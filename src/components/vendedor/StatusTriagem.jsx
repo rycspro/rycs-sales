@@ -1,7 +1,7 @@
 import { Clock, XCircle } from "lucide-react";
 import { dataCurta } from "../../lib/utils.js";
 
-export default function StatusTriagem({ eu, up, db }) {
+export default function StatusTriagem({ eu }) {
   const recusado = eu.status === "recusado";
   return (
     <div className="vx-fade" style={{ maxWidth: 480 }}>
@@ -27,15 +27,6 @@ export default function StatusTriagem({ eu, up, db }) {
           <div className="vx-row" style={{ fontSize: 13, padding: "5px 0" }}><span className="vx-mut">Enviado em</span><b>{dataCurta(eu.criadoEm)}</b></div>
         </div>
       </div>
-      <p className="vx-mut" style={{ fontSize: 12, textAlign: "center", marginTop: 18 }}>
-        Para ver a esteira funcionando, troque para <b>Plataforma</b> no topo e aprove a triagem.
-      </p>
-      {db.sellers.length > 1 && (
-        <button className="vx-btn vx-btn-sm" style={{ display: "block", margin: "10px auto" }}
-          onClick={() => up((d) => ({ sellerId: d.sellers.find((s) => s.status === "aprovado")?.id || d.sellerId }))}>
-          Entrar com uma conta já aprovada
-        </button>
-      )}
     </div>
   );
 }

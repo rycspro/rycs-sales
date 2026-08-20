@@ -1,25 +1,20 @@
-const CACHE = "rycs-v1";
-const PRECACHE = ["/", "/index.html"];
+// Service worker desativado.
+//
+// A versão anterior cacheava o index.html com estratégia cache-first, o que
+// deixava clientes presos a um HTML antigo apontando para bundles que já não
+// existiam — resultando em tela branca após cada deploy.
+//
+// Este arquivo agora só limpa o cache e se desregistra. Não reintroduza cache
+// de HTML aqui: o app é online-only e depende da API para tudo.
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
-  self.skipWaiting();
-});
+self.addEventListener("install", () => self.skipWaiting());
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))));
-  self.clients.claim();
-});
-
-self.addEventListener("fetch", (e) => {
-  if (e.request.url.includes("/api/")) return;
-  e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request).then((res) => {
-      if (res.status === 200 && e.request.method === "GET") {
-        const clone = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, clone));
-      }
-      return res;
-    }).catch(() => caches.match("/index.html")))
+  e.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+      .then(() => self.registration.unregister())
+      .then(() => self.clients.matchAll({ type: "window" }))
+      .then((clients) => clients.forEach((c) => c.navigate(c.url)))
   );
 });

@@ -1,12 +1,24 @@
 import { useState } from "react";
 import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock } from "lucide-react";
-import { apiPatch } from "../../lib/api.js";
+import { api, apiPatch } from "../../lib/api.js";
 import { money, agora, dataCurta } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { Stat } from "../ui.jsx";
 
 export default function PainelEmpresa({ emp, db, up, aviso }) {
   const [rec, setRec] = useState("");
+  const [cobranca, setCobranca] = useState(null);
+  const [gerando, setGerando] = useState(false);
+  const [doc, setDoc] = useState("");
+
+  const salvarDocumento = async () => {
+    const limpo = doc.replace(/\D/g, "");
+    if (limpo.length !== 11 && limpo.length !== 14)
+      return aviso("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).");
+    await apiPatch(`/companies/${emp.id}`, { documento: limpo });
+    up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, documento: limpo } : c) }));
+    aviso("Documento salvo.");
+  };
   const subs = db.submissions.filter((s) => s.companyId === emp.id);
   const pagos = subs.filter((s) => s.status === "liberado");
   const gasto = pagos.reduce((a, s) => a + s.valor, 0);
@@ -14,19 +26,17 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   const vendas = subs.filter((s) => s.tipo === "venda" && s.status === "liberado").length;
   const time = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado").length;
 
-  const abastecer = () => {
+  // O saldo não é mais creditado aqui: ele entra quando o gateway confirma o
+  // pagamento, via webhook. Esta tela só gera a cobrança.
+  const abastecer = async (metodo) => {
     const v = Number(String(rec).replace(",", "."));
-    if (!v || v < 100) return aviso("Recarga mínima de R$ 100,00.");
-    const novoSaldo = +(emp.saldo + v).toFixed(2);
-    const novoTotal = +((emp.totalAportado || 0) + v).toFixed(2);
-    const novosAportes = [...(emp.aportes || []), { valor: v, ts: agora() }];
-    apiPatch(`/companies/${emp.id}`, { saldo: novoSaldo, totalAportado: novoTotal, aportes: novosAportes });
-    up((d) => ({
-      companies: d.companies.map((c) => c.id === emp.id
-        ? { ...c, saldo: novoSaldo, totalAportado: novoTotal, aportes: novosAportes }
-        : c),
-    }));
-    setRec(""); aviso(`Caixa abastecido em ${money(v)}.`);
+    if (!v || v < 50) return aviso("Depósito mínimo de R$ 50,00.");
+    setGerando(true);
+    const r = await api("/payments/deposit", { valor: v, metodo });
+    setGerando(false);
+    if (!r || r.error) return aviso(r?.error || "Não foi possível gerar a cobrança.");
+    setCobranca({ ...r, valor: v, metodo });
+    setRec("");
   };
 
   return (
@@ -66,15 +76,59 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
         <p className="vx-mut" style={{ fontSize: 13, marginTop: 0 }}>
           Você só paga pelo que foi conferido. O valor sai do caixa no momento em que a ação é liberada.
         </p>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input className="vx-input vx-mono" value={rec} onChange={(e) => setRec(e.target.value)} placeholder="1.000,00" inputMode="decimal" />
-          <button className="vx-btn vx-btn-primary" onClick={abastecer}>Abastecer</button>
-        </div>
+        {!emp.documento && (
+          <div style={{ marginBottom: 10 }}>
+            <div className="vx-label">CNPJ ou CPF do titular</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input className="vx-input vx-mono" value={doc} onChange={(e) => setDoc(e.target.value)}
+                placeholder="00.000.000/0001-00" inputMode="numeric" />
+              <button className="vx-btn" onClick={salvarDocumento}>Salvar</button>
+            </div>
+            <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>
+              Exigido pelo banco para emitir a cobrança em nome da sua empresa.
+            </div>
+          </div>
+        )}
+        <input className="vx-input vx-mono" value={rec} onChange={(e) => setRec(e.target.value)} placeholder="1.000,00" inputMode="decimal" />
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
           {[500, 1000, 5000].map((v) => (
             <button key={v} className="vx-btn vx-btn-sm" onClick={() => setRec(String(v))}>{money(v)}</button>
           ))}
         </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <button className="vx-btn vx-btn-primary" style={{ flex: 1 }} disabled={gerando} onClick={() => abastecer("pix")}>
+            {gerando ? "Gerando…" : "Pagar com Pix"}
+          </button>
+          <button className="vx-btn" style={{ flex: 1 }} disabled={gerando} onClick={() => abastecer("boleto")}>Boleto</button>
+        </div>
+
+        {cobranca && (
+          <div className="vx-card" style={{ padding: 14, marginTop: 12, background: "var(--brand-50)" }}>
+            <div className="vx-disp" style={{ fontSize: 15 }}>Cobrança de {money(cobranca.valor)} gerada</div>
+            <p className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>
+              O caixa é creditado automaticamente assim que o pagamento for confirmado.
+            </p>
+            {cobranca.pixQrCodeBase64 && (
+              <img src={`data:image/png;base64,${cobranca.pixQrCodeBase64}`} alt="QR Code Pix"
+                style={{ width: 180, display: "block", margin: "10px auto", borderRadius: 8 }} />
+            )}
+            {cobranca.pixCopiaECola && (
+              <button className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 6 }}
+                onClick={() => { navigator.clipboard?.writeText(cobranca.pixCopiaECola); aviso("Código Pix copiado."); }}>
+                Copiar código Pix
+              </button>
+            )}
+            {(cobranca.bankSlipUrl || cobranca.invoiceUrl) && (
+              <a className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 6 }} target="_blank" rel="noreferrer"
+                href={cobranca.bankSlipUrl || cobranca.invoiceUrl}>
+                {cobranca.metodo === "boleto" ? "Abrir boleto" : "Abrir fatura"}
+              </a>
+            )}
+            <button className="vx-btn vx-btn-ghost vx-btn-sm vx-btn-block" style={{ marginTop: 6 }} onClick={() => setCobranca(null)}>
+              Fechar
+            </button>
+          </div>
+        )}
         <hr className="vx-sep" />
         <div className="vx-row" style={{ fontSize: 13 }}>
           <span className="vx-mut">Pago em comissões</span><b className="vx-mono">{money(gasto)}</b>

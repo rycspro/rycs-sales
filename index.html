@@ -8,18 +8,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>RYCS Sales Solutions</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231a2744'/><text x='16' y='22' font-family='system-ui' font-weight='700' font-size='16' fill='%233b82f6' text-anchor='middle'>R</text></svg>">
+    <link rel="icon" href="/logo-rycs.png">
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.svg" />
+    <link rel="apple-touch-icon" href="/logo-rycs.png" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
+      // Remove qualquer service worker legado. Ver comentário em public/sw.js.
       if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/sw.js").catch(() => {});
-        });
+        navigator.serviceWorker.getRegistrations()
+          .then((rs) => rs.forEach((r) => r.unregister()))
+          .catch(() => {});
+        if (window.caches) {
+          caches.keys().then((ks) => ks.forEach((k) => caches.delete(k))).catch(() => {});
+        }
       }
     </script>
   </body>

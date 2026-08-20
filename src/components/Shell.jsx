@@ -1,7 +1,8 @@
 import { NAV } from "../lib/constants.js";
 
 export default function Shell({ role, active, onSelect, counts, children }) {
-  const items = NAV[role];
+  // role pode chegar vazio na janela entre o login e o carregamento do state.
+  const items = NAV[role] || [];
   return (
     <div className="vx-body">
       <aside className="vx-sidebar">

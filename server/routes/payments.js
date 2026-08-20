@@ -2,141 +2,259 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { notificar } from "./notifications.js";
+import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
 
 const router = Router();
 
-const ASAAS_BASE = process.env.ASAAS_ENV === "production"
-  ? "https://api.asaas.com/v3"
-  : "https://sandbox.asaas.com/api/v3";
+const DEPOSITO_MINIMO = 50;
+const SAQUE_MINIMO = 10;
 
-async function asaasRequest(path, options = {}) {
-  if (!process.env.ASAAS_API_KEY) return null;
-  const res = await fetch(`${ASAAS_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      access_token: process.env.ASAAS_API_KEY,
-      ...options.headers,
+// ---------------------------------------------------------------------------
+// Repasse ao vendedor — ÚNICO ponto por onde dinheiro sai para o profissional.
+//
+// Hoje opera em custódia: a plataforma recebe os depósitos e transfere por Pix.
+// Para migrar a split do Asaas, basta trocar o corpo desta função por uma
+// cobrança com `split` para a carteira do vendedor; nada mais no código
+// precisa mudar.
+// ---------------------------------------------------------------------------
+async function repassarParaVendedor({ vendedor, valor, referencia }) {
+  if (!asaasAtivo()) return { modo: "manual", externoId: null };
+
+  const transfer = await asaas("/transfers", {
+    method: "POST",
+    body: {
+      value: valor,
+      pixAddressKey: vendedor.pix,
+      pixAddressKeyType: tipoChavePix(vendedor.pix),
+      description: `RYCS - repasse ${referencia}`,
     },
   });
-  return res.json();
+  return { modo: "pix", externoId: transfer.id };
 }
 
+// Garante que a empresa exista como cliente no gateway e reaproveita o id.
+async function clienteAsaasDaEmpresa(empresa) {
+  if (empresa.asaasCustomerId) return empresa.asaasCustomerId;
+
+  if (!empresa.documento) {
+    const e = new Error("Cadastre o CNPJ ou CPF da empresa antes de depositar.");
+    e.faltaDocumento = true;
+    throw e;
+  }
+
+  const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
+  const cliente = await asaas("/customers", {
+    method: "POST",
+    body: {
+      name: empresa.nome,
+      cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
+      email: usuario?.email || undefined,
+      externalReference: empresa.id,
+    },
+  });
+
+  db.prepare("UPDATE companies SET asaasCustomerId = ? WHERE id = ?").run(cliente.id, empresa.id);
+  return cliente.id;
+}
+
+// ---------------------------------------------------------------------------
+// Depósito da empresa
+// ---------------------------------------------------------------------------
 router.post("/payments/deposit", authMiddleware, async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem depositar" });
 
-  const { valor, metodo } = req.body;
-  if (!valor || valor < 50) return res.status(400).json({ error: "Valor mínimo: R$ 50,00" });
+  const valor = Number(req.body?.valor);
+  if (!Number.isFinite(valor) || valor < DEPOSITO_MINIMO)
+    return res.status(400).json({ error: `Valor mínimo: R$ ${DEPOSITO_MINIMO},00` });
 
-  if (!process.env.ASAAS_API_KEY) {
-    db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ? WHERE id = ?").run(valor, valor, entityId);
-    const company = db.prepare("SELECT nome FROM companies WHERE id = ?").get(entityId);
-    const aportes = JSON.parse(db.prepare("SELECT aportes FROM companies WHERE id = ?").get(entityId)?.aportes || "[]");
-    aportes.push({ valor, ts: agora() });
-    db.prepare("UPDATE companies SET aportes = ? WHERE id = ?").run(JSON.stringify(aportes), entityId);
-    return res.json({ ok: true, method: "manual", message: "Asaas não configurado. Saldo adicionado diretamente." });
-  }
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  // Sem gateway o saldo não pode ser creditado de graça: isso pagaria
+  // vendedores com dinheiro que nunca entrou. Melhor recusar o depósito.
+  if (!asaasAtivo())
+    return res.status(503).json({ error: "Pagamentos indisponíveis no momento. Tente mais tarde." });
+
+  const metodo = req.body?.metodo;
+  const billingType = metodo === "boleto" ? "BOLETO" : metodo === "cartao" ? "CREDIT_CARD" : "PIX";
 
   try {
-    const billingType = metodo === "boleto" ? "BOLETO" : metodo === "cartao" ? "CREDIT_CARD" : "PIX";
-    const payment = await asaasRequest("/payments", {
+    const customer = await clienteAsaasDaEmpresa(empresa);
+    const cobranca = await asaas("/payments", {
       method: "POST",
-      body: JSON.stringify({
-        customer: entityId,
+      body: {
+        customer,
         billingType,
         value: valor,
         dueDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-        description: `Depósito RYCS - ${db.prepare("SELECT nome FROM companies WHERE id = ?").get(entityId)?.nome}`,
-      }),
+        description: `Depósito RYCS - ${empresa.nome}`,
+        externalReference: empresa.id,
+      },
     });
-    res.json({ ok: true, paymentId: payment.id, pixQr: payment.pixQrCode, invoiceUrl: payment.invoiceUrl });
+
+    // O Pix copia-e-cola vem de um endpoint separado.
+    let pix = null;
+    if (billingType === "PIX") {
+      try { pix = await asaas(`/payments/${cobranca.id}/pixQrCode`); }
+      catch (e) { console.warn("[asaas] QR Pix indisponível:", e.message); }
+    }
+
+    res.json({
+      ok: true,
+      paymentId: cobranca.id,
+      invoiceUrl: cobranca.invoiceUrl,
+      bankSlipUrl: cobranca.bankSlipUrl || null,
+      pixCopiaECola: pix?.payload || null,
+      pixQrCodeBase64: pix?.encodedImage || null,
+      aviso: "O saldo entra assim que o pagamento for confirmado.",
+    });
   } catch (err) {
-    console.error("Erro Asaas deposit:", err.message);
-    res.status(500).json({ error: "Erro ao processar depósito" });
+    if (err.faltaDocumento) return res.status(400).json({ error: err.message });
+    console.error("[asaas] depósito:", err.message);
+    const detalhe = err instanceof AsaasError ? err.message : "Erro ao processar depósito";
+    res.status(502).json({ error: detalhe });
   }
 });
 
+// ---------------------------------------------------------------------------
+// Saque do vendedor
+// ---------------------------------------------------------------------------
 router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais podem sacar" });
 
-  const { valor } = req.body;
-  const seller = db.prepare("SELECT * FROM sellers WHERE id = ?").get(entityId);
-  if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
-  if (valor > seller.disponivel) return res.status(400).json({ error: "Saldo insuficiente" });
-  if (valor < 10) return res.status(400).json({ error: "Valor mínimo: R$ 10,00" });
+  const valor = Number(req.body?.valor);
+  const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(entityId);
+  if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
+  if (!Number.isFinite(valor) || valor < SAQUE_MINIMO)
+    return res.status(400).json({ error: `Valor mínimo: R$ ${SAQUE_MINIMO},00` });
+  if (!vendedor.pix) return res.status(400).json({ error: "Cadastre sua chave Pix antes de sacar" });
 
+  // Reserva o valor e cria o saque numa transação, para que dois pedidos
+  // simultâneos não sacem o mesmo saldo duas vezes.
   const wId = uid();
-  db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm) VALUES (?, ?, ?, ?, 'solicitado', ?)").run(
-    wId, entityId, valor, seller.pix, agora()
-  );
-  db.prepare("UPDATE sellers SET disponivel = disponivel - ? WHERE id = ?").run(valor, entityId);
-
-  if (!process.env.ASAAS_API_KEY) {
-    return res.json({ id: wId, method: "manual", message: "Asaas não configurado. Saque registrado para processamento manual." });
+  try {
+    db.transaction(() => {
+      const atual = db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(entityId);
+      if (atual.disponivel < valor) throw new Error("SALDO_INSUFICIENTE");
+      db.prepare("UPDATE sellers SET disponivel = disponivel - ? WHERE id = ?").run(valor, entityId);
+      db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm) VALUES (?, ?, ?, ?, 'solicitado', ?)")
+        .run(wId, entityId, valor, vendedor.pix, agora());
+    })();
+  } catch (e) {
+    if (e.message === "SALDO_INSUFICIENTE") return res.status(400).json({ error: "Saldo insuficiente" });
+    throw e;
   }
 
   try {
-    const transfer = await asaasRequest("/transfers", {
-      method: "POST",
-      body: JSON.stringify({
-        value: valor,
-        pixAddressKey: seller.pix,
-        pixAddressKeyType: detectPixType(seller.pix),
-        description: `Saque RYCS - ${seller.nome}`,
-      }),
-    });
-    db.prepare("UPDATE withdrawals SET asaasId = ? WHERE id = ?").run(transfer.id, wId);
-    res.json({ id: wId, transferId: transfer.id });
+    const { modo, externoId } = await repassarParaVendedor({ vendedor, valor, referencia: vendedor.nome });
+    if (externoId) db.prepare("UPDATE withdrawals SET asaasId = ? WHERE id = ?").run(externoId, wId);
+    res.json({ id: wId, modo, message: modo === "manual"
+      ? "Saque registrado para processamento manual."
+      : "Transferência enviada. O Pix cai em instantes." });
   } catch (err) {
-    console.error("Erro Asaas withdraw:", err.message);
-    res.json({ id: wId, method: "manual", message: "Erro no gateway. Saque será processado manualmente." });
+    // O gateway recusou: devolve o saldo em vez de deixar o dinheiro sumido.
+    console.error("[asaas] saque:", err.message);
+    db.transaction(() => {
+      db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(valor, entityId);
+      db.prepare("UPDATE withdrawals SET status = 'falhou', falhaMotivo = ? WHERE id = ?").run(String(err.message).slice(0, 200), wId);
+    })();
+    res.status(502).json({ error: "Não foi possível concluir o saque. O valor voltou para o seu saldo." });
   }
 });
 
-router.post("/payments/webhook", async (req, res) => {
+// ---------------------------------------------------------------------------
+// Webhook do gateway
+// ---------------------------------------------------------------------------
+router.post("/payments/webhook", (req, res) => {
   const token = req.headers["asaas-access-token"] || req.query.token;
-  if (process.env.ASAAS_WEBHOOK_TOKEN && token !== process.env.ASAAS_WEBHOOK_TOKEN) {
+  if (!process.env.ASAAS_WEBHOOK_TOKEN || token !== process.env.ASAAS_WEBHOOK_TOKEN)
     return res.status(401).json({ error: "Token inválido" });
-  }
 
-  const { event, payment, transfer } = req.body;
+  const { event, payment, transfer } = req.body || {};
+  const eventoId = req.body?.id || payment?.id || transfer?.id;
+  if (!event || !eventoId) return res.status(400).json({ error: "Evento inválido" });
 
-  if (event === "PAYMENT_RECEIVED" && payment) {
-    const company = db.prepare("SELECT * FROM companies WHERE id = ?").get(payment.customer);
-    if (company) {
-      db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ? WHERE id = ?").run(payment.value, payment.value, company.id);
-      const aportes = JSON.parse(company.aportes || "[]");
-      aportes.push({ valor: payment.value, ts: agora(), asaasId: payment.id });
-      db.prepare("UPDATE companies SET aportes = ? WHERE id = ?").run(JSON.stringify(aportes), company.id);
+  // O Asaas reentrega eventos. Sem esta trava, um depósito seria creditado
+  // tantas vezes quantas o webhook chegasse.
+  const chave = `${event}:${eventoId}`;
+  const novo = db.prepare("INSERT OR IGNORE INTO gateway_events (id, evento, criadoEm) VALUES (?, ?, ?)")
+    .run(chave, event, agora());
+  if (novo.changes === 0) return res.json({ ok: true, duplicado: true });
 
-      const empUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(company.id);
-      if (empUser) notificar(empUser.id, "pagamento", `Depósito de R$ ${payment.value.toFixed(2)} confirmado!`);
-    }
-  }
-
-  if (event === "TRANSFER_DONE" && transfer) {
-    const w = db.prepare("SELECT * FROM withdrawals WHERE asaasId = ?").get(transfer.id);
-    if (w) {
-      db.prepare("UPDATE withdrawals SET status = 'pago' WHERE id = ?").run(w.id);
-      db.prepare("UPDATE sellers SET sacado = sacado + ? WHERE id = ?").run(w.valor, w.sellerId);
-
-      const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
-      if (sellerUser) notificar(sellerUser.id, "saque", `Saque de R$ ${w.valor.toFixed(2)} foi pago!`);
-    }
+  if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
+    creditarDeposito(payment);
+  } else if (event === "TRANSFER_DONE") {
+    concluirSaque(transfer);
+  } else if (event === "TRANSFER_FAILED" || event === "TRANSFER_CANCELLED") {
+    devolverSaque(transfer);
   }
 
   res.json({ ok: true });
 });
 
-function detectPixType(key) {
-  if (!key) return "RANDOM_KEY";
-  if (key.includes("@")) return "EMAIL";
-  const digits = key.replace(/\D/g, "");
-  if (digits.length === 11) return "CPF";
-  if (digits.length === 14) return "CNPJ";
-  if (digits.length >= 10 && digits.length <= 13) return "PHONE";
+function creditarDeposito(payment) {
+  if (!payment) return;
+  // externalReference guarda o id interno; asaasCustomerId cobre cobranças
+  // criadas fora do app. O id do Asaas nunca bate com o id interno.
+  const empresa =
+    (payment.externalReference && db.prepare("SELECT * FROM companies WHERE id = ?").get(payment.externalReference)) ||
+    db.prepare("SELECT * FROM companies WHERE asaasCustomerId = ?").get(payment.customer);
+
+  if (!empresa) return console.warn("[webhook] pagamento sem empresa:", payment.id);
+
+  const valor = Number(payment.value) || 0;
+  if (valor <= 0) return;
+
+  db.transaction(() => {
+    db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ? WHERE id = ?")
+      .run(valor, valor, empresa.id);
+    const aportes = JSON.parse(empresa.aportes || "[]");
+    aportes.push({ valor, ts: agora(), asaasId: payment.id });
+    db.prepare("UPDATE companies SET aportes = ? WHERE id = ?").run(JSON.stringify(aportes), empresa.id);
+  })();
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
+  if (user) notificar(user.id, "pagamento", `Depósito de R$ ${valor.toFixed(2)} confirmado!`);
+}
+
+function concluirSaque(transfer) {
+  if (!transfer?.id) return;
+  const w = db.prepare("SELECT * FROM withdrawals WHERE asaasId = ?").get(transfer.id);
+  if (!w || w.status === "pago") return;
+
+  db.transaction(() => {
+    db.prepare("UPDATE withdrawals SET status = 'pago' WHERE id = ?").run(w.id);
+    db.prepare("UPDATE sellers SET sacado = sacado + ? WHERE id = ?").run(w.valor, w.sellerId);
+  })();
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
+  if (user) notificar(user.id, "saque", `Saque de R$ ${w.valor.toFixed(2)} foi pago!`);
+}
+
+function devolverSaque(transfer) {
+  if (!transfer?.id) return;
+  const w = db.prepare("SELECT * FROM withdrawals WHERE asaasId = ?").get(transfer.id);
+  if (!w || w.status !== "solicitado") return;
+
+  db.transaction(() => {
+    db.prepare("UPDATE withdrawals SET status = 'falhou', falhaMotivo = ? WHERE id = ?")
+      .run("Transferência recusada pelo banco", w.id);
+    db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(w.valor, w.sellerId);
+  })();
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
+  if (user) notificar(user.id, "saque", "Saque não concluído", "O valor voltou para o seu saldo. Confira sua chave Pix.");
+}
+
+function tipoChavePix(chave) {
+  if (!chave) return "RANDOM_KEY";
+  if (chave.includes("@")) return "EMAIL";
+  const digitos = chave.replace(/\D/g, "");
+  if (digitos.length === 11) return "CPF";
+  if (digitos.length === 14) return "CNPJ";
+  if (digitos.length >= 10 && digitos.length <= 13) return "PHONE";
   return "RANDOM_KEY";
 }
 

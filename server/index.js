@@ -24,6 +24,8 @@ import paymentRoutes from "./routes/payments.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 const isProd = process.env.NODE_ENV === "production";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -63,6 +65,9 @@ app.use("/api", apiLimiter);
 
 // --- Routes ---
 app.use("/api", authRoutes);
+// Antes das rotas protegidas: o gateway chama o webhook sem cookie, e o
+// authMiddleware registrado abaixo responderia 401 antes de chegar aqui.
+app.use("/api", paymentRoutes);
 
 app.use("/api", authMiddleware, stateRoutes);
 app.use("/api", authMiddleware, sellersRoutes);
@@ -75,7 +80,6 @@ app.use("/api", authMiddleware, courseRoutes);
 app.use("/api", authMiddleware, notificationsRoutes);
 app.use("/api", authMiddleware, campaignsRoutes);
 app.use("/api", authMiddleware, uploadsRoutes);
-app.use("/api", paymentRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
@@ -126,6 +130,9 @@ if (isProd) {
   const __dirname = dirname(fileURLToPath(import.meta.url));
   app.use(express.static(join(__dirname, "../dist")));
   app.get("*", (req, res) => {
+    // Não devolva o HTML para assets inexistentes: o browser recusaria o
+    // módulo por MIME type e a página ficaria em branco. 404 é mais honesto.
+    if (req.path.startsWith("/assets/")) return res.status(404).end();
     res.sendFile(join(__dirname, "../dist/index.html"));
   });
 }

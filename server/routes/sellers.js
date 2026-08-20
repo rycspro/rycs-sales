@@ -24,9 +24,12 @@ router.patch("/sellers/:id", (req, res) => {
     return res.status(403).json({ error: "Sem permissão para editar outro vendedor" });
 
   const fields = req.body;
+  // Campos financeiros (disponivel/pendente/sacado) NUNCA podem ser escritos
+  // pelo próprio vendedor: valem dinheiro real via Pix. Só o servidor os move,
+  // ao liberar uma ação ou processar um saque.
   const sellerFields = ["nome", "email", "whats", "cidade", "perfil", "experiencia", "pix", "video"];
-  const adminFields = [...sellerFields, "status", "nota", "disponivel", "pendente", "sacado"];
-  const allowed = role === "admin" ? adminFields : sellerFields.concat(["pendente", "disponivel"]);
+  const adminFields = [...sellerFields, "status", "nota"];
+  const allowed = role === "admin" ? adminFields : sellerFields;
 
   const sets = [];
   const vals = [];

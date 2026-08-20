@@ -3,11 +3,10 @@ FROM node:20-slim
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
-COPY shared/ shared/
-COPY server/ server/
-COPY dist/ dist/
+COPY . .
+RUN npm run build
 
 ENV NODE_ENV=production
 ENV PORT=3001

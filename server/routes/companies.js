@@ -13,8 +13,10 @@ router.patch("/companies/:id", (req, res) => {
     return res.status(403).json({ error: "Vendedores não podem editar empresas" });
 
   const fields = req.body;
-  const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "saldo", "vagas", "cor", "totalAportado"];
-  const jsonFields = ["comissoes", "curso", "aportes"];
+  // saldo/totalAportado/aportes só mudam por pagamento confirmado no gateway
+  // ou por liberação de ação — nunca por escrita direta do cliente.
+  const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "vagas", "cor", "documento"];
+  const jsonFields = ["comissoes", "curso"];
   const sets = [];
   const vals = [];
 

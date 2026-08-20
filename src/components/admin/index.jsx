@@ -1,4 +1,4 @@
-import { apiPatch } from "../../lib/api.js";
+import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { TAXA } from "../../lib/constants.js";
 import { Vazio } from "../ui.jsx";
@@ -18,26 +18,13 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
     aviso(st === "aprovado" ? `${s.nome} aprovado.` : "Cadastro recusado.");
   };
 
-  const liberar = (sub) => {
-    const emp = db.companies.find((c) => c.id === sub.companyId);
-    if (!emp || emp.saldo < sub.valor) return aviso("Caixa da empresa insuficiente. Avise a empresa para abastecer.");
-    const liquido = +(sub.valor * (1 - TAXA)).toFixed(2);
-    const seller = db.sellers.find((s) => s.id === sub.sellerId);
-    apiPatch(`/submissions/${sub.id}`, { status: "liberado", liquido });
-    apiPatch(`/companies/${sub.companyId}`, { saldo: +(emp.saldo - sub.valor).toFixed(2) });
-    if (seller) apiPatch(`/sellers/${seller.id}`, {
-      pendente: +Math.max(0, seller.pendente - liquido).toFixed(2),
-      disponivel: +(seller.disponivel + liquido).toFixed(2),
-    });
-    setDb((d) => ({
-      ...d,
-      submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "liberado", liquido } : s),
-      companies: d.companies.map((c) => c.id === sub.companyId ? { ...c, saldo: +(c.saldo - sub.valor).toFixed(2) } : c),
-      sellers: d.sellers.map((s) => s.id === sub.sellerId
-        ? { ...s, pendente: +Math.max(0, s.pendente - liquido).toFixed(2), disponivel: +(s.disponivel + liquido).toFixed(2) }
-        : s),
-    }));
-    aviso(`${money(liquido)} liberados para saque.`);
+  // O servidor faz a conta e move o dinheiro numa transação; aqui só
+  // disparamos e recarregamos o estado real.
+  const liberar = async (sub) => {
+    const r = await api(`/submissions/${sub.id}/liberar`, {});
+    if (r?.error) return aviso(r.error);
+    await recarregar();
+    aviso(`${money(r.liquido)} liberados para saque.`);
   };
 
   const pagar = (w) => {

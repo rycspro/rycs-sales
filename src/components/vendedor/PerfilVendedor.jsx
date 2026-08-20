@@ -1,6 +1,4 @@
 import { useMemo } from "react";
-import { RotateCcw } from "lucide-react";
-import { seed } from "../../lib/seed.js";
 
 export default function PerfilVendedor({ eu, db, up, setDb, aviso }) {
   const stats = useMemo(() => {
@@ -41,18 +39,6 @@ export default function PerfilVendedor({ eu, db, up, setDb, aviso }) {
         </div>
       </div>
 
-      <div className="vx-card" style={{ padding: 16, marginTop: 14 }}>
-        <div className="vx-label">Trocar de conta (demonstração)</div>
-        <select className="vx-input" value={eu.id} onChange={(e) => up(() => ({ sellerId: e.target.value }))}>
-          {db.sellers.map((s) => <option key={s.id} value={s.id}>{s.nome} — {s.status}</option>)}
-        </select>
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          <button className="vx-btn vx-btn-sm" onClick={() => up(() => ({ sellerId: null }))}>Cadastrar novo vendedor</button>
-          <button className="vx-btn vx-btn-sm vx-btn-danger" onClick={() => { setDb(seed()); aviso("Dados de demonstração restaurados."); }}>
-            <RotateCcw size={12} /> Zerar demonstração
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

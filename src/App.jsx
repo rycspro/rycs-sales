@@ -28,7 +28,11 @@ export default function App() {
     const u = usr || userRef.current;
     if (!u) return;
     const state = await api("/state");
-    if (!state?.sellers) return;
+    if (!state?.sellers) {
+      // Sem dados ainda: fixa o papel para a interface conseguir renderizar.
+      setDb((d) => ({ ...d, role: u.role }));
+      return;
+    }
     setDb((d) => ({
       ...d,
       ...state,
@@ -91,14 +95,18 @@ export default function App() {
   const recarregar = () => carregarState();
   const ctx = { db, setDb, up, aviso, recarregar };
 
+  // O papel vem do usuário autenticado, disponível assim que o login responde.
+  // db.role só é preenchido depois do /state e chegaria vazio no primeiro render.
+  const role = user?.role ?? db.role;
+
   const counts = useMemo(() => {
-    if (db.role === "empresa") {
+    if (role === "empresa") {
       return {
         conferir: db.submissions.filter((s) => s.companyId === db.companyId && s.status === "revisao").length,
         time: db.sellers.filter((s) => s.aplicacoes?.[db.companyId] === "pendente").length,
       };
     }
-    if (db.role === "admin") {
+    if (role === "admin") {
       return {
         triagem: db.sellers.filter((s) => s.status === "triagem").length,
         liberar: db.submissions.filter((s) => s.status === "ia_aprovado" || s.status === "conferido").length,
@@ -106,10 +114,10 @@ export default function App() {
       };
     }
     return {};
-  }, [db]);
+  }, [db, role]);
 
-  const aba = nav[db.role];
-  const setAba = (k) => setNav((n) => ({ ...n, [db.role]: k }));
+  const aba = nav[role];
+  const setAba = (k) => setNav((n) => ({ ...n, [role]: k }));
 
   if (!loaded) return <div className={`vx-app${dark ? " vx-dark" : ""}`}><style>{CSS}</style></div>;
 
@@ -127,7 +135,7 @@ export default function App() {
     </div>
   );
 
-  const roleLabel = { vendedor: "Vendedor", empresa: "Empresa", admin: "Plataforma" }[db.role] || "";
+  const roleLabel = { vendedor: "Vendedor", empresa: "Empresa", admin: "Plataforma" }[role] || "";
 
   return (
     <div className={`vx-app${dark ? " vx-dark" : ""}`}>
@@ -135,9 +143,8 @@ export default function App() {
 
       <header className="vx-topbar">
         <div className="vx-topbar-inner">
-          <div className="vx-word vx-disp">
-            <span className="vx-mark" style={{ background: "var(--navy)" }}><span style={{ color: "var(--brand)", fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 15 }}>R</span></span>
-            RYCS
+          <div className="vx-word vx-disp" style={{ display: "flex", alignItems: "center" }}>
+            <img src="/logo-rycs.png" alt="RYCS" style={{ height: 28, objectFit: "contain" }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span className="vx-chip">{roleLabel} · {user.email}</span>
@@ -150,10 +157,10 @@ export default function App() {
         </div>
       </header>
 
-      <Shell role={db.role} active={aba} onSelect={setAba} counts={counts}>
-        {db.role === "vendedor" && <Vendedor {...ctx} aba={aba} />}
-        {db.role === "empresa" && <Empresa {...ctx} aba={aba} />}
-        {db.role === "admin" && <Admin {...ctx} aba={aba} />}
+      <Shell role={role} active={aba} onSelect={setAba} counts={counts}>
+        {role === "vendedor" && <Vendedor {...ctx} aba={aba} />}
+        {role === "empresa" && <Empresa {...ctx} aba={aba} />}
+        {role === "admin" && <Admin {...ctx} aba={aba} />}
       </Shell>
 
       {toast && (

@@ -58,9 +58,7 @@ export default function Login({ onLogin, onRegister }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="vx-mark" style={{ width: 48, height: 48, borderRadius: 14, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--navy)" }}>
-            <span style={{ color: "var(--brand)", fontWeight: 700, fontSize: 24 }}>R</span>
-          </div>
+          <img src="/logo-rycs.png" alt="RYCS" style={{ width: 180, margin: "0 auto 12px", display: "block" }} />
           <div className="vx-disp" style={{ fontSize: 22 }}>Redefinir senha</div>
         </div>
         <div className="vx-card" style={{ padding: 22 }}>
@@ -78,9 +76,7 @@ export default function Login({ onLogin, onRegister }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="vx-mark" style={{ width: 48, height: 48, borderRadius: 14, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--navy)" }}>
-            <span style={{ color: "var(--brand)", fontWeight: 700, fontSize: 24 }}>R</span>
-          </div>
+          <img src="/logo-rycs.png" alt="RYCS" style={{ width: 180, margin: "0 auto 12px", display: "block" }} />
           <div className="vx-disp" style={{ fontSize: 22 }}>Esqueci minha senha</div>
           <p className="vx-mut" style={{ fontSize: 13, marginTop: 6 }}>Informe seu e-mail para receber o link de redefinição.</p>
         </div>
@@ -136,11 +132,7 @@ export default function Login({ onLogin, onRegister }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="vx-mark" style={{ width: 48, height: 48, borderRadius: 14, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--navy)" }}>
-            <span style={{ color: "var(--brand)", fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24 }}>R</span>
-          </div>
-          <div className="vx-disp" style={{ fontSize: 26 }}>RYCS</div>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--muted)", marginTop: 2 }}>Sales Solutions</div>
+          <img src="/logo-rycs.png" alt="RYCS Sales Solutions" style={{ width: 220, margin: "0 auto 12px", display: "block" }} />
           <p className="vx-mut" style={{ fontSize: 14, marginTop: 6 }}>
             {modo === "login" ? "Entre na sua conta" : "Crie sua conta"}
           </p>
@@ -211,23 +203,6 @@ export default function Login({ onLogin, onRegister }) {
           </div>
         </div>
 
-        {modo === "login" && (
-          <div className="vx-card" style={{ padding: 16, marginTop: 14, background: "var(--surface-2)", border: "none" }}>
-            <div className="vx-eyebrow" style={{ marginBottom: 8 }}>Contas de demonstração</div>
-            {[
-              ["rafa@email.com", "123456", "Vendedor"],
-              ["nexo@email.com", "123456", "Empresa"],
-              ["admin@email.com", "123456", "Plataforma"],
-            ].map(([e, s, label]) => (
-              <button key={e} className="vx-btn vx-btn-sm vx-btn-block" style={{ marginBottom: 6, justifyContent: "space-between" }}
-                onClick={() => { setEmail(e); setSenha(s); }}>
-                <span className="vx-mono" style={{ fontSize: 12 }}>{e}</span>
-                <span className="vx-badge vx-badge-muted">{label}</span>
-              </button>
-            ))}
-            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>Senha: 123456</div>
-          </div>
-        )}
       </div>
     </div>
   );

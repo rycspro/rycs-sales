@@ -1,10 +1,16 @@
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database(join(__dirname, "data.db"));
+
+// Em produção aponte DB_PATH para um volume persistente (ex.: /data/data.db).
+// Sem volume, o banco vive no container e é apagado a cada deploy.
+const DB_PATH = process.env.DB_PATH || join(__dirname, "data.db");
+const db = new Database(DB_PATH);
+console.log(`[db] ${DB_PATH}`);
 
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
@@ -166,6 +172,27 @@ db.exec(`
     FOREIGN KEY (sellerId) REFERENCES sellers(id)
   );
 
+  -- Receita da plataforma (take rate), registrada a cada ação liberada.
+  CREATE TABLE IF NOT EXISTS platform_earnings (
+    id TEXT PRIMARY KEY,
+    submissionId TEXT NOT NULL UNIQUE,
+    companyId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    bruto REAL NOT NULL,
+    taxa REAL NOT NULL,
+    liquido REAL NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+
+  -- Eventos já processados do gateway, para que reentregas do webhook não
+  -- creditem o mesmo pagamento duas vezes.
+  CREATE TABLE IF NOT EXISTS gateway_events (
+    id TEXT PRIMARY KEY,
+    evento TEXT NOT NULL,
+    payload TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS uploads (
     id TEXT PRIMARY KEY,
     userId TEXT NOT NULL,
@@ -182,127 +209,55 @@ db.exec(`
 const uid = () => Math.random().toString(36).slice(2, 9);
 const agora = () => Date.now();
 
-function seedIfEmpty() {
-  const count = db.prepare("SELECT COUNT(*) as n FROM sellers").get().n;
-  if (count > 0) return;
-
-  const e1 = uid(), e2 = uid(), e3 = uid();
-  const s1 = uid(), s2 = uid(), s3 = uid();
-  const now = agora();
-
-  const cursoPadrao = (items) =>
-    items.map((t) => ({ id: uid(), titulo: t[0], min: t[1], conteudo: t[2] }));
-
-  const insertSeller = db.prepare(`
-    INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  insertSeller.run(s1, "Rafa Lima", "rafa@email.com", "(11) 9 8123-4477", "Guarulhos, SP", "sdr", "6 meses em telecom", "aprovado", 78, "starter", "rafa@email.com", 44, 0, 132, "[]", "", now - 86400000 * 9);
-  insertSeller.run(s2, "Bruna Sato", "bruna@email.com", "(21) 9 9670-1188", "Niterói, RJ", "closer", "2 anos em software B2B", "triagem", 88, "starter", "", 0, 0, 0, JSON.stringify(["Levanto a dor antes do preço", "Ligo no mesmo dia", "Peço o próximo passo na hora"]), "", now - 3600000 * 5);
-  insertSeller.run(s3, "Diego Moura", "diego@email.com", "(31) 9 9004-2210", "Belo Horizonte, MG", "sem-exp", "Primeira vez em vendas", "triagem", 41, "starter", "", 0, 0, 0, JSON.stringify(["Mando proposta por e-mail", "Espero o cliente responder", "Falo o preço logo no começo"]), "", now - 3600000 * 30);
-
-  const insertCompany = db.prepare(`
-    INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor, totalAportado, criadoEm, comissoes, curso, aportes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  insertCompany.run(e1, "Nexo CRM", "CRM para distribuidoras", "R$ 890/mês", "Distribuidoras de 10 a 80 funcionários", "saldo", 1, 4200, 12, "#2563EB", 9800, now - 86400000 * 41,
-    JSON.stringify({ agendamento: 5, venda: 250, realizada: 8, ligacao: 10, follow: 0.5 }),
-    JSON.stringify(cursoPadrao([
-      ["O que a Nexo vende", 4, "CRM com rota de vendedor externo e catálogo. Substitui planilha e WhatsApp solto. Implanta em 7 dias."],
-      ["Quem é o cliente certo", 5, "Distribuidora com equipe de rua. Dor: pedido perdido, vendedor sem histórico, dono sem visão do funil."],
-      ["Abordagem que funciona", 6, "Abra pelo prejuízo: 'quantos pedidos você perdeu esse mês por falta de follow?'. Nunca abra por funcionalidade."],
-      ["Objeções e o que responder", 6, "'Já uso planilha' → mostre custo do retrabalho. 'Tá caro' → compare com um pedido médio perdido."],
-    ])),
-    JSON.stringify([
-      { valor: 5000, ts: now - 86400000 * 41 }, { valor: 3000, ts: now - 86400000 * 24 }, { valor: 1800, ts: now - 86400000 * 8 },
-    ])
-  );
-
-  insertCompany.run(e2, "SolarUp Energia", "Energia solar para comércio", "R$ 38.000", "Comércios com conta de luz acima de R$ 1.500", "destaque", 1, 1560, 8, "#B45309", 6000, now - 86400000 * 19,
-    JSON.stringify({ agendamento: 12, venda: 900, realizada: 20, ligacao: 6, follow: 0.5 }),
-    JSON.stringify(cursoPadrao([
-      ["Como funciona o sistema", 5, "Placa, inversor e homologação na concessionária. Payback médio de 38 meses."],
-      ["Conta de luz é o filtro", 4, "Sem conta acima de R$ 1.500 não há economia relevante. Peça a conta antes de agendar."],
-      ["Agendamento com o dono", 5, "Só o dono decide. Se falar com o gerente, o agendamento não conta."],
-    ])),
-    JSON.stringify([
-      { valor: 4000, ts: now - 86400000 * 19 }, { valor: 2000, ts: now - 86400000 * 6 },
-    ])
-  );
-
-  insertCompany.run(e3, "Ativa Contábil", "Contabilidade para prestadores", "R$ 320/mês", "Autônomos abrindo CNPJ e MEIs migrando para ME", "saldo", 0, 700, 20, "#3730A1", 3400, now - 86400000 * 63,
-    JSON.stringify({ agendamento: 4, venda: 120, realizada: 6, ligacao: 4, follow: 0.5 }),
-    JSON.stringify(cursoPadrao([
-      ["Abertura de CNPJ na prática", 4, "Prazo de 5 dias úteis, taxa inclusa no primeiro mês. Diferença entre MEI, ME e Simples."],
-      ["Gatilho de troca de contador", 5, "Atraso em guia, multa e contador que some. É aí que a conversa abre."],
-    ])),
-    JSON.stringify([
-      { valor: 2000, ts: now - 86400000 * 63 }, { valor: 1400, ts: now - 86400000 * 30 },
-    ])
-  );
-
-  db.prepare("INSERT INTO applications (sellerId, companyId, status) VALUES (?, ?, ?)").run(s1, e1, "aprovado");
-  db.prepare("INSERT INTO course_progress (sellerId, companyId, moduleIds) VALUES (?, ?, ?)").run(s1, e1, '"todos"');
-
-  const insertSub = db.prepare(`
-    INSERT INTO submissions (id, sellerId, companyId, tipo, valor, liquido, prova, status, confianca, motivo, fonte, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  insertSub.run(uid(), s1, e1, "agendamento", 5, null,
-    JSON.stringify({ cliente: "Marcos — Distribuidora Vila Nova", telefone: "(11) 9 9812-3344", datahora: "20/08 às 10h", video: "https://drive.link/video-01" }),
-    "revisao", 58, "Primeira ação deste vendedor com esta empresa — confirme com o cliente antes de liberar.", "ia", now - 3600000 * 3
-  );
-  insertSub.run(uid(), s1, e1, "ligacao", 10, null,
-    JSON.stringify({ cliente: "Sônia — Atacado Bela Vista", telefone: "(11) 9 9711-2200", duracao: "7", video: "https://drive.link/video-88" }),
-    "ia_aprovado", 91, "Dados específicos e coerentes, vídeo anexado. Consistente com a regra.", "ia", now - 3600000 * 20
-  );
-  insertSub.run(uid(), s1, e1, "follow", 0.5, 0.44,
-    JSON.stringify({ cliente: "Marcos — Distribuidora Vila Nova", telefone: "(11) 9 9812-3344", canal: "WhatsApp", video: "https://drive.link/video-02" }),
-    "liberado", 88, "Aprovado automaticamente pela IA.", "ia", now - 86400000 * 2
-  );
-
-  db.prepare("INSERT INTO messages (id, companyId, sellerId, de, texto, ts) VALUES (?, ?, ?, ?, ?, ?)").run(
-    uid(), e1, s1, "empresa", "Rafa, o agendamento das 10h da Vila Nova o cliente confirmou por aqui. Segue firme.", now - 3600000 * 2
-  );
-
-  // Seed demo campaigns
-  const c1 = uid();
-  db.prepare(`
-    INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento, requisitos, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(c1, e1, "Prospecção Distribuidoras SP",
-    "Prospectar distribuidoras na Grande SP para demonstração do CRM Nexo",
-    "CRM para distribuidoras", "Distribuidoras de 10 a 80 funcionários na Grande SP",
-    "ativa", 5,
-    JSON.stringify({ ligacao: 10, agendamento: 5, realizada: 8, venda: 250 }),
-    JSON.stringify([{ id: uid(), titulo: "Pitch de abertura", conteudo: "Abra pelo prejuízo do pedido perdido" }]),
-    "Experiência em prospecção B2B, mínimo score 60",
-    now - 86400000 * 5
-  );
-
-  const hash = bcrypt.hashSync("123456", 10);
-  const insertUser = db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)");
-  insertUser.run(uid(), "rafa@email.com", hash, "vendedor", s1, 1, now);
-  insertUser.run(uid(), "nexo@email.com", hash, "empresa", e1, 1, now);
-  insertUser.run(uid(), "admin@email.com", hash, "admin", null, 1, now);
-
-  // Seed score dimensions for Rafa
-  const insertScore = db.prepare("INSERT INTO score_dimensions (sellerId, dimension, valor, role, atualizadoEm) VALUES (?, ?, ?, ?, ?)");
-  insertScore.run(s1, "performance", 82, "sdr", now);
-  insertScore.run(s1, "conhecimento", 70, "sdr", now);
-  insertScore.run(s1, "comunicacao", 85, "sdr", now);
-  insertScore.run(s1, "confiabilidade", 78, "sdr", now);
-  insertScore.run(s1, "conversao", 65, "sdr", now);
-  insertScore.run(s1, "qualidade", 80, "sdr", now);
-  insertScore.run(s1, "consistencia", 75, "sdr", now);
-
-  console.log("Banco populado com dados semente.");
+// CREATE TABLE IF NOT EXISTS não altera tabelas já existentes, então colunas
+// novas precisam ser adicionadas à parte para não quebrar bancos em uso.
+function adicionarColuna(tabela, coluna, definicao) {
+  const existe = db.prepare(`PRAGMA table_info(${tabela})`).all().some((c) => c.name === coluna);
+  if (!existe) db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${definicao}`);
 }
 
-seedIfEmpty();
+adicionarColuna("companies", "documento", "TEXT DEFAULT ''");
+adicionarColuna("companies", "asaasCustomerId", "TEXT");
+adicionarColuna("withdrawals", "falhaMotivo", "TEXT");
+
+// Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
+// repositório é público, e o admin aprova saques e vê todas as empresas.
+export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@rycs.pro").toLowerCase().trim();
+
+function seedAdmin() {
+  const definida = process.env.ADMIN_PASSWORD;
+  const atual = db.prepare("SELECT id, senha FROM users WHERE role = 'admin'").get();
+
+  if (atual) {
+    // ADMIN_PASSWORD é a fonte da verdade: trocá-la no painel e reimplantar é
+    // o caminho de recuperação do admin. Sem isto, esquecer a senha tranca a
+    // plataforma para fora — o reset por e-mail depende do Resend configurado.
+    if (definida && !bcrypt.compareSync(definida, atual.senha)) {
+      db.prepare("UPDATE users SET email = ?, senha = ? WHERE id = ?").run(
+        ADMIN_EMAIL, bcrypt.hashSync(definida, 10), atual.id
+      );
+      console.log("[seed] Senha do admin sincronizada com ADMIN_PASSWORD.");
+    }
+    return;
+  }
+
+  // Sem ADMIN_PASSWORD, gera uma senha forte e mostra no log uma única vez:
+  // é preferível a subir sem nenhum admin e ficar trancado para fora.
+  const senha = definida || randomBytes(12).toString("base64url");
+
+  db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+    uid(), ADMIN_EMAIL, bcrypt.hashSync(senha, 10), "admin", null, 1, agora()
+  );
+
+  if (definida) {
+    console.log(`[seed] Admin da plataforma: ${ADMIN_EMAIL}`);
+  } else {
+    console.log(`[seed] Admin da plataforma: ${ADMIN_EMAIL}`);
+    console.log(`[seed] Senha gerada (anote agora): ${senha}`);
+    console.log("[seed] Defina ADMIN_PASSWORD no Railway para fixar a senha.");
+  }
+}
+seedAdmin();
 
 export default db;
 export { uid, agora };
