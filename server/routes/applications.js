@@ -1,5 +1,6 @@
 import { Router } from "express";
 import db from "../db.js";
+import { notificar } from "./notifications.js";
 
 const router = Router();
 
@@ -24,6 +25,14 @@ router.patch("/applications", (req, res) => {
     return res.status(403).json({ error: "Vendedores não podem aprovar candidaturas" });
 
   db.prepare("UPDATE applications SET status = ? WHERE sellerId = ? AND companyId = ?").run(status, sellerId, companyId);
+
+  const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sellerId);
+  const company = db.prepare("SELECT nome FROM companies WHERE id = ?").get(companyId);
+  if (sellerUser && company) {
+    const msg = status === "aprovado" ? `Você foi aprovado na ${company.nome}!` : `Sua candidatura na ${company.nome} foi recusada.`;
+    notificar(sellerUser.id, "candidatura", msg);
+  }
+
   res.json({ ok: true });
 });
 

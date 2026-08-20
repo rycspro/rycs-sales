@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
 import { Campo } from "./ui.jsx";
 
 export default function Login({ onLogin, onRegister }) {
@@ -25,10 +24,11 @@ export default function Login({ onLogin, onRegister }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="vx-mark" style={{ width: 44, height: 44, borderRadius: 14, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Sparkles size={22} color="#fff" strokeWidth={2.5} />
+          <div className="vx-mark" style={{ width: 48, height: 48, borderRadius: 14, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--navy)" }}>
+            <span style={{ color: "var(--brand)", fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24 }}>R</span>
           </div>
-          <div className="vx-disp" style={{ fontSize: 26 }}>Sales Machine</div>
+          <div className="vx-disp" style={{ fontSize: 26 }}>RYCS</div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--muted)", marginTop: 2 }}>Sales Solutions</div>
           <p className="vx-mut" style={{ fontSize: 14, marginTop: 6 }}>
             {modo === "login" ? "Entre na sua conta" : "Crie sua conta"}
           </p>

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
+import { notificar } from "./notifications.js";
 
 const router = Router();
 
@@ -43,6 +44,15 @@ router.patch("/submissions/:id", (req, res) => {
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
   vals.push(id);
   db.prepare(`UPDATE submissions SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+
+  if (fields.status && fields.status !== sub.status) {
+    const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sub.sellerId);
+    const labels = { liberado: "aprovada", recusado: "recusada", revisao: "enviada para revisão", ia_aprovado: "pré-aprovada pela IA", conferido: "conferida" };
+    if (sellerUser && labels[fields.status]) {
+      notificar(sellerUser.id, "submissao", `Ação ${labels[fields.status]}`, fields.motivo || "");
+    }
+  }
+
   res.json({ ok: true });
 });
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
+import { notificar } from "./notifications.js";
 
 const router = Router();
 
@@ -21,6 +22,16 @@ router.patch("/withdrawals/:id", (req, res) => {
 
   const { status } = req.body;
   db.prepare("UPDATE withdrawals SET status = ? WHERE id = ?").run(status, req.params.id);
+
+  const w = db.prepare("SELECT sellerId, valor FROM withdrawals WHERE id = ?").get(req.params.id);
+  if (w) {
+    const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
+    if (sellerUser) {
+      const msg = status === "pago" ? `Saque de R$ ${w.valor.toFixed(2)} foi pago!` : `Status do saque atualizado para: ${status}`;
+      notificar(sellerUser.id, "saque", msg);
+    }
+  }
+
   res.json({ ok: true });
 });
 

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Wallet, ClipboardList, Banknote, Users } from "lucide-react";
+import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock } from "lucide-react";
 import { apiPatch } from "../../lib/api.js";
-import { money, agora } from "../../lib/utils.js";
+import { money, agora, dataCurta } from "../../lib/utils.js";
+import { ACOES } from "../../lib/constants.js";
 import { Stat } from "../ui.jsx";
 
 export default function PainelEmpresa({ emp, db, up, aviso }) {
@@ -37,6 +38,29 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
         <Stat label="Vendedores ativos" value={time} Icon={Users} tone="muted" mono={false} />
       </div>
 
+      <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>
+        <div className="vx-card" style={{ padding: 16 }}>
+          <div className="vx-row" style={{ marginBottom: 8 }}>
+            <span className="vx-eyebrow">Taxa de aprovação</span>
+            <TrendingUp size={14} color="var(--brand)" />
+          </div>
+          <div className="vx-disp vx-mono" style={{ fontSize: 28 }}>
+            {subs.length > 0 ? Math.round((pagos.length / subs.length) * 100) : 0}%
+          </div>
+          <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>{pagos.length} de {subs.length} ações aprovadas</div>
+        </div>
+        <div className="vx-card" style={{ padding: 16 }}>
+          <div className="vx-row" style={{ marginBottom: 8 }}>
+            <span className="vx-eyebrow">ROI estimado</span>
+            <Banknote size={14} color="var(--amber)" />
+          </div>
+          <div className="vx-disp vx-mono" style={{ fontSize: 28 }}>
+            {emp.totalAportado > 0 ? `${((vendas * Number(emp.ticket?.replace(/[^\d]/g, "") || 0)) / emp.totalAportado * 100).toFixed(0) || 0}%` : "—"}
+          </div>
+          <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>Receita potencial vs. investimento</div>
+        </div>
+      </div>
+
       <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="vx-disp" style={{ fontSize: 17, marginBottom: 8 }}>Abastecer caixa</div>
         <p className="vx-mut" style={{ fontSize: 13, marginTop: 0 }}>
@@ -58,6 +82,30 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
         <div className="vx-row" style={{ fontSize: 13, marginTop: 6 }}>
           <span className="vx-mut">Total já investido na plataforma</span><b className="vx-mono">{money(emp.totalAportado || 0)}</b>
         </div>
+      </div>
+
+      <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
+        <div className="vx-disp" style={{ fontSize: 17, marginBottom: 12 }}>
+          <Clock size={16} style={{ marginRight: 6, verticalAlign: -2 }} />Atividade recente
+        </div>
+        {subs.length === 0 && <div className="vx-mut" style={{ fontSize: 13, padding: "8px 0" }}>Nenhuma ação registrada ainda.</div>}
+        {subs.slice(0, 8).map((s) => {
+          const seller = db.sellers.find((sl) => sl.id === s.sellerId);
+          const statusCor = { liberado: "var(--brand)", recusado: "var(--red)", revisao: "var(--amber)", ia_aprovado: "var(--indigo)", analisando: "var(--muted)" };
+          const statusLabel = { liberado: "Aprovada", recusado: "Recusada", revisao: "Revisão", ia_aprovado: "Pré-aprovada", analisando: "Analisando", conferido: "Conferida" };
+          return (
+            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+              <div style={{ width: 8, height: 8, borderRadius: 999, background: statusCor[s.status] || "var(--muted)", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{ACOES[s.tipo]?.nome || s.tipo} — {money(s.valor)}</div>
+                <div className="vx-mut" style={{ fontSize: 12 }}>{seller?.nome || "Vendedor"} · {dataCurta(s.criadoEm)}</div>
+              </div>
+              <span className="vx-badge" style={{ background: `${statusCor[s.status] || "var(--muted)"}15`, color: statusCor[s.status] || "var(--muted)", fontSize: 11 }}>
+                {statusLabel[s.status] || s.status}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       <div className="vx-card" style={{ padding: 18 }}>

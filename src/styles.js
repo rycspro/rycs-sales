@@ -4,7 +4,8 @@ export const CSS = `
 .vx-app{
   --bg:#F6F7F9; --surface:#FFFFFF; --surface-2:#F1F2F5; --border:#E4E7EC; --border-strong:#D0D5DD;
   --ink:#101828; --ink-2:#344054; --muted:#667085; --muted-2:#98A2B3;
-  --brand:#0F766E; --brand-600:#0D9488; --brand-50:#EFFCFA; --brand-100:#CCFBF1;
+  --brand:#2563EB; --brand-600:#3b82f6; --brand-50:#EFF6FF; --brand-100:#DBEAFE;
+  --navy:#1a2744; --navy-600:#0f172a;
   --amber:#B45309; --amber-50:#FFFBEB; --amber-100:#FEF3C7;
   --red:#B42318; --red-50:#FEF3F2; --red-100:#FEE4E2;
   --indigo:#3730A1; --indigo-50:#EEF2FF; --indigo-100:#E0E7FF;
@@ -13,33 +14,47 @@ export const CSS = `
   --shadow-pop:0 8px 24px -6px rgba(16,24,40,.18);
   min-height:100vh;background:var(--bg);color:var(--ink);
   font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:14.5px;line-height:1.5;
+  transition:background .2s,color .2s;
+}
+.vx-app.vx-dark{
+  --bg:#0C111D; --surface:#1D2432; --surface-2:#151B28; --border:#2A3246; --border-strong:#3B4560;
+  --ink:#F5F5F6; --ink-2:#D0D5DD; --muted:#98A2B3; --muted-2:#667085;
+  --brand:#3b82f6; --brand-600:#60a5fa; --brand-50:rgba(59,130,246,.12); --brand-100:rgba(59,130,246,.18);
+  --navy:#1e3a5f; --navy-600:#0f172a;
+  --amber:#F59E0B; --amber-50:rgba(245,158,11,.1); --amber-100:rgba(245,158,11,.15);
+  --red:#F87171; --red-50:rgba(248,113,113,.1); --red-100:rgba(248,113,113,.15);
+  --indigo:#818CF8; --indigo-50:rgba(129,140,248,.1); --indigo-100:rgba(129,140,248,.15);
+  --topbar-bg:rgba(12,17,29,.92);
+  --shadow-card:0 1px 2px rgba(0,0,0,.2),0 1px 3px rgba(0,0,0,.3);
+  --shadow-pop:0 8px 24px -6px rgba(0,0,0,.5);
 }
 .vx-disp{font-family:'Space Grotesk','Inter',sans-serif;font-weight:600;letter-spacing:-.01em}
 .vx-mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
 .vx-eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 
 /* topbar */
-.vx-topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+.vx-topbar{position:sticky;top:0;z-index:30;background:var(--topbar-bg,rgba(255,255,255,.92));backdrop-filter:blur(8px);
   border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center}
 .vx-topbar-inner{width:100%;max-width:1180px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.vx-mark{width:28px;height:28px;border-radius:8px;background:var(--brand);display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 1px 2px rgba(15,118,110,.35)}
+.vx-mark{width:28px;height:28px;border-radius:8px;background:var(--navy);display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 1px 2px rgba(15,118,110,.35)}
 .vx-word{font-size:17px;color:var(--ink);display:flex;align-items:center;gap:8px;white-space:nowrap;flex:none}
 .vx-seg{display:inline-flex;background:var(--surface-2);border-radius:var(--radius-pill);padding:3px;gap:2px;overflow-x:auto;scrollbar-width:none}
 .vx-seg::-webkit-scrollbar{display:none}
 .vx-seg button{border:0;background:transparent;padding:7px 12px;border-radius:var(--radius-pill);font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;transition:.15s}
 .vx-seg button[data-on="1"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-card)}
-@media (max-width:480px){
+@media (max-width:640px){
   .vx-word{font-size:14px;gap:6px}
   .vx-mark{width:23px;height:23px;border-radius:7px}
   .vx-topbar-inner{gap:6px;padding:0 10px}
   .vx-seg button{padding:6px 8px;font-size:10.5px}
+  .vx-topbar .vx-chip{display:none}
 }
 
 /* shell: sidebar (desktop) + bottom nav (mobile) */
 .vx-body{max-width:1180px;margin:0 auto;display:block}
 .vx-sidebar{display:none}
 .vx-content{padding:22px 16px 100px;max-width:760px;margin:0 auto}
-.vx-bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);
+.vx-bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--topbar-bg,rgba(255,255,255,.97));backdrop-filter:blur(10px);
   border-top:1px solid var(--border);display:flex}
 .vx-navbtn{flex:1;background:none;border:0;font:inherit;padding:9px 4px 12px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted-2);position:relative}

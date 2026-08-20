@@ -82,7 +82,10 @@ function getFilteredState(user) {
 }
 
 router.get("/state", (req, res) => {
-  res.json(getFilteredState(req.user));
+  const state = getFilteredState(req.user);
+  const notifs = db.prepare("SELECT * FROM notifications WHERE userId = ? ORDER BY criadoEm DESC LIMIT 50").all(req.user.id);
+  state.notifications = notifs;
+  res.json(state);
 });
 
 router.post("/state/reset", (req, res) => {

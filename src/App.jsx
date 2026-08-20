@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { Sparkles } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Moon, Sun } from "lucide-react";
 import { api } from "./lib/api.js";
 import { seed } from "./lib/seed.js";
 import { CSS } from "./styles.js";
@@ -8,6 +8,7 @@ import Login from "./components/Login.jsx";
 import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
+import Notificacoes from "./components/Notificacoes.jsx";
 
 export default function App() {
   const [db, setDb] = useState(seed);
@@ -15,18 +16,27 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState({ vendedor: "empresas", empresa: "painel", admin: "triagem" });
+  const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") === "dark");
 
-  const carregarState = async (usr) => {
+  const userRef = useRef(null);
+
+  const toggleDark = () => {
+    setDark((d) => { localStorage.setItem("rycs-theme", d ? "light" : "dark"); return !d; });
+  };
+
+  const carregarState = useCallback(async (usr) => {
+    const u = usr || userRef.current;
+    if (!u) return;
     const state = await api("/state");
     if (!state?.sellers) return;
     setDb((d) => ({
       ...d,
       ...state,
-      role: usr.role,
-      sellerId: usr.role === "vendedor" ? usr.entityId : state.sellers.find((s) => s.status === "aprovado")?.id || null,
-      companyId: usr.role === "empresa" ? usr.entityId : state.companies[0]?.id || null,
+      role: u.role,
+      sellerId: u.role === "vendedor" ? u.entityId : state.sellers.find((s) => s.status === "aprovado")?.id || null,
+      companyId: u.role === "empresa" ? u.entityId : state.companies[0]?.id || null,
     }));
-  };
+  }, []);
 
   useEffect(() => {
     let vivo = true;
@@ -35,6 +45,7 @@ export default function App() {
         const me = await api("/auth/me");
         if (vivo && me?.id) {
           setUser(me);
+          userRef.current = me;
           await carregarState(me);
         }
       } catch (e) {}
@@ -42,6 +53,12 @@ export default function App() {
     })();
     return () => { vivo = false; };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const iv = setInterval(() => carregarState(), 30000);
+    return () => clearInterval(iv);
+  }, [user, carregarState]);
 
   useEffect(() => {
     if (!toast) return;
@@ -52,14 +69,14 @@ export default function App() {
   const login = async (email, senha) => {
     const r = await api("/auth/login", { email, senha });
     if (r?.error) { setToast(r.error); return false; }
-    if (r?.id) { setUser(r); await carregarState(r); return true; }
+    if (r?.id) { setUser(r); userRef.current = r; await carregarState(r); return true; }
     setToast("Erro ao fazer login."); return false;
   };
 
   const registrar = async (dados) => {
     const r = await api("/auth/register", dados);
     if (r?.error) { setToast(r.error); return false; }
-    if (r?.id) { setUser(r); await carregarState(r); return true; }
+    if (r?.id) { setUser(r); userRef.current = r; await carregarState(r); return true; }
     setToast("Erro ao registrar."); return false;
   };
 
@@ -71,7 +88,8 @@ export default function App() {
 
   const up = (fn) => setDb((d) => ({ ...d, ...fn(d) }));
   const aviso = (t) => setToast(t);
-  const ctx = { db, setDb, up, aviso };
+  const recarregar = () => carregarState();
+  const ctx = { db, setDb, up, aviso, recarregar };
 
   const counts = useMemo(() => {
     if (db.role === "empresa") {
@@ -93,10 +111,10 @@ export default function App() {
   const aba = nav[db.role];
   const setAba = (k) => setNav((n) => ({ ...n, [db.role]: k }));
 
-  if (!loaded) return <div className="vx-app"><style>{CSS}</style></div>;
+  if (!loaded) return <div className={`vx-app${dark ? " vx-dark" : ""}`}><style>{CSS}</style></div>;
 
   if (!user) return (
-    <div className="vx-app">
+    <div className={`vx-app${dark ? " vx-dark" : ""}`}>
       <style>{CSS}</style>
       <Login onLogin={login} onRegister={registrar} />
       {toast && (
@@ -112,17 +130,21 @@ export default function App() {
   const roleLabel = { vendedor: "Vendedor", empresa: "Empresa", admin: "Plataforma" }[db.role] || "";
 
   return (
-    <div className="vx-app">
+    <div className={`vx-app${dark ? " vx-dark" : ""}`}>
       <style>{CSS}</style>
 
       <header className="vx-topbar">
         <div className="vx-topbar-inner">
           <div className="vx-word vx-disp">
-            <span className="vx-mark"><Sparkles size={15} color="#fff" strokeWidth={2.5} /></span>
-            Sales Machine
+            <span className="vx-mark" style={{ background: "var(--navy)" }}><span style={{ color: "var(--brand)", fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 15 }}>R</span></span>
+            RYCS
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span className="vx-chip">{roleLabel} · {user.email}</span>
+            <Notificacoes items={db.notifications || []} onUpdate={recarregar} />
+            <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={toggleDark} style={{ padding: "7px 8px" }}>
+              {dark ? <Sun size={17} strokeWidth={2.2} /> : <Moon size={17} strokeWidth={2.2} />}
+            </button>
             <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={logout}>Sair</button>
           </div>
         </div>

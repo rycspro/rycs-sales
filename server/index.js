@@ -15,6 +15,7 @@ import submissionsRoutes from "./routes/submissions.js";
 import withdrawalsRoutes from "./routes/withdrawals.js";
 import messagesRoutes from "./routes/messages.js";
 import courseRoutes from "./routes/course.js";
+import notificationsRoutes from "./routes/notifications.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,6 +38,7 @@ app.use("/api", authMiddleware, submissionsRoutes);
 app.use("/api", authMiddleware, withdrawalsRoutes);
 app.use("/api", authMiddleware, messagesRoutes);
 app.use("/api", authMiddleware, courseRoutes);
+app.use("/api", authMiddleware, notificationsRoutes);
 
 app.post("/api/analisar", authMiddleware, async (req, res) => {
   const { tipo, prova } = req.body;
@@ -80,5 +82,5 @@ app.post("/api/analisar", authMiddleware, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Sales Machine API rodando em http://localhost:${PORT}`);
+  console.log(`RYCS API rodando em http://localhost:${PORT}`);
 });

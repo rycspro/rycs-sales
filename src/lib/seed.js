@@ -37,7 +37,7 @@ export const seed = () => {
       {
         id: e1, nome: "Nexo CRM", produto: "CRM para distribuidoras", ticket: "R$ 890/mês",
         icp: "Distribuidoras de 10 a 80 funcionários", plano: "saldo", destaque: true,
-        saldo: 4200, vagas: 12, cor: "#0F766E", criadoEm: agora() - 86400000 * 41,
+        saldo: 4200, vagas: 12, cor: "#2563EB", criadoEm: agora() - 86400000 * 41,
         totalAportado: 9800, aportes: [
           { valor: 5000, ts: agora() - 86400000 * 41 }, { valor: 3000, ts: agora() - 86400000 * 24 }, { valor: 1800, ts: agora() - 86400000 * 8 },
         ],
@@ -97,6 +97,7 @@ export const seed = () => {
         criadoEm: agora() - 86400000 * 2,
       },
     ],
+    notifications: [],
     withdrawals: [],
     messages: [
       { id: uid(), companyId: e1, sellerId: s1, de: "empresa", texto: "Rafa, o agendamento das 10h da Vila Nova o cliente confirmou por aqui. Segue firme.", ts: agora() - 3600000 * 2 },

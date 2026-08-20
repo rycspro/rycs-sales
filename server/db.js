@@ -39,7 +39,7 @@ db.exec(`
     destaque INTEGER DEFAULT 0,
     saldo REAL DEFAULT 0,
     vagas INTEGER DEFAULT 0,
-    cor TEXT DEFAULT '#0F766E',
+    cor TEXT DEFAULT '#2563EB',
     totalAportado REAL DEFAULT 0,
     criadoEm INTEGER NOT NULL,
     comissoes TEXT DEFAULT '{}',
@@ -101,6 +101,17 @@ db.exec(`
     ts INTEGER NOT NULL,
     FOREIGN KEY (companyId) REFERENCES companies(id),
     FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    corpo TEXT DEFAULT '',
+    lida INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(id)
   );
 
   CREATE TABLE IF NOT EXISTS users (
