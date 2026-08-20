@@ -3,9 +3,11 @@ import { money, dataCurta } from "../../lib/utils.js";
 import { TAXA } from "../../lib/constants.js";
 import { Vazio } from "../ui.jsx";
 import CardEnvio from "../CardEnvio.jsx";
-import FinanceiroEmpresas from "./FinanceiroEmpresas.jsx";
+import DashboardAdmin from "./DashboardAdmin.jsx";
+import ProfissionaisAdmin from "./ProfissionaisAdmin.jsx";
+import EmpresasAdmin from "./EmpresasAdmin.jsx";
 
-export default function Admin({ db, setDb, up, aviso, aba }) {
+export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
   const paraLiberar = db.submissions.filter((s) => s.status === "ia_aprovado" || s.status === "conferido");
   const saques = db.withdrawals.filter((w) => w.status === "solicitado");
@@ -50,16 +52,12 @@ export default function Admin({ db, setDb, up, aviso, aba }) {
     aviso("PIX marcado como pago.");
   };
 
-  const receita = db.submissions.filter((s) => s.status === "liberado").reduce((a, s) => a + s.valor * TAXA, 0);
+  if (aba === "dashboard") return <DashboardAdmin db={db} />;
+  if (aba === "profissionais") return <ProfissionaisAdmin db={db} />;
+  if (aba === "empresas") return <EmpresasAdmin db={db} />;
 
   return (
     <div className="vx-fade">
-      <div className="vx-card" style={{ padding: 18, marginBottom: 22 }}>
-        <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Receita da esteira</div>
-        <div className="vx-disp vx-mono" style={{ fontSize: 30 }}>{money(receita)}</div>
-        <div className="vx-mut" style={{ fontSize: 12 }}>taxa de serviço acumulada ({Math.round(TAXA * 100)}% por ação liberada)</div>
-      </div>
-
       {aba === "triagem" && (!triagem.length
         ? <Vazio titulo="Fila vazia" texto="Novos cadastros de vendedores aparecem aqui com nota automática e vídeo de pitch." />
         : <div className="vx-grid">{triagem.map((s) => (
@@ -114,8 +112,6 @@ export default function Admin({ db, setDb, up, aviso, aba }) {
             </div>
           );
         })}</div>)}
-
-      {aba === "empresas" && <FinanceiroEmpresas db={db} />}
     </div>
   );
 }

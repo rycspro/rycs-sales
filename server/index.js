@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import db from "./db.js";
 import { authMiddleware } from "./middleware/auth.js";
@@ -16,20 +18,52 @@ import withdrawalsRoutes from "./routes/withdrawals.js";
 import messagesRoutes from "./routes/messages.js";
 import courseRoutes from "./routes/course.js";
 import notificationsRoutes from "./routes/notifications.js";
+import campaignsRoutes from "./routes/campaigns.js";
+import uploadsRoutes from "./routes/uploads.js";
+import paymentRoutes from "./routes/payments.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const isProd = process.env.NODE_ENV === "production";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-app.use(cors({ origin: ["http://localhost:5173", "http://127.0.0.1:5173"], credentials: true }));
-app.use(express.json());
+// --- Security ---
+app.use(helmet({ contentSecurityPolicy: false }));
+app.set("trust proxy", 1);
+
+const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
+app.use(cors({
+  origin: isProd ? [FRONTEND] : ["http://localhost:5173", "http://127.0.0.1:5173"],
+  credentials: true,
+}));
+
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
-// Auth routes (login/register/logout/me) — public
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: "Muitas tentativas. Aguarde 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { error: "Limite de requisições atingido." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api", apiLimiter);
+
+// --- Routes ---
 app.use("/api", authRoutes);
 
-// Protected routes — require login
 app.use("/api", authMiddleware, stateRoutes);
 app.use("/api", authMiddleware, sellersRoutes);
 app.use("/api", authMiddleware, companiesRoutes);
@@ -39,7 +73,11 @@ app.use("/api", authMiddleware, withdrawalsRoutes);
 app.use("/api", authMiddleware, messagesRoutes);
 app.use("/api", authMiddleware, courseRoutes);
 app.use("/api", authMiddleware, notificationsRoutes);
+app.use("/api", authMiddleware, campaignsRoutes);
+app.use("/api", authMiddleware, uploadsRoutes);
+app.use("/api", paymentRoutes);
 
+// --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
   const { tipo, prova } = req.body;
 
@@ -81,6 +119,17 @@ app.post("/api/analisar", authMiddleware, async (req, res) => {
   }
 });
 
+// --- Serve frontend in production ---
+if (isProd) {
+  const { dirname, join } = await import("path");
+  const { fileURLToPath } = await import("url");
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  app.use(express.static(join(__dirname, "../dist")));
+  app.get("*", (req, res) => {
+    res.sendFile(join(__dirname, "../dist/index.html"));
+  });
+}
+
 app.listen(PORT, () => {
-  console.log(`RYCS API rodando em http://localhost:${PORT}`);
+  console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);
 });

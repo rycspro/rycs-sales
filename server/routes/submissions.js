@@ -1,21 +1,25 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
+import { recalcularScore } from "../services/score.js";
+import { emailStatusAcao } from "../services/email.js";
 
 const router = Router();
 
 router.post("/submissions", (req, res) => {
-  const { sellerId, companyId, tipo, valor, prova } = req.body;
+  const { sellerId, companyId, campaignId, tipo, valor, prova } = req.body;
   const { role, entityId } = req.user;
 
   if (role === "vendedor" && entityId !== sellerId)
     return res.status(403).json({ error: "Sem permissão" });
 
+  if (!tipo || !companyId) return res.status(400).json({ error: "tipo e companyId são obrigatórios" });
+
   const id = uid();
   db.prepare(`
-    INSERT INTO submissions (id, sellerId, companyId, tipo, valor, prova, status, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, 'analisando', ?)
-  `).run(id, sellerId, companyId, tipo, valor, JSON.stringify(prova), agora());
+    INSERT INTO submissions (id, sellerId, companyId, campaignId, tipo, valor, prova, status, criadoEm)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'analisando', ?)
+  `).run(id, sellerId, companyId, campaignId || null, tipo, valor || 0, JSON.stringify(prova || {}), agora());
   res.json({ id });
 });
 
@@ -47,9 +51,18 @@ router.patch("/submissions/:id", (req, res) => {
 
   if (fields.status && fields.status !== sub.status) {
     const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sub.sellerId);
+    const seller = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(sub.sellerId);
     const labels = { liberado: "aprovada", recusado: "recusada", revisao: "enviada para revisão", ia_aprovado: "pré-aprovada pela IA", conferido: "conferida" };
     if (sellerUser && labels[fields.status]) {
       notificar(sellerUser.id, "submissao", `Ação ${labels[fields.status]}`, fields.motivo || "");
+    }
+
+    if (seller && ["liberado", "recusado"].includes(fields.status)) {
+      emailStatusAcao(seller.nome, seller.email, sub.tipo, fields.status);
+    }
+
+    if (fields.status === "liberado" || fields.status === "recusado") {
+      recalcularScore(sub.sellerId);
     }
   }
 

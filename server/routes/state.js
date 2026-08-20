@@ -18,12 +18,17 @@ function parseCompany(row) {
 }
 
 function parseSub(row) {
-  return { ...row, prova: JSON.parse(row.prova || "{}") };
+  return { ...row, prova: JSON.parse(row.prova || "{}"), arquivos: JSON.parse(row.arquivos || "[]") };
+}
+
+function parseCampaign(row) {
+  return { ...row, comissoes: JSON.parse(row.comissoes || "{}"), treinamento: JSON.parse(row.treinamento || "[]") };
 }
 
 function buildSellersWithRelations(sellers) {
   const apps = db.prepare("SELECT * FROM applications").all();
   const progress = db.prepare("SELECT * FROM course_progress").all();
+  const scores = db.prepare("SELECT * FROM score_dimensions").all();
 
   return sellers.map((s) => {
     const aplicacoes = {};
@@ -35,7 +40,13 @@ function buildSellersWithRelations(sellers) {
       curso[p.companyId] = val;
     });
 
-    return { ...parseSeller(s), aplicacoes, curso };
+    const scoreDimensions = {};
+    scores.filter((sc) => sc.sellerId === s.id).forEach((sc) => {
+      if (!scoreDimensions[sc.role]) scoreDimensions[sc.role] = {};
+      scoreDimensions[sc.role][sc.dimension] = sc.valor;
+    });
+
+    return { ...parseSeller(s), aplicacoes, curso, scoreDimensions };
   });
 }
 
@@ -45,8 +56,14 @@ export function getFullState() {
   const submissions = db.prepare("SELECT * FROM submissions ORDER BY criadoEm DESC").all().map(parseSub);
   const withdrawals = db.prepare("SELECT * FROM withdrawals ORDER BY criadoEm DESC").all();
   const messages = db.prepare("SELECT * FROM messages ORDER BY ts ASC").all();
+  const campaigns = db.prepare("SELECT * FROM campaigns ORDER BY criadoEm DESC").all().map(parseCampaign);
+  const campaignApps = db.prepare("SELECT * FROM campaign_applications").all();
 
-  return { sellers, companies, submissions, withdrawals, messages };
+  campaigns.forEach((c) => {
+    c.candidaturas = campaignApps.filter((a) => a.campaignId === c.id);
+  });
+
+  return { sellers, companies, submissions, withdrawals, messages, campaigns };
 }
 
 function getFilteredState(user) {
@@ -63,6 +80,7 @@ function getFilteredState(user) {
       submissions: full.submissions.filter((s) => s.sellerId === meuId),
       withdrawals: full.withdrawals.filter((w) => w.sellerId === meuId),
       messages: full.messages.filter((m) => m.sellerId === meuId),
+      campaigns: full.campaigns.filter((c) => c.status === "ativa"),
     };
   }
 
@@ -75,6 +93,7 @@ function getFilteredState(user) {
       submissions: full.submissions.filter((s) => s.companyId === meuId),
       withdrawals: [],
       messages: full.messages.filter((m) => m.companyId === meuId),
+      campaigns: full.campaigns.filter((c) => c.companyId === meuId),
     };
   }
 
@@ -90,6 +109,10 @@ router.get("/state", (req, res) => {
 
 router.post("/state/reset", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin pode resetar" });
+  db.exec("DELETE FROM campaign_applications");
+  db.exec("DELETE FROM campaigns");
+  db.exec("DELETE FROM score_dimensions");
+  db.exec("DELETE FROM uploads");
   db.exec("DELETE FROM messages");
   db.exec("DELETE FROM withdrawals");
   db.exec("DELETE FROM submissions");

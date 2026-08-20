@@ -97,6 +97,7 @@ export const seed = () => {
         criadoEm: agora() - 86400000 * 2,
       },
     ],
+    campaigns: [],
     notifications: [],
     withdrawals: [],
     messages: [

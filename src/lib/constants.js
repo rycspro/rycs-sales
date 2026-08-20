@@ -46,10 +46,12 @@ export const NAV = {
     { key: "chat", label: "Chat", Icon: MessageSquare },
   ],
   admin: [
-    { key: "triagem", label: "Triagem", Icon: UserCheck },
+    { key: "dashboard", label: "Dashboard", Icon: BarChart3 },
+    { key: "profissionais", label: "Profissionais", Icon: UserCheck },
+    { key: "empresas", label: "Empresas", Icon: Building2 },
+    { key: "triagem", label: "Triagem", Icon: ShieldCheck },
     { key: "liberar", label: "Liberar", Icon: Banknote },
     { key: "saques", label: "Saques", Icon: Wallet },
-    { key: "empresas", label: "Empresas", Icon: Building2 },
   ],
 };
 

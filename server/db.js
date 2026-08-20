@@ -20,6 +20,7 @@ db.exec(`
     experiencia TEXT DEFAULT '',
     status TEXT DEFAULT 'triagem',
     nota INTEGER DEFAULT 0,
+    nivel TEXT DEFAULT 'starter',
     pix TEXT DEFAULT '',
     disponivel REAL DEFAULT 0,
     pendente REAL DEFAULT 0,
@@ -47,6 +48,32 @@ db.exec(`
     aportes TEXT DEFAULT '[]'
   );
 
+  CREATE TABLE IF NOT EXISTS campaigns (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    produto TEXT DEFAULT '',
+    publico TEXT DEFAULT '',
+    status TEXT DEFAULT 'ativa',
+    vagas INTEGER DEFAULT 0,
+    comissoes TEXT DEFAULT '{}',
+    treinamento TEXT DEFAULT '[]',
+    requisitos TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS campaign_applications (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    status TEXT DEFAULT 'pendente',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
   CREATE TABLE IF NOT EXISTS applications (
     sellerId TEXT NOT NULL,
     companyId TEXT NOT NULL,
@@ -69,10 +96,12 @@ db.exec(`
     id TEXT PRIMARY KEY,
     sellerId TEXT NOT NULL,
     companyId TEXT NOT NULL,
+    campaignId TEXT,
     tipo TEXT NOT NULL,
     valor REAL DEFAULT 0,
     liquido REAL,
     prova TEXT DEFAULT '{}',
+    arquivos TEXT DEFAULT '[]',
     status TEXT DEFAULT 'analisando',
     confianca INTEGER,
     motivo TEXT,
@@ -88,6 +117,7 @@ db.exec(`
     valor REAL NOT NULL,
     pix TEXT NOT NULL,
     status TEXT DEFAULT 'solicitado',
+    asaasId TEXT,
     criadoEm INTEGER NOT NULL,
     FOREIGN KEY (sellerId) REFERENCES sellers(id)
   );
@@ -120,7 +150,32 @@ db.exec(`
     senha TEXT NOT NULL,
     role TEXT NOT NULL,
     entityId TEXT,
+    resetToken TEXT,
+    resetExpira INTEGER,
+    aceitouTermos INTEGER DEFAULT 0,
     criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS score_dimensions (
+    sellerId TEXT NOT NULL,
+    dimension TEXT NOT NULL,
+    valor INTEGER DEFAULT 0,
+    role TEXT DEFAULT 'geral',
+    atualizadoEm INTEGER NOT NULL,
+    PRIMARY KEY (sellerId, dimension, role),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS uploads (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    submissionId TEXT,
+    filename TEXT NOT NULL,
+    mimetype TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(id)
   );
 `);
 
@@ -139,20 +194,20 @@ function seedIfEmpty() {
     items.map((t) => ({ id: uid(), titulo: t[0], min: t[1], conteudo: t[2] }));
 
   const insertSeller = db.prepare(`
-    INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertSeller.run(s1, "Rafa Lima", "rafa@email.com", "(11) 9 8123-4477", "Guarulhos, SP", "sdr", "6 meses em telecom", "aprovado", 78, "rafa@email.com", 44, 0, 132, "[]", "", now - 86400000 * 9);
-  insertSeller.run(s2, "Bruna Sato", "bruna@email.com", "(21) 9 9670-1188", "Niterói, RJ", "closer", "2 anos em software B2B", "triagem", 88, "", 0, 0, 0, JSON.stringify(["Levanto a dor antes do preço", "Ligo no mesmo dia", "Peço o próximo passo na hora"]), "", now - 3600000 * 5);
-  insertSeller.run(s3, "Diego Moura", "diego@email.com", "(31) 9 9004-2210", "Belo Horizonte, MG", "sem-exp", "Primeira vez em vendas", "triagem", 41, "", 0, 0, 0, JSON.stringify(["Mando proposta por e-mail", "Espero o cliente responder", "Falo o preço logo no começo"]), "", now - 3600000 * 30);
+  insertSeller.run(s1, "Rafa Lima", "rafa@email.com", "(11) 9 8123-4477", "Guarulhos, SP", "sdr", "6 meses em telecom", "aprovado", 78, "starter", "rafa@email.com", 44, 0, 132, "[]", "", now - 86400000 * 9);
+  insertSeller.run(s2, "Bruna Sato", "bruna@email.com", "(21) 9 9670-1188", "Niterói, RJ", "closer", "2 anos em software B2B", "triagem", 88, "starter", "", 0, 0, 0, JSON.stringify(["Levanto a dor antes do preço", "Ligo no mesmo dia", "Peço o próximo passo na hora"]), "", now - 3600000 * 5);
+  insertSeller.run(s3, "Diego Moura", "diego@email.com", "(31) 9 9004-2210", "Belo Horizonte, MG", "sem-exp", "Primeira vez em vendas", "triagem", 41, "starter", "", 0, 0, 0, JSON.stringify(["Mando proposta por e-mail", "Espero o cliente responder", "Falo o preço logo no começo"]), "", now - 3600000 * 30);
 
   const insertCompany = db.prepare(`
     INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor, totalAportado, criadoEm, comissoes, curso, aportes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertCompany.run(e1, "Nexo CRM", "CRM para distribuidoras", "R$ 890/mês", "Distribuidoras de 10 a 80 funcionários", "saldo", 1, 4200, 12, "#0F766E", 9800, now - 86400000 * 41,
+  insertCompany.run(e1, "Nexo CRM", "CRM para distribuidoras", "R$ 890/mês", "Distribuidoras de 10 a 80 funcionários", "saldo", 1, 4200, 12, "#2563EB", 9800, now - 86400000 * 41,
     JSON.stringify({ agendamento: 5, venda: 250, realizada: 8, ligacao: 10, follow: 0.5 }),
     JSON.stringify(cursoPadrao([
       ["O que a Nexo vende", 4, "CRM com rota de vendedor externo e catálogo. Substitui planilha e WhatsApp solto. Implanta em 7 dias."],
@@ -213,11 +268,36 @@ function seedIfEmpty() {
     uid(), e1, s1, "empresa", "Rafa, o agendamento das 10h da Vila Nova o cliente confirmou por aqui. Segue firme.", now - 3600000 * 2
   );
 
+  // Seed demo campaigns
+  const c1 = uid();
+  db.prepare(`
+    INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento, requisitos, criadoEm)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(c1, e1, "Prospecção Distribuidoras SP",
+    "Prospectar distribuidoras na Grande SP para demonstração do CRM Nexo",
+    "CRM para distribuidoras", "Distribuidoras de 10 a 80 funcionários na Grande SP",
+    "ativa", 5,
+    JSON.stringify({ ligacao: 10, agendamento: 5, realizada: 8, venda: 250 }),
+    JSON.stringify([{ id: uid(), titulo: "Pitch de abertura", conteudo: "Abra pelo prejuízo do pedido perdido" }]),
+    "Experiência em prospecção B2B, mínimo score 60",
+    now - 86400000 * 5
+  );
+
   const hash = bcrypt.hashSync("123456", 10);
-  const insertUser = db.prepare("INSERT INTO users (id, email, senha, role, entityId, criadoEm) VALUES (?, ?, ?, ?, ?, ?)");
-  insertUser.run(uid(), "rafa@email.com", hash, "vendedor", s1, now);
-  insertUser.run(uid(), "nexo@email.com", hash, "empresa", e1, now);
-  insertUser.run(uid(), "admin@email.com", hash, "admin", null, now);
+  const insertUser = db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)");
+  insertUser.run(uid(), "rafa@email.com", hash, "vendedor", s1, 1, now);
+  insertUser.run(uid(), "nexo@email.com", hash, "empresa", e1, 1, now);
+  insertUser.run(uid(), "admin@email.com", hash, "admin", null, 1, now);
+
+  // Seed score dimensions for Rafa
+  const insertScore = db.prepare("INSERT INTO score_dimensions (sellerId, dimension, valor, role, atualizadoEm) VALUES (?, ?, ?, ?, ?)");
+  insertScore.run(s1, "performance", 82, "sdr", now);
+  insertScore.run(s1, "conhecimento", 70, "sdr", now);
+  insertScore.run(s1, "comunicacao", 85, "sdr", now);
+  insertScore.run(s1, "confiabilidade", 78, "sdr", now);
+  insertScore.run(s1, "conversao", 65, "sdr", now);
+  insertScore.run(s1, "qualidade", 80, "sdr", now);
+  insertScore.run(s1, "consistencia", 75, "sdr", now);
 
   console.log("Banco populado com dados semente.");
 }

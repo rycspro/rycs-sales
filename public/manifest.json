@@ -1,0 +1,15 @@
+{
+  "name": "RYCS Sales Solutions",
+  "short_name": "RYCS",
+  "description": "Plataforma de vendas por ação verificada",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a2744",
+  "theme_color": "#2563EB",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "/icon-192.svg", "sizes": "512x512", "type": "image/svg+xml" },
+    { "src": "/icon-192.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

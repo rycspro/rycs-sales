@@ -15,7 +15,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [user, setUser] = useState(null);
   const [toast, setToast] = useState("");
-  const [nav, setNav] = useState({ vendedor: "empresas", empresa: "painel", admin: "triagem" });
+  const [nav, setNav] = useState({ vendedor: "empresas", empresa: "painel", admin: "dashboard" });
   const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") === "dark");
 
   const userRef = useRef(null);
