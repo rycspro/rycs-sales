@@ -4,11 +4,39 @@
 // gateway virava "sucesso" com campos undefined e o erro só aparecia depois,
 // como saldo que nunca creditou. Aqui todo erro vira exceção.
 
-const BASE = process.env.ASAAS_ENV === "production"
-  ? "https://api.asaas.com/v3"
-  : "https://sandbox.asaas.com/api/v3";
+const AMBIENTES = {
+  production: "https://api.asaas.com/v3",
+  sandbox: "https://sandbox.asaas.com/api/v3",
+};
 
-export const asaasAtivo = () => !!process.env.ASAAS_API_KEY;
+// A chave carrega o ambiente no próprio prefixo: $aact_prod_ é dinheiro real.
+const chaveEhProducao = () => String(process.env.ASAAS_API_KEY || "").includes("_prod_");
+
+// Confere ambiente e chave antes de qualquer chamada. Um ASAAS_ENV digitado
+// errado não pode ser a diferença entre testar e movimentar dinheiro real:
+// na dúvida o gateway fica desligado, e o depósito é recusado com clareza.
+function resolverAmbiente() {
+  const declarado = String(process.env.ASAAS_ENV || "").trim().toLowerCase();
+  if (!process.env.ASAAS_API_KEY) return { ok: false, motivo: "ASAAS_API_KEY não configurada" };
+
+  if (!AMBIENTES[declarado])
+    return { ok: false, motivo: `ASAAS_ENV inválido ("${process.env.ASAAS_ENV}"). Use "sandbox" ou "production".` };
+
+  if ((declarado === "production") !== chaveEhProducao())
+    return {
+      ok: false,
+      motivo: `ASAAS_ENV="${declarado}" não corresponde à chave (${chaveEhProducao() ? "produção" : "sandbox"}).`,
+    };
+
+  return { ok: true, base: AMBIENTES[declarado], ambiente: declarado };
+}
+
+const ambiente = resolverAmbiente();
+if (!ambiente.ok) console.warn(`[asaas] desligado — ${ambiente.motivo}`);
+else console.log(`[asaas] ${ambiente.ambiente}${ambiente.ambiente === "production" ? " — DINHEIRO REAL" : ""}`);
+
+export const asaasAtivo = () => ambiente.ok;
+export const asaasMotivoDesligado = () => ambiente.motivo;
 
 export class AsaasError extends Error {
   constructor(mensagem, status, corpo) {
@@ -20,9 +48,9 @@ export class AsaasError extends Error {
 }
 
 export async function asaas(caminho, { method = "GET", body } = {}) {
-  if (!asaasAtivo()) throw new AsaasError("ASAAS_API_KEY não configurada", 0, null);
+  if (!ambiente.ok) throw new AsaasError(ambiente.motivo, 0, null);
 
-  const res = await fetch(`${BASE}${caminho}`, {
+  const res = await fetch(`${ambiente.base}${caminho}`, {
     method,
     headers: { "Content-Type": "application/json", access_token: process.env.ASAAS_API_KEY },
     body: body ? JSON.stringify(body) : undefined,
