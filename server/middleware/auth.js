@@ -1,6 +1,13 @@
 import jwt from "jsonwebtoken";
 import db from "../db.js";
 
+// Em produção o segredo é obrigatório: o fallback abaixo está publicado no
+// GitHub, e quem o conhece forja um token de admin. Melhor não subir do que
+// subir com sessão falsificável.
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  console.error("[auth] JWT_SECRET não definido em produção. Encerrando.");
+  process.exit(1);
+}
 const SECRET = process.env.JWT_SECRET || "salesmachine-dev-secret-change-in-production";
 
 // Atalho de desenvolvimento: entra direto, sem tela de login.

@@ -29,13 +29,21 @@ router.post("/uploads/presign", async (req, res) => {
 
   if (!filename || !mimetype) return res.status(400).json({ error: "filename e mimetype são obrigatórios" });
   if (!ALLOWED_TYPES.includes(mimetype)) return res.status(400).json({ error: `Tipo ${mimetype} não permitido` });
-  if (size > MAX_SIZE) return res.status(400).json({ error: "Arquivo muito grande (máx 50MB)" });
+
+  // `undefined > MAX_SIZE` é falso, então omitir o campo passava pela
+  // validação. Agora o tamanho é obrigatório e precisa ser um número real —
+  // ainda assim vem do cliente, então o limite de verdade tem de estar na
+  // política do bucket.
+  const tamanho = Number(size);
+  if (!Number.isFinite(tamanho) || tamanho <= 0)
+    return res.status(400).json({ error: "Tamanho do arquivo é obrigatório" });
+  if (tamanho > MAX_SIZE) return res.status(400).json({ error: "Arquivo muito grande (máx 50MB)" });
 
   const s3 = await getS3();
   if (!s3) {
     const id = uid();
     db.prepare("INSERT INTO uploads (id, userId, submissionId, filename, mimetype, size, url, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(
-      id, req.user.id, submissionId || null, filename, mimetype, size || 0, `local://${id}`, agora()
+      id, req.user.id, submissionId || null, filename, mimetype, tamanho, `local://${id}`, agora()
     );
     return res.json({ id, method: "local", message: "S3 não configurado. Em produção, configure S3_BUCKET." });
   }
@@ -56,7 +64,7 @@ router.post("/uploads/presign", async (req, res) => {
 
     const id = uid();
     db.prepare("INSERT INTO uploads (id, userId, submissionId, filename, mimetype, size, url, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(
-      id, req.user.id, submissionId || null, filename, mimetype, size || 0, publicUrl, agora()
+      id, req.user.id, submissionId || null, filename, mimetype, tamanho, publicUrl, agora()
     );
 
     res.json({ id, presignedUrl, publicUrl, method: "s3" });
