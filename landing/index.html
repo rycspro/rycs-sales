@@ -104,8 +104,11 @@
     nav .inner { display: flex; align-items: center; justify-content: space-between; height: 66px; gap: 16px; }
     .logo { display: flex; align-items: center; gap: 8px; }
     .nav-links { display: flex; align-items: center; gap: 26px; }
-    .nav-links a { color: var(--muted); font-size: 14px; font-weight: 500; transition: color .16s; }
-    .nav-links a:hover { color: var(--ink); }
+    /* Só os links de texto ficam apagados. Sem o :not(.btn), esta regra vence
+       .btn-primary por especificidade e pinta o texto do botão de cinza sobre
+       o azul — ilegível. */
+    .nav-links a:not(.btn) { color: var(--muted); font-size: 14px; font-weight: 500; transition: color .16s; }
+    .nav-links a:not(.btn):hover { color: var(--ink); }
 
     .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 14px; transition: all .16s; border: 1px solid transparent; cursor: pointer; }
     .btn-primary { background: var(--brand); color: #06101F; border-color: var(--brand); }
