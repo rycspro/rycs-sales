@@ -4,8 +4,9 @@ import ConferirEmpresa from "./ConferirEmpresa.jsx";
 import TimeEmpresa from "./TimeEmpresa.jsx";
 import TabelaEmpresa from "./TabelaEmpresa.jsx";
 import ChatEmpresa from "./ChatEmpresa.jsx";
+import PlanosEmpresa from "./PlanosEmpresa.jsx";
 
-export default function Empresa({ db, setDb, up, aviso, aba }) {
+export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
   if (!emp) return null;
 
@@ -24,6 +25,7 @@ export default function Empresa({ db, setDb, up, aviso, aba }) {
       {aba === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "tabela" && <TabelaEmpresa emp={emp} up={up} aviso={aviso} />}
       {aba === "chat" && <ChatEmpresa emp={emp} db={db} up={up} />}
+      {aba === "planos" && <PlanosEmpresa aviso={aviso} recarregar={recarregar} />}
     </div>
   );
 }

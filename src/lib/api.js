@@ -15,3 +15,9 @@ export const apiPatch = (path, body) =>
     body: JSON.stringify(body),
     credentials: "include",
   }).then((r) => r.json()).catch(() => null);
+
+export const apiDelete = (path) =>
+  fetch(`${API_URL}/api${path}`, {
+    method: "DELETE",
+    credentials: "include",
+  }).then((r) => r.json()).catch(() => null);

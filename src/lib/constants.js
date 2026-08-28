@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap,
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon,
 } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
@@ -45,6 +45,7 @@ export const NAV = {
     { key: "time", label: "Time", Icon: Users },
     { key: "tabela", label: "Tabela", Icon: ClipboardList },
     { key: "chat", label: "Chat", Icon: MessageSquare },
+    { key: "planos", label: "Plano", Icon: SparklesIcon },
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },

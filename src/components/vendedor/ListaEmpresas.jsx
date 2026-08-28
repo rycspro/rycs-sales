@@ -3,6 +3,7 @@ import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import { Stat } from "../ui.jsx";
+import { CompanyScoreChip } from "../CompanyScore.jsx";
 
 export default function ListaEmpresas({ eu, db, up, aviso, abrir }) {
   const ordenadas = [...db.companies].sort((a, b) => Number(b.destaque) - Number(a.destaque));
@@ -35,6 +36,7 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir }) {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span className="vx-disp" style={{ fontSize: 17 }}>{c.nome}</span>
+                    <CompanyScoreChip nota={c.nota} />
                     {c.destaque && <span className="vx-badge vx-badge-amber">Destaque</span>}
                   </div>
                   <div className="vx-mut" style={{ fontSize: 13, marginTop: 4 }}>{c.produto} · ticket {c.ticket}</div>

@@ -4,6 +4,7 @@ import { api, apiPatch } from "../../lib/api.js";
 import { money, agora, dataCurta } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { Stat } from "../ui.jsx";
+import CompanyScore from "../CompanyScore.jsx";
 
 export default function PainelEmpresa({ emp, db, up, aviso }) {
   const [rec, setRec] = useState("");
@@ -69,6 +70,10 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
           </div>
           <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>Receita potencial vs. investimento</div>
         </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <CompanyScore nota={emp.nota} dimensoes={emp.scoreDimensions} />
       </div>
 
       <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>

@@ -8,8 +8,14 @@ function parseSeller(row) {
 }
 
 function parseCompany(row) {
+  // Dimensões do Company Score viajam junto da empresa: o profissional
+  // precisa dela na vitrine, antes de se candidatar.
+  const dims = {};
+  db.prepare("SELECT dimension, valor FROM company_score_dimensions WHERE companyId = ?").all(row.id)
+    .forEach((d) => { dims[d.dimension] = d.valor; });
   return {
     ...row,
+    scoreDimensions: dims,
     destaque: !!row.destaque,
     comissoes: JSON.parse(row.comissoes || "{}"),
     curso: JSON.parse(row.curso || "[]"),
