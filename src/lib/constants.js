@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck,
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap,
 } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
@@ -35,6 +35,7 @@ export const MOTIVO_COR = {
 export const NAV = {
   vendedor: [
     { key: "empresas", label: "Empresas", Icon: Building2 },
+    { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "perfil", label: "Perfil", Icon: UserIcon },
   ],
