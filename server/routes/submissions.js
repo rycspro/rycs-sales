@@ -4,6 +4,8 @@ import { notificar } from "./notifications.js";
 import { recalcularScore } from "../services/score.js";
 import { emailStatusAcao } from "../services/email.js";
 import { TAXA } from "../../shared/acoes.js";
+import { takeRateDoPlano } from "../../shared/planos.js";
+import { recalcularCompanyScore } from "../services/companyScore.js";
 
 const router = Router();
 
@@ -71,6 +73,7 @@ router.patch("/submissions/:id", (req, res) => {
     if (fields.status === "liberado" || fields.status === "recusado") {
       recalcularScore(sub.sellerId);
     }
+    recalcularCompanyScore(sub.companyId);
   }
 
   res.json({ ok: true });
@@ -113,7 +116,7 @@ router.post("/submissions/:id/liberar", (req, res) => {
   if (!["ia_aprovado", "conferido", "revisao"].includes(sub.status))
     return res.status(400).json({ error: "Ação não está pronta para liberação" });
 
-  const empresa = db.prepare("SELECT saldo FROM companies WHERE id = ?").get(sub.companyId);
+  const empresa = db.prepare("SELECT saldo, assinatura FROM companies WHERE id = ?").get(sub.companyId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 
   const bruto = +(sub.valor || 0).toFixed(2);
@@ -121,7 +124,9 @@ router.post("/submissions/:id/liberar", (req, res) => {
   if (empresa.saldo < bruto)
     return res.status(400).json({ error: "Caixa da empresa insuficiente" });
 
-  const taxa = +(bruto * TAXA).toFixed(2);
+  // O take rate vem do plano contratado — é o que torna a assinatura
+  // vantajosa para quem opera volume.
+  const taxa = +(bruto * takeRateDoPlano(empresa.assinatura)).toFixed(2);
   const liquido = +(bruto - taxa).toFixed(2);
 
   db.transaction(() => {
@@ -139,6 +144,7 @@ router.post("/submissions/:id/liberar", (req, res) => {
   const seller = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(sub.sellerId);
   if (seller) emailStatusAcao(seller.nome, seller.email, sub.tipo, "liberado");
   recalcularScore(sub.sellerId);
+  recalcularCompanyScore(sub.companyId);
 
   res.json({ ok: true, bruto, taxa, liquido });
 });

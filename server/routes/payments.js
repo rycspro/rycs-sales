@@ -3,6 +3,7 @@ import db, { uid, agora } from "../db.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
+import { ativarAssinatura } from "./subscriptions.js";
 
 const router = Router();
 
@@ -196,6 +197,12 @@ router.post("/payments/webhook", (req, res) => {
 
 function creditarDeposito(payment) {
   if (!payment) return;
+
+  // Cobrança de assinatura não é aporte de caixa: ativa o plano e para aqui.
+  if (payment.subscription) {
+    ativarAssinatura(payment.subscription);
+    return;
+  }
   // externalReference guarda o id interno; asaasCustomerId cobre cobranças
   // criadas fora do app. O id do Asaas nunca bate com o id interno.
   const empresa =

@@ -16,7 +16,8 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState({ vendedor: "empresas", empresa: "painel", admin: "dashboard" });
-  const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") === "dark");
+  // O escuro é a identidade primária da RYCS; o claro fica como preferência.
+  const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") !== "light");
 
   const userRef = useRef(null);
 
@@ -128,7 +129,7 @@ export default function App() {
       {toast && (
         <div className="vx-fade" style={{
           position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
-          background: "var(--ink)", color: "#fff", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
+          background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
           boxShadow: "var(--shadow-pop)",
         }}>{toast}</div>
       )}
@@ -144,7 +145,7 @@ export default function App() {
       <header className="vx-topbar">
         <div className="vx-topbar-inner">
           <div className="vx-word vx-disp" style={{ display: "flex", alignItems: "center" }}>
-            <img src="/logo-rycs.png" alt="RYCS" style={{ height: 28, objectFit: "contain" }} />
+            <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ height: 26 }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span className="vx-chip">{roleLabel} · {user.email}</span>
@@ -166,7 +167,7 @@ export default function App() {
       {toast && (
         <div className="vx-fade" style={{
           position: "fixed", bottom: 84, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
-          background: "var(--ink)", color: "#fff", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
+          background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
           boxShadow: "var(--shadow-pop)",
         }}>{toast}</div>
       )}

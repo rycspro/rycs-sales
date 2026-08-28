@@ -58,7 +58,7 @@ export default function Login({ onLogin, onRegister }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <img src="/logo-rycs.png" alt="RYCS" style={{ width: 180, margin: "0 auto 12px", display: "block" }} />
+          <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ width: 180, margin: "0 auto 12px" }} />
           <div className="vx-disp" style={{ fontSize: 22 }}>Redefinir senha</div>
         </div>
         <div className="vx-card" style={{ padding: 22 }}>
@@ -76,7 +76,7 @@ export default function Login({ onLogin, onRegister }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <img src="/logo-rycs.png" alt="RYCS" style={{ width: 180, margin: "0 auto 12px", display: "block" }} />
+          <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ width: 180, margin: "0 auto 12px" }} />
           <div className="vx-disp" style={{ fontSize: 22 }}>Esqueci minha senha</div>
           <p className="vx-mut" style={{ fontSize: 13, marginTop: 6 }}>Informe seu e-mail para receber o link de redefinição.</p>
         </div>
@@ -132,7 +132,7 @@ export default function Login({ onLogin, onRegister }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <img src="/logo-rycs.png" alt="RYCS Sales Solutions" style={{ width: 220, margin: "0 auto 12px", display: "block" }} />
+          <img className="vx-logo" src="/logo-rycs.png" alt="RYCS Sales Solutions" style={{ width: 220, margin: "0 auto 14px" }} />
           <p className="vx-mut" style={{ fontSize: 14, marginTop: 6 }}>
             {modo === "login" ? "Entre na sua conta" : "Crie sua conta"}
           </p>

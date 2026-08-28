@@ -21,6 +21,8 @@ import notificationsRoutes from "./routes/notifications.js";
 import campaignsRoutes from "./routes/campaigns.js";
 import uploadsRoutes from "./routes/uploads.js";
 import paymentRoutes from "./routes/payments.js";
+import academyRoutes from "./routes/academy.js";
+import subscriptionRoutes from "./routes/subscriptions.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -80,6 +82,8 @@ app.use("/api", authMiddleware, courseRoutes);
 app.use("/api", authMiddleware, notificationsRoutes);
 app.use("/api", authMiddleware, campaignsRoutes);
 app.use("/api", authMiddleware, uploadsRoutes);
+app.use("/api", authMiddleware, academyRoutes);
+app.use("/api", authMiddleware, subscriptionRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

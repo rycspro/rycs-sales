@@ -172,6 +172,62 @@ db.exec(`
     FOREIGN KEY (sellerId) REFERENCES sellers(id)
   );
 
+  -- RYCS Academy: progresso nos módulos, tentativas de prova e certificações.
+  CREATE TABLE IF NOT EXISTS academy_progress (
+    sellerId TEXT NOT NULL,
+    funcao TEXT NOT NULL,
+    modulosVistos TEXT DEFAULT '[]',
+    atualizadoEm INTEGER NOT NULL,
+    PRIMARY KEY (sellerId, funcao),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS academy_attempts (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    funcao TEXT NOT NULL,
+    acertos INTEGER NOT NULL,
+    total INTEGER NOT NULL,
+    percentual INTEGER NOT NULL,
+    aprovado INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS certifications (
+    sellerId TEXT NOT NULL,
+    funcao TEXT NOT NULL,
+    nivel TEXT DEFAULT 'certified',
+    percentual INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    PRIMARY KEY (sellerId, funcao),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
+  -- Reputação da empresa, espelhando o score do profissional.
+  CREATE TABLE IF NOT EXISTS company_score_dimensions (
+    companyId TEXT NOT NULL,
+    dimension TEXT NOT NULL,
+    valor INTEGER DEFAULT 0,
+    atualizadoEm INTEGER NOT NULL,
+    PRIMARY KEY (companyId, dimension),
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  -- Assinatura do plano SaaS, separada do caixa de campanha.
+  CREATE TABLE IF NOT EXISTS subscriptions (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    plano TEXT NOT NULL,
+    status TEXT DEFAULT 'pendente',
+    asaasId TEXT,
+    valor REAL DEFAULT 0,
+    inicio INTEGER,
+    proximaCobranca INTEGER,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
   -- Receita da plataforma (take rate), registrada a cada ação liberada.
   CREATE TABLE IF NOT EXISTS platform_earnings (
     id TEXT PRIMARY KEY,
@@ -219,6 +275,12 @@ function adicionarColuna(tabela, coluna, definicao) {
 adicionarColuna("companies", "documento", "TEXT DEFAULT ''");
 adicionarColuna("companies", "asaasCustomerId", "TEXT");
 adicionarColuna("withdrawals", "falhaMotivo", "TEXT");
+// `plano` já existia com outro sentido ('saldo'/'destaque'); a assinatura
+// SaaS vive em coluna própria para não misturar os dois conceitos.
+adicionarColuna("companies", "assinatura", "TEXT DEFAULT 'free'");
+adicionarColuna("companies", "nota", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "exigeCertificacao", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "funcao", "TEXT DEFAULT ''");
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
