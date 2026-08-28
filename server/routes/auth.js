@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { randomBytes } from "crypto";
+import { randomBytes, timingSafeEqual } from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db, { uid, agora } from "../db.js";
@@ -26,10 +26,56 @@ router.post("/auth/login", (req, res) => {
     return res.status(401).json({ error: "E-mail ou senha incorretos" });
   }
 
+  // A plataforma tem entrada própria, com chave de segurança. Aceitar admin
+  // aqui deixaria o painel que aprova saques atrás de senha apenas.
+  if (user.role === "admin") {
+    return res.status(403).json({ error: "Esta conta acessa pela entrada da plataforma." });
+  }
+
   const token = signToken({ id: user.id, role: user.role, entityId: user.entityId });
   res.cookie("sm_token", token, COOKIE_OPTS);
   res.json({ id: user.id, email: user.email, role: user.role, entityId: user.entityId });
 });
+
+// Entrada exclusiva da plataforma: além da senha, exige a chave de segurança
+// que só existe nas variáveis de ambiente. Senha vazada, sozinha, não abre.
+router.post("/auth/admin/login", (req, res) => {
+  const { email, senha, chave } = req.body;
+  const esperada = process.env.ADMIN_SECURITY_KEY;
+
+  if (!esperada) {
+    console.error("[auth] ADMIN_SECURITY_KEY não configurada — entrada da plataforma bloqueada.");
+    return res.status(503).json({ error: "Entrada da plataforma indisponível." });
+  }
+  if (!email || !senha || !chave)
+    return res.status(400).json({ error: "E-mail, senha e chave de segurança são obrigatórios" });
+
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(String(email).toLowerCase().trim());
+  const senhaOk = user ? bcrypt.compareSync(senha, user.senha) : false;
+  const chaveOk = comparaSegura(String(chave), esperada);
+
+  // Resposta única para qualquer combinação errada: dizer qual fator falhou
+  // entregaria ao atacante se já tem a senha ou já tem a chave.
+  if (!user || user.role !== "admin" || !senhaOk || !chaveOk) {
+    console.warn(`[auth] tentativa de acesso à plataforma recusada (${String(email).slice(0, 40)})`);
+    return res.status(401).json({ error: "Credenciais inválidas." });
+  }
+
+  const token = signToken({ id: user.id, role: user.role, entityId: user.entityId });
+  res.cookie("sm_token", token, COOKIE_OPTS);
+  res.json({ id: user.id, email: user.email, role: user.role, entityId: user.entityId });
+});
+
+// Comparação de tempo constante: comparar com === vazaria, pelo tempo de
+// resposta, quantos caracteres iniciais da chave estão certos.
+function comparaSegura(a, b) {
+  const ba = Buffer.from(a), bb = Buffer.from(b);
+  if (ba.length !== bb.length) {
+    timingSafeEqual(bb, bb); // gasta o mesmo tempo mesmo com tamanho diferente
+    return false;
+  }
+  return timingSafeEqual(ba, bb);
+}
 
 router.post("/auth/register", (req, res) => {
   const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos } = req.body;

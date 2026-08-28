@@ -5,6 +5,7 @@ import { seed } from "./lib/seed.js";
 import { CSS } from "./styles.js";
 import Shell from "./components/Shell.jsx";
 import Login from "./components/Login.jsx";
+import LoginPlataforma from "./components/LoginPlataforma.jsx";
 import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
@@ -20,6 +21,10 @@ export default function App() {
   const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") !== "light");
 
   const userRef = useRef(null);
+
+  // A plataforma vive num endereço próprio. Sem router no projeto, o caminho
+  // da URL decide qual porta de entrada aparece.
+  const entradaPlataforma = typeof window !== "undefined" && window.location.pathname.startsWith("/plataforma");
 
   const toggleDark = () => {
     setDark((d) => { localStorage.setItem("rycs-theme", d ? "light" : "dark"); return !d; });
@@ -122,10 +127,14 @@ export default function App() {
 
   if (!loaded) return <div className={`vx-app${dark ? " vx-dark" : ""}`}><style>{CSS}</style></div>;
 
+  const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
+
   if (!user) return (
     <div className={`vx-app${dark ? " vx-dark" : ""}`}>
       <style>{CSS}</style>
-      <Login onLogin={login} onRegister={registrar} />
+      {entradaPlataforma
+        ? <LoginPlataforma onEntrar={entrarComoAdmin} />
+        : <Login onLogin={login} onRegister={registrar} />}
       {toast && (
         <div className="vx-fade" style={{
           position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
