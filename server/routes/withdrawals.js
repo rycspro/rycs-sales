@@ -1,27 +1,18 @@
 import { Router } from "express";
-import db, { uid, agora } from "../db.js";
+import db from "../db.js";
 import { notificar } from "./notifications.js";
 import { emailSaquePago } from "../services/email.js";
 
 const router = Router();
 
-router.post("/withdrawals", (req, res) => {
-  const { sellerId, valor, pix } = req.body;
-  const { role, entityId } = req.user;
-
-  if (role === "vendedor" && entityId !== sellerId)
-    return res.status(403).json({ error: "Sem permissão" });
-
-  if (!valor || valor < 10) return res.status(400).json({ error: "Valor mínimo: R$ 10,00" });
-
-  const seller = db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(sellerId);
-  if (!seller || valor > seller.disponivel)
-    return res.status(400).json({ error: "Saldo insuficiente" });
-
-  const id = uid();
-  db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm) VALUES (?, ?, ?, ?, 'solicitado', ?)").run(id, sellerId, valor, pix, agora());
-  db.prepare("UPDATE sellers SET disponivel = disponivel - ? WHERE id = ?").run(valor, sellerId);
-  res.json({ id });
+// Esta rota permitia que uma conta empresa criasse um saque para qualquer
+// vendedor, com a chave Pix vinda do corpo da requisição — dinheiro do
+// profissional indo para a chave de quem chamasse. Também lia o saldo e
+// debitava fora de transação, deixando dois pedidos simultâneos sacarem o
+// mesmo valor. Todo saque passa por POST /payments/withdraw, que verifica o
+// dono, usa a chave do cadastro e opera em transação.
+router.post("/withdrawals", (_req, res) => {
+  res.status(410).json({ error: "Rota descontinuada. Use POST /payments/withdraw." });
 });
 
 router.patch("/withdrawals/:id", (req, res) => {
@@ -32,27 +23,31 @@ router.patch("/withdrawals/:id", (req, res) => {
   if (!["pago", "cancelado"].includes(status))
     return res.status(400).json({ error: "Status inválido" });
 
-  db.prepare("UPDATE withdrawals SET status = ? WHERE id = ?").run(status, req.params.id);
+  const w = db.prepare("SELECT sellerId, valor, status FROM withdrawals WHERE id = ?").get(req.params.id);
+  if (!w) return res.status(404).json({ error: "Saque não encontrado" });
 
-  const w = db.prepare("SELECT sellerId, valor FROM withdrawals WHERE id = ?").get(req.params.id);
-  if (w) {
+  // Sem esta guarda, repetir "cancelado" devolvia o valor ao saldo a cada
+  // chamada — um duplo-clique virava dinheiro inventado. E cancelar um saque
+  // já pago devolvia ao saldo um Pix que havia saído.
+  if (w.status !== "solicitado")
+    return res.status(409).json({ error: `Saque já está como "${w.status}".` });
+
+  db.transaction(() => {
+    db.prepare("UPDATE withdrawals SET status = ? WHERE id = ?").run(status, req.params.id);
     if (status === "pago") {
       db.prepare("UPDATE sellers SET sacado = sacado + ? WHERE id = ?").run(w.valor, w.sellerId);
-    }
-    if (status === "cancelado") {
+    } else {
       db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(w.valor, w.sellerId);
     }
+  })();
 
-    const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
-    const seller = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(w.sellerId);
-    if (sellerUser) {
-      const msg = status === "pago" ? `Saque de R$ ${w.valor.toFixed(2)} foi pago!` : `Saque de R$ ${w.valor.toFixed(2)} foi cancelado.`;
-      notificar(sellerUser.id, "saque", msg);
-    }
-    if (seller && status === "pago") {
-      emailSaquePago(seller.nome, seller.email, w.valor);
-    }
+  const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
+  const seller = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(w.sellerId);
+  if (sellerUser) {
+    const msg = status === "pago" ? `Saque de R$ ${w.valor.toFixed(2)} foi pago!` : `Saque de R$ ${w.valor.toFixed(2)} foi cancelado.`;
+    notificar(sellerUser.id, "saque", msg);
   }
+  if (seller && status === "pago") emailSaquePago(seller.nome, seller.email, w.valor);
 
   res.json({ ok: true });
 });

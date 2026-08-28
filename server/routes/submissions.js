@@ -76,6 +76,30 @@ router.patch("/submissions/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+// Contestar uma recusa da IA é o único caminho pelo qual o vendedor mexe na
+// própria ação. Não move dinheiro: só devolve para conferência humana.
+router.post("/submissions/:id/contestar", (req, res) => {
+  const { role, entityId } = req.user;
+  const sub = db.prepare("SELECT * FROM submissions WHERE id = ?").get(req.params.id);
+  if (!sub) return res.status(404).json({ error: "Ação não encontrada" });
+  if (role === "vendedor" && entityId !== sub.sellerId)
+    return res.status(403).json({ error: "Sem permissão" });
+  if (!["ia_recusado", "recusado"].includes(sub.status))
+    return res.status(400).json({ error: "Só ações recusadas podem ser contestadas" });
+
+  const motivo = `Vendedor contestou e pediu revisão humana. Motivo original da IA: ${sub.motivo || "—"}`;
+  db.transaction(() => {
+    db.prepare("UPDATE submissions SET status = 'revisao', motivo = ? WHERE id = ?").run(motivo, sub.id);
+    const liquido = +((sub.valor || 0) * (1 - TAXA)).toFixed(2);
+    db.prepare("UPDATE sellers SET pendente = pendente + ? WHERE id = ?").run(liquido, sub.sellerId);
+  })();
+
+  const empUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(sub.companyId);
+  if (empUser) notificar(empUser.id, "submissao", "Ação contestada", "Um profissional pediu revisão humana.");
+
+  res.json({ ok: true });
+});
+
 // Liberar uma ação move dinheiro: debita o caixa da empresa, credita o
 // vendedor e registra o take rate. Tudo numa transação, no servidor — o
 // cliente não envia valores, apenas o id da ação.

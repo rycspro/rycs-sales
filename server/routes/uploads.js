@@ -69,6 +69,19 @@ router.post("/uploads/presign", async (req, res) => {
 router.get("/uploads", (req, res) => {
   const { submissionId } = req.query;
   if (submissionId) {
+    // Os arquivos são vídeos de comprovação com nome e telefone de clientes
+    // reais. Só quem participa da ação — vendedor, empresa contratante ou a
+    // plataforma — pode vê-los.
+    const sub = db.prepare("SELECT sellerId, companyId FROM submissions WHERE id = ?").get(submissionId);
+    if (!sub) return res.status(404).json({ error: "Ação não encontrada" });
+
+    const { role, entityId } = req.user;
+    const podeVer =
+      role === "admin" ||
+      (role === "vendedor" && entityId === sub.sellerId) ||
+      (role === "empresa" && entityId === sub.companyId);
+    if (!podeVer) return res.status(403).json({ error: "Sem permissão" });
+
     const rows = db.prepare("SELECT * FROM uploads WHERE submissionId = ? ORDER BY criadoEm DESC").all(submissionId);
     return res.json(rows);
   }

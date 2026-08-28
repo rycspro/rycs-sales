@@ -1,49 +1,43 @@
 import { useState } from "react";
 import { Wallet, Clock, Banknote, CheckCircle2 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
-import { uid, agora, money, dataCurta } from "../../lib/utils.js";
-import { TAXA } from "../../lib/constants.js";
+import { money, dataCurta } from "../../lib/utils.js";
 import { Stat, Campo } from "../ui.jsx";
 import MeusEnvios from "./MeusEnvios.jsx";
 
-function pedirRevisaoHumana(setDb, aviso, sub) {
-  const liquido = +(sub.valor * (1 - TAXA)).toFixed(2);
-  const motivo = "Vendedor contestou e pediu revisão humana. Motivo original da IA: " + (sub.motivo || "—");
-  apiPatch(`/submissions/${sub.id}`, { status: "revisao", motivo });
-  setDb((d) => {
-    const seller = d.sellers.find((s) => s.id === sub.sellerId);
-    if (seller) apiPatch(`/sellers/${seller.id}`, { pendente: +(seller.pendente + liquido).toFixed(2) });
-    return {
-      ...d,
-      submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "revisao", motivo } : s),
-      sellers: d.sellers.map((s) => s.id === sub.sellerId ? { ...s, pendente: +(s.pendente + liquido).toFixed(2) } : s),
-    };
-  });
+// O servidor muda o status e ajusta o pendente; o cliente não envia valores.
+async function pedirRevisaoHumana(recarregar, aviso, sub) {
+  const r = await api(`/submissions/${sub.id}/contestar`, {});
+  if (r?.error) return aviso(r.error);
+  await recarregar();
   aviso("Enviado para conferência humana da empresa.");
 }
 
-export default function Carteira({ eu, db, setDb, aviso }) {
+export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
   const [pix, setPix] = useState(eu.pix || "");
   const [valor, setValor] = useState("");
   const meus = db.submissions.filter((s) => s.sellerId === eu.id);
   const saques = db.withdrawals.filter((w) => w.sellerId === eu.id);
   const MIN = 20;
 
-  const sacar = () => {
+  // O servidor debita o saldo e dispara o Pix numa transação. O cliente não
+  // envia saldo nem chave de destino: a chave usada é a do cadastro.
+  const sacar = async () => {
     const v = Number(String(valor).replace(",", "."));
     if (!pix.trim()) return aviso("Informe a chave PIX.");
     if (!v || v < MIN) return aviso(`Saque mínimo de ${money(MIN)}.`);
-    if (v > eu.disponivel) return aviso("Valor acima do disponível.");
-    const wid = uid();
-    api("/withdrawals", { sellerId: eu.id, valor: v, pix });
-    apiPatch(`/sellers/${eu.id}`, { disponivel: +(eu.disponivel - v).toFixed(2), pix });
-    setDb((d) => ({
-      ...d,
-      withdrawals: [{ id: wid, sellerId: eu.id, valor: v, pix, status: "solicitado", criadoEm: agora() }, ...d.withdrawals],
-      sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, disponivel: +(s.disponivel - v).toFixed(2), pix } : s),
-    }));
+
+    if (pix.trim() !== (eu.pix || "")) {
+      const r = await apiPatch(`/sellers/${eu.id}`, { pix: pix.trim() });
+      if (r?.error) return aviso(r.error);
+    }
+
+    const r = await api("/payments/withdraw", { valor: v });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível solicitar o saque.");
+
+    await recarregar();
     setValor("");
-    aviso("Saque solicitado. Cai em até 1 dia útil.");
+    aviso(r.message || "Saque solicitado.");
   };
 
   return (
@@ -86,7 +80,7 @@ export default function Carteira({ eu, db, setDb, aviso }) {
       )}
 
       <h3 className="vx-disp" style={{ fontSize: 16, marginBottom: 10 }}>Extrato de ações</h3>
-      <MeusEnvios empresa={null} eu={eu} db={db} pedirRevisao={(sub) => pedirRevisaoHumana(setDb, aviso, sub)} />
+      <MeusEnvios empresa={null} eu={eu} db={db} pedirRevisao={(sub) => pedirRevisaoHumana(recarregar, aviso, sub)} />
     </div>
   );
 }

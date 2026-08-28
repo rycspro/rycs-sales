@@ -12,22 +12,44 @@ router.get("/messages", (req, res) => {
   if (role === "empresa" && companyId && entityId !== companyId)
     return res.status(403).json({ error: "Sem permissão" });
 
+  // Sem parâmetros, a consulta antiga devolvia as mensagens da plataforma
+  // inteira — as checagens acima só disparam quando os filtros são enviados.
+  // Agora cada papel fica preso à própria conversa.
   let rows;
-  if (companyId && sellerId) {
-    rows = db.prepare("SELECT * FROM messages WHERE companyId = ? AND sellerId = ? ORDER BY ts ASC").all(companyId, sellerId);
-  } else if (companyId) {
-    rows = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(companyId);
+  if (role === "admin") {
+    rows = companyId && sellerId
+      ? db.prepare("SELECT * FROM messages WHERE companyId = ? AND sellerId = ? ORDER BY ts ASC").all(companyId, sellerId)
+      : db.prepare("SELECT * FROM messages ORDER BY ts ASC").all();
+  } else if (role === "vendedor") {
+    rows = db.prepare("SELECT * FROM messages WHERE sellerId = ? ORDER BY ts ASC").all(entityId);
+  } else if (role === "empresa") {
+    rows = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(entityId);
   } else {
-    rows = db.prepare("SELECT * FROM messages ORDER BY ts ASC").all();
+    rows = [];
   }
   res.json(rows);
 });
 
 router.post("/messages", (req, res) => {
-  const { companyId, sellerId, de, texto } = req.body;
+  const { companyId, sellerId, texto } = req.body;
+  const { role, entityId } = req.user;
+
+  if (!texto?.trim()) return res.status(400).json({ error: "Mensagem vazia" });
+  if (!companyId || !sellerId) return res.status(400).json({ error: "companyId e sellerId são obrigatórios" });
+
+  // A rota não verificava nada: qualquer usuário inseria mensagens em qualquer
+  // conversa, assinando como quisesse. O remetente agora vem da sessão, nunca
+  // do corpo — era o caminho para uma falsa mensagem "da empresa" pedindo Pix.
+  if (role === "vendedor" && entityId !== sellerId)
+    return res.status(403).json({ error: "Sem permissão" });
+  if (role === "empresa" && entityId !== companyId)
+    return res.status(403).json({ error: "Sem permissão" });
+
+  const de = role === "empresa" ? "empresa" : role === "vendedor" ? "vendedor" : "plataforma";
   const id = uid();
-  db.prepare("INSERT INTO messages (id, companyId, sellerId, de, texto, ts) VALUES (?, ?, ?, ?, ?, ?)").run(id, companyId, sellerId, de, texto, agora());
-  res.json({ id });
+  db.prepare("INSERT INTO messages (id, companyId, sellerId, de, texto, ts) VALUES (?, ?, ?, ?, ?, ?)")
+    .run(id, companyId, sellerId, de, String(texto).slice(0, 2000), agora());
+  res.json({ id, de });
 });
 
 export default router;

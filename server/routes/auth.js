@@ -3,7 +3,7 @@ import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db, { uid, agora } from "../db.js";
-import { signToken } from "../middleware/auth.js";
+import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 
 const router = Router();
@@ -120,6 +120,10 @@ router.post("/auth/logout", (req, res) => {
 });
 
 router.get("/auth/me", (req, res) => {
+  // Modo sem login (só fora de produção): responde já autenticado.
+  const dev = usuarioDev();
+  if (dev) return res.json(dev);
+
   const token = req.cookies?.sm_token;
   if (!token) return res.status(401).json({ error: "Não autenticado" });
 
