@@ -6,6 +6,7 @@ import { emailStatusAcao } from "../services/email.js";
 import { TAXA } from "../../shared/acoes.js";
 import { takeRateDoPlano } from "../../shared/planos.js";
 import { recalcularCompanyScore } from "../services/companyScore.js";
+import { qualificarIndicacao } from "../services/indicacoes.js";
 
 const router = Router();
 
@@ -145,6 +146,8 @@ router.post("/submissions/:id/liberar", (req, res) => {
   if (seller) emailStatusAcao(seller.nome, seller.email, sub.tipo, "liberado");
   recalcularScore(sub.sellerId);
   recalcularCompanyScore(sub.companyId);
+  // Primeira ação aprovada é o gatilho da recompensa de quem indicou.
+  if (sellerUser) qualificarIndicacao(sellerUser.id);
 
   res.json({ ok: true, bruto, taxa, liquido });
 });

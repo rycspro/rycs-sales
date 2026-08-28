@@ -6,6 +6,7 @@ import Workspace from "./Workspace.jsx";
 import Carteira from "./Carteira.jsx";
 import PerfilVendedor from "./PerfilVendedor.jsx";
 import Academy from "./Academy.jsx";
+import Indicacoes from "../Indicacoes.jsx";
 
 export default function Vendedor({ db, setDb, up, aviso, aba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
@@ -25,6 +26,7 @@ export default function Vendedor({ db, setDb, up, aviso, aba, recarregar }) {
       {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={setAbertaId} />}
       {aba === "academy" && <Academy eu={eu} aviso={aviso} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
+      {aba === "indicar" && <Indicacoes aviso={aviso} />}
       {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} setDb={setDb} aviso={aviso} />}
     </>
   );

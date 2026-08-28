@@ -4,6 +4,7 @@ import { authMiddleware } from "../middleware/auth.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
 import { ativarAssinatura } from "./subscriptions.js";
+import { qualificarIndicacao } from "../services/indicacoes.js";
 
 const router = Router();
 
@@ -223,7 +224,11 @@ function creditarDeposito(payment) {
   })();
 
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
-  if (user) notificar(user.id, "pagamento", `Depósito de R$ ${valor.toFixed(2)} confirmado!`);
+  if (user) {
+    notificar(user.id, "pagamento", `Depósito de R$ ${valor.toFixed(2)} confirmado!`);
+    // Depósito confirmado é o gatilho da recompensa de quem indicou a empresa.
+    qualificarIndicacao(user.id);
+  }
 }
 
 function concluirSaque(transfer) {

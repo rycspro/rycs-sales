@@ -228,6 +228,23 @@ db.exec(`
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
 
+  -- Member Get Member. A recompensa só vira "qualificada" quando o indicado
+  -- produz atividade real; até lá fica pendente e nada é creditado.
+  CREATE TABLE IF NOT EXISTS referrals (
+    id TEXT PRIMARY KEY,
+    codigo TEXT NOT NULL,
+    indicadorUserId TEXT NOT NULL,
+    indicadoUserId TEXT NOT NULL UNIQUE,
+    papelIndicador TEXT NOT NULL,
+    papelIndicado TEXT NOT NULL,
+    valor REAL DEFAULT 0,
+    status TEXT DEFAULT 'pendente',
+    criadoEm INTEGER NOT NULL,
+    qualificadoEm INTEGER,
+    FOREIGN KEY (indicadorUserId) REFERENCES users(id),
+    FOREIGN KEY (indicadoUserId) REFERENCES users(id)
+  );
+
   -- Receita da plataforma (take rate), registrada a cada ação liberada.
   CREATE TABLE IF NOT EXISTS platform_earnings (
     id TEXT PRIMARY KEY,
@@ -281,6 +298,7 @@ adicionarColuna("companies", "assinatura", "TEXT DEFAULT 'free'");
 adicionarColuna("companies", "nota", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "exigeCertificacao", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "funcao", "TEXT DEFAULT ''");
+adicionarColuna("users", "codigoIndicacao", "TEXT");
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.

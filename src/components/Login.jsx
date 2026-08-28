@@ -19,10 +19,15 @@ export default function Login({ onLogin, onRegister }) {
   const [novaSenha, setNovaSenha] = useState("");
   const [resetMsg, setResetMsg] = useState("");
 
+  const [indicacao, setIndicacao] = useState("");
+
   useState(() => {
     const params = new URLSearchParams(window.location.search);
     const t = params.get("token");
     if (t) { setResetToken(t); setShowReset(true); }
+    // Link de convite: /?ref=CODIGO já abre no cadastro com o código preenchido.
+    const ref = params.get("ref");
+    if (ref) { setIndicacao(ref.toUpperCase()); setModo("registro"); }
   });
 
   const submit = async (e) => {
@@ -32,7 +37,7 @@ export default function Login({ onLogin, onRegister }) {
       await onLogin(email, senha);
     } else {
       if (!aceitouTermos) { setLoading(false); return; }
-      await onRegister({ email, senha, role, nome, aceitouTermos: true });
+      await onRegister({ email, senha, role, nome, aceitouTermos: true, indicacao: indicacao || undefined });
     }
     setLoading(false);
   };
@@ -164,6 +169,14 @@ export default function Login({ onLogin, onRegister }) {
             <Campo label="Senha">
               <input className="vx-input" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} />
             </Campo>
+
+            {modo === "registro" && (
+              <Campo label="Código de indicação (opcional)">
+                <input className="vx-input vx-mono" value={indicacao} placeholder="Ex.: SXMD9JG"
+                  onChange={(e) => setIndicacao(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))}
+                  style={{ letterSpacing: ".08em" }} />
+              </Campo>
+            )}
 
             {modo === "registro" && (
               <label style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "12px 0", cursor: "pointer", fontSize: 12.5, color: "var(--text-2)" }}>

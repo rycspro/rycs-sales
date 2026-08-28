@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import db, { uid, agora } from "../db.js";
 import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
+import { vincularIndicacao } from "../services/indicacoes.js";
 
 const router = Router();
 const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -78,7 +79,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", (req, res) => {
-  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos } = req.body;
+  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (senha.length < 6) return res.status(400).json({ error: "Senha deve ter pelo menos 6 caracteres" });
@@ -115,6 +116,8 @@ router.post("/auth/register", (req, res) => {
   );
 
   emailBoasVindas(nomeClean, emailNorm, role);
+  // Vínculo de indicação: nada é creditado agora, só registrado.
+  if (indicacao) vincularIndicacao(indicacao, userId, role);
 
   const token = signToken({ id: userId, role, entityId });
   res.cookie("sm_token", token, COOKIE_OPTS);
