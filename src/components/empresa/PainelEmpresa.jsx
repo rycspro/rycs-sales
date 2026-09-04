@@ -31,7 +31,7 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   // confirma o recebimento e só então o caixa é creditado. Nada entra aqui.
   const abastecer = async () => {
     const v = Number(String(rec).replace(",", "."));
-    if (!v || v < 50) return aviso("Depósito mínimo de R$ 50,00.");
+    if (!v || v < 1) return aviso("Depósito mínimo de R$ 1,00.");
     setGerando(true);
     const r = await api("/deposits", { valor: v });
     setGerando(false);
@@ -94,9 +94,9 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
             </div>
           </div>
         )}
-        <input className="vx-input vx-mono" value={rec} onChange={(e) => setRec(e.target.value)} placeholder="1.000,00" inputMode="decimal" />
+        <input className="vx-input vx-mono" value={rec} onChange={(e) => setRec(e.target.value)} placeholder="100,00" inputMode="decimal" />
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-          {[500, 1000, 5000].map((v) => (
+          {[50, 100, 500].map((v) => (
             <button key={v} className="vx-btn vx-btn-sm" onClick={() => setRec(String(v))}>{money(v)}</button>
           ))}
         </div>

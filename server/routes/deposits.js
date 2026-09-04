@@ -4,7 +4,7 @@ import { notificar } from "./notifications.js";
 
 const router = Router();
 
-const MINIMO = 50;
+const MINIMO = 1;
 
 // Chave Pix da plataforma, mostrada à empresa na hora de depositar.
 const PIX_RYCS = process.env.PIX_RECEBIMENTO || "";

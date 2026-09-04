@@ -8,7 +8,7 @@ import { qualificarIndicacao } from "../services/indicacoes.js";
 
 const router = Router();
 
-const DEPOSITO_MINIMO = 50;
+const DEPOSITO_MINIMO = 1;
 const SAQUE_MINIMO = 10;
 
 // ---------------------------------------------------------------------------
