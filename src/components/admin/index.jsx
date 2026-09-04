@@ -6,6 +6,7 @@ import CardEnvio from "../CardEnvio.jsx";
 import DashboardAdmin from "./DashboardAdmin.jsx";
 import ProfissionaisAdmin from "./ProfissionaisAdmin.jsx";
 import EmpresasAdmin from "./EmpresasAdmin.jsx";
+import DepositosAdmin from "./DepositosAdmin.jsx";
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
@@ -27,21 +28,21 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
     aviso(`${money(r.liquido)} liberados para saque.`);
   };
 
-  const pagar = (w) => {
-    apiPatch(`/withdrawals/${w.id}`, { status: "pago" });
-    const seller = db.sellers.find((s) => s.id === w.sellerId);
-    if (seller) apiPatch(`/sellers/${seller.id}`, { sacado: +(seller.sacado + w.valor).toFixed(2) });
-    setDb((d) => ({
-      ...d,
-      withdrawals: d.withdrawals.map((x) => x.id === w.id ? { ...x, status: "pago" } : x),
-      sellers: d.sellers.map((s) => s.id === w.sellerId ? { ...s, sacado: +(s.sacado + w.valor).toFixed(2) } : s),
-    }));
-    aviso("PIX marcado como pago.");
+  // O servidor credita o "sacado" e guarda a transição de estado; tentar
+  // fazer isso pelo cliente falharia em silêncio, já que campos financeiros
+  // não são graváveis por PATCH.
+  const pagar = async (w) => {
+    if (!window.confirm(`Confirmar que o Pix de ${money(w.valor)} foi enviado?`)) return;
+    const r = await apiPatch(`/withdrawals/${w.id}`, { status: "pago" });
+    if (r?.error) return aviso(r.error);
+    await recarregar();
+    aviso("Saque marcado como pago.");
   };
 
   if (aba === "dashboard") return <DashboardAdmin db={db} />;
   if (aba === "profissionais") return <ProfissionaisAdmin db={db} />;
   if (aba === "empresas") return <EmpresasAdmin db={db} />;
+  if (aba === "depositos") return <DepositosAdmin aviso={aviso} recarregar={recarregar} />;
 
   return (
     <div className="vx-fade">

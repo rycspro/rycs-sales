@@ -55,6 +55,7 @@ export const NAV = {
     { key: "empresas", label: "Empresas", Icon: Building2 },
     { key: "triagem", label: "Triagem", Icon: ShieldCheck },
     { key: "liberar", label: "Liberar", Icon: Banknote },
+    { key: "depositos", label: "Depósitos", Icon: Banknote },
     { key: "saques", label: "Saques", Icon: Wallet },
   ],
 };

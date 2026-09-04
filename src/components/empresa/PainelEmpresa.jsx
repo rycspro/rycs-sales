@@ -27,16 +27,16 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   const vendas = subs.filter((s) => s.tipo === "venda" && s.status === "liberado").length;
   const time = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado").length;
 
-  // O saldo não é mais creditado aqui: ele entra quando o gateway confirma o
-  // pagamento, via webhook. Esta tela só gera a cobrança.
-  const abastecer = async (metodo) => {
+  // Fluxo manual: a empresa declara o depósito e paga por Pix; a plataforma
+  // confirma o recebimento e só então o caixa é creditado. Nada entra aqui.
+  const abastecer = async () => {
     const v = Number(String(rec).replace(",", "."));
     if (!v || v < 50) return aviso("Depósito mínimo de R$ 50,00.");
     setGerando(true);
-    const r = await api("/payments/deposit", { valor: v, metodo });
+    const r = await api("/deposits", { valor: v });
     setGerando(false);
-    if (!r || r.error) return aviso(r?.error || "Não foi possível gerar a cobrança.");
-    setCobranca({ ...r, valor: v, metodo });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível registrar o depósito.");
+    setCobranca({ ...r, valor: v });
     setRec("");
   };
 
@@ -100,38 +100,40 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
             <button key={v} className="vx-btn vx-btn-sm" onClick={() => setRec(String(v))}>{money(v)}</button>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          <button className="vx-btn vx-btn-primary" style={{ flex: 1 }} disabled={gerando} onClick={() => abastecer("pix")}>
-            {gerando ? "Gerando…" : "Pagar com Pix"}
-          </button>
-          <button className="vx-btn" style={{ flex: 1 }} disabled={gerando} onClick={() => abastecer("boleto")}>Boleto</button>
-        </div>
+        <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} disabled={gerando} onClick={abastecer}>
+          {gerando ? "Registrando…" : "Depositar por Pix"}
+        </button>
 
         {cobranca && (
-          <div className="vx-card" style={{ padding: 14, marginTop: 12, background: "var(--brand-50)" }}>
-            <div className="vx-disp" style={{ fontSize: 15 }}>Cobrança de {money(cobranca.valor)} gerada</div>
-            <p className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>
-              O caixa é creditado automaticamente assim que o pagamento for confirmado.
-            </p>
-            {cobranca.pixQrCodeBase64 && (
-              <img src={`data:image/png;base64,${cobranca.pixQrCodeBase64}`} alt="QR Code Pix"
-                style={{ width: 180, display: "block", margin: "10px auto", borderRadius: 8 }} />
+          <div className="vx-card" style={{ padding: 16, marginTop: 12, background: "var(--brand-50)", borderColor: "var(--brand-100)" }}>
+            <div className="vx-disp" style={{ fontSize: 15 }}>Depósito de {money(cobranca.valor)} registrado</div>
+            <p className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>{cobranca.instrucoes}</p>
+
+            {cobranca.pix && (
+              <div style={{ marginTop: 12 }}>
+                <div className="vx-label">Chave Pix da RYCS</div>
+                <div className="vx-row" style={{ padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                  <span className="vx-mono" style={{ fontSize: 13, wordBreak: "break-all" }}>{cobranca.pix}</span>
+                  <button className="vx-btn vx-btn-sm" style={{ flex: "none" }}
+                    onClick={() => { navigator.clipboard?.writeText(cobranca.pix); aviso("Chave Pix copiada."); }}>Copiar</button>
+                </div>
+                <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>Titular: {cobranca.titular}</div>
+              </div>
             )}
-            {cobranca.pixCopiaECola && (
-              <button className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 6 }}
-                onClick={() => { navigator.clipboard?.writeText(cobranca.pixCopiaECola); aviso("Código Pix copiado."); }}>
-                Copiar código Pix
-              </button>
-            )}
-            {(cobranca.bankSlipUrl || cobranca.invoiceUrl) && (
-              <a className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 6 }} target="_blank" rel="noreferrer"
-                href={cobranca.bankSlipUrl || cobranca.invoiceUrl}>
-                {cobranca.metodo === "boleto" ? "Abrir boleto" : "Abrir fatura"}
-              </a>
-            )}
-            <button className="vx-btn vx-btn-ghost vx-btn-sm vx-btn-block" style={{ marginTop: 6 }} onClick={() => setCobranca(null)}>
-              Fechar
-            </button>
+
+            <div style={{ marginTop: 12 }}>
+              <div className="vx-label">Coloque esta referência na transferência</div>
+              <div className="vx-row" style={{ padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                <span className="vx-mono vx-disp" style={{ fontSize: 15, color: "var(--brand)" }}>{cobranca.referencia}</span>
+                <button className="vx-btn vx-btn-sm" style={{ flex: "none" }}
+                  onClick={() => { navigator.clipboard?.writeText(cobranca.referencia); aviso("Referência copiada."); }}>Copiar</button>
+              </div>
+              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>
+                É ela que liga o seu Pix a este pedido.
+              </div>
+            </div>
+
+            <button className="vx-btn vx-btn-ghost vx-btn-sm vx-btn-block" style={{ marginTop: 10 }} onClick={() => setCobranca(null)}>Fechar</button>
           </div>
         )}
         <hr className="vx-sep" />

@@ -245,6 +245,22 @@ db.exec(`
     FOREIGN KEY (indicadoUserId) REFERENCES users(id)
   );
 
+  -- Depósitos manuais: a empresa declara que pagou, e um admin confirma o
+  -- recebimento. É o único caminho por onde entra saldo sem gateway, então
+  -- guarda quem confirmou — crédito manual sem rastro é buraco de auditoria.
+  CREATE TABLE IF NOT EXISTS deposit_requests (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    valor REAL NOT NULL,
+    status TEXT DEFAULT 'pendente',
+    referencia TEXT DEFAULT '',
+    observacao TEXT DEFAULT '',
+    confirmadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    confirmadoEm INTEGER,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
   -- Receita da plataforma (take rate), registrada a cada ação liberada.
   CREATE TABLE IF NOT EXISTS platform_earnings (
     id TEXT PRIMARY KEY,

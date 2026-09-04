@@ -24,6 +24,7 @@ import paymentRoutes from "./routes/payments.js";
 import academyRoutes from "./routes/academy.js";
 import subscriptionRoutes from "./routes/subscriptions.js";
 import referralRoutes from "./routes/referrals.js";
+import depositRoutes from "./routes/deposits.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -87,6 +88,7 @@ app.use("/api", authMiddleware, uploadsRoutes);
 app.use("/api", authMiddleware, academyRoutes);
 app.use("/api", authMiddleware, subscriptionRoutes);
 app.use("/api", authMiddleware, referralRoutes);
+app.use("/api", authMiddleware, depositRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
