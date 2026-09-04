@@ -15,6 +15,7 @@ async function pedirRevisaoHumana(recarregar, aviso, sub) {
 
 export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
   const [pix, setPix] = useState(eu.pix || "");
+  const [pixTipo, setPixTipo] = useState(eu.pixTipo || "");
   const [valor, setValor] = useState("");
   const meus = db.submissions.filter((s) => s.sellerId === eu.id);
   const saques = db.withdrawals.filter((w) => w.sellerId === eu.id);
@@ -27,8 +28,9 @@ export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
     if (!pix.trim()) return aviso("Informe a chave PIX.");
     if (!v || v < MIN) return aviso(`Saque mínimo de ${money(MIN)}.`);
 
-    if (pix.trim() !== (eu.pix || "")) {
-      const r = await apiPatch(`/sellers/${eu.id}`, { pix: pix.trim() });
+    if (!pixTipo) return aviso("Escolha o tipo da sua chave Pix.");
+    if (pix.trim() !== (eu.pix || "") || pixTipo !== (eu.pixTipo || "")) {
+      const r = await apiPatch(`/sellers/${eu.id}`, { pix: pix.trim(), pixTipo });
       if (r?.error) return aviso(r.error);
     }
 
@@ -51,7 +53,20 @@ export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
 
       <div className="vx-card" style={{ padding: 18, marginBottom: 20 }}>
         <div className="vx-disp" style={{ fontSize: 17, marginBottom: 12 }}>Sacar por PIX</div>
-        <Campo label="Chave PIX"><input className="vx-input" value={pix} onChange={(e) => setPix(e.target.value)} placeholder="CPF, e-mail ou telefone" /></Campo>
+        <Campo label="Tipo da chave">
+          <select className="vx-input" value={pixTipo} onChange={(e) => setPixTipo(e.target.value)}>
+            <option value="">Selecione…</option>
+            <option value="CPF">CPF</option>
+            <option value="CNPJ">CNPJ</option>
+            <option value="PHONE">Celular</option>
+            <option value="EMAIL">E-mail</option>
+            <option value="EVP">Chave aleatória</option>
+          </select>
+        </Campo>
+        <Campo label="Chave PIX">
+          <input className="vx-input" value={pix} onChange={(e) => setPix(e.target.value)}
+            placeholder={{CPF:"000.000.000-00",CNPJ:"00.000.000/0001-00",PHONE:"(11) 90000-0000",EMAIL:"voce@email.com",EVP:"chave aleatória do banco"}[pixTipo] || "Escolha o tipo primeiro"} />
+        </Campo>
         <Campo label={`Valor (mínimo ${money(MIN)})`}>
           <input className="vx-input vx-mono" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" inputMode="decimal" />
         </Campo>

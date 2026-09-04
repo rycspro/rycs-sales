@@ -26,8 +26,9 @@ async function repassarParaVendedor({ vendedor, valor, referencia }) {
     method: "POST",
     body: {
       value: valor,
-      pixAddressKey: vendedor.pix,
-      pixAddressKeyType: tipoChavePix(vendedor.pix),
+      pixAddressKey: normalizarChavePix(vendedor.pix, tipoDaChave(vendedor)),
+      pixAddressKeyType: tipoDaChave(vendedor),
+      operationType: "PIX",
       description: `RYCS - repasse ${referencia}`,
     },
   });
@@ -132,6 +133,7 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   if (!Number.isFinite(valor) || valor < SAQUE_MINIMO)
     return res.status(400).json({ error: `Valor mínimo: R$ ${SAQUE_MINIMO},00` });
   if (!vendedor.pix) return res.status(400).json({ error: "Cadastre sua chave Pix antes de sacar" });
+  if (!vendedor.pixTipo) return res.status(400).json({ error: "Informe o tipo da sua chave Pix (CPF, celular, e-mail ou aleatória)" });
 
   // Reserva o valor e cria o saque numa transação, para que dois pedidos
   // simultâneos não sacem o mesmo saldo duas vezes.
@@ -260,14 +262,40 @@ function devolverSaque(transfer) {
   if (user) notificar(user.id, "saque", "Saque não concluído", "O valor voltou para o seu saldo. Confira sua chave Pix.");
 }
 
-function tipoChavePix(chave) {
-  if (!chave) return "RANDOM_KEY";
-  if (chave.includes("@")) return "EMAIL";
-  const digitos = chave.replace(/\D/g, "");
-  if (digitos.length === 11) return "CPF";
+// O tipo declarado pelo vendedor manda. A dedução automática é só palpite
+// inicial: celular e CPF têm os mesmos 11 dígitos, e errar o tipo faz o Pix
+// ir para o lugar errado ou ser recusado.
+const TIPOS_VALIDOS = ["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"];
+function tipoDaChave(vendedor) {
+  const declarado = String(vendedor?.pixTipo || "").toUpperCase();
+  return TIPOS_VALIDOS.includes(declarado) ? declarado : tipoChavePix(vendedor?.pix);
+}
+
+// Tipos aceitos pelo Asaas: CPF, CNPJ, EMAIL, PHONE e EVP.
+// "RANDOM_KEY" não existe na API deles — usar esse valor fazia toda
+// transferência para chave aleatória ser recusada.
+export function tipoChavePix(chave) {
+  const c = String(chave || "").trim();
+  if (!c) return "EVP";
+  if (c.includes("@")) return "EMAIL";
+
+  // Chave aleatória é um UUID; reconhecer pelo formato evita confundi-la
+  // com documento por causa da contagem de dígitos.
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c)) return "EVP";
+
+  const digitos = c.replace(/\D/g, "");
+  if (digitos.length === 11 && !c.startsWith("+")) return "CPF";
   if (digitos.length === 14) return "CNPJ";
   if (digitos.length >= 10 && digitos.length <= 13) return "PHONE";
-  return "RANDOM_KEY";
+  return "EVP";
+}
+
+// O Asaas espera o telefone no padrão internacional.
+export function normalizarChavePix(chave, tipo) {
+  const c = String(chave || "").trim();
+  if (tipo !== "PHONE") return c;
+  const d = c.replace(/\D/g, "");
+  return d.startsWith("55") ? `+${d}` : `+55${d}`;
 }
 
 export default router;

@@ -27,7 +27,7 @@ router.patch("/sellers/:id", (req, res) => {
   // Campos financeiros (disponivel/pendente/sacado) NUNCA podem ser escritos
   // pelo próprio vendedor: valem dinheiro real via Pix. Só o servidor os move,
   // ao liberar uma ação ou processar um saque.
-  const sellerFields = ["nome", "email", "whats", "cidade", "perfil", "experiencia", "pix", "video"];
+  const sellerFields = ["nome", "email", "whats", "cidade", "perfil", "experiencia", "pix", "pixTipo", "video"];
   const adminFields = [...sellerFields, "status", "nota"];
   const allowed = role === "admin" ? adminFields : sellerFields;
 

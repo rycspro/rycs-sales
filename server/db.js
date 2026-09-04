@@ -315,6 +315,7 @@ adicionarColuna("companies", "nota", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "exigeCertificacao", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "funcao", "TEXT DEFAULT ''");
 adicionarColuna("users", "codigoIndicacao", "TEXT");
+adicionarColuna("sellers", "pixTipo", "TEXT DEFAULT ''");
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
