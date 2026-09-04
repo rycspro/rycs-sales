@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, agora, dataCurta } from "../../lib/utils.js";
@@ -11,6 +11,9 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   const [cobranca, setCobranca] = useState(null);
   const [gerando, setGerando] = useState(false);
   const [doc, setDoc] = useState("");
+  const [minimo, setMinimo] = useState(1);
+
+  useEffect(() => { api("/deposits/config").then((c) => { if (c?.minimo) setMinimo(c.minimo); }); }, []);
 
   const salvarDocumento = async () => {
     const limpo = doc.replace(/\D/g, "");
@@ -31,7 +34,7 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   // confirma o recebimento e só então o caixa é creditado. Nada entra aqui.
   const abastecer = async () => {
     const v = Number(String(rec).replace(",", "."));
-    if (!v || v < 1) return aviso("Depósito mínimo de R$ 1,00.");
+    if (!v || v < minimo) return aviso(`Depósito mínimo de ${money(minimo)}.`);
     setGerando(true);
     const r = await api("/deposits", { valor: v });
     setGerando(false);
@@ -96,7 +99,7 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
         )}
         <input className="vx-input vx-mono" value={rec} onChange={(e) => setRec(e.target.value)} placeholder="100,00" inputMode="decimal" />
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-          {[50, 100, 500].map((v) => (
+          {[Math.max(minimo, 50), 100, 500].map((v) => (
             <button key={v} className="vx-btn vx-btn-sm" onClick={() => setRec(String(v))}>{money(v)}</button>
           ))}
         </div>

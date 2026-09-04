@@ -61,6 +61,10 @@ async function cobrancaPeloGateway(req, res, companyId, valor) {
 }
 
 const MINIMO = 1;
+// O Asaas recusa cobrança abaixo de R$ 5,00. Com o gateway ativo o piso é
+// dele, senão a empresa pediria R$ 2 e receberia um erro do gateway sem
+// entender o motivo.
+const MINIMO_GATEWAY = 5;
 
 // Chave Pix da plataforma, mostrada à empresa na hora de depositar.
 const PIX_RYCS = process.env.PIX_RECEBIMENTO || "";
@@ -75,8 +79,9 @@ router.post("/deposits", async (req, res) => {
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem depositar" });
 
   const valor = Number(req.body?.valor);
-  if (!Number.isFinite(valor) || valor < MINIMO)
-    return res.status(400).json({ error: `Valor mínimo: R$ ${MINIMO},00` });
+  const piso = asaasAtivo() ? MINIMO_GATEWAY : MINIMO;
+  if (!Number.isFinite(valor) || valor < piso)
+    return res.status(400).json({ error: `Valor mínimo: R$ ${piso},00` });
 
   // Com o gateway ativo, a cobrança é gerada e confirmada sozinha pelo
   // webhook. O caminho manual abaixo só existe para quando ele está desligado,
@@ -108,6 +113,11 @@ router.post("/deposits", async (req, res) => {
       ? `Transfira R$ ${valor.toFixed(2)} por Pix e informe a referência ${referencia}. O caixa é creditado após a confirmação.`
       : "A chave Pix ainda não foi configurada. Fale com a plataforma para concluir o depósito.",
   });
+});
+
+// A tela precisa saber o piso vigente para validar antes de enviar.
+router.get("/deposits/config", (req, res) => {
+  res.json({ minimo: asaasAtivo() ? MINIMO_GATEWAY : MINIMO, gateway: asaasAtivo() });
 });
 
 // A empresa vê os próprios pedidos; o admin vê todos os pendentes.
