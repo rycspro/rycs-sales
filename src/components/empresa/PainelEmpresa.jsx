@@ -106,8 +106,28 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
 
         {cobranca && (
           <div className="vx-card" style={{ padding: 16, marginTop: 12, background: "var(--brand-50)", borderColor: "var(--brand-100)" }}>
-            <div className="vx-disp" style={{ fontSize: 15 }}>Depósito de {money(cobranca.valor)} registrado</div>
+            <div className="vx-disp" style={{ fontSize: 15 }}>
+              {cobranca.modo === "gateway" ? "Cobrança de" : "Depósito de"} {money(cobranca.valor)}
+            </div>
             <p className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>{cobranca.instrucoes}</p>
+
+            {cobranca.pixQrCodeBase64 && (
+              <img src={`data:image/png;base64,${cobranca.pixQrCodeBase64}`} alt="QR Code Pix"
+                style={{ width: 190, display: "block", margin: "14px auto", borderRadius: 10, background: "#fff", padding: 8 }} />
+            )}
+
+            {cobranca.pixCopiaECola && (
+              <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 6 }}
+                onClick={() => { navigator.clipboard?.writeText(cobranca.pixCopiaECola); aviso("Código Pix copiado."); }}>
+                Copiar código Pix
+              </button>
+            )}
+
+            {cobranca.invoiceUrl && (
+              <a className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 6 }} target="_blank" rel="noreferrer" href={cobranca.invoiceUrl}>
+                Abrir fatura
+              </a>
+            )}
 
             {cobranca.pix && (
               <div style={{ marginTop: 12 }}>
@@ -121,17 +141,16 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
               </div>
             )}
 
-            <div style={{ marginTop: 12 }}>
-              <div className="vx-label">Coloque esta referência na transferência</div>
-              <div className="vx-row" style={{ padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                <span className="vx-mono vx-disp" style={{ fontSize: 15, color: "var(--brand)" }}>{cobranca.referencia}</span>
-                <button className="vx-btn vx-btn-sm" style={{ flex: "none" }}
-                  onClick={() => { navigator.clipboard?.writeText(cobranca.referencia); aviso("Referência copiada."); }}>Copiar</button>
+            {cobranca.referencia && (
+              <div style={{ marginTop: 12 }}>
+                <div className="vx-label">Coloque esta referência na transferência</div>
+                <div className="vx-row" style={{ padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                  <span className="vx-mono vx-disp" style={{ fontSize: 15, color: "var(--brand)" }}>{cobranca.referencia}</span>
+                  <button className="vx-btn vx-btn-sm" style={{ flex: "none" }}
+                    onClick={() => { navigator.clipboard?.writeText(cobranca.referencia); aviso("Referência copiada."); }}>Copiar</button>
+                </div>
               </div>
-              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>
-                É ela que liga o seu Pix a este pedido.
-              </div>
-            </div>
+            )}
 
             <button className="vx-btn vx-btn-ghost vx-btn-sm vx-btn-block" style={{ marginTop: 10 }} onClick={() => setCobranca(null)}>Fechar</button>
           </div>

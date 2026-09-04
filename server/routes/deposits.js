@@ -1,8 +1,64 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
+import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
 
 const router = Router();
+
+// Cobrança pelo gateway: o saldo entra pelo webhook, não aqui.
+async function cobrancaPeloGateway(req, res, companyId, valor) {
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(companyId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  if (!empresa.documento)
+    return res.status(400).json({ error: "Cadastre o CNPJ ou CPF da empresa antes de depositar." });
+
+  try {
+    let customer = empresa.asaasCustomerId;
+    if (!customer) {
+      const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
+      const cliente = await asaas("/customers", {
+        method: "POST",
+        body: {
+          name: empresa.nome,
+          cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
+          email: usuario?.email || undefined,
+          externalReference: companyId,
+        },
+      });
+      customer = cliente.id;
+      db.prepare("UPDATE companies SET asaasCustomerId = ? WHERE id = ?").run(customer, companyId);
+    }
+
+    const cobranca = await asaas("/payments", {
+      method: "POST",
+      body: {
+        customer,
+        billingType: "PIX",
+        value: valor,
+        dueDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        description: `Depósito RYCS — ${empresa.nome}`,
+        externalReference: companyId,
+      },
+    });
+
+    let pix = null;
+    try { pix = await asaas(`/payments/${cobranca.id}/pixQrCode`); }
+    catch (e) { console.warn("[asaas] QR Pix indisponível:", e.message); }
+
+    return res.json({
+      id: cobranca.id,
+      valor,
+      modo: "gateway",
+      pixCopiaECola: pix?.payload || null,
+      pixQrCodeBase64: pix?.encodedImage || null,
+      invoiceUrl: cobranca.invoiceUrl || null,
+      instrucoes: "Pague o Pix abaixo. O caixa é creditado automaticamente após a confirmação.",
+    });
+  } catch (err) {
+    console.error("[asaas] depósito:", err.message);
+    return res.status(502).json({ error: err instanceof AsaasError ? err.message : "Erro ao gerar a cobrança" });
+  }
+}
 
 const MINIMO = 1;
 
@@ -14,13 +70,18 @@ const TITULAR_RYCS = process.env.PIX_TITULAR || "RYCS Sales Solutions";
 // Empresa declara um depósito. Nada é creditado aqui — só registra a intenção
 // e devolve os dados para o pagamento.
 // ---------------------------------------------------------------------------
-router.post("/deposits", (req, res) => {
+router.post("/deposits", async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem depositar" });
 
   const valor = Number(req.body?.valor);
   if (!Number.isFinite(valor) || valor < MINIMO)
     return res.status(400).json({ error: `Valor mínimo: R$ ${MINIMO},00` });
+
+  // Com o gateway ativo, a cobrança é gerada e confirmada sozinha pelo
+  // webhook. O caminho manual abaixo só existe para quando ele está desligado,
+  // e é a mesma tela nos dois casos.
+  if (asaasAtivo()) return cobrancaPeloGateway(req, res, entityId, valor);
 
   const pendentes = db.prepare("SELECT COUNT(*) n FROM deposit_requests WHERE companyId = ? AND status = 'pendente'").get(entityId).n;
   if (pendentes >= 5)
