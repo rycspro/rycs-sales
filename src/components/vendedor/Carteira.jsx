@@ -19,7 +19,7 @@ export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
   const [valor, setValor] = useState("");
   const meus = db.submissions.filter((s) => s.sellerId === eu.id);
   const saques = db.withdrawals.filter((w) => w.sellerId === eu.id);
-  const MIN = 20;
+  const MIN = 10; // igual ao SAQUE_MINIMO do servidor
 
   // O servidor debita o saldo e dispara o Pix numa transação. O cliente não
   // envia saldo nem chave de destino: a chave usada é a do cadastro.
