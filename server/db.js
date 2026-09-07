@@ -261,6 +261,31 @@ db.exec(`
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
 
+  -- Triagem de entrada da Academy. Guarda toda tentativa: o histórico é o
+  -- que permite auditar depois se um score foi manipulado.
+  CREATE TABLE IF NOT EXISTS assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    tentativa INTEGER NOT NULL,
+    score REAL NOT NULL,
+    status TEXT NOT NULL,
+    categorias TEXT DEFAULT '{}',
+    perfil TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS assessment_answers (
+    id TEXT PRIMARY KEY,
+    assessmentId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    questionId TEXT NOT NULL,
+    resposta TEXT DEFAULT '',
+    pontos REAL DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (assessmentId) REFERENCES assessments(id)
+  );
+
   -- Central de leads: o funil que o vendedor opera.
   CREATE TABLE IF NOT EXISTS leads (
     id TEXT PRIMARY KEY,
@@ -356,6 +381,12 @@ adicionarColuna("campaigns", "exigeCertificacao", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "funcao", "TEXT DEFAULT ''");
 adicionarColuna("users", "codigoIndicacao", "TEXT");
 adicionarColuna("sellers", "pixTipo", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "estado", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "documento", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "tipoVendedor", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "perfilComercial", "TEXT DEFAULT '{}'");
+adicionarColuna("sellers", "scoreTriagem", "REAL DEFAULT 0");
+adicionarColuna("sellers", "emailVerificado", "INTEGER DEFAULT 0");
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
