@@ -2,9 +2,9 @@ import { useState, useMemo } from "react";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { money, dataCurta, agora } from "../../lib/utils.js";
 import { TAXA } from "../../lib/constants.js";
-import { Medidor } from "../ui.jsx";
+import { Medidor, Excluir } from "../ui.jsx";
 
-export default function EmpresasAdmin({ db }) {
+export default function EmpresasAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
   const [expandido, setExpandido] = useState(null);
 
@@ -103,6 +103,19 @@ export default function EmpresasAdmin({ db }) {
                       )}
                     </div>
                   )}
+
+                  <hr className="vx-sep" />
+                  <Excluir
+                    key={c.id}
+                    rota={`/companies/${c.id}`}
+                    label="Excluir empresa"
+                    sucesso={`Empresa ${c.nome} excluída da plataforma.`}
+                    aviso={aviso}
+                    onRemovido={() => { setExpandido(null); up?.((d) => ({ companies: d.companies.filter((x) => x.id !== c.id) })); }}
+                    conflito={(p) => `${c.nome} tem ${money(p.saldo || 0)} em caixa` +
+                      (p.acoesEmAnalise ? ` e ${p.acoesEmAnalise} ação(ões) em análise` : "") +
+                      ". Excluir agora não devolve esse saldo."}
+                  />
                 </div>
               )}
             </div>

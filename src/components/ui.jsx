@@ -1,4 +1,7 @@
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { STATUS } from "../lib/constants.js";
+import { apiDeleteStatus } from "../lib/api.js";
 
 export function Selo({ s }) {
   const v = STATUS[s] || STATUS.analisando;
@@ -46,6 +49,54 @@ export function Stat({ label, value, Icon, tone = "brand", mono = true }) {
       {Icon && <div className="vx-stat-icon" style={{ background: bg }}><Icon size={16} color={fg} strokeWidth={2.3} /></div>}
       <div className="vx-eyebrow" style={{ marginBottom: 3 }}>{label}</div>
       <div className={"vx-stat-val" + (mono ? " vx-mono" : "")}>{value}</div>
+    </div>
+  );
+}
+
+// Exclusão definitiva, em dois estágios: o primeiro clique arma, o segundo
+// executa. Quando o servidor recusa por valores em aberto (409), o motivo
+// aparece aqui mesmo e o botão passa a oferecer a exclusão forçada.
+//
+// Um confirm() do browser esconderia justamente o número que a plataforma
+// precisa ler antes de decidir — e há navegadores que o suprimem sem avisar.
+export function Excluir({ rota, label, conflito, sucesso, onRemovido, aviso }) {
+  const [armado, setArmado] = useState(false);
+  const [pendencia, setPendencia] = useState(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  const cancelar = () => { setArmado(false); setPendencia(null); };
+
+  const excluir = async (forcar) => {
+    setExcluindo(true);
+    const { status, corpo } = await apiDeleteStatus(`${rota}${forcar ? "?forcar=true" : ""}`);
+    setExcluindo(false);
+
+    if (status === 409) return setPendencia(corpo);
+    if (status !== 200) return aviso?.(corpo.error || "Não foi possível excluir.");
+
+    cancelar();
+    onRemovido?.();
+    // A mensagem vem de quem chama: um nome de pessoa não diz o gênero
+    // dela, e uma frase fixa acabaria escolhendo um por conta própria.
+    aviso?.(sucesso);
+  };
+
+  if (!armado)
+    return (
+      <button className="vx-btn" onClick={() => { setArmado(true); setPendencia(null); }} style={{ color: "var(--red)" }}>
+        <Trash2 size={14} /> {label}
+      </button>
+    );
+
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <span style={{ fontSize: 12.5, color: "var(--red)", flex: 1, minWidth: 190 }}>
+        {pendencia ? conflito(pendencia) : "Apaga o cadastro e todo o histórico ligado a ele. Não tem volta."}
+      </span>
+      <button className="vx-btn" onClick={cancelar} disabled={excluindo}>Cancelar</button>
+      <button className="vx-btn vx-btn-danger" onClick={() => excluir(!!pendencia)} disabled={excluindo}>
+        {excluindo ? "Excluindo…" : pendencia ? "Excluir mesmo assim" : "Confirmar exclusão"}
+      </button>
     </div>
   );
 }

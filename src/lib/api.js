@@ -21,3 +21,15 @@ export const apiDelete = (path) =>
     method: "DELETE",
     credentials: "include",
   }).then((r) => r.json()).catch(() => null);
+
+// Exclusões respondem 409 quando há valores em aberto, e o corpo traz os
+// números que a plataforma precisa ler antes de decidir. Por isso aqui o
+// status vem junto: sem ele, "recusado por saldo" e "erro" seriam a mesma
+// coisa para quem chama.
+export const apiDeleteStatus = (path) =>
+  fetch(`${API_URL}/api${path}`, {
+    method: "DELETE",
+    credentials: "include",
+  })
+    .then(async (r) => ({ status: r.status, corpo: await r.json().catch(() => ({})) }))
+    .catch(() => ({ status: 0, corpo: { error: "Falha de conexão." } }));

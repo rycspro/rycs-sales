@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
-import { Medidor } from "../ui.jsx";
-import { apiDelete } from "../../lib/api.js";
+import { Medidor, Excluir } from "../ui.jsx";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", "sem-exp": "Iniciante", bdr: "BDR", pap: "PAP" };
 const STATUS_LABEL = { aprovado: "Ativo", parcial: "Parcial", triagem: "Triagem", recusado: "Recusado" };
@@ -12,34 +11,6 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [expandido, setExpandido] = useState(null);
-  const [confirmando, setConfirmando] = useState(null);
-  const [excluindo, setExcluindo] = useState(false);
-  const [pendencia, setPendencia] = useState(null);
-
-  // Exclusão é definitiva. O primeiro clique só arma a confirmação; o
-  // segundo chama a API. Se houver saldo, o servidor devolve 409 com o valor
-  // e o aviso aparece na própria tela — um confirm() do browser esconderia
-  // justamente a informação que a plataforma precisa ler antes de decidir.
-  const excluir = async (s, forcar = false) => {
-    setExcluindo(true);
-    const r = await apiDelete(`/sellers/${s.id}${forcar ? "?forcar=true" : ""}`);
-    setExcluindo(false);
-
-    if (r?.disponivel !== undefined || r?.saquesAbertos) {
-      setPendencia({ id: s.id, total: (r.disponivel || 0) + (r.pendente || 0), saques: r.saquesAbertos || 0 });
-      return;
-    }
-    if (r?.error) return aviso?.(r.error);
-
-    up?.((d) => ({ sellers: d.sellers.filter((x) => x.id !== s.id) }));
-    setConfirmando(null);
-    setPendencia(null);
-    setExpandido(null);
-    aviso?.(`${s.nome} foi excluído da plataforma.`);
-  };
-
-  const cancelar = () => { setConfirmando(null); setPendencia(null); };
-
 
   const profissionais = useMemo(() => {
     let list = db.sellers.map((s) => {
@@ -128,27 +99,17 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
                   </div>
 
                   <hr className="vx-sep" />
-                  {confirmando === s.id ? (
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 12.5, color: "var(--red)", flex: 1, minWidth: 190 }}>
-                        {pendencia?.id === s.id
-                          ? `${s.nome} tem ${money(pendencia.total)} em conta` +
-                            (pendencia.saques ? ` e ${pendencia.saques} saque(s) em aberto` : "") +
-                            ". Excluir agora não repassa esse valor."
-                          : "Apaga o cadastro, as avaliações, os leads e o histórico. Não tem volta."}
-                      </span>
-                      <button className="vx-btn" onClick={cancelar} disabled={excluindo}>Cancelar</button>
-                      <button className="vx-btn vx-btn-danger"
-                        onClick={() => excluir(s, pendencia?.id === s.id)} disabled={excluindo}>
-                        {excluindo ? "Excluindo…"
-                          : pendencia?.id === s.id ? "Excluir mesmo com saldo" : "Confirmar exclusão"}
-                      </button>
-                    </div>
-                  ) : (
-                    <button className="vx-btn" onClick={() => { setConfirmando(s.id); setPendencia(null); }} style={{ color: "var(--red)" }}>
-                      <Trash2 size={14} /> Excluir profissional
-                    </button>
-                  )}
+                  <Excluir
+                    key={s.id}
+                    rota={`/sellers/${s.id}`}
+                    label="Excluir profissional"
+                    sucesso={`Cadastro de ${s.nome} excluído da plataforma.`}
+                    aviso={aviso}
+                    onRemovido={() => { setExpandido(null); up?.((d) => ({ sellers: d.sellers.filter((x) => x.id !== s.id) })); }}
+                    conflito={(p) => `${s.nome} tem ${money((p.disponivel || 0) + (p.pendente || 0))} em conta` +
+                      (p.saquesAbertos ? ` e ${p.saquesAbertos} saque(s) em aberto` : "") +
+                      ". Excluir agora não repassa esse valor."}
+                  />
                 </div>
               )}
             </div>
