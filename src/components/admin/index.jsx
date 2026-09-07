@@ -40,7 +40,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   };
 
   if (aba === "dashboard") return <DashboardAdmin db={db} />;
-  if (aba === "profissionais") return <ProfissionaisAdmin db={db} />;
+  if (aba === "profissionais") return <ProfissionaisAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "empresas") return <EmpresasAdmin db={db} />;
   if (aba === "depositos") return <DepositosAdmin aviso={aviso} recarregar={recarregar} />;
 
