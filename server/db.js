@@ -261,6 +261,46 @@ db.exec(`
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
 
+  -- Central de leads: o funil que o vendedor opera.
+  CREATE TABLE IF NOT EXISTS leads (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    campaignId TEXT,
+    nome TEXT NOT NULL,
+    empresa TEXT DEFAULT '',
+    cargo TEXT DEFAULT '',
+    telefone TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    origem TEXT DEFAULT 'proprio',
+    etapa TEXT DEFAULT 'novo',
+    valorEstimado REAL DEFAULT 0,
+    motivoPerda TEXT DEFAULT '',
+    proximaAcao TEXT DEFAULT '',
+    proximaAcaoEm INTEGER,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id),
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  -- Linha do tempo do lead. Cada evento é evidência de execução: é o que
+  -- responde "a tarefa aconteceu?" em vez de "o vendedor disse que fez".
+  CREATE TABLE IF NOT EXISTS lead_events (
+    id TEXT PRIMARY KEY,
+    leadId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    resultado TEXT DEFAULT '',
+    duracao INTEGER DEFAULT 0,
+    valor REAL DEFAULT 0,
+    observacao TEXT DEFAULT '',
+    etapaAntes TEXT DEFAULT '',
+    etapaDepois TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (leadId) REFERENCES leads(id)
+  );
+
   -- Receita da plataforma (take rate), registrada a cada ação liberada.
   CREATE TABLE IF NOT EXISTS platform_earnings (
     id TEXT PRIMARY KEY,
