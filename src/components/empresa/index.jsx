@@ -14,10 +14,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
   return (
     <div className="vx-fade">
       <div className="vx-row" style={{ marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
-        <select className="vx-input vx-disp" style={{ width: "auto", fontSize: 16, padding: "8px 12px" }}
-          value={emp.id} onChange={(e) => up(() => ({ companyId: e.target.value }))}>
-          {db.companies.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
-        </select>
+        {/* Era um seletor para alternar entre empresas, do tempo em que não
+            havia login. Cada conta enxerga só a própria empresa. */}
+        <h1 className="vx-disp" style={{ fontSize: 20, margin: 0 }}>{emp.nome}</h1>
         <span className="vx-chip vx-mono">caixa {money(emp.saldo)}</span>
       </div>
 
