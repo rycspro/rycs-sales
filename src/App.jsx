@@ -168,7 +168,7 @@ export default function App() {
       </header>
 
       <Shell role={role} active={aba} onSelect={setAba} counts={counts}>
-        {role === "vendedor" && <Vendedor {...ctx} aba={aba} />}
+        {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
         {role === "empresa" && <Empresa {...ctx} aba={aba} />}
         {role === "admin" && <Admin {...ctx} aba={aba} />}
       </Shell>

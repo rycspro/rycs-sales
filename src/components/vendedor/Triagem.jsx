@@ -12,17 +12,17 @@ const TITULOS = {
   aprovado: "Você foi aprovado!",
   condicional: "Quase lá",
   reavaliacao: "Desenvolva seu perfil comercial",
-  reprovado: "Sua avaliação ainda não foi aprovada",
+  reprovado: "Perfil parcial liberado",
 };
 
 const RECADOS = {
-  aprovado: "Seu perfil comercial foi criado e você já pode acessar oportunidades compatíveis com suas habilidades.",
-  condicional: "Você tem bom potencial, mas recomendamos concluir alguns treinamentos. Seu acesso está liberado.",
-  reavaliacao: "Antes de acessar as oportunidades, complete a trilha da Academy e refaça a avaliação.",
-  reprovado: "Isso não significa que você não saiba vender. Significa que precisamos desenvolver algumas competências antes de liberar sua conta.",
+  aprovado: "Seu perfil comercial está completo e sua conta foi aprovada integralmente. As oportunidades compatíveis já estão liberadas.",
+  condicional: "Sua conta foi liberada com perfil parcial. Complete a trilha da Academy para elevar a classificação e desbloquear a aprovação plena.",
+  reavaliacao: "Sua conta foi liberada com perfil parcial. A trilha completa da Academy é o caminho para melhorar seu score e sua classificação.",
+  reprovado: "Isso não significa que você não saiba vender. Sua conta foi liberada com perfil parcial e a trilha completa da Academy fica disponível para você desenvolver as competências avaliadas.",
 };
 
-export default function Triagem({ aviso, recarregar }) {
+export default function Triagem({ aviso, recarregar, irAcademy }) {
   const [dados, setDados] = useState(null);
   const [historico, setHistorico] = useState(null);
   const [fase, setFase] = useState("intro"); // intro | prova | resultado
@@ -83,7 +83,9 @@ export default function Triagem({ aviso, recarregar }) {
     if (!r || r.error) return aviso(r?.error || "Não foi possível enviar a avaliação.");
     setResultado(r);
     setFase("resultado");
-    await recarregar?.();
+    // O recarregar não vem aqui de propósito: ele muda o status da conta para
+    // "parcial" e desmontaria esta tela antes de o profissional ler o
+    // resultado. Ele acontece quando o usuário escolhe seguir.
   };
 
   // ---------- Resultado ----------
@@ -91,6 +93,14 @@ export default function Triagem({ aviso, recarregar }) {
     const cor = CORES[resultado.status];
     const cats = resultado.categorias || {};
     const perfil = resultado.perfil || {};
+    const aprovadoPleno = resultado.status === "aprovado";
+
+    // Sair daqui é o que efetivamente aplica o novo status na sessão: ou o
+    // marketplace, para quem passou dos 90%, ou a Academy para os demais.
+    const seguir = async () => {
+      if (!aprovadoPleno) irAcademy?.();
+      await recarregar?.();
+    };
 
     return (
       <div className="vx-fade" style={{ maxWidth: 620 }}>
@@ -166,12 +176,18 @@ export default function Triagem({ aviso, recarregar }) {
           </>
         )}
 
-        {resultado.status !== "aprovado" && (
-          <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 18 }}
-            onClick={() => { setRespostas({}); setBloco(0); setFase("prova"); }}>
-            <RotateCcw size={14} /> Refazer a avaliação
+        <div style={{ display: "flex", flexDirection: "column", gap: 9, marginTop: 18 }}>
+          <button className="vx-btn vx-btn-primary vx-btn-block" onClick={seguir}>
+            {aprovadoPleno ? <>Acessar as oportunidades <ArrowRight size={14} /></>
+                           : <><GraduationCap size={14} /> Continuar na Academy</>}
           </button>
-        )}
+          {!aprovadoPleno && (
+            <button className="vx-btn vx-btn-block"
+              onClick={() => { setRespostas({}); setBloco(0); setFase("prova"); }}>
+              <RotateCcw size={14} /> Refazer a avaliação
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -210,9 +226,9 @@ export default function Triagem({ aviso, recarregar }) {
             marginTop: 18, padding: "12px 14px", borderRadius: 10, fontSize: 12.5,
             background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink-2)",
           }}>
-            Acima de <b>90%</b> a aprovação é imediata. Entre 80% e 90%, o acesso é liberado
-            com trilha recomendada. Abaixo disso, você completa a Academy e refaz a avaliação
-            quantas vezes precisar.
+            Sua conta é liberada ao concluir a avaliação. Acima de <b>90%</b> a aprovação é
+            plena; abaixo disso o perfil fica <b>parcial</b> e você segue para a Academy completa,
+            onde eleva sua classificação e pode refazer a avaliação quantas vezes precisar.
           </div>
 
           <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 18 }}
@@ -302,7 +318,7 @@ export default function Triagem({ aviso, recarregar }) {
             disabled={enviando || respondidas < dados.total}
             onClick={enviar}>
             {enviando ? "Calculando…" : respondidas < dados.total
-              ? `Faltam ${dados.total - respondidas} respostas`
+              ? (dados.total - respondidas === 1 ? "Falta 1 resposta" : `Faltam ${dados.total - respondidas} respostas`)
               : "Ver meu resultado"}
           </button>
         ) : (

@@ -6,9 +6,15 @@ import { perguntasPublicas, CATEGORIAS, FAIXAS, TOTAL_PERGUNTAS } from "../../sh
 
 const router = Router();
 
-// Só quem passou da triagem opera. "condicional" entra com acesso, mas com
-// trilha recomendada; abaixo disso, a conta existe e o marketplace não abre.
-export const LIBERA_MARKETPLACE = ["aprovado", "condicional"];
+// Concluir a triagem já dá acesso — o que muda é o grau. Acima de 90 a
+// aprovação é plena; abaixo disso o perfil fica PARCIAL, com acesso liberado
+// e trilha da Academy recomendada.
+//
+// Bloquear quem tira menos afastaria justamente o lado que precisamos atrair
+// primeiro. O filtro real acontece depois, na execução auditada.
+export const LIBERA_MARKETPLACE = ["aprovado", "condicional", "reavaliacao", "reprovado"];
+
+const statusDaConta = (faixa) => (faixa === "aprovado" ? "aprovado" : "parcial");
 
 router.get("/triagem/perguntas", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
@@ -38,7 +44,7 @@ router.get("/triagem/minhas", (req, res) => {
     tentativas,
     atual: tentativas[0] || null,
     statusConta: vendedor?.status || "triagem",
-    liberado: LIBERA_MARKETPLACE.includes(tentativas[0]?.status),
+    liberado: !!tentativas.length,
   });
 });
 
@@ -81,8 +87,8 @@ router.post("/triagem", (req, res) => {
       ins.run(uid(), assessmentId, entityId, d.id, JSON.stringify(respostas[d.id] ?? null), d.pontos, ts);
     }
 
-    // A conta só é aprovada por score. Não há caminho manual aqui.
-    const statusConta = LIBERA_MARKETPLACE.includes(r.status) ? "aprovado" : "triagem";
+    // O status da conta sai do score, sem caminho manual.
+    const statusConta = statusDaConta(r.status);
     db.prepare("UPDATE sellers SET status = ?, scoreTriagem = ?, perfilComercial = ?, perfil = ? WHERE id = ?")
       .run(statusConta, r.score, JSON.stringify(r.perfil), r.perfil.funcaoSugerida || "sdr", entityId);
   })();
@@ -90,10 +96,10 @@ router.post("/triagem", (req, res) => {
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(entityId);
   if (user) {
     const msg = {
-      aprovado: `Aprovado com ${r.score}%! Seu perfil comercial foi criado.`,
-      condicional: `Você fez ${r.score}%. Acesso liberado com trilha recomendada.`,
-      reavaliacao: `Você fez ${r.score}%. Complete a trilha e refaça a avaliação.`,
-      reprovado: `Você fez ${r.score}%. Complete a trilha obrigatória para tentar de novo.`,
+      aprovado: `Aprovado com ${r.score}%! Seu perfil comercial está completo.`,
+      condicional: `Você fez ${r.score}%. Perfil parcial liberado — complete a Academy para a aprovação plena.`,
+      reavaliacao: `Você fez ${r.score}%. Perfil parcial liberado. A trilha da Academy eleva sua classificação.`,
+      reprovado: `Você fez ${r.score}%. Perfil parcial liberado com trilha obrigatória na Academy.`,
     }[r.status];
     notificar(user.id, "triagem", "Resultado da triagem", msg);
   }
@@ -105,7 +111,9 @@ router.post("/triagem", (req, res) => {
     categorias: r.categorias,
     perfil: r.perfil,
     tentativa: anteriores + 1,
-    liberado: LIBERA_MARKETPLACE.includes(r.status),
+    liberado: true,
+    statusConta: statusDaConta(r.status),
+    proximoPasso: r.status === "aprovado" ? "marketplace" : "academy",
   });
 });
 

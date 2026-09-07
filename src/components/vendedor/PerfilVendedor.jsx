@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 
 export default function PerfilVendedor({ eu, db, up, setDb, aviso }) {
+  // Abaixo de 90% na triagem a conta entra liberada, porém parcial: a Academy
+  // é o caminho para chegar à aprovação plena.
+  const parcial = eu.status === "parcial";
   const stats = useMemo(() => {
     const meus = db.submissions.filter((s) => s.sellerId === eu.id);
     const lib = meus.filter((s) => s.status === "liberado");
@@ -23,6 +26,10 @@ export default function PerfilVendedor({ eu, db, up, setDb, aviso }) {
               {eu.perfil === "sdr" ? "SDR" : eu.perfil === "closer" ? "Closer" : "Iniciante"} · {eu.cidade || "—"}
             </div>
           </div>
+          <span className={"vx-badge " + (parcial ? "vx-badge-amber" : "vx-badge-brand")} style={{ marginLeft: "auto" }}>
+            {parcial ? "Perfil parcial" : "Perfil aprovado"}
+            {eu.scoreTriagem != null && <> · {eu.scoreTriagem}%</>}
+          </span>
         </div>
         <hr className="vx-sep" />
         <div className="vx-grid vx-g4">
@@ -35,6 +42,9 @@ export default function PerfilVendedor({ eu, db, up, setDb, aviso }) {
         </div>
         <hr className="vx-sep" />
         <div className="vx-mut" style={{ fontSize: 12 }}>
+          {parcial && <div style={{ marginBottom: 8, color: "var(--amber)" }}>
+            Seu perfil está parcial. Conclua a trilha da Academy e refaça a avaliação para chegar à aprovação plena.
+          </div>}
           Taxa de aprovação abaixo de 60% em 20 ações tira você do topo da fila das empresas.
         </div>
       </div>

@@ -50,15 +50,14 @@ export function classificar(score) {
 const q = (id, categoria, texto, tipo, extra = {}) => ({ id, categoria, texto, tipo, ...extra });
 
 export const PERGUNTAS = [
-  // ---- Experiência ----
-  q("exp1", "experiencia", "Há quanto tempo você trabalha com vendas?", "unica", {
-    opcoes: [["Nunca trabalhei com vendas", 0], ["Menos de 1 ano", 3], ["1 a 3 anos", 6], ["3 a 5 anos", 8], ["Mais de 5 anos", 10]],
-  }),
-  q("exp2", "experiencia", "Você já vendeu para empresas (B2B)?", "unica", {
-    opcoes: [["Não, apenas para consumidor final", 4], ["Sim, ocasionalmente", 7], ["Sim, é o meu principal mercado", 10]],
-  }),
+  // 17 perguntas cobrindo as 10 categorias. A distribuição segue os pesos:
+  // categorias de 15% e 10% ganham duas perguntas, as de 5% ganham uma.
+  // Três são abertas — o suficiente para avaliar raciocínio sem transformar
+  // a triagem em redação.
+
+  // ---- Experiência (10%) ----
   q("exp3", "experiencia", "Qual o maior ticket que você já vendeu?", "unica", {
-    opcoes: [["Até R$ 500", 3], ["R$ 500 a R$ 5.000", 6], ["R$ 5.000 a R$ 50.000", 8], ["Acima de R$ 50.000", 10]],
+    opcoes: [["Nunca vendi", 0], ["Até R$ 500", 3], ["R$ 500 a R$ 5.000", 6], ["R$ 5.000 a R$ 50.000", 8], ["Acima de R$ 50.000", 10]],
     perfil: "ticketMaximo",
   }),
   q("exp4", "experiencia", "Em quais segmentos você já vendeu?", "multipla", {
@@ -67,26 +66,19 @@ export const PERGUNTAS = [
     perfil: "segmentos",
   }),
 
-  // ---- Prospecção ----
+  // ---- Prospecção (15%) ----
   q("pro1", "prospeccao", "Quantos contatos comerciais você consegue fazer por dia?", "unica", {
     opcoes: [["Até 10", 3], ["10 a 30", 6], ["30 a 50", 8], ["50 a 100", 10], ["Mais de 100", 10]],
     perfil: "capacidadeDiaria",
   }),
-  q("pro2", "prospeccao", "Quais canais de prospecção você domina?", "multipla", {
-    opcoes: [["Ligação", 10], ["WhatsApp", 8], ["E-mail", 8], ["LinkedIn", 9], ["Instagram", 6], ["Visita presencial", 10]],
-    perfil: "canais",
-  }),
-  q("pro3", "prospeccao", "Você se sente confortável fazendo prospecção ativa, sem lead prévio?", "unica", {
-    opcoes: [["Não, prefiro só atender demanda", 2], ["Parcialmente", 6], ["Sim, é o que faço melhor", 10]],
-  }),
   q("pro4", "prospeccao", "Quando um prospect não responde, qual é a sua estratégia?", "aberta", {
     rubrica: {
       bons: ["cadência", "cadencia", "canal", "horário", "horario", "tentativ", "follow", "insist", "variar", "sequência", "sequencia", "dias"],
-      ruins: ["desisto", "deixo", "espero", "aguardo", "próximo", "proximo lead"],
+      ruins: ["desisto", "deixo", "espero", "aguardo", "próximo lead", "proximo lead"],
     },
   }),
 
-  // ---- Comunicação ----
+  // ---- Comunicação (10%) ----
   q("com1", "comunicacao", "Numa primeira ligação, o que você faz primeiro?", "unica", {
     opcoes: [["Apresento o produto e as funcionalidades", 3], ["Falo o preço para filtrar rápido", 1],
              ["Pergunto sobre o problema que a pessoa vive hoje", 10], ["Conto a história da empresa", 2]],
@@ -94,26 +86,11 @@ export const PERGUNTAS = [
   q("com2", "comunicacao", "Numa conversa comercial, quem deve falar mais?", "unica", {
     opcoes: [["Eu, para mostrar domínio", 2], ["O cliente, e eu conduzo com perguntas", 10], ["Meio a meio", 6]],
   }),
-  q("com3", "comunicacao", "O cliente pede: 'me manda uma apresentação pelo WhatsApp'. O que você responde?", "aberta", {
-    rubrica: {
-      bons: ["pergunt", "o que", "preciso saber", "personaliz", "antes", "entender", "minutos", "conversa", "ligação", "ligacao", "específic", "especific"],
-      ruins: ["mando", "envio agora", "já mando", "ja mando", "claro", "sem problema"],
-    },
-  }),
 
-  // ---- Negociação ----
+  // ---- Negociação (15%) ----
   q("neg1", "negociacao", "O cliente diz 'está muito caro'. Qual é sua primeira reação?", "unica", {
     opcoes: [["Ofereço um desconto para não perder", 1], ["Pergunto com o que ele está comparando", 9],
              ["Retomo o custo do problema que ele mesmo descreveu", 10], ["Digo que o preço é esse mesmo", 3]],
-  }),
-  q("neg2", "negociacao", "Você costuma oferecer desconto para fechar?", "unica", {
-    opcoes: [["Sempre", 1], ["Frequentemente", 3], ["Às vezes", 6], ["Raramente", 9], ["Nunca", 8]],
-  }),
-  q("neg3", "negociacao", "O cliente diz que já tem fornecedor. Como você segue?", "aberta", {
-    rubrica: {
-      bons: ["pergunt", "o que funciona", "o que falta", "satisfeit", "contrato", "renovação", "renovacao", "compar", "prazo", "dor", "insatisf"],
-      ruins: ["desisto", "agradeço", "agradeco", "encerro", "melhor preço", "melhor preco", "mais barato"],
-    },
   }),
   q("neg4", "negociacao", "'Seu concorrente é 30% mais barato.' Como você responde?", "aberta", {
     rubrica: {
@@ -122,88 +99,50 @@ export const PERGUNTAS = [
     },
   }),
 
-  // ---- Reuniões ----
-  q("reu1", "reunioes", "Você tem experiência conduzindo reuniões comerciais?", "unica", {
-    opcoes: [["Nunca conduzi", 0], ["Algumas vezes", 5], ["Sim, com frequência", 8], ["Sim, é minha principal atividade", 10]],
-  }),
-  q("reu2", "reunioes", "Quais formatos você domina?", "multipla", {
-    opcoes: [["Presencial", 10], ["Google Meet", 8], ["Zoom", 8], ["Microsoft Teams", 8], ["Telefone", 7]],
+  // ---- Reuniões (15%) ----
+  q("reu2", "reunioes", "Quais formatos de reunião você domina?", "multipla", {
+    opcoes: [["Presencial", 10], ["Google Meet", 8], ["Zoom", 8], ["Microsoft Teams", 8], ["Telefone", 7], ["Nenhum", 0]],
     perfil: "formatos",
   }),
   q("reu3", "reunioes", "Em qual momento da reunião você apresenta o preço?", "unica", {
     opcoes: [["Logo no início, para não perder tempo", 2], ["Depois de entender a dor e dimensionar o custo dela", 10],
              ["Quando o cliente pergunta", 5], ["No final, sempre", 6]],
   }),
-  q("reu4", "reunioes", "O que caracteriza uma reunião comercial bem-sucedida?", "aberta", {
-    rubrica: {
-      bons: ["próximo passo", "proximo passo", "data", "compromisso", "dor", "diagnóstic", "diagnostic", "qualific", "decisor", "orçament", "orcament"],
-      ruins: ["cliente gostou", "foi boa", "simpátic", "simpatic", "apresentei"],
-    },
-  }),
 
-  // ---- Qualificação ----
+  // ---- Qualificação (10%) ----
   q("qua1", "qualificacao", "O que você precisa confirmar antes de agendar uma reunião?", "multipla", {
     opcoes: [["Que existe um problema reconhecido", 10], ["Que há orçamento ou caminho para ele", 10],
              ["Que a pessoa participa da decisão", 10], ["Apenas que ela tem interesse", 2], ["Apenas o horário disponível", 0]],
-  }),
-  q("qua2", "qualificacao", "Você está numa reunião. Quais informações busca descobrir primeiro?", "aberta", {
-    rubrica: {
-      bons: ["dor", "problema", "processo atual", "custo", "quanto", "decisor", "decide", "prazo", "orçament", "orcament", "tentaram", "hoje"],
-      ruins: ["produto", "apresent", "funcionalidade", "preço", "preco"],
-    },
   }),
   q("qua3", "qualificacao", "Reunião marcada com quem não decide:", "unica", {
     opcoes: [["Conta como resultado, o volume importa", 1], ["É retrabalho e tende a não avançar", 10],
              ["Vale igual, o contato pode indicar", 5]],
   }),
 
-  // ---- Objeções ----
+  // ---- Objeções (10%) ----
   q("obj1", "objecoes", "'Vou pensar e depois te retorno.' Como você conduz?", "aberta", {
     rubrica: {
       bons: ["pergunt", "o que", "dúvida", "duvida", "ficou", "falta", "próximo passo", "proximo passo", "data", "quando", "específic", "especific"],
       ruins: ["aguardo", "espero", "tudo bem", "fico no aguardo", "mando mensagem depois"],
     },
   }),
-  q("obj2", "objecoes", "Uma objeção, na prática, costuma ser:", "unica", {
-    opcoes: [["Um não definitivo", 1], ["Um pedido de mais informação", 10], ["Sinal de que o cliente não tem dinheiro", 3],
-             ["Falha na apresentação", 5]],
-  }),
   q("obj3", "objecoes", "Quantas tentativas você faz antes de considerar um contato perdido?", "unica", {
     opcoes: [["1 ou 2", 2], ["3 a 5", 6], ["6 ou mais, variando canal e horário", 10]],
   }),
 
-  // ---- Fechamento ----
-  q("fec1", "fechamento", "O cliente demonstra interesse mas não quer assumir um próximo compromisso. O que você faz?", "aberta", {
-    rubrica: {
-      bons: ["pergunt", "o que impede", "dúvida", "duvida", "prazo", "data", "quando", "reduz", "menor", "próximo", "proximo", "falta"],
-      ruins: ["deixo", "espero", "aguardo", "insisto", "pressiono", "desconto"],
-    },
-  }),
+  // ---- Fechamento (5%) ----
   q("fec2", "fechamento", "Toda reunião deve terminar com:", "unica", {
     opcoes: [["Um agradecimento", 2], ["A promessa de enviar a proposta", 5],
              ["Data, responsável e ação definidos", 10], ["O cliente dizendo que vai pensar", 0]],
   }),
 
-  // ---- Disciplina ----
-  q("dis1", "disciplina", "Quantas horas por dia você consegue dedicar a vendas?", "unica", {
-    opcoes: [["Menos de 1 hora", 1], ["1 a 2 horas", 4], ["3 a 4 horas", 8], ["Mais de 4 horas", 10]],
-    perfil: "horasDia",
-  }),
+  // ---- Disciplina (5%) ----
   q("dis2", "disciplina", "Se receber 50 leads hoje, em quanto tempo faz o primeiro contato?", "unica", {
     opcoes: [["Na mesma hora", 10], ["No mesmo dia", 8], ["Em até 3 dias", 4], ["Conforme der tempo", 1]],
-  }),
-  q("dis3", "disciplina", "Como você organiza seus follow-ups?", "aberta", {
-    rubrica: {
-      bons: ["agenda", "crm", "planilha", "lembrete", "data", "sistema", "todo dia", "rotina", "bloco", "cadência", "cadencia"],
-      ruins: ["memória", "memoria", "de cabeça", "de cabeca", "quando lembro", "não uso", "nao uso"],
-    },
+    perfil: "velocidadeContato",
   }),
 
-  // ---- Conhecimento comercial ----
-  q("con1", "conhecimento", "O que significa ICP em vendas?", "unica", {
-    opcoes: [["Índice de Conversão de Propostas", 0], ["Perfil de Cliente Ideal", 10],
-             ["Instrução de Contato Padrão", 0], ["Não conheço o termo", 1]],
-  }),
+  // ---- Conhecimento comercial (5%) ----
   q("con2", "conhecimento", "Qual a diferença entre SDR e Closer?", "unica", {
     opcoes: [["Não há diferença prática", 0], ["O SDR qualifica e agenda; o Closer conduz e fecha", 10],
              ["O SDR vende barato e o Closer vende caro", 2], ["O SDR trabalha por telefone e o Closer presencialmente", 3]],

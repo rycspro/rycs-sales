@@ -8,15 +8,16 @@ import Academy from "./Academy.jsx";
 import Indicacoes from "../Indicacoes.jsx";
 import Triagem from "./Triagem.jsx";
 
-export default function Vendedor({ db, setDb, up, aviso, aba, recarregar }) {
+export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
   if (!eu) return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
-  // Quem ainda não passou na triagem não chega ao marketplace: a avaliação é
-  // a única tela disponível até o score liberar a conta.
+  // Só quem ainda não fez a avaliação fica retido nela. Concluída, o perfil
+  // é liberado — pleno acima de 90%, parcial abaixo — e a Academy passa a ser
+  // o caminho para elevar a classificação.
   if (eu.status === "triagem" || eu.status === "recusado")
-    return <Triagem aviso={aviso} recarregar={recarregar} />;
+    return <Triagem aviso={aviso} recarregar={recarregar} irAcademy={() => setAba("academy")} />;
 
   const empresaAberta = db.companies.find((c) => c.id === abertaId);
 
