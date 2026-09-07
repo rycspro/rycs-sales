@@ -6,25 +6,53 @@ import { emailStatusAcao } from "../services/email.js";
 import { TAXA } from "../../shared/acoes.js";
 import { takeRateDoPlano } from "../../shared/planos.js";
 import { recalcularCompanyScore } from "../services/companyScore.js";
+import { auditar, statusDoVeredito } from "../services/auditoria.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
 
 const router = Router();
 
-router.post("/submissions", (req, res) => {
-  const { sellerId, companyId, campaignId, tipo, valor, prova } = req.body;
+router.post("/submissions", async (req, res) => {
+  const { sellerId, companyId, campaignId, tipo, prova } = req.body;
   const { role, entityId } = req.user;
 
   if (role === "vendedor" && entityId !== sellerId)
     return res.status(403).json({ error: "Sem permissão" });
-
   if (!tipo || !companyId) return res.status(400).json({ error: "tipo e companyId são obrigatórios" });
+
+  const empresa = db.prepare("SELECT comissoes, assinatura FROM companies WHERE id = ?").get(companyId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  // O valor vem da tabela da empresa, não do corpo da requisição. Aceitar o
+  // valor enviado pelo cliente deixaria o vendedor definir quanto vale a
+  // própria ação.
+  const comissoes = JSON.parse(empresa.comissoes || "{}");
+  const valor = Number(comissoes[tipo]);
+  if (!Number.isFinite(valor) || valor <= 0)
+    return res.status(400).json({ error: "Esta empresa não remunera este tipo de ação." });
 
   const id = uid();
   db.prepare(`
     INSERT INTO submissions (id, sellerId, companyId, campaignId, tipo, valor, prova, status, criadoEm)
     VALUES (?, ?, ?, ?, ?, ?, ?, 'analisando', ?)
-  `).run(id, sellerId, companyId, campaignId || null, tipo, valor || 0, JSON.stringify(prova || {}), agora());
-  res.json({ id });
+  `).run(id, sellerId, companyId, campaignId || null, tipo, valor, JSON.stringify(prova || {}), agora());
+
+  // Auditoria no servidor. O veredito nunca passa pelo cliente.
+  const r = await auditar({ tipo, prova });
+  const status = statusDoVeredito(r.veredito);
+  const liquido = +(valor * (1 - takeRateDoPlano(empresa.assinatura))).toFixed(2);
+
+  db.transaction(() => {
+    db.prepare("UPDATE submissions SET status = ?, confianca = ?, motivo = ?, fonte = ? WHERE id = ?")
+      .run(status, r.confianca, r.motivo, r.fonte, id);
+    // Recusada não fica pendente: não há o que esperar.
+    if (status !== "ia_recusado")
+      db.prepare("UPDATE sellers SET pendente = pendente + ? WHERE id = ?").run(liquido, sellerId);
+  })();
+
+  if (status === "ia_recusado") recalcularScore(sellerId);
+  recalcularCompanyScore(companyId);
+
+  res.json({ id, status, confianca: r.confianca, motivo: r.motivo, fonte: r.fonte, valor });
 });
 
 router.patch("/submissions/:id", (req, res) => {

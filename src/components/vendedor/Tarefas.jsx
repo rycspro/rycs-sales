@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { api, apiPatch } from "../../lib/api.js";
+import { api } from "../../lib/api.js";
 import { uid, agora, money } from "../../lib/utils.js";
 import { ACOES, CAMPOS, ORDEM_ACOES, TAXA } from "../../lib/constants.js";
-import { analisarComIA } from "../../lib/analise.js";
 import { Campo, Vazio } from "../ui.jsx";
 
-export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCurso }) {
+export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCurso, recarregar }) {
   const [tipo, setTipo] = useState(null);
   const [prova, setProva] = useState({});
   const [enviando, setEnviando] = useState(false);
@@ -25,36 +24,24 @@ export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCur
     if (!/^https?:\/\/\S+/i.test(String(prova.video || "").trim()))
       return aviso("Cole um link de vídeo válido, começando com http:// ou https://.");
 
-    const valor = empresa.comissoes[tipo];
-    const liquido = +(valor * (1 - TAXA)).toFixed(2);
-    const id = uid();
     setEnviando(true);
 
-    const backendSub = await api("/submissions", { sellerId: eu.id, companyId: empresa.id, tipo, valor, prova });
-    const realId = backendSub?.id || id;
+    // O servidor calcula o valor pela tabela da empresa, audita e devolve o
+    // veredito pronto. A tela não decide nada disso — antes ela chamava a IA
+    // e depois gravava o resultado, o que permitia pular a análise.
+    const r = await api("/submissions", { sellerId: eu.id, companyId: empresa.id, tipo, prova });
+    setEnviando(false);
 
-    setDb((d) => ({
-      ...d,
-      submissions: [{ id: realId, sellerId: eu.id, companyId: empresa.id, tipo, valor, prova, status: "analisando", criadoEm: agora() }, ...d.submissions],
-      sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, pendente: +(s.pendente + liquido).toFixed(2) } : s),
-    }));
-    apiPatch(`/sellers/${eu.id}`, { pendente: +(eu.pendente + liquido).toFixed(2) });
-    setTipo(null); setProva({}); setEnviando(false);
-    aviso("Comprovação enviada. A IA já está analisando o vídeo e os dados.");
+    if (!r || r.error) return aviso(r?.error || "Não foi possível enviar a comprovação.");
 
-    const r = await analisarComIA({ tipo, prova });
-    const status = r.veredito === "aprovado" ? "ia_aprovado" : r.veredito === "recusado" ? "ia_recusado" : "revisao";
-    apiPatch(`/submissions/${realId}`, { status, confianca: r.confianca, motivo: r.motivo, fonte: r.fonte });
-    if (status === "ia_recusado") {
-      apiPatch(`/sellers/${eu.id}`, { pendente: +Math.max(0, eu.pendente).toFixed(2) });
-    }
-    setDb((d) => ({
-      ...d,
-      submissions: d.submissions.map((s) => s.id === realId ? { ...s, status, confianca: r.confianca, motivo: r.motivo, fonte: r.fonte } : s),
-      sellers: status === "ia_recusado"
-        ? d.sellers.map((s) => s.id === eu.id ? { ...s, pendente: +Math.max(0, s.pendente - liquido).toFixed(2) } : s)
-        : d.sellers,
-    }));
+    setTipo(null); setProva({});
+    await recarregar();
+
+    aviso({
+      ia_aprovado: "Comprovação aprovada pela análise automática.",
+      revisao: "Enviada para conferência da empresa.",
+      ia_recusado: `Recusada: ${r.motivo}`,
+    }[r.status] || "Comprovação enviada.");
   };
 
   return (

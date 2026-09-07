@@ -19,7 +19,7 @@ export default function Vendedor({ db, setDb, up, aviso, aba, recarregar }) {
   const empresaAberta = db.companies.find((c) => c.id === abertaId);
 
   if (empresaAberta)
-    return <Workspace empresa={empresaAberta} eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} voltar={() => setAbertaId(null)} />;
+    return <Workspace empresa={empresaAberta} eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} voltar={() => setAbertaId(null)} recarregar={recarregar} />;
 
   return (
     <>
