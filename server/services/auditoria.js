@@ -1,87 +1,71 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { ACOES, CAMPOS, SISTEMA_AUDITOR } from "../../shared/acoes.js";
+import db from "../db.js";
+import { ACOES } from "../../shared/acoes.js";
+import { avaliar } from "./regras.js";
 
-// A auditoria roda no servidor, no momento em que a ação é criada.
+// Auditoria da RYCS — roda no servidor, sem depender de IA externa.
 //
-// Antes ela vivia no navegador: a tela chamava a IA e depois gravava o
-// veredito na própria ação. Isso permitia ao vendedor pular a análise e
-// escrever "aprovado" na própria tarefa — auto-aprovar o próprio trabalho.
-// Aqui o veredito nunca passa pelo cliente.
+// Antes o veredito vinha de uma chamada à Anthropic. O motor de regras faz a
+// triagem localmente: é gratuito, instantâneo, reproduzível e explicável —
+// cada recusa lista exatamente o que pesou, o que a IA não garantia.
+//
+// O que ele não faz é julgar conteúdo: não assiste ao vídeo nem interpreta
+// nuance. Por isso o desenho continua sendo triagem, com "revisao" mandando
+// para conferência humana da empresa sempre que houver dúvida.
 
-const client = process.env.ANTHROPIC_API_KEY
-  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  : null;
+const UMA_HORA = 3600000;
+const JANELA_CLIENTE = 24 * UMA_HORA;
 
-if (!client) console.warn("[auditoria] ANTHROPIC_API_KEY ausente — usando triagem por heurística.");
-
-// Plano B determinístico. Existe para o sistema nunca travar sem veredito:
-// sem ele, uma falha da IA deixaria a ação parada para sempre, que é
-// exatamente o que estava acontecendo.
-export function heuristica(prova, camposReq) {
-  let pontos = 0;
-  const motivos = [];
-
-  const video = String(prova?.video || "").trim();
-  if (/^https?:\/\/\S+/i.test(video)) pontos += 34;
-  else motivos.push("link de vídeo ausente ou inválido");
-
-  const cliente = String(prova?.cliente || "").trim();
-  if (cliente.length >= 5 && !/^(teste|test|asdf|a+|cliente ?\d*|x+|nome)$/i.test(cliente)) pontos += 26;
-  else motivos.push("nome do cliente genérico");
+// Reúne o histórico que transforma checagem de formato em detecção de fraude.
+function montarContexto({ sellerId, companyId, prova }) {
+  const ctx = {};
 
   const telefone = String(prova?.telefone || "").replace(/\D/g, "");
-  const precisaTelefone = camposReq.includes("telefone");
-  if (!precisaTelefone || telefone.length >= 10) pontos += 22;
-  else motivos.push("telefone incompleto");
+  const video = String(prova?.video || "").trim();
+  const cliente = String(prova?.cliente || "").trim().toLowerCase();
 
-  // Dígitos repetidos são o padrão mais comum de telefone inventado.
-  if (precisaTelefone && /^(\d)\1+$/.test(telefone)) { pontos -= 30; motivos.push("telefone com dígitos repetidos"); }
+  const anteriores = db.prepare(
+    "SELECT prova, companyId, criadoEm, status FROM submissions WHERE sellerId = ? ORDER BY criadoEm DESC LIMIT 200"
+  ).all(sellerId);
 
-  const preenchidos = camposReq.every((c) => String(prova?.[c] || "").trim().length > 0);
-  if (preenchidos) pontos += 18;
-  else motivos.push("campo obrigatório vazio");
+  const agora = Date.now();
+  let acoesUltimaHora = 0;
 
-  pontos = Math.max(0, Math.min(100, pontos));
-  const veredito = pontos >= 78 ? "aprovado" : pontos >= 48 ? "revisao" : "recusado";
-  const texto = motivos.length ? motivos.join(", ") : "dados consistentes com o exigido";
+  for (const a of anteriores) {
+    let p = {};
+    try { p = JSON.parse(a.prova || "{}"); } catch { /* prova corrompida */ }
 
-  return {
-    veredito,
-    confianca: Math.max(5, Math.min(96, pontos)),
-    motivo: texto[0].toUpperCase() + texto.slice(1) + ".",
-    fonte: "heuristica",
-  };
+    if (agora - a.criadoEm < UMA_HORA) acoesUltimaHora++;
+
+    const tel = String(p.telefone || "").replace(/\D/g, "");
+    if (telefone && tel && tel === telefone) ctx.telefoneRepetido = true;
+
+    if (video && String(p.video || "").trim() === video) ctx.videoRepetido = true;
+
+    if (cliente && String(p.cliente || "").trim().toLowerCase() === cliente
+        && agora - a.criadoEm < JANELA_CLIENTE) ctx.clienteRepetidoRecente = true;
+  }
+
+  ctx.acoesUltimaHora = acoesUltimaHora;
+  ctx.primeiraAcaoNaEmpresa = !anteriores.some((a) => a.companyId === companyId);
+
+  const decididas = anteriores.filter((a) => ["liberado", "recusado", "ia_recusado"].includes(a.status));
+  const aprovadas = anteriores.filter((a) => a.status === "liberado");
+  ctx.totalDecididas = decididas.length;
+  ctx.totalAprovadas = aprovadas.length;
+  ctx.taxaAprovacao = decididas.length ? Math.round((aprovadas.length / decididas.length) * 100) : 100;
+
+  const empresa = db.prepare("SELECT ticket FROM companies WHERE id = ?").get(companyId);
+  ctx.ticketEmpresa = Number(String(empresa?.ticket || "").replace(/[^\d]/g, "")) || 0;
+
+  return ctx;
 }
 
-export async function auditar({ tipo, prova }) {
+export async function auditar({ tipo, prova, sellerId, companyId }) {
   const acao = ACOES[tipo];
   if (!acao) return { veredito: "revisao", confianca: 0, motivo: "Tipo de ação desconhecido.", fonte: "sistema" };
 
-  if (!client) return heuristica(prova, acao.prova);
-
-  try {
-    const linhas = acao.prova.map((c) => `${CAMPOS[c]?.label || c}: ${prova?.[c] || "(vazio)"}`).join("\n");
-    const resposta = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 200,
-      system: SISTEMA_AUDITOR,
-      messages: [{ role: "user", content: `Ação: ${acao.nome}\nRegra: ${acao.regra}\n\nDados enviados pelo vendedor:\n${linhas}` }],
-    });
-
-    const texto = resposta.content.map((b) => b.text || "").join("").replace(/```json|```/g, "").trim();
-    const j = JSON.parse(texto);
-
-    return {
-      veredito: ["aprovado", "revisao", "recusado"].includes(j.veredito) ? j.veredito : "revisao",
-      confianca: Math.max(0, Math.min(100, Math.round(Number(j.confianca) || 50))),
-      motivo: String(j.motivo || "Analisado pela IA.").slice(0, 200),
-      fonte: "ia",
-    };
-  } catch (err) {
-    // Falha da IA não pode travar a esteira: cai na heurística e segue.
-    console.error("[auditoria] IA indisponível:", err.message);
-    return heuristica(prova, acao.prova);
-  }
+  const contexto = sellerId && companyId ? montarContexto({ sellerId, companyId, prova }) : {};
+  return avaliar({ tipo, prova, camposReq: acao.prova, contexto });
 }
 
 export const statusDoVeredito = (v) =>

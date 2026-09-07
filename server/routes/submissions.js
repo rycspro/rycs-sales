@@ -30,20 +30,19 @@ router.post("/submissions", async (req, res) => {
   if (!Number.isFinite(valor) || valor <= 0)
     return res.status(400).json({ error: "Esta empresa não remunera este tipo de ação." });
 
-  const id = uid();
-  db.prepare(`
-    INSERT INTO submissions (id, sellerId, companyId, campaignId, tipo, valor, prova, status, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'analisando', ?)
-  `).run(id, sellerId, companyId, campaignId || null, tipo, valor, JSON.stringify(prova || {}), agora());
-
-  // Auditoria no servidor. O veredito nunca passa pelo cliente.
-  const r = await auditar({ tipo, prova });
+  // A auditoria roda ANTES de gravar. Auditar depois faria o motor encontrar a
+  // própria ação recém-inserida no histórico e acusar repetição consigo mesma.
+  const r = await auditar({ tipo, prova, sellerId, companyId });
   const status = statusDoVeredito(r.veredito);
   const liquido = +(valor * (1 - takeRateDoPlano(empresa.assinatura))).toFixed(2);
 
+  const id = uid();
   db.transaction(() => {
-    db.prepare("UPDATE submissions SET status = ?, confianca = ?, motivo = ?, fonte = ? WHERE id = ?")
-      .run(status, r.confianca, r.motivo, r.fonte, id);
+    db.prepare(`
+      INSERT INTO submissions (id, sellerId, companyId, campaignId, tipo, valor, prova, status, confianca, motivo, fonte, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, sellerId, companyId, campaignId || null, tipo, valor,
+           JSON.stringify(prova || {}), status, r.confianca, r.motivo, r.fonte, agora());
     // Recusada não fica pendente: não há o que esperar.
     if (status !== "ia_recusado")
       db.prepare("UPDATE sellers SET pendente = pendente + ? WHERE id = ?").run(liquido, sellerId);
