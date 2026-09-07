@@ -1,20 +1,22 @@
 import { useState } from "react";
 import Cadastro from "./Cadastro.jsx";
-import StatusTriagem from "./StatusTriagem.jsx";
 import ListaEmpresas from "./ListaEmpresas.jsx";
 import Workspace from "./Workspace.jsx";
 import Carteira from "./Carteira.jsx";
 import PerfilVendedor from "./PerfilVendedor.jsx";
 import Academy from "./Academy.jsx";
 import Indicacoes from "../Indicacoes.jsx";
+import Triagem from "./Triagem.jsx";
 
 export default function Vendedor({ db, setDb, up, aviso, aba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
   if (!eu) return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
+  // Quem ainda não passou na triagem não chega ao marketplace: a avaliação é
+  // a única tela disponível até o score liberar a conta.
   if (eu.status === "triagem" || eu.status === "recusado")
-    return <StatusTriagem eu={eu} up={up} db={db} />;
+    return <Triagem aviso={aviso} recarregar={recarregar} />;
 
   const empresaAberta = db.companies.find((c) => c.id === abertaId);
 
