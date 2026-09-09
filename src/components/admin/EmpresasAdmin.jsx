@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { money, dataCurta, agora } from "../../lib/utils.js";
-import { TAXA } from "../../lib/constants.js";
 import { Medidor, Excluir } from "../ui.jsx";
+import { apiPatch } from "../../lib/api.js";
+import { takeRateDoPlano } from "../../../shared/planos.js";
 
 export default function EmpresasAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
@@ -13,7 +14,7 @@ export default function EmpresasAdmin({ db, up, aviso }) {
       const subs = db.submissions.filter((s) => s.companyId === c.id);
       const liberados = subs.filter((s) => s.status === "liberado");
       const totalLiberado = liberados.reduce((a, s) => a + s.valor, 0);
-      const receitaTaxa = totalLiberado * TAXA;
+      const receitaTaxa = totalLiberado * takeRateDoPlano(c.assinatura);
       const profissionais = db.sellers.filter((s) => s.aplicacoes?.[c.id] === "aprovado").length;
       const diasAtivos = Math.max(1, Math.ceil((agora() - c.criadoEm) / 86400000));
       const burnDiario = totalLiberado / diasAtivos;
@@ -30,6 +31,12 @@ export default function EmpresasAdmin({ db, up, aviso }) {
 
   const totalSaldo = empresas.reduce((a, c) => a + c.saldo, 0);
   const totalAportado = empresas.reduce((a, c) => a + (c.totalAportado || 0), 0);
+  const decidirCadastro = async (c, statusCadastro) => {
+    const r = await apiPatch(`/companies/${c.id}/status`, { statusCadastro });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível atualizar o cadastro.");
+    up?.((d) => ({ companies: d.companies.map((x) => x.id === c.id ? { ...x, statusCadastro } : x) }));
+    aviso(statusCadastro === "aprovada" ? `${c.nome} aprovada para operar.` : `${c.nome} suspensa.`);
+  };
 
   return (
     <div className="vx-fade">
@@ -65,6 +72,7 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <b style={{ fontSize: 15 }}>{c.nome}</b>
                     {c.destaque && <span className="vx-badge vx-badge-amber">Destaque</span>}
+                    <span className={`vx-badge ${c.statusCadastro === "aprovada" ? "vx-badge-brand" : c.statusCadastro === "em_analise" ? "vx-badge-amber" : "vx-badge-muted"}`}>{({ rascunho: "Rascunho", em_analise: "Em análise", aprovada: "Aprovada", suspensa: "Suspensa" })[c.statusCadastro] || "Rascunho"}</span>
                   </div>
                   <div className="vx-mut" style={{ fontSize: 12 }}>{c.profissionais} profissionais · {c.liberados} ações liberadas</div>
                 </div>
@@ -105,6 +113,13 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                   )}
 
                   <hr className="vx-sep" />
+                  <div className="vx-row" style={{ marginBottom: 12, alignItems: "center" }}>
+                    <div><b style={{ fontSize: 13 }}>Habilitação operacional</b><div className="vx-mut" style={{ fontSize: 12 }}>A aprovação libera publicação de campanhas.</div></div>
+                    <div style={{ display: "flex", gap: 7 }}>
+                      {c.statusCadastro !== "aprovada" && <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => decidirCadastro(c, "aprovada")}>Aprovar empresa</button>}
+                      {c.statusCadastro === "aprovada" && <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => decidirCadastro(c, "suspensa")}>Suspender</button>}
+                    </div>
+                  </div>
                   <Excluir
                     key={c.id}
                     rota={`/companies/${c.id}`}

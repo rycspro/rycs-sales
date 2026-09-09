@@ -55,12 +55,28 @@ router.post("/leads", (req, res) => {
   if (vinculo?.status !== "aprovado")
     return res.status(403).json({ error: "Você ainda não foi aprovado nesta empresa" });
 
+  if (campaignId) {
+    const campanha = db.prepare("SELECT status, aceitaLeadProprio FROM campaigns WHERE id = ? AND companyId = ?").get(campaignId, companyId);
+    if (!campanha) return res.status(404).json({ error: "Campanha não encontrada" });
+    if (campanha.status !== "ativa") return res.status(422).json({ error: "Campanha não está ativa" });
+    if (!campanha.aceitaLeadProprio) return res.status(422).json({ error: "Esta campanha não aceita leads próprios" });
+  }
+
+  const emailNormalizado = String(email || "").trim().toLowerCase();
+  const telefoneNormalizado = String(telefone || "").replace(/\D/g, "");
+  if (emailNormalizado || telefoneNormalizado) {
+    const duplicado = db.prepare(`SELECT id, nome, etapa FROM leads WHERE companyId = ? AND
+      ((? <> '' AND lower(trim(email)) = ?) OR (? <> '' AND replace(replace(replace(replace(replace(telefone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?))
+      LIMIT 1`).get(companyId, emailNormalizado, emailNormalizado, telefoneNormalizado, telefoneNormalizado);
+    if (duplicado) return res.status(409).json({ error: "Lead duplicado nesta empresa", duplicado });
+  }
+
   const id = uid();
   const ts = agora();
   db.prepare(`INSERT INTO leads (id, sellerId, companyId, campaignId, nome, empresa, cargo, telefone, email, etapa, valorEstimado, criadoEm, atualizadoEm)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'novo', ?, ?, ?)`)
     .run(id, entityId, companyId, campaignId || null, nome.trim(), empresa || "", cargo || "",
-         telefone || "", email || "", Number(valorEstimado) || 0, ts, ts);
+         telefoneNormalizado, emailNormalizado, Number(valorEstimado) || 0, ts, ts);
 
   res.json({ id, etapa: "novo" });
 });

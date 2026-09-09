@@ -78,7 +78,7 @@ function comparaSegura(a, b) {
   return timingSafeEqual(ba, bb);
 }
 
-router.post("/auth/register", (req, res) => {
+router.post("/auth/register", async (req, res) => {
   const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
@@ -115,7 +115,7 @@ router.post("/auth/register", (req, res) => {
     userId, emailNorm, hash, role, entityId, 1, agora()
   );
 
-  emailBoasVindas(nomeClean, emailNorm, role);
+  await emailBoasVindas(nomeClean, emailNorm, role);
   // Vínculo de indicação: nada é creditado agora, só registrado.
   if (indicacao) vincularIndicacao(indicacao, userId, role);
 

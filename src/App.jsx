@@ -11,12 +11,59 @@ import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
 import Notificacoes from "./components/Notificacoes.jsx";
 
+const PREVIA_QUALIFICACAO = {
+  id: "preview-empresa",
+  nome: "Nexo CRM",
+  produto: "CRM comercial para equipes B2B",
+  ticket: "R$ 1.490/mês",
+  icp: "Empresas B2B em crescimento",
+  saldo: 12500,
+  saldoReservado: 1450,
+  assinatura: "starter",
+  statusCadastro: "aprovada",
+  razaoSocial: "Nexo Tecnologia Comercial Ltda",
+  documento: "12345678000190",
+  endereco: "São Paulo, SP",
+  representanteLegal: "Marina Alves",
+  contatoFinanceiro: "financeiro@nexocrm.com.br",
+  contatoComercial: "vendas@nexocrm.com.br",
+  segmento: "Tecnologia B2B",
+  regiao: "Brasil",
+  diferenciais: "Implantação rápida, cadências integradas e visão completa do funil.",
+  objecoes: "Migração de dados, adoção do time e integração com ferramentas existentes.",
+  materiais: [{ id: "deck", nome: "Apresentação comercial", url: "https://example.com/deck" }],
+  vagas: 8,
+  cor: "#2563EB",
+  curso: [
+    { id: "produto", titulo: "O problema que resolvemos", min: 6, conteudo: "O Nexo CRM organiza a operação comercial em um único lugar: leads, cadência, previsões e conversas." },
+    { id: "cliente", titulo: "Cliente ideal e mensagem", min: 8, conteudo: "Fale com líderes comerciais de empresas B2B que já têm volume de leads, mas pouca previsibilidade na receita." },
+  ],
+  qualificacao: {
+    criterios: { perfis: ["sdr", "closer"], notaMinima: 70, exigeVideo: true },
+    notaMinimaQuiz: 80,
+    questoes: [
+      { pergunta: "Para quem a solução é indicada?", opcoes: ["Líderes comerciais B2B", "Restaurantes", "Influenciadores"], correta: 0 },
+      { pergunta: "Qual é o principal ganho prometido?", opcoes: ["Mais seguidores", "Previsibilidade comercial", "Reduzir estoque"], correta: 1 },
+    ],
+  },
+};
+
+const PREVIA_LEADS = [
+  { id: "lead-1", sellerId: "s1", companyId: "preview-empresa", campaignId: "camp-preview", nome: "Carlos Mendes", empresa: "Orbita Logística", cargo: "Diretor comercial", etapa: "reuniao", valorEstimado: 17880, atualizadoEm: Date.now() - 3600000 },
+  { id: "lead-2", sellerId: "s1", companyId: "preview-empresa", campaignId: "camp-preview", nome: "Fernanda Lima", empresa: "Atlas Consultoria", cargo: "Head de vendas", etapa: "proposta", valorEstimado: 23840, atualizadoEm: Date.now() - 86400000 },
+  { id: "lead-3", sellerId: "s2", companyId: "preview-empresa", campaignId: "camp-preview", nome: "Rafael Souza", empresa: "Kubo Tech", cargo: "CEO", etapa: "ganho", valorEstimado: 14900, atualizadoEm: Date.now() - 172800000 },
+];
+
 export default function App() {
-  const [db, setDb] = useState(seed);
+  const previaQualificacao = import.meta.env.DEV && typeof window !== "undefined" && window.location.pathname.startsWith("/preview/");
+  const previaEmpresa = previaQualificacao && window.location.pathname === "/preview/empresa";
+  const [db, setDb] = useState(() => previaQualificacao
+    ? { ...seed(), role: "empresa", companyId: PREVIA_QUALIFICACAO.id, companies: [PREVIA_QUALIFICACAO], leads: PREVIA_LEADS, campaigns: [{ id: "camp-preview", companyId: PREVIA_QUALIFICACAO.id, titulo: "Piloto Nexo CRM", descricao: "Campanha de validação", produto: PREVIA_QUALIFICACAO.produto, publico: PREVIA_QUALIFICACAO.icp, objetivo: "Gerar reuniões qualificadas", regiao: "Brasil", funcao: "sdr", vagas: 3, orcamento: 5000, reservado: 1450, status: "rascunho", prazoHoras: 48, limitePorProfissional: 10, aceitaLeadProprio: true, exigeCertificacao: true, tarefas: { agendamento: 80, realizada: 140 }, evidencias: {}, criteriosAprovacao: {}, treinamento: PREVIA_QUALIFICACAO.curso }] }
+    : seed());
   const [loaded, setLoaded] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => previaQualificacao ? { role: "empresa", email: "preview@local" } : null);
   const [toast, setToast] = useState("");
-  const [nav, setNav] = useState({ vendedor: "empresas", empresa: "painel", admin: "dashboard" });
+  const [nav, setNav] = useState({ vendedor: "empresas", empresa: previaQualificacao ? (previaEmpresa ? "cadastro" : "qualificacao") : "painel", admin: "dashboard" });
   // O escuro é a identidade primária da RYCS; o claro fica como preferência.
   const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") !== "light");
 

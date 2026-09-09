@@ -2,6 +2,7 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
+import { registrarMovimento } from "../services/financeiro.js";
 
 const router = Router();
 
@@ -167,6 +168,7 @@ router.patch("/deposits/:id", (req, res) => {
       aportes.push({ valor: pedido.valor, ts: agora(), referencia: pedido.referencia, manual: true });
       db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ?, aportes = ? WHERE id = ?")
         .run(pedido.valor, pedido.valor, JSON.stringify(aportes), pedido.companyId);
+      registrarMovimento({ companyId: pedido.companyId, tipo: "deposito", valor: pedido.valor, idempotencyKey: pedido.id, dados: { manual: true, referencia: pedido.referencia } });
     }
   })();
 

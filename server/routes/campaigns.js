@@ -1,5 +1,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
+import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel } from "../../shared/empresa.js";
+import { dentroDoLimite } from "../../shared/planos.js";
 
 const router = Router();
 
@@ -30,7 +32,9 @@ router.post("/campaigns", (req, res) => {
   if (role !== "empresa" && role !== "admin")
     return res.status(403).json({ error: "Apenas empresas podem criar campanhas" });
 
-  const { titulo, descricao, produto, publico, vagas, comissoes, treinamento, requisitos } = req.body;
+  const { titulo, descricao, produto, publico, vagas, comissoes, treinamento, requisitos, objetivo, regiao,
+    funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, limitePorProfissional,
+    aceitaLeadProprio, exigeCertificacao } = req.body;
   if (!titulo) return res.status(400).json({ error: "Título é obrigatório" });
 
   const companyId = role === "empresa" ? entityId : req.body.companyId;
@@ -38,11 +42,16 @@ router.post("/campaigns", (req, res) => {
 
   const id = uid();
   db.prepare(`
-    INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento, requisitos, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, 'ativa', ?, ?, ?, ?, ?)
+    INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento,
+      requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras,
+      limitePorProfissional, aceitaLeadProprio, exigeCertificacao, criadoEm)
+    VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(id, companyId, titulo, descricao || "", produto || "", publico || "",
     vagas || 0, JSON.stringify(comissoes || {}), JSON.stringify(treinamento || []),
-    requisitos || "", agora());
+    requisitos || "", objetivo || "", regiao || "", funcao || "", Number(orcamento) || 0,
+    JSON.stringify(tarefas || {}), JSON.stringify(evidencias || {}), JSON.stringify(criteriosAprovacao || {}),
+    Math.max(1, Number(prazoHoras) || 48), Math.max(0, Number(limitePorProfissional) || 0),
+    aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, agora());
 
   res.json({ id });
 });
@@ -54,18 +63,48 @@ router.patch("/campaigns/:id", (req, res) => {
   if (role === "empresa" && entityId !== campaign.companyId)
     return res.status(403).json({ error: "Sem permissão" });
 
-  const allowed = ["titulo", "descricao", "produto", "publico", "status", "vagas", "requisitos"];
-  const jsonFields = ["comissoes", "treinamento"];
+  const allowed = ["titulo", "descricao", "produto", "publico", "vagas", "requisitos", "objetivo", "regiao", "funcao",
+    "orcamento", "prazoHoras", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao"];
+  const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(req.body)) {
-    if (allowed.includes(k)) { sets.push(`${k} = ?`); vals.push(v); }
+    if (allowed.includes(k)) {
+      sets.push(`${k} = ?`);
+      vals.push(["aceitaLeadProprio", "exigeCertificacao"].includes(k) ? (v ? 1 : 0) : v);
+    }
     else if (jsonFields.includes(k)) { sets.push(`${k} = ?`); vals.push(JSON.stringify(v)); }
   }
   if (!sets.length) return res.status(400).json({ error: "Nenhum campo válido" });
   vals.push(req.params.id);
   db.prepare(`UPDATE campaigns SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
   res.json({ ok: true });
+});
+
+router.post("/campaigns/:id/status", (req, res) => {
+  const { role, entityId } = req.user;
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const status = String(req.body?.status || "");
+  if (!STATUS_CAMPANHA.includes(status)) return res.status(400).json({ error: "Status inválido" });
+
+  if (status === "ativa") {
+    const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(campaign.companyId);
+    const parsed = parseCampaign(campaign);
+    const check = campanhaPodeSerPublicada(parsed, empresa);
+    if (!check.ok) return res.status(422).json({ error: "Campanha ainda não pode ser publicada.", pendencias: check.pendencias });
+    const ativas = db.prepare("SELECT COUNT(*) n FROM campaigns WHERE companyId = ? AND status = 'ativa' AND id <> ?")
+      .get(campaign.companyId, campaign.id).n;
+    if (!dentroDoLimite(empresa.assinatura, "campanhasAtivas", ativas))
+      return res.status(422).json({ error: "Limite de campanhas ativas do plano atingido." });
+    if (Number(parsed.orcamento) > saldoDisponivel(empresa))
+      return res.status(422).json({ error: "O orçamento da campanha supera o saldo disponível." });
+  }
+
+  db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").run(status, campaign.id);
+  res.json({ ok: true, status });
 });
 
 router.post("/campaigns/:id/apply", (req, res) => {
@@ -105,6 +144,11 @@ function parseCampaign(row) {
     ...row,
     comissoes: JSON.parse(row.comissoes || "{}"),
     treinamento: JSON.parse(row.treinamento || "[]"),
+    tarefas: JSON.parse(row.tarefas || "{}"),
+    evidencias: JSON.parse(row.evidencias || "{}"),
+    criteriosAprovacao: JSON.parse(row.criteriosAprovacao || "{}"),
+    aceitaLeadProprio: !!row.aceitaLeadProprio,
+    exigeCertificacao: !!row.exigeCertificacao,
   };
 }
 

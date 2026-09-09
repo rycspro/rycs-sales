@@ -1,6 +1,6 @@
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
-import { TAXA } from "../../lib/constants.js";
+import { takeRateDoPlano } from "../../../shared/planos.js";
 import { Vazio } from "../ui.jsx";
 import CardEnvio from "../CardEnvio.jsx";
 import DashboardAdmin from "./DashboardAdmin.jsx";
@@ -79,7 +79,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
           <CardEnvio key={sub.id} sub={sub} db={db} extra={
             <div style={{ marginTop: 12 }}>
               <div className="vx-mut vx-mono" style={{ fontSize: 11.5, marginBottom: 8 }}>
-                bruto {money(sub.valor)} · taxa {money(sub.valor * TAXA)} · líquido {money(sub.valor * (1 - TAXA))}
+                profissional {money(sub.valor)} · taxa da empresa {money(sub.valor * takeRateDoPlano(db.companies.find((c) => c.id === sub.companyId)?.assinatura))}
               </div>
               <button className="vx-btn vx-btn-primary vx-btn-sm vx-btn-block" onClick={() => liberar(sub)}>Liberar para saque</button>
             </div>

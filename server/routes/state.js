@@ -19,6 +19,8 @@ function parseCompany(row) {
     destaque: !!row.destaque,
     comissoes: JSON.parse(row.comissoes || "{}"),
     curso: JSON.parse(row.curso || "[]"),
+    qualificacao: JSON.parse(row.qualificacao || "{}"),
+    materiais: JSON.parse(row.materiais || "[]"),
     aportes: JSON.parse(row.aportes || "[]"),
   };
 }
@@ -28,7 +30,16 @@ function parseSub(row) {
 }
 
 function parseCampaign(row) {
-  return { ...row, comissoes: JSON.parse(row.comissoes || "{}"), treinamento: JSON.parse(row.treinamento || "[]") };
+  return {
+    ...row,
+    comissoes: JSON.parse(row.comissoes || "{}"),
+    treinamento: JSON.parse(row.treinamento || "[]"),
+    tarefas: JSON.parse(row.tarefas || "{}"),
+    evidencias: JSON.parse(row.evidencias || "{}"),
+    criteriosAprovacao: JSON.parse(row.criteriosAprovacao || "{}"),
+    aceitaLeadProprio: !!row.aceitaLeadProprio,
+    exigeCertificacao: !!row.exigeCertificacao,
+  };
 }
 
 function buildSellersWithRelations(sellers) {
@@ -52,7 +63,11 @@ function buildSellersWithRelations(sellers) {
       scoreDimensions[sc.role][sc.dimension] = sc.valor;
     });
 
-    return { ...parseSeller(s), aplicacoes, curso, scoreDimensions };
+    const aplicacoesDetalhe = {};
+    apps.filter((a) => a.sellerId === s.id).forEach((a) => {
+      aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: JSON.parse(a.criterios || "[]"), quizScore: a.quizScore };
+    });
+    return { ...parseSeller(s), aplicacoes, aplicacoesDetalhe, curso, scoreDimensions };
   });
 }
 
@@ -82,7 +97,15 @@ function getFilteredState(user) {
     const meuId = entityId;
     return {
       sellers: full.sellers.filter((s) => s.id === meuId),
-      companies: full.companies,
+      // A alternativa correta só existe no servidor. O vendedor recebe a
+      // pergunta e as opções, nunca o gabarito embutido no cadastro da empresa.
+      companies: full.companies.map((c) => ({
+        ...c,
+        qualificacao: {
+          ...c.qualificacao,
+          questoes: (c.qualificacao?.questoes || []).map(({ correta, ...q }) => q),
+        },
+      })),
       submissions: full.submissions.filter((s) => s.sellerId === meuId),
       withdrawals: full.withdrawals.filter((w) => w.sellerId === meuId),
       messages: full.messages.filter((m) => m.sellerId === meuId),

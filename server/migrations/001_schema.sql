@@ -48,7 +48,26 @@ CREATE TABLE IF NOT EXISTS companies (
   "criadoEm" BIGINT NOT NULL,
   comissoes TEXT DEFAULT '{}',
   curso TEXT DEFAULT '[]',
+  qualificacao TEXT DEFAULT '{}',
   aportes TEXT DEFAULT '[]'
+  ,razaoSocial TEXT DEFAULT ''
+  ,documento TEXT DEFAULT ''
+  ,endereco TEXT DEFAULT ''
+  ,segmento TEXT DEFAULT ''
+  ,regiao TEXT DEFAULT ''
+  ,diferenciais TEXT DEFAULT ''
+  ,objecoes TEXT DEFAULT ''
+  ,representanteLegal TEXT DEFAULT ''
+  ,contatoFinanceiro TEXT DEFAULT ''
+  ,contatoComercial TEXT DEFAULT ''
+  ,materiais TEXT DEFAULT '[]'
+  ,statusCadastro TEXT DEFAULT 'rascunho'
+  ,saldoReservado REAL DEFAULT 0
+  ,assinatura TEXT DEFAULT 'free'
+  ,qualificacao TEXT DEFAULT '{}'
+  ,"asaasCustomerId" TEXT
+  ,"aprovadoPor" TEXT
+  ,"aprovadoEm" BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS campaigns (
@@ -62,6 +81,19 @@ CREATE TABLE IF NOT EXISTS campaigns (
   vagas INTEGER DEFAULT 0,
   comissoes TEXT DEFAULT '{}',
   treinamento TEXT DEFAULT '[]',
+  requisitos TEXT DEFAULT '',
+  objetivo TEXT DEFAULT '',
+  regiao TEXT DEFAULT '',
+  funcao TEXT DEFAULT '',
+  orcamento REAL DEFAULT 0,
+  reservado REAL DEFAULT 0,
+  tarefas TEXT DEFAULT '{}',
+  evidencias TEXT DEFAULT '{}',
+  "criteriosAprovacao" TEXT DEFAULT '{}',
+  "prazoHoras" INTEGER DEFAULT 48,
+  "limitePorProfissional" INTEGER DEFAULT 0,
+  "aceitaLeadProprio" BOOLEAN DEFAULT FALSE,
+  "exigeCertificacao" BOOLEAN DEFAULT FALSE,
   "criadoEm" BIGINT NOT NULL
 );
 
@@ -69,6 +101,8 @@ CREATE TABLE IF NOT EXISTS applications (
   "sellerId" TEXT NOT NULL REFERENCES sellers(id),
   "companyId" TEXT NOT NULL REFERENCES companies(id),
   status TEXT DEFAULT 'pendente',
+  criterios TEXT DEFAULT '[]',
+  "quizScore" INTEGER,
   PRIMARY KEY ("sellerId", "companyId")
 );
 
@@ -76,6 +110,8 @@ CREATE TABLE IF NOT EXISTS course_progress (
   "sellerId" TEXT NOT NULL REFERENCES sellers(id),
   "companyId" TEXT NOT NULL REFERENCES companies(id),
   "moduleIds" TEXT DEFAULT '[]',
+  "quizScore" INTEGER,
+  "quizAnswers" TEXT DEFAULT '[]',
   PRIMARY KEY ("sellerId", "companyId")
 );
 
@@ -139,3 +175,22 @@ CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications("userId");
 CREATE INDEX IF NOT EXISTS idx_withdrawals_seller ON withdrawals("sellerId");
 CREATE INDEX IF NOT EXISTS idx_campaigns_company ON campaigns("companyId");
+
+CREATE TABLE IF NOT EXISTS financial_ledger (
+  id TEXT PRIMARY KEY,
+  "companyId" TEXT,
+  "sellerId" TEXT,
+  "submissionId" TEXT,
+  tipo TEXT NOT NULL,
+  valor REAL NOT NULL,
+  "saldoEmpresa" REAL,
+  "reservadoEmpresa" REAL,
+  "saldoProfissional" REAL,
+  "idempotencyKey" TEXT,
+  dados TEXT DEFAULT '{}',
+  "criadoEm" BIGINT NOT NULL,
+  UNIQUE (tipo, "idempotencyKey")
+);
+
+CREATE INDEX IF NOT EXISTS idx_financial_ledger_company ON financial_ledger("companyId", "criadoEm");
+CREATE INDEX IF NOT EXISTS idx_financial_ledger_seller ON financial_ledger("sellerId", "criadoEm");

@@ -5,11 +5,12 @@ import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
 import { ativarAssinatura } from "./subscriptions.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
+import { registrarMovimento } from "../services/financeiro.js";
 
 const router = Router();
 
 const DEPOSITO_MINIMO = 1;
-const SAQUE_MINIMO = 10;
+const SAQUE_MINIMO = 20;
 
 // ---------------------------------------------------------------------------
 // Repasse ao vendedor — ÚNICO ponto por onde dinheiro sai para o profissional.
@@ -145,6 +146,7 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
       db.prepare("UPDATE sellers SET disponivel = disponivel - ? WHERE id = ?").run(valor, entityId);
       db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm) VALUES (?, ?, ?, ?, 'solicitado', ?)")
         .run(wId, entityId, valor, vendedor.pix, agora());
+      registrarMovimento({ sellerId: entityId, tipo: "saque_reservado", valor: -valor, idempotencyKey: wId });
     })();
   } catch (e) {
     if (e.message === "SALDO_INSUFICIENTE") return res.status(400).json({ error: "Saldo insuficiente" });
@@ -163,6 +165,7 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
     db.transaction(() => {
       db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(valor, entityId);
       db.prepare("UPDATE withdrawals SET status = 'falhou', falhaMotivo = ? WHERE id = ?").run(String(err.message).slice(0, 200), wId);
+      registrarMovimento({ sellerId: entityId, tipo: "saque_estornado", valor, idempotencyKey: wId });
     })();
     res.status(502).json({ error: "Não foi possível concluir o saque. O valor voltou para o seu saldo." });
   }
@@ -223,6 +226,7 @@ function creditarDeposito(payment) {
     const aportes = JSON.parse(empresa.aportes || "[]");
     aportes.push({ valor, ts: agora(), asaasId: payment.id });
     db.prepare("UPDATE companies SET aportes = ? WHERE id = ?").run(JSON.stringify(aportes), empresa.id);
+    registrarMovimento({ companyId: empresa.id, tipo: "deposito", valor, idempotencyKey: payment.id, dados: { gateway: "asaas" } });
   })();
 
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
@@ -241,6 +245,7 @@ function concluirSaque(transfer) {
   db.transaction(() => {
     db.prepare("UPDATE withdrawals SET status = 'pago' WHERE id = ?").run(w.id);
     db.prepare("UPDATE sellers SET sacado = sacado + ? WHERE id = ?").run(w.valor, w.sellerId);
+    registrarMovimento({ sellerId: w.sellerId, tipo: "saque_pago", valor: -w.valor, idempotencyKey: w.id });
   })();
 
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
@@ -256,6 +261,7 @@ function devolverSaque(transfer) {
     db.prepare("UPDATE withdrawals SET status = 'falhou', falhaMotivo = ? WHERE id = ?")
       .run("Transferência recusada pelo banco", w.id);
     db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(w.valor, w.sellerId);
+    registrarMovimento({ sellerId: w.sellerId, tipo: "saque_estornado", valor: w.valor, idempotencyKey: w.id });
   })();
 
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);

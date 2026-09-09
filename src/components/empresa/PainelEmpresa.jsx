@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock } from "lucide-react";
+import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock, LockKeyhole } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, agora, dataCurta } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
@@ -12,8 +12,12 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   const [gerando, setGerando] = useState(false);
   const [doc, setDoc] = useState("");
   const [minimo, setMinimo] = useState(1);
+  const [financeiro, setFinanceiro] = useState(null);
 
-  useEffect(() => { api("/deposits/config").then((c) => { if (c?.minimo) setMinimo(c.minimo); }); }, []);
+  useEffect(() => {
+    api("/deposits/config").then((c) => { if (c?.minimo) setMinimo(c.minimo); });
+    api("/company/finance").then((f) => { if (f?.posicao) setFinanceiro(f); });
+  }, []);
 
   const salvarDocumento = async () => {
     const limpo = doc.replace(/\D/g, "");
@@ -29,6 +33,8 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   const agendas = subs.filter((s) => s.tipo === "agendamento" && s.status === "liberado").length;
   const vendas = subs.filter((s) => s.tipo === "venda" && s.status === "liberado").length;
   const time = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado").length;
+  const reservado = financeiro?.posicao?.reservado ?? Number(emp.saldoReservado || 0);
+  const disponivel = financeiro?.posicao?.disponivel ?? Math.max(0, Number(emp.saldo || 0) - reservado);
 
   // Fluxo manual: a empresa declara o depósito e paga por Pix; a plataforma
   // confirma o recebimento e só então o caixa é creditado. Nada entra aqui.
@@ -46,10 +52,10 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   return (
     <>
       <div className="vx-grid vx-g4" style={{ marginBottom: 22 }}>
-        <Stat label="Caixa da operação" value={money(emp.saldo)} Icon={Wallet} tone="brand" />
+        <Stat label="Saldo disponível" value={money(disponivel)} Icon={Wallet} tone="brand" />
+        <Stat label="Saldo reservado" value={money(reservado)} Icon={LockKeyhole} tone="amber" />
         <Stat label="Reuniões agendadas" value={agendas} Icon={ClipboardList} tone="indigo" mono={false} />
-        <Stat label="Vendas fechadas" value={vendas} Icon={Banknote} tone="amber" mono={false} />
-        <Stat label="Vendedores ativos" value={time} Icon={Users} tone="muted" mono={false} />
+        <Stat label="Profissionais ativos" value={time} Icon={Users} tone="muted" mono={false} />
       </div>
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>
@@ -166,6 +172,11 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
           <span className="vx-mut">Total já investido na plataforma</span><b className="vx-mono">{money(emp.totalAportado || 0)}</b>
         </div>
       </div>
+
+      {financeiro?.extrato?.length > 0 && <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
+        <div className="vx-disp" style={{ fontSize: 17, marginBottom: 10 }}>Extrato operacional</div>
+        {financeiro.extrato.slice(0, 8).map((m) => <div key={m.id} className="vx-row" style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}><div><b>{({ deposito: "Depósito", reserva: "Reserva de tarefa", estorno_reserva: "Reserva liberada", liquidacao: "Tarefa paga" })[m.tipo] || m.tipo}</b><div className="vx-mut" style={{ fontSize: 11.5 }}>{dataCurta(m.criadoEm)}</div></div><b className="vx-mono" style={{ color: m.valor < 0 ? "var(--red)" : "var(--brand)" }}>{money(m.valor)}</b></div>)}
+      </div>}
 
       <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="vx-disp" style={{ fontSize: 17, marginBottom: 12 }}>

@@ -1,5 +1,8 @@
 import { Router } from "express";
 import db from "../db.js";
+import { camposPendentesEmpresa, STATUS_EMPRESA } from "../../shared/empresa.js";
+import { extratoEmpresa, posicaoEmpresa } from "../services/financeiro.js";
+import { emailEmpresaEmAnalise, emailStatusEmpresa } from "../services/email.js";
 
 const router = Router();
 
@@ -15,8 +18,10 @@ router.patch("/companies/:id", (req, res) => {
   const fields = req.body;
   // saldo/totalAportado/aportes só mudam por pagamento confirmado no gateway
   // ou por liberação de ação — nunca por escrita direta do cliente.
-  const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "vagas", "cor", "documento"];
-  const jsonFields = ["comissoes", "curso"];
+  const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "vagas", "cor", "documento",
+    "razaoSocial", "endereco", "segmento", "regiao", "diferenciais", "objecoes", "representanteLegal",
+    "contatoFinanceiro", "contatoComercial"];
+  const jsonFields = ["comissoes", "curso", "qualificacao", "materiais"];
   const sets = [];
   const vals = [];
 
@@ -33,6 +38,54 @@ router.patch("/companies/:id", (req, res) => {
   vals.push(id);
   db.prepare(`UPDATE companies SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
   res.json({ ok: true });
+});
+
+router.get("/companies/:id/readiness", (req, res) => {
+  const { id } = req.params;
+  if (req.user.role === "empresa" && req.user.entityId !== id) return res.status(403).json({ error: "Sem permissão" });
+  if (req.user.role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(id);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  const pendencias = camposPendentesEmpresa(empresa);
+  res.json({ prontaParaAnalise: pendencias.length === 0, pendencias, status: empresa.statusCadastro, caixa: posicaoEmpresa(id) });
+});
+
+router.post("/companies/:id/submit-review", async (req, res) => {
+  const { id } = req.params;
+  if (req.user.role !== "empresa" || req.user.entityId !== id) return res.status(403).json({ error: "Sem permissão" });
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(id);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  const pendencias = camposPendentesEmpresa(empresa);
+  if (pendencias.length) return res.status(422).json({ error: "Complete o cadastro antes de enviar.", pendencias });
+  if (empresa.statusCadastro === "em_analise") return res.json({ ok: true, status: "em_analise", duplicado: true });
+  db.prepare("UPDATE companies SET statusCadastro = 'em_analise' WHERE id = ?").run(id);
+  const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(id);
+  if (usuario?.email) await emailEmpresaEmAnalise(empresa.nome, usuario.email);
+  res.json({ ok: true, status: "em_analise" });
+});
+
+router.patch("/companies/:id/status", async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+  const status = String(req.body?.status || "");
+  if (!STATUS_EMPRESA.includes(status)) return res.status(400).json({ error: "Status inválido" });
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(req.params.id);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  if (status === "aprovada") {
+    const pendencias = camposPendentesEmpresa(empresa);
+    if (pendencias.length) return res.status(422).json({ error: "Cadastro incompleto", pendencias });
+  }
+  db.prepare("UPDATE companies SET statusCadastro = ?, aprovadoPor = ?, aprovadoEm = ? WHERE id = ?")
+    .run(status, status === "aprovada" ? req.user.id : null, status === "aprovada" ? Date.now() : null, req.params.id);
+  if (status !== empresa.statusCadastro) {
+    const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
+    if (usuario?.email) await emailStatusEmpresa(empresa.nome, usuario.email, status);
+  }
+  res.json({ ok: true, status });
+});
+
+router.get("/company/finance", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  res.json({ posicao: posicaoEmpresa(req.user.entityId), extrato: extratoEmpresa(req.user.entityId, req.query.limit) });
 });
 
 // Tabelas penduradas na empresa. Os filhos saem antes do pai, senão a

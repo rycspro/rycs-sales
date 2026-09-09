@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -66,6 +66,17 @@ db.exec(`
     comissoes TEXT DEFAULT '{}',
     treinamento TEXT DEFAULT '[]',
     requisitos TEXT DEFAULT '',
+    objetivo TEXT DEFAULT '',
+    regiao TEXT DEFAULT '',
+    funcao TEXT DEFAULT '',
+    orcamento REAL DEFAULT 0,
+    reservado REAL DEFAULT 0,
+    tarefas TEXT DEFAULT '{}',
+    evidencias TEXT DEFAULT '{}',
+    criteriosAprovacao TEXT DEFAULT '{}',
+    prazoHoras INTEGER DEFAULT 48,
+    limitePorProfissional INTEGER DEFAULT 0,
+    aceitaLeadProprio INTEGER DEFAULT 0,
     criadoEm INTEGER NOT NULL,
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
@@ -103,6 +114,7 @@ db.exec(`
     sellerId TEXT NOT NULL,
     companyId TEXT NOT NULL,
     campaignId TEXT,
+    leadId TEXT,
     tipo TEXT NOT NULL,
     valor REAL DEFAULT 0,
     liquido REAL,
@@ -112,9 +124,55 @@ db.exec(`
     confianca INTEGER,
     motivo TEXT,
     fonte TEXT,
+    idempotencyKey TEXT,
+    proofHash TEXT DEFAULT '',
+    auditVersion TEXT DEFAULT '',
+    riskLevel TEXT DEFAULT 'medio',
+    reviewRequired INTEGER DEFAULT 1,
+    reviewedBy TEXT,
+    reviewedEm INTEGER,
+    reviewChecklist TEXT DEFAULT '[]',
     criadoEm INTEGER NOT NULL,
     FOREIGN KEY (sellerId) REFERENCES sellers(id),
     FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  -- A prova bruta continua no snapshot de submission para o participante
+  -- autorizado; esta tabela guarda um recibo lacrado de cada campo sem
+  -- duplicar telefone, documento ou link em texto aberto.
+  CREATE TABLE IF NOT EXISTS submission_evidence (
+    id TEXT PRIMARY KEY,
+    submissionId TEXT NOT NULL,
+    campo TEXT NOT NULL,
+    origem TEXT NOT NULL,
+    valueHash TEXT NOT NULL,
+    metadados TEXT DEFAULT '{}',
+    hash TEXT NOT NULL,
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    UNIQUE (submissionId, campo, origem)
+  );
+
+  -- Livro append-only: toda mudança relevante recebe um hash HMAC encadeado
+  -- ao evento anterior. A tabela de submissions é a projeção atual; esta é a
+  -- fonte de comprovação de como o estado foi alcançado.
+  CREATE TABLE IF NOT EXISTS submission_events (
+    id TEXT PRIMARY KEY,
+    submissionId TEXT NOT NULL,
+    sequencia INTEGER NOT NULL,
+    tipo TEXT NOT NULL,
+    atorId TEXT,
+    atorRole TEXT NOT NULL,
+    statusAnterior TEXT,
+    statusNovo TEXT,
+    motivoCodigo TEXT DEFAULT '',
+    observacao TEXT DEFAULT '',
+    checklist TEXT DEFAULT '[]',
+    dados TEXT DEFAULT '{}',
+    hashAnterior TEXT DEFAULT '',
+    hash TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    UNIQUE (submissionId, sequencia)
   );
 
   CREATE TABLE IF NOT EXISTS withdrawals (
@@ -338,6 +396,24 @@ db.exec(`
     criadoEm INTEGER NOT NULL
   );
 
+  -- Livro financeiro único. Saldos nas entidades são projeções rápidas; este
+  -- histórico explica cada reserva, liberação, estorno, crédito e saque.
+  CREATE TABLE IF NOT EXISTS financial_ledger (
+    id TEXT PRIMARY KEY,
+    companyId TEXT,
+    sellerId TEXT,
+    submissionId TEXT,
+    tipo TEXT NOT NULL,
+    valor REAL NOT NULL,
+    saldoEmpresa REAL,
+    reservadoEmpresa REAL,
+    saldoProfissional REAL,
+    idempotencyKey TEXT,
+    dados TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL,
+    UNIQUE (tipo, idempotencyKey)
+  );
+
   -- Eventos já processados do gateway, para que reentregas do webhook não
   -- creditem o mesmo pagamento duas vezes.
   CREATE TABLE IF NOT EXISTS gateway_events (
@@ -358,9 +434,23 @@ db.exec(`
     criadoEm INTEGER NOT NULL,
     FOREIGN KEY (userId) REFERENCES users(id)
   );
+
+  -- Não existe rota que atualize eventos ou evidências. Esta trava protege o
+  -- histórico também contra alterações acidentais feitas por código futuro.
+  CREATE TRIGGER IF NOT EXISTS no_update_submission_events
+  BEFORE UPDATE ON submission_events
+  BEGIN
+    SELECT RAISE(ABORT, 'Eventos de auditoria são imutáveis');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS no_update_submission_evidence
+  BEFORE UPDATE ON submission_evidence
+  BEGIN
+    SELECT RAISE(ABORT, 'Evidências de auditoria são imutáveis');
+  END;
 `);
 
-const uid = () => Math.random().toString(36).slice(2, 9);
+const uid = () => randomUUID();
 const agora = () => Date.now();
 
 // CREATE TABLE IF NOT EXISTS não altera tabelas já existentes, então colunas
@@ -377,8 +467,33 @@ adicionarColuna("withdrawals", "falhaMotivo", "TEXT");
 // SaaS vive em coluna própria para não misturar os dois conceitos.
 adicionarColuna("companies", "assinatura", "TEXT DEFAULT 'free'");
 adicionarColuna("companies", "nota", "INTEGER DEFAULT 0");
+adicionarColuna("companies", "qualificacao", "TEXT DEFAULT '{}'");
+adicionarColuna("companies", "razaoSocial", "TEXT DEFAULT ''");
+adicionarColuna("companies", "endereco", "TEXT DEFAULT ''");
+adicionarColuna("companies", "segmento", "TEXT DEFAULT ''");
+adicionarColuna("companies", "regiao", "TEXT DEFAULT ''");
+adicionarColuna("companies", "diferenciais", "TEXT DEFAULT ''");
+adicionarColuna("companies", "objecoes", "TEXT DEFAULT ''");
+adicionarColuna("companies", "representanteLegal", "TEXT DEFAULT ''");
+adicionarColuna("companies", "contatoFinanceiro", "TEXT DEFAULT ''");
+adicionarColuna("companies", "contatoComercial", "TEXT DEFAULT ''");
+adicionarColuna("companies", "materiais", "TEXT DEFAULT '[]'");
+adicionarColuna("companies", "statusCadastro", "TEXT DEFAULT 'rascunho'");
+adicionarColuna("companies", "saldoReservado", "REAL DEFAULT 0");
+adicionarColuna("companies", "aprovadoPor", "TEXT");
+adicionarColuna("companies", "aprovadoEm", "INTEGER");
 adicionarColuna("campaigns", "exigeCertificacao", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "funcao", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "objetivo", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "regiao", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "orcamento", "REAL DEFAULT 0");
+adicionarColuna("campaigns", "reservado", "REAL DEFAULT 0");
+adicionarColuna("campaigns", "tarefas", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "evidencias", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "criteriosAprovacao", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "prazoHoras", "INTEGER DEFAULT 48");
+adicionarColuna("campaigns", "limitePorProfissional", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "aceitaLeadProprio", "INTEGER DEFAULT 0");
 adicionarColuna("users", "codigoIndicacao", "TEXT");
 adicionarColuna("sellers", "pixTipo", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "estado", "TEXT DEFAULT ''");
@@ -387,6 +502,32 @@ adicionarColuna("sellers", "tipoVendedor", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "perfilComercial", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "scoreTriagem", "REAL DEFAULT 0");
 adicionarColuna("sellers", "emailVerificado", "INTEGER DEFAULT 0");
+adicionarColuna("submissions", "leadId", "TEXT");
+adicionarColuna("submissions", "idempotencyKey", "TEXT");
+adicionarColuna("submissions", "proofHash", "TEXT DEFAULT ''");
+adicionarColuna("submissions", "auditVersion", "TEXT DEFAULT ''");
+adicionarColuna("submissions", "riskLevel", "TEXT DEFAULT 'medio'");
+adicionarColuna("submissions", "reviewRequired", "INTEGER DEFAULT 1");
+adicionarColuna("submissions", "reviewedBy", "TEXT");
+adicionarColuna("submissions", "reviewedEm", "INTEGER");
+adicionarColuna("submissions", "reviewChecklist", "TEXT DEFAULT '[]'");
+adicionarColuna("lead_events", "submissionId", "TEXT");
+adicionarColuna("course_progress", "quizScore", "INTEGER");
+adicionarColuna("course_progress", "quizAnswers", "TEXT DEFAULT '[]'");
+adicionarColuna("applications", "criterios", "TEXT DEFAULT '[]'");
+adicionarColuna("applications", "quizScore", "INTEGER");
+
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_idempotency
+    ON submissions(sellerId, idempotencyKey) WHERE idempotencyKey IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS idx_submissions_lead ON submissions(leadId);
+  CREATE INDEX IF NOT EXISTS idx_submission_evidence_submission ON submission_evidence(submissionId);
+  CREATE INDEX IF NOT EXISTS idx_submission_events_submission ON submission_events(submissionId, sequencia);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_lead_events_submission
+    ON lead_events(submissionId) WHERE submissionId IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS idx_financial_ledger_company ON financial_ledger(companyId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_financial_ledger_seller ON financial_ledger(sellerId, criadoEm);
+`);
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.

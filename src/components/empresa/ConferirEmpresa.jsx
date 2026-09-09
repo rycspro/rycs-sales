@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { apiPatch } from "../../lib/api.js";
-import { TAXA } from "../../lib/constants.js";
 import CardEnvio from "../CardEnvio.jsx";
 
 export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
@@ -8,29 +7,23 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
   const revisao = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
   const iaAprovados = db.submissions.filter((s) => s.companyId === emp.id && s.status === "ia_aprovado");
 
-  const confirmar = (sub) => {
-    apiPatch(`/submissions/${sub.id}`, { status: "conferido", motivo: "Confirmado manualmente pela empresa." });
+  const confirmar = async (sub) => {
+    const r = await apiPatch(`/submissions/${sub.id}`, { status: "conferido", motivo: "Confirmado manualmente pela empresa." });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível confirmar.");
     setDb((d) => ({ ...d, submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "conferido", motivo: "Confirmado manualmente pela empresa." } : s) }));
     aviso("Confirmado. A plataforma libera o pagamento.");
   };
-  const recusar = (sub) => {
+  const recusar = async (sub) => {
     const m = (motivo[sub.id] || "").trim();
     if (!m) return aviso("Escreva o motivo da recusa. O vendedor precisa saber o que corrigir.");
-    apiPatch(`/submissions/${sub.id}`, { status: "recusado", motivo: m });
-    setDb((d) => {
-      const seller = d.sellers.find((s) => s.id === sub.sellerId);
-      const novoPendente = +Math.max(0, (seller?.pendente || 0) - sub.valor * (1 - TAXA)).toFixed(2);
-      if (seller) apiPatch(`/sellers/${seller.id}`, { pendente: novoPendente });
-      return {
-        ...d,
-        submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "recusado", motivo: m } : s),
-        sellers: d.sellers.map((s) => s.id === sub.sellerId ? { ...s, pendente: +Math.max(0, s.pendente - sub.valor * (1 - TAXA)).toFixed(2) } : s),
-      };
-    });
+    const r = await apiPatch(`/submissions/${sub.id}`, { status: "recusado", motivo: m });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível recusar.");
+    setDb((d) => ({ ...d, submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "recusado", motivo: m } : s) }));
     aviso("Ação recusada.");
   };
-  const contestar = (sub) => {
-    apiPatch(`/submissions/${sub.id}`, { status: "revisao", motivo: "Empresa sinalizou dúvida sobre a aprovação automática." });
+  const contestar = async (sub) => {
+    const r = await apiPatch(`/submissions/${sub.id}`, { status: "revisao", motivo: "Empresa sinalizou dúvida sobre a aprovação automática." });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível enviar para revisão.");
     setDb((d) => ({ ...d, submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "revisao", motivo: "Empresa sinalizou dúvida sobre a aprovação automática." } : s) }));
     aviso("Enviado para revisão manual.");
   };

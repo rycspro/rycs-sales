@@ -34,7 +34,11 @@ const PORT = process.env.PORT || 3001;
 app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 const isProd = process.env.NODE_ENV === "production";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// A ausência da chave não pode derrubar todo o backend: o motor de auditoria
+// possui fallback local e a rota dedicada informa indisponibilidade.
+const client = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
 
 // --- Security ---
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -42,7 +46,11 @@ app.set("trust proxy", 1);
 
 const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
 app.use(cors({
-  origin: isProd ? [FRONTEND] : ["http://localhost:5173", "http://127.0.0.1:5173"],
+  origin(origin, callback) {
+    if (!origin || origin === FRONTEND) return callback(null, true);
+    if (!isProd && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) return callback(null, true);
+    callback(new Error("Origem não autorizada pelo CORS"));
+  },
   credentials: true,
 }));
 
@@ -101,6 +109,7 @@ app.post("/api/analisar", authMiddleware, async (req, res) => {
   if (!tipo || !prova || !ACOES[tipo]) {
     return res.status(400).json({ error: "tipo e prova são obrigatórios" });
   }
+  if (!client) return res.status(503).json({ error: "Auditoria por IA não configurada neste ambiente" });
 
   const acao = ACOES[tipo];
   const linhas = acao.prova

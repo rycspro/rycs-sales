@@ -26,7 +26,7 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
 
   return (
     <>
-      {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={setAbertaId} />}
+      {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={setAbertaId} recarregar={recarregar} />}
       {aba === "academy" && <Academy eu={eu} aviso={aviso} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}

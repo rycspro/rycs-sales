@@ -3,8 +3,9 @@ import { apiPatch } from "../../lib/api.js";
 export default function TimeEmpresa({ emp, db, up, aviso }) {
   const pend = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "pendente");
   const time = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado");
-  const decidir = (s, st) => {
-    apiPatch("/applications", { sellerId: s.id, companyId: emp.id, status: st });
+  const decidir = async (s, st) => {
+    const r = await apiPatch("/applications", { sellerId: s.id, companyId: emp.id, status: st });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível atualizar a candidatura.");
     up((d) => ({ sellers: d.sellers.map((x) => x.id === s.id ? { ...x, aplicacoes: { ...x.aplicacoes, [emp.id]: st } } : x) }));
     aviso(st === "aprovado" ? `${s.nome} entrou no seu time.` : "Candidatura recusada.");
   };

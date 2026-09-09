@@ -3,18 +3,26 @@ import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { calcular } from "../services/triagem.js";
 import { perguntasPublicas, CATEGORIAS, FAIXAS, TOTAL_PERGUNTAS } from "../../shared/triagem.js";
+import { montarDossie, narrativa } from "../services/dossie.js";
+import { emailProfissionalEmAnalise, emailStatusProfissional } from "../services/email.js";
 
 const router = Router();
 
-// Concluir a triagem já dá acesso — o que muda é o grau. Acima de 90 a
-// aprovação é plena; abaixo disso o perfil fica PARCIAL, com acesso liberado
-// e trilha da Academy recomendada.
+// Concluir a avaliação não aprova ninguém: manda a conta para análise. Quem
+// decide é a plataforma, lendo o dossiê com todas as respostas e o que aquele
+// profissional consegue entregar.
 //
-// Bloquear quem tira menos afastaria justamente o lado que precisamos atrair
-// primeiro. O filtro real acontece depois, na execução auditada.
-export const LIBERA_MARKETPLACE = ["aprovado", "condicional", "reavaliacao", "reprovado"];
-
-const statusDaConta = (faixa) => (faixa === "aprovado" ? "aprovado" : "parcial");
+// O score sozinho não sustenta a decisão — ele mede o que a pessoa declara
+// saber. Ler as respostas é o que separa quem sabe vender de quem sabe
+// responder prova.
+//
+// Enquanto espera, a conta fica em ANALISE: Academy liberada, marketplace não.
+export const STATUS_LIBERADOS = ["aprovado", "parcial"];
+export const DECISOES = {
+  aprovado: "aprovado",
+  parcial: "parcial",
+  recusado: "recusado",
+};
 
 router.get("/triagem/perguntas", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
@@ -44,11 +52,11 @@ router.get("/triagem/minhas", (req, res) => {
     tentativas,
     atual: tentativas[0] || null,
     statusConta: vendedor?.status || "triagem",
-    liberado: !!tentativas.length,
+    emAnalise: vendedor?.status === "analise",
   });
 });
 
-router.post("/triagem", (req, res) => {
+router.post("/triagem", async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais fazem a triagem" });
 
@@ -87,22 +95,19 @@ router.post("/triagem", (req, res) => {
       ins.run(uid(), assessmentId, entityId, d.id, JSON.stringify(respostas[d.id] ?? null), d.pontos, ts);
     }
 
-    // O status da conta sai do score, sem caminho manual.
-    const statusConta = statusDaConta(r.status);
-    db.prepare("UPDATE sellers SET status = ?, scoreTriagem = ?, perfilComercial = ?, perfil = ? WHERE id = ?")
-      .run(statusConta, r.score, JSON.stringify(r.perfil), r.perfil.funcaoSugerida || "sdr", entityId);
+    // Vai para a fila da plataforma. Nenhum caminho no código aprova sozinho.
+    db.prepare("UPDATE sellers SET status = 'analise', scoreTriagem = ?, perfilComercial = ?, perfil = ? WHERE id = ?")
+      .run(r.score, JSON.stringify(r.perfil), r.perfil.funcaoSugerida || "sdr", entityId);
   })();
 
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(entityId);
   if (user) {
-    const msg = {
-      aprovado: `Aprovado com ${r.score}%! Seu perfil comercial está completo.`,
-      condicional: `Você fez ${r.score}%. Perfil parcial liberado — complete a Academy para a aprovação plena.`,
-      reavaliacao: `Você fez ${r.score}%. Perfil parcial liberado. A trilha da Academy eleva sua classificação.`,
-      reprovado: `Você fez ${r.score}%. Perfil parcial liberado com trilha obrigatória na Academy.`,
-    }[r.status];
-    notificar(user.id, "triagem", "Resultado da triagem", msg);
+    notificar(user.id, "triagem", "Avaliação concluída",
+      `Você fez ${r.score}%. Seu perfil foi enviado para análise da plataforma. ` +
+      `Enquanto isso, a Academy já está liberada.`);
   }
+  const vendedor = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(entityId);
+  if (vendedor?.email) await emailProfissionalEmAnalise(vendedor.nome, vendedor.email);
 
   res.json({
     assessmentId,
@@ -111,9 +116,8 @@ router.post("/triagem", (req, res) => {
     categorias: r.categorias,
     perfil: r.perfil,
     tentativa: anteriores + 1,
-    liberado: true,
-    statusConta: statusDaConta(r.status),
-    proximoPasso: r.status === "aprovado" ? "marketplace" : "academy",
+    statusConta: "analise",
+    proximoPasso: "academy",
   });
 });
 
@@ -138,6 +142,114 @@ router.get("/triagem/painel", (req, res) => {
     porStatus,
     mediaPorCategoria: mediaCat,
   });
+});
+
+// ---------------------------------------------------------------------------
+// Fila da plataforma
+// ---------------------------------------------------------------------------
+
+// Reconstrói as respostas de uma tentativa a partir do que foi guardado.
+// Nada é recalculado aqui: o dossiê lê o que já foi pontuado no envio.
+function tentativaCompleta(assessmentId) {
+  const a = db.prepare("SELECT * FROM assessments WHERE id = ?").get(assessmentId);
+  if (!a) return null;
+
+  const linhas = db.prepare(
+    "SELECT questionId, resposta, pontos FROM assessment_answers WHERE assessmentId = ?"
+  ).all(assessmentId);
+
+  const respostas = {};
+  const detalhe = [];
+  for (const l of linhas) {
+    try { respostas[l.questionId] = JSON.parse(l.resposta); } catch { respostas[l.questionId] = l.resposta; }
+    detalhe.push({ id: l.questionId, pontos: l.pontos, nota: "" });
+  }
+
+  return {
+    id: a.id,
+    tentativa: a.tentativa,
+    score: a.score,
+    status: a.status,
+    categorias: JSON.parse(a.categorias || "{}"),
+    perfil: JSON.parse(a.perfil || "{}"),
+    criadoEm: a.criadoEm,
+    respostas,
+    detalhe,
+  };
+}
+
+router.get("/triagem/fila", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const fila = db.prepare(`
+    SELECT s.id, s.nome, s.email, s.cidade, s.perfil, s.scoreTriagem, s.criadoEm, s.perfilComercial,
+           (SELECT COUNT(*) FROM assessments WHERE sellerId = s.id) AS tentativas,
+           (SELECT MAX(criadoEm) FROM assessments WHERE sellerId = s.id) AS avaliadoEm
+    FROM sellers s WHERE s.status = 'analise'
+    ORDER BY avaliadoEm ASC
+  `).all().map((s) => ({ ...s, perfilComercial: JSON.parse(s.perfilComercial || "{}") }));
+
+  res.json({ fila });
+});
+
+// O dossiê que a plataforma lê antes de decidir: todas as respostas, o que o
+// profissional entrega hoje e o que ainda não entrega.
+router.get("/triagem/:sellerId/dossie", async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const vendedor = db.prepare("SELECT id, nome, email, cidade, status, criadoEm FROM sellers WHERE id = ?")
+    .get(req.params.sellerId);
+  if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
+
+  const ultima = db.prepare(
+    "SELECT id FROM assessments WHERE sellerId = ? ORDER BY criadoEm DESC LIMIT 1"
+  ).get(vendedor.id);
+  if (!ultima) return res.status(404).json({ error: "Este profissional ainda não fez a avaliação" });
+
+  const t = tentativaCompleta(ultima.id);
+  const dossie = montarDossie(t);
+
+  // A narrativa é opcional e nunca bloqueia a resposta: se a chave não
+  // existir ou a chamada falhar, o dossiê vai completo do mesmo jeito.
+  dossie.narrativa = await narrativa(dossie);
+
+  const historico = db.prepare(
+    "SELECT tentativa, score, status, criadoEm FROM assessments WHERE sellerId = ? ORDER BY criadoEm DESC"
+  ).all(vendedor.id);
+
+  res.json({ vendedor, avaliadoEm: t.criadoEm, dossie, historico });
+});
+
+// A decisão. Só a plataforma, e sempre com registro de quem decidiu.
+router.post("/triagem/:sellerId/decidir", async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const decisao = DECISOES[req.body?.decisao];
+  if (!decisao)
+    return res.status(400).json({ error: "Decisão inválida. Use aprovado, parcial ou recusado." });
+
+  const vendedor = db.prepare("SELECT id, nome, email, status FROM sellers WHERE id = ?").get(req.params.sellerId);
+  if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
+  if (vendedor.status !== "analise")
+    return res.status(409).json({ error: `Este profissional não está em análise (status: ${vendedor.status}).` });
+
+  const nota = String(req.body?.nota || "").slice(0, 500);
+  db.prepare("UPDATE sellers SET status = ?, notaTriagem = ?, decididoPor = ?, decididoEm = ? WHERE id = ?")
+    .run(decisao, nota, req.user.id, agora(), vendedor.id);
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(vendedor.id);
+  if (user) {
+    const msg = {
+      aprovado: "Perfil aprovado pela plataforma. As oportunidades já estão liberadas.",
+      parcial: "Perfil aprovado parcialmente. Você já acessa as oportunidades e a Academy eleva sua classificação.",
+      recusado: "Seu perfil ainda não foi aprovado. Complete a Academy e refaça a avaliação.",
+    }[decisao];
+    notificar(user.id, "triagem", "Resultado da análise", nota ? `${msg}\n\n${nota}` : msg);
+  }
+  if (vendedor.email) await emailStatusProfissional(vendedor.nome, vendedor.email, decisao, nota);
+
+  console.log(`[admin] triagem decidida: ${vendedor.nome} → ${decisao}`);
+  res.json({ id: vendedor.id, status: decisao });
 });
 
 export default router;

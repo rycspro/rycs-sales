@@ -1,61 +1,65 @@
-# Sales Machine
+# RYCS Sales Machine
 
-Projeto React (Vite) gerado a partir do artifact construído no chat. Pronto pra abrir
-no Claude Code e continuar evoluindo como um app de verdade, fora do sandbox do claude.ai.
+Plataforma de execução comercial que conecta empresas e profissionais, controla campanhas, qualificação, leads, comprovação de tarefas e repasses.
 
-## O que já está pronto
-- `src/App.jsx` — o app inteiro (papéis Vendedor / Empresa / Plataforma), sem alterações
-  em relação ao artifact.
-- `src/main.jsx` — inclui um "shim" que recria a API `window.storage` usando `localStorage`,
-  porque essa API só existe dentro do artifact do claude.ai. Sem essa parte, o app quebraria
-  ao tentar salvar dados.
+## Executar localmente
 
-## O que ainda depende do ambiente do claude.ai
-A análise por IA (`analisarComIA`, dentro de `App.jsx`) chama `https://api.anthropic.com/v1/messages`
-direto do navegador, sem chave — isso só funciona dentro do artifact do claude.ai, que faz esse
-proxy por você. Fora dali, essa chamada vai falhar (CORS / falta de autenticação), e o app cai
-automaticamente no fallback local (`heuristicaLocal`), que já está no código — ou seja, o app
-continua funcionando, só que sem a IA de verdade.
+Requer Node.js 20 ou superior.
 
-Para ter a IA de verdade rodando fora do claude.ai, é preciso um backend simples (Node/Express,
-Next.js API route, etc.) que guarde a `ANTHROPIC_API_KEY` no servidor e repasse a chamada — isso é
-exatamente o tipo de tarefa que o Claude Code resolve bem se você pedir.
-
-## Passo a passo
-
-### 1. Instalar o Claude Code (se ainda não tiver)
-```bash
-# macOS, Linux ou WSL
-curl -fsSL https://claude.ai/install.sh | bash
-```
-```powershell
-# Windows PowerShell
-irm https://claude.ai/install.ps1 | iex
-```
-Confirme com `claude --version`. Precisa de uma conta Pro, Max, Team ou Enterprise
-(o plano gratuito do claude.ai não dá acesso ao Claude Code).
-
-### 2. Colocar este projeto em uma pasta local
-Baixe os arquivos deste projeto e coloque numa pasta, por exemplo `~/projetos/sales-machine`.
-
-### 3. Abrir o Claude Code na pasta do projeto
-```bash
-cd ~/projetos/sales-machine
-claude
-```
-Na primeira vez ele abre o navegador para autenticar com sua conta Anthropic.
-
-### 4. Instalar as dependências e rodar
-Dentro da sessão do Claude Code (ou no terminal normal):
 ```bash
 npm install
+cp .env.example .env
+npm run server
+```
+
+Em outro terminal:
+
+```bash
 npm run dev
 ```
-Abre em `http://localhost:5173`.
 
-### 5. Seguir evoluindo com o Claude Code
-A partir daqui é só pedir em linguagem natural, por exemplo:
-- "monta um backend simples em Node pra guardar a ANTHROPIC_API_KEY e fazer a análise por IA de verdade"
-- "troca o localStorage por um banco de dados real (Postgres/Supabase)"
-- "adiciona autenticação de verdade pro vendedor e pra empresa"
-- "prepara isso pra deploy na Vercel"
+Frontend: `http://localhost:5173`. API: `http://localhost:3001`. Para abrir dados demonstrativos sem gravar no banco, use `/preview/empresa`, `/preview/vendedor` ou `/preview/admin`.
+
+## Fluxo operacional implementado
+
+1. A empresa completa cadastro, ICP, contatos e materiais e envia para análise.
+2. A plataforma aprova ou suspende a empresa.
+3. Uma empresa aprovada contrata plano pago, configura campanha, treinamento, tarefas e orçamento.
+4. A publicação valida cadastro, plano, caixa, limite do plano e campos obrigatórios.
+5. O profissional se candidata, conclui a qualificação e passa pela aprovação.
+6. Leads são vinculados à empresa/campanha, protegidos contra duplicidade e acompanhados no funil.
+7. Uma submissão reserva no caixa o pagamento do profissional mais a taxa do plano.
+8. Recusa estorna a reserva; liberação debita a empresa, credita integralmente o profissional e registra a receita RYCS.
+9. O painel separa saldo total, disponível e reservado e apresenta o extrato operacional.
+
+## Alterações necessárias no ambiente da empresa
+
+Para produção, não use o SQLite efêmero do container. Configure `DB_PATH` em volume persistente ou migre o repositório para Postgres, defina `NODE_ENV=production`, um `JWT_SECRET` forte e um `AUDIT_HMAC_SECRET` separado. Cadastre também a URL pública exata em `FRONTEND_URL` e `VITE_API_URL` durante o build.
+
+Integrações externas:
+
+- Asaas: `ASAAS_API_KEY`, `ASAAS_ENV=production` e `ASAAS_WEBHOOK_TOKEN` para depósitos e pagamentos.
+- Resend: `RESEND_API_KEY` e `EMAIL_FROM` com domínio verificado.
+- S3 ou Cloudflare R2: bucket, endpoint e credenciais; aplique no bucket o limite real de 50 MB e política privada.
+- Anthropic: `ANTHROPIC_API_KEY` para auditoria assistida por IA. Sem a chave, a API continua no ar e usa as regras locais disponíveis.
+- Administração: `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ADMIN_SECURITY_KEY`. Guarde tudo no cofre de segredos do provedor.
+
+Antes do piloto, configure domínio/TLS, backups automáticos, alertas de erro e saldo, retenção de evidências, política de privacidade/LGPD, termos de uso, contrato da operação, conciliação diária e responsáveis por aprovação de empresas, contestações e saques.
+
+## Comandos de validação
+
+```bash
+npm test
+npm run build
+```
+
+O endpoint `GET /api/health` deve responder `{ "status": "ok" }`.
+
+## Planos configurados
+
+- Sandbox: configuração sem campanha ativa.
+- Start: R$ 499/mês, taxa de 12%, 1 campanha e até 5 profissionais.
+- Growth: R$ 999/mês, taxa de 9%, 3 campanhas e até 20 profissionais.
+- Scale: R$ 2.700/mês, taxa de 7%, 10 campanhas e até 100 profissionais.
+
+O profissional recebe o valor integral definido para a tarefa. A taxa variável é adicionada ao débito da empresa e registrada separadamente no livro financeiro.

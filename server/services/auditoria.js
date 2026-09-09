@@ -1,72 +1,97 @@
 import db from "../db.js";
 import { ACOES } from "../../shared/acoes.js";
-import { avaliar } from "./regras.js";
+import { VERSAO_AUDITORIA } from "../../shared/auditoria.js";
+import { avaliar, normalizarProva } from "./regras.js";
+import { canonicalizarUrl, hashDaProva, hmacAuditoria, normalizarDocumento, normalizarTelefone } from "./auditTrail.js";
 
-// Auditoria da RYCS — roda no servidor, sem depender de IA externa.
-//
-// Antes o veredito vinha de uma chamada à Anthropic. O motor de regras faz a
-// triagem localmente: é gratuito, instantâneo, reproduzível e explicável —
-// cada recusa lista exatamente o que pesou, o que a IA não garantia.
-//
-// O que ele não faz é julgar conteúdo: não assiste ao vídeo nem interpreta
-// nuance. Por isso o desenho continua sendo triagem, com "revisao" mandando
-// para conferência humana da empresa sempre que houver dúvida.
+const UMA_HORA = 60 * 60 * 1000;
+const UM_DIA = 24 * UMA_HORA;
+const NOVENTA_DIAS = 90 * UM_DIA;
 
-const UMA_HORA = 3600000;
-const JANELA_CLIENTE = 24 * UMA_HORA;
+function hashEvidencia(campo, valor) {
+  return hmacAuditoria(`evidencia:${campo}:${valor}`);
+}
 
-// Reúne o histórico que transforma checagem de formato em detecção de fraude.
-function montarContexto({ sellerId, companyId, prova }) {
-  const ctx = {};
+function existeEvidencia({ campo, valor, tipo, desde = 0 }) {
+  if (!valor) return false;
+  const valorHash = hashEvidencia(campo, valor);
+  const query = tipo
+    ? `SELECT 1
+         FROM submission_evidence e
+         JOIN submissions s ON s.id = e.submissionId
+        WHERE e.campo = ? AND e.valueHash = ? AND s.tipo = ? AND e.criadoEm >= ?
+        LIMIT 1`
+    : `SELECT 1 FROM submission_evidence WHERE campo = ? AND valueHash = ? AND criadoEm >= ? LIMIT 1`;
+  const row = tipo
+    ? db.prepare(query).get(campo, valorHash, tipo, desde)
+    : db.prepare(query).get(campo, valorHash, desde);
+  return Boolean(row);
+}
 
-  const telefone = String(prova?.telefone || "").replace(/\D/g, "");
-  const video = String(prova?.video || "").trim();
-  const cliente = String(prova?.cliente || "").trim().toLowerCase();
+function montarContexto({ sellerId, companyId, leadId, prova, tipo, proofHash }) {
+  const telefone = normalizarTelefone(prova?.telefone);
+  const documento = normalizarDocumento(prova?.documento);
+  const video = canonicalizarUrl(prova?.video);
+  const agora = Date.now();
 
   const anteriores = db.prepare(
-    "SELECT prova, companyId, criadoEm, status FROM submissions WHERE sellerId = ? ORDER BY criadoEm DESC LIMIT 200"
+    "SELECT companyId, criadoEm, status FROM submissions WHERE sellerId = ? ORDER BY criadoEm DESC LIMIT 200"
   ).all(sellerId);
-
-  const agora = Date.now();
-  let acoesUltimaHora = 0;
-
-  for (const a of anteriores) {
-    let p = {};
-    try { p = JSON.parse(a.prova || "{}"); } catch { /* prova corrompida */ }
-
-    if (agora - a.criadoEm < UMA_HORA) acoesUltimaHora++;
-
-    const tel = String(p.telefone || "").replace(/\D/g, "");
-    if (telefone && tel && tel === telefone) ctx.telefoneRepetido = true;
-
-    if (video && String(p.video || "").trim() === video) ctx.videoRepetido = true;
-
-    if (cliente && String(p.cliente || "").trim().toLowerCase() === cliente
-        && agora - a.criadoEm < JANELA_CLIENTE) ctx.clienteRepetidoRecente = true;
-  }
-
-  ctx.acoesUltimaHora = acoesUltimaHora;
-  ctx.primeiraAcaoNaEmpresa = !anteriores.some((a) => a.companyId === companyId);
-
+  const acoesUltimaHora = anteriores.filter((a) => agora - a.criadoEm < UMA_HORA).length;
   const decididas = anteriores.filter((a) => ["liberado", "recusado", "ia_recusado"].includes(a.status));
   const aprovadas = anteriores.filter((a) => a.status === "liberado");
-  ctx.totalDecididas = decididas.length;
-  ctx.totalAprovadas = aprovadas.length;
-  ctx.taxaAprovacao = decididas.length ? Math.round((aprovadas.length / decididas.length) * 100) : 100;
-
   const empresa = db.prepare("SELECT ticket FROM companies WHERE id = ?").get(companyId);
-  ctx.ticketEmpresa = Number(String(empresa?.ticket || "").replace(/[^\d]/g, "")) || 0;
 
-  return ctx;
+  return {
+    leadId: leadId || null,
+    ticketEmpresa: Number(String(empresa?.ticket || "").replace(/[^\d]/g, "")) || 0,
+    provaRepetida: Boolean(db.prepare("SELECT 1 FROM submissions WHERE proofHash = ? LIMIT 1").get(proofHash)),
+    videoRepetido: Boolean(video && existeEvidencia({ campo: "video", valor: video })),
+    contatoMesmoTipo24h: Boolean(telefone && existeEvidencia({ campo: "telefone", valor: telefone, tipo, desde: agora - UM_DIA })),
+    documentoRepetido: Boolean(documento && existeEvidencia({ campo: "documento", valor: documento, tipo: "venda", desde: agora - NOVENTA_DIAS })),
+    acoesUltimaHora,
+    volumeAtipico: acoesUltimaHora >= 7,
+    primeiraAcaoNaEmpresa: !anteriores.some((a) => a.companyId === companyId),
+    totalDecididas: decididas.length,
+    totalAprovadas: aprovadas.length,
+    taxaAprovacao: decididas.length ? Math.round((aprovadas.length / decididas.length) * 100) : 100,
+  };
 }
 
-export async function auditar({ tipo, prova, sellerId, companyId }) {
+export async function auditar({ tipo, prova, sellerId, companyId, leadId = null }) {
   const acao = ACOES[tipo];
-  if (!acao) return { veredito: "revisao", confianca: 0, motivo: "Tipo de ação desconhecido.", fonte: "sistema" };
+  if (!acao) {
+    return {
+      veredito: "recusado",
+      confianca: 1,
+      motivo: "Tipo de ação desconhecido.",
+      fonte: "regras_internas",
+      risco: "critico",
+      sinais: ["tipo de ação desconhecido"],
+      verificacoes: [],
+      provaNormalizada: {},
+      proofHash: "",
+      auditVersion: VERSAO_AUDITORIA,
+    };
+  }
 
-  const contexto = sellerId && companyId ? montarContexto({ sellerId, companyId, prova }) : {};
-  return avaliar({ tipo, prova, camposReq: acao.prova, contexto });
+  const provaNormalizada = normalizarProva(prova, acao.prova);
+  const proofHash = hashDaProva(provaNormalizada);
+  const contexto = montarContexto({ sellerId, companyId, leadId, prova: provaNormalizada, tipo, proofHash });
+  const resultado = avaliar({ tipo, prova: provaNormalizada, camposReq: acao.prova, contexto });
+  return {
+    ...resultado,
+    provaNormalizada,
+    proofHash,
+    auditVersion: VERSAO_AUDITORIA,
+    contexto: {
+      leadVinculado: Boolean(leadId),
+      acoesUltimaHora: contexto.acoesUltimaHora,
+      primeiraAcaoNaEmpresa: contexto.primeiraAcaoNaEmpresa,
+    },
+  };
 }
 
-export const statusDoVeredito = (v) =>
-  v === "aprovado" ? "ia_aprovado" : v === "recusado" ? "ia_recusado" : "revisao";
+// Não existe aprovação automática para evidência manual. O nome legado
+// ia_aprovado é mantido apenas para submissões históricas já gravadas.
+export const statusDoVeredito = (veredito) => veredito === "recusado" ? "ia_recusado" : "revisao";

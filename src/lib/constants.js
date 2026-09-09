@@ -1,8 +1,8 @@
 import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
-  Building2, Wallet, User as UserIcon,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift,
+  Building2, Wallet, User as UserIcon, SlidersHorizontal,
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound,
 } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
@@ -42,8 +42,12 @@ export const NAV = {
   ],
   empresa: [
     { key: "painel", label: "Painel", Icon: BarChart3 },
+    { key: "cadastro", label: "Cadastro", Icon: Building2 },
+    { key: "campanhas", label: "Campanhas", Icon: Megaphone },
+    { key: "leads", label: "Leads", Icon: ContactRound },
     { key: "conferir", label: "Conferir", Icon: ShieldCheck },
     { key: "time", label: "Time", Icon: Users },
+    { key: "qualificacao", label: "Qualificação", Icon: SlidersHorizontal },
     { key: "tabela", label: "Tabela", Icon: ClipboardList },
     { key: "chat", label: "Chat", Icon: MessageSquare },
     { key: "planos", label: "Plano", Icon: SparklesIcon },
