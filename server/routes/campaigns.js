@@ -3,6 +3,7 @@ import db, { uid, agora } from "../db.js";
 import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel } from "../../shared/empresa.js";
 import { dentroDoLimite } from "../../shared/planos.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
+import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
 
 const router = Router();
 
@@ -117,6 +118,16 @@ router.post("/campaigns/:id/apply", (req, res) => {
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
   if (campaign.status !== "ativa") return res.status(400).json({ error: "Campanha não está ativa" });
 
+  if (campaign.exigeCertificacao) {
+    const certificacoes = db.prepare("SELECT funcao FROM certifications WHERE sellerId = ?").all(entityId);
+    if (!atendeCertificacaoDaCampanha(campaign, certificacoes)) {
+      return res.status(422).json({
+        error: `Conclua e seja aprovado na trilha ${campaign.funcao || "exigida"} da Academy antes de se candidatar.`,
+        codigo: "CERTIFICACAO_OBRIGATORIA",
+      });
+    }
+  }
+
   const existing = db.prepare("SELECT id FROM campaign_applications WHERE campaignId = ? AND sellerId = ?").get(req.params.id, entityId);
   if (existing) return res.status(409).json({ error: "Já se candidatou a esta campanha" });
 
@@ -137,7 +148,22 @@ router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {
   if (!["aprovado", "recusado"].includes(status))
     return res.status(400).json({ error: "Status deve ser aprovado ou recusado" });
 
+  const candidatura = db.prepare(
+    "SELECT * FROM campaign_applications WHERE id = ? AND campaignId = ?"
+  ).get(req.params.appId, campaign.id);
+  if (!candidatura) return res.status(404).json({ error: "Candidatura não encontrada" });
+
+  if (status === "aprovado" && campaign.exigeCertificacao) {
+    const certificacoes = db.prepare("SELECT funcao FROM certifications WHERE sellerId = ?").all(candidatura.sellerId);
+    if (!atendeCertificacaoDaCampanha(campaign, certificacoes))
+      return res.status(422).json({ error: "O profissional ainda não possui a certificação exigida pela campanha." });
+  }
+
   db.prepare("UPDATE campaign_applications SET status = ? WHERE id = ?").run(status, req.params.appId);
+  if (status === "aprovado") {
+    db.prepare("INSERT OR REPLACE INTO applications (sellerId, companyId, status) VALUES (?, ?, 'aprovado')")
+      .run(candidatura.sellerId, campaign.companyId);
+  }
   res.json({ ok: true });
 });
 

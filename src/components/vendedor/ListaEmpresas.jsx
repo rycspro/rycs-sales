@@ -5,12 +5,14 @@ import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import { Stat } from "../ui.jsx";
 import { CompanyScoreChip } from "../CompanyScore.jsx";
+import { atendeCertificacaoDaCampanha } from "../../../shared/campaignAcademy.js";
 
-export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) {
+export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar, irAcademy }) {
   const ordenadas = [...db.companies].sort((a, b) => Number(b.destaque) - Number(a.destaque));
   const [estudando, setEstudando] = useState(null);
   const [respostas, setRespostas] = useState({});
   const [enviando, setEnviando] = useState(false);
+  const [campanhaAberta, setCampanhaAberta] = useState(null);
   const escolherResposta = (companyId, pergunta, opcao) => setRespostas((atual) => {
     const respostasDaEmpresa = [...(atual[companyId] || [])];
     respostasDaEmpresa[pergunta] = opcao;
@@ -36,6 +38,12 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) 
     aviso(r.aprovado ? `Avaliação concluída: ${r.quizScore}%. Você já pode se candidatar.` : `Você fez ${r.quizScore}%. Revise o material e tente novamente.`);
     await recarregar();
   };
+  const candidatarCampanha = async (campanha) => {
+    const r = await api(`/campaigns/${campanha.id}/apply`, {});
+    if (r?.error) return aviso(r.error);
+    aviso("Candidatura enviada para aprovação.");
+    await recarregar();
+  };
 
   return (
     <div className="vx-fade">
@@ -43,6 +51,34 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) 
         <Stat label="Disponível para saque" value={money(eu.disponivel)} Icon={Wallet} tone="brand" />
         <Stat label="Em análise" value={money(eu.pendente)} Icon={Clock} tone="amber" />
       </div>
+
+      {!!db.campaigns?.length && <>
+        <div className="vx-row" style={{ marginBottom: 12 }}>
+          <h2 className="vx-disp" style={{ fontSize: 19, margin: 0 }}>Campanhas disponíveis</h2>
+          <span className="vx-chip vx-mono">{db.campaigns.length}</span>
+        </div>
+        <div className="vx-grid" style={{ marginBottom: 24 }}>
+          {db.campaigns.map((campanha) => {
+            const empresa = db.companies.find((c) => c.id === campanha.companyId);
+            const certificada = atendeCertificacaoDaCampanha(campanha, eu.certificacoes);
+            const candidatura = campanha.candidaturas?.[0];
+            return <div key={campanha.id} className="vx-card" style={{ padding: 18 }}>
+              <div className="vx-disp" style={{ fontSize: 17 }}>{campanha.titulo}</div>
+              <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3 }}>{empresa?.nome || campanha.produto} · {campanha.funcao?.toUpperCase()}</div>
+              <button className="vx-btn vx-btn-block" style={{ marginTop: 12 }} onClick={() => setCampanhaAberta(campanhaAberta === campanha.id ? null : campanha.id)}>
+                <BookOpen size={15} />{campanhaAberta === campanha.id ? "Fechar treinamento" : "Ver treinamento da campanha"}
+              </button>
+              {campanhaAberta === campanha.id && <div style={{ marginTop: 10 }}>
+                {(campanha.treinamento || []).map((m, i) => <div key={m.id || i} style={{ padding: "9px 0", borderBottom: "1px solid var(--border)" }}><b style={{ fontSize: 13 }}>{m.titulo}</b><div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3, whiteSpace: "pre-wrap" }}>{m.conteudo}</div></div>)}
+              </div>}
+              {candidatura?.status === "aprovado" ? <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} onClick={() => abrir(campanha.companyId)}>Trabalhar nesta campanha</button>
+                : candidatura?.status === "pendente" ? <button className="vx-btn vx-btn-block" style={{ marginTop: 10 }} disabled>Aguardando aprovação</button>
+                : !certificada ? <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} onClick={() => irAcademy(campanha.funcao)}>Fazer prova da Academy</button>
+                : <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} onClick={() => candidatarCampanha(campanha)}>Candidatar-se</button>}
+            </div>;
+          })}
+        </div>
+      </>}
 
       <div className="vx-row" style={{ marginBottom: 12 }}>
         <h2 className="vx-disp" style={{ fontSize: 19, margin: 0 }}>Empresas na operação</h2>

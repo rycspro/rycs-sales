@@ -46,6 +46,7 @@ function buildSellersWithRelations(sellers) {
   const apps = db.prepare("SELECT * FROM applications").all();
   const progress = db.prepare("SELECT * FROM course_progress").all();
   const scores = db.prepare("SELECT * FROM score_dimensions").all();
+  const certifications = db.prepare("SELECT * FROM certifications").all();
 
   return sellers.map((s) => {
     const aplicacoes = {};
@@ -67,7 +68,10 @@ function buildSellersWithRelations(sellers) {
     apps.filter((a) => a.sellerId === s.id).forEach((a) => {
       aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: JSON.parse(a.criterios || "[]"), quizScore: a.quizScore };
     });
-    return { ...parseSeller(s), aplicacoes, aplicacoesDetalhe, curso, scoreDimensions };
+    return {
+      ...parseSeller(s), aplicacoes, aplicacoesDetalhe, curso, scoreDimensions,
+      certificacoes: certifications.filter((c) => c.sellerId === s.id),
+    };
   });
 }
 
@@ -111,13 +115,19 @@ function getFilteredState(user) {
       submissions: full.submissions.filter((s) => s.sellerId === meuId),
       withdrawals: full.withdrawals.filter((w) => w.sellerId === meuId),
       messages: full.messages.filter((m) => m.sellerId === meuId),
-      campaigns: oportunidadesLiberadas ? full.campaigns.filter((c) => c.status === "ativa") : [],
+      campaigns: oportunidadesLiberadas ? full.campaigns.filter((c) => c.status === "ativa").map((c) => ({
+        ...c,
+        candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
+      })) : [],
     };
   }
 
   if (role === "empresa") {
     const meuId = entityId;
-    const meusSellers = full.sellers.filter((s) => s.aplicacoes?.[meuId]);
+    const idsCandidatosCampanha = new Set(full.campaigns
+      .filter((c) => c.companyId === meuId)
+      .flatMap((c) => c.candidaturas.map((a) => a.sellerId)));
+    const meusSellers = full.sellers.filter((s) => s.aplicacoes?.[meuId] || idsCandidatosCampanha.has(s.id));
     return {
       sellers: meusSellers,
       companies: full.companies.filter((c) => c.id === meuId),

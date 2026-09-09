@@ -27,7 +27,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
 
       {aba === "painel" && <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "cadastro" && <CadastroEmpresa emp={emp} up={up} aviso={aviso} />}
-      {aba === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
+      {aba === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "leads" && <LeadsEmpresa emp={emp} db={db} />}
       {aba === "conferir" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} />}
       {aba === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}

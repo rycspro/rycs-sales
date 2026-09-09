@@ -5,7 +5,7 @@ import { api, apiPatch } from "../../lib/api.js";
 const CORES_NIVEL = { certified: "var(--brand)", pro: "var(--indigo)", elite: "var(--amber)" };
 const NOME_NIVEL = { certified: "Certified", pro: "Pro", elite: "Elite" };
 
-export default function Academy({ eu, aviso }) {
+export default function Academy({ eu, aviso, funcaoInicial }) {
   const [trilha, setTrilha] = useState(null);
   const [progresso, setProgresso] = useState({ progresso: [], certificacoes: [], tentativas: [] });
   const [abertoIdx, setAbertoIdx] = useState(null);
@@ -14,7 +14,7 @@ export default function Academy({ eu, aviso }) {
   const [resultado, setResultado] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
-  const funcao = eu.perfil || "sem-exp";
+  const funcao = funcaoInicial || eu.perfil || "sem-exp";
 
   const carregar = useCallback(async () => {
     const [t, p] = await Promise.all([

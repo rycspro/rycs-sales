@@ -14,7 +14,7 @@ const novaCampanha = (emp) => ({
   }, criteriosAprovacao: { agendamento: "Lead válido, não duplicado e reunião confirmada.", realizada: "Participantes presentes e reunião concluída conforme a campanha." }, treinamento: [], requisitos: "",
 });
 
-export default function CampanhasEmpresa({ emp, db, up, aviso }) {
+export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
   const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
   const [selecionada, setSelecionada] = useState(campanhas[0]?.id || "nova");
   const existente = campanhas.find((c) => c.id === selecionada);
@@ -55,6 +55,12 @@ export default function CampanhasEmpresa({ emp, db, up, aviso }) {
     aviso(status === "ativa" ? "Campanha publicada." : "Campanha pausada.");
   };
   const adicionarModulo = () => set("treinamento", [...(campanha.treinamento || []), { id: `mod-${Date.now()}`, titulo: "", conteudo: "" }]);
+  const decidirCandidatura = async (app, status) => {
+    const r = await apiPatch(`/campaigns/${campanha.id}/applications/${app.id}`, { status });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível decidir a candidatura.");
+    aviso(status === "aprovado" ? "Profissional aprovado e liberado para trabalhar." : "Candidatura recusada.");
+    await recarregar?.();
+  };
 
   return <div className="vx-fade">
     <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><div className="vx-eyebrow">Operação comercial</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>Campanhas</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Configure orçamento, tarefas, evidências e treinamento antes da publicação.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setSelecionada("nova"); setEdicao(null); }}><Plus size={14} /> Nova campanha</button></div>
@@ -82,6 +88,19 @@ export default function CampanhasEmpresa({ emp, db, up, aviso }) {
     </div>
 
     <section className="vx-card" style={{ padding: 18, marginTop: 16 }}><div className="vx-row"><div><div className="vx-disp" style={{ fontSize: 17 }}>Treinamento específico</div><div className="vx-mut" style={{ fontSize: 12 }}>Ao menos um módulo é obrigatório para publicar.</div></div><button className="vx-btn vx-btn-sm" onClick={adicionarModulo}><Plus size={14} /> Módulo</button></div>{(campanha.treinamento || []).map((m, i) => <div key={m.id} className="vx-grid vx-g2" style={{ marginTop: 10 }}><input className="vx-input" placeholder="Título" value={m.titulo} onChange={(e) => set("treinamento", campanha.treinamento.map((x, n) => n === i ? { ...x, titulo: e.target.value } : x))} /><input className="vx-input" placeholder="Conteúdo ou URL" value={m.conteudo} onChange={(e) => set("treinamento", campanha.treinamento.map((x, n) => n === i ? { ...x, conteudo: e.target.value } : x))} /></div>)}</section>
+
+    {!!existente?.candidaturas?.length && <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
+      <div className="vx-disp" style={{ fontSize: 17, marginBottom: 10 }}>Candidaturas</div>
+      <div className="vx-grid">
+        {existente.candidaturas.map((app) => {
+          const profissional = db.sellers.find((s) => s.id === app.sellerId);
+          return <div key={app.id} className="vx-row" style={{ padding: 10, borderBottom: "1px solid var(--border)" }}>
+            <div><b style={{ fontSize: 13.5 }}>{profissional?.nome || "Profissional"}</b><div className="vx-mut" style={{ fontSize: 12 }}>{app.status}</div></div>
+            {app.status === "pendente" && <div style={{ display: "flex", gap: 7 }}><button className="vx-btn vx-btn-sm" onClick={() => decidirCandidatura(app, "recusado")}>Recusar</button><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => decidirCandidatura(app, "aprovado")}>Aprovar</button></div>}
+          </div>;
+        })}
+      </div>
+    </section>}
 
     <section className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: check.ok ? "var(--brand)" : "var(--amber)" }}><div style={{ display: "flex", gap: 9 }}><ClipboardCheck size={18} color={check.ok ? "var(--brand)" : "var(--amber)"} /><div><b>{check.ok ? "Pronta para publicar" : "Pendências de publicação"}</b>{!check.ok && <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3 }}>{check.pendencias.join(" · ")}</div>}</div></div></section>
     <div style={{ display: "flex", gap: 9, marginTop: 16 }}><button className="vx-btn vx-btn-primary" onClick={salvar}><Save size={14} /> Salvar</button>{campanha.status === "ativa" ? <button className="vx-btn" onClick={() => mudarStatus("pausada")}><CirclePause size={14} /> Pausar</button> : <button className="vx-btn" disabled={!check.ok} onClick={() => mudarStatus("ativa")}><Rocket size={14} /> Publicar</button>}</div>
