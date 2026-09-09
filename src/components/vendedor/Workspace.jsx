@@ -24,7 +24,7 @@ function pedirRevisaoHumana(setDb, aviso, sub) {
   aviso("Enviado para conferência humana da empresa.");
 }
 
-export default function Workspace({ empresa, eu, db, setDb, up, aviso, voltar , recarregar }) {
+export default function Workspace({ campanha, empresa, eu, db, setDb, up, aviso, voltar , recarregar }) {
   const [aba, setAba] = useState("tarefas");
   const feitos = eu.curso?.[empresa.id];
   const todosFeitos = feitos === "todos" || (Array.isArray(feitos) && feitos.length === empresa.curso.length);
@@ -47,7 +47,7 @@ export default function Workspace({ empresa, eu, db, setDb, up, aviso, voltar , 
       </div>
 
       {aba === "curso" && <Curso empresa={empresa} eu={eu} up={up} aviso={aviso} />}
-      {aba === "tarefas" && <Tarefas empresa={empresa} eu={eu} db={db} setDb={setDb} aviso={aviso} liberado={todosFeitos} irCurso={() => setAba("curso")} recarregar={recarregar} />}
+      {aba === "tarefas" && <Tarefas campanha={campanha} empresa={empresa} eu={eu} db={db} setDb={setDb} aviso={aviso} liberado={campanha ? true : todosFeitos} irCurso={() => setAba("curso")} recarregar={recarregar} />}
       {aba === "envios" && <MeusEnvios empresa={empresa} eu={eu} db={db} pedirRevisao={(sub) => pedirRevisaoHumana(setDb, aviso, sub)} />}
       {aba === "chat" && <Chat empresa={empresa} sellerId={eu.id} db={db} up={up} de="vendedor" />}
     </div>

@@ -82,13 +82,14 @@ export function getFullState() {
   const withdrawals = db.prepare("SELECT * FROM withdrawals ORDER BY criadoEm DESC").all();
   const messages = db.prepare("SELECT * FROM messages ORDER BY ts ASC").all();
   const campaigns = db.prepare("SELECT * FROM campaigns ORDER BY criadoEm DESC").all().map(parseCampaign);
+  const leads = db.prepare("SELECT * FROM leads ORDER BY atualizadoEm DESC").all();
   const campaignApps = db.prepare("SELECT * FROM campaign_applications").all();
 
   campaigns.forEach((c) => {
     c.candidaturas = campaignApps.filter((a) => a.campaignId === c.id);
   });
 
-  return { sellers, companies, submissions, withdrawals, messages, campaigns };
+  return { sellers, companies, submissions, withdrawals, messages, campaigns, leads };
 }
 
 function getFilteredState(user) {
@@ -119,6 +120,7 @@ function getFilteredState(user) {
         ...c,
         candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
       })) : [],
+      leads: full.leads.filter((l) => l.sellerId === meuId),
     };
   }
 
@@ -135,6 +137,7 @@ function getFilteredState(user) {
       withdrawals: [],
       messages: full.messages.filter((m) => m.companyId === meuId),
       campaigns: full.campaigns.filter((c) => c.companyId === meuId),
+      leads: full.leads.filter((l) => l.companyId === meuId),
     };
   }
 

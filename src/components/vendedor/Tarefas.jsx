@@ -4,10 +4,25 @@ import { uid, agora, money } from "../../lib/utils.js";
 import { ACOES, CAMPOS, ORDEM_ACOES, TAXA } from "../../lib/constants.js";
 import { Campo, Vazio } from "../ui.jsx";
 
-export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCurso, recarregar }) {
+export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liberado, irCurso, recarregar }) {
   const [tipo, setTipo] = useState(null);
   const [prova, setProva] = useState({});
   const [enviando, setEnviando] = useState(false);
+  const [leadId, setLeadId] = useState("");
+  const [novoLead, setNovoLead] = useState({ nome: "", empresa: "", telefone: "" });
+  const valores = campanha?.tarefas || empresa.comissoes;
+  const tiposDisponiveis = campanha ? ["agendamento"] : ORDEM_ACOES;
+  const leads = (db.leads || []).filter((l) => l.companyId === empresa.id && (!campanha || l.campaignId === campanha.id));
+  const cadastrarLead = async () => {
+    if (!novoLead.nome.trim() || !novoLead.telefone.trim()) return aviso("Informe nome e telefone do lead.");
+    const r = await api("/leads", { ...novoLead, companyId: empresa.id, campaignId: campanha.id });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível cadastrar o lead.");
+    setLeadId(r.id);
+    setProva((p) => ({ ...p, cliente: novoLead.nome.trim(), telefone: novoLead.telefone }));
+    setNovoLead({ nome: "", empresa: "", telefone: "" });
+    await recarregar();
+    aviso("Lead cadastrado e selecionado.");
+  };
 
   if (!liberado)
     return (
@@ -23,13 +38,14 @@ export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCur
     if (campos.some((c) => !String(prova[c] || "").trim())) return aviso("Preencha todos os campos da comprovação.");
     if (!/^https?:\/\/\S+/i.test(String(prova.video || "").trim()))
       return aviso("Cole um link de vídeo válido, começando com http:// ou https://.");
+    if (campanha && tipo === "agendamento" && !leadId) return aviso("Selecione o lead da reunião.");
 
     setEnviando(true);
 
     // O servidor calcula o valor pela tabela da empresa, audita e devolve o
     // veredito pronto. A tela não decide nada disso — antes ela chamava a IA
     // e depois gravava o resultado, o que permitia pular a análise.
-    const r = await api("/submissions", { sellerId: eu.id, companyId: empresa.id, tipo, prova });
+    const r = await api("/submissions", { sellerId: eu.id, companyId: empresa.id, campaignId: campanha?.id, leadId: leadId || undefined, tipo, prova });
     setEnviando(false);
 
     if (!r || r.error) return aviso(r?.error || "Não foi possível enviar a comprovação.");
@@ -47,7 +63,7 @@ export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCur
   return (
     <>
       <div className="vx-grid vx-g2">
-        {ORDEM_ACOES.filter((k) => empresa.comissoes[k]).map((k) => {
+        {tiposDisponiveis.filter((k) => valores[k]).map((k) => {
           const Icon = ACOES[k].Icon;
           return (
             <div key={k} className="vx-card" style={{ padding: 16 }}>
@@ -58,10 +74,10 @@ export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCur
                   </span>
                   <div style={{ fontWeight: 600, fontSize: 13.5 }}>{ACOES[k].nome}</div>
                 </div>
-                <div className="vx-disp vx-mono" style={{ fontSize: 18, color: "var(--brand)" }}>{money(empresa.comissoes[k])}</div>
+                <div className="vx-disp vx-mono" style={{ fontSize: 18, color: "var(--brand)" }}>{money(valores[k])}</div>
               </div>
               <p className="vx-mut" style={{ fontSize: 12.5, margin: "10px 0 12px" }}>{ACOES[k].regra}</p>
-              <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => { setTipo(k); setProva({}); }}>Registrar ação</button>
+              <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => { setTipo(k); setProva({}); setLeadId(""); }}>Registrar ação</button>
             </div>
           );
         })}
@@ -78,10 +94,25 @@ export default function Tarefas({ empresa, eu, db, setDb, aviso, liberado, irCur
           <div className="vx-sheet vx-fade" onClick={(e) => e.stopPropagation()}>
             <div className="vx-row" style={{ marginBottom: 4 }}>
               <div className="vx-disp" style={{ fontSize: 19 }}>{ACOES[tipo].nome}</div>
-              <div className="vx-disp vx-mono" style={{ fontSize: 19, color: "var(--brand)" }}>{money(empresa.comissoes[tipo])}</div>
+              <div className="vx-disp vx-mono" style={{ fontSize: 19, color: "var(--brand)" }}>{money(valores[tipo])}</div>
             </div>
             <p className="vx-mut" style={{ fontSize: 13, marginTop: 0 }}>{ACOES[tipo].regra}</p>
             <hr className="vx-sep" />
+            {campanha && tipo === "agendamento" && <Campo label="Lead da reunião">
+              <select className="vx-input" value={leadId} onChange={(e) => {
+                const id = e.target.value;
+                const lead = leads.find((l) => l.id === id);
+                setLeadId(id);
+                if (lead) setProva((p) => ({ ...p, cliente: lead.nome || "", telefone: lead.telefone || "" }));
+              }}><option value="">Selecione o lead</option>{leads.map((l) => <option key={l.id} value={l.id}>{l.nome}{l.empresa ? ` · ${l.empresa}` : ""}</option>)}</select>
+            </Campo>}
+            {campanha && tipo === "agendamento" && campanha.aceitaLeadProprio && <div className="vx-card" style={{ padding: 12, marginBottom: 10 }}>
+              <div className="vx-label">Cadastrar novo lead</div>
+              <input className="vx-input" placeholder="Nome do contato" value={novoLead.nome} onChange={(e) => setNovoLead({ ...novoLead, nome: e.target.value })} />
+              <input className="vx-input" style={{ marginTop: 7 }} placeholder="Empresa" value={novoLead.empresa} onChange={(e) => setNovoLead({ ...novoLead, empresa: e.target.value })} />
+              <input className="vx-input" style={{ marginTop: 7 }} placeholder="WhatsApp" value={novoLead.telefone} onChange={(e) => setNovoLead({ ...novoLead, telefone: e.target.value })} />
+              <button type="button" className="vx-btn vx-btn-sm" style={{ marginTop: 8 }} onClick={cadastrarLead}>Cadastrar e selecionar</button>
+            </div>}
             {ACOES[tipo].prova.map((c) => (
               <Campo key={c} label={CAMPOS[c].label}>
                 <input className="vx-input" placeholder={CAMPOS[c].ph} value={prova[c] || ""} onChange={(e) => setProva({ ...prova, [c]: e.target.value })} />

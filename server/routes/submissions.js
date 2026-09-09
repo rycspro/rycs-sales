@@ -9,6 +9,7 @@ import { auditar, statusDoVeredito } from "../services/auditoria.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
 import { reservarParaSubmissao, cancelarReserva, liquidarSubmissao, posicaoEmpresa } from "../services/financeiro.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
+import { dadosAgendamentoCorrespondemAoLead } from "../../shared/agendamento.js";
 
 const router = Router();
 
@@ -36,6 +37,15 @@ router.post("/submissions", async (req, res) => {
     if (campanha.status !== "ativa") return res.status(422).json({ error: "Campanha não está ativa" });
     const vinculo = db.prepare("SELECT status FROM applications WHERE sellerId = ? AND companyId = ?").get(sellerId, companyId);
     if (vinculo?.status !== "aprovado") return res.status(403).json({ error: "Profissional não aprovado nesta empresa" });
+    if (tipo === "agendamento") {
+      if (!leadId) return res.status(400).json({ error: "Selecione o lead da reunião agendada" });
+      const lead = db.prepare(
+        "SELECT id, nome, telefone FROM leads WHERE id = ? AND sellerId = ? AND companyId = ? AND campaignId = ?"
+      ).get(leadId, sellerId, companyId, campaignId);
+      if (!lead) return res.status(422).json({ error: "Lead não pertence a esta campanha e profissional" });
+      if (!dadosAgendamentoCorrespondemAoLead(prova, lead))
+        return res.status(422).json({ error: "Nome e telefone da comprovação devem corresponder ao lead selecionado" });
+    }
   }
 
   // O valor vem da tabela da empresa, não do corpo da requisição. Aceitar o
@@ -48,7 +58,7 @@ router.post("/submissions", async (req, res) => {
 
   // A auditoria roda ANTES de gravar. Auditar depois faria o motor encontrar a
   // própria ação recém-inserida no histórico e acusar repetição consigo mesma.
-  const r = await auditar({ tipo, prova, sellerId, companyId });
+  const r = await auditar({ tipo, prova, sellerId, companyId, leadId });
   const status = statusDoVeredito(r.veredito);
   const taxa = +(valor * takeRateDoPlano(empresa.assinatura)).toFixed(2);
   const liquido = +valor.toFixed(2);

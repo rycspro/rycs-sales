@@ -71,7 +71,7 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar, ir
               {campanhaAberta === campanha.id && <div style={{ marginTop: 10 }}>
                 {(campanha.treinamento || []).map((m, i) => <div key={m.id || i} style={{ padding: "9px 0", borderBottom: "1px solid var(--border)" }}><b style={{ fontSize: 13 }}>{m.titulo}</b><div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3, whiteSpace: "pre-wrap" }}>{m.conteudo}</div></div>)}
               </div>}
-              {candidatura?.status === "aprovado" ? <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} onClick={() => abrir(campanha.companyId)}>Trabalhar nesta campanha</button>
+              {candidatura?.status === "aprovado" ? <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} onClick={() => abrir(campanha.companyId, campanha.id)}>Trabalhar nesta campanha</button>
                 : candidatura?.status === "pendente" ? <button className="vx-btn vx-btn-block" style={{ marginTop: 10 }} disabled>Aguardando aprovação</button>
                 : !certificada ? <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} onClick={() => irAcademy(campanha.funcao)}>Fazer prova da Academy</button>
                 : <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} onClick={() => candidatarCampanha(campanha)}>Candidatar-se</button>}

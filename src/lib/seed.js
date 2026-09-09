@@ -6,6 +6,7 @@ export const seed = () => ({
   companies: [],
   submissions: [],
   campaigns: [],
+  leads: [],
   notifications: [],
   withdrawals: [],
   messages: [],

@@ -113,7 +113,7 @@ function dataHoraPlausivel(valor) {
   if (!texto) return { ok: false, motivo: "data e hora ausentes" };
   const iso = Date.parse(texto);
   if (!Number.isNaN(iso)) {
-    if (iso > Date.now() + 24 * 60 * 60 * 1000) return { ok: false, motivo: "data da reunião está muito no futuro" };
+    if (iso > Date.now() + 180 * 24 * 60 * 60 * 1000) return { ok: false, motivo: "data da reunião está muito no futuro" };
     return { ok: true };
   }
   // Mantém compatibilidade com a entrada atual ("22/08 às 15h30"), mas não
