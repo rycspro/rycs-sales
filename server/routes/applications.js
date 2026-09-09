@@ -1,6 +1,7 @@
 import { Router } from "express";
 import db from "../db.js";
 import { notificar } from "./notifications.js";
+import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.post("/applications", (req, res) => {
     return res.status(400).json({ error: "sellerId e companyId são obrigatórios" });
   if (role === "vendedor" && entityId !== sellerId)
     return res.status(403).json({ error: "Sem permissão" });
+  if (!exigirOportunidadesLiberadas(req, res, sellerId)) return;
   // Quem se candidata é o profissional. Sem isto, uma empresa podia inscrever
   // qualquer vendedor em si mesma, sem que ele soubesse.
   if (role === "empresa")

@@ -8,6 +8,7 @@ import { recalcularCompanyScore } from "../services/companyScore.js";
 import { auditar, statusDoVeredito } from "../services/auditoria.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
 import { reservarParaSubmissao, cancelarReserva, liquidarSubmissao, posicaoEmpresa } from "../services/financeiro.js";
+import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.post("/submissions", async (req, res) => {
 
   if (role === "vendedor" && entityId !== sellerId)
     return res.status(403).json({ error: "Sem permissão" });
+  if (!exigirOportunidadesLiberadas(req, res, sellerId)) return;
   if (!tipo || !companyId) return res.status(400).json({ error: "tipo e companyId são obrigatórios" });
 
   if (idempotencyKey) {

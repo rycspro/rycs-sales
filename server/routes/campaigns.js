@@ -2,6 +2,7 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel } from "../../shared/empresa.js";
 import { dentroDoLimite } from "../../shared/planos.js";
+import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 
 const router = Router();
 
@@ -110,6 +111,7 @@ router.post("/campaigns/:id/status", (req, res) => {
 router.post("/campaigns/:id/apply", (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais podem se candidatar" });
+  if (!exigirOportunidadesLiberadas(req, res)) return;
 
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });

@@ -501,6 +501,11 @@ adicionarColuna("sellers", "documento", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "tipoVendedor", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "perfilComercial", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "scoreTriagem", "REAL DEFAULT 0");
+// Decisão humana da triagem. Separada do score para preservar quem decidiu,
+// quando decidiu e qual justificativa foi comunicada ao profissional.
+adicionarColuna("sellers", "notaTriagem", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "decididoPor", "TEXT");
+adicionarColuna("sellers", "decididoEm", "INTEGER");
 adicionarColuna("sellers", "emailVerificado", "INTEGER DEFAULT 0");
 adicionarColuna("submissions", "leadId", "TEXT");
 adicionarColuna("submissions", "idempotencyKey", "TEXT");

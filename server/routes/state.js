@@ -95,21 +95,23 @@ function getFilteredState(user) {
 
   if (role === "vendedor") {
     const meuId = entityId;
+    const meuVendedor = full.sellers.find((s) => s.id === meuId);
+    const oportunidadesLiberadas = ["aprovado", "parcial"].includes(meuVendedor?.status);
     return {
       sellers: full.sellers.filter((s) => s.id === meuId),
       // A alternativa correta só existe no servidor. O vendedor recebe a
       // pergunta e as opções, nunca o gabarito embutido no cadastro da empresa.
-      companies: full.companies.map((c) => ({
+      companies: oportunidadesLiberadas ? full.companies.map((c) => ({
         ...c,
         qualificacao: {
           ...c.qualificacao,
           questoes: (c.qualificacao?.questoes || []).map(({ correta, ...q }) => q),
         },
-      })),
+      })) : [],
       submissions: full.submissions.filter((s) => s.sellerId === meuId),
       withdrawals: full.withdrawals.filter((w) => w.sellerId === meuId),
       messages: full.messages.filter((m) => m.sellerId === meuId),
-      campaigns: full.campaigns.filter((c) => c.status === "ativa"),
+      campaigns: oportunidadesLiberadas ? full.campaigns.filter((c) => c.status === "ativa") : [],
     };
   }
 

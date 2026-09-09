@@ -30,6 +30,11 @@ CREATE TABLE IF NOT EXISTS sellers (
   sacado REAL DEFAULT 0,
   respostas TEXT DEFAULT '[]',
   video TEXT DEFAULT '',
+  "perfilComercial" TEXT DEFAULT '{}',
+  "scoreTriagem" REAL DEFAULT 0,
+  "notaTriagem" TEXT DEFAULT '',
+  "decididoPor" TEXT,
+  "decididoEm" BIGINT,
   "criadoEm" BIGINT NOT NULL
 );
 
@@ -175,6 +180,30 @@ CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications("userId");
 CREATE INDEX IF NOT EXISTS idx_withdrawals_seller ON withdrawals("sellerId");
 CREATE INDEX IF NOT EXISTS idx_campaigns_company ON campaigns("companyId");
+
+CREATE TABLE IF NOT EXISTS assessments (
+  id TEXT PRIMARY KEY,
+  "sellerId" TEXT NOT NULL REFERENCES sellers(id),
+  tentativa INTEGER NOT NULL,
+  score REAL NOT NULL,
+  status TEXT NOT NULL,
+  categorias TEXT DEFAULT '{}',
+  perfil TEXT DEFAULT '{}',
+  "criadoEm" BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS assessment_answers (
+  id TEXT PRIMARY KEY,
+  "assessmentId" TEXT NOT NULL REFERENCES assessments(id),
+  "sellerId" TEXT NOT NULL REFERENCES sellers(id),
+  "questionId" TEXT NOT NULL,
+  resposta TEXT DEFAULT '',
+  pontos REAL DEFAULT 0,
+  "criadoEm" BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_assessments_seller ON assessments("sellerId", "criadoEm");
+CREATE INDEX IF NOT EXISTS idx_assessment_answers_assessment ON assessment_answers("assessmentId");
 
 CREATE TABLE IF NOT EXISTS financial_ledger (
   id TEXT PRIMARY KEY,

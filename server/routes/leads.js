@@ -1,6 +1,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { ETAPAS, TIPOS_EVENTO, etapaValida, MOTIVOS_PERDA } from "../../shared/pipeline.js";
+import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 
 const router = Router();
 
@@ -44,6 +45,7 @@ router.get("/leads/:id", (req, res) => {
 router.post("/leads", (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais criam leads" });
+  if (!exigirOportunidadesLiberadas(req, res)) return;
 
   const { companyId, campaignId, nome, empresa, cargo, telefone, email, valorEstimado } = req.body;
   if (!nome?.trim()) return res.status(400).json({ error: "Nome do contato é obrigatório" });
@@ -86,6 +88,7 @@ router.patch("/leads/:id", (req, res) => {
   if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
   if (req.user.role !== "vendedor" || req.user.entityId !== lead.sellerId)
     return res.status(403).json({ error: "Sem permissão" });
+  if (!exigirOportunidadesLiberadas(req, res, lead.sellerId)) return;
 
   const permitidos = ["nome", "empresa", "cargo", "telefone", "email", "valorEstimado", "proximaAcao", "proximaAcaoEm"];
   const sets = [], vals = [];
@@ -126,6 +129,7 @@ router.post("/leads/:id/eventos", (req, res) => {
   if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
   if (req.user.role !== "vendedor" || req.user.entityId !== lead.sellerId)
     return res.status(403).json({ error: "Sem permissão" });
+  if (!exigirOportunidadesLiberadas(req, res, lead.sellerId)) return;
 
   const { tipo, resultado, duracao, valor, observacao, proximaAcao, proximaAcaoEm } = req.body;
   const def = TIPOS_EVENTO[tipo];
