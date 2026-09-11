@@ -44,6 +44,10 @@ router.post("/messages", (req, res) => {
     return res.status(403).json({ error: "Sem permissão" });
   if (role === "empresa" && entityId !== companyId)
     return res.status(403).json({ error: "Sem permissão" });
+  if (role !== "admin") {
+    const vinculo = db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(sellerId, companyId);
+    if (!vinculo) return res.status(403).json({ error: "Conversa disponível apenas para vínculos aprovados" });
+  }
 
   const de = role === "empresa" ? "empresa" : role === "vendedor" ? "vendedor" : "plataforma";
   const id = uid();

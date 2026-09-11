@@ -21,6 +21,10 @@ router.get("/campaigns", (req, res) => {
 router.get("/campaigns/:id", (req, res) => {
   const row = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (req.user.role === "empresa" && req.user.entityId !== row.companyId)
+    return res.status(403).json({ error: "Sem permissão" });
+  if (req.user.role === "vendedor" && row.status !== "ativa")
+    return res.status(404).json({ error: "Campanha não encontrada" });
   const campaign = parseCampaign(row);
 
   const apps = db.prepare("SELECT * FROM campaign_applications WHERE campaignId = ?").all(req.params.id);

@@ -435,6 +435,47 @@ db.exec(`
     FOREIGN KEY (userId) REFERENCES users(id)
   );
 
+  CREATE TABLE IF NOT EXISTS knowledge_documents (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    campaignId TEXT,
+    titulo TEXT NOT NULL,
+    categoria TEXT DEFAULT 'geral',
+    departamento TEXT DEFAULT 'comercial',
+    nivelAcesso TEXT DEFAULT 'empresa',
+    idioma TEXT DEFAULT 'pt-BR',
+    versao INTEGER DEFAULT 1,
+    origem TEXT DEFAULT 'texto',
+    responsavel TEXT DEFAULT '',
+    validadeEm INTEGER,
+    status TEXT DEFAULT 'aguardando',
+    conteudo TEXT DEFAULT '',
+    erro TEXT DEFAULT '',
+    atualizadoEm INTEGER NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS knowledge_history (
+    id TEXT PRIMARY KEY,
+    documentId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    acao TEXT NOT NULL,
+    versao INTEGER NOT NULL,
+    atorId TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS assistant_history (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    pergunta TEXT NOT NULL,
+    resposta TEXT NOT NULL,
+    fontes TEXT DEFAULT '[]',
+    criadoEm INTEGER NOT NULL
+  );
+
   -- Não existe rota que atualize eventos ou evidências. Esta trava protege o
   -- histórico também contra alterações acidentais feitas por código futuro.
   CREATE TRIGGER IF NOT EXISTS no_update_submission_events
@@ -532,6 +573,8 @@ db.exec(`
     ON lead_events(submissionId) WHERE submissionId IS NOT NULL;
   CREATE INDEX IF NOT EXISTS idx_financial_ledger_company ON financial_ledger(companyId, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_financial_ledger_seller ON financial_ledger(sellerId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_knowledge_company ON knowledge_documents(companyId, status, atualizadoEm);
+  CREATE INDEX IF NOT EXISTS idx_assistant_company ON assistant_history(companyId, criadoEm);
 `);
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este

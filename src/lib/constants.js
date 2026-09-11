@@ -42,16 +42,10 @@ export const NAV = {
   ],
   empresa: [
     { key: "painel", label: "Painel", Icon: BarChart3 },
-    { key: "cadastro", label: "Cadastro", Icon: Building2 },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
-    { key: "leads", label: "Leads", Icon: ContactRound },
+    { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "conferir", label: "Conferir", Icon: ShieldCheck },
-    { key: "time", label: "Time", Icon: Users },
-    { key: "qualificacao", label: "Qualificação", Icon: SlidersHorizontal },
-    { key: "tabela", label: "Tabela", Icon: ClipboardList },
-    { key: "chat", label: "Chat", Icon: MessageSquare },
-    { key: "planos", label: "Plano", Icon: SparklesIcon },
-    { key: "indicar", label: "Indicar", Icon: Gift },
+    { key: "conta", label: "Minha Conta", Icon: UserIcon },
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },

@@ -9,6 +9,10 @@ router.patch("/course-progress", (req, res) => {
 
   if (role === "vendedor" && entityId !== sellerId)
     return res.status(403).json({ error: "Sem permissão" });
+  if (role === "empresa" && entityId !== companyId)
+    return res.status(403).json({ error: "Sem permissão" });
+  if (!["vendedor", "empresa", "admin"].includes(role))
+    return res.status(403).json({ error: "Sem permissão" });
 
   const existing = db.prepare("SELECT * FROM course_progress WHERE sellerId = ? AND companyId = ?").get(sellerId, companyId);
   if (existing) {

@@ -205,6 +205,25 @@ CREATE TABLE IF NOT EXISTS assessment_answers (
 CREATE INDEX IF NOT EXISTS idx_assessments_seller ON assessments("sellerId", "criadoEm");
 CREATE INDEX IF NOT EXISTS idx_assessment_answers_assessment ON assessment_answers("assessmentId");
 
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+  id TEXT PRIMARY KEY, "companyId" TEXT NOT NULL REFERENCES companies(id), "campaignId" TEXT,
+  titulo TEXT NOT NULL, categoria TEXT DEFAULT 'geral', departamento TEXT DEFAULT 'comercial',
+  "nivelAcesso" TEXT DEFAULT 'empresa', idioma TEXT DEFAULT 'pt-BR', versao INTEGER DEFAULT 1,
+  origem TEXT DEFAULT 'texto', responsavel TEXT DEFAULT '', "validadeEm" BIGINT,
+  status TEXT DEFAULT 'aguardando', conteudo TEXT DEFAULT '', erro TEXT DEFAULT '',
+  "atualizadoEm" BIGINT NOT NULL, "criadoEm" BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS knowledge_history (
+  id TEXT PRIMARY KEY, "documentId" TEXT NOT NULL, "companyId" TEXT NOT NULL,
+  acao TEXT NOT NULL, versao INTEGER NOT NULL, "atorId" TEXT, "criadoEm" BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS assistant_history (
+  id TEXT PRIMARY KEY, "companyId" TEXT NOT NULL, "userId" TEXT NOT NULL,
+  pergunta TEXT NOT NULL, resposta TEXT NOT NULL, fontes TEXT DEFAULT '[]', "criadoEm" BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_knowledge_company ON knowledge_documents("companyId", status, "atualizadoEm");
+CREATE INDEX IF NOT EXISTS idx_assistant_company ON assistant_history("companyId", "criadoEm");
+
 CREATE TABLE IF NOT EXISTS financial_ledger (
   id TEXT PRIMARY KEY,
   "companyId" TEXT,

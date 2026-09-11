@@ -27,6 +27,7 @@ import referralRoutes from "./routes/referrals.js";
 import depositRoutes from "./routes/deposits.js";
 import leadRoutes from "./routes/leads.js";
 import triagemRoutes from "./routes/triagem.js";
+import knowledgeRoutes from "./routes/knowledge.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -101,6 +102,7 @@ app.use("/api", authMiddleware, referralRoutes);
 app.use("/api", authMiddleware, depositRoutes);
 app.use("/api", authMiddleware, leadRoutes);
 app.use("/api", authMiddleware, triagemRoutes);
+app.use("/api", authMiddleware, knowledgeRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

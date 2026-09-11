@@ -85,11 +85,14 @@ export const CSS = `
 .vx-sidebar{display:none}
 .vx-content{padding:24px 16px 104px;max-width:820px;margin:0 auto}
 .vx-bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--topbar-bg,rgba(255,255,255,.96));backdrop-filter:blur(14px);
-  border-top:1px solid var(--border);display:flex}
-.vx-navbtn{flex:1;background:none;border:0;font:inherit;padding:10px 4px 13px;cursor:pointer;
+  border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding-bottom:env(safe-area-inset-bottom,0)}
+.vx-navbtn{min-width:0;background:none;border:0;font:inherit;padding:10px 1px 11px;cursor:pointer;overflow:hidden;
   display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted-2);position:relative;transition:color .16s}
 .vx-navbtn[data-on="1"]{color:var(--brand)}
-.vx-navbtn span{font-size:11px;font-weight:600}
+.vx-navbtn span{max-width:100%;font-size:clamp(9px,2.6vw,11px);line-height:1.15;font-weight:600;white-space:nowrap}
+.vx-subnav{max-width:100%;flex-wrap:wrap;overflow-x:hidden}
+.vx-ai-trigger{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:28;box-shadow:var(--shadow-pop)}
+.vx-ai-panel{position:fixed;right:16px;bottom:calc(126px + env(safe-area-inset-bottom,0px));z-index:29;width:min(390px,calc(100vw - 32px));max-height:70vh;overflow:auto;padding:16px}
 .vx-navdot{position:absolute;top:5px;right:calc(50% - 16px);min-width:15px;height:15px;padding:0 3px;border-radius:999px;
   background:var(--red);color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 
@@ -99,6 +102,8 @@ export const CSS = `
   .vx-sidebar{display:flex;flex-direction:column;gap:3px;padding:22px 14px;border-right:1px solid var(--border);
     position:sticky;top:60px;height:calc(100vh - 60px);align-self:start}
   .vx-bottomnav{display:none}
+  .vx-ai-trigger{bottom:22px}
+  .vx-ai-panel{bottom:72px}
   .vx-sidebtn{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:var(--radius-sm);border:1px solid transparent;
     background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left;position:relative;transition:.16s}
   .vx-sidebtn:hover{background:var(--surface-2);color:var(--ink)}

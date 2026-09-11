@@ -91,6 +91,9 @@ router.get("/company/finance", (req, res) => {
 // Tabelas penduradas na empresa. Os filhos saem antes do pai, senão a
 // foreign key barra a exclusão.
 const DEPENDENTES = [
+  ["assistant_history", "companyId"],
+  ["knowledge_history", "companyId"],
+  ["knowledge_documents", "companyId"],
   ["course_progress", "companyId"],
   ["applications", "companyId"],
   ["messages", "companyId"],
