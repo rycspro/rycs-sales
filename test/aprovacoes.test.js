@@ -76,3 +76,62 @@ test("normalização protege contra valores fora de faixa vindos do cliente", ()
   assert.deepEqual(r.tipos, []);
   assert.equal(normalizarRegras(undefined).confiancaMinima, PADRAO.confiancaMinima);
 });
+
+// --- Sugestão de valores (requisito 12) --------------------------------
+import { sugerirValores, impactoNoRoi } from "../shared/valorTarefa.js";
+
+test("sem ticket ou sem conversão a sugestão se recusa a inventar número", () => {
+  const semTicket = sugerirValores({ ticketMedio: 0, plano: "starter" });
+  assert.equal(semTicket.disponivel, false);
+  assert.deepEqual(semTicket.ausentes, ["ticket médio"]);
+
+  const semConversao = sugerirValores({ ticketMedio: 3000, plano: "starter" });
+  assert.equal(semConversao.disponivel, false);
+  assert.match(semConversao.ausentes[0], /convers/);
+});
+
+test("histórico da empresa tem prioridade sobre o parâmetro informado", () => {
+  const s = sugerirValores({
+    ticketMedio: 3000, margem: .3,
+    conversaoReuniaoVenda: .9, // valor absurdo, deve ser ignorado
+    historico: { agendadas: 40, realizadas: 30, vendas: 5 },
+    plano: "starter",
+  });
+  assert.equal(s.disponivel, true);
+  assert.equal(Math.round(s.premissas.conversao * 1000) / 1000, .167);
+  assert.match(s.fontes[0].nome, /histórico/);
+});
+
+test("valor sugerido desconta a taxa real do plano e traz faixa em torno dele", () => {
+  const s = sugerirValores({
+    ticketMedio: 3000, margem: .3,
+    historico: { agendadas: 40, realizadas: 30, vendas: 5 },
+    plano: "starter",
+  });
+  const agendada = s.tarefas.find((t) => t.tipo === "agendamento");
+  assert.equal(agendada.bruto, 37.5);
+  assert.equal(agendada.taxa, 4.5);          // 12% do plano starter
+  assert.equal(agendada.liquido, 33);
+  assert.ok(agendada.minimo < agendada.bruto && agendada.bruto < agendada.maximo);
+});
+
+test("confiança acompanha o tamanho da amostra", () => {
+  const base = { ticketMedio: 3000, margem: .3, plano: "starter" };
+  assert.equal(sugerirValores({ ...base, historico: { agendadas: 4, realizadas: 3, vendas: 1 } }).confianca, "baixa");
+  assert.equal(sugerirValores({ ...base, historico: { agendadas: 40, realizadas: 30, vendas: 5 } }).confianca, "alta");
+  // Sem histórico, mesmo com conversão informada, a confiança nunca sobe.
+  assert.equal(sugerirValores({ ...base, conversaoReuniaoVenda: .2 }).confianca, "baixa");
+});
+
+test("impacto no ROI liga a tabela ao resultado da operação", () => {
+  const s = sugerirValores({ ticketMedio: 3000, margem: .3, historico: { agendadas: 40, realizadas: 30, vendas: 5 }, plano: "starter" });
+  const i = impactoNoRoi({
+    tarefas: s.tarefas, metaAgendadas: 40, ticketMedio: 3000,
+    conversao: s.premissas.conversao, comparecimento: s.premissas.comparecimento,
+  });
+  assert.equal(i.vendas, 5);
+  assert.equal(i.receita, 15000);
+  assert.ok(i.roi > 0);
+  assert.equal(i.custoPorVenda, Math.round((i.investimento / i.vendas) * 100) / 100);
+  assert.equal(impactoNoRoi({ tarefas: s.tarefas, metaAgendadas: 0 }), null);
+});

@@ -29,7 +29,7 @@ ou dado fixo apresentado como real.
 | 9 | Time da empresa | CONCLUÍDO E PUBLICADO | `TimeEmpresa.jsx`, `Chat.jsx` | — | dossiê, Academy, mensagem | — |
 | 10 | Diagnóstico operacional | PARCIAL | `EmpresaAI.jsx` | — | fluxo por texto e ditado | Questionário guiado dedicado não construído |
 | 11 | Tipos de tarefa | CONCLUÍDO E PUBLICADO | `shared/acoes.js`, `TabelaEmpresa.jsx` | reunião agendada (2) | cinco tipos em campanha e tabela | — |
-| 12 | Sugestão de valores | PARCIAL | `shared/valorTarefa.js`, `TabelaEmpresa.jsx` | taxa 12%: R$ 10,00 → R$ 8,80 | bruto, taxa e líquido antes de confirmar | Faixa, fatores, amostra e impacto no ROI não exibidos |
+| 12 | Sugestão de valores | CONCLUÍDO E PUBLICADO | `shared/valorTarefa.js`, `TabelaEmpresa.jsx` | **5 testes de sugestão** | faixa, fatores, fontes, confiança e impacto no ROI | Sem afirmação de "valor de mercado": não há fonte externa auditável |
 | 13 | RYCS Academy (dois ambientes) | CONCLUÍDO E PUBLICADO | `RycsAcademyEmpresa.jsx`, `QualificacaoEmpresa.jsx` | Academy (2) | trilhas, prova, certificado | Catálogo sem curso pago configurado |
 | 14 | Gamificação | PARCIAL | `shared/academy.js` | Academy | progresso, níveis, certificação | Sem conquistas além dos níveis atuais |
 | 15 | Treinamento da empresa com IA | PARCIAL | `/assistant/training-draft` | — | rascunho revisável | Áudio e vídeo exigem transcrição revisada |
@@ -62,7 +62,14 @@ ou dado fixo apresentado como real.
    (`shared/aprovacoes.js`): ações elegíveis, confiança mínima, teto por ação
    e amostragem manual. Venda nunca entra, em duas camadas independentes.
 
-4. **Trilha de auditoria ligada.** `services/auditTrail.js` implementava uma
+4. **Sugestão de valores (req 12).** A tela mostrava bruto e líquido e nada
+   mais. Agora há motor determinístico: ancora o valor da reunião na margem
+   que ela gera, com faixa mínima e máxima, fatores considerados, fontes com
+   tamanho de amostra, nível de confiança e o efeito no investimento e no ROI.
+   O histórico da empresa tem prioridade sobre o parâmetro digitado, e a
+   sugestão preenche os campos para revisão — nunca salva sozinha.
+
+5. **Trilha de auditoria ligada.** `services/auditTrail.js` implementava uma
    cadeia de eventos com hash encadeado e **nenhuma rota o chamava**. Agora
    envio, evidências, triagem, decisão automática, decisão manual, contestação
    e liberação viram eventos verificáveis, expostos em `/submissions/:id/trilha`
@@ -84,7 +91,7 @@ ou dado fixo apresentado como real.
 
 ## Validação
 
-- `npm test`: 28/28 aprovados (20 anteriores + 8 novos de regras de aprovação).
+- `npm test`: 33/33 aprovados (20 anteriores + 8 de regras de aprovação + 5 de sugestão de valores).
 - `npm run build`: aprovado.
 - Fluxo financeiro exercitado ponta a ponta no servidor local: envio → reserva
   → conferência → liberação → razão. Bruto R$ 12,00, taxa R$ 1,44, líquido

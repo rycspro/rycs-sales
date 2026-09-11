@@ -51,7 +51,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
         {secaoCampanhas === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} aviso={aviso} />}
         {secaoCampanhas === "leads" && <LeadsEmpresa emp={emp} db={db} aviso={aviso} />}
         {secaoCampanhas === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
-        {secaoCampanhas === "tabela" && <TabelaEmpresa emp={emp} up={up} aviso={aviso} />}
+        {secaoCampanhas === "tabela" && <TabelaEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       </>}
       {aba === "academy" && <>
         {submenu([["rycs", "Cursos da RYCS"], ["empresa", `Academy ${emp.nome}`]], secaoAcademy, setSecaoAcademy)}
