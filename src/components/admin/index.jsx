@@ -7,6 +7,7 @@ import DashboardAdmin from "./DashboardAdmin.jsx";
 import ProfissionaisAdmin from "./ProfissionaisAdmin.jsx";
 import EmpresasAdmin from "./EmpresasAdmin.jsx";
 import DepositosAdmin from "./DepositosAdmin.jsx";
+import AcademyAdmin from "./AcademyAdmin.jsx";
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
@@ -43,6 +44,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   if (aba === "profissionais") return <ProfissionaisAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "empresas") return <EmpresasAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "depositos") return <DepositosAdmin aviso={aviso} recarregar={recarregar} />;
+  if (aba === "academy") return <AcademyAdmin aviso={aviso} />;
 
   return (
     <div className="vx-fade">

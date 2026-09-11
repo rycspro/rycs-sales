@@ -30,6 +30,8 @@ import triagemRoutes from "./routes/triagem.js";
 import knowledgeRoutes from "./routes/knowledge.js";
 import reportRoutes from "./routes/reports.js";
 import auditRoutes from "./routes/audit.js";
+import courseRoutes2 from "./routes/courses.js";
+import { semearCatalogo } from "./services/academy.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
 // camada de providers. Trocar de fornecedor é trocar esta linha.
 import "./services/audit/providers/anthropic.js";
@@ -111,6 +113,7 @@ app.use("/api", authMiddleware, triagemRoutes);
 app.use("/api", authMiddleware, knowledgeRoutes);
 app.use("/api", authMiddleware, reportRoutes);
 app.use("/api", authMiddleware, auditRoutes);
+app.use("/api", authMiddleware, courseRoutes2);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
@@ -174,6 +177,7 @@ if (isProd) {
 // Redis a um MVP. O contrato da fila não muda quando isso virar serviço à
 // parte.
 semearPoliticasPadrao();
+semearCatalogo();
 const capacidades = capacidadesDisponiveis();
 console.log("[audit] capacidades:", Object.entries(capacidades)
   .map(([c, v]) => `${c}=${v.disponivel ? v.provider : "não configurado"}`).join(" "));

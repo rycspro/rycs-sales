@@ -199,4 +199,20 @@ export const CSS = `
 @media(min-width:640px){.vx-overlay{align-items:center}}
 .vx-sheet{width:100%;max-width:580px;background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:22px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-pop)}
 @media(min-width:640px){.vx-sheet{border-radius:20px}}
+/* --- RYCS Academy: grade de cursos ------------------------------------ */
+.vx-course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
+.vx-course-card{padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .16s,border-color .16s}
+.vx-course-card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.vx-course-capa{position:relative;aspect-ratio:16/9;background:var(--surface-2)}
+.vx-course-capa img{width:100%;height:100%;object-fit:cover;display:block}
+.vx-course-capa .vx-badge{position:absolute;top:10px;left:10px;background:rgba(7,11,20,.82);backdrop-filter:blur(6px);border-color:rgba(255,255,255,.2);color:#fff}
+.vx-course-capa .vx-course-cert{left:auto;right:10px}
+.vx-course-corpo{padding:15px;display:flex;flex-direction:column;flex:1}
+.vx-course-corpo h3{font-family:'Space Grotesk',system-ui,sans-serif;font-size:15.5px;line-height:1.28;margin:5px 0 4px}
+.vx-course-corpo p{color:var(--muted);font-size:12.5px;line-height:1.45;margin:0;flex:1}
+.vx-course-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:11px;color:var(--muted);font-size:11.5px}
+.vx-course-meta span{display:inline-flex;align-items:center;gap:4px}
+.vx-course-layout{display:grid;grid-template-columns:290px 1fr;gap:16px;margin-top:16px;align-items:start}
+@media(max-width:860px){.vx-course-layout{grid-template-columns:1fr}}
+
 `;

@@ -656,6 +656,120 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_audit_evidences_hash ON audit_evidences (hash);
   CREATE INDEX IF NOT EXISTS idx_audit_signals_request ON audit_signals (auditRequestId);
   CREATE INDEX IF NOT EXISTS idx_provider_runs_request ON audit_provider_runs (auditRequestId);
+
+  -- =====================================================================
+  -- RYCS ACADEMY
+  --
+  -- Curso é dado, não código. As trilhas nasceram fixas em shared/academy.js
+  -- e continuam funcionando; daqui para frente o catálogo vive no banco e a
+  -- plataforma cria, edita e publica sem deploy.
+  -- =====================================================================
+
+  CREATE TABLE IF NOT EXISTS courses (
+    id TEXT PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    titulo TEXT NOT NULL,
+    subtitulo TEXT DEFAULT '',
+    descricao TEXT DEFAULT '',
+    categoria TEXT DEFAULT 'Vendas',
+    nivel TEXT DEFAULT 'fundamentos',
+    professor TEXT DEFAULT 'RYCS',
+    capa TEXT DEFAULT '',
+    requisitos TEXT DEFAULT '',
+    funcao TEXT DEFAULT '',          -- liga o curso à certificação de função
+    gratuito INTEGER NOT NULL DEFAULT 1,
+    preco REAL NOT NULL DEFAULT 0,
+    notaMinima INTEGER NOT NULL DEFAULT 70,
+    status TEXT NOT NULL DEFAULT 'rascunho',
+    ordem INTEGER DEFAULT 0,
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS course_modules (
+    id TEXT PRIMARY KEY,
+    courseId TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    resumo TEXT DEFAULT '',
+    ordem INTEGER DEFAULT 0,
+    FOREIGN KEY (courseId) REFERENCES courses(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS course_lessons (
+    id TEXT PRIMARY KEY,
+    courseId TEXT NOT NULL,
+    moduleId TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    tipo TEXT NOT NULL DEFAULT 'texto',   -- texto | video
+    conteudo TEXT DEFAULT '',
+    videoUrl TEXT DEFAULT '',
+    materiais TEXT DEFAULT '[]',
+    duracaoMin INTEGER DEFAULT 5,
+    ordem INTEGER DEFAULT 0,
+    FOREIGN KEY (courseId) REFERENCES courses(id),
+    FOREIGN KEY (moduleId) REFERENCES course_modules(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS course_questions (
+    id TEXT PRIMARY KEY,
+    courseId TEXT NOT NULL,
+    pergunta TEXT NOT NULL,
+    alternativas TEXT NOT NULL DEFAULT '[]',
+    correta INTEGER NOT NULL DEFAULT 0,
+    explicacao TEXT DEFAULT '',
+    ordem INTEGER DEFAULT 0,
+    FOREIGN KEY (courseId) REFERENCES courses(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS course_enrollments (
+    id TEXT PRIMARY KEY,
+    courseId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    origem TEXT DEFAULT 'gratuito',   -- gratuito | compra | cortesia
+    criadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    UNIQUE (courseId, sellerId)
+  );
+
+  -- Progresso por aula: é o que permite "continuar de onde parou".
+  CREATE TABLE IF NOT EXISTS course_lesson_progress (
+    sellerId TEXT NOT NULL,
+    courseId TEXT NOT NULL,
+    lessonId TEXT NOT NULL,
+    concluidoEm INTEGER NOT NULL,
+    PRIMARY KEY (sellerId, lessonId)
+  );
+
+  CREATE TABLE IF NOT EXISTS course_attempts (
+    id TEXT PRIMARY KEY,
+    courseId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    acertos INTEGER NOT NULL,
+    total INTEGER NOT NULL,
+    percentual INTEGER NOT NULL,
+    aprovado INTEGER NOT NULL DEFAULT 0,
+    respostas TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL
+  );
+
+  -- Certificado emitido. O código é público e serve para conferência: um
+  -- certificado sem como verificar não vale como credencial.
+  CREATE TABLE IF NOT EXISTS course_certificates (
+    id TEXT PRIMARY KEY,
+    codigo TEXT UNIQUE NOT NULL,
+    courseId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    percentual INTEGER NOT NULL,
+    emitidoEm INTEGER NOT NULL,
+    UNIQUE (courseId, sellerId)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_courses_status ON courses (status, ordem);
+  CREATE INDEX IF NOT EXISTS idx_modules_course ON course_modules (courseId, ordem);
+  CREATE INDEX IF NOT EXISTS idx_lessons_course ON course_lessons (courseId, ordem);
+  CREATE INDEX IF NOT EXISTS idx_progress_seller ON course_lesson_progress (sellerId, courseId);
+  CREATE INDEX IF NOT EXISTS idx_enroll_seller ON course_enrollments (sellerId);
 `);
 
 const uid = () => randomUUID();

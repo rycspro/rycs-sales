@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from "react";
-import { Award, Camera, CheckCircle2, Pencil, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
+import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import { MODALIDADES, SEGMENTOS, DISPONIBILIDADES, SKILLS, LIMITES } from "../../../shared/fotoPerfil.js";
 
@@ -65,6 +66,11 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
   const [avaliacaoFoto, setAvaliacaoFoto] = useState(null);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
   const arquivo = useRef(null);
+  const [certificados, setCertificados] = useState([]);
+
+  // Os certificados que o profissional tirou na Academy fazem parte do
+  // currículo comercial dele — é o que a empresa lê antes de convidar.
+  useEffect(() => { api("/courses/me/certificates").then((r) => setCertificados(r?.certificados || [])); }, []);
 
   const [form, setForm] = useState(() => ({
     nome: eu.nome || "", titulo: eu.titulo || "", bio: eu.bio || "",
@@ -324,6 +330,34 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
               </p>
             </div>
           )}
+
+          <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
+            <div className="vx-row" style={{ marginBottom: 10 }}>
+              <div className="vx-eyebrow">
+                <GraduationCap size={12} style={{ verticalAlign: -1, marginRight: 4 }} /> Certificados da RYCS Academy
+              </div>
+              <span className="vx-chip vx-mono">{certificados.length}</span>
+            </div>
+            {!certificados.length ? (
+              <p className="vx-mut" style={{ fontSize: 12.5, margin: 0 }}>
+                Nenhum certificado ainda. Conclua um curso na Academy e passe na prova — o certificado
+                aparece aqui com código de verificação.
+              </p>
+            ) : (
+              <div className="vx-grid vx-g2">
+                {certificados.map((c) => (
+                  <div key={c.codigo} style={{ padding: 13, border: "1px solid var(--border)", borderRadius: 12, borderLeft: "3px solid var(--brand)" }}>
+                    <div className="vx-row" style={{ gap: 8 }}>
+                      <b style={{ fontSize: 13 }}>{c.titulo}</b>
+                      <span className="vx-badge vx-badge-brand vx-mono" style={{ flexShrink: 0 }}>{c.percentual}%</span>
+                    </div>
+                    <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 2 }}>{c.categoria} · {dataCurta(c.emitidoEm)}</div>
+                    <div className="vx-mono" style={{ fontSize: 11.5, marginTop: 5, color: "var(--brand)" }}>{c.codigo}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="vx-card" style={{ padding: 20, marginTop: 12 }}>
             <div className="vx-eyebrow" style={{ marginBottom: 10 }}>

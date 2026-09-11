@@ -53,6 +53,7 @@ export const NAV = {
     { key: "profissionais", label: "Profissionais", Icon: UserCheck },
     { key: "empresas", label: "Empresas", Icon: Building2 },
     { key: "triagem", label: "Triagem", Icon: ShieldCheck },
+    { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "liberar", label: "Liberar", Icon: Banknote },
     { key: "depositos", label: "Depósitos", Icon: Banknote },
     { key: "saques", label: "Saques", Icon: Wallet },

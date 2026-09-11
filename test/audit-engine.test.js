@@ -355,3 +355,62 @@ test("limiar de aprovação é explícito e não fica escondido no código", () 
   assert.equal(APROVA_A_PARTIR_DE, 70);
   assert.ok(LIMITES.larguraMinima > 0);
 });
+
+// --- RYCS Academy -------------------------------------------------------
+import { CATALOGO_INICIAL, resumirCurso, gerarCapa, CATEGORIAS } from "../shared/academy/catalogo.js";
+
+test("todo curso do catálogo tem módulos, aulas e prova", () => {
+  for (const c of CATALOGO_INICIAL) {
+    const r = resumirCurso(c);
+    assert.ok(r.modulos >= 1, `${c.titulo}: sem módulos`);
+    assert.ok(r.aulas >= 3, `${c.titulo}: poucas aulas`);
+    assert.ok(r.questoes >= 3, `${c.titulo}: prova curta demais`);
+    assert.ok(r.duracaoMin > 0, `${c.titulo}: sem duração`);
+  }
+});
+
+test("o curso âncora de SDR tem profundidade real", () => {
+  const sdr = CATALOGO_INICIAL.find((c) => c.slug === "sdr-completo");
+  const r = resumirCurso(sdr);
+  assert.equal(r.modulos, 5);
+  assert.equal(r.aulas, 20);
+  assert.equal(r.questoes, 10);
+  assert.ok(r.duracaoMin >= 100, `esperado curso longo, veio ${r.duracaoMin} min`);
+});
+
+test("toda aula tem conteúdo substancial, não placeholder", () => {
+  for (const c of CATALOGO_INICIAL) {
+    for (const m of c.modulos) {
+      for (const a of m.aulas) {
+        assert.ok(a.conteudo.length > 200, `"${a.titulo}" tem só ${a.conteudo.length} caracteres`);
+        assert.ok(a.titulo.length > 5, "título vazio");
+      }
+    }
+  }
+});
+
+test("gabarito das provas aponta para alternativa existente", () => {
+  for (const c of CATALOGO_INICIAL) {
+    for (const q of c.prova) {
+      assert.ok(q.alternativas.length >= 2, `"${q.pergunta}": poucas alternativas`);
+      assert.ok(q.correta >= 0 && q.correta < q.alternativas.length,
+        `"${q.pergunta}": gabarito ${q.correta} fora das ${q.alternativas.length} alternativas`);
+      assert.ok(q.explicacao.length > 20, `"${q.pergunta}": sem explicação útil`);
+    }
+  }
+});
+
+test("categoria de cada curso existe na lista oficial", () => {
+  for (const c of CATALOGO_INICIAL) {
+    assert.ok(CATEGORIAS.includes(c.categoria), `categoria desconhecida: ${c.categoria}`);
+  }
+});
+
+test("capa gerada é SVG válido em data URI e escapa o título", () => {
+  const capa = gerarCapa({ titulo: "Curso <script> & cia", categoria: "SDR" });
+  assert.match(capa, /^data:image\/svg\+xml;base64,/);
+  const svg = Buffer.from(capa.split(",")[1], "base64").toString("utf8");
+  assert.match(svg, /<svg/);
+  assert.ok(!svg.includes("<script>"), "título não foi escapado na capa");
+  assert.match(svg, /&lt;script&gt;/);
+});
