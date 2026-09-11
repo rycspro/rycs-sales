@@ -34,6 +34,7 @@ export const MOTIVO_COR = {
 
 export const NAV = {
   vendedor: [
+    { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "empresas", label: "Empresas", Icon: Building2 },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "carteira", label: "Carteira", Icon: Wallet },

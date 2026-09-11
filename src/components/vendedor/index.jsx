@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Cadastro from "./Cadastro.jsx";
+import PainelVendedor from "./PainelVendedor.jsx";
 import ListaEmpresas from "./ListaEmpresas.jsx";
 import Workspace from "./Workspace.jsx";
 import Carteira from "./Carteira.jsx";
@@ -29,7 +30,8 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
 
   return (
     <>
-      {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={(companyId, campaignId = null) => { setAbertaId(companyId); setCampanhaAbertaId(campaignId); }} recarregar={recarregar} irAcademy={(funcao) => { setFuncaoAcademy(funcao); setAba("academy"); }} />}
+      {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("empresas")} />}
+        {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={(companyId, campaignId = null) => { setAbertaId(companyId); setCampanhaAbertaId(campaignId); }} recarregar={recarregar} irAcademy={(funcao) => { setFuncaoAcademy(funcao); setAba("academy"); }} />}
       {aba === "academy" && <Academy eu={eu} aviso={aviso} funcaoInicial={funcaoAcademy} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}

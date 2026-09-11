@@ -29,6 +29,11 @@ import leadRoutes from "./routes/leads.js";
 import triagemRoutes from "./routes/triagem.js";
 import knowledgeRoutes from "./routes/knowledge.js";
 import reportRoutes from "./routes/reports.js";
+import auditRoutes from "./routes/audit.js";
+// O registro dos adapters acontece no import: cada arquivo se declara na
+// camada de providers. Trocar de fornecedor é trocar esta linha.
+import "./services/audit/providers/anthropic.js";
+import { semearPoliticasPadrao, iniciarWorker, capacidadesDisponiveis } from "./services/audit/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -105,6 +110,7 @@ app.use("/api", authMiddleware, leadRoutes);
 app.use("/api", authMiddleware, triagemRoutes);
 app.use("/api", authMiddleware, knowledgeRoutes);
 app.use("/api", authMiddleware, reportRoutes);
+app.use("/api", authMiddleware, auditRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
@@ -163,6 +169,16 @@ if (isProd) {
   });
 }
 
+// RYCS Audit Engine: políticas padrão no primeiro boot e worker da fila.
+// O worker vive no mesmo processo — adequado ao volume atual e sem adicionar
+// Redis a um MVP. O contrato da fila não muda quando isso virar serviço à
+// parte.
+semearPoliticasPadrao();
+const capacidades = capacidadesDisponiveis();
+console.log("[audit] capacidades:", Object.entries(capacidades)
+  .map(([c, v]) => `${c}=${v.disponivel ? v.provider : "não configurado"}`).join(" "));
+
 app.listen(PORT, () => {
   console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);
+  iniciarWorker();
 });

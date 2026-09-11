@@ -13,6 +13,7 @@ import { dadosAgendamentoCorrespondemAoLead } from "../../shared/agendamento.js"
 import { calcularValorTarefa } from "../../shared/valorTarefa.js";
 import { avaliarRegras } from "../../shared/aprovacoes.js";
 import { registrarEventoAuditoria, registrarEvidencias, verificarTrilhaAuditoria, resumoEvidencias } from "../services/auditTrail.js";
+import { solicitar as solicitarAuditoria } from "../services/audit/index.js";
 
 const router = Router();
 
@@ -112,8 +113,40 @@ router.post("/submissions", async (req, res) => {
   if (status === "ia_recusado") recalcularScore(sellerId);
   recalcularCompanyScore(companyId);
 
+  // RYCS Audit Engine. Abre o pedido e devolve na hora: o processamento pesado
+  // — visão, transcrição, semântica — acontece na fila, fora deste request.
+  // Só faz sentido para o que não foi recusado na entrada.
+  let auditoria = null;
+  if (status !== "ia_recusado") {
+    const evidencias = [];
+    for (const [campo, valor] of Object.entries(prova || {})) {
+      if (!valor) continue;
+      const ehMidia = /^(video|contrato)$/.test(campo);
+      evidencias.push({
+        tipo: ehMidia ? "video" : "texto",
+        referencia: String(valor).slice(0, 500),
+        metadata: { campo },
+      });
+    }
+    if (req.body?.geo) {
+      const empresaGeo = db.prepare("SELECT endereco FROM companies WHERE id = ?").get(companyId);
+      evidencias.push({
+        tipo: "geo",
+        referencia: "captura_do_app",
+        metadata: {
+          capturado: req.body.geo,
+          esperado: req.body.geoEsperado || null,
+          tolerancia: req.body.geoTolerancia || null,
+          endereco: empresaGeo?.endereco || "",
+        },
+      });
+    }
+    const r2 = solicitarAuditoria({ taskId: id, sellerId, companyId, tipo, evidencias });
+    auditoria = r2.erro ? null : { id: r2.id, status: r2.status, politica: r2.politica };
+  }
+
   res.json({ id, status, confianca: r.confianca, motivo: r.motivo, fonte: r.fonte, valor,
-             automatica: decisao.automatica, regraAplicada: decisao.motivo });
+             automatica: decisao.automatica, regraAplicada: decisao.motivo, auditoria });
 });
 
 router.patch("/submissions/:id", (req, res) => {

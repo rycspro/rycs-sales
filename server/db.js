@@ -540,6 +540,122 @@ db.exec(`
   BEGIN
     SELECT RAISE(ABORT, 'Evidências de auditoria são imutáveis');
   END;
+
+  -- =====================================================================
+  -- RYCS AUDIT ENGINE
+  --
+  -- Política é dado versionado: uma auditoria guarda a VERSÃO que a julgou,
+  -- e não um ponteiro para a política de hoje. Sem isso, mudar um peso
+  -- reescreveria retroativamente o motivo de toda decisão passada.
+  -- =====================================================================
+
+  CREATE TABLE IF NOT EXISTS audit_policies (
+    id TEXT PRIMARY KEY,
+    companyId TEXT,                    -- NULL = política padrão da plataforma
+    tipo TEXT NOT NULL,                -- tipo de tarefa que esta política audita
+    nome TEXT NOT NULL,
+    versao INTEGER NOT NULL DEFAULT 1,
+    criterios TEXT NOT NULL DEFAULT '[]',
+    limiares TEXT NOT NULL DEFAULT '{}',
+    ativo INTEGER NOT NULL DEFAULT 1,
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    UNIQUE (companyId, tipo, versao)
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_requests (
+    id TEXT PRIMARY KEY,
+    taskId TEXT NOT NULL,              -- submissions.id
+    sellerId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    policyId TEXT,
+    policyVersao INTEGER,
+    politicaSnapshot TEXT DEFAULT '{}',-- cópia da política no momento do julgamento
+    status TEXT NOT NULL DEFAULT 'pendente',
+    score REAL,
+    cobertura REAL,
+    decisao TEXT,
+    motivo TEXT DEFAULT '',
+    detalhe TEXT DEFAULT '',
+    explicacao TEXT DEFAULT '{}',
+    tentativas INTEGER NOT NULL DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    iniciadoEm INTEGER,
+    concluidoEm INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_evidences (
+    id TEXT PRIMARY KEY,
+    auditRequestId TEXT NOT NULL,
+    tipo TEXT NOT NULL,                -- imagem | audio | video | texto | geo | metadata
+    referencia TEXT DEFAULT '',        -- chave no storage ou id do upload
+    hash TEXT,                         -- SHA-256 do conteúdo
+    hashPerceptual TEXT,               -- reservado para pHash
+    metadata TEXT DEFAULT '{}',
+    origem TEXT DEFAULT 'vendedor',
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_signals (
+    id TEXT PRIMARY KEY,
+    auditRequestId TEXT NOT NULL,
+    chave TEXT NOT NULL,               -- GPS_DISTANCE, IMAGE_DUPLICATE, ...
+    valor TEXT DEFAULT '',
+    severidade TEXT DEFAULT 'info',    -- info | atencao | critico
+    detalhe TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_provider_runs (
+    id TEXT PRIMARY KEY,
+    auditRequestId TEXT,
+    capacidade TEXT NOT NULL,
+    operacao TEXT DEFAULT '',
+    provider TEXT,
+    modelo TEXT,
+    status TEXT NOT NULL,
+    latenciaMs INTEGER DEFAULT 0,
+    custoEstimado REAL,
+    tokensEntrada INTEGER,
+    tokensSaida INTEGER,
+    erro TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+
+  -- Fila de processamento assíncrono. Auditoria pesada não roda dentro do
+  -- request do vendedor: ele envia, recebe "em auditoria" e a fila processa.
+  CREATE TABLE IF NOT EXISTS audit_jobs (
+    id TEXT PRIMARY KEY,
+    auditRequestId TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pendente',
+    tentativas INTEGER NOT NULL DEFAULT 0,
+    proximaTentativaEm INTEGER,
+    ultimoErro TEXT,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL
+  );
+
+  -- Revisão humana e correção de decisão da IA. As duas colunas finais são o
+  -- começo do dataset próprio da RYCS: quando uma pessoa discorda do motor,
+  -- essa discordância é o rótulo mais valioso que existe.
+  CREATE TABLE IF NOT EXISTS audit_reviews (
+    id TEXT PRIMARY KEY,
+    auditRequestId TEXT NOT NULL,
+    revisorId TEXT NOT NULL,
+    revisorRole TEXT NOT NULL,
+    decisaoAnterior TEXT,
+    decisaoFinal TEXT NOT NULL,
+    concordouComMotor INTEGER NOT NULL DEFAULT 1,
+    motivo TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_audit_requests_task ON audit_requests (taskId);
+  CREATE INDEX IF NOT EXISTS idx_audit_requests_status ON audit_requests (status);
+  CREATE INDEX IF NOT EXISTS idx_audit_jobs_status ON audit_jobs (status, proximaTentativaEm);
+  CREATE INDEX IF NOT EXISTS idx_audit_evidences_hash ON audit_evidences (hash);
+  CREATE INDEX IF NOT EXISTS idx_audit_signals_request ON audit_signals (auditRequestId);
+  CREATE INDEX IF NOT EXISTS idx_provider_runs_request ON audit_provider_runs (auditRequestId);
 `);
 
 const uid = () => randomUUID();
