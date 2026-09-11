@@ -102,3 +102,51 @@ export const SKILLS = [
   "Negociação", "Fechamento", "Follow-up", "Gestão de carteira", "CRM",
   "Apresentação", "Contorno de objeções",
 ];
+
+// Orientação mostrada ANTES do upload. Sem isso a pessoa descobre o padrão
+// errando: manda a foto, leva recusa e precisa adivinhar o que corrigir.
+export const GUIA_FOTO = {
+  titulo: "Como deve ser a sua foto",
+  requisitos: [
+    { chave: "formato", texto: "JPG, PNG ou WebP", detalhe: "Formatos que qualquer navegador exibe." },
+    { chave: "resolucao", texto: `No mínimo ${LIMITES.larguraMinima}×${LIMITES.alturaMinima} px`, detalhe: `Acima de ${LIMITES.larguraIdeal} px fica nítida em telas grandes.` },
+    { chave: "enquadramento", texto: "Quadrada ou vertical", detalhe: "O avatar é redondo: foto muito larga corta o rosto." },
+    { chave: "tamanho", texto: `Até ${Math.round(LIMITES.tamanhoMaximoBytes / 1024 / 1024)} MB`, detalhe: "Arquivo maior que isso é recusado." },
+  ],
+  recomendado: [
+    "Rosto ocupando boa parte do quadro, do peito para cima",
+    "Luz na frente do rosto, não atrás",
+    "Fundo simples, sem poluição visual",
+    "Você sozinho na foto",
+  ],
+  evitar: [
+    "Captura de tela ou foto de outra foto",
+    "Logotipo, desenho ou meme no lugar do rosto",
+    "Foto de corpo inteiro ou muito distante",
+    "Imagem escura, tremida ou desfocada",
+  ],
+};
+
+// Miniatura que ilustra o enquadramento certo e o errado. Gerada, para não
+// depender de arquivo hospedado nem de foto de pessoa real.
+export function exemploEnquadramento(tipo = "certo") {
+  const certo = tipo === "certo";
+  const cor = certo ? "#5B8CFF" : "#FF8A7A";
+  // No exemplo correto a cabeça ocupa o terço superior e o busto entra no
+  // quadro. No errado, a pessoa aparece pequena e distante.
+  const r = certo ? 26 : 10;
+  const cy = certo ? 46 : 34;
+  const bustoY = certo ? 78 : 48;
+  const bustoR = certo ? 40 : 15;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+<rect width="120" height="120" rx="14" fill="#0E1524"/>
+<rect x="2" y="2" width="116" height="116" rx="13" fill="none" stroke="${cor}" stroke-width="2" stroke-dasharray="${certo ? "0" : "5 4"}"/>
+<circle cx="60" cy="${cy}" r="${r}" fill="${cor}" opacity=".9"/>
+<ellipse cx="60" cy="${bustoY + bustoR}" rx="${bustoR}" ry="${bustoR * .8}" fill="${cor}" opacity=".65"/>
+<text x="60" y="112" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="${cor}">${certo ? "ASSIM" : "ASSIM NÃO"}</text>
+</svg>`;
+  const b64 = typeof Buffer !== "undefined"
+    ? Buffer.from(svg, "utf8").toString("base64")
+    : btoa(unescape(encodeURIComponent(svg)));
+  return `data:image/svg+xml;base64,${b64}`;
+}

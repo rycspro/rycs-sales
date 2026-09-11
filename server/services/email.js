@@ -44,6 +44,7 @@ export async function sendEmail(to, subject, html) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Erro Resend");
+    console.log(`[EMAIL] enviado | ${to} | ${subject}`);
     return { ok: true, id: data.id };
   } catch (err) {
     console.error("[EMAIL] Erro:", err.message);
@@ -196,4 +197,30 @@ export function emailSaquePago(nome, email, valor) {
       </div>
     </div>
   `);
+}
+
+// Modelo genérico de atualização. Recebe o mesmo título e corpo que foram para
+// o sino, então os dois canais nunca contam histórias diferentes.
+const ROTULOS = {
+  submissao: "Suas ações",
+  triagem: "Avaliação",
+  academy: "RYCS Academy",
+  parceria: "Parcerias",
+  candidatura: "Candidaturas",
+  deposito: "Financeiro",
+  pagamento: "Financeiro",
+  saque: "Saques",
+  assinatura: "Assinatura",
+  indicacao: "Indicações",
+  relatorio: "Relatórios",
+  importacao: "Importações",
+};
+
+export function emailAtualizacao({ nome, titulo, corpo, tipo }) {
+  return emailCadastro({
+    titulo,
+    nome: nome || "tudo bem",
+    mensagem: corpo || "Há uma atualização na sua conta RYCS.",
+    botao: `Abrir ${ROTULOS[tipo] || "a RYCS"}`,
+  });
 }

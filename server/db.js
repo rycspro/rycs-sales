@@ -813,6 +813,9 @@ adicionarColuna("companies", "aprovadoPor", "TEXT");
 // JSON: o conjunto muda com o produto e uma coluna por critério viraria uma
 // migração a cada ajuste.
 adicionarColuna("companies", "regrasAprovacao", "TEXT DEFAULT '{}'");
+// Logo da empresa, guardada como data URI — mesma decisão da foto do perfil:
+// um logotipo pequeno não justifica depender de S3 configurado.
+adicionarColuna("companies", "logo", "TEXT DEFAULT ''");
 adicionarColuna("companies", "aprovadoEm", "INTEGER");
 adicionarColuna("campaigns", "exigeCertificacao", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "funcao", "TEXT DEFAULT ''");

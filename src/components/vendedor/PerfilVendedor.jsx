@@ -3,7 +3,7 @@ import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X } from "l
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
-import { MODALIDADES, SEGMENTOS, DISPONIBILIDADES, SKILLS, LIMITES } from "../../../shared/fotoPerfil.js";
+import { MODALIDADES, SEGMENTOS, DISPONIBILIDADES, SKILLS, LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", bdr: "BDR", pap: "PAP", "sem-exp": "Iniciante" };
 
@@ -65,6 +65,7 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
   const [salvando, setSalvando] = useState(false);
   const [avaliacaoFoto, setAvaliacaoFoto] = useState(null);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const [guiaAberto, setGuiaAberto] = useState(false);
   const arquivo = useRef(null);
   const [certificados, setCertificados] = useState([]);
 
@@ -93,7 +94,10 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
     };
   }, [db, eu]);
 
-  const parcial = eu.status === "parcial";
+  // O selo diz só se o perfil foi aprovado, com a nota da avaliação ao lado.
+  // "Parcial" era um terceiro estado que não significava nada para quem lê.
+  const aprovado = eu.status === "aprovado" || eu.status === "parcial";
+  const nota = Number(eu.scoreTriagem) || 0;
 
   const salvar = async () => {
     setSalvando(true);
@@ -166,7 +170,7 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
                 ? <img src={eu.foto} alt={`Foto de ${eu.nome}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : String(eu.nome || "?").slice(0, 1).toUpperCase()}
             </div>
-            <button className="vx-btn vx-btn-sm" onClick={() => arquivo.current?.click()} disabled={enviandoFoto}
+            <button className="vx-btn vx-btn-sm" onClick={() => setGuiaAberto(true)} disabled={enviandoFoto}
               style={{ position: "absolute", right: -6, bottom: -6, padding: "5px 7px", borderRadius: 999 }}
               title="Trocar foto">
               <Camera size={13} />
@@ -186,9 +190,9 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
           </div>
 
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-            <span className={"vx-badge " + (parcial ? "vx-badge-amber" : "vx-badge-brand")}>
-              {parcial ? "Perfil parcial" : "Perfil aprovado"}
-              {eu.scoreTriagem != null && eu.scoreTriagem > 0 && <> · {eu.scoreTriagem}%</>}
+            <span className={"vx-badge " + (aprovado ? "vx-badge-brand" : "vx-badge-red")}>
+              {aprovado ? "Perfil aprovado" : "Perfil não aprovado"}
+              {nota > 0 && <> · {nota}%</>}
             </span>
             <button className="vx-btn vx-btn-sm" onClick={() => setEditando(!editando)}>
               {editando ? <><X size={13} /> Cancelar</> : <><Pencil size={13} /> Editar perfil</>}
@@ -202,6 +206,63 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
 
         {enviandoFoto && <div className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>Verificando a foto…</div>}
       </div>
+
+      {/* Orientação antes do upload. Descobrir o padrão levando recusa é a
+          pior forma de aprender qual foto serve. */}
+      {guiaAberto && (
+        <div className="vx-overlay" onClick={() => setGuiaAberto(false)}>
+          <div className="vx-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="vx-row">
+              <div>
+                <div className="vx-eyebrow">Foto de perfil</div>
+                <h2 className="vx-disp" style={{ margin: "4px 0", fontSize: 19 }}>{GUIA_FOTO.titulo}</h2>
+              </div>
+              <button className="vx-btn vx-btn-ghost" onClick={() => setGuiaAberto(false)}><X size={16} /></button>
+            </div>
+
+            <div style={{ display: "flex", gap: 14, justifyContent: "center", margin: "14px 0 18px" }}>
+              {["certo", "errado"].map((t) => (
+                <img key={t} src={exemploEnquadramento(t)} alt={t === "certo" ? "Enquadramento correto" : "Enquadramento incorreto"}
+                  style={{ width: 108, height: 108, borderRadius: 14 }} />
+              ))}
+            </div>
+
+            <div className="vx-grid vx-g2">
+              <div>
+                <div className="vx-eyebrow" style={{ marginBottom: 6, color: "var(--brand)" }}>Recomendado</div>
+                <ul style={{ fontSize: 12.5, paddingLeft: 16, margin: 0, lineHeight: 1.7 }}>
+                  {GUIA_FOTO.recomendado.map((r) => <li key={r}>{r}</li>)}
+                </ul>
+              </div>
+              <div>
+                <div className="vx-eyebrow" style={{ marginBottom: 6, color: "var(--red)" }}>Evite</div>
+                <ul className="vx-mut" style={{ fontSize: 12.5, paddingLeft: 16, margin: 0, lineHeight: 1.7 }}>
+                  {GUIA_FOTO.evitar.map((r) => <li key={r}>{r}</li>)}
+                </ul>
+              </div>
+            </div>
+
+            <hr className="vx-sep" />
+            <div className="vx-eyebrow" style={{ marginBottom: 7 }}>Requisitos técnicos</div>
+            <div className="vx-grid vx-g2">
+              {GUIA_FOTO.requisitos.map((r) => (
+                <div key={r.chave} style={{ fontSize: 12.5 }}>
+                  <b>{r.texto}</b>
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>{r.detalhe}</div>
+                </div>
+              ))}
+            </div>
+
+            <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 18 }}
+              onClick={() => { setGuiaAberto(false); arquivo.current?.click(); }}>
+              <Camera size={14} /> Escolher foto
+            </button>
+            <div className="vx-chart-source">
+              Avaliamos apenas a apresentação técnica da imagem — nunca características pessoais de quem aparece nela.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Resultado da verificação de foto. Aparece com os critérios, não só
           com a nota: uma reprovação sem instrução não ajuda a corrigir. */}
@@ -378,11 +439,6 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
               <b className="vx-mono">{stats.taxa === null ? "—" : `${stats.taxa}%`}</b>
             </div>
             {stats.taxa !== null && <Medidor value={stats.taxa} tone={stats.taxa >= 70 ? "brand" : stats.taxa >= 50 ? "amber" : "red"} />}
-            {parcial && (
-              <div style={{ marginTop: 12, fontSize: 12.5, color: "var(--amber)" }}>
-                Seu perfil está parcial. Conclua a trilha da Academy e refaça a avaliação para chegar à aprovação plena.
-              </div>
-            )}
             <div className="vx-chart-source">
               A taxa considera só ações já decididas. O que está em auditoria não entra na conta.
             </div>

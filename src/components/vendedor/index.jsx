@@ -5,7 +5,6 @@ import ListaEmpresas from "./ListaEmpresas.jsx";
 import Workspace from "./Workspace.jsx";
 import Carteira from "./Carteira.jsx";
 import PerfilVendedor from "./PerfilVendedor.jsx";
-import Academy from "./Academy.jsx";
 import AcademyCatalogo from "./AcademyCatalogo.jsx";
 import Indicacoes from "../Indicacoes.jsx";
 import Triagem from "./Triagem.jsx";
@@ -13,8 +12,6 @@ import Triagem from "./Triagem.jsx";
 export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
   const [campanhaAbertaId, setCampanhaAbertaId] = useState(null);
-  const [funcaoAcademy, setFuncaoAcademy] = useState(null);
-  const [secaoAcademy, setSecaoAcademy] = useState("cursos");
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
   if (!eu) return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
@@ -33,18 +30,8 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
   return (
     <>
       {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("empresas")} />}
-        {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={(companyId, campaignId = null) => { setAbertaId(companyId); setCampanhaAbertaId(campaignId); }} recarregar={recarregar} irAcademy={(funcao) => { setFuncaoAcademy(funcao); setAba("academy"); }} />}
-      {aba === "academy" && <>
-        <div className="vx-seg vx-subnav" style={{ marginBottom: 18 }}>
-          {[["cursos", "Cursos"], ["funcao", "Certificação por função"]].map(([k, label]) => (
-            <button key={k} data-on={(funcaoAcademy ? "funcao" : secaoAcademy) === k ? "1" : "0"}
-              onClick={() => { setFuncaoAcademy(null); setSecaoAcademy(k); }}>{label}</button>
-          ))}
-        </div>
-        {(funcaoAcademy || secaoAcademy === "funcao")
-          ? <Academy eu={eu} aviso={aviso} funcaoInicial={funcaoAcademy} />
-          : <AcademyCatalogo eu={eu} aviso={aviso} />}
-      </>}
+        {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={(companyId, campaignId = null) => { setAbertaId(companyId); setCampanhaAbertaId(campaignId); }} recarregar={recarregar} irAcademy={() => setAba("academy")} />}
+      {aba === "academy" && <AcademyCatalogo eu={eu} aviso={aviso} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
       {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} setDb={setDb} aviso={aviso} />}

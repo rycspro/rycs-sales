@@ -388,7 +388,278 @@ const WHATSAPP = {
   ],
 };
 
-export const CATALOGO_INICIAL = [SDR, COLD_CALL, WHATSAPP];
+
+// -------------------------------------------------------------------------
+// Trilha Challenger — três cursos, um por contexto de aplicação.
+//
+// O método Challenger inverte a lógica do vendedor simpático: em vez de
+// construir relacionamento e esperar o cliente pedir, o vendedor ENSINA algo
+// que o cliente não sabia, ADAPTA a conversa para quem está ouvindo e ASSUME o
+// controle do processo. Os três cursos aplicam o mesmo método em contextos
+// diferentes, porque a execução muda bastante entre uma videochamada, uma
+// ligação fria e uma abordagem de qualificação.
+// -------------------------------------------------------------------------
+
+const CHALLENGER_BASE = [
+  aula("Os cinco perfis de vendedor", 7,
+    "A pesquisa que originou o método classificou vendedores em cinco perfis: o **Trabalhador esforçado**, o **Construtor de relacionamento**, o **Lobo solitário**, o **Solucionador de problemas reativo** e o **Desafiador**.\n\n" +
+    "O achado contraintuitivo: em vendas complexas, o Construtor de relacionamento — o vendedor mais simpático, o que todo mundo gosta — é o que tem o PIOR desempenho. E o Desafiador é o melhor, por uma margem que cresce conforme a venda fica mais complexa.\n\n" +
+    "O motivo é simples quando se entende: relacionamento é consequência de valor entregue, não caminho para ele. O cliente não compra porque gosta de você; ele passa a gostar de você porque a conversa mudou o jeito dele de enxergar o próprio problema.\n\n" +
+    "**Aplique hoje:** identifique qual perfil é o seu padrão. Quase todo vendedor brasileiro é treinado para ser Construtor de relacionamento."),
+  aula("Ensinar, adaptar, assumir o controle", 7,
+    "O Desafiador faz três coisas que os outros perfis não fazem:\n\n" +
+    "**Ensina.** Traz uma informação que o cliente não tinha e que muda a forma dele ver a operação. Não é sobre o produto — é sobre o negócio do cliente.\n\n" +
+    "**Adapta.** A mesma ideia é dita de um jeito para o financeiro e de outro para o operacional. Não é mudar o conteúdo; é mudar o que dói em cada um.\n\n" +
+    "**Assume o controle.** Fala de dinheiro sem constrangimento, discorda quando precisa e conduz o processo em vez de perguntar \"o que você acha?\" o tempo todo.\n\n" +
+    "A ordem importa: assumir o controle sem ter ensinado nada é ser o vendedor chato. É o ensinar que compra o direito de conduzir.\n\n" +
+    "**Aplique hoje:** escreva uma informação sobre o setor do seu cliente que ele provavelmente não sabe e que muda a conta dele."),
+  aula("O insight comercial: o que ensinar", 8,
+    "Insight comercial não é curiosidade nem estatística solta. É uma informação que satisfaz três condições:\n\n" +
+    "1. O cliente não sabia.\n" +
+    "2. Muda o cálculo que ele faz sobre o próprio problema.\n" +
+    "3. Leva, naturalmente, para algo em que você é forte.\n\n" +
+    "A terceira condição é a que separa insight de conversa interessante. Se o seu insight leva o cliente a uma conclusão que qualquer concorrente atende igual, você educou o mercado de graça.\n\n" +
+    "Exemplo ruim: \"o mercado de energia cresceu 20%\". Exemplo bom: \"empresas do seu porte costumam olhar a conta de luz e ignorar a demanda contratada, que é onde está a maior parte do desperdício — e é justamente o que a maioria dos fornecedores não mexe\".\n\n" +
+    "**Aplique hoje:** teste o seu insight contra as três condições. Se falhar em qualquer uma, não é insight."),
+  aula("Reframe: a virada da conversa", 7,
+    "O reframe é o momento em que o cliente reorganiza o problema na cabeça. Ele acontece assim:\n\n" +
+    "1. **Aquecimento** — você descreve o problema dele melhor do que ele descreveria. Isso compra atenção.\n" +
+    "2. **Reframe** — você mostra que a causa não é a que ele pensava.\n" +
+    "3. **Afogamento racional** — você dimensiona o custo dessa causa real, com números.\n" +
+    "4. **Impacto emocional** — você liga o número ao dia a dia de quem está ouvindo.\n" +
+    "5. **Novo caminho** — você mostra como seria resolver isso, ainda sem falar do produto.\n" +
+    "6. **Sua solução** — só agora.\n\n" +
+    "Quem pula direto para o passo 6 faz uma apresentação. Quem percorre os seis faz uma venda.\n\n" +
+    "**Aplique hoje:** monte os seis passos para o seu produto. Leva uma hora e serve para o resto do ano."),
+  aula("Assumir o controle sem ser arrogante", 6,
+    "Assumir o controle é a parte que mais gera resistência em quem foi treinado para agradar. A confusão é entre firmeza e arrogância.\n\n" +
+    "Firmeza é: propor o próximo passo em vez de perguntar se pode; discordar com fundamento quando o cliente diz algo que vai custar caro a ele; falar de preço no momento certo sem pedir desculpas.\n\n" +
+    "Arrogância é: desmerecer a operação atual do cliente, tratar a objeção como ignorância, impor prazo que só serve à sua meta.\n\n" +
+    "A régua prática: você está sendo firme quando a tensão que cria é sobre o **problema dele**, e arrogante quando é sobre **você ter razão**.\n\n" +
+    "**Aplique hoje:** na próxima conversa, proponha o próximo passo em vez de perguntar qual seria."),
+];
+
+const CHALLENGER_PROVA_BASE = [
+  questao("Segundo a pesquisa que originou o método, qual perfil tem o pior desempenho em vendas complexas?",
+    ["Lobo solitário", "Construtor de relacionamento", "Trabalhador esforçado", "Desafiador"], 1,
+    "É o achado contraintuitivo do método: o vendedor mais simpático é o que menos vende em venda complexa."),
+  questao("O que o Desafiador ensina ao cliente?",
+    ["As funcionalidades do produto", "Algo sobre o negócio do cliente que ele não sabia", "A história da empresa", "As condições comerciais"], 1,
+    "Ensinar é sobre o negócio do cliente, nunca sobre o produto. O produto entra no fim."),
+  questao("Um insight comercial precisa levar naturalmente a quê?",
+    ["A qualquer solução do mercado", "A algo em que você é forte", "Ao menor preço", "A uma nova reunião"], 1,
+    "Sem essa condição você educa o mercado de graça e o concorrente colhe."),
+  questao("Qual é a ordem correta no reframe?",
+    ["Solução, aquecimento, reframe", "Aquecimento, reframe, dimensionamento, impacto, novo caminho, solução", "Preço, produto, problema", "Reframe, solução, aquecimento"], 1,
+    "Quem pula para a solução faz apresentação; quem percorre os seis passos faz venda."),
+  questao("Qual é a diferença entre firmeza e arrogância?",
+    ["Firmeza é falar alto", "A tensão da firmeza é sobre o problema do cliente; a da arrogância é sobre você ter razão", "Não há diferença prática", "Arrogância funciona melhor"], 1,
+    "A régua é para onde aponta a tensão que você cria."),
+];
+
+const CHALLENGER_VIDEO = {
+  slug: "challenger-videochamada",
+  titulo: "Challenger em videochamada",
+  subtitulo: "Conduzir e criar tensão construtiva por trás de uma tela",
+  categoria: "Negociação",
+  nivel: "avancado",
+  professor: "RYCS Academy",
+  funcao: "closer",
+  gratuito: true,
+  preco: 0,
+  descricao:
+    "A videochamada tirou do vendedor quase tudo que sustentava a presença: a sala, o aperto de mão, " +
+    "o silêncio confortável. Este curso aplica o método Challenger ao formato remoto — como ensinar " +
+    "com a tela compartilhada, como sustentar o reframe sem ler a sala, e como assumir o controle " +
+    "quando o cliente está com a câmera fechada e três abas abertas.",
+  requisitos: "Experiência com reuniões comerciais. Recomendado para quem conduz negociação.",
+  modulos: [
+    modulo("O método Challenger", "A base que os três cursos compartilham.", CHALLENGER_BASE),
+    modulo("Adaptação ao formato remoto", "O que muda quando não há sala.", [
+      aula("Presença sem sala", 7,
+        "Numa reunião presencial, a presença vem de graça: você ocupa espaço, o cliente não tem para onde olhar. Na tela, você concorre com e-mail, WhatsApp e a próxima reunião.\n\n" +
+        "O que devolve presença no remoto:\n" +
+        "- **Câmera aberta e enquadramento de meio-busto.** Rosto pequeno no canto da tela não conduz nada.\n" +
+        "- **Primeiros noventa segundos sem tela compartilhada.** Compartilhar cedo transforma você em narrador de slide.\n" +
+        "- **Pausas deliberadas.** No remoto a tentação de preencher silêncio é maior, e é no silêncio que o cliente processa o reframe.\n\n" +
+        "**Aplique hoje:** na próxima call, não compartilhe nada nos primeiros dois minutos."),
+      aula("Ensinar com a tela, não pela tela", 7,
+        "O erro clássico do remoto é abrir a apresentação de 40 slides e narrar. Isso mata o método: o Challenger ensina numa conversa, não numa exposição.\n\n" +
+        "A tela serve para **uma coisa de cada vez**: um número, um gráfico simples, um cálculo feito ao vivo com os dados que o cliente acabou de dar. Fazer a conta na frente dele, com os números dele, vale mais que qualquer slide pronto.\n\n" +
+        "Regra prática: se o slide funcionaria enviado por e-mail, ele não deveria estar na reunião.\n\n" +
+        "**Aplique hoje:** substitua o deck por uma planilha em branco e faça a conta ao vivo."),
+      aula("Ler sinais quando não há sala", 6,
+        "Presencialmente você lê postura, olhar e o movimento de quem se inclina para frente. No remoto, sobra pouco — e é preciso compensar com pergunta explícita.\n\n" +
+        "Sinais que ainda dá para ler: tempo de resposta, se a pessoa abre a câmera ao ser questionada, se toma nota, se chama alguém para ver a tela.\n\n" +
+        "E a pergunta que substitui a leitura da sala: \"isso bate com o que você vê aí ou estou falando de um problema que não é o seu?\". É desconfortável e é exatamente por isso que funciona.\n\n" +
+        "**Aplique hoje:** faça essa pergunta no meio da próxima call, não no fim."),
+      aula("Controle do processo à distância", 6,
+        "Sem sala, o cliente encerra a reunião fechando uma aba. O controle precisa ser construído no começo, não resgatado no fim.\n\n" +
+        "Três movimentos:\n" +
+        "1. **Contrato inicial** — \"temos 40 minutos; proponho 10 entendendo a operação, 15 no que costuma dar errado e 15 decidindo se faz sentido seguir. Funciona?\"\n" +
+        "2. **Marcos audíveis** — \"então até aqui a gente concordou que X. Posso seguir?\"\n" +
+        "3. **Próximo passo antes do fim** — proponha aos 35 minutos, não aos 39.\n\n" +
+        "**Aplique hoje:** use o contrato inicial na próxima reunião e observe a diferença no encerramento."),
+    ]),
+    modulo("Negociação e fechamento remoto", "Preço, objeção e decisão na tela.", [
+      aula("Falar de preço em videochamada", 7,
+        "No remoto, preço mal conduzido gera o pior dos silêncios: o cliente com a câmera fechada, sem reação visível, e o vendedor preenchendo o vazio com desconto.\n\n" +
+        "O que fazer:\n" +
+        "- Ancore no custo do problema que ELE dimensionou antes. Se você não dimensionou, não fale preço.\n" +
+        "- Diga o número e **pare**. Conte até cinco mentalmente.\n" +
+        "- Se vier silêncio, pergunte: \"o que passou pela sua cabeça agora?\"\n\n" +
+        "O desconto oferecido antes da objeção é o sinal mais caro de insegurança que existe.\n\n" +
+        "**Aplique hoje:** ensaie dizer o preço e ficar em silêncio. É mais difícil do que parece."),
+      aula("As objeções que só existem no remoto", 6,
+        "**\"Vou levar para o time e te retorno.\"** — No remoto isso é quase sempre o fim. Responda: \"faz sentido. Para não virar telefone sem fio, consigo 20 minutos com quem mais precisa entender isso?\"\n\n" +
+        "**\"Manda a proposta que eu analiso.\"** — Proposta enviada sem próxima data é proposta morta. \"Mando hoje. Já deixo 20 minutos na quinta para a gente ver junto — se você decidir antes, cancelamos.\"\n\n" +
+        "**Câmera fechada e silêncio.** — Nomeie: \"percebi que ficou quieto. É porque não faz sentido ou porque está processando?\"\n\n" +
+        "**Aplique hoje:** nunca encerre uma call sem data marcada para o próximo passo."),
+      aula("Fechar sem o aperto de mão", 6,
+        "O fechamento remoto precisa de algo concreto no lugar do gesto físico: um documento aberto na tela, um cronograma preenchido junto, um e-mail redigido ali mesmo.\n\n" +
+        "Co-criar o próximo passo na tela compartilhada, com o cliente vendo você escrever, produz comprometimento que nenhuma promessa verbal produz no remoto.\n\n" +
+        "**Aplique hoje:** na próxima call que avançar, abra um documento e escreva o plano junto com o cliente antes de desligar."),
+    ]),
+  ],
+  prova: [
+    ...CHALLENGER_PROVA_BASE,
+    questao("Por que não compartilhar a tela nos primeiros minutos de uma videochamada?",
+      ["Por questão técnica", "Porque transforma o vendedor em narrador de slide e mata a conversa", "Para economizar tempo", "Porque o cliente não gosta"], 1,
+      "O Challenger ensina numa conversa. Slide cedo vira exposição, e exposição não cria reframe."),
+    questao("Depois de dizer o preço em uma videochamada, o que fazer?",
+      ["Justificar imediatamente", "Oferecer uma condição melhor", "Parar e esperar a reação", "Mudar de assunto"], 2,
+      "Desconto oferecido antes da objeção é o sinal mais caro de insegurança que existe."),
+    questao("O cliente diz 'manda a proposta que eu analiso'. Qual é a melhor resposta?",
+      ["Enviar e aguardar", "Enviar e já deixar uma data marcada para revisar juntos", "Insistir para decidir na hora", "Perguntar o orçamento"], 1,
+      "Proposta enviada sem próxima data é proposta morta, especialmente no remoto."),
+    questao("Qual pergunta substitui a leitura da sala no remoto?",
+      ["Você entendeu?", "Isso bate com o que você vê aí ou estou falando de um problema que não é o seu?", "Posso continuar?", "Tem alguma dúvida?"], 1,
+      "É desconfortável e por isso funciona: força uma resposta real em vez de concordância educada."),
+  ],
+};
+
+const CHALLENGER_COLD = {
+  slug: "challenger-cold-call",
+  titulo: "Challenger no cold call",
+  subtitulo: "Ensinar algo novo em sessenta segundos, para quem não te conhece",
+  categoria: "Cold Call",
+  nivel: "avancado",
+  professor: "RYCS Academy",
+  funcao: "",
+  gratuito: true,
+  preco: 0,
+  descricao:
+    "Aplicar o método Challenger numa ligação fria parece impossível: não há relacionamento, " +
+    "não há contexto e há uns quinze segundos de paciência. Este curso comprime o método ao " +
+    "essencial — um insight que cabe em duas frases, dito para quem não pediu para ouvir.",
+  requisitos: "Recomendado depois de 'Cold call na prática'.",
+  modulos: [
+    modulo("O método Challenger", "A base que os três cursos compartilham.", CHALLENGER_BASE),
+    modulo("Challenger comprimido", "O método em sessenta segundos.", [
+      aula("O insight de duas frases", 7,
+        "Na ligação fria não existe espaço para os seis passos do reframe. O que cabe é a versão comprimida: **uma observação sobre o setor dele + uma consequência que ele não calculou**.\n\n" +
+        "> \"Marcos, a maioria das distribuidoras que a gente atende controla pedido em planilha e acha que o custo disso é o tempo de digitação. Na prática o custo maior é o pedido que sai errado e volta — e esse ninguém contabiliza. Acontece aí?\"\n\n" +
+        "Duas frases, um reframe, uma pergunta que aceita não. Isso é Challenger em ligação fria.\n\n" +
+        "**Aplique hoje:** escreva o seu insight em duas frases. Se não couber, ainda não está claro o suficiente."),
+      aula("Tensão construtiva sem parecer agressivo", 6,
+        "Criar tensão com quem não te conhece é arriscado: a linha entre provocar reflexão e soar arrogante é fina no telefone, onde não há expressão facial para suavizar.\n\n" +
+        "O que mantém do lado certo:\n" +
+        "- Atribua a observação a um grupo, não à pessoa: \"a maioria das empresas do setor\", não \"vocês\".\n" +
+        "- Ofereça saída explícita: \"pode ser que aí já esteja resolvido\".\n" +
+        "- Pergunte, não afirme: \"acontece aí?\" em vez de \"vocês têm esse problema\".\n\n" +
+        "**Aplique hoje:** revise seu script e troque toda afirmação sobre o cliente por pergunta."),
+      aula("Quando o cliente discorda do insight", 6,
+        "Vai acontecer: \"aqui a gente não tem esse problema\". Há duas possibilidades, e confundi-las custa caro.\n\n" +
+        "**Ele realmente resolveu.** Ótimo — desqualifique com elegância e peça uma indicação. Insistir aqui queima o contato.\n\n" +
+        "**Ele não mediu.** Aí vale uma pergunta: \"legal. Vocês chegaram a medir quanto custa por mês ou é percepção?\" A pergunta é respeitosa e costuma abrir a conversa, porque quase ninguém mediu.\n\n" +
+        "A diferença entre as duas aparece na resposta seguinte. Se vier um número, ele resolveu. Se vier \"acho que é pouco\", ele não mediu.\n\n" +
+        "**Aplique hoje:** prepare essa pergunta e use na próxima discordância."),
+      aula("Do insight para a reunião", 6,
+        "O objetivo da ligação fria continua sendo a reunião qualificada — o insight é o que compra os quinze segundos seguintes, não o que fecha negócio.\n\n" +
+        "A transição: depois que o cliente reconhece o problema e dá um sinal de dimensionamento, proponha com alternativa fechada.\n\n" +
+        "> \"Faz sentido a gente olhar isso com calma? Tenho quinta às 10 ou sexta às 16.\"\n\n" +
+        "Não pergunte se ele quer marcar. Proponha dois horários.\n\n" +
+        "**Aplique hoje:** use alternativa fechada em todas as propostas de agenda de hoje."),
+    ]),
+  ],
+  prova: [
+    ...CHALLENGER_PROVA_BASE,
+    questao("Como fica o reframe numa ligação fria?",
+      ["Os seis passos completos", "Comprimido em uma observação sobre o setor e uma consequência não calculada", "Substituído por apresentação do produto", "Não se aplica"], 1,
+      "Não há espaço para os seis passos; cabe a versão de duas frases."),
+    questao("Como criar tensão sem soar arrogante no telefone?",
+      ["Afirmar com convicção sobre a empresa dele", "Atribuir a observação a um grupo e perguntar em vez de afirmar", "Falar mais alto", "Citar concorrentes pelo nome"], 1,
+      "Sem expressão facial para suavizar, a atribuição ao grupo e a pergunta mantêm a conversa respeitosa."),
+    questao("O cliente diz que não tem o problema. O que fazer?",
+      ["Insistir que tem", "Encerrar imediatamente", "Perguntar se mediram ou é percepção", "Mudar de produto"], 2,
+      "A resposta separa quem resolveu de quem não mediu — e quase ninguém mediu."),
+    questao("Como propor a reunião ao fim de uma cold call?",
+      ["Perguntar se ele quer marcar", "Propor dois horários específicos", "Pedir para ele sugerir", "Enviar link da agenda por e-mail"], 1,
+      "Alternativa fechada converte mais que pergunta aberta."),
+  ],
+};
+
+const CHALLENGER_SDR = {
+  slug: "challenger-sdr",
+  titulo: "Challenger para SDR",
+  subtitulo: "Qualificar ensinando, em vez de interrogar",
+  categoria: "SDR",
+  nivel: "intermediario",
+  professor: "RYCS Academy",
+  funcao: "sdr",
+  gratuito: true,
+  preco: 0,
+  descricao:
+    "O SDR tradicional qualifica com uma lista de perguntas e soa como formulário. " +
+    "Este curso aplica o método Challenger à qualificação: ensinar algo no meio da descoberta, " +
+    "usar o reframe para separar quem tem o problema de quem só foi educado, e passar ao closer " +
+    "uma reunião onde o cliente já mudou de ideia sobre algo.",
+  requisitos: "Recomendado depois de 'SDR: da lista à reunião qualificada'.",
+  modulos: [
+    modulo("O método Challenger", "A base que os três cursos compartilham.", CHALLENGER_BASE),
+    modulo("Qualificar ensinando", "O método aplicado à descoberta.", [
+      aula("Por que a qualificação soa como interrogatório", 6,
+        "A qualificação clássica é uma lista: tem orçamento? quem decide? qual o prazo? Cada pergunta serve ao vendedor e nenhuma serve ao cliente — e ele sente isso.\n\n" +
+        "O resultado é o cliente respondendo por educação, dando as respostas que encerram a ligação mais rápido. Você qualifica com dado falso e marca reunião que não existe.\n\n" +
+        "A alternativa Challenger: cada pergunta vem depois de algo que você ensinou, e por isso a resposta vale.\n\n" +
+        "**Aplique hoje:** conte quantas perguntas você faz antes de entregar qualquer informação útil."),
+      aula("Ensinar para qualificar melhor", 7,
+        "Sequência que funciona: **informação → pergunta**, nunca pergunta solta.\n\n" +
+        "Em vez de \"quantas reuniões vocês fazem por mês?\", faça:\n\n" +
+        "> \"A gente vê que distribuidoras desse porte costumam fazer umas trinta reuniões por mês e fechar cinco. O que puxa o número para baixo quase sempre é o no-show, não a conversão. Como está isso aí?\"\n\n" +
+        "A pergunta é a mesma. O que mudou é que agora o cliente tem uma referência, sabe que você conhece o setor, e a resposta dele vem com contexto em vez de número inventado.\n\n" +
+        "**Aplique hoje:** reescreva suas três perguntas de qualificação nesse formato."),
+      aula("O reframe como filtro de qualificação", 7,
+        "O reframe não serve só para convencer — serve para **filtrar**. Quem tem o problema reage; quem não tem, não reage.\n\n" +
+        "Quando você apresenta a causa real de um problema e o cliente responde \"nossa, é exatamente isso\", você qualificou. Quando ele responde \"interessante\", você não qualificou nada.\n\n" +
+        "\"Interessante\" é a palavra mais perigosa da prospecção: parece avanço e significa indiferença educada.\n\n" +
+        "**Aplique hoje:** trate \"interessante\" como não. Peça um dado logo em seguida e veja se a pessoa gasta esforço."),
+      aula("Passar uma reunião onde o cliente já mudou de ideia", 6,
+        "A melhor passagem de bastão que um SDR entrega não é \"cliente interessado\". É:\n\n" +
+        "> \"Ele achava que o problema era conversão. Quando mostrei que o no-show dele é de 40%, ele parou e disse que nunca tinha olhado. Pediu para trazer o gerente comercial na reunião.\"\n\n" +
+        "O closer que recebe isso entra numa conversa que já começou. A reunião não é apresentação: é continuação.\n\n" +
+        "Reunião em que o cliente já mudou de ideia sobre algo converte várias vezes mais que reunião de cliente curioso.\n\n" +
+        "**Aplique hoje:** registre, em toda passagem, qual foi a ideia que mudou na cabeça do cliente. Se nenhuma mudou, a reunião é fraca."),
+  ]),
+  ],
+  prova: [
+    ...CHALLENGER_PROVA_BASE,
+    questao("Por que a qualificação clássica soa como interrogatório?",
+      ["Porque são muitas perguntas", "Porque cada pergunta serve ao vendedor e nenhuma ao cliente", "Porque é feita por telefone", "Porque o cliente tem pressa"], 1,
+      "O cliente sente e responde por educação, dando o dado que encerra a ligação mais rápido."),
+    questao("Qual é a sequência do Challenger aplicada à qualificação?",
+      ["Pergunta, depois informação", "Informação, depois pergunta", "Só perguntas", "Só informação"], 1,
+      "A informação dá referência ao cliente e faz a resposta dele valer alguma coisa."),
+    questao("O cliente responde 'interessante' ao seu reframe. O que isso significa?",
+      ["Que ele está qualificado", "Que é indiferença educada e não qualificou nada", "Que precisa de mais informação", "Que o preço é o problema"], 1,
+      "'Interessante' parece avanço e significa indiferença. Quem tem o problema reage de outro jeito."),
+    questao("Qual é a melhor passagem de bastão para o closer?",
+      ["Cliente interessado, ligar amanhã", "Qual ideia mudou na cabeça do cliente durante a conversa", "Nome, telefone e e-mail", "O orçamento estimado"], 1,
+      "Reunião em que o cliente já mudou de ideia sobre algo converte muito mais que reunião de curioso."),
+  ],
+};
+
+export const CATALOGO_INICIAL = [SDR, CHALLENGER_SDR, COLD_CALL, CHALLENGER_COLD, CHALLENGER_VIDEO, WHATSAPP];
 
 // Estatísticas derivadas, usadas no card e na página do curso.
 export function resumirCurso(curso) {

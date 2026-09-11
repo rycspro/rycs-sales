@@ -12,14 +12,14 @@ const TITULOS = {
   aprovado: "Você foi aprovado!",
   condicional: "Quase lá",
   reavaliacao: "Desenvolva seu perfil comercial",
-  reprovado: "Perfil parcial liberado",
+  reprovado: "Sua avaliação foi concluída",
 };
 
 const RECADOS = {
   aprovado: "Seu perfil comercial está completo e sua conta foi aprovada integralmente. As oportunidades compatíveis já estão liberadas.",
-  condicional: "Sua conta foi liberada com perfil parcial. Complete a trilha da Academy para elevar a classificação e desbloquear a aprovação plena.",
-  reavaliacao: "Sua conta foi liberada com perfil parcial. A trilha completa da Academy é o caminho para melhorar seu score e sua classificação.",
-  reprovado: "Isso não significa que você não saiba vender. Sua conta foi liberada com perfil parcial e a trilha completa da Academy fica disponível para você desenvolver as competências avaliadas.",
+  condicional: "Perfil aprovado. A trilha da Academy eleva sua nota e sua posição na fila das empresas.",
+  reavaliacao: "Perfil aprovado. Os cursos da Academy são o caminho mais rápido para melhorar sua nota.",
+  reprovado: "Isso não significa que você não saiba vender. Sua conta está liberada e os cursos da Academy ficam disponíveis para desenvolver as competências avaliadas.",
 };
 
 export default function Triagem({ aviso, recarregar, irAcademy }) {
@@ -227,8 +227,8 @@ export default function Triagem({ aviso, recarregar, irAcademy }) {
             background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink-2)",
           }}>
             Sua conta é liberada ao concluir a avaliação. Acima de <b>90%</b> a aprovação é
-            plena; abaixo disso o perfil fica <b>parcial</b> e você segue para a Academy completa,
-            onde eleva sua classificação e pode refazer a avaliação quantas vezes precisar.
+            plena; abaixo disso você segue para a Academy, onde eleva sua nota e pode refazer a
+            avaliação quantas vezes precisar.
           </div>
 
           <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 18 }}

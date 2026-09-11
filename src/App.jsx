@@ -67,6 +67,15 @@ export default function App() {
   // O escuro é a identidade primária da RYCS; o claro fica como preferência.
   const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") !== "light");
 
+  // O fundo do <html> acompanha o tema. É ele que aparece na área do recorte
+  // do aparelho e no repique do rolar além do fim — deixar fixo pintaria uma
+  // faixa da cor errada nas bordas do celular.
+  useEffect(() => {
+    const cor = dark ? "#070B14" : "#F4F7FC";
+    document.documentElement.style.background = cor;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", cor);
+  }, [dark]);
+
   const userRef = useRef(null);
 
   // A plataforma vive num endereço próprio. Sem router no projeto, o caminho

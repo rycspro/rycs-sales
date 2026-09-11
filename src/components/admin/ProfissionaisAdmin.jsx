@@ -4,8 +4,8 @@ import { money, dataCurta } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", "sem-exp": "Iniciante", bdr: "BDR", pap: "PAP" };
-const STATUS_LABEL = { aprovado: "Ativo", parcial: "Parcial", triagem: "Triagem", recusado: "Recusado" };
-const STATUS_TONE = { aprovado: "brand", parcial: "amber", triagem: "amber", recusado: "red" };
+const STATUS_LABEL = { aprovado: "Ativo", parcial: "Ativo", analise: "Em análise", triagem: "Triagem", recusado: "Recusado" };
+const STATUS_TONE = { aprovado: "brand", parcial: "brand", analise: "amber", triagem: "amber", recusado: "red" };
 
 export default function ProfissionaisAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");

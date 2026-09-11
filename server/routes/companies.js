@@ -3,6 +3,7 @@ import db from "../db.js";
 import { camposPendentesEmpresa, STATUS_EMPRESA } from "../../shared/empresa.js";
 import { ACOES } from "../../shared/acoes.js";
 import { normalizarRegras, PADRAO, SEMPRE_MANUAL, VERSAO_REGRAS } from "../../shared/aprovacoes.js";
+import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { extratoEmpresa, posicaoEmpresa } from "../services/financeiro.js";
 import { emailEmpresaEmAnalise, emailStatusEmpresa } from "../services/email.js";
 import Anthropic from "@anthropic-ai/sdk";
@@ -332,6 +333,26 @@ router.patch("/company/approval-rules", (req, res) => {
     .run(JSON.stringify(regras), req.user.entityId);
   console.log(`[aprovacoes] regras atualizadas: ${req.user.entityId} ativo=${regras.ativo}`);
   res.json({ regras });
+});
+
+// Logo da empresa. Passa pela mesma verificação técnica da foto de perfil:
+// formato, peso, resolução e enquadramento — nada de conteúdo.
+router.post("/companies/:id/logo", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "admin" && entityId !== req.params.id)
+    return res.status(403).json({ error: "Sem permissão" });
+
+  const { base64, mimetype, largura, altura } = req.body || {};
+  if (!base64) return res.status(400).json({ error: "Envie a imagem" });
+
+  const tamanhoBytes = Math.round((String(base64).length * 3) / 4);
+  const avaliacao = avaliarFoto({ mimetype, tamanhoBytes, largura: Number(largura), altura: Number(altura) });
+  if (!avaliacao.aprovada)
+    return res.status(422).json({ error: "A imagem não passou na verificação.", avaliacao });
+
+  const dataUri = `data:${mimetype};base64,${base64}`;
+  db.prepare("UPDATE companies SET logo = ? WHERE id = ?").run(dataUri, req.params.id);
+  res.json({ ok: true, logo: dataUri, avaliacao });
 });
 
 export default router;

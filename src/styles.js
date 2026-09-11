@@ -2,6 +2,14 @@ export const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box}
 
+/* O navegador aplica margin:8px no body por padrão. Sem zerar, sobra uma
+   faixa da cor da página em volta do app inteiro — é a "moldura branca" que
+   aparece no celular. html e body também precisam da cor de fundo: acima da
+   área do app, o que o iOS mostra ao rolar além do limite é o fundo do html. */
+html,body{margin:0;padding:0;min-height:100%;background:#070B14;overscroll-behavior-y:none}
+body{-webkit-text-size-adjust:100%}
+#root{min-height:100vh}
+
 /* ---------------------------------------------------------------------------
    Identidade RYCS — painel escuro com brilho azul ambiente.
    O tema claro existe como alternativa e recebe o mesmo cuidado, mas o escuro
@@ -65,7 +73,7 @@ export const CSS = `
 /* topbar */
 .vx-topbar{position:sticky;top:0;z-index:30;background:var(--topbar-bg,rgba(255,255,255,.85));backdrop-filter:blur(14px) saturate(1.6);
   border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center}
-.vx-topbar-inner{width:100%;max-width:1240px;margin:0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vx-topbar-inner{width:100%;max-width:1240px;margin:0 auto;padding:0 max(18px,env(safe-area-inset-left,0px)) 0 max(18px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:space-between;gap:10px}
 .vx-mark{width:28px;height:28px;border-radius:9px;background:var(--navy);display:flex;align-items:center;justify-content:center;flex:none}
 .vx-word{font-size:17px;color:var(--ink);display:flex;align-items:center;gap:8px;white-space:nowrap;flex:none}
 .vx-seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:3px;gap:2px;overflow-x:auto;scrollbar-width:none}
@@ -83,7 +91,7 @@ export const CSS = `
 /* shell */
 .vx-body{max-width:1240px;margin:0 auto;display:block}
 .vx-sidebar{display:none}
-.vx-content{padding:24px 16px 104px;max-width:820px;margin:0 auto}
+.vx-content{padding:24px max(16px,env(safe-area-inset-right,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:820px;margin:0 auto}
 .vx-bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--topbar-bg,rgba(255,255,255,.96));backdrop-filter:blur(14px);
   border-top:1px solid var(--border);display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom,0)}
 .vx-navbtn{min-width:0;background:none;border:0;font:inherit;padding:10px 1px 11px;cursor:pointer;overflow:hidden;
@@ -214,5 +222,21 @@ export const CSS = `
 .vx-course-meta span{display:inline-flex;align-items:center;gap:4px}
 .vx-course-layout{display:grid;grid-template-columns:290px 1fr;gap:16px;margin-top:16px;align-items:start}
 @media(max-width:860px){.vx-course-layout{grid-template-columns:1fr}}
+/* --- Card de empresa: vitrine, não linha de lista --------------------- */
+.vx-empresa-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  overflow:hidden;box-shadow:var(--shadow-card);transition:border-color .16s,transform .16s}
+.vx-empresa-card:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.vx-empresa-topo{height:64px}
+.vx-empresa-corpo{padding:0 18px 18px}
+.vx-empresa-cabeca{display:flex;gap:13px;align-items:flex-end;margin-top:-30px;margin-bottom:14px}
+.vx-empresa-logo{width:62px;height:62px;border-radius:16px;background:var(--surface);border:2px solid;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;box-shadow:var(--shadow-card)}
+.vx-empresa-logo img{width:100%;height:100%;object-fit:cover}
+.vx-empresa-ficha{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:12px;
+  padding:13px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.vx-empresa-ficha b{display:block;font-size:13.5px;margin-top:2px}
+.vx-empresa-icp{margin-top:12px}
+.vx-empresa-icp p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
 
 `;

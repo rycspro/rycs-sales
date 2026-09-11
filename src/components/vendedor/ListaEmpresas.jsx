@@ -96,24 +96,55 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar, ir
           const questoes = qualificacao.questoes || [];
           const scoreQuiz = eu.aplicacoesDetalhe?.[c.id]?.quizScore;
           return (
-            <div key={c.id} className="vx-card" style={{ padding: 18, borderLeft: `3px solid ${c.cor}` }}>
-              <div className="vx-row" style={{ alignItems: "flex-start" }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span className="vx-disp" style={{ fontSize: 17 }}>{c.nome}</span>
-                    <CompanyScoreChip nota={c.nota} />
-                    {c.destaque && <span className="vx-badge vx-badge-amber">Destaque</span>}
-                  </div>
-                  <div className="vx-mut" style={{ fontSize: 13, marginTop: 4 }}>{c.produto} · ticket {c.ticket}</div>
-                  <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>Cliente ideal: {c.icp}</div>
-                </div>
-              </div>
+            <div key={c.id} className="vx-empresa-card">
+              {/* Faixa de topo com a cor da marca: dá presença ao card sem
+                  exigir que toda empresa tenha logotipo. */}
+              <div className="vx-empresa-topo" style={{ background: `linear-gradient(120deg, ${c.cor}, transparent 78%)` }} />
 
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "12px 0" }}>
-                {ORDEM_ACOES.filter((k) => c.comissoes[k]).slice(0, 3).map((k) => (
-                  <span key={k} className="vx-chip vx-mono">{ACOES[k].nome} <b style={{ color: "var(--brand)" }}>{money(c.comissoes[k])}</b></span>
-                ))}
-              </div>
+              <div className="vx-empresa-corpo">
+                <div className="vx-empresa-cabeca">
+                  <div className="vx-empresa-logo" style={{ borderColor: c.cor }}>
+                    {c.logo
+                      ? <img src={c.logo} alt="" />
+                      : <span style={{ color: c.cor }}>{String(c.nome || "?").slice(0, 2).toUpperCase()}</span>}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span className="vx-disp" style={{ fontSize: 19 }}>{c.nome}</span>
+                      <CompanyScoreChip nota={c.nota} />
+                      {c.destaque && <span className="vx-badge vx-badge-amber">Destaque</span>}
+                    </div>
+                    <div className="vx-mut" style={{ fontSize: 13, marginTop: 3 }}>{c.produto}</div>
+                  </div>
+                </div>
+
+                {/* Ficha: é o que faz o profissional decidir se quer vender
+                    para esta empresa antes de se candidatar. */}
+                <div className="vx-empresa-ficha">
+                  <div><span className="vx-eyebrow">Ticket médio</span><b>{c.ticket || "—"}</b></div>
+                  <div><span className="vx-eyebrow">Segmento</span><b>{c.segmento || "—"}</b></div>
+                  <div><span className="vx-eyebrow">Região</span><b>{c.regiao || "Brasil"}</b></div>
+                  <div><span className="vx-eyebrow">Vagas</span><b>{c.vagas ?? "—"}</b></div>
+                </div>
+
+                <div className="vx-empresa-icp">
+                  <span className="vx-eyebrow">Cliente ideal</span>
+                  <p>{c.icp || "A empresa ainda não descreveu o cliente ideal."}</p>
+                </div>
+
+                {!!c.diferenciais && (
+                  <div className="vx-empresa-icp">
+                    <span className="vx-eyebrow">Diferenciais</span>
+                    <p>{c.diferenciais}</p>
+                  </div>
+                )}
+
+                <div className="vx-eyebrow" style={{ marginTop: 14, marginBottom: 6 }}>Quanto você recebe por ação</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+                  {ORDEM_ACOES.filter((k) => c.comissoes[k]).map((k) => (
+                    <span key={k} className="vx-chip vx-mono">{ACOES[k].nome} <b style={{ color: "var(--brand)" }}>{money(c.comissoes[k])}</b></span>
+                  ))}
+                </div>
 
               {st === "aprovado" ? (
                 <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => abrir(c.id)}>Abrir área da empresa</button>
@@ -134,6 +165,7 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar, ir
                 {!!questoes.length && <div style={{ marginTop: 14 }}><b style={{ fontSize: 13.5 }}>Avaliação de conhecimento</b>{questoes.map((q, i) => <div key={i} style={{ marginTop: 12 }}><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 7 }}>{i + 1}. {q.pergunta}</div>{q.opcoes.map((op, n) => <button key={n} className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 5, justifyContent: "flex-start", borderColor: respostas[c.id]?.[i] === n ? "var(--brand)" : undefined, background: respostas[c.id]?.[i] === n ? "var(--brand-50)" : undefined }} onClick={() => escolherResposta(c.id, i, n)}>{op}</button>)}</div>)}<button className="vx-btn vx-btn-primary vx-btn-block" disabled={enviando} style={{ marginTop: 14 }} onClick={() => enviarQuiz(c)}>{enviando ? "Enviando…" : "Enviar avaliação"}</button></div>}
                 {!c.curso?.length && !questoes.length && <div className="vx-mut" style={{ fontSize: 13 }}><AlertCircle size={14} style={{ verticalAlign: -2 }} /> Esta empresa ainda não publicou material.</div>}
               </div>}
+              </div>
             </div>
           );
         })}
