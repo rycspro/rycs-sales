@@ -1,8 +1,12 @@
 import { Router } from "express";
 import db from "../db.js";
 import { camposPendentesEmpresa, STATUS_EMPRESA } from "../../shared/empresa.js";
+import { ACOES } from "../../shared/acoes.js";
+import { normalizarRegras, PADRAO, SEMPRE_MANUAL, VERSAO_REGRAS } from "../../shared/aprovacoes.js";
 import { extratoEmpresa, posicaoEmpresa } from "../services/financeiro.js";
 import { emailEmpresaEmAnalise, emailStatusEmpresa } from "../services/email.js";
+import Anthropic from "@anthropic-ai/sdk";
+import { extrairTextoPdf } from "../services/reportPdf.js";
 
 const router = Router();
 
@@ -20,7 +24,7 @@ router.patch("/companies/:id", (req, res) => {
   // ou por liberação de ação — nunca por escrita direta do cliente.
   const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "vagas", "cor", "documento",
     "razaoSocial", "endereco", "segmento", "regiao", "diferenciais", "objecoes", "representanteLegal",
-    "contatoFinanceiro", "contatoComercial"];
+    "contatoFinanceiro", "contatoComercial", "situacaoCadastral", "dataAbertura", "naturezaJuridica", "cnaes", "telefoneEmpresa", "emailEmpresa"];
   const jsonFields = ["comissoes", "curso", "qualificacao", "materiais"];
   const sets = [];
   const vals = [];
@@ -38,6 +42,15 @@ router.patch("/companies/:id", (req, res) => {
   vals.push(id);
   db.prepare(`UPDATE companies SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
   res.json({ ok: true });
+});
+
+router.post("/companies/:id/cnpj/extract", async (req,res)=>{
+  if(req.user.role!=="empresa"||req.user.entityId!==req.params.id)return res.status(403).json({error:"Sem permissão"});
+  const base64=String(req.body?.base64||""),mimetype=String(req.body?.mimetype||"");
+  const buffer=Buffer.from(base64,"base64");if(!buffer.length||buffer.length>5*1024*1024)return res.status(413).json({error:"Arquivo deve ter até 5 MB"});
+  let texto="";if(mimetype==="application/pdf"){try{texto=extrairTextoPdf(buffer);}catch(e){return res.status(422).json({error:e.message});}}
+  if(!process.env.ANTHROPIC_API_KEY){if(!texto)return res.status(503).json({error:"Leitura de imagem requer o serviço de IA configurado. Você pode preencher os dados manualmente."});const cnpj=texto.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/)?.[0]||"";return res.json({dados:{documento:cnpj.replace(/\D/g,""),razaoSocial:"",nome:"",situacaoCadastral:"",dataAbertura:"",naturezaJuridica:"",cnaes:"",endereco:"",telefoneEmpresa:"",emailEmpresa:""},preview:texto.slice(0,800),confianca:"baixa"});}
+  try{const client=new Anthropic({apiKey:process.env.ANTHROPIC_API_KEY});const conteudo=texto?[{type:"text",text:`Extraia do cartão CNPJ abaixo. Responda só JSON com documento, razaoSocial, nome, situacaoCadastral, dataAbertura, naturezaJuridica, cnaes, endereco, telefoneEmpresa, emailEmpresa. Use string vazia quando ausente.\n${texto.slice(0,12000)}`}]:[{type:"image",source:{type:"base64",media_type:mimetype,data:base64}},{type:"text",text:"Extraia este cartão CNPJ. Responda só JSON com documento, razaoSocial, nome, situacaoCadastral, dataAbertura, naturezaJuridica, cnaes, endereco, telefoneEmpresa, emailEmpresa. Use string vazia quando ausente."}];const out=await client.messages.create({model:"claude-sonnet-4-6",max_tokens:700,messages:[{role:"user",content:conteudo}]});const raw=out.content.map((b)=>b.text||"").join("").replace(/```json|```/g,"").trim(),dados=JSON.parse(raw);dados.documento=String(dados.documento||"").replace(/\D/g,"");res.json({dados,preview:raw,confianca:"assistida"});}catch(e){res.status(502).json({error:"Não foi possível ler o cartão CNPJ. Preencha manualmente ou tente outro arquivo."});}
 });
 
 router.get("/companies/:id/readiness", (req, res) => {
@@ -83,9 +96,116 @@ router.patch("/companies/:id/status", async (req, res) => {
   res.json({ ok: true, status });
 });
 
+// Extrato enriquecido: cada linha do razão ganha o nome da tarefa, da
+// campanha e do profissional. Sem isso o financeiro é uma lista de valores
+// sem a pergunta que a empresa realmente faz — "esse débito veio de quê?".
+function extratoDetalhado(companyId, { dias, tipo, campaignId } = {}) {
+  const linhas = extratoEmpresa(companyId, 300);
+  const desde = dias ? Date.now() - Number(dias) * 86400000 : 0;
+
+  const submissoes = new Map();
+  for (const l of linhas) {
+    if (!l.submissionId || submissoes.has(l.submissionId)) continue;
+    const s = db.prepare(`SELECT s.id, s.tipo, s.campaignId, s.sellerId, c.titulo AS campanha, v.nome AS profissional
+                          FROM submissions s
+                          LEFT JOIN campaigns c ON c.id = s.campaignId
+                          LEFT JOIN sellers v ON v.id = s.sellerId
+                          WHERE s.id = ?`).get(l.submissionId);
+    if (s) submissoes.set(l.submissionId, s);
+  }
+
+  return linhas
+    .map((l) => {
+      const s = l.submissionId ? submissoes.get(l.submissionId) : null;
+      return {
+        id: l.id,
+        tipo: l.tipo,
+        valor: l.valor,
+        criadoEm: l.criadoEm,
+        saldoEmpresa: l.saldoEmpresa,
+        reservadoEmpresa: l.reservadoEmpresa,
+        submissionId: l.submissionId,
+        tarefa: s?.tipo || null,
+        campaignId: s?.campaignId || null,
+        campanha: s?.campanha || null,
+        profissional: s?.profissional || null,
+        taxa: l.dados?.taxa ?? null,
+        bruto: l.dados?.bruto ?? null,
+        liquido: l.dados?.liquido ?? null,
+        referencia: l.dados?.referencia || l.dados?.gateway || l.dados?.motivo || "",
+      };
+    })
+    .filter((l) => (!desde || l.criadoEm >= desde)
+      && (!tipo || l.tipo === tipo)
+      && (!campaignId || l.campaignId === campaignId));
+}
+
 router.get("/company/finance", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
-  res.json({ posicao: posicaoEmpresa(req.user.entityId), extrato: extratoEmpresa(req.user.entityId, req.query.limit) });
+  const id = req.user.entityId;
+
+  const extrato = extratoDetalhado(id, {
+    dias: req.query.dias,
+    tipo: req.query.tipo,
+    campaignId: req.query.campaignId,
+  });
+
+  // Consolidado do período filtrado. Os valores saem do razão, não de uma
+  // contagem paralela: dois números que deveriam bater precisam vir da
+  // mesma fonte, senão um dia divergem sem ninguém perceber.
+  const soma = (f) => Math.round(extrato.filter(f).reduce((n, l) => n + Math.abs(l.valor), 0) * 100) / 100;
+  const resumo = {
+    depositado: soma((l) => l.tipo === "deposito"),
+    utilizado: soma((l) => l.tipo === "liquidacao"),
+    taxas: Math.round(extrato.reduce((n, l) => n + (Number(l.taxa) || 0), 0) * 100) / 100,
+    repassado: Math.round(extrato.reduce((n, l) => n + (Number(l.liquido) || 0), 0) * 100) / 100,
+    movimentos: extrato.length,
+  };
+
+  const empresa = db.prepare("SELECT assinatura, plano, destaque FROM companies WHERE id = ?").get(id);
+  const assinatura = db.prepare(
+    "SELECT plano, status, valor, proximaCobranca FROM subscriptions WHERE companyId = ? ORDER BY criadoEm DESC LIMIT 1"
+  ).get(id) || null;
+
+  res.json({
+    posicao: posicaoEmpresa(id),
+    resumo,
+    extrato,
+    assinatura,
+    plano: empresa?.assinatura || empresa?.plano || "free",
+    destaque: !!empresa?.destaque,
+  });
+});
+
+// Exportação do extrato. CSV com separador ponto e vírgula e BOM: é o que o
+// Excel em português abre sem pedir importação manual.
+router.get("/company/finance/export", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+
+  const extrato = extratoDetalhado(req.user.entityId, {
+    dias: req.query.dias,
+    tipo: req.query.tipo,
+    campaignId: req.query.campaignId,
+  });
+
+  const escapar = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const cabecalho = ["Data", "Movimento", "Valor", "Tarefa", "Campanha", "Profissional", "Bruto", "Taxa", "Líquido", "Referência"];
+  const linhas = extrato.map((l) => [
+    new Date(l.criadoEm).toLocaleString("pt-BR"),
+    l.tipo,
+    Number(l.valor).toFixed(2).replace(".", ","),
+    l.tarefa ? (ACOES[l.tarefa]?.nome || l.tarefa) : "",
+    l.campanha || "",
+    l.profissional || "",
+    l.bruto != null ? Number(l.bruto).toFixed(2).replace(".", ",") : "",
+    l.taxa != null ? Number(l.taxa).toFixed(2).replace(".", ",") : "",
+    l.liquido != null ? Number(l.liquido).toFixed(2).replace(".", ",") : "",
+    l.referencia || "",
+  ].map(escapar).join(";"));
+
+  res.type("text/csv; charset=utf-8")
+    .set("Content-Disposition", `attachment; filename=extrato-rycs-${Date.now()}.csv`)
+    .send("\ufeff" + [cabecalho.map(escapar).join(";"), ...linhas].join("\n"));
 });
 
 // Tabelas penduradas na empresa. Os filhos saem antes do pai, senão a
@@ -94,11 +214,14 @@ const DEPENDENTES = [
   ["assistant_history", "companyId"],
   ["knowledge_history", "companyId"],
   ["knowledge_documents", "companyId"],
+  ["company_reports", "companyId"],
   ["course_progress", "companyId"],
   ["applications", "companyId"],
+  ["partnership_requests", "companyId"],
   ["messages", "companyId"],
   ["submissions", "companyId"],
   ["company_score_dimensions", "companyId"],
+  ["voucher_redemptions", "companyId"],
   ["subscriptions", "companyId"],
   ["deposit_requests", "companyId"],
 ];
@@ -165,6 +288,50 @@ router.delete("/companies/:id", (req, res) => {
 
   console.log(`[admin] empresa excluída: ${empresa.nome}`);
   res.json({ removido: { id, nome: empresa.nome }, registros: removidos, forcado: forcar });
+});
+
+// Regras de aprovação automática da empresa.
+router.get("/company/approval-rules", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const row = db.prepare("SELECT regrasAprovacao FROM companies WHERE id = ?").get(req.user.entityId);
+  let guardado = {};
+  try { guardado = JSON.parse(row?.regrasAprovacao || "{}"); } catch { guardado = {}; }
+
+  // Quantas ações cada critério teria pego nos últimos 30 dias. Ligar a regra
+  // às cegas é o caminho curto para aprovar sozinho o que não devia.
+  const desde = Date.now() - 30 * 86400000;
+  const recentes = db.prepare(
+    "SELECT tipo, valor, confianca, status FROM submissions WHERE companyId = ? AND criadoEm >= ?"
+  ).all(req.user.entityId, desde);
+
+  res.json({
+    regras: normalizarRegras(guardado),
+    padrao: PADRAO,
+    sempreManual: SEMPRE_MANUAL,
+    versao: VERSAO_REGRAS,
+    amostra: {
+      total: recentes.length,
+      porTipo: Object.fromEntries(Object.keys(ACOES).map((t) => {
+        const doTipo = recentes.filter((s) => s.tipo === t);
+        return [t, {
+          total: doTipo.length,
+          confiancaMedia: doTipo.length
+            ? Math.round(doTipo.reduce((n, s) => n + (Number(s.confianca) || 0), 0) / doTipo.length)
+            : null,
+          valorMaximo: doTipo.reduce((n, s) => Math.max(n, Number(s.valor) || 0), 0),
+        }];
+      })),
+    },
+  });
+});
+
+router.patch("/company/approval-rules", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const regras = normalizarRegras(req.body);
+  db.prepare("UPDATE companies SET regrasAprovacao = ? WHERE id = ?")
+    .run(JSON.stringify(regras), req.user.entityId);
+  console.log(`[aprovacoes] regras atualizadas: ${req.user.entityId} ativo=${regras.ativo}`);
+  res.json({ regras });
 });
 
 export default router;

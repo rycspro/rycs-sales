@@ -10,6 +10,9 @@ import { qualificarIndicacao } from "../services/indicacoes.js";
 import { reservarParaSubmissao, cancelarReserva, liquidarSubmissao, posicaoEmpresa } from "../services/financeiro.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { dadosAgendamentoCorrespondemAoLead } from "../../shared/agendamento.js";
+import { calcularValorTarefa } from "../../shared/valorTarefa.js";
+import { avaliarRegras } from "../../shared/aprovacoes.js";
+import { registrarEventoAuditoria, registrarEvidencias, verificarTrilhaAuditoria, resumoEvidencias } from "../services/auditTrail.js";
 
 const router = Router();
 
@@ -27,7 +30,7 @@ router.post("/submissions", async (req, res) => {
     if (anterior) return res.json({ id: anterior.id, status: anterior.status, valor: anterior.valor, duplicado: true });
   }
 
-  const empresa = db.prepare("SELECT comissoes, assinatura, saldo, saldoReservado FROM companies WHERE id = ?").get(companyId);
+  const empresa = db.prepare("SELECT comissoes, assinatura, saldo, saldoReservado, regrasAprovacao FROM companies WHERE id = ?").get(companyId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 
   let campanha = null;
@@ -59,23 +62,47 @@ router.post("/submissions", async (req, res) => {
   // A auditoria roda ANTES de gravar. Auditar depois faria o motor encontrar a
   // própria ação recém-inserida no histórico e acusar repetição consigo mesma.
   const r = await auditar({ tipo, prova, sellerId, companyId, leadId });
-  const status = statusDoVeredito(r.veredito);
-  const taxa = +(valor * takeRateDoPlano(empresa.assinatura)).toFixed(2);
-  const liquido = +valor.toFixed(2);
-  const totalDebito = +(valor + taxa).toFixed(2);
+  const { taxa, liquido } = calcularValorTarefa(valor, empresa.assinatura);
+  const totalDebito = +valor.toFixed(2);
+
+  // Regras da empresa podem dispensar a conferência manual. O que elas NÃO
+  // fazem é liberar dinheiro: a ação vai para "conferido", o mesmo estado de
+  // quem foi conferido à mão, e o repasse continua com a plataforma.
+  let regras = {};
+  try { regras = JSON.parse(empresa.regrasAprovacao || "{}"); } catch { regras = {}; }
+  const decisao = avaliarRegras({ regras, tipo, valor, confianca: r.confianca, veredito: r.veredito, risco: r.risco });
+  const status = decisao.automatica ? "conferido" : statusDoVeredito(r.veredito);
 
   const id = uid();
   try { db.transaction(() => {
     db.prepare(`
-      INSERT INTO submissions (id, sellerId, companyId, campaignId, leadId, tipo, valor, prova, status, confianca, motivo, fonte, idempotencyKey, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO submissions (id, sellerId, companyId, campaignId, leadId, tipo, valor, liquido, prova, status, confianca, motivo, fonte, idempotencyKey, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, sellerId, companyId, campaignId || null, leadId || null, tipo, valor,
-           JSON.stringify(prova || {}), status, r.confianca, r.motivo, r.fonte, idempotencyKey || null, agora());
+           liquido, JSON.stringify(prova || {}), status, r.confianca, r.motivo, r.fonte, idempotencyKey || null, agora());
     // Recusada não fica pendente: não há o que esperar.
     if (status !== "ia_recusado") {
       reservarParaSubmissao({ companyId, sellerId, submissionId: id, valor: totalDebito });
       db.prepare("UPDATE sellers SET pendente = pendente + ? WHERE id = ?").run(liquido, sellerId);
     }
+
+    // Trilha encadeada: o envio, as evidências e a decisão viram eventos com
+    // hash ligado ao anterior. É o que permite provar depois que a decisão não
+    // foi editada — inclusive contra a própria plataforma.
+    registrarEventoAuditoria({
+      submissionId: id, tipo: "envio", actorId: req.user.id, actorRole: role,
+      statusNovo: "enviado", dados: { acao: tipo, valor, campaignId: campaignId || null, leadId: leadId || null },
+    });
+    registrarEvidencias({ submissionId: id, prova: prova || {}, actorId: req.user.id });
+    registrarEventoAuditoria({
+      submissionId: id,
+      tipo: decisao.automatica ? "decisao_automatica" : "triagem",
+      actorRole: "sistema",
+      statusAnterior: "enviado", statusNovo: status,
+      motivoCodigo: r.fonte || "regras_internas",
+      observacao: decisao.automatica ? decisao.motivo : r.motivo,
+      dados: { confianca: r.confianca, veredito: r.veredito, regras: decisao.regras, automatica: decisao.automatica },
+    });
   })(); } catch (err) {
     if (campaignId && /Caixa disponível insuficiente/.test(err.message))
       db.prepare("UPDATE campaigns SET status = 'pausada' WHERE id = ?").run(campaignId);
@@ -85,7 +112,8 @@ router.post("/submissions", async (req, res) => {
   if (status === "ia_recusado") recalcularScore(sellerId);
   recalcularCompanyScore(companyId);
 
-  res.json({ id, status, confianca: r.confianca, motivo: r.motivo, fonte: r.fonte, valor });
+  res.json({ id, status, confianca: r.confianca, motivo: r.motivo, fonte: r.fonte, valor,
+             automatica: decisao.automatica, regraAplicada: decisao.motivo });
 });
 
 router.patch("/submissions/:id", (req, res) => {
@@ -122,10 +150,18 @@ router.patch("/submissions/:id", (req, res) => {
     db.prepare(`UPDATE submissions SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
     if (["recusado", "ia_recusado"].includes(fields.status) && !["recusado", "ia_recusado"].includes(sub.status)) {
       const empresa = db.prepare("SELECT assinatura FROM companies WHERE id = ?").get(sub.companyId);
-      const liquido = +(sub.valor || 0).toFixed(2);
-      const totalDebito = +(liquido * (1 + takeRateDoPlano(empresa?.assinatura))).toFixed(2);
+      const novoModelo = sub.liquido != null;
+      const liquido = novoModelo ? Number(sub.liquido) : Number(sub.valor || 0);
+      const totalDebito = novoModelo ? Number(sub.valor || 0) : +(liquido * (1 + takeRateDoPlano(empresa?.assinatura))).toFixed(2);
       cancelarReserva({ companyId: sub.companyId, sellerId: sub.sellerId, submissionId: sub.id, valor: totalDebito, motivo: fields.motivo });
       db.prepare("UPDATE sellers SET pendente = MAX(0, pendente - ?) WHERE id = ?").run(liquido, sub.sellerId);
+    }
+    if (fields.status && fields.status !== sub.status) {
+      registrarEventoAuditoria({
+        submissionId: sub.id, tipo: "decisao_manual", actorId: req.user.id, actorRole: role,
+        statusAnterior: sub.status, statusNovo: fields.status,
+        motivoCodigo: "conferencia_humana", observacao: fields.motivo || "",
+      });
     }
   })();
 
@@ -163,12 +199,18 @@ router.post("/submissions/:id/contestar", (req, res) => {
 
   const motivo = `Vendedor contestou e pediu revisão humana. Motivo original da IA: ${sub.motivo || "—"}`;
   const empresa = db.prepare("SELECT assinatura FROM companies WHERE id = ?").get(sub.companyId);
-  const liquido = +(sub.valor || 0).toFixed(2);
-  const totalDebito = +(liquido * (1 + takeRateDoPlano(empresa?.assinatura))).toFixed(2);
+  const novoModelo = sub.liquido != null;
+  const liquido = novoModelo ? Number(sub.liquido) : Number(sub.valor || 0);
+  const totalDebito = novoModelo ? Number(sub.valor || 0) : +(liquido * (1 + takeRateDoPlano(empresa?.assinatura))).toFixed(2);
   try { db.transaction(() => {
     reservarParaSubmissao({ companyId: sub.companyId, sellerId: sub.sellerId, submissionId: sub.id, valor: totalDebito });
     db.prepare("UPDATE submissions SET status = 'revisao', motivo = ? WHERE id = ?").run(motivo, sub.id);
     db.prepare("UPDATE sellers SET pendente = pendente + ? WHERE id = ?").run(liquido, sub.sellerId);
+    registrarEventoAuditoria({
+      submissionId: sub.id, tipo: "contestacao", actorId: req.user.id, actorRole: role,
+      statusAnterior: sub.status, statusNovo: "revisao",
+      motivoCodigo: "contestacao_profissional", observacao: motivo,
+    });
   })(); } catch (err) { return res.status(422).json({ error: err.message }); }
 
   const empUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(sub.companyId);
@@ -201,9 +243,11 @@ router.post("/submissions/:id/liberar", (req, res) => {
 
   // O take rate vem do plano contratado — é o que torna a assinatura
   // vantajosa para quem opera volume.
-  const taxa = +(bruto * takeRateDoPlano(empresa.assinatura)).toFixed(2);
-  const liquido = bruto;
-  const totalDebito = +(bruto + taxa).toFixed(2);
+  const novoModelo = sub.liquido != null;
+  const calculo = calcularValorTarefa(bruto, empresa.assinatura);
+  const taxa = novoModelo ? +(bruto - Number(sub.liquido)).toFixed(2) : calculo.taxa;
+  const liquido = novoModelo ? Number(sub.liquido) : bruto;
+  const totalDebito = novoModelo ? bruto : +(bruto + taxa).toFixed(2);
   if (posicao.saldo < totalDebito || posicao.reservado < totalDebito)
     return res.status(400).json({ error: "Reserva financeira da ação e da taxa não está disponível" });
 
@@ -213,6 +257,12 @@ router.post("/submissions/:id/liberar", (req, res) => {
     db.prepare(`INSERT INTO platform_earnings (id, submissionId, companyId, sellerId, bruto, taxa, liquido, criadoEm)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(uid(), sub.id, sub.companyId, sub.sellerId, bruto, taxa, liquido, agora());
+    registrarEventoAuditoria({
+      submissionId: sub.id, tipo: "liberacao", actorId: req.user.id, actorRole: "admin",
+      statusAnterior: sub.status, statusNovo: "liberado",
+      motivoCodigo: "repasse_plataforma",
+      dados: { bruto, taxa, liquido, totalDebito },
+    });
   })();
 
   const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sub.sellerId);
@@ -225,6 +275,29 @@ router.post("/submissions/:id/liberar", (req, res) => {
   if (sellerUser) qualificarIndicacao(sellerUser.id);
 
   res.json({ ok: true, bruto, taxa, liquido, totalDebito });
+});
+
+// Trilha de auditoria de uma ação: quem decidiu o quê, quando, com qual regra
+// e com qual confiança. A integridade é verificada na hora — se a cadeia de
+// hashes tiver sido quebrada, a resposta diz isso em vez de esconder.
+router.get("/submissions/:id/trilha", (req, res) => {
+  const { role, entityId } = req.user;
+  const sub = db.prepare("SELECT id, sellerId, companyId FROM submissions WHERE id = ?").get(req.params.id);
+  if (!sub) return res.status(404).json({ error: "Ação não encontrada" });
+  if (role === "empresa" && entityId !== sub.companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && entityId !== sub.sellerId) return res.status(403).json({ error: "Sem permissão" });
+
+  const eventos = db.prepare(
+    "SELECT sequencia, tipo, atorRole, statusAnterior, statusNovo, motivoCodigo, observacao, dados, criadoEm FROM submission_events WHERE submissionId = ? ORDER BY sequencia ASC"
+  ).all(sub.id).map((e) => ({ ...e, dados: JSON.parse(e.dados || "{}") }));
+
+  res.json({
+    eventos,
+    integridade: verificarTrilhaAuditoria(sub.id),
+    // O hash da evidência, não a evidência: a trilha prova que o dado não
+    // mudou sem reexpor telefone e documento a cada consulta.
+    evidencias: resumoEvidencias(sub.id).map((e) => ({ campo: e.campo, origem: e.origem, metadados: e.metadados, criadoEm: e.criadoEm })),
+  });
 });
 
 export default router;

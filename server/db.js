@@ -100,6 +100,18 @@ db.exec(`
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
 
+  CREATE TABLE IF NOT EXISTS partnership_requests (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    status TEXT DEFAULT 'pendente',
+    criadoEm INTEGER NOT NULL,
+    respondidoEm INTEGER,
+    UNIQUE(companyId, sellerId),
+    FOREIGN KEY (companyId) REFERENCES companies(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
   CREATE TABLE IF NOT EXISTS course_progress (
     sellerId TEXT NOT NULL,
     companyId TEXT NOT NULL,
@@ -282,6 +294,45 @@ db.exec(`
     valor REAL DEFAULT 0,
     inicio INTEGER,
     proximaCobranca INTEGER,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS vouchers (
+    id TEXT PRIMARY KEY,
+    codigo TEXT UNIQUE NOT NULL,
+    tipo TEXT NOT NULL,
+    valor REAL NOT NULL,
+    validadeEm INTEGER,
+    limiteTotal INTEGER DEFAULT 0,
+    limitePorEmpresa INTEGER DEFAULT 1,
+    planos TEXT DEFAULT '[]',
+    status TEXT DEFAULT 'ativo',
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS voucher_redemptions (
+    id TEXT PRIMARY KEY,
+    voucherId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    subscriptionId TEXT NOT NULL,
+    valorOriginal REAL NOT NULL,
+    desconto REAL NOT NULL,
+    valorFinal REAL NOT NULL,
+    status TEXT DEFAULT 'reservado',
+    criadoEm INTEGER NOT NULL,
+    confirmadoEm INTEGER,
+    UNIQUE(voucherId, companyId, subscriptionId)
+  );
+
+  CREATE TABLE IF NOT EXISTS company_reports (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    periodo TEXT DEFAULT '',
+    status TEXT DEFAULT 'processando',
+    origem TEXT DEFAULT 'operacional',
+    dados TEXT DEFAULT '{}',
     criadoEm INTEGER NOT NULL,
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
@@ -520,8 +571,18 @@ adicionarColuna("companies", "contatoFinanceiro", "TEXT DEFAULT ''");
 adicionarColuna("companies", "contatoComercial", "TEXT DEFAULT ''");
 adicionarColuna("companies", "materiais", "TEXT DEFAULT '[]'");
 adicionarColuna("companies", "statusCadastro", "TEXT DEFAULT 'rascunho'");
+adicionarColuna("companies", "situacaoCadastral", "TEXT DEFAULT ''");
+adicionarColuna("companies", "dataAbertura", "TEXT DEFAULT ''");
+adicionarColuna("companies", "naturezaJuridica", "TEXT DEFAULT ''");
+adicionarColuna("companies", "cnaes", "TEXT DEFAULT ''");
+adicionarColuna("companies", "telefoneEmpresa", "TEXT DEFAULT ''");
+adicionarColuna("companies", "emailEmpresa", "TEXT DEFAULT ''");
 adicionarColuna("companies", "saldoReservado", "REAL DEFAULT 0");
 adicionarColuna("companies", "aprovadoPor", "TEXT");
+// Regras de aprovação automática configuradas pela empresa. Guardadas como
+// JSON: o conjunto muda com o produto e uma coluna por critério viraria uma
+// migração a cada ajuste.
+adicionarColuna("companies", "regrasAprovacao", "TEXT DEFAULT '{}'");
 adicionarColuna("companies", "aprovadoEm", "INTEGER");
 adicionarColuna("campaigns", "exigeCertificacao", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "funcao", "TEXT DEFAULT ''");
@@ -562,6 +623,15 @@ adicionarColuna("course_progress", "quizScore", "INTEGER");
 adicionarColuna("course_progress", "quizAnswers", "TEXT DEFAULT '[]'");
 adicionarColuna("applications", "criterios", "TEXT DEFAULT '[]'");
 adicionarColuna("applications", "quizScore", "INTEGER");
+adicionarColuna("assistant_history", "contexto", "TEXT DEFAULT ''");
+adicionarColuna("assistant_history", "status", "TEXT DEFAULT 'proposto'");
+adicionarColuna("assistant_history", "acao", "TEXT DEFAULT 'registrar_analise'");
+adicionarColuna("assistant_history", "confirmadoEm", "INTEGER");
+adicionarColuna("subscriptions", "valorOriginal", "REAL DEFAULT 0");
+adicionarColuna("subscriptions", "desconto", "REAL DEFAULT 0");
+adicionarColuna("subscriptions", "voucherId", "TEXT");
+adicionarColuna("subscriptions", "paymentId", "TEXT");
+adicionarColuna("subscriptions", "invoiceUrl", "TEXT");
 
 db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_idempotency
@@ -575,6 +645,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_financial_ledger_seller ON financial_ledger(sellerId, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_knowledge_company ON knowledge_documents(companyId, status, atualizadoEm);
   CREATE INDEX IF NOT EXISTS idx_assistant_company ON assistant_history(companyId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_partnership_seller ON partnership_requests(sellerId, status, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_voucher_redemptions ON voucher_redemptions(voucherId, companyId, status);
+  CREATE INDEX IF NOT EXISTS idx_company_reports ON company_reports(companyId, criadoEm);
 `);
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este

@@ -9,19 +9,14 @@
 export const RECOMPENSAS = {
   // quem indicou → o que ganha, e o que o indicado precisa fazer
   vendedor: {
-    vendedor: { valor: 25, comoRecebe: "saldo disponível" },
     empresa: { valor: 100, comoRecebe: "saldo disponível" },
   },
   empresa: {
-    vendedor: { valor: 25, comoRecebe: "caixa de campanha" },
     empresa: { valor: 150, comoRecebe: "caixa de campanha" },
   },
 };
 
-export const GATILHOS = {
-  vendedor: "primeira ação aprovada",
-  empresa: "primeiro depósito confirmado",
-};
+export const GATILHOS = { empresa: "pagamento confirmado de um plano elegível" };
 
 export function recompensaDe(papelIndicador, papelIndicado) {
   return RECOMPENSAS[papelIndicador]?.[papelIndicado] || null;

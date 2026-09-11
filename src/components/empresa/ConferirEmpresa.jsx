@@ -1,11 +1,24 @@
 import { useState } from "react";
 import { apiPatch } from "../../lib/api.js";
 import CardEnvio from "../CardEnvio.jsx";
+import RegrasAprovacao from "./RegrasAprovacao.jsx";
+import TrilhaAuditoria from "./TrilhaAuditoria.jsx";
 
 export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
   const [motivo, setMotivo] = useState({});
+  const [secao, setSecao] = useState("fila");
+  const [trilha, setTrilha] = useState(null);
   const revisao = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
-  const iaAprovados = db.submissions.filter((s) => s.companyId === emp.id && s.status === "ia_aprovado");
+  // "conferido" entra aqui porque é onde a regra automática deposita a ação:
+  // a empresa precisa poder discordar antes de a plataforma repassar.
+  const iaAprovados = db.submissions.filter((s) => s.companyId === emp.id && ["ia_aprovado", "conferido"].includes(s.status));
+
+  const botaoTrilha = (sub) => (
+    <button className="vx-btn vx-btn-sm vx-btn-ghost" style={{ marginTop: 8 }}
+      onClick={() => setTrilha(trilha === sub.id ? null : sub.id)}>
+      {trilha === sub.id ? "Ocultar trilha" : "Ver trilha de auditoria"}
+    </button>
+  );
 
   const confirmar = async (sub) => {
     const r = await apiPatch(`/submissions/${sub.id}`, { status: "conferido", motivo: "Confirmado manualmente pela empresa." });
@@ -30,10 +43,19 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
 
   return (
     <>
+      <div className="vx-page-head"><div><div className="vx-eyebrow">Governança de evidências</div><h1 className="vx-disp">Aprovações</h1><p>Revisão manual, recusas, contestações e decisões rastreáveis.</p></div><span className="vx-chip vx-mono">{revisao.length} pendentes</span></div>
       <p className="vx-mut" style={{ fontSize: 13, marginTop: 0 }}>
-        A IA analisa toda ação assim que o vendedor envia. Só chega aqui quem ela sinalizou como dúvida —
-        o resto segue direto para a liberação da plataforma, mas você pode sinalizar qualquer aprovação abaixo.
+        A triagem automática verifica consistência e confiança. Evidência manual permanece sujeita a revisão humana e a liberação financeira continua restrita à plataforma.
       </p>
+
+      <div className="vx-seg vx-subnav" style={{ margin: "14px 0 4px" }}>
+        {[["fila", "Fila de revisão"], ["regras", "Regras automáticas"]].map(([k, label]) => (
+          <button key={k} data-on={secao === k ? "1" : "0"} onClick={() => setSecao(k)}>{label}</button>
+        ))}
+      </div>
+
+      {secao === "regras" && <RegrasAprovacao aviso={aviso} />}
+      {secao === "fila" && <>
 
       <h3 className="vx-disp" style={{ fontSize: 16, margin: "18px 0 10px" }}>
         Revisão manual {revisao.length > 0 && <span className="vx-chip vx-mono" style={{ marginLeft: 6 }}>{revisao.length}</span>}
@@ -50,25 +72,32 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
                     <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flex: 1 }} onClick={() => confirmar(sub)}>Confirmei com o cliente</button>
                     <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => recusar(sub)}>Recusar</button>
                   </div>
+                  {botaoTrilha(sub)}
+                  {trilha === sub.id && <TrilhaAuditoria submissionId={sub.id} />}
                 </div>
               } />
             ))}
           </div>}
 
       <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>
-        Aprovados automaticamente pela IA {iaAprovados.length > 0 && <span className="vx-chip vx-mono" style={{ marginLeft: 6 }}>{iaAprovados.length}</span>}
+        Decisões automáticas históricas {iaAprovados.length > 0 && <span className="vx-chip vx-mono" style={{ marginLeft: 6 }}>{iaAprovados.length}</span>}
       </h3>
       {!iaAprovados.length
         ? <p className="vx-mut" style={{ fontSize: 13 }}>Nenhum nas últimas horas.</p>
         : <div className="vx-grid">
             {iaAprovados.map((sub) => (
               <CardEnvio key={sub.id} sub={sub} db={db} extra={
-                <button className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 10 }} onClick={() => contestar(sub)}>
-                  Algo errado — mandar para revisão
-                </button>
+                <>
+                  <button className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 10 }} onClick={() => contestar(sub)}>
+                    Algo errado — mandar para revisão
+                  </button>
+                  {botaoTrilha(sub)}
+                  {trilha === sub.id && <TrilhaAuditoria submissionId={sub.id} />}
+                </>
               } />
             ))}
           </div>}
+      </>}
     </>
   );
 }

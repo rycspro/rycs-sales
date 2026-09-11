@@ -1,55 +1,20 @@
+import { useState } from "react";
+import { Award, BarChart3, MessageSquare, UserRound, X } from "lucide-react";
 import { apiPatch } from "../../lib/api.js";
+import { dataCurta } from "../../lib/utils.js";
+import Chat from "../Chat.jsx";
 
 export default function TimeEmpresa({ emp, db, up, aviso }) {
-  const pend = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "pendente");
-  const time = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado");
-  const decidir = async (s, st) => {
-    const r = await apiPatch("/applications", { sellerId: s.id, companyId: emp.id, status: st });
-    if (!r || r.error) return aviso(r?.error || "Não foi possível atualizar a candidatura.");
-    up((d) => ({ sellers: d.sellers.map((x) => x.id === s.id ? { ...x, aplicacoes: { ...x.aplicacoes, [emp.id]: st } } : x) }));
-    aviso(st === "aprovado" ? `${s.nome} entrou no seu time.` : "Candidatura recusada.");
-  };
-  const perfLabel = (p) => (p === "sdr" ? "SDR" : p === "closer" ? "Closer" : "Iniciante");
-
-  return (
-    <>
-      <h3 className="vx-disp" style={{ fontSize: 16, marginBottom: 10 }}>Querem vender para você</h3>
-      {!pend.length && <p className="vx-mut" style={{ fontSize: 13 }}>Nenhuma solicitação aberta no momento.</p>}
-      <div className="vx-grid" style={{ marginBottom: 22 }}>
-        {pend.map((s) => (
-          <div key={s.id} className="vx-card" style={{ padding: 16 }}>
-            <div className="vx-row">
-              <div>
-                <b>{s.nome}</b>
-                <div className="vx-mut" style={{ fontSize: 12 }}>{perfLabel(s.perfil)} · {s.cidade} · nota {s.nota}/100</div>
-                <div className="vx-mut" style={{ fontSize: 12 }}>{s.experiencia}</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flex: 1 }} onClick={() => decidir(s, "aprovado")}>Aprovar</button>
-              <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => decidir(s, "recusado")}>Recusar</button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <h3 className="vx-disp" style={{ fontSize: 16, marginBottom: 10 }}>Seu time ({time.length})</h3>
-      <div className="vx-grid">
-        {time.map((s) => {
-          const subs = db.submissions.filter((x) => x.sellerId === s.id && x.companyId === emp.id);
-          const lib = subs.filter((x) => x.status === "liberado").length;
-          return (
-            <div key={s.id} className="vx-card vx-row" style={{ padding: 15 }}>
-              <div>
-                <b style={{ fontSize: 13.5 }}>{s.nome}</b>
-                <div className="vx-mut" style={{ fontSize: 12 }}>{perfLabel(s.perfil)} · {subs.length} ações enviadas · {lib} aprovadas</div>
-              </div>
-              <button className="vx-btn vx-btn-sm vx-btn-danger" onClick={() => decidir(s, "recusado")}>Remover</button>
-            </div>
-          );
-        })}
-        {!time.length && <p className="vx-mut" style={{ fontSize: 13 }}>Aprove candidatos para montar seu time.</p>}
-      </div>
-    </>
-  );
+  const [perfil, setPerfil] = useState(null), [chat, setChat] = useState(null);
+  const pend = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "pendente"), time = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado");
+  const decidir = async (s, st) => { const r = await apiPatch("/applications", { sellerId:s.id, companyId:emp.id, status:st }); if (r?.error) return aviso(r.error); up((d)=>({sellers:d.sellers.map((x)=>x.id===s.id?{...x,aplicacoes:{...x.aplicacoes,[emp.id]:st}}:x)})); aviso(st==="aprovado"?`${s.nome} entrou no seu time.`:"Candidatura recusada."); };
+  const perfLabel = (p) => ({sdr:"SDR",bdr:"BDR",closer:"Closer",pap:"Porta a porta","sem-exp":"Em formação"})[p] || p;
+  const dados = (s) => { const subs=db.submissions.filter((x)=>x.sellerId===s.id&&x.companyId===emp.id), leads=(db.leads||[]).filter((l)=>l.sellerId===s.id&&l.companyId===emp.id), campanhas=(db.campaigns||[]).filter((c)=>c.companyId===emp.id&&c.candidaturas?.some((a)=>a.sellerId===s.id&&a.status==="aprovado")); const aprovadas=subs.filter((x)=>x.status==="liberado").length; return {subs,leads,campanhas,aprovadas,taxa:subs.length?Math.round(aprovadas/subs.length*100):0,ultima:Math.max(0,...subs.map((x)=>x.criadoEm||0),...leads.map((x)=>x.atualizadoEm||x.criadoEm||0))}; };
+  return <div className="vx-fade"><div className="vx-page-head"><div><div className="vx-eyebrow">Equipe vinculada</div><h1 className="vx-disp">Time da empresa</h1><p>Somente profissionais com vínculo aceito aparecem aqui.</p></div><span className="vx-chip"><UserRound size={13}/>{time.length} profissionais</span></div>
+    {!!pend.length&&<><h3 className="vx-disp" style={{fontSize:16}}>Solicitações recebidas</h3><div className="vx-grid" style={{marginBottom:22}}>{pend.map((s)=><div key={s.id} className="vx-card vx-row" style={{padding:16,flexWrap:"wrap"}}><div><b>{s.nome}</b><div className="vx-mut" style={{fontSize:12}}>{perfLabel(s.perfil)} · {s.cidade} · nota {s.nota}/100</div></div><div style={{display:"flex",gap:8}}><button className="vx-btn vx-btn-danger vx-btn-sm" onClick={()=>decidir(s,"recusado")}>Recusar</button><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={()=>decidir(s,"aprovado")}>Aprovar</button></div></div>)}</div></>}
+    <div className="vx-talent-grid">{time.map((s)=>{const d=dados(s);return <article key={s.id} className="vx-card" style={{padding:17}}><div className="vx-row"><div style={{display:"flex",alignItems:"center",gap:10}}><div className="vx-avatar">{s.nome.split(/\s+/).slice(0,2).map((x)=>x[0]).join("")}</div><div><b>{s.nome}</b><div className="vx-mut" style={{fontSize:12}}>{perfLabel(s.perfil)} · {s.cidade||"Brasil"}</div></div></div><span className="vx-badge vx-badge-brand">{d.taxa}% aprovadas</span></div><div className="vx-grid vx-g3" style={{marginTop:13}}><div className="vx-scenario"><span>Tarefas</span><strong>{d.subs.length}</strong></div><div className="vx-scenario"><span>Leads</span><strong>{d.leads.length}</strong></div><div className="vx-scenario"><span>Certificados</span><strong>{s.certificacoes?.length||0}</strong></div></div><div className="vx-chart-source">Última atividade: {d.ultima?dataCurta(d.ultima):"sem atividade"}</div><div style={{display:"flex",gap:7,marginTop:12,flexWrap:"wrap"}}><button className="vx-btn vx-btn-sm" onClick={()=>setPerfil(s)}><BarChart3 size={13}/>Perfil e desempenho</button><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={()=>setChat(s)}><MessageSquare size={13}/>Enviar mensagem</button><button className="vx-btn vx-btn-danger vx-btn-sm" onClick={()=>decidir(s,"recusado")}>Remover</button></div></article>})}</div>
+    {!time.length&&<div className="vx-card" style={{padding:24,textAlign:"center"}}><UserRound size={25} color="var(--muted)"/><p className="vx-mut">Solicite parceria em Profissionais Ativos ou aprove uma candidatura.</p></div>}
+    {perfil&&(()=>{const d=dados(perfil);return <div className="vx-overlay" onClick={()=>setPerfil(null)}><div className="vx-sheet" onClick={(e)=>e.stopPropagation()}><div className="vx-row"><div><div className="vx-eyebrow">Dossiê autorizado</div><h2 className="vx-disp" style={{margin:"4px 0"}}>{perfil.nome}</h2></div><button className="vx-btn vx-btn-ghost" onClick={()=>setPerfil(null)}><X size={16}/></button></div><p className="vx-mut">{perfil.experiencia||"Experiência em atualização."}</p><div className="vx-grid vx-g2"><div className="vx-scenario"><span>Aprovações</span><strong>{d.aprovadas}/{d.subs.length}</strong></div><div className="vx-scenario"><span>Campanhas vinculadas</span><strong>{d.campanhas.length}</strong></div><div className="vx-scenario"><span>Leads</span><strong>{d.leads.length}</strong></div><div className="vx-scenario"><span>Nota</span><strong>{perfil.nota}/100</strong></div></div><h3 className="vx-disp" style={{fontSize:15}}><Award size={15} style={{verticalAlign:-2}}/> Academy e certificações</h3>{perfil.certificacoes?.length?perfil.certificacoes.map((c)=><span className="vx-chip" key={c.funcao}>{perfLabel(c.funcao)} · {c.percentual}%</span>):<p className="vx-mut">Sem certificações publicadas.</p>}<button className="vx-btn vx-btn-primary vx-btn-block" style={{marginTop:17}} onClick={()=>{setPerfil(null);setChat(perfil)}}><MessageSquare size={14}/>Enviar mensagem</button></div></div>})()}
+    {chat&&<div className="vx-overlay" onClick={()=>setChat(null)}><div className="vx-sheet" onClick={(e)=>e.stopPropagation()}><div className="vx-row"><div><div className="vx-eyebrow">Mensagem direta</div><h2 className="vx-disp" style={{fontSize:18,margin:"3px 0"}}>{chat.nome}</h2></div><button className="vx-btn vx-btn-ghost" onClick={()=>setChat(null)}><X size={16}/></button></div><Chat empresa={emp} sellerId={chat.id} db={db} up={up} de="empresa"/></div></div>}
+  </div>;
 }

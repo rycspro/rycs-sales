@@ -1,14 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CirclePause, ClipboardCheck, Plus, Rocket, Save, Wallet } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
 import { money } from "../../lib/utils.js";
+import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 
 const novaCampanha = (emp) => ({
   titulo: "", descricao: "", produto: emp.produto || "", objetivo: "Gerar reuniões qualificadas",
   publico: emp.icp || "", regiao: emp.regiao || "", funcao: "sdr", vagas: 2, orcamento: 0,
   prazoHoras: 48, limitePorProfissional: 10, aceitaLeadProprio: false, exigeCertificacao: true,
-  tarefas: { agendamento: 0, realizada: 0 }, evidencias: {
+  tarefas: { agendamento: 0, realizada: 0, venda:0, ligacao:0, follow:0 }, evidencias: {
     agendamento: ["Lead no ICP", "Data e participantes", "Confirmação", "Vídeo ou registro verificável"],
     realizada: ["Presença", "Duração", "Gravação ou transcrição autorizada"],
   }, criteriosAprovacao: { agendamento: "Lead válido, não duplicado e reunião confirmada.", realizada: "Participantes presentes e reunião concluída conforme a campanha." }, treinamento: [], requisitos: "",
@@ -18,15 +19,21 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
   const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
   const [selecionada, setSelecionada] = useState(campanhas[0]?.id || "nova");
   const existente = campanhas.find((c) => c.id === selecionada);
-  const [rascunhoNovo, setRascunhoNovo] = useState(() => novaCampanha(emp));
+  const [rascunhoNovo, setRascunhoNovo] = useState(() => { try{return JSON.parse(localStorage.getItem(`rycs-campanha-${emp.id}`))||novaCampanha(emp)}catch{return novaCampanha(emp)} });
   const [edicao, setEdicao] = useState(null);
+  const [alterado,setAlterado]=useState(false);
   const campanha = edicao?.id === selecionada ? edicao : existente || rascunhoNovo;
   const set = (k, valor) => {
     const atualizar = (c) => ({ ...c, [k]: valor });
     existente ? setEdicao(atualizar(campanha)) : setRascunhoNovo(atualizar(campanha));
+    setAlterado(true);
   };
   const check = useMemo(() => campanhaPodeSerPublicada(campanha, emp), [campanha, emp]);
   const disponivel = saldoDisponivel(emp);
+  useEffect(()=>{if(!existente)localStorage.setItem(`rycs-campanha-${emp.id}`,JSON.stringify(rascunhoNovo));},[rascunhoNovo,existente,emp.id]);
+  useEffect(()=>{const sair=(e)=>{if(alterado){e.preventDefault();e.returnValue="";}};window.addEventListener("beforeunload",sair);return()=>window.removeEventListener("beforeunload",sair);},[alterado]);
+  const passos=["Informações gerais","Objetivo e público","Profissionais e Time","Leads","Academy","Tarefas e Valores","Aprovações","Orçamento e ROI","Revisão","Publicação"];
+  const concluidos=[campanha.titulo,campanha.publico,true,true,(campanha.treinamento||[]).length,Object.values(campanha.tarefas||{}).some(Number),campanha.criteriosAprovacao,campanha.orcamento,check.pendencias.length===0,campanha.status==="ativa"].filter(Boolean).length;
 
   const salvar = async () => {
     if (!campanha.titulo.trim()) return aviso("Dê um título à campanha.");
@@ -42,6 +49,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
       setSelecionada(r.id); setEdicao(criada); setRascunhoNovo(novaCampanha(emp));
     }
     aviso("Campanha salva como rascunho.");
+    setAlterado(false);localStorage.removeItem(`rycs-campanha-${emp.id}`);
     return r.id || existente.id;
   };
   const mudarStatus = async (status) => {
@@ -64,6 +72,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
 
   return <div className="vx-fade">
     <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><div className="vx-eyebrow">Operação comercial</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>Campanhas</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Configure orçamento, tarefas, evidências e treinamento antes da publicação.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setSelecionada("nova"); setEdicao(null); }}><Plus size={14} /> Nova campanha</button></div>
+    <div className="vx-card" style={{padding:14,marginBottom:14}}><div className="vx-row"><b>Progresso da campanha</b><span className="vx-chip vx-mono">{concluidos}/10 {alterado?"· não salvo":"· salvo"}</span></div><div className="vx-meter-track" style={{margin:"10px 0"}}><div className="vx-meter-fill" style={{width:`${concluidos*10}%`,background:"var(--brand)"}}/></div><div className="vx-steps">{passos.map((p,i)=><span key={p} data-done={i<concluidos?"1":"0"}>{i+1}. {p}</span>)}</div></div>
 
     <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10 }}>{campanhas.map((c) => <button key={c.id} className="vx-btn vx-btn-sm" onClick={() => { setSelecionada(c.id); setEdicao({ ...c }); }} style={{ borderColor: selecionada === c.id ? "var(--brand)" : undefined }}>{c.titulo} · {c.status}</button>)}</div>
 
@@ -80,7 +89,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
       <section className="vx-card" style={{ padding: 18 }}>
         <div className="vx-row"><div className="vx-disp" style={{ fontSize: 17 }}>Orçamento</div><span className="vx-chip"><Wallet size={12} /> {money(disponivel)} disponível</span></div>
         <div className="vx-grid vx-g2" style={{ marginTop: 12 }}><label><div className="vx-label">Limite da campanha</div><input className="vx-input vx-mono" type="number" min="0" value={campanha.orcamento} onChange={(e) => set("orcamento", Number(e.target.value))} /></label><label><div className="vx-label">Vagas</div><input className="vx-input vx-mono" type="number" min="1" value={campanha.vagas} onChange={(e) => set("vagas", Number(e.target.value))} /></label></div>
-        <div className="vx-grid vx-g2" style={{ marginTop: 10 }}><label><div className="vx-label">Reunião agendada</div><input className="vx-input vx-mono" type="number" min="0" value={campanha.tarefas?.agendamento || 0} onChange={(e) => set("tarefas", { ...campanha.tarefas, agendamento: Number(e.target.value) })} /></label><label><div className="vx-label">Reunião realizada</div><input className="vx-input vx-mono" type="number" min="0" value={campanha.tarefas?.realizada || 0} onChange={(e) => set("tarefas", { ...campanha.tarefas, realizada: Number(e.target.value) })} /></label></div>
+        <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>{ORDEM_ACOES.map((k)=><label key={k}><div className="vx-label">{ACOES[k].nome}</div><input className="vx-input vx-mono" type="number" min="0" value={campanha.tarefas?.[k] || 0} onChange={(e) => set("tarefas", { ...campanha.tarefas, [k]: Number(e.target.value) })} /></label>)}</div>
         <div className="vx-grid vx-g2" style={{ marginTop: 10 }}><label><div className="vx-label">Prazo em horas</div><input className="vx-input vx-mono" type="number" min="1" value={campanha.prazoHoras} onChange={(e) => set("prazoHoras", Number(e.target.value))} /></label><label><div className="vx-label">Limite por profissional</div><input className="vx-input vx-mono" type="number" min="0" value={campanha.limitePorProfissional} onChange={(e) => set("limitePorProfissional", Number(e.target.value))} /></label></div>
         <label style={{ display: "flex", gap: 8, marginTop: 13, fontSize: 13 }}><input type="checkbox" checked={campanha.aceitaLeadProprio} onChange={(e) => set("aceitaLeadProprio", e.target.checked)} /> Aceitar prospecção própria</label>
         <label style={{ display: "flex", gap: 8, marginTop: 9, fontSize: 13 }}><input type="checkbox" checked={campanha.exigeCertificacao} onChange={(e) => set("exigeCertificacao", e.target.checked)} /> Exigir certificação</label>

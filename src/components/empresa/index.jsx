@@ -12,11 +12,16 @@ import QualificacaoEmpresa from "./QualificacaoEmpresa.jsx";
 import CadastroEmpresa from "./CadastroEmpresa.jsx";
 import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
 import LeadsEmpresa from "./LeadsEmpresa.jsx";
+import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
+import NotificacoesEmpresa from "./NotificacoesEmpresa.jsx";
+import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
+import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
 import { AssistenteEmpresa, BaseConhecimento, RelatoriosEmpresa } from "./EmpresaAI.jsx";
 
 export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
   const [secaoCampanhas, setSecaoCampanhas] = useState("campanhas");
   const [secaoConta, setSecaoConta] = useState("cadastro");
+  const [secaoAcademy, setSecaoAcademy] = useState("rycs");
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
   if (!emp) return null;
 
@@ -41,25 +46,27 @@ export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
 
       {aba === "painel" && <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "campanhas" && <>
-        {submenu([["campanhas", "Campanhas"], ["leads", "Leads"], ["time", "Time"], ["tabela", "Tarefas e valores"]], secaoCampanhas, setSecaoCampanhas)}
+        {submenu([["campanhas", "Campanhas"], ["profissionais", "Profissionais Ativos"], ["time", "Time"], ["leads", "Leads"], ["tabela", "Tarefas e valores"]], secaoCampanhas, setSecaoCampanhas)}
         {secaoCampanhas === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
-        {secaoCampanhas === "leads" && <LeadsEmpresa emp={emp} db={db} />}
+        {secaoCampanhas === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} aviso={aviso} />}
+        {secaoCampanhas === "leads" && <LeadsEmpresa emp={emp} db={db} aviso={aviso} />}
         {secaoCampanhas === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
         {secaoCampanhas === "tabela" && <TabelaEmpresa emp={emp} up={up} aviso={aviso} />}
       </>}
       {aba === "academy" && <>
-        {submenu([["qualificacao", `Academy ${emp.nome}`]], "qualificacao", () => {})}
-        <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} />
+        {submenu([["rycs", "Cursos da RYCS"], ["empresa", `Academy ${emp.nome}`]], secaoAcademy, setSecaoAcademy)}
+        {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}
+        {secaoAcademy === "empresa" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} />}
       </>}
       {aba === "conferir" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} />}
       {aba === "conta" && <>
         {submenu([["cadastro", "Configurações"], ["base", "Base de conhecimento"], ["financeiro", "Financeiro"], ["relatorios", "Relatórios"], ["planos", "Plano"], ["notificacoes", "Notificações"], ["suporte", "Suporte"], ["indicar", "Indicar"], ["sair", "Sair"]], secaoConta, (key) => key === "sair" ? sair() : setSecaoConta(key))}
         {secaoConta === "cadastro" && <CadastroEmpresa emp={emp} up={up} aviso={aviso} />}
         {secaoConta === "base" && <BaseConhecimento emp={emp} db={db} aviso={aviso} />}
-        {secaoConta === "financeiro" && <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
+        {secaoConta === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
         {secaoConta === "relatorios" && <RelatoriosEmpresa emp={emp} db={db} />}
         {secaoConta === "planos" && <PlanosEmpresa aviso={aviso} recarregar={recarregar} />}
-        {secaoConta === "notificacoes" && <div className="vx-card" style={{ padding: 18 }}><div className="vx-disp" style={{ fontSize: 17 }}>Notificações</div><p className="vx-mut" style={{ fontSize: 13 }}>As notificações continuam disponíveis no sino do cabeçalho.</p></div>}
+        {secaoConta === "notificacoes" && <NotificacoesEmpresa aviso={aviso} />}
         {secaoConta === "suporte" && <ChatEmpresa emp={emp} db={db} up={up} />}
         {secaoConta === "indicar" && <Indicacoes aviso={aviso} />}
       </>}

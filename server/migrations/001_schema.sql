@@ -111,6 +111,18 @@ CREATE TABLE IF NOT EXISTS applications (
   PRIMARY KEY ("sellerId", "companyId")
 );
 
+CREATE TABLE IF NOT EXISTS partnership_requests (
+  id TEXT PRIMARY KEY,
+  companyId TEXT NOT NULL,
+  sellerId TEXT NOT NULL,
+  status TEXT DEFAULT 'pendente',
+  criadoEm INTEGER NOT NULL,
+  respondidoEm INTEGER,
+  UNIQUE(companyId, sellerId),
+  FOREIGN KEY (companyId) REFERENCES companies(id),
+  FOREIGN KEY (sellerId) REFERENCES sellers(id)
+);
+
 CREATE TABLE IF NOT EXISTS course_progress (
   "sellerId" TEXT NOT NULL REFERENCES sellers(id),
   "companyId" TEXT NOT NULL REFERENCES companies(id),
@@ -238,6 +250,25 @@ CREATE TABLE IF NOT EXISTS financial_ledger (
   dados TEXT DEFAULT '{}',
   "criadoEm" BIGINT NOT NULL,
   UNIQUE (tipo, "idempotencyKey")
+);
+
+CREATE TABLE IF NOT EXISTS vouchers (
+  id TEXT PRIMARY KEY, codigo TEXT UNIQUE NOT NULL, tipo TEXT NOT NULL, valor REAL NOT NULL,
+  validadeEm INTEGER, limiteTotal INTEGER DEFAULT 0, limitePorEmpresa INTEGER DEFAULT 1,
+  planos TEXT DEFAULT '[]', status TEXT DEFAULT 'ativo', criadoEm INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS voucher_redemptions (
+  id TEXT PRIMARY KEY, voucherId TEXT NOT NULL, companyId TEXT NOT NULL, subscriptionId TEXT NOT NULL,
+  valorOriginal REAL NOT NULL, desconto REAL NOT NULL, valorFinal REAL NOT NULL,
+  status TEXT DEFAULT 'reservado', criadoEm INTEGER NOT NULL, confirmadoEm INTEGER,
+  UNIQUE(voucherId, companyId, subscriptionId)
+);
+
+CREATE TABLE IF NOT EXISTS company_reports (
+  id TEXT PRIMARY KEY, companyId TEXT NOT NULL, titulo TEXT NOT NULL, periodo TEXT DEFAULT '',
+  status TEXT DEFAULT 'processando', origem TEXT DEFAULT 'operacional', dados TEXT DEFAULT '{}',
+  criadoEm INTEGER NOT NULL, FOREIGN KEY (companyId) REFERENCES companies(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_financial_ledger_company ON financial_ledger("companyId", "criadoEm");

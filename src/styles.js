@@ -143,6 +143,11 @@ export const CSS = `
   background:var(--surface-2);color:var(--ink-2);border:1px solid var(--border)}
 .vx-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .vx-mut{color:var(--muted)}
+.vx-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px;flex-wrap:wrap}
+.vx-page-head h1{font-size:26px;margin:4px 0 3px}.vx-page-head p{font-size:13px;color:var(--muted);margin:0}
+.vx-filterbar{display:grid;grid-template-columns:repeat(2,minmax(130px,1fr));gap:7px;flex:1;max-width:620px}.vx-filterbar .vx-input{padding:8px 10px;font-size:12px}
+.vx-notice{padding:11px 13px;border-radius:var(--radius-sm);font-size:12.5px;border:1px solid var(--border)}
+.vx-notice-amber{background:var(--amber-50);border-color:var(--amber-100);color:var(--amber)}
 .vx-sep{height:1px;background:var(--border);border:0;margin:15px 0}
 .vx-fade{animation:vxin .26s cubic-bezier(.22,.9,.32,1)}
 @keyframes vxin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
@@ -150,7 +155,8 @@ export const CSS = `
 .vx-grid{display:grid;gap:13px}
 .vx-g2{grid-template-columns:1fr}
 .vx-g4{grid-template-columns:repeat(2,1fr)}
-@media(min-width:620px){.vx-g2{grid-template-columns:1fr 1fr}.vx-g4{grid-template-columns:repeat(4,1fr)}}
+.vx-g3{grid-template-columns:1fr}
+@media(min-width:620px){.vx-g2{grid-template-columns:1fr 1fr}.vx-g3{grid-template-columns:repeat(3,1fr)}.vx-g4{grid-template-columns:repeat(4,1fr)}}
 
 /* stat cards */
 .vx-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-card);
@@ -159,6 +165,22 @@ export const CSS = `
   background:linear-gradient(90deg,transparent,var(--brand-100),transparent);opacity:.8}
 .vx-stat-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
 .vx-stat-val{font-family:'Space Grotesk';font-weight:700;font-size:23px;letter-spacing:-.02em}
+
+/* gráficos e cenários compartilhados */
+.vx-chart-card{padding:17px;min-height:230px}.vx-donut-layout{display:grid;grid-template-columns:118px 1fr;align-items:center;gap:18px;margin-top:15px}
+.vx-donut{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;position:relative;box-shadow:inset 0 0 0 1px var(--border)}
+.vx-donut::after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--border)}
+.vx-donut>div{z-index:1;display:flex;flex-direction:column;text-align:center;line-height:1.1}.vx-donut strong{font-size:15px}.vx-donut span{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px}
+.vx-chart-legend{display:flex;flex-direction:column;gap:8px;min-width:0}.vx-chart-legend>div{display:grid;grid-template-columns:8px minmax(0,1fr) auto;align-items:center;gap:7px;font-size:11.5px}
+.vx-chart-legend i{width:8px;height:8px;border-radius:50%}.vx-chart-legend span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}.vx-chart-legend b{font-size:10.5px}
+.vx-chart-source{font-size:11px;color:var(--muted);margin-top:11px}.vx-scenario{border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:3px}
+.vx-scenario>span{text-transform:capitalize;font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.06em}.vx-scenario>strong{font-size:17px}.vx-scenario small{font-size:10.5px;color:var(--muted)}
+.vx-talent-grid{display:grid;grid-template-columns:1fr;gap:13px}.vx-talent-card{padding:17px;display:grid;grid-template-columns:48px 1fr;gap:13px}.vx-talent-card h3{font-family:'Space Grotesk';font-size:16px;margin:0}.vx-talent-card p{color:var(--muted);font-size:12px;margin:2px 0}.vx-avatar{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--brand),var(--indigo));color:#fff;display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700}.vx-talent-meta{display:flex;flex-direction:column;gap:5px;margin-top:9px}.vx-talent-meta span{display:flex;gap:6px;align-items:flex-start;color:var(--muted);font-size:11.5px}.vx-skeleton{background:linear-gradient(100deg,var(--surface) 20%,var(--surface-2) 45%,var(--surface) 70%);background-size:200% 100%;animation:vxsh 1.4s infinite}@keyframes vxsh{to{background-position:-200% 0}}
+@media(min-width:720px){.vx-talent-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.vx-filterbar{grid-template-columns:1fr 1fr;width:100%}.vx-donut-layout{grid-template-columns:96px 1fr;gap:12px}.vx-donut{width:96px;height:96px}.vx-donut::after{width:58px;height:58px}.vx-chart-card{min-height:200px}.vx-page-head h1{font-size:23px}}
+.vx-plan-card{padding:20px;position:relative;overflow:hidden}.vx-plan-card h2{font-size:18px;margin:0 0 5px}.vx-plan-recommended{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand),var(--shadow-pop)}.vx-plan-ribbon{display:inline-flex;align-items:center;gap:5px;background:var(--brand);color:#fff;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800;margin-bottom:12px}.vx-plan-price{font:700 25px 'Space Grotesk';margin:5px 0 10px}.vx-plan-price small{font:500 11px Inter;color:var(--muted);margin-left:4px}.vx-plan-benefits{display:flex;flex-direction:column;gap:8px;margin:16px 0}.vx-plan-benefits>div{display:flex;gap:7px;color:var(--muted);font-size:12px}.vx-plan-benefits svg{color:var(--brand);flex:none;margin-top:2px}.vx-checkout-total{display:grid;grid-template-columns:1fr auto;gap:8px;padding:14px;background:var(--surface-2);border-radius:12px;margin:14px 0}.vx-checkout-total span{color:var(--muted)}.vx-checkout-total strong{font:700 20px 'Space Grotesk';color:var(--brand)}
+.vx-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm)}.vx-table{border-collapse:collapse;width:100%;min-width:640px;font-size:12px}.vx-table th,.vx-table td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--border);white-space:nowrap}.vx-table th{color:var(--muted);background:var(--surface-2);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.vx-steps{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.vx-steps span{white-space:nowrap;padding:5px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:10.5px}.vx-steps span[data-done="1"]{background:var(--brand-50);color:var(--brand)}
 
 /* meter */
 .vx-meter-track{height:6px;background:var(--surface-3);border-radius:999px;overflow:hidden}

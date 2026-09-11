@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock, LockKeyhole } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock, LockKeyhole, CalendarCheck, Presentation, Target } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, agora, dataCurta } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
-import { Stat } from "../ui.jsx";
+import { Donut, Stat } from "../ui.jsx";
 import CompanyScore from "../CompanyScore.jsx";
+import { metricasEmpresa, projetarROI, valorMonetario } from "../../../shared/analytics.js";
 
 export default function PainelEmpresa({ emp, db, up, aviso }) {
   const [rec, setRec] = useState("");
@@ -13,6 +14,8 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
   const [doc, setDoc] = useState("");
   const [minimo, setMinimo] = useState(1);
   const [financeiro, setFinanceiro] = useState(null);
+  const [filtros, setFiltros] = useState({ dias: "30", campaignId: "", sellerId: "", tipo: "" });
+  const [premissas, setPremissas] = useState({ metaVendas: 5, ticketMedio: valorMonetario(emp.ticket), taxaComparecimento: "", taxaConversao: "", custoAgendada: "" });
 
   useEffect(() => {
     api("/deposits/config").then((c) => { if (c?.minimo) setMinimo(c.minimo); });
@@ -27,11 +30,11 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
     up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, documento: limpo } : c) }));
     aviso("Documento salvo.");
   };
-  const subs = db.submissions.filter((s) => s.companyId === emp.id);
-  const pagos = subs.filter((s) => s.status === "liberado");
-  const gasto = pagos.reduce((a, s) => a + s.valor, 0);
-  const agendas = subs.filter((s) => s.tipo === "agendamento" && s.status === "liberado").length;
-  const vendas = subs.filter((s) => s.tipo === "venda" && s.status === "liberado").length;
+  const subsTodos = db.submissions.filter((s) => s.companyId === emp.id);
+  const metricas = useMemo(() => metricasEmpresa({ submissions: db.submissions, campaigns: db.campaigns || [], leads: db.leads || [], companyId: emp.id, filtros }), [db.submissions, db.campaigns, db.leads, emp.id, filtros]);
+  const projecao = useMemo(() => projetarROI({ metricas, ...premissas, taxaComparecimento: Number(premissas.taxaComparecimento) / 100, taxaConversao: Number(premissas.taxaConversao) / 100 }), [metricas, premissas]);
+  const pagos = subsTodos.filter((s) => s.status === "liberado");
+  const gasto = pagos.reduce((a, s) => a + Number(s.valor || 0), 0);
   const time = db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado").length;
   const reservado = financeiro?.posicao?.reservado ?? Number(emp.saldoReservado || 0);
   const disponivel = financeiro?.posicao?.disponivel ?? Math.max(0, Number(emp.saldo || 0) - reservado);
@@ -51,35 +54,48 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
 
   return (
     <>
-      <div className="vx-grid vx-g4" style={{ marginBottom: 22 }}>
-        <Stat label="Saldo disponível" value={money(disponivel)} Icon={Wallet} tone="brand" />
-        <Stat label="Saldo reservado" value={money(reservado)} Icon={LockKeyhole} tone="amber" />
-        <Stat label="Reuniões agendadas" value={agendas} Icon={ClipboardList} tone="indigo" mono={false} />
-        <Stat label="Profissionais ativos" value={time} Icon={Users} tone="muted" mono={false} />
+      <div className="vx-page-head">
+        <div><div className="vx-eyebrow">Visão do proprietário</div><h1 className="vx-disp">Desempenho comercial</h1><p>Indicadores calculados exclusivamente a partir dos registros da sua empresa.</p></div>
+        <div className="vx-filterbar">
+          <select className="vx-input" aria-label="Período" value={filtros.dias} onChange={(e) => setFiltros({ ...filtros, dias: e.target.value })}><option value="7">7 dias</option><option value="30">30 dias</option><option value="90">90 dias</option><option value="">Todo período</option></select>
+          <select className="vx-input" aria-label="Campanha" value={filtros.campaignId} onChange={(e) => setFiltros({ ...filtros, campaignId: e.target.value })}><option value="">Todas campanhas</option>{(db.campaigns || []).filter((c) => c.companyId === emp.id).map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select>
+          <select className="vx-input" aria-label="Profissional" value={filtros.sellerId} onChange={(e) => setFiltros({ ...filtros, sellerId: e.target.value })}><option value="">Todos profissionais</option>{db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado").map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}</select>
+          <select className="vx-input" aria-label="Tipo de tarefa" value={filtros.tipo} onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}><option value="">Todas tarefas</option>{Object.entries(ACOES).map(([k, a]) => <option key={k} value={k}>{a.nome}</option>)}</select>
+        </div>
       </div>
 
-      <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>
-        <div className="vx-card" style={{ padding: 16 }}>
-          <div className="vx-row" style={{ marginBottom: 8 }}>
-            <span className="vx-eyebrow">Taxa de aprovação</span>
-            <TrendingUp size={14} color="var(--brand)" />
-          </div>
-          <div className="vx-disp vx-mono" style={{ fontSize: 28 }}>
-            {subs.length > 0 ? Math.round((pagos.length / subs.length) * 100) : 0}%
-          </div>
-          <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>{pagos.length} de {subs.length} ações aprovadas</div>
-        </div>
-        <div className="vx-card" style={{ padding: 16 }}>
-          <div className="vx-row" style={{ marginBottom: 8 }}>
-            <span className="vx-eyebrow">ROI estimado</span>
-            <Banknote size={14} color="var(--amber)" />
-          </div>
-          <div className="vx-disp vx-mono" style={{ fontSize: 28 }}>
-            {emp.totalAportado > 0 ? `${((vendas * Number(emp.ticket?.replace(/[^\d]/g, "") || 0)) / emp.totalAportado * 100).toFixed(0) || 0}%` : "—"}
-          </div>
-          <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>Receita potencial vs. investimento</div>
-        </div>
+      <div className="vx-grid vx-g4" style={{ marginBottom: 22 }}>
+        <Stat label="Reuniões agendadas" value={metricas.agendadas} Icon={CalendarCheck} tone="brand" mono={false} />
+        <Stat label="Reuniões realizadas" value={metricas.realizadas} Icon={Presentation} tone="indigo" mono={false} />
+        <Stat label="Vendas realizadas" value={metricas.vendas} Icon={Target} tone="amber" mono={false} />
+        <Stat label="ROI atual" value={metricas.roi == null ? "—" : `${metricas.roi.toFixed(1)}%`} Icon={TrendingUp} tone={metricas.roi != null && metricas.roi < 0 ? "red" : "brand"} />
       </div>
+
+      <div className="vx-grid vx-g4" style={{ marginBottom: 22 }}>
+        <Stat label="Investimento" value={money(metricas.investimento)} Icon={Banknote} tone="muted" />
+        <Stat label="Retorno registrado" value={money(metricas.retorno)} Icon={TrendingUp} tone="brand" />
+        <Stat label="Tarefas filtradas" value={metricas.subs.length} Icon={ClipboardList} tone="indigo" mono={false} />
+        <Stat label="Profissionais no time" value={time} Icon={Users} tone="muted" mono={false} />
+      </div>
+
+      <div className="vx-grid vx-g2 vx-dashboard-charts" style={{ marginBottom: 22 }}>
+        <Donut titulo="Conversão comercial" itens={[{ nome: "Agendadas", valor: metricas.agendadas }, { nome: "Realizadas", valor: metricas.realizadas }, { nome: "Vendas", valor: metricas.vendas }]} />
+        <Donut titulo="Tarefas por situação" itens={metricas.status.map((s) => ({ nome: ({ liberado:"Aprovadas", revisao:"Em revisão", conferido:"Conferidas", ia_recusado:"Recusadas pela IA", recusado:"Recusadas", analisando:"Analisando" })[s.chave] || s.chave, valor: s.valor }))} />
+        <Donut titulo="Investimento versus retorno" centro={money(metricas.retorno)} formatar={money} itens={[{ nome: "Investimento", valor: metricas.investimento }, { nome: "Retorno", valor: metricas.retorno }]} />
+        <Donut titulo="Desempenho por campanha" itens={metricas.campanhas.filter((c) => c.total).map((c) => ({ nome: c.nome, valor: c.aprovadas, fonte: `${c.total} tarefas registradas` }))} />
+      </div>
+
+      <section className="vx-card" style={{ padding: 18, marginBottom: 22 }}>
+        <div className="vx-row" style={{ alignItems: "flex-start", flexWrap: "wrap" }}><div><div className="vx-eyebrow">Planejamento determinístico</div><div className="vx-disp" style={{ fontSize: 18 }}>ROI projetado</div><p className="vx-mut" style={{ margin: "4px 0 0", fontSize: 12.5 }}>Projeção não é garantia. Ajuste as premissas e confira a fonte.</p></div>{projecao.disponivel && <span className={`vx-badge ${projecao.confianca === "alta" ? "vx-badge-brand" : "vx-badge-amber"}`}>Confiança {projecao.confianca} · amostra {projecao.amostra}</span>}</div>
+        <div className="vx-grid vx-g4" style={{ marginTop: 14 }}>
+          <label><span className="vx-label">Meta de vendas</span><input className="vx-input" type="number" min="1" value={premissas.metaVendas} onChange={(e) => setPremissas({ ...premissas, metaVendas: e.target.value })}/></label>
+          <label><span className="vx-label">Ticket médio</span><input className="vx-input" type="number" min="0" value={premissas.ticketMedio} onChange={(e) => setPremissas({ ...premissas, ticketMedio: e.target.value })}/></label>
+          <label><span className="vx-label">Comparecimento %</span><input className="vx-input" type="number" min="1" max="100" placeholder={metricas.agendadas ? `${Math.round(metricas.realizadas / metricas.agendadas * 100)} histórico` : "Informe"} value={premissas.taxaComparecimento} onChange={(e) => setPremissas({ ...premissas, taxaComparecimento: e.target.value })}/></label>
+          <label><span className="vx-label">Conversão %</span><input className="vx-input" type="number" min="1" max="100" placeholder={metricas.realizadas ? `${Math.round(metricas.vendas / metricas.realizadas * 100)} histórico` : "Informe"} value={premissas.taxaConversao} onChange={(e) => setPremissas({ ...premissas, taxaConversao: e.target.value })}/></label>
+          <label><span className="vx-label">Custo por agendada</span><input className="vx-input" type="number" min="0" placeholder={metricas.agendadas ? money(metricas.investimento / metricas.agendadas) : "Informe"} value={premissas.custoAgendada} onChange={(e) => setPremissas({ ...premissas, custoAgendada: e.target.value })}/></label>
+        </div>
+        {!projecao.disponivel ? <div className="vx-notice vx-notice-amber" style={{ marginTop: 14 }}>Complete: {projecao.ausentes.join(", ")}. Sem essas premissas não exibimos números inventados.</div> : <><div className="vx-grid vx-g3" style={{ marginTop: 14 }}>{Object.entries(projecao.cenarios).map(([nome, c]) => <div className="vx-scenario" key={nome}><span>{nome}</span><strong className="vx-mono">{c.roi.toFixed(1)}% ROI</strong><small>{c.agendadas} agendadas → {c.realizadas} realizadas → {c.vendas} vendas</small><small>{money(c.investimento)} investimento · {money(c.receita)} receita</small></div>)}</div><div className="vx-chart-source">Fonte: {projecao.fonte}. Fórmula: (retorno - investimento) / investimento × 100.</div></>}
+      </section>
 
       <div style={{ marginBottom: 16 }}>
         <CompanyScore nota={emp.nota} dimensoes={emp.scoreDimensions} />
@@ -182,8 +198,8 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
         <div className="vx-disp" style={{ fontSize: 17, marginBottom: 12 }}>
           <Clock size={16} style={{ marginRight: 6, verticalAlign: -2 }} />Atividade recente
         </div>
-        {subs.length === 0 && <div className="vx-mut" style={{ fontSize: 13, padding: "8px 0" }}>Nenhuma ação registrada ainda.</div>}
-        {subs.slice(0, 8).map((s) => {
+        {subsTodos.length === 0 && <div className="vx-mut" style={{ fontSize: 13, padding: "8px 0" }}>Nenhuma ação registrada ainda.</div>}
+        {subsTodos.slice(0, 8).map((s) => {
           const seller = db.sellers.find((sl) => sl.id === s.sellerId);
           const statusCor = { liberado: "var(--brand)", recusado: "var(--red)", revisao: "var(--amber)", ia_aprovado: "var(--indigo)", analisando: "var(--muted)" };
           const statusLabel = { liberado: "Aprovada", recusado: "Recusada", revisao: "Revisão", ia_aprovado: "Pré-aprovada", analisando: "Analisando", conferido: "Conferida" };

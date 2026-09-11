@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiPatch } from "../../lib/api.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
+import { calcularValorTarefa } from "../../../shared/valorTarefa.js";
 
 export default function TabelaEmpresa({ emp, up, aviso }) {
   const [v, setV] = useState(emp.comissoes);
@@ -24,11 +25,12 @@ export default function TabelaEmpresa({ emp, up, aviso }) {
               <b style={{ fontSize: 13.5 }}>{ACOES[k].nome}</b>
               <div className="vx-mut" style={{ fontSize: 11.5 }}>{ACOES[k].regra}</div>
             </div>
-            <input className="vx-input vx-mono" style={{ width: 108, textAlign: "right", flex: "none" }} value={v[k] ?? ""} inputMode="decimal"
-              onChange={(e) => setV({ ...v, [k]: e.target.value })} />
+            <div style={{width:150,flex:"none"}}><input className="vx-input vx-mono" style={{ textAlign: "right" }} value={v[k] ?? ""} inputMode="decimal" aria-label={`Valor bruto de ${ACOES[k].nome}`}
+              onChange={(e) => setV({ ...v, [k]: e.target.value })} /><div className="vx-mut" style={{fontSize:10.5,textAlign:"right",marginTop:3}}>Profissional recebe {new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(calcularValorTarefa(Number(String(v[k]||0).replace(",",".")),emp.assinatura).liquido)}</div></div>
           </div>
         ))}
         <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 16 }} onClick={salvar}>Salvar tabela</button>
+        <div className="vx-chart-source">Taxa real do plano: {Math.round(calcularValorTarefa(100,emp.assinatura).percentual*100)}%. Fórmula: líquido = valor bruto - taxa da plataforma. O cálculo é exibido antes da confirmação e não altera valores automaticamente.</div>
       </div>
     </>
   );

@@ -3,7 +3,7 @@ import { Gift, Copy, Clock, CheckCircle2 } from "lucide-react";
 import { api } from "../lib/api.js";
 import { money, dataCurta } from "../lib/utils.js";
 
-const PAPEL = { vendedor: "Profissional", empresa: "Empresa" };
+const PAPEL = { empresa: "Empresa" };
 
 export default function Indicacoes({ aviso }) {
   const [dados, setDados] = useState(null);
@@ -83,7 +83,7 @@ export default function Indicacoes({ aviso }) {
         </div>
         <p className="vx-mut" style={{ fontSize: 12, marginTop: 14 }}>
           A recompensa não é paga por cadastro. Ela entra quando quem você indicou
-          realmente começa a operar — é o que mantém o programa saudável.
+          contrata um plano elegível e o pagamento é confirmado. Cadastro sem pagamento não gera comissão.
         </p>
       </div>
 

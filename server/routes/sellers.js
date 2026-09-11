@@ -1,7 +1,59 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
+import { notificar } from "./notifications.js";
 
 const router = Router();
+
+router.get("/professionals/active", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const companyId = req.user.entityId;
+  const rows = db.prepare(`SELECT id, nome, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial
+    FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
+  const certificacoes = db.prepare("SELECT sellerId, funcao, nivel, percentual FROM certifications").all();
+  const pedidos = new Map(db.prepare("SELECT sellerId, status FROM partnership_requests WHERE companyId = ?").all(companyId).map((p) => [p.sellerId, p.status]));
+  res.json(rows.map((s) => {
+    let perfilComercial = {}; try { perfilComercial = JSON.parse(s.perfilComercial || "{}"); } catch {}
+    return { ...s, perfilComercial, certificacoes: certificacoes.filter((c) => c.sellerId === s.id), parceria: pedidos.get(s.id) || null };
+  }));
+});
+
+router.post("/professionals/:id/partnership", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const seller = db.prepare("SELECT id, status FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(req.params.id);
+  if (!seller) return res.status(404).json({ error: "Profissional ativo não encontrado" });
+  const id = uid();
+  db.prepare(`INSERT INTO partnership_requests (id, companyId, sellerId, status, criadoEm)
+    VALUES (?, ?, ?, 'pendente', ?)
+    ON CONFLICT(companyId, sellerId) DO UPDATE SET status = 'pendente', criadoEm = excluded.criadoEm, respondidoEm = NULL`)
+    .run(id, req.user.entityId, seller.id, agora());
+  const user = db.prepare("SELECT id FROM users WHERE role = 'vendedor' AND entityId = ?").get(seller.id);
+  const company = db.prepare("SELECT nome FROM companies WHERE id = ?").get(req.user.entityId);
+  if (user) notificar(user.id, "parceria", `${company?.nome || "Uma empresa"} solicitou parceria`, "Revise o convite na área de empresas.");
+  res.json({ id, status: "pendente" });
+});
+
+router.get("/partnerships/invitations", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  res.json(db.prepare(`SELECT p.*, c.nome AS empresaNome, c.produto, c.segmento
+    FROM partnership_requests p JOIN companies c ON c.id = p.companyId
+    WHERE p.sellerId = ? ORDER BY p.criadoEm DESC`).all(req.user.entityId));
+});
+
+router.patch("/partnerships/:id", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const status = req.body?.status;
+  if (!["aprovado", "recusado"].includes(status)) return res.status(400).json({ error: "Resposta inválida" });
+  const pedido = db.prepare("SELECT * FROM partnership_requests WHERE id = ? AND sellerId = ?").get(req.params.id, req.user.entityId);
+  if (!pedido) return res.status(404).json({ error: "Convite não encontrado" });
+  db.transaction(() => {
+    db.prepare("UPDATE partnership_requests SET status = ?, respondidoEm = ? WHERE id = ?").run(status, agora(), pedido.id);
+    if (status === "aprovado") db.prepare(`INSERT INTO applications (sellerId, companyId, status) VALUES (?, ?, 'aprovado')
+      ON CONFLICT(sellerId, companyId) DO UPDATE SET status = 'aprovado'`).run(pedido.sellerId, pedido.companyId);
+  })();
+  const user = db.prepare("SELECT id FROM users WHERE role = 'empresa' AND entityId = ?").get(pedido.companyId);
+  if (user) notificar(user.id, "parceria", status === "aprovado" ? "Parceria aceita" : "Parceria recusada", status === "aprovado" ? "O profissional já aparece no seu Time." : "O profissional recusou o convite.");
+  res.json({ ok: true, status });
+});
 
 router.post("/sellers", (req, res) => {
   if (req.user.role !== "vendedor" && req.user.role !== "admin")
@@ -59,6 +111,7 @@ const DEPENDENTES = [
   ["course_progress", "sellerId"],
   ["campaign_applications", "sellerId"],
   ["applications", "sellerId"],
+  ["partnership_requests", "sellerId"],
   ["messages", "sellerId"],
   ["submissions", "sellerId"],
   ["withdrawals", "sellerId"],

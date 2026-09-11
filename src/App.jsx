@@ -63,7 +63,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [user, setUser] = useState(() => previaQualificacao ? { role: "empresa", email: "preview@local" } : null);
   const [toast, setToast] = useState("");
-  const [nav, setNav] = useState({ vendedor: "empresas", empresa: previaQualificacao ? (previaEmpresa ? "cadastro" : "qualificacao") : "painel", admin: "dashboard" });
+  const [nav, setNav] = useState({ vendedor: "empresas", empresa: previaQualificacao ? (previaEmpresa ? "painel" : "academy") : "painel", admin: "dashboard" });
   // O escuro é a identidade primária da RYCS; o claro fica como preferência.
   const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") !== "light");
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Building2, CheckCircle2, CircleAlert, FileText, Send } from "lucide-react";
+import { Building2, CheckCircle2, CircleAlert, FileScan, FileText, Send } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { camposPendentesEmpresa } from "../../../shared/empresa.js";
 
@@ -8,12 +8,18 @@ const campos = [
   ["endereco", "Endereço completo"], ["representanteLegal", "Representante legal"],
   ["contatoFinanceiro", "Contato financeiro"], ["contatoComercial", "Contato comercial"],
   ["produto", "Produto ou serviço"], ["segmento", "Segmento"], ["regiao", "Região atendida"],
+  ["situacaoCadastral", "Situação cadastral"], ["dataAbertura", "Data de abertura"],
+  ["naturezaJuridica", "Natureza jurídica"], ["cnaes", "CNAEs"],
+  ["telefoneEmpresa", "Telefone da empresa"], ["emailEmpresa", "E-mail da empresa"],
 ];
 
 export default function CadastroEmpresa({ emp, up, aviso }) {
   const [form, setForm] = useState(() => ({ ...emp, materiais: emp.materiais || [] }));
   const [salvando, setSalvando] = useState(false);
   const [material, setMaterial] = useState({ nome: "", url: "" });
+  const [cnpjPreview,setCnpjPreview]=useState(null),[lendoCnpj,setLendoCnpj]=useState(false);
+  const lerCnpj=async(file)=>{if(!file)return;setLendoCnpj(true);const base64=await new Promise((ok)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.readAsDataURL(file)});const out=await api(`/companies/${emp.id}/cnpj/extract`,{base64,mimetype:file.type});setLendoCnpj(false);if(out?.error)return aviso(out.error);setCnpjPreview(out);};
+  const aplicarCnpj=()=>{setForm((f)=>({...f,...Object.fromEntries(Object.entries(cnpjPreview.dados||{}).filter(([,v])=>String(v||"").trim()))}));setCnpjPreview(null);aviso("Dados aplicados à prévia. Revise e clique em Salvar cadastro para confirmar.");};
   const pendencias = useMemo(() => camposPendentesEmpresa(form), [form]);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const adicionarMaterial = () => {
@@ -53,6 +59,8 @@ export default function CadastroEmpresa({ emp, up, aviso }) {
     </div>
 
     <div className="vx-card" style={{ padding: 18, marginTop: 18 }}>
+      <div className="vx-row" style={{marginBottom:14,flexWrap:"wrap"}}><div><b><FileScan size={15} style={{verticalAlign:-3,marginRight:6}}/>Leitura do cartão CNPJ</b><div className="vx-mut" style={{fontSize:12}}>Imagem ou PDF → extração → prévia → revisão → confirmação.</div></div><label className="vx-btn vx-btn-sm">{lendoCnpj?"Lendo…":"Enviar cartão CNPJ"}<input hidden type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(e)=>lerCnpj(e.target.files?.[0])}/></label></div>
+      {cnpjPreview&&<div className="vx-notice" style={{marginBottom:14}}><b>Prévia extraída · confiança {cnpjPreview.confianca}</b><div className="vx-grid vx-g2" style={{marginTop:9}}>{Object.entries(cnpjPreview.dados||{}).map(([k,v])=><div key={k}><span className="vx-label">{k}</span><span>{v||"Não encontrado"}</span></div>)}</div><button className="vx-btn vx-btn-primary vx-btn-sm" style={{marginTop:10}} onClick={aplicarCnpj}>Confirmar dados na prévia</button></div>}
       <div className="vx-grid vx-g2">
         {campos.map(([k, label]) => <label key={k}><div className="vx-label">{label}</div><input className="vx-input" value={form[k] || ""} onChange={set(k)} /></label>)}
         <label><div className="vx-label">Ticket médio</div><input className="vx-input" value={form.ticket || ""} onChange={set("ticket")} placeholder="Ex.: R$ 1.500 por mês" /></label>

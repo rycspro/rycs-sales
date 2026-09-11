@@ -73,7 +73,7 @@ export function resumoDoUsuario(userId) {
   const lista = db.prepare(`
     SELECT r.*, u.email AS emailIndicado
     FROM referrals r JOIN users u ON u.id = r.indicadoUserId
-    WHERE r.indicadorUserId = ? ORDER BY r.criadoEm DESC LIMIT 50
+    WHERE r.indicadorUserId = ? AND r.papelIndicado = 'empresa' ORDER BY r.criadoEm DESC LIMIT 50
   `).all(userId);
 
   return {

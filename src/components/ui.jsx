@@ -53,6 +53,30 @@ export function Stat({ label, value, Icon, tone = "brand", mono = true }) {
   );
 }
 
+export function Donut({ titulo, itens = [], centro, legenda = true, formatar }) {
+  const cores = ["var(--brand)", "var(--indigo)", "var(--amber)", "var(--red)", "var(--muted)", "#2DBE91"];
+  const total = itens.reduce((s, i) => s + Number(i.valor || 0), 0);
+  // Sem formatador, o valor sai cru — que é o certo para contagens e errado
+  // para dinheiro. Quem sabe qual é o caso é a tela que chama.
+  const rotular = formatar || ((v) => v);
+  let cursor = 0;
+  const stops = total ? itens.map((item, i) => {
+    const inicio = cursor;
+    cursor += Number(item.valor || 0) / total * 100;
+    return `${item.cor || cores[i % cores.length]} ${inicio}% ${cursor}%`;
+  }).join(",") : "var(--surface-3) 0 100%";
+  return <div className="vx-card vx-chart-card">
+    <div className="vx-row"><b>{titulo}</b><span className="vx-chip vx-mono">{rotular(total)}</span></div>
+    <div className="vx-donut-layout">
+      <div className="vx-donut" role="img" aria-label={`${titulo}: ${total} registros`} style={{ background: `conic-gradient(${stops})` }}>
+        <div><strong className="vx-mono">{centro ?? rotular(total)}</strong><span>total</span></div>
+      </div>
+      {legenda && <div className="vx-chart-legend">{itens.length ? itens.map((item, i) => <div key={`${item.nome}-${i}`} title={item.fonte || `${item.valor} registro(s)`}><i style={{ background: item.cor || cores[i % cores.length] }} /><span>{item.nome}</span><b className="vx-mono">{rotular(item.valor)}{total ? ` · ${Math.round(item.valor / total * 100)}%` : ""}</b></div>) : <span className="vx-mut">Sem registros no filtro</span>}</div>}
+    </div>
+    <div className="vx-chart-source">Fonte: registros operacionais filtrados da empresa</div>
+  </div>;
+}
+
 // Exclusão definitiva, em dois estágios: o primeiro clique arma, o segundo
 // executa. Quando o servidor recusa por valores em aberto (409), o motivo
 // aparece aqui mesmo e o botão passa a oferecer a exclusão forçada.

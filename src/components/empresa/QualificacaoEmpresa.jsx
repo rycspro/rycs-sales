@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Plus, Trash2, BookOpen, ShieldCheck } from "lucide-react";
-import { apiPatch } from "../../lib/api.js";
+import { api, apiPatch } from "../../lib/api.js";
 
 const padrao = {
   criterios: { perfis: ["sdr", "closer"], notaMinima: 60, exigeVideo: false },
@@ -12,6 +12,8 @@ export default function QualificacaoEmpresa({ emp, up, aviso }) {
   const [qualificacao, setQualificacao] = useState({ ...padrao, ...(emp.qualificacao || {}), criterios: { ...padrao.criterios, ...(emp.qualificacao?.criterios || {}) } });
   const [curso, setCurso] = useState(emp.curso || []);
   const [salvando, setSalvando] = useState(false);
+  const [gerando, setGerando] = useState(false);
+  const gerarRascunho = async () => { setGerando(true); const r=await api("/assistant/training-draft",{}); setGerando(false); if(r?.error)return aviso(r.error); setCurso(r.modulos); setQualificacao((q)=>({...q,questoes:r.questoes})); aviso("Rascunho criado com fontes autorizadas. Revise antes de publicar."); };
   const alterarCriterio = (chave, valor) => setQualificacao((q) => ({ ...q, criterios: { ...q.criterios, [chave]: valor } }));
   const alternarPerfil = (perfil) => {
     const atuais = qualificacao.criterios.perfis || [];
@@ -30,7 +32,7 @@ export default function QualificacaoEmpresa({ emp, up, aviso }) {
   };
   return <div className="vx-fade" style={{ maxWidth: 860 }}>
     <div className="vx-eyebrow" style={{ marginBottom: 7 }}>Entrada de vendedores</div>
-    <h2 className="vx-disp" style={{ fontSize: 24, margin: "0 0 8px" }}>Qualificação da sua empresa</h2>
+    <div className="vx-row" style={{alignItems:"flex-start",flexWrap:"wrap"}}><h2 className="vx-disp" style={{ fontSize: 24, margin: "0 0 8px" }}>Academy {emp.nome}</h2><button className="vx-btn vx-btn-primary vx-btn-sm" disabled={gerando} onClick={gerarRascunho}>{gerando?"Consultando fontes…":"Gerar rascunho com IA"}</button></div>
     <p className="vx-mut" style={{ fontSize: 13.5, marginTop: 0 }}>Defina quem pode se candidatar e prepare o vendedor antes da primeira oportunidade. Os critérios são verificados pelo servidor no envio da candidatura.</p>
 
     <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
@@ -51,7 +53,7 @@ export default function QualificacaoEmpresa({ emp, up, aviso }) {
     <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
       <div className="vx-row"><b>Questionário de aprendizado</b><button className="vx-btn vx-btn-sm" onClick={() => setQualificacao((q) => ({ ...q, questoes: [...q.questoes, { pergunta: "", opcoes: ["", "", ""], correta: 0 }] }))}><Plus size={14} />Questão</button></div>
       <p className="vx-mut" style={{ fontSize: 12.5 }}>Escolha a resposta correta; ela não é enviada ao vendedor.</p>
-      {qualificacao.questoes.map((q, i) => <div key={i} style={{ paddingTop: 14, marginTop: 14, borderTop: "1px solid var(--border)" }}><div className="vx-row"><span className="vx-chip vx-mono">{i + 1}</span><input className="vx-input" value={q.pergunta} onChange={(e) => atualizarQuestao(i, "pergunta", e.target.value)} placeholder="O que o vendedor deve saber?" /><button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => setQualificacao((x) => ({ ...x, questoes: x.questoes.filter((_, n) => n !== i) }))}><Trash2 size={14} /></button></div>{q.opcoes.map((op, n) => <label key={n} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13 }}><input type="radio" name={`correta-${i}`} checked={Number(q.correta) === n} onChange={() => atualizarQuestao(i, "correta", n)} /><input className="vx-input" value={op} onChange={(e) => atualizarQuestao(i, "opcoes", q.opcoes.map((x, p) => p === n ? e.target.value : x))} placeholder={`Alternativa ${n + 1}`} /></label>)}</div>)}
+      {qualificacao.questoes.map((q, i) => <div key={i} style={{ paddingTop: 14, marginTop: 14, borderTop: "1px solid var(--border)" }}><div className="vx-row"><span className="vx-chip vx-mono">{i + 1}</span><input className="vx-input" value={q.pergunta} onChange={(e) => atualizarQuestao(i, "pergunta", e.target.value)} placeholder="O que o vendedor deve saber?" /><button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => setQualificacao((x) => ({ ...x, questoes: x.questoes.filter((_, n) => n !== i) }))}><Trash2 size={14} /></button></div>{q.opcoes.map((op, n) => <label key={n} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13 }}><input type="radio" name={`correta-${i}`} checked={Number(q.correta) === n} onChange={() => atualizarQuestao(i, "correta", n)} /><input className="vx-input" value={op} onChange={(e) => atualizarQuestao(i, "opcoes", q.opcoes.map((x, p) => p === n ? e.target.value : x))} placeholder={`Alternativa ${n + 1}`} /></label>)}{q.justificativa&&<div className="vx-chart-source">{q.justificativa}</div>}</div>)}
       {!qualificacao.questoes.length && <div className="vx-mut" style={{ fontSize: 13 }}>Sem perguntas, somente os critérios de perfil serão usados.</div>}
     </section>
     <button className="vx-btn vx-btn-primary" style={{ marginTop: 16 }} disabled={salvando} onClick={salvar}>{salvando ? "Publicando…" : "Publicar qualificação"}</button>

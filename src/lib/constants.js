@@ -44,7 +44,7 @@ export const NAV = {
     { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
     { key: "academy", label: "Academy", Icon: GraduationCap },
-    { key: "conferir", label: "Conferir", Icon: ShieldCheck },
+    { key: "conferir", label: "Aprovações", Icon: ShieldCheck },
     { key: "conta", label: "Minha Conta", Icon: UserIcon },
   ],
   admin: [
