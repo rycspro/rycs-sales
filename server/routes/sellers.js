@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 
@@ -7,13 +8,20 @@ const router = Router();
 router.get("/professionals/active", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
   const companyId = req.user.entityId;
-  const rows = db.prepare(`SELECT id, nome, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial
+  const rows = db.prepare(`SELECT id, nome, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial,
+    foto, titulo, bio, segmentos, modalidades, skills, disponibilidade
     FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   const certificacoes = db.prepare("SELECT sellerId, funcao, nivel, percentual FROM certifications").all();
   const pedidos = new Map(db.prepare("SELECT sellerId, status FROM partnership_requests WHERE companyId = ?").all(companyId).map((p) => [p.sellerId, p.status]));
   res.json(rows.map((s) => {
     let perfilComercial = {}; try { perfilComercial = JSON.parse(s.perfilComercial || "{}"); } catch {}
-    return { ...s, perfilComercial, certificacoes: certificacoes.filter((c) => c.sellerId === s.id), parceria: pedidos.get(s.id) || null };
+    const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
+    return {
+      ...s, perfilComercial,
+      segmentos: lista(s.segmentos), modalidades: lista(s.modalidades), skills: lista(s.skills),
+      certificacoes: certificacoes.filter((c) => c.sellerId === s.id),
+      parceria: pedidos.get(s.id) || null,
+    };
   }));
 });
 
@@ -79,7 +87,10 @@ router.patch("/sellers/:id", (req, res) => {
   // Campos financeiros (disponivel/pendente/sacado) NUNCA podem ser escritos
   // pelo próprio vendedor: valem dinheiro real via Pix. Só o servidor os move,
   // ao liberar uma ação ou processar um saque.
-  const sellerFields = ["nome", "email", "whats", "cidade", "perfil", "experiencia", "pix", "pixTipo", "video"];
+  const sellerFields = ["nome", "email", "whats", "cidade", "estado", "perfil", "experiencia",
+    "pix", "pixTipo", "video", "titulo", "bio", "disponibilidade"];
+  // Campos de lista chegam como array e são guardados como JSON.
+  const camposLista = ["segmentos", "modalidades", "regioes", "skills"];
   const adminFields = [...sellerFields, "status", "nota"];
   const allowed = role === "admin" ? adminFields : sellerFields;
 
@@ -88,7 +99,12 @@ router.patch("/sellers/:id", (req, res) => {
   for (const [k, v] of Object.entries(fields)) {
     if (allowed.includes(k)) {
       sets.push(`${k} = ?`);
-      vals.push(v);
+      // Texto livre entra com teto: bio sem limite é convite para o campo
+      // virar depósito de qualquer coisa.
+      vals.push(typeof v === "string" ? v.slice(0, k === "bio" ? 1200 : 300) : v);
+    } else if (camposLista.includes(k) && role !== "empresa") {
+      sets.push(`${k} = ?`);
+      vals.push(JSON.stringify((Array.isArray(v) ? v : []).slice(0, 20).map((x) => String(x).slice(0, 60))));
     }
   }
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
@@ -172,6 +188,45 @@ router.delete("/sellers/:id", (req, res) => {
 
   console.log(`[admin] profissional excluído: ${vendedor.nome} <${vendedor.email}>`);
   res.json({ removido: { id, nome: vendedor.nome, email: vendedor.email }, registros: removidos, forcado: forcar });
+});
+
+// Foto de perfil.
+//
+// Guardada como data URI no próprio registro: um avatar de até 2 MB não
+// justifica depender de S3 configurado, e sem storage o upload seria só
+// aparência. Quando o bucket existir, esta rota passa a gravar a chave em vez
+// do conteúdo — quem consome lê `foto` do mesmo jeito.
+router.post("/sellers/:id/foto", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "admin" && entityId !== req.params.id)
+    return res.status(403).json({ error: "Sem permissão" });
+
+  const { base64, mimetype, largura, altura } = req.body || {};
+  if (!base64) return res.status(400).json({ error: "Envie a imagem" });
+
+  const tamanhoBytes = Math.round((String(base64).length * 3) / 4);
+  const avaliacao = avaliarFoto({ mimetype, tamanhoBytes, largura: Number(largura), altura: Number(altura) });
+
+  if (!avaliacao.aprovada) {
+    return res.status(422).json({
+      error: "A foto não passou na verificação de apresentação.",
+      avaliacao,
+    });
+  }
+
+  const dataUri = `data:${mimetype};base64,${base64}`;
+  db.prepare("UPDATE sellers SET foto = ?, fotoScore = ? WHERE id = ?")
+    .run(dataUri, avaliacao.score, req.params.id);
+
+  res.json({ ok: true, avaliacao, foto: dataUri });
+});
+
+router.delete("/sellers/:id/foto", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "admin" && entityId !== req.params.id)
+    return res.status(403).json({ error: "Sem permissão" });
+  db.prepare("UPDATE sellers SET foto = '', fotoScore = NULL WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
 });
 
 export default router;

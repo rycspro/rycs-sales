@@ -725,6 +725,18 @@ adicionarColuna("sellers", "notaTriagem", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "decididoPor", "TEXT");
 adicionarColuna("sellers", "decididoEm", "INTEGER");
 adicionarColuna("sellers", "emailVerificado", "INTEGER DEFAULT 0");
+// Perfil profissional — o currículo comercial do vendedor dentro da RYCS.
+// A foto fica como data URI: um avatar pequeno não justifica depender de S3
+// configurado, e sem storage o upload seria só aparência.
+adicionarColuna("sellers", "foto", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "fotoScore", "INTEGER");
+adicionarColuna("sellers", "titulo", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "bio", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "segmentos", "TEXT DEFAULT '[]'");
+adicionarColuna("sellers", "modalidades", "TEXT DEFAULT '[]'");
+adicionarColuna("sellers", "regioes", "TEXT DEFAULT '[]'");
+adicionarColuna("sellers", "skills", "TEXT DEFAULT '[]'");
+adicionarColuna("sellers", "disponibilidade", "TEXT DEFAULT ''");
 adicionarColuna("submissions", "leadId", "TEXT");
 adicionarColuna("submissions", "idempotencyKey", "TEXT");
 adicionarColuna("submissions", "proofHash", "TEXT DEFAULT ''");

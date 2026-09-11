@@ -3,7 +3,6 @@ import { Wallet, Clock, BookOpen, CheckCircle2, AlertCircle } from "lucide-react
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
-import { Stat } from "../ui.jsx";
 import { CompanyScoreChip } from "../CompanyScore.jsx";
 import { atendeCertificacaoDaCampanha } from "../../../shared/campaignAcademy.js";
 
@@ -55,11 +54,6 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar, ir
 
   return (
     <div className="vx-fade">
-      <div className="vx-grid vx-g2" style={{ marginBottom: 24 }}>
-        <Stat label="Disponível para saque" value={money(eu.disponivel)} Icon={Wallet} tone="brand" />
-        <Stat label="Em análise" value={money(eu.pendente)} Icon={Clock} tone="amber" />
-      </div>
-
       {convites.some((c) => c.status === "pendente") && <section className="vx-card" style={{padding:18,marginBottom:22,borderColor:"var(--brand)"}}><div className="vx-row"><div><div className="vx-eyebrow">Convites de parceria</div><div className="vx-disp" style={{fontSize:17}}>Empresas querem trabalhar com você</div></div><span className="vx-chip vx-mono">{convites.filter((c)=>c.status==="pendente").length}</span></div>{convites.filter((c)=>c.status==="pendente").map((c)=><div key={c.id} className="vx-row" style={{paddingTop:12,marginTop:12,borderTop:"1px solid var(--border)",flexWrap:"wrap"}}><div><b>{c.empresaNome}</b><div className="vx-mut" style={{fontSize:12}}>{c.produto}{c.segmento?` · ${c.segmento}`:""}</div></div><div style={{display:"flex",gap:7}}><button className="vx-btn vx-btn-danger vx-btn-sm" onClick={()=>responderConvite(c,"recusado")}>Recusar</button><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={()=>responderConvite(c,"aprovado")}>Aceitar parceria</button></div></div>)}</section>}
 
       {!!db.campaigns?.length && <>

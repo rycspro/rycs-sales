@@ -3,8 +3,17 @@ import db from "../db.js";
 
 const router = Router();
 
+const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
+
 function parseSeller(row) {
-  return { ...row, respostas: JSON.parse(row.respostas || "[]") };
+  return {
+    ...row,
+    respostas: lista(row.respostas),
+    segmentos: lista(row.segmentos),
+    modalidades: lista(row.modalidades),
+    regioes: lista(row.regioes),
+    skills: lista(row.skills),
+  };
 }
 
 function parseCompany(row) {

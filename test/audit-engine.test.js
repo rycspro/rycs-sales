@@ -310,3 +310,48 @@ test("potencial zero explica o motivo em vez de mostrar R$ 0,00 seco", () => {
   });
   assert.match(semCaixa.motivo, /sem caixa/i);
 });
+
+// --- Foto de perfil -----------------------------------------------------
+import { avaliarFoto, APROVA_A_PARTIR_DE, LIMITES } from "../shared/fotoPerfil.js";
+
+const boaFoto = { mimetype: "image/jpeg", tamanhoBytes: 400 * 1024, largura: 800, altura: 800 };
+
+test("foto adequada é aprovada com nota alta", () => {
+  const r = avaliarFoto(boaFoto);
+  assert.equal(r.aprovada, true);
+  assert.equal(r.score, 100);
+  assert.equal(r.problemas.length, 0);
+});
+
+test("formato não suportado é eliminatório, por alta que seja a nota restante", () => {
+  const r = avaliarFoto({ ...boaFoto, mimetype: "image/gif" });
+  assert.equal(r.aprovada, false);
+  assert.ok(r.problemas.some((p) => /Formato/.test(p.titulo)));
+});
+
+test("cada problema explica como resolver, não só que falhou", () => {
+  const r = avaliarFoto({ mimetype: "image/png", tamanhoBytes: 5 * 1024 * 1024, largura: 120, altura: 400 });
+  assert.equal(r.aprovada, false);
+  assert.ok(r.problemas.length >= 3);
+  assert.equal(r.problemas.every((p) => p.comoResolver.length > 10), true);
+});
+
+test("foto muito larga reprova no enquadramento", () => {
+  // Avatar é redondo: uma paisagem 1920x400 corta o rosto.
+  const r = avaliarFoto({ ...boaFoto, largura: 1920, altura: 400 });
+  assert.ok(r.problemas.some((p) => /Enquadramento/.test(p.titulo)));
+});
+
+test("checagens de conteúdo ficam pendentes, nunca viram nota inventada", () => {
+  const r = avaliarFoto(boaFoto);
+  assert.ok(r.pendentesDeAnalise.length > 0);
+  assert.match(r.observacao, /não está configurado/i);
+  // Nenhuma checagem técnica avalia característica pessoal.
+  const chaves = r.checagens.map((c) => c.chave);
+  assert.deepEqual(chaves, ["formato", "tamanho", "resolucao", "enquadramento", "definicao"]);
+});
+
+test("limiar de aprovação é explícito e não fica escondido no código", () => {
+  assert.equal(APROVA_A_PARTIR_DE, 70);
+  assert.ok(LIMITES.larguraMinima > 0);
+});
