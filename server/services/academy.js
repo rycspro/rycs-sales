@@ -11,17 +11,24 @@ const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; 
 
 // ------------------------------------------------------------- semente ----
 
+// Semeia por slug, não por tabela vazia. Checar se a tabela tem alguma coisa
+// faria um curso novo do catálogo nunca chegar a uma instalação que já rodou
+// uma vez — que é exatamente o caso de produção.
+//
+// Curso já existente não é tocado: a plataforma pode tê-lo editado, e
+// sobrescrever apagaria esse trabalho.
 export function semearCatalogo() {
-  const existe = db.prepare("SELECT COUNT(*) n FROM courses").get().n;
-  if (existe) return 0;
+  const existentes = new Set(db.prepare("SELECT slug FROM courses").all().map((c) => c.slug));
+  const novos = CATALOGO_INICIAL.filter((c) => !existentes.has(c.slug));
+  if (!novos.length) return 0;
 
-  let n = 0;
-  for (const [i, curso] of CATALOGO_INICIAL.entries()) {
-    criarCurso({ ...curso, ordem: i, status: "publicado", criadoPor: "sistema" });
-    n++;
-  }
-  console.log(`[academy] ${n} curso(s) do catálogo inicial publicado(s)`);
-  return n;
+  const base = db.prepare("SELECT COALESCE(MAX(ordem), -1) o FROM courses").get().o;
+  novos.forEach((curso, i) => {
+    criarCurso({ ...curso, ordem: base + 1 + i, status: "publicado", criadoPor: "sistema" });
+  });
+
+  console.log(`[academy] ${novos.length} curso(s) publicado(s): ${novos.map((c) => c.slug).join(", ")}`);
+  return novos.length;
 }
 
 // --------------------------------------------------------------- CRUD ----
