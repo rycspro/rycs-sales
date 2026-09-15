@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CirclePause, ClipboardCheck, Plus, Rocket, Save, Wallet } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
+import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
@@ -19,7 +20,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
   const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
   const [selecionada, setSelecionada] = useState(campanhas[0]?.id || "nova");
   const existente = campanhas.find((c) => c.id === selecionada);
-  const [rascunhoNovo, setRascunhoNovo] = useState(() => { try{return JSON.parse(localStorage.getItem(`rycs-campanha-${emp.id}`))||novaCampanha(emp)}catch{return novaCampanha(emp)} });
+  const [rascunhoNovo, setRascunhoNovo] = useState(() => lerJson(`rycs-campanha-${emp.id}`, null) || novaCampanha(emp));
   const [edicao, setEdicao] = useState(null);
   const [alterado,setAlterado]=useState(false);
   const campanha = edicao?.id === selecionada ? edicao : existente || rascunhoNovo;
@@ -30,7 +31,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
   };
   const check = useMemo(() => campanhaPodeSerPublicada(campanha, emp), [campanha, emp]);
   const disponivel = saldoDisponivel(emp);
-  useEffect(()=>{if(!existente)localStorage.setItem(`rycs-campanha-${emp.id}`,JSON.stringify(rascunhoNovo));},[rascunhoNovo,existente,emp.id]);
+  useEffect(()=>{if(!existente)gravarJson(`rycs-campanha-${emp.id}`,rascunhoNovo);},[rascunhoNovo,existente,emp.id]);
   useEffect(()=>{const sair=(e)=>{if(alterado){e.preventDefault();e.returnValue="";}};window.addEventListener("beforeunload",sair);return()=>window.removeEventListener("beforeunload",sair);},[alterado]);
   const passos=["Informações gerais","Objetivo e público","Profissionais e Time","Leads","Academy","Tarefas e Valores","Aprovações","Orçamento e ROI","Revisão","Publicação"];
   const concluidos=[campanha.titulo,campanha.publico,true,true,(campanha.treinamento||[]).length,Object.values(campanha.tarefas||{}).some(Number),campanha.criteriosAprovacao,campanha.orcamento,check.pendencias.length===0,campanha.status==="ativa"].filter(Boolean).length;
@@ -49,7 +50,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
       setSelecionada(r.id); setEdicao(criada); setRascunhoNovo(novaCampanha(emp));
     }
     aviso("Campanha salva como rascunho.");
-    setAlterado(false);localStorage.removeItem(`rycs-campanha-${emp.id}`);
+    setAlterado(false);removerArmazenado(`rycs-campanha-${emp.id}`);
     return r.id || existente.id;
   };
   const mudarStatus = async (status) => {

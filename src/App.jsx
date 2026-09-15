@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { ler as lerArmazenamento, gravar as gravarArmazenamento } from "./lib/armazenamento.js";
 import { Moon, Sun } from "lucide-react";
 import { api } from "./lib/api.js";
 import { seed } from "./lib/seed.js";
@@ -65,7 +66,7 @@ export default function App() {
   const [toast, setToast] = useState("");
   const [nav, setNav] = useState({ vendedor: "empresas", empresa: previaQualificacao ? (previaEmpresa ? "painel" : "academy") : "painel", admin: "dashboard" });
   // O escuro é a identidade primária da RYCS; o claro fica como preferência.
-  const [dark, setDark] = useState(() => localStorage.getItem("rycs-theme") !== "light");
+  const [dark, setDark] = useState(() => lerArmazenamento("rycs-theme") !== "light");
 
   // O fundo do <html> acompanha o tema. É ele que aparece na área do recorte
   // do aparelho e no repique do rolar além do fim — deixar fixo pintaria uma
@@ -83,7 +84,7 @@ export default function App() {
   const entradaPlataforma = typeof window !== "undefined" && window.location.pathname.startsWith("/plataforma");
 
   const toggleDark = () => {
-    setDark((d) => { localStorage.setItem("rycs-theme", d ? "light" : "dark"); return !d; });
+    setDark((d) => { gravarArmazenamento("rycs-theme", d ? "light" : "dark"); return !d; });
   };
 
   const carregarState = useCallback(async (usr) => {

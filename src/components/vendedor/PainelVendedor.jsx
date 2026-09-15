@@ -6,12 +6,13 @@ import {
 import { money } from "../../lib/utils.js";
 import { Stat, Medidor, Donut } from "../ui.jsx";
 import { desempenhoVendedor, potencialDeGanhos } from "../../../shared/desempenhoVendedor.js";
+import { ler as lerArmazenamento, gravar as gravarArmazenamento } from "../../lib/armazenamento.js";
 
 const NIVEIS = { starter: "Starter", pro: "Pro", elite: "Elite" };
 
 export default function PainelVendedor({ eu, db, abrirEmpresas }) {
   const [meta, setMeta] = useState(() => {
-    try { return Number(localStorage.getItem("rycs:meta") || 0); } catch { return 0; }
+    return Number(lerArmazenamento("rycs:meta", 0)) || 0;
   });
 
   const d = useMemo(() => desempenhoVendedor({
@@ -27,7 +28,7 @@ export default function PainelVendedor({ eu, db, abrirEmpresas }) {
   const salvarMeta = (v) => {
     const valor = Math.max(0, Number(String(v).replace(",", ".")) || 0);
     setMeta(valor);
-    try { localStorage.setItem("rycs:meta", String(valor)); } catch { /* modo privado */ }
+    gravarArmazenamento("rycs:meta", valor);
   };
 
   const { financeiro: f, performance: p, comercial: c, rycs: r } = d;
