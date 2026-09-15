@@ -414,3 +414,57 @@ test("capa gerada é SVG válido em data URI e escapa o título", () => {
   assert.ok(!svg.includes("<script>"), "título não foi escapado na capa");
   assert.match(svg, /&lt;script&gt;/);
 });
+
+// --- Política de origens (CORS) -----------------------------------------
+// Regressão do incidente em que quem chegava pela landing recebia 500 em toda
+// chamada de API. A lógica é replicada aqui porque vive dentro do arranque do
+// servidor; se ela mudar de lugar, este teste deve importar de lá.
+function origensDe(frontendUrl, extras = "") {
+  const lista = new Set([frontendUrl]);
+  for (const extra of String(extras).split(",")) {
+    const limpo = extra.trim();
+    if (limpo) lista.add(limpo);
+  }
+  try {
+    const { protocol, hostname } = new URL(frontendUrl);
+    const raiz = hostname.replace(/^(www|app)\./, "");
+    if (raiz.includes(".")) {
+      for (const h of [raiz, `www.${raiz}`, `app.${raiz}`]) lista.add(`${protocol}//${h}`);
+    }
+  } catch { /* URL malformada */ }
+  return lista;
+}
+
+test("a família do domínio é liberada a partir de um único FRONTEND_URL", () => {
+  const p = origensDe("https://app.rycs.pro");
+  assert.ok(p.has("https://app.rycs.pro"));
+  assert.ok(p.has("https://rycs.pro"), "apex precisa entrar: é onde fica a landing");
+  assert.ok(p.has("https://www.rycs.pro"), "www precisa entrar");
+  assert.ok(!p.has("https://atacante.com"));
+});
+
+test("partir do apex também deriva www e app", () => {
+  const p = origensDe("https://rycs.pro");
+  assert.ok(p.has("https://app.rycs.pro"));
+  assert.ok(p.has("https://www.rycs.pro"));
+});
+
+test("CORS_ORIGINS acrescenta sem substituir a família", () => {
+  const p = origensDe("https://app.rycs.pro", "https://parceiro.com, https://outro.com");
+  assert.ok(p.has("https://parceiro.com"));
+  assert.ok(p.has("https://outro.com"));
+  assert.ok(p.has("https://rycs.pro"));
+});
+
+test("URL malformada não derruba a lista nem libera geral", () => {
+  const p = origensDe("nao-e-url");
+  assert.deepEqual([...p], ["nao-e-url"]);
+  assert.ok(!p.has("https://atacante.com"));
+});
+
+test("host sem ponto não vira curinga", () => {
+  // "localhost" não tem ponto: derivar www./app. dele não faz sentido e
+  // poderia liberar host inesperado.
+  const p = origensDe("http://localhost:5173");
+  assert.deepEqual([...p], ["http://localhost:5173"]);
+});

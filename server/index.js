@@ -54,11 +54,53 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.set("trust proxy", 1);
 
 const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
+
+// Origens permitidas.
+//
+// O produto vive em mais de um host: a landing em rycs.pro e www.rycs.pro, o
+// app em app.rycs.pro. Permitir só o FRONTEND_URL derrubava todo mundo que
+// chegava pela landing — e o navegador manda Origin também em POST de mesma
+// origem, então a quebra atingia login, não só chamada entre domínios.
+//
+// CORS_ORIGINS aceita lista separada por vírgula para acrescentar outras.
+function origensPermitidas() {
+  const lista = new Set([FRONTEND]);
+
+  for (const extra of String(process.env.CORS_ORIGINS || "").split(",")) {
+    const limpo = extra.trim();
+    if (limpo) lista.add(limpo);
+  }
+
+  // A família do domínio: apex, www e app são o mesmo produto. Derivar aqui
+  // evita depender de alguém lembrar de listar as três em toda instalação.
+  try {
+    const { protocol, hostname } = new URL(FRONTEND);
+    const raiz = hostname.replace(/^(www|app)\./, "");
+    if (raiz.includes(".")) {
+      for (const h of [raiz, `www.${raiz}`, `app.${raiz}`]) lista.add(`${protocol}//${h}`);
+    }
+  } catch { /* FRONTEND_URL malformada: fica só com o valor bruto */ }
+
+  return lista;
+}
+
+const PERMITIDAS = origensPermitidas();
+console.log(`[cors] origens permitidas: ${[...PERMITIDAS].join(", ")}`);
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || origin === FRONTEND) return callback(null, true);
+    // Sem Origin é requisição que não veio de navegador — curl, webhook,
+    // healthcheck. Não há o que restringir.
+    if (!origin) return callback(null, true);
+    if (PERMITIDAS.has(origin)) return callback(null, true);
     if (!isProd && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) return callback(null, true);
-    callback(new Error("Origem não autorizada pelo CORS"));
+
+    // Recusa NÃO é erro de servidor. Devolver `false` omite o cabeçalho e
+    // deixa o navegador aplicar a política, que é o comportamento correto.
+    // Lançar transformava uma decisão de política em 500 — e era isso que
+    // deixava o app fora do ar para quem vinha da landing.
+    console.warn(`[cors] origem recusada: ${String(origin).slice(0, 120)}`);
+    callback(null, false);
   },
   credentials: true,
 }));
@@ -181,6 +223,19 @@ semearCatalogo();
 const capacidades = capacidadesDisponiveis();
 console.log("[audit] capacidades:", Object.entries(capacidades)
   .map(([c, v]) => `${c}=${v.disponivel ? v.provider : "não configurado"}`).join(" "));
+
+// Rede de segurança: erro não tratado vira JSON com identificador, nunca uma
+// página de stack trace. O CORS que derrubava o app aparecia como um 500 mudo;
+// com isto, qualquer falha futura deixa um rastro procurável no log.
+app.use((err, req, res, _next) => {
+  const ref = Math.random().toString(36).slice(2, 10);
+  console.error(`[erro ${ref}] ${req.method} ${req.path}:`, err?.message || err);
+  if (res.headersSent) return;
+  res.status(err?.status || 500).json({
+    error: "Falha ao processar a requisição.",
+    referencia: ref,
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);
