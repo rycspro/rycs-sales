@@ -1,0 +1,8 @@
+# O deploy da landing é feito pela CLI, que envia o conteúdo da pasta.
+# Sem esta lista, .env.local — que guarda o VERCEL_OIDC_TOKEN gerado pelo
+# próprio `vercel link` — subiria junto com o site. Hoje a Vercel não serve
+# arquivos de ponto, então nada ficou exposto; mas depender desse
+# comportamento para proteger um segredo é depender de detalhe alheio.
+.env
+.env.*
+.vercel
