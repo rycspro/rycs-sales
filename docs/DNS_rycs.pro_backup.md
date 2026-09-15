@@ -1,23 +1,39 @@
-# Zona DNS de rycs.pro — estado em 15/09/2026
+# Zona DNS de rycs.pro — migração em 15/09/2026
 
-Capturado antes de qualquer migração de nameserver. Se a zona for recriada em
-outro provedor, TODOS os registros abaixo precisam existir no destino antes de
-trocar os nameservers no registrador.
+## Autoridade DNS atual
 
-Nameservers atuais (Hostinger / estacionamento):
+Em 15/09/2026, a delegação foi alterada na Hostinger para os nameservers da
+Vercel, provedor que já hospeda a landing page do domínio:
+
+    ns1.vercel-dns.com
+    ns2.vercel-dns.com
+
+Antes da troca, todos os registros ativos abaixo foram replicados e consultados
+diretamente em `ns1.vercel-dns.com`. O CNAME `app` usa TTL de 60 segundos na
+Vercel. Durante a propagação, a zona antiga da Hostinger continua íntegra e o
+TTL do `app` foi reduzido para 300 segundos.
+
+Os nameservers anteriores, preservados somente para referência e eventual
+rollback, eram:
+
     hermes.dns-parking.com
     artemis.dns-parking.com
 
+## Registros preservados
+
+Se a zona for recriada em outro provedor, TODOS os registros abaixo precisam
+existir no destino antes de trocar os nameservers no registrador.
+
 | Nome                      | Tipo  | Valor                                                                 | Para que serve |
 |---------------------------|-------|-----------------------------------------------------------------------|----------------|
-| rycs.pro                  | A     | 216.198.79.1                                                          | Site na Vercel |
-| rycs.pro                  | A     | 76.76.21.21                                                           | Site na Vercel |
+| rycs.pro                  | ALIAS | f4f6b98acb32dbe5.vercel-dns-017.com                                  | Site na Vercel |
+| *.rycs.pro                | ALIAS | cname.vercel-dns-017.com                                              | Fallback de subdomínios na Vercel |
 | www.rycs.pro              | CNAME | rycs.pro                                                              | Site na Vercel |
 | app.rycs.pro              | CNAME | ok7cf5qa.up.railway.app                                               | Aplicação na Railway |
+| _railway-verify.app.rycs.pro | TXT | railway-verify=f1c5d93bbec5856f34dc43d5cd6cb56644e1ac6645592a8e2f669b54e95f2df4 | Verificação Railway |
 | rycs.pro                  | MX 10 | inbound-smtp.sa-east-1.amazonaws.com                                  | RECEBER e-mail (Amazon SES) |
-| send.rycs.pro             | MX 10 | feedback.forge.rmta.net                                               | Retorno de envio (Resend) |
-| send.rycs.pro             | MX    | send.forge.rmta.net                                                   | Retorno de envio (Resend) |
-| send.rycs.pro             | TXT   | v=spf1 ip4:52.3.252.119 ip4:44.222.39.36 ip4:199.249.231.0/24 ~all    | SPF do Resend |
+| send.rycs.pro             | CNAME | send.forge.rmta.net                                                   | Envio transacional (Resend) |
+| rsend.rycs.pro            | CNAME | rsend-sae1.forge.rmta.net                                             | Rastreamento/retorno (Resend) |
 | resend._domainkey.rycs.pro| TXT   | p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDGDld7ZzTk4v02eJT/vrDtCX+EivIiD5QAlzzwq46dlBX6+9hFSBW07/2INcll1j71aFS0Xu374Jh+H+mZKe6RyuqyDDnbzrdP2UTY2oDpPffp5cUmY8Wyu0gGMSbAeCCUwjf/vkRam9cj565qRV7ql3mtjcra4O+jSYs+VNRyYwIDAQAB | DKIM do Resend |
 | _dmarc.rycs.pro           | TXT   | v=DMARC1; p=none;                                                     | Política DMARC |
 
@@ -31,6 +47,6 @@ Nameservers atuais (Hostinger / estacionamento):
 
 1. **MX do apex** — sem ele, todo e-mail enviado PARA @rycs.pro deixa de chegar.
    Ninguém recebe erro; a mensagem simplesmente some.
-2. **resend._domainkey + send.rycs.pro** — sem eles, os e-mails que a plataforma
+2. **resend._domainkey + send.rycs.pro + rsend.rycs.pro** — sem eles, os e-mails que a plataforma
    ENVIA (boas-vindas, notificações de campanha, aprovação) passam a cair em
    spam ou a ser recusados.
