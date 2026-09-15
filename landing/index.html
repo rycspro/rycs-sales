@@ -40,11 +40,9 @@
     "operatingSystem": "Web",
     "description": "Plataforma que conecta empresas a profissionais de vendas independentes, com remuneração por ação verificada por inteligência artificial.",
     "url": "https://www.rycs.pro",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "BRL",
-      "description": "Plano gratuito disponível"
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "Empresas que vendem B2B e profissionais de vendas independentes"
     }
   }
   </script>
@@ -230,21 +228,6 @@
     .feat h3 { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 9px; }
     .feat p { color: var(--muted); font-size: 13.8px; line-height: 1.7; }
 
-    #planos { border-top: 1px solid rgba(255,255,255,.055); background: radial-gradient(750px 500px at 50% 30%, rgba(61,102,205,.10), transparent 72%); }
-    .price-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 54px; align-items: stretch; }
-    .price-card { min-height: 440px; padding: 29px 24px 24px; display: flex; flex-direction: column; }
-    .price-card.featured { transform: translateY(-12px); border-color: rgba(115,155,255,.55); background: radial-gradient(360px 220px at 50% 0%, rgba(95,143,255,.18), transparent 72%), linear-gradient(145deg, rgba(21,28,43,.97), rgba(9,12,19,.97)); box-shadow: 0 34px 100px rgba(0,0,0,.48), 0 0 0 1px rgba(95,143,255,.12); }
-    .price-card.featured:hover { transform: translateY(-17px); }
-    .price-tag { position: absolute; top: 14px; right: 14px; background: linear-gradient(135deg, #eef4ff, #bcd0ff); color: #0a1426; font-size: 9.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px; }
-    .price-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: var(--ink-2); }
-    .price-value { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 650; letter-spacing: -.04em; margin: 13px 0 3px; }
-    .price-value small { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
-    .price-take { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; margin: 11px 0 22px; padding: 5px 10px; border-radius: 999px; background: rgba(95,143,255,.09); border: 1px solid rgba(95,143,255,.18); color: #a9c0ff; font-size: 11.5px; font-weight: 600; }
-    .price-card ul { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-    .price-card li { display: flex; gap: 9px; align-items: flex-start; color: var(--muted); font-size: 12.8px; }
-    .price-card li::before { content: "✓"; color: var(--brand-600); flex: none; font-weight: 700; }
-    .price-card .btn { margin-top: auto; }
-
     .cta { padding-top: 72px; text-align: center; }
     .cta-inner { position: relative; overflow: hidden; padding: 90px 34px; border-radius: 30px; background: radial-gradient(620px 360px at 50% 115%, rgba(74,127,255,.42), transparent 68%), linear-gradient(145deg, rgba(20,26,39,.94), rgba(8,11,17,.96)); border: 1px solid rgba(130,165,240,.25); box-shadow: var(--shadow); }
     .cta-inner::before { content: ""; position: absolute; width: 720px; height: 300px; left: 50%; bottom: -210px; transform: translateX(-50%); border: 1px solid rgba(152,181,255,.3); border-radius: 50%; box-shadow: 0 0 0 42px rgba(95,143,255,.04), 0 0 0 84px rgba(95,143,255,.025); }
@@ -261,8 +244,6 @@
     .footer-bottom { margin-top: 50px; padding-top: 25px; border-top: 1px solid var(--border); color: var(--muted-2); font-size: 12px; }
 
     @media (max-width: 1020px) {
-      .price-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
-      .price-card.featured, .price-card.featured:hover { transform: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 860px) {
@@ -299,7 +280,7 @@
       .stat-label { font-size: 11px; }
       section { padding: 78px 0; }
       .section-title { font-size: 35px; }
-      .for-grid, .price-grid { grid-template-columns: 1fr; }
+      .for-grid { grid-template-columns: 1fr; }
       .for-card { padding: 28px 24px; }
       .cta { padding-top: 48px; }
       .cta-inner { padding: 72px 22px; border-radius: 24px; }
@@ -313,7 +294,26 @@
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       .btn, .card { transition: none; }
-      .btn:hover, .card:hover, .price-card.featured:hover { transform: none; }
+      .btn:hover, .card:hover { transform: none; }
+    }
+
+    /* Como funciona: dois trilhos, um por público. O rótulo diz de quem é o
+       caminho — sem ele, a empresa lê os passos do vendedor como se fossem seus. */
+    .track-head { display: flex; align-items: center; gap: 12px; margin-top: 52px; font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; color: var(--ink); }
+    .track-head::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+    .track-head .tag { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #a8c0ff; border: 1px solid var(--brand-100); background: var(--brand-50); padding: 4px 9px; border-radius: 999px; }
+    .track-head + .steps { margin-top: 18px; }
+
+    /* Auditoria: grade de mecanismos. Cada um existe de verdade no motor —
+       nada aqui é adjetivo de marketing sem implementação atrás. */
+    .sec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
+    .sec-item { padding: 26px; }
+    .sec-item .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #7fa5ff; margin-bottom: 12px; }
+    .sec-item h3 { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; margin-bottom: 9px; }
+    .sec-item p { color: var(--muted); font-size: 13.5px; line-height: 1.72; }
+
+    @media (max-width: 900px) {
+      .sec-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -325,25 +325,25 @@
       <div class="nav-links">
         <a href="#como-funciona">Como funciona</a>
         <a href="#para-quem">Para quem</a>
-        <a href="#planos">Planos</a>
+        <a href="#auditoria">Auditoria</a>
         <a href="https://app.rycs.pro" class="btn btn-outline btn-nav">Entrar</a>
-        <a href="https://app.rycs.pro/cadastro" class="btn btn-primary btn-nav">Começar grátis</a>
+        <a href="https://app.rycs.pro/cadastro" class="btn btn-primary btn-nav">Criar conta</a>
       </div>
     </div>
   </nav>
 
   <section class="hero">
     <div class="container">
-      <div class="hero-eyebrow"><span class="dot"></span> Auditoria por IA em cada ação</div>
+      <div class="hero-eyebrow"><span class="dot"></span> Auditoria de alta tecnologia em cada ação</div>
       <h1 class="disp">Vendas por <span>ação verificada</span>. Sem risco. Sem CLT.</h1>
-      <p>Conecte sua empresa a profissionais de vendas qualificados. Pague apenas por ligações feitas, reuniões agendadas e vendas fechadas — cada uma comprovada e auditada antes de virar custo.</p>
+      <p>De um lado, empresas que precisam vender mais sem montar equipe. Do outro, profissionais de vendas que querem ganhar por resultado, no próprio ritmo. A RYCS conecta os dois e verifica cada entrega antes que ela vire dinheiro.</p>
       <div class="hero-actions">
-        <a href="https://app.rycs.pro/cadastro" class="btn btn-primary btn-lg">Começar grátis</a>
-        <a href="#como-funciona" class="btn btn-outline btn-lg">Como funciona</a>
+        <a href="https://app.rycs.pro/cadastro/empresa" class="btn btn-primary btn-lg">Quero vender mais</a>
+        <a href="https://app.rycs.pro/cadastro/profissional" class="btn btn-outline btn-lg">Quero trabalhar vendendo</a>
       </div>
       <div class="hero-proof">
-        <span><span class="dot"></span> Sem mensalidade obrigatória</span>
         <span><span class="dot"></span> Sem vínculo empregatício</span>
+        <span><span class="dot"></span> Cada ação comprovada e auditada</span>
         <span><span class="dot"></span> Saque por Pix</span>
       </div>
     </div>
@@ -352,10 +352,10 @@
   <div class="stats-bar">
     <div class="container">
       <div class="stats-grid">
-        <div><div class="stat-num mono">6–12%</div><div class="stat-label">Taxa sobre o volume, conforme o plano</div></div>
-        <div><div class="stat-num mono">R$ 0</div><div class="stat-label">Para começar — pague só quando vender</div></div>
         <div><div class="stat-num mono">5</div><div class="stat-label">Tipos de ação remunerada</div></div>
         <div><div class="stat-num">IA</div><div class="stat-label">Verificação automática de cada ação</div></div>
+        <div><div class="stat-num mono">7</div><div class="stat-label">Dimensões avaliadas no RYCS Score</div></div>
+        <div><div class="stat-num">Pix</div><div class="stat-label">Saque direto, sem intermediário</div></div>
       </div>
     </div>
   </div>
@@ -363,23 +363,44 @@
   <section id="como-funciona">
     <div class="container">
       <div class="section-label">Como funciona</div>
-      <h2 class="section-title">Três passos para escalar suas vendas</h2>
-      <p class="section-desc">Empresas criam campanhas. Profissionais executam. A RYCS audita e paga. Simples assim.</p>
+      <h2 class="section-title">O caminho de cada lado</h2>
+      <p class="section-desc">Empresa e profissional entram por portas diferentes e se encontram na campanha. Cada um vê aqui o próprio percurso, do começo ao pagamento.</p>
+
+      <div class="track-head"><span class="tag">Empresa</span> Da campanha ao resultado</div>
       <div class="steps">
         <div class="card step">
           <div class="step-num">1</div>
-          <h3>Crie sua campanha</h3>
-          <p>Defina o produto, o público-alvo, quanto vale cada ação — ligação, reunião, venda — e o treinamento necessário. Adicione saldo à sua conta.</p>
+          <h3>Monte sua campanha</h3>
+          <p>Diga o que você vende, para quem, e o que conta como entrega — ligação, reunião agendada, visita, venda fechada. O treinamento do seu produto entra junto.</p>
         </div>
         <div class="card step">
           <div class="step-num">2</div>
-          <h3>Profissionais executam</h3>
-          <p>Profissionais certificados se candidatam, passam pelo treinamento e começam a prospectar. Cada ação é gravada e enviada com comprovação.</p>
+          <h3>Receba gente pronta</h3>
+          <p>Profissionais já triados se candidatam, estudam o seu produto e começam a prospectar. Você aprova quem entra no time e acompanha tudo pelo painel.</p>
         </div>
         <div class="card step">
           <div class="step-num">3</div>
-          <h3>A IA verifica, você paga</h3>
-          <p>A auditoria analisa cada comprovação antes de liberar. O valor sai do seu caixa apenas quando a ação é aprovada — nunca antes.</p>
+          <h3>Pague só o que foi entregue</h3>
+          <p>Cada ação chega com comprovação e passa pela auditoria antes de virar custo. O que não comprova, não é cobrado de você.</p>
+        </div>
+      </div>
+
+      <div class="track-head"><span class="tag">Profissional</span> Do cadastro ao Pix</div>
+      <div class="steps">
+        <div class="card step">
+          <div class="step-num">1</div>
+          <h3>Mostre o que você sabe</h3>
+          <p>Uma avaliação curta identifica a sua função — SDR, BDR, Closer, Porta a Porta ou iniciante. Se faltar base, a trilha do Academy é sua, sem custo.</p>
+        </div>
+        <div class="card step">
+          <div class="step-num">2</div>
+          <h3>Escolha onde vender</h3>
+          <p>Você vê as campanhas abertas, o que cada empresa paga por ação e o que ela espera. Entra nas que combinam com a sua rotina, sem exclusividade.</p>
+        </div>
+        <div class="card step">
+          <div class="step-num">3</div>
+          <h3>Entregue e receba</h3>
+          <p>Registre a ação com a comprovação. Aprovada na auditoria, o valor cai no seu saldo — e o saque é por Pix, quando você quiser.</p>
         </div>
       </div>
     </div>
@@ -392,14 +413,14 @@
       <div class="for-grid">
         <div class="card for-card">
           <h3 class="disp">Para Empresas</h3>
-          <div class="subtitle">Escale vendas sem contratar</div>
+          <div class="subtitle">Escale vendas sem montar equipe</div>
           <ul>
-            <li>Pague por ação verificada, sem salário fixo</li>
-            <li>Profissionais já treinados no seu produto</li>
-            <li>Auditoria com IA em cada comprovação</li>
-            <li>Painel com ROI e taxa de aprovação</li>
-            <li>Sem vínculo empregatício</li>
-            <li>Adicione saldo e comece em minutos</li>
+            <li>Force de vendas sob demanda, sem processo seletivo</li>
+            <li>Profissionais treinados no seu produto antes de falar com o cliente</li>
+            <li>Cada entrega chega comprovada e auditada</li>
+            <li>Painel com desempenho por campanha e por profissional</li>
+            <li>Sem vínculo empregatício e sem passivo trabalhista</li>
+            <li>Ligue e desligue campanhas quando quiser</li>
           </ul>
           <a href="https://app.rycs.pro/cadastro/empresa" class="btn btn-primary" style="margin-top:8px;width:100%">Criar conta empresa</a>
         </div>
@@ -407,12 +428,12 @@
           <h3 class="disp">Para Profissionais</h3>
           <div class="subtitle">Ganhe por resultado, no seu ritmo</div>
           <ul>
-            <li>Escolha as campanhas que fazem sentido</li>
-            <li>Receba por cada ação verificada</li>
-            <li>Trilha de formação gratuita na sua função</li>
-            <li>Certificação e score que abrem portas</li>
-            <li>Saque via Pix a partir de R$ 10</li>
-            <li>Evolua de Certified a Elite</li>
+            <li>Você escolhe as campanhas — sem chefe e sem exclusividade</li>
+            <li>Trabalhe para várias empresas ao mesmo tempo</li>
+            <li>Formação completa na sua função, sem pagar nada</li>
+            <li>Certificado e score que você leva para a próxima campanha</li>
+            <li>Saque por Pix a partir de R$ 10, quando quiser</li>
+            <li>Comece mesmo sem experiência, pela trilha de fundamentos</li>
           </ul>
           <a href="https://app.rycs.pro/cadastro/profissional" class="btn btn-outline" style="margin-top:8px;width:100%">Criar conta profissional</a>
         </div>
@@ -459,59 +480,49 @@
     </div>
   </section>
 
-  <section id="planos">
+  <section id="auditoria">
     <div class="container">
-      <div class="section-label">Planos</div>
-      <h2 class="section-title">Comece grátis, escale quando quiser</h2>
-      <p class="section-desc">A assinatura reduz a taxa sobre cada ação liberada. Quanto mais volume você opera, mais ela se paga.</p>
-      <div class="price-grid">
-        <div class="card price-card">
-          <div class="price-name">Free</div>
-          <div class="price-value">R$ 0</div>
-          <div class="price-take">Taxa de 12%</div>
-          <ul>
-            <li>1 campanha ativa</li>
-            <li>Até 3 profissionais</li>
-            <li>Auditoria por IA</li>
-          </ul>
-          <a href="https://app.rycs.pro/cadastro/empresa" class="btn btn-outline" style="width:100%">Começar grátis</a>
+      <div class="section-label">Auditoria</div>
+      <h2 class="section-title">Engenharia de confiança, não confiança cega</h2>
+      <p class="section-desc">O RYCS Audit Engine verifica cada ação com as mesmas técnicas que a indústria usa para proteger registro financeiro: encadeamento criptográfico, impressão digital de evidência e detecção de fraude em camadas independentes.</p>
+      <div class="sec-grid">
+
+        <div class="card sec-item">
+          <div class="kicker">Hash chain · HMAC</div>
+          <h3>Trilha imutável</h3>
+          <p>Cada decisão sela criptograficamente a anterior, formando uma cadeia. Adulterar um único registro quebra a cadeia inteira e o sistema acusa na hora. Não existe edição silenciosa.</p>
         </div>
-        <div class="card price-card">
-          <div class="price-name">Starter</div>
-          <div class="price-value">R$ 200 <small>/mês</small></div>
-          <div class="price-take">Taxa de 10%</div>
-          <ul>
-            <li>3 campanhas ativas</li>
-            <li>Até 10 profissionais</li>
-            <li>Relatórios de campanha</li>
-          </ul>
-          <a href="https://app.rycs.pro/cadastro/empresa" class="btn btn-outline" style="width:100%">Assinar Starter</a>
+
+        <div class="card sec-item">
+          <div class="kicker">SHA-256</div>
+          <h3>Impressão digital da evidência</h3>
+          <p>Todo arquivo enviado ganha uma assinatura única. Reaproveitar uma gravação antiga, duplicar comprovação ou reenviar material de outra campanha é identificado automaticamente.</p>
         </div>
-        <div class="card price-card featured">
-          <span class="price-tag">Mais escolhido</span>
-          <div class="price-name">Growth</div>
-          <div class="price-value">R$ 697 <small>/mês</small></div>
-          <div class="price-take">Taxa de 8%</div>
-          <ul>
-            <li>10 campanhas ativas</li>
-            <li>Até 40 profissionais</li>
-            <li>Destaque na vitrine</li>
-            <li>Exigir profissionais certificados</li>
-          </ul>
-          <a href="https://app.rycs.pro/cadastro/empresa" class="btn btn-primary" style="width:100%">Assinar Growth</a>
+
+        <div class="card sec-item">
+          <div class="kicker">Defesa em camadas</div>
+          <h3>Dois motores independentes</h3>
+          <p>Um motor determinístico aplica as regras objetivas da campanha. Em cima dele, a análise por IA avalia conteúdo e coerência. Uma camada não sabe da outra — e as duas precisam concordar.</p>
         </div>
-        <div class="card price-card">
-          <div class="price-name">Scale</div>
-          <div class="price-value">R$ 2.700 <small>/mês</small></div>
-          <div class="price-take">Taxa de 6%</div>
-          <ul>
-            <li>50 campanhas ativas</li>
-            <li>Até 200 profissionais</li>
-            <li>Destaque na vitrine</li>
-            <li>Acesso antecipado a novos recursos</li>
-          </ul>
-          <a href="mailto:contato@rycs.pro" class="btn btn-outline" style="width:100%">Falar com vendas</a>
+
+        <div class="card sec-item">
+          <div class="kicker">Antifraude</div>
+          <h3>Sinais cruzados</h3>
+          <p>Geolocalização, horário, distância percorrida, ritmo de envio e reincidência entram num escore de risco. Padrão fora da curva vai para perícia antes de liberar qualquer valor.</p>
         </div>
+
+        <div class="card sec-item">
+          <div class="kicker">Zero trust</div>
+          <h3>Ninguém paga adiantado</h3>
+          <p>O valor fica retido na plataforma e só se move quando a ação passa. A empresa não paga por promessa, e o profissional não depende da boa vontade de quem contratou.</p>
+        </div>
+
+        <div class="card sec-item">
+          <div class="kicker">Failsafe</div>
+          <h3>Erro nosso não reprova você</h3>
+          <p>Se qualquer etapa da verificação falhar, a ação vai para revisão humana — nunca para recusa automática. Falha de sistema é problema nosso, não prejuízo de quem trabalhou.</p>
+        </div>
+
       </div>
     </div>
   </section>
@@ -519,9 +530,12 @@
   <section class="cta">
     <div class="container">
       <div class="cta-inner">
-        <h2>Pronto para vender mais?</h2>
-        <p>Crie sua conta em 2 minutos. Sem cartão de crédito, sem compromisso.</p>
-        <a href="https://app.rycs.pro/cadastro" class="btn btn-primary btn-lg">Criar conta grátis →</a>
+        <h2>De que lado você está?</h2>
+        <p>Cadastro em 2 minutos. Escolha a porta e a gente te leva direto ao ambiente certo.</p>
+        <div class="hero-actions">
+          <a href="https://app.rycs.pro/cadastro/empresa" class="btn btn-primary btn-lg">Sou empresa</a>
+          <a href="https://app.rycs.pro/cadastro/profissional" class="btn btn-outline btn-lg">Sou profissional</a>
+        </div>
       </div>
     </div>
   </section>
@@ -536,7 +550,7 @@
         <div class="footer-col">
           <h4>Produto</h4>
           <a href="#como-funciona">Como funciona</a>
-          <a href="#planos">Planos</a>
+          <a href="#auditoria">Auditoria</a>
           <a href="https://app.rycs.pro">Entrar</a>
         </div>
         <div class="footer-col">
@@ -547,7 +561,7 @@
         </div>
         <div class="footer-col">
           <h4>Profissionais</h4>
-          <a href="https://app.rycs.pro/cadastro">Criar conta</a>
+          <a href="https://app.rycs.pro/cadastro/profissional">Criar conta</a>
           <a href="#para-quem">Como ganhar</a>
           <a href="#como-funciona">Academy</a>
         </div>
