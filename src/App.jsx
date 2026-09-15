@@ -7,6 +7,10 @@ import { CSS } from "./styles.js";
 import Shell from "./components/Shell.jsx";
 import Login from "./components/Login.jsx";
 import LoginPlataforma from "./components/LoginPlataforma.jsx";
+import CadastroProfissional from "./components/auth/CadastroProfissional.jsx";
+import CadastroEmpresa from "./components/auth/CadastroEmpresa.jsx";
+import EscolhaCadastro from "./components/auth/EscolhaCadastro.jsx";
+import { useRota } from "./lib/rotas.js";
 import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
@@ -79,9 +83,10 @@ export default function App() {
 
   const userRef = useRef(null);
 
-  // A plataforma vive num endereço próprio. Sem router no projeto, o caminho
-  // da URL decide qual porta de entrada aparece.
-  const entradaPlataforma = typeof window !== "undefined" && window.location.pathname.startsWith("/plataforma");
+  // Cada porta de entrada vive num endereço próprio: login, cadastro de
+  // profissional, cadastro de empresa e plataforma. A tabela de endereços fica
+  // em lib/rotas.js — aqui só se escolhe o que renderizar.
+  const rota = useRota();
 
   const toggleDark = () => {
     setDark((d) => { gravarArmazenamento("rycs-theme", d ? "light" : "dark"); return !d; });
@@ -143,7 +148,13 @@ export default function App() {
   const registrar = async (dados) => {
     const r = await api("/auth/register", dados);
     if (r?.error) { setToast(r.error); return false; }
-    if (r?.id) { setUser(r); userRef.current = r; await carregarState(r); return true; }
+    if (r?.id) {
+      setUser(r); userRef.current = r; await carregarState(r);
+      // A conta existe: o endereço de cadastro não deve sobreviver a um F5,
+      // senão a pessoa recarrega e volta a ver um formulário já cumprido.
+      window.history.replaceState({}, "", "/");
+      return true;
+    }
     setToast("Erro ao registrar."); return false;
   };
 
@@ -189,9 +200,11 @@ export default function App() {
   if (!user) return (
     <div className={`vx-app${dark ? " vx-dark" : ""}`}>
       <style>{CSS}</style>
-      {entradaPlataforma
-        ? <LoginPlataforma onEntrar={entrarComoAdmin} />
-        : <Login onLogin={login} onRegister={registrar} />}
+      {rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
+        : rota.tipo === "escolha" ? <EscolhaCadastro />
+        : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
+        : rota.tipo === "cadastro" && rota.role === "empresa" ? <CadastroEmpresa onRegister={registrar} />
+        : <Login onLogin={login} />}
       {toast && (
         <div className="vx-fade" style={{
           position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Gift, Copy, Clock, CheckCircle2 } from "lucide-react";
 import { api } from "../lib/api.js";
 import { money, dataCurta } from "../lib/utils.js";
+import { ROTAS } from "../lib/rotas.js";
 
 const PAPEL = { empresa: "Empresa" };
 
@@ -12,7 +13,9 @@ export default function Indicacoes({ aviso }) {
 
   if (!dados) return <div className="vx-mut" style={{ padding: 20 }}>Carregando…</div>;
 
-  const link = `${window.location.origin}/?ref=${dados.codigo}`;
+  // O convite leva direto ao cadastro de profissional: quem recebe um código
+  // de indicação vem criar conta, e a raiz é a tela de quem já tem uma.
+  const link = `${window.location.origin}${ROTAS.cadastroVendedor}?ref=${dados.codigo}`;
 
   const copiar = async (texto, oque) => {
     try { await navigator.clipboard.writeText(texto); aviso(`${oque} copiado.`); }
