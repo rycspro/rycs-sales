@@ -5,7 +5,7 @@ import { ACOES } from "../../shared/acoes.js";
 import { normalizarRegras, PADRAO, SEMPRE_MANUAL, VERSAO_REGRAS } from "../../shared/aprovacoes.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { extratoEmpresa, posicaoEmpresa } from "../services/financeiro.js";
-import { emailEmpresaEmAnalise, emailStatusEmpresa } from "../services/email.js";
+import { emailStatusEmpresa } from "../services/email.js";
 import Anthropic from "@anthropic-ai/sdk";
 import { extrairTextoPdf } from "../services/reportPdf.js";
 import { montarDossieEmpresa, narrativaEmpresa } from "../services/dossieEmpresa.js";
@@ -95,13 +95,21 @@ router.post("/companies/:id/submit-review", async (req, res) => {
   if (req.user.role !== "empresa" || req.user.entityId !== id) return res.status(403).json({ error: "Sem permissão" });
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(id);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  // Cadastro completo aprova na hora. A plataforma deixou de ser fila de
+  // espera também aqui — mesma razão do lado do profissional: esperar sem
+  // prazo nem motivo faz a empresa desistir antes de operar.
+  //
+  // A exigência de cadastro completo FICA. Ela não é burocracia: é o que
+  // impede uma empresa sem CNPJ e sem representante legal de publicar
+  // campanha e ficar devendo comissão a um vendedor que já trabalhou.
   const pendencias = camposPendentesEmpresa(empresa);
   if (pendencias.length) return res.status(422).json({ error: "Complete o cadastro antes de enviar.", pendencias });
-  if (empresa.statusCadastro === "em_analise") return res.json({ ok: true, status: "em_analise", duplicado: true });
-  db.prepare("UPDATE companies SET statusCadastro = 'em_analise' WHERE id = ?").run(id);
+  if (empresa.statusCadastro === "aprovada") return res.json({ ok: true, status: "aprovada", duplicado: true });
+
+  db.prepare("UPDATE companies SET statusCadastro = 'aprovada', aprovadoEm = ? WHERE id = ?").run(Date.now(), id);
   const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(id);
-  if (usuario?.email) await emailEmpresaEmAnalise(empresa.nome, usuario.email);
-  res.json({ ok: true, status: "em_analise" });
+  if (usuario?.email) await emailStatusEmpresa(empresa.nome, usuario.email, "aprovada");
+  res.json({ ok: true, status: "aprovada" });
 });
 
 router.patch("/companies/:id/status", async (req, res) => {

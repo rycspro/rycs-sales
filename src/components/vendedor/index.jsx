@@ -12,14 +12,27 @@ import Triagem from "./Triagem.jsx";
 export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
   const [campanhaAbertaId, setCampanhaAbertaId] = useState(null);
+  // Refazer a avaliação por escolha própria, já aprovado. A nota é o que a
+  // empresa lê antes de aceitar alguém numa campanha, então travar a
+  // avaliação na primeira tentativa congelaria a pessoa na versão mais fraca
+  // dela — inclusive depois de ela estudar na Academy justamente para melhorar.
+  const [refazendo, setRefazendo] = useState(false);
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
   if (!eu) return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
   // Só quem ainda não fez a avaliação fica retido nela. Concluída, o perfil
   // é liberado — pleno acima de 90%, parcial abaixo — e a Academy passa a ser
   // o caminho para elevar a classificação.
-  if (eu.status === "triagem" || eu.status === "recusado")
-    return <Triagem aviso={aviso} recarregar={recarregar} irAcademy={() => setAba("academy")} />;
+  const precisaAvaliar = eu.status === "triagem" || eu.status === "recusado";
+  if (precisaAvaliar || refazendo)
+    return (
+      <Triagem
+        aviso={aviso}
+        recarregar={recarregar}
+        irAcademy={() => { setRefazendo(false); setAba("academy"); }}
+        voltar={refazendo ? () => setRefazendo(false) : null}
+      />
+    );
 
   const empresaAberta = db.companies.find((c) => c.id === abertaId);
   const campanhaAberta = db.campaigns?.find((c) => c.id === campanhaAbertaId);
@@ -34,7 +47,7 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
       {aba === "academy" && <AcademyCatalogo eu={eu} aviso={aviso} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
-      {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} setDb={setDb} aviso={aviso} />}
+      {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} setDb={setDb} aviso={aviso} refazerAvaliacao={() => setRefazendo(true)} />}
     </>
   );
 }

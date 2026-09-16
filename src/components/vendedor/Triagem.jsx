@@ -22,7 +22,7 @@ const RECADOS = {
   reprovado: "Isso não significa que você não saiba vender. Sua conta está liberada e os cursos da Academy ficam disponíveis para desenvolver as competências avaliadas.",
 };
 
-export default function Triagem({ aviso, recarregar, irAcademy }) {
+export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
   const [dados, setDados] = useState(null);
   const [historico, setHistorico] = useState(null);
   const [fase, setFase] = useState("intro"); // intro | prova | resultado
@@ -100,6 +100,7 @@ export default function Triagem({ aviso, recarregar, irAcademy }) {
     const seguir = async () => {
       if (!aprovadoPleno) irAcademy?.();
       await recarregar?.();
+      voltar?.();
     };
 
     return (
@@ -181,10 +182,15 @@ export default function Triagem({ aviso, recarregar, irAcademy }) {
             {aprovadoPleno ? <>Acessar as oportunidades <ArrowRight size={14} /></>
                            : <><GraduationCap size={14} /> Continuar na Academy</>}
           </button>
-          {!aprovadoPleno && (
-            <button className="vx-btn vx-btn-block"
-              onClick={() => { setRespostas({}); setBloco(0); setFase("prova"); }}>
-              <RotateCcw size={14} /> Refazer a avaliação
+          {/* Refazer deixa de ser consolo de quem não passou: quem já foi
+              aprovado também melhora a nota, e é a nota que a empresa lê. */}
+          <button className="vx-btn vx-btn-block"
+            onClick={() => { setRespostas({}); setBloco(0); setFase("prova"); }}>
+            <RotateCcw size={14} /> Refazer a avaliação
+          </button>
+          {voltar && (
+            <button className="vx-btn vx-btn-ghost vx-btn-block vx-btn-sm" onClick={voltar}>
+              Voltar ao perfil
             </button>
           )}
         </div>
@@ -235,6 +241,14 @@ export default function Triagem({ aviso, recarregar, irAcademy }) {
             onClick={() => setFase("prova")}>
             Começar avaliação <ArrowRight size={15} />
           </button>
+          {/* Quem abriu a avaliação por escolha própria precisa poder desistir.
+              Sem esta saída, quem já está aprovado e só foi olhar fica preso
+              numa tela de 17 perguntas sem caminho de volta. */}
+          {voltar && (
+            <button className="vx-btn vx-btn-ghost vx-btn-block vx-btn-sm" style={{ marginTop: 8 }} onClick={voltar}>
+              Agora não, voltar ao perfil
+            </button>
+          )}
         </div>
       </div>
     );

@@ -892,6 +892,17 @@ if (liberados.changes > 0) {
   console.log(`[migracao] ${liberados.changes} profissional(is) liberado(s) da fila de análise`);
 }
 
+// Mesma mudança do lado da empresa: cadastro completo aprova na hora, então
+// ninguém fica parado em 'em_analise' esperando um passo que não existe mais.
+// 'rascunho' não é tocado — ali o cadastro ainda está incompleto, e aprovar
+// empresa sem CNPJ é o que essa checagem existe para impedir.
+const empresasLiberadas = db.prepare(
+  "UPDATE companies SET statusCadastro = 'aprovada', aprovadoEm = COALESCE(aprovadoEm, ?) WHERE statusCadastro = 'em_analise'"
+).run(Date.now());
+if (empresasLiberadas.changes > 0) {
+  console.log(`[migracao] ${empresasLiberadas.changes} empresa(s) liberada(s) da fila de análise`);
+}
+
 db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_idempotency
     ON submissions(sellerId, idempotencyKey) WHERE idempotencyKey IS NOT NULL;

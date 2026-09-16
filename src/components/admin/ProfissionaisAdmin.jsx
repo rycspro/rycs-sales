@@ -56,13 +56,24 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
             <div key={s.id} className="vx-card" style={{ overflow: "hidden" }}>
               <div style={{ padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}
                 onClick={() => setExpandido(isOpen ? null : s.id)}>
-                <div style={{ width: 38, height: 38, borderRadius: 999, background: "var(--brand-50)", color: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
-                  {s.nome.charAt(0)}
-                </div>
+                {/* A foto já vinha do servidor e a tela mostrava só a inicial.
+                    Quem avalia um profissional quer ver a pessoa. */}
+                {s.foto ? (
+                  <img src={s.foto} alt={s.nome} style={{ width: 38, height: 38, borderRadius: 999, objectFit: "cover", flexShrink: 0, border: "1px solid var(--border)" }} />
+                ) : (
+                  <div style={{ width: 38, height: 38, borderRadius: 999, background: "var(--brand-50)", color: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
+                    {s.nome.charAt(0)}
+                  </div>
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <b style={{ fontSize: 14 }}>{s.nome}</b>
-                    <span className={`vx-badge vx-badge-${STATUS_TONE[s.status]}`}>{STATUS_LABEL[s.status]}</span>
+                    <span className={`vx-badge vx-badge-${STATUS_TONE[s.status]}`}>
+                      {STATUS_LABEL[s.status]}
+                      {/* A nota da triagem é o número que sustentou a aprovação.
+                          Estava no banco e não aparecia em lugar nenhum. */}
+                      {s.scoreTriagem != null && ` · ${Number(s.scoreTriagem).toFixed(2)}%`}
+                    </span>
                     <span className="vx-badge vx-badge-muted">{PERFIS[s.perfil] || s.perfil}</span>
                   </div>
                   <div className="vx-mut" style={{ fontSize: 12 }}>{s.email} · {s.cidade || "—"}</div>
@@ -83,6 +94,16 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
                     <div><span className="vx-mut">Sacado</span><div className="vx-mono" style={{ fontWeight: 600 }}>{money(s.sacado)}</div></div>
                     <div><span className="vx-mut">Empresas ativas</span><div style={{ fontWeight: 600 }}>{s.empresasAtivas}</div></div>
                   </div>
+                  <div className="vx-grid vx-g4" style={{ marginTop: 10, fontSize: 12.5 }}>
+                    <div><span className="vx-mut">Nota da triagem</span><div className="vx-mono" style={{ fontWeight: 600 }}>{s.scoreTriagem != null ? `${Number(s.scoreTriagem).toFixed(2)}%` : "não avaliado"}</div></div>
+                    <div><span className="vx-mut">Qualidade da foto</span><div className="vx-mono" style={{ fontWeight: 600 }}>{s.fotoScore != null && s.foto ? `${s.fotoScore}%` : "sem foto"}</div></div>
+                  </div>
+                  {s.notaTriagem && (
+                    <div style={{ marginTop: 10, fontSize: 12.5 }}>
+                      <span className="vx-mut">Observação da análise</span>
+                      <div style={{ lineHeight: 1.6 }}>{s.notaTriagem}</div>
+                    </div>
+                  )}
                   <div className="vx-grid vx-g4" style={{ marginTop: 10, fontSize: 12.5 }}>
                     <div><span className="vx-mut">WhatsApp</span><div style={{ fontWeight: 500 }}>{s.whats}</div></div>
                     <div><span className="vx-mut">PIX</span><div className="vx-mono" style={{ fontSize: 12 }}>{s.pix || "—"}</div></div>

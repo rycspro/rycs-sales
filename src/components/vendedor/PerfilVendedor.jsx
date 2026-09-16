@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X } from "lucide-react";
+import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
@@ -60,7 +60,7 @@ function Marcadores({ opcoes, valor = [], onChange, max = 12 }) {
   );
 }
 
-export default function PerfilVendedor({ eu, db, up, aviso }) {
+export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) {
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [avaliacaoFoto, setAvaliacaoFoto] = useState(null);
@@ -194,6 +194,14 @@ export default function PerfilVendedor({ eu, db, up, aviso }) {
               {aprovado ? "Perfil aprovado" : "Perfil não aprovado"}
               {nota > 0 && <> · {nota}%</>}
             </span>
+            {/* A avaliação fica sempre à mão. Quem estudou na Academy precisa
+                de onde provar isso, e a nota é o que a empresa lê antes de
+                aceitar alguém numa campanha. */}
+            {refazerAvaliacao && (
+              <button className="vx-btn vx-btn-sm" onClick={refazerAvaliacao}>
+                <RotateCcw size={13} /> {nota > 0 ? "Refazer avaliação" : "Fazer avaliação"}
+              </button>
+            )}
             <button className="vx-btn vx-btn-sm" onClick={() => setEditando(!editando)}>
               {editando ? <><X size={13} /> Cancelar</> : <><Pencil size={13} /> Editar perfil</>}
             </button>
