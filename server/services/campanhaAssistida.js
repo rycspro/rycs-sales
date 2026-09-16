@@ -15,10 +15,17 @@ import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha } from "../../shared/objetiv
 // e por isso "fechar" vem antes de "reunião" — quem diz "quero fechar mais
 // contratos com reunião" está pedindo closer, não SDR.
 const PISTAS = [
+  // "Prospecção completa" contém "prospec" e "fechamento" contém "fechar":
+  // o ciclo inteiro precisa vencer as duas partes dele, ou nunca é detectado.
+  ["completa",    /\b(completa|completo|do in[ií]cio ao fim|ponta a ponta|ciclo (comercial|completo)|todo o (processo|funil|ciclo))\b/i],
   ["vendas",      /\b(fechar|fechamento|contrato|assinar|vender mais|converter|proposta)\b/i],
   ["reativacao",  /\b(reativar|base (parada|inativa|antiga)|ex.?clientes?|voltar a (falar|vender)|churn)\b/i],
-  ["campo",       /\b(porta a porta|presencial|em campo|rua|com[ée]rcio|condom[ií]nio|visita)\b/i],
-  ["prospeccao",  /\b(prospec\w+|mercado novo|lista fria|cold|abrir (mercado|conta)|n[aã]o conhec\w+)\b/i],
+  // Visita vem antes de campo: as duas são PAP, mas "visita presencial" é o
+  // objetivo que a tela oferece hoje, e campo ficou restrito a porta a porta.
+  ["visitas",     /\b(visita\w*|visitar|presencial|ponto de venda|pdv|in loco|diagn[óo]stico local)\b/i],
+  ["campo",       /\b(porta a porta|em campo|na rua|condom[ií]nio)\b/i],
+  ["prospeccao",  /\b(mercado novo|lista fria|cold|abrir (mercado|conta)|n[aã]o conhec\w+|prospec\w+)\b/i],
+  ["leads",       /\b(leads?|contatos? qualificados?|abastecer\w*( o)? funil|encher o funil|qualifica\w+)\b/i],
   ["reunioes",    /\b(reuni[aã]o|reuni[oõ]es|agenda|agendar|agendamento|call|demonstra\w+)\b/i],
 ];
 

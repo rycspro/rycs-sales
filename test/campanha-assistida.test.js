@@ -86,3 +86,32 @@ test("mesmo pedido gera exatamente a mesma campanha", () => {
   const brief = "quero agendar reuniões com distribuidoras no interior de SP";
   assert.deepEqual(sugerirInterno({ empresa, brief }), sugerirInterno({ empresa, brief }));
 });
+
+// Esta invariante já quebrou uma vez: a tela ganhou três objetivos novos
+// (leads, visitas, completa) e o detector continuou conhecendo só os antigos.
+// Quem digitava "preciso gerar leads" recebia "não consegui identificar o
+// objetivo" — com "Gerar leads" sendo o primeiro card da tela.
+test("todo objetivo oferecido na tela é alcançável pelo texto livre", () => {
+  const exemplos = {
+    leads: "preciso gerar leads qualificados para o meu time",
+    reunioes: "preciso agendar reuniões com quem decide",
+    visitas: "quero visitas presenciais em pontos de venda",
+    vendas: "quero fechar mais contratos",
+    completa: "quero a prospecção completa, do início ao fim",
+  };
+
+  for (const chave of ORDEM_OBJETIVOS) {
+    const frase = exemplos[chave];
+    assert.ok(frase, `objetivo "${chave}" está na tela e não tem exemplo neste teste`);
+    assert.equal(detectarObjetivo(frase), chave, `"${frase}" deveria virar ${chave}`);
+  }
+});
+
+test("objetivo detectado sempre monta uma campanha válida", () => {
+  for (const chave of ORDEM_OBJETIVOS) {
+    const c = montarCampanha(chave, empresa);
+    assert.ok(c, `${chave} não montou`);
+    assert.ok(Object.keys(c.tarefas).length > 0, `${chave} sem nenhuma ação remunerada`);
+    assert.ok(c.funcao, `${chave} sem função comercial`);
+  }
+});
