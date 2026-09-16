@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
-import { saldoDisponivel } from "../../../shared/empresa.js";
+import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
 
 // Criação de campanha em três passos.
 //
@@ -22,6 +22,7 @@ import { saldoDisponivel } from "../../../shared/empresa.js";
 // que a campanha nasce. Nada foi removido, só tirado do caminho.
 
 const PASSOS = ["Objetivo", "Detalhes", "Revisão"];
+const ICONES_OBJETIVO = { leads: Target, reunioes: CalendarCheck, visitas: MapPin, vendas: BadgeDollarSign, completa: Workflow };
 
 export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarComIA = false }) {
   const [passo, setPasso] = useState(0);
@@ -65,28 +66,31 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   const obj = objetivo ? OBJETIVOS[objetivo] : null;
   const custo = campanha ? custoEstimado(campanha, campanha.limitePorProfissional || 10) : null;
+  const checklist = campanha ? campanhaPodeSerPublicada(campanha, emp) : { ok: false, pendencias: [] };
+  const requisitosPublicacao = campanha ? [
+    ["Título", !!campanha.titulo?.trim()], ["Objetivo", !!campanha.objetivo?.trim()],
+    ["ICP", !!campanha.publico?.trim()], ["Região", !!campanha.regiao?.trim()],
+    ["Função", !!campanha.funcao?.trim()], ["Orçamento", Number(campanha.orcamento) > 0],
+    ["Tarefa remunerada", Object.values(campanha.tarefas || {}).some((valor) => Number(valor) > 0)],
+    ["Treinamento obrigatório", (campanha.treinamento || []).length > 0],
+    ["Empresa aprovada", emp.statusCadastro === "aprovada"], ["Plano ativo", !!emp.assinatura && emp.assinatura !== "free"],
+    ["Saldo suficiente", Number(campanha.orcamento || 0) > 0 && Number(campanha.orcamento) <= disponivel],
+  ] : [];
+  const adicionarTreinamento = () => set("treinamento", [...(campanha.treinamento || []), { id: `mod-${Date.now()}`, titulo: "", conteudo: "" }]);
+  const atualizarTreinamento = (indice, campo, valor) => set("treinamento", campanha.treinamento.map((item, i) => i === indice ? { ...item, [campo]: valor } : item));
+  const removerTreinamento = (indice) => set("treinamento", campanha.treinamento.filter((_, i) => i !== indice));
 
   return (
-    <div className="vx-fade" style={{ maxWidth: 780 }}>
+    <div className="vx-fade vx-campaign-wizard">
       {/* trilha dos passos */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+      <div className="vx-wizard-steps">
         {PASSOS.map((p, i) => (
-          <div key={p} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 7,
-              color: i === passo ? "var(--brand)" : i < passo ? "var(--text-2)" : "var(--muted)",
-              fontSize: 13, fontWeight: i === passo ? 600 : 500,
-            }}>
-              <span style={{
-                width: 22, height: 22, borderRadius: 999, display: "grid", placeItems: "center",
-                fontSize: 11, fontWeight: 700,
-                background: i <= passo ? "var(--brand-50)" : "transparent",
-                border: `1px solid ${i <= passo ? "var(--brand)" : "var(--border)"}`,
-                color: i <= passo ? "var(--brand)" : "var(--muted)",
-              }}>{i < passo ? <Check size={12} /> : i + 1}</span>
+          <div key={p} data-active={i === passo ? "1" : "0"} data-done={i < passo ? "1" : "0"}>
+            <div>
+              <span>{i < passo ? <Check size={12} /> : i + 1}</span>
               {p}
             </div>
-            {i < PASSOS.length - 1 && <div style={{ width: 22, height: 1, background: "var(--border)" }} />}
+            {i < PASSOS.length - 1 && <i />}
           </div>
         ))}
       </div>
@@ -99,15 +103,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             A escolha define qual profissional atende, o que é remunerado e que prova cada ação exige.
           </p>
 
-          {!iniciarComIA && <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
+          {!iniciarComIA && <div className="vx-objective-grid">
             {ORDEM_OBJETIVOS.map((k) => {
               const o = OBJETIVOS[k];
+              const Icone = ICONES_OBJETIVO[k] || Target;
               return (
-                <button key={k} className="vx-card" onClick={() => escolher(k)}
-                  style={{
-                    padding: 16, textAlign: "left", cursor: "pointer", border: "1px solid var(--border)",
-                    background: "var(--surface)", display: "flex", alignItems: "flex-start", gap: 13,
-                  }}>
+                <button key={k} className="vx-card vx-objective-card" onClick={() => escolher(k)}>
+                  <span className="vx-objective-icon"><Icone size={19} /></span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <b style={{ fontSize: 15 }}>{o.nome}</b>
@@ -116,7 +118,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>{o.resumo}</div>
                     <div className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>{o.paraQuem}</div>
                   </div>
-                  <ArrowRight size={16} color="var(--muted)" style={{ flexShrink: 0, marginTop: 4 }} />
+                  <ArrowRight size={16} className="vx-objective-arrow" />
                 </button>
               );
             })}
@@ -162,7 +164,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <label><div className="vx-label">Nome da campanha</div>
               <input className="vx-input" value={campanha.titulo} onChange={(e) => set("titulo", e.target.value)} /></label>
 
-            <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">Quem é o cliente que você quer</div>
+            <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">Descrição curta da operação</div>
+              <textarea className="vx-input" style={{ minHeight: 62 }} value={campanha.descricao || ""}
+                onChange={(e) => set("descricao", e.target.value)}
+                placeholder="Explique o resultado esperado e o contexto que o profissional precisa conhecer." /></label>
+
+            <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">ICP — quem é o cliente que você quer</div>
               <textarea className="vx-input" style={{ minHeight: 64 }} value={campanha.publico}
                 onChange={(e) => set("publico", e.target.value)}
                 placeholder="Ex.: distribuidoras de bebida com 10 a 80 funcionários" /></label>
@@ -174,6 +181,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <input className="vx-input vx-mono" type="number" min="1" value={campanha.vagas}
                   onChange={(e) => set("vagas", Number(e.target.value))} /></label>
             </div>
+          </div>
+
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div className="vx-row" style={{ marginBottom: 12 }}><div><b>Estrutura da operação</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Função, prazo e limites de execução.</div></div><ShieldCheck size={18} color="var(--brand)" /></div>
+            <div className="vx-grid vx-g3">
+              <label><div className="vx-label">Função recomendada</div><select className="vx-input" value={campanha.funcao} onChange={(e) => set("funcao", e.target.value)}><option value="sdr">SDR</option><option value="bdr">BDR</option><option value="closer">Closer</option><option value="pap">Porta a porta</option></select></label>
+              <label><div className="vx-label">Prazo por tarefa (horas)</div><input className="vx-input vx-mono" type="number" min="1" value={campanha.prazoHoras} onChange={(e) => set("prazoHoras", Number(e.target.value))} /></label>
+              <label><div className="vx-label">Limite por profissional</div><input className="vx-input vx-mono" type="number" min="0" value={campanha.limitePorProfissional} onChange={(e) => set("limitePorProfissional", Number(e.target.value))} /></label>
+            </div>
+            <div className="vx-wizard-checks"><label><input type="checkbox" checked={campanha.aceitaLeadProprio} onChange={(e) => set("aceitaLeadProprio", e.target.checked)} /> Aceitar leads próprios dos profissionais</label><label><input type="checkbox" checked={campanha.exigeCertificacao} onChange={(e) => set("exigeCertificacao", e.target.checked)} /> Exigir certificação antes de trabalhar</label></div>
           </div>
 
           {/* valores: o ponto onde a empresa decide o que paga */}
@@ -207,6 +224,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
           </div>
 
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div className="vx-row"><div><b style={{ fontSize: 14 }}>Treinamento obrigatório</b><div className="vx-mut" style={{ fontSize: 11.5 }}>O profissional precisa conhecer a operação antes de começar.</div></div><button className="vx-btn vx-btn-sm" onClick={adicionarTreinamento}><Plus size={13} /> Módulo</button></div>
+            {(campanha.treinamento || []).length === 0 ? <div className="vx-campaign-inline-empty" style={{ marginTop: 12 }}>Adicione ao menos um módulo para liberar a publicação.</div> : <div className="vx-training-drafts">{campanha.treinamento.map((modulo, indice) => <div key={modulo.id || indice}><input className="vx-input" placeholder="Título do módulo" value={modulo.titulo || ""} onChange={(e) => atualizarTreinamento(indice, "titulo", e.target.value)} /><textarea className="vx-input" placeholder="Resumo, conteúdo ou URL autorizada" value={modulo.conteudo || ""} onChange={(e) => atualizarTreinamento(indice, "conteudo", e.target.value)} /><button className="vx-btn vx-btn-ghost vx-btn-sm" aria-label="Remover módulo" onClick={() => removerTreinamento(indice)}><Trash2 size={14} /></button></div>)}</div>}
+          </div>
+
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(0)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" onClick={() => setPasso(2)}>Revisar <ArrowRight size={14} /></button>
@@ -226,10 +248,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <div className="vx-grid vx-g2" style={{ fontSize: 13 }}>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Campanha</span><div style={{ fontWeight: 600 }}>{campanha.titulo}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Objetivo</span><div style={{ fontWeight: 600 }}>{obj?.nome}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>ICP</span><div style={{ fontWeight: 600 }}>{campanha.publico || "—"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Profissional</span><div style={{ fontWeight: 600 }}>{campanha.funcao.toUpperCase()}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Vagas</span><div style={{ fontWeight: 600 }}>{campanha.vagas}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Região</span><div style={{ fontWeight: 600 }}>{campanha.regiao || "—"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Prazo por ação</span><div style={{ fontWeight: 600 }}>{campanha.prazoHoras}h</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Orçamento</span><div style={{ fontWeight: 600 }} className="vx-mono">{money(campanha.orcamento)}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Limite por profissional</span><div style={{ fontWeight: 600 }}>{campanha.limitePorProfissional || "Sem limite"}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Leads próprios</span><div style={{ fontWeight: 600 }}>{campanha.aceitaLeadProprio ? "Aceitos" : "Não aceitos"}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Certificação</span><div style={{ fontWeight: 600 }}>{campanha.exigeCertificacao ? "Obrigatória" : "Não exigida"}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento</span><div style={{ fontWeight: 600 }}>{(campanha.treinamento || []).length} módulo(s)</div></div>
             </div>
 
             <hr className="vx-sep" />
@@ -251,18 +279,19 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
 
             <hr className="vx-sep" />
-            <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Ainda falta, antes de publicar</div>
-            <ul style={{ margin: 0, paddingLeft: 17, fontSize: 12.5, lineHeight: 1.8, color: "var(--muted)" }}>
-              <li>Ao menos um módulo de treinamento sobre o seu produto</li>
-              <li>Saldo disponível cobrindo o orçamento</li>
-              <li>Plano pago ativo</li>
-            </ul>
+            <div className="vx-eyebrow" style={{ marginBottom: 8 }}>Evidências exigidas</div>
+            <div className="vx-evidence-summary">{Object.entries(campanha.evidencias || {}).map(([tipo, campos]) => <div key={tipo}><b>{ACOES[tipo]?.nome || tipo}</b><span>{Array.isArray(campos) ? campos.join(" · ") : "Critério configurado"}</span></div>)}</div>
+
+            <hr className="vx-sep" />
+            <div className="vx-row" style={{ alignItems: "flex-start" }}><div><div className="vx-eyebrow">Checklist de publicação</div><b style={{ fontSize: 13 }}>{checklist.ok ? "Rascunho pronto para solicitar publicação" : `${checklist.pendencias.length} pendência(s) identificada(s)`}</b></div><span className={`vx-campaign-status ${checklist.ok ? "is-ativa" : "is-em_revisao"}`}>{checklist.ok ? "Completo" : "Pendente"}</span></div>
+            <div className="vx-publish-checklist">{requisitosPublicacao.map(([label, ok]) => <div key={label} data-ok={ok ? "1" : "0"}><span>{ok ? <Check size={12} /> : "!"}</span>{label}</div>)}</div>
+            {!checklist.ok && <div className="vx-notice vx-notice-amber" style={{ marginTop: 11 }}>{checklist.pendencias.join(" · ")}</div>}
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={criar}>
-              {salvando ? "Criando…" : <>Criar campanha <Check size={14} /></>}
+              {salvando ? "Salvando…" : <>Salvar como rascunho <Check size={14} /></>}
             </button>
           </div>
         </>

@@ -20,6 +20,19 @@ import { ACOES } from "./acoes.js";
 // mercado, porque não medimos mercado nenhum.
 
 export const OBJETIVOS = {
+  leads: {
+    nome: "Gerar leads",
+    resumo: "Encontrar e qualificar potenciais clientes para o seu time.",
+    paraQuem: "Você precisa abastecer o funil com contatos que correspondam ao cliente ideal.",
+    funcao: "bdr",
+    acoes: ["ligacao", "follow", "agendamento"],
+    principal: "agendamento",
+    prazoHoras: 72,
+    proporcao: { ligacao: 0.006, follow: 0.002, agendamento: 0.012 },
+    tituloSugerido: (emp) => `Geração de leads — ${emp.segmento || emp.nome || "campanha"}`,
+    objetivoTexto: "Encontrar e qualificar potenciais clientes.",
+  },
+
   reunioes: {
     nome: "Agendar reuniões",
     resumo: "Encher a agenda do seu time comercial com reuniões confirmadas.",
@@ -32,6 +45,19 @@ export const OBJETIVOS = {
     proporcao: { agendamento: 0.012, realizada: 0.02 },
     tituloSugerido: (emp) => `Agendamento de reuniões — ${emp.nome || "campanha"}`,
     objetivoTexto: "Gerar reuniões qualificadas com quem decide.",
+  },
+
+  visitas: {
+    nome: "Realizar visitas presenciais",
+    resumo: "Visitar empresas ou pontos de venda em uma região definida.",
+    paraQuem: "Sua operação depende de presença física, diagnóstico local ou demonstração em campo.",
+    funcao: "pap",
+    acoes: ["agendamento", "realizada"],
+    principal: "realizada",
+    prazoHoras: 48,
+    proporcao: { agendamento: 0.01, realizada: 0.025 },
+    tituloSugerido: (emp) => `Visitas presenciais — ${emp.regiao || "região a definir"}`,
+    objetivoTexto: "Realizar visitas presenciais qualificadas na região definida.",
   },
 
   prospeccao: {
@@ -58,6 +84,19 @@ export const OBJETIVOS = {
     proporcao: { realizada: 0.015, venda: 0.28 },
     tituloSugerido: (emp) => `Fechamento — ${emp.produto || emp.nome || "campanha"}`,
     objetivoTexto: "Conduzir a negociação e fechar contrato.",
+  },
+
+  completa: {
+    nome: "Prospecção completa",
+    resumo: "Da prospecção inicial ao fechamento da venda.",
+    paraQuem: "Você quer uma força comercial responsável pelo ciclo completo da operação.",
+    funcao: "sdr",
+    acoes: ["ligacao", "follow", "agendamento", "realizada", "venda"],
+    principal: "venda",
+    prazoHoras: 72,
+    proporcao: { ligacao: 0.004, follow: 0.002, agendamento: 0.012, realizada: 0.02, venda: 0.22 },
+    tituloSugerido: (emp) => `Prospecção completa — ${emp.produto || emp.nome || "campanha"}`,
+    objetivoTexto: "Executar o ciclo comercial da prospecção ao fechamento.",
   },
 
   campo: {
@@ -87,7 +126,9 @@ export const OBJETIVOS = {
   },
 };
 
-export const ORDEM_OBJETIVOS = ["reunioes", "prospeccao", "vendas", "campo", "reativacao"];
+// As chaves antigas continuam acima para abrir e editar rascunhos já salvos.
+// A nova criação apresenta somente a hierarquia operacional abaixo.
+export const ORDEM_OBJETIVOS = ["leads", "reunioes", "visitas", "vendas", "completa"];
 
 // Converte "R$ 1.490,50/mês" em 1490.5. Sem ticket não há sugestão de valor —
 // e é melhor não sugerir do que sugerir a partir de um número inventado.

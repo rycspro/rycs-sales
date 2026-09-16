@@ -1,9 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { detectarObjetivo, sugerirInterno } from "../server/services/campanhaAssistida.js";
-import { montarCampanha, ticketEmNumero } from "../shared/objetivosCampanha.js";
+import { montarCampanha, OBJETIVOS, ORDEM_OBJETIVOS, ticketEmNumero } from "../shared/objetivosCampanha.js";
 
 const empresa = { nome: "Nexo CRM", produto: "CRM para distribuidoras", ticket: "R$ 890/mês", icp: "Distribuidoras" };
+
+test("nova criação apresenta os cinco objetivos operacionais solicitados", () => {
+  assert.deepEqual(ORDEM_OBJETIVOS, ["leads", "reunioes", "visitas", "vendas", "completa"]);
+  assert.deepEqual(ORDEM_OBJETIVOS.map((chave) => OBJETIVOS[chave].nome), ["Gerar leads", "Agendar reuniões", "Realizar visitas presenciais", "Fechar vendas", "Prospecção completa"]);
+});
 
 test("o objetivo sai do que a pessoa pediu, não de palavra solta", () => {
   assert.equal(detectarObjetivo("preciso de reuniões com distribuidoras"), "reunioes");

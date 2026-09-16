@@ -34,9 +34,10 @@ export function campanhaPodeSerPublicada(campanha = {}, empresa = {}) {
   if (!String(campanha.funcao || "").trim()) pendencias.push("função comercial");
   if (!Number(campanha.orcamento || 0)) pendencias.push("orçamento");
   const tarefas = campanha.tarefas || {};
-  if (!Number(tarefas.agendamento || 0) && !Number(tarefas.realizada || 0)) pendencias.push("ao menos uma tarefa piloto remunerada");
+  if (!Object.values(tarefas).some((valor) => Number(valor) > 0)) pendencias.push("ao menos uma tarefa remunerada");
   const treinamento = campanha.treinamento || [];
   if (!treinamento.length) pendencias.push("treinamento");
+  if (Number(campanha.orcamento || 0) > saldoDisponivel(empresa)) pendencias.push("orçamento superior ao saldo disponível");
   return { ok: pendencias.length === 0, pendencias };
 }
 

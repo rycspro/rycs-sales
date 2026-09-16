@@ -23,6 +23,11 @@ test("campanha pronta pode ser publicada", () => {
   assert.deepEqual(campanhaPodeSerPublicada(campanha, empresaPronta), { ok: true, pendencias: [] });
 });
 
+test("qualquer tarefa remunerada atende o requisito de publicação", () => {
+  const campanha = { titulo: "Prospecção", objetivo: "Contato", publico: "B2B", regiao: "Brasil", funcao: "bdr", orcamento: 1000, tarefas: { ligacao: 5 }, treinamento: [{ titulo: "Produto" }] };
+  assert.equal(campanhaPodeSerPublicada(campanha, empresaPronta).ok, true);
+});
+
 test("campanha sem caixa ou treinamento fica bloqueada", () => {
   const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [] };
   const resultado = campanhaPodeSerPublicada(campanha, { ...empresaPronta, saldoReservado: 5000 });
