@@ -8,6 +8,7 @@ import { extratoEmpresa, posicaoEmpresa } from "../services/financeiro.js";
 import { emailEmpresaEmAnalise, emailStatusEmpresa } from "../services/email.js";
 import Anthropic from "@anthropic-ai/sdk";
 import { extrairTextoPdf } from "../services/reportPdf.js";
+import { montarDossieEmpresa, narrativaEmpresa } from "../services/dossieEmpresa.js";
 
 const router = Router();
 
@@ -52,6 +53,31 @@ router.post("/companies/:id/cnpj/extract", async (req,res)=>{
   let texto="";if(mimetype==="application/pdf"){try{texto=extrairTextoPdf(buffer);}catch(e){return res.status(422).json({error:e.message});}}
   if(!process.env.ANTHROPIC_API_KEY){if(!texto)return res.status(503).json({error:"Leitura de imagem requer o serviço de IA configurado. Você pode preencher os dados manualmente."});const cnpj=texto.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/)?.[0]||"";return res.json({dados:{documento:cnpj.replace(/\D/g,""),razaoSocial:"",nome:"",situacaoCadastral:"",dataAbertura:"",naturezaJuridica:"",cnaes:"",endereco:"",telefoneEmpresa:"",emailEmpresa:""},preview:texto.slice(0,800),confianca:"baixa"});}
   try{const client=new Anthropic({apiKey:process.env.ANTHROPIC_API_KEY});const conteudo=texto?[{type:"text",text:`Extraia do cartão CNPJ abaixo. Responda só JSON com documento, razaoSocial, nome, situacaoCadastral, dataAbertura, naturezaJuridica, cnaes, endereco, telefoneEmpresa, emailEmpresa. Use string vazia quando ausente.\n${texto.slice(0,12000)}`}]:[{type:"image",source:{type:"base64",media_type:mimetype,data:base64}},{type:"text",text:"Extraia este cartão CNPJ. Responda só JSON com documento, razaoSocial, nome, situacaoCadastral, dataAbertura, naturezaJuridica, cnaes, endereco, telefoneEmpresa, emailEmpresa. Use string vazia quando ausente."}];const out=await client.messages.create({model:"claude-sonnet-4-6",max_tokens:700,messages:[{role:"user",content:conteudo}]});const raw=out.content.map((b)=>b.text||"").join("").replace(/```json|```/g,"").trim(),dados=JSON.parse(raw);dados.documento=String(dados.documento||"").replace(/\D/g,"");res.json({dados,preview:raw,confianca:"assistida"});}catch(e){res.status(502).json({error:"Não foi possível ler o cartão CNPJ. Preencha manualmente ou tente outro arquivo."});}
+});
+
+// Dossiê da empresa: o que ela vende, para quem, que vendedor serve nessa
+// operação e como ela se comporta com quem já trabalhou para ela.
+//
+// Junta três fontes que sozinhas não dizem nada: o cadastro (o que ela
+// declara), as campanhas (o que ela realmente busca) e as submissões (como
+// ela trata quem entrega).
+router.get("/companies/:id/dossie", async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(req.params.id);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  const campanhas = db.prepare("SELECT * FROM campaigns WHERE companyId = ?").all(empresa.id)
+    .map((c) => ({ ...c, tarefas: JSON.parse(c.tarefas || "{}") }));
+  const submissions = db.prepare("SELECT * FROM submissions WHERE companyId = ?").all(empresa.id);
+
+  const dossie = montarDossieEmpresa({ empresa, campanhas, submissions });
+
+  // Igual ao dossiê do profissional: a narrativa é opcional e nunca segura a
+  // resposta. Sem chave configurada ela vem nula, e a tela diz isso.
+  dossie.narrativa = await narrativaEmpresa(dossie);
+
+  res.json({ dossie });
 });
 
 router.get("/companies/:id/readiness", (req, res) => {

@@ -4,6 +4,7 @@ import { money, dataCurta, agora } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
 import { apiPatch } from "../../lib/api.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
+import { DossieEmpresa } from "./Dossie.jsx";
 
 export default function EmpresasAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
@@ -113,7 +114,9 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                   )}
 
                   <hr className="vx-sep" />
-                  <div className="vx-row" style={{ marginBottom: 12, alignItems: "center" }}>
+                  <DossieEmpresa companyId={c.id} />
+
+                  <div className="vx-row" style={{ marginTop: 16, marginBottom: 12, alignItems: "center" }}>
                     <div><b style={{ fontSize: 13 }}>Habilitação operacional</b><div className="vx-mut" style={{ fontSize: 12 }}>A aprovação libera publicação de campanhas.</div></div>
                     <div style={{ display: "flex", gap: 7 }}>
                       {c.statusCadastro !== "aprovada" && <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => decidirCadastro(c, "aprovada")}>Aprovar empresa</button>}

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
+import { DossieProfissional } from "./Dossie.jsx";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", "sem-exp": "Iniciante", bdr: "BDR", pap: "PAP" };
 const STATUS_LABEL = { aprovado: "Ativo", parcial: "Ativo", analise: "Em análise", triagem: "Triagem", recusado: "Recusado" };
@@ -42,7 +43,7 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
           <input className="vx-input" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, email ou cidade" style={{ paddingLeft: 32 }} />
         </div>
         <div className="vx-seg">
-          {[["todos", "Todos"], ["aprovado", "Ativos"], ["triagem", "Triagem"], ["recusado", "Recusados"]].map(([k, t]) => (
+          {[["todos", "Todos"], ["aprovado", "Ativos"], ["triagem", "Sem avaliação"], ["recusado", "Suspensos"]].map(([k, t]) => (
             <button key={k} data-on={filtroStatus === k ? "1" : "0"} onClick={() => setFiltroStatus(k)}>{t}</button>
           ))}
         </div>
@@ -97,6 +98,8 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
                   <div style={{ marginTop: 12 }}>
                     <span className="vx-mut" style={{ fontSize: 12.5 }}>Total de submissões: {s.subs} · Aprovadas: {s.liberados} · Taxa: {s.subs > 0 ? Math.round((s.liberados / s.subs) * 100) : 0}%</span>
                   </div>
+
+                  <DossieProfissional sellerId={s.id} />
 
                   <hr className="vx-sep" />
                   <Excluir

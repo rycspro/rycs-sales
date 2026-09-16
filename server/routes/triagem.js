@@ -185,15 +185,22 @@ function tentativaCompleta(assessmentId) {
   };
 }
 
+// Antes isto era uma fila de espera: só quem estava em 'analise'. Ninguém
+// fica mais em análise, então a consulta passou a devolver lista vazia para
+// sempre — e a plataforma perdeu de vista todo mundo que já se avaliou.
+//
+// Vira um diretório: todos que concluíram a avaliação, com o que precisa para
+// entender a especialidade de cada um sem abrir o dossiê completo.
 router.get("/triagem/fila", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
 
   const fila = db.prepare(`
-    SELECT s.id, s.nome, s.email, s.cidade, s.perfil, s.scoreTriagem, s.criadoEm, s.perfilComercial,
+    SELECT s.id, s.nome, s.email, s.cidade, s.perfil, s.status, s.scoreTriagem, s.criadoEm, s.perfilComercial,
            (SELECT COUNT(*) FROM assessments WHERE sellerId = s.id) AS tentativas,
            (SELECT MAX(criadoEm) FROM assessments WHERE sellerId = s.id) AS avaliadoEm
-    FROM sellers s WHERE s.status = 'analise'
-    ORDER BY avaliadoEm ASC
+    FROM sellers s
+    WHERE EXISTS (SELECT 1 FROM assessments WHERE sellerId = s.id)
+    ORDER BY avaliadoEm DESC
   `).all().map((s) => ({ ...s, perfilComercial: JSON.parse(s.perfilComercial || "{}") }));
 
   res.json({ fila });
