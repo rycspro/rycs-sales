@@ -5,7 +5,7 @@ import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel } from "../.
 import { dentroDoLimite } from "../../shared/planos.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
-import { obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
+import { obterOperacaoCampanha, obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
 
 const router = Router();
 
@@ -45,6 +45,17 @@ router.get("/campaigns-overview", (req, res) => {
   const overview = obterVisaoGeralCampanhas(req.user.entityId);
   if (!overview) return res.status(404).json({ error: "Empresa não encontrada" });
   res.json(overview);
+});
+
+router.get("/campaigns/:id/operations", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const operacao = obterOperacaoCampanha(req.user.entityId, req.params.id, {
+    periodo: String(req.query.periodo || "7d"),
+    de: req.query.de,
+    ate: req.query.ate,
+  });
+  if (!operacao) return res.status(404).json({ error: "Campanha não encontrada" });
+  res.json(operacao);
 });
 
 router.get("/campaigns/:id", (req, res) => {

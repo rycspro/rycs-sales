@@ -21,6 +21,16 @@ export function filtrarCampanhasPorStatus(campanhas = [], chave = "todas") {
   return campanhas.filter((campanha) => campanha.status === filtro.status);
 }
 
+export function taxaEntreEtapas(numerador, denominador) {
+  const base = numero(denominador);
+  return base > 0 ? Math.round((numero(numerador) / base) * 1000) / 10 : null;
+}
+
+export function custoPorResultado(investimento, quantidade) {
+  const total = numero(quantidade);
+  return total > 0 ? Math.round((numero(investimento) / total) * 100) / 100 : null;
+}
+
 const numero = (valor) => Number(valor) || 0;
 const arredondar = (valor) => Math.round(numero(valor) * 100) / 100;
 

@@ -7,6 +7,7 @@ import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
 import CampaignsDashboard from "./CampaignsDashboard.jsx";
+import CampaignDetail from "./CampaignDetail.jsx";
 
 const novaCampanha = (emp) => ({
   titulo: "", descricao: "", produto: emp.produto || "", objetivo: "Gerar reuniões qualificadas",
@@ -104,11 +105,19 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
     recarregarSinal={recarregarDashboard}
     onCriar={() => { setCriarComIA(false); setCriando(true); }}
     onCriarIA={() => { setCriarComIA(true); setCriando(true); }}
-    onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
+    onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
+  />;
+
+  if (modo === "detalhe" && existente) return <CampaignDetail
+    campanha={existente}
+    db={db}
+    onVoltar={() => setModo("dashboard")}
+    onEditar={() => { setEdicao({ ...existente }); setModo("editor"); }}
+    onStatus={mudarStatus}
   />;
 
   return <div className="vx-fade">
-    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 4 }} onClick={() => setModo("dashboard")}>← Central de campanhas</button><div className="vx-eyebrow">Configuração da campanha</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>{campanha.titulo || "Nova campanha"}</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Ajuste orçamento, tarefas, evidências e treinamento.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Nova campanha</button></div>
+    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 4 }} onClick={() => setModo(existente ? "detalhe" : "dashboard")}>← {existente ? "Dashboard da campanha" : "Central de campanhas"}</button><div className="vx-eyebrow">Configuração da campanha</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>{campanha.titulo || "Nova campanha"}</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Ajuste orçamento, tarefas, evidências e treinamento.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Nova campanha</button></div>
     <div className="vx-card" style={{padding:14,marginBottom:14}}><div className="vx-row"><b>Progresso da campanha</b><span className="vx-chip vx-mono">{concluidos}/10 {alterado?"· não salvo":"· salvo"}</span></div><div className="vx-meter-track" style={{margin:"10px 0"}}><div className="vx-meter-fill" style={{width:`${concluidos*10}%`,background:"var(--brand)"}}/></div><div className="vx-steps">{passos.map((p,i)=><span key={p} data-done={i<concluidos?"1":"0"}>{i+1}. {p}</span>)}</div></div>
 
     <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10 }}>{campanhas.map((c) => <button key={c.id} className="vx-btn vx-btn-sm" onClick={() => { setSelecionada(c.id); setEdicao({ ...c }); }} style={{ borderColor: selecionada === c.id ? "var(--brand)" : undefined }}>{c.titulo} · {c.status}</button>)}</div>

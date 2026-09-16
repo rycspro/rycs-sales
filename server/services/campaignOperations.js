@@ -1,13 +1,25 @@
 import db from "../db.js";
-import { projetarOrcamento, variacaoPercentual } from "../../shared/campaignOperations.js";
+import { custoPorResultado, projetarOrcamento, taxaEntreEtapas, variacaoPercentual } from "../../shared/campaignOperations.js";
 
 const valor = (row, chave = "total") => Number(row?.[chave]) || 0;
+const DIA = 86400000;
+const FUSO_SAO_PAULO = -3 * 60 * 60 * 1000;
+
+function inicioDiaSaoPaulo(agoraMs) {
+  const local = new Date(agoraMs + FUSO_SAO_PAULO);
+  return Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) - FUSO_SAO_PAULO;
+}
+
+function inicioMesSaoPaulo(agoraMs, deslocamento = 0) {
+  const local = new Date(agoraMs + FUSO_SAO_PAULO);
+  return Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + deslocamento, 1) - FUSO_SAO_PAULO;
+}
 
 function intervalos(agoraMs) {
-  const agora = new Date(agoraMs);
-  const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
-  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).getTime();
-  const inicioMesAnterior = new Date(agora.getFullYear(), agora.getMonth() - 1, 1).getTime();
+  const agora = new Date(agoraMs + FUSO_SAO_PAULO);
+  const inicioHoje = inicioDiaSaoPaulo(agoraMs);
+  const inicioMes = inicioMesSaoPaulo(agoraMs);
+  const inicioMesAnterior = inicioMesSaoPaulo(agoraMs, -1);
   const duracaoHoje = Math.max(1, agoraMs - inicioHoje);
   const duracaoMes = Math.max(1, agoraMs - inicioMes);
   return {
@@ -18,8 +30,133 @@ function intervalos(agoraMs) {
     inicioMes,
     inicioMesAnterior,
     fimMesAnteriorEquivalente: Math.min(inicioMes, inicioMesAnterior + duracaoMes),
-    diaDoMes: agora.getDate(),
-    diasNoMes: new Date(agora.getFullYear(), agora.getMonth() + 1, 0).getDate(),
+    diaDoMes: agora.getUTCDate(),
+    diasNoMes: new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth() + 1, 0)).getUTCDate(),
+  };
+}
+
+function resolverPeriodo(periodo = "7d", agoraMs = Date.now(), de, ate) {
+  const fim = agoraMs + 1;
+  if (periodo === "personalizado") {
+    const inicioCustom = Number(de);
+    const fimCustom = Number(ate);
+    if (Number.isFinite(inicioCustom) && Number.isFinite(fimCustom) && inicioCustom < fimCustom) {
+      const inicio = Math.max(inicioCustom, fimCustom - 366 * DIA);
+      return { inicio, fim: Math.min(fimCustom + 1, fim), label: "Personalizado" };
+    }
+  }
+  const inicioHoje = inicioDiaSaoPaulo(agoraMs);
+  if (periodo === "hoje") return { inicio: inicioHoje, fim, label: "Hoje" };
+  if (periodo === "30d") return { inicio: inicioHoje - 29 * DIA, fim, label: "30 dias" };
+  return { inicio: inicioHoje - 6 * DIA, fim, label: "7 dias" };
+}
+
+function agregarPeriodo(companyId, campaignId, inicio, fim) {
+  const tarefas = db.prepare(`
+    SELECT COUNT(*) tarefas,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'ligacao' THEN 1 ELSE 0 END) contatos,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'agendamento' THEN 1 ELSE 0 END) reunioes,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'realizada' THEN 1 ELSE 0 END) realizadas,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'venda' THEN 1 ELSE 0 END) vendas
+      FROM submissions
+     WHERE companyId = ? AND campaignId = ? AND criadoEm >= ? AND criadoEm < ?
+  `).get(companyId, campaignId, inicio, fim);
+  const leads = valor(db.prepare(`SELECT COUNT(*) total FROM leads WHERE companyId = ? AND campaignId = ? AND criadoEm >= ? AND criadoEm < ?`).get(companyId, campaignId, inicio, fim));
+  const investimento = valor(db.prepare(`
+    SELECT COALESCE(SUM(ABS(fl.valor)), 0) total
+      FROM financial_ledger fl JOIN submissions s ON s.id = fl.submissionId
+     WHERE fl.companyId = ? AND s.companyId = ? AND s.campaignId = ? AND fl.tipo = 'liquidacao'
+       AND fl.criadoEm >= ? AND fl.criadoEm < ?
+  `).get(companyId, companyId, campaignId, inicio, fim));
+  return {
+    investimento,
+    tarefas: Number(tarefas.tarefas) || 0,
+    contatos: Number(tarefas.contatos) || 0,
+    leads,
+    reunioes: Number(tarefas.reunioes) || 0,
+    realizadas: Number(tarefas.realizadas) || 0,
+    vendas: Number(tarefas.vendas) || 0,
+  };
+}
+
+function serieTemporal(companyId, campaignId, inicio, fim) {
+  const tarefas = mapa(db.prepare(`
+    SELECT strftime('%Y-%m-%d', criadoEm / 1000, 'unixepoch', '-3 hours') campaignId,
+           COUNT(*) tarefas,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'agendamento' THEN 1 ELSE 0 END) reunioes,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'venda' THEN 1 ELSE 0 END) vendas
+      FROM submissions WHERE companyId = ? AND campaignId = ? AND criadoEm >= ? AND criadoEm < ?
+     GROUP BY 1 ORDER BY 1
+  `).all(companyId, campaignId, inicio, fim));
+  const leads = mapa(db.prepare(`
+    SELECT strftime('%Y-%m-%d', criadoEm / 1000, 'unixepoch', '-3 hours') campaignId, COUNT(*) leads
+      FROM leads WHERE companyId = ? AND campaignId = ? AND criadoEm >= ? AND criadoEm < ? GROUP BY 1 ORDER BY 1
+  `).all(companyId, campaignId, inicio, fim));
+  const gastos = mapa(db.prepare(`
+    SELECT strftime('%Y-%m-%d', fl.criadoEm / 1000, 'unixepoch', '-3 hours') campaignId, SUM(ABS(fl.valor)) investimento
+      FROM financial_ledger fl JOIN submissions s ON s.id = fl.submissionId
+     WHERE fl.companyId = ? AND s.companyId = ? AND s.campaignId = ? AND fl.tipo = 'liquidacao'
+       AND fl.criadoEm >= ? AND fl.criadoEm < ? GROUP BY 1 ORDER BY 1
+  `).all(companyId, companyId, campaignId, inicio, fim));
+  const dias = [];
+  for (let cursor = inicioDiaSaoPaulo(inicio); cursor < fim; cursor += DIA) {
+    const data = new Date(cursor + FUSO_SAO_PAULO).toISOString().slice(0, 10);
+    const t = tarefas.get(data) || {};
+    dias.push({
+      data,
+      investimento: Number(gastos.get(data)?.investimento) || 0,
+      tarefas: Number(t.tarefas) || 0,
+      leads: Number(leads.get(data)?.leads) || 0,
+      reunioes: Number(t.reunioes) || 0,
+      vendas: Number(t.vendas) || 0,
+    });
+  }
+  return dias.slice(-31);
+}
+
+export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
+  const campanha = db.prepare(`
+    SELECT id, companyId, titulo, descricao, objetivo, regiao, funcao, status, vagas, orcamento, reservado, criadoEm
+      FROM campaigns WHERE id = ? AND companyId = ?
+  `).get(campaignId, companyId);
+  if (!campanha) return null;
+  const periodo = resolverPeriodo(opcoes.periodo, opcoes.agoraMs || Date.now(), opcoes.de, opcoes.ate);
+  const duracao = periodo.fim - periodo.inicio;
+  const atual = agregarPeriodo(companyId, campaignId, periodo.inicio, periodo.fim);
+  const anterior = agregarPeriodo(companyId, campaignId, periodo.inicio - duracao, periodo.inicio);
+  const profissionaisAtivos = valor(db.prepare(`
+    SELECT COUNT(DISTINCT sellerId) total FROM campaign_applications
+     WHERE campaignId = ? AND status = 'aprovado'
+  `).get(campaignId));
+  return {
+    campanha: { ...campanha, profissionaisAtivos },
+    periodo: { ...periodo, chave: opcoes.periodo || "7d" },
+    metricas: {
+      investimento: { valor: atual.investimento, variacao: variacaoPercentual(atual.investimento, anterior.investimento) },
+      tarefas: { valor: atual.tarefas, variacao: variacaoPercentual(atual.tarefas, anterior.tarefas) },
+      leads: { valor: atual.leads, variacao: variacaoPercentual(atual.leads, anterior.leads) },
+      reunioes: { valor: atual.reunioes, variacao: variacaoPercentual(atual.reunioes, anterior.reunioes) },
+      vendas: { valor: atual.vendas, variacao: variacaoPercentual(atual.vendas, anterior.vendas) },
+    },
+    funil: [
+      { chave: "contatos", label: "Contatos", valor: atual.contatos, taxa: null },
+      { chave: "leads", label: "Leads", valor: atual.leads, taxa: taxaEntreEtapas(atual.leads, atual.contatos) },
+      { chave: "reunioes", label: "Reuniões", valor: atual.reunioes, taxa: taxaEntreEtapas(atual.reunioes, atual.leads) },
+      { chave: "realizadas", label: "Realizadas", valor: atual.realizadas, taxa: taxaEntreEtapas(atual.realizadas, atual.reunioes) },
+      { chave: "vendas", label: "Vendas", valor: atual.vendas, taxa: taxaEntreEtapas(atual.vendas, atual.realizadas) },
+    ],
+    custos: {
+      lead: custoPorResultado(atual.investimento, atual.leads),
+      reuniao: custoPorResultado(atual.investimento, atual.reunioes),
+      venda: custoPorResultado(atual.investimento, atual.vendas),
+    },
+    serie: serieTemporal(companyId, campaignId, periodo.inicio, periodo.fim),
+    origem: {
+      investimento: "liquidações da razão financeira",
+      tarefas: "execuções enviadas",
+      resultados: "execuções liberadas pela plataforma",
+      leads: "leads vinculados à campanha",
+    },
   };
 }
 

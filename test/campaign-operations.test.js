@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { filtrarCampanhasPorStatus, projetarOrcamento, variacaoPercentual } from "../shared/campaignOperations.js";
+import { custoPorResultado, filtrarCampanhasPorStatus, projetarOrcamento, taxaEntreEtapas, variacaoPercentual } from "../shared/campaignOperations.js";
 
 test("variação só é exibida quando existe histórico comparável", () => {
   assert.equal(variacaoPercentual(18, 15), 20);
@@ -27,4 +27,11 @@ test("filtros visuais preservam os estados internos da campanha", () => {
   assert.deepEqual(filtrarCampanhasPorStatus(campanhas, "todas").map((c) => c.id), ["1", "2", "3"]);
   assert.deepEqual(filtrarCampanhasPorStatus(campanhas, "em_andamento").map((c) => c.id), ["1"]);
   assert.deepEqual(filtrarCampanhasPorStatus(campanhas, "aguardando_aprovacao").map((c) => c.id), ["2"]);
+});
+
+test("funil e custo não dividem por zero nem fabricam resultado", () => {
+  assert.equal(taxaEntreEtapas(31, 84), 36.9);
+  assert.equal(taxaEntreEtapas(3, 0), null);
+  assert.equal(custoPorResultado(382, 3), 127.33);
+  assert.equal(custoPorResultado(382, 0), null);
 });

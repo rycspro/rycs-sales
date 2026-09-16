@@ -79,6 +79,8 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
   const [erro, setErro] = useState("");
   const [filtro, setFiltro] = useState("todas");
 
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, []);
+
   useEffect(() => {
     let ativo = true;
     setErro("");
