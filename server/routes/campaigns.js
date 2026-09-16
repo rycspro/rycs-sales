@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { sugerirCampanha } from "../services/campanhaAssistida.js";
 import db, { uid, agora } from "../db.js";
 import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel } from "../../shared/empresa.js";
 import { dentroDoLimite } from "../../shared/planos.js";
@@ -6,6 +7,23 @@ import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js"
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
 
 const router = Router();
+
+// Rascunho de campanha a partir de um pedido em texto livre. Nada é criado
+// nem publicado aqui: devolve a configuração para a empresa revisar na tela.
+router.post("/campaigns/sugerir", async (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+
+  const brief = String(req.body?.brief || "").trim();
+  if (brief.length < 10) return res.status(400).json({ error: "Descreva em uma frase o que você precisa que aconteça." });
+
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(req.user.entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  const r = await sugerirCampanha({ empresa, brief });
+  if (!r.campanha) return res.status(422).json({ error: r.explicacao });
+  res.json(r);
+});
+
 
 router.get("/campaigns", (req, res) => {
   const { role, entityId } = req.user;

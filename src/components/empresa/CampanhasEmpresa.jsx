@@ -5,6 +5,7 @@ import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/arm
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
+import NovaCampanha from "./NovaCampanha.jsx";
 
 const novaCampanha = (emp) => ({
   titulo: "", descricao: "", produto: emp.produto || "", objetivo: "Gerar reuniões qualificadas",
@@ -18,6 +19,10 @@ const novaCampanha = (emp) => ({
 
 export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
   const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
+  // Criar e editar deixam de ser a mesma tela. Criar é decisão comercial e
+  // ganha um assistente de três passos; editar é ajuste fino e continua no
+  // editor completo, com todos os campos à mão.
+  const [criando, setCriando] = useState(campanhas.length === 0);
   const [selecionada, setSelecionada] = useState(campanhas[0]?.id || "nova");
   const existente = campanhas.find((c) => c.id === selecionada);
   const [rascunhoNovo, setRascunhoNovo] = useState(() => lerJson(`rycs-campanha-${emp.id}`, null) || novaCampanha(emp));
@@ -71,8 +76,23 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
     await recarregar?.();
   };
 
+  if (criando) return (
+    <NovaCampanha
+      emp={emp}
+      aviso={aviso}
+      aoCancelar={() => setCriando(false)}
+      aoCriar={(criada) => {
+        up((d) => ({ campaigns: [...(d.campaigns || []), criada] }));
+        setSelecionada(criada.id);
+        setEdicao(criada);
+        setCriando(false);
+        aviso("Campanha criada como rascunho. Adicione o treinamento para publicar.");
+      }}
+    />
+  );
+
   return <div className="vx-fade">
-    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><div className="vx-eyebrow">Operação comercial</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>Campanhas</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Configure orçamento, tarefas, evidências e treinamento antes da publicação.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setSelecionada("nova"); setEdicao(null); }}><Plus size={14} /> Nova campanha</button></div>
+    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><div className="vx-eyebrow">Operação comercial</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>Campanhas</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Configure orçamento, tarefas, evidências e treinamento antes da publicação.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setCriando(true)}><Plus size={14} /> Nova campanha</button></div>
     <div className="vx-card" style={{padding:14,marginBottom:14}}><div className="vx-row"><b>Progresso da campanha</b><span className="vx-chip vx-mono">{concluidos}/10 {alterado?"· não salvo":"· salvo"}</span></div><div className="vx-meter-track" style={{margin:"10px 0"}}><div className="vx-meter-fill" style={{width:`${concluidos*10}%`,background:"var(--brand)"}}/></div><div className="vx-steps">{passos.map((p,i)=><span key={p} data-done={i<concluidos?"1":"0"}>{i+1}. {p}</span>)}</div></div>
 
     <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10 }}>{campanhas.map((c) => <button key={c.id} className="vx-btn vx-btn-sm" onClick={() => { setSelecionada(c.id); setEdicao({ ...c }); }} style={{ borderColor: selecionada === c.id ? "var(--brand)" : undefined }}>{c.titulo} · {c.status}</button>)}</div>
