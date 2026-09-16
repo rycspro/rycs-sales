@@ -4,19 +4,25 @@ import { notificar } from "./notifications.js";
 import { calcular } from "../services/triagem.js";
 import { perguntasPublicas, CATEGORIAS, FAIXAS, TOTAL_PERGUNTAS } from "../../shared/triagem.js";
 import { montarDossie, narrativa } from "../services/dossie.js";
-import { emailProfissionalEmAnalise, emailStatusProfissional } from "../services/email.js";
+import { emailStatusProfissional } from "../services/email.js";
 
 const router = Router();
 
-// Concluir a avaliação não aprova ninguém: manda a conta para análise. Quem
-// decide é a plataforma, lendo o dossiê com todas as respostas e o que aquele
-// profissional consegue entregar.
+// Concluir a avaliação libera a conta na hora. A plataforma não é mais o
+// portão: quem decide se um profissional entra é a EMPRESA, ao aprovar a
+// candidatura dele numa campanha.
 //
-// O score sozinho não sustenta a decisão — ele mede o que a pessoa declara
-// saber. Ler as respostas é o que separa quem sabe vender de quem sabe
-// responder prova.
+// A razão é de produto, não técnica. O portão da plataforma criava uma fila
+// invisível: a pessoa se cadastrava, respondia 17 perguntas e ficava parada
+// sem prazo nem motivo. Vendedor bom não espera — vai vender em outro lugar.
+// E a decisão que importa sempre foi a da empresa, que conhece o próprio
+// produto e o próprio funil.
 //
-// Enquanto espera, a conta fica em ANALISE: Academy liberada, marketplace não.
+// A avaliação continua: ela mede o perfil, sugere a função e alimenta o score
+// que a empresa lê antes de aprovar. Ela informa, não bloqueia.
+//
+// A plataforma mantém o poder de intervir depois — a rota de decisão abaixo
+// segue existindo para moderar quem já está dentro.
 export const STATUS_LIBERADOS = ["aprovado", "parcial"];
 export const DECISOES = {
   aprovado: "aprovado",
@@ -95,19 +101,20 @@ router.post("/triagem", async (req, res) => {
       ins.run(uid(), assessmentId, entityId, d.id, JSON.stringify(respostas[d.id] ?? null), d.pontos, ts);
     }
 
-    // Vai para a fila da plataforma. Nenhum caminho no código aprova sozinho.
-    db.prepare("UPDATE sellers SET status = 'analise', scoreTriagem = ?, perfilComercial = ?, perfil = ? WHERE id = ?")
+    // Liberada na hora. O score fica registrado e vai junto para a empresa,
+    // que é quem decide a entrada numa campanha.
+    db.prepare("UPDATE sellers SET status = 'aprovado', scoreTriagem = ?, perfilComercial = ?, perfil = ? WHERE id = ?")
       .run(r.score, JSON.stringify(r.perfil), r.perfil.funcaoSugerida || "sdr", entityId);
   })();
 
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(entityId);
   if (user) {
-    notificar(user.id, "triagem", "Avaliação concluída",
-      `Você fez ${r.score}%. Seu perfil foi enviado para análise da plataforma. ` +
-      `Enquanto isso, a Academy já está liberada.`);
+    notificar(user.id, "triagem", "Perfil liberado",
+      `Você fez ${r.score}%. Seu perfil já está ativo e as empresas podem ver você. ` +
+      `Candidate-se às campanhas que combinam com o seu perfil — cada empresa aprova o próprio time.`);
   }
   const vendedor = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(entityId);
-  if (vendedor?.email) await emailProfissionalEmAnalise(vendedor.nome, vendedor.email);
+  if (vendedor?.email) await emailStatusProfissional(vendedor.nome, vendedor.email, "aprovado");
 
   res.json({
     assessmentId,
@@ -116,8 +123,8 @@ router.post("/triagem", async (req, res) => {
     categorias: r.categorias,
     perfil: r.perfil,
     tentativa: anteriores + 1,
-    statusConta: "analise",
-    proximoPasso: "academy",
+    statusConta: "aprovado",
+    proximoPasso: "empresas",
   });
 });
 
@@ -230,8 +237,11 @@ router.post("/triagem/:sellerId/decidir", async (req, res) => {
 
   const vendedor = db.prepare("SELECT id, nome, email, status FROM sellers WHERE id = ?").get(req.params.sellerId);
   if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
-  if (vendedor.status !== "analise")
-    return res.status(409).json({ error: `Este profissional não está em análise (status: ${vendedor.status}).` });
+  // Antes esta rota só agia sobre quem estava em análise. Como ninguém mais
+  // fica em análise, essa trava tornaria a moderação impossível: a plataforma
+  // perderia a capacidade de suspender alguém já liberado.
+  if (vendedor.status === decisao)
+    return res.status(409).json({ error: `Este profissional já está como ${decisao}.` });
 
   const nota = String(req.body?.nota || "").slice(0, 500);
   db.prepare("UPDATE sellers SET status = ?, notaTriagem = ?, decididoPor = ?, decididoEm = ? WHERE id = ?")

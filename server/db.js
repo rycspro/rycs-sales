@@ -878,6 +878,20 @@ adicionarColuna("subscriptions", "voucherId", "TEXT");
 adicionarColuna("subscriptions", "paymentId", "TEXT");
 adicionarColuna("subscriptions", "invoiceUrl", "TEXT");
 
+// A plataforma deixou de ser portão de entrada: concluir a avaliação libera o
+// perfil na hora, e quem decide a entrada numa campanha é a empresa.
+//
+// Quem já tinha respondido e estava parado esperando análise é liberado junto.
+// Sem isso, essas pessoas ficariam presas para sempre numa fila que ninguém
+// mais atende — o código que as tirava de lá deixou de existir.
+//
+// 'recusado' não é tocado: foi decisão humana sobre um caso concreto, e
+// reverter em massa apagaria esse julgamento.
+const liberados = db.prepare("UPDATE sellers SET status = 'aprovado' WHERE status = 'analise'").run();
+if (liberados.changes > 0) {
+  console.log(`[migracao] ${liberados.changes} profissional(is) liberado(s) da fila de análise`);
+}
+
 db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_idempotency
     ON submissions(sellerId, idempotencyKey) WHERE idempotencyKey IS NOT NULL;
