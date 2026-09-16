@@ -1,5 +1,6 @@
 import db from "../db.js";
 import { custoPorResultado, projetarOrcamento, taxaEntreEtapas, variacaoPercentual } from "../../shared/campaignOperations.js";
+import { listarEventosCampanha } from "./campaignEvents.js";
 
 const valor = (row, chave = "total") => Number(row?.[chave]) || 0;
 const DIA = 86400000;
@@ -114,6 +115,58 @@ function serieTemporal(companyId, campaignId, inicio, fim) {
   return dias.slice(-31);
 }
 
+function profissionaisDaCampanha(companyId, campaignId, agoraMs) {
+  const candidaturas = db.prepare(`
+    SELECT ca.id applicationId, ca.sellerId, ca.status candidaturaStatus, ca.criadoEm candidaturaEm,
+           s.nome, s.foto, s.titulo, s.perfil, s.cidade, s.nota, s.scoreTriagem
+      FROM campaign_applications ca
+      JOIN campaigns c ON c.id = ca.campaignId
+      JOIN sellers s ON s.id = ca.sellerId
+     WHERE c.companyId = ? AND ca.campaignId = ? AND ca.status IN ('aprovado', 'pendente')
+     ORDER BY ca.criadoEm DESC
+  `).all(companyId, campaignId);
+  const agregados = mapa(db.prepare(`
+    SELECT sellerId campaignId,
+           COUNT(*) tarefas,
+           SUM(CASE WHEN criadoEm >= ? THEN 1 ELSE 0 END) tarefasHoje,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'agendamento' THEN 1 ELSE 0 END) reunioes,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'realizada' THEN 1 ELSE 0 END) realizadas,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'venda' THEN 1 ELSE 0 END) vendas,
+           SUM(CASE WHEN status = 'liberado' THEN COALESCE(liquido, valor, 0) ELSE 0 END) ganhos,
+           SUM(CASE WHEN status = 'liberado' THEN 1 ELSE 0 END) aprovadas,
+           SUM(CASE WHEN status IN ('recusado','ia_recusado') THEN 1 ELSE 0 END) recusadas,
+           MAX(criadoEm) ultimaAtividade
+      FROM submissions WHERE companyId = ? AND campaignId = ? GROUP BY sellerId
+  `).all(inicioDiaSaoPaulo(agoraMs), companyId, campaignId));
+  return candidaturas.map((item) => {
+    const stats = agregados.get(item.sellerId) || {};
+    const decididas = (Number(stats.aprovadas) || 0) + (Number(stats.recusadas) || 0);
+    const taxaAprovacao = decididas > 0 ? Math.round(((Number(stats.aprovadas) || 0) / decididas) * 1000) / 10 : null;
+    const ultimaAtividade = Number(stats.ultimaAtividade) || null;
+    const candidaturaPendente = item.candidaturaStatus === "pendente";
+    const statusOperacional = candidaturaPendente ? "pendente"
+      : ultimaAtividade && ultimaAtividade >= agoraMs - 30 * 60 * 1000 ? "online"
+      : !ultimaAtividade || ultimaAtividade < agoraMs - 48 * 60 * 60 * 1000 ? "sem_atividade"
+      : "ativo";
+    return {
+      ...item,
+      tarefas: Number(stats.tarefas) || 0,
+      tarefasHoje: Number(stats.tarefasHoje) || 0,
+      reunioes: Number(stats.reunioes) || 0,
+      realizadas: Number(stats.realizadas) || 0,
+      vendas: Number(stats.vendas) || 0,
+      ganhos: Number(stats.ganhos) || 0,
+      aprovadas: Number(stats.aprovadas) || 0,
+      recusadas: Number(stats.recusadas) || 0,
+      taxaAprovacao,
+      ultimaAtividade,
+      score: Number(item.nota) || Number(item.scoreTriagem) || 0,
+      statusOperacional,
+      altaPerformance: !candidaturaPendente && decididas >= 3 && taxaAprovacao >= 80,
+    };
+  });
+}
+
 export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
   const campanha = db.prepare(`
     SELECT id, companyId, titulo, descricao, objetivo, regiao, funcao, status, vagas, orcamento, reservado, criadoEm
@@ -151,6 +204,8 @@ export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
       venda: custoPorResultado(atual.investimento, atual.vendas),
     },
     serie: serieTemporal(companyId, campaignId, periodo.inicio, periodo.fim),
+    profissionais: profissionaisDaCampanha(companyId, campaignId, opcoes.agoraMs || Date.now()),
+    eventos: listarEventosCampanha(companyId, campaignId, 40),
     origem: {
       investimento: "liquidações da razão financeira",
       tarefas: "execuções enviadas",

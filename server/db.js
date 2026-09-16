@@ -91,6 +91,25 @@ db.exec(`
     FOREIGN KEY (sellerId) REFERENCES sellers(id)
   );
 
+  -- Linha do tempo operacional unificada. As tabelas de origem continuam
+  -- sendo a fonte de verdade; este log append-only permite montar feed,
+  -- analytics e contexto de IA sem varrer cada módulo a cada acesso.
+  CREATE TABLE IF NOT EXISTS campaign_events (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    campaignId TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    actorId TEXT,
+    actorRole TEXT DEFAULT 'sistema',
+    sellerId TEXT,
+    submissionId TEXT,
+    leadId TEXT,
+    source TEXT DEFAULT 'SYSTEM',
+    dados TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+
   CREATE TABLE IF NOT EXISTS applications (
     sellerId TEXT NOT NULL,
     companyId TEXT NOT NULL,
@@ -541,6 +560,18 @@ db.exec(`
     SELECT RAISE(ABORT, 'Evidências de auditoria são imutáveis');
   END;
 
+  CREATE TRIGGER IF NOT EXISTS no_update_campaign_events
+  BEFORE UPDATE ON campaign_events
+  BEGIN
+    SELECT RAISE(ABORT, 'Eventos de campanha são imutáveis');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS no_delete_campaign_events
+  BEFORE DELETE ON campaign_events
+  BEGIN
+    SELECT RAISE(ABORT, 'Eventos de campanha são imutáveis');
+  END;
+
   -- =====================================================================
   -- RYCS AUDIT ENGINE
   --
@@ -913,11 +944,38 @@ db.exec(`
     ON lead_events(submissionId) WHERE submissionId IS NOT NULL;
   CREATE INDEX IF NOT EXISTS idx_financial_ledger_company ON financial_ledger(companyId, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_financial_ledger_seller ON financial_ledger(sellerId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_campaign_events_campaign ON campaign_events(companyId, campaignId, criadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_campaign_events_seller ON campaign_events(sellerId, criadoEm DESC);
   CREATE INDEX IF NOT EXISTS idx_knowledge_company ON knowledge_documents(companyId, status, atualizadoEm);
   CREATE INDEX IF NOT EXISTS idx_assistant_company ON assistant_history(companyId, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_partnership_seller ON partnership_requests(sellerId, status, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_voucher_redemptions ON voucher_redemptions(voucherId, companyId, status);
   CREATE INDEX IF NOT EXISTS idx_company_reports ON company_reports(companyId, criadoEm);
+`);
+
+// Registros anteriores à linha do tempo são projetados uma única vez. Cada
+// item usa um id determinístico e source=BACKFILL; assim o feed aproveita o
+// histórico real sem fingir que conhece a hora de aprovações antigas.
+db.exec(`
+  INSERT OR IGNORE INTO campaign_events
+    (id, companyId, campaignId, tipo, actorRole, source, dados, criadoEm)
+  SELECT 'backfill:campaign:' || id, companyId, id, 'CAMPAIGN_CREATED', 'sistema', 'BACKFILL', '{}', criadoEm
+    FROM campaigns;
+
+  INSERT OR IGNORE INTO campaign_events
+    (id, companyId, campaignId, tipo, actorRole, sellerId, source, dados, criadoEm)
+  SELECT 'backfill:application:' || ca.id, c.companyId, ca.campaignId, 'PROFESSIONAL_APPLIED', 'profissional', ca.sellerId, 'BACKFILL', '{}', ca.criadoEm
+    FROM campaign_applications ca JOIN campaigns c ON c.id = ca.campaignId;
+
+  INSERT OR IGNORE INTO campaign_events
+    (id, companyId, campaignId, tipo, actorRole, sellerId, submissionId, source, dados, criadoEm)
+  SELECT 'backfill:submission:' || s.id, s.companyId, s.campaignId, 'TASK_COMPLETED', 'profissional', s.sellerId, s.id, 'BACKFILL', json_object('tipo', s.tipo, 'status', s.status), s.criadoEm
+    FROM submissions s WHERE s.campaignId IS NOT NULL;
+
+  INSERT OR IGNORE INTO campaign_events
+    (id, companyId, campaignId, tipo, actorRole, sellerId, leadId, source, dados, criadoEm)
+  SELECT 'backfill:lead:' || l.id, l.companyId, l.campaignId, 'LEAD_CREATED', 'profissional', l.sellerId, l.id, 'BACKFILL', '{}', l.criadoEm
+    FROM leads l WHERE l.campaignId IS NOT NULL;
 `);
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este

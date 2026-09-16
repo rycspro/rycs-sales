@@ -6,6 +6,7 @@ import { dentroDoLimite } from "../../shared/planos.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
 import { obterOperacaoCampanha, obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
+import { registrarEventoCampanha } from "../services/campaignEvents.js";
 
 const router = Router();
 
@@ -87,17 +88,21 @@ router.post("/campaigns", (req, res) => {
   if (!companyId) return res.status(400).json({ error: "companyId é obrigatório" });
 
   const id = uid();
-  db.prepare(`
-    INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento,
-      requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras,
-      limitePorProfissional, aceitaLeadProprio, exigeCertificacao, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, companyId, titulo, descricao || "", produto || "", publico || "",
-    vagas || 0, JSON.stringify(comissoes || {}), JSON.stringify(treinamento || []),
-    requisitos || "", objetivo || "", regiao || "", funcao || "", Number(orcamento) || 0,
-    JSON.stringify(tarefas || {}), JSON.stringify(evidencias || {}), JSON.stringify(criteriosAprovacao || {}),
-    Math.max(1, Number(prazoHoras) || 48), Math.max(0, Number(limitePorProfissional) || 0),
-    aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, agora());
+  const criadoEm = agora();
+  db.transaction(() => {
+    db.prepare(`
+      INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento,
+        requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras,
+        limitePorProfissional, aceitaLeadProprio, exigeCertificacao, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, companyId, titulo, descricao || "", produto || "", publico || "",
+      vagas || 0, JSON.stringify(comissoes || {}), JSON.stringify(treinamento || []),
+      requisitos || "", objetivo || "", regiao || "", funcao || "", Number(orcamento) || 0,
+      JSON.stringify(tarefas || {}), JSON.stringify(evidencias || {}), JSON.stringify(criteriosAprovacao || {}),
+      Math.max(1, Number(prazoHoras) || 48), Math.max(0, Number(limitePorProfissional) || 0),
+      aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, criadoEm);
+    registrarEventoCampanha({ companyId, campaignId: id, tipo: "CAMPAIGN_CREATED", actorId: req.user.id, actorRole: role, source: "USER", criadoEm });
+  })();
 
   res.json({ id });
 });
@@ -149,7 +154,11 @@ router.post("/campaigns/:id/status", (req, res) => {
       return res.status(422).json({ error: "O orçamento da campanha supera o saldo disponível." });
   }
 
-  db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").run(status, campaign.id);
+  db.transaction(() => {
+    db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").run(status, campaign.id);
+    const tipo = status === "ativa" ? "CAMPAIGN_PUBLISHED" : status === "pausada" ? "CAMPAIGN_PAUSED" : status === "encerrada" ? "CAMPAIGN_CLOSED" : null;
+    if (tipo && status !== campaign.status) registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo, actorId: req.user.id, actorRole: role, source: "USER", dados: { statusAnterior: campaign.status, statusNovo: status } });
+  })();
   res.json({ ok: true, status });
 });
 
@@ -176,7 +185,11 @@ router.post("/campaigns/:id/apply", (req, res) => {
   if (existing) return res.status(409).json({ error: "Já se candidatou a esta campanha" });
 
   const id = uid();
-  db.prepare("INSERT INTO campaign_applications (id, campaignId, sellerId, status, criadoEm) VALUES (?, ?, ?, 'pendente', ?)").run(id, req.params.id, entityId, agora());
+  const criadoEm = agora();
+  db.transaction(() => {
+    db.prepare("INSERT INTO campaign_applications (id, campaignId, sellerId, status, criadoEm) VALUES (?, ?, ?, 'pendente', ?)").run(id, req.params.id, entityId, criadoEm);
+    registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "PROFESSIONAL_APPLIED", actorId: req.user.id, actorRole: role, sellerId: entityId, source: "USER", criadoEm });
+  })();
   res.json({ id });
 });
 
@@ -203,11 +216,19 @@ router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {
       return res.status(422).json({ error: "O profissional ainda não possui a certificação exigida pela campanha." });
   }
 
-  db.prepare("UPDATE campaign_applications SET status = ? WHERE id = ?").run(status, req.params.appId);
-  if (status === "aprovado") {
-    db.prepare("INSERT OR REPLACE INTO applications (sellerId, companyId, status) VALUES (?, ?, 'aprovado')")
-      .run(candidatura.sellerId, campaign.companyId);
-  }
+  db.transaction(() => {
+    db.prepare("UPDATE campaign_applications SET status = ? WHERE id = ?").run(status, req.params.appId);
+    registrarEventoCampanha({
+      companyId: campaign.companyId, campaignId: campaign.id,
+      tipo: status === "aprovado" ? "PROFESSIONAL_APPROVED" : "PROFESSIONAL_REJECTED",
+      actorId: req.user.id, actorRole: role, sellerId: candidatura.sellerId, source: "USER",
+    });
+    if (status === "aprovado") {
+      db.prepare("INSERT OR REPLACE INTO applications (sellerId, companyId, status) VALUES (?, ?, 'aprovado')")
+        .run(candidatura.sellerId, campaign.companyId);
+      registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "PROFESSIONAL_JOINED", actorId: req.user.id, actorRole: role, sellerId: candidatura.sellerId, source: "USER" });
+    }
+  })();
   res.json({ ok: true });
 });
 

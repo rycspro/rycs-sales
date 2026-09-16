@@ -14,6 +14,7 @@ import { calcularValorTarefa } from "../../shared/valorTarefa.js";
 import { avaliarRegras } from "../../shared/aprovacoes.js";
 import { registrarEventoAuditoria, registrarEvidencias, verificarTrilhaAuditoria, resumoEvidencias } from "../services/auditTrail.js";
 import { solicitar as solicitarAuditoria } from "../services/audit/index.js";
+import { registrarEventoCampanha } from "../services/campaignEvents.js";
 
 const router = Router();
 
@@ -81,6 +82,14 @@ router.post("/submissions", async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, sellerId, companyId, campaignId || null, leadId || null, tipo, valor,
            liquido, JSON.stringify(prova || {}), status, r.confianca, r.motivo, r.fonte, idempotencyKey || null, agora());
+    if (campaignId) {
+      const dadosEvento = { tipo, status, valor };
+      registrarEventoCampanha({ companyId, campaignId, tipo: "TASK_COMPLETED", actorId: req.user.id, actorRole: role, sellerId, submissionId: id, leadId: leadId || null, source: "USER", dados: dadosEvento });
+      const eventoResultado = tipo === "agendamento" ? "MEETING_SCHEDULED" : tipo === "realizada" ? "MEETING_COMPLETED" : tipo === "venda" ? "SALE_RECORDED" : null;
+      if (eventoResultado) registrarEventoCampanha({ companyId, campaignId, tipo: eventoResultado, actorId: req.user.id, actorRole: role, sellerId, submissionId: id, leadId: leadId || null, source: "USER", dados: dadosEvento });
+      if (Object.values(prova || {}).some(Boolean)) registrarEventoCampanha({ companyId, campaignId, tipo: "EVIDENCE_SUBMITTED", actorId: req.user.id, actorRole: role, sellerId, submissionId: id, leadId: leadId || null, source: "USER", dados: { campos: Object.keys(prova || {}).filter((campo) => prova[campo]) } });
+      if (status === "ia_recusado") registrarEventoCampanha({ companyId, campaignId, tipo: "TASK_REJECTED", actorRole: "sistema", sellerId, submissionId: id, leadId: leadId || null, source: "SYSTEM", dados: { motivo: r.motivo, fonte: r.fonte } });
+    }
     // Recusada não fica pendente: não há o que esperar.
     if (status !== "ia_recusado") {
       reservarParaSubmissao({ companyId, sellerId, submissionId: id, valor: totalDebito });
@@ -195,6 +204,11 @@ router.patch("/submissions/:id", (req, res) => {
         statusAnterior: sub.status, statusNovo: fields.status,
         motivoCodigo: "conferencia_humana", observacao: fields.motivo || "",
       });
+      if (["recusado", "ia_recusado"].includes(fields.status) && sub.campaignId) registrarEventoCampanha({
+        companyId: sub.companyId, campaignId: sub.campaignId, tipo: "TASK_REJECTED",
+        actorId: req.user.id, actorRole: role, sellerId: sub.sellerId, submissionId: sub.id,
+        source: "USER", dados: { motivo: fields.motivo || "", statusAnterior: sub.status },
+      });
     }
   })();
 
@@ -296,6 +310,10 @@ router.post("/submissions/:id/liberar", (req, res) => {
       motivoCodigo: "repasse_plataforma",
       dados: { bruto, taxa, liquido, totalDebito },
     });
+    if (sub.campaignId) {
+      registrarEventoCampanha({ companyId: sub.companyId, campaignId: sub.campaignId, tipo: "TASK_APPROVED", actorId: req.user.id, actorRole: "admin", sellerId: sub.sellerId, submissionId: sub.id, source: "USER", dados: { bruto, liquido } });
+      registrarEventoCampanha({ companyId: sub.companyId, campaignId: sub.campaignId, tipo: "PAYMENT_RELEASED", actorId: req.user.id, actorRole: "admin", sellerId: sub.sellerId, submissionId: sub.id, source: "SYSTEM", dados: { bruto, taxa, liquido, totalDebito } });
+    }
   })();
 
   const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sub.sellerId);
