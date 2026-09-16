@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity, BriefcaseBusiness, CalendarCheck, CircleDollarSign, Plus,
   Sparkles, Target, TrendingUp, UsersRound, WalletCards,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
+import { FILTROS_STATUS_CAMPANHA, filtrarCampanhasPorStatus, STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
 
 const INDICADORES = [
   ["campanhasEmAndamento", "Campanhas em andamento", BriefcaseBusiness, "agora", false],
@@ -42,9 +42,42 @@ function Risco({ risco }) {
   return <span className={`vx-budget-risk ${classe}`}><i />{texto}</span>;
 }
 
+function CampaignCard({ campanha, onAbrir }) {
+  const hoje = campanha.operacaoHoje || {};
+  const budget = campanha.orcamentoResumo || {};
+  const percentual = Math.min(100, Math.max(0, Number(budget.percentual) || 0));
+  return <article className="vx-card vx-campaign-card">
+    <div className="vx-campaign-card-head">
+      <div>
+        <h3 className="vx-disp">{campanha.titulo}</h3>
+        <div className="vx-campaign-card-meta">{campanha.funcao ? campanha.funcao.toUpperCase() : "Função não definida"}{campanha.regiao ? ` • ${campanha.regiao}` : ""}</div>
+      </div>
+      <span className={`vx-campaign-status is-${campanha.status}`}>{STATUS_CAMPANHA_UI[campanha.status] || campanha.status}</span>
+    </div>
+    <div className="vx-campaign-people"><UsersRound size={14} /><b>{Number(hoje.profissionais || 0).toLocaleString("pt-BR")}</b> profissionais ativos</div>
+    <div className="vx-campaign-today">
+      <div className="vx-eyebrow">Hoje</div>
+      <div className="vx-campaign-metrics">
+        <div><b className="vx-mono">{money(hoje.gasto)}</b><span>gastos</span></div>
+        <div><b className="vx-mono">{Number(hoje.tarefas || 0).toLocaleString("pt-BR")}</b><span>tarefas</span></div>
+        <div><b className="vx-mono">{Number(hoje.leads || 0).toLocaleString("pt-BR")}</b><span>leads</span></div>
+        <div><b className="vx-mono">{Number(hoje.reunioes || 0).toLocaleString("pt-BR")}</b><span>reuniões</span></div>
+        <div><b className="vx-mono">{Number(hoje.vendas || 0).toLocaleString("pt-BR")}</b><span>vendas</span></div>
+      </div>
+    </div>
+    <div className="vx-campaign-budget-mini">
+      <div className="vx-row"><span>Orçamento</span><b className="vx-mono">{money(budget.consumido)} / {money(budget.limite)}</b></div>
+      <div className="vx-meter-track"><div className="vx-meter-fill" style={{ width: `${percentual}%`, background: percentual >= 90 ? "var(--red)" : percentual >= 70 ? "var(--amber)" : "var(--brand)" }} /></div>
+      <span>{budget.percentual == null ? "Sem orçamento definido" : `${budget.percentual.toLocaleString("pt-BR")}% consumido`}</span>
+    </div>
+    <button className="vx-btn vx-btn-block vx-campaign-operation-btn" onClick={() => onAbrir(campanha)}>Ver operação <span>→</span></button>
+  </article>;
+}
+
 export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAbrir, recarregarSinal = 0 }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
+  const [filtro, setFiltro] = useState("todas");
 
   useEffect(() => {
     let ativo = true;
@@ -59,6 +92,11 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
 
   const orcamento = dados?.orcamento;
   const percentualVisual = Math.min(100, Math.max(0, Number(orcamento?.percentual) || 0));
+  const campanhasComDados = useMemo(() => {
+    if (!dados?.campanhas) return campanhas;
+    return dados.campanhas.map((resumo) => ({ ...(campanhas.find((c) => c.id === resumo.id) || {}), ...resumo }));
+  }, [campanhas, dados]);
+  const campanhasFiltradas = useMemo(() => filtrarCampanhasPorStatus(campanhasComDados, filtro), [campanhasComDados, filtro]);
 
   return <div className="vx-fade">
     <div className="vx-page-head vx-campaign-head">
@@ -108,17 +146,21 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
       <div className="vx-row" style={{ alignItems: "end", marginBottom: 11 }}>
         <div><div className="vx-eyebrow">Operações</div><h2 className="vx-disp" style={{ margin: "3px 0 0", fontSize: 19 }}>Suas campanhas</h2></div>
       </div>
+      {campanhas.length > 0 && dados && <>
+        <div className="vx-campaign-filters" role="tablist" aria-label="Filtrar campanhas por status">
+          {FILTROS_STATUS_CAMPANHA.map((item) => <button key={item.chave} role="tab" aria-selected={filtro === item.chave} data-on={filtro === item.chave ? "1" : "0"} onClick={() => setFiltro(item.chave)}>
+            {item.label}<span>{dados.status[item.chave] || 0}</span>
+          </button>)}
+        </div>
+        {filtro === "todas" && dados.status.em_andamento === 0 && <div className="vx-notice vx-notice-amber" style={{ margin: "12px 0" }}><b>Nenhuma campanha em andamento.</b> Ative uma campanha ou crie uma nova operação.</div>}
+      </>}
       {campanhas.length === 0 ? <div className="vx-card vx-campaign-empty">
         <div className="vx-campaign-empty-icon"><BriefcaseBusiness size={24} /></div>
         <h2 className="vx-disp">Coloque sua força comercial para trabalhar.</h2>
         <p>Crie sua primeira campanha e encontre profissionais para executar sua operação comercial.</p>
         <div className="vx-campaign-actions"><button className="vx-btn vx-btn-primary" onClick={onCriar}>Criar campanha</button><button className="vx-btn vx-btn-ai" onClick={onCriarIA}><Sparkles size={14} /> Criar com IA</button></div>
-      </div> : <div className="vx-grid">
-        {campanhas.map((campanha) => <button key={campanha.id} className="vx-card vx-campaign-row" onClick={() => onAbrir(campanha)}>
-          <div><b className="vx-disp">{campanha.titulo}</b><span>{campanha.objetivo || campanha.descricao || "Campanha comercial"}</span></div>
-          <span className={`vx-campaign-status is-${campanha.status}`}>{STATUS_CAMPANHA_UI[campanha.status] || campanha.status}</span>
-          <span className="vx-campaign-open">Abrir →</span>
-        </button>)}
+      </div> : campanhasFiltradas.length === 0 ? <div className="vx-card vx-campaign-filter-empty">Nenhuma campanha neste status.</div> : <div className="vx-campaign-card-grid">
+        {campanhasFiltradas.map((campanha) => <CampaignCard key={campanha.id} campanha={campanha} onAbrir={onAbrir} />)}
       </div>}
     </section>
   </div>;

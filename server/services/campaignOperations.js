@@ -48,6 +48,10 @@ function quantidadeLeads(companyId, inicio, fim) {
   `).get(companyId, inicio, fim));
 }
 
+function mapa(rows) {
+  return new Map(rows.map((row) => [row.campaignId, row]));
+}
+
 export function obterVisaoGeralCampanhas(companyId, agoraMs = Date.now()) {
   const empresa = db.prepare("SELECT saldo, saldoReservado FROM companies WHERE id = ?").get(companyId);
   if (!empresa) return null;
@@ -55,10 +59,60 @@ export function obterVisaoGeralCampanhas(companyId, agoraMs = Date.now()) {
   const tempo = intervalos(agoraMs);
   const statusRows = db.prepare("SELECT status, COUNT(*) total FROM campaigns WHERE companyId = ? GROUP BY status").all(companyId);
   const porStatus = Object.fromEntries(statusRows.map((r) => [r.status, Number(r.total) || 0]));
-  const campanhas = db.prepare(`
+  const campanhasBase = db.prepare(`
     SELECT id, titulo, descricao, objetivo, regiao, funcao, status, vagas, orcamento, reservado, criadoEm
       FROM campaigns WHERE companyId = ? ORDER BY criadoEm DESC
   `).all(companyId);
+  const profissionaisPorCampanha = mapa(db.prepare(`
+    SELECT ca.campaignId, COUNT(DISTINCT ca.sellerId) total
+      FROM campaign_applications ca JOIN campaigns c ON c.id = ca.campaignId
+     WHERE c.companyId = ? AND ca.status = 'aprovado' GROUP BY ca.campaignId
+  `).all(companyId));
+  const tarefasPorCampanha = mapa(db.prepare(`
+    SELECT campaignId,
+           COUNT(*) tarefas,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'agendamento' THEN 1 ELSE 0 END) reunioes,
+           SUM(CASE WHEN status = 'liberado' AND tipo = 'venda' THEN 1 ELSE 0 END) vendas
+      FROM submissions
+     WHERE companyId = ? AND campaignId IS NOT NULL AND criadoEm >= ? AND criadoEm < ?
+     GROUP BY campaignId
+  `).all(companyId, tempo.inicioHoje, tempo.agora + 1));
+  const leadsPorCampanha = mapa(db.prepare(`
+    SELECT campaignId, COUNT(*) leads FROM leads
+     WHERE companyId = ? AND campaignId IS NOT NULL AND criadoEm >= ? AND criadoEm < ?
+     GROUP BY campaignId
+  `).all(companyId, tempo.inicioHoje, tempo.agora + 1));
+  const gastosPorCampanha = mapa(db.prepare(`
+    SELECT s.campaignId,
+           COALESCE(SUM(CASE WHEN fl.criadoEm >= ? AND fl.criadoEm < ? THEN ABS(fl.valor) ELSE 0 END), 0) gastoHoje,
+           COALESCE(SUM(ABS(fl.valor)), 0) gastoTotal
+      FROM financial_ledger fl JOIN submissions s ON s.id = fl.submissionId
+     WHERE fl.companyId = ? AND s.companyId = ? AND s.campaignId IS NOT NULL AND fl.tipo = 'liquidacao'
+     GROUP BY s.campaignId
+  `).all(tempo.inicioHoje, tempo.agora + 1, companyId, companyId));
+  const campanhas = campanhasBase.map((campanha) => {
+    const tarefas = tarefasPorCampanha.get(campanha.id) || {};
+    const leads = leadsPorCampanha.get(campanha.id) || {};
+    const gastos = gastosPorCampanha.get(campanha.id) || {};
+    const gastoTotal = Number(gastos.gastoTotal) || 0;
+    const limite = Number(campanha.orcamento) || 0;
+    return {
+      ...campanha,
+      operacaoHoje: {
+        profissionais: Number(profissionaisPorCampanha.get(campanha.id)?.total) || 0,
+        gasto: Number(gastos.gastoHoje) || 0,
+        tarefas: Number(tarefas.tarefas) || 0,
+        leads: Number(leads.leads) || 0,
+        reunioes: Number(tarefas.reunioes) || 0,
+        vendas: Number(tarefas.vendas) || 0,
+      },
+      orcamentoResumo: {
+        consumido: gastoTotal,
+        limite,
+        percentual: limite > 0 ? Math.round((gastoTotal / limite) * 1000) / 10 : null,
+      },
+    };
+  });
   const orcamentoAtivo = valor(db.prepare("SELECT COALESCE(SUM(orcamento), 0) total FROM campaigns WHERE companyId = ? AND status = 'ativa'").get(companyId));
   const profissionaisAtivos = valor(db.prepare(`
     SELECT COUNT(DISTINCT ca.sellerId) total

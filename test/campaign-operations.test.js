@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { projetarOrcamento, variacaoPercentual } from "../shared/campaignOperations.js";
+import { filtrarCampanhasPorStatus, projetarOrcamento, variacaoPercentual } from "../shared/campaignOperations.js";
 
 test("variação só é exibida quando existe histórico comparável", () => {
   assert.equal(variacaoPercentual(18, 15), 20);
@@ -20,4 +20,11 @@ test("projeção sem consumo não inventa duração ou tendência", () => {
   assert.equal(resultado.projecaoFechamento, 0);
   assert.equal(resultado.diasRestantes, null);
   assert.equal(resultado.risco, "dentro");
+});
+
+test("filtros visuais preservam os estados internos da campanha", () => {
+  const campanhas = [{ id: "1", status: "ativa" }, { id: "2", status: "em_revisao" }, { id: "3", status: "rascunho" }];
+  assert.deepEqual(filtrarCampanhasPorStatus(campanhas, "todas").map((c) => c.id), ["1", "2", "3"]);
+  assert.deepEqual(filtrarCampanhasPorStatus(campanhas, "em_andamento").map((c) => c.id), ["1"]);
+  assert.deepEqual(filtrarCampanhasPorStatus(campanhas, "aguardando_aprovacao").map((c) => c.id), ["2"]);
 });

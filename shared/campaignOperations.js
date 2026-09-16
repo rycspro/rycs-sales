@@ -6,6 +6,21 @@ export const STATUS_CAMPANHA_UI = {
   encerrada: "Encerrada",
 };
 
+export const FILTROS_STATUS_CAMPANHA = [
+  { chave: "todas", label: "Todas", status: null },
+  { chave: "em_andamento", label: "Em andamento", status: "ativa" },
+  { chave: "aguardando_aprovacao", label: "Aguardando aprovação", status: "em_revisao" },
+  { chave: "rascunhos", label: "Rascunhos", status: "rascunho" },
+  { chave: "pausadas", label: "Pausadas", status: "pausada" },
+  { chave: "encerradas", label: "Encerradas", status: "encerrada" },
+];
+
+export function filtrarCampanhasPorStatus(campanhas = [], chave = "todas") {
+  const filtro = FILTROS_STATUS_CAMPANHA.find((item) => item.chave === chave);
+  if (!filtro?.status) return campanhas;
+  return campanhas.filter((campanha) => campanha.status === filtro.status);
+}
+
 const numero = (valor) => Number(valor) || 0;
 const arredondar = (valor) => Math.round(numero(valor) * 100) / 100;
 
