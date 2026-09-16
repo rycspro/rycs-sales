@@ -12,18 +12,30 @@ import { Medidor } from "../ui.jsx";
 // quebrado. O mesmo princípio da auditoria — indisponível não é o mesmo que
 // negativo, e nenhum dos dois pode ser inventado.
 
-function Narrativa({ texto }) {
+// A leitura vem de duas fontes: provedor externo quando há chave, e o motor
+// interno da RYCS sempre que não há. As duas aparecem sob o mesmo rótulo para
+// quem usa, mas a origem vai no dado e é mostrada no rodapé do bloco — quem
+// audita uma decisão precisa saber o que escreveu aquele parecer.
+const ORIGEM = {
+  externo: "Gerado por modelo de linguagem externo.",
+  interno: "Gerado pelo motor de leitura da RYCS, a partir dos números deste dossiê.",
+};
+
+function Narrativa({ leitura }) {
+  const texto = typeof leitura === "string" ? leitura : leitura?.texto;
+  const fonte = typeof leitura === "string" ? "externo" : leitura?.fonte;
+
   if (!texto) {
     return (
       <div style={{ padding: "12px 14px", borderRadius: 10, border: "1px dashed var(--border)", marginBottom: 14 }}>
         <div className="vx-eyebrow" style={{ marginBottom: 4 }}>Leitura por IA</div>
         <div className="vx-mut" style={{ fontSize: 12.5, lineHeight: 1.6 }}>
-          Indisponível: nenhum provedor de IA está configurado nesta instalação.
-          O restante do dossiê abaixo é calculado por regra e não depende disso.
+          Sem dados suficientes para montar a leitura deste cadastro.
         </div>
       </div>
     );
   }
+
   return (
     <div style={{ padding: "13px 15px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)", marginBottom: 14 }}>
       <div className="vx-eyebrow" style={{ marginBottom: 5, color: "var(--brand)", display: "flex", alignItems: "center", gap: 6 }}>
@@ -31,7 +43,7 @@ function Narrativa({ texto }) {
       </div>
       <div style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-2)" }}>{texto}</div>
       <div className="vx-mut" style={{ fontSize: 11, marginTop: 8, fontStyle: "italic" }}>
-        Texto auxiliar. Nenhuma decisão da plataforma depende dele.
+        {ORIGEM[fonte] || ORIGEM.interno} Texto auxiliar: nenhuma decisão da plataforma depende dele.
       </div>
     </div>
   );
@@ -102,7 +114,7 @@ export function DossieProfissional({ sellerId }) {
 
       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>{resumo.veredito}</div>
 
-      <Narrativa texto={dossie.narrativa} />
+      <Narrativa leitura={dossie.narrativa} />
 
       {/* Prontidão por função: é aqui que a especialidade fica objetiva. */}
       <div style={{ display: "grid", gap: 8 }}>
@@ -180,7 +192,7 @@ export function DossieEmpresa({ companyId }) {
 
       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>{resumo.veredito}</div>
 
-      <Narrativa texto={dossie.narrativa} />
+      <Narrativa leitura={dossie.narrativa} />
 
       <div className="vx-grid vx-g4">
         <Campo rotulo="Vende" valor={oferta.produto} />

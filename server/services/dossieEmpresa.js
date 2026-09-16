@@ -1,5 +1,6 @@
 import { camposPendentesEmpresa, saldoDisponivel } from "../../shared/empresa.js";
 import { FUNCOES, nomeFuncao } from "../../shared/funcoes.js";
+import { leituraEmpresa } from "./inteligencia.js";
 
 // Dossiê da empresa: o que a plataforma precisa entender sobre quem contrata.
 //
@@ -179,7 +180,9 @@ export function montarDossieEmpresa({ empresa, campanhas = [], submissions = [] 
 // funciona sem ela. Descreve a especialidade da empresa — não dá nota, não
 // recomenda aprovar nem recusar, e não inventa o que não estiver nos campos.
 export async function narrativaEmpresa(dossie) {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { texto: leituraEmpresa(dossie), fonte: "interno" };
+  }
 
   try {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
@@ -210,9 +213,12 @@ export async function narrativaEmpresa(dossie) {
       messages: [{ role: "user", content: campos }],
     });
 
-    return resposta.content.map((b) => b.text || "").join("").trim() || null;
+    const texto = resposta.content.map((b) => b.text || "").join("").trim();
+    return texto
+      ? { texto, fonte: "externo" }
+      : { texto: leituraEmpresa(dossie), fonte: "interno" };
   } catch (err) {
-    console.error("[dossie-empresa] narrativa indisponível:", err.message);
-    return null;
+    console.error("[dossie-empresa] provedor externo indisponível, usando motor interno:", err.message);
+    return { texto: leituraEmpresa(dossie), fonte: "interno" };
   }
 }

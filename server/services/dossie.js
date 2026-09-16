@@ -1,4 +1,5 @@
 import { PERGUNTAS, CATEGORIAS, ORDEM_CATEGORIAS, FAIXAS } from "../../shared/triagem.js";
+import { leituraProfissional } from "./inteligencia.js";
 
 // Dossiê de triagem: o que a plataforma lê antes de aprovar um profissional.
 //
@@ -191,10 +192,22 @@ function recomendar(score, melhor, fracas) {
   };
 }
 
-// Leitura auxiliar por IA. Só roda se a chave existir — o dossiê inteiro
-// funciona sem ela, e a recomendação nunca depende deste texto.
+// Leitura do dossiê. Duas fontes, nesta ordem:
+//
+//   1. Provedor externo, quando há chave configurada.
+//   2. Motor de leitura interno — determinístico, sem custo, sempre disponível.
+//
+// Antes, sem chave, o campo vinha nulo e a tela ficava com um buraco. O motor
+// interno fecha esse buraco sem inventar nada: ele escreve o que os números já
+// dizem, e nada além disso.
+//
+// `fonte` acompanha o texto porque quem lê precisa saber de onde ele veio. A
+// informação fica no dado; como a tela rotula isso é decisão de produto, num
+// lugar só.
 export async function narrativa(dossie) {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { texto: leituraProfissional(dossie), fonte: "interno" };
+  }
 
   try {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
@@ -219,9 +232,13 @@ export async function narrativa(dossie) {
       }],
     });
 
-    return resposta.content.map((b) => b.text || "").join("").trim() || null;
+    const texto = resposta.content.map((b) => b.text || "").join("").trim();
+    return texto
+      ? { texto, fonte: "externo" }
+      : { texto: leituraProfissional(dossie), fonte: "interno" };
   } catch (err) {
-    console.error("[dossie] narrativa indisponível:", err.message);
-    return null;
+    // Falha do provedor não pode deixar a tela vazia: cai para o motor interno.
+    console.error("[dossie] provedor externo indisponível, usando motor interno:", err.message);
+    return { texto: leituraProfissional(dossie), fonte: "interno" };
   }
 }
