@@ -33,8 +33,19 @@ export default function EmpresasAdmin({ db, up, aviso }) {
   const totalSaldo = empresas.reduce((a, c) => a + c.saldo, 0);
   const totalAportado = empresas.reduce((a, c) => a + (c.totalAportado || 0), 0);
   const decidirCadastro = async (c, statusCadastro) => {
-    const r = await apiPatch(`/companies/${c.id}/status`, { statusCadastro });
-    if (!r || r.error) return aviso(r?.error || "Não foi possível atualizar o cadastro.");
+    // A rota lê `status`; esta tela mandava `statusCadastro`. O campo chegava
+    // vazio, a validação recusava, e o botão de aprovar empresa nunca
+    // funcionou — falhava com "Status inválido", que não diz nada a quem
+    // clicou.
+    const r = await apiPatch(`/companies/${c.id}/status`, { status: statusCadastro });
+
+    if (!r || r.error) {
+      // Cadastro incompleto volta com a lista de pendências. Sem mostrá-la, o
+      // admin lê "Cadastro incompleto" e não tem como saber o que falta.
+      const detalhe = r?.pendencias?.length ? `: falta ${r.pendencias.join(", ")}` : "";
+      return aviso((r?.error || "Não foi possível atualizar o cadastro.") + detalhe);
+    }
+
     up?.((d) => ({ companies: d.companies.map((x) => x.id === c.id ? { ...x, statusCadastro } : x) }));
     aviso(statusCadastro === "aprovada" ? `${c.nome} aprovada para operar.` : `${c.nome} suspensa.`);
   };
