@@ -221,7 +221,11 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
       <div className="vx-card" style={{ padding: 18 }}>
         <div className="vx-disp" style={{ fontSize: 17, marginBottom: 4 }}>Posição na vitrine</div>
         <p className="vx-mut" style={{ fontSize: 13, marginTop: 0 }}>
-          Empresas em destaque aparecem no topo da lista dos vendedores e recebem cerca de 3x mais candidaturas.
+          {/* Aqui dizia "recebem cerca de 3x mais candidaturas". Esse número
+              nunca foi medido — era estimativa vestida de dado, usada para
+              vender um recurso pago. Enquanto não houver medição real, a
+              descrição diz o que o destaque faz, não o que ele renderia. */}
+          Empresas em destaque aparecem no topo da lista que o vendedor vê ao procurar campanha.
         </p>
         <div className="vx-row" style={{ padding: "10px 0" }}>
           <div>

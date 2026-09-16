@@ -1,19 +1,23 @@
 import { useMemo } from "react";
 import { Wallet, Banknote } from "lucide-react";
 import { money, agora } from "../../lib/utils.js";
-import { TAXA } from "../../lib/constants.js";
+import { takeRateDoPlano } from "../../../shared/planos.js";
 import { Stat, Medidor } from "../ui.jsx";
 
 export default function FinanceiroEmpresas({ db }) {
   const linhas = useMemo(() => db.companies.map((c) => {
     const libs = db.submissions.filter((s) => s.companyId === c.id && s.status === "liberado");
     const totalLiberado = libs.reduce((a, s) => a + s.valor, 0);
-    const receitaTaxa = totalLiberado * TAXA;
+    // A taxa é a do plano de cada empresa, não uma constante. Com 12% fixo, a
+    // projeção superestimava a receita de quem está no Growth (9%) e no Scale
+    // (7%) — número de faturamento errado para mais é o pior tipo de errado.
+    const taxa = takeRateDoPlano(c.assinatura);
+    const receitaTaxa = totalLiberado * taxa;
     const receitaDestaque = c.destaque ? 490 : 0;
     const diasAtivos = Math.max(1, Math.ceil((agora() - c.criadoEm) / 86400000));
     const burnDiario = totalLiberado / diasAtivos;
     const projecaoGastoMensal = burnDiario * 30;
-    const projecaoReceitaMensal = projecaoGastoMensal * TAXA + receitaDestaque;
+    const projecaoReceitaMensal = projecaoGastoMensal * taxa + receitaDestaque;
     const runway = burnDiario > 0 ? Math.floor(c.saldo / burnDiario) : null;
     return { c, totalLiberado, receitaTaxa, receitaDestaque, projecaoReceitaMensal, runway, diasAtivos };
   }).sort((a, b) => b.projecaoReceitaMensal - a.projecaoReceitaMensal), [db]);
@@ -31,7 +35,7 @@ export default function FinanceiroEmpresas({ db }) {
       <div className="vx-card" style={{ padding: 18, marginBottom: 22 }}>
         <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Projeção de faturamento (próximos 30 dias, todas as empresas)</div>
         <div className="vx-disp vx-mono" style={{ fontSize: 30, color: "var(--brand)" }}>{money(totalProjecao)}</div>
-        <div className="vx-mut" style={{ fontSize: 12 }}>Taxa de {Math.round(TAXA * 100)}% sobre o ritmo de gasto atual, mais destaques mensais ativos.</div>
+        <div className="vx-mut" style={{ fontSize: 12 }}>Taxa do plano de cada empresa sobre o ritmo de gasto atual, mais destaques mensais ativos.</div>
       </div>
 
       <div className="vx-grid">
