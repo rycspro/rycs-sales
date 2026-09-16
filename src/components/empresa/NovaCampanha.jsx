@@ -23,7 +23,7 @@ import { saldoDisponivel } from "../../../shared/empresa.js";
 
 const PASSOS = ["Objetivo", "Detalhes", "Revisão"];
 
-export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso }) {
+export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarComIA = false }) {
   const [passo, setPasso] = useState(0);
   const [objetivo, setObjetivo] = useState(null);
   const [campanha, setCampanha] = useState(null);
@@ -94,12 +94,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso }) {
       {/* ---------------------------------------------- passo 1: objetivo */}
       {passo === 0 && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>O que você precisa que aconteça?</h2>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>{iniciarComIA ? "Criar campanha com IA" : "O que você quer que a RYCS faça?"}</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
             A escolha define qual profissional atende, o que é remunerado e que prova cada ação exige.
           </p>
 
-          <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
+          {!iniciarComIA && <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
             {ORDEM_OBJETIVOS.map((k) => {
               const o = OBJETIVOS[k];
               return (
@@ -120,7 +120,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso }) {
                 </button>
               );
             })}
-          </div>
+          </div>}
 
           {/* atalho assistido */}
           <div className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: "var(--brand-100)", background: "var(--brand-50)" }}>

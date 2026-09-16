@@ -5,6 +5,7 @@ import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel } from "../.
 import { dentroDoLimite } from "../../shared/planos.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
+import { obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
 
 const router = Router();
 
@@ -34,6 +35,16 @@ router.get("/campaigns", (req, res) => {
     rows = db.prepare("SELECT * FROM campaigns ORDER BY criadoEm DESC").all();
   }
   res.json(rows.map(parseCampaign));
+});
+
+// Um único contrato agregado abastece os cards do dashboard. Além de evitar
+// uma requisição por indicador, todo cálculo permanece isolado por empresa no
+// servidor — o cliente nunca escolhe qual companyId consultar.
+router.get("/campaigns-overview", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const overview = obterVisaoGeralCampanhas(req.user.entityId);
+  if (!overview) return res.status(404).json({ error: "Empresa não encontrada" });
+  res.json(overview);
 });
 
 router.get("/campaigns/:id", (req, res) => {

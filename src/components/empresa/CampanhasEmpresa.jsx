@@ -6,6 +6,7 @@ import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empre
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
+import CampaignsDashboard from "./CampaignsDashboard.jsx";
 
 const novaCampanha = (emp) => ({
   titulo: "", descricao: "", produto: emp.produto || "", objetivo: "Gerar reuniões qualificadas",
@@ -22,7 +23,10 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
   // Criar e editar deixam de ser a mesma tela. Criar é decisão comercial e
   // ganha um assistente de três passos; editar é ajuste fino e continua no
   // editor completo, com todos os campos à mão.
-  const [criando, setCriando] = useState(campanhas.length === 0);
+  const [criando, setCriando] = useState(false);
+  const [criarComIA, setCriarComIA] = useState(false);
+  const [modo, setModo] = useState("dashboard");
+  const [recarregarDashboard, setRecarregarDashboard] = useState(0);
   const [selecionada, setSelecionada] = useState(campanhas[0]?.id || "nova");
   const existente = campanhas.find((c) => c.id === selecionada);
   const [rascunhoNovo, setRascunhoNovo] = useState(() => lerJson(`rycs-campanha-${emp.id}`, null) || novaCampanha(emp));
@@ -80,19 +84,31 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
     <NovaCampanha
       emp={emp}
       aviso={aviso}
-      aoCancelar={() => setCriando(false)}
+      iniciarComIA={criarComIA}
+      aoCancelar={() => { setCriando(false); setCriarComIA(false); }}
       aoCriar={(criada) => {
         up((d) => ({ campaigns: [...(d.campaigns || []), criada] }));
         setSelecionada(criada.id);
         setEdicao(criada);
         setCriando(false);
+        setCriarComIA(false);
+        setModo("editor");
+        setRecarregarDashboard((n) => n + 1);
         aviso("Campanha criada como rascunho. Adicione o treinamento para publicar.");
       }}
     />
   );
 
+  if (modo === "dashboard") return <CampaignsDashboard
+    campanhas={campanhas}
+    recarregarSinal={recarregarDashboard}
+    onCriar={() => { setCriarComIA(false); setCriando(true); }}
+    onCriarIA={() => { setCriarComIA(true); setCriando(true); }}
+    onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
+  />;
+
   return <div className="vx-fade">
-    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><div className="vx-eyebrow">Operação comercial</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>Campanhas</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Configure orçamento, tarefas, evidências e treinamento antes da publicação.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setCriando(true)}><Plus size={14} /> Nova campanha</button></div>
+    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 4 }} onClick={() => setModo("dashboard")}>← Central de campanhas</button><div className="vx-eyebrow">Configuração da campanha</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>{campanha.titulo || "Nova campanha"}</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Ajuste orçamento, tarefas, evidências e treinamento.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Nova campanha</button></div>
     <div className="vx-card" style={{padding:14,marginBottom:14}}><div className="vx-row"><b>Progresso da campanha</b><span className="vx-chip vx-mono">{concluidos}/10 {alterado?"· não salvo":"· salvo"}</span></div><div className="vx-meter-track" style={{margin:"10px 0"}}><div className="vx-meter-fill" style={{width:`${concluidos*10}%`,background:"var(--brand)"}}/></div><div className="vx-steps">{passos.map((p,i)=><span key={p} data-done={i<concluidos?"1":"0"}>{i+1}. {p}</span>)}</div></div>
 
     <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10 }}>{campanhas.map((c) => <button key={c.id} className="vx-btn vx-btn-sm" onClick={() => { setSelecionada(c.id); setEdicao({ ...c }); }} style={{ borderColor: selecionada === c.id ? "var(--brand)" : undefined }}>{c.titulo} · {c.status}</button>)}</div>
