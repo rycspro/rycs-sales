@@ -41,13 +41,17 @@ export default function Cadastro({ db, setDb, aviso }) {
       </p>
 
       <div className="vx-card" style={{ padding: 16, margin: "18px 0 22px" }}>
-        <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Tabela base — Nexo CRM</div>
+        {/* Era "Tabela base — Nexo CRM". Nexo CRM não existe: é nome de teste,
+            e o cabeçalho o apresentava ao vendedor como se fosse cliente real
+            com tabela real. Números de exemplo precisam se anunciar como
+            exemplo — quem lê está decidindo se vale a pena trabalhar aqui. */}
+        <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Exemplo de tabela — valores ilustrativos</div>
         {[["Reunião agendada", 5], ["Call conectada", 10], ["Reunião realizada", 8], ["Follow-up", 0.5], ["Venda fechada", 250]].map(([n, v]) => (
           <div key={n} className="vx-row" style={{ borderBottom: "1px solid var(--border)", padding: "8px 0", fontSize: 13.5 }}>
             <span>{n}</span><b className="vx-mono">{money(v)}</b>
           </div>
         ))}
-        <div className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>Cada empresa define a própria tabela.</div>
+        <div className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>Valores apenas ilustrativos. Cada empresa define a própria tabela, e você vê a real antes de aceitar a campanha.</div>
       </div>
 
       <div className="vx-card" style={{ padding: 20 }}>
