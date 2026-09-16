@@ -81,7 +81,7 @@ router.post("/campaigns", (req, res) => {
 
   const { titulo, descricao, produto, publico, vagas, comissoes, treinamento, requisitos, objetivo, regiao,
     funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, limitePorProfissional,
-    aceitaLeadProprio, exigeCertificacao } = req.body;
+    aceitaLeadProprio, exigeCertificacao, duracaoDias } = req.body;
   if (!titulo) return res.status(400).json({ error: "Título é obrigatório" });
 
   const companyId = role === "empresa" ? entityId : req.body.companyId;
@@ -92,14 +92,14 @@ router.post("/campaigns", (req, res) => {
   db.transaction(() => {
     db.prepare(`
       INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento,
-        requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras,
+        requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, duracaoDias,
         limitePorProfissional, aceitaLeadProprio, exigeCertificacao, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, companyId, titulo, descricao || "", produto || "", publico || "",
       vagas || 0, JSON.stringify(comissoes || {}), JSON.stringify(treinamento || []),
       requisitos || "", objetivo || "", regiao || "", funcao || "", Number(orcamento) || 0,
       JSON.stringify(tarefas || {}), JSON.stringify(evidencias || {}), JSON.stringify(criteriosAprovacao || {}),
-      Math.max(1, Number(prazoHoras) || 48), Math.max(0, Number(limitePorProfissional) || 0),
+      Math.max(1, Number(prazoHoras) || 48), Math.max(1, Number(duracaoDias) || 30), Math.max(0, Number(limitePorProfissional) || 0),
       aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, criadoEm);
     registrarEventoCampanha({ companyId, campaignId: id, tipo: "CAMPAIGN_CREATED", actorId: req.user.id, actorRole: role, source: "USER", criadoEm });
   })();
@@ -115,7 +115,7 @@ router.patch("/campaigns/:id", (req, res) => {
     return res.status(403).json({ error: "Sem permissão" });
 
   const allowed = ["titulo", "descricao", "produto", "publico", "vagas", "requisitos", "objetivo", "regiao", "funcao",
-    "orcamento", "prazoHoras", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao"];
+    "orcamento", "prazoHoras", "duracaoDias", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao"];
   const sets = [];
   const vals = [];

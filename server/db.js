@@ -75,6 +75,7 @@ db.exec(`
     evidencias TEXT DEFAULT '{}',
     criteriosAprovacao TEXT DEFAULT '{}',
     prazoHoras INTEGER DEFAULT 48,
+    duracaoDias INTEGER DEFAULT 30,
     limitePorProfissional INTEGER DEFAULT 0,
     aceitaLeadProprio INTEGER DEFAULT 0,
     criadoEm INTEGER NOT NULL,
@@ -858,6 +859,7 @@ adicionarColuna("campaigns", "tarefas", "TEXT DEFAULT '{}'");
 adicionarColuna("campaigns", "evidencias", "TEXT DEFAULT '{}'");
 adicionarColuna("campaigns", "criteriosAprovacao", "TEXT DEFAULT '{}'");
 adicionarColuna("campaigns", "prazoHoras", "INTEGER DEFAULT 48");
+adicionarColuna("campaigns", "duracaoDias", "INTEGER DEFAULT 30");
 adicionarColuna("campaigns", "limitePorProfissional", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "aceitaLeadProprio", "INTEGER DEFAULT 0");
 adicionarColuna("users", "codigoIndicacao", "TEXT");

@@ -176,6 +176,7 @@ export function montarCampanha(chave, empresa = {}) {
     vagas: 2,
     orcamento: 0,
     prazoHoras: obj.prazoHoras,
+    duracaoDias: 30,
     limitePorProfissional: 10,
     aceitaLeadProprio: chave === "prospeccao" || chave === "campo",
     exigeCertificacao: true,
