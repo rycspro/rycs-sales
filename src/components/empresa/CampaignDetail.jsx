@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
+import { ACOES } from "../../lib/constants.js";
 import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
 
 const ABAS = [
@@ -13,7 +14,7 @@ const ABAS = [
   ["leads", "Leads"], ["reunioes", "Reuniões"], ["performance", "Performance"],
   ["financeiro", "Financeiro"], ["configuracoes", "Configurações"],
 ];
-const PERIODOS = [["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"]];
+const PERIODOS = [["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"], ["personalizado", "Personalizado"]];
 const FILTROS_PROFISSIONAIS = [
   ["todos", "Todos"], ["online", "Ativos agora"], ["alta", "Alta performance"],
   ["sem_atividade", "Sem atividade"], ["pendente", "Pendentes"],
@@ -28,6 +29,23 @@ const EVENTOS_LABEL = {
   MEETING_COMPLETED: "Reunião realizada", SALE_RECORDED: "Venda registrada",
   EVIDENCE_SUBMITTED: "Evidência enviada", PAYMENT_RELEASED: "Pagamento liberado",
 };
+const SERIES = {
+  investimento: { label: "Investimento", cor: "#F0B45E", monetario: true },
+  tarefas: { label: "Tarefas", cor: "#5B8CFF" },
+  leads: { label: "Leads", cor: "#9AA6FF" },
+  reunioes: { label: "Reuniões", cor: "#22A06B" },
+  vendas: { label: "Vendas", cor: "#FF8A7A" },
+};
+
+function dataInput(ms) {
+  const data = new Date(ms - 3 * 60 * 60 * 1000);
+  return data.toISOString().slice(0, 10);
+}
+
+function timestampSaoPaulo(data, fim = false) {
+  if (!data) return null;
+  return new Date(`${data}T${fim ? "23:59:59.999" : "00:00:00"}-03:00`).getTime();
+}
 
 function Variacao({ valor }) {
   if (valor == null) return <span className="vx-mut">sem comparação</span>;
@@ -50,6 +68,46 @@ function ActivityFeed({ eventos = [], onRefresh }) {
     </div>}
     <div className="vx-chart-source">Atualização sob demanda e pelo ciclo seguro da aplicação; sem polling agressivo.</div>
   </section>;
+}
+
+function AttentionNeeded({ alertas = [] }) {
+  return <section className="vx-card vx-alerts-card">
+    <div className="vx-eyebrow">Monitoramento determinístico</div><h2 className="vx-disp">Atenção necessária</h2>
+    {alertas.length === 0 ? <div className="vx-alert-row is-positive"><CheckCircle2 size={16} /><span>Nenhum alerta operacional detectado com os dados disponíveis.</span></div> : alertas.map((alerta) => <div className={`vx-alert-row is-${alerta.nivel}`} key={alerta.codigo}><span className="vx-alert-dot" /><span>{alerta.texto}</span></div>)}
+  </section>;
+}
+
+function PerformanceChart({ serie = [] }) {
+  const [visiveis, setVisiveis] = useState(() => new Set(Object.keys(SERIES)));
+  const largura = 640, altura = 220, margemX = 18, margemY = 20;
+  const temDados = serie.some((dia) => Object.keys(SERIES).some((chave) => Number(dia[chave]) > 0));
+  const alternar = (chave) => setVisiveis((atual) => {
+    const proximo = new Set(atual);
+    if (proximo.has(chave) && proximo.size > 1) proximo.delete(chave); else proximo.add(chave);
+    return proximo;
+  });
+  const pontos = (chave) => {
+    const maximo = Math.max(1, ...serie.map((dia) => Number(dia[chave]) || 0));
+    return serie.map((dia, i) => {
+      const x = margemX + (serie.length <= 1 ? 0 : (i / (serie.length - 1)) * (largura - margemX * 2));
+      const y = altura - margemY - ((Number(dia[chave]) || 0) / maximo) * (altura - margemY * 2);
+      return { x, y, valor: Number(dia[chave]) || 0, data: dia.data };
+    });
+  };
+  return <div className="vx-performance-chart">
+    <div className="vx-chart-toggles">{Object.entries(SERIES).map(([chave, config]) => <button key={chave} data-on={visiveis.has(chave) ? "1" : "0"} onClick={() => alternar(chave)}><i style={{ background: config.cor }} />{config.label}</button>)}</div>
+    {!temDados ? <Empty texto="Ainda não há atividade suficiente para o gráfico." /> : <>
+      <svg role="img" aria-label="Resultados ao longo do tempo" viewBox={`0 0 ${largura} ${altura}`} preserveAspectRatio="none">
+        {[0, .25, .5, .75, 1].map((p) => <line key={p} x1={margemX} x2={largura - margemX} y1={margemY + p * (altura - margemY * 2)} y2={margemY + p * (altura - margemY * 2)} className="vx-chart-gridline" />)}
+        {Object.entries(SERIES).filter(([chave]) => visiveis.has(chave)).map(([chave, config]) => {
+          const lista = pontos(chave);
+          return <g key={chave}><polyline points={lista.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={config.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" />{lista.map((p) => <circle key={p.data} cx={p.x} cy={p.y} r="4" fill={config.cor}><title>{`${config.label} · ${p.data}: ${config.monetario ? money(p.valor) : p.valor}`}</title></circle>)}</g>;
+        })}
+      </svg>
+      <div className="vx-chart-axis"><span>{serie[0]?.data?.slice(5).split("-").reverse().join("/")}</span><span>{serie.at(-1)?.data?.slice(5).split("-").reverse().join("/")}</span></div>
+    </>}
+    <div className="vx-chart-source">Cada série usa sua própria escala para comparar tendências. Passe pelos pontos para ver os valores reais.</div>
+  </div>;
 }
 
 function ProfessionalProfile({ item, tarefas, leads, onClose }) {
@@ -91,6 +149,8 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
   const [recarregar, setRecarregar] = useState(0);
   const [filtroProfissional, setFiltroProfissional] = useState("todos");
   const [profissionalAberto, setProfissionalAberto] = useState(null);
+  const [dataDe, setDataDe] = useState(() => dataInput(Date.now() - 6 * 86400000));
+  const [dataAte, setDataAte] = useState(() => dataInput(Date.now()));
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, []);
 
@@ -98,13 +158,14 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     let ativo = true;
     setErro("");
     setDados(null);
-    api(`/campaigns/${campanha.id}/operations?periodo=${periodo}`).then((r) => {
+    const custom = periodo === "personalizado" ? `&de=${timestampSaoPaulo(dataDe)}&ate=${timestampSaoPaulo(dataAte, true)}` : "";
+    api(`/campaigns/${campanha.id}/operations?periodo=${periodo}${custom}`).then((r) => {
       if (!ativo) return;
       if (!r || r.error) setErro(r?.error || "Não foi possível carregar a operação.");
       else setDados(r);
     });
     return () => { ativo = false; };
-  }, [campanha.id, periodo, recarregar]);
+  }, [campanha.id, periodo, dataDe, dataAte, recarregar]);
 
   const tarefas = useMemo(() => (db.submissions || []).filter((s) => s.campaignId === campanha.id), [db.submissions, campanha.id]);
   const leads = useMemo(() => (db.leads || []).filter((l) => l.campaignId === campanha.id), [db.leads, campanha.id]);
@@ -159,7 +220,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
 
     {["geral", "performance", "financeiro"].includes(aba) && <div className="vx-campaign-periods">
       {PERIODOS.map(([chave, label]) => <button key={chave} data-on={periodo === chave ? "1" : "0"} onClick={() => setPeriodo(chave)}>{label}</button>)}
-      <button disabled title="O intervalo personalizado será habilitado no filtro avançado.">Personalizado</button>
+      {periodo === "personalizado" && <div className="vx-custom-dates"><label>De<input type="date" value={dataDe} max={dataAte} onChange={(e) => setDataDe(e.target.value)} /></label><label>Até<input type="date" value={dataAte} min={dataDe} onChange={(e) => setDataAte(e.target.value)} /></label></div>}
     </div>}
 
     {erro && <div className="vx-notice vx-notice-amber">{erro}</div>}
@@ -194,6 +255,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
           <div className="vx-chart-source">Base: {dados.origem.investimento}.</div>
         </section>
       </div>
+      <AttentionNeeded alertas={dados.alertas} />
       <ActivityFeed eventos={dados.eventos} onRefresh={() => setRecarregar((n) => n + 1)} />
     </>}
 
@@ -217,8 +279,18 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     {dados && aba === "tarefas" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Tarefas da campanha</h2><p>Execuções mais recentes, com o status real de auditoria.</p>{tarefas.length === 0 ? <Empty texto="Nenhuma tarefa executada nesta campanha." /> : <div className="vx-compact-list">{tarefas.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
     {dados && aba === "leads" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Leads da campanha</h2><p>Registros vinculados exclusivamente a esta operação.</p>{leads.length === 0 ? <Empty texto="Nenhum lead gerado nesta campanha." /> : <div className="vx-compact-list">{leads.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.nome}</b><span>{item.empresa || "Empresa não informada"}</span></div><span className="vx-chip">{item.etapa}</span></div>)}</div>}</section>}
     {dados && aba === "reunioes" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Reuniões</h2><p>Agendamentos e reuniões realizadas vinculados à campanha.</p>{reunioes.length === 0 ? <Empty texto="Nenhuma reunião registrada nesta campanha." /> : <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? "Reunião realizada" : "Reunião agendada"}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
-    {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Resultados ao longo do tempo</h2><p>Produção diária em {dados.periodo.label.toLowerCase()}.</p>{dados.serie.every((d) => !d.tarefas && !d.leads && !d.reunioes && !d.vendas) ? <Empty texto="Ainda não há atividade suficiente para o gráfico." /> : <div className="vx-performance-list">{dados.serie.map((dia) => <div key={dia.data}><span>{dia.data.slice(5).split("-").reverse().join("/")}</span><i style={{ width: `${Math.min(100, dia.tarefas * 5)}%` }} /><b>{dia.tarefas}</b></div>)}</div>}</section>}
-    {dados && aba === "financeiro" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Financeiro da campanha</h2><p>Consumo no período selecionado e limite configurado.</p><div className="vx-grid vx-g3"><div className="vx-scenario"><span>Investido no período</span><strong className="vx-mono">{money(dados.metricas.investimento.valor)}</strong></div><div className="vx-scenario"><span>Orçamento</span><strong className="vx-mono">{money(campanha.orcamento)}</strong></div><div className="vx-scenario"><span>Reservado</span><strong className="vx-mono">{money(campanha.reservado)}</strong></div></div></section>}
+    {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Resultados ao longo do tempo</h2><p>Compare investimento, tarefas, leads, reuniões e vendas em {dados.periodo.label.toLowerCase()}.</p><PerformanceChart serie={dados.serie} /></section>}
+    {dados && aba === "financeiro" && <div className="vx-finance-stack">
+      <section className="vx-card vx-detail-section">
+        <div className="vx-row" style={{ alignItems: "flex-start", flexWrap: "wrap" }}><div><h2 className="vx-disp">Financeiro da campanha</h2><p>Posição financeira real da operação.</p></div><span className={`vx-budget-risk ${dados.financeiro.diasRestantes != null && dados.financeiro.diasRestantes <= 2 ? "is-danger" : "is-ok"}`}><i />{dados.financeiro.diasRestantes == null ? "Aguardando consumo" : `${dados.financeiro.diasRestantes.toLocaleString("pt-BR")} dias estimados`}</span></div>
+        <div className="vx-finance-budget"><div className="vx-row"><span>Orçamento</span><b className="vx-mono">{money(dados.financeiro.consumido)} / {money(dados.financeiro.limite)}</b></div><div className="vx-meter-track"><div className="vx-meter-fill" style={{ width: `${Math.min(100, dados.financeiro.limite > 0 ? (dados.financeiro.consumido / dados.financeiro.limite) * 100 : 0)}%`, background: "var(--brand)" }} /></div></div>
+        <div className="vx-finance-kpis">
+          {[["Saldo reservado", dados.financeiro.reservado, true], ["Consumido", dados.financeiro.consumido, true], ["Disponível", dados.financeiro.disponivel, true], ["Gasto médio diário", dados.financeiro.gastoMedioDiario, true], ["Projeção mensal", dados.financeiro.projecaoMensal, true], ["Estimativa de duração", dados.financeiro.diasRestantes, false]].map(([label, valor, monetario]) => <div key={label}><span>{label}</span><b className="vx-mono">{monetario ? money(valor) : valor == null ? "Sem consumo" : `${valor.toLocaleString("pt-BR")} dias`}</b></div>)}
+        </div>
+      </section>
+      <section className="vx-card vx-detail-section"><h2 className="vx-disp">Gasto diário × Resultados</h2><p>Séries do período selecionado, com valores reais em cada ponto.</p><PerformanceChart serie={dados.financeiro.serie} /></section>
+      <section className="vx-card vx-detail-section"><h2 className="vx-disp">Detalhamento dos custos</h2><p>Valores configurados e tarefas efetivamente liquidadas.</p>{dados.financeiro.detalhamento.length === 0 ? <Empty texto="Nenhum tipo de tarefa remunerada ou liquidada nesta campanha." /> : <div className="vx-cost-table"><div><span>Tipo de tarefa</span><span>Valor unitário</span><span>Quantidade</span><span>Total gasto</span></div>{dados.financeiro.detalhamento.map((item) => <div key={item.tipo}><b>{ACOES[item.tipo]?.nome || item.tipo}</b><span className="vx-mono" data-label="Valor unitário">{money(item.valorUnitario)}</span><span className="vx-mono" data-label="Quantidade">{item.quantidade}</span><span className="vx-mono" data-label="Total gasto">{money(item.total)}</span></div>)}</div>}</section>
+    </div>}
     {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">Configurações da campanha</h2><p>Objetivo, público, região, valores, evidências, treinamento e regras de publicação continuam no editor completo.</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> Editar configuração</button></section>}
     {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} onClose={() => setProfissionalAberto(null)} />}
   </div>;

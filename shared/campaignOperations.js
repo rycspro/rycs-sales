@@ -31,6 +31,19 @@ export function custoPorResultado(investimento, quantidade) {
   return total > 0 ? Math.round((numero(investimento) / total) * 100) / 100 : null;
 }
 
+export function gerarAlertasCampanha({ profissionais = [], financeiro = {}, variacaoReunioes = null, taxaAprovacaoAtual = null, taxaAprovacaoAnterior = null }) {
+  const alertas = [];
+  const inativos = profissionais.filter((p) => p.candidaturaStatus === "aprovado" && p.statusOperacional === "sem_atividade").length;
+  if (inativos > 0) alertas.push({ nivel: "atencao", codigo: "PROFISSIONAIS_INATIVOS", texto: `${inativos} profissional(is) estão sem atividade há pelo menos 48 horas.` });
+  if (financeiro.diasRestantes != null && financeiro.diasRestantes <= 2) alertas.push({ nivel: "critico", codigo: "SALDO_CURTO", texto: `Saldo suficiente para aproximadamente ${financeiro.diasRestantes.toLocaleString("pt-BR")} dia(s).` });
+  if (taxaAprovacaoAtual != null && taxaAprovacaoAnterior != null) {
+    const queda = Math.round((taxaAprovacaoAnterior - taxaAprovacaoAtual) * 10) / 10;
+    if (queda >= 10) alertas.push({ nivel: "atencao", codigo: "APROVACAO_CAIU", texto: `A taxa de aprovação caiu ${queda.toLocaleString("pt-BR")}% no período.` });
+  }
+  if (variacaoReunioes != null && variacaoReunioes >= 20) alertas.push({ nivel: "positivo", codigo: "REUNIOES_SUBIRAM", texto: `As reuniões aumentaram ${variacaoReunioes.toLocaleString("pt-BR")}% em relação ao período anterior.` });
+  return alertas;
+}
+
 const numero = (valor) => Number(valor) || 0;
 const arredondar = (valor) => Math.round(numero(valor) * 100) / 100;
 

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { custoPorResultado, filtrarCampanhasPorStatus, projetarOrcamento, taxaEntreEtapas, variacaoPercentual } from "../shared/campaignOperations.js";
+import { custoPorResultado, filtrarCampanhasPorStatus, gerarAlertasCampanha, projetarOrcamento, taxaEntreEtapas, variacaoPercentual } from "../shared/campaignOperations.js";
 
 test("variação só é exibida quando existe histórico comparável", () => {
   assert.equal(variacaoPercentual(18, 15), 20);
@@ -34,4 +34,16 @@ test("funil e custo não dividem por zero nem fabricam resultado", () => {
   assert.equal(taxaEntreEtapas(3, 0), null);
   assert.equal(custoPorResultado(382, 3), 127.33);
   assert.equal(custoPorResultado(382, 0), null);
+});
+
+test("alertas operacionais são determinísticos e dependem de dados reais", () => {
+  const alertas = gerarAlertasCampanha({
+    profissionais: [{ candidaturaStatus: "aprovado", statusOperacional: "sem_atividade" }],
+    financeiro: { diasRestantes: 1.5 },
+    variacaoReunioes: 24,
+    taxaAprovacaoAtual: 70,
+    taxaAprovacaoAnterior: 87,
+  });
+  assert.deepEqual(alertas.map((a) => a.codigo), ["PROFISSIONAIS_INATIVOS", "SALDO_CURTO", "APROVACAO_CAIU", "REUNIOES_SUBIRAM"]);
+  assert.deepEqual(gerarAlertasCampanha({ profissionais: [], financeiro: {} }), []);
 });

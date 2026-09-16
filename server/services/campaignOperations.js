@@ -1,5 +1,5 @@
 import db from "../db.js";
-import { custoPorResultado, projetarOrcamento, taxaEntreEtapas, variacaoPercentual } from "../../shared/campaignOperations.js";
+import { custoPorResultado, gerarAlertasCampanha, projetarOrcamento, taxaEntreEtapas, variacaoPercentual } from "../../shared/campaignOperations.js";
 import { listarEventosCampanha } from "./campaignEvents.js";
 
 const valor = (row, chave = "total") => Number(row?.[chave]) || 0;
@@ -59,6 +59,8 @@ function agregarPeriodo(companyId, campaignId, inicio, fim) {
            SUM(CASE WHEN status = 'liberado' AND tipo = 'agendamento' THEN 1 ELSE 0 END) reunioes,
            SUM(CASE WHEN status = 'liberado' AND tipo = 'realizada' THEN 1 ELSE 0 END) realizadas,
            SUM(CASE WHEN status = 'liberado' AND tipo = 'venda' THEN 1 ELSE 0 END) vendas
+           ,SUM(CASE WHEN status = 'liberado' THEN 1 ELSE 0 END) aprovadas
+           ,SUM(CASE WHEN status IN ('recusado','ia_recusado') THEN 1 ELSE 0 END) recusadas
       FROM submissions
      WHERE companyId = ? AND campaignId = ? AND criadoEm >= ? AND criadoEm < ?
   `).get(companyId, campaignId, inicio, fim);
@@ -77,6 +79,8 @@ function agregarPeriodo(companyId, campaignId, inicio, fim) {
     reunioes: Number(tarefas.reunioes) || 0,
     realizadas: Number(tarefas.realizadas) || 0,
     vendas: Number(tarefas.vendas) || 0,
+    aprovadas: Number(tarefas.aprovadas) || 0,
+    recusadas: Number(tarefas.recusadas) || 0,
   };
 }
 
@@ -167,9 +171,49 @@ function profissionaisDaCampanha(companyId, campaignId, agoraMs) {
   });
 }
 
+function financeiroDaCampanha(companyId, campanha, agoraMs, serie) {
+  let tarefasConfiguradas = {};
+  try { tarefasConfiguradas = JSON.parse(campanha.tarefas || "{}"); } catch { tarefasConfiguradas = {}; }
+  const totais = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN fl.tipo = 'liquidacao' THEN ABS(fl.valor) ELSE 0 END), 0) consumido,
+      COALESCE(SUM(CASE WHEN fl.tipo IN ('reserva','estorno_reserva','liquidacao') THEN fl.valor ELSE 0 END), 0) reservado,
+      COALESCE(SUM(CASE WHEN fl.tipo = 'liquidacao' AND fl.criadoEm >= ? THEN ABS(fl.valor) ELSE 0 END), 0) gasto30
+      FROM financial_ledger fl JOIN submissions s ON s.id = fl.submissionId
+     WHERE fl.companyId = ? AND s.companyId = ? AND s.campaignId = ?
+  `).get(agoraMs - 30 * DIA, companyId, companyId, campanha.id);
+  const primeiroMovimento = db.prepare(`
+    SELECT MIN(fl.criadoEm) criadoEm FROM financial_ledger fl JOIN submissions s ON s.id = fl.submissionId
+     WHERE fl.companyId = ? AND s.companyId = ? AND s.campaignId = ? AND fl.tipo = 'liquidacao'
+  `).get(companyId, companyId, campanha.id)?.criadoEm;
+  const diasObservados = primeiroMovimento ? Math.max(1, Math.min(30, Math.ceil((agoraMs - Math.max(primeiroMovimento, agoraMs - 30 * DIA)) / DIA))) : 0;
+  const consumido = Number(totais.consumido) || 0;
+  const reservado = Math.max(0, Number(totais.reservado) || 0);
+  const limite = Number(campanha.orcamento) || 0;
+  const disponivel = Math.max(0, limite - consumido - reservado);
+  const gastoMedioDiario = diasObservados > 0 ? Math.round(((Number(totais.gasto30) || 0) / diasObservados) * 100) / 100 : 0;
+  const projecaoMensal = Math.round(gastoMedioDiario * 30 * 100) / 100;
+  const diasRestantes = gastoMedioDiario > 0 ? Math.round((disponivel / gastoMedioDiario) * 10) / 10 : null;
+  const porTipo = db.prepare(`
+    SELECT s.tipo, COUNT(DISTINCT s.id) quantidade, COALESCE(SUM(ABS(fl.valor)), 0) total
+      FROM financial_ledger fl JOIN submissions s ON s.id = fl.submissionId
+     WHERE fl.companyId = ? AND s.companyId = ? AND s.campaignId = ? AND fl.tipo = 'liquidacao'
+     GROUP BY s.tipo
+  `).all(companyId, companyId, campanha.id);
+  const mapaTipos = new Map(porTipo.map((item) => [item.tipo, item]));
+  const tipos = new Set([...Object.keys(tarefasConfiguradas), ...porTipo.map((item) => item.tipo)]);
+  const detalhamento = [...tipos].filter((tipo) => Number(tarefasConfiguradas[tipo]) > 0 || mapaTipos.has(tipo)).map((tipo) => ({
+    tipo,
+    valorUnitario: Number(tarefasConfiguradas[tipo]) || 0,
+    quantidade: Number(mapaTipos.get(tipo)?.quantidade) || 0,
+    total: Number(mapaTipos.get(tipo)?.total) || 0,
+  }));
+  return { limite, reservado, consumido, disponivel, gastoMedioDiario, projecaoMensal, diasRestantes, detalhamento, serie };
+}
+
 export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
   const campanha = db.prepare(`
-    SELECT id, companyId, titulo, descricao, objetivo, regiao, funcao, status, vagas, orcamento, reservado, criadoEm
+    SELECT id, companyId, titulo, descricao, objetivo, regiao, funcao, status, vagas, orcamento, reservado, tarefas, criadoEm
       FROM campaigns WHERE id = ? AND companyId = ?
   `).get(campaignId, companyId);
   if (!campanha) return null;
@@ -181,6 +225,14 @@ export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
     SELECT COUNT(DISTINCT sellerId) total FROM campaign_applications
      WHERE campaignId = ? AND status = 'aprovado'
   `).get(campaignId));
+  const serie = serieTemporal(companyId, campaignId, periodo.inicio, periodo.fim);
+  const profissionais = profissionaisDaCampanha(companyId, campaignId, opcoes.agoraMs || Date.now());
+  const financeiro = financeiroDaCampanha(companyId, campanha, opcoes.agoraMs || Date.now(), serie);
+  const decididasAtual = atual.aprovadas + atual.recusadas;
+  const decididasAnterior = anterior.aprovadas + anterior.recusadas;
+  const taxaAprovacaoAtual = decididasAtual > 0 ? taxaEntreEtapas(atual.aprovadas, decididasAtual) : null;
+  const taxaAprovacaoAnterior = decididasAnterior > 0 ? taxaEntreEtapas(anterior.aprovadas, decididasAnterior) : null;
+  const variacaoReunioes = variacaoPercentual(atual.reunioes, anterior.reunioes);
   return {
     campanha: { ...campanha, profissionaisAtivos },
     periodo: { ...periodo, chave: opcoes.periodo || "7d" },
@@ -188,7 +240,7 @@ export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
       investimento: { valor: atual.investimento, variacao: variacaoPercentual(atual.investimento, anterior.investimento) },
       tarefas: { valor: atual.tarefas, variacao: variacaoPercentual(atual.tarefas, anterior.tarefas) },
       leads: { valor: atual.leads, variacao: variacaoPercentual(atual.leads, anterior.leads) },
-      reunioes: { valor: atual.reunioes, variacao: variacaoPercentual(atual.reunioes, anterior.reunioes) },
+      reunioes: { valor: atual.reunioes, variacao: variacaoReunioes },
       vendas: { valor: atual.vendas, variacao: variacaoPercentual(atual.vendas, anterior.vendas) },
     },
     funil: [
@@ -203,8 +255,10 @@ export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
       reuniao: custoPorResultado(atual.investimento, atual.reunioes),
       venda: custoPorResultado(atual.investimento, atual.vendas),
     },
-    serie: serieTemporal(companyId, campaignId, periodo.inicio, periodo.fim),
-    profissionais: profissionaisDaCampanha(companyId, campaignId, opcoes.agoraMs || Date.now()),
+    serie,
+    profissionais,
+    financeiro,
+    alertas: gerarAlertasCampanha({ profissionais, financeiro, variacaoReunioes, taxaAprovacaoAtual, taxaAprovacaoAnterior }),
     eventos: listarEventosCampanha(companyId, campaignId, 40),
     origem: {
       investimento: "liquidações da razão financeira",
