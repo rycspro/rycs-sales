@@ -11,7 +11,7 @@ import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 // do backend — pedir que a pessoa escolha "entrar como" seria inventar uma
 // decisão que o servidor já tomou, com o risco de ela escolher errado.
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, conviteTrial = false }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
@@ -78,7 +78,12 @@ export default function Login({ onLogin }) {
   );
 
   return (
-    <MolduraAuth subtitulo="Entre na sua conta" largura={420}>
+    <MolduraAuth
+      tarja={conviteTrial ? "Convite de teste gratuito" : undefined}
+      subtitulo={conviteTrial
+        ? "Entre com a conta da sua empresa para ativar o período gratuito. Se ainda não tem conta, crie uma abaixo — o convite continua valendo."
+        : "Entre na sua conta"}
+      largura={420}>
       <form onSubmit={submit}>
         <Campo label="E-mail">
           <input className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />

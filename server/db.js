@@ -314,8 +314,26 @@ db.exec(`
     valor REAL DEFAULT 0,
     inicio INTEGER,
     proximaCobranca INTEGER,
+    trialOrigem TEXT DEFAULT '',
     criadoEm INTEGER NOT NULL,
     FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  -- Convites de trial. O token NÃO é guardado: fica só o hash dele.
+  -- Um vazamento do banco entregaria acessos gratuitos de graça, e link de
+  -- convite é credencial como qualquer outra.
+  CREATE TABLE IF NOT EXISTS trial_links (
+    id TEXT PRIMARY KEY,
+    tokenHash TEXT UNIQUE NOT NULL,
+    dias INTEGER NOT NULL,
+    plano TEXT DEFAULT '',          -- vazio = a empresa escolhe qualquer plano
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    expiraEm INTEGER,               -- o convite vence mesmo sem ser usado
+    usadoPor TEXT,                  -- companyId que resgatou
+    usadoEm INTEGER,
+    subscriptionId TEXT,
+    observacao TEXT DEFAULT ''
   );
 
   CREATE TABLE IF NOT EXISTS vouchers (
@@ -914,6 +932,9 @@ adicionarColuna("subscriptions", "invoiceUrl", "TEXT");
 // de acesso decide: trial vencido sem cobrança confirmada vira inadimplente.
 adicionarColuna("subscriptions", "trialFim", "INTEGER");
 adicionarColuna("subscriptions", "trialDias", "INTEGER DEFAULT 0");
+// Identifica como o período gratuito foi concedido sem misturar o trial
+// interno da operação com assinaturas normais do gateway.
+adicionarColuna("subscriptions", "trialOrigem", "TEXT DEFAULT ''");
 // Forma de pagamento escolhida no checkout ("CREDIT_CARD" ou "PIX"). Só o
 // meio, nunca o cartão: número e CVV não passam pelo nosso banco.
 adicionarColuna("subscriptions", "formaPagamento", "TEXT DEFAULT ''");

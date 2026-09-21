@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { CreditCard, Check, ShieldCheck, ArrowLeft, Loader, QrCode } from "lucide-react";
+import { CreditCard, Check, ShieldCheck, ArrowLeft, Loader, QrCode, Gift } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
 import { formatarData, primeiraCobranca } from "../../../shared/assinatura.js";
+import { lerConvite, limparConvite } from "../../lib/rotas.js";
 
 // Escolha de plano e checkout.
 //
@@ -33,9 +34,39 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
 
+  // Convite de trial, quando a empresa chegou por um link privado. Validado no
+  // servidor: um token inventado não vira oferta na tela.
+  const [convite, setConvite] = useState(null);
+  const [resgatando, setResgatando] = useState(false);
+
   // O período gratuito é decidido pelo servidor, não pela tela: assim a oferta
   // muda por configuração e as duas pontas concordam sobre a data da cobrança.
   useEffect(() => { api("/subscription/access").then((r) => setTrialDias(Number(r?.trialDisponivel || 0))); }, []);
+
+  useEffect(() => {
+    const token = lerConvite();
+    if (!token) return;
+    api(`/trial/${token}`).then((r) => {
+      // Convite ruim não fica pendurado atrapalhando o checkout normal.
+      if (!r?.ok) { limparConvite(); return; }
+      setConvite({ token, ...r });
+    });
+  }, []);
+
+  const resgatarConvite = async (chave) => {
+    setResgatando(true);
+    const r = await api(`/trial/${convite.token}/resgatar`, { plano: chave });
+    setResgatando(false);
+    if (!r || r.error) {
+      // Convite queimado ou empresa inelegível: some com ele e deixa a empresa
+      // seguir pelo caminho normal, em vez de travar numa oferta impossível.
+      if (r?.motivo) { limparConvite(); setConvite(null); }
+      return aviso(r?.error || "Não foi possível ativar o período gratuito.");
+    }
+    limparConvite();
+    aviso(`Período gratuito ativado até ${formatarData(r.trialFim)}.`);
+    aoAtivar?.(r);
+  };
 
   const detalhes = plano ? PLANOS[plano] : null;
   const cobrancaEm = primeiraCobranca({ trialDias: forma === "CREDIT_CARD" ? trialDias : 0 });
@@ -105,11 +136,26 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
         {acesso?.mensagem || "Escolha um plano para publicar campanhas e receber profissionais."}
       </p>
 
+      {convite && (
+        <div className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: "var(--brand)", background: "var(--brand-50)" }}>
+          <div className="vx-eyebrow" style={{ color: "var(--brand)", display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <Gift size={12} /> Convite de teste gratuito
+          </div>
+          <div style={{ fontSize: 13.5, color: "var(--text-2)", lineHeight: 1.65 }}>
+            Você tem <b>{convite.dias} dias grátis</b>{convite.plano ? <> no plano <b>{PLANOS[convite.plano]?.nome}</b></> : <> no plano que escolher</>}.
+            Não pedimos cartão agora. Ao fim do período, será necessário contratar um plano para continuar —
+            e nada da sua conta é apagado nessa troca.
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "grid", gap: 12, marginTop: 20, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
-        {PLANOS_OFERTADOS.map((k) => {
+        {PLANOS_OFERTADOS.filter((k) => !convite?.plano || k === convite.plano).map((k) => {
           const p = PLANOS[k];
           return (
-            <button key={k} className="vx-card" onClick={() => { setPlano(k); setPasso(1); }}
+            <button key={k} className="vx-card"
+              disabled={resgatando}
+              onClick={() => { if (convite) return resgatarConvite(k); setPlano(k); setPasso(1); }}
               style={{ padding: 18, textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: 8 }}>
               <div className="vx-disp" style={{ fontSize: 17 }}>{p.nome}</div>
               <div className="vx-disp vx-mono" style={{ fontSize: 26, color: "var(--brand)" }}>
@@ -122,6 +168,11 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
                   </li>
                 ))}
               </ul>
+              {convite && (
+                <div className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10, pointerEvents: "none" }}>
+                  {resgatando ? "Ativando…" : `Ativar ${convite.dias} dias grátis`}
+                </div>
+              )}
             </button>
           );
         })}

@@ -14,6 +14,7 @@ export const ROTAS = {
   cadastroVendedor: "/cadastro/profissional",
   cadastroEmpresa: "/cadastro/empresa",
   plataforma: "/plataforma",
+  trial: "/trial",
 };
 
 // Endereços alternativos que as pessoas digitam ou que ficam em links antigos.
@@ -36,6 +37,13 @@ function normalizar(caminho) {
 
 export function resolver(caminho = typeof window !== "undefined" ? window.location.pathname : "/") {
   const p = normalizar(caminho);
+  // Convite de trial: /trial/<token>. O token não pode passar por normalização
+  // — ele é sensível a maiúsculas e minúsculas.
+  const bruto = (caminho || "/").replace(/\/+$/, "");
+  if (bruto.startsWith("/trial/")) {
+    const token = bruto.slice("/trial/".length).split("/")[0];
+    if (token) return { tipo: "trial", token };
+  }
   if (p.startsWith("/plataforma")) return { tipo: "plataforma" };
   if (p === ROTAS.cadastroVendedor) return { tipo: "cadastro", role: "vendedor" };
   if (p === ROTAS.cadastroEmpresa) return { tipo: "cadastro", role: "empresa" };
@@ -70,3 +78,20 @@ export const parametro = (chave) => {
     return null;
   }
 };
+
+// O convite chega pela URL e precisa sobreviver ao login: quem abre o link
+// sem estar logado passa por cadastro ou entrada antes de conseguir resgatar.
+// Guardar em memória só não bastaria — a página recarrega no meio do caminho.
+const CHAVE_CONVITE = "rycs-convite-trial";
+
+export function guardarConvite(token) {
+  try { window.sessionStorage?.setItem(CHAVE_CONVITE, token); } catch { /* sessão bloqueada */ }
+}
+
+export function lerConvite() {
+  try { return window.sessionStorage?.getItem(CHAVE_CONVITE) || null; } catch { return null; }
+}
+
+export function limparConvite() {
+  try { window.sessionStorage?.removeItem(CHAVE_CONVITE); } catch { /* nada a fazer */ }
+}

@@ -16,6 +16,7 @@ export const ESTADOS = {
   trial:      "trial",       // período gratuito correndo, cartão já cadastrado
   pendente:   "pendente",    // checkout criado, primeiro pagamento não confirmado
   inadimplente: "inadimplente", // cobrança falhou ou venceu
+  trialFim:   "trial_terminado", // período gratuito acabou, e não havia cartão
   sem:        "sem",         // nunca assinou, ou está no plano gratuito antigo
 };
 
@@ -44,7 +45,14 @@ export function estadoDaAssinatura(assinatura, agora = agoraPadrao()) {
   // 'trial' daria acesso vitalício de graça.
   if (status === "trial" || status === "trialing") {
     const fim = Number(assinatura.trialFim || 0);
-    if (fim && agora > fim) return ESTADOS.inadimplente;
+    if (fim && agora > fim) {
+      // Trial com cartão cadastrado que venceu é cobrança que não entrou.
+      // Trial de cortesia que venceu é só o fim do período — dizer "não
+      // conseguimos processar seu pagamento" a quem nunca deu cartão manda a
+      // pessoa procurar um problema que não existe.
+      const semCartao = !assinatura.formaPagamento || assinatura.formaPagamento === "ADMIN_TRIAL";
+      return semCartao ? ESTADOS.trialFim : ESTADOS.inadimplente;
+    }
     return ESTADOS.trial;
   }
 
@@ -95,6 +103,11 @@ export function acessoDaEmpresa({ empresa = {}, assinatura = null } = {}, agora 
         ? `Assim que o pagamento do plano ${nomePlano} for confirmado, seu acesso é liberado automaticamente.`
         : "Assim que o pagamento for confirmado, seu acesso é liberado automaticamente.",
       acao: "aguardar",
+    },
+    [ESTADOS.trialFim]: {
+      titulo: "Seu período gratuito terminou",
+      mensagem: "Escolha um plano para continuar usando a RYCS. Suas campanhas, seu saldo e seu histórico continuam salvos.",
+      acao: "escolher-plano",
     },
     [ESTADOS.inadimplente]: {
       titulo: "Não conseguimos processar seu pagamento",

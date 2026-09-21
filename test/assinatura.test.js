@@ -21,10 +21,12 @@ test("trial em andamento libera o acesso", () => {
 test("trial vencido deixa de liberar", () => {
   // Sem esta regra, uma assinatura esquecida em 'trial' daria acesso vitalício
   // de graça — basta o webhook da primeira cobrança nunca chegar.
+  //
+  // Sem forma de pagamento registrada, o vencimento é fim de cortesia, não
+  // falha de cobrança: os dois casos têm mensagens diferentes logo abaixo.
   const r = acessoDaEmpresa({ empresa: {}, assinatura: { status: "trial", plano: "growth", trialFim: emDias(-1) } }, AGORA);
-  assert.equal(r.estado, ESTADOS.inadimplente);
+  assert.equal(r.estado, ESTADOS.trialFim);
   assert.equal(r.liberado, false);
-  assert.equal(r.acao, "atualizar-pagamento");
 });
 
 test("empresa sem assinatura vai escolher plano", () => {
@@ -94,4 +96,26 @@ test("sem assinatura não exibe plano nenhum", () => {
   // contradizem na mesma linha do painel.
   const r = acessoDaEmpresa({ empresa: { assinatura: "free" }, assinatura: null }, AGORA);
   assert.equal(r.plano, null);
+});
+
+test("trial de cortesia que vence não acusa falha de pagamento", () => {
+  // Quem ganhou o trial por convite nunca informou cartão. Dizer "não
+  // conseguimos processar seu pagamento" manda a pessoa caçar um problema
+  // inexistente — e o caminho certo é escolher um plano.
+  const r = acessoDaEmpresa({
+    empresa: { assinatura: "growth" },
+    assinatura: { status: "trial", plano: "growth", trialFim: emDias(-1), formaPagamento: "ADMIN_TRIAL" },
+  }, AGORA);
+  assert.equal(r.liberado, false);
+  assert.equal(r.acao, "escolher-plano");
+  assert.match(r.titulo, /período gratuito terminou/);
+  assert.match(r.mensagem, /continuam salvos/);
+});
+
+test("trial com cartão que vence continua sendo falha de cobrança", () => {
+  const r = acessoDaEmpresa({
+    empresa: {},
+    assinatura: { status: "trial", plano: "growth", trialFim: emDias(-1), formaPagamento: "CREDIT_CARD" },
+  }, AGORA);
+  assert.equal(r.acao, "atualizar-pagamento");
 });

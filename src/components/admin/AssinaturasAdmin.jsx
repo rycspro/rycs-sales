@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, AlertTriangle } from "lucide-react";
+import { Search, AlertTriangle, Gift, Link2, Copy } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
+import { ORDEM_PLANOS, PLANOS } from "../../../shared/planos.js";
 
 // Cobrança das empresas, na visão da plataforma.
 //
@@ -38,8 +39,35 @@ export default function AssinaturasAdmin() {
   const [dados, setDados] = useState(null);
   const [filtro, setFiltro] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [planosTrial, setPlanosTrial] = useState({});
+  const [liberando, setLiberando] = useState("");
 
-  useEffect(() => { api("/admin/subscriptions").then((r) => setDados(r || { linhas: [], resumo: {} })); }, []);
+  // Convite por link: gerado aqui, entregue por fora. O token aparece uma vez
+  // só — o servidor guarda apenas o hash e não tem como exibi-lo de novo.
+  const [convite, setConvite] = useState(null);
+  const [gerando, setGerando] = useState(false);
+
+  const gerarLink = async () => {
+    setGerando(true);
+    const r = await api("/admin/trial-links", { dias: 7 });
+    setGerando(false);
+    if (r?.error) return window.alert(r.error);
+    setConvite(r);
+  };
+
+  const carregar = () => api("/admin/subscriptions").then((r) => setDados(r || { linhas: [], resumo: {} }));
+  useEffect(() => { carregar(); }, []);
+
+  const planosPagos = ORDEM_PLANOS.filter((chave) => PLANOS[chave]?.preco > 0);
+  const liberarTrial = async (linha) => {
+    const plano = planosTrial[linha.companyId] || planosPagos[0]?.chave;
+    if (!plano || !window.confirm(`Liberar 7 dias de acesso ao plano ${PLANOS[plano].nome} para ${linha.empresa}?`)) return;
+    setLiberando(linha.companyId);
+    const r = await api(`/admin/subscriptions/${linha.companyId}/secret-trial`, { plano });
+    setLiberando("");
+    if (r?.error) return window.alert(r.error);
+    await carregar();
+  };
 
   const linhas = useMemo(() => {
     let l = dados?.linhas || [];
@@ -57,10 +85,38 @@ export default function AssinaturasAdmin() {
 
   return (
     <div className="vx-fade">
-      <div className="vx-row" style={{ marginBottom: 16 }}>
-        <div className="vx-disp" style={{ fontSize: 22 }}>Cobrança</div>
-        <span className="vx-badge vx-badge-muted">{dados.total} empresas</span>
+      <div className="vx-row" style={{ marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="vx-disp" style={{ fontSize: 22 }}>Cobrança</div>
+          <span className="vx-badge vx-badge-muted">{dados.total} empresas</span>
+        </div>
+        <button className="vx-btn vx-btn-sm" onClick={gerarLink} disabled={gerando}>
+          <Link2 size={13} /> {gerando ? "Gerando…" : "Gerar link de trial"}
+        </button>
       </div>
+
+      {convite && (
+        <div className="vx-card" style={{ padding: 16, marginBottom: 16, borderColor: "var(--brand)", background: "var(--brand-50)" }}>
+          <div className="vx-eyebrow" style={{ color: "var(--brand)", marginBottom: 7 }}>
+            Link de {convite.dias} dias — copie agora
+          </div>
+          <div className="vx-mono" style={{
+            fontSize: 12, wordBreak: "break-all", background: "var(--surface)",
+            border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", lineHeight: 1.5,
+          }}>{convite.url}</div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+            <button className="vx-btn vx-btn-primary vx-btn-sm"
+              onClick={() => { navigator.clipboard?.writeText(convite.url); window.alert("Link copiado."); }}>
+              <Copy size={13} /> Copiar link
+            </button>
+            <button className="vx-btn vx-btn-sm" onClick={() => setConvite(null)}>Fechar</button>
+          </div>
+          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10, lineHeight: 1.6 }}>
+            {convite.aviso} Vale para uma única empresa, expira em {new Date(convite.expiraEm).toLocaleDateString("pt-BR")},
+            e quem resgatar escolhe qualquer plano sem informar cartão.
+          </div>
+        </div>
+      )}
 
       {/* Quem não está pagando é o número que a operação abre a tela para ver */}
       {(resumo.sem > 0 || resumo.inadimplente > 0) && (
@@ -95,7 +151,7 @@ export default function AssinaturasAdmin() {
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
             <thead>
               <tr>
-                {["Empresa", "Plano", "Valor", "Status", "Próxima cobrança"].map((h) => (
+                {["Empresa", "Plano", "Valor", "Status", "Próxima cobrança", "Ação interna"].map((h) => (
                   <th key={h} style={{
                     textAlign: h === "Valor" ? "right" : "left", padding: "11px 14px",
                     fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase",
@@ -126,6 +182,23 @@ export default function AssinaturasAdmin() {
                     {l.proximaCobranca
                       ? <>{dataCurta(l.proximaCobranca)}{l.estado === "trial" && <div className="vx-mut" style={{ fontSize: 11 }}>fim do trial</div>}</>
                       : <span className="vx-mut">—</span>}
+                  </td>
+                  <td style={{ padding: "9px 14px", borderBottom: "1px solid var(--border)", minWidth: 210 }}>
+                    {l.trialElegivel ? (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <select className="vx-input" aria-label={`Plano do trial para ${l.empresa}`}
+                          value={planosTrial[l.companyId] || planosPagos[0]?.chave || ""}
+                          onChange={(e) => setPlanosTrial((atual) => ({ ...atual, [l.companyId]: e.target.value }))}
+                          style={{ minWidth: 0, padding: "6px 8px", fontSize: 12 }}>
+                          {planosPagos.map((chave) => <option key={chave} value={chave}>{PLANOS[chave].nome}</option>)}
+                        </select>
+                        <button className="vx-btn vx-btn-sm" onClick={() => liberarTrial(l)} disabled={liberando === l.companyId}
+                          title="Conceder trial interno de sete dias">
+                          <Gift size={13} />{liberando === l.companyId ? "…" : "7 dias"}
+                        </button>
+                      </div>
+                    ) : l.trialUsado ? <span className="vx-mut" style={{ fontSize: 12 }}>Trial já utilizado</span>
+                      : <span className="vx-mut" style={{ fontSize: 12 }}>Indisponível neste status</span>}
                   </td>
                 </tr>
               ))}

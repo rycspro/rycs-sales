@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomBytes, createHash } from "crypto";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
@@ -6,6 +7,7 @@ import { acessoDaEmpresa, primeiraCobranca } from "../../shared/assinatura.js";
 import { PLANOS, ORDEM_PLANOS, planoDe } from "../../shared/planos.js";
 import { calcularVoucher, normalizarVoucher, validarVoucher } from "../services/vouchers.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
+import { TRIAL_SECRETO_DIAS, TRIAL_LINK_VALIDADE_DIAS, podeConcederTrialSecreto, podeResgatarConvite, estadoDoConvite, MOTIVOS_CONVITE } from "../../shared/trialSecreto.js";
 
 const router = Router();
 
@@ -30,9 +32,9 @@ router.post("/vouchers", (req, res) => {
   try{const id=uid();db.prepare(`INSERT INTO vouchers (id,codigo,tipo,valor,validadeEm,limiteTotal,limitePorEmpresa,planos,status,criadoEm) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(id,codigo,tipo,valor,req.body.validadeEm||null,Number(req.body.limiteTotal)||0,Number(req.body.limitePorEmpresa)||1,JSON.stringify(req.body.planos||[]),req.body.status||"ativo",agora());res.json({id,codigo});}catch{return res.status(409).json({error:"Código já existe"});}
 });
 
-// Dias de período gratuito. Configurável por ambiente: zero desliga o trial
-// sem mexer em código, que é o que a operação precisa para testar oferta.
-const TRIAL_DIAS = Math.max(0, Number(process.env.TRIAL_DIAS || 0));
+// Trial não é uma oferta pública. A concessão de sete dias só existe na rota
+// administrativa abaixo; o checkout comum sempre começa com cobrança normal.
+const TRIAL_DIAS_PUBLICO = 0;
 
 // O estado de acesso da empresa. A tela pergunta aqui em vez de decidir
 // sozinha — duas decisões separadas produziriam o caso em que a tela libera e
@@ -49,6 +51,9 @@ router.get("/admin/subscriptions", (req, res) => {
   const assinaturas = db.prepare(
     "SELECT * FROM subscriptions WHERE status != 'cancelada' ORDER BY criadoEm DESC"
   ).all();
+  const trialsUsados = new Set(db.prepare(
+    "SELECT DISTINCT companyId FROM subscriptions WHERE trialDias > 0"
+  ).all().map((s) => s.companyId));
   const porEmpresa = new Map();
   for (const a of assinaturas) if (!porEmpresa.has(a.companyId)) porEmpresa.set(a.companyId, a);
 
@@ -68,6 +73,11 @@ router.get("/admin/subscriptions", (req, res) => {
       formaPagamento: assinatura?.formaPagamento || null,
       cartaoFinal: assinatura?.cartaoFinal || null,
       falhaMotivo: assinatura?.falhaMotivo || null,
+      trialUsado: trialsUsados.has(e.id),
+      trialElegivel: podeConcederTrialSecreto({
+        estadoAtual: acesso.estado,
+        jaUsouTrial: trialsUsados.has(e.id),
+      }).ok,
       desde: e.criadoEm,
     };
   });
@@ -85,7 +95,181 @@ router.get("/subscription/access", (req, res) => {
     "SELECT * FROM subscriptions WHERE companyId = ? AND status != 'cancelada' ORDER BY criadoEm DESC LIMIT 1"
   ).get(entityId);
 
-  res.json({ ...acessoDaEmpresa({ empresa, assinatura }), assinatura: assinatura || null, trialDisponivel: TRIAL_DIAS });
+  res.json({ ...acessoDaEmpresa({ empresa, assinatura }), assinatura: assinatura || null, trialDisponivel: TRIAL_DIAS_PUBLICO });
+});
+
+// Concessão interna, deliberada e rastreável de sete dias. Não chama o Asaas,
+// não usa cartão e não é exposta à empresa no checkout público.
+// ---------------------------------------------------------------------------
+// Convites de trial por link
+//
+// O token só existe em claro uma vez: na resposta que cria o convite. O banco
+// guarda o hash. Se alguém copiar a tabela inteira, não sai um trial de lá.
+const hashDoToken = (t) => createHash("sha256").update(String(t)).digest("hex");
+
+router.post("/admin/trial-links", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const dias = Math.max(1, Math.min(90, Number(req.body?.dias) || TRIAL_SECRETO_DIAS));
+  const plano = String(req.body?.plano || "").trim();
+  if (plano && !PLANOS[plano]?.preco) return res.status(400).json({ error: "Plano inválido." });
+
+  const token = randomBytes(32).toString("hex");
+  const id = uid();
+  const criadoEm = agora();
+  const expiraEm = criadoEm + TRIAL_LINK_VALIDADE_DIAS * 86400000;
+
+  db.prepare(`INSERT INTO trial_links (id, tokenHash, dias, plano, criadoPor, criadoEm, expiraEm, observacao)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(id, hashDoToken(token), dias, plano, req.user.id, criadoEm, expiraEm, String(req.body?.observacao || "").slice(0, 200));
+
+  console.log(`[trial] convite gerado por ${req.user.id} — ${dias} dias${plano ? `, plano ${plano}` : ", qualquer plano"}`);
+
+  const base = String(process.env.FRONTEND_URL || "").replace(/\/$/, "");
+  res.status(201).json({
+    id, dias, plano: plano || null, expiraEm,
+    // Mostrado uma vez só. Não há como recuperá-lo depois, por desenho.
+    token,
+    url: `${base}/trial/${token}`,
+    aviso: "Copie agora: este link não pode ser exibido de novo.",
+  });
+});
+
+// Lista os convites para a operação acompanhar. Sem token nenhum — só o
+// estado, para não transformar a tela do admin em fonte de links ativos.
+router.get("/admin/trial-links", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const links = db.prepare("SELECT * FROM trial_links ORDER BY criadoEm DESC LIMIT 100").all().map((l) => {
+    const empresa = l.usadoPor ? db.prepare("SELECT nome FROM companies WHERE id = ?").get(l.usadoPor) : null;
+    const estado = estadoDoConvite(l);
+    return {
+      id: l.id, dias: l.dias, plano: l.plano || null,
+      criadoEm: l.criadoEm, expiraEm: l.expiraEm,
+      usadoEm: l.usadoEm, usadoPor: empresa?.nome || null,
+      estado: l.usadoEm ? "usado" : estado.ok ? "disponivel" : "expirado",
+    };
+  });
+  res.json({ links });
+});
+
+// Consulta pública do convite. Diz se serve, sem consumir e sem revelar nada
+// além do necessário para a tela se desenhar.
+router.get("/trial/:token", (req, res) => {
+  const link = db.prepare("SELECT * FROM trial_links WHERE tokenHash = ?").get(hashDoToken(req.params.token));
+  const estado = estadoDoConvite(link);
+  if (!estado.ok) return res.status(404).json({ ok: false, motivo: estado.motivo, error: MOTIVOS_CONVITE[estado.motivo] });
+  res.json({ ok: true, dias: link.dias, plano: link.plano || null, expiraEm: link.expiraEm });
+});
+
+// Resgate. A empresa logada troca o convite por sete dias no plano que ela
+// escolher — sem checkout, sem cartão e sem passar pelo Asaas.
+router.post("/trial/:token/resgatar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem resgatar um convite." });
+
+  const link = db.prepare("SELECT * FROM trial_links WHERE tokenHash = ?").get(hashDoToken(req.params.token));
+
+  const empresa = db.prepare("SELECT id, assinatura FROM companies WHERE id = ?").get(entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada." });
+
+  const atual = db.prepare(
+    "SELECT * FROM subscriptions WHERE companyId = ? AND status != 'cancelada' ORDER BY criadoEm DESC LIMIT 1"
+  ).get(entityId);
+  const acesso = acessoDaEmpresa({ empresa, assinatura: atual || null });
+  const jaUsouTrial = !!db.prepare("SELECT 1 FROM subscriptions WHERE companyId = ? AND trialDias > 0 LIMIT 1").get(entityId);
+
+  const permissao = podeResgatarConvite({ link, estadoAtual: acesso.estado, jaUsouTrial });
+  if (!permissao.ok) return res.status(409).json({ error: permissao.erro, motivo: permissao.motivo });
+
+  // O convite pode fixar o plano; quando não fixa, a empresa escolhe qualquer
+  // um dos pagos. Plano inválido não vira trial silenciosamente.
+  const plano = link.plano || String(req.body?.plano || "").trim();
+  if (!PLANOS[plano]?.preco) return res.status(400).json({ error: "Escolha um plano para ativar o período gratuito." });
+
+  const inicio = agora();
+  const trialFim = inicio + link.dias * 86400000;
+  const subId = uid();
+
+  let consumido = false;
+  db.transaction(() => {
+    // Marcar o uso e criar a assinatura na MESMA transação, com a condição
+    // usadoEm IS NULL, é o que torna o uso único de verdade: dois resgates
+    // simultâneos do mesmo link, só um passa.
+    const marca = db.prepare(
+      "UPDATE trial_links SET usadoPor = ?, usadoEm = ?, subscriptionId = ? WHERE id = ? AND usadoEm IS NULL"
+    ).run(entityId, inicio, subId, link.id);
+    if (marca.changes === 0) return;
+    consumido = true;
+
+    db.prepare(`INSERT INTO subscriptions
+      (id, companyId, plano, status, valor, valorOriginal, inicio, proximaCobranca, trialFim, trialDias, trialOrigem, formaPagamento, criadoEm, atualizadoEm)
+      VALUES (?, ?, ?, 'trial', ?, ?, ?, ?, ?, ?, 'convite_link', 'ADMIN_TRIAL', ?, ?)`)
+      .run(subId, entityId, plano, PLANOS[plano].preco, PLANOS[plano].preco,
+           inicio, trialFim, trialFim, link.dias, inicio, inicio);
+    db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(plano, entityId);
+  })();
+
+  if (!consumido) return res.status(409).json({ error: MOTIVOS_CONVITE.usado, motivo: "usado" });
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(entityId);
+  if (user) {
+    notificar(user.id, "assinatura", "Período gratuito liberado",
+      `Seu acesso ao plano ${planoDe(plano).nome} está liberado até ${new Date(trialFim).toLocaleDateString("pt-BR")}. ` +
+      "Depois dessa data será necessário contratar um plano para continuar.");
+  }
+  console.log(`[trial] convite resgatado pela empresa ${entityId} — plano ${plano}, até ${new Date(trialFim).toISOString()}`);
+
+  res.status(201).json({ ok: true, plano, dias: link.dias, trialFim, subscriptionId: subId });
+});
+
+router.post("/admin/subscriptions/:companyId/secret-trial", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const companyId = String(req.params.companyId || "");
+  const plano = String(req.body?.plano || "").trim();
+  if (!PLANOS[plano]?.preco) return res.status(400).json({ error: "Selecione um plano pago válido." });
+
+  const empresa = db.prepare("SELECT id, assinatura FROM companies WHERE id = ?").get(companyId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada." });
+
+  const atual = db.prepare(
+    "SELECT * FROM subscriptions WHERE companyId = ? AND status != 'cancelada' ORDER BY criadoEm DESC LIMIT 1"
+  ).get(companyId);
+  const acesso = acessoDaEmpresa({ empresa, assinatura: atual || null });
+  const jaUsouTrial = !!db.prepare(
+    "SELECT 1 FROM subscriptions WHERE companyId = ? AND trialDias > 0 LIMIT 1"
+  ).get(companyId);
+  const elegibilidade = podeConcederTrialSecreto({ estadoAtual: acesso.estado, jaUsouTrial });
+  if (!elegibilidade.ok) return res.status(409).json({ error: elegibilidade.erro });
+
+  const inicio = agora();
+  const trialFim = inicio + TRIAL_SECRETO_DIAS * 86400000;
+  const subId = uid();
+
+  db.transaction(() => {
+    db.prepare(`INSERT INTO subscriptions
+      (id, companyId, plano, status, valor, valorOriginal, inicio, proximaCobranca, trialFim, trialDias, trialOrigem, formaPagamento, criadoEm, atualizadoEm)
+      VALUES (?, ?, ?, 'trial', ?, ?, ?, ?, ?, ?, 'admin_secreto', 'ADMIN_TRIAL', ?, ?)`)
+      .run(subId, companyId, plano, PLANOS[plano].preco, PLANOS[plano].preco,
+        inicio, trialFim, trialFim, TRIAL_SECRETO_DIAS, inicio, inicio);
+    db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(plano, companyId);
+  })();
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
+  if (user) {
+    notificar(user.id, "assinatura", "Período de acesso liberado",
+      `Seu acesso ao plano ${planoDe(plano).nome} está liberado até ${new Date(trialFim).toLocaleDateString("pt-BR")}.`);
+  }
+
+  res.status(201).json({
+    ok: true,
+    subscriptionId: subId,
+    plano,
+    status: "trial",
+    trialDias: TRIAL_SECRETO_DIAS,
+    trialFim,
+  });
 });
 
 router.get("/subscription", (req, res) => {
@@ -198,7 +382,7 @@ router.post("/subscription", async (req, res) => {
 
     // Com trial, a primeira cobrança cai no fim dele. Sem trial, em 3 dias —
     // prazo que o Pix precisa para o boleto/QR não vencer antes de ser pago.
-    const trialDias = forma === "CREDIT_CARD" ? TRIAL_DIAS : 0;
+    const trialDias = TRIAL_DIAS_PUBLICO;
     const vencimento = trialDias
       ? primeiraCobranca({ trialDias })
       : new Date(Date.now() + 3 * 86400000);
@@ -286,7 +470,7 @@ router.delete("/subscription", async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
 
-  const atual = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? AND status IN ('ativa','pendente') ORDER BY criadoEm DESC LIMIT 1").get(entityId);
+  const atual = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? AND status IN ('ativa','pendente','trial') ORDER BY criadoEm DESC LIMIT 1").get(entityId);
   if (!atual) return res.status(404).json({ error: "Nenhuma assinatura ativa" });
 
   if (atual.asaasId && asaasAtivo()) {

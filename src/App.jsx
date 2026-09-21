@@ -10,7 +10,7 @@ import LoginPlataforma from "./components/LoginPlataforma.jsx";
 import CadastroProfissional from "./components/auth/CadastroProfissional.jsx";
 import CadastroEmpresa from "./components/auth/CadastroEmpresa.jsx";
 import EscolhaCadastro from "./components/auth/EscolhaCadastro.jsx";
-import { useRota } from "./lib/rotas.js";
+import { useRota, guardarConvite } from "./lib/rotas.js";
 import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
@@ -87,6 +87,10 @@ export default function App() {
   // profissional, cadastro de empresa e plataforma. A tabela de endereços fica
   // em lib/rotas.js — aqui só se escolhe o que renderizar.
   const rota = useRota();
+  // O convite é guardado no instante em que o link abre. Quem chega sem conta
+  // passa por cadastro e login antes de conseguir resgatar, e a URL se perde
+  // no caminho.
+  useEffect(() => { if (rota.tipo === "trial" && rota.token) guardarConvite(rota.token); }, [rota]);
 
   const toggleDark = () => {
     setDark((d) => { gravarArmazenamento("rycs-theme", d ? "light" : "dark"); return !d; });
@@ -200,7 +204,8 @@ export default function App() {
   if (!user) return (
     <div className={`vx-app${dark ? " vx-dark" : ""}`}>
       <style>{CSS}</style>
-      {rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
+      {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial />
+        : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
         : rota.tipo === "escolha" ? <EscolhaCadastro />
         : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
         : rota.tipo === "cadastro" && rota.role === "empresa" ? <CadastroEmpresa onRegister={registrar} />
