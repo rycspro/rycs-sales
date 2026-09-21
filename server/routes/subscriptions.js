@@ -112,8 +112,56 @@ router.post("/subscription", async (req, res) => {
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 
-  const pendente = db.prepare("SELECT id FROM subscriptions WHERE companyId = ? AND plano = ? AND status = 'pendente' ORDER BY criadoEm DESC LIMIT 1").get(entityId,chave);
-  if (pendente) return res.status(409).json({ error:"Já existe um checkout pendente para este plano. Aguarde o pagamento ou cancele antes de criar outro.", subscriptionId:pendente.id });
+  // Checkout pendente não pode mais ser um beco sem saída. Antes isto recusava
+  // com 409 e a empresa ficava presa: sem link válido e sem como gerar outro.
+  //
+  // Mas gerar uma assinatura nova a cada clique também não serve — cada
+  // POST /subscriptions abre uma recorrência DE VERDADE no gateway, e duas
+  // recorrências é cobrança dobrada todo mês.
+  //
+  // A saída é reaproveitar: mesmo plano, mesma assinatura, link novo.
+  const pendente = db.prepare(
+    "SELECT * FROM subscriptions WHERE companyId = ? AND status = 'pendente' ORDER BY criadoEm DESC LIMIT 1"
+  ).get(entityId);
+
+  // Só o Pix se reaproveita. Cartão pendente é cobrança em análise ou recusada:
+  // ali a empresa precisa informar os dados de novo, e renovar o link sem
+  // cartão criaria uma cobrança que ninguém consegue pagar.
+  const pendenteEhPix = pendente && (pendente.formaPagamento || "PIX") === "PIX";
+
+  if (pendente && pendenteEhPix && pendente.plano === chave && pendente.asaasId && asaasAtivo()) {
+    try {
+      const link = await renovarLinkDePagamento(pendente);
+      if (link) {
+        return res.json({
+          ok: true, reaproveitado: true,
+          subscriptionId: pendente.id, asaasId: pendente.asaasId,
+          valorOriginal: pendente.valorOriginal, desconto: pendente.desconto, valorFinal: pendente.valor,
+          status: "pendente", formaPagamento: pendente.formaPagamento || null,
+          ...link,
+          message: "Geramos um novo link para o checkout que já estava aberto.",
+        });
+      }
+    } catch (err) {
+      // Se o gateway não devolver um link utilizável, seguimos adiante e
+      // criamos uma assinatura nova — depois de cancelar esta, logo abaixo.
+      console.warn("[assinatura] não deu para renovar o link:", err.message);
+    }
+  }
+
+  // Pendente de OUTRO plano, ou pendente sem link recuperável: cancela antes
+  // de abrir a próxima. Deixar as duas vivas no gateway é cobrar duas vezes.
+  if (pendente) {
+    if (pendente.asaasId && asaasAtivo()) {
+      try { await asaas(`/subscriptions/${pendente.asaasId}`, { method: "DELETE" }); }
+      catch (e) { console.warn("[asaas] cancelamento do checkout anterior:", e.message); }
+    }
+    db.transaction(() => {
+      db.prepare("UPDATE subscriptions SET status = 'cancelada', atualizadoEm = ? WHERE id = ?").run(agora(), pendente.id);
+      db.prepare("UPDATE voucher_redemptions SET status = 'cancelado' WHERE subscriptionId = ? AND status = 'reservado'").run(pendente.id);
+    })();
+    console.log(`[assinatura] checkout anterior cancelado para abrir outro: empresa ${entityId}`);
+  }
 
   if (chave === "free") {
     db.transaction(() => {
@@ -259,6 +307,63 @@ router.delete("/subscription", async (req, res) => {
 // Cobrança que falhou ou venceu. Não cancela nem apaga nada: marca o estado
 // para a empresa conseguir entrar e regularizar. Bloquear o login de quem
 // precisa atualizar o cartão é impedir exatamente quem quer pagar.
+// Um link de pagamento vivo para uma assinatura que já existe no gateway.
+//
+// Cobrança de Pix vence. Quando isso acontece, o checkout continua "pendente"
+// aqui mas o QR não paga mais nada — que é exatamente a situação em que a
+// empresa precisa de link novo e antes recebia uma recusa.
+//
+// A assinatura no Asaas NÃO é recriada: pedimos a ela a cobrança corrente, e
+// só se não houver nenhuma pagável é que geramos a próxima dentro dela.
+async function renovarLinkDePagamento(sub) {
+  const PAGAVEL = ["PENDING", "AWAITING_RISK_ANALYSIS", "AWAITING_PAYMENT"];
+
+  const lista = await asaas(`/payments?subscription=${encodeURIComponent(sub.asaasId)}&limit=10`);
+  const cobrancas = lista?.data || [];
+
+  // Já pago? Então não é caso de link novo: o webhook é que está atrasado.
+  const paga = cobrancas.find((c) => ["RECEIVED", "CONFIRMED"].includes(c.status));
+  if (paga) {
+    ativarAssinatura(sub.asaasId);
+    return { jaPago: true, invoiceUrl: paga.invoiceUrl || null };
+  }
+
+  let cobranca = cobrancas.find((c) => PAGAVEL.includes(c.status));
+
+  // Nenhuma cobrança pagável: todas venceram. Cria a próxima dentro da mesma
+  // assinatura — uma cobrança a mais, não uma recorrência a mais.
+  if (!cobranca) {
+    cobranca = await asaas("/payments", {
+      method: "POST",
+      body: {
+        customer: (await asaas(`/subscriptions/${sub.asaasId}`))?.customer,
+        billingType: sub.formaPagamento || "PIX",
+        value: sub.valor,
+        dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0],
+        description: `RYCS ${planoDe(sub.plano).nome} — nova tentativa de pagamento`,
+        externalReference: `sub:${sub.companyId}`,
+      },
+    });
+  }
+
+  if (!cobranca?.id) return null;
+
+  let pix = null;
+  if ((sub.formaPagamento || "PIX") === "PIX") {
+    try { pix = await asaas(`/payments/${cobranca.id}/pixQrCode`); }
+    catch (e) { console.warn("[asaas] QR da renovação:", e.message); }
+  }
+
+  db.prepare("UPDATE subscriptions SET paymentId = ?, invoiceUrl = ?, atualizadoEm = ? WHERE id = ?")
+    .run(cobranca.id, cobranca.invoiceUrl || null, agora(), sub.id);
+
+  return {
+    pixCopiaECola: pix?.payload || null,
+    pixQrCodeBase64: pix?.encodedImage || null,
+    invoiceUrl: cobranca.invoiceUrl || null,
+  };
+}
+
 export function marcarInadimplencia(asaasSubscriptionId, motivo = "") {
   const sub = db.prepare("SELECT * FROM subscriptions WHERE asaasId = ?").get(asaasSubscriptionId);
   if (!sub || sub.status === "cancelada") return;

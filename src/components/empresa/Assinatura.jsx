@@ -59,7 +59,15 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
 
     if (!r || r.error) return aviso(r?.error || "Não foi possível ativar a assinatura.");
 
-    if (r.status === "pendente" && r.pixCopiaECola) { setPix(r); return; }
+    // O servidor pode devolver um checkout que já existia, com link novo.
+    if (r.jaPago) { aviso("Pagamento confirmado. Liberando seu acesso."); return aoAtivar?.(r); }
+    if (r.pixCopiaECola || r.pixQrCodeBase64) { setPix(r); return; }
+    if (r.status === "pendente" && r.invoiceUrl) {
+      // Sem QR, mas com fatura: abrir a fatura é o caminho de pagamento.
+      window.open(r.invoiceUrl, "_blank", "noopener");
+      aviso(r.message || "Abrimos a fatura numa nova aba para você pagar.");
+      return;
+    }
     aviso(r.message || "Conta ativada.");
     aoAtivar?.(r);
   };
