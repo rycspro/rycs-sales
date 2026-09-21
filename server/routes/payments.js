@@ -2,8 +2,8 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { notificar } from "./notifications.js";
-import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
-import { ativarAssinatura } from "./subscriptions.js";
+import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
+import { ativarAssinatura, marcarInadimplencia } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 
 const router = Router();
@@ -35,30 +35,9 @@ async function repassarParaVendedor({ vendedor, valor, referencia }) {
   return { modo: "pix", externoId: transfer.id };
 }
 
-// Garante que a empresa exista como cliente no gateway e reaproveita o id.
-async function clienteAsaasDaEmpresa(empresa) {
-  if (empresa.asaasCustomerId) return empresa.asaasCustomerId;
-
-  if (!empresa.documento) {
-    const e = new Error("Cadastre o CNPJ ou CPF da empresa antes de depositar.");
-    e.faltaDocumento = true;
-    throw e;
-  }
-
-  const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
-  const cliente = await asaas("/customers", {
-    method: "POST",
-    body: {
-      name: empresa.nome,
-      cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
-      email: usuario?.email || undefined,
-      externalReference: empresa.id,
-    },
-  });
-
-  db.prepare("UPDATE companies SET asaasCustomerId = ? WHERE id = ?").run(cliente.id, empresa.id);
-  return cliente.id;
-}
+// Mudou de lugar: agora vive em services/asaas.js, porque a assinatura precisa
+// do mesmo cliente e não pode exigir um depósito antes para criá-lo.
+const clienteAsaasDaEmpresa = (empresa) => garantirCliente(db, empresa);
 
 // ---------------------------------------------------------------------------
 // Depósito da empresa
@@ -191,6 +170,19 @@ router.post("/payments/webhook", (req, res) => {
 
   if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
     creditarDeposito(payment);
+  } else if (
+    // Cobrança que não entrou. O Asaas usa nomes diferentes para recusa de
+    // cartão, vencimento e estorno; os três deixam a empresa sem plano em dia.
+    event === "PAYMENT_OVERDUE" ||
+    event === "PAYMENT_REFUSED" ||
+    event === "PAYMENT_DECLINED" ||
+    event === "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED" ||
+    event === "PAYMENT_REFUNDED" ||
+    event === "PAYMENT_CHARGEBACK_REQUESTED"
+  ) {
+    if (payment?.subscription) {
+      marcarInadimplencia(payment.subscription, `${event}${payment?.status ? ` (${payment.status})` : ""}`);
+    }
   } else if (event === "TRANSFER_DONE") {
     concluirSaque(transfer);
   } else if (event === "TRANSFER_FAILED" || event === "TRANSFER_CANCELLED") {

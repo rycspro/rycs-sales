@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import PainelEmpresa from "./PainelEmpresa.jsx";
@@ -17,22 +17,49 @@ import NotificacoesEmpresa from "./NotificacoesEmpresa.jsx";
 import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
 import { AssistenteEmpresa, BaseConhecimento, RelatoriosEmpresa } from "./EmpresaAI.jsx";
+import Assinatura from "./Assinatura.jsx";
 
 export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
+  const sair = async () => {
+    await api("/auth/logout", {});
+    window.location.reload();
+  };
+
   const [secaoCampanhas, setSecaoCampanhas] = useState("campanhas");
   const [secaoConta, setSecaoConta] = useState("cadastro");
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
+
+  // Portão de acesso. Quem decide é o servidor — a tela só pergunta e obedece.
+  // Decidir aqui também produziria o caso em que a tela libera e a API recusa.
+  const [acesso, setAcesso] = useState(null);
+  const consultarAcesso = () => api("/subscription/access").then((r) => setAcesso(r || null));
+  useEffect(() => { consultarAcesso(); }, []);
+
   if (!emp) return null;
+
+  // Enquanto a resposta não chega, não mostra nem o painel nem o bloqueio:
+  // piscar a plataforma para quem não tem plano e tirar logo depois é pior que
+  // esperar meio segundo.
+  if (acesso === null) return <div className="vx-fade" style={{ padding: 20 }} />;
+
+  if (!acesso.liberado) {
+    return (
+      <div className="vx-fade">
+        <div className="vx-row" style={{ marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+          <h1 className="vx-disp" style={{ fontSize: 20, margin: 0 }}>{emp.nome}</h1>
+          <button className="vx-btn vx-btn-sm" onClick={sair}>Sair</button>
+        </div>
+        <Assinatura emp={emp} acesso={acesso} aviso={aviso}
+          aoAtivar={async () => { await consultarAcesso(); await recarregar?.(); }} />
+      </div>
+    );
+  }
 
   const submenu = (itens, ativo, selecionar) => <div className="vx-seg vx-subnav" style={{ marginBottom: 18 }}>
     {itens.map(([key, label]) => <button key={key} data-on={ativo === key ? "1" : "0"} onClick={() => selecionar(key)}>{label}</button>)}
   </div>;
 
-  const sair = async () => {
-    await api("/auth/logout", {});
-    window.location.reload();
-  };
 
   return (
     <div className="vx-fade">

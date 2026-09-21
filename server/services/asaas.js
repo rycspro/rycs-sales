@@ -67,3 +67,35 @@ export async function asaas(caminho, { method = "GET", body } = {}) {
   }
   return dados;
 }
+
+// ---------------------------------------------------------------------------
+// Cliente da empresa no gateway
+//
+// Estava dentro de routes/payments.js, privado, e só nascia quando a empresa
+// fazia um depósito. A assinatura precisa da mesma coisa e não pode exigir
+// depósito antes — ninguém deposita caixa de campanha para poder assinar.
+// Mora aqui para os dois caminhos usarem um só.
+
+export async function garantirCliente(db, empresa) {
+  if (empresa.asaasCustomerId) return empresa.asaasCustomerId;
+
+  if (!empresa.documento) {
+    const e = new Error("Cadastre o CNPJ ou CPF da empresa antes de continuar.");
+    e.faltaDocumento = true;
+    throw e;
+  }
+
+  const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
+  const cliente = await asaas("/customers", {
+    method: "POST",
+    body: {
+      name: empresa.nome,
+      cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
+      email: usuario?.email || undefined,
+      externalReference: empresa.id,
+    },
+  });
+
+  db.prepare("UPDATE companies SET asaasCustomerId = ? WHERE id = ?").run(cliente.id, empresa.id);
+  return cliente.id;
+}

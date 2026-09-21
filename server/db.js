@@ -910,6 +910,19 @@ adicionarColuna("subscriptions", "desconto", "REAL DEFAULT 0");
 adicionarColuna("subscriptions", "voucherId", "TEXT");
 adicionarColuna("subscriptions", "paymentId", "TEXT");
 adicionarColuna("subscriptions", "invoiceUrl", "TEXT");
+// Período gratuito. Guardado na própria assinatura porque é dela que a regra
+// de acesso decide: trial vencido sem cobrança confirmada vira inadimplente.
+adicionarColuna("subscriptions", "trialFim", "INTEGER");
+adicionarColuna("subscriptions", "trialDias", "INTEGER DEFAULT 0");
+// Forma de pagamento escolhida no checkout ("CREDIT_CARD" ou "PIX"). Só o
+// meio, nunca o cartão: número e CVV não passam pelo nosso banco.
+adicionarColuna("subscriptions", "formaPagamento", "TEXT DEFAULT ''");
+// Últimos quatro dígitos e bandeira, que o Asaas devolve depois de tokenizar.
+// É o suficiente para a empresa reconhecer o cartão na tela.
+adicionarColuna("subscriptions", "cartaoFinal", "TEXT DEFAULT ''");
+adicionarColuna("subscriptions", "cartaoBandeira", "TEXT DEFAULT ''");
+adicionarColuna("subscriptions", "falhaMotivo", "TEXT");
+adicionarColuna("subscriptions", "atualizadoEm", "INTEGER");
 
 // A plataforma deixou de ser portão de entrada: concluir a avaliação libera o
 // perfil na hora, e quem decide a entrada numa campanha é a empresa.
