@@ -46,9 +46,14 @@ async function cobrancaPeloGateway(req, res, companyId, valor) {
     try { pix = await asaas(`/payments/${cobranca.id}/pixQrCode`); }
     catch (e) { console.warn("[asaas] QR Pix indisponível:", e.message); }
 
+    // A taxa de gateway é cobrada da conta RYCS, não descontada do depositante.
+    // O caixa da empresa recebe o valor bruto integral.
     return res.json({
       id: cobranca.id,
       valor,
+      valorBruto: valor,
+      taxaGateway: 0,
+      valorLiquido: valor,
       modo: "gateway",
       pixCopiaECola: pix?.payload || null,
       pixQrCodeBase64: pix?.encodedImage || null,
@@ -107,7 +112,11 @@ router.post("/deposits", async (req, res) => {
     `Depósito de R$ ${valor.toFixed(2)} aguardando confirmação`, `${empresa?.nome || "Empresa"} · ${referencia}`));
 
   res.json({
-    id, valor, referencia,
+    id, valor,
+    valorBruto: valor,
+    taxaGateway: 0,
+    valorLiquido: valor,
+    referencia,
     pix: PIX_RYCS || null,
     titular: TITULAR_RYCS,
     instrucoes: PIX_RYCS

@@ -9,20 +9,67 @@ router.get("/professionals/active", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
   const companyId = req.user.entityId;
   const rows = db.prepare(`SELECT id, nome, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial,
-    foto, titulo, bio, segmentos, modalidades, skills, disponibilidade
+    foto, titulo, bio, segmentos, modalidades, skills, disponibilidade, criadoEm, status
     FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   const certificacoes = db.prepare("SELECT sellerId, funcao, nivel, percentual FROM certifications").all();
   const pedidos = new Map(db.prepare("SELECT sellerId, status FROM partnership_requests WHERE companyId = ?").all(companyId).map((p) => [p.sellerId, p.status]));
+  const notas = new Map(db.prepare("SELECT sellerId, observacao FROM professional_notes WHERE companyId = ?").all(companyId).map((n) => [n.sellerId, n.observacao]));
+  const metricas = new Map(db.prepare(`
+    SELECT sellerId,
+      COUNT(*) tarefas,
+      SUM(CASE WHEN status = 'liberado' THEN 1 ELSE 0 END) aprovadas,
+      SUM(CASE WHEN status = 'recusado' THEN 1 ELSE 0 END) recusadas,
+      SUM(CASE WHEN status = 'liberado' THEN COALESCE(liquido, valor, 0) ELSE 0 END) ganhos,
+      SUM(CASE WHEN status = 'liberado' AND tipo = 'agendamento' THEN 1 ELSE 0 END) reunioes,
+      SUM(CASE WHEN status = 'liberado' AND tipo = 'realizada' THEN 1 ELSE 0 END) visitas,
+      SUM(CASE WHEN status = 'liberado' AND tipo = 'venda' THEN 1 ELSE 0 END) vendas
+    FROM submissions WHERE companyId = ? GROUP BY sellerId
+  `).all(companyId).map((m) => [m.sellerId, m]));
+  const campanhas = db.prepare(`
+    SELECT ca.sellerId, c.id, c.titulo, c.funcao, c.regiao, c.status, ca.status candidaturaStatus
+    FROM campaign_applications ca JOIN campaigns c ON c.id = ca.campaignId
+    WHERE c.companyId = ?
+    ORDER BY ca.criadoEm DESC
+  `).all(companyId);
+  const leads = new Map(db.prepare("SELECT sellerId, COUNT(*) total FROM leads WHERE companyId = ? GROUP BY sellerId").all(companyId).map((l) => [l.sellerId, l.total]));
   res.json(rows.map((s) => {
     let perfilComercial = {}; try { perfilComercial = JSON.parse(s.perfilComercial || "{}"); } catch {}
     const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
+    const m = metricas.get(s.id) || {};
+    const cs = campanhas.filter((c) => c.sellerId === s.id);
+    const ativas = cs.filter((c) => c.candidaturaStatus === "aprovado" && c.status !== "encerrada");
     return {
       ...s, perfilComercial,
       segmentos: lista(s.segmentos), modalidades: lista(s.modalidades), skills: lista(s.skills),
       certificacoes: certificacoes.filter((c) => c.sellerId === s.id),
+      campanhas: cs,
+      campanhasAtivas: ativas.length,
+      tarefasRealizadas: Number(m.tarefas || 0),
+      tarefasAprovadas: Number(m.aprovadas || 0),
+      tarefasRecusadas: Number(m.recusadas || 0),
+      taxaAprovacao: Number(m.tarefas || 0) ? Math.round(Number(m.aprovadas || 0) / Number(m.tarefas || 0) * 100) : 0,
+      ganhosTotais: Number(m.ganhos || 0),
+      reunioesGeradas: Number(m.reunioes || 0),
+      visitas: Number(m.visitas || 0),
+      vendas: Number(m.vendas || 0),
+      resultadosGerados: Number(m.reunioes || 0) + Number(m.visitas || 0) + Number(m.vendas || 0) + Number(leads.get(s.id) || 0),
+      leadsGerados: Number(leads.get(s.id) || 0),
+      observacaoInterna: notas.get(s.id) || "",
       parceria: pedidos.get(s.id) || null,
     };
   }));
+});
+
+router.post("/professionals/:id/note", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const seller = db.prepare("SELECT id FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(req.params.id);
+  if (!seller) return res.status(404).json({ error: "Profissional ativo não encontrado" });
+  const observacao = String(req.body?.observacao || "").slice(0, 1200);
+  db.prepare(`INSERT INTO professional_notes (companyId, sellerId, observacao, atualizadoEm)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(companyId, sellerId) DO UPDATE SET observacao = excluded.observacao, atualizadoEm = excluded.atualizadoEm`)
+    .run(req.user.entityId, seller.id, observacao, agora());
+  res.json({ ok: true, observacao });
 });
 
 router.post("/professionals/:id/partnership", (req, res) => {

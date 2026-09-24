@@ -10,6 +10,17 @@ import { registrarEventoCampanha } from "../services/campaignEvents.js";
 
 const router = Router();
 
+function certificacoesDoProfissional(sellerId) {
+  const trilhas = db.prepare("SELECT funcao, percentual FROM certifications WHERE sellerId = ?").all(sellerId);
+  const cursos = db.prepare(`
+    SELECT c.funcao, ce.percentual
+    FROM course_certificates ce
+    JOIN courses c ON c.id = ce.courseId
+    WHERE ce.sellerId = ? AND c.funcao != ''
+  `).all(sellerId);
+  return [...trilhas, ...cursos];
+}
+
 // Rascunho de campanha a partir de um pedido em texto livre. Nada é criado
 // nem publicado aqui: devolve a configuração para a empresa revisar na tela.
 router.post("/campaigns/sugerir", async (req, res) => {
@@ -248,10 +259,10 @@ router.post("/campaigns/:id/apply", (req, res) => {
   if (campaign.status !== "ativa") return res.status(400).json({ error: "Campanha não está ativa" });
 
   if (campaign.exigeCertificacao) {
-    const certificacoes = db.prepare("SELECT funcao FROM certifications WHERE sellerId = ?").all(entityId);
+    const certificacoes = certificacoesDoProfissional(entityId);
     if (!atendeCertificacaoDaCampanha(campaign, certificacoes)) {
       return res.status(422).json({
-        error: `Conclua e seja aprovado na trilha ${campaign.funcao || "exigida"} da Academy antes de se candidatar.`,
+        error: `Conclua as aulas e seja aprovado no quiz da Academy ${campaign.funcao || "exigida"} antes de se candidatar.`,
         codigo: "CERTIFICACAO_OBRIGATORIA",
       });
     }
@@ -287,7 +298,7 @@ router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {
   if (!candidatura) return res.status(404).json({ error: "Candidatura não encontrada" });
 
   if (status === "aprovado" && campaign.exigeCertificacao) {
-    const certificacoes = db.prepare("SELECT funcao FROM certifications WHERE sellerId = ?").all(candidatura.sellerId);
+    const certificacoes = certificacoesDoProfissional(candidatura.sellerId);
     if (!atendeCertificacaoDaCampanha(campaign, certificacoes))
       return res.status(422).json({ error: "O profissional ainda não possui a certificação exigida pela campanha." });
   }

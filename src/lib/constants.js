@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -10,7 +10,16 @@ export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
 // ACOES with Icons added (shared version has no React icons)
 import { ACOES as ACOES_BASE } from "../../shared/acoes.js";
 
-const ICONS = { ligacao: Video, follow: Send, agendamento: ClipboardList, realizada: Users, venda: Banknote };
+const ICONS = {
+  contato: ContactRound,
+  lead_qualificado: UserCheck,
+  ligacao: Video,
+  follow: Send,
+  agendamento: ClipboardList,
+  realizada: Users,
+  visita: Building2,
+  venda: Banknote,
+};
 
 export const ACOES = Object.fromEntries(
   Object.entries(ACOES_BASE).map(([k, v]) => [k, { ...v, Icon: ICONS[k] }])
@@ -43,6 +52,7 @@ export const NAV = {
   empresa: [
     { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
+    { key: "profissionais", label: "Profissionais Ativos", Icon: UserRoundSearch },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "conferir", label: "Aprovações", Icon: ShieldCheck },
     { key: "conta", label: "Minha Conta", Icon: UserIcon },
@@ -57,6 +67,7 @@ export const NAV = {
     { key: "cobranca", label: "Cobrança", Icon: CreditCard },
     { key: "depositos", label: "Depósitos", Icon: Banknote },
     { key: "saques", label: "Saques", Icon: Wallet },
+    { key: "beta", label: "Ambiente Beta", Icon: RotateCcw },
   ],
 };
 

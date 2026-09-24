@@ -42,7 +42,7 @@ function normalizar(row) {
 }
 
 // POST /contacts/upload — recebe base64 do CSV/XLSX e insere
-router.post("/upload", (req, res) => {
+router.post("/contacts/upload", (req, res) => {
   const { campaignId, companyId, dados } = req.body;
   if (!campaignId || !companyId || !Array.isArray(dados) || !dados.length) {
     return res.status(400).json({ error: "campaignId, companyId e dados[] são obrigatórios." });
@@ -79,7 +79,7 @@ router.post("/upload", (req, res) => {
 });
 
 // GET /contacts/:campaignId — lista contatos da campanha
-router.get("/:campaignId", (req, res) => {
+router.get("/contacts/:campaignId", (req, res) => {
   const { campaignId } = req.params;
   const { status, limit = 200, offset = 0 } = req.query;
   let query = "SELECT * FROM campaign_contacts WHERE campaignId=?";
@@ -93,7 +93,7 @@ router.get("/:campaignId", (req, res) => {
 });
 
 // PATCH /contacts/:id — atualizar status ou distribuição
-router.patch("/:id", (req, res) => {
+router.patch("/contacts/:id", (req, res) => {
   const { status, sellerId } = req.body;
   const campos = [];
   const vals = [];
@@ -110,7 +110,7 @@ router.patch("/:id", (req, res) => {
 });
 
 // POST /contacts/distribuir — distribui contatos disponíveis entre profissionais
-router.post("/distribuir", (req, res) => {
+router.post("/contacts/distribuir", (req, res) => {
   const { campaignId, sellers } = req.body;
   if (!campaignId || !Array.isArray(sellers) || !sellers.length) {
     return res.status(400).json({ error: "campaignId e sellers[] são obrigatórios." });
@@ -138,7 +138,7 @@ router.post("/distribuir", (req, res) => {
 });
 
 // DELETE /contacts/:campaignId — limpa lista inteira (só disponíveis)
-router.delete("/:campaignId", (req, res) => {
+router.delete("/contacts/:campaignId", (req, res) => {
   const r = db.prepare("DELETE FROM campaign_contacts WHERE campaignId=? AND status='disponivel'").run(req.params.campaignId);
   res.json({ removidos: r.changes });
 });

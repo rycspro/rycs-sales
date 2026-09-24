@@ -28,6 +28,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar 
   const [secaoCampanhas, setSecaoCampanhas] = useState("campanhas");
   const [secaoConta, setSecaoConta] = useState("cadastro");
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
+  const [camposAcademyPendentes, setCamposAcademyPendentes] = useState([]);
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
 
   // Portão de acesso. Quem decide é o servidor — a tela só pergunta e obedece.
@@ -73,22 +74,22 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar 
 
       {aba === "painel" && <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />}
       {aba === "campanhas" && <>
-        {submenu([["campanhas", "Campanhas"], ["profissionais", "Profissionais Ativos"], ["time", "Time"], ["leads", "Leads"], ["tabela", "Tarefas e valores"]], secaoCampanhas, setSecaoCampanhas)}
+        {submenu([["campanhas", "Campanhas"], ["time", "Time"], ["leads", "Leads"], ["tabela", "Tarefas e valores"]], secaoCampanhas, setSecaoCampanhas)}
         {secaoCampanhas === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
-        {secaoCampanhas === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} aviso={aviso} />}
         {secaoCampanhas === "leads" && <LeadsEmpresa emp={emp} db={db} aviso={aviso} />}
         {secaoCampanhas === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
         {secaoCampanhas === "tabela" && <TabelaEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       </>}
+      {aba === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "academy" && <>
         {submenu([["rycs", "Cursos da RYCS"], ["empresa", `Academy ${emp.nome}`]], secaoAcademy, setSecaoAcademy)}
         {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}
-        {secaoAcademy === "empresa" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} />}
+        {secaoAcademy === "empresa" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={(pendencias) => { setCamposAcademyPendentes(pendencias.map((p) => p.campo)); setSecaoConta("cadastro"); setAba?.("conta"); }} />}
       </>}
       {aba === "conferir" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} />}
       {aba === "conta" && <>
         {submenu([["cadastro", "Configurações"], ["base", "Cérebro da Operação"], ["financeiro", "Financeiro"], ["relatorios", "Relatórios"], ["planos", "Plano"], ["notificacoes", "Notificações"], ["suporte", "Suporte"], ["indicar", "Indicar"], ["sair", "Sair"]], secaoConta, (key) => key === "sair" ? sair() : setSecaoConta(key))}
-        {secaoConta === "cadastro" && <CadastroEmpresa emp={emp} up={up} aviso={aviso} />}
+        {secaoConta === "cadastro" && <CadastroEmpresa emp={emp} up={up} aviso={aviso} camposDestacados={camposAcademyPendentes} />}
         {secaoConta === "base" && <BaseConhecimento emp={emp} db={db} aviso={aviso} />}
         {secaoConta === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
         {secaoConta === "relatorios" && <RelatoriosEmpresa emp={emp} db={db} />}

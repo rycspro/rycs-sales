@@ -5,6 +5,7 @@ import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
 import { ativarAssinatura, marcarInadimplencia } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
+import { isBetaEnvironment } from "../services/betaEnvironment.js";
 
 const router = Router();
 
@@ -52,6 +53,18 @@ router.post("/payments/deposit", authMiddleware, async (req, res) => {
 
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  if (isBetaEnvironment()) {
+    const id = uid();
+    db.transaction(() => {
+      db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ? WHERE id = ?")
+        .run(valor, valor, empresa.id);
+      db.prepare("INSERT INTO deposit_requests (id,companyId,valor,status,referencia,observacao,confirmadoPor,criadoEm,confirmadoEm) VALUES (?,?,?,?,?,?,?,?,?)")
+        .run(id, empresa.id, valor, "confirmado", "BETA-SIMULADO", "SIMULAÇÃO — depósito fictício sem valor real", req.user.id, agora(), agora());
+      registrarMovimento({ companyId: empresa.id, tipo: "beta_deposito_simulado", valor, idempotencyKey: id, dados: { simulacao: true, semValorReal: true } });
+    })();
+    return res.json({ ok: true, paymentId: id, modo: "beta_simulado", aviso: "SIMULAÇÃO: saldo Beta creditado sem Pix, cartão ou valor real." });
+  }
 
   // Sem gateway o saldo não pode ser creditado de graça: isso pagaria
   // vendedores com dinheiro que nunca entrou. Melhor recusar o depósito.
@@ -132,6 +145,11 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   }
 
   try {
+    if (isBetaEnvironment()) {
+      db.prepare("UPDATE withdrawals SET status = 'pago', asaasId = ? WHERE id = ?").run("BETA-SIMULADO", wId);
+      registrarMovimento({ sellerId: entityId, tipo: "beta_saque_simulado", valor: -valor, idempotencyKey: `${wId}-beta`, dados: { simulacao: true, semValorReal: true } });
+      return res.json({ id: wId, modo: "beta_simulado", message: "SIMULAÇÃO: saque Beta registrado como fictício, sem Pix real." });
+    }
     const { modo, externoId } = await repassarParaVendedor({ vendedor, valor, referencia: vendedor.nome });
     if (externoId) db.prepare("UPDATE withdrawals SET asaasId = ? WHERE id = ?").run(externoId, wId);
     res.json({ id: wId, modo, message: modo === "manual"

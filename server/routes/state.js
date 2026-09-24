@@ -1,5 +1,6 @@
 import { Router } from "express";
 import db from "../db.js";
+import { BETA_DEFAULT_BALANCE, ajustarSaldoBeta, isBetaEnvironment, resetBetaEnvironment } from "../services/betaEnvironment.js";
 
 const router = Router();
 
@@ -56,6 +57,12 @@ function buildSellersWithRelations(sellers) {
   const progress = db.prepare("SELECT * FROM course_progress").all();
   const scores = db.prepare("SELECT * FROM score_dimensions").all();
   const certifications = db.prepare("SELECT * FROM certifications").all();
+  const courseCertifications = db.prepare(`
+    SELECT ce.sellerId, c.funcao, ce.percentual, ce.emitidoEm AS criadoEm, ce.codigo, c.titulo AS curso
+    FROM course_certificates ce
+    JOIN courses c ON c.id = ce.courseId
+    WHERE c.funcao != ''
+  `).all();
 
   return sellers.map((s) => {
     const aplicacoes = {};
@@ -79,7 +86,10 @@ function buildSellersWithRelations(sellers) {
     });
     return {
       ...parseSeller(s), aplicacoes, aplicacoesDetalhe, curso, scoreDimensions,
-      certificacoes: certifications.filter((c) => c.sellerId === s.id),
+      certificacoes: [
+        ...certifications.filter((c) => c.sellerId === s.id),
+        ...courseCertifications.filter((c) => c.sellerId === s.id).map((c) => ({ ...c, nivel: "course" })),
+      ],
     };
   });
 }
@@ -162,18 +172,35 @@ router.get("/state", (req, res) => {
 
 router.post("/state/reset", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin pode resetar" });
-  db.exec("DELETE FROM campaign_applications");
-  db.exec("DELETE FROM campaigns");
-  db.exec("DELETE FROM score_dimensions");
-  db.exec("DELETE FROM uploads");
-  db.exec("DELETE FROM messages");
-  db.exec("DELETE FROM withdrawals");
-  db.exec("DELETE FROM submissions");
-  db.exec("DELETE FROM course_progress");
-  db.exec("DELETE FROM applications");
-  db.exec("DELETE FROM companies");
-  db.exec("DELETE FROM sellers");
-  res.json({ ok: true, message: "Banco limpo. Reinicie o servidor para popular novamente." });
+  if (!isBetaEnvironment()) return res.status(403).json({ error: "Reset indisponível fora do ambiente Beta." });
+  if (req.body?.confirmacao !== "RESETAR BETA") return res.status(400).json({ error: "Confirmação inválida." });
+  try {
+    resetBetaEnvironment();
+    res.json({ ok: true, message: "Ambiente Beta restaurado para a base de QA." });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || "Não foi possível resetar o Beta." });
+  }
+});
+
+router.post("/state/beta/balance", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin pode ajustar saldo Beta" });
+  if (!isBetaEnvironment()) return res.status(403).json({ error: "Controle de saldo indisponível fora do ambiente Beta." });
+  const acao = req.body?.acao;
+  const mapa = {
+    add_1000: { valor: 1000, modo: "add" },
+    add_10000: { valor: 10000, modo: "add" },
+    add_100000: { valor: 100000, modo: "add" },
+    zerar: { valor: 0, modo: "set" },
+    restaurar: { valor: BETA_DEFAULT_BALANCE, modo: "set" },
+  };
+  const ajuste = mapa[acao];
+  if (!ajuste) return res.status(400).json({ error: "Ação Beta inválida." });
+  try {
+    const r = ajustarSaldoBeta({ ...ajuste, actorId: req.user.id });
+    res.json({ ok: true, saldo: r.saldo, message: "SIMULAÇÃO: saldo Beta ajustado sem valor real." });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || "Não foi possível ajustar o saldo Beta." });
+  }
 });
 
 export default router;

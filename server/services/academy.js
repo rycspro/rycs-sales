@@ -203,6 +203,8 @@ export function matricular({ courseId, sellerId }) {
 export function concluirAula({ courseId, lessonId, sellerId }) {
   const aula = db.prepare("SELECT id FROM course_lessons WHERE id = ? AND courseId = ?").get(lessonId, courseId);
   if (!aula) return { erro: "Aula não encontrada neste curso" };
+  const matricula = matricular({ courseId, sellerId });
+  if (matricula.erro) return matricula;
 
   db.prepare(`INSERT INTO course_lesson_progress (sellerId, courseId, lessonId, concluidoEm)
               VALUES (?, ?, ?, ?) ON CONFLICT(sellerId, lessonId) DO NOTHING`)

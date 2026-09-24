@@ -44,7 +44,7 @@ function Negrito({ texto }) {
       : <span key={i}>{p}</span>);
 }
 
-export default function CursoPlayer({ courseId, eu, aviso, voltar }) {
+export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
   const [aulaId, setAulaId] = useState(null);
@@ -111,6 +111,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar }) {
     setResultado(r);
     setFase("resultado");
     await carregar();
+    if (r.aprovado) await onCertified?.();
     window.scrollTo(0, 0);
   };
 

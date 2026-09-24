@@ -11,7 +11,9 @@ import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 // do backend — pedir que a pessoa escolha "entrar como" seria inventar uma
 // decisão que o servidor já tomou, com o risco de ela escolher errado.
 
-export default function Login({ onLogin, conviteTrial = false }) {
+const DEMO_PASSWORD = "Demo@RYCS2026";
+
+export default function Login({ onLogin, conviteTrial = false, beta = false }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,15 @@ export default function Login({ onLogin, conviteTrial = false }) {
     e.preventDefault();
     setLoading(true);
     await onLogin(email, senha);
+    setLoading(false);
+  };
+
+  const entrarDemo = async (tipo) => {
+    const demoEmail = tipo === "empresa" ? "demo@rycs.pro" : "profissional.demo@rycs.pro";
+    setEmail(demoEmail);
+    setSenha(DEMO_PASSWORD);
+    setLoading(true);
+    await onLogin(demoEmail, DEMO_PASSWORD);
     setLoading(false);
   };
 
@@ -95,6 +106,17 @@ export default function Login({ onLogin, conviteTrial = false }) {
           {loading ? "Carregando…" : "Entrar"}
         </button>
       </form>
+
+      {beta && !conviteTrial && (
+        <div className="vx-beta-login-panel">
+          <div className="vx-eyebrow">AMBIENTE BETA — DADOS FICTÍCIOS</div>
+          <p>Nenhuma movimentação financeira possui valor real. Os dados podem ser resetados e existem apenas para testes.</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="vx-btn vx-btn-primary" disabled={loading} onClick={() => entrarDemo("empresa")} style={{ flex: 1 }}>Entrar como Empresa Demo</button>
+            <button className="vx-btn" disabled={loading} onClick={() => entrarDemo("profissional")} style={{ flex: 1 }}>Entrar como Profissional Demo</button>
+          </div>
+        </div>
+      )}
 
       <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setShowForgot(true)} style={{ width: "100%", marginTop: 8, fontSize: 12.5 }}>
         Esqueci minha senha

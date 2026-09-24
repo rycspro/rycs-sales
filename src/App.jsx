@@ -68,6 +68,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [user, setUser] = useState(() => previaQualificacao ? { role: "empresa", email: "preview@local" } : null);
   const [toast, setToast] = useState("");
+  const [environment, setEnvironment] = useState("production");
   const [nav, setNav] = useState({ vendedor: "empresas", empresa: previaQualificacao ? (previaEmpresa ? "painel" : "academy") : "painel", admin: "dashboard" });
   // O escuro é a identidade primária da RYCS; o claro fica como preferência.
   const [dark, setDark] = useState(() => lerArmazenamento("rycs-theme") !== "light");
@@ -113,6 +114,8 @@ export default function App() {
       companyId: u.role === "empresa" ? u.entityId : state.companies[0]?.id || null,
     }));
   }, []);
+
+  useEffect(() => { api("/environment").then((r) => { if (r?.environment) setEnvironment(r.environment); }); }, []);
 
   useEffect(() => {
     let vivo = true;
@@ -204,12 +207,13 @@ export default function App() {
   if (!user) return (
     <div className={`vx-app${dark ? " vx-dark" : ""}`}>
       <style>{CSS}</style>
-      {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial />
+      {environment === "beta" && <div className="vx-beta-login-badge">AMBIENTE BETA — DADOS FICTÍCIOS</div>}
+      {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial beta={environment === "beta"} />
         : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
         : rota.tipo === "escolha" ? <EscolhaCadastro />
         : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
         : rota.tipo === "cadastro" && rota.role === "empresa" ? <CadastroEmpresa onRegister={registrar} />
-        : <Login onLogin={login} />}
+        : <Login onLogin={login} beta={environment === "beta"} />}
       {toast && (
         <div className="vx-fade" style={{
           position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
@@ -232,6 +236,7 @@ export default function App() {
             <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ height: 26 }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {environment === "beta" && <span className="vx-beta-badge">AMBIENTE BETA — DADOS FICTÍCIOS</span>}
             <span className="vx-chip">{roleLabel} · {user.email}</span>
             <Notificacoes items={db.notifications || []} onUpdate={recarregar} />
             <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={toggleDark} style={{ padding: "7px 8px" }}>
@@ -242,7 +247,7 @@ export default function App() {
         </div>
       </header>
 
-      <Shell role={role} active={aba} onSelect={setAba} counts={counts}>
+      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"}>
         {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
         {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} />}
         {role === "admin" && <Admin {...ctx} aba={aba} />}

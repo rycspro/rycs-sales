@@ -115,14 +115,59 @@ router.post("/assistant/confirm/:id", (req, res) => {
 
 router.post("/assistant/training-draft", (req, res) => {
   const companyId = empresa(req, res); if (!companyId) return;
+  const perfil = String(req.body?.perfil || "sdr").toLowerCase();
+  const tipoOperacao = String(req.body?.tipoOperacao || "remota").toLowerCase();
+  const companhia = db.prepare("SELECT * FROM companies WHERE id = ?").get(companyId);
+  const campanhas = db.prepare("SELECT * FROM campaigns WHERE companyId = ? ORDER BY criadoEm DESC LIMIT 8").all(companyId);
   const docs = db.prepare("SELECT id, titulo, conteudo, versao FROM knowledge_documents WHERE companyId = ? AND status = 'disponível' ORDER BY atualizadoEm DESC").all(companyId);
-  const trechos = docs.flatMap((d)=>String(d.conteudo||"").split(/(?<=[.!?])\s+|\n+/).map((t)=>t.trim()).filter((t)=>t.length>=35).map((t,i)=>({texto:t.slice(0,420),documento:d.titulo,documentId:d.id,versao:d.versao,secao:i+1}))).slice(0,10);
-  if (trechos.length < 5) return res.status(422).json({ error:"Adicione conteúdo suficiente à Base de Conhecimento para gerar ao menos 5 perguntas fundamentadas." });
-  const questoes = trechos.slice(0,Math.min(10,trechos.length)).map((t,i)=>{const distratores=trechos.filter((_,n)=>n!==i).slice(0,2).map((x)=>x.texto);return { pergunta:`Qual orientação está registrada na fonte “${t.documento}”?`, opcoes:[t.texto,...distratores].sort((a,b)=>a.length-b.length), correta:0, resposta:t.texto, justificativa:`Resposta baseada exclusivamente em ${t.documento}, seção ${t.secao}, versão ${t.versao}.`, fonte:t };});
-  // Recalcula o índice correto depois da ordenação usada para variar a posição.
-  questoes.forEach((q)=>{q.correta=q.opcoes.indexOf(q.resposta);});
-  const modulos = docs.slice(0,6).map((d)=>({id:`rag-${d.id}`,titulo:d.titulo,conteudo:String(d.conteudo||"").slice(0,1600),fonte:{documentId:d.id,documento:d.titulo,versao:d.versao}}));
-  res.json({ modulos, questoes, status:"rascunho", fontes:trechos.map((t)=>t.documentId) });
+  const json = (valor, padrao = []) => { try { return JSON.parse(valor || ""); } catch { return padrao; } };
+  const materiais = json(companhia?.materiais);
+  const conteudosExistentes = [
+    ...json(companhia?.curso),
+    ...campanhas.flatMap((c) => json(c.treinamento)),
+  ].filter((item) => item && (item.titulo || item.conteudo));
+  const tem = (valor) => String(valor || "").trim().length > 2;
+  const campanhaComProduto = campanhas.find((c) => tem(c.produto) || tem(c.descricao));
+  const campanhaComIcp = campanhas.find((c) => tem(c.publico));
+  const pendencias = [];
+  if (!tem(companhia?.produto) && !campanhaComProduto) pendencias.push({ campo: "produto", label: "Produto ou serviço", destino: "cadastro" });
+  if (!tem(companhia?.icp) && !campanhaComIcp) pendencias.push({ campo: "icp", label: "ICP / público-alvo", destino: "cadastro" });
+  if (!tem(companhia?.diferenciais) && !docs.length && !materiais.length && !conteudosExistentes.length) pendencias.push({ campo: "diferenciais", label: "Diferenciais ou material comercial", destino: "cadastro" });
+  if (!tem(companhia?.objecoes) && !docs.length && !conteudosExistentes.length) pendencias.push({ campo: "objecoes", label: "Objeções e respostas comerciais", destino: "cadastro" });
+  if (pendencias.length) return res.status(422).json({
+    error: "Faltam informações para gerar um treinamento confiável.", pendencias,
+  });
+
+  const produto = companhia.produto || campanhaComProduto?.produto || campanhaComProduto?.descricao;
+  const icp = companhia.icp || campanhaComIcp?.publico || "público definido na operação";
+  const diferenciais = companhia.diferenciais || materiais.map((m) => m.nome).join(", ") || docs.map((d) => d.titulo).join(", ");
+  const objecoes = companhia.objecoes || conteudosExistentes.map((m) => m.conteudo).filter(Boolean).join("\n").slice(0, 1000) || "Consulte os materiais e responda com base no contexto da operação.";
+  const perfilNome = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "PAP / Porta a Porta", "sem-exp": "Iniciante" }[perfil] || perfil.toUpperCase();
+  const canal = tipoOperacao === "pap" || perfil === "pap" ? "presencial / porta a porta" : tipoOperacao;
+  const trechos = docs.flatMap((d) => String(d.conteudo || "").split(/(?<=[.!?])\s+|\n+/)
+    .map((t) => t.trim()).filter((t) => t.length >= 35)
+    .map((texto, i) => ({ texto: texto.slice(0, 420), documento: d.titulo, documentId: d.id, versao: d.versao, secao: i + 1 }))).slice(0, 8);
+  const fontes = [
+    ...(tem(companhia.produto) || tem(companhia.icp) || tem(companhia.diferenciais) || tem(companhia.objecoes) ? ["cadastro-empresa"] : []),
+    ...campanhas.map((c) => `campanha-${c.id}`), ...docs.map((d) => d.id),
+    ...materiais.map((m) => `material-${m.id || m.nome}`), ...conteudosExistentes.map((m) => `treinamento-${m.id || m.titulo}`),
+  ];
+  const modulos = [
+    { id: `base-${Date.now()}-1`, titulo: `Produto e proposta de valor para ${perfilNome}`, conteudo: `Produto/serviço: ${produto}\nPúblico-alvo: ${icp}\nDiferenciais: ${diferenciais}\n\nExplique o benefício em linguagem adequada à operação ${canal}.`, fonte: { tipo: "dados da empresa" } },
+    { id: `base-${Date.now()}-2`, titulo: `Abordagem ${canal}`, conteudo: `Perfil comercial: ${perfilNome}.\nUse uma abertura objetiva, conectada ao ICP (${icp}), valide a necessidade e defina o próximo passo. Registre o contexto relevante no CRM.`, fonte: { tipo: "perfil e operação" } },
+    { id: `base-${Date.now()}-3`, titulo: "Objeções e encaminhamento", conteudo: `Objeções e orientações existentes: ${objecoes}\n\nNão invente condições. Confirme a dúvida, retome o diferencial aplicável e combine um próximo passo concreto.`, fonte: { tipo: "dados comerciais" } },
+    ...conteudosExistentes.slice(0, 2).map((m, i) => ({ id: `operacao-${m.id || i}`, titulo: m.titulo || "Material operacional", conteudo: String(m.conteudo || "").slice(0, 1600), fonte: { tipo: "campanha ou onboarding existente" } })),
+    ...docs.slice(0, 3).map((d) => ({ id: `rag-${d.id}`, titulo: d.titulo, conteudo: String(d.conteudo || "").slice(0, 1600), fonte: { documentId: d.id, documento: d.titulo, versao: d.versao } })),
+  ];
+  const basesQuiz = trechos.length >= 3 ? trechos.slice(0, 5) : [
+    { texto: produto, documento: "Produto ou serviço" }, { texto: icp, documento: "ICP" }, { texto: diferenciais, documento: "Diferenciais" }, { texto: objecoes, documento: "Objeções" },
+  ];
+  const questoes = basesQuiz.slice(0, 5).map((t, i) => {
+    const distratores = basesQuiz.filter((_, n) => n !== i).slice(0, 2).map((x) => x.texto);
+    const opcoes = [t.texto, ...distratores].sort((a, b) => a.length - b.length);
+    return { pergunta: `Qual orientação deve guiar a atuação de ${perfilNome} em “${t.documento}”?`, opcoes, correta: opcoes.indexOf(t.texto), justificativa: `Base: ${t.documento}.` };
+  });
+  res.json({ modulos, questoes, status: "rascunho", fontes: [...new Set(fontes)], perfil, tipoOperacao });
 });
 
 router.get("/assistant/audio-config", (req, res) => {

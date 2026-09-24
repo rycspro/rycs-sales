@@ -25,6 +25,16 @@ export const MOTIVOS_RECUSA = [
 ];
 
 export const CHECKLIST_REVISAO = {
+  contato: [
+    { id: "identidade", label: "Cliente e contato conferem com o registro" },
+    { id: "abordagem", label: "A evidência mostra uma abordagem comercial real" },
+    { id: "canal", label: "O canal declarado corresponde à evidência" },
+  ],
+  lead_qualificado: [
+    { id: "identidade", label: "Cliente e contato conferem com o registro" },
+    { id: "qualificacao", label: "A evidência demonstra qualificação do lead" },
+    { id: "proximo_passo", label: "Há dor, fit ou próximo passo registrado" },
+  ],
   ligacao: [
     { id: "identidade", label: "Cliente e contato conferem com o registro" },
     { id: "execucao", label: "A gravação ou evidência mostra uma ligação atendida" },
@@ -44,6 +54,11 @@ export const CHECKLIST_REVISAO = {
     { id: "identidade", label: "Cliente e contato conferem com o registro" },
     { id: "presenca", label: "A evidência demonstra que a reunião ocorreu" },
     { id: "completude", label: "A prova cobre a interação, não apenas um convite" },
+  ],
+  visita: [
+    { id: "identidade", label: "Cliente e contato conferem com o registro" },
+    { id: "presenca", label: "A evidência demonstra visita presencial ou PAP" },
+    { id: "local", label: "Local, contexto ou registro visual são coerentes" },
   ],
   venda: [
     { id: "identidade", label: "Cliente e documento conferem com o contrato" },

@@ -80,6 +80,14 @@ body{-webkit-text-size-adjust:100%}
 .vx-seg::-webkit-scrollbar{display:none}
 .vx-seg button{border:0;background:transparent;padding:7px 13px;border-radius:var(--radius-pill);font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;transition:.16s}
 .vx-seg button[data-on="1"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-card)}
+.vx-beta-badge{background:var(--amber);color:#17110a;border-radius:999px;padding:5px 9px;font-size:10.5px;font-weight:800;letter-spacing:.08em;white-space:nowrap}
+.vx-beta-login-badge{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60;background:var(--amber);color:#17110a;border-radius:999px;padding:7px 12px;font-size:11px;font-weight:800;letter-spacing:.07em;white-space:nowrap;box-shadow:var(--shadow-pop)}
+.vx-beta-login-panel{margin-top:12px;padding:12px;border:1px solid var(--amber);border-radius:var(--radius-sm);background:var(--amber-50)}
+.vx-beta-login-panel p{margin:6px 0 10px;color:var(--ink-2);font-size:12.5px}
+.vx-beta-ribbon{margin-bottom:16px;border:1px solid var(--amber);background:var(--amber-50);color:var(--ink);border-radius:var(--radius-sm);padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.vx-beta-ribbon b{font-size:12px;letter-spacing:.06em}
+.vx-beta-ribbon span{font-size:12.5px;color:var(--ink-2)}
+.vx-beta-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
 @media (max-width:640px){
   .vx-word{font-size:14px;gap:6px}
   .vx-mark{width:23px;height:23px;border-radius:7px}

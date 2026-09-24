@@ -29,27 +29,69 @@ Ao receber um lote de tarefas:
 6. Rode build uma única vez.
 7. Corrija somente erros relacionados ao lote.
 
-## Deploy
-Este projeto usa GitHub conectado à Railway.
+## DEPLOY AUTOMÁTICO DIRETO NA RAILWAY
 
-Quando eu disser "faça o deploy":
-1. Finalize todas as alterações.
-2. Valide somente o que foi alterado.
-3. Rode testes uma única vez.
-4. Rode build uma única vez.
-5. Faça git add.
-6. Faça um único commit.
-7. Faça git push para origin/main.
-8. Considere o push para main como gatilho do deploy da Railway.
-9. Não fique monitorando logs após push bem-sucedido.
-10. Só consulte logs se houver erro real.
+O ambiente de produção deste projeto é a Railway.
+
+O deploy deve ser feito diretamente através da Railway CLI usando o código local atual.
+
+Fluxo padrão obrigatório:
+
+1. Finalizar todas as alterações do lote.
+2. Validar somente o que foi alterado.
+3. Rodar os testes necessários uma única vez.
+4. Rodar build local uma única vez, quando aplicável.
+5. Se testes/build estiverem corretos, fazer o deploy diretamente na Railway.
+6. Usar: railway up
+7. Se o projeto já estiver corretamente vinculado ao projeto e serviço da Railway, reutilizar essa configuração.
+8. Não exigir git push para realizar deploy.
+9. Não bloquear o deploy por problemas de autenticação do GitHub.
+10. GitHub e deploy da Railway são processos independentes neste projeto.
+11. O código pode ser commitado normalmente para histórico, mas git push não é requisito para publicar.
+12. Após railway up, confirmar que o deployment terminou com sucesso.
+13. Não repetir deploy sem necessidade.
+14. Não consultar logs repetidamente após sucesso.
+15. Consultar logs somente se o deployment falhar.
+
+### Autonomia da Railway
+
+Antes de pedir intervenção humana:
+- verificar se Railway CLI está instalada;
+- verificar se já existe autenticação válida;
+- verificar se o projeto está vinculado;
+- verificar projeto, ambiente e serviço atuais;
+- tentar resolver configurações locais seguras automaticamente.
+
+Se o projeto ainda não estiver vinculado:
+- usar railway link para vincular ao projeto correto;
+- não criar um projeto Railway novo sem autorização.
+
+Se a Railway exigir login:
+- iniciar railway login;
+- pedir intervenção humana somente se for necessária autorização no navegador.
+
+### Regra de conclusão
+
+Uma tarefa só deve ser considerada publicada quando:
+
+código concluído → validação concluída → testes/build aprovados → railway up executado → deployment da Railway com status de sucesso.
+
+Não considerar git push como deploy.
+
+Nunca armazenar Railway Token, senha ou secret no CLAUDE.md.
 
 ## Git
+
+Git é usado para versionamento e histórico de commits.
+
 - Use a branch main para produção.
 - Não faça commits desnecessários.
 - Faça um commit por lote concluído.
 - Não faça push repetido sem necessidade.
 - Nunca exponha tokens, secrets ou chaves.
+- Falha de git push não deve impedir deploy na Railway.
+- Não tentar corrigir autenticação do GitHub durante um deploy Railway.
+- GitHub não faz parte do fluxo obrigatório de publicação.
 
 ## Banco e produção
 - Considere que existem usuários e dados reais.
@@ -98,14 +140,14 @@ Objetivo: resolver sozinho problemas operacionais simples antes de solicitar int
 6. Problemas de deploy devem ser tratados autonomamente sempre que possível.
 
    Neste projeto:
-   - GitHub: https://github.com/rycspro/rycs-sales.git
-   - Branch de produção: main
+   - Deploy direto via Railway CLI: railway up
    - Destino final: Railway
+   - GitHub é usado apenas para histórico — não é requisito de deploy.
 
    Fluxo:
-   commit → push origin/main → GitHub recebe → Railway inicia deploy automático → confirmar deployment saudável.
+   código concluído → testes/build aprovados → railway up → confirmar deployment saudável.
 
-7. Se o push para main disparar o deploy corretamente, não criar outro deployment manual na Railway.
+7. Se railway up concluir com sucesso, não criar outro deployment.
 
 8. Se o deploy falhar:
    - identificar a causa;

@@ -13,7 +13,7 @@ const campos = [
   ["telefoneEmpresa", "Telefone da empresa"], ["emailEmpresa", "E-mail da empresa"],
 ];
 
-export default function CadastroEmpresa({ emp, up, aviso }) {
+export default function CadastroEmpresa({ emp, up, aviso, camposDestacados = [] }) {
   const [form, setForm] = useState(() => ({ ...emp, materiais: emp.materiais || [] }));
   const [salvando, setSalvando] = useState(false);
   const [material, setMaterial] = useState({ nome: "", url: "" });
@@ -62,12 +62,12 @@ export default function CadastroEmpresa({ emp, up, aviso }) {
       <div className="vx-row" style={{marginBottom:14,flexWrap:"wrap"}}><div><b><FileScan size={15} style={{verticalAlign:-3,marginRight:6}}/>Leitura do cartão CNPJ</b><div className="vx-mut" style={{fontSize:12}}>Imagem ou PDF → extração → prévia → revisão → confirmação.</div></div><label className="vx-btn vx-btn-sm">{lendoCnpj?"Lendo…":"Enviar cartão CNPJ"}<input hidden type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(e)=>lerCnpj(e.target.files?.[0])}/></label></div>
       {cnpjPreview&&<div className="vx-notice" style={{marginBottom:14}}><b>Prévia extraída · confiança {cnpjPreview.confianca}</b><div className="vx-grid vx-g2" style={{marginTop:9}}>{Object.entries(cnpjPreview.dados||{}).map(([k,v])=><div key={k}><span className="vx-label">{k}</span><span>{v||"Não encontrado"}</span></div>)}</div><button className="vx-btn vx-btn-primary vx-btn-sm" style={{marginTop:10}} onClick={aplicarCnpj}>Confirmar dados na prévia</button></div>}
       <div className="vx-grid vx-g2">
-        {campos.map(([k, label]) => <label key={k}><div className="vx-label">{label}</div><input className="vx-input" value={form[k] || ""} onChange={set(k)} /></label>)}
+        {campos.map(([k, label]) => <label key={k}><div className="vx-label" style={camposDestacados.includes(k) ? { color: "var(--amber)", fontWeight: 700 } : undefined}>{label}{camposDestacados.includes(k) ? " · necessário para a IA" : ""}</div><input className="vx-input" style={camposDestacados.includes(k) ? { borderColor: "var(--amber)" } : undefined} value={form[k] || ""} onChange={set(k)} /></label>)}
         <label><div className="vx-label">Ticket médio</div><input className="vx-input" value={form.ticket || ""} onChange={set("ticket")} placeholder="Ex.: R$ 1.500 por mês" /></label>
-        <label><div className="vx-label">ICP</div><input className="vx-input" value={form.icp || ""} onChange={set("icp")} placeholder="Quem compra e em qual contexto" /></label>
+        <label><div className="vx-label" style={camposDestacados.includes("icp") ? { color: "var(--amber)", fontWeight: 700 } : undefined}>ICP{camposDestacados.includes("icp") ? " · necessário para a IA" : ""}</div><input className="vx-input" style={camposDestacados.includes("icp") ? { borderColor: "var(--amber)" } : undefined} value={form.icp || ""} onChange={set("icp")} placeholder="Quem compra e em qual contexto" /></label>
       </div>
-      <label style={{ display: "block", marginTop: 14 }}><div className="vx-label">Diferenciais</div><textarea className="vx-input" style={{ minHeight: 76 }} value={form.diferenciais || ""} onChange={set("diferenciais")} /></label>
-      <label style={{ display: "block", marginTop: 14 }}><div className="vx-label">Objeções mais comuns</div><textarea className="vx-input" style={{ minHeight: 76 }} value={form.objecoes || ""} onChange={set("objecoes")} /></label>
+      <label style={{ display: "block", marginTop: 14 }}><div className="vx-label" style={camposDestacados.includes("diferenciais") ? { color: "var(--amber)", fontWeight: 700 } : undefined}>Diferenciais{camposDestacados.includes("diferenciais") ? " · necessário para a IA" : ""}</div><textarea className="vx-input" style={{ minHeight: 76, ...(camposDestacados.includes("diferenciais") ? { borderColor: "var(--amber)" } : {}) }} value={form.diferenciais || ""} onChange={set("diferenciais")} /></label>
+      <label style={{ display: "block", marginTop: 14 }}><div className="vx-label" style={camposDestacados.includes("objecoes") ? { color: "var(--amber)", fontWeight: 700 } : undefined}>Objeções mais comuns{camposDestacados.includes("objecoes") ? " · necessário para a IA" : ""}</div><textarea className="vx-input" style={{ minHeight: 76, ...(camposDestacados.includes("objecoes") ? { borderColor: "var(--amber)" } : {}) }} value={form.objecoes || ""} onChange={set("objecoes")} /></label>
     </div>
 
     <div className="vx-card" style={{ padding: 18, marginTop: 16 }}>

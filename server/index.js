@@ -33,6 +33,7 @@ import reportRoutes from "./routes/reports.js";
 import auditRoutes from "./routes/audit.js";
 import courseRoutes2 from "./routes/courses.js";
 import { semearCatalogo } from "./services/academy.js";
+import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
 // camada de providers. Trocar de fornecedor é trocar esta linha.
 import "./services/audit/providers/anthropic.js";
@@ -42,6 +43,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.get("/api/health", (_, res) => res.json({ status: "ok" }));
+app.get("/api/environment", (_, res) => res.json({ environment: process.env.RYCS_ENVIRONMENT === "beta" ? "beta" : "production" }));
 const isProd = process.env.NODE_ENV === "production";
 
 // A ausência da chave não pode derrubar todo o backend: o motor de auditoria
@@ -220,6 +222,10 @@ if (isProd) {
 // O worker vive no mesmo processo — adequado ao volume atual e sem adicionar
 // Redis a um MVP. O contrato da fila não muda quando isso virar serviço à
 // parte.
+// Primeiro boot do serviço Beta recebe somente a massa sintética. O marcador
+// mora no mesmo volume isolado, portanto nunca executa em bancos já usados.
+if (isBetaEnvironment() && !db.prepare("SELECT 1 FROM beta_environment WHERE id = 1").get()) resetBetaEnvironment();
+garantirDadosCriticosProfissionalBeta();
 semearPoliticasPadrao();
 semearCatalogo();
 const capacidades = capacidadesDisponiveis();

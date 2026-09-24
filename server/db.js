@@ -15,6 +15,10 @@ console.log(`[db] ${DB_PATH}`);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
+// Marcador persistente exclusivo do banco Beta. Ele não contém dados de
+// negócio e permite que operações de teste confirmem o alvo antes de agir.
+db.exec(`CREATE TABLE IF NOT EXISTS beta_environment (id INTEGER PRIMARY KEY CHECK (id = 1), resetAt INTEGER NOT NULL)`);
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS sellers (
     id TEXT PRIMARY KEY,
@@ -128,6 +132,16 @@ db.exec(`
     criadoEm INTEGER NOT NULL,
     respondidoEm INTEGER,
     UNIQUE(companyId, sellerId),
+    FOREIGN KEY (companyId) REFERENCES companies(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS professional_notes (
+    companyId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    observacao TEXT DEFAULT '',
+    atualizadoEm INTEGER NOT NULL,
+    PRIMARY KEY (companyId, sellerId),
     FOREIGN KEY (companyId) REFERENCES companies(id),
     FOREIGN KEY (sellerId) REFERENCES sellers(id)
   );
