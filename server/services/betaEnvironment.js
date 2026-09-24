@@ -344,6 +344,25 @@ export function garantirDadosCriticosProfissionalBeta() {
     db.prepare("UPDATE campaign_applications SET status = 'aprovado' WHERE campaignId = ? AND sellerId = ?")
       .run(campaignId, sellerId);
 
+    // Campanhas extras para o Demo (SDR, PAP, Cold Call, Follow, Reuniões, Venda)
+    const campaignStmt2 = db.prepare(`INSERT OR IGNORE INTO campaigns
+      (id,companyId,titulo,descricao,produto,publico,status,vagas,comissoes,treinamento,requisitos,objetivo,regiao,funcao,orcamento,reservado,tarefas,evidencias,criteriosAprovacao,modelosVerificacao,aceitaLeadProprio,exigeCertificacao,criadoEm)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    const baseTasks = '{"contato":25,"lead_qualificado":60,"follow":35,"agendamento":120,"realizada":220,"visita":180,"ligacao":40,"venda":900}';
+    const baseEvid = '{"contato":["print"],"realizada":["gravacao","ata"],"visita":["geo","foto"],"venda":["contrato","valor"]}';
+    const extraCamps = [
+      ["beta-camp-sdr", "SDR — Prospecção Outbound", "sdr", 25000, 'Especialistas B2B que precisam escalar geração de demanda', '{"contato":25,"lead_qualificado":60,"follow":35,"agendamento":120}'],
+      ["beta-camp-pap", "PAP — Visitas Presenciais", "pap", 18000, 'PMEs no interior de SP e região Sul', '{"visita":180,"contato":25,"follow":35,"venda":900}'],
+      ["beta-camp-coldcall", "Cold Call — Ligações Outbound", "sdr", 15000, 'Decisores em empresas de TI e serviços', '{"ligacao":40,"contato":25,"lead_qualificado":60,"agendamento":120}'],
+      ["beta-camp-reunioes", "Reuniões — Discovery + Demo", "closer", 28000, 'Empresas SaaS buscando fechar contratos anuais', '{"agendamento":120,"realizada":220,"venda":900}'],
+      ["beta-camp-venda", "Venda Direta — Fechamento B2B", "closer", 40000, 'Contas com ciclo curto prontas para fechar', '{"venda":900,"realizada":220,"agendamento":120}'],
+    ];
+    for (const [id, titulo, funcao, orcamento, publico, tarefas] of extraCamps) {
+      campaignStmt2.run(id, companyId, titulo, `Campanha Beta: ${titulo}`, "Operação comercial B2B terceirizada", publico, "ativa", 6, tarefas, '[]', "Seguir roteiro e enviar evidências reais.", `Escalar resultados com ${funcao.toUpperCase()} especializado`, "Brasil", funcao, orcamento, 0, tarefas, baseEvid, '{}', '{}', 1, 0, ts);
+      db.prepare("INSERT OR IGNORE INTO campaign_applications (id,campaignId,sellerId,status,criadoEm) VALUES (?,?,?,?,?)")
+        .run(`beta-cand-${id}-demo`, id, "beta-profissional-demo", "aprovado", ts);
+    }
+
     // Quiz de certificação da campanha
     const quiz = [
       {

@@ -5,6 +5,7 @@ import { uid, agora, money } from "../../lib/utils.js";
 import { ACOES, CAMPOS, ORDEM_ACOES, TAXA } from "../../lib/constants.js";
 import { EVIDENCE_MATRIX, EVIDENCE_SLOTS, validateProva } from "../../../shared/evidenceMatrix.js";
 import { Campo, Vazio } from "../ui.jsx";
+import UploadEvidencia from "./UploadEvidencia.jsx";
 
 // Seções de campos obrigatórios por tipo de tarefa
 const CAMPOS_CONTATO_BASE = ["cliente", "telefone"];
@@ -24,28 +25,13 @@ function EvidenceItem({ slot, idx, value, onChange, isRequired }) {
   const def = EVIDENCE_SLOTS[slot] || { label: `Evidência ${idx + 1}`, ph: "", isUrl: false };
   return (
     <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "10px 12px", marginBottom: 8 }}>
-      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ background: isRequired ? "var(--brand)" : "var(--surface-3)", color: isRequired ? "#fff" : "var(--ink-2)", borderRadius: 4, padding: "1px 6px", fontSize: 10.5, fontWeight: 700 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ background: isRequired ? "var(--brand)" : "var(--surface-3)", color: isRequired ? "#fff" : "var(--ink-2)", borderRadius: 4, padding: "2px 7px", fontSize: 10.5, fontWeight: 700 }}>
           {isRequired ? `OBRIGATÓRIA ${idx + 1}` : "ADICIONAL"}
         </span>
         {def.label}
       </div>
-      {def.isText ? (
-        <textarea
-          className="vx-input"
-          style={{ minHeight: 72, resize: "vertical" }}
-          placeholder={def.ph}
-          value={value || ""}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      ) : (
-        <input
-          className="vx-input"
-          placeholder={def.ph}
-          value={value || ""}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      )}
+      <UploadEvidencia slot={slot} value={value || ""} onChange={onChange} placeholder={def.ph} />
     </div>
   );
 }
@@ -298,7 +284,7 @@ export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liber
                 </div>
 
                 {tipo === "realizada" && (
-                  <div style={{ background: "#FEF9C3", borderRadius: 8, padding: "8px 10px", marginBottom: 10, fontSize: 12 }}>
+                  <div style={{ background: "var(--amber-50)", border: "1px solid var(--amber-100)", color: "var(--ink)", borderRadius: 8, padding: "8px 10px", marginBottom: 10, fontSize: 12 }}>
                     <b>Atenção:</b> Reunião agendada ≠ Reunião realizada. Para marcar como realizada é obrigatório: gravação/vídeo <b>e</b> resumo estruturado.
                   </div>
                 )}

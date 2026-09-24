@@ -80,16 +80,26 @@ export default function CardEnvio({ sub, db, extra }) {
             <>
               <hr className="vx-sep" style={{ margin: "6px 0" }} />
               <div style={{ fontWeight: 700, fontSize: 11, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-3)" }}>Evidências</div>
-              {sub.prova.evidencias.map((ev, i) => (
-                <div key={i} className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
-                  <span className="vx-mut" style={{ whiteSpace: "nowrap" }}>#{i + 1} {ev.slot || "evidência"}</span>
-                  {/^https?:\/\//i.test(String(ev.valor || "")) ? (
-                    <a href={ev.valor} target="_blank" rel="noreferrer" style={{ textAlign: "right", wordBreak: "break-all", color: "var(--brand)", fontSize: 12 }}>Abrir link</a>
-                  ) : (
-                    <b style={{ textAlign: "right", wordBreak: "break-word", fontSize: 12 }}>{ev.valor || "—"}</b>
-                  )}
-                </div>
-              ))}
+              {sub.prova.evidencias.map((ev, i) => {
+                const val = String(ev.valor || "");
+                const isDataImg = val.startsWith("data:image");
+                const isDataVid = val.startsWith("data:video");
+                const isLink = /^https?:\/\//i.test(val);
+                return (
+                  <div key={i} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div className="vx-mut" style={{ fontSize: 10.5, marginBottom: 4 }}>#{i + 1} {ev.slot || "evidência"}</div>
+                    {isDataImg ? (
+                      <img src={val} alt="evidência" style={{ width: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 6, background: "var(--surface-3)" }} />
+                    ) : isDataVid ? (
+                      <video src={val} controls style={{ width: "100%", maxHeight: 140, borderRadius: 6 }} />
+                    ) : isLink ? (
+                      <a href={val} target="_blank" rel="noreferrer" style={{ color: "var(--brand)", fontSize: 12, wordBreak: "break-all" }}>Abrir link</a>
+                    ) : (
+                      <span style={{ fontSize: 12, wordBreak: "break-word" }}>{val || "—"}</span>
+                    )}
+                  </div>
+                );
+              })}
             </>
           ) : (
             <div className="vx-row" style={{ padding: "2px 0", gap: 10 }}>

@@ -4,6 +4,7 @@ import PainelVendedor from "./PainelVendedor.jsx";
 import ListaEmpresas from "./ListaEmpresas.jsx";
 import Workspace from "./Workspace.jsx";
 import CampanhaPage from "./CampanhaPage.jsx";
+import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
 import Carteira from "./Carteira.jsx";
 import PerfilVendedor from "./PerfilVendedor.jsx";
 import AcademyCatalogo from "./AcademyCatalogo.jsx";
@@ -40,11 +41,12 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
   const empresaAberta = db.companies.find((c) => c.id === abertaId);
   const campanhaAberta = db.campaigns?.find((c) => c.id === campanhaAbertaId);
 
-  if (empresaAberta)
+  if (empresaAberta) {
     if (campanhaAberta) {
       return <CampanhaPage campanha={campanhaAberta} empresa={empresaAberta} eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} voltar={() => setCampanhaAbertaId(null)} recarregar={recarregar} />;
     }
-    return <Workspace campanha={campanhaAberta} empresa={empresaAberta} eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} voltar={() => { setAbertaId(null); setCampanhaAbertaId(null); }} recarregar={recarregar} />;
+    return <CampanhasEmpresa empresa={empresaAberta} eu={eu} db={db} onAbrir={(id) => setCampanhaAbertaId(id)} voltar={() => setAbertaId(null)} aviso={aviso} recarregar={recarregar} irAcademy={(funcao) => { setAcademyFuncao(funcao); setAbertaId(null); setAba("academy"); }} />;
+  }
 
   return (
     <>
