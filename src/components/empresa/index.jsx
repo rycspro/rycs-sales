@@ -87,7 +87,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar 
       </>}
       {aba === "conferir" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} />}
       {aba === "conta" && <>
-        {submenu([["cadastro", "Configurações"], ["base", "Base de conhecimento"], ["financeiro", "Financeiro"], ["relatorios", "Relatórios"], ["planos", "Plano"], ["notificacoes", "Notificações"], ["suporte", "Suporte"], ["indicar", "Indicar"], ["sair", "Sair"]], secaoConta, (key) => key === "sair" ? sair() : setSecaoConta(key))}
+        {submenu([["cadastro", "Configurações"], ["base", "Cérebro da Operação"], ["financeiro", "Financeiro"], ["relatorios", "Relatórios"], ["planos", "Plano"], ["notificacoes", "Notificações"], ["suporte", "Suporte"], ["indicar", "Indicar"], ["sair", "Sair"]], secaoConta, (key) => key === "sair" ? sair() : setSecaoConta(key))}
         {secaoConta === "cadastro" && <CadastroEmpresa emp={emp} up={up} aviso={aviso} />}
         {secaoConta === "base" && <BaseConhecimento emp={emp} db={db} aviso={aviso} />}
         {secaoConta === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}

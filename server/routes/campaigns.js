@@ -27,6 +27,82 @@ router.post("/campaigns/sugerir", async (req, res) => {
 });
 
 
+// Geração de treinamento com IA para uma campanha.
+// Usa o contexto da campanha + empresa + Cérebro da Operação.
+// Devolve módulos prontos para a empresa revisar — nada é salvo automaticamente.
+router.post("/campaigns/treinamento", async (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+
+  const { modelo = "rapido", campanha = {}, empresa: empresaCtx = {} } = req.body || {};
+
+  // Contexto do Cérebro da Operação (knowledge base)
+  const docs = db.prepare("SELECT titulo, conteudo, origem FROM knowledge_documents WHERE companyId = ? AND status != 'erro' LIMIT 10").all(req.user.entityId);
+  const cerebroCtx = docs.length
+    ? docs.map((d) => `[${d.origem || "texto"}] ${d.titulo}: ${String(d.conteudo || "").slice(0, 300)}`).join("\n")
+    : "";
+
+  const PROMPTS = {
+    rapido: "Crie 2 módulos de treinamento rápido: visão geral do produto/serviço e script de abordagem. Cada módulo com título e conteúdo de até 300 palavras.",
+    completo: "Crie 4 módulos detalhados: (1) Produto e proposta de valor, (2) Perfil do cliente ideal (ICP), (3) Objeções e respostas, (4) Processo comercial e evidências exigidas.",
+    quiz: "Crie 3 módulos de quiz com perguntas de múltipla escolha: título do módulo, conteúdo explicativo curto e 3 perguntas com 4 alternativas cada (indique a correta com [CERTA]).",
+    script: "Crie 3 módulos de script operacional: (1) Abordagem inicial, (2) Qualificação do lead, (3) Condução para o próximo passo. Cada um com diálogo modelo.",
+  };
+
+  const instrucao = PROMPTS[modelo] || PROMPTS.rapido;
+
+  // Motor interno: estrutura determinística sem IA externa
+  const modulosInternos = () => {
+    const base = [
+      { id: `mod-${Date.now()}-1`, titulo: `${campanha.titulo || "Operação"} — Visão geral`, conteudo: `Produto/serviço: ${empresaCtx.produto || campanha.descricao || "Consulte o material da empresa"}.\nCliente ideal: ${campanha.publico || empresaCtx.icp || "Conforme briefing da campanha"}.\nRegião: ${campanha.regiao || "Nacional"}.\nFunção: ${campanha.funcao?.toUpperCase() || "SDR"}.` },
+      { id: `mod-${Date.now()}-2`, titulo: "Script de abordagem", conteudo: `Olá, [nome]! Aqui é [seu nome], da equipe de prospecção. Estou entrando em contato porque atendemos empresas como a sua${campanha.publico ? " — " + campanha.publico : ""}.\n\nPosso compartilhar como temos ajudado esses negócios? Tenho disponibilidade essa semana para uma conversa rápida.` },
+    ];
+    if (modelo === "completo") {
+      base.push(
+        { id: `mod-${Date.now()}-3`, titulo: "Objeções e respostas", conteudo: cerebroCtx ? "Use os materiais do Cérebro da Operação como referência." : "Não tenho tempo agora → Entendo! Quanto tempo você teria em uma terça ou quarta? São só 15 minutos.\nJá trabalho com outro fornecedor → Ótimo! Nós não viemos substituir, mas trazer uma comparação honesta." },
+        { id: `mod-${Date.now()}-4`, titulo: "Processo e evidências", conteudo: `Após o contato, registre:\n- Nome e cargo do contato\n- Confirmação da reunião (data, horário, participantes)\n- Vídeo ou captura de tela da confirmação\n\nPrazo máximo: ${campanha.prazoHoras || 48}h após o agendamento.` }
+      );
+    }
+    return base;
+  };
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.json({ modulos: modulosInternos(), fonte: "interno" });
+  }
+
+  try {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const resposta = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1200,
+      system:
+        "Você cria módulos de treinamento para profissionais de vendas comissionados. " +
+        "Responda APENAS um JSON com a chave 'modulos': array de objetos com 'titulo' e 'conteudo'. " +
+        "Máximo 4 módulos. Conteúdo direto, prático, sem introduções genéricas.",
+      messages: [{
+        role: "user",
+        content:
+          `Empresa: ${empresaCtx.nome || "—"}\nProduto: ${empresaCtx.produto || "—"}\nTicket: ${empresaCtx.ticket || "—"}\nICP: ${empresaCtx.icp || campanha.publico || "—"}\n` +
+          `Campanha: ${campanha.titulo || "—"}\nFunção: ${campanha.funcao || "SDR"}\nRegião: ${campanha.regiao || "—"}\n` +
+          (cerebroCtx ? `\nCérebro da Operação:\n${cerebroCtx}\n` : "") +
+          `\nInstrução: ${instrucao}`,
+      }],
+    });
+
+    const texto = resposta.content.map((b) => b.text || "").join("");
+    const json = JSON.parse(texto.slice(texto.indexOf("{"), texto.lastIndexOf("}") + 1));
+    const modulos = Array.isArray(json.modulos)
+      ? json.modulos.slice(0, 4).map((m, i) => ({ id: `mod-${Date.now()}-${i}`, titulo: String(m.titulo || "").slice(0, 120), conteudo: String(m.conteudo || "").slice(0, 2000) }))
+      : modulosInternos();
+
+    res.json({ modulos, fonte: "externo" });
+  } catch (err) {
+    console.error("[treinamento] provedor externo indisponível:", err.message);
+    res.json({ modulos: modulosInternos(), fonte: "interno" });
+  }
+});
+
 router.get("/campaigns", (req, res) => {
   const { role, entityId } = req.user;
   let rows;

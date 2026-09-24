@@ -3,32 +3,114 @@ import { BookOpen, Bot, CheckCircle2, Download, FileText, FileUp, History, Mic, 
 import { api, apiDelete, API_URL } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 
+const TIPOS_MATERIAL = [
+  { value: "texto", label: "Texto / FAQ" },
+  { value: "script", label: "Script comercial" },
+  { value: "objecao", label: "Objecoes e respostas" },
+  { value: "link", label: "Link com contexto" },
+  { value: "transcricao", label: "Transcricao de audio/video" },
+  { value: "video", label: "Video (titulo + URL + resumo)" },
+  { value: "material", label: "Material comercial" },
+];
+
 export function BaseConhecimento({ emp, db, aviso }) {
   const [docs, setDocs] = useState([]), [carregando, setCarregando] = useState(true);
   const [form, setForm] = useState({ titulo: "", categoria: "geral", departamento: "comercial", origem: "texto", conteudo: "", responsavel: "" });
   const carregar = async () => { setCarregando(true); const r = await api("/knowledge"); setDocs(Array.isArray(r) ? r : []); setCarregando(false); };
   useEffect(() => { carregar(); }, []);
   const salvar = async () => {
-    const r = await api("/knowledge", form); if (!r || r.error) return aviso(r?.error || "Não foi possível adicionar o material.");
-    setForm({ ...form, titulo: "", conteudo: "" }); await carregar(); aviso("Material adicionado à base autorizada.");
+    const r = await api("/knowledge", form);
+    if (!r || r.error) return aviso(r?.error || "Nao foi possivel adicionar o material.");
+    setForm({ ...form, titulo: "", conteudo: "" }); await carregar(); aviso("Material adicionado ao Cerebro da Operacao.");
   };
-  const importar=async(file)=>{if(!file)return;const titulo=form.titulo.trim()||file.name;const base64=await new Promise((ok)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.readAsDataURL(file)});const out=await api("/knowledge/import",{titulo,mimetype:file.type,base64,categoria:form.categoria,departamento:form.departamento,responsavel:form.responsavel});if(out?.error)return aviso(out.error);await carregar();aviso("Arquivo extraído, indexado e disponível para o RAG.");};
+  const importar = async (file) => {
+    if (!file) return;
+    const titulo = form.titulo.trim() || file.name;
+    const base64 = await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(file); });
+    const out = await api("/knowledge/import", { titulo, mimetype: file.type, base64, categoria: form.categoria, departamento: form.departamento, responsavel: form.responsavel });
+    if (out?.error) return aviso(out.error);
+    await carregar(); aviso("Arquivo extraido, indexado e disponivel para a IA.");
+  };
   const remover = async (doc) => {
-    if (!window.confirm(`Excluir “${doc.titulo}” e seu índice?`)) return;
-    const r = await apiDelete(`/knowledge/${doc.id}`); if (r?.error) return aviso(r.error); await carregar(); aviso("Material e índice removidos.");
+    if (!window.confirm(`Excluir "${doc.titulo}" e seu indice?`)) return;
+    const r = await apiDelete(`/knowledge/${doc.id}`); if (r?.error) return aviso(r.error); await carregar(); aviso("Material e indice removidos.");
   };
   const reprocessar = async (doc) => { const r = await api(`/knowledge/${doc.id}/reprocess`, {}); if (r?.error) return aviso(r.error); await carregar(); aviso(`Processamento: ${r.status}.`); };
-  return <div className="vx-fade">
-    <div className="vx-row" style={{ marginBottom: 14 }}><div><div className="vx-eyebrow">Fontes autorizadas</div><h2 className="vx-disp" style={{ margin: "4px 0" }}>Base de conhecimento</h2></div><span className="vx-chip">{docs.length} materiais</span></div>
-    <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
-      <div className="vx-grid vx-g2"><label><div className="vx-label">Título</div><input className="vx-input" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} /></label><label><div className="vx-label">Responsável</div><input className="vx-input" value={form.responsavel} onChange={(e) => setForm({ ...form, responsavel: e.target.value })} /></label></div>
-      <div className="vx-grid vx-g2" style={{ marginTop: 9 }}><label><div className="vx-label">Categoria</div><input className="vx-input" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} /></label><label><div className="vx-label">Campanha</div><select className="vx-input" value={form.campaignId || ""} onChange={(e) => setForm({ ...form, campaignId: e.target.value || null })}><option value="">Toda a empresa</option>{(db.campaigns || []).map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label></div>
-      <div className="vx-grid vx-g2" style={{marginTop:9}}><label><div className="vx-label">Origem</div><select className="vx-input" value={form.origem} onChange={(e)=>setForm({...form,origem:e.target.value})}><option value="texto">Texto</option><option value="link">Link com contexto</option><option value="transcricao">Transcrição de áudio/vídeo</option></select></label><label><div className="vx-label">Importar documento</div><span className="vx-btn vx-btn-block"><FileUp size={14}/>TXT, MD ou PDF<input hidden type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" onChange={(e)=>importar(e.target.files?.[0])}/></span></label></div>
-      <label style={{ display: "block", marginTop: 9 }}><div className="vx-label">Texto autorizado</div><textarea className="vx-input" rows={7} value={form.conteudo} onChange={(e) => setForm({ ...form, conteudo: e.target.value })} placeholder="Cole políticas, manuais, FAQs ou transcrições. PDF, DOCX e áudio podem ser cadastrados como aguardando processamento." /></label>
-      <button className="vx-btn vx-btn-primary" style={{ marginTop: 10 }} onClick={salvar}>Adicionar material</button>
+
+  const PLACEHOLDER = {
+    texto: "Cole politicas, manuais, FAQs, processos ou qualquer conteudo que a IA deve usar como referencia.",
+    script: "Cole o script de abordagem, de ligacao ou de apresentacao.",
+    objecao: "Cadastre objecoes e as respostas recomendadas — a IA usara isso nos treinamentos e scripts.",
+    link: "Cole o link e adicione um contexto explicando do que se trata.",
+    transcricao: "Cole a transcricao de audio ou video.",
+    video: "Informe o titulo, URL e um resumo do conteudo do video.",
+    material: "Cole ou descreva o material comercial (apresentacao, proposta, catalogo).",
+  };
+
+  return (
+    <div className="vx-fade">
+      <div className="vx-row" style={{ marginBottom: 14 }}>
+        <div>
+          <div className="vx-eyebrow">Fontes autorizadas para a IA</div>
+          <h2 className="vx-disp" style={{ margin: "4px 0" }}>Cerebro da Operacao</h2>
+          <p className="vx-mut" style={{ margin: "4px 0 0", fontSize: 13 }}>
+            Tudo aqui e usado pela IA para criar campanhas, treinamentos, scripts e sugestoes comerciais.
+          </p>
+        </div>
+        <span className="vx-chip">{docs.length} materiais</span>
+      </div>
+      <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
+        <div className="vx-grid vx-g2">
+          <label><div className="vx-label">Titulo</div><input className="vx-input" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} /></label>
+          <label><div className="vx-label">Tipo de material</div>
+            <select className="vx-input" value={form.origem} onChange={(e) => setForm({ ...form, origem: e.target.value })}>
+              {TIPOS_MATERIAL.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="vx-grid vx-g2" style={{ marginTop: 9 }}>
+          <label><div className="vx-label">Campanha</div>
+            <select className="vx-input" value={form.campaignId || ""} onChange={(e) => setForm({ ...form, campaignId: e.target.value || null })}>
+              <option value="">Toda a empresa</option>
+              {(db.campaigns || []).map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+            </select>
+          </label>
+          <label><div className="vx-label">Importar arquivo</div>
+            <span className="vx-btn vx-btn-block"><FileUp size={14} /> TXT, MD ou PDF
+              <input hidden type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" onChange={(e) => importar(e.target.files?.[0])} />
+            </span>
+          </label>
+        </div>
+        <label style={{ display: "block", marginTop: 9 }}>
+          <div className="vx-label">Conteudo</div>
+          <textarea className="vx-input" rows={6} value={form.conteudo} onChange={(e) => setForm({ ...form, conteudo: e.target.value })}
+            placeholder={PLACEHOLDER[form.origem] || PLACEHOLDER.texto} />
+        </label>
+        <button className="vx-btn vx-btn-primary" style={{ marginTop: 10 }} onClick={salvar}>Adicionar ao Cerebro</button>
+      </div>
+      {carregando
+        ? <div className="vx-mut">Carregando materiais...</div>
+        : !docs.length
+          ? <div className="vx-card" style={{ padding: 24, textAlign: "center" }}>
+              <BookOpen size={24} color="var(--muted)" />
+              <p className="vx-mut">Nenhum material ainda. Adicione scripts, FAQs, objecoes e materiais para a IA usar como contexto.</p>
+            </div>
+          : <div className="vx-grid">
+              {docs.map((d) => (
+                <div key={d.id} className="vx-card vx-row" style={{ padding: 14 }}>
+                  <div>
+                    <b>{d.titulo}</b>
+                    <div className="vx-mut" style={{ fontSize: 12 }}>{d.categoria} · {d.origem || "texto"} · v{d.versao} · {d.status} · {dataCurta(d.atualizadoEm)}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="vx-btn vx-btn-sm" onClick={() => reprocessar(d)}><RotateCcw size={13} /> Reprocessar</button>
+                    <button className="vx-btn vx-btn-sm vx-btn-danger" onClick={() => remover(d)}><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>}
     </div>
-    {carregando ? <div className="vx-mut">Carregando materiais…</div> : !docs.length ? <div className="vx-card" style={{ padding: 24, textAlign: "center" }}><BookOpen size={24} color="var(--muted)" /><p className="vx-mut">Adicione a primeira fonte para habilitar respostas fundamentadas.</p></div> : <div className="vx-grid">{docs.map((d) => <div key={d.id} className="vx-card vx-row" style={{ padding: 14 }}><div><b>{d.titulo}</b><div className="vx-mut" style={{ fontSize: 12 }}>{d.categoria} · v{d.versao} · {d.status} · {dataCurta(d.atualizadoEm)}</div></div><div style={{ display: "flex", gap: 6 }}><button className="vx-btn vx-btn-sm" onClick={() => reprocessar(d)}><RotateCcw size={13} /> Reprocessar</button><button className="vx-btn vx-btn-sm vx-btn-danger" onClick={() => remover(d)}><Trash2 size={13} /></button></div></div>)}</div>}
-  </div>;
+  );
 }
 
 export function RelatoriosEmpresa({ emp, db }) {

@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
+import { sugerirValores, impactoNoRoi } from "../../../shared/valorTarefa.js";
+import { takeRateDoPlano } from "../../../shared/planos.js";
 
 // Criação de campanha em três passos.
 //
@@ -67,8 +69,68 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [explicacao, setExplicacao] = useState("");
   const [salvando, setSalvando] = useState(false);
 
+  const [sugestaoIA, setSugestaoIA] = useState(null);
+  const [mostrarSugestao, setMostrarSugestao] = useState(false);
+  const [gerandoTreinamento, setGerandoTreinamento] = useState(false);
+  const [modeloTreinamento, setModeloTreinamento] = useState("rapido");
+
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
+
+  const calcularSugestaoIA = () => {
+    const plano = emp.assinatura || "free";
+    const resultado = sugerirValores({
+      ticketMedio: Number(String(emp.ticket || "").replace(/\D/g, "")) || Number(emp.ticket) || 0,
+      margem: 0.3,
+      plano,
+    });
+    setSugestaoIA(resultado);
+    setMostrarSugestao(true);
+  };
+
+  const aceitarSugestaoIA = () => {
+    if (!sugestaoIA?.disponivel || !campanha) return;
+    const novasTarefas = { ...campanha.tarefas };
+    sugestaoIA.tarefas.forEach((t) => {
+      if (novasTarefas[t.tipo] !== undefined) novasTarefas[t.tipo] = t.bruto;
+    });
+    set("tarefas", novasTarefas);
+    setMostrarSugestao(false);
+  };
+
+  const MODELOS_TREINAMENTO = {
+    rapido: { nome: "Treinamento rápido", descricao: "Visão geral + script de abordagem + 3 objeções principais" },
+    completo: { nome: "Treinamento completo", descricao: "Módulos detalhados: produto, ICP, objeções, processo comercial e evidências" },
+    quiz: { nome: "Quiz + certificação", descricao: "Perguntas de múltipla escolha para testar conhecimento antes de liberar" },
+    script: { nome: "Script operacional", descricao: "Roteiro passo a passo para cada tipo de contato da campanha" },
+  };
+
+  const gerarTreinamentoComIA = async () => {
+    if (!campanha) return;
+    setGerandoTreinamento(true);
+    const r = await api("/campaigns/treinamento", {
+      modelo: modeloTreinamento,
+      campanha: {
+        titulo: campanha.titulo,
+        objetivo: campanha.objetivo,
+        descricao: campanha.descricao,
+        publico: campanha.publico,
+        regiao: campanha.regiao,
+        funcao: campanha.funcao,
+      },
+      empresa: {
+        nome: emp.nome,
+        produto: emp.produto,
+        icp: emp.icp,
+        ticket: emp.ticket,
+      },
+    });
+    setGerandoTreinamento(false);
+    if (!r || r.error) return;
+    if (Array.isArray(r.modulos) && r.modulos.length > 0) {
+      set("treinamento", r.modulos);
+    }
+  };
 
   const escolher = (chave) => {
     setObjetivo(chave);
@@ -263,10 +325,66 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <b style={{ fontSize: 14 }}>Quanto você paga por ação</b>
               <span className="vx-chip"><Wallet size={12} /> {money(disponivel)} disponível</span>
             </div>
+
+            {/* Sugestão com IA */}
+            <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
+              <div className="vx-row" style={{ marginBottom: mostrarSugestao ? 10 : 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <TrendingUp size={14} color="var(--brand)" />
+                  <b style={{ fontSize: 13 }}>Sugestão com IA</b>
+                  <span className="vx-mut" style={{ fontSize: 11.5 }}>— quanto custará cada reunião/venda</span>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={calcularSugestaoIA}>
+                    <Sparkles size={12} /> Calcular
+                  </button>
+                  {sugestaoIA && <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={() => setMostrarSugestao((v) => !v)}>
+                    {mostrarSugestao ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </button>}
+                </div>
+              </div>
+              {mostrarSugestao && sugestaoIA && (
+                sugestaoIA.disponivel ? (
+                  <div>
+                    <div className="vx-grid vx-g2" style={{ marginBottom: 10 }}>
+                      {sugestaoIA.tarefas.filter((t) => campanha.tarefas[t.tipo] !== undefined).map((t) => (
+                        <div key={t.tipo} style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
+                          <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>{ACOES[t.tipo]?.nome || t.tipo}</div>
+                          <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(t.bruto)}</div>
+                          <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(t.percentual * 100).toFixed(0)}% · líq. {money(t.liquido)}</div>
+                          <div className="vx-mut" style={{ fontSize: 11 }}>Faixa: {money(t.minimo)} – {money(t.maximo)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {(() => {
+                      const agendamento = sugestaoIA.tarefas.find((t) => t.tipo === "agendamento");
+                      return agendamento ? (
+                        <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 10 }}>
+                          Custo estimado por reunião agendada: <b className="vx-mono">{money(agendamento.bruto)}</b>
+                          {sugestaoIA.premissas?.conversao ? ` · por venda: ~${money(agendamento.bruto / sugestaoIA.premissas.conversao)}` : ""}
+                          {" · "}Take rate do plano: {(takeRateDoPlano(emp.assinatura || "free") * 100).toFixed(0)}%
+                        </div>
+                      ) : null;
+                    })()}
+                    <div className="vx-mut" style={{ fontSize: 11, marginBottom: 8 }}>
+                      Confiança: {sugestaoIA.confianca} · {sugestaoIA.fontes?.[0]?.nome}
+                    </div>
+                    <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={aceitarSugestaoIA}>
+                      <Check size={12} /> Aceitar sugestão
+                    </button>
+                  </div>
+                ) : (
+                  <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>
+                    {sugestaoIA.motivo} <b>Ausente: {sugestaoIA.ausentes?.join(", ")}</b>
+                  </div>
+                )
+              )}
+            </div>
+
             <p className="vx-mut" style={{ margin: "0 0 12px", fontSize: 12, lineHeight: 1.6 }}>
               {campanha.valoresDerivadosDoTicket
-                ? `Sugestões calculadas a partir do seu ticket (${emp.ticket}). São ponto de partida — quem decide o preço é você.`
-                : "Sem ticket no cadastro da empresa não dá para sugerir valor. Preencha cada ação abaixo."}
+                ? `Valores pré-preenchidos a partir do seu ticket (${emp.ticket}). São ponto de partida — você decide.`
+                : "Preencha o valor de cada ação abaixo ou use a sugestão da IA."}
             </p>
             <div className="vx-grid vx-g2">
               {Object.keys(campanha.tarefas).map((k) => (
@@ -288,8 +406,47 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div className="vx-row"><div><b style={{ fontSize: 14 }}>Treinamento obrigatório</b><div className="vx-mut" style={{ fontSize: 11.5 }}>O profissional precisa conhecer a operação antes de começar.</div></div><button className="vx-btn vx-btn-sm" onClick={adicionarTreinamento}><Plus size={13} /> Módulo</button></div>
-            {(campanha.treinamento || []).length === 0 ? <div className="vx-campaign-inline-empty" style={{ marginTop: 12 }}>Adicione ao menos um módulo para liberar a publicação.</div> : <div className="vx-training-drafts">{campanha.treinamento.map((modulo, indice) => <div key={modulo.id || indice}><input className="vx-input" placeholder="Título do módulo" value={modulo.titulo || ""} onChange={(e) => atualizarTreinamento(indice, "titulo", e.target.value)} /><textarea className="vx-input" placeholder="Resumo, conteúdo ou URL autorizada" value={modulo.conteudo || ""} onChange={(e) => atualizarTreinamento(indice, "conteudo", e.target.value)} /><button className="vx-btn vx-btn-ghost vx-btn-sm" aria-label="Remover módulo" onClick={() => removerTreinamento(indice)}><Trash2 size={14} /></button></div>)}</div>}
+            <div className="vx-row" style={{ marginBottom: 12 }}>
+              <div><b style={{ fontSize: 14 }}>Treinamento obrigatório</b><div className="vx-mut" style={{ fontSize: 11.5 }}>O profissional precisa conhecer a operação antes de começar.</div></div>
+              <button className="vx-btn vx-btn-sm" onClick={adicionarTreinamento}><Plus size={13} /> Módulo</button>
+            </div>
+
+            {/* Gerador de treinamento com IA */}
+            <div style={{ background: "linear-gradient(135deg, var(--brand-50), var(--indigo-50, var(--brand-50)))", border: "1px solid var(--brand-100)", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <BookOpen size={14} color="var(--brand)" />
+                <b style={{ fontSize: 13 }}>Gerar treinamento com IA</b>
+              </div>
+              <p className="vx-mut" style={{ margin: "0 0 10px", fontSize: 12, lineHeight: 1.5 }}>
+                A IA monta os módulos usando as informações da campanha e do Cérebro da Operação. Você edita ou adiciona módulos depois.
+              </p>
+              <div className="vx-grid vx-g2" style={{ marginBottom: 10 }}>
+                {Object.entries(MODELOS_TREINAMENTO).map(([k, m]) => (
+                  <label key={k} style={{ display: "flex", gap: 8, alignItems: "flex-start", cursor: "pointer", background: modeloTreinamento === k ? "var(--brand-50)" : "var(--surface)", border: `1px solid ${modeloTreinamento === k ? "var(--brand)" : "var(--border)"}`, borderRadius: 8, padding: "9px 11px" }}>
+                    <input type="radio" name="modeloTreinamento" value={k} checked={modeloTreinamento === k} onChange={() => setModeloTreinamento(k)} style={{ marginTop: 2, flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nome}</div>
+                      <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.4 }}>{m.descricao}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <button className="vx-btn vx-btn-primary vx-btn-sm" disabled={gerandoTreinamento} onClick={gerarTreinamentoComIA}>
+                {gerandoTreinamento ? <><Loader size={13} /> Gerando módulos…</> : <><Sparkles size={13} /> Gerar treinamento</>}
+              </button>
+            </div>
+
+            {(campanha.treinamento || []).length === 0
+              ? <div className="vx-campaign-inline-empty">Gere com IA ou adicione ao menos um módulo para liberar a publicação.</div>
+              : <div className="vx-training-drafts">
+                  {campanha.treinamento.map((modulo, indice) => (
+                    <div key={modulo.id || indice}>
+                      <input className="vx-input" placeholder="Título do módulo" value={modulo.titulo || ""} onChange={(e) => atualizarTreinamento(indice, "titulo", e.target.value)} />
+                      <textarea className="vx-input" placeholder="Resumo, conteúdo ou URL autorizada" value={modulo.conteudo || ""} onChange={(e) => atualizarTreinamento(indice, "conteudo", e.target.value)} />
+                      <button className="vx-btn vx-btn-ghost vx-btn-sm" aria-label="Remover módulo" onClick={() => removerTreinamento(indice)}><Trash2 size={14} /></button>
+                    </div>
+                  ))}
+                </div>}
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
