@@ -32,6 +32,7 @@ import contactsRoutes from "./routes/contacts.js";
 import reportRoutes from "./routes/reports.js";
 import auditRoutes from "./routes/audit.js";
 import courseRoutes2 from "./routes/courses.js";
+import brainRoutes from "./routes/brain.js";
 import { semearCatalogo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
@@ -160,6 +161,7 @@ app.use("/api", authMiddleware, contactsRoutes);
 app.use("/api", authMiddleware, reportRoutes);
 app.use("/api", authMiddleware, auditRoutes);
 app.use("/api", authMiddleware, courseRoutes2);
+app.use("/api", authMiddleware, brainRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

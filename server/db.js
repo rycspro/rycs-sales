@@ -989,6 +989,33 @@ adicionarColuna("campaigns", "prazoFim", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "modeloOperacao", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "maxTentativasQuiz", "INTEGER DEFAULT 3");
 
+// Cérebro da Operação — onboarding inteligente (Lote 7D-2)
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS brain_onboarding (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL REFERENCES companies(id),
+    etapa INTEGER DEFAULT 1,
+    concluida INTEGER DEFAULT 0,
+    respostas TEXT DEFAULT '{}',
+    materiais TEXT DEFAULT '[]',
+    resumoIa TEXT DEFAULT '',
+    revisado INTEGER DEFAULT 0,
+    ativado INTEGER DEFAULT 0,
+    scoreCache REAL DEFAULT 0,
+    scoreDims TEXT DEFAULT '{}',
+    lacunas TEXT DEFAULT '[]',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL
+  )
+`).run();
+db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_brain_onboarding_company ON brain_onboarding(companyId)`).run();
+adicionarColuna("companies", "diferenciais", "TEXT DEFAULT ''");
+adicionarColuna("companies", "objecoes", "TEXT DEFAULT ''");
+adicionarColuna("companies", "processo", "TEXT DEFAULT ''");
+adicionarColuna("companies", "qualificacao", "TEXT DEFAULT ''");
+adicionarColuna("companies", "materiais", "TEXT DEFAULT '[]'");
+adicionarColuna("companies", "atualizadoEm", "INTEGER DEFAULT 0");
+
 // A plataforma deixou de ser portão de entrada: concluir a avaliação libera o
 // perfil na hora, e quem decide a entrada numa campanha é a empresa.
 //

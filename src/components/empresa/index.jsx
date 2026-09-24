@@ -18,6 +18,8 @@ import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
 import { AssistenteEmpresa, BaseConhecimento, RelatoriosEmpresa } from "./EmpresaAI.jsx";
 import Assinatura from "./Assinatura.jsx";
+import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
+import BannerCerebro from "./BannerCerebro.jsx";
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar }) {
   const sair = async () => {
@@ -72,7 +74,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar 
         {Number(emp.saldoReservado || 0) > 0 && <span className="vx-chip vx-mono">reservado {money(emp.saldoReservado)}</span>}
       </div>
 
-      {aba === "painel" && <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />}
+      {aba === "painel" && <>
+        <BannerCerebro onIr={() => { setSecaoAcademy("empresa"); setAba?.("academy"); }} />
+        <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
+      </>}
       {aba === "campanhas" && <>
         {submenu([["campanhas", "Campanhas"], ["time", "Time"], ["leads", "Leads"], ["tabela", "Tarefas e valores"]], secaoCampanhas, setSecaoCampanhas)}
         {secaoCampanhas === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
@@ -82,9 +87,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar 
       </>}
       {aba === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "academy" && <>
-        {submenu([["rycs", "Cursos da RYCS"], ["empresa", `Academy ${emp.nome}`]], secaoAcademy, setSecaoAcademy)}
+        {submenu([["rycs", "Cursos da RYCS"], ["empresa", "Ensinar a RYCS"], ["qualificacao", "Dados da Operação"]], secaoAcademy, setSecaoAcademy)}
         {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}
-        {secaoAcademy === "empresa" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={(pendencias) => { setCamposAcademyPendentes(pendencias.map((p) => p.campo)); setSecaoConta("cadastro"); setAba?.("conta"); }} />}
+        {secaoAcademy === "empresa" && <AcademyEmpresaHub emp={emp} aviso={aviso} />}
+        {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={(pendencias) => { setCamposAcademyPendentes(pendencias.map((p) => p.campo)); setSecaoConta("cadastro"); setAba?.("conta"); }} />}
       </>}
       {aba === "conferir" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} />}
       {aba === "conta" && <>
