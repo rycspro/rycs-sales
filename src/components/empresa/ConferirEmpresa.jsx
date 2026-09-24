@@ -16,7 +16,7 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
   const botaoTrilha = (sub) => (
     <button className="vx-btn vx-btn-sm vx-btn-ghost" style={{ marginTop: 8 }}
       onClick={() => setTrilha(trilha === sub.id ? null : sub.id)}>
-      {trilha === sub.id ? "Ocultar trilha" : "Ver trilha de auditoria"}
+      {trilha === sub.id ? "Ocultar sinais de auditoria" : "Ver sinais de auditoria"}
     </button>
   );
 
@@ -66,14 +66,14 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
             {revisao.map((sub) => (
               <CardEnvio key={sub.id} sub={sub} db={db} extra={
                 <div style={{ marginTop: 12 }}>
-                  <input className="vx-input" style={{ marginBottom: 8, fontSize: 13 }} placeholder="Motivo, se for recusar"
+                  {/* Sinais de auditoria aparecem abertos por padrão na fila de revisão */}
+                  <TrilhaAuditoria submissionId={sub.id} />
+                  <input className="vx-input" style={{ marginTop: 12, marginBottom: 8, fontSize: 13 }} placeholder="Motivo, se for recusar"
                     value={motivo[sub.id] || ""} onChange={(e) => setMotivo({ ...motivo, [sub.id]: e.target.value })} />
                   <div style={{ display: "flex", gap: 8 }}>
                     <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flex: 1 }} onClick={() => confirmar(sub)}>Confirmei com o cliente</button>
                     <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => recusar(sub)}>Recusar</button>
                   </div>
-                  {botaoTrilha(sub)}
-                  {trilha === sub.id && <TrilhaAuditoria submissionId={sub.id} />}
                 </div>
               } />
             ))}

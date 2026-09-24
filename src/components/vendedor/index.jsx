@@ -5,6 +5,7 @@ import ListaEmpresas from "./ListaEmpresas.jsx";
 import Workspace from "./Workspace.jsx";
 import CampanhaPage from "./CampanhaPage.jsx";
 import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
+import TreinamentoEmpresa from "./TreinamentoEmpresa.jsx";
 import Carteira from "./Carteira.jsx";
 import PerfilVendedor from "./PerfilVendedor.jsx";
 import AcademyCatalogo from "./AcademyCatalogo.jsx";
@@ -16,17 +17,13 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
   const [abertaId, setAbertaId] = useState(null);
   const [campanhaAbertaId, setCampanhaAbertaId] = useState(null);
   const [academyFuncao, setAcademyFuncao] = useState(null);
-  // Refazer a avaliação por escolha própria, já aprovado. A nota é o que a
-  // empresa lê antes de aceitar alguém numa campanha, então travar a
-  // avaliação na primeira tentativa congelaria a pessoa na versão mais fraca
-  // dela — inclusive depois de ela estudar na Academy justamente para melhorar.
   const [refazendo, setRefazendo] = useState(false);
+  // Quando true, o profissional abriu a empresa mas ainda não está aprovado:
+  // mostra TreinamentoEmpresa em vez de CampanhasEmpresa.
+  const [modoTreinamento, setModoTreinamento] = useState(false);
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
   if (!eu) return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
-  // Só quem ainda não fez a avaliação fica retido nela. Concluída, o perfil
-  // é liberado — pleno acima de 90%, parcial abaixo — e a Academy passa a ser
-  // o caminho para elevar a classificação.
   const precisaAvaliar = eu.status === "triagem" || eu.status === "recusado";
   if (precisaAvaliar || refazendo)
     return (
@@ -45,13 +42,47 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
     if (campanhaAberta) {
       return <CampanhaPage campanha={campanhaAberta} empresa={empresaAberta} eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} voltar={() => setCampanhaAbertaId(null)} recarregar={recarregar} />;
     }
-    return <CampanhasEmpresa empresa={empresaAberta} eu={eu} db={db} onAbrir={(id) => setCampanhaAbertaId(id)} voltar={() => setAbertaId(null)} aviso={aviso} recarregar={recarregar} irAcademy={(funcao) => { setAcademyFuncao(funcao); setAbertaId(null); setAba("academy"); }} />;
+    // Profissional aprovado nesta empresa → vai direto para campanhas
+    if (eu.aplicacoes?.[empresaAberta.id] === "aprovado" && !modoTreinamento) {
+      return (
+        <CampanhasEmpresa
+          empresa={empresaAberta}
+          eu={eu}
+          db={db}
+          onAbrir={(id) => setCampanhaAbertaId(id)}
+          voltar={() => setAbertaId(null)}
+          aviso={aviso}
+          recarregar={recarregar}
+          irAcademy={(funcao) => { setAcademyFuncao(funcao); setAbertaId(null); setAba("academy"); }}
+        />
+      );
+    }
+    // Não aprovado ainda → treinamento + certificação
+    return (
+      <TreinamentoEmpresa
+        empresa={empresaAberta}
+        eu={eu}
+        voltar={() => { setAbertaId(null); setModoTreinamento(false); }}
+        onAprovado={() => { setModoTreinamento(false); }}
+        aviso={aviso}
+        recarregar={recarregar}
+      />
+    );
   }
 
   return (
     <>
       {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("empresas")} />}
-        {aba === "empresas" && <ListaEmpresas eu={eu} db={db} up={up} aviso={aviso} abrir={(companyId, campaignId = null) => { setAbertaId(companyId); setCampanhaAbertaId(campaignId); }} recarregar={recarregar} irAcademy={(funcao = null) => { setAcademyFuncao(funcao); setAba("academy"); }} />}
+      {aba === "empresas" && (
+        <ListaEmpresas
+          eu={eu}
+          db={db}
+          up={up}
+          aviso={aviso}
+          abrir={(companyId) => { setAbertaId(companyId); setModoTreinamento(false); }}
+          recarregar={recarregar}
+        />
+      )}
       {aba === "academy" && (academyFuncao
         ? <Academy eu={eu} aviso={aviso} funcaoInicial={academyFuncao} recarregar={recarregar} />
         : <AcademyCatalogo eu={eu} aviso={aviso} />)}

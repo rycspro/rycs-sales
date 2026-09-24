@@ -50,10 +50,30 @@ function ValidationErrors({ erros }) {
 
 function IntegrityNotice() {
   return (
-    <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "10px 12px", marginBottom: 12, borderLeft: "3px solid var(--brand)" }}>
-      <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 4 }}>Integridade das informações</div>
-      <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.5 }}>
-        As ações e evidências enviadas na RYCS passam por mecanismos de auditoria e verificação. Informações inconsistentes, manipuladas ou comprovadamente falsas podem resultar na recusa da tarefa, perda da remuneração e suspensão da conta.
+    <div style={{
+      background: "#1e1b4b",
+      border: "1.5px solid #4338ca",
+      borderRadius: 10,
+      padding: "12px 14px",
+      marginBottom: 14,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+        <span style={{ fontSize: 15 }}>🛡</span>
+        <span style={{ fontWeight: 800, fontSize: 12.5, color: "#e0e7ff", letterSpacing: "0.02em", textTransform: "uppercase" }}>
+          Integridade das Informações
+        </span>
+      </div>
+      <div style={{ fontSize: 12.5, color: "#c7d2fe", lineHeight: 1.55 }}>
+        As ações e evidências enviadas na RYCS podem passar por verificações automáticas e manuais de consistência, evidências, duplicidade e outros sinais de auditoria.
+      </div>
+      <div style={{ marginTop: 8, fontSize: 12, color: "#a5b4fc", lineHeight: 1.5 }}>
+        Informações comprovadamente falsas, manipuladas ou inconsistentes podem resultar em:
+        <span style={{ display: "block", paddingLeft: 10, marginTop: 3 }}>
+          · recusa da tarefa · perda da remuneração · suspensão do acesso
+        </span>
+      </div>
+      <div style={{ marginTop: 8, fontWeight: 700, fontSize: 12, color: "#818cf8" }}>
+        Envie somente informações e evidências reais.
       </div>
     </div>
   );
