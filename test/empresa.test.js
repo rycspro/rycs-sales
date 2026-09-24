@@ -37,8 +37,8 @@ test("campanha sem caixa ou treinamento fica bloqueada", () => {
 });
 
 test("planos seguem preços e taxas aprovados no plano de produto", () => {
-  assert.deepEqual([planoDe("starter").preco, planoDe("starter").takeRate], [499, 0.12]);
-  assert.deepEqual([planoDe("growth").preco, planoDe("growth").takeRate], [999.90, 0.09]);
+  assert.deepEqual([planoDe("starter").preco, planoDe("starter").takeRate], [499, 0.30]);
+  assert.deepEqual([planoDe("growth").preco, planoDe("growth").takeRate], [999.90, 0.15]);
   assert.deepEqual([planoDe("scale").preco, planoDe("scale").takeRate], [2700, 0.07]);
   assert.equal(dentroDoLimite("starter", "campanhasAtivas", 0), true);
   assert.equal(dentroDoLimite("starter", "campanhasAtivas", 1), false);

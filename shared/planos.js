@@ -20,24 +20,24 @@ export const PLANOS = {
   starter: {
     nome: "Start",
     preco: 499,
-    takeRate: 0.12,
+    takeRate: 0.30,
     limites: { campanhasAtivas: 1, vendedores: 5, destaque: false },
     inclui: [
       "1 campanha ativa",
       "Até 5 profissionais ativos",
-      "Take rate de 12%",
+      "Take rate de 30%",
       "Painel operacional",
     ],
   },
   growth: {
     nome: "Growth",
     preco: 999.90,
-    takeRate: 0.09,
+    takeRate: 0.15,
     limites: { campanhasAtivas: 3, vendedores: 20, destaque: true },
     inclui: [
       "3 campanhas ativas",
       "Até 20 profissionais ativos",
-      "Take rate de 9%",
+      "Take rate de 15%",
       "Destaque na vitrine",
       "Exigir profissionais certificados",
     ],

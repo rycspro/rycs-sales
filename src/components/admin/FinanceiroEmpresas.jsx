@@ -8,8 +8,8 @@ export default function FinanceiroEmpresas({ db }) {
   const linhas = useMemo(() => db.companies.map((c) => {
     const libs = db.submissions.filter((s) => s.companyId === c.id && s.status === "liberado");
     const totalLiberado = libs.reduce((a, s) => a + s.valor, 0);
-    // A taxa é a do plano de cada empresa, não uma constante. Com 12% fixo, a
-    // projeção superestimava a receita de quem está no Growth (9%) e no Scale
+    // A taxa é a do plano de cada empresa, não uma constante. Com uma taxa fixa,
+    // a projeção erraria a receita de quem está no Growth (15%) e no Scale
     // (7%) — número de faturamento errado para mais é o pior tipo de errado.
     const taxa = takeRateDoPlano(c.assinatura);
     const receitaTaxa = totalLiberado * taxa;

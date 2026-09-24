@@ -58,8 +58,8 @@ O endpoint `GET /api/health` deve responder `{ "status": "ok" }`.
 ## Planos configurados
 
 - Sandbox: configuração sem campanha ativa.
-- Start: R$ 499/mês, taxa de 12%, 1 campanha e até 5 profissionais.
-- Growth: R$ 999/mês, taxa de 9%, 3 campanhas e até 20 profissionais.
+- Start: R$ 499/mês, taxa de 30%, 1 campanha e até 10 profissionais.
+- Growth: R$ 999/mês, taxa de 15%, 3 campanhas e até 20 profissionais.
 - Scale: R$ 2.700/mês, taxa de 7%, 10 campanhas e até 100 profissionais.
 
 O profissional recebe o valor integral definido para a tarefa. A taxa variável é adicionada ao débito da empresa e registrada separadamente no livro financeiro.

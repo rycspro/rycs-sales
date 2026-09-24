@@ -110,8 +110,8 @@ test("valor sugerido desconta a taxa real do plano e traz faixa em torno dele", 
   });
   const agendada = s.tarefas.find((t) => t.tipo === "agendamento");
   assert.equal(agendada.bruto, 37.5);
-  assert.equal(agendada.taxa, 4.5);          // 12% do plano starter
-  assert.equal(agendada.liquido, 33);
+  assert.equal(agendada.taxa, 11.25);        // 30% do plano starter
+  assert.equal(agendada.liquido, 26.25);
   assert.ok(agendada.minimo < agendada.bruto && agendada.bruto < agendada.maximo);
 });
 
