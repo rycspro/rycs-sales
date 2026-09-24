@@ -1,17 +1,22 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { ACOES, CAMPOS, STATUS, MOTIVO_COR } from "../lib/constants.js";
 import { money, dataCurta } from "../lib/utils.js";
 import { Selo, Medidor } from "./ui.jsx";
 
 export default function CardEnvio({ sub, db, extra }) {
+  const [aberto, setAberto] = useState(false);
   const c = db.companies.find((x) => x.id === sub.companyId);
+  const campanha = db.campaigns?.find((x) => x.id === sub.campaignId);
   const s = db.sellers.find((x) => x.id === sub.sellerId);
   const st = STATUS[sub.status] || STATUS.analisando;
+  const acao = ACOES[sub.tipo] || { nome: sub.tipo || "Tarefa", prova: Object.keys(sub.prova || {}) };
   return (
     <div className="vx-card" style={{ padding: 16 }}>
       <div className="vx-row" style={{ alignItems: "flex-start" }}>
         <div>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>{ACOES[sub.tipo].nome}</div>
-          <div className="vx-mut" style={{ fontSize: 12 }}>{c?.nome} · {s?.nome} · {dataCurta(sub.criadoEm)}</div>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>{acao.nome}</div>
+          <div className="vx-mut" style={{ fontSize: 12 }}>{campanha?.titulo || "Sem campanha"} · {c?.nome || "Empresa"} · {dataCurta(sub.criadoEm)}</div>
         </div>
         <div className="vx-disp vx-mono" style={{ fontSize: 17, color: "var(--brand)" }}>{money(sub.valor)}</div>
       </div>
@@ -37,14 +42,63 @@ export default function CardEnvio({ sub, db, extra }) {
         <div style={{ fontSize: 12.5, color: MOTIVO_COR[sub.status] || "var(--muted)", marginBottom: 10 }}>{sub.motivo}</div>
       )}
 
-      <div className="vx-mono" style={{ fontSize: 12, color: "var(--ink-2)", background: "var(--surface-2)", padding: 11, borderRadius: 10 }}>
-        {ACOES[sub.tipo].prova.map((k) => (
-          <div key={k} className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
-            <span className="vx-mut">{CAMPOS[k].label}</span>
-            <b style={{ textAlign: "right", wordBreak: "break-all" }}>{sub.prova[k]}</b>
-          </div>
-        ))}
-      </div>
+      <button className="vx-btn vx-btn-sm vx-btn-block" onClick={() => setAberto((v) => !v)}>
+        <ChevronDown size={14} style={{ transform: aberto ? "rotate(180deg)" : "none", transition: ".15s" }} />
+        {aberto ? "Ocultar detalhes" : "Abrir detalhes"}
+      </button>
+
+      {aberto && (
+        <div className="vx-mono" style={{ fontSize: 12, color: "var(--ink-2)", background: "var(--surface-2)", padding: 11, borderRadius: 10, marginTop: 10 }}>
+          {[
+            ["Campanha", campanha?.titulo || "Sem campanha"],
+            ["Empresa", c?.nome || "—"],
+            ["Tarefa", acao.nome],
+            ["Tipo", sub.tipo],
+            ["Data", dataCurta(sub.criadoEm)],
+            ["Valor", money(sub.valor)],
+            ["Status", st.txt],
+          ].map(([label, value]) => (
+            <div key={label} className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
+              <span className="vx-mut">{label}</span>
+              <b style={{ textAlign: "right", wordBreak: "break-word" }}>{value}</b>
+            </div>
+          ))}
+          <hr className="vx-sep" />
+          {acao.prova.map((k) => (
+            <div key={k} className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
+              <span className="vx-mut">{CAMPOS[k]?.label || k}</span>
+              <b style={{ textAlign: "right", wordBreak: "break-all" }}>{sub.prova?.[k] || "—"}</b>
+            </div>
+          ))}
+          {Object.entries(sub.prova || {}).filter(([k]) => !acao.prova.includes(k)).map(([k, v]) => (
+            <div key={k} className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
+              <span className="vx-mut">{CAMPOS[k]?.label || k}</span>
+              <b style={{ textAlign: "right", wordBreak: "break-all" }}>{String(v || "—")}</b>
+            </div>
+          ))}
+          {(sub.prova?.evidencias || []).length > 0 ? (
+            <>
+              <hr className="vx-sep" style={{ margin: "6px 0" }} />
+              <div style={{ fontWeight: 700, fontSize: 11, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-3)" }}>Evidências</div>
+              {sub.prova.evidencias.map((ev, i) => (
+                <div key={i} className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
+                  <span className="vx-mut" style={{ whiteSpace: "nowrap" }}>#{i + 1} {ev.slot || "evidência"}</span>
+                  {/^https?:\/\//i.test(String(ev.valor || "")) ? (
+                    <a href={ev.valor} target="_blank" rel="noreferrer" style={{ textAlign: "right", wordBreak: "break-all", color: "var(--brand)", fontSize: 12 }}>Abrir link</a>
+                  ) : (
+                    <b style={{ textAlign: "right", wordBreak: "break-word", fontSize: 12 }}>{ev.valor || "—"}</b>
+                  )}
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
+              <span className="vx-mut">Evidência</span>
+              <b style={{ textAlign: "right", wordBreak: "break-all" }}>{sub.prova?.video || sub.prova?.contrato || (sub.arquivos || []).join(", ") || "—"}</b>
+            </div>
+          )}
+        </div>
+      )}
       {extra}
     </div>
   );
