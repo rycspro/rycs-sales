@@ -1,6 +1,7 @@
 import { Router } from "express";
-import db from "../db.js";
+import db, { uid, agora } from "../db.js";
 import { sendEmail } from "../services/email.js";
+import Anthropic from "@anthropic-ai/sdk";
 
 const router = Router();
 
@@ -122,5 +123,99 @@ function buildHtml({ assunto, preheader, conteudo, cta, teste }) {
       </div>
     </div>`;
 }
+
+// GET /api/admin/email-templates
+router.get("/admin/email-templates", requireAdmin, (req, res) => {
+  const rows = db.prepare("SELECT * FROM email_templates ORDER BY nome").all();
+  res.json(rows);
+});
+
+// POST /api/admin/emails/ai-generate — gera e-mail via IA
+router.post("/admin/emails/ai-generate", requireAdmin, async (req, res) => {
+  const { prompt, action, assunto, conteudo } = req.body;
+
+  if (!process.env.ANTHROPIC_API_KEY)
+    return res.status(503).json({ error: "IA não configurada neste ambiente." });
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  let systemPrompt, userMsg;
+
+  if (action && assunto) {
+    // Melhorar e-mail existente
+    const acoes = {
+      curto: "Reescreva o e-mail de forma mais curta e direta, mantendo a mensagem essencial.",
+      persuasivo: "Reescreva o e-mail de forma mais persuasiva, com gatilhos de urgência e valor.",
+      profissional: "Reescreva o e-mail com tom mais formal e profissional.",
+      amigavel: "Reescreva o e-mail com tom mais amigável e próximo.",
+      assunto: "Crie 3 opções de assunto melhores para este e-mail. Retorne só os assuntos, um por linha.",
+      cta: "Crie 3 opções de texto para o botão CTA deste e-mail. Retorne só os textos, um por linha.",
+      corrigir: "Corrija erros de português e melhore a clareza do texto.",
+    };
+    systemPrompt = "Você é especialista em copywriting para e-mails B2B. Responda apenas com o texto solicitado, sem explicações.";
+    userMsg = `${acoes[action] || "Melhore este e-mail."}\n\nAssunto: ${assunto}\n\nConteúdo:\n${conteudo || ""}`;
+  } else {
+    // Criar e-mail do zero
+    systemPrompt = `Você é especialista em copywriting para e-mails B2B da plataforma Hicks Pro, uma plataforma SaaS para gestão de operações comerciais com vendedores freelance.
+Responda SOMENTE com JSON válido, sem markdown, sem explicações.
+Formato: {"assunto":"...","preheader":"...","titulo":"...","conteudo":"...","cta":"...","versaoTexto":"..."}`;
+    userMsg = prompt || "Crie um e-mail de engajamento para empresas da plataforma.";
+  }
+
+  try {
+    const out = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1200,
+      messages: [{ role: "user", content: userMsg }],
+      system: systemPrompt,
+    });
+    const texto = out.content.map((b) => b.text || "").join("").trim();
+    if (action) return res.json({ ok: true, resultado: texto });
+    // Tentar parsear JSON
+    try {
+      const dados = JSON.parse(texto.replace(/```json|```/g, "").trim());
+      return res.json({ ok: true, dados });
+    } catch {
+      return res.json({ ok: true, dados: { assunto: "", preheader: "", titulo: "", conteudo: texto, cta: "" } });
+    }
+  } catch (err) {
+    res.status(502).json({ error: err.message || "Erro ao gerar e-mail." });
+  }
+});
+
+// GET /api/admin/email-sequences
+router.get("/admin/email-sequences", requireAdmin, (req, res) => {
+  const rows = db.prepare("SELECT * FROM email_sequences ORDER BY criadoEm DESC LIMIT 200").all();
+  res.json(rows);
+});
+
+// POST /api/admin/email-sequences — iniciar sequência
+router.post("/admin/email-sequences", requireAdmin, (req, res) => {
+  const { tipo, email, companyId, userId } = req.body;
+  if (!tipo || !email) return res.status(400).json({ error: "tipo e email são obrigatórios." });
+  if (!["recuperacao", "reativacao", "bloqueio"].includes(tipo))
+    return res.status(400).json({ error: "tipo inválido." });
+
+  // Evitar sequência duplicada ativa
+  const existente = db.prepare(
+    "SELECT id FROM email_sequences WHERE email = ? AND tipo = ? AND status = 'ativa'"
+  ).get(email, tipo);
+  if (existente) return res.status(409).json({ error: "Já existe uma sequência ativa para este e-mail e tipo." });
+
+  const id = uid();
+  db.prepare(
+    "INSERT INTO email_sequences (id,tipo,companyId,userId,email,passo,status,proximoEnvio,criadoEm) VALUES (?,?,?,?,?,0,'ativa',?,?)"
+  ).run(id, tipo, companyId || null, userId || null, email, agora(), agora());
+
+  res.json({ ok: true, id });
+});
+
+// PATCH /api/admin/email-sequences/:id/stop — parar sequência
+router.patch("/admin/email-sequences/:id/stop", requireAdmin, (req, res) => {
+  const motivo = req.body?.motivo || "admin";
+  db.prepare("UPDATE email_sequences SET status = 'parada', resolvidoEm = ? WHERE id = ?")
+    .run(agora(), req.params.id);
+  res.json({ ok: true });
+});
 
 export default router;

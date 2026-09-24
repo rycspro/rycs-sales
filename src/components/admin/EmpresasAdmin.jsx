@@ -5,10 +5,12 @@ import { Medidor, Excluir } from "../ui.jsx";
 import { apiPatch } from "../../lib/api.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
 import { DossieEmpresa } from "./Dossie.jsx";
+import CobrancaEmpresa from "./CobrancaEmpresa.jsx";
 
 export default function EmpresasAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
   const [expandido, setExpandido] = useState(null);
+  const [empresaCobranca, setEmpresaCobranca] = useState(null);
 
   const empresas = useMemo(() => {
     let list = db.companies.map((c) => {
@@ -49,6 +51,10 @@ export default function EmpresasAdmin({ db, up, aviso }) {
     up?.((d) => ({ companies: d.companies.map((x) => x.id === c.id ? { ...x, statusCadastro } : x) }));
     aviso(statusCadastro === "aprovada" ? `${c.nome} aprovada para operar.` : `${c.nome} suspensa.`);
   };
+
+  if (empresaCobranca) {
+    return <CobrancaEmpresa empresa={empresaCobranca} aviso={aviso} onVoltar={() => setEmpresaCobranca(null)} />;
+  }
 
   return (
     <div className="vx-fade">
@@ -125,6 +131,11 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                   )}
 
                   <hr className="vx-sep" />
+                  <div style={{ marginBottom: 12 }}>
+                    <button className="vx-btn vx-btn-sm" onClick={() => setEmpresaCobranca(c)}>
+                      Cobrança e Acesso
+                    </button>
+                  </div>
                   <DossieEmpresa companyId={c.id} />
 
                   <div className="vx-row" style={{ marginTop: 16, marginBottom: 12, alignItems: "center" }}>

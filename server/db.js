@@ -1095,6 +1095,77 @@ db.exec(`
     FROM leads l WHERE l.campaignId IS NOT NULL;
 `);
 
+// Cobrança e acesso administrativo por empresa
+db.exec(`
+  CREATE TABLE IF NOT EXISTS company_billing (
+    companyId TEXT PRIMARY KEY,
+    billing_status TEXT NOT NULL DEFAULT 'ativa',
+    access_status TEXT NOT NULL DEFAULT 'ativo',
+    isencao_motivo TEXT DEFAULT NULL,
+    isencao_ate INTEGER DEFAULT NULL,
+    updatedAt INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS company_billing_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    companyId TEXT NOT NULL,
+    campo TEXT NOT NULL,
+    status_anterior TEXT,
+    status_novo TEXT NOT NULL,
+    motivo TEXT DEFAULT NULL,
+    adminId TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS email_sequences (
+    id TEXT PRIMARY KEY,
+    tipo TEXT NOT NULL,
+    companyId TEXT,
+    userId TEXT,
+    email TEXT NOT NULL,
+    passo INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'ativa',
+    proximoEnvio INTEGER NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    resolvidoEm INTEGER DEFAULT NULL
+  );
+`);
+
+// Templates de e-mail predefinidos
+db.exec(`
+  CREATE TABLE IF NOT EXISTS email_templates (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    assunto TEXT NOT NULL,
+    preheader TEXT DEFAULT '',
+    conteudo TEXT NOT NULL,
+    cta TEXT DEFAULT '',
+    tipo TEXT NOT NULL DEFAULT 'custom',
+    criadoEm INTEGER NOT NULL
+  );
+`);
+
+// Semear templates padrão se não existirem
+const templateCount = db.prepare("SELECT COUNT(*) as n FROM email_templates").get();
+if (templateCount.n === 0) {
+  const tpls = [
+    { id: "tpl_boasvindas", nome: "Boas-vindas", tipo: "boasvindas", assunto: "Bem-vindo à Hicks Pro, {{first_name}}!", preheader: "Sua conta está pronta.", conteudo: "Olá, {{first_name}}!\n\nSua empresa {{company_name}} está agora ativa na Hicks Pro.\n\nAqui você vai organizar operações comerciais, acompanhar campanhas e capacitar sua equipe de vendas.\n\nBoa jornada!", cta: "Acessar plataforma" },
+    { id: "tpl_academy", nome: "Academy incompleto", tipo: "academy", assunto: "Seu Academy ainda pode ficar mais completo, {{first_name}}", preheader: "Seu Cérebro está {{brain_score}}% completo.", conteudo: "Olá, {{first_name}}!\n\nPercebemos que o Academy da {{company_name}} ainda tem itens pendentes.\n\nUm Academy completo ajuda os profissionais a entenderem melhor sua operação e aumenta a qualidade dos resultados.\n\nLeva poucos minutos — vale completar agora.", cta: "Completar Academy" },
+    { id: "tpl_campanha_pronta", nome: "Campanha pronta", tipo: "campanha", assunto: "Sua campanha está pronta para começar, {{first_name}}", preheader: "Tudo configurado e pronto para o primeiro resultado.", conteudo: "Olá, {{first_name}}!\n\nA campanha da {{company_name}} está configurada e aguardando sua aprovação para ir ao ar.\n\nProfissionais qualificados já estão disponíveis para atuar.", cta: "Abrir campanha" },
+    { id: "tpl_campanha_inativa", nome: "Campanha sem atividade", tipo: "campanha", assunto: "Há uma campanha esperando por você, {{first_name}}", preheader: "Retome agora e acelere seus resultados.", conteudo: "Olá, {{first_name}}!\n\nA campanha da {{company_name}} está sem movimentação há alguns dias.\n\nRetome agora e aproveite os profissionais disponíveis.", cta: "Retomar campanha" },
+    { id: "tpl_recuperar_acesso", nome: "Recuperação de acesso", tipo: "recuperacao", assunto: "Recupere seu acesso à Hicks Pro", preheader: "Seu acesso está disponível.", conteudo: "Olá!\n\nIdentificamos uma solicitação de recuperação de acesso à sua conta na Hicks Pro.\n\nClique no botão abaixo para recuperar o acesso.", cta: "Recuperar acesso" },
+    { id: "tpl_reativar", nome: "Reativação de conta", tipo: "reativacao", assunto: "Sentimos sua falta na Hicks Pro, {{first_name}}", preheader: "Seu ambiente continua aqui, preservado.", conteudo: "Olá, {{first_name}}!\n\nSua empresa {{company_name}} e toda a sua operação continuam preservadas na Hicks Pro: campanhas, Academy, Cérebro e histórico.\n\nVolte quando quiser — tudo está esperando por você.", cta: "Voltar para minha conta" },
+    { id: "tpl_pgto_pendente", nome: "Pagamento pendente", tipo: "financeiro", assunto: "Pagamento pendente na sua conta, {{first_name}}", preheader: "Regularize e mantenha seu acesso.", conteudo: "Olá, {{first_name}}!\n\nHá um pagamento pendente na conta da {{company_name}} na Hicks Pro.\n\nRegularize para manter seu acesso sem interrupção.", cta: "Ver pagamento" },
+    { id: "tpl_pgto_confirmado", nome: "Pagamento confirmado", tipo: "financeiro", assunto: "Pagamento recebido — obrigado, {{first_name}}!", preheader: "Tudo certo com sua conta.", conteudo: "Olá, {{first_name}}!\n\nConfirmamos o recebimento do pagamento da {{company_name}}.\n\nSua conta está ativa e com todos os recursos disponíveis.", cta: "" },
+    { id: "tpl_conta_liberada", nome: "Conta liberada", tipo: "acesso", assunto: "Seu acesso foi liberado, {{first_name}}!", preheader: "Bem-vindo de volta.", conteudo: "Olá, {{first_name}}!\n\nO acesso da {{company_name}} à Hicks Pro foi liberado.\n\nTudo está preservado e pronto para continuar.", cta: "Acessar plataforma" },
+    { id: "tpl_convite", nome: "Convite para empresa", tipo: "convite", assunto: "Você foi convidado para {{company_name}} na Hicks Pro", preheader: "Acesse agora e comece.", conteudo: "Olá!\n\nVocê foi convidado para acessar a empresa {{company_name}} na plataforma Hicks Pro.\n\nClique abaixo para aceitar o convite.", cta: "Aceitar convite" },
+  ];
+  const ins = db.prepare("INSERT INTO email_templates (id,nome,assunto,preheader,conteudo,cta,tipo,criadoEm) VALUES (?,?,?,?,?,?,?,?)");
+  const now = Date.now();
+  for (const t of tpls) ins.run(t.id, t.nome, t.assunto, t.preheader, t.conteudo, t.cta, t.tipo, now);
+}
+
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@rycs.pro").toLowerCase().trim();
