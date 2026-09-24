@@ -344,6 +344,67 @@ export function garantirDadosCriticosProfissionalBeta() {
     db.prepare("UPDATE campaign_applications SET status = 'aprovado' WHERE campaignId = ? AND sellerId = ?")
       .run(campaignId, sellerId);
 
+    // Quiz de certificação da campanha
+    const quiz = [
+      {
+        pergunta: "Qual é o ticket médio mínimo do ICP desta campanha?",
+        opcoes: ["R$ 500,00", "R$ 1.500,00", "R$ 5.000,00", "Não há ticket mínimo"],
+        correta: 1,
+        modulo: "ICP e dor",
+      },
+      {
+        pergunta: "O cliente diz que já tem um fornecedor. Qual abordagem está mais alinhada à estratégia desta campanha?",
+        opcoes: [
+          "Encerrar a conversa imediatamente",
+          "Oferecer desconto sem entender a situação",
+          "Reconhecer e perguntar sobre lacunas no processo atual",
+          "Enviar proposta por e-mail sem mais perguntas",
+        ],
+        correta: 2,
+        modulo: "Objeções",
+      },
+      {
+        pergunta: "Qual evidência é obrigatória para uma reunião realizada (call)?",
+        opcoes: [
+          "Apenas o nome do cliente",
+          "Vídeo ou gravação + resumo estruturado da reunião",
+          "Somente o print da agenda",
+          "Nenhuma — basta registrar o resultado",
+        ],
+        correta: 1,
+        modulo: "Evidências",
+      },
+      {
+        pergunta: "Qual é o modelo de operação desta campanha?",
+        opcoes: ["Inbound", "SDR outbound + BDR enterprise", "Closer puro", "Somente PAP"],
+        correta: 1,
+        modulo: "Operação",
+      },
+      {
+        pergunta: "Uma tarefa enviada mas ainda não aprovada pela empresa...",
+        opcoes: [
+          "Já é debitada do orçamento definitivamente",
+          "Fica pendente e pode ser aprovada ou recusada",
+          "É aprovada automaticamente em 24h",
+          "Não aparece em Meus Envios",
+        ],
+        correta: 1,
+        modulo: "Processo",
+      },
+    ];
+    db.prepare("UPDATE campaigns SET quiz = ?, notaMinimaQuiz = ?, produto = ?, icp = ?, modeloOperacao = ? WHERE id = ?")
+      .run(JSON.stringify(quiz), 60, "Operação comercial B2B terceirizada", "Empresas B2B com ticket acima de R$ 1.500 e time comercial enxuto", "SDR outbound + BDR enterprise", campaignId);
+
+    // Treinamento rico
+    const treinamento = [
+      { id: "tr-1", titulo: "Produto e proposta de valor", conteudo: "A RYCS Demo oferece operação comercial B2B terceirizada: prospecção, qualificação, agendamento e fechamento sob demanda, com pagamento por resultado validado.\n\nDiferenciais:\n• Sem custo fixo de equipe\n• Auditoria automática de evidências\n• Pagamento somente por tarefas aprovadas\n\nProposta: escalar geração de demanda sem inflar folha ou depender de contratação tradicional." },
+      { id: "tr-2", titulo: "ICP — Perfil do cliente ideal", conteudo: "Cliente ideal:\n• Empresa B2B com ticket > R$ 1.500\n• Ciclo comercial ativo (não startup pré-receita)\n• Liderança que precisa acelerar prospecção\n• Time comercial enxuto (< 5 pessoas)\n• Setores: tecnologia, serviços, indústria, saúde corporativa, RH\n\nNÃO priorizar:\n• B2C, varejo físico\n• Empresas sem histórico de vendas recorrentes\n• Startups sem produto validado" },
+      { id: "tr-3", titulo: "Script de abordagem e objeções", conteudo: "Abertura:\n\"Olá [nome], sou [seu nome], parceiro de operações comerciais. Atendemos empresas B2B que precisam escalar prospecção sem ampliar a folha — posso mostrar como em 2 minutos?\"\n\nObjeções comuns:\n• 'Já temos equipe' → Pergunte: 'E conseguem suprir a demanda atual de prospecção?'\n• 'Não temos budget' → 'Aqui você só paga por resultados aprovados. Não há custo fixo.'\n• 'Já tentamos terceirizar' → 'O que não funcionou antes? Posso mostrar como a metodologia é diferente.'\n\nNunca: pressionar, interromper, ou mencionar concorrentes negativamente." },
+      { id: "tr-4", titulo: "Regras e evidências", conteudo: "Regras desta campanha:\n• Prazo: enviar evidência em até 48h após a ação\n• Leads devem ser vinculados à campanha\n• Cold call: mínimo 2 minutos com decisor\n• Reunião realizada: gravação obrigatória\n• PAP/visita: foto do local + registro do resultado\n• Venda: contrato ou comprovante + CNPJ\n\nO que NÃO é aceito:\n• Evidência genérica sem dados do cliente\n• Gravação editada ou com cortes suspeitos\n• Leads sem CNPJ/CPF na venda\n• Submit duplicado do mesmo contato no mesmo dia" },
+    ];
+    const cursoJson = JSON.stringify(treinamento);
+    db.prepare("UPDATE campaigns SET treinamento = ? WHERE id = ?").run(cursoJson, campaignId);
+
     const demoProvas = {
       lead_qualificado: { cliente: "Demo Lead", empresa: "Demo Corp", telefone: "+5511988880009", canal: "WhatsApp", interesse: "Escalar prospecção", necessidade: "Sem SDR dedicado", fit: "Alto", objecoes: "Timing no Q4", proximo_passo: "Reunião de discovery", evidencias: [{ slot: "contact_proof", valor: "https://example.test/print-lq-demo" }, { slot: "qualification_summary", valor: "Lead qualificado com fit alto. Demo para QA do Beta." }] },
       follow: { cliente: "Demo Follow", empresa: "Demo Corp", telefone: "+5511988880009", canal: "E-mail", resultado: "Cliente respondeu positivamente.", proximo_follow: "Próxima segunda-feira", evidencias: [{ slot: "follow_proof", valor: "https://example.test/print-follow-demo" }] },

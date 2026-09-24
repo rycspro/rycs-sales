@@ -981,6 +981,13 @@ db.prepare(`
 `).run();
 db.prepare(`CREATE INDEX IF NOT EXISTS idx_contacts_campaign ON campaign_contacts(campaignId, status)`).run();
 adicionarColuna("campaigns", "modelosVerificacao", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "quiz", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "notaMinimaQuiz", "INTEGER DEFAULT 70");
+adicionarColuna("campaigns", "produto", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "icp", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "prazoFim", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "modeloOperacao", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "maxTentativasQuiz", "INTEGER DEFAULT 3");
 
 // A plataforma deixou de ser portão de entrada: concluir a avaliação libera o
 // perfil na hora, e quem decide a entrada numa campanha é a empresa.
@@ -1019,7 +1026,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_financial_ledger_seller ON financial_ledger(sellerId, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_campaign_events_campaign ON campaign_events(companyId, campaignId, criadoEm DESC);
   CREATE INDEX IF NOT EXISTS idx_campaign_events_seller ON campaign_events(sellerId, criadoEm DESC);
-  CREATE INDEX IF NOT EXISTS idx_knowledge_company ON knowledge_documents(companyId, status, atualizadoEm);
+  CREATE TABLE IF NOT EXISTS campaign_quiz_attempts (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    respostas TEXT DEFAULT '[]',
+    aprovado INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_campaign_knowledge ON knowledge_documents(companyId, status, atualizadoEm);
   CREATE INDEX IF NOT EXISTS idx_assistant_company ON assistant_history(companyId, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_partnership_seller ON partnership_requests(sellerId, status, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_voucher_redemptions ON voucher_redemptions(voucherId, companyId, status);

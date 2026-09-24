@@ -135,10 +135,17 @@ function getFilteredState(user) {
       submissions: full.submissions.filter((s) => s.sellerId === meuId),
       withdrawals: full.withdrawals.filter((w) => w.sellerId === meuId),
       messages: full.messages.filter((m) => m.sellerId === meuId),
-      campaigns: oportunidadesLiberadas ? full.campaigns.filter((c) => c.status === "ativa").map((c) => ({
-        ...c,
-        candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
-      })) : [],
+      campaigns: oportunidadesLiberadas ? full.campaigns.filter((c) => c.status === "ativa").map((c) => {
+        const melhorTentativa = db.prepare(
+          "SELECT score, aprovado FROM campaign_quiz_attempts WHERE campaignId = ? AND sellerId = ? ORDER BY score DESC, criadoEm DESC LIMIT 1"
+        ).get(c.id, meuId);
+        return {
+          ...c,
+          candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
+          quizAprovado: melhorTentativa ? !!melhorTentativa.aprovado : false,
+          quizScore: melhorTentativa?.score ?? null,
+        };
+      }) : [],
       leads: full.leads.filter((l) => l.sellerId === meuId),
     };
   }

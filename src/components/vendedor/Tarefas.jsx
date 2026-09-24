@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora, money } from "../../lib/utils.js";
@@ -73,14 +73,21 @@ function IntegrityNotice() {
   );
 }
 
-export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liberado, irCurso, recarregar }) {
-  const [tipo, setTipo] = useState(null);
+export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liberado, irCurso, recarregar, tipoInicial }) {
+  const [tipo, setTipo] = useState(tipoInicial || null);
   const [prova, setProva] = useState({});
   const [evidencias, setEvidencias] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false);
   const [leadId, setLeadId] = useState("");
   const [novoLead, setNovoLead] = useState({ nome: "", empresa: "", telefone: "" });
+
+  useEffect(() => {
+    if (tipoInicial) {
+      const m = EVIDENCE_MATRIX[tipoInicial];
+      setEvidencias(m ? m.required.map((slot) => ({ slot, valor: "" })) : []);
+    }
+  }, [tipoInicial]);
 
   const valores = campanha?.tarefas || {};
   const tiposDisponiveis = ORDEM_ACOES.filter((k) => valores[k] > 0 && ACOES[k]);

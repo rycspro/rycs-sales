@@ -319,6 +319,46 @@ router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {
   res.json({ ok: true });
 });
 
+// Quiz de certificação da campanha
+router.get("/campaigns/:id/quiz", (req, res) => {
+  const { role, entityId } = req.user;
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  const questoes = JSON.parse(campaign.quiz || "[]");
+  // Vendedor nunca recebe a alternativa correta
+  const semGabarito = questoes.map(({ correta, ...q }) => q);
+  const ultima = db.prepare(
+    "SELECT * FROM campaign_quiz_attempts WHERE campaignId = ? AND sellerId = ? ORDER BY criadoEm DESC LIMIT 1"
+  ).get(req.params.id, entityId);
+  const tentativas = db.prepare(
+    "SELECT COUNT(*) n FROM campaign_quiz_attempts WHERE campaignId = ? AND sellerId = ?"
+  ).get(req.params.id, entityId)?.n || 0;
+  res.json({ questoes: semGabarito, notaMinima: campaign.notaMinimaQuiz || 70, maxTentativas: campaign.maxTentativasQuiz || 3, tentativas, ultima });
+});
+
+router.post("/campaigns/:id/quiz", (req, res) => {
+  const { entityId } = req.user;
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  const questoes = JSON.parse(campaign.quiz || "[]");
+  if (!questoes.length) return res.status(422).json({ error: "Esta campanha não possui quiz." });
+  const { respostas = [] } = req.body;
+  const acertos = questoes.filter((q, i) => respostas[i] !== undefined && String(respostas[i]) === String(q.correta)).length;
+  const score = Math.round((acertos / questoes.length) * 100);
+  const notaMinima = campaign.notaMinimaQuiz || 70;
+  const aprovado = score >= notaMinima ? 1 : 0;
+  const id = `cqa-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  db.prepare(
+    "INSERT INTO campaign_quiz_attempts (id, campaignId, sellerId, score, respostas, aprovado, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).run(id, req.params.id, entityId, score, JSON.stringify(respostas), aprovado, Date.now());
+  // Erradas: quais temas revisar
+  const erradas = questoes
+    .filter((q, i) => String(respostas[i]) !== String(q.correta))
+    .map((q) => q.modulo || q.tema || "Revisão geral");
+  const temasRevisar = [...new Set(erradas)];
+  res.json({ score, aprovado: !!aprovado, notaMinima, acertos, total: questoes.length, temasRevisar });
+});
+
 function parseCampaign(row) {
   return {
     ...row,
@@ -327,6 +367,7 @@ function parseCampaign(row) {
     tarefas: JSON.parse(row.tarefas || "{}"),
     evidencias: JSON.parse(row.evidencias || "{}"),
     criteriosAprovacao: JSON.parse(row.criteriosAprovacao || "{}"),
+    quiz: JSON.parse(row.quiz || "[]").map(({ correta, ...q }) => q),
     aceitaLeadProprio: !!row.aceitaLeadProprio,
     exigeCertificacao: !!row.exigeCertificacao,
   };
