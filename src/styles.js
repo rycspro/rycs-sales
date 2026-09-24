@@ -6,7 +6,7 @@ export const CSS = `
    faixa da cor da página em volta do app inteiro — é a "moldura branca" que
    aparece no celular. html e body também precisam da cor de fundo: acima da
    área do app, o que o iOS mostra ao rolar além do limite é o fundo do html. */
-html,body{margin:0;padding:0;min-height:100%;background:#070B14;overscroll-behavior-y:none}
+html,body{margin:0;padding:0;min-height:100%;background:#F4F7FC;overscroll-behavior-y:none}
 body{-webkit-text-size-adjust:100%}
 #root{min-height:100vh}
 
@@ -18,18 +18,27 @@ body{-webkit-text-size-adjust:100%}
 
 .vx-app{
   --bg:#F4F7FC; --bg-glow:transparent;
-  --surface:#FFFFFF; --surface-2:#EEF2F9; --surface-3:#E6ECF6;
+  --surface:#FFFFFF; --surface-1:#F8FAFC; --surface-2:#EEF2F9; --surface-3:#E6ECF6;
   --border:#DCE4F0; --border-strong:#C6D2E6;
   --ink:#0B1220; --ink-2:#33415C; --muted:#64748B; --muted-2:#94A3B8;
   --brand:#2563EB; --brand-600:#1D4ED8; --brand-50:#E8F0FE; --brand-100:#D3E1FD;
+  --brand-200:#BFDBFE;
+  --orange:#EA580C; --orange-600:#C2410C; --orange-50:#FFF7ED; --orange-100:#FFEDD5;
+  --green:#16A34A; --green-50:#F0FDF4; --green-100:#DCFCE7;
   --navy:#0F1A31; --navy-600:#0A1120;
-  --amber:#B45309; --amber-50:#FFF7EA; --amber-100:#FCEBD2;
+  --amber:#B45309; --amber-50:#FFFBEB; --amber-100:#FEF3C7;
   --red:#B42318; --red-50:#FEF2F1; --red-100:#FBDDDA;
   --indigo:#4338CA; --indigo-50:#EEF0FE; --indigo-100:#DEE1FB;
   --radius-lg:16px; --radius-md:13px; --radius-sm:10px; --radius-pill:999px;
-  --shadow-card:0 1px 2px rgba(11,18,32,.04),0 2px 8px -4px rgba(11,18,32,.08);
-  --shadow-pop:0 18px 44px -16px rgba(11,18,32,.28);
+  --shadow-card:0 1px 3px rgba(11,18,32,.05),0 4px 12px -4px rgba(11,18,32,.10);
+  --shadow-pop:0 20px 48px -16px rgba(11,18,32,.26);
+  --shadow-brand:0 4px 16px -4px rgba(37,99,235,.35);
+  --shadow-orange:0 4px 16px -4px rgba(234,88,12,.35);
   --ring:0 0 0 3px var(--brand-100);
+  --grad-brand:linear-gradient(135deg,#2563EB 0%,#4338CA 100%);
+  --grad-orange:linear-gradient(135deg,#EA580C 0%,#F59E0B 100%);
+  --grad-ai:linear-gradient(135deg,#4338CA 0%,#2563EB 60%,#0EA5E9 100%);
+  --glass:rgba(255,255,255,.72);
   min-height:100vh;background:var(--bg);color:var(--ink);
   font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:14.5px;line-height:1.55;
   -webkit-font-smoothing:antialiased;
@@ -107,8 +116,17 @@ body{-webkit-text-size-adjust:100%}
 .vx-navbtn[data-on="1"]{color:var(--brand)}
 .vx-navbtn span{max-width:100%;font-size:clamp(9px,2.6vw,11px);line-height:1.15;font-weight:600;white-space:nowrap}
 .vx-subnav{max-width:100%;flex-wrap:wrap;overflow-x:hidden}
-.vx-ai-trigger{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:28;box-shadow:var(--shadow-pop)}
-.vx-ai-panel{position:fixed;right:16px;bottom:calc(126px + env(safe-area-inset-bottom,0px));z-index:29;width:min(390px,calc(100vw - 32px));max-height:70vh;overflow:auto;padding:16px}
+.vx-ai-trigger{display:none!important}
+.vx-ai-panel{display:none!important}
+/* Jarvis / Brain premium */
+.vx-jarvis-btn{background:var(--grad-ai);border-color:transparent;color:#fff;border-radius:var(--radius-pill);box-shadow:0 4px 20px -6px rgba(67,56,202,.5)}
+.vx-jarvis-btn:hover{filter:brightness(1.12);border-color:transparent;color:#fff}
+.vx-jarvis-pulse{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;animation:vxpulse 2s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes vxpulse{0%,100%{box-shadow:0 0 0 0 rgba(67,56,202,.4)}50%{box-shadow:0 0 0 10px rgba(67,56,202,0)}}
+.vx-brain-card{background:linear-gradient(135deg,var(--brand-50) 0%,var(--indigo-50) 100%);border:1.5px solid var(--brand-200);border-radius:var(--radius-lg);overflow:hidden;position:relative}
+.vx-brain-card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.6),transparent);pointer-events:none;border-radius:inherit}
+.vx-chrome-badge{background:linear-gradient(135deg,#e8f0fe,#c7d7fd,#e8f0fe);border:1px solid rgba(37,99,235,.2);color:var(--brand);border-radius:var(--radius-pill)}
+.vx-glass-card{background:rgba(255,255,255,.72);backdrop-filter:blur(12px) saturate(1.4);border:1px solid rgba(255,255,255,.9);box-shadow:0 4px 24px -8px rgba(11,18,32,.12)}
 .vx-navdot{position:absolute;top:5px;right:calc(50% - 16px);min-width:15px;height:15px;padding:0 3px;border-radius:999px;
   background:var(--red);color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 
@@ -136,8 +154,10 @@ body{-webkit-text-size-adjust:100%}
 .vx-btn:hover{background:var(--surface-2);border-color:var(--brand-100)}
 .vx-btn:disabled{opacity:.42;cursor:not-allowed}
 .vx-btn:focus-visible{outline:none;box-shadow:var(--ring)}
-.vx-btn-primary{background:var(--brand);border-color:var(--brand);color:#fff}
-.vx-btn-primary:hover{background:var(--brand-600);border-color:var(--brand-600)}
+.vx-btn-primary{background:var(--grad-brand);border-color:var(--brand);color:#fff;box-shadow:var(--shadow-brand)}
+.vx-btn-primary:hover{background:var(--brand-600);border-color:var(--brand-600);box-shadow:0 6px 20px -6px rgba(37,99,235,.45)}
+.vx-btn-orange{background:var(--grad-orange);border-color:var(--orange);color:#fff;box-shadow:var(--shadow-orange)}
+.vx-btn-orange:hover{background:var(--orange-600);border-color:var(--orange-600);color:#fff}
 .vx-btn-danger{border-color:var(--red-100);color:var(--red);background:transparent}
 .vx-btn-danger:hover{background:var(--red-50);border-color:var(--red-100)}
 .vx-btn-ghost{border-color:transparent;background:transparent;color:var(--muted)}
@@ -180,9 +200,10 @@ body{-webkit-text-size-adjust:100%}
 
 /* stat cards */
 .vx-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-card);
-  position:relative;overflow:hidden}
-.vx-stat::after{content:"";position:absolute;inset:0 0 auto 0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--brand-100),transparent);opacity:.8}
+  position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.vx-stat:hover{box-shadow:var(--shadow-pop);transform:translateY(-1px)}
+.vx-stat::after{content:"";position:absolute;inset:0 0 auto 0;height:2px;
+  background:var(--grad-brand);opacity:.5}
 .vx-stat-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
 .vx-stat-val{font-family:'Space Grotesk';font-weight:700;font-size:23px;letter-spacing:-.02em}
 
@@ -283,21 +304,72 @@ body{-webkit-text-size-adjust:100%}
 .vx-course-meta span{display:inline-flex;align-items:center;gap:4px}
 .vx-course-layout{display:grid;grid-template-columns:290px 1fr;gap:16px;margin-top:16px;align-items:start}
 @media(max-width:860px){.vx-course-layout{grid-template-columns:1fr}}
-/* --- Card de empresa: vitrine, não linha de lista --------------------- */
+/* --- Card de empresa: vitrine premium -------------------------------- */
 .vx-empresa-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-  overflow:hidden;box-shadow:var(--shadow-card);transition:border-color .16s,transform .16s}
-.vx-empresa-card:hover{border-color:var(--border-strong);transform:translateY(-1px)}
-.vx-empresa-topo{height:64px}
-.vx-empresa-corpo{padding:0 18px 18px}
-.vx-empresa-cabeca{display:flex;gap:13px;align-items:flex-end;margin-top:-30px;margin-bottom:14px}
-.vx-empresa-logo{width:62px;height:62px;border-radius:16px;background:var(--surface);border:2px solid;
+  overflow:hidden;box-shadow:var(--shadow-card);transition:border-color .2s,transform .2s,box-shadow .2s}
+.vx-empresa-card:hover{border-color:var(--brand-200);transform:translateY(-2px);box-shadow:0 8px 28px -8px rgba(37,99,235,.18)}
+.vx-empresa-topo{height:72px;background:var(--grad-brand);position:relative;overflow:hidden}
+.vx-empresa-topo::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent)}
+.vx-empresa-corpo{padding:0 18px 20px}
+.vx-empresa-cabeca{display:flex;gap:13px;align-items:flex-end;margin-top:-32px;margin-bottom:14px}
+.vx-empresa-logo{width:64px;height:64px;border-radius:16px;background:var(--surface);border:3px solid var(--surface);
   display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;
-  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;box-shadow:var(--shadow-card)}
-.vx-empresa-logo img{width:100%;height:100%;object-fit:cover}
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;box-shadow:0 4px 14px -4px rgba(11,18,32,.2);
+  background:linear-gradient(135deg,var(--brand-50),var(--indigo-50));color:var(--brand)}
+.vx-empresa-logo img{width:100%;height:100%;object-fit:cover;border-radius:14px}
 .vx-empresa-ficha{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:12px;
   padding:13px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .vx-empresa-ficha b{display:block;font-size:13.5px;margin-top:2px}
 .vx-empresa-icp{margin-top:12px}
 .vx-empresa-icp p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
 
+/* ── Jarvis / Modo de Gravação premium ─────────────────────────────────── */
+.vx-jarvis-ring{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;position:relative;cursor:pointer;transition:.2s}
+.vx-jarvis-ring::before{content:"";position:absolute;inset:-4px;border-radius:50%;background:var(--grad-ai);opacity:.18;transition:opacity .3s}
+.vx-jarvis-ring:hover::before{opacity:.32}
+.vx-jarvis-ring[data-active="1"]::before{opacity:.4;animation:vxpulse 1.4s ease-in-out infinite}
+.vx-jarvis-wave{display:flex;align-items:center;gap:3px;height:28px}
+.vx-jarvis-wave span{width:4px;border-radius:2px;background:var(--brand);transform-origin:bottom;animation:vxwave 1.2s ease-in-out infinite}
+.vx-jarvis-wave span:nth-child(2){animation-delay:.15s;height:18px}
+.vx-jarvis-wave span:nth-child(3){animation-delay:.3s;height:24px}
+.vx-jarvis-wave span:nth-child(4){animation-delay:.15s;height:18px}
+.vx-jarvis-wave span:nth-child(5){animation-delay:0s;height:10px}
+@keyframes vxwave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1.1)}}
+
+/* ── Scores & progress premium ─────────────────────────────────────────── */
+.vx-score-ring{--size:96px;width:var(--size);height:var(--size);border-radius:50%;position:relative;display:grid;place-items:center}
+.vx-score-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+
+/* ── Empty states ───────────────────────────────────────────────────────── */
+.vx-empty{padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.vx-empty-icon{width:56px;height:56px;border-radius:18px;background:var(--brand-50);display:grid;place-items:center;color:var(--brand)}
+.vx-empty h2{font-size:20px;margin:0}
+.vx-empty p{font-size:13.5px;color:var(--muted);max-width:420px;margin:0;line-height:1.65}
+
+/* ── Microinterações ────────────────────────────────────────────────────── */
+.vx-card{transition:box-shadow .2s,border-color .2s}
+.vx-campaign-card:hover{border-color:var(--brand-200);box-shadow:0 6px 20px -8px rgba(37,99,235,.15)}
+button.vx-btn:active:not(:disabled){transform:scale(.97)}
+
+/* ── Topbar premium ─────────────────────────────────────────────────────── */
+.vx-topbar{background:rgba(255,255,255,.90)}
+
+/* ── Corrigir badge amber (texto branco em fundo amarelo) ───────────────── */
+.vx-beta-badge{background:#F59E0B;color:#1c1200}
+.vx-beta-login-badge{background:#F59E0B;color:#1c1200}
+
+/* ── Sidebar desktop premium ────────────────────────────────────────────── */
+@media(min-width:900px){
+  .vx-sidebtn[data-on="1"]{background:var(--brand-50);color:var(--brand);border-color:var(--brand-100);
+    box-shadow:inset 0 0 0 1px var(--brand-100)}
+}
+
+/* ── Responsividade mobile ──────────────────────────────────────────────── */
+@media(max-width:640px){
+  .vx-page-head h1{font-size:22px}
+  .vx-campaign-head h1{font-size:24px}
+  .vx-btn{font-size:13px;padding:9px 14px}
+}
+
 `;
+

@@ -104,7 +104,6 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar 
         {secaoConta === "suporte" && <ChatEmpresa emp={emp} db={db} up={up} />}
         {secaoConta === "indicar" && <Indicacoes aviso={aviso} />}
       </>}
-      <AssistenteEmpresa emp={emp} contexto={aba} aviso={aviso} />
     </div>
   );
 }

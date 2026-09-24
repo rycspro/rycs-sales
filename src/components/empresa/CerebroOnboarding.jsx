@@ -112,9 +112,11 @@ function Pergunta({ pergunta, indice, total, resposta, onChange, onProxima }) {
           <button
             onClick={toggleVoz}
             title={gravando ? "Parar gravação" : "Falar resposta"}
-            style={{ position: "absolute", right: 10, top: 10, background: gravando ? "var(--red, #ef4444)" : "var(--brand)", color: "#fff", border: "none", borderRadius: 8, padding: "7px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600 }}
+            style={{ position: "absolute", right: 10, top: 10, background: gravando ? "linear-gradient(135deg,#ef4444,#dc2626)" : "var(--grad-ai,linear-gradient(135deg,#4338CA,#2563EB))", color: "#fff", border: "none", borderRadius: 10, padding: "7px 11px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, boxShadow: gravando ? "0 4px 12px -4px rgba(239,68,68,.5)" : "0 4px 12px -4px rgba(67,56,202,.4)" }}
           >
-            {gravando ? <><MicOff size={14} /> Parar</> : <><Mic size={14} /> Falar</>}
+            {gravando ? (
+              <><div style={{ display: "flex", gap: 2, height: 14, alignItems: "center" }}>{[0,1,2,3].map(i=><span key={i} style={{ width: 3, borderRadius: 2, background: "#fff", height: [8,14,10,12][i], animation: "vxwave 1.2s ease-in-out infinite", animationDelay: `${i*0.15}s` }}/>)}</div> Ouvindo…</>
+            ) : <><Mic size={14} /> Falar</>}
           </button>
         )}
       </div>
