@@ -158,6 +158,8 @@ body{-webkit-text-size-adjust:100%}
 .vx-notice-amber{background:var(--amber-50);border-color:var(--amber-100);color:var(--amber)}
 .vx-btn-ai{border-color:var(--indigo-100);color:var(--indigo);background:linear-gradient(135deg,var(--indigo-50),var(--brand-50))}
 .vx-btn-ai:hover{border-color:var(--indigo);background:var(--indigo-50)}
+.vx-btn-ai-hero{background:linear-gradient(135deg,var(--indigo),var(--brand));border-color:transparent;color:#fff;font-weight:600}
+.vx-btn-ai-hero:hover{background:linear-gradient(135deg,var(--indigo-600,var(--indigo)),var(--brand-600));border-color:transparent;color:#fff}
 .vx-sep{height:1px;background:var(--border);border:0;margin:15px 0}
 .vx-fade{animation:vxin .26s cubic-bezier(.22,.9,.32,1)}
 @keyframes vxin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}

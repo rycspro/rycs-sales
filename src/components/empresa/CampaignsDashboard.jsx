@@ -108,8 +108,8 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
         <p><b>Sua operação comercial em um só lugar.</b><br />Acompanhe profissionais, investimento e resultados das suas campanhas em tempo real.</p>
       </div>
       <div className="vx-campaign-actions">
-        <button className="vx-btn vx-btn-ai" onClick={onCriarIA}><Sparkles size={15} /> Criar com IA</button>
-        <button className="vx-btn vx-btn-primary" onClick={onCriar}><Plus size={15} /> Nova campanha</button>
+        <button className="vx-btn vx-btn-primary vx-btn-ai-hero" onClick={onCriarIA}><Sparkles size={15} /> Criar com IA</button>
+        <button className="vx-btn vx-btn-ghost" onClick={onCriar}><Plus size={15} /> Criar manualmente</button>
       </div>
     </div>
 
@@ -160,7 +160,7 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
         <div className="vx-campaign-empty-icon"><BriefcaseBusiness size={24} /></div>
         <h2 className="vx-disp">Coloque sua força comercial para trabalhar.</h2>
         <p>Crie sua primeira campanha e encontre profissionais para executar sua operação comercial.</p>
-        <div className="vx-campaign-actions"><button className="vx-btn vx-btn-primary" onClick={onCriar}>Criar campanha</button><button className="vx-btn vx-btn-ai" onClick={onCriarIA}><Sparkles size={14} /> Criar com IA</button></div>
+        <div className="vx-campaign-actions"><button className="vx-btn vx-btn-primary vx-btn-ai-hero" onClick={onCriarIA}><Sparkles size={14} /> Criar com IA</button><button className="vx-btn vx-btn-ghost" onClick={onCriar}><Plus size={14} /> Criar manualmente</button></div>
       </div> : campanhasFiltradas.length === 0 ? <div className="vx-card vx-campaign-filter-empty">Nenhuma campanha neste status.</div> : <div className="vx-campaign-card-grid">
         {campanhasFiltradas.map((campanha) => <CampaignCard key={campanha.id} campanha={campanha} onAbrir={onAbrir} />)}
       </div>}

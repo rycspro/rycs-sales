@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -22,6 +22,40 @@ import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empre
 // que a campanha nasce. Nada foi removido, só tirado do caminho.
 
 const PASSOS = ["Objetivo", "Detalhes", "Revisão"];
+
+function formatarBRL(valor) {
+  if (!valor && valor !== 0) return "";
+  return Number(valor).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseBRL(str) {
+  if (!str) return 0;
+  return Number(str.replace(/\./g, "").replace(",", ".")) || 0;
+}
+
+function CampoOrcamento({ value, onChange }) {
+  const [display, setDisplay] = useState(value > 0 ? formatarBRL(value) : "");
+  const inputRef = useRef(null);
+  const handleChange = (e) => {
+    const raw = e.target.value.replace(/[^\d,]/g, "");
+    setDisplay(raw);
+    onChange(parseBRL(raw));
+  };
+  const handleBlur = () => {
+    const n = parseBRL(display);
+    setDisplay(n > 0 ? formatarBRL(n) : "");
+    onChange(n);
+  };
+  return (
+    <div style={{ position: "relative" }}>
+      <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--text-2)", fontSize: 13.5, pointerEvents: "none", userSelect: "none" }}>R$</span>
+      <input ref={inputRef} className="vx-input vx-mono" style={{ paddingLeft: 30 }}
+        inputMode="decimal" value={display}
+        onChange={handleChange} onBlur={handleBlur}
+        placeholder="0,00" />
+    </div>
+  );
+}
 const ICONES_OBJETIVO = { leads: Target, reunioes: CalendarCheck, visitas: MapPin, vendas: BadgeDollarSign, completa: Workflow };
 
 export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarComIA = false }) {
@@ -98,49 +132,57 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ---------------------------------------------- passo 1: objetivo */}
       {passo === 0 && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>{iniciarComIA ? "Criar campanha com IA" : "O que você quer que a RYCS faça?"}</h2>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Nova campanha</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            A escolha define qual profissional atende, o que é remunerado e que prova cada ação exige.
+            {iniciarComIA ? "Descreva o que você precisa — a IA monta a campanha e você revisa antes de publicar." : "Use a IA ou escolha o objetivo manualmente."}
           </p>
 
-          {!iniciarComIA && <div className="vx-objective-grid">
-            {ORDEM_OBJETIVOS.map((k) => {
-              const o = OBJETIVOS[k];
-              const Icone = ICONES_OBJETIVO[k] || Target;
-              return (
-                <button key={k} className="vx-card vx-objective-card" onClick={() => escolher(k)}>
-                  <span className="vx-objective-icon"><Icone size={19} /></span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <b style={{ fontSize: 15 }}>{o.nome}</b>
-                      <span className="vx-badge vx-badge-muted">{o.funcao.toUpperCase()}</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>{o.resumo}</div>
-                    <div className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>{o.paraQuem}</div>
-                  </div>
-                  <ArrowRight size={16} className="vx-objective-arrow" />
-                </button>
-              );
-            })}
-          </div>}
-
-          {/* atalho assistido */}
-          <div className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: "var(--brand-100)", background: "var(--brand-50)" }}>
-            <div className="vx-eyebrow" style={{ color: "var(--brand)", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-              <Sparkles size={12} /> Montar com IA
+          {/* caminho principal: IA */}
+          <div className="vx-card" style={{ padding: 20, marginTop: 4, borderColor: "var(--brand-200, var(--brand-100))", background: "linear-gradient(135deg, var(--brand-50) 0%, var(--indigo-50, var(--brand-50)) 100%)", borderWidth: 1.5 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+              <Sparkles size={16} color="var(--brand)" />
+              <b style={{ fontSize: 15 }}>Criar com IA</b>
+              <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>Recomendado</span>
             </div>
-            <p className="vx-mut" style={{ margin: "0 0 10px", fontSize: 12.5, lineHeight: 1.6 }}>
-              Escreva com suas palavras o que você precisa. A campanha vem montada como rascunho,
-              e você revisa tudo antes de publicar.
+            <p className="vx-mut" style={{ margin: "0 0 12px", fontSize: 13, lineHeight: 1.6 }}>
+              Escreva com suas palavras o que você precisa. A campanha vem montada automaticamente com as informações da sua empresa — você só revisa antes de publicar.
             </p>
-            <textarea className="vx-input" style={{ minHeight: 70, fontSize: 13 }} value={brief}
+            <textarea className="vx-input" style={{ minHeight: 74, fontSize: 13.5 }} value={brief}
               onChange={(e) => setBrief(e.target.value)}
               placeholder="Ex.: preciso de reuniões com distribuidoras de bebida no interior de SP; quem fecha é meu time." />
-            <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }}
+            <button className="vx-btn vx-btn-ai-hero vx-btn-block" style={{ marginTop: 10, fontSize: 14, padding: "11px 0" }}
               disabled={gerando} onClick={gerarComIA}>
-              {gerando ? <><Loader size={14} /> Montando…</> : <><Sparkles size={14} /> Montar campanha</>}
+              {gerando ? <><Loader size={14} /> Montando…</> : <><Sparkles size={14} /> Montar campanha com IA</>}
             </button>
           </div>
+
+          {!iniciarComIA && <>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0 12px" }}>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              <span className="vx-mut" style={{ fontSize: 12 }}>ou escolha um objetivo manualmente</span>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            </div>
+            <div className="vx-objective-grid">
+              {ORDEM_OBJETIVOS.map((k) => {
+                const o = OBJETIVOS[k];
+                const Icone = ICONES_OBJETIVO[k] || Target;
+                return (
+                  <button key={k} className="vx-card vx-objective-card" onClick={() => escolher(k)}>
+                    <span className="vx-objective-icon"><Icone size={19} /></span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <b style={{ fontSize: 15 }}>{o.nome}</b>
+                        <span className="vx-badge vx-badge-muted">{o.funcao.toUpperCase()}</span>
+                      </div>
+                      <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>{o.resumo}</div>
+                      <div className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>{o.paraQuem}</div>
+                    </div>
+                    <ArrowRight size={16} className="vx-objective-arrow" />
+                  </button>
+                );
+              })}
+            </div>
+          </>}
 
           <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ marginTop: 14 }} onClick={aoCancelar}>Cancelar</button>
         </>
@@ -190,7 +232,29 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <label><div className="vx-label">Prazo por tarefa (horas)</div><input className="vx-input vx-mono" type="number" min="1" value={campanha.prazoHoras} onChange={(e) => set("prazoHoras", Number(e.target.value))} /></label>
               <label><div className="vx-label">Limite por profissional</div><input className="vx-input vx-mono" type="number" min="0" value={campanha.limitePorProfissional} onChange={(e) => set("limitePorProfissional", Number(e.target.value))} /></label>
             </div>
-            <div className="vx-wizard-checks"><label><input type="checkbox" checked={campanha.aceitaLeadProprio} onChange={(e) => set("aceitaLeadProprio", e.target.checked)} /> Aceitar leads próprios dos profissionais</label><label><input type="checkbox" checked={campanha.exigeCertificacao} onChange={(e) => set("exigeCertificacao", e.target.checked)} /> Exigir certificação antes de trabalhar</label></div>
+            <div className="vx-wizard-checks" style={{ marginTop: 12 }}>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }}>
+                <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={campanha.prospeccaoAtiva} onChange={(e) => set("prospeccaoAtiva", e.target.checked)} />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Quero fazer prospecção ativa / Cold Call</div>
+                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>O profissional aborda novos contatos por conta própria — ligações, mensagens, visitas — e traz o lead até você.</div>
+                </div>
+              </label>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginTop: 10 }}>
+                <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={campanha.aceitaLeadProprio} onChange={(e) => set("aceitaLeadProprio", e.target.checked)} />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Aceitar leads dos próprios profissionais</div>
+                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>O profissional pode submeter leads que ele já conhece ou mantém relacionamento — sem precisar prospectar do zero.</div>
+                </div>
+              </label>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginTop: 10 }}>
+                <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={campanha.exigeCertificacao} onChange={(e) => set("exigeCertificacao", e.target.checked)} />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Exigir certificação antes de trabalhar</div>
+                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>Profissional precisa completar o treinamento desta campanha antes de submeter tarefas.</div>
+                </div>
+              </label>
+            </div>
           </div>
 
           {/* valores: o ponto onde a empresa decide o que paga */}
@@ -214,9 +278,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               ))}
             </div>
 
-            <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">Orçamento total da campanha</div>
-              <input className="vx-input vx-mono" type="number" min="0" value={campanha.orcamento}
-                onChange={(e) => set("orcamento", Number(e.target.value))} /></label>
+            <div style={{ marginTop: 12 }}><div className="vx-label">Orçamento total da campanha</div>
+              <CampoOrcamento value={campanha.orcamento} onChange={(v) => set("orcamento", v)} /></div>
             {campanha.orcamento > disponivel && (
               <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--amber)" }}>
                 O orçamento passa do seu saldo disponível. Dá para salvar como rascunho, mas não para publicar.

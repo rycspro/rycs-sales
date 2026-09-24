@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock, LockKeyhole, CalendarCheck, Presentation, Target } from "lucide-react";
+import { Wallet, ClipboardList, Banknote, Users, TrendingUp, Clock, LockKeyhole, CalendarCheck, Presentation, Target, Sparkles, ArrowRight } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, agora, dataCurta } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
@@ -7,7 +7,7 @@ import { Donut, Stat } from "../ui.jsx";
 import CompanyScore from "../CompanyScore.jsx";
 import { metricasEmpresa, projetarROI, valorMonetario } from "../../../shared/analytics.js";
 
-export default function PainelEmpresa({ emp, db, up, aviso }) {
+export default function PainelEmpresa({ emp, db, up, aviso, irParaCampanhas }) {
   const [rec, setRec] = useState("");
   const [cobranca, setCobranca] = useState(null);
   const [gerando, setGerando] = useState(false);
@@ -63,6 +63,27 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
           <select className="vx-input" aria-label="Tipo de tarefa" value={filtros.tipo} onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}><option value="">Todas tarefas</option>{Object.entries(ACOES).map(([k, a]) => <option key={k} value={k}>{a.nome}</option>)}</select>
         </div>
       </div>
+
+      {(db.campaigns || []).filter((c) => c.companyId === emp.id).length === 0 && (
+        <div style={{ background: "linear-gradient(135deg, var(--brand-50) 0%, var(--brand-100) 100%)", border: "1.5px solid var(--brand-200, var(--brand-100))", borderRadius: 14, padding: "22px 22px 18px", marginBottom: 22, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+              <Sparkles size={16} color="var(--brand)" />
+              <span style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--brand)" }}>Comece aqui</span>
+            </div>
+            <div className="vx-disp" style={{ fontSize: 20, margin: "0 0 5px" }}>Crie sua primeira campanha</div>
+            <p className="vx-mut" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6 }}>Coloque profissionais de vendas para trabalhar pela sua empresa. A IA monta tudo — você só revisa.</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+            <button className="vx-btn vx-btn-primary" style={{ gap: 7, fontSize: 14, padding: "10px 20px" }} onClick={irParaCampanhas}>
+              <Sparkles size={14} /> Criar com IA <ArrowRight size={14} />
+            </button>
+            <button className="vx-btn" style={{ fontSize: 13 }} onClick={irParaCampanhas}>
+              Criar manualmente
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="vx-grid vx-g4" style={{ marginBottom: 22 }}>
         <Stat label="Reuniões agendadas" value={metricas.agendadas} Icon={CalendarCheck} tone="brand" mono={false} />
@@ -132,8 +153,15 @@ export default function PainelEmpresa({ emp, db, up, aviso }) {
         {cobranca && (
           <div className="vx-card" style={{ padding: 16, marginTop: 12, background: "var(--brand-50)", borderColor: "var(--brand-100)" }}>
             <div className="vx-disp" style={{ fontSize: 15 }}>
-              {cobranca.modo === "gateway" ? "Cobrança de" : "Depósito de"} {money(cobranca.valor)}
+              {cobranca.modo === "gateway" ? "Cobrança de" : "Depósito de"} {money(cobranca.valorBruto ?? cobranca.valor)}
             </div>
+            {cobranca.taxaGateway > 0 && (
+              <div style={{ fontSize: 12.5, marginTop: 6 }}>
+                <div className="vx-row"><span className="vx-mut">Valor bruto</span><span className="vx-mono">{money(cobranca.valorBruto)}</span></div>
+                <div className="vx-row"><span className="vx-mut">Taxa de processamento</span><span className="vx-mono" style={{ color: "var(--red)" }}>− {money(cobranca.taxaGateway)}</span></div>
+                <div className="vx-row"><span style={{ fontWeight: 600 }}>Creditado no caixa</span><span className="vx-mono" style={{ fontWeight: 600, color: "var(--brand)" }}>{money(cobranca.valorLiquido)}</span></div>
+              </div>
+            )}
             <p className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>{cobranca.instrucoes}</p>
 
             {cobranca.pixQrCodeBase64 && (

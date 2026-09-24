@@ -19,7 +19,7 @@ import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
 import { AssistenteEmpresa, BaseConhecimento, RelatoriosEmpresa } from "./EmpresaAI.jsx";
 import Assinatura from "./Assinatura.jsx";
 
-export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
+export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar }) {
   const sair = async () => {
     await api("/auth/logout", {});
     window.location.reload();
@@ -71,7 +71,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, recarregar }) {
         {Number(emp.saldoReservado || 0) > 0 && <span className="vx-chip vx-mono">reservado {money(emp.saldoReservado)}</span>}
       </div>
 
-      {aba === "painel" && <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
+      {aba === "painel" && <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />}
       {aba === "campanhas" && <>
         {submenu([["campanhas", "Campanhas"], ["profissionais", "Profissionais Ativos"], ["time", "Time"], ["leads", "Leads"], ["tabela", "Tarefas e valores"]], secaoCampanhas, setSecaoCampanhas)}
         {secaoCampanhas === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
