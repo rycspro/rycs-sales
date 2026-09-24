@@ -192,7 +192,7 @@ router.patch("/campaigns/:id", (req, res) => {
 
   const allowed = ["titulo", "descricao", "produto", "publico", "vagas", "requisitos", "objetivo", "regiao", "funcao",
     "orcamento", "prazoHoras", "duracaoDias", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao"];
-  const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao"];
+  const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(req.body)) {

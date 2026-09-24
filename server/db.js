@@ -945,6 +945,29 @@ adicionarColuna("subscriptions", "cartaoBandeira", "TEXT DEFAULT ''");
 adicionarColuna("subscriptions", "falhaMotivo", "TEXT");
 adicionarColuna("subscriptions", "atualizadoEm", "INTEGER");
 
+// Lista de contatos por campanha
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS campaign_contacts (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    nome TEXT DEFAULT '',
+    empresa TEXT DEFAULT '',
+    cargo TEXT DEFAULT '',
+    telefone TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    cidade TEXT DEFAULT '',
+    extra TEXT DEFAULT '{}',
+    status TEXT DEFAULT 'disponivel',
+    sellerId TEXT,
+    abordadoEm INTEGER,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  )
+`).run();
+db.prepare(`CREATE INDEX IF NOT EXISTS idx_contacts_campaign ON campaign_contacts(campaignId, status)`).run();
+adicionarColuna("campaigns", "modelosVerificacao", "TEXT DEFAULT '{}'");
+
 // A plataforma deixou de ser portão de entrada: concluir a avaliação libera o
 // perfil na hora, e quem decide a entrada numa campanha é a empresa.
 //

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, Award, BriefcaseBusiness, CalendarCheck, CheckCircle2, CircleDollarSign,
   CirclePause, Clock3, Ellipsis, ListChecks, Pencil, RefreshCw, Settings, Target,
-  TrendingUp, UsersRound, X,
+  TrendingUp, Upload, UsersRound, X,
 } from "lucide-react";
-import { api } from "../../lib/api.js";
+import { api, apiDelete, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
@@ -12,7 +12,8 @@ import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
 const ABAS = [
   ["geral", "Visão Geral"], ["profissionais", "Profissionais"], ["tarefas", "Tarefas"],
   ["leads", "Leads"], ["reunioes", "Reuniões"], ["performance", "Performance"],
-  ["financeiro", "Financeiro"], ["configuracoes", "Configurações"],
+  ["financeiro", "Financeiro"], ["contatos", "Lista de Contatos"],
+  ["verificacao", "Verificação"], ["configuracoes", "Configurações"],
 ];
 const PERIODOS = [["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"], ["personalizado", "Personalizado"]];
 const FILTROS_PROFISSIONAIS = [
@@ -292,6 +293,276 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
       <section className="vx-card vx-detail-section"><h2 className="vx-disp">Detalhamento dos custos</h2><p>Valores configurados e tarefas efetivamente liquidadas.</p>{dados.financeiro.detalhamento.length === 0 ? <Empty texto="Nenhum tipo de tarefa remunerada ou liquidada nesta campanha." /> : <div className="vx-cost-table"><div><span>Tipo de tarefa</span><span>Valor unitário</span><span>Quantidade</span><span>Total gasto</span></div>{dados.financeiro.detalhamento.map((item) => <div key={item.tipo}><b>{ACOES[item.tipo]?.nome || item.tipo}</b><span className="vx-mono" data-label="Valor unitário">{money(item.valorUnitario)}</span><span className="vx-mono" data-label="Quantidade">{item.quantidade}</span><span className="vx-mono" data-label="Total gasto">{money(item.total)}</span></div>)}</div>}</section>
     </div>}
     {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">Configurações da campanha</h2><p>Objetivo, público, região, valores, evidências, treinamento e regras de publicação continuam no editor completo.</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> Editar configuração</button></section>}
+    {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} />}
+    {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
     {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} onClose={() => setProfissionalAberto(null)} />}
   </div>;
+}
+
+// ── Lista de Contatos ────────────────────────────────────────────────────────
+
+const MODELOS_VERIFICACAO = [
+  { value: "ia", label: "IA", desc: "Avaliação automática por inteligência artificial" },
+  { value: "manual", label: "Manual", desc: "Gestor revisa e aprova cada evidência" },
+  { value: "ia_manual", label: "IA + aprovação manual", desc: "IA filtra, gestor aprova o que ficou em dúvida" },
+  { value: "integracao", label: "Integração automática", desc: "CRM ou sistema externo valida automaticamente" },
+];
+
+function parseCSVFrontend(texto) {
+  const linhas = texto.trim().split(/\r?\n/);
+  if (linhas.length < 2) return [];
+  const cabecalho = linhas[0].split(/[,;]/).map((h) => h.trim().replace(/^"|"$/g, "").toLowerCase());
+  return linhas.slice(1).map((linha) => {
+    const cols = linha.split(/[,;]/).map((c) => c.trim().replace(/^"|"$/g, ""));
+    const obj = {};
+    cabecalho.forEach((h, i) => { obj[h] = cols[i] || ""; });
+    return obj;
+  }).filter((r) => Object.values(r).some((v) => v));
+}
+
+function ContatosCampanha({ campanha, profissionais }) {
+  const [contatos, setContatos] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [carregando, setCarregando] = useState(true);
+  const [enviando, setEnviando] = useState(false);
+  const [aviso, setAviso] = useState("");
+  const [filtro, setFiltro] = useState("todos");
+  const [distribuindo, setDistribuindo] = useState(false);
+
+  const carregar = async () => {
+    setCarregando(true);
+    const r = await api(`/contacts/${campanha.id}?limit=200${filtro !== "todos" ? `&status=${filtro}` : ""}`);
+    setContatos(r?.contatos || []);
+    setTotal(r?.total || 0);
+    setCarregando(false);
+  };
+
+  useEffect(() => { carregar(); }, [campanha.id, filtro]);
+
+  const importar = async (file) => {
+    if (!file) return;
+    setEnviando(true);
+    setAviso("");
+    try {
+      let dados = [];
+      if (file.name.endsWith(".csv") || file.type === "text/csv") {
+        const texto = await file.text();
+        dados = parseCSVFrontend(texto);
+      } else {
+        setAviso("Use arquivos .csv. Suporte a .xlsx em breve.");
+        setEnviando(false);
+        return;
+      }
+      if (!dados.length) { setAviso("Arquivo vazio ou sem dados reconhecíveis."); setEnviando(false); return; }
+      const r = await api("/contacts/upload", { campaignId: campanha.id, companyId: campanha.companyId, dados });
+      if (r?.error) { setAviso(r.error); } else {
+        setAviso(`${r.inseridos} contatos importados. ${r.duplicados} duplicatas ignoradas.`);
+        await carregar();
+      }
+    } catch {
+      setAviso("Erro ao processar o arquivo.");
+    }
+    setEnviando(false);
+  };
+
+  const distribuir = async () => {
+    const aprovados = profissionais.filter((p) => p.candidaturaStatus === "aprovado").map((p) => p.sellerId || p.id);
+    if (!aprovados.length) { setAviso("Nenhum profissional aprovado para distribuir."); return; }
+    setDistribuindo(true);
+    const r = await api("/contacts/distribuir", { campaignId: campanha.id, sellers: aprovados });
+    setDistribuindo(false);
+    if (r?.error) { setAviso(r.error); return; }
+    setAviso(`${r.distribuidos} contatos distribuídos entre ${aprovados.length} profissional(is).`);
+    await carregar();
+  };
+
+  const limpar = async () => {
+    if (!window.confirm("Remover todos os contatos disponíveis desta campanha?")) return;
+    await apiDelete(`/contacts/${campanha.id}`);
+    await carregar();
+  };
+
+  const FILTROS = [["todos", "Todos"], ["disponivel", "Disponíveis"], ["distribuido", "Distribuídos"], ["abordado", "Abordados"]];
+
+  return (
+    <div className="vx-fade">
+      <div className="vx-row" style={{ marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div className="vx-eyebrow">Prospecção ativa</div>
+          <h2 className="vx-disp" style={{ margin: "4px 0" }}>Lista de Contatos</h2>
+          <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Importe CSV para SDR, BDR, Cold Call, PAP, follow-up ou reativação.</p>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <span className="vx-chip">{total} contatos</span>
+          <label className="vx-btn">
+            <Upload size={13} /> {enviando ? "Importando..." : "Importar CSV"}
+            <input hidden type="file" accept=".csv,text/csv" disabled={enviando} onChange={(e) => importar(e.target.files?.[0])} />
+          </label>
+          <button className="vx-btn vx-btn-primary" disabled={distribuindo} onClick={distribuir}>
+            {distribuindo ? "Distribuindo..." : "Distribuir para profissionais"}
+          </button>
+        </div>
+      </div>
+
+      {aviso && <div className="vx-notice" style={{ marginBottom: 12 }}>{aviso}</div>}
+
+      <div className="vx-seg" style={{ marginBottom: 14 }}>
+        {FILTROS.map(([k, l]) => <button key={k} data-on={filtro === k ? "1" : "0"} onClick={() => setFiltro(k)}>{l}</button>)}
+      </div>
+
+      {carregando
+        ? <div className="vx-mut">Carregando...</div>
+        : !contatos.length
+          ? <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
+              <Upload size={24} color="var(--muted)" />
+              <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum contato importado. Use "Importar CSV" para começar.</p>
+              <p className="vx-mut" style={{ fontSize: 12 }}>Colunas reconhecidas: nome, empresa, cargo, telefone, email, cidade</p>
+            </div>
+          : <>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid var(--border)" }}>
+                      {["Nome", "Empresa", "Cargo", "Telefone", "E-mail", "Status", "Profissional"].map((h) => (
+                        <th key={h} style={{ padding: "6px 10px", textAlign: "left", color: "var(--muted)", fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contatos.map((c) => (
+                      <tr key={c.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                        <td style={{ padding: "7px 10px" }}>{c.nome || "—"}</td>
+                        <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{c.empresa || "—"}</td>
+                        <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{c.cargo || "—"}</td>
+                        <td style={{ padding: "7px 10px" }}>{c.telefone || "—"}</td>
+                        <td style={{ padding: "7px 10px" }}>{c.email || "—"}</td>
+                        <td style={{ padding: "7px 10px" }}>
+                          <span className="vx-chip" style={{ fontSize: 11 }}>{c.status}</span>
+                        </td>
+                        <td style={{ padding: "7px 10px", color: "var(--muted)", fontSize: 12 }}>
+                          {c.sellerId ? c.sellerId.slice(0, 8) + "..." : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {contatos.filter((c) => c.status === "disponivel").length > 0 && (
+                <button className="vx-btn vx-btn-sm" style={{ marginTop: 12, color: "var(--danger)" }} onClick={limpar}>
+                  Remover contatos disponíveis
+                </button>
+              )}
+            </>}
+    </div>
+  );
+}
+
+// ── Modelo de Verificação ────────────────────────────────────────────────────
+
+function VerificacaoCampanha({ campanha }) {
+  const tarefasCampanha = (() => {
+    try { return JSON.parse(campanha.tarefas || "[]"); } catch { return []; }
+  })();
+  const modelosSalvos = (() => {
+    try { return JSON.parse(campanha.modelosVerificacao || "{}"); } catch { return {}; }
+  })();
+  const evidenciasCampanha = (() => {
+    try { return JSON.parse(campanha.evidencias || "{}"); } catch { return {}; }
+  })();
+
+  const [modelos, setModelos] = useState(modelosSalvos);
+  const [salvando, setSalvando] = useState(false);
+  const [aviso, setAviso] = useState("");
+
+  const EVIDENCIA_POR_TIPO = {
+    agendamento: ["Registro no CRM", "Confirmação enviada ao lead"],
+    realizada: ["Gravação da chamada ou ata", "Confirmação do lead"],
+    venda: ["Comprovante / contrato assinado", "Registro no CRM"],
+    ligacao: ["Gravação de áudio (IA analisa)", "Log da ligação"],
+    follow: ["Mensagem ou e-mail enviado", "Resposta do lead (se houver)"],
+    pap: ["Foto no local", "Confirmação de geolocalização"],
+  };
+
+  const salvar = async () => {
+    setSalvando(true);
+    const r = await apiPatch(`/campaigns/${campanha.id}`, { modelosVerificacao: modelos });
+    setSalvando(false);
+    setAviso(r?.error ? r.error : "Modelos de verificação salvos.");
+  };
+
+  return (
+    <div className="vx-fade">
+      <div style={{ marginBottom: 20 }}>
+        <div className="vx-eyebrow">Qualidade e conformidade</div>
+        <h2 className="vx-disp" style={{ margin: "4px 0" }}>Modelo de Verificação</h2>
+        <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Defina como cada tipo de tarefa será verificada antes do pagamento.</p>
+      </div>
+
+      {aviso && <div className="vx-notice" style={{ marginBottom: 14 }}>{aviso}</div>}
+
+      {tarefasCampanha.length === 0
+        ? <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+            <p className="vx-mut">Esta campanha não tem tarefas configuradas. Edite a campanha para adicionar tarefas.</p>
+            <p className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>As evidências exigidas em cada tarefa aparecerão aqui para configuração.</p>
+          </div>
+        : <>
+            <div style={{ display: "grid", gap: 14 }}>
+              {tarefasCampanha.map((tarefa) => {
+                const tipo = tarefa.tipo || tarefa.acao;
+                const evidencias = evidenciasCampanha[tipo] || EVIDENCIA_POR_TIPO[tipo] || [];
+                const modeloAtual = modelos[tipo] || "manual";
+                return (
+                  <div key={tipo} className="vx-card" style={{ padding: 18 }}>
+                    <div className="vx-row" style={{ marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
+                      <div>
+                        <b style={{ fontSize: 15 }}>{ACOES[tipo]?.nome || tipo}</b>
+                        <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>
+                          Valor: {money(tarefa.valor || 0)} por execução
+                        </div>
+                      </div>
+                      <span className="vx-chip">{MODELOS_VERIFICACAO.find((m) => m.value === modeloAtual)?.label || modeloAtual}</span>
+                    </div>
+
+                    <div className="vx-label" style={{ marginBottom: 6 }}>Modelo de verificação</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                      {MODELOS_VERIFICACAO.map((m) => (
+                        <label key={m.value} style={{ display: "flex", alignItems: "flex-start", gap: 6, cursor: "pointer", fontSize: 13 }}>
+                          <input
+                            type="radio"
+                            name={`verificacao-${tipo}`}
+                            value={m.value}
+                            checked={modeloAtual === m.value}
+                            onChange={() => setModelos((prev) => ({ ...prev, [tipo]: m.value }))}
+                            style={{ marginTop: 2 }}
+                          />
+                          <span>
+                            <b>{m.label}</b>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>{m.desc}</div>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+
+                    {evidencias.length > 0 && (
+                      <div>
+                        <div className="vx-label" style={{ marginBottom: 6 }}>Evidências exigidas</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {evidencias.map((ev) => (
+                            <span key={ev} className="vx-chip" style={{ fontSize: 11 }}>
+                              <CheckCircle2 size={10} style={{ marginRight: 3 }} />{ev}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <button className="vx-btn vx-btn-primary" style={{ marginTop: 16 }} disabled={salvando} onClick={salvar}>
+              {salvando ? "Salvando..." : "Salvar modelos de verificação"}
+            </button>
+          </>}
+    </div>
+  );
 }
