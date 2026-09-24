@@ -55,21 +55,24 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) 
 
           return (
             <div key={c.id} className="vx-empresa-card">
-              <div className="vx-empresa-topo" style={{ background: `linear-gradient(120deg, ${c.cor}, transparent 78%)` }} />
+              <div className="vx-empresa-topo" style={{ background: c.cor || "var(--brand)" }} />
               <div className="vx-empresa-corpo">
                 <div className="vx-empresa-cabeca">
-                  <div className="vx-empresa-logo" style={{ borderColor: c.cor }}>
+                  <div className="vx-empresa-logo">
                     {c.logo
-                      ? <img src={c.logo} alt="" />
-                      : <span style={{ color: c.cor }}>{String(c.nome || "?").slice(0, 2).toUpperCase()}</span>}
+                      ? <img src={c.logo} alt={c.nome} />
+                      : <span>{String(c.nome || "?").slice(0, 2).toUpperCase()}</span>}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span className="vx-disp" style={{ fontSize: 19 }}>{c.nome}</span>
-                      <CompanyScoreChip nota={c.nota} />
+                      <span className="vx-disp" style={{ fontSize: 17 }}>{c.nome}</span>
                       {c.destaque && <span className="vx-badge vx-badge-amber">Destaque</span>}
                     </div>
-                    <div className="vx-mut" style={{ fontSize: 13, marginTop: 3 }}>{c.produto}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, flexWrap: "wrap" }}>
+                      <CompanyScoreChip nota={c.nota} />
+                      {c.segmento && <span className="vx-mut" style={{ fontSize: 12 }}>{c.segmento}</span>}
+                    </div>
+                    <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>{c.produto}</div>
                   </div>
                 </div>
 

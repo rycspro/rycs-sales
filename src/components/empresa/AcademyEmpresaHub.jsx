@@ -34,9 +34,9 @@ export default function AcademyEmpresaHub({ emp, aviso }) {
     <div className="vx-fade">
       <div className="vx-page-head" style={{ marginBottom: 28 }}>
         <div>
-          <div className="vx-eyebrow">Academy da empresa</div>
-          <h1 className="vx-disp">Ensine a RYCS</h1>
-          <p>Em aproximadamente 15 minutos, a RYCS organiza seu produto, ICP, argumentos, objeções e processo comercial.</p>
+          <div className="vx-eyebrow">Ambiente Academy</div>
+          <h1 className="vx-disp">Academy {emp?.nome}</h1>
+          <p>Ensine a RYCS sobre sua empresa e prepare sua equipe para vender melhor.</p>
         </div>
       </div>
 

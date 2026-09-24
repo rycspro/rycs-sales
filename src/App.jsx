@@ -1,6 +1,4 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { ler as lerArmazenamento, gravar as gravarArmazenamento } from "./lib/armazenamento.js";
-import { Moon, Sun } from "lucide-react";
 import { api } from "./lib/api.js";
 import { seed } from "./lib/seed.js";
 import { CSS } from "./styles.js";
@@ -70,17 +68,10 @@ export default function App() {
   const [toast, setToast] = useState("");
   const [environment, setEnvironment] = useState("production");
   const [nav, setNav] = useState({ vendedor: "empresas", empresa: previaQualificacao ? (previaEmpresa ? "painel" : "academy") : "painel", admin: "dashboard" });
-  // O escuro é a identidade primária da RYCS; o claro fica como preferência.
-  const [dark, setDark] = useState(() => lerArmazenamento("rycs-theme") !== "light");
-
-  // O fundo do <html> acompanha o tema. É ele que aparece na área do recorte
-  // do aparelho e no repique do rolar além do fim — deixar fixo pintaria uma
-  // faixa da cor errada nas bordas do celular.
   useEffect(() => {
-    const cor = dark ? "#070B14" : "#F4F7FC";
-    document.documentElement.style.background = cor;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", cor);
-  }, [dark]);
+    document.documentElement.style.background = "#F4F7FC";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#F4F7FC");
+  }, []);
 
   const userRef = useRef(null);
 
@@ -92,10 +83,6 @@ export default function App() {
   // passa por cadastro e login antes de conseguir resgatar, e a URL se perde
   // no caminho.
   useEffect(() => { if (rota.tipo === "trial" && rota.token) guardarConvite(rota.token); }, [rota]);
-
-  const toggleDark = () => {
-    setDark((d) => { gravarArmazenamento("rycs-theme", d ? "light" : "dark"); return !d; });
-  };
 
   const carregarState = useCallback(async (usr) => {
     const u = usr || userRef.current;
@@ -200,12 +187,12 @@ export default function App() {
   const aba = nav[role];
   const setAba = (k) => setNav((n) => ({ ...n, [role]: k }));
 
-  if (!loaded) return <div className={`vx-app${dark ? " vx-dark" : ""}`}><style>{CSS}</style></div>;
+  if (!loaded) return <div className="vx-app"><style>{CSS}</style></div>;
 
   const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
 
   if (!user) return (
-    <div className={`vx-app${dark ? " vx-dark" : ""}`}>
+    <div className="vx-app">
       <style>{CSS}</style>
       {environment === "beta" && <div className="vx-beta-login-badge">AMBIENTE BETA — DADOS FICTÍCIOS</div>}
       {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial beta={environment === "beta"} />
@@ -227,7 +214,7 @@ export default function App() {
   const roleLabel = { vendedor: "Vendedor", empresa: "Empresa", admin: "Plataforma" }[role] || "";
 
   return (
-    <div className={`vx-app${dark ? " vx-dark" : ""}`}>
+    <div className="vx-app">
       <style>{CSS}</style>
 
       <header className="vx-topbar">
@@ -239,9 +226,6 @@ export default function App() {
             {environment === "beta" && <span className="vx-beta-badge">AMBIENTE BETA — DADOS FICTÍCIOS</span>}
             <span className="vx-chip">{roleLabel} · {user.email}</span>
             <Notificacoes items={db.notifications || []} onUpdate={recarregar} />
-            <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={toggleDark} style={{ padding: "7px 8px" }}>
-              {dark ? <Sun size={17} strokeWidth={2.2} /> : <Moon size={17} strokeWidth={2.2} />}
-            </button>
             <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={logout}>Sair</button>
           </div>
         </div>

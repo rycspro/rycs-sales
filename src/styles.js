@@ -45,35 +45,7 @@ body{-webkit-text-size-adjust:100%}
   transition:background .25s,color .25s;
 }
 
-.vx-app.vx-dark{
-  --bg:#070B14;
-  /* O brilho é o que dá profundidade ao painel — sem ele o escuro fica chapado. */
-  --bg-glow:radial-gradient(1100px 620px at 78% -12%, rgba(76,125,255,.20), transparent 62%),
-            radial-gradient(820px 520px at 4% 8%, rgba(56,92,196,.13), transparent 60%);
-  --surface:#0E1524; --surface-2:#141D30; --surface-3:#1B2740;
-  --border:#1E2A44; --border-strong:#2A3958;
-  --ink:#EDF2FB; --ink-2:#B7C4DC; --muted:#8496B4; --muted-2:#5D6E8D;
-  --brand:#5B8CFF; --brand-600:#7BA4FF; --brand-50:rgba(91,140,255,.13); --brand-100:rgba(91,140,255,.22);
-  --navy:#16233C; --navy-600:#0A1120;
-  --amber:#F0B45E; --amber-50:rgba(240,180,94,.11); --amber-100:rgba(240,180,94,.18);
-  --red:#FF8A7A; --red-50:rgba(255,138,122,.10); --red-100:rgba(255,138,122,.18);
-  --indigo:#9AA6FF; --indigo-50:rgba(154,166,255,.11); --indigo-100:rgba(154,166,255,.18);
-  --topbar-bg:rgba(9,14,25,.78);
-  --shadow-card:0 1px 2px rgba(0,0,0,.34),0 10px 26px -14px rgba(0,0,0,.7);
-  --shadow-pop:0 24px 60px -18px rgba(0,0,0,.85);
-  --ring:0 0 0 3px rgba(91,140,255,.28);
-  background:var(--bg);
-  background-image:var(--bg-glow);
-  background-attachment:fixed;
-}
-
-/* A logo é um PNG de fundo branco. No escuro, inverter a luminosidade e girar
-   o matiz de volta apaga o fundo e preserva o azul da marca — evita o
-   retângulo branco recortado no topo. */
 .vx-logo{display:block;object-fit:contain;mix-blend-mode:multiply}
-/* Invertido, o fundo branco vira preto; o blend "lighten" então o descarta
-   contra a superfície escura, deixando só a marca. */
-.vx-dark .vx-logo{filter:invert(1) hue-rotate(180deg) saturate(1.2) brightness(1.1);mix-blend-mode:lighten}
 
 .vx-disp{font-family:'Space Grotesk','Inter',sans-serif;font-weight:600;letter-spacing:-.015em}
 .vx-mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
@@ -171,7 +143,7 @@ body{-webkit-text-size-adjust:100%}
 .vx-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 6px}
 .vx-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--radius-pill)}
 .vx-badge-brand{background:var(--brand-100);color:var(--brand)}
-.vx-badge-amber{background:var(--amber-100);color:var(--amber)}
+.vx-badge-amber{background:var(--amber-100);color:#7C3B0A}
 .vx-badge-red{background:var(--red-100);color:var(--red)}
 .vx-badge-indigo{background:var(--indigo-100);color:var(--indigo)}
 .vx-badge-muted{background:var(--surface-2);color:var(--muted)}
@@ -183,7 +155,7 @@ body{-webkit-text-size-adjust:100%}
 .vx-page-head h1{font-size:26px;margin:4px 0 3px}.vx-page-head p{font-size:13px;color:var(--muted);margin:0}
 .vx-filterbar{display:grid;grid-template-columns:repeat(2,minmax(130px,1fr));gap:7px;flex:1;max-width:620px}.vx-filterbar .vx-input{padding:8px 10px;font-size:12px}
 .vx-notice{padding:11px 13px;border-radius:var(--radius-sm);font-size:12.5px;border:1px solid var(--border)}
-.vx-notice-amber{background:var(--amber-50);border-color:var(--amber-100);color:var(--amber)}
+.vx-notice-amber{background:var(--amber-50);border-color:var(--amber-100);color:#7C3B0A}
 .vx-btn-ai{border-color:var(--indigo-100);color:var(--indigo);background:linear-gradient(135deg,var(--indigo-50),var(--brand-50))}
 .vx-btn-ai:hover{border-color:var(--indigo);background:var(--indigo-50)}
 .vx-btn-ai-hero{background:linear-gradient(135deg,var(--indigo),var(--brand));border-color:transparent;color:#fff;font-weight:600}
@@ -262,7 +234,7 @@ body{-webkit-text-size-adjust:100%}
 @media(max-width:520px){.vx-campaign-team-table{grid-template-columns:1fr}.vx-profile-stats{grid-template-columns:repeat(2,1fr)}.vx-professional-identity{grid-template-columns:48px minmax(0,1fr)}.vx-professional-identity>.vx-campaign-person-status{grid-column:1/-1}}
 
 /* Performance, alertas e financeiro da campanha */
-.vx-alerts-card{padding:18px;margin-top:13px}.vx-alerts-card h2{font-size:18px;margin:3px 0 11px}.vx-alert-row{display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border-radius:9px;background:var(--surface-2);font-size:11.5px;margin-top:6px}.vx-alert-row.is-positive{color:#22A06B;background:rgba(34,160,107,.1)}.vx-alert-row.is-atencao{color:var(--amber);background:var(--amber-50)}.vx-alert-row.is-critico{color:var(--red);background:var(--red-50)}.vx-alert-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;margin-top:5px}
+.vx-alerts-card{padding:18px;margin-top:13px}.vx-alerts-card h2{font-size:18px;margin:3px 0 11px}.vx-alert-row{display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border-radius:9px;background:var(--surface-2);font-size:11.5px;margin-top:6px}.vx-alert-row.is-positive{color:#22A06B;background:rgba(34,160,107,.1)}.vx-alert-row.is-atencao{color:#7C3B0A;background:var(--amber-50)}.vx-alert-row.is-critico{color:var(--red);background:var(--red-50)}.vx-alert-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;margin-top:5px}
 .vx-performance-chart{min-width:0}.vx-chart-toggles{display:flex;gap:5px;flex-wrap:wrap;margin:12px 0}.vx-chart-toggles button{appearance:none;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:5px 8px;font:600 9.5px Inter;cursor:pointer;display:inline-flex;align-items:center;gap:5px;opacity:.55}.vx-chart-toggles button[data-on="1"]{opacity:1;border-color:var(--border-strong);color:var(--ink)}.vx-chart-toggles i{width:7px;height:7px;border-radius:50%}.vx-performance-chart svg{display:block;width:100%;height:230px;overflow:visible}.vx-chart-gridline{stroke:var(--border);stroke-width:1;vector-effect:non-scaling-stroke}.vx-chart-axis{display:flex;justify-content:space-between;color:var(--muted);font-size:9px;margin-top:2px}
 .vx-finance-stack{display:flex;flex-direction:column;gap:13px}.vx-finance-budget{margin:14px 0}.vx-finance-budget .vx-row{font-size:11px;margin-bottom:7px}.vx-finance-budget .vx-row span{color:var(--muted)}.vx-finance-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.vx-finance-kpis>div{padding:10px;background:var(--surface-2);border-radius:9px}.vx-finance-kpis span,.vx-finance-kpis b{display:block}.vx-finance-kpis span{font-size:9.5px;color:var(--muted)}.vx-finance-kpis b{font-size:12px;margin-top:3px;overflow:hidden;text-overflow:ellipsis}.vx-cost-table{border:1px solid var(--border);border-radius:11px;overflow:hidden}.vx-cost-table>div{display:grid;grid-template-columns:minmax(140px,1fr) repeat(3,minmax(90px,.55fr));gap:8px;padding:9px 11px;border-bottom:1px solid var(--border);font-size:11px}.vx-cost-table>div:first-child{background:var(--surface-2);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase}.vx-cost-table>div:last-child{border-bottom:0}
 @media(max-width:620px){.vx-campaign-periods{flex-wrap:wrap}.vx-custom-dates{width:100%}.vx-finance-kpis{grid-template-columns:1fr 1fr}.vx-performance-chart svg{height:190px}.vx-cost-table{border:0;display:grid;gap:8px}.vx-cost-table>div:first-child{display:none}.vx-cost-table>div:not(:first-child){border:1px solid var(--border);border-radius:10px;display:grid;grid-template-columns:1fr 1fr;padding:11px}.vx-cost-table>div b{grid-column:1/-1;padding-bottom:6px;border-bottom:1px solid var(--border)}.vx-cost-table>div span::before{content:attr(data-label);display:block;color:var(--muted);font-size:8px;text-transform:uppercase;margin-bottom:2px}}
@@ -306,17 +278,17 @@ body{-webkit-text-size-adjust:100%}
 @media(max-width:860px){.vx-course-layout{grid-template-columns:1fr}}
 /* --- Card de empresa: vitrine premium -------------------------------- */
 .vx-empresa-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-  overflow:hidden;box-shadow:var(--shadow-card);transition:border-color .2s,transform .2s,box-shadow .2s}
+  overflow:hidden;box-shadow:var(--shadow-card);transition:border-color .2s,transform .2s,box-shadow .2s;display:flex;flex-direction:column}
 .vx-empresa-card:hover{border-color:var(--brand-200);transform:translateY(-2px);box-shadow:0 8px 28px -8px rgba(37,99,235,.18)}
-.vx-empresa-topo{height:72px;background:var(--grad-brand);position:relative;overflow:hidden}
-.vx-empresa-topo::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent)}
-.vx-empresa-corpo{padding:0 18px 20px}
-.vx-empresa-cabeca{display:flex;gap:13px;align-items:flex-end;margin-top:-32px;margin-bottom:14px}
-.vx-empresa-logo{width:64px;height:64px;border-radius:16px;background:var(--surface);border:3px solid var(--surface);
+.vx-empresa-topo{height:5px;flex:none}
+.vx-empresa-corpo{padding:18px 18px 20px;display:flex;flex-direction:column;flex:1}
+.vx-empresa-cabeca{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.vx-empresa-logo{width:56px;height:56px;border-radius:14px;
   display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;
-  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;box-shadow:0 4px 14px -4px rgba(11,18,32,.2);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;
+  box-shadow:0 2px 8px -2px rgba(11,18,32,.14);
   background:linear-gradient(135deg,var(--brand-50),var(--indigo-50));color:var(--brand)}
-.vx-empresa-logo img{width:100%;height:100%;object-fit:cover;border-radius:14px}
+.vx-empresa-logo img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .vx-empresa-ficha{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:12px;
   padding:13px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .vx-empresa-ficha b{display:block;font-size:13.5px;margin-top:2px}
