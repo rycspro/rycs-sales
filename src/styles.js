@@ -105,18 +105,25 @@ body{-webkit-text-size-adjust:100%}
 @media (min-width:900px){
   .vx-content{padding:30px 30px 56px;max-width:none}
   .vx-body{display:grid;grid-template-columns:236px 1fr}
-  .vx-sidebar{display:flex;flex-direction:column;gap:3px;padding:22px 14px;border-right:1px solid var(--border);
-    position:sticky;top:60px;height:calc(100vh - 60px);align-self:start}
+  .vx-sidebar{display:flex;flex-direction:column;gap:2px;padding:20px 12px;border-right:1px solid var(--border);
+    position:sticky;top:60px;height:calc(100vh - 60px);align-self:start;overflow-y:auto;scrollbar-width:none}
+  .vx-sidebar::-webkit-scrollbar{display:none}
   .vx-bottomnav{display:none}
   .vx-ai-trigger{bottom:22px}
   .vx-ai-panel{bottom:72px}
-  .vx-sidebtn{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:var(--radius-sm);border:1px solid transparent;
-    background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left;position:relative;transition:.16s}
+  .vx-sidebar-section{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);
+    padding:14px 13px 5px;pointer-events:none;user-select:none}
+  .vx-sidebtn{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:var(--radius-sm);border:1px solid transparent;
+    background:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left;position:relative;transition:.16s}
   .vx-sidebtn:hover{background:var(--surface-2);color:var(--ink)}
   .vx-sidebtn[data-on="1"]{background:var(--brand-50);color:var(--brand);border-color:var(--brand-100)}
+  .vx-sidebtn[data-on="1"]::before{content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+    width:3px;height:60%;border-radius:0 3px 3px 0;background:var(--brand)}
   .vx-sidedot{margin-left:auto;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:var(--red);
     color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 }
+.vx-navbar-indicator{position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:24px;height:3px;border-radius:0 0 3px 3px;background:var(--brand)}
 
 /* primitives */
 .vx-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}

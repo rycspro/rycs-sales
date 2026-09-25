@@ -1,18 +1,27 @@
 import { NAV } from "../lib/constants.js";
 
 export default function Shell({ role, active, onSelect, counts, beta, children }) {
-  // role pode chegar vazio na janela entre o login e o carregamento do state.
-  const items = (NAV[role] || []).filter((item) => item.key !== "beta" || beta);
+  const allItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
+  // bottom nav shows only key items (no sections), max 5 for mobile
+  const navItems = allItems.filter((item) => item.key);
+  const bottomItems = navItems.slice(0, 5);
+
   return (
     <div className="vx-body">
       <aside className="vx-sidebar">
-        {items.map(({ key, label, Icon }) => (
-          <button key={key} className="vx-sidebtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
-            <Icon size={16} strokeWidth={2.3} />
-            {label}
-            {counts?.[key] > 0 && <span className="vx-sidedot">{counts[key]}</span>}
-          </button>
-        ))}
+        {allItems.map((item, i) => {
+          if (item.section) {
+            return <div key={`sec-${i}`} className="vx-sidebar-section">{item.section}</div>;
+          }
+          const { key, label, Icon } = item;
+          return (
+            <button key={key} className="vx-sidebtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
+              <Icon size={16} strokeWidth={2.3} />
+              {label}
+              {counts?.[key] > 0 && <span className="vx-sidedot">{counts[key]}</span>}
+            </button>
+          );
+        })}
       </aside>
 
       <div className="vx-content">
@@ -26,8 +35,9 @@ export default function Shell({ role, active, onSelect, counts, beta, children }
       </div>
 
       <nav className="vx-bottomnav">
-        {items.map(({ key, label, Icon }) => (
+        {bottomItems.map(({ key, label, Icon }) => (
           <button key={key} className="vx-navbtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
+            {active === key && <span className="vx-navbar-indicator" />}
             {counts?.[key] > 0 && <span className="vx-navdot">{counts[key]}</span>}
             <Icon size={19} strokeWidth={2.3} />
             <span>{label}</span>
