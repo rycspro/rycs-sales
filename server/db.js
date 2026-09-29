@@ -920,6 +920,11 @@ adicionarColuna("sellers", "regioes", "TEXT DEFAULT '[]'");
 adicionarColuna("sellers", "skills", "TEXT DEFAULT '[]'");
 adicionarColuna("sellers", "disponibilidade", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "cadastroCompletadoNotificado", "INTEGER DEFAULT 0");
+adicionarColuna("companies", "diaFechamento", "INTEGER");
+adicionarColuna("companies", "diaPagamento", "INTEGER");
+adicionarColuna("companies", "modalidadePagamento", "TEXT DEFAULT 'pre'");
+adicionarColuna("companies", "limiteCredito", "REAL DEFAULT 0");
+adicionarColuna("submissions", "dataLiberacao", "INTEGER");
 adicionarColuna("submissions", "leadId", "TEXT");
 adicionarColuna("submissions", "idempotencyKey", "TEXT");
 adicionarColuna("submissions", "proofHash", "TEXT DEFAULT ''");
@@ -1205,6 +1210,42 @@ function seedAdmin() {
   }
 }
 seedAdmin();
+
+// INNER Energia — empresa parceira com ciclo especial de pagamento.
+// Fechamento dia 30 · Repasse dia 15 do mês seguinte.
+(function seedInnerEnergia() {
+  const existente = db.prepare("SELECT id FROM companies WHERE nome = 'INNER Energia'").get();
+  if (existente) return;
+
+  const companyId = uid();
+  const userId = uid();
+
+  db.prepare(`
+    INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor,
+      totalAportado, criadoEm, comissoes, curso, aportes, statusCadastro, assinatura,
+      segmento, diaFechamento, diaPagamento, modalidadePagamento, limiteCredito)
+    VALUES (?, ?, ?, ?, ?, 'saldo', 0, 0, 20, '#F97316',
+      0, ?, '{}', '[]', '[]', 'aprovada', 'pro',
+      'Energia', 30, 15, 'pos', 50000)
+  `).run(
+    companyId,
+    "INNER Energia",
+    "Comercialização de energia elétrica e soluções em eficiência energética",
+    "Variável conforme contrato",
+    "Empresas com alto consumo energético e gestores de facilities",
+    agora()
+  );
+
+  // Conta empresa vinculada
+  const emailEmpresa = "empresa@innerenergia.com.br";
+  const senhaTemp = "Inner@2025";
+  db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, ?)")
+    .run(userId, emailEmpresa, bcrypt.hashSync(senhaTemp, 10), companyId, agora());
+
+  console.log(`[seed] INNER Energia criada — companyId: ${companyId}`);
+  console.log(`[seed] Login empresa INNER: ${emailEmpresa} | senha: ${senhaTemp}`);
+  console.log("[seed] Modalidade: pós-pago | Ciclo: fechamento dia 30 · repasse dia 15 do mês seguinte");
+})();
 
 export default db;
 export { uid, agora };

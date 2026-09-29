@@ -1,16 +1,147 @@
 import { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Plus, CreditCard, Zap } from "lucide-react";
 import { money, dataCurta, agora } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
-import { apiPatch } from "../../lib/api.js";
+import { apiPatch, api } from "../../lib/api.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
 import { DossieEmpresa } from "./Dossie.jsx";
 import CobrancaEmpresa from "./CobrancaEmpresa.jsx";
+
+function ModalCriarEmpresa({ onClose, aviso, onCriada }) {
+  const [form, setForm] = useState({ nome: "", produto: "", email: "", senha: "", modalidadePagamento: "pre", diaFechamento: "", diaPagamento: "", limiteCredito: "" });
+  const [criada, setCriada] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const criar = async () => {
+    if (!form.nome || !form.produto || !form.email) return aviso("Nome, produto e e-mail são obrigatórios.");
+    setLoading(true);
+    const body = { ...form, diaFechamento: form.diaFechamento ? Number(form.diaFechamento) : undefined, diaPagamento: form.diaPagamento ? Number(form.diaPagamento) : undefined, limiteCredito: form.limiteCredito ? Number(form.limiteCredito) : undefined };
+    const r = await api("/admin/companies", body);
+    setLoading(false);
+    if (!r || r.error) return aviso(r?.error || "Erro ao criar empresa.");
+    setCriada(r);
+    onCriada?.(r);
+  };
+
+  if (criada) return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+      <div className="vx-card" style={{ width: "min(480px,95vw)", padding: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <Zap size={20} color="var(--brand)" />
+          <b style={{ fontSize: 16 }}>Empresa criada com sucesso</b>
+        </div>
+        <div className="vx-grid vx-g2" style={{ fontSize: 13.5, marginBottom: 18 }}>
+          <div><span className="vx-mut">Login (e-mail)</span><div style={{ fontWeight: 600 }}>{criada.email}</div></div>
+          <div><span className="vx-mut">Senha temporária</span><div style={{ fontWeight: 700, color: "var(--brand)", fontFamily: "monospace" }}>{criada.senhaTemporaria}</div></div>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 20 }}>Compartilhe estas credenciais com a empresa. Ela pode alterar a senha no primeiro acesso.</div>
+        <button className="vx-btn vx-btn-primary" onClick={onClose}>Fechar</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+      <div className="vx-card" style={{ width: "min(500px,95vw)", padding: 24, maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+          <b style={{ fontSize: 16 }}>Nova empresa</b>
+          <button className="vx-btn vx-btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="vx-grid" style={{ gap: 10 }}>
+          <div><label className="vx-label">Nome da empresa *</label><input className="vx-input" value={form.nome} onChange={set("nome")} /></div>
+          <div><label className="vx-label">Produto / serviço *</label><input className="vx-input" value={form.produto} onChange={set("produto")} /></div>
+          <div><label className="vx-label">E-mail de acesso *</label><input className="vx-input" type="email" value={form.email} onChange={set("email")} /></div>
+          <div><label className="vx-label">Senha (deixe em branco para gerar)</label><input className="vx-input" type="text" value={form.senha} onChange={set("senha")} placeholder="Gerada automaticamente" /></div>
+          <hr className="vx-sep" />
+          <div><label className="vx-label">Modalidade de pagamento</label>
+            <select className="vx-input" value={form.modalidadePagamento} onChange={set("modalidadePagamento")}>
+              <option value="pre">Pré-pago (saldo antes das campanhas)</option>
+              <option value="pos">Pós-pago (deposita depois)</option>
+            </select>
+          </div>
+          {form.modalidadePagamento === "pos" && (
+            <div><label className="vx-label">Limite de crédito (R$)</label><input className="vx-input" type="number" value={form.limiteCredito} onChange={set("limiteCredito")} placeholder="0 = ilimitado" /></div>
+          )}
+          <div className="vx-grid vx-g2">
+            <div><label className="vx-label">Dia de fechamento</label><input className="vx-input" type="number" min="1" max="31" value={form.diaFechamento} onChange={set("diaFechamento")} placeholder="Ex: 30" /></div>
+            <div><label className="vx-label">Dia de repasse</label><input className="vx-input" type="number" min="1" max="31" value={form.diaPagamento} onChange={set("diaPagamento")} placeholder="Ex: 15" /></div>
+          </div>
+        </div>
+        <div style={{ marginTop: 20, display: "flex", gap: 8 }}>
+          <button className="vx-btn vx-btn-primary" onClick={criar} disabled={loading}>{loading ? "Criando…" : "Criar empresa"}</button>
+          <button className="vx-btn" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PainelPagamento({ empresa, aviso, onClose }) {
+  const [form, setForm] = useState({ modalidadePagamento: empresa.modalidadePagamento || "pre", diaFechamento: empresa.diaFechamento || "", diaPagamento: empresa.diaPagamento || "", limiteCredito: empresa.limiteCredito || "" });
+  const [loading, setLoading] = useState(false);
+  const [liberando, setLiberando] = useState(false);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const salvar = async () => {
+    setLoading(true);
+    const body = { modalidadePagamento: form.modalidadePagamento, diaFechamento: form.diaFechamento ? Number(form.diaFechamento) : null, diaPagamento: form.diaPagamento ? Number(form.diaPagamento) : null, limiteCredito: Number(form.limiteCredito) || 0 };
+    const r = await apiPatch(`/admin/companies/${empresa.id}/pagamento`, body);
+    setLoading(false);
+    if (!r?.ok) return aviso(r?.error || "Erro ao salvar.");
+    aviso("Configuração salva.");
+    onClose?.();
+  };
+
+  const liberarCiclo = async () => {
+    setLiberando(true);
+    const r = await api(`/admin/companies/${empresa.id}/ciclo/liberar`, {});
+    setLiberando(false);
+    if (!r?.ok) return aviso(r?.error || "Erro ao liberar ciclo.");
+    aviso(`${r.liberadas} ação(ões) liberadas — R$ ${r.valorTotal?.toFixed(2)} repassados aos profissionais.`);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+      <div className="vx-card" style={{ width: "min(460px,95vw)", padding: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}><CreditCard size={16} color="var(--brand)" /><b style={{ fontSize: 15 }}>Pagamento · {empresa.nome}</b></div>
+          <button className="vx-btn vx-btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="vx-grid" style={{ gap: 10 }}>
+          <div><label className="vx-label">Modalidade</label>
+            <select className="vx-input" value={form.modalidadePagamento} onChange={set("modalidadePagamento")}>
+              <option value="pre">Pré-pago</option>
+              <option value="pos">Pós-pago</option>
+            </select>
+          </div>
+          {form.modalidadePagamento === "pos" && (
+            <div><label className="vx-label">Limite de crédito (R$) — 0 = ilimitado</label><input className="vx-input" type="number" value={form.limiteCredito} onChange={set("limiteCredito")} /></div>
+          )}
+          <div className="vx-grid vx-g2">
+            <div><label className="vx-label">Dia de fechamento</label><input className="vx-input" type="number" min="1" max="31" value={form.diaFechamento} onChange={set("diaFechamento")} /></div>
+            <div><label className="vx-label">Dia de repasse</label><input className="vx-input" type="number" min="1" max="31" value={form.diaPagamento} onChange={set("diaPagamento")} /></div>
+          </div>
+        </div>
+        <div style={{ marginTop: 20, display: "flex", gap: 8 }}>
+          <button className="vx-btn vx-btn-primary" onClick={salvar} disabled={loading}>{loading ? "Salvando…" : "Salvar"}</button>
+          {(empresa.diaFechamento || form.diaFechamento) && (
+            <button className="vx-btn" onClick={liberarCiclo} disabled={liberando}>{liberando ? "Liberando…" : "Processar repasse"}</button>
+          )}
+          <button className="vx-btn" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function EmpresasAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
   const [expandido, setExpandido] = useState(null);
   const [empresaCobranca, setEmpresaCobranca] = useState(null);
+  const [criandoEmpresa, setCriandoEmpresa] = useState(false);
+  const [empresaPagamento, setEmpresaPagamento] = useState(null);
 
   const empresas = useMemo(() => {
     let list = db.companies.map((c) => {
@@ -58,9 +189,24 @@ export default function EmpresasAdmin({ db, up, aviso }) {
 
   return (
     <div className="vx-fade">
+      {criandoEmpresa && (
+        <ModalCriarEmpresa
+          aviso={aviso}
+          onClose={() => setCriandoEmpresa(false)}
+          onCriada={(r) => up?.((d) => ({ companies: [...d.companies, { id: r.companyId, nome: r.email, statusCadastro: "aprovada", saldo: 0, totalAportado: 0, criadoEm: Date.now() }] }))}
+        />
+      )}
+      {empresaPagamento && (
+        <PainelPagamento empresa={empresaPagamento} aviso={aviso} onClose={() => setEmpresaPagamento(null)} />
+      )}
       <div className="vx-row" style={{ marginBottom: 16 }}>
-        <div className="vx-disp" style={{ fontSize: 22 }}>Empresas</div>
-        <span className="vx-badge vx-badge-muted">{empresas.length}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="vx-disp" style={{ fontSize: 22 }}>Empresas</div>
+          <span className="vx-badge vx-badge-muted">{empresas.length}</span>
+        </div>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setCriandoEmpresa(true)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Plus size={14} /> Nova empresa
+        </button>
       </div>
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 16, fontSize: 13 }}>
@@ -90,6 +236,8 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <b style={{ fontSize: 15 }}>{c.nome}</b>
                     {c.destaque && <span className="vx-badge vx-badge-amber">Destaque</span>}
+                    {c.modalidadePagamento === "pos" && <span className="vx-badge" style={{ background: "#fef3c7", color: "#92400e" }}>Pós-pago</span>}
+                    {c.diaFechamento && <span className="vx-badge vx-badge-muted">Ciclo D{c.diaFechamento}/P{c.diaPagamento}</span>}
                     <span className={`vx-badge ${c.statusCadastro === "aprovada" ? "vx-badge-brand" : c.statusCadastro === "em_analise" ? "vx-badge-amber" : "vx-badge-muted"}`}>{({ rascunho: "Rascunho", em_analise: "Em análise", aprovada: "Aprovada", suspensa: "Suspensa" })[c.statusCadastro] || "Rascunho"}</span>
                   </div>
                   <div className="vx-mut" style={{ fontSize: 12 }}>{c.profissionais} profissionais · {c.liberados} ações liberadas</div>
@@ -131,9 +279,12 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                   )}
 
                   <hr className="vx-sep" />
-                  <div style={{ marginBottom: 12 }}>
+                  <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
                     <button className="vx-btn vx-btn-sm" onClick={() => setEmpresaCobranca(c)}>
                       Cobrança e Acesso
+                    </button>
+                    <button className="vx-btn vx-btn-sm" onClick={() => setEmpresaPagamento(c)} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <CreditCard size={13} /> Pagamento
                     </button>
                   </div>
                   <DossieEmpresa companyId={c.id} />

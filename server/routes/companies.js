@@ -1,5 +1,7 @@
 import { Router } from "express";
-import db from "../db.js";
+import db, { uid, agora } from "../db.js";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { camposPendentesEmpresa, STATUS_EMPRESA } from "../../shared/empresa.js";
 import { ACOES } from "../../shared/acoes.js";
 import { normalizarRegras, PADRAO, SEMPRE_MANUAL, VERSAO_REGRAS } from "../../shared/aprovacoes.js";
@@ -387,6 +389,93 @@ router.post("/companies/:id/logo", (req, res) => {
   const dataUri = `data:${mimetype};base64,${base64}`;
   db.prepare("UPDATE companies SET logo = ? WHERE id = ?").run(dataUri, req.params.id);
   res.json({ ok: true, logo: dataUri, avaliacao });
+});
+
+// ─── ADMIN: Criar empresa com login ───────────────────────────────────────────
+router.post("/admin/companies", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const { nome, produto, email, senha, diaFechamento, diaPagamento, modalidadePagamento, limiteCredito } = req.body;
+  if (!nome || !produto || !email) return res.status(400).json({ error: "nome, produto e email são obrigatórios" });
+
+  const emailNorm = email.toLowerCase().trim();
+  if (db.prepare("SELECT id FROM users WHERE email = ?").get(emailNorm))
+    return res.status(409).json({ error: "E-mail já cadastrado" });
+
+  const senhaFinal = senha || randomBytes(8).toString("base64url");
+  const companyId = uid();
+  const userId = uid();
+
+  db.prepare(`
+    INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor,
+      totalAportado, criadoEm, comissoes, curso, aportes, statusCadastro, assinatura,
+      diaFechamento, diaPagamento, modalidadePagamento, limiteCredito)
+    VALUES (?, ?, ?, '', '', 'saldo', 0, 0, 20, '#2563EB',
+      0, ?, '{}', '[]', '[]', 'aprovada', 'pro',
+      ?, ?, ?, ?)
+  `).run(companyId, nome, produto, agora(),
+    diaFechamento || null, diaPagamento || null,
+    modalidadePagamento || "pre", limiteCredito || 0);
+
+  db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, ?)")
+    .run(userId, emailNorm, bcrypt.hashSync(senhaFinal, 10), companyId, agora());
+
+  res.json({ ok: true, companyId, userId, email: emailNorm, senhaTemporaria: senhaFinal });
+});
+
+// ─── ADMIN: Configurar ciclo/modalidade de pagamento de uma empresa ────────────
+router.patch("/admin/companies/:id/pagamento", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const empresa = db.prepare("SELECT id FROM companies WHERE id = ?").get(req.params.id);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  const { diaFechamento, diaPagamento, modalidadePagamento, limiteCredito } = req.body;
+  const sets = [];
+  const vals = [];
+
+  if (diaFechamento !== undefined) { sets.push("diaFechamento = ?"); vals.push(diaFechamento || null); }
+  if (diaPagamento !== undefined) { sets.push("diaPagamento = ?"); vals.push(diaPagamento || null); }
+  if (modalidadePagamento !== undefined) {
+    if (!["pre", "pos"].includes(modalidadePagamento)) return res.status(400).json({ error: "modalidadePagamento deve ser 'pre' ou 'pos'" });
+    sets.push("modalidadePagamento = ?"); vals.push(modalidadePagamento);
+  }
+  if (limiteCredito !== undefined) { sets.push("limiteCredito = ?"); vals.push(Number(limiteCredito) || 0); }
+
+  if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
+  vals.push(req.params.id);
+  db.prepare(`UPDATE companies SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+  res.json({ ok: true });
+});
+
+// ─── ADMIN: Processar ciclo de pagamento (liberar saldo para profissionais) ────
+router.post("/admin/companies/:id/ciclo/liberar", async (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const empresa = db.prepare("SELECT id, nome, diaFechamento, diaPagamento FROM companies WHERE id = ?").get(req.params.id);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  if (!empresa.diaFechamento || !empresa.diaPagamento)
+    return res.status(400).json({ error: "Esta empresa não possui ciclo de pagamento configurado." });
+
+  const { liberarCicloEmpresa } = await import("../services/financeiro.js");
+  const resultado = liberarCicloEmpresa(empresa.id);
+  res.json({ ok: true, empresa: empresa.nome, ...resultado });
+});
+
+// ─── ADMIN: Consultar configuração de pagamento de uma empresa ─────────────────
+router.get("/admin/companies/:id/pagamento", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const empresa = db.prepare(
+    "SELECT id, nome, modalidadePagamento, diaFechamento, diaPagamento, limiteCredito FROM companies WHERE id = ?"
+  ).get(req.params.id);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  const pendenteCiclo = db.prepare(
+    "SELECT COUNT(*) total, COALESCE(SUM(liquido), 0) valor FROM submissions WHERE companyId = ? AND status = 'liberado' AND dataLiberacao IS NOT NULL"
+  ).get(req.params.id);
+
+  res.json({ ...empresa, pendenteCiclo });
 });
 
 export default router;
