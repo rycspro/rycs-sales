@@ -2,6 +2,25 @@ import { Router } from "express";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
+import { emailCadastroCompletadoAdmin } from "../services/email.js";
+
+const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusiness.com.br";
+
+function cadastroCompleto(s) {
+  if (!s.foto || !s.titulo || !s.bio || !s.disponibilidade || !s.cidade) return false;
+  for (const campo of ["segmentos", "modalidades", "skills"]) {
+    let lista = []; try { lista = JSON.parse(s[campo] || "[]"); } catch {}
+    if (!lista.length) return false;
+  }
+  return true;
+}
+
+function notificarCadastroCompleto(sellerId) {
+  const s = db.prepare("SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills, cadastroCompletadoNotificado FROM sellers WHERE id = ?").get(sellerId);
+  if (!s || !cadastroCompleto(s) || s.cadastroCompletadoNotificado) return;
+  db.prepare("UPDATE sellers SET cadastroCompletadoNotificado = 1 WHERE id = ?").run(sellerId);
+  emailCadastroCompletadoAdmin({ nomeProfissional: s.nome, emailProfissional: s.email, adminEmail: ADMIN_NOTIF_EMAIL });
+}
 
 const router = Router();
 
@@ -157,6 +176,7 @@ router.patch("/sellers/:id", (req, res) => {
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
   vals.push(id);
   db.prepare(`UPDATE sellers SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+  notificarCadastroCompleto(id);
   res.json({ ok: true });
 });
 
@@ -264,7 +284,7 @@ router.post("/sellers/:id/foto", (req, res) => {
   const dataUri = `data:${mimetype};base64,${base64}`;
   db.prepare("UPDATE sellers SET foto = ?, fotoScore = ? WHERE id = ?")
     .run(dataUri, avaliacao.score, req.params.id);
-
+  notificarCadastroCompleto(req.params.id);
   res.json({ ok: true, avaliacao, foto: dataUri });
 });
 

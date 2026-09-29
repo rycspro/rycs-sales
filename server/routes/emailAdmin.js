@@ -1,6 +1,6 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
-import { sendEmail } from "../services/email.js";
+import { sendEmail, emailFotoPendente } from "../services/email.js";
 import Anthropic from "@anthropic-ai/sdk";
 
 const router = Router();
@@ -123,6 +123,72 @@ function buildHtml({ assunto, preheader, conteudo, cta, teste }) {
       </div>
     </div>`;
 }
+
+// POST /api/admin/emails/disparar-foto-pendente
+// Disparo para todos os profissionais com cadastro incompleto (sem foto ou outros campos)
+router.post("/admin/emails/disparar-foto-pendente", requireAdmin, async (req, res) => {
+  const CAMPOS_OBRIGATORIOS = [
+    { campo: "foto", label: "Foto de perfil" },
+    { campo: "titulo", label: "Título profissional" },
+    { campo: "bio", label: "Descrição pessoal (Bio)" },
+    { campo: "disponibilidade", label: "Disponibilidade" },
+    { campo: "cidade", label: "Cidade" },
+  ];
+  const CAMPOS_LISTA = [
+    { campo: "segmentos", label: "Segmentos de atuação" },
+    { campo: "modalidades", label: "Modalidades de trabalho" },
+    { campo: "skills", label: "Habilidades (Skills)" },
+  ];
+
+  const profissionais = db.prepare(
+    "SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills FROM sellers WHERE status NOT IN ('excluido','bloqueado')"
+  ).all();
+
+  const incompletos = profissionais.filter((s) => {
+    const pendentes = [];
+    for (const { campo, label } of CAMPOS_OBRIGATORIOS) {
+      if (!s[campo]) pendentes.push(label);
+    }
+    for (const { campo, label } of CAMPOS_LISTA) {
+      let lista = [];
+      try { lista = JSON.parse(s[campo] || "[]"); } catch {}
+      if (!lista.length) pendentes.push(label);
+    }
+    s._pendentes = pendentes;
+    return pendentes.length > 0;
+  });
+
+  if (!incompletos.length) return res.json({ ok: true, quantidade: 0, falhas: 0, mensagem: "Nenhum profissional com cadastro incompleto." });
+
+  let enviados = 0, falhas = 0;
+  for (const s of incompletos) {
+    const r = await emailFotoPendente({ nome: s.nome, email: s.email, camposPendentes: s._pendentes });
+    if (r.ok) enviados++; else falhas++;
+  }
+
+  const status = falhas === 0 ? "enviado" : enviados === 0 ? "falhou" : "parcial";
+  db.prepare(
+    "INSERT INTO email_dispatches (adminId, assunto, publico, quantidade, status, resendId, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).run(req.user.id, "Cadastro incompleto — foto e dados pendentes", "Profissionais sem cadastro completo", enviados, status, null, Date.now());
+
+  res.json({ ok: true, quantidade: enviados, falhas, totalIncompletos: incompletos.length, status });
+});
+
+// GET /api/admin/emails/foto-pendente/preview — quantos serão afetados
+router.get("/admin/emails/foto-pendente/preview", requireAdmin, (req, res) => {
+  const profissionais = db.prepare(
+    "SELECT id, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills FROM sellers WHERE status NOT IN ('excluido','bloqueado')"
+  ).all();
+  const total = profissionais.filter((s) => {
+    if (!s.foto || !s.titulo || !s.bio || !s.disponibilidade || !s.cidade) return true;
+    for (const campo of ["segmentos", "modalidades", "skills"]) {
+      let lista = []; try { lista = JSON.parse(s[campo] || "[]"); } catch {}
+      if (!lista.length) return true;
+    }
+    return false;
+  }).length;
+  res.json({ total });
+});
 
 // GET /api/admin/email-templates
 router.get("/admin/email-templates", requireAdmin, (req, res) => {

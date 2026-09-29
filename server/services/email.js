@@ -224,3 +224,64 @@ export function emailAtualizacao({ nome, titulo, corpo, tipo }) {
     botao: `Abrir ${ROTULOS[tipo] || "a RYCS"}`,
   });
 }
+
+export function emailFotoPendente({ nome, email, camposPendentes }) {
+  const listaPendentes = camposPendentes.map((c) => `<li style="margin-bottom:6px">• ${seguro(c)}</li>`).join("");
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;color:#1f2937">
+      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
+        <span style="color:#60a5fa;font-size:26px;font-weight:800">R</span>
+        <span style="color:#fff;font-size:18px;font-weight:700;margin-left:4px">RYCS</span>
+      </div>
+      <div style="background:#f9fafb;padding:28px 24px;border-radius:0 0 12px 12px">
+        <h2 style="margin:0 0 16px;font-size:19px;color:#0b1220">Seu cadastro está incompleto</h2>
+        <p style="color:#4b5563;line-height:1.7;font-size:14px">Olá, ${seguro(nome)}!</p>
+        <p style="color:#4b5563;line-height:1.7;font-size:14px">
+          Identificamos que seu perfil na RYCS ainda não está 100% completo.
+          Um perfil completo aumenta suas chances de ser selecionado por empresas e receber novas oportunidades.
+        </p>
+        <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:14px 16px;border-radius:4px;margin:18px 0">
+          <p style="margin:0 0 8px;font-weight:600;color:#92400e;font-size:14px">Itens pendentes para concluir seu cadastro:</p>
+          <ul style="margin:0;padding:0;list-style:none;color:#78350f;font-size:13px">${listaPendentes}</ul>
+        </div>
+        <p style="color:#4b5563;line-height:1.7;font-size:14px">
+          Acesse a plataforma agora e complete as informações pendentes para liberar seu perfil completo.
+        </p>
+        <div style="text-align:center;margin:24px 0 16px">
+          <a href="${seguro(APP_URL)}/perfil" style="background:#2563EB;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Completar meu cadastro</a>
+        </div>
+        <hr style="border:0;border-top:1px solid #e5e7eb;margin:20px 0"/>
+        <p style="color:#9ca3af;font-size:12px;margin:0">Equipe RYCS Sales Solutions · <a href="${seguro(APP_URL)}" style="color:#6b7280">${seguro(APP_URL)}</a></p>
+      </div>
+    </div>`;
+  return sendEmail(email, "Seu cadastro na RYCS está incompleto — foto e dados pendentes", html);
+}
+
+export function emailCadastroCompletadoAdmin({ nomeProfissional, emailProfissional, adminEmail }) {
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;color:#1f2937">
+      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
+        <span style="color:#60a5fa;font-size:26px;font-weight:800">R</span>
+        <span style="color:#fff;font-size:18px;font-weight:700;margin-left:4px">RYCS</span>
+      </div>
+      <div style="background:#f9fafb;padding:28px 24px;border-radius:0 0 12px 12px">
+        <div style="background:#d1fae5;border-left:4px solid #10b981;padding:14px 16px;border-radius:4px;margin-bottom:18px">
+          <p style="margin:0;font-weight:600;color:#065f46;font-size:15px">✅ Cadastro 100% concluído</p>
+        </div>
+        <h2 style="margin:0 0 16px;font-size:18px;color:#0b1220">Novo perfil completo na plataforma</h2>
+        <p style="color:#4b5563;line-height:1.7;font-size:14px">
+          O profissional abaixo acabou de concluir o cadastro completo na RYCS:
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px">
+          <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600;width:40%;border-radius:4px 0 0 4px">Nome</td><td style="padding:8px 12px;background:#f9fafb;border-radius:0 4px 4px 0">${seguro(nomeProfissional)}</td></tr>
+          <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600;margin-top:4px;border-radius:4px 0 0 4px">E-mail</td><td style="padding:8px 12px;background:#f9fafb;border-radius:0 4px 4px 0">${seguro(emailProfissional)}</td></tr>
+        </table>
+        <div style="text-align:center;margin:24px 0 16px">
+          <a href="${seguro(APP_URL)}/admin/profissionais" style="background:#2563EB;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Ver profissional no painel</a>
+        </div>
+        <hr style="border:0;border-top:1px solid #e5e7eb;margin:20px 0"/>
+        <p style="color:#9ca3af;font-size:12px;margin:0">RYCS Sales Solutions · Notificação automática</p>
+      </div>
+    </div>`;
+  return sendEmail(adminEmail, `[RYCS] Cadastro completo: ${nomeProfissional}`, html);
+}

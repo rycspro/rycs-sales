@@ -919,6 +919,7 @@ adicionarColuna("sellers", "modalidades", "TEXT DEFAULT '[]'");
 adicionarColuna("sellers", "regioes", "TEXT DEFAULT '[]'");
 adicionarColuna("sellers", "skills", "TEXT DEFAULT '[]'");
 adicionarColuna("sellers", "disponibilidade", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "cadastroCompletadoNotificado", "INTEGER DEFAULT 0");
 adicionarColuna("submissions", "leadId", "TEXT");
 adicionarColuna("submissions", "idempotencyKey", "TEXT");
 adicionarColuna("submissions", "proofHash", "TEXT DEFAULT ''");
