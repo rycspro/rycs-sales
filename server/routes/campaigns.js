@@ -258,16 +258,6 @@ router.post("/campaigns/:id/apply", (req, res) => {
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
   if (campaign.status !== "ativa") return res.status(400).json({ error: "Campanha não está ativa" });
 
-  if (campaign.exigeCertificacao) {
-    const certificacoes = certificacoesDoProfissional(entityId);
-    if (!atendeCertificacaoDaCampanha(campaign, certificacoes)) {
-      return res.status(422).json({
-        error: `Conclua as aulas e seja aprovado no quiz da Academy ${campaign.funcao || "exigida"} antes de se candidatar.`,
-        codigo: "CERTIFICACAO_OBRIGATORIA",
-      });
-    }
-  }
-
   const existing = db.prepare("SELECT id FROM campaign_applications WHERE campaignId = ? AND sellerId = ?").get(req.params.id, entityId);
   if (existing) return res.status(409).json({ error: "Já se candidatou a esta campanha" });
 
