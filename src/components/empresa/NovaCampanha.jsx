@@ -25,251 +25,6 @@ import { takeRateDoPlano } from "../../../shared/planos.js";
 
 const PASSOS = ["Objetivo", "Detalhes", "Revisão"];
 
-// Mapa de objetivo → label amigável para o Jarvas
-const OBJETIVO_LABELS = {
-  leads:      "Gerar leads",
-  reunioes:   "Agendar reuniões",
-  visitas:    "Visitas presenciais",
-  campo:      "Porta a porta / campo",
-  vendas:     "Fechar vendas",
-  completa:   "Prospecção completa",
-  prospeccao: "Abrir mercado novo",
-  reativacao: "Reativar clientes",
-};
-
-// Perguntas que o Jarvas faz, em ordem
-const PERGUNTAS_JARVAS = [
-  {
-    id: "objetivo",
-    pergunta: "Que tipo de campanha você precisa?",
-    tipo: "opcoes",
-    opcoes: [
-      { valor: "campo",      label: "Porta a porta / campo" },
-      { valor: "visitas",    label: "Visitas presenciais" },
-      { valor: "reunioes",   label: "Agendar reuniões" },
-      { valor: "leads",      label: "Gerar leads" },
-      { valor: "vendas",     label: "Fechar vendas" },
-      { valor: "completa",   label: "Prospecção completa" },
-      { valor: "prospeccao", label: "Abrir mercado novo" },
-      { valor: "reativacao", label: "Reativar clientes" },
-    ],
-  },
-  {
-    id: "regiao",
-    pergunta: "Em qual região vai acontecer essa campanha?",
-    tipo: "texto",
-    placeholder: "Ex.: Sorocaba, interior de SP, Grande BH…",
-  },
-  {
-    id: "publico",
-    pergunta: "Quem é o cliente ideal? Descreva o perfil.",
-    tipo: "texto",
-    placeholder: "Ex.: empresas com alto consumo energético, gestores de facilities…",
-  },
-  {
-    id: "vagas",
-    pergunta: "Quantos profissionais você precisa nessa campanha?",
-    tipo: "numero",
-    placeholder: "Ex.: 2",
-  },
-  {
-    id: "extra",
-    pergunta: "Quer acrescentar algo? (prazo, restrições, produto específico…)",
-    tipo: "texto",
-    placeholder: "Opcional — pressione Enter para pular",
-    opcional: true,
-  },
-];
-
-function JarvasChat({ emp, onCampanha }) {
-  const [etapa, setEtapa] = useState(0);
-  const [respostas, setRespostas] = useState({});
-  const [inputAtual, setInputAtual] = useState("");
-  const [historico, setHistorico] = useState([]);
-  const [gerando, setGerando] = useState(false);
-  const fimRef = useRef(null);
-
-  // Rola para o fim sempre que o histórico muda
-  useEffect(() => { fimRef.current?.scrollIntoView({ behavior: "smooth" }); }, [historico, etapa]);
-
-  const perguntaAtual = PERGUNTAS_JARVAS[etapa];
-
-  const adicionarMensagem = (de, texto) =>
-    setHistorico((h) => [...h, { de, texto, id: Date.now() + Math.random() }]);
-
-  // Jarvas inicia com a primeira pergunta automaticamente
-  useEffect(() => {
-    if (historico.length === 0) {
-      setTimeout(() => {
-        adicionarMensagem("jarvas", `Olá! Vou te ajudar a montar a campanha. ${PERGUNTAS_JARVAS[0].pergunta}`);
-      }, 200);
-    }
-  }, []);
-
-  const responder = (valor, labelVisivel) => {
-    const p = PERGUNTAS_JARVAS[etapa];
-    const label = labelVisivel || valor;
-    adicionarMensagem("usuario", label);
-    const novasRespostas = { ...respostas, [p.id]: valor };
-    setRespostas(novasRespostas);
-    setInputAtual("");
-
-    const proxima = etapa + 1;
-    if (proxima < PERGUNTAS_JARVAS.length) {
-      setTimeout(() => {
-        const pNext = PERGUNTAS_JARVAS[proxima];
-        adicionarMensagem("jarvas", pNext.pergunta);
-        setEtapa(proxima);
-      }, 400);
-    } else {
-      // Todas as perguntas respondidas → montar campanha
-      setTimeout(() => montar(novasRespostas), 400);
-    }
-  };
-
-  const pularOpcional = () => responder("", "—");
-
-  const montar = async (r) => {
-    adicionarMensagem("jarvas", "Perfeito! Montando sua campanha…");
-    setGerando(true);
-
-    const objetivo = r.objetivo || "reunioes";
-    const nomeObj = OBJETIVO_LABELS[objetivo] || objetivo;
-    const empresa = emp.nome || "";
-    const regiao = r.regiao || "";
-
-    // Constrói brief para o endpoint
-    const brief = [
-      `Criar campanha de ${nomeObj}`,
-      regiao ? `na região de ${regiao}` : "",
-      r.publico ? `para ${r.publico}` : "",
-      r.vagas ? `com ${r.vagas} profissionais` : "",
-      r.extra || "",
-    ].filter(Boolean).join(", ").replace(/,\s*$/, "") + ".";
-
-    // Tenta via API; cai no local se falhar
-    let campanha = null;
-    try {
-      const res = await api("/campaigns/sugerir", { brief });
-      if (res && !res.error && res.campanha) {
-        campanha = res.campanha;
-      }
-    } catch (_) {}
-
-    // Fallback local
-    if (!campanha) {
-      const { montarCampanha: mc } = await import("../../../shared/objetivosCampanha.js");
-      campanha = mc(objetivo, emp);
-    }
-
-    // Sobrescreve com as respostas do Jarvas
-    campanha.objetivoChave = objetivo;
-    if (r.regiao) campanha.regiao = r.regiao;
-    if (r.publico) campanha.publico = r.publico;
-    if (r.vagas) campanha.vagas = Number(r.vagas) || campanha.vagas;
-
-    // Título personalizado: Tipo — Empresa — Região
-    const partesTitulo = [nomeObj];
-    if (empresa) partesTitulo.push(empresa);
-    if (regiao) partesTitulo.push(regiao);
-    campanha.titulo = partesTitulo.join(" — ");
-
-    setGerando(false);
-    adicionarMensagem("jarvas", `Pronto! Campanha "${campanha.titulo}" montada. Revise os detalhes e ajuste o que quiser.`);
-    setTimeout(() => onCampanha(objetivo, campanha), 600);
-  };
-
-  const reiniciar = () => {
-    setEtapa(0);
-    setRespostas({});
-    setInputAtual("");
-    setHistorico([]);
-    setTimeout(() => {
-      adicionarMensagem("jarvas", `Vamos recomeçar! ${PERGUNTAS_JARVAS[0].pergunta}`);
-    }, 100);
-  };
-
-  const enviarTexto = () => {
-    const v = inputAtual.trim();
-    if (!v && !perguntaAtual?.opcional) return;
-    responder(v || "");
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      {/* histórico */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 340, overflowY: "auto", padding: "4px 0 8px" }}>
-        {historico.map((m) => (
-          <div key={m.id} style={{ display: "flex", gap: 8, alignItems: "flex-start", flexDirection: m.de === "jarvas" ? "row" : "row-reverse" }}>
-            {m.de === "jarvas" && (
-              <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>J</div>
-            )}
-            <div style={{
-              maxWidth: "78%", padding: "9px 13px", borderRadius: m.de === "jarvas" ? "4px 14px 14px 14px" : "14px 4px 14px 14px",
-              background: m.de === "jarvas" ? "var(--brand-50)" : "var(--brand)", color: m.de === "jarvas" ? "var(--text)" : "#fff",
-              fontSize: 13.5, lineHeight: 1.5, border: m.de === "jarvas" ? "1px solid var(--brand-100)" : "none",
-            }}>
-              {m.texto}
-            </div>
-          </div>
-        ))}
-        {gerando && (
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>J</div>
-            <div style={{ padding: "9px 13px", borderRadius: "4px 14px 14px 14px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", display: "flex", gap: 5, alignItems: "center" }}>
-              <Loader size={12} style={{ animation: "spin 1s linear infinite" }} /> <span style={{ fontSize: 12.5, color: "var(--text-2)" }}>Montando…</span>
-            </div>
-          </div>
-        )}
-        <div ref={fimRef} />
-      </div>
-
-      {/* área de resposta */}
-      {!gerando && perguntaAtual && (
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: 4 }}>
-          {perguntaAtual.tipo === "opcoes" ? (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-              {perguntaAtual.opcoes.map((op) => (
-                <button key={op.valor} className="vx-btn vx-btn-sm"
-                  style={{ borderRadius: 20, fontSize: 12.5 }}
-                  onClick={() => responder(op.valor, op.label)}>
-                  {op.label}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                className="vx-input"
-                style={{ flex: 1, fontSize: 13.5 }}
-                type={perguntaAtual.tipo === "numero" ? "number" : "text"}
-                placeholder={perguntaAtual.placeholder}
-                value={inputAtual}
-                onChange={(e) => setInputAtual(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && enviarTexto()}
-                autoFocus
-              />
-              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={enviarTexto}>
-                <Send size={13} />
-              </button>
-              {perguntaAtual.opcional && (
-                <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={pularOpcional} style={{ fontSize: 11.5 }}>Pular</button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* reiniciar */}
-      {!gerando && Object.keys(respostas).length > 0 && etapa < PERGUNTAS_JARVAS.length && (
-        <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ marginTop: 8, alignSelf: "flex-start", fontSize: 11.5 }} onClick={reiniciar}>
-          <RotateCcw size={11} /> Recomeçar
-        </button>
-      )}
-    </div>
-  );
-}
-
 function formatarBRL(valor) {
   if (!valor && valor !== 0) return "";
   return Number(valor).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -277,7 +32,324 @@ function formatarBRL(valor) {
 
 function parseBRL(str) {
   if (!str) return 0;
-  return Number(str.replace(/\./g, "").replace(",", ".")) || 0;
+  return Number(String(str).replace(/\./g, "").replace(",", ".")) || 0;
+}
+
+const OBJETIVO_LABELS = {
+  leads: "Gerar leads", reunioes: "Agendar reuniões", visitas: "Visitas presenciais",
+  campo: "Porta a porta", vendas: "Fechar vendas", completa: "Prospecção completa",
+  prospeccao: "Abrir mercado novo", reativacao: "Reativar clientes",
+};
+
+const OBJETIVO_OPCOES = [
+  { valor: "campo", label: "Porta a porta" }, { valor: "visitas", label: "Visitas presenciais" },
+  { valor: "reunioes", label: "Agendar reuniões" }, { valor: "leads", label: "Gerar leads" },
+  { valor: "vendas", label: "Fechar vendas" }, { valor: "completa", label: "Prospecção completa" },
+  { valor: "prospeccao", label: "Abrir mercado novo" }, { valor: "reativacao", label: "Reativar clientes" },
+];
+
+const PERGUNTAS_JARVAS = [
+  { id: "objetivo",     voz: "Que tipo de campanha você precisa criar?",                                           tipo: "opcoes" },
+  { id: "regiao",       voz: "Em qual cidade ou região vai acontecer essa campanha?",                             tipo: "texto",  ph: "Ex.: Sorocaba" },
+  { id: "publico",      voz: "Quem é o cliente ideal? Descreva o perfil de quem você quer atingir.",              tipo: "texto",  ph: "Ex.: Empresas com alto consumo energético" },
+  { id: "vagas",        voz: "Quantos profissionais você precisa nessa campanha?",                                 tipo: "numero", ph: "Ex.: 2" },
+  { id: "ticketMedio",  voz: "Qual é o ticket médio? Quanto vale uma venda fechada para você, em reais?",         tipo: "moeda",  ph: "Ex.: 5000" },
+  { id: "vendasDia",    voz: "Quantas vendas por dia você espera que cada profissional feche?",                   tipo: "numero", ph: "Ex.: 1" },
+  { id: "fixoMensal",   voz: "Qual o valor máximo que você quer pagar por mês por profissional, em reais?",       tipo: "moeda",  ph: "Ex.: 3000" },
+];
+
+// Calcula tarefas e orçamento a partir das respostas do Jarvas
+function calcularTarefasJarvas(r, objetivo, emp) {
+  const fixoMensal = parseBRL(String(r.fixoMensal || "")) || 0;
+  const vendasDia  = Number(r.vendasDia) || 1;
+  const vagas      = Number(r.vagas) || 1;
+  const ticket     = parseBRL(String(r.ticketMedio || "")) || 0;
+  const obj        = OBJETIVOS[objetivo] || OBJETIVOS.reunioes;
+
+  // valor por tarefa principal = fixo mensal / (vendas/dia × 22 dias úteis)
+  const diasUteis = 22;
+  const valorPrincipal = fixoMensal > 0 ? Math.round(fixoMensal / (vendasDia * diasUteis)) : 0;
+  const principalKey = obj.principal;
+
+  // Demais tarefas proporcionais ao principal usando proporcao relativa
+  const propPrincipal = obj.proporcao[principalKey] || 1;
+  const tarefas = {};
+  for (const acao of obj.acoes) {
+    if (acao === principalKey) { tarefas[acao] = valorPrincipal; continue; }
+    const propRel = (obj.proporcao[acao] || 0) / propPrincipal;
+    tarefas[acao] = valorPrincipal > 0 ? Math.max(1, Math.round(valorPrincipal * propRel)) : (ticket ? Math.round(ticket * (obj.proporcao[acao] || 0)) : 0);
+  }
+
+  const orcamento = fixoMensal > 0 ? fixoMensal * vagas : 0;
+  return { tarefas, orcamento };
+}
+
+// Interface estilo Siri: orb animado, voz Web Speech API, input texto como fallback
+function JarvasVoice({ emp, onCampanha }) {
+  const [fase, setFase] = useState("intro"); // intro|perguntando|ouvindo|confirmando|montando
+  const [etapa, setEtapa] = useState(0);
+  const [respostas, setRespostas] = useState({});
+  const [transcricao, setTranscricao] = useState("");
+  const [inputTexto, setInputTexto] = useState("");
+  const [temMic, setTemMic] = useState(false);
+  const [micAtivo, setMicAtivo] = useState(false);
+
+  const recRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Detecta suporte a Speech API
+  useEffect(() => {
+    setTemMic(!!(window.SpeechRecognition || window.webkitSpeechRecognition));
+  }, []);
+
+  const pergunta = PERGUNTAS_JARVAS[etapa];
+  const totalEtapas = PERGUNTAS_JARVAS.length;
+  const progresso = Math.round((etapa / totalEtapas) * 100);
+
+  // Fala um texto e chama callback ao terminar
+  const falar = (texto, aoTerminar) => {
+    if (!window.speechSynthesis) { aoTerminar?.(); return; }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(texto);
+    utter.lang = "pt-BR"; utter.rate = 1.0; utter.pitch = 1.05;
+    const definirVoz = () => {
+      const vozes = window.speechSynthesis.getVoices();
+      const voz = vozes.find(v => v.lang.startsWith("pt-BR")) || vozes.find(v => v.lang.startsWith("pt")) || vozes[0];
+      if (voz) utter.voice = voz;
+    };
+    definirVoz();
+    if (window.speechSynthesis.getVoices().length === 0) window.speechSynthesis.addEventListener("voiceschanged", definirVoz, { once: true });
+    utter.onend = () => aoTerminar?.();
+    utter.onerror = () => aoTerminar?.();
+    window.speechSynthesis.speak(utter);
+  };
+
+  // Inicia escuta via microfone
+  const iniciarEscuta = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "pt-BR"; rec.continuous = false; rec.interimResults = true;
+    recRef.current = rec;
+    rec.onstart = () => { setMicAtivo(true); setFase("ouvindo"); setTranscricao(""); };
+    rec.onresult = (e) => {
+      const t = Array.from(e.results).map(r => r[0].transcript).join("");
+      setTranscricao(t);
+    };
+    rec.onend = () => { setMicAtivo(false); setFase("confirmando"); };
+    rec.onerror = () => { setMicAtivo(false); setFase("confirmando"); };
+    rec.start();
+  };
+
+  const pararEscuta = () => { recRef.current?.stop(); };
+
+  // Avança para a pergunta atual: fala e depois escuta
+  const fazerPergunta = (idx) => {
+    const p = PERGUNTAS_JARVAS[idx];
+    if (!p) return;
+    setEtapa(idx); setFase("perguntando"); setTranscricao(""); setInputTexto("");
+    if (p.tipo !== "opcoes") {
+      falar(p.voz, () => { setFase("ouvindo"); if (temMic) iniciarEscuta(); else setFase("confirmando"); });
+    } else {
+      falar(p.voz, () => setFase("confirmando"));
+    }
+  };
+
+  const iniciar = () => fazerPergunta(0);
+
+  const confirmar = (valorOverride) => {
+    const valor = valorOverride !== undefined ? valorOverride : (transcricao.trim() || inputTexto.trim());
+    if (!valor && pergunta?.tipo !== "opcoes") return;
+    const novas = { ...respostas, [pergunta.id]: valor };
+    setRespostas(novas);
+    setTranscricao(""); setInputTexto("");
+    const prox = etapa + 1;
+    if (prox < totalEtapas) {
+      setTimeout(() => fazerPergunta(prox), 300);
+    } else {
+      montar(novas);
+    }
+  };
+
+  const repetir = () => { setTranscricao(""); setInputTexto(""); setFase("ouvindo"); if (temMic) iniciarEscuta(); };
+
+  const reiniciar = () => { window.speechSynthesis?.cancel(); recRef.current?.stop(); setFase("intro"); setEtapa(0); setRespostas({}); setTranscricao(""); setInputTexto(""); };
+
+  const montar = async (r) => {
+    setFase("montando");
+    falar("Perfeito! Montando sua campanha agora.");
+    const objetivo = r.objetivo || "reunioes";
+    const nomeObj = OBJETIVO_LABELS[objetivo] || objetivo;
+    const regiao = r.regiao || "";
+    const vagas = Number(r.vagas) || 1;
+
+    let campanha = montarCampanha(objetivo, emp);
+    const { tarefas, orcamento } = calcularTarefasJarvas(r, objetivo, emp);
+
+    campanha.objetivoChave = objetivo;
+    campanha.regiao = regiao;
+    if (r.publico) campanha.publico = r.publico;
+    campanha.vagas = vagas;
+    campanha.tarefas = tarefas;
+    if (orcamento > 0) campanha.orcamento = orcamento;
+
+    // Título: Tipo — Cidade — N prof. — R$ orçamento
+    const parts = [nomeObj];
+    if (regiao) parts.push(regiao);
+    parts.push(`${vagas} prof.`);
+    if (orcamento > 0) parts.push(money(orcamento));
+    campanha.titulo = parts.join(" — ");
+
+    setTimeout(() => onCampanha(objetivo, campanha), 800);
+  };
+
+  // ---- render ----
+  const corOrb = fase === "ouvindo" ? "#ef4444" : "var(--brand)";
+  const pulsando = fase === "ouvindo" || fase === "perguntando";
+
+  return (
+    <>
+      <style>{`
+        @keyframes jv-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.12);opacity:.85} }
+        @keyframes jv-ring  { 0%{transform:scale(1);opacity:.5} 100%{transform:scale(1.7);opacity:0} }
+        @keyframes jv-dots  { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+      `}</style>
+
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"28px 0 20px", gap:20 }}>
+
+        {/* barra de progresso */}
+        {fase !== "intro" && (
+          <div style={{ width:"100%", height:3, background:"var(--border)", borderRadius:2 }}>
+            <div style={{ height:"100%", width:`${progresso}%`, background:"var(--brand)", borderRadius:2, transition:"width .4s" }} />
+          </div>
+        )}
+
+        {/* orb */}
+        <div style={{ position:"relative", width:100, height:100, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          {pulsando && (
+            <div style={{ position:"absolute", width:100, height:100, borderRadius:"50%", background:corOrb, opacity:.2, animation:"jv-ring 1.4s ease-out infinite" }} />
+          )}
+          <div style={{
+            width:80, height:80, borderRadius:"50%",
+            background:`radial-gradient(circle at 35% 35%, ${fase==="ouvindo"?"#f87171":corOrb}, ${fase==="ouvindo"?"#dc2626":"var(--brand-700,#1d4ed8)"})`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            boxShadow:`0 8px 32px ${fase==="ouvindo"?"rgba(239,68,68,.4)":"rgba(59,130,246,.35)"}`,
+            animation: pulsando ? "jv-pulse 1.6s ease-in-out infinite" : "none",
+            cursor: fase==="montando" ? "default" : "pointer",
+            transition:"all .3s",
+          }}
+            onClick={() => {
+              if (fase === "intro") iniciar();
+              else if (fase === "ouvindo") pararEscuta();
+              else if (fase === "confirmando" && temMic) repetir();
+            }}
+          >
+            {fase === "montando"
+              ? <div style={{ display:"flex", gap:4 }}>{[0,1,2].map(i=><div key={i} style={{ width:7,height:7,borderRadius:"50%",background:"#fff",animation:`jv-dots 1.2s ${i*0.16}s infinite ease-in-out` }} />)}</div>
+              : fase === "ouvindo"
+                ? <div style={{ width:18,height:18,borderRadius:3,background:"#fff" }} />
+                : <span style={{ fontSize:28, color:"#fff", fontWeight:700, fontFamily:"serif" }}>J</span>
+            }
+          </div>
+        </div>
+
+        {/* texto central */}
+        {fase === "intro" && (
+          <div style={{ textAlign:"center", maxWidth:360 }}>
+            <div style={{ fontSize:17, fontWeight:700, marginBottom:6 }}>Jarvas</div>
+            <div className="vx-mut" style={{ fontSize:13.5, lineHeight:1.6, marginBottom:16 }}>
+              Vou fazer algumas perguntas e montar a campanha para você — com nome, valores por tarefa e orçamento calculados automaticamente.
+            </div>
+            <button className="vx-btn vx-btn-primary" style={{ minWidth:140 }} onClick={iniciar}>
+              <Sparkles size={14} /> Começar
+            </button>
+          </div>
+        )}
+
+        {fase !== "intro" && fase !== "montando" && pergunta && (
+          <div style={{ textAlign:"center", maxWidth:400, width:"100%" }}>
+            <div className="vx-mut" style={{ fontSize:11.5, marginBottom:6 }}>Pergunta {etapa+1} de {totalEtapas}</div>
+            <div style={{ fontSize:15, fontWeight:600, lineHeight:1.5, marginBottom:16, minHeight:44 }}>{pergunta.voz}</div>
+
+            {/* Resposta do usuário */}
+            {(transcricao || inputTexto) && (
+              <div style={{ fontSize:14, color:"var(--brand)", fontWeight:500, marginBottom:12, minHeight:20 }}>
+                "{transcricao || inputTexto}"
+              </div>
+            )}
+
+            {/* Opções para objetivo */}
+            {pergunta.tipo === "opcoes" && (
+              <div style={{ display:"flex", flexWrap:"wrap", gap:7, justifyContent:"center", marginBottom:12 }}>
+                {OBJETIVO_OPCOES.map(op => (
+                  <button key={op.valor} className="vx-btn vx-btn-sm"
+                    style={{ borderRadius:20, fontSize:12.5, background: respostas.objetivo === op.valor ? "var(--brand)" : "", color: respostas.objetivo === op.valor ? "#fff" : "" }}
+                    onClick={() => confirmar(op.valor)}>
+                    {op.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Input texto fallback */}
+            {pergunta.tipo !== "opcoes" && (
+              <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+                <input
+                  ref={inputRef}
+                  className="vx-input"
+                  style={{ flex:1, fontSize:13.5, textAlign:"center" }}
+                  type={pergunta.tipo === "numero" || pergunta.tipo === "moeda" ? "text" : "text"}
+                  inputMode={pergunta.tipo === "moeda" || pergunta.tipo === "numero" ? "decimal" : "text"}
+                  placeholder={fase === "ouvindo" ? "Ouvindo… ou escreva aqui" : pergunta.ph}
+                  value={transcricao || inputTexto}
+                  onChange={(e) => { setTranscricao(""); setInputTexto(e.target.value); }}
+                  onKeyDown={(e) => e.key === "Enter" && confirmar()}
+                />
+              </div>
+            )}
+
+            {/* status e botões de ação */}
+            <div style={{ display:"flex", gap:8, justifyContent:"center", alignItems:"center", flexWrap:"wrap" }}>
+              {fase === "ouvindo" && (
+                <span className="vx-mut" style={{ fontSize:12, display:"flex", alignItems:"center", gap:4 }}>
+                  <span style={{ width:8,height:8,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"jv-pulse 1s infinite" }} /> Ouvindo…
+                </span>
+              )}
+              {(fase === "confirmando" || (transcricao || inputTexto)) && pergunta.tipo !== "opcoes" && (
+                <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => confirmar()}>
+                  <Check size={13} /> Confirmar
+                </button>
+              )}
+              {temMic && fase === "confirmando" && (
+                <button className="vx-btn vx-btn-sm" onClick={repetir}>
+                  <RotateCcw size={12} /> Falar de novo
+                </button>
+              )}
+              {temMic && fase === "confirmando" && !micAtivo && (
+                <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ fontSize:11.5 }} onClick={iniciarEscuta}>
+                  🎤 Usar microfone
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {fase === "montando" && (
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontSize:15, fontWeight:600, marginBottom:4 }}>Montando sua campanha…</div>
+            <div className="vx-mut" style={{ fontSize:12.5 }}>Calculando valores por tarefa e orçamento</div>
+          </div>
+        )}
+
+        {/* reiniciar */}
+        {fase !== "intro" && fase !== "montando" && (
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ fontSize:11, marginTop:4 }} onClick={reiniciar}>
+            <RotateCcw size={10} /> Recomeçar
+          </button>
+        )}
+      </div>
+    </>
+  );
 }
 
 function CampoOrcamento({ value, onChange }) {
@@ -462,7 +534,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <b style={{ fontSize: 15 }}>Jarvas</b>
               <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>IA · Recomendado</span>
             </div>
-            <JarvasChat emp={emp} onCampanha={receberCampanhaDoJarvas} />
+            <JarvasVoice emp={emp} onCampanha={receberCampanhaDoJarvas} />
           </div>
 
           {!iniciarComIA && <>
