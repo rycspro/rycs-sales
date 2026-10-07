@@ -71,6 +71,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   const [sugestaoIA, setSugestaoIA] = useState(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
+  const [ticketLocal, setTicketLocal] = useState("");
   const [gerandoTreinamento, setGerandoTreinamento] = useState(false);
   const [modeloTreinamento, setModeloTreinamento] = useState("rapido");
 
@@ -79,8 +80,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   const calcularSugestaoIA = () => {
     const plano = emp.assinatura || "free";
+    const ticketBase = ticketLocal
+      ? parseBRL(ticketLocal)
+      : Number(String(emp.ticket || "").replace(/\D/g, "")) || Number(emp.ticket) || 0;
     const resultado = sugerirValores({
-      ticketMedio: Number(String(emp.ticket || "").replace(/\D/g, "")) || Number(emp.ticket) || 0,
+      ticketMedio: ticketBase,
       margem: 0.3,
       plano,
     });
@@ -328,7 +332,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
             {/* Sugestão com IA */}
             <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
-              <div className="vx-row" style={{ marginBottom: mostrarSugestao ? 10 : 0 }}>
+              <div className="vx-row" style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <TrendingUp size={14} color="var(--brand)" />
                   <b style={{ fontSize: 13 }}>Sugestão com IA</b>
@@ -342,6 +346,23 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     {mostrarSugestao ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>}
                 </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: mostrarSugestao ? 10 : 0 }}>
+                <span style={{ fontSize: 12, color: "var(--text-2)", whiteSpace: "nowrap" }}>Ticket médio</span>
+                <div style={{ position: "relative", maxWidth: 160 }}>
+                  <span style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--text-2)", fontSize: 12.5, pointerEvents: "none" }}>R$</span>
+                  <input
+                    className="vx-input vx-mono"
+                    style={{ paddingLeft: 28, fontSize: 13, height: 32 }}
+                    inputMode="decimal"
+                    placeholder={emp.ticket ? String(emp.ticket).replace("R$", "").trim() : "0,00"}
+                    value={ticketLocal}
+                    onChange={(e) => setTicketLocal(e.target.value.replace(/[^\d,]/g, ""))}
+                  />
+                </div>
+                {!ticketLocal && emp.ticket && (
+                  <span className="vx-mut" style={{ fontSize: 11 }}>Usando do perfil: {emp.ticket}</span>
+                )}
               </div>
               {mostrarSugestao && sugestaoIA && (
                 sugestaoIA.disponivel ? (
