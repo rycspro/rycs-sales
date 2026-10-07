@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Award, BarChart3, BriefcaseBusiness, CheckCircle2, ClipboardList, Eye, MapPin, MessageSquare, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
+import { Award, BarChart3, BriefcaseBusiness, CheckCircle2, ClipboardList, Eye, MapPin, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
 
@@ -126,30 +126,27 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     aviso?.("Observação interna salva.");
   };
 
-  const convidar = async (p) => {
-    const r = await api(`/professionals/${p.id}/partnership`, {});
+  const convidarParaCampanha = async (p) => {
+    if (!campanhaDestino) return aviso?.("Selecione uma campanha antes de convidar.");
+    const r = await api("/applications/invite", { sellerId: p.id, companyId: emp.id, campaignId: campanhaDestino });
     if (r?.error) return aviso?.(r.error);
-    setListaApi((x) => x.map((v) => v.id === p.id ? { ...v, parceria: "pendente" } : v));
-    aviso?.("Convite enviado ao profissional.");
+    recarregar?.();
+    aviso?.("Profissional convidado. Candidatura aberta — aprove para liberar acesso.");
   };
 
   const alterarTime = async (p, status) => {
-    if (!p.aplicacoes?.[emp.id]) return aviso?.("Este profissional ainda não tem candidatura/vínculo para alterar.");
+    if (!p.aplicacoes?.[emp.id] && status !== "pendente") {
+      // Não tem candidatura ainda: cria via invite
+      const r = await api("/applications/invite", { sellerId: p.id, companyId: emp.id });
+      if (r?.error) return aviso?.(r.error);
+      recarregar?.();
+      return aviso?.("Candidatura criada. Aprove o profissional.");
+    }
     const r = await apiPatch("/applications", { sellerId: p.id, companyId: emp.id, status });
     if (r?.error) return aviso?.(r.error);
     up?.((d) => ({ sellers: d.sellers.map((s) => s.id === p.id ? { ...s, aplicacoes: { ...s.aplicacoes, [emp.id]: status } } : s) }));
     recarregar?.();
-    aviso?.(status === "aprovado" ? "Profissional aprovado." : "Profissional removido do time.");
-  };
-
-  const moverCampanha = async (p) => {
-    const campanha = campanhasEmpresa.find((c) => c.id === campanhaDestino);
-    const candidatura = campanha?.candidaturas?.find((a) => a.sellerId === p.id);
-    if (!campanha || !candidatura) return aviso?.("Não há candidatura existente nesta campanha para mover.");
-    const r = await apiPatch(`/campaigns/${campanha.id}/applications/${candidatura.id}`, { status: "aprovado" });
-    if (r?.error) return aviso?.(r.error);
-    recarregar?.();
-    aviso?.("Profissional movido para a campanha.");
+    aviso?.(status === "aprovado" ? "Profissional aprovado." : status === "pendente" ? "Candidatura reaberta." : "Profissional removido do time.");
   };
 
   return <div className="vx-fade">
@@ -254,16 +251,19 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button className="vx-btn vx-btn-sm" onClick={() => alterarTime(p, "aprovado")}><UserPlus size={13} />Aprovar profissional</button>
               <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => alterarTime(p, "recusado")}><UserMinus size={13} />Remover</button>
+              {p.aplicacoes?.[emp.id] === "recusado" && (
+                <button className="vx-btn vx-btn-sm" onClick={() => alterarTime(p, "pendente")}><RotateCcw size={13} />Reabrir candidatura</button>
+              )}
               <button className="vx-btn vx-btn-sm" onClick={() => aviso?.("Histórico exibido no modal.")}><ClipboardList size={13} />Visualizar histórico</button>
               <button className="vx-btn vx-btn-sm" onClick={() => aviso?.("Treinamentos exibidos no modal.")}><Award size={13} />Visualizar treinamentos</button>
               <button className="vx-btn vx-btn-sm" onClick={() => aviso?.("Resultados exibidos no modal.")}><BarChart3 size={13} />Visualizar resultados</button>
-              <button className="vx-btn vx-btn-primary vx-btn-sm" disabled={p.parceria === "pendente"} onClick={() => convidar(p)}><Send size={13} />Convidar para nova campanha</button>
             </div>
             <div className="vx-row" style={{ marginTop: 10, flexWrap: "wrap" }}>
               <select className="vx-input" style={{ maxWidth: 280 }} value={campanhaDestino} onChange={(e) => setCampanhaDestino(e.target.value)}>
-                <option value="">Selecionar campanha para mover</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+                <option value="">Selecionar campanha para convidar</option>
+                {campanhasEmpresa.filter((c) => c.status === "ativa").map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
               </select>
-              <button className="vx-btn vx-btn-sm" onClick={() => moverCampanha(p)}><ShieldCheck size={13} />Mover para campanha</button>
+              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => convidarParaCampanha(p)}><Send size={13} />Convidar para campanha</button>
             </div>
             <textarea className="vx-input" style={{ marginTop: 10, minHeight: 74 }} value={obs[p.id] || ""} onChange={(e) => setObs({ ...obs, [p.id]: e.target.value })} placeholder="Observação interna" />
             <button className="vx-btn vx-btn-sm" style={{ marginTop: 8 }} onClick={() => salvarObs(p.id, obs[p.id] || "")}><MessageSquare size={13} />Salvar observação interna</button>
