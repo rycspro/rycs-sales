@@ -66,10 +66,12 @@ router.post("/applications", (req, res) => {
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(companyId);
   if (!vendedor || !empresa) return res.status(404).json({ error: "Profissional ou empresa não encontrado" });
   const progresso = db.prepare("SELECT * FROM course_progress WHERE sellerId = ? AND companyId = ?").get(sellerId, companyId);
-  const falhas = checarCriterios(vendedor, empresa, progresso);
-  if (falhas.length) return res.status(422).json({ error: `Você ainda não atende aos critérios: ${falhas.join(", ")}.`, falhas });
+  const pendencias = checarCriterios(vendedor, empresa, progresso);
+
+  // Candidatura é sempre criada — pendências são informativas, não bloqueantes.
+  // A empresa decide manualmente se aprova ou não.
   db.prepare("INSERT OR REPLACE INTO applications (sellerId, companyId, status) VALUES (?, ?, 'pendente')").run(sellerId, companyId);
-  res.json({ ok: true, criterios: [] });
+  res.json({ ok: true, pendencias });
 });
 
 router.patch("/applications", (req, res) => {

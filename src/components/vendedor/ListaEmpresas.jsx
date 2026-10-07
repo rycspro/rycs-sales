@@ -13,7 +13,11 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) 
     const r = await api("/applications", { sellerId: eu.id, companyId });
     if (r?.error) return aviso(r.error);
     up?.((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, aplicacoes: { ...s.aplicacoes, [companyId]: "pendente" } } : s) }));
-    aviso("Solicitação enviada. A empresa irá analisar sua candidatura.");
+    if (r?.pendencias?.length) {
+      aviso(`Candidatura enviada. Para aumentar suas chances, complete: ${r.pendencias.join(", ")}.`);
+    } else {
+      aviso("Candidatura enviada. A empresa irá analisar seu perfil.");
+    }
   };
 
   const responderConvite = async (convite, status) => {
