@@ -1037,6 +1037,10 @@ adicionarColuna("companies", "tipoEmpresa", "TEXT DEFAULT 'padrao'");
 const notaReset = db.prepare("UPDATE sellers SET nota = 100 WHERE nota = 0 OR nota IS NULL").run();
 if (notaReset.changes > 0) console.log(`[migracao] ${notaReset.changes} vendedor(es) com nota zerada → 100`);
 
+// Empresas com nota = 0 ou NULL nunca tiveram atividade — resetar para 100.
+const notaResetEmpresas = db.prepare("UPDATE companies SET nota = 100 WHERE nota = 0 OR nota IS NULL").run();
+if (notaResetEmpresas.changes > 0) console.log(`[migracao] ${notaResetEmpresas.changes} empresa(s) com nota zerada → 100`);
+
 const liberados = db.prepare("UPDATE sellers SET status = 'aprovado' WHERE status = 'analise'").run();
 if (liberados.changes > 0) {
   console.log(`[migracao] ${liberados.changes} profissional(is) liberado(s) da fila de análise`);

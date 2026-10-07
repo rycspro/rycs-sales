@@ -28,7 +28,7 @@ export function recalcularCompanyScore(companyId) {
   // Sem histórico, a empresa começa em patamar neutro em vez de zero — nota
   // baixa por ausência de dados puniria quem acabou de entrar.
   if (subs.length === 0) {
-    const neutro = 70;
+    const neutro = 100;
     gravar(companyId, Object.fromEntries(DIMENSOES_EMPRESA.map((d) => [d, neutro])));
     db.prepare("UPDATE companies SET nota = ? WHERE id = ?").run(neutro, companyId);
     return { nota: neutro, dimensoes: Object.fromEntries(DIMENSOES_EMPRESA.map((d) => [d, neutro])) };
