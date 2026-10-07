@@ -1042,6 +1042,9 @@ if (notaReset.changes > 0) console.log(`[migracao] ${notaReset.changes} vendedor
 const notaResetEmpresas = db.prepare("UPDATE companies SET nota = 100 WHERE nota = 0 OR nota IS NULL").run();
 if (notaResetEmpresas.changes > 0) console.log(`[migracao] ${notaResetEmpresas.changes} empresa(s) com nota zerada → 100`);
 
+// INNER Energia é empresa premium — sem limite de campanhas ativas.
+db.prepare("UPDATE companies SET tipoEmpresa = 'premium', assinatura = 'premium', plano = 'premium' WHERE nome LIKE '%INNER%' AND (tipoEmpresa IS NULL OR tipoEmpresa != 'premium')").run();
+
 const liberados = db.prepare("UPDATE sellers SET status = 'aprovado' WHERE status = 'analise'").run();
 if (liberados.changes > 0) {
   console.log(`[migracao] ${liberados.changes} profissional(is) liberado(s) da fila de análise`);
