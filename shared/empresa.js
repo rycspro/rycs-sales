@@ -24,27 +24,30 @@ export function camposPendentesEmpresa(empresa = {}) {
 
 export const isPosPago = (empresa = {}) => empresa.modalidadePagamento === "pos";
 
+export const isPremium = (empresa = {}) => empresa.tipoEmpresa === "premium";
+
 export function campanhaPodeSerPublicada(campanha = {}, empresa = {}) {
   const posPago = isPosPago(empresa);
+  const premium = isPremium(empresa);
   const pendencias = [];
   if (empresa.statusCadastro !== "aprovada") pendencias.push("empresa ainda não aprovada");
-  if (!empresa.assinatura || empresa.assinatura === "free") pendencias.push("plano pago ainda não ativo");
-  if (!posPago && Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0) <= 0) pendencias.push("caixa sem saldo disponível");
+  if (!premium && (!empresa.assinatura || empresa.assinatura === "free")) pendencias.push("plano pago ainda não ativo");
+  if (!premium && !posPago && Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0) <= 0) pendencias.push("caixa sem saldo disponível");
   if (!String(campanha.titulo || "").trim()) pendencias.push("título");
   if (!String(campanha.objetivo || "").trim()) pendencias.push("objetivo");
   if (!String(campanha.publico || "").trim()) pendencias.push("ICP da campanha");
   if (!String(campanha.regiao || "").trim()) pendencias.push("região");
   if (!String(campanha.funcao || "").trim()) pendencias.push("função comercial");
-  if (!Number(campanha.orcamento || 0) && !posPago) pendencias.push("orçamento");
+  if (!Number(campanha.orcamento || 0) && !posPago && !premium) pendencias.push("orçamento");
   const tarefas = campanha.tarefas || {};
   if (!Object.values(tarefas).some((valor) => Number(valor) > 0)) pendencias.push("ao menos uma tarefa remunerada");
   const treinamento = campanha.treinamento || [];
   if (!treinamento.length) pendencias.push("treinamento");
-  if (!posPago && Number(campanha.orcamento || 0) > saldoDisponivel(empresa)) pendencias.push("orçamento superior ao saldo disponível");
+  if (!posPago && !premium && Number(campanha.orcamento || 0) > saldoDisponivel(empresa)) pendencias.push("orçamento superior ao saldo disponível");
   return { ok: pendencias.length === 0, pendencias };
 }
 
 export const saldoDisponivel = (empresa = {}) =>
-  isPosPago(empresa)
+  isPosPago(empresa) || isPremium(empresa)
     ? Infinity
     : Math.max(0, Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0));

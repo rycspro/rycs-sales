@@ -395,7 +395,7 @@ router.post("/companies/:id/logo", (req, res) => {
 router.post("/admin/companies", (req, res) => {
   if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
 
-  const { nome, produto, email, senha, diaFechamento, diaPagamento, modalidadePagamento, limiteCredito } = req.body;
+  const { nome, produto, email, senha, diaFechamento, diaPagamento, modalidadePagamento, limiteCredito, tipoEmpresa } = req.body;
   if (!nome || !produto || !email) return res.status(400).json({ error: "nome, produto e email são obrigatórios" });
 
   const emailNorm = email.toLowerCase().trim();
@@ -405,17 +405,18 @@ router.post("/admin/companies", (req, res) => {
   const senhaFinal = senha || randomBytes(8).toString("base64url");
   const companyId = uid();
   const userId = uid();
+  const tipoFinal = ["padrao", "premium"].includes(tipoEmpresa) ? tipoEmpresa : "padrao";
 
   db.prepare(`
     INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor,
       totalAportado, criadoEm, comissoes, curso, aportes, statusCadastro, assinatura,
-      diaFechamento, diaPagamento, modalidadePagamento, limiteCredito)
+      diaFechamento, diaPagamento, modalidadePagamento, limiteCredito, tipoEmpresa)
     VALUES (?, ?, ?, '', '', 'saldo', 0, 0, 20, '#2563EB',
       0, ?, '{}', '[]', '[]', 'aprovada', 'pro',
-      ?, ?, ?, ?)
+      ?, ?, ?, ?, ?)
   `).run(companyId, nome, produto, agora(),
     diaFechamento || null, diaPagamento || null,
-    modalidadePagamento || "pre", limiteCredito || 0);
+    modalidadePagamento || "pre", limiteCredito || 0, tipoFinal);
 
   db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, ?)")
     .run(userId, emailNorm, bcrypt.hashSync(senhaFinal, 10), companyId, agora());
@@ -430,7 +431,7 @@ router.patch("/admin/companies/:id/pagamento", (req, res) => {
   const empresa = db.prepare("SELECT id FROM companies WHERE id = ?").get(req.params.id);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 
-  const { diaFechamento, diaPagamento, modalidadePagamento, limiteCredito } = req.body;
+  const { diaFechamento, diaPagamento, modalidadePagamento, limiteCredito, tipoEmpresa } = req.body;
   const sets = [];
   const vals = [];
 
@@ -441,6 +442,10 @@ router.patch("/admin/companies/:id/pagamento", (req, res) => {
     sets.push("modalidadePagamento = ?"); vals.push(modalidadePagamento);
   }
   if (limiteCredito !== undefined) { sets.push("limiteCredito = ?"); vals.push(Number(limiteCredito) || 0); }
+  if (tipoEmpresa !== undefined) {
+    if (!["padrao", "premium"].includes(tipoEmpresa)) return res.status(400).json({ error: "tipoEmpresa deve ser 'padrao' ou 'premium'" });
+    sets.push("tipoEmpresa = ?"); vals.push(tipoEmpresa);
+  }
 
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
   vals.push(req.params.id);
@@ -467,7 +472,7 @@ router.get("/admin/companies/:id/pagamento", (req, res) => {
   if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
 
   const empresa = db.prepare(
-    "SELECT id, nome, modalidadePagamento, diaFechamento, diaPagamento, limiteCredito FROM companies WHERE id = ?"
+    "SELECT id, nome, tipoEmpresa, modalidadePagamento, diaFechamento, diaPagamento, limiteCredito FROM companies WHERE id = ?"
   ).get(req.params.id);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 

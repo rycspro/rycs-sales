@@ -1021,6 +1021,7 @@ adicionarColuna("companies", "processo", "TEXT DEFAULT ''");
 adicionarColuna("companies", "qualificacao", "TEXT DEFAULT ''");
 adicionarColuna("companies", "materiais", "TEXT DEFAULT '[]'");
 adicionarColuna("companies", "atualizadoEm", "INTEGER DEFAULT 0");
+adicionarColuna("companies", "tipoEmpresa", "TEXT DEFAULT 'padrao'");
 
 // A plataforma deixou de ser portão de entrada: concluir a avaliação libera o
 // perfil na hora, e quem decide a entrada numa campanha é a empresa.

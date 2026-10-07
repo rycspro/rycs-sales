@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { sugerirCampanha } from "../services/campanhaAssistida.js";
 import db, { uid, agora } from "../db.js";
-import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel } from "../../shared/empresa.js";
+import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel, isPremium } from "../../shared/empresa.js";
 import { dentroDoLimite } from "../../shared/planos.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
@@ -235,9 +235,9 @@ router.post("/campaigns/:id/status", (req, res) => {
     if (!check.ok) return res.status(422).json({ error: "Campanha ainda não pode ser publicada.", pendencias: check.pendencias });
     const ativas = db.prepare("SELECT COUNT(*) n FROM campaigns WHERE companyId = ? AND status = 'ativa' AND id <> ?")
       .get(campaign.companyId, campaign.id).n;
-    if (!dentroDoLimite(empresa.assinatura, "campanhasAtivas", ativas))
+    if (!isPremium(empresa) && !dentroDoLimite(empresa.assinatura, "campanhasAtivas", ativas))
       return res.status(422).json({ error: "Limite de campanhas ativas do plano atingido." });
-    if (Number(parsed.orcamento) > saldoDisponivel(empresa))
+    if (!isPremium(empresa) && Number(parsed.orcamento) > saldoDisponivel(empresa))
       return res.status(422).json({ error: "O orçamento da campanha supera o saldo disponível." });
   }
 
