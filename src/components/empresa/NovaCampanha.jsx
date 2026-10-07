@@ -4,7 +4,7 @@ import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
-import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
+import { campanhaPodeSerPublicada, saldoDisponivel, isPosPago } from "../../../shared/empresa.js";
 import { sugerirValores, impactoNoRoi } from "../../../shared/valorTarefa.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
 
@@ -426,7 +426,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     ["Tarefa remunerada", Object.values(campanha.tarefas || {}).some((valor) => Number(valor) > 0)],
     ["Treinamento obrigatório", (campanha.treinamento || []).length > 0],
     ["Empresa aprovada", emp.statusCadastro === "aprovada"], ["Plano ativo", !!emp.assinatura && emp.assinatura !== "free"],
-    ["Saldo suficiente", Number(campanha.orcamento || 0) > 0 && Number(campanha.orcamento) <= disponivel],
+    ...(isPosPago(emp) ? [] : [["Saldo suficiente", Number(campanha.orcamento || 0) > 0 && Number(campanha.orcamento) <= disponivel]]),
   ] : [];
   const adicionarTreinamento = () => set("treinamento", [...(campanha.treinamento || []), { id: `mod-${Date.now()}`, titulo: "", conteudo: "" }]);
   const atualizarTreinamento = (indice, campo, valor) => set("treinamento", campanha.treinamento.map((item, i) => i === indice ? { ...item, [campo]: valor } : item));
@@ -570,7 +570,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div className="vx-row" style={{ marginBottom: 4 }}>
               <b style={{ fontSize: 14 }}>Quanto você paga por ação</b>
-              <span className="vx-chip"><Wallet size={12} /> {money(disponivel)} disponível</span>
+              <span className="vx-chip"><Wallet size={12} /> {isPosPago(emp) ? "Pós-pago · sem limite" : `${money(disponivel)} disponível`}</span>
             </div>
 
             {/* Sugestão com IA */}
@@ -662,7 +662,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
             <div style={{ marginTop: 12 }}><div className="vx-label">Orçamento total da campanha</div>
               <CampoOrcamento value={campanha.orcamento} onChange={(v) => set("orcamento", v)} /></div>
-            {campanha.orcamento > disponivel && (
+            {!isPosPago(emp) && campanha.orcamento > disponivel && (
               <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--amber)" }}>
                 O orçamento passa do seu saldo disponível. Dá para salvar como rascunho, mas não para publicar.
               </div>
