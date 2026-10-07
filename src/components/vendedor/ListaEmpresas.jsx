@@ -9,6 +9,13 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) 
   const [convites, setConvites] = useState([]);
   useEffect(() => { api("/partnerships/invitations").then((r) => { if (Array.isArray(r)) setConvites(r); }); }, []);
 
+  const recandidatar = async (companyId) => {
+    const r = await api("/applications", { sellerId: eu.id, companyId });
+    if (r?.error) return aviso(r.error);
+    up?.((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, aplicacoes: { ...s.aplicacoes, [companyId]: "pendente" } } : s) }));
+    aviso("Solicitação enviada. A empresa irá analisar sua candidatura.");
+  };
+
   const responderConvite = async (convite, status) => {
     const r = await apiPatch(`/partnerships/${convite.id}`, { status });
     if (r?.error) return aviso(r.error);
@@ -109,7 +116,7 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) 
                 ) : st === "pendente" ? (
                   <button className="vx-btn vx-btn-block" disabled>Candidatura em análise</button>
                 ) : st === "recusado" ? (
-                  <button className="vx-btn vx-btn-danger vx-btn-block" disabled>Não aprovado nesta operação</button>
+                  <button className="vx-btn vx-btn-block" onClick={() => recandidatar(c.id)}>Solicitar aprovação novamente</button>
                 ) : (
                   <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => abrir(c.id)}>
                     Abrir área da empresa
