@@ -101,7 +101,7 @@ router.post("/auth/register", async (req, res) => {
     entityId = uid();
     db.prepare(`
       INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 0, 'starter', '', 0, 0, 0, '[]', '', ?)
+      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?)
     `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", agora());
   } else if (role === "empresa") {
     entityId = uid();

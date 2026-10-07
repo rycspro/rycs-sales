@@ -138,7 +138,7 @@ router.post("/sellers", (req, res) => {
   db.prepare(`
     INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
     VALUES (?, ?, ?, ?, ?, ?, ?, 'triagem', ?, ?, 0, 0, 0, ?, ?, ?)
-  `).run(id, nome, email, whats, cidade || "", perfil || "sdr", experiencia || "", nota || 0, pix || "", JSON.stringify(respostas || []), video || "", agora());
+  `).run(id, nome, email, whats, cidade || "", perfil || "sdr", experiencia || "", nota || 100, pix || "", JSON.stringify(respostas || []), video || "", agora());
   res.json({ id });
 });
 
