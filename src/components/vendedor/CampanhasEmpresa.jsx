@@ -120,10 +120,6 @@ function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy }) {
         <button className="vx-btn vx-btn-block" disabled style={{ marginTop: 4 }}>
           <Clock size={14} /> Candidatura em análise
         </button>
-      ) : !certificada ? (
-        <button className="vx-btn vx-btn-block" style={{ marginTop: 4 }} onClick={() => irAcademy(campanha.funcao)}>
-          <Lock size={14} /> Fazer prova da Academy primeiro
-        </button>
       ) : (
         <button className="vx-btn vx-btn-primary vx-btn-block" disabled={candidatando} style={{ marginTop: 4 }} onClick={candidatar}>
           {candidatando ? "Enviando..." : "Candidatar-se a esta campanha"}
