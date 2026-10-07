@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
@@ -24,6 +24,251 @@ import { takeRateDoPlano } from "../../../shared/planos.js";
 // que a campanha nasce. Nada foi removido, só tirado do caminho.
 
 const PASSOS = ["Objetivo", "Detalhes", "Revisão"];
+
+// Mapa de objetivo → label amigável para o Jarvas
+const OBJETIVO_LABELS = {
+  leads:      "Gerar leads",
+  reunioes:   "Agendar reuniões",
+  visitas:    "Visitas presenciais",
+  campo:      "Porta a porta / campo",
+  vendas:     "Fechar vendas",
+  completa:   "Prospecção completa",
+  prospeccao: "Abrir mercado novo",
+  reativacao: "Reativar clientes",
+};
+
+// Perguntas que o Jarvas faz, em ordem
+const PERGUNTAS_JARVAS = [
+  {
+    id: "objetivo",
+    pergunta: "Que tipo de campanha você precisa?",
+    tipo: "opcoes",
+    opcoes: [
+      { valor: "campo",      label: "Porta a porta / campo" },
+      { valor: "visitas",    label: "Visitas presenciais" },
+      { valor: "reunioes",   label: "Agendar reuniões" },
+      { valor: "leads",      label: "Gerar leads" },
+      { valor: "vendas",     label: "Fechar vendas" },
+      { valor: "completa",   label: "Prospecção completa" },
+      { valor: "prospeccao", label: "Abrir mercado novo" },
+      { valor: "reativacao", label: "Reativar clientes" },
+    ],
+  },
+  {
+    id: "regiao",
+    pergunta: "Em qual região vai acontecer essa campanha?",
+    tipo: "texto",
+    placeholder: "Ex.: Sorocaba, interior de SP, Grande BH…",
+  },
+  {
+    id: "publico",
+    pergunta: "Quem é o cliente ideal? Descreva o perfil.",
+    tipo: "texto",
+    placeholder: "Ex.: empresas com alto consumo energético, gestores de facilities…",
+  },
+  {
+    id: "vagas",
+    pergunta: "Quantos profissionais você precisa nessa campanha?",
+    tipo: "numero",
+    placeholder: "Ex.: 2",
+  },
+  {
+    id: "extra",
+    pergunta: "Quer acrescentar algo? (prazo, restrições, produto específico…)",
+    tipo: "texto",
+    placeholder: "Opcional — pressione Enter para pular",
+    opcional: true,
+  },
+];
+
+function JarvasChat({ emp, onCampanha }) {
+  const [etapa, setEtapa] = useState(0);
+  const [respostas, setRespostas] = useState({});
+  const [inputAtual, setInputAtual] = useState("");
+  const [historico, setHistorico] = useState([]);
+  const [gerando, setGerando] = useState(false);
+  const fimRef = useRef(null);
+
+  // Rola para o fim sempre que o histórico muda
+  useEffect(() => { fimRef.current?.scrollIntoView({ behavior: "smooth" }); }, [historico, etapa]);
+
+  const perguntaAtual = PERGUNTAS_JARVAS[etapa];
+
+  const adicionarMensagem = (de, texto) =>
+    setHistorico((h) => [...h, { de, texto, id: Date.now() + Math.random() }]);
+
+  // Jarvas inicia com a primeira pergunta automaticamente
+  useEffect(() => {
+    if (historico.length === 0) {
+      setTimeout(() => {
+        adicionarMensagem("jarvas", `Olá! Vou te ajudar a montar a campanha. ${PERGUNTAS_JARVAS[0].pergunta}`);
+      }, 200);
+    }
+  }, []);
+
+  const responder = (valor, labelVisivel) => {
+    const p = PERGUNTAS_JARVAS[etapa];
+    const label = labelVisivel || valor;
+    adicionarMensagem("usuario", label);
+    const novasRespostas = { ...respostas, [p.id]: valor };
+    setRespostas(novasRespostas);
+    setInputAtual("");
+
+    const proxima = etapa + 1;
+    if (proxima < PERGUNTAS_JARVAS.length) {
+      setTimeout(() => {
+        const pNext = PERGUNTAS_JARVAS[proxima];
+        adicionarMensagem("jarvas", pNext.pergunta);
+        setEtapa(proxima);
+      }, 400);
+    } else {
+      // Todas as perguntas respondidas → montar campanha
+      setTimeout(() => montar(novasRespostas), 400);
+    }
+  };
+
+  const pularOpcional = () => responder("", "—");
+
+  const montar = async (r) => {
+    adicionarMensagem("jarvas", "Perfeito! Montando sua campanha…");
+    setGerando(true);
+
+    const objetivo = r.objetivo || "reunioes";
+    const nomeObj = OBJETIVO_LABELS[objetivo] || objetivo;
+    const empresa = emp.nome || "";
+    const regiao = r.regiao || "";
+
+    // Constrói brief para o endpoint
+    const brief = [
+      `Criar campanha de ${nomeObj}`,
+      regiao ? `na região de ${regiao}` : "",
+      r.publico ? `para ${r.publico}` : "",
+      r.vagas ? `com ${r.vagas} profissionais` : "",
+      r.extra || "",
+    ].filter(Boolean).join(", ").replace(/,\s*$/, "") + ".";
+
+    // Tenta via API; cai no local se falhar
+    let campanha = null;
+    try {
+      const res = await api("/campaigns/sugerir", { brief });
+      if (res && !res.error && res.campanha) {
+        campanha = res.campanha;
+      }
+    } catch (_) {}
+
+    // Fallback local
+    if (!campanha) {
+      const { montarCampanha: mc } = await import("../../../shared/objetivosCampanha.js");
+      campanha = mc(objetivo, emp);
+    }
+
+    // Sobrescreve com as respostas do Jarvas
+    campanha.objetivoChave = objetivo;
+    if (r.regiao) campanha.regiao = r.regiao;
+    if (r.publico) campanha.publico = r.publico;
+    if (r.vagas) campanha.vagas = Number(r.vagas) || campanha.vagas;
+
+    // Título personalizado: Tipo — Empresa — Região
+    const partesTitulo = [nomeObj];
+    if (empresa) partesTitulo.push(empresa);
+    if (regiao) partesTitulo.push(regiao);
+    campanha.titulo = partesTitulo.join(" — ");
+
+    setGerando(false);
+    adicionarMensagem("jarvas", `Pronto! Campanha "${campanha.titulo}" montada. Revise os detalhes e ajuste o que quiser.`);
+    setTimeout(() => onCampanha(objetivo, campanha), 600);
+  };
+
+  const reiniciar = () => {
+    setEtapa(0);
+    setRespostas({});
+    setInputAtual("");
+    setHistorico([]);
+    setTimeout(() => {
+      adicionarMensagem("jarvas", `Vamos recomeçar! ${PERGUNTAS_JARVAS[0].pergunta}`);
+    }, 100);
+  };
+
+  const enviarTexto = () => {
+    const v = inputAtual.trim();
+    if (!v && !perguntaAtual?.opcional) return;
+    responder(v || "");
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* histórico */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 340, overflowY: "auto", padding: "4px 0 8px" }}>
+        {historico.map((m) => (
+          <div key={m.id} style={{ display: "flex", gap: 8, alignItems: "flex-start", flexDirection: m.de === "jarvas" ? "row" : "row-reverse" }}>
+            {m.de === "jarvas" && (
+              <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>J</div>
+            )}
+            <div style={{
+              maxWidth: "78%", padding: "9px 13px", borderRadius: m.de === "jarvas" ? "4px 14px 14px 14px" : "14px 4px 14px 14px",
+              background: m.de === "jarvas" ? "var(--brand-50)" : "var(--brand)", color: m.de === "jarvas" ? "var(--text)" : "#fff",
+              fontSize: 13.5, lineHeight: 1.5, border: m.de === "jarvas" ? "1px solid var(--brand-100)" : "none",
+            }}>
+              {m.texto}
+            </div>
+          </div>
+        ))}
+        {gerando && (
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>J</div>
+            <div style={{ padding: "9px 13px", borderRadius: "4px 14px 14px 14px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", display: "flex", gap: 5, alignItems: "center" }}>
+              <Loader size={12} style={{ animation: "spin 1s linear infinite" }} /> <span style={{ fontSize: 12.5, color: "var(--text-2)" }}>Montando…</span>
+            </div>
+          </div>
+        )}
+        <div ref={fimRef} />
+      </div>
+
+      {/* área de resposta */}
+      {!gerando && perguntaAtual && (
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: 4 }}>
+          {perguntaAtual.tipo === "opcoes" ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+              {perguntaAtual.opcoes.map((op) => (
+                <button key={op.valor} className="vx-btn vx-btn-sm"
+                  style={{ borderRadius: 20, fontSize: 12.5 }}
+                  onClick={() => responder(op.valor, op.label)}>
+                  {op.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                className="vx-input"
+                style={{ flex: 1, fontSize: 13.5 }}
+                type={perguntaAtual.tipo === "numero" ? "number" : "text"}
+                placeholder={perguntaAtual.placeholder}
+                value={inputAtual}
+                onChange={(e) => setInputAtual(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && enviarTexto()}
+                autoFocus
+              />
+              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={enviarTexto}>
+                <Send size={13} />
+              </button>
+              {perguntaAtual.opcional && (
+                <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={pularOpcional} style={{ fontSize: 11.5 }}>Pular</button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* reiniciar */}
+      {!gerando && Object.keys(respostas).length > 0 && etapa < PERGUNTAS_JARVAS.length && (
+        <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ marginTop: 8, alignSelf: "flex-start", fontSize: 11.5 }} onClick={reiniciar}>
+          <RotateCcw size={11} /> Recomeçar
+        </button>
+      )}
+    </div>
+  );
+}
 
 function formatarBRL(valor) {
   if (!valor && valor !== 0) return "";
@@ -155,6 +400,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     setPasso(1);
   };
 
+  const receberCampanhaDoJarvas = (chaveObjetivo, campanhaMontada) => {
+    setObjetivo(chaveObjetivo);
+    setCampanha(campanhaMontada);
+    setExplicacao("");
+    setPasso(1);
+  };
+
   const criar = async () => {
     if (!campanha?.titulo?.trim()) return aviso("Dê um título à campanha.");
     setSalvando(true);
@@ -203,23 +455,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             {iniciarComIA ? "Descreva o que você precisa — a IA monta a campanha e você revisa antes de publicar." : "Use a IA ou escolha o objetivo manualmente."}
           </p>
 
-          {/* caminho principal: IA */}
+          {/* Jarvas — wizard conversacional */}
           <div className="vx-card" style={{ padding: 20, marginTop: 4, borderColor: "var(--brand-200, var(--brand-100))", background: "linear-gradient(135deg, var(--brand-50) 0%, var(--indigo-50, var(--brand-50)) 100%)", borderWidth: 1.5 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
-              <Sparkles size={16} color="var(--brand)" />
-              <b style={{ fontSize: 15 }}>Criar com IA</b>
-              <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>Recomendado</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>J</div>
+              <b style={{ fontSize: 15 }}>Jarvas</b>
+              <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>IA · Recomendado</span>
             </div>
-            <p className="vx-mut" style={{ margin: "0 0 12px", fontSize: 13, lineHeight: 1.6 }}>
-              Escreva com suas palavras o que você precisa. A campanha vem montada automaticamente com as informações da sua empresa — você só revisa antes de publicar.
-            </p>
-            <textarea className="vx-input" style={{ minHeight: 74, fontSize: 13.5 }} value={brief}
-              onChange={(e) => setBrief(e.target.value)}
-              placeholder="Ex.: preciso de reuniões com distribuidoras de bebida no interior de SP; quem fecha é meu time." />
-            <button className="vx-btn vx-btn-ai-hero vx-btn-block" style={{ marginTop: 10, fontSize: 14, padding: "11px 0" }}
-              disabled={gerando} onClick={gerarComIA}>
-              {gerando ? <><Loader size={14} /> Montando…</> : <><Sparkles size={14} /> Montar campanha com IA</>}
-            </button>
+            <JarvasChat emp={emp} onCampanha={receberCampanhaDoJarvas} />
           </div>
 
           {!iniciarComIA && <>
