@@ -29,7 +29,7 @@ db.exec(`
     perfil TEXT DEFAULT 'sdr',
     experiencia TEXT DEFAULT '',
     status TEXT DEFAULT 'triagem',
-    nota INTEGER DEFAULT 0,
+    nota INTEGER DEFAULT 100,
     nivel TEXT DEFAULT 'starter',
     pix TEXT DEFAULT '',
     disponivel REAL DEFAULT 0,
@@ -1031,6 +1031,11 @@ adicionarColuna("companies", "atualizadoEm", "INTEGER DEFAULT 0");
 //
 // 'recusado' não é tocado: foi decisão humana sobre um caso concreto, e
 // reverter em massa apagaria esse julgamento.
+// Score começa em 100 (inocente até que prove o contrário).
+// Sellers com nota = 0 ou NULL nunca tiveram atividade — resetar para 100.
+const notaReset = db.prepare("UPDATE sellers SET nota = 100 WHERE nota = 0 OR nota IS NULL").run();
+if (notaReset.changes > 0) console.log(`[migracao] ${notaReset.changes} vendedor(es) com nota zerada → 100`);
+
 const liberados = db.prepare("UPDATE sellers SET status = 'aprovado' WHERE status = 'analise'").run();
 if (liberados.changes > 0) {
   console.log(`[migracao] ${liberados.changes} profissional(is) liberado(s) da fila de análise`);

@@ -89,7 +89,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     if (campanha.segmento && arr(p.segmentos).some((s) => norm(campanha.segmento).includes(norm(s)) || norm(s).includes(norm(campanha.segmento)))) { score += 14; pontos.push("experiência no segmento"); } else if (campanha.segmento) atencao.push("segmento sem histórico explícito");
     if (arr(p.modalidades).some((m) => norm(`${emp.produto} ${emp.icp} ${campanha.objetivo}`).includes(norm(m)))) { score += 8; pontos.push("preferências próximas da operação"); }
     if (p.disponibilidade) { score += 7; pontos.push("disponibilidade declarada"); } else atencao.push("disponibilidade não informada");
-    if (nota(p.nota) >= 70) { score += 8; pontos.push("score operacional alto"); } else atencao.push("score requer acompanhamento");
+    if (nota(p.nota) >= 80) { score += 8; pontos.push("score operacional alto"); } else atencao.push("score requer acompanhamento");
     return { campanha, percentual: Math.min(100, score), pontos: pontos.length ? pontos : ["dados reais disponíveis, sem compatibilidade forte registrada"], atencao: atencao.length ? atencao : ["sem ponto crítico identificado nos dados disponíveis"] };
   };
 
@@ -109,7 +109,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     const regiao = [p.cidade, p.estado].filter(Boolean).join(" / ");
     const campanhaMatch = !f.campanha || p.campanhas?.some((c) => c.id === f.campanha);
     const performanceOk = !f.performance || (f.performance === "alta" ? p.taxaAprovacao >= 80 : f.performance === "media" ? p.taxaAprovacao >= 50 && p.taxaAprovacao < 80 : p.taxaAprovacao < 50);
-    const scoreOk = !f.score || (f.score === "70" ? nota(p.nota) >= 70 : f.score === "50" ? nota(p.nota) >= 50 && nota(p.nota) < 70 : nota(p.nota) < 50);
+    const scoreOk = !f.score || (f.score === "80" ? nota(p.nota) >= 80 : f.score === "50" ? nota(p.nota) >= 50 && nota(p.nota) < 80 : nota(p.nota) < 50);
     return (!f.busca || norm(p.nome).includes(norm(f.busca)))
       && (!f.funcao || p.perfil === f.funcao)
       && campanhaMatch
@@ -165,7 +165,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
       <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
       <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
       <label><span className="vx-label">Região</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todas</option>{opcoes.regioes.map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
-      <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="70">70+</option><option value="50">50-69</option><option value="0">Abaixo de 50</option></select></label>
+      <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
     </div>
 
     {carregando ? <div className="vx-card vx-skeleton" style={{ height: 180 }} /> : <div className="vx-grid">
@@ -173,7 +173,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
         <div className="vx-row" style={{ alignItems: "flex-start", gap: 12 }}>
           <div className="vx-avatar" style={p.foto ? { padding: 0, overflow: "hidden" } : undefined}>{p.foto ? <img src={p.foto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : iniciais(p.nome)}</div>
           <div style={{ flex: 1, minWidth: 0 }}><b>{p.nome}</b><div className="vx-mut" style={{ fontSize: 12 }}>{PERFIL[p.perfil] || p.perfil || "Função não informada"} · {[p.cidade, p.estado].filter(Boolean).join(" / ") || "Região não informada"}</div></div>
-          <span className={`vx-badge vx-badge-${nota(p.nota) >= 70 ? "brand" : nota(p.nota) >= 50 ? "amber" : "red"}`}>{p.nota || 0} score</span>
+          <span className={`vx-badge vx-badge-${nota(p.nota) >= 80 ? "brand" : nota(p.nota) >= 50 ? "amber" : "red"}`} style={nota(p.nota) >= 30 && nota(p.nota) < 50 ? { background:"#fff0e6", color:"#c2410c" } : undefined}>{nota(p.nota) || 100} score</span>
         </div>
         <div className="vx-grid vx-g4" style={{ marginTop: 12 }}>
           <Metric label="Campanhas" value={p.campanhasAtivas || 0} />

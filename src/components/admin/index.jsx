@@ -65,7 +65,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
                   {s.perfil === "sdr" ? "SDR" : s.perfil === "closer" ? "Closer" : "Iniciante"} · {s.cidade || "—"} · {dataCurta(s.criadoEm)}
                 </div>
               </div>
-              <div className="vx-disp vx-mono" style={{ fontSize: 26, color: s.nota >= 60 ? "var(--brand)" : "var(--amber)" }}>{s.nota}</div>
+              <div className="vx-disp vx-mono" style={{ fontSize: 26, color: s.nota >= 80 ? "var(--brand)" : s.nota >= 50 ? "var(--amber)" : s.nota >= 30 ? "#c2410c" : "var(--red)" }}>{s.nota ?? 100}</div>
             </div>
             <div className="vx-mut" style={{ fontSize: 13, margin: "8px 0" }}>{s.experiencia || "Sem experiência declarada"}</div>
             {s.respostas?.length > 0 && (

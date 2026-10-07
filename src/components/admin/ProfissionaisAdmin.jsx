@@ -82,7 +82,7 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
                   <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700 }}>{money(s.totalGanho)}</div>
                   <div className="vx-mut" style={{ fontSize: 11 }}>{s.liberados} ações</div>
                 </div>
-                <div className="vx-disp vx-mono" style={{ fontSize: 22, color: s.nota >= 70 ? "var(--brand)" : s.nota >= 50 ? "var(--amber)" : "var(--red)" }}>{s.nota}</div>
+                <div className="vx-disp vx-mono" style={{ fontSize: 22, color: s.nota >= 80 ? "var(--brand)" : s.nota >= 50 ? "var(--amber)" : s.nota >= 30 ? "#c2410c" : "var(--red)" }}>{s.nota ?? 100}</div>
                 {isOpen ? <ChevronUp size={16} color="var(--muted)" /> : <ChevronDown size={16} color="var(--muted)" />}
               </div>
 
@@ -114,7 +114,7 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
                     <div className="vx-row" style={{ fontSize: 12.5, marginBottom: 4 }}>
                       <span className="vx-mut">Score</span><b>{s.nota}/100</b>
                     </div>
-                    <Medidor value={s.nota} tone={s.nota >= 70 ? "brand" : s.nota >= 50 ? "amber" : "red"} />
+                    <Medidor value={s.nota} tone={s.nota >= 80 ? "brand" : s.nota >= 50 ? "amber" : "red"} />
                   </div>
                   <div style={{ marginTop: 12 }}>
                     <span className="vx-mut" style={{ fontSize: 12.5 }}>Total de submissões: {s.subs} · Aprovadas: {s.liberados} · Taxa: {s.subs > 0 ? Math.round((s.liberados / s.subs) * 100) : 0}%</span>
