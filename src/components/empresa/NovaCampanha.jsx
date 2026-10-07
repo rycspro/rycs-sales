@@ -5,7 +5,7 @@ import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
 import { campanhaPodeSerPublicada, saldoDisponivel, isPosPago } from "../../../shared/empresa.js";
-import { sugerirValores, impactoNoRoi } from "../../../shared/valorTarefa.js";
+import { sugerirValores, sugerirValorVisita, impactoNoRoi } from "../../../shared/valorTarefa.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
 
 // Criação de campanha em três passos.
@@ -49,35 +49,44 @@ const OBJETIVO_OPCOES = [
 ];
 
 const PERGUNTAS_JARVAS = [
-  { id: "objetivo",     voz: "Que tipo de campanha você precisa criar?",                                           tipo: "opcoes" },
-  { id: "regiao",       voz: "Em qual cidade ou região vai acontecer essa campanha?",                             tipo: "texto",  ph: "Ex.: Sorocaba" },
-  { id: "publico",      voz: "Quem é o cliente ideal? Descreva o perfil de quem você quer atingir.",              tipo: "texto",  ph: "Ex.: Empresas com alto consumo energético" },
-  { id: "vagas",        voz: "Quantos profissionais você precisa nessa campanha?",                                 tipo: "numero", ph: "Ex.: 2" },
-  { id: "ticketMedio",  voz: "Qual é o ticket médio? Quanto vale uma venda fechada para você, em reais?",         tipo: "moeda",  ph: "Ex.: 5000" },
-  { id: "vendasDia",    voz: "Quantas vendas por dia você espera que cada profissional feche?",                   tipo: "numero", ph: "Ex.: 1" },
-  { id: "fixoMensal",   voz: "Qual o valor máximo que você quer pagar por mês por profissional, em reais?",       tipo: "moeda",  ph: "Ex.: 3000" },
+  { id: "objetivo",        voz: "Que tipo de campanha você precisa criar?",                                           tipo: "opcoes" },
+  { id: "regiao",          voz: "Em qual cidade ou região vai acontecer essa campanha?",                             tipo: "texto",  ph: "Ex.: Sorocaba" },
+  { id: "publico",         voz: "Quem é o cliente ideal? Descreva o perfil de quem você quer atingir.",              tipo: "texto",  ph: "Ex.: Empresas com alto consumo energético" },
+  { id: "vagas",           voz: "Quantos profissionais você precisa nessa campanha?",                                 tipo: "numero", ph: "Ex.: 2" },
+  { id: "ticketMedio",     voz: "Qual é o ticket médio? Quanto vale uma venda fechada para você, em reais?",         tipo: "moeda",  ph: "Ex.: 5000" },
+  { id: "visitasPorDia",   voz: "Quantas visitas por dia você espera que cada profissional realize?",                tipo: "numero", ph: "Ex.: 5" },
+  { id: "fixoMensal",      voz: "Qual o valor máximo que você quer pagar por mês por profissional, em reais?",       tipo: "moeda",  ph: "Ex.: 3000" },
 ];
 
 // Calcula tarefas e orçamento a partir das respostas do Jarvas
 function calcularTarefasJarvas(r, objetivo, emp) {
-  const fixoMensal = parseBRL(String(r.fixoMensal || "")) || 0;
-  const vendasDia  = Number(r.vendasDia) || 1;
-  const vagas      = Number(r.vagas) || 1;
-  const ticket     = parseBRL(String(r.ticketMedio || "")) || 0;
-  const obj        = OBJETIVOS[objetivo] || OBJETIVOS.reunioes;
+  const fixoMensal    = parseBRL(String(r.fixoMensal || "")) || 0;
+  const visitasPorDia = Number(r.visitasPorDia) || 5;
+  const vagas         = Number(r.vagas) || 1;
+  const ticket        = parseBRL(String(r.ticketMedio || "")) || 0;
+  const obj           = OBJETIVOS[objetivo] || OBJETIVOS.reunioes;
+  const diasUteis     = 22;
 
-  // valor por tarefa principal = fixo mensal / (vendas/dia × 22 dias úteis)
-  const diasUteis = 22;
-  const valorPrincipal = fixoMensal > 0 ? Math.round(fixoMensal / (vendasDia * diasUteis)) : 0;
   const principalKey = obj.principal;
-
-  // Demais tarefas proporcionais ao principal usando proporcao relativa
-  const propPrincipal = obj.proporcao[principalKey] || 1;
   const tarefas = {};
-  for (const acao of obj.acoes) {
-    if (acao === principalKey) { tarefas[acao] = valorPrincipal; continue; }
-    const propRel = (obj.proporcao[acao] || 0) / propPrincipal;
-    tarefas[acao] = valorPrincipal > 0 ? Math.max(1, Math.round(valorPrincipal * propRel)) : (ticket ? Math.round(ticket * (obj.proporcao[acao] || 0)) : 0);
+
+  if (obj.usaVisitasPorDia) {
+    // Campanha de visitas: orcamento / diasUteis / visitasPorDia = valor por visita
+    const valorVisita = fixoMensal > 0 ? Math.round(fixoMensal / diasUteis / visitasPorDia) : (ticket ? Math.round(ticket * (obj.proporcao.visita || 0.008)) : 0);
+    tarefas.visita = valorVisita;
+    if (obj.acoes.includes("venda")) tarefas.venda = ticket ? Math.round(ticket * (obj.proporcao.venda || 0.08)) : 0;
+  } else {
+    // Demais campanhas: fixo mensal / (unidades principais por dia × dias úteis)
+    const unidadesDia = 1;
+    const valorPrincipal = fixoMensal > 0 ? Math.round(fixoMensal / (unidadesDia * diasUteis)) : 0;
+    const propPrincipal = obj.proporcao[principalKey] || 1;
+    for (const acao of obj.acoes) {
+      if (acao === principalKey) { tarefas[acao] = valorPrincipal; continue; }
+      const propRel = (obj.proporcao[acao] || 0) / propPrincipal;
+      tarefas[acao] = valorPrincipal > 0 ? Math.max(1, Math.round(valorPrincipal * propRel)) : (ticket ? Math.round(ticket * (obj.proporcao[acao] || 0)) : 0);
+    }
+    // Comissão venda sempre baseada no ticket se não tiver valor ainda
+    if (tarefas.venda === 0 && ticket) tarefas.venda = Math.round(ticket * (obj.proporcao.venda || 0.08));
   }
 
   const orcamento = fixoMensal > 0 ? fixoMensal * vagas : 0;
@@ -389,32 +398,46 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [sugestaoIA, setSugestaoIA] = useState(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
   const [ticketLocal, setTicketLocal] = useState("");
+  const [visitasPorDiaLocal, setVisitasPorDiaLocal] = useState("");
   const [gerandoTreinamento, setGerandoTreinamento] = useState(false);
   const [modeloTreinamento, setModeloTreinamento] = useState("rapido");
 
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
 
+  const objAtual = campanha?.objetivoChave ? OBJETIVOS[campanha.objetivoChave] : null;
+  const ehCampanhaVisita = objAtual?.usaVisitasPorDia || false;
+
   const calcularSugestaoIA = () => {
     const plano = emp.assinatura || "free";
     const ticketBase = ticketLocal
       ? parseBRL(ticketLocal)
       : Number(String(emp.ticket || "").replace(/\D/g, "")) || Number(emp.ticket) || 0;
-    const resultado = sugerirValores({
-      ticketMedio: ticketBase,
-      margem: 0.3,
-      plano,
-    });
-    setSugestaoIA(resultado);
-    setMostrarSugestao(true);
+
+    if (ehCampanhaVisita) {
+      const vpd = Number(visitasPorDiaLocal) || 0;
+      const orcBase = Number(campanha?.orcamento) || 0;
+      const resultado = sugerirValorVisita({ orcamento: orcBase, visitasPorDia: vpd, ticketMedio: ticketBase, plano });
+      setSugestaoIA({ ...resultado, tipo: "visita" });
+      setMostrarSugestao(true);
+    } else {
+      const resultado = sugerirValores({ ticketMedio: ticketBase, margem: 0.3, plano });
+      setSugestaoIA({ ...resultado, tipo: "reuniao" });
+      setMostrarSugestao(true);
+    }
   };
 
   const aceitarSugestaoIA = () => {
     if (!sugestaoIA?.disponivel || !campanha) return;
     const novasTarefas = { ...campanha.tarefas };
-    sugestaoIA.tarefas.forEach((t) => {
-      if (novasTarefas[t.tipo] !== undefined) novasTarefas[t.tipo] = t.bruto;
-    });
+    if (sugestaoIA.tipo === "visita") {
+      if (novasTarefas.visita !== undefined) novasTarefas.visita = sugestaoIA.valorVisita.bruto;
+      if (novasTarefas.venda !== undefined) novasTarefas.venda = sugestaoIA.comissaoVenda.bruto;
+    } else {
+      sugestaoIA.tarefas?.forEach((t) => {
+        if (novasTarefas[t.tipo] !== undefined) novasTarefas[t.tipo] = t.bruto;
+      });
+    }
     set("tarefas", novasTarefas);
     setMostrarSugestao(false);
   };
@@ -482,7 +505,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const criar = async () => {
     if (!campanha?.titulo?.trim()) return aviso("Dê um título à campanha.");
     setSalvando(true);
-    const r = await api("/campaigns", campanha);
+    const payload = { ...campanha };
+    if (ehCampanhaVisita && visitasPorDiaLocal) payload.visitasPorDia = Number(visitasPorDiaLocal) || 0;
+    const r = await api("/campaigns", payload);
     setSalvando(false);
     if (!r || r.error) return aviso(r?.error || "Não foi possível criar a campanha.");
     aoCriar?.({ ...campanha, id: r.id, companyId: emp.id, status: "rascunho", criadoEm: Date.now() });
@@ -651,7 +676,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <TrendingUp size={14} color="var(--brand)" />
                   <b style={{ fontSize: 13 }}>Sugestão com IA</b>
-                  <span className="vx-mut" style={{ fontSize: 11.5 }}>— quanto custará cada reunião/venda</span>
+                  <span className="vx-mut" style={{ fontSize: 11.5 }}>— {ehCampanhaVisita ? "valor por visita e comissão" : "quanto custará cada ação"}</span>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={calcularSugestaoIA}>
@@ -662,7 +687,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   </button>}
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: mostrarSugestao ? 10 : 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: mostrarSugestao ? 10 : 0 }}>
                 <span style={{ fontSize: 12, color: "var(--text-2)", whiteSpace: "nowrap" }}>Ticket médio</span>
                 <div style={{ position: "relative", maxWidth: 160 }}>
                   <span style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--text-2)", fontSize: 12.5, pointerEvents: "none" }}>R$</span>
@@ -678,22 +703,55 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 {!ticketLocal && emp.ticket && (
                   <span className="vx-mut" style={{ fontSize: 11 }}>Usando do perfil: {emp.ticket}</span>
                 )}
+                {ehCampanhaVisita && (
+                  <>
+                    <span style={{ fontSize: 12, color: "var(--text-2)", whiteSpace: "nowrap", marginLeft: 4 }}>Visitas/dia</span>
+                    <input
+                      className="vx-input vx-mono"
+                      style={{ width: 72, fontSize: 13, height: 32 }}
+                      type="number" min="1" step="1"
+                      placeholder="Ex.: 5"
+                      value={visitasPorDiaLocal}
+                      onChange={(e) => setVisitasPorDiaLocal(e.target.value)}
+                    />
+                    <span className="vx-mut" style={{ fontSize: 11 }}>Orçamento ÷ 22 dias ÷ visitas/dia</span>
+                  </>
+                )}
               </div>
               {mostrarSugestao && sugestaoIA && (
                 sugestaoIA.disponivel ? (
                   <div>
-                    <div className="vx-grid vx-g2" style={{ marginBottom: 10 }}>
-                      {sugestaoIA.tarefas.filter((t) => campanha.tarefas[t.tipo] !== undefined).map((t) => (
-                        <div key={t.tipo} style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
-                          <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>{ACOES[t.tipo]?.nome || t.tipo}</div>
-                          <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(t.bruto)}</div>
-                          <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(t.percentual * 100).toFixed(0)}% · líq. {money(t.liquido)}</div>
-                          <div className="vx-mut" style={{ fontSize: 11 }}>Faixa: {money(t.minimo)} – {money(t.maximo)}</div>
+                    {sugestaoIA.tipo === "visita" ? (
+                      <div className="vx-grid vx-g2" style={{ marginBottom: 10 }}>
+                        <div style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
+                          <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>Por visita realizada</div>
+                          <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(sugestaoIA.valorVisita.bruto)}</div>
+                          <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(sugestaoIA.valorVisita.percentual * 100).toFixed(0)}% · líq. {money(sugestaoIA.valorVisita.liquido)}</div>
+                          <div className="vx-mut" style={{ fontSize: 11 }}>{sugestaoIA.fonte}</div>
                         </div>
-                      ))}
-                    </div>
-                    {(() => {
-                      const agendamento = sugestaoIA.tarefas.find((t) => t.tipo === "agendamento");
+                        {sugestaoIA.comissaoVenda.bruto > 0 && (
+                          <div style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
+                            <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>Comissão por venda fechada</div>
+                            <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(sugestaoIA.comissaoVenda.bruto)}</div>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(sugestaoIA.comissaoVenda.percentual * 100).toFixed(0)}% · líq. {money(sugestaoIA.comissaoVenda.liquido)}</div>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>8% do ticket</div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="vx-grid vx-g2" style={{ marginBottom: 10 }}>
+                        {sugestaoIA.tarefas?.filter((t) => campanha.tarefas[t.tipo] !== undefined).map((t) => (
+                          <div key={t.tipo} style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
+                            <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>{ACOES[t.tipo]?.nome || t.tipo}</div>
+                            <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(t.bruto)}</div>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(t.percentual * 100).toFixed(0)}% · líq. {money(t.liquido)}</div>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>Faixa: {money(t.minimo)} – {money(t.maximo)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {sugestaoIA.tipo !== "visita" && (() => {
+                      const agendamento = sugestaoIA.tarefas?.find((t) => t.tipo === "agendamento");
                       return agendamento ? (
                         <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 10 }}>
                           Custo estimado por reunião agendada: <b className="vx-mono">{money(agendamento.bruto)}</b>
@@ -702,16 +760,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         </div>
                       ) : null;
                     })()}
-                    <div className="vx-mut" style={{ fontSize: 11, marginBottom: 8 }}>
+                    {sugestaoIA.confianca && <div className="vx-mut" style={{ fontSize: 11, marginBottom: 8 }}>
                       Confiança: {sugestaoIA.confianca} · {sugestaoIA.fontes?.[0]?.nome}
-                    </div>
+                    </div>}
                     <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={aceitarSugestaoIA}>
                       <Check size={12} /> Aceitar sugestão
                     </button>
                   </div>
                 ) : (
                   <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>
-                    {sugestaoIA.motivo} <b>Ausente: {sugestaoIA.ausentes?.join(", ")}</b>
+                    {sugestaoIA.motivo} {sugestaoIA.ausentes && <b>Ausente: {sugestaoIA.ausentes.join(", ")}</b>}
                   </div>
                 )
               )}
@@ -725,7 +783,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <div className="vx-grid vx-g2">
               {Object.keys(campanha.tarefas).map((k) => (
                 <label key={k}>
-                  <div className="vx-label">{ACOES[k]?.nome || k}</div>
+                  <div className="vx-label">
+                    {k === "venda" ? "Comissão por venda fechada (R$)" : (ACOES[k]?.nome || k)}
+                  </div>
                   <input className="vx-input vx-mono" type="number" min="0" step="0.5" value={campanha.tarefas[k]}
                     onChange={(e) => set("tarefas", { ...campanha.tarefas, [k]: Number(e.target.value) })} />
                 </label>

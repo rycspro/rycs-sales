@@ -118,6 +118,44 @@ export function sugerirValores({ ticketMedio, margem = 0.3, conversaoReuniaoVend
   };
 }
 
+// Calcula o valor por visita a partir do orçamento mensal e meta diária de visitas.
+// Fórmula: orcamento / diasUteis / visitasPorDia = valor por visita.
+export function sugerirValorVisita({ orcamento, visitasPorDia, ticketMedio, diasUteis = 22, plano }) {
+  const orc = Number(orcamento) || 0;
+  const vpd = Number(visitasPorDia) || 0;
+  const ticket = Number(ticketMedio) || 0;
+
+  if (!vpd) {
+    return { disponivel: false, motivo: "Informe quantas visitas por dia cada profissional deve realizar." };
+  }
+  if (!orc && !ticket) {
+    return { disponivel: false, motivo: "Informe o orçamento mensal ou o ticket médio para calcular o valor por visita." };
+  }
+
+  let valorVisita;
+  let fonte;
+  if (orc > 0) {
+    valorVisita = orc / diasUteis / vpd;
+    fonte = `Orçamento R$${orc.toFixed(2)} ÷ ${diasUteis} dias ÷ ${vpd} visitas/dia`;
+  } else {
+    // Sem orçamento, usa proporção do ticket (0,8% por visita)
+    valorVisita = ticket * 0.008;
+    fonte = `${(0.008 * 100).toFixed(1)}% do ticket de R$${ticket.toFixed(2)}`;
+  }
+
+  const comissaoVenda = ticket > 0 ? arredondar(ticket * 0.08) : 0;
+  const visitaCalc = calcularValorTarefa(arredondar(valorVisita), plano);
+  const vendaCalc = calcularValorTarefa(comissaoVenda, plano);
+
+  return {
+    disponivel: true,
+    valorVisita: visitaCalc,
+    comissaoVenda: vendaCalc,
+    fonte,
+    premissas: { orcamento: orc, visitasPorDia: vpd, diasUteis, ticket },
+  };
+}
+
 // Quanto a tabela custa e devolve num volume alvo. É o que liga o valor da
 // tarefa ao ROI antes de a empresa confirmar.
 export function impactoNoRoi({ tarefas, metaAgendadas, ticketMedio, conversao, comparecimento = 1 }) {

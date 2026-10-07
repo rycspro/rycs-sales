@@ -994,6 +994,7 @@ adicionarColuna("campaigns", "icp", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "prazoFim", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "modeloOperacao", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "maxTentativasQuiz", "INTEGER DEFAULT 3");
+adicionarColuna("campaigns", "visitasPorDia", "INTEGER DEFAULT 0");
 
 // Cérebro da Operação — onboarding inteligente (Lote 7D-2)
 db.prepare(`
