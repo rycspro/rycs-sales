@@ -112,7 +112,9 @@ export function validateProva(tipo, prova, evidencias, campanhaConfig) {
       const { label } = EVIDENCE_SLOTS[slot] || { label: slot };
       erros.push(`Evidência obrigatória ausente: ${label}`);
     }
-    if (item && EVIDENCE_SLOTS[slot]?.isUrl && !/^https?:\/\/\S+/i.test(String(item.valor || "").trim())) {
+    const valorTrim = String(item?.valor || "").trim();
+    const ehArquivoEnviado = valorTrim.startsWith("data:");
+    if (item && EVIDENCE_SLOTS[slot]?.isUrl && !ehArquivoEnviado && !/^https?:\/\/\S+/i.test(valorTrim)) {
       const { label } = EVIDENCE_SLOTS[slot] || { label: slot };
       erros.push(`${label}: cole um link válido (http:// ou https://)`);
     }

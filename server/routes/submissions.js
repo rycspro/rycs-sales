@@ -75,13 +75,23 @@ router.post("/submissions", async (req, res) => {
   const decisao = avaliarRegras({ regras, tipo, valor, confianca: r.confianca, veredito: r.veredito, risco: r.risco });
   const status = decisao.automatica ? "conferido" : statusDoVeredito(r.veredito);
 
+  // IP e horário de recebimento vêm do servidor, não do cliente — junto com
+  // o horário e a geolocalização lidos do EXIF da foto (enviados pelo
+  // vendedor), dão à empresa um rastro comprobatório da evidência.
+  const provaComMetadados = {
+    ...prova,
+    evidencias: Array.isArray(prova?.evidencias)
+      ? prova.evidencias.map((e) => ({ ...e, metadata: { ...(e.metadata || {}), ip: req.ip, recebidoEm: agora() } }))
+      : prova?.evidencias,
+  };
+
   const id = uid();
   try { db.transaction(() => {
     db.prepare(`
       INSERT INTO submissions (id, sellerId, companyId, campaignId, leadId, tipo, valor, liquido, prova, status, confianca, motivo, fonte, idempotencyKey, criadoEm)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, sellerId, companyId, campaignId || null, leadId || null, tipo, valor,
-           liquido, JSON.stringify(prova || {}), status, r.confianca, r.motivo, r.fonte, idempotencyKey || null, agora());
+           liquido, JSON.stringify(provaComMetadados || {}), status, r.confianca, r.motivo, r.fonte, idempotencyKey || null, agora());
     if (campaignId) {
       const dadosEvento = { tipo, status, valor };
       registrarEventoCampanha({ companyId, campaignId, tipo: "TASK_COMPLETED", actorId: req.user.id, actorRole: role, sellerId, submissionId: id, leadId: leadId || null, source: "USER", dados: dadosEvento });

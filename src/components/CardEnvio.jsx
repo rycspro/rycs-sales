@@ -97,6 +97,21 @@ export default function CardEnvio({ sub, db, extra }) {
                     ) : (
                       <span style={{ fontSize: 12, wordBreak: "break-word" }}>{val || "—"}</span>
                     )}
+                    {ev.metadata && (isDataImg || isDataVid) && (
+                      <div style={{ marginTop: 5, fontSize: 10.5, color: "var(--ink-3)", display: "flex", flexDirection: "column", gap: 1 }}>
+                        {ev.metadata.capturadoEm && <span>📷 Capturada em: {new Date(ev.metadata.capturadoEm).toLocaleString("pt-BR")}</span>}
+                        {ev.metadata.latitude != null && ev.metadata.longitude != null && (
+                          <span>📍 <a href={`https://maps.google.com/?q=${ev.metadata.latitude},${ev.metadata.longitude}`} target="_blank" rel="noreferrer" style={{ color: "var(--brand)" }}>
+                            {ev.metadata.latitude.toFixed(5)}, {ev.metadata.longitude.toFixed(5)}
+                          </a></span>
+                        )}
+                        {ev.metadata.ip && <span>🌐 IP do envio: {ev.metadata.ip}</span>}
+                        {ev.metadata.recebidoEm && <span>🕒 Enviada à plataforma em: {new Date(ev.metadata.recebidoEm).toLocaleString("pt-BR")}</span>}
+                        {!ev.metadata.capturadoEm && !ev.metadata.latitude && (
+                          <span style={{ color: "#b45309" }}>⚠ Sem metadados de câmera (horário/local não encontrados na foto)</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

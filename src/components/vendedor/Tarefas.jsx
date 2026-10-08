@@ -115,8 +115,8 @@ export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liber
     setEvidencias(m.required.map((slot) => ({ slot, valor: "" })));
   };
 
-  const setEvidenciaValor = (idx, valor) => {
-    setEvidencias((prev) => prev.map((e, i) => (i === idx ? { ...e, valor } : e)));
+  const setEvidenciaValor = (idx, valor, metadata) => {
+    setEvidencias((prev) => prev.map((e, i) => (i === idx ? { ...e, valor, metadata: metadata || undefined } : e)));
   };
 
   const addEvidencia = () => {
@@ -149,7 +149,7 @@ export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liber
     setEnviando(true);
     const provaFinal = {
       ...prova,
-      evidencias: evidencias.map((e) => ({ slot: e.slot, valor: e.valor })),
+      evidencias: evidencias.map((e) => ({ slot: e.slot, valor: e.valor, metadata: e.metadata })),
     };
     const r = await api("/submissions", {
       sellerId: eu.id,

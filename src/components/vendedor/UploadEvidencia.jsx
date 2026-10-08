@@ -1,5 +1,26 @@
 import { useRef, useState } from "react";
 import { Upload, X, Image, Film, FileText, Link2 } from "lucide-react";
+import { parse as parseExif } from "exifr";
+
+// Metadados da foto — horário e geolocalização embutidos pela câmera do
+// aparelho — ficam visíveis para a empresa e compõem a análise de integridade.
+async function extrairMetadadosFoto(file) {
+  try {
+    const exif = await parseExif(file, { gps: true, pick: ["DateTimeOriginal", "CreateDate", "latitude", "longitude"] });
+    if (!exif) return null;
+    const metadata = {};
+    if (exif.DateTimeOriginal || exif.CreateDate) {
+      metadata.capturadoEm = new Date(exif.DateTimeOriginal || exif.CreateDate).toISOString();
+    }
+    if (typeof exif.latitude === "number" && typeof exif.longitude === "number") {
+      metadata.latitude = exif.latitude;
+      metadata.longitude = exif.longitude;
+    }
+    return Object.keys(metadata).length ? metadata : null;
+  } catch {
+    return null;
+  }
+}
 
 const ACCEPT = {
   image: "image/jpeg,image/png,image/webp,image/gif",
@@ -39,12 +60,13 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
   const isLink = value && value.startsWith("http");
   const Icon = ICONS[tipo] || Upload;
 
-  function handleFile(e) {
+  async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const metadata = tipo === "image" ? await extrairMetadadosFoto(file) : null;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      onChange(ev.target.result);
+      onChange(ev.target.result, metadata);
     };
     reader.readAsDataURL(file);
   }
