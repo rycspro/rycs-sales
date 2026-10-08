@@ -36,7 +36,7 @@ export default function CertificacaoCampanha({ campanha, eu, onAprovado }) {
   async function submeter(rsFinal) {
     setEnviando(true);
     try {
-      const r = await api(`/campaigns/${campanha.id}/quiz`, { method: "POST", body: JSON.stringify({ respostas: rsFinal }) });
+      const r = await api(`/campaigns/${campanha.id}/quiz`, { respostas: rsFinal });
       setResultado(r);
       setFase(r.aprovado ? "aprovado" : "reprovado");
       if (r.aprovado && onAprovado) onAprovado();
