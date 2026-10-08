@@ -67,14 +67,6 @@ router.post("/submissions", async (req, res) => {
   const { taxa, liquido } = calcularValorTarefa(valor, empresa.assinatura);
   const totalDebito = +valor.toFixed(2);
 
-  // Regras da empresa podem dispensar a conferência manual. O que elas NÃO
-  // fazem é liberar dinheiro: a ação vai para "conferido", o mesmo estado de
-  // quem foi conferido à mão, e o repasse continua com a plataforma.
-  let regras = {};
-  try { regras = JSON.parse(empresa.regrasAprovacao || "{}"); } catch { regras = {}; }
-  const decisao = avaliarRegras({ regras, tipo, valor, confianca: r.confianca, veredito: r.veredito, risco: r.risco });
-  const status = decisao.automatica ? "conferido" : statusDoVeredito(r.veredito);
-
   // IP e horário de recebimento vêm do servidor, não do cliente — junto com
   // o horário e a geolocalização lidos do EXIF da foto (enviados pelo
   // vendedor), dão à empresa um rastro comprobatório da evidência.
@@ -84,6 +76,24 @@ router.post("/submissions", async (req, res) => {
       ? prova.evidencias.map((e) => ({ ...e, metadata: { ...(e.metadata || {}), ip: req.ip, recebidoEm: agora() } }))
       : prova?.evidencias,
   };
+
+  // Foto sem horário/GPS no EXIF (ex: passou por WhatsApp/Instagram, que
+  // apagam esses dados) não tem lastro comprobatório — nunca aprova sozinha,
+  // vai direto para conferência humana, custe o que custar a regra da empresa.
+  const semMetadadosCamera = (provaComMetadados.evidencias || []).some((e) =>
+    String(e.valor || "").startsWith("data:image") && !e.metadata?.capturadoEm && e.metadata?.latitude == null
+  );
+
+  // Regras da empresa podem dispensar a conferência manual. O que elas NÃO
+  // fazem é liberar dinheiro: a ação vai para "conferido", o mesmo estado de
+  // quem foi conferido à mão, e o repasse continua com a plataforma.
+  let regras = {};
+  try { regras = JSON.parse(empresa.regrasAprovacao || "{}"); } catch { regras = {}; }
+  const decisao = avaliarRegras({ regras, tipo, valor, confianca: r.confianca, veredito: r.veredito, risco: r.risco });
+  const status = decisao.automatica && !semMetadadosCamera ? "conferido" : statusDoVeredito(r.veredito);
+  if (semMetadadosCamera && status !== "ia_recusado") {
+    r.motivo = `Foto sem metadados de câmera (horário/localização) — revisão manual obrigatória. ${r.motivo || ""}`.trim();
+  }
 
   const id = uid();
   try { db.transaction(() => {
