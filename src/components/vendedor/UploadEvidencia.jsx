@@ -1,20 +1,25 @@
 import { useRef, useState } from "react";
 import { Upload, X, Image, Film, FileText, Link2 } from "lucide-react";
-import { parse as parseExif } from "exifr";
+import { parse as parseExif, gps as parseGps } from "exifr";
 
 // Metadados da foto — horário e geolocalização embutidos pela câmera do
 // aparelho — ficam visíveis para a empresa e compõem a análise de integridade.
+// GPS usa a função dedicada exifr.gps(): "latitude"/"longitude" não são tags
+// EXIF reais (são GPSLatitude/GPSLongitude), então pedi-las via `pick` do
+// parse() genérico descarta o bloco de GPS inteiro antes de computá-las.
 async function extrairMetadadosFoto(file) {
   try {
-    const exif = await parseExif(file, { gps: true, pick: ["DateTimeOriginal", "CreateDate", "latitude", "longitude"] });
-    if (!exif) return null;
+    const [datas, coords] = await Promise.all([
+      parseExif(file, { pick: ["DateTimeOriginal", "CreateDate"] }).catch(() => null),
+      parseGps(file).catch(() => null),
+    ]);
     const metadata = {};
-    if (exif.DateTimeOriginal || exif.CreateDate) {
-      metadata.capturadoEm = new Date(exif.DateTimeOriginal || exif.CreateDate).toISOString();
+    if (datas?.DateTimeOriginal || datas?.CreateDate) {
+      metadata.capturadoEm = new Date(datas.DateTimeOriginal || datas.CreateDate).toISOString();
     }
-    if (typeof exif.latitude === "number" && typeof exif.longitude === "number") {
-      metadata.latitude = exif.latitude;
-      metadata.longitude = exif.longitude;
+    if (typeof coords?.latitude === "number" && typeof coords?.longitude === "number") {
+      metadata.latitude = coords.latitude;
+      metadata.longitude = coords.longitude;
     }
     return Object.keys(metadata).length ? metadata : null;
   } catch {
