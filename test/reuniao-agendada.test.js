@@ -18,25 +18,25 @@ const contexto = {
 
 test("reunião agendada completa segue para revisão de auditoria", () => {
   const campos = ACOES.agendamento.prova;
-  assert.deepEqual(campos, ["cliente", "telefone", "datahora", "video"]);
+  assert.deepEqual(campos, ["cliente", "telefone", "datahora", "modalidade"]);
   const prova = normalizarProva({
     cliente: "Mariana Oliveira",
     telefone: "11987654321",
     datahora: new Date(Date.now() + 7 * 86400000).toISOString(),
-    video: "https://drive.google.com/file/d/evidencia-agendamento",
+    modalidade: "Remota (Google Meet)",
   }, campos);
   const resultado = avaliar({ tipo: "agendamento", prova, camposReq: campos, contexto });
   assert.equal(resultado.veredito, "revisao");
   assert.equal(resultado.exigeRevisaoHumana, true);
 });
 
-test("reunião agendada sem evidência obrigatória é recusada", () => {
+test("reunião agendada sem campo obrigatório é recusada", () => {
   const campos = ACOES.agendamento.prova;
   const prova = normalizarProva({
     cliente: "Mariana Oliveira",
     telefone: "11987654321",
     datahora: new Date(Date.now() + 7 * 86400000).toISOString(),
-    video: "",
+    modalidade: "",
   }, campos);
   const resultado = avaliar({ tipo: "agendamento", prova, camposReq: campos, contexto });
   assert.equal(resultado.veredito, "recusado");

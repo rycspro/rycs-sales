@@ -34,46 +34,51 @@ export const CAMPOS = {
   video:         { label: "Link do vídeo / gravação", ph: "Drive, YouTube não listado, Loom…" },
 };
 
+// prova de cada ação espelha requiredFields de shared/evidenceMatrix.js — são
+// os campos de texto que a tela realmente coleta. O arquivo de evidência em
+// si (link ou upload) vai em prova.evidencias[], validado separadamente; não
+// entra aqui como campo de texto "video"/"contrato" (isso é só legado, veja
+// comentário em CAMPOS acima).
 export const ACOES = {
   ligacao: {
     nome: "Cold call",
     regra: "Ligação atendida pelo decisor, acima de 2 minutos. Suba o vídeo ou a gravação da call.",
-    prova: ["cliente", "telefone", "duracao", "video"],
+    prova: ["cliente", "telefone", "duracao", "resultado"],
   },
   contato: {
     nome: "Contato",
     regra: "Primeiro contato válido com o lead. Informe o contato, canal e evidência da abordagem.",
-    prova: ["cliente", "telefone", "canal", "video"],
+    prova: ["cliente", "telefone", "canal"],
   },
   lead_qualificado: {
     nome: "Qualificação",
     regra: "Lead qualificado com dor, perfil e próximo passo registrados. Grave a evidência da qualificação.",
-    prova: ["cliente", "telefone", "canal", "video"],
+    prova: ["cliente", "telefone", "interesse", "necessidade", "proximo_passo"],
   },
   follow: {
     nome: "Follow-up",
     regra: "Retomada de contato com resposta do cliente. Grave a tela mostrando a conversa.",
-    prova: ["cliente", "telefone", "canal", "video"],
+    prova: ["cliente", "telefone", "canal", "resultado", "proximo_follow"],
   },
   agendamento: {
     nome: "Reunião agendada",
     regra: "Cliente confirmou dia e hora. Grave a tela com a confirmação do cliente.",
-    prova: ["cliente", "telefone", "datahora", "video"],
+    prova: ["cliente", "telefone", "datahora", "modalidade"],
   },
   realizada: {
     nome: "Reunião realizada",
     regra: "Reunião aconteceu do início ao fim. Suba a gravação completa.",
-    prova: ["cliente", "telefone", "video"],
+    prova: ["cliente", "telefone", "duracao", "necessidade", "resultado", "proximo_passo"],
   },
   visita: {
     nome: "PAP/visita",
     regra: "Visita presencial ou porta a porta realizada. Envie evidência verificável da execução.",
-    prova: ["cliente", "telefone", "video"],
+    prova: ["cliente", "telefone", "endereco", "resultado"],
   },
   venda: {
     nome: "Venda fechada",
     regra: "Contrato assinado ou primeiro pagamento confirmado. Anexe o contrato e o vídeo do fechamento.",
-    prova: ["cliente", "documento", "valorContrato", "contrato", "video"],
+    prova: ["cliente", "documento", "valorContrato"],
   },
 };
 
