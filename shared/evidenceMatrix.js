@@ -12,7 +12,7 @@ export const EVIDENCE_SLOTS = {
   meeting_summary:         { label: "Resumo estruturado da reunião", ph: "Participante, empresa, duração, necessidade, interesse, objeções, resultado, próximo passo", isText: true },
   call_log:                { label: "Registro da ligação", ph: "Log da chamada, duração, número e resultado", isText: true },
   call_recording:          { label: "Gravação da call (se habilitada)", ph: "Link da gravação ou arquivo", isUrl: true },
-  visit_proof:             { label: "Prova da visita", ph: "Foto, geolocalização ou evidência do estabelecimento (link)", isUrl: true },
+  visit_proof:             { label: "Prova da visita", ph: "Foto do estabelecimento ou do local visitado", isImage: true },
   visit_result:            { label: "Resultado da visita", ph: "Empresa/local, contato, resultado e próximo passo", isText: true },
   closing_proof:           { label: "Comprovação do fechamento", ph: "Link do pedido, contrato, aceite ou comprovante", isUrl: true },
   sale_data:               { label: "Dados da venda", ph: "Cliente, produto/serviço, valor, data e status", isText: true },
