@@ -31,7 +31,7 @@ function StatusChip({ status }) {
   );
 }
 
-function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy }) {
+function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy, aviso }) {
   const [candidatando, setCandidatando] = useState(false);
   const candidatura = campanha.candidaturas?.[0];
   const certificada = atendeCertificacaoDaCampanha(campanha, eu.certificacoes);
@@ -45,7 +45,7 @@ function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy }) {
     setCandidatando(true);
     const r = await api(`/campaigns/${campanha.id}/apply`, {});
     setCandidatando(false);
-    if (r?.error) return;
+    if (r?.error) return aviso?.(r.error);
     onCandidatar?.();
   }
 
@@ -162,6 +162,7 @@ export default function CampanhasEmpresa({ empresa, eu, db, onAbrir, voltar, avi
               onAbrir={onAbrir}
               onCandidatar={recarregar}
               irAcademy={irAcademy}
+              aviso={aviso}
             />
           ))}
         </div>
