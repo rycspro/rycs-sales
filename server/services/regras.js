@@ -239,6 +239,13 @@ export function avaliar({ tipo, prova, camposReq, contexto = {} }) {
     ? "ação vinculada a um lead interno"
     : "ação sem lead interno vinculado", { peso: 18 });
 
+  if (contexto.totalFotos > 0) {
+    const semMetadados = contexto.fotosSemMetadados > 0;
+    registrar(!semMetadados, "foto_metadados", semMetadados
+      ? `${contexto.fotosSemMetadados} de ${contexto.totalFotos} foto(s) sem horário/GPS no EXIF (pode ter passado por WhatsApp, Instagram ou edição)`
+      : "fotos com metadados de câmera íntegros", { peso: 28 });
+  }
+
   if (contexto.primeiraAcaoNaEmpresa) {
     problemas.push("primeira ação nesta empresa exige conferência reforçada");
     penalidade += 12;

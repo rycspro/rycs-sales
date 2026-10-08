@@ -77,23 +77,17 @@ router.post("/submissions", async (req, res) => {
       : prova?.evidencias,
   };
 
-  // Foto sem horário/GPS no EXIF (ex: passou por WhatsApp/Instagram, que
-  // apagam esses dados) não tem lastro comprobatório — nunca aprova sozinha,
-  // vai direto para conferência humana, custe o que custar a regra da empresa.
-  const semMetadadosCamera = (provaComMetadados.evidencias || []).some((e) =>
-    String(e.valor || "").startsWith("data:image") && !e.metadata?.capturadoEm && e.metadata?.latitude == null
-  );
-
   // Regras da empresa podem dispensar a conferência manual. O que elas NÃO
   // fazem é liberar dinheiro: a ação vai para "conferido", o mesmo estado de
   // quem foi conferido à mão, e o repasse continua com a plataforma.
+  // Foto sem metadados de câmera já entra nessa conta: auditar() pondera a
+  // ausência de horário/GPS como sinal de risco, elevando risco/reduzindo
+  // confiança o suficiente para que a própria regra barre a aprovação
+  // automática quando o risco deixa de ser "baixo" — sem veto hardcoded.
   let regras = {};
   try { regras = JSON.parse(empresa.regrasAprovacao || "{}"); } catch { regras = {}; }
   const decisao = avaliarRegras({ regras, tipo, valor, confianca: r.confianca, veredito: r.veredito, risco: r.risco });
-  const status = decisao.automatica && !semMetadadosCamera ? "conferido" : statusDoVeredito(r.veredito);
-  if (semMetadadosCamera && status !== "ia_recusado") {
-    r.motivo = `Foto sem metadados de câmera (horário/localização) — revisão manual obrigatória. ${r.motivo || ""}`.trim();
-  }
+  const status = decisao.automatica ? "conferido" : statusDoVeredito(r.veredito);
 
   const id = uid();
   try { db.transaction(() => {

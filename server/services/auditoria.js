@@ -28,11 +28,19 @@ function existeEvidencia({ campo, valor, tipo, desde = 0 }) {
   return Boolean(row);
 }
 
-function montarContexto({ sellerId, companyId, leadId, prova, tipo, proofHash }) {
+function montarContexto({ sellerId, companyId, leadId, prova, tipo, proofHash, evidencias }) {
   const telefone = normalizarTelefone(prova?.telefone);
   const documento = normalizarDocumento(prova?.documento);
   const video = canonicalizarUrl(prova?.video);
   const agora = Date.now();
+
+  // Foto sem horário/GPS no EXIF (ex: reenviada pelo WhatsApp ou Instagram,
+  // que apagam esses dados) não tem lastro de câmera — é um sinal de risco
+  // para a triagem ponderar, não um motivo de recusa por si só.
+  const fotosSemMetadados = (evidencias || []).filter((e) =>
+    String(e?.valor || "").startsWith("data:image") && !e?.metadata?.capturadoEm && e?.metadata?.latitude == null
+  ).length;
+  const totalFotos = (evidencias || []).filter((e) => String(e?.valor || "").startsWith("data:image")).length;
 
   const anteriores = db.prepare(
     "SELECT companyId, criadoEm, status FROM submissions WHERE sellerId = ? ORDER BY criadoEm DESC LIMIT 200"
@@ -55,6 +63,8 @@ function montarContexto({ sellerId, companyId, leadId, prova, tipo, proofHash })
     totalDecididas: decididas.length,
     totalAprovadas: aprovadas.length,
     taxaAprovacao: decididas.length ? Math.round((aprovadas.length / decididas.length) * 100) : 100,
+    totalFotos,
+    fotosSemMetadados,
   };
 }
 
@@ -77,7 +87,7 @@ export async function auditar({ tipo, prova, sellerId, companyId, leadId = null 
 
   const provaNormalizada = normalizarProva(prova, acao.prova);
   const proofHash = hashDaProva(provaNormalizada);
-  const contexto = montarContexto({ sellerId, companyId, leadId, prova: provaNormalizada, tipo, proofHash });
+  const contexto = montarContexto({ sellerId, companyId, leadId, prova: provaNormalizada, tipo, proofHash, evidencias: prova?.evidencias });
   const resultado = avaliar({ tipo, prova: provaNormalizada, camposReq: acao.prova, contexto });
   return {
     ...resultado,
@@ -88,6 +98,8 @@ export async function auditar({ tipo, prova, sellerId, companyId, leadId = null 
       leadVinculado: Boolean(leadId),
       acoesUltimaHora: contexto.acoesUltimaHora,
       primeiraAcaoNaEmpresa: contexto.primeiraAcaoNaEmpresa,
+      totalFotos: contexto.totalFotos,
+      fotosSemMetadados: contexto.fotosSemMetadados,
     },
   };
 }
