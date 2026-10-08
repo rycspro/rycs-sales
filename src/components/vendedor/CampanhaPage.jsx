@@ -120,6 +120,7 @@ function AcaoCard({ tipo, valor, acoes, onRegistrar }) {
 function TreinamentoModulos({ campanha, onIrCertificacao, quizAprovado }) {
   const [aberto, setAberto] = useState({});
   const modulos = campanha.treinamento || [];
+  const temQuiz = campanha.quiz?.length > 0;
 
   return (
     <div>
@@ -146,7 +147,7 @@ function TreinamentoModulos({ campanha, onIrCertificacao, quizAprovado }) {
           )}
         </div>
       ))}
-      {modulos.length > 0 && (
+      {modulos.length > 0 && temQuiz && (
         <div style={{ textAlign: "center", marginTop: 8 }}>
           {quizAprovado
             ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#16a34a", fontWeight: 600, fontSize: 13 }}>
@@ -369,11 +370,11 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
           </div>
           <TreinamentoModulos
             campanha={campanha}
-            onIrCertificacao={() => setAba("certif")}
+            onIrCertificacao={() => document.getElementById("certificacao-campanha")?.scrollIntoView({ behavior: "smooth", block: "start" })}
             quizAprovado={campanha.quizAprovado}
           />
           {campanha.quiz?.length > 0 && (
-            <div style={{ marginTop: 20 }}>
+            <div id="certificacao-campanha" style={{ marginTop: 20 }}>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Certificação</div>
               <CertificacaoCampanha
                 campanha={campanha}
