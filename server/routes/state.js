@@ -47,6 +47,7 @@ function parseCampaign(row) {
     tarefas: JSON.parse(row.tarefas || "{}"),
     evidencias: JSON.parse(row.evidencias || "{}"),
     criteriosAprovacao: JSON.parse(row.criteriosAprovacao || "{}"),
+    quiz: JSON.parse(row.quiz || "[]"),
     aceitaLeadProprio: !!row.aceitaLeadProprio,
     exigeCertificacao: !!row.exigeCertificacao,
   };
@@ -142,6 +143,8 @@ function getFilteredState(user) {
         return {
           ...c,
           candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
+          // Vendedor nunca recebe o gabarito embutido na campanha.
+          quiz: c.quiz.map(({ correta, ...q }) => q),
           quizAprovado: melhorTentativa ? !!melhorTentativa.aprovado : false,
           quizScore: melhorTentativa?.score ?? null,
         };
