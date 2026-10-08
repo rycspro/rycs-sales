@@ -111,7 +111,7 @@ function PerformanceChart({ serie = [] }) {
   </div>;
 }
 
-function ProfessionalProfile({ item, tarefas, leads, onClose }) {
+function ProfessionalProfile({ item, tarefas, leads, campanha, onClose, onStatusChange }) {
   const sellerId = item.sellerId;
   const tarefasProfissional = tarefas.filter((t) => t.sellerId === sellerId);
   const leadsProfissional = leads.filter((l) => l.sellerId === sellerId);
@@ -137,6 +137,12 @@ function ProfessionalProfile({ item, tarefas, leads, onClose }) {
       <div className="vx-profile-chart"><div className="vx-eyebrow">Performance diária</div>{serie.length === 0 ? <Empty texto="Ainda não há atividade deste profissional na campanha." /> : serie.map(([data, total]) => <div key={data}><span>{data}</span><i><b style={{ width: `${(total / maximo) * 100}%` }} /></i><strong>{total}</strong></div>)}</div>
       <div className="vx-eyebrow" style={{ marginTop: 17 }}>Evidências e histórico recente</div>
       {evidencias.length === 0 ? <Empty texto="Nenhuma evidência enviada nesta campanha." /> : <div className="vx-compact-list">{evidencias.slice(0, 8).map((t) => <div key={t.id}><div><b>{t.tipo}</b><span>{new Date(t.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{t.status}</span></div>)}</div>}
+      {item.candidaturaStatus === "pendente" && (
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+          <button className="vx-btn vx-btn-primary" style={{ flex: 1 }} onClick={() => onStatusChange("aprovado")}><CheckCircle2 size={14} /> Aprovar profissional</button>
+          <button className="vx-btn vx-btn-danger" style={{ flex: 1 }} onClick={() => onStatusChange("recusado")}><X size={14} /> Recusar</button>
+        </div>
+      )}
     </div>
   </div>;
 }
@@ -295,7 +301,11 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">Configurações da campanha</h2><p>Objetivo, público, região, valores, evidências, treinamento e regras de publicação continuam no editor completo.</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> Editar configuração</button></section>}
     {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} />}
     {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
-    {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} onClose={() => setProfissionalAberto(null)} />}
+    {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} campanha={campanha} onClose={() => setProfissionalAberto(null)} onStatusChange={async (status) => {
+      await apiPatch(`/campaigns/${campanha.id}/applications/${profissionalAberto.id}`, { status });
+      setProfissionalAberto(null);
+      setRecarregar((v) => v + 1);
+    }} />}
   </div>;
 }
 

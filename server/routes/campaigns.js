@@ -287,12 +287,6 @@ router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {
   ).get(req.params.appId, campaign.id);
   if (!candidatura) return res.status(404).json({ error: "Candidatura não encontrada" });
 
-  if (status === "aprovado" && campaign.exigeCertificacao) {
-    const certificacoes = certificacoesDoProfissional(candidatura.sellerId);
-    if (!atendeCertificacaoDaCampanha(campaign, certificacoes))
-      return res.status(422).json({ error: "O profissional ainda não possui a certificação exigida pela campanha." });
-  }
-
   db.transaction(() => {
     db.prepare("UPDATE campaign_applications SET status = ? WHERE id = ?").run(status, req.params.appId);
     registrarEventoCampanha({
