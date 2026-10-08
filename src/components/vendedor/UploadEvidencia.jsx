@@ -10,9 +10,15 @@ import { parse as parseExif, gps as parseGps } from "exifr";
 function obterLocalizacaoNavegador() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null);
+    // O `timeout` da própria API já devolve erro em 8s, mas alguns
+    // navegadores/webviews embutidos não respeitam isso — o setTimeout
+    // manual garante que isto nunca trava o resto da função por mais tempo.
+    let resolvido = false;
+    const concluir = (valor) => { if (!resolvido) { resolvido = true; resolve(valor); } };
+    setTimeout(() => concluir(null), 9000);
     navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-      () => resolve(null),
+      (pos) => concluir({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      () => concluir(null),
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
     );
   });
@@ -91,13 +97,22 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
   const isLink = value && value.startsWith("http");
   const Icon = ICONS[tipo] || Upload;
 
-  async function handleFile(e) {
+  function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const metadata = tipo === "image" ? await extrairMetadadosFoto(file) : null;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      onChange(ev.target.result, metadata);
+      const dataUrl = ev.target.result;
+      // A foto aparece na hora — os metadados (que dependem de permissão de
+      // localização, podendo demorar ou nunca responder) nunca podem travar
+      // o upload em si. Chegam depois, em segundo plano, e atualizam a mesma
+      // evidência quando (e se) ficarem prontos.
+      onChange(dataUrl);
+      if (tipo === "image") {
+        extrairMetadadosFoto(file).then((metadata) => {
+          if (metadata) onChange(dataUrl, metadata);
+        });
+      }
     };
     reader.readAsDataURL(file);
   }
