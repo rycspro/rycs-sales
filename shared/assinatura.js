@@ -1,4 +1,5 @@
 import { PLANOS, planoDe } from "./planos.js";
+import { isPremium } from "./empresa.js";
 
 // Regra de acesso da empresa à plataforma.
 //
@@ -18,12 +19,13 @@ export const ESTADOS = {
   inadimplente: "inadimplente", // cobrança falhou ou venceu
   trialFim:   "trial_terminado", // período gratuito acabou, e não havia cartão
   sem:        "sem",         // nunca assinou, ou está no plano gratuito antigo
+  premium:    "premium",     // marcada premium pela plataforma: não precisa pagar
 };
 
 // Quem entra na plataforma. Trial conta como acesso liberado: o cartão já foi
 // cadastrado, e cobrar para deixar entrar durante o período gratuito seria
 // contradizer a própria oferta.
-export const LIBERADOS = [ESTADOS.ativa, ESTADOS.trial];
+export const LIBERADOS = [ESTADOS.ativa, ESTADOS.trial, ESTADOS.premium];
 
 const agoraPadrao = () => Date.now();
 
@@ -65,6 +67,24 @@ export function estadoDaAssinatura(assinatura, agora = agoraPadrao()) {
 // A decisão que a tela e a API consultam. Devolve o estado, se libera, e o que
 // dizer a quem está do outro lado.
 export function acessoDaEmpresa({ empresa = {}, assinatura = null } = {}, agora = agoraPadrao()) {
+  // Empresa premium entra sem passar pela cobrança. Quem marca é o admin, na
+  // tela de Cobrança e Acesso, e a marca mora na empresa — não na assinatura.
+  //
+  // Pagar continua possível: se ela assinou um plano, é o plano dela que
+  // aparece. Premium remove a obrigação, não a opção. Bloqueio de acesso é
+  // decidido antes desta função, e continua valendo acima do premium.
+  if (isPremium(empresa)) {
+    const assinado = assinatura?.plano || empresa.assinatura || null;
+    return {
+      estado: ESTADOS.premium,
+      liberado: true,
+      plano: assinado && PLANOS[assinado] && PLANOS[assinado].preco ? assinado : "premium",
+      titulo: "",
+      mensagem: "",
+      acao: null,
+    };
+  }
+
   const estado = estadoDaAssinatura(assinatura, agora);
 
   // Empresa que assinou antes deste sistema pode ter `assinatura` preenchida na
@@ -91,6 +111,7 @@ export function acessoDaEmpresa({ empresa = {}, assinatura = null } = {}, agora 
 
   const textos = {
     [ESTADOS.ativa]: { titulo: "", mensagem: "", acao: null },
+    [ESTADOS.premium]: { titulo: "", mensagem: "", acao: null },
     [ESTADOS.trial]: { titulo: "", mensagem: "", acao: null },
     [ESTADOS.sem]: {
       titulo: "Ative seu plano para continuar usando a RYCS",

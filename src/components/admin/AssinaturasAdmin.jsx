@@ -12,6 +12,7 @@ import { ORDEM_PLANOS, PLANOS } from "../../../shared/planos.js";
 
 const ROTULOS = {
   ativa: "Ativo",
+  premium: "Premium",
   trial: "Trial",
   pendente: "Pendente",
   inadimplente: "Inadimplente",
@@ -20,6 +21,7 @@ const ROTULOS = {
 
 const TONS = {
   ativa: "brand",
+  premium: "brand",
   trial: "brand",
   pendente: "amber",
   inadimplente: "red",
@@ -29,6 +31,7 @@ const TONS = {
 const FILTROS = [
   ["todos", "Todos"],
   ["ativa", "Ativos"],
+  ["premium", "Premium"],
   ["trial", "Trial"],
   ["pendente", "Pendentes"],
   ["inadimplente", "Inadimplentes"],

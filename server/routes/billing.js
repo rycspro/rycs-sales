@@ -1,6 +1,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { asaas, asaasAtivo, garantirCliente } from "../services/asaas.js";
+import { PLANOS } from "../../shared/planos.js";
 
 const router = Router();
 
@@ -37,9 +38,15 @@ function upsertBilling(companyId, fields) {
 
 // GET /api/admin/companies/:id/billing
 router.get("/admin/companies/:id/billing", requireAdmin, (req, res) => {
-  const empresa = db.prepare("SELECT id, nome FROM companies WHERE id = ?").get(req.params.id);
+  const empresa = db.prepare("SELECT id, nome, tipoEmpresa, assinatura FROM companies WHERE id = ?").get(req.params.id);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada." });
   const billing = getBilling(req.params.id);
+  // Tipo e plano moram em `companies`, não em `company_billing`, mas são
+  // decididos na mesma tela: a empresa é premium ou padrão, e com ou sem plano.
+  // Devolvê-los aqui evita a tela ter de buscar em dois lugares para desenhar
+  // um estado só.
+  billing.tipoEmpresa = empresa.tipoEmpresa || "padrao";
+  billing.plano = empresa.assinatura || null;
   const historico = db.prepare(
     "SELECT h.*, u.email as adminEmail FROM company_billing_history h LEFT JOIN users u ON u.id = h.adminId WHERE h.companyId = ? ORDER BY h.criadoEm DESC LIMIT 50"
   ).all(req.params.id);
@@ -48,11 +55,37 @@ router.get("/admin/companies/:id/billing", requireAdmin, (req, res) => {
 
 // PATCH /api/admin/companies/:id/billing/status
 router.patch("/admin/companies/:id/billing/status", requireAdmin, (req, res) => {
-  const { billing_status, access_status, motivo, isencao_ate } = req.body;
-  const empresa = db.prepare("SELECT id, nome FROM companies WHERE id = ?").get(req.params.id);
+  const { billing_status, access_status, motivo, isencao_ate, tipoEmpresa, plano } = req.body;
+  const empresa = db.prepare("SELECT id, nome, tipoEmpresa, assinatura FROM companies WHERE id = ?").get(req.params.id);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada." });
 
   const atual = getBilling(req.params.id);
+
+  // Premium: a empresa opera sem precisar pagar mensalidade. A marca vive em
+  // companies.tipoEmpresa porque é dela, não da cobrança — e é lida pelo
+  // portão de acesso, pelo limite de campanhas e pelo saldo de caixa.
+  //
+  // Voltar a padrão não apaga nada: plano, saldo, campanhas e histórico ficam
+  // como estão, e a empresa volta a ser cobrada pelas regras normais.
+  if (tipoEmpresa !== undefined && tipoEmpresa !== empresa.tipoEmpresa) {
+    if (!["padrao", "premium"].includes(tipoEmpresa))
+      return res.status(400).json({ error: "tipoEmpresa deve ser 'padrao' ou 'premium'." });
+    db.prepare("UPDATE companies SET tipoEmpresa = ? WHERE id = ?").run(tipoEmpresa, req.params.id);
+    registrarHistorico(req.params.id, "tipoEmpresa", empresa.tipoEmpresa || "padrao", tipoEmpresa, motivo, req.user.id);
+  }
+
+  // Liberar plano manualmente, sem passar pelo checkout. String vazia remove o
+  // plano concedido — a empresa volta para a tela de escolha, sem perder dado.
+  if (plano !== undefined) {
+    const novo = plano === null || plano === "" ? "" : String(plano);
+    if (novo && !PLANOS[novo])
+      return res.status(400).json({ error: "Plano inválido." });
+    const anterior = empresa.assinatura || "";
+    if (novo !== anterior) {
+      db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(novo || null, req.params.id);
+      registrarHistorico(req.params.id, "plano", anterior || "nenhum", novo || "nenhum", motivo, req.user.id);
+    }
+  }
 
   if (billing_status && billing_status !== atual.billing_status) {
     if (!["ativa", "isenta", "pausada"].includes(billing_status))
@@ -76,7 +109,8 @@ router.patch("/admin/companies/:id/billing/status", requireAdmin, (req, res) => 
     registrarHistorico(req.params.id, "access_status", atual.access_status, access_status, motivo, req.user.id);
   }
 
-  res.json({ ok: true, billing: getBilling(req.params.id) });
+  const depois = db.prepare("SELECT tipoEmpresa, assinatura FROM companies WHERE id = ?").get(req.params.id);
+  res.json({ ok: true, billing: { ...getBilling(req.params.id), tipoEmpresa: depois.tipoEmpresa || "padrao", plano: depois.assinatura || null } });
 });
 
 // GET /api/admin/companies/:id/billing/history

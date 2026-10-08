@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
+import { ORDEM_PLANOS, PLANOS } from "../../../shared/planos.js";
 
 const BILLING_LABELS = {
   ativa: { txt: "Ativa", color: "#22A06B" },
   isenta: { txt: "Isenta", color: "#6366F1" },
   pausada: { txt: "Pausada", color: "#F59E0B" },
+};
+const TIPO_LABELS = {
+  padrao: { txt: "Padrão", color: "var(--muted)" },
+  premium: { txt: "Premium", color: "#A855F7" },
 };
 const ACCESS_LABELS = {
   ativo: { txt: "Ativo", color: "#22A06B" },
@@ -36,6 +41,8 @@ export default function CobrancaEmpresa({ empresa, aviso, onVoltar }) {
     if (access_status) body.access_status = access_status;
     if (extra.motivo) body.motivo = extra.motivo;
     if (extra.isencao_ate) body.isencao_ate = extra.isencao_ate;
+    if (extra.tipoEmpresa !== undefined) body.tipoEmpresa = extra.tipoEmpresa;
+    if (extra.plano !== undefined) body.plano = extra.plano;
     const r = await apiPatch(`/admin/companies/${empresa.id}/billing/status`, body);
     setSalvando(false);
     if (r?.error) return aviso(r.error);
@@ -65,6 +72,9 @@ export default function CobrancaEmpresa({ empresa, aviso, onVoltar }) {
   const { billing, historico } = data;
   const bs = BILLING_LABELS[billing.billing_status] || BILLING_LABELS.ativa;
   const as = ACCESS_LABELS[billing.access_status] || ACCESS_LABELS.ativo;
+  const ts = TIPO_LABELS[billing.tipoEmpresa] || TIPO_LABELS.padrao;
+  const premium = billing.tipoEmpresa === "premium";
+  const nomePlano = billing.plano && PLANOS[billing.plano] ? PLANOS[billing.plano].nome : null;
 
   return (
     <div className="vx-fade">
@@ -125,6 +135,47 @@ export default function CobrancaEmpresa({ empresa, aviso, onVoltar }) {
         </div>
       </div>
 
+      {/* Tipo da empresa e plano liberado */}
+      <div className="vx-grid vx-g2" style={{ marginBottom: 20 }}>
+        <div className="vx-card" style={{ padding: 20 }}>
+          <div className="vx-mut" style={{ fontSize: 12, marginBottom: 6 }}>TIPO DE EMPRESA</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: ts.color, marginBottom: 10 }}>{ts.txt}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
+            {premium
+              ? "Opera sem precisar pagar plano. Campanhas e profissionais sem limite, caixa sem travar publicação. Pagar continua opcional."
+              : "Segue as regras normais: precisa de plano ativo e de saldo em caixa para publicar campanha."}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {!premium ? (
+              <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => { setModal("premium"); setForm({}); }}>
+                Tornar premium
+              </button>
+            ) : (
+              <button className="vx-btn vx-btn-sm" onClick={() => { setModal("padrao"); setForm({}); }}>
+                Voltar a padrão
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="vx-card" style={{ padding: 20 }}>
+          <div className="vx-mut" style={{ fontSize: 12, marginBottom: 6 }}>PLANO LIBERADO</div>
+          <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{nomePlano || "Nenhum"}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
+            Concessão manual, sem passar pelo checkout. Remover o plano não apaga campanhas, saldo nem histórico.
+          </div>
+          <select className="vx-input" value={billing.plano || ""} disabled={salvando}
+            aria-label="Plano liberado"
+            onChange={(e) => acao(null, null, { plano: e.target.value, motivo: "Plano definido pela plataforma" })}>
+            <option value="">Nenhum (empresa escolhe e paga)</option>
+            {ORDEM_PLANOS.map((k) => (
+              <option key={k} value={k}>{PLANOS[k].nome}{PLANOS[k].preco ? ` — R$ ${PLANOS[k].preco}` : ""}</option>
+            ))}
+            <option value="premium">Premium — sem mensalidade</option>
+          </select>
+        </div>
+      </div>
+
       {/* Gerar pagamento */}
       <div className="vx-card" style={{ padding: 20, marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -151,7 +202,7 @@ export default function CobrancaEmpresa({ empresa, aviso, onVoltar }) {
                 <span style={{ fontWeight: 600 }}>
                   {h.status_anterior} → <span style={{ color: "var(--brand)" }}>{h.status_novo}</span>
                 </span>
-                <span style={{ color: "var(--muted)", fontSize: 12 }}>{h.campo === "billing_status" ? "Cobrança" : "Acesso"}</span>
+                <span style={{ color: "var(--muted)", fontSize: 12 }}>{({ billing_status: "Cobrança", access_status: "Acesso", tipoEmpresa: "Tipo", plano: "Plano" })[h.campo] || h.campo}</span>
               </div>
               {h.motivo && <div style={{ color: "var(--muted)", fontSize: 12, marginTop: 2 }}>Motivo: {h.motivo}</div>}
               <div style={{ color: "var(--muted)", fontSize: 11, marginTop: 2 }}>Por: {h.adminEmail || h.adminId}</div>
@@ -184,6 +235,36 @@ export default function CobrancaEmpresa({ empresa, aviso, onVoltar }) {
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={() => acao("isenta", null, form)}>Confirmar</button>
+                  <button className="vx-btn" onClick={() => setModal(null)}>Cancelar</button>
+                </div>
+              </>
+            )}
+
+            {modal === "premium" && (
+              <>
+                <div className="vx-disp" style={{ fontSize: 17, marginBottom: 8 }}>Tornar empresa premium</div>
+                <div style={{ color: "var(--muted)", fontSize: 13, marginBottom: 16 }}>
+                  {empresa.nome} passa a operar sem precisar pagar plano. Pagar segue possível, mas deixa de ser exigência para manter a conta ativa. Saldo e depósitos continuam como estão.
+                </div>
+                <label className="vx-label">Motivo</label>
+                <input className="vx-input" value={form.motivo || ""} onChange={(e) => setForm({ ...form, motivo: e.target.value })} placeholder="Ex: parceria estratégica" />
+                <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                  <button className="vx-btn vx-btn-primary" disabled={salvando || !form.motivo} onClick={() => acao(null, null, { tipoEmpresa: "premium", motivo: form.motivo })}>Confirmar</button>
+                  <button className="vx-btn" onClick={() => setModal(null)}>Cancelar</button>
+                </div>
+              </>
+            )}
+
+            {modal === "padrao" && (
+              <>
+                <div className="vx-disp" style={{ fontSize: 17, marginBottom: 8 }}>Voltar empresa a padrão</div>
+                <div style={{ color: "var(--muted)", fontSize: 13, marginBottom: 16 }}>
+                  {empresa.nome} volta a precisar de plano ativo e de saldo em caixa para publicar campanha. Nada é apagado — campanhas, saldo e histórico ficam como estão.
+                </div>
+                <label className="vx-label">Motivo</label>
+                <input className="vx-input" value={form.motivo || ""} onChange={(e) => setForm({ ...form, motivo: e.target.value })} placeholder="Informe o motivo" />
+                <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                  <button className="vx-btn vx-btn-primary" disabled={salvando || !form.motivo} onClick={() => acao(null, null, { tipoEmpresa: "padrao", motivo: form.motivo })}>Confirmar</button>
                   <button className="vx-btn" onClick={() => setModal(null)}>Cancelar</button>
                 </div>
               </>

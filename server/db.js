@@ -1045,6 +1045,16 @@ if (notaResetEmpresas.changes > 0) console.log(`[migracao] ${notaResetEmpresas.c
 // INNER Energia é empresa premium — sem limite de campanhas ativas.
 db.prepare("UPDATE companies SET tipoEmpresa = 'premium', assinatura = 'premium', plano = 'premium' WHERE nome LIKE '%INNER%' AND (tipoEmpresa IS NULL OR tipoEmpresa != 'premium')").run();
 
+// Martin Business School é empresa premium: opera sem precisar pagar plano.
+// Só `tipoEmpresa` e `assinatura` mudam — saldo, depósitos e histórico ficam
+// intactos, e pagar segue sendo possível. Daqui para frente quem concede
+// premium é o admin, na tela de Cobrança e Acesso; esta linha existe para a
+// empresa já nascer premium no deploy, e não repete o trabalho se já estiver.
+const martinPremium = db.prepare(
+  "UPDATE companies SET tipoEmpresa = 'premium', assinatura = 'premium' WHERE nome LIKE '%Martin%Business%' AND (tipoEmpresa IS NULL OR tipoEmpresa != 'premium')"
+).run();
+if (martinPremium.changes > 0) console.log(`[migracao] Martin Business School marcada como premium`);
+
 const liberados = db.prepare("UPDATE sellers SET status = 'aprovado' WHERE status = 'analise'").run();
 if (liberados.changes > 0) {
   console.log(`[migracao] ${liberados.changes} profissional(is) liberado(s) da fila de análise`);

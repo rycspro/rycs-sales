@@ -14,6 +14,13 @@ export function podeConcederTrialSecreto({ estadoAtual, jaUsouTrial = false } = 
     return { ok: false, erro: "A empresa já possui uma assinatura com acesso liberado." };
   }
 
+  // Premium não paga mensalidade: conceder trial a ela é oferecer desconto
+  // sobre zero, e queimaria o único trial a que a empresa teria direito se
+  // algum dia voltasse a ser padrão.
+  if (estadoAtual === "premium") {
+    return { ok: false, erro: "Empresa premium já tem acesso liberado sem mensalidade." };
+  }
+
   if (estadoAtual === "pendente") {
     return { ok: false, erro: "Existe um checkout pendente. Resolva-o antes de conceder o trial." };
   }

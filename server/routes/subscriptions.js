@@ -47,7 +47,7 @@ const TRIAL_DIAS_PUBLICO = 0;
 router.get("/admin/subscriptions", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
 
-  const empresas = db.prepare("SELECT id, nome, assinatura, criadoEm FROM companies ORDER BY nome").all();
+  const empresas = db.prepare("SELECT id, nome, assinatura, tipoEmpresa, criadoEm FROM companies ORDER BY nome").all();
   const assinaturas = db.prepare(
     "SELECT * FROM subscriptions WHERE status != 'cancelada' ORDER BY criadoEm DESC"
   ).all();
@@ -90,18 +90,23 @@ router.get("/subscription/access", (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.json({ liberado: true, estado: "ativa" });
 
-  // Isenção ou acesso concedido manualmente pelo admin sobrepõe qualquer
-  // status de assinatura. Empresa isenta tem acesso completo (plano pro) sem
-  // precisar de cobrança.
   const billing = db.prepare("SELECT billing_status, access_status FROM company_billing WHERE companyId = ?").get(entityId);
-  if (billing?.billing_status === "isenta") {
-    return res.json({ liberado: true, estado: "ativa", plano: "pro", titulo: "", mensagem: "", acao: null, assinatura: null, trialDisponivel: TRIAL_DIAS_PUBLICO });
-  }
+
+  // Bloqueio administrativo vem antes de tudo — inclusive de isenção e de
+  // premium. É a decisão deliberada de um humano sobre um caso concreto, e
+  // deixá-la depois da isenção criava o estado em que o admin bloqueia a
+  // empresa, a tela continua liberada, e ninguém entende por quê.
   if (billing?.access_status === "bloqueado") {
     return res.json({ liberado: false, estado: "inadimplente", plano: null, titulo: "Acesso suspenso", mensagem: "Entre em contato com a RYCS para regularizar seu acesso.", acao: null, assinatura: null, trialDisponivel: TRIAL_DIAS_PUBLICO });
   }
 
-  const empresa = db.prepare("SELECT assinatura FROM companies WHERE id = ?").get(entityId);
+  // Isenção de mensalidade concedida pelo admin sobrepõe o status de
+  // assinatura: a empresa tem acesso completo sem precisar de cobrança.
+  if (billing?.billing_status === "isenta") {
+    return res.json({ liberado: true, estado: "ativa", plano: "pro", titulo: "", mensagem: "", acao: null, assinatura: null, trialDisponivel: TRIAL_DIAS_PUBLICO });
+  }
+
+  const empresa = db.prepare("SELECT assinatura, tipoEmpresa FROM companies WHERE id = ?").get(entityId);
   const assinatura = db.prepare(
     "SELECT * FROM subscriptions WHERE companyId = ? AND status != 'cancelada' ORDER BY criadoEm DESC LIMIT 1"
   ).get(entityId);

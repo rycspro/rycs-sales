@@ -42,6 +42,28 @@ export const PLANOS = {
       "Exigir profissionais certificados",
     ],
   },
+  // Plano concedido pela plataforma, não vendido no checkout.
+  //
+  // Empresa premium não paga mensalidade — por isso preço zero e sem limite de
+  // campanhas ou profissionais. O take rate repete o do Free, que já era o
+  // efetivo de quem era premium antes deste registro existir: premium isenta
+  // de assinatura, não de comissão sobre ação entregue.
+  //
+  // Fora de ORDEM_PLANOS de propósito: não aparece em /plans nem na vitrine de
+  // planos da empresa. Quem concede é o admin, na tela de Cobrança e Acesso.
+  premium: {
+    nome: "Premium",
+    preco: 0,
+    takeRate: 0.12,
+    limites: { campanhasAtivas: Infinity, vendedores: Infinity, destaque: true },
+    inclui: [
+      "Sem mensalidade",
+      "Campanhas ativas sem limite",
+      "Profissionais sem limite",
+      "Destaque na vitrine",
+      "Pagamento de planos opcional",
+    ],
+  },
   scale: {
     nome: "Scale",
     preco: 2700,

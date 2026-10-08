@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { acessoDaEmpresa, estadoDaAssinatura, diasDeTrialRestantes, ESTADOS } from "../shared/assinatura.js";
+import { ORDEM_PLANOS, PLANOS } from "../shared/planos.js";
+import { podeConcederTrialSecreto } from "../shared/trialSecreto.js";
 
 const AGORA = Date.parse("2026-09-21T12:00:00Z");
 const emDias = (n) => AGORA + n * 86400000;
@@ -118,4 +120,59 @@ test("trial com cartão que vence continua sendo falha de cobrança", () => {
     assinatura: { status: "trial", plano: "growth", trialFim: emDias(-1), formaPagamento: "CREDIT_CARD" },
   }, AGORA);
   assert.equal(r.acao, "atualizar-pagamento");
+});
+
+// ── Empresa premium ─────────────────────────────────────────────────────────
+//
+// Premium é marca da plataforma sobre a empresa: ela opera sem precisar pagar
+// plano. É o único caso em que a cobrança não decide o acesso — e por isso
+// cada regra abaixo existe para impedir que a marca vaze para onde não deve.
+
+test("premium entra sem assinatura nenhuma", () => {
+  const r = acessoDaEmpresa({ empresa: { tipoEmpresa: "premium" }, assinatura: null }, AGORA);
+  assert.equal(r.liberado, true);
+  assert.equal(r.estado, ESTADOS.premium);
+  assert.equal(r.plano, "premium");
+  assert.equal(r.acao, null);
+  assert.equal(r.titulo, "");
+});
+
+test("premium com cobrança falhada continua liberada", () => {
+  // Sem isto, marcar a empresa como premium não resolveria nada: a assinatura
+  // antiga em aberto continuaria derrubando o acesso dela.
+  const r = acessoDaEmpresa({
+    empresa: { tipoEmpresa: "premium" },
+    assinatura: { status: "inadimplente", plano: "scale" },
+  }, AGORA);
+  assert.equal(r.liberado, true);
+  assert.equal(r.estado, ESTADOS.premium);
+});
+
+test("premium que escolhe pagar aparece com o plano que pagou", () => {
+  // Pagar é opcional para premium, não proibido. Quem assinou precisa ver o
+  // próprio plano no painel, e não "Premium" no lugar dele.
+  const r = acessoDaEmpresa({
+    empresa: { tipoEmpresa: "premium", assinatura: "growth" },
+    assinatura: { status: "ativa", plano: "growth" },
+  }, AGORA);
+  assert.equal(r.liberado, true);
+  assert.equal(r.plano, "growth");
+});
+
+test("voltar a padrão devolve a empresa às regras de cobrança", () => {
+  const r = acessoDaEmpresa({ empresa: { tipoEmpresa: "padrao" }, assinatura: null }, AGORA);
+  assert.equal(r.liberado, false);
+  assert.equal(r.acao, "escolher-plano");
+});
+
+test("premium não é plano a vender: fica fora da vitrine", () => {
+  // Se entrasse em ORDEM_PLANOS, apareceria no checkout como plano de R$ 0 e
+  // qualquer empresa se tornaria premium sozinha.
+  assert.equal(ORDEM_PLANOS.includes("premium"), false);
+  assert.equal(PLANOS.premium.preco, 0);
+});
+
+test("premium não consome o trial da empresa", () => {
+  const r = podeConcederTrialSecreto({ estadoAtual: ESTADOS.premium, jaUsouTrial: false });
+  assert.equal(r.ok, false);
 });
