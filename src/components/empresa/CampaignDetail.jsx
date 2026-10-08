@@ -180,7 +180,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
   const profissionaisLocais = useMemo(() => candidaturas.filter((a) => ["aprovado", "pendente"].includes(a.status)).map((a) => {
     const profissional = (db.sellers || []).find((s) => s.id === a.sellerId) || {};
     const tarefasDoProfissional = tarefas.filter((s) => s.sellerId === a.sellerId);
-    return { ...a, ...profissional, candidaturaStatus: a.status, tarefas: tarefasDoProfissional.length, statusOperacional: a.status === "pendente" ? "pendente" : "sem_atividade", ganhos: 0, aprovadas: 0, recusadas: 0, score: Number(profissional.nota) || 0 };
+    return { ...a, ...profissional, applicationId: a.id, candidaturaStatus: a.status, tarefas: tarefasDoProfissional.length, statusOperacional: a.status === "pendente" ? "pendente" : "sem_atividade", ganhos: 0, aprovadas: 0, recusadas: 0, score: Number(profissional.nota) || 0 };
   }), [candidaturas, db.sellers, tarefas]);
   const profissionais = dados?.profissionais || profissionaisLocais;
   const profissionaisFiltrados = profissionais.filter((item) => filtroProfissional === "todos"
@@ -302,7 +302,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} />}
     {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
     {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} campanha={campanha} onClose={() => setProfissionalAberto(null)} onStatusChange={async (status) => {
-      await apiPatch(`/campaigns/${campanha.id}/applications/${profissionalAberto.id}`, { status });
+      await apiPatch(`/campaigns/${campanha.id}/applications/${profissionalAberto.applicationId || profissionalAberto.id}`, { status });
       setProfissionalAberto(null);
       setRecarregar((v) => v + 1);
     }} />}
