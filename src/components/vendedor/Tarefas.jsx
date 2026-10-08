@@ -317,7 +317,7 @@ export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liber
                         slot={ev.slot}
                         idx={idx}
                         value={ev.valor}
-                        onChange={(v) => setEvidenciaValor(idx, v)}
+                        onChange={(v, m) => setEvidenciaValor(idx, v, m)}
                         isRequired={isRequired}
                       />
                       {!isRequired && (
