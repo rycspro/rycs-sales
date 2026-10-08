@@ -2,24 +2,44 @@ import { useRef, useState } from "react";
 import { Upload, X, Image, Film, FileText, Link2 } from "lucide-react";
 import { parse as parseExif, gps as parseGps } from "exifr";
 
-// Metadados da foto — horário e geolocalização embutidos pela câmera do
-// aparelho — ficam visíveis para a empresa e compõem a análise de integridade.
-// GPS usa a função dedicada exifr.gps(): "latitude"/"longitude" não são tags
-// EXIF reais (são GPSLatitude/GPSLongitude), então pedi-las via `pick` do
-// parse() genérico descarta o bloco de GPS inteiro antes de computá-las.
+// A captura de câmera feita dentro de um site (não pelo app nativo) às vezes
+// não grava GPS no EXIF, mesmo com a permissão de localização ligada — é uma
+// limitação do próprio navegador (comum no Safari/iOS). Por isso pedimos a
+// posição direto da API do navegador como fonte principal, e só caímos para o
+// EXIF da foto se o navegador negar ou falhar.
+function obterLocalizacaoNavegador() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  });
+}
+
+// Metadados da foto — horário e geolocalização — ficam visíveis para a
+// empresa e compõem a análise de integridade da evidência.
+// GPS do EXIF usa a função dedicada exifr.gps(): "latitude"/"longitude" não
+// são tags EXIF reais (são GPSLatitude/GPSLongitude), então pedi-las via
+// `pick` do parse() genérico descarta o bloco de GPS inteiro antes de
+// computá-las.
 async function extrairMetadadosFoto(file) {
   try {
-    const [datas, coords] = await Promise.all([
+    const [datas, exifCoords, navCoords] = await Promise.all([
       parseExif(file, { pick: ["DateTimeOriginal", "CreateDate"] }).catch(() => null),
       parseGps(file).catch(() => null),
+      obterLocalizacaoNavegador(),
     ]);
     const metadata = {};
     if (datas?.DateTimeOriginal || datas?.CreateDate) {
       metadata.capturadoEm = new Date(datas.DateTimeOriginal || datas.CreateDate).toISOString();
     }
+    const coords = navCoords || exifCoords;
     if (typeof coords?.latitude === "number" && typeof coords?.longitude === "number") {
       metadata.latitude = coords.latitude;
       metadata.longitude = coords.longitude;
+      metadata.origemLocalizacao = navCoords ? "navegador" : "exif";
     }
     return Object.keys(metadata).length ? metadata : null;
   } catch {
@@ -52,6 +72,12 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
   const fileRef = useRef();
   const tipo = tipoDoSlot(slot);
   const podeLink = allowLink(slot);
+  // Evidência de foto que não aceita link (ex: prova de visita) é sempre uma
+  // foto real do local — força abrir a câmera na hora, sem opção de galeria,
+  // pra eliminar foto antiga sem GPS. Campos que aceitam link (print de
+  // conversa, confirmação) continuam podendo escolher da galeria: ali a
+  // evidência costuma já existir como captura de tela.
+  const forcarCamera = tipo === "image" && !podeLink;
 
   const [modo, setModo] = useState(() => {
     if (tipo === "text") return "texto";
@@ -164,9 +190,11 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
             >
               <Icon size={20} color="var(--brand)" />
               <span style={{ fontSize: 12.5, fontWeight: 600 }}>
-                {tipo === "image" ? "Selecionar imagem" : tipo === "video" ? "Selecionar vídeo" : "Selecionar arquivo"}
+                {forcarCamera ? "Tirar foto agora" : tipo === "image" ? "Selecionar imagem" : tipo === "video" ? "Selecionar vídeo" : "Selecionar arquivo"}
               </span>
-              <span style={{ fontSize: 11 }}>PNG, JPG, WEBP{tipo === "video" ? ", MP4, WEBM" : ""} · máx 50MB</span>
+              <span style={{ fontSize: 11 }}>
+                {forcarCamera ? "Abre a câmera do aparelho — não é possível escolher da galeria" : `PNG, JPG, WEBP${tipo === "video" ? ", MP4, WEBM" : ""} · máx 50MB`}
+              </span>
             </button>
           )}
 
@@ -174,6 +202,7 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
             ref={fileRef}
             type="file"
             accept={ACCEPT[tipo] || ACCEPT.any}
+            capture={forcarCamera ? "environment" : undefined}
             style={{ display: "none" }}
             onChange={handleFile}
           />

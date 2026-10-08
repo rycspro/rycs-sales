@@ -103,11 +103,11 @@ export default function CardEnvio({ sub, db, extra }) {
                         {ev.metadata.latitude != null && ev.metadata.longitude != null && (
                           <span>📍 <a href={`https://maps.google.com/?q=${ev.metadata.latitude},${ev.metadata.longitude}`} target="_blank" rel="noreferrer" style={{ color: "var(--brand)" }}>
                             {ev.metadata.latitude.toFixed(5)}, {ev.metadata.longitude.toFixed(5)}
-                          </a></span>
+                          </a> {ev.metadata.origemLocalizacao === "navegador" ? "(GPS do navegador)" : "(EXIF da foto)"}</span>
                         )}
                         {ev.metadata.ip && <span>🌐 IP do envio: {ev.metadata.ip}</span>}
                         {ev.metadata.recebidoEm && <span>🕒 Enviada à plataforma em: {new Date(ev.metadata.recebidoEm).toLocaleString("pt-BR")}</span>}
-                        {!ev.metadata.capturadoEm && !ev.metadata.latitude && (
+                        {!ev.metadata.capturadoEm && ev.metadata.latitude == null && (
                           <span style={{ color: "#b45309" }}>⚠ Sem metadados de câmera (horário/local não encontrados na foto)</span>
                         )}
                       </div>
