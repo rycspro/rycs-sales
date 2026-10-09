@@ -204,11 +204,13 @@ router.post("/admin/withdrawals/:id/reconciliar", authMiddleware, async (req, re
 
   const w = db.prepare("SELECT * FROM withdrawals WHERE id = ?").get(req.params.id);
   if (!w) return res.status(404).json({ error: "Saque não encontrado" });
-  if (w.status !== "solicitado") return res.json({ ok: true, status: w.status, desfecho: "nada a fazer", message: `Este saque já está como "${w.status}".` });
+  if (w.status === "cancelado") return res.json({ ok: true, status: w.status, desfecho: "nada a fazer", message: "Saque cancelado — o valor já voltou para o saldo." });
 
   if (!w.asaasId)
     return res.status(409).json({
-      error: "Este saque não tem transferência no gateway — foi registrado para processamento manual. Confirme o Pix no banco antes de marcar como pago.",
+      error: w.status === "pago"
+        ? "Este saque foi marcado como pago na mão e nunca gerou transferência no gateway: nenhum Pix saiu por aqui. Use \"Enviar Pix agora\" se o profissional ainda não recebeu."
+        : "Este saque não tem transferência no gateway — foi registrado para processamento manual. Confirme o Pix no banco antes de marcar como pago.",
     });
 
   if (!asaasAtivo())
@@ -233,6 +235,92 @@ router.post("/admin/withdrawals/:id/reconciliar", authMiddleware, async (req, re
     return res.json({ ok: true, statusGateway, desfecho, message: "O banco recusou a transferência. O valor voltou para o saldo do profissional, que já pode sacar de novo." });
   }
   res.json({ ok: true, statusGateway, desfecho, message: `O banco ainda está processando (${statusGateway || "sem status"}). O dinheiro não voltou e não saiu: aguarde antes de pedir de novo.` });
+});
+
+// ---------------------------------------------------------------------------
+// Pagar um saque de verdade
+//
+// "Marcar pago" só escreve no nosso banco que o Pix saiu — existe para quando
+// o admin transferiu na mão, pelo banco. Com o gateway ativo ele vira uma
+// mentira registrada: o profissional fica sem o saldo, que saiu no pedido, e
+// sem o dinheiro, que nunca foi enviado. Esta rota é a que move dinheiro.
+//
+// A ordem importa: pergunta ao banco antes de mandar. Reenviar sobre uma
+// transferência que já foi concluída paga a mesma pessoa duas vezes, e é
+// exatamente o erro que um saque "pago sem Pix" convida a cometer.
+// ---------------------------------------------------------------------------
+router.post("/admin/withdrawals/:id/pagar-pix", authMiddleware, async (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const w = db.prepare("SELECT * FROM withdrawals WHERE id = ?").get(req.params.id);
+  if (!w) return res.status(404).json({ error: "Saque não encontrado" });
+  if (w.status === "cancelado") return res.status(409).json({ error: "Saque cancelado. O valor já voltou para o saldo; peça um novo saque." });
+
+  if (!asaasAtivo()) return res.status(503).json({ error: `Gateway indisponível: ${asaasMotivoDesligado()}` });
+
+  const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(w.sellerId);
+  if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
+  if (!vendedor.pix || !vendedor.pixTipo) return res.status(400).json({ error: "O profissional precisa ter chave Pix e tipo cadastrados." });
+
+  // Se já existe transferência no gateway, o estado dela manda. Só segue para
+  // o envio quando o banco confirma que aquela não saiu.
+  if (w.asaasId) {
+    let anterior;
+    try { anterior = await asaas(`/transfers/${w.asaasId}`); }
+    catch (err) { return res.status(502).json({ error: `Não foi possível consultar a transferência anterior: ${err.message}` }); }
+
+    const desfechoAnterior = decidirSaque(anterior?.status);
+    if (desfechoAnterior === "pago") {
+      concluirSaque({ id: w.asaasId });
+      return res.status(409).json({ error: "O Pix desta solicitação já foi concluído pelo banco. Não envie de novo — o profissional receberia duas vezes." });
+    }
+    if (desfechoAnterior === "aguardando") {
+      return res.status(409).json({ error: `O banco ainda está processando esta transferência (${String(anterior?.status || "sem status").toUpperCase()}). Aguarde o desfecho antes de reenviar.` });
+    }
+  }
+
+  let envio;
+  try {
+    envio = await repassarParaVendedor({ vendedor, valor: w.valor, referencia: vendedor.nome });
+  } catch (err) {
+    console.error("[asaas] reenvio de saque:", err.message);
+    return res.status(502).json({ error: `O banco recusou o envio: ${err.message}` });
+  }
+
+  const desfecho = decidirSaque(envio.statusGateway);
+  const eraPagoNaMao = w.status === "pago";
+
+  db.transaction(() => {
+    if (envio.externoId) db.prepare("UPDATE withdrawals SET asaasId = ? WHERE id = ?").run(envio.externoId, w.id);
+
+    if (desfecho === "recusado") {
+      // Devolve o valor. Se o saque tinha sido marcado pago na mão, desfaz
+      // também esse lançamento: "sacado" contava um Pix que não existiu.
+      db.prepare("UPDATE withdrawals SET status = 'falhou', falhaMotivo = ? WHERE id = ?").run("Transferência recusada pelo banco", w.id);
+      db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(w.valor, w.sellerId);
+      if (eraPagoNaMao) db.prepare("UPDATE sellers SET sacado = sacado - ? WHERE id = ?").run(w.valor, w.sellerId);
+      registrarMovimento({ sellerId: w.sellerId, tipo: "saque_estornado", valor: w.valor, idempotencyKey: `${w.id}:reenvio` });
+      return;
+    }
+
+    // Enviado. O "sacado" só cresce aqui se ainda não tiver crescido na
+    // marcação manual — somar de novo inflaria o total sacado do profissional.
+    db.prepare("UPDATE withdrawals SET status = ?, falhaMotivo = NULL WHERE id = ?").run(desfecho === "pago" ? "pago" : "solicitado", w.id);
+    if (desfecho === "pago" && !eraPagoNaMao) {
+      db.prepare("UPDATE sellers SET sacado = sacado + ? WHERE id = ?").run(w.valor, w.sellerId);
+      registrarMovimento({ sellerId: w.sellerId, tipo: "saque_pago", valor: -w.valor, idempotencyKey: `${w.id}:reenvio` });
+    }
+  })();
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
+  if (user && desfecho !== "recusado") notificar(user.id, "saque", `Pix de R$ ${w.valor.toFixed(2)} enviado.`);
+
+  if (desfecho === "recusado")
+    return res.status(502).json({ error: "O banco recusou a transferência. O valor voltou para o saldo do profissional." });
+
+  res.json({ ok: true, desfecho, statusGateway: envio.statusGateway, message: desfecho === "pago"
+    ? "Pix enviado e confirmado pelo banco."
+    : "Pix enviado. O banco está processando e confirmará em instantes." });
 });
 
 // ---------------------------------------------------------------------------

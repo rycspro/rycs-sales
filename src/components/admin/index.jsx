@@ -16,6 +16,13 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
   const paraLiberar = db.submissions.filter((s) => s.status === "ia_aprovado" || s.status === "conferido");
   const saques = db.withdrawals.filter((w) => w.status === "solicitado");
+  // Os já resolvidos também precisam aparecer: é neles que mora o saque
+  // marcado pago sem Pix, que some da fila e fica invisível para quem
+  // precisa consertar.
+  const saquesResolvidos = db.withdrawals
+    .filter((w) => w.status !== "solicitado")
+    .sort((a, b) => b.criadoEm - a.criadoEm)
+    .slice(0, 15);
 
   const decidirTriagem = (s, st) => {
     apiPatch(`/sellers/${s.id}`, { status: st });
@@ -36,7 +43,10 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   // fazer isso pelo cliente falharia em silêncio, já que campos financeiros
   // não são graváveis por PATCH.
   const pagar = async (w) => {
-    if (!window.confirm(`Confirmar que o Pix de ${money(w.valor)} foi enviado?`)) return;
+    // Este botão não move dinheiro: só registra que alguém já transferiu por
+    // fora. Dizer isso aqui é o que evita marcar como pago um Pix que não
+    // existiu — o profissional fica sem o saldo e sem o dinheiro.
+    if (!window.confirm(`Isto NÃO envia Pix. Só registra que você já transferiu ${money(w.valor)} por fora da plataforma.\n\nPara o sistema enviar o Pix, use "Enviar Pix agora".\n\nConfirma que o Pix já foi feito?`)) return;
     const r = await apiPatch(`/withdrawals/${w.id}`, { status: "pago" });
     if (r?.error) return aviso(r.error);
     await recarregar();
@@ -47,6 +57,17 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   // chegou. Antes de devolver saldo ou cobrar de novo, pergunta ao banco.
   const conferir = async (w) => {
     const r = await api(`/admin/withdrawals/${w.id}/reconciliar`, {});
+    if (r?.error) return aviso(r.error);
+    await recarregar();
+    aviso(r.message);
+  };
+
+  // O que de fato manda o dinheiro. Confere a transferência anterior no banco
+  // antes de enviar, para não pagar a mesma pessoa duas vezes.
+  const enviarPix = async (w) => {
+    const s = db.sellers.find((x) => x.id === w.sellerId);
+    if (!window.confirm(`Enviar Pix de ${money(w.valor)} para ${s?.nome || "o profissional"} agora?`)) return;
+    const r = await api(`/admin/withdrawals/${w.id}/pagar-pix`, {});
     if (r?.error) return aviso(r.error);
     await recarregar();
     aviso(r.message);
@@ -113,13 +134,42 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
                 <b className="vx-mono">{money(w.valor)}</b>
                 <div className="vx-mut" style={{ fontSize: 12 }}>{s?.nome} · {w.pix} · {dataCurta(w.criadoEm)}</div>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>Conferir no banco</button>
-                <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => pagar(w)}>Marcar pago</button>
+                <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>Enviar Pix agora</button>
+                <button className="vx-btn vx-btn-sm" onClick={() => pagar(w)}>Só registrar</button>
               </div>
             </div>
           );
         })}</div>)}
+
+      {aba === "saques" && saquesResolvidos.length > 0 && (
+        <>
+          <h3 className="vx-disp" style={{ fontSize: 15, margin: "22px 0 10px" }}>Saques resolvidos</h3>
+          <div className="vx-grid">{saquesResolvidos.map((w) => {
+            const s = db.sellers.find((x) => x.id === w.sellerId);
+            const rotulo = { pago: "Pago", falhou: "Não concluído", cancelado: "Cancelado" }[w.status] || w.status;
+            return (
+              <div key={w.id} className="vx-card vx-row" style={{ padding: 16 }}>
+                <div>
+                  <b className="vx-mono">{money(w.valor)}</b>
+                  <span className={"vx-badge " + (w.status === "pago" ? "vx-badge-brand" : "vx-badge-muted")} style={{ marginLeft: 8 }}>{rotulo}</span>
+                  <div className="vx-mut" style={{ fontSize: 12 }}>{s?.nome} · {w.pix} · {dataCurta(w.criadoEm)}</div>
+                  {!w.asaasId && w.status === "pago" && (
+                    <div style={{ fontSize: 12, color: "var(--amber)", marginTop: 3 }}>Marcado pago sem transferência no gateway — nenhum Pix saiu pela plataforma.</div>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>Conferir no banco</button>
+                  {w.status !== "cancelado" && (
+                    <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>Enviar Pix agora</button>
+                  )}
+                </div>
+              </div>
+            );
+          })}</div>
+        </>
+      )}
     </div>
   );
 }
