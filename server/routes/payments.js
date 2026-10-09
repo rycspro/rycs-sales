@@ -2,7 +2,7 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { notificar } from "./notifications.js";
-import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
+import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente } from "../services/asaas.js";
 import { ativarAssinatura, marcarInadimplencia } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
@@ -185,6 +185,54 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
     })();
     res.status(502).json({ error: "Não foi possível concluir o saque. O valor voltou para o seu saldo." });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Conferência de um saque parado
+//
+// O saque fica em "solicitado" até o webhook TRANSFER_DONE chegar. Se o
+// webhook não estiver registrado no Asaas, ou tiver sido interrompido, ele
+// fica ali para sempre — e ninguém na plataforma sabe dizer se o Pix saiu.
+//
+// Cancelar um saque nesse estado para a pessoa pedir de novo é o caminho que
+// paga duas vezes: "solicitado" não prova que o dinheiro ficou parado, só que
+// não recebemos a confirmação. Esta rota pergunta ao banco qual é o estado
+// real e aplica o desfecho — pagar ou devolver o saldo — em vez de adivinhar.
+// ---------------------------------------------------------------------------
+router.post("/admin/withdrawals/:id/reconciliar", authMiddleware, async (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const w = db.prepare("SELECT * FROM withdrawals WHERE id = ?").get(req.params.id);
+  if (!w) return res.status(404).json({ error: "Saque não encontrado" });
+  if (w.status !== "solicitado") return res.json({ ok: true, status: w.status, desfecho: "nada a fazer", message: `Este saque já está como "${w.status}".` });
+
+  if (!w.asaasId)
+    return res.status(409).json({
+      error: "Este saque não tem transferência no gateway — foi registrado para processamento manual. Confirme o Pix no banco antes de marcar como pago.",
+    });
+
+  if (!asaasAtivo())
+    return res.status(503).json({ error: `Gateway indisponível: ${asaasMotivoDesligado()}` });
+
+  let transfer;
+  try {
+    transfer = await asaas(`/transfers/${w.asaasId}`);
+  } catch (err) {
+    return res.status(502).json({ error: `Não foi possível consultar o banco: ${err.message}` });
+  }
+
+  const statusGateway = String(transfer?.status || "").toUpperCase();
+  const desfecho = decidirSaque(statusGateway);
+
+  if (desfecho === "pago") {
+    concluirSaque({ id: w.asaasId });
+    return res.json({ ok: true, statusGateway, desfecho, message: "O Pix já havia sido concluído. Saque marcado como pago — não peça de novo." });
+  }
+  if (desfecho === "recusado") {
+    devolverSaque({ id: w.asaasId });
+    return res.json({ ok: true, statusGateway, desfecho, message: "O banco recusou a transferência. O valor voltou para o saldo do profissional, que já pode sacar de novo." });
+  }
+  res.json({ ok: true, statusGateway, desfecho, message: `O banco ainda está processando (${statusGateway || "sem status"}). O dinheiro não voltou e não saiu: aguarde antes de pedir de novo.` });
 });
 
 // ---------------------------------------------------------------------------

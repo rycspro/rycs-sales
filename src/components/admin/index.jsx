@@ -43,6 +43,15 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
     aviso("Saque marcado como pago.");
   };
 
+  // "Solicitado" não prova que o Pix ficou parado — só que a confirmação não
+  // chegou. Antes de devolver saldo ou cobrar de novo, pergunta ao banco.
+  const conferir = async (w) => {
+    const r = await api(`/admin/withdrawals/${w.id}/reconciliar`, {});
+    if (r?.error) return aviso(r.error);
+    await recarregar();
+    aviso(r.message);
+  };
+
   if (aba === "dashboard") return <DashboardAdmin db={db} />;
   if (aba === "profissionais") return <ProfissionaisAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "empresas") return <EmpresasAdmin db={db} up={up} aviso={aviso} />;
@@ -104,7 +113,10 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
                 <b className="vx-mono">{money(w.valor)}</b>
                 <div className="vx-mut" style={{ fontSize: 12 }}>{s?.nome} · {w.pix} · {dataCurta(w.criadoEm)}</div>
               </div>
-              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => pagar(w)}>Marcar pago</button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>Conferir no banco</button>
+                <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => pagar(w)}>Marcar pago</button>
+              </div>
             </div>
           );
         })}</div>)}
