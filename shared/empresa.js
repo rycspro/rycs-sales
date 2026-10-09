@@ -26,24 +26,44 @@ export const isPosPago = (empresa = {}) => empresa.modalidadePagamento === "pos"
 
 export const isPremium = (empresa = {}) => empresa.tipoEmpresa === "premium";
 
-export function campanhaPodeSerPublicada(campanha = {}, empresa = {}) {
+// Os requisitos de publicação, um a um, com o rótulo que a tela mostra e a
+// pendência que o servidor devolve.
+//
+// Lista única porque antes eram duas: esta regra e uma cópia dela dentro do
+// wizard de campanha. As duas discordavam — a empresa premium via "Plano
+// ativo" em vermelho no checklist enquanto a regra real já a tinha liberado,
+// e o painel acusava uma pendência que ninguém conseguia resolver.
+//
+// Requisito que não se aplica à empresa sai da lista em vez de aparecer
+// satisfeito: premium não precisa de plano nem de caixa, e mostrar esses itens
+// marcados em verde sugeriria que ela pagou algo.
+export function requisitosPublicacao(campanha = {}, empresa = {}) {
   const posPago = isPosPago(empresa);
   const premium = isPremium(empresa);
-  const pendencias = [];
-  if (empresa.statusCadastro !== "aprovada") pendencias.push("empresa ainda não aprovada");
-  if (!premium && (!empresa.assinatura || empresa.assinatura === "free")) pendencias.push("plano pago ainda não ativo");
-  if (!premium && !posPago && Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0) <= 0) pendencias.push("caixa sem saldo disponível");
-  if (!String(campanha.titulo || "").trim()) pendencias.push("título");
-  if (!String(campanha.objetivo || "").trim()) pendencias.push("objetivo");
-  if (!String(campanha.publico || "").trim()) pendencias.push("ICP da campanha");
-  if (!String(campanha.regiao || "").trim()) pendencias.push("região");
-  if (!String(campanha.funcao || "").trim()) pendencias.push("função comercial");
-  if (!Number(campanha.orcamento || 0) && !posPago && !premium) pendencias.push("orçamento");
+  const precisaDeCaixa = !posPago && !premium;
   const tarefas = campanha.tarefas || {};
-  if (!Object.values(tarefas).some((valor) => Number(valor) > 0)) pendencias.push("ao menos uma tarefa remunerada");
-  const treinamento = campanha.treinamento || [];
-  if (!treinamento.length) pendencias.push("treinamento");
-  if (!posPago && !premium && Number(campanha.orcamento || 0) > saldoDisponivel(empresa)) pendencias.push("orçamento superior ao saldo disponível");
+  const disponivel = saldoDisponivel(empresa);
+
+  return [
+    ["Empresa aprovada", "empresa ainda não aprovada", empresa.statusCadastro === "aprovada", true],
+    ["Plano ativo", "plano pago ainda não ativo", !!empresa.assinatura && empresa.assinatura !== "free", !premium],
+    ["Caixa com saldo", "caixa sem saldo disponível", Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0) > 0, precisaDeCaixa],
+    ["Título", "título", !!String(campanha.titulo || "").trim(), true],
+    ["Objetivo", "objetivo", !!String(campanha.objetivo || "").trim(), true],
+    ["ICP", "ICP da campanha", !!String(campanha.publico || "").trim(), true],
+    ["Região", "região", !!String(campanha.regiao || "").trim(), true],
+    ["Função", "função comercial", !!String(campanha.funcao || "").trim(), true],
+    ["Orçamento", "orçamento", Number(campanha.orcamento || 0) > 0, precisaDeCaixa],
+    ["Tarefa remunerada", "ao menos uma tarefa remunerada", Object.values(tarefas).some((valor) => Number(valor) > 0), true],
+    ["Treinamento obrigatório", "treinamento", (campanha.treinamento || []).length > 0, true],
+    ["Saldo suficiente", "orçamento superior ao saldo disponível", Number(campanha.orcamento || 0) <= disponivel, precisaDeCaixa],
+  ]
+    .filter(([, , , aplica]) => aplica)
+    .map(([label, pendencia, ok]) => ({ label, pendencia, ok }));
+}
+
+export function campanhaPodeSerPublicada(campanha = {}, empresa = {}) {
+  const pendencias = requisitosPublicacao(campanha, empresa).filter((r) => !r.ok).map((r) => r.pendencia);
   return { ok: pendencias.length === 0, pendencias };
 }
 

@@ -4,7 +4,7 @@ import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
-import { campanhaPodeSerPublicada, saldoDisponivel, isPosPago } from "../../../shared/empresa.js";
+import { campanhaPodeSerPublicada, requisitosPublicacao, saldoDisponivel, isPosPago } from "../../../shared/empresa.js";
 import { sugerirValores, sugerirValorVisita, impactoNoRoi } from "../../../shared/valorTarefa.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
 
@@ -516,15 +516,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const obj = objetivo ? OBJETIVOS[objetivo] : null;
   const custo = campanha ? custoEstimado(campanha, campanha.limitePorProfissional || 10) : null;
   const checklist = campanha ? campanhaPodeSerPublicada(campanha, emp) : { ok: false, pendencias: [] };
-  const requisitosPublicacao = campanha ? [
-    ["Título", !!campanha.titulo?.trim()], ["Objetivo", !!campanha.objetivo?.trim()],
-    ["ICP", !!campanha.publico?.trim()], ["Região", !!campanha.regiao?.trim()],
-    ["Função", !!campanha.funcao?.trim()], ["Orçamento", Number(campanha.orcamento) > 0],
-    ["Tarefa remunerada", Object.values(campanha.tarefas || {}).some((valor) => Number(valor) > 0)],
-    ["Treinamento obrigatório", (campanha.treinamento || []).length > 0],
-    ["Empresa aprovada", emp.statusCadastro === "aprovada"], ["Plano ativo", !!emp.assinatura && emp.assinatura !== "free"],
-    ...(isPosPago(emp) ? [] : [["Saldo suficiente", Number(campanha.orcamento || 0) > 0 && Number(campanha.orcamento) <= disponivel]]),
-  ] : [];
+  // Os itens do checklist vêm da mesma regra que decide a publicação. Antes
+  // eram uma lista à parte, escrita aqui, e as duas discordavam: a empresa
+  // premium via "Plano ativo" em vermelho num checklist que o servidor já
+  // tinha aprovado.
+  const requisitos = campanha ? requisitosPublicacao(campanha, emp) : [];
   const adicionarTreinamento = () => set("treinamento", [...(campanha.treinamento || []), { id: `mod-${Date.now()}`, titulo: "", conteudo: "" }]);
   const atualizarTreinamento = (indice, campo, valor) => set("treinamento", campanha.treinamento.map((item, i) => i === indice ? { ...item, [campo]: valor } : item));
   const removerTreinamento = (indice) => set("treinamento", campanha.treinamento.filter((_, i) => i !== indice));
@@ -667,7 +663,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div className="vx-row" style={{ marginBottom: 4 }}>
               <b style={{ fontSize: 14 }}>Quanto você paga por ação</b>
-              <span className="vx-chip"><Wallet size={12} /> {isPosPago(emp) ? "Pós-pago · sem limite" : `${money(disponivel)} disponível`}</span>
+              <span className="vx-chip"><Wallet size={12} /> {disponivel === Infinity ? (isPosPago(emp) ? "Pós-pago · sem limite" : "Premium · sem limite") : `${money(disponivel)} disponível`}</span>
             </div>
 
             {/* Sugestão com IA */}
@@ -900,7 +896,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
             <hr className="vx-sep" />
             <div className="vx-row" style={{ alignItems: "flex-start" }}><div><div className="vx-eyebrow">Checklist de publicação</div><b style={{ fontSize: 13 }}>{checklist.ok ? "Rascunho pronto para solicitar publicação" : `${checklist.pendencias.length} pendência(s) identificada(s)`}</b></div><span className={`vx-campaign-status ${checklist.ok ? "is-ativa" : "is-em_revisao"}`}>{checklist.ok ? "Completo" : "Pendente"}</span></div>
-            <div className="vx-publish-checklist">{requisitosPublicacao.map(([label, ok]) => <div key={label} data-ok={ok ? "1" : "0"}><span>{ok ? <Check size={12} /> : "!"}</span>{label}</div>)}</div>
+            <div className="vx-publish-checklist">{requisitos.map(({ label, ok }) => <div key={label} data-ok={ok ? "1" : "0"}><span>{ok ? <Check size={12} /> : "!"}</span>{label}</div>)}</div>
             {!checklist.ok && <div className="vx-notice vx-notice-amber" style={{ marginTop: 11 }}>{checklist.pendencias.join(" · ")}</div>}
           </div>
 

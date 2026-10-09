@@ -1055,6 +1055,15 @@ const martinPremium = db.prepare(
 ).run();
 if (martinPremium.changes > 0) console.log(`[migracao] Martin Business School marcada como premium`);
 
+// Habilitação operacional é um portão à parte do plano: premium tira a
+// mensalidade, não aprova o cadastro. A Martin Business School é aprovada aqui
+// porque a decisão já está tomada — e o botão "Aprovar empresa" do admin exige
+// o cadastro completo, que ela ainda não tem.
+const martinAprovada = db.prepare(
+  "UPDATE companies SET statusCadastro = 'aprovada', aprovadoEm = COALESCE(aprovadoEm, ?) WHERE nome LIKE '%Martin%Business%' AND statusCadastro != 'aprovada'"
+).run(Date.now());
+if (martinAprovada.changes > 0) console.log(`[migracao] Martin Business School aprovada para operar`);
+
 const liberados = db.prepare("UPDATE sellers SET status = 'aprovado' WHERE status = 'analise'").run();
 if (liberados.changes > 0) {
   console.log(`[migracao] ${liberados.changes} profissional(is) liberado(s) da fila de análise`);
