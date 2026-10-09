@@ -6,6 +6,18 @@ import { SAQUE_MINIMO } from "../../../shared/saque.js";
 import { Stat, Campo } from "../ui.jsx";
 import MeusEnvios from "./MeusEnvios.jsx";
 
+// Tudo que não fosse "pago" aparecia como "Processando" — inclusive saque
+// recusado e cancelado, cujo valor já tinha voltado para o saldo. O
+// profissional via um pedido eternamente em andamento sobre dinheiro que já
+// estava de volta na carteira dele, e pedia de novo achando que o primeiro
+// havia sumido.
+const SITUACAO = {
+  pago: { texto: "Pago", tom: "vx-badge-brand" },
+  solicitado: { texto: "Processando", tom: "vx-badge-amber" },
+  falhou: { texto: "Não concluída · valor devolvido", tom: "vx-badge-muted" },
+  cancelado: { texto: "Cancelada · valor devolvido", tom: "vx-badge-muted" },
+};
+
 // O servidor muda o status e ajusta o pendente; o cliente não envia valores.
 async function pedirRevisaoHumana(recarregar, aviso, sub) {
   const r = await api(`/submissions/${sub.id}/contestar`, {});
@@ -86,8 +98,8 @@ export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
                   <b className="vx-mono">{money(w.valor)}</b>
                   <div className="vx-mut" style={{ fontSize: 11.5 }}>{w.pix} · {dataCurta(w.criadoEm)}</div>
                 </div>
-                <span className={"vx-badge " + (w.status === "pago" ? "vx-badge-brand" : "vx-badge-amber")}>
-                  {w.status === "pago" ? "Pago" : "Processando"}
+                <span className={"vx-badge " + (SITUACAO[w.status] || SITUACAO.solicitado).tom}>
+                  {(SITUACAO[w.status] || SITUACAO.solicitado).texto}
                 </span>
               </div>
             ))}
