@@ -6,7 +6,7 @@ import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaa
 import { ativarAssinatura, marcarInadimplencia } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
-import { SAQUE_MINIMO } from "../../shared/saque.js";
+import { SAQUE_MINIMO, decidirSaque } from "../../shared/saque.js";
 
 const router = Router();
 
@@ -33,8 +33,12 @@ async function repassarParaVendedor({ vendedor, valor, referencia }) {
       description: `RYCS - repasse ${referencia}`,
     },
   });
-  return { modo: "pix", externoId: transfer.id };
+  // O status já vem na resposta da criação. Ignorá-lo era o que fazia um Pix
+  // concluído na hora continuar escrito como "Processando" na carteira até o
+  // webhook chegar — e, se o webhook não chegasse, para sempre.
+  return { modo: "pix", externoId: transfer.id, statusGateway: String(transfer.status || "").toUpperCase() };
 }
+
 
 // Mudou de lugar: agora vive em services/asaas.js, porque a assinatura precisa
 // do mesmo cliente e não pode exigir um depósito antes para criá-lo.
@@ -150,11 +154,27 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
       registrarMovimento({ sellerId: entityId, tipo: "beta_saque_simulado", valor: -valor, idempotencyKey: `${wId}-beta`, dados: { simulacao: true, semValorReal: true } });
       return res.json({ id: wId, modo: "beta_simulado", message: "SIMULAÇÃO: saque Beta registrado como fictício, sem Pix real." });
     }
-    const { modo, externoId } = await repassarParaVendedor({ vendedor, valor, referencia: vendedor.nome });
+    const { modo, externoId, statusGateway } = await repassarParaVendedor({ vendedor, valor, referencia: vendedor.nome });
     if (externoId) db.prepare("UPDATE withdrawals SET asaasId = ? WHERE id = ?").run(externoId, wId);
-    res.json({ id: wId, modo, message: modo === "manual"
+
+    // Quando o gateway já devolve o Pix concluído, o saque fecha aqui. Antes
+    // ele ficava preso em "solicitado" esperando o TRANSFER_DONE, e o
+    // profissional via "Processando" sobre um dinheiro que já estava na conta
+    // dele. As duas funções são as mesmas do webhook e são idempotentes: se o
+    // evento chegar depois, não refaz nada.
+    const desfecho = decidirSaque(statusGateway);
+    if (externoId && desfecho === "pago") concluirSaque({ id: externoId });
+    if (externoId && desfecho === "recusado") {
+      devolverSaque({ id: externoId });
+      return res.status(502).json({ error: "O banco recusou a transferência. O valor voltou para o seu saldo." });
+    }
+
+    const concluido = desfecho === "pago";
+    res.json({ id: wId, modo, status: concluido ? "pago" : "solicitado", message: modo === "manual"
       ? "Saque registrado para processamento manual."
-      : "Transferência enviada. O Pix cai em instantes." });
+      : concluido
+        ? "Pix enviado. O valor já está na sua conta."
+        : "Transferência enviada. O Pix cai em instantes." });
   } catch (err) {
     // O gateway recusou: devolve o saldo em vez de deixar o dinheiro sumido.
     console.error("[asaas] saque:", err.message);
