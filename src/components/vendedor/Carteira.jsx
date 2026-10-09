@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Wallet, Clock, Banknote, CheckCircle2 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
+import { SAQUE_MINIMO } from "../../../shared/saque.js";
 import { Stat, Campo } from "../ui.jsx";
 import MeusEnvios from "./MeusEnvios.jsx";
 
@@ -19,7 +20,7 @@ export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
   const [valor, setValor] = useState("");
   const meus = db.submissions.filter((s) => s.sellerId === eu.id);
   const saques = db.withdrawals.filter((w) => w.sellerId === eu.id);
-  const MIN = 10; // igual ao SAQUE_MINIMO do servidor
+  const MIN = SAQUE_MINIMO;
 
   // O servidor debita o saldo e dispara o Pix numa transação. O cliente não
   // envia saldo nem chave de destino: a chave usada é a do cadastro.

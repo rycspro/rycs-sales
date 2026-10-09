@@ -6,11 +6,11 @@ import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaa
 import { ativarAssinatura, marcarInadimplencia } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
+import { SAQUE_MINIMO } from "../../shared/saque.js";
 
 const router = Router();
 
 const DEPOSITO_MINIMO = 1;
-const SAQUE_MINIMO = 20;
 
 // ---------------------------------------------------------------------------
 // Repasse ao vendedor — ÚNICO ponto por onde dinheiro sai para o profissional.
@@ -123,7 +123,7 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(entityId);
   if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
   if (!Number.isFinite(valor) || valor < SAQUE_MINIMO)
-    return res.status(400).json({ error: `Valor mínimo: R$ ${SAQUE_MINIMO},00` });
+    return res.status(400).json({ error: `Valor mínimo: R$ ${SAQUE_MINIMO.toFixed(2).replace(".", ",")}` });
   if (!vendedor.pix) return res.status(400).json({ error: "Cadastre sua chave Pix antes de sacar" });
   if (!vendedor.pixTipo) return res.status(400).json({ error: "Informe o tipo da sua chave Pix (CPF, celular, e-mail ou aleatória)" });
 
