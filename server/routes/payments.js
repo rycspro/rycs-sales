@@ -324,6 +324,68 @@ router.post("/admin/withdrawals/:id/pagar-pix", authMiddleware, async (req, res)
 });
 
 // ---------------------------------------------------------------------------
+// Devolver um saque ao saldo
+//
+// Para o caso em que o Pix não saiu e o profissional precisa poder pedir de
+// novo. Devolver é seguro só quando se sabe que o dinheiro não está a
+// caminho: um saque "pago" na mão, ou "solicitado" há dias, não prova nada
+// sobre o que o banco fez — e devolver sobre um Pix que saiu paga duas vezes.
+//
+// Por isso a rota pergunta ao gateway antes. Se a transferência ainda estiver
+// em processamento, ela tenta cancelá-la na origem: só depois de o banco
+// confirmar que aquele dinheiro não vai sair é que o saldo volta.
+// ---------------------------------------------------------------------------
+router.post("/admin/withdrawals/:id/estornar", authMiddleware, async (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const w = db.prepare("SELECT * FROM withdrawals WHERE id = ?").get(req.params.id);
+  if (!w) return res.status(404).json({ error: "Saque não encontrado" });
+  if (w.status === "cancelado" || w.status === "falhou")
+    return res.json({ ok: true, jaDevolvido: true, message: "Este saque já estava devolvido — o valor está no saldo do profissional." });
+
+  if (w.asaasId) {
+    if (!asaasAtivo()) return res.status(503).json({ error: `Gateway indisponível: ${asaasMotivoDesligado()}` });
+
+    let transfer;
+    try { transfer = await asaas(`/transfers/${w.asaasId}`); }
+    catch (err) { return res.status(502).json({ error: `Não foi possível consultar o banco antes de devolver: ${err.message}` }); }
+
+    const desfecho = decidirSaque(transfer?.status);
+    if (desfecho === "pago") {
+      concluirSaque({ id: w.asaasId });
+      return res.status(409).json({ error: "O banco confirma que este Pix foi concluído. Devolver o saldo agora pagaria o profissional duas vezes." });
+    }
+    if (desfecho === "aguardando") {
+      // Ainda pode cair na conta dele. Só dá para devolver se o banco aceitar
+      // cancelar a transferência.
+      try { await asaas(`/transfers/${w.asaasId}`, { method: "DELETE" }); }
+      catch (err) {
+        return res.status(409).json({
+          error: `A transferência ainda está em processamento no banco (${String(transfer?.status || "sem status").toUpperCase()}) e não foi possível cancelá-la: ${err.message}. Cancele no painel do Asaas antes de devolver, senão o Pix pode cair e o valor sair duas vezes.`,
+        });
+      }
+    }
+  }
+
+  const eraPago = w.status === "pago";
+  db.transaction(() => {
+    db.prepare("UPDATE withdrawals SET status = 'cancelado', falhaMotivo = ? WHERE id = ?")
+      .run(String(req.body?.motivo || "Devolvido ao saldo pela plataforma").slice(0, 200), w.id);
+    db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(w.valor, w.sellerId);
+    // "sacado" foi somado quando alguém marcou o saque como pago. Como o Pix
+    // não existiu, esse total precisa voltar atrás junto.
+    if (eraPago) db.prepare("UPDATE sellers SET sacado = sacado - ? WHERE id = ?").run(w.valor, w.sellerId);
+    registrarMovimento({ sellerId: w.sellerId, tipo: "saque_estornado", valor: w.valor, idempotencyKey: `${w.id}:estorno` });
+  })();
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
+  if (user) notificar(user.id, "saque", `R$ ${w.valor.toFixed(2)} voltaram para o seu saldo. Você já pode solicitar o saque de novo.`);
+
+  const seller = db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(w.sellerId);
+  res.json({ ok: true, message: `R$ ${w.valor.toFixed(2)} devolvidos ao saldo. O profissional já pode solicitar de novo.`, disponivel: seller?.disponivel });
+});
+
+// ---------------------------------------------------------------------------
 // Webhook do gateway
 // ---------------------------------------------------------------------------
 router.post("/payments/webhook", (req, res) => {

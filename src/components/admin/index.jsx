@@ -73,6 +73,18 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
     aviso(r.message);
   };
 
+  // Devolve o valor ao saldo para o profissional poder pedir de novo. O
+  // servidor confere no banco antes: se o Pix saiu, recusa em vez de pagar
+  // duas vezes.
+  const estornar = async (w) => {
+    const s = db.sellers.find((x) => x.id === w.sellerId);
+    if (!window.confirm(`Devolver ${money(w.valor)} ao saldo de ${s?.nome || "o profissional"}?\n\nUse isto apenas quando o Pix NÃO saiu. O sistema confere no banco antes de devolver.`)) return;
+    const r = await api(`/admin/withdrawals/${w.id}/estornar`, {});
+    if (r?.error) return aviso(r.error);
+    await recarregar();
+    aviso(r.message);
+  };
+
   if (aba === "dashboard") return <DashboardAdmin db={db} />;
   if (aba === "profissionais") return <ProfissionaisAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "empresas") return <EmpresasAdmin db={db} up={up} aviso={aviso} />;
@@ -137,6 +149,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>Conferir no banco</button>
                 <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>Enviar Pix agora</button>
+                <button className="vx-btn vx-btn-sm" onClick={() => estornar(w)}>Devolver ao saldo</button>
                 <button className="vx-btn vx-btn-sm" onClick={() => pagar(w)}>Só registrar</button>
               </div>
             </div>
@@ -162,7 +175,10 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>Conferir no banco</button>
                   {w.status !== "cancelado" && (
-                    <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>Enviar Pix agora</button>
+                    <>
+                      <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>Enviar Pix agora</button>
+                      <button className="vx-btn vx-btn-sm" onClick={() => estornar(w)}>Devolver ao saldo</button>
+                    </>
                   )}
                 </div>
               </div>
