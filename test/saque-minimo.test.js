@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { SAQUE_MINIMO, decidirSaque } from "../shared/saque.js";
+import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../shared/saque.js";
 
 test("saque mínimo é R$ 10", () => {
   assert.equal(SAQUE_MINIMO, 10);
@@ -46,4 +46,29 @@ test("status desconhecido espera, em vez de chutar que foi pago", () => {
   for (const s of ["", null, undefined, "SCHEDULED", "QUALQUER_COISA"]) {
     assert.equal(decidirSaque(s), "aguardando", `status ${s}`);
   }
+});
+
+// ── Validação automática do Asaas ───────────────────────────────────────────
+
+test("transferência de um saque registrado é aprovada sem ninguém intervir", () => {
+  const saque = { id: "w1", valor: 50, status: "solicitado", asaasId: "tr_1" };
+  assert.deepEqual(avaliarTransferencia({ id: "tr_1", value: 50 }, saque), { status: "APPROVED" });
+});
+
+test("aprova mesmo antes de o id da transferência ser gravado no saque", () => {
+  // O Asaas pode perguntar antes de a criação terminar de ser salva aqui.
+  const saque = { id: "w1", valor: 50, status: "solicitado", asaasId: null };
+  assert.equal(avaliarTransferencia({ id: "tr_1", value: 50, externalReference: "w1" }, saque).status, "APPROVED");
+});
+
+test("Pix sem saque correspondente é recusado (chave de API vazada)", () => {
+  assert.equal(avaliarTransferencia({ id: "tr_x", value: 5000 }, undefined).status, "REFUSED");
+});
+
+test("valor diferente, saque encerrado ou segunda transferência são recusados", () => {
+  const saque = { id: "w1", valor: 50, status: "solicitado", asaasId: "tr_1" };
+  assert.equal(avaliarTransferencia({ id: "tr_1", value: 500 }, saque).status, "REFUSED");
+  assert.equal(avaliarTransferencia({ id: "tr_2", value: 50 }, saque).status, "REFUSED");
+  assert.equal(avaliarTransferencia({ id: "tr_1", value: 50 }, { ...saque, status: "cancelado" }).status, "REFUSED");
+  assert.equal(avaliarTransferencia({ id: "tr_1", value: 50 }, { ...saque, status: "falhou" }).status, "REFUSED");
 });

@@ -6,7 +6,7 @@ import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente } 
 import { ativarAssinatura, marcarInadimplencia } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
-import { SAQUE_MINIMO, decidirSaque } from "../../shared/saque.js";
+import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
 
 const router = Router();
 
@@ -20,7 +20,7 @@ const DEPOSITO_MINIMO = 1;
 // cobrança com `split` para a carteira do vendedor; nada mais no código
 // precisa mudar.
 // ---------------------------------------------------------------------------
-async function repassarParaVendedor({ vendedor, valor, referencia }) {
+async function repassarParaVendedor({ vendedor, valor, referencia, saqueId }) {
   if (!asaasAtivo()) return { modo: "manual", externoId: null };
 
   const transfer = await asaas("/transfers", {
@@ -31,6 +31,9 @@ async function repassarParaVendedor({ vendedor, valor, referencia }) {
       pixAddressKeyType: tipoDaChave(vendedor),
       operationType: "PIX",
       description: `RYCS - repasse ${referencia}`,
+      // Liga a transferência ao saque antes mesmo de guardarmos o id dela: a
+      // validação automática do Asaas pode perguntar por ela nesse intervalo.
+      externalReference: saqueId,
     },
   });
   // O status já vem na resposta da criação. Ignorá-lo era o que fazia um Pix
@@ -154,7 +157,7 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
       registrarMovimento({ sellerId: entityId, tipo: "beta_saque_simulado", valor: -valor, idempotencyKey: `${wId}-beta`, dados: { simulacao: true, semValorReal: true } });
       return res.json({ id: wId, modo: "beta_simulado", message: "SIMULAÇÃO: saque Beta registrado como fictício, sem Pix real." });
     }
-    const { modo, externoId, statusGateway } = await repassarParaVendedor({ vendedor, valor, referencia: vendedor.nome });
+    const { modo, externoId, statusGateway } = await repassarParaVendedor({ vendedor, valor, referencia: vendedor.nome, saqueId: wId });
     if (externoId) db.prepare("UPDATE withdrawals SET asaasId = ? WHERE id = ?").run(externoId, wId);
 
     // Quando o gateway já devolve o Pix concluído, o saque fecha aqui. Antes
@@ -281,7 +284,7 @@ router.post("/admin/withdrawals/:id/pagar-pix", authMiddleware, async (req, res)
 
   let envio;
   try {
-    envio = await repassarParaVendedor({ vendedor, valor: w.valor, referencia: vendedor.nome });
+    envio = await repassarParaVendedor({ vendedor, valor: w.valor, referencia: vendedor.nome, saqueId: w.id });
   } catch (err) {
     console.error("[asaas] reenvio de saque:", err.message);
     return res.status(502).json({ error: `O banco recusou o envio: ${err.message}` });
@@ -383,6 +386,36 @@ router.post("/admin/withdrawals/:id/estornar", authMiddleware, async (req, res) 
 
   const seller = db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(w.sellerId);
   res.json({ ok: true, message: `R$ ${w.valor.toFixed(2)} devolvidos ao saldo. O profissional já pode solicitar de novo.`, disponivel: seller?.disponivel });
+});
+
+// ---------------------------------------------------------------------------
+// Validação automática de saque (Asaas → Mecanismos de segurança)
+//
+// Sem isto, toda transferência criada pela API fica parada no Asaas até alguém
+// digitar o token SMS/app — o profissional pede o saque e o Pix não sai. Com o
+// mecanismo ligado, o Asaas pergunta aqui se a transferência é nossa e segue
+// na hora quando a resposta é APPROVED. Ninguém aprova na mão.
+//
+// O que torna isso seguro é que só aprovamos transferência que nasceu de um
+// saque registrado aqui, com o mesmo valor. Uma chave de API vazada não
+// consegue tirar dinheiro: o Pix dela não tem saque correspondente.
+// ---------------------------------------------------------------------------
+router.post("/payments/validar-saque", (req, res) => {
+  const token = req.headers["asaas-access-token"];
+  if (!process.env.ASAAS_WEBHOOK_TOKEN || token !== process.env.ASAAS_WEBHOOK_TOKEN)
+    return res.status(401).json({ error: "Token inválido" });
+
+  const { type, transfer } = req.body || {};
+  if (type !== "TRANSFER" || !transfer?.id)
+    return res.json({ status: "REFUSED", refuseReason: "Operação não reconhecida pela RYCS" });
+
+  const saque =
+    db.prepare("SELECT * FROM withdrawals WHERE asaasId = ?").get(transfer.id) ||
+    (transfer.externalReference && db.prepare("SELECT * FROM withdrawals WHERE id = ?").get(transfer.externalReference));
+
+  const decisao = avaliarTransferencia(transfer, saque);
+  if (decisao.status !== "APPROVED") console.warn("[asaas] saque recusado na validação:", transfer.id, decisao.refuseReason);
+  res.json(decisao);
 });
 
 // ---------------------------------------------------------------------------

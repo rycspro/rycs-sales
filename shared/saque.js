@@ -29,3 +29,21 @@ export function decidirSaque(statusGateway) {
   if (RECUSADO.includes(s)) return "recusado";
   return "aguardando";
 }
+
+// Resposta à validação automática de saque do Asaas.
+//
+// Aprova só a transferência que corresponde a um saque registrado aqui: mesmo
+// valor, ainda vivo, e sem outra transferência já ligada a ele. Qualquer outra
+// coisa — Pix feito com uma chave de API vazada, valor adulterado, segundo
+// envio para o mesmo saque — é recusada, e o Asaas cancela a transferência.
+const ENCERRADO = ["cancelado", "falhou"];
+
+export function avaliarTransferencia(transfer, saque) {
+  const recusar = (refuseReason) => ({ status: "REFUSED", refuseReason });
+  if (!transfer?.id) return recusar("Transferência inválida");
+  if (!saque) return recusar("Transferência sem saque correspondente na RYCS");
+  if (ENCERRADO.includes(saque.status)) return recusar("Saque já encerrado na RYCS");
+  if (saque.asaasId && saque.asaasId !== transfer.id) return recusar("Saque já tem outra transferência");
+  if (Math.abs(Number(transfer.value) - Number(saque.valor)) > 0.005) return recusar("Valor diferente do saque solicitado");
+  return { status: "APPROVED" };
+}
