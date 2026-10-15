@@ -3,7 +3,7 @@ import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { calcular } from "../services/triagem.js";
 import { perguntasPublicas, CATEGORIAS, FAIXAS, TOTAL_PERGUNTAS } from "../../shared/triagem.js";
-import { montarDossie, narrativa } from "../services/dossie.js";
+import { montarDossie, narrativa, montarDossieDisc, narrativaDisc } from "../services/dossie.js";
 import { emailStatusProfissional } from "../services/email.js";
 
 const router = Router();
@@ -218,20 +218,28 @@ router.get("/triagem/:sellerId/dossie", async (req, res) => {
   const ultima = db.prepare(
     "SELECT id FROM assessments WHERE sellerId = ? ORDER BY criadoEm DESC LIMIT 1"
   ).get(vendedor.id);
-  if (!ultima) return res.status(404).json({ error: "Este profissional ainda não fez a avaliação" });
 
-  const t = tentativaCompleta(ultima.id);
-  const dossie = montarDossie(t);
+  if (ultima) {
+    const t = tentativaCompleta(ultima.id);
+    const dossie = montarDossie(t);
+    dossie.narrativa = await narrativa(dossie);
+    const historico = db.prepare(
+      "SELECT tentativa, score, status, criadoEm FROM assessments WHERE sellerId = ? ORDER BY criadoEm DESC"
+    ).all(vendedor.id);
+    return res.json({ vendedor, avaliadoEm: t.criadoEm, dossie, historico });
+  }
 
-  // A narrativa é opcional e nunca bloqueia a resposta: se a chave não
-  // existir ou a chamada falhar, o dossiê vai completo do mesmo jeito.
-  dossie.narrativa = await narrativa(dossie);
+  const seller = db.prepare(
+    "SELECT disc, xpRespostas, scoreTriagem, onboardingEtapa, criadoEm FROM sellers WHERE id = ?"
+  ).get(vendedor.id);
 
-  const historico = db.prepare(
-    "SELECT tentativa, score, status, criadoEm FROM assessments WHERE sellerId = ? ORDER BY criadoEm DESC"
-  ).all(vendedor.id);
+  if (seller?.onboardingEtapa === "concluido" && seller.disc) {
+    const dossie = montarDossieDisc(seller);
+    dossie.narrativa = await narrativaDisc(dossie);
+    return res.json({ vendedor, avaliadoEm: seller.criadoEm, dossie, historico: [] });
+  }
 
-  res.json({ vendedor, avaliadoEm: t.criadoEm, dossie, historico });
+  return res.status(404).json({ error: "Este profissional ainda não fez a avaliação" });
 });
 
 // A decisão. Só a plataforma, e sempre com registro de quem decidiu.

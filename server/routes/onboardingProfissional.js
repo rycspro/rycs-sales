@@ -65,19 +65,18 @@ router.get("/onboarding-pro", (req, res) => {
 // Step 1: Salvar perfil (nome, foto, bio, whatsapp, linkedin)
 router.post("/onboarding-pro/perfil", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
-  const { nome, bio, whatsapp, linkedin } = req.body;
+  const { nome, bio, linkedin } = req.body;
   const sellerId = req.user.entityId;
 
   const seller = db.prepare("SELECT foto, onboardingEtapa FROM sellers WHERE id = ?").get(sellerId);
   if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
 
   if (!nome?.trim()) return res.status(400).json({ error: "Nome é obrigatório", campo: "nome" });
-  if (!whatsapp?.trim()) return res.status(400).json({ error: "WhatsApp é obrigatório", campo: "whatsapp" });
   if (!seller.foto) return res.status(400).json({ error: "Foto de perfil é obrigatória", campo: "foto" });
   if (!bio?.trim()) return res.status(400).json({ error: "Biografia é obrigatória", campo: "bio" });
 
-  db.prepare("UPDATE sellers SET nome = ?, bio = ?, whats = ?, linkedin = ?, onboardingEtapa = 'quiz' WHERE id = ?")
-    .run(nome.trim(), bio.trim(), whatsapp.trim(), (linkedin || "").trim(), sellerId);
+  db.prepare("UPDATE sellers SET nome = ?, bio = ?, linkedin = ?, onboardingEtapa = 'quiz' WHERE id = ?")
+    .run(nome.trim(), bio.trim(), (linkedin || "").trim(), sellerId);
 
   res.json({ ok: true, etapa: "quiz" });
 });

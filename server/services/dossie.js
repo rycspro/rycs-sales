@@ -1,4 +1,5 @@
 import { PERGUNTAS, CATEGORIAS, ORDEM_CATEGORIAS, FAIXAS } from "../../shared/triagem.js";
+import { DIMENSOES, PERGUNTAS_EXPERIENCIA } from "../../shared/discQuiz.js";
 import { leituraProfissional } from "./inteligencia.js";
 
 // Dossiê de triagem: o que a plataforma lê antes de aprovar um profissional.
@@ -190,6 +191,123 @@ function recomendar(score, melhor, fracas) {
     acao: "parcial",
     texto: "Liberar apenas a Academy até a próxima tentativa: nenhuma função tem o mínimo coberto.",
   };
+}
+
+// ---------------------------------------------------------------- dossiê DISC
+// Quando o profissional completou o onboarding DISC em vez da triagem antiga.
+
+const DISC_ENTREGA = {
+  D: { forte: "Toma decisão rápida e conduz negociação com firmeza", fraco: "Pode atropelar etapas e ser impaciente com o processo" },
+  I: { forte: "Cria rapport natural e persuade com entusiasmo", fraco: "Pode perder foco nos detalhes e no acompanhamento" },
+  S: { forte: "Mantém cadência de follow-up e acompanha o cliente com paciência", fraco: "Pode evitar confronto e demorar para pedir o fechamento" },
+  C: { forte: "Analisa o funil, prepara proposta detalhada e segue processo", fraco: "Pode travar na análise e perder o timing de ação" },
+};
+
+const FUNC_DISC = [
+  { funcao: "closer", nome: "Closer", primario: "D", secundario: "I" },
+  { funcao: "sdr", nome: "SDR", primario: "I", secundario: "D" },
+  { funcao: "bdr", nome: "BDR", primario: "C", secundario: "S" },
+];
+
+const XP_ANOS = { 0: "Sem experiência", 1: "Menos de 1 ano", 2: "1 a 3 anos", 3: "3 a 5 anos", 4: "Mais de 5 anos" };
+const XP_TIPO = { b2b: "B2B", b2c: "B2C", ambos: "B2B e B2C", nenhuma: "Sem experiência" };
+const XP_DEDICACAO = { integral: "Tempo integral", meio: "Meio período", parcial: "Algumas horas/dia", pontual: "Pontual" };
+
+function funcoesPorDisc(pct) {
+  return FUNC_DISC.map((f) => {
+    const p1 = pct[f.primario] || 0;
+    const p2 = pct[f.secundario] || 0;
+    const raw = p1 * 0.6 + p2 * 0.4;
+    const cobertura = Math.min(100, Math.max(0, Math.round((raw - 15) / 29 * 100)));
+    const veredito = cobertura >= 75 ? "pronto" : cobertura >= 50 ? "com acompanhamento" : "não recomendado";
+    return { funcao: f.funcao, nome: f.nome, cobertura, veredito, faltam: [] };
+  }).sort((a, b) => b.cobertura - a.cobertura);
+}
+
+export function montarDossieDisc({ disc, xpRespostas, scoreTriagem }) {
+  const d = typeof disc === "string" ? JSON.parse(disc) : (disc || {});
+  const xp = typeof xpRespostas === "string" ? JSON.parse(xpRespostas) : (xpRespostas || {});
+  const score = scoreTriagem || 0;
+  const pct = d.percentuais || {};
+
+  const categorias = Object.entries(DIMENSOES).map(([dim, meta]) => ({
+    chave: dim,
+    nome: meta.nome,
+    peso: 25,
+    valor: pct[dim] || 0,
+    leitura: (pct[dim] || 0) >= 30 ? "forte" : (pct[dim] || 0) >= 20 ? "mediano" : "frágil",
+  }));
+
+  const fortes = Object.entries(pct).filter(([, v]) => v >= 30).map(([k]) => k);
+  const fracos = Object.entries(pct).filter(([, v]) => v < 15).map(([k]) => k);
+
+  const funcoes = funcoesPorDisc(pct);
+  const melhor = funcoes[0];
+
+  const canais = Array.isArray(xp.xp2) ? xp.xp2.filter((c) => c !== "Ainda não tenho canal definido") : [];
+
+  const veredito = melhor.veredito === "pronto"
+    ? `Perfil ${d.predominante || "—"}: encaixa como ${melhor.nome} de forma autônoma.`
+    : melhor.veredito === "com acompanhamento"
+      ? `Perfil ${d.predominante || "—"}: encaixa como ${melhor.nome} com acompanhamento.`
+      : `Perfil ${d.predominante || "—"}: ainda não cobre o mínimo de nenhuma função.`;
+
+  const alertas = [];
+  if (Number(xp.xp1) === 0) alertas.push("Declara não ter experiência anterior em vendas.");
+  if (canais.length === 0) alertas.push("Nenhum canal de venda definido.");
+  if (fracos.length) alertas.push(`Dimensão baixa em ${fracos.map((k) => DIMENSOES[k].nome).join(", ")}.`);
+
+  return {
+    fonte: "disc",
+    resumo: {
+      score,
+      faixa: score >= 80 ? "especialista" : score >= 60 ? "intermediário" : score >= 40 ? "iniciante" : "em formação",
+      tentativa: 1,
+      predominante: d.label || `${d.predominante || ""}${d.secundario || ""}`,
+      veredito,
+      entregaHoje: fortes.map((k) => DISC_ENTREGA[k].forte),
+      naoEntregaAinda: fracos.map((k) => DISC_ENTREGA[k].fraco),
+    },
+    categorias,
+    funcoes,
+    declarado: {
+      ticketMaximo: XP_ANOS[xp.xp1] ?? "—",
+      segmentos: canais,
+      capacidadeDiaria: XP_DEDICACAO[xp.xp4] || "—",
+      formatos: [],
+      velocidadeContato: XP_TIPO[xp.xp3] || "—",
+    },
+    abertas: [],
+    respostas: [],
+    alertas,
+    recomendacao: {
+      acao: melhor.veredito === "pronto" ? "aprovado" : "parcial",
+      texto: melhor.veredito === "pronto"
+        ? `Aprovar como ${melhor.nome}. Perfil DISC dominante em ${DIMENSOES[d.predominante]?.nome || d.predominante}.`
+        : `Aprovar parcialmente como ${melhor.nome}. Academy pode fortalecer as dimensões mais baixas.`,
+    },
+  };
+}
+
+export async function narrativaDisc(dossie) {
+  const { resumo, categorias, declarado, funcoes } = dossie;
+  const melhor = funcoes?.[0];
+  const fortes = categorias.filter((c) => c.leitura === "forte");
+  const fracas = categorias.filter((c) => c.leitura === "frágil");
+
+  const partes = [];
+  if (melhor) {
+    partes.push(
+      melhor.veredito === "pronto"
+        ? `Perfil ${resumo.predominante}: opera como ${melhor.nome} com autonomia (${melhor.cobertura}% de cobertura).`
+        : `Perfil ${resumo.predominante}: melhor encaixe como ${melhor.nome} (${melhor.cobertura}% de cobertura), ainda precisa de acompanhamento.`
+    );
+  }
+  if (fortes.length) partes.push(`Forte em ${fortes.map((c) => c.nome.toLowerCase()).join(" e ")}.`);
+  if (fracas.length) partes.push(`Precisa desenvolver ${fracas.map((c) => c.nome.toLowerCase()).join(" e ")}.`);
+  partes.push(`Experiência declarada: ${declarado.ticketMaximo}. Dedicação: ${declarado.capacidadeDiaria}.`);
+
+  return { texto: partes.join(" "), fonte: "interno" };
 }
 
 // Leitura do dossiê. Duas fontes, nesta ordem:

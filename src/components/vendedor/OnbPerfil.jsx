@@ -9,7 +9,6 @@ export default function OnbPerfil({ aviso, aoAvancar }) {
 
   const [nome, setNome] = useState("");
   const [bio, setBio] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [foto, setFoto] = useState(null);
   const [fotoPrevia, setFotoPrevia] = useState(null);
@@ -66,13 +65,12 @@ export default function OnbPerfil({ aviso, aoAvancar }) {
     e.preventDefault();
     const novosErros = {};
     if (!nome.trim()) novosErros.nome = "Informe seu nome.";
-    if (!whatsapp.trim()) novosErros.whatsapp = "WhatsApp é obrigatório.";
     if (!bio.trim()) novosErros.bio = "Conte um pouco sobre você.";
     if (!foto && !fotoPrevia) novosErros.foto = "Foto de perfil é obrigatória.";
     if (Object.keys(novosErros).length) { setErros(novosErros); return; }
 
     setSalvando(true);
-    const r = await api("/onboarding-pro/perfil", { nome, bio, whatsapp, linkedin });
+    const r = await api("/onboarding-pro/perfil", { nome, bio, linkedin });
     setSalvando(false);
     if (r?.error) {
       if (r.campo) setErros({ [r.campo]: r.error });
@@ -218,16 +216,6 @@ export default function OnbPerfil({ aviso, aoAvancar }) {
               aria-invalid={erros.bio ? true : undefined} />
             {erros.bio && <div className="vx-onb-erro" role="alert">{erros.bio}</div>}
             <div className="vx-onb-dica">{bio.length}/500 caracteres</div>
-          </div>
-
-          {/* WhatsApp */}
-          <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-whats`}>WhatsApp *</label>
-            <input id={`${id}-whats`} className="vx-input" type="tel" inputMode="numeric"
-              value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="(11) 91234-5678"
-              aria-invalid={erros.whatsapp ? true : undefined} />
-            {erros.whatsapp && <div className="vx-onb-erro" role="alert">{erros.whatsapp}</div>}
           </div>
 
           {/* LinkedIn */}
