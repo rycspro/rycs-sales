@@ -224,6 +224,36 @@ function funcoesPorDisc(pct) {
   }).sort((a, b) => b.cobertura - a.cobertura);
 }
 
+const DISC_TRACOS = {
+  D: {
+    positivos: ["Foco em resultados", "Tomada de decisão rápida", "Liderança natural", "Comunicação direta"],
+    riscos: ["Impaciência com detalhes", "Pode parecer agressivo", "Tendência a atropelar etapas"],
+    estilo: "Vai direto ao ponto. Prefere negociações rápidas e decisivas. Melhor em operações de ticket alto com ciclo curto.",
+  },
+  I: {
+    positivos: ["Persuasão natural", "Cria rapport rápido", "Entusiasmo contagiante", "Rede de contatos ampla"],
+    riscos: ["Pode perder foco nos detalhes", "Tendência a prometer demais", "Follow-up inconsistente"],
+    estilo: "Constrói relacionamento antes de vender. Excelente em prospecção por indicação e networking. Melhor em operações que exigem carisma.",
+  },
+  S: {
+    positivos: ["Consistência no follow-up", "Paciência com ciclo longo", "Relacionamento de confiança", "Estabilidade emocional"],
+    riscos: ["Evita confronto", "Demora para pedir fechamento", "Resistência a mudança de processo"],
+    estilo: "Constrói confiança com consistência. Excelente em carteira de clientes e renovação. Melhor em operações de ciclo longo e recorrência.",
+  },
+  C: {
+    positivos: ["Análise detalhada do funil", "Propostas bem estruturadas", "Segue processos com rigor", "Precisão nos dados"],
+    riscos: ["Pode travar na análise", "Perde timing de ação", "Dificuldade com improviso"],
+    estilo: "Prepara antes de agir. Excelente em vendas consultivas e técnicas. Melhor em operações B2B com processo definido.",
+  },
+};
+
+const DISC_COMPATIBILIDADE = {
+  D: { melhorCom: ["I"], conflitoCom: ["S"], campanhas: "Ticket alto, ciclo curto, fechamento agressivo" },
+  I: { melhorCom: ["D"], conflitoCom: ["C"], campanhas: "Prospecção, networking, social selling" },
+  S: { melhorCom: ["C"], conflitoCom: ["D"], campanhas: "Carteira, renovação, suporte comercial" },
+  C: { melhorCom: ["S"], conflitoCom: ["I"], campanhas: "Venda consultiva, proposta técnica, B2B" },
+};
+
 export function montarDossieDisc({ disc, xpRespostas, scoreTriagem }) {
   const d = typeof disc === "string" ? JSON.parse(disc) : (disc || {});
   const xp = typeof xpRespostas === "string" ? JSON.parse(xpRespostas) : (xpRespostas || {});
@@ -236,6 +266,7 @@ export function montarDossieDisc({ disc, xpRespostas, scoreTriagem }) {
     peso: 25,
     valor: pct[dim] || 0,
     leitura: (pct[dim] || 0) >= 30 ? "forte" : (pct[dim] || 0) >= 20 ? "mediano" : "frágil",
+    cor: meta.cor,
   }));
 
   const fortes = Object.entries(pct).filter(([, v]) => v >= 30).map(([k]) => k);
@@ -256,6 +287,12 @@ export function montarDossieDisc({ disc, xpRespostas, scoreTriagem }) {
   if (Number(xp.xp1) === 0) alertas.push("Declara não ter experiência anterior em vendas.");
   if (canais.length === 0) alertas.push("Nenhum canal de venda definido.");
   if (fracos.length) alertas.push(`Dimensão baixa em ${fracos.map((k) => DIMENSOES[k].nome).join(", ")}.`);
+  if (xp.xp4 === "pontual") alertas.push("Disponibilidade pontual — pode não manter cadência.");
+
+  const predominante = d.predominante || "D";
+  const secundario = d.secundario || "I";
+  const tracos = DISC_TRACOS[predominante] || DISC_TRACOS.D;
+  const compat = DISC_COMPATIBILIDADE[predominante] || DISC_COMPATIBILIDADE.D;
 
   return {
     fonte: "disc",
@@ -263,13 +300,34 @@ export function montarDossieDisc({ disc, xpRespostas, scoreTriagem }) {
       score,
       faixa: score >= 80 ? "especialista" : score >= 60 ? "intermediário" : score >= 40 ? "iniciante" : "em formação",
       tentativa: 1,
-      predominante: d.label || `${d.predominante || ""}${d.secundario || ""}`,
+      predominante: d.label || `${predominante}${secundario}`,
       veredito,
       entregaHoje: fortes.map((k) => DISC_ENTREGA[k].forte),
       naoEntregaAinda: fracos.map((k) => DISC_ENTREGA[k].fraco),
     },
     categorias,
     funcoes,
+    disc: {
+      predominante,
+      secundario,
+      label: d.label || `${predominante}${secundario}`,
+      percentuais: pct,
+      nomePredominante: DIMENSOES[predominante]?.nome || predominante,
+      nomeSecundario: DIMENSOES[secundario]?.nome || secundario,
+      corPredominante: DIMENSOES[predominante]?.cor || "#3182CE",
+      corSecundario: DIMENSOES[secundario]?.cor || "#DD6B20",
+      descricaoPredominante: DIMENSOES[predominante]?.descricao || "",
+      descricaoSecundario: DIMENSOES[secundario]?.descricao || "",
+      tracos,
+      compatibilidade: compat,
+    },
+    experiencia: {
+      anos: XP_ANOS[xp.xp1] ?? "—",
+      anosValor: Number(xp.xp1) || 0,
+      tipoVenda: XP_TIPO[xp.xp3] || "—",
+      dedicacao: XP_DEDICACAO[xp.xp4] || "—",
+      canais,
+    },
     declarado: {
       ticketMaximo: XP_ANOS[xp.xp1] ?? "—",
       segmentos: canais,
@@ -283,29 +341,48 @@ export function montarDossieDisc({ disc, xpRespostas, scoreTriagem }) {
     recomendacao: {
       acao: melhor.veredito === "pronto" ? "aprovado" : "parcial",
       texto: melhor.veredito === "pronto"
-        ? `Aprovar como ${melhor.nome}. Perfil DISC dominante em ${DIMENSOES[d.predominante]?.nome || d.predominante}.`
+        ? `Aprovar como ${melhor.nome}. Perfil DISC dominante em ${DIMENSOES[predominante]?.nome || predominante}.`
         : `Aprovar parcialmente como ${melhor.nome}. Academy pode fortalecer as dimensões mais baixas.`,
     },
   };
 }
 
 export async function narrativaDisc(dossie) {
-  const { resumo, categorias, declarado, funcoes } = dossie;
+  const { resumo, categorias, funcoes, disc, experiencia } = dossie;
   const melhor = funcoes?.[0];
   const fortes = categorias.filter((c) => c.leitura === "forte");
   const fracas = categorias.filter((c) => c.leitura === "frágil");
 
   const partes = [];
+
   if (melhor) {
     partes.push(
       melhor.veredito === "pronto"
-        ? `Perfil ${resumo.predominante}: opera como ${melhor.nome} com autonomia (${melhor.cobertura}% de cobertura).`
-        : `Perfil ${resumo.predominante}: melhor encaixe como ${melhor.nome} (${melhor.cobertura}% de cobertura), ainda precisa de acompanhamento.`
+        ? `Perfil ${resumo.predominante} com cobertura de ${melhor.cobertura}% para ${melhor.nome}: opera com autonomia nesta função.`
+        : `Perfil ${resumo.predominante} com melhor encaixe como ${melhor.nome} (${melhor.cobertura}% de cobertura). Ainda precisa de acompanhamento para operar sozinho.`
     );
   }
-  if (fortes.length) partes.push(`Forte em ${fortes.map((c) => c.nome.toLowerCase()).join(" e ")}.`);
-  if (fracas.length) partes.push(`Precisa desenvolver ${fracas.map((c) => c.nome.toLowerCase()).join(" e ")}.`);
-  partes.push(`Experiência declarada: ${declarado.ticketMaximo}. Dedicação: ${declarado.capacidadeDiaria}.`);
+
+  if (disc) {
+    partes.push(`Personalidade predominante: ${disc.nomePredominante} — ${disc.descricaoPredominante.toLowerCase()} Dimensão secundária: ${disc.nomeSecundario} — ${disc.descricaoSecundario.toLowerCase()}`);
+    if (disc.tracos?.estilo) partes.push(disc.tracos.estilo);
+  }
+
+  if (fortes.length) partes.push(`Ponto forte em ${fortes.map((c) => `${c.nome} (${c.valor}%)`).join(" e ")}.`);
+  if (fracas.length) partes.push(`Precisa desenvolver ${fracas.map((c) => `${c.nome} (${c.valor}%)`).join(" e ")}.`);
+
+  if (experiencia) {
+    const detalhes = [];
+    if (experiencia.anos !== "—") detalhes.push(`${experiencia.anos} em vendas`);
+    if (experiencia.tipoVenda !== "—") detalhes.push(`experiência ${experiencia.tipoVenda}`);
+    if (experiencia.dedicacao !== "—") detalhes.push(`dedicação: ${experiencia.dedicacao.toLowerCase()}`);
+    if (experiencia.canais.length) detalhes.push(`canais: ${experiencia.canais.join(", ")}`);
+    if (detalhes.length) partes.push(`Experiência declarada: ${detalhes.join("; ")}.`);
+  }
+
+  if (disc?.compatibilidade) {
+    partes.push(`Melhor alocação em campanhas de: ${disc.compatibilidade.campanhas.toLowerCase()}.`);
+  }
 
   return { texto: partes.join(" "), fonte: "interno" };
 }

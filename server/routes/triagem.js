@@ -211,7 +211,7 @@ router.get("/triagem/fila", (req, res) => {
 router.get("/triagem/:sellerId/dossie", async (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
 
-  const vendedor = db.prepare("SELECT id, nome, email, cidade, status, criadoEm FROM sellers WHERE id = ?")
+  const vendedor = db.prepare("SELECT id, nome, email, cidade, status, criadoEm, foto, whats, linkedin, bio, perfil FROM sellers WHERE id = ?")
     .get(req.params.sellerId);
   if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
 
