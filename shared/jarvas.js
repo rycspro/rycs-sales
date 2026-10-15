@@ -72,6 +72,29 @@ export function numeroDe(texto) {
   return e ? porExtenso(e[0]) : null;
 }
 
+// Taxa de conversão: "3" ou "3 de 10" → 0,3; "30%" → 0,3; "1 em 4" → 0,25.
+export function taxaDe(texto) {
+  const n = sem(texto);
+  let m = n.match(new RegExp(`(${NUMERO})\\s*(?:de cada|em cada|a cada|de|em)\\s*(${NUMERO})`));
+  if (m) { const a = numeroDe(m[1]), b = numeroDe(m[2]); if (a != null && b > 0 && a <= b) return a / b; }
+  m = n.match(/(\d+(?:[.,]\d+)?)\s*(?:%|por cento)/);
+  if (m) return Math.min(1, parseFloat(m[1].replace(",", ".")) / 100);
+  const v = numeroDe(texto);
+  if (v == null || v < 0) return null;
+  return v <= 10 ? v / 10 : v <= 100 ? v / 100 : null;
+}
+
+// Retorno desejado, em vezes: "5", "5x", "5 vezes" → 5; "500%" → 5.
+export function multiploDe(texto) {
+  const n = sem(texto);
+  const m = n.match(/(\d+(?:[.,]\d+)?)\s*(?:%|por cento)/);
+  if (m) { const v = parseFloat(m[1].replace(",", ".")) / 100; return v > 1 ? v : null; }
+  const v = numeroDe(n.replace(/(\d)\s*x\b/, "$1"));
+  return v != null && v > 1 && v <= 50 ? v : null;
+}
+
+const decimal = (v) => Number(Number(v).toFixed(1)).toLocaleString("pt-BR");
+
 // ---------------------------------------------------------------------------
 // 1. Interpretação
 
@@ -108,6 +131,12 @@ export function interpretar(texto, esperado = null) {
   if (m) r.ticketMedio = numeroDe(m[1]);
   m = n.match(new RegExp(`(?:ate|maximo|pagar|investir|orcamento|fixo)\\D{0,25}?(${NUMERO})(?=[^\\d]{0,30}(?:por mes|mensal|\\/mes|ao mes|por profissional|cada profissional))`));
   if (m) r.fixoMensal = numeroDe(m[1]);
+  m = n.match(new RegExp(`(${NUMERO})\\s+(?:de cada|a cada|em cada)\\s+(${NUMERO})\\s+(?:reunio|visita|contato|lead)`));
+  if (m) r.conversao = taxaDe(`${m[1]} de ${m[2]}`);
+  m = n.match(new RegExp(`retorno de\\s+(${NUMERO})\\s*(?:x|vezes)|(${NUMERO})\\s*(?:x|vezes)\\s+(?:de |o )?retorno`));
+  if (m) r.retorno = numeroDe(m[1] || m[2]);
+  m = n.match(new RegExp(`(${NUMERO})\\s+(?:reunioes|reunioes agendadas|vendas|leads|agendamentos)\\s*(?:por|ao|\\/)\\s*mes`));
+  if (m) r.meta = Math.round(numeroDe(m[1]));
 
   if (esperado && r[esperado] == null) {
     const naoSabe = NAO_SEI.test(n);
@@ -118,6 +147,17 @@ export function interpretar(texto, esperado = null) {
       const v = numeroDe(bruto);
       if (v != null) r[esperado] = v;
       else if (naoSabe) r[esperado] = 0;
+    } else if (esperado === "conversao") {
+      const v = naoSabe ? null : taxaDe(bruto);
+      if (v != null) r.conversao = Math.round(v * 1000) / 1000;
+      else if (naoSabe) r.conversao = 0;
+    } else if (esperado === "retorno") {
+      const v = naoSabe ? null : multiploDe(bruto);
+      if (v) r.retorno = v;
+      else if (naoSabe) { r.retorno = 3; r.retornoSugerido = true; }
+    } else if (esperado === "meta") {
+      const v = numeroDe(bruto);
+      if (v != null && v > 0) r.meta = Math.round(v);
     } else if (esperado === "regiao" && !naoSabe) {
       const t = limparResposta(bruto).replace(/^(em|no|na|nos|nas|para|pra)\s+/i, "");
       if (/[a-zà-ú]{2}/i.test(t) && t.length <= 80) r.regiao = capitalizar(t);
@@ -136,6 +176,8 @@ export function interpretarAjuste(texto) {
   const campo = [
     ["regiao", /\b(regiao|cidade|local)\b/], ["publico", /\b(publico|cliente ideal|perfil)\b/],
     ["vagas", /\b(profission\w*|vendedor\w*|pessoas|vagas)\b/], ["ticketMedio", /\bticket\b/],
+    ["conversao", /\b(convers\w*|de cada)\b/], ["retorno", /\bretorno\b/],
+    ["meta", /\b(meta|reunioes por mes|vendas por mes)\b/],
     ["visitasPorDia", /\bvisitas?\b/], ["fixoMensal", /\b(fixo|mensal|por mes|orcamento|pagar)\b/],
   ].find(([, re]) => re.test(n))?.[0];
   if (campo && r[campo] == null) {
@@ -147,8 +189,18 @@ export function interpretarAjuste(texto) {
 
 // ---------------------------------------------------------------------------
 // 2. Condução
+//
+// Com ticket, o Jarvas conduz pelo retorno, como num funil de verdade:
+// conversão ("de cada 10 reuniões, quantas viram venda?") → mostra quanto
+// isso dá em vendas → retorno desejado → só então o custo por tarefa → meta
+// do mês e o resultado do mês. Sem ticket ou sem conversão, não há como
+// prometer retorno: a conversa segue pelo orçamento mensal.
 
 const ticketDoCadastro = (emp) => numeroDe(emp?.ticket) || 0;
+const principalDe = (r) => OBJETIVOS[r.objetivo]?.principal || "agendamento";
+const UNIDADE = { agendamento: "reuniões", visita: "visitas", venda: "vendas" };
+const UNIDADE_MES = { agendamento: "reuniões agendadas", visita: "visitas", venda: "vendas" };
+const usaRoi = (r) => Number(r.ticketMedio) > 0 && (principalDe(r) === "venda" || Number(r.conversao) > 0);
 
 export function proximoCampo(r) {
   if (!r.objetivo) return "objetivo";
@@ -156,7 +208,12 @@ export function proximoCampo(r) {
   if (!r.publico) return "publico";
   if (r.vagas == null) return "vagas";
   if (r.ticketMedio == null) return "ticketMedio";
-  if (OBJETIVOS[r.objetivo]?.usaVisitasPorDia && r.visitasPorDia == null) return "visitasPorDia";
+  const obj = OBJETIVOS[r.objetivo];
+  const p = principalDe(r);
+  if (Number(r.ticketMedio) > 0 && p !== "venda" && r.conversao == null) return "conversao";
+  if (usaRoi(r) && r.retorno == null) return "retorno";
+  if (obj?.usaVisitasPorDia && r.visitasPorDia == null) return "visitasPorDia";
+  if (usaRoi(r)) return !obj?.usaVisitasPorDia && r.meta == null ? "meta" : null;
   if (r.fixoMensal == null) return "fixoMensal";
   return null;
 }
@@ -165,9 +222,10 @@ export function proximoCampo(r) {
 // aplica o valor direto; com `seguir`, o Jarvas responde com essa frase.
 export function perguntar(campo, r, emp = {}) {
   const obj = OBJETIVOS[r.objetivo];
+  const p = principalDe(r);
   switch (campo) {
     case "objetivo":
-      return { texto: "O que você precisa que aconteça? Pode escrever do seu jeito, como \"agendar reuniões com indústrias em Sorocaba\", ou escolher uma opção.",
+      return { texto: "Me conta: o que você precisa que aconteça? Pode falar do seu jeito, tipo \"agendar reuniões com indústrias em Sorocaba\".",
         chips: OBJETIVO_OPCOES.map((o) => ({ rotulo: o.label, patch: { objetivo: o.valor } })) };
     case "regiao":
       return { texto: "Em qual cidade ou região essa campanha vai acontecer?", chips: [{ rotulo: "Todo o Brasil", patch: { regiao: "Todo o Brasil" } }] };
@@ -182,10 +240,19 @@ export function perguntar(campo, r, emp = {}) {
     case "ticketMedio": {
       const t = ticketDoCadastro(emp);
       return t
-        ? { texto: `Vi no cadastro que o ticket médio é ${dinheiro(t)}. Uso esse valor para calcular as comissões?`,
-            chips: [{ rotulo: `Sim, usar ${dinheiro(t)}`, patch: { ticketMedio: t } }, { rotulo: "É outro valor", seguir: "Qual é o ticket médio, então? Pode escrever do seu jeito, como \"5 mil\"." }] }
+        ? { texto: `Vi no cadastro que o ticket médio é ${dinheiro(t)}. Uso esse valor para calcular o seu retorno?`,
+            chips: [{ rotulo: `Sim, usar ${dinheiro(t)}`, patch: { ticketMedio: t } }, { rotulo: "É outro valor", seguir: "Qual é o ticket médio, então? Pode falar do seu jeito, tipo \"5 mil\"." }] }
         : { texto: "Quanto vale, em média, uma venda fechada para você?", chips: [{ rotulo: "Ainda não sei", patch: { ticketMedio: 0 } }] };
     }
+    case "conversao":
+      return { texto: `Agora uma pergunta importante para eu calcular o seu retorno: de cada 10 ${UNIDADE[p]}, quantas costumam virar venda?`,
+        chips: [...[1, 2, 3, 5].map((v) => ({ rotulo: `${v} de 10`, patch: { conversao: v / 10 } })), { rotulo: "Não sei", patch: { conversao: 0 } }] };
+    case "retorno":
+      return { texto: "E quanto de retorno você quer? Por exemplo: para cada real investido, voltar 5 reais em vendas.",
+        chips: [3, 5, 10].map((v) => ({ rotulo: `${v} vezes`, patch: { retorno: v } })) };
+    case "meta":
+      return { texto: `Quantas ${UNIDADE_MES[p]} você quer por mês, somando todos os profissionais?`,
+        chips: [10, 20, 40, 80].map((v) => ({ rotulo: String(v), patch: { meta: v } })) };
     case "visitasPorDia":
       return { texto: "Quantas visitas por dia você espera de cada profissional?", chips: [3, 5, 8].map((v) => ({ rotulo: `${v} por dia`, patch: { visitasPorDia: v } })) };
     case "fixoMensal":
@@ -198,50 +265,91 @@ export function perguntar(campo, r, emp = {}) {
 // Quando a resposta não foi entendida.
 export function pedirDeNovo(campo) {
   return {
-    objetivo: "Não consegui identificar o objetivo. Me diz o que precisa acontecer (agendar reuniões, visitar clientes, fechar vendas, reativar a base…) ou escolhe uma opção abaixo.",
+    objetivo: "Hum, não consegui entender o objetivo. Você quer agendar reuniões, visitar clientes, fechar vendas ou reativar a base? Pode falar ou tocar numa opção.",
     regiao: "Não peguei a região. Pode me dizer a cidade, o estado ou \"todo o Brasil\"?",
     publico: "Me conta um pouco mais sobre quem é esse cliente: segmento, porte ou cargo de quem decide.",
     vagas: "Não peguei a quantidade. Quantos profissionais? Pode ser só o número, tipo 3.",
-    ticketMedio: "Não entendi o valor. Pode me dizer em reais, tipo \"5 mil\" ou \"R$ 5.000\"? Se ainda não souber, tudo bem.",
+    ticketMedio: "Não entendi o valor. Pode me dizer em reais, tipo \"5 mil\"? Se ainda não souber, tudo bem.",
+    conversao: "Não peguei. De cada 10, quantas viram venda? Pode dizer só o número, tipo 3. Se não souber, tudo bem.",
+    retorno: "Quantas vezes o valor investido você quer de volta em vendas? Tipo 5 vezes.",
+    meta: "Quantas por mês? Pode ser só o número, tipo 40.",
     visitasPorDia: "Quantas visitas por dia? Pode ser só o número, tipo 5.",
     fixoMensal: "Não entendi o valor. Quanto por mês, em reais, para cada profissional? Se ainda não souber, sem problema.",
   }[campo] || "Não entendi. Pode repetir de outro jeito?";
 }
 
 // ---------------------------------------------------------------------------
-// 3. Resposta: reação ao que acabou de ser dito, com as contas.
+// 3. Contas e resposta
 
+// Valores por tarefa, orçamento e, quando há ticket e conversão, o retorno.
+//
+// Pelo retorno: cada reunião (ou visita) vale ticket × conversão em vendas;
+// para o retorno desejado, ela pode custar até isso ÷ retorno, somando o
+// valor da tarefa e a parte da comissão de venda. A comissão parte da
+// proporção do objetivo (8% do ticket) e nunca passa de 60% desse teto.
+// Fechamento (closer): a comissão por venda é ticket ÷ retorno.
 export function calcularTarefasJarvas(r) {
+  const obj = OBJETIVOS[r.objetivo] || OBJETIVOS.reunioes;
+  const p = obj.principal;
+  const ticket = Number(r.ticketMedio) || 0;
+  const vagas = Number(r.vagas) || 1;
+  const retorno = Number(r.retorno) || 0;
+  const conv = p === "venda" ? 1 : Number(r.conversao) || 0;
+
+  if (ticket > 0 && conv > 0 && retorno > 0) {
+    const tarefas = {};
+    let porUnidade = null;
+    if (p === "venda") tarefas.venda = Math.round(ticket / retorno);
+    else {
+      porUnidade = (ticket * conv) / retorno;
+      const venda = obj.acoes.includes("venda")
+        ? Math.min(Math.round(ticket * (obj.proporcao.venda || 0.08)), Math.round((porUnidade * 0.6) / conv)) : 0;
+      tarefas[p] = Math.max(1, Math.round(porUnidade - venda * conv));
+      if (obj.acoes.includes("venda")) tarefas.venda = venda;
+    }
+    const unidades = obj.usaVisitasPorDia ? (Number(r.visitasPorDia) || 0) * DIAS_UTEIS * vagas : Number(r.meta) || 0;
+    const vendas = p === "venda" ? unidades : unidades * conv;
+    const investimento = Math.round(p === "venda" ? unidades * tarefas.venda : unidades * tarefas[p] + vendas * (tarefas.venda || 0));
+    const receita = Math.round(vendas * ticket);
+    return {
+      tarefas, orcamento: investimento,
+      roi: { principal: p, conversao: conv, retorno, porUnidade, unidades, vendas, receita, investimento, multiplo: investimento ? receita / investimento : null },
+    };
+  }
+
+  // Sem retorno calculável: pelo orçamento mensal por profissional.
   const fixoMensal = Number(r.fixoMensal) || 0;
   const visitasPorDia = Number(r.visitasPorDia) || 5;
-  const vagas = Number(r.vagas) || 1;
-  const ticket = Number(r.ticketMedio) || 0;
-  const obj = OBJETIVOS[r.objetivo] || OBJETIVOS.reunioes;
   const tarefas = {};
-
   if (obj.usaVisitasPorDia) {
     tarefas.visita = fixoMensal > 0 ? Math.round(fixoMensal / DIAS_UTEIS / visitasPorDia) : (ticket ? Math.round(ticket * (obj.proporcao.visita || 0.008)) : 0);
     if (obj.acoes.includes("venda")) tarefas.venda = ticket ? Math.round(ticket * (obj.proporcao.venda || 0.08)) : 0;
   } else {
-    const principal = obj.principal;
     const valorPrincipal = fixoMensal > 0 ? Math.round(fixoMensal / DIAS_UTEIS) : 0;
-    const propPrincipal = obj.proporcao[principal] || 1;
+    const propPrincipal = obj.proporcao[p] || 1;
     for (const acao of obj.acoes) {
-      if (acao === principal) { tarefas[acao] = valorPrincipal; continue; }
+      if (acao === p) { tarefas[acao] = valorPrincipal; continue; }
       const rel = (obj.proporcao[acao] || 0) / propPrincipal;
       tarefas[acao] = valorPrincipal > 0 ? Math.max(1, Math.round(valorPrincipal * rel)) : (ticket ? Math.round(ticket * (obj.proporcao[acao] || 0)) : 0);
     }
     if (tarefas.venda === 0 && ticket) tarefas.venda = Math.round(ticket * (obj.proporcao.venda || 0.08));
   }
-  return { tarefas, orcamento: fixoMensal > 0 ? fixoMensal * vagas : 0 };
+  return { tarefas, orcamento: fixoMensal > 0 ? fixoMensal * vagas : 0, roi: null };
 }
 
 // Variação sem sorteio: a mesma conversa dá as mesmas frases.
 const escolher = (lista, semente) => lista[Math.abs(semente) % lista.length];
 
+function fraseResultadoMes(roi) {
+  const u = roi.principal === "venda" ? "vendas" : UNIDADE_MES[roi.principal];
+  const vendas = roi.principal === "venda" ? "" : `, a média é de ${decimal(roi.vendas)} vendas`;
+  return `Com ${roi.unidades} ${u} por mês${vendas}: ${dinheiro(roi.receita)} em vendas, com investimento de ${dinheiro(roi.investimento)}. Um retorno de ${decimal(roi.multiplo)} vezes.`;
+}
+
 export function reagir(patch, r, emp = {}) {
   const frases = [];
   const obj = OBJETIVOS[r.objetivo];
+  const p = principalDe(r);
   const s = Object.keys(r).length;
   if (patch.objetivo && obj)
     frases.push(`${escolher(["Boa escolha.", "Perfeito.", "Fechado."], s)} ${rotuloObjetivo(r.objetivo)}: ${obj.resumo.replace(/\.$/, "").toLowerCase()}. Vou buscar profissionais de ${obj.funcao.toUpperCase()} para isso.`);
@@ -254,32 +362,38 @@ export function reagir(patch, r, emp = {}) {
     frases.push(v === 1 ? "Um profissional para começar, bom para validar antes de escalar."
       : v <= 5 ? `${v} profissionais, um ótimo tamanho para começar.` : `${v} profissionais, uma operação de bom porte.`);
   }
-  if (patch.ticketMedio != null) {
-    const comissao = r.ticketMedio && obj?.acoes.includes("venda") ? Math.round(r.ticketMedio * (obj.proporcao.venda || 0.08)) : 0;
-    frases.push(r.ticketMedio
-      ? `Com ticket de ${dinheiro(r.ticketMedio)}${comissao ? `, a comissão sugerida por venda fechada fica perto de ${dinheiro(comissao)}` : ""}.`
-      : "Sem problema. Deixo os valores por venda em aberto para você ajustar na revisão.");
+  if (patch.ticketMedio != null)
+    frases.push(r.ticketMedio ? `Ticket de ${dinheiro(r.ticketMedio)}, anotado.` : "Sem problema. Sem ticket, os valores ficam em aberto para você ajustar na revisão.");
+
+  const plano = calcularTarefasJarvas(r);
+  const roi = plano.roi;
+  if (patch.conversao != null) {
+    if (r.conversao > 0) {
+      const de10 = decimal(r.conversao * 10);
+      frases.push(`Então, a cada 10 ${UNIDADE[p]}, você fecha ${de10} ${r.conversao * 10 === 1 ? "negócio" : "negócios"}. Com ticket de ${dinheiro(r.ticketMedio)}, isso dá ${dinheiro(r.ticketMedio * r.conversao * 10)} em vendas a cada 10 ${UNIDADE[p]}.`);
+    } else frases.push("Sem problema. Sem essa taxa eu não consigo te mostrar o retorno com segurança, então vamos pelo orçamento.");
   }
-  if (patch.visitasPorDia != null)
+  if (patch.retorno != null && roi) {
+    if (p === "venda") frases.push(`Para ter ${decimal(r.retorno)} vezes de retorno, a comissão pode ser de até ${dinheiro(roi.porUnidade ?? plano.tarefas.venda)} por venda fechada.`);
+    else frases.push(`Para ter ${decimal(r.retorno)} vezes de retorno, dá para investir até ${dinheiro(Math.round(roi.porUnidade * 10))} a cada 10 ${UNIDADE[p]}. Na prática: ${dinheiro(plano.tarefas[p])} por ${ACAO[p]} e ${dinheiro(plano.tarefas.venda || 0)} de comissão por venda fechada.`);
+    if (r.retornoSugerido) frases.push("Usei 3 vezes como ponto de partida; você pode mudar na revisão.");
+  }
+  if ((patch.meta != null || patch.visitasPorDia != null) && roi && roi.unidades > 0) frases.push(fraseResultadoMes(roi));
+  else if (patch.visitasPorDia != null)
     frases.push(`${r.visitasPorDia} por dia dá umas ${r.visitasPorDia * DIAS_UTEIS} visitas por mês para cada profissional.`);
   if (patch.fixoMensal != null) {
     if (r.fixoMensal > 0 && obj) {
-      const { tarefas, orcamento } = calcularTarefasJarvas(r);
-      const unit = tarefas[obj.principal];
-      frases.push(`Com ${dinheiro(r.fixoMensal)} por profissional, cada ${ACAO[obj.principal] || "ação"} sai por cerca de ${dinheiro(unit)}. No total, ${dinheiro(orcamento)} por mês.`);
+      frases.push(`Com ${dinheiro(r.fixoMensal)} por profissional, cada ${ACAO[p] || "ação"} sai por cerca de ${dinheiro(plano.tarefas[p])}. No total, ${dinheiro(plano.orcamento)} por mês.`);
     } else frases.push("Tudo bem. O orçamento fica em aberto e você define na revisão.");
   }
   return frases.join(" ");
 }
 
-export function saudacao(emp = {}) {
-  return `Oi! Eu sou o Jarvas. Vou montar a campanha${emp.nome ? ` da ${emp.nome}` : ""} com você, leva uns 2 minutos e eu já calculo os valores por tarefa e o orçamento.`;
-}
-
 // Resumo final, em linhas [rótulo, valor].
 export function resumo(r) {
   const obj = OBJETIVOS[r.objetivo];
-  const { tarefas, orcamento } = calcularTarefasJarvas(r);
+  const { tarefas, orcamento, roi } = calcularTarefasJarvas(r);
+  const p = principalDe(r);
   const linhas = [
     ["Objetivo", rotuloObjetivo(r.objetivo)],
     ["Região", r.regiao],
@@ -287,8 +401,44 @@ export function resumo(r) {
     ["Profissionais", `${r.vagas} de ${obj?.funcao.toUpperCase() || "—"}`],
     ["Ticket médio", r.ticketMedio ? dinheiro(r.ticketMedio) : "Em aberto"],
   ];
+  if (roi && p !== "venda") linhas.push(["Conversão", `${decimal(roi.conversao * 10)} de cada 10 ${UNIDADE[p]}`]);
+  if (roi) linhas.push(["Retorno desejado", `${decimal(roi.retorno)} vezes`]);
   if (obj?.usaVisitasPorDia) linhas.push(["Visitas por dia", String(r.visitasPorDia)]);
   for (const acao of obj?.acoes || []) if (tarefas[acao]) linhas.push([`Por ${ACAO[acao] || acao}`, dinheiro(tarefas[acao])]);
-  linhas.push(["Orçamento mensal", orcamento ? dinheiro(orcamento) : "Em aberto"]);
+  if (roi && roi.unidades > 0) {
+    linhas.push([`${capitalizar(UNIDADE_MES[p])} por mês`, String(roi.unidades)]);
+    if (p !== "venda") linhas.push(["Vendas previstas", `${decimal(roi.vendas)} por mês`]);
+    linhas.push(["Faturamento previsto", `${dinheiro(roi.receita)} por mês`]);
+  }
+  linhas.push(["Investimento mensal", orcamento ? dinheiro(orcamento) : "Em aberto"]);
+  if (roi?.multiplo) linhas.push(["Retorno estimado", `${decimal(roi.multiplo)} vezes`]);
   return linhas;
+}
+
+export function saudacao(emp = {}) {
+  return `Oi! Eu sou o Jarvas. Vou montar a campanha${emp.nome ? ` da ${emp.nome}` : ""} com você, leva uns dois minutinhos, e eu já calculo os valores e o orçamento.`;
+}
+
+// Fim da conversa: a frase que convida a revisar e montar.
+export const FECHAMENTO = "Pronto, já tenho tudo! Dá uma olhada no resumo. Se estiver certo, é só dizer \"pode montar\", ou me fala o que você quer mudar.";
+
+// "Pode montar", "tá certo", "isso mesmo": confirma o resumo por voz.
+export const confirmaMontagem = (texto) =>
+  /\b(pode (montar|criar|seguir|fazer)|monta(r)?( a campanha)?|confirm\w*|ta (certo|otimo|bom)|esta (certo|otimo)|isso mesmo|perfeito|fechado|manda ver|bora)\b/.test(sem(texto));
+
+// Texto para a voz: o que se lê bem na tela nem sempre soa bem falado.
+// "R$ 2.500" vira "2.500 reais", siglas de função viram palavras, aspas e
+// quebras de linha somem.
+export function paraFala(texto) {
+  return String(texto || "")
+    .replace(/R\$\s?(\d{1,3}(?:\.\d{3})+|\d+),(\d{2})/g, (_, r, c) => (c === "00" ? `${r} reais` : `${r} reais e ${Number(c)} centavos`))
+    .replace(/R\$\s?(\d{1,3}(?:\.\d{3})+|\d+)/g, "$1 reais")
+    .replace(/\bPAP\b/g, "porta a porta")
+    .replace(/\bSDR\b/g, "pré-vendas")
+    .replace(/\bBDR\b/g, "prospecção")
+    .replace(/\bCLOSER\b/g, "fechamento")
+    .replace(/["“”]/g, "")
+    .replace(/\s*\n+\s*/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }

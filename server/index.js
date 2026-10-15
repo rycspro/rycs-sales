@@ -38,6 +38,7 @@ import billingRoutes from "./routes/billing.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
+import jarvasRoutes from "./routes/jarvas.js";
 import { semearCatalogo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
@@ -176,6 +177,7 @@ app.use("/api", authMiddleware, emailAdminRoutes);
 app.use("/api", authMiddleware, billingRoutes);
 app.use("/api", authMiddleware, onboardingRoutes);
 app.use("/api", authMiddleware, onboardingProRoutes);
+app.use("/api", authMiddleware, jarvasRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

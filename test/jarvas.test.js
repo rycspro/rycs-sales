@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { numeroDe, interpretar, interpretarAjuste, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas } from "../shared/jarvas.js";
+import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem } from "../shared/jarvas.js";
 
 // Jarvas (shared/jarvas.js): entende português do dia a dia, pula o que já
 // sabe e reage com conta de verdade, sem provedor externo.
@@ -45,13 +45,52 @@ test("condução: pula o que já sabe e só pergunta visitas por dia quando faz 
 });
 
 test("reage com as contas, sem inventar quando falta dado", () => {
-  const r = { objetivo: "visitas", regiao: "Sorocaba", publico: "Indústrias", vagas: 3, ticketMedio: 890, visitasPorDia: 6, fixoMensal: 2500 };
+  // Sem conversão conhecida: pelo orçamento mensal.
+  const r = { objetivo: "visitas", regiao: "Sorocaba", publico: "Indústrias", vagas: 3, ticketMedio: 890, conversao: 0, visitasPorDia: 6, fixoMensal: 2500 };
   const { tarefas, orcamento } = calcularTarefasJarvas(r);
   assert.equal(orcamento, 7500);
   assert.equal(tarefas.visita, Math.round(2500 / 22 / 6));
   assert.match(reagir({ fixoMensal: 2500 }, r), /cada visita sai por cerca de R\$\s?19.*R\$\s?7\.500/);
   assert.match(reagir({ ticketMedio: 0 }, { ...r, ticketMedio: 0 }), /em aberto/);
   const linhas = Object.fromEntries(resumo(r));
-  assert.equal(linhas["Orçamento mensal"].replace(/\s/g, " "), "R$ 7.500");
+  assert.equal(linhas["Investimento mensal"].replace(/\s/g, " "), "R$ 7.500");
   assert.equal(linhas["Profissionais"], "3 de PAP");
+});
+
+test("pelo retorno: mostra o resultado antes do custo e fecha a conta do mês", () => {
+  assert.equal(taxaDe("3 de 10"), 0.3);
+  assert.equal(taxaDe("30%"), 0.3);
+  assert.equal(taxaDe("1 em 4"), 0.25);
+  assert.equal(multiploDe("5x"), 5);
+  assert.equal(multiploDe("500%"), 5);
+
+  let r = { objetivo: "reunioes", regiao: "Sorocaba", publico: "Indústrias", vagas: 2, ticketMedio: 5000 };
+  assert.equal(proximoCampo(r), "conversao");
+  r.conversao = 0.3;
+  assert.match(reagir({ conversao: 0.3 }, r), /a cada 10 reuniões, você fecha 3 negócios.*R\$\s?15\.000 em vendas/);
+  assert.equal(proximoCampo(r), "retorno");
+  r.retorno = 5;
+  // Custo só depois do retorno: R$ 3.000 a cada 10 reuniões = R$ 180 por reunião + R$ 400 por venda.
+  assert.match(reagir({ retorno: 5 }, r), /investir até R\$\s?3\.000 a cada 10 reuniões.*R\$\s?180 por reunião agendada.*R\$\s?400 de comissão/);
+  assert.equal(proximoCampo(r), "meta");
+  r.meta = 40;
+  const { tarefas, orcamento, roi } = calcularTarefasJarvas(r);
+  assert.deepEqual(tarefas, { agendamento: 180, venda: 400 });
+  assert.equal(orcamento, 12000);
+  assert.deepEqual([roi.vendas, roi.receita, roi.multiplo], [12, 60000, 5]);
+  assert.match(reagir({ meta: 40 }, r), /12 vendas.*R\$\s?60\.000 em vendas.*investimento de R\$\s?12\.000.*5 vezes/);
+  assert.equal(proximoCampo(r), null);
+  assert.equal(Object.fromEntries(resumo(r))["Retorno estimado"], "5 vezes");
+
+  // Fechamento: comissão = ticket ÷ retorno. Sem conversão: pelo orçamento, sem prometer retorno.
+  assert.equal(calcularTarefasJarvas({ objetivo: "vendas", ticketMedio: 10000, retorno: 4, meta: 8 }).tarefas.venda, 2500);
+  const semTaxa = { objetivo: "reunioes", regiao: "SP", publico: "x", vagas: 2, ticketMedio: 5000, conversao: 0 };
+  assert.equal(proximoCampo(semTaxa), "fixoMensal");
+  assert.match(reagir({ conversao: 0 }, semTaxa), /não consigo te mostrar o retorno/);
+});
+
+test("voz: texto falado e confirmação por voz", () => {
+  assert.equal(paraFala("Custa R$ 19. Total R$ 7.500,00\n\nVou buscar \"PAP\"."), "Custa 19 reais. Total 7.500 reais Vou buscar porta a porta.");
+  assert.ok(confirmaMontagem("tá certo, pode montar"));
+  assert.ok(!confirmaMontagem("muda para 3 profissionais"));
 });

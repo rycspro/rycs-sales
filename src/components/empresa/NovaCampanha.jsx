@@ -1,14 +1,13 @@
-import { useState, useRef, useEffect, useId } from "react";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw } from "lucide-react";
 import { api } from "../../lib/api.js";
-import ThinkingOrb from "../ThinkingOrb.jsx";
+import ConversaJarvas from "./ConversaJarvas.jsx";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
 import { campanhaPodeSerPublicada, requisitosPublicacao, saldoDisponivel, isPosPago } from "../../../shared/empresa.js";
 import { sugerirValores, sugerirValorVisita, impactoNoRoi } from "../../../shared/valorTarefa.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
-import { interpretar, interpretarAjuste, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo, calcularTarefasJarvas, rotuloObjetivo } from "../../../shared/jarvas.js";
 
 // Criação de campanha em três passos.
 //
@@ -35,293 +34,6 @@ function formatarBRL(valor) {
 function parseBRL(str) {
   if (!str) return 0;
   return Number(String(str).replace(/\./g, "").replace(",", ".")) || 0;
-}
-
-const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
-const movimentoReduzido = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
-// Jarvas: monta a campanha conversando, no ritmo de um chat. Cada resposta
-// tem um instante de "digitando" (mais longo para texto mais longo) e chega
-// palavra por palavra. Quem prefere menos movimento recebe o texto inteiro.
-// A inteligência (o que a frase quer dizer, a próxima pergunta, as contas)
-// está em shared/jarvas.js; aqui fica o ritmo, a voz e a tela.
-function Jarvas({ emp, onCampanha }) {
-  const id = useId();
-  const [msgs, setMsgs] = useState([]); // { id, de: "jarvas"|"voce", texto, completo, chips?, resumo? }
-  const [digitando, setDigitando] = useState(false);
-  const [escrevendo, setEscrevendo] = useState(false);
-  const [ocupado, setOcupado] = useState(true);
-  const [campo, setCampo] = useState(null); // pergunta em aberto, "ajuste" no resumo, "fim" ao montar
-  const [texto, setTexto] = useState("");
-  const [ouvindo, setOuvindo] = useState(false);
-  const [voz, setVoz] = useState(false);
-  const [anuncio, setAnuncio] = useState("");
-  const temMic = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-
-  const respostas = useRef({});
-  const fila = useRef(Promise.resolve());
-  const geracao = useRef(0);
-  const seq = useRef(0);
-  const lista = useRef(null);
-  const entrada = useRef(null);
-  const rec = useRef(null);
-  const vozLigada = useRef(false);
-  vozLigada.current = voz;
-
-  useEffect(() => { const el = lista.current; if (el) el.scrollTop = el.scrollHeight; }, [msgs, digitando]);
-
-  const falar = (t) => {
-    if (!vozLigada.current || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(t.replace(/\n+/g, " "));
-    u.lang = "pt-BR"; u.rate = 1.05;
-    const vozes = window.speechSynthesis.getVoices();
-    u.voice = vozes.find((v) => v.lang === "pt-BR" && /natural|google|luciana|francisca/i.test(v.name)) || vozes.find((v) => v.lang.startsWith("pt")) || null;
-    window.speechSynthesis.speak(u);
-  };
-
-  // Escreve uma mensagem do Jarvas no ritmo do chat. As mensagens entram em
-  // fila; recomeçar a conversa invalida o que estava sendo escrito.
-  const escrever = (t, extra = {}) => {
-    const g = geracao.current;
-    fila.current = fila.current.then(async () => {
-      if (g !== geracao.current) return;
-      const reduzido = movimentoReduzido();
-      setDigitando(true);
-      await esperar(reduzido ? 0 : Math.min(420 + t.length * 4, 1100));
-      if (g !== geracao.current) return;
-      setDigitando(false);
-      setEscrevendo(true);
-      const mid = ++seq.current;
-      setMsgs((m) => [...m, { id: mid, de: "jarvas", texto: reduzido ? t : "", completo: reduzido, ...(reduzido ? extra : {}) }]);
-      if (!reduzido) {
-        const partes = t.split(/(\s+)/);
-        for (let i = 1; i <= partes.length; i += 2) {
-          await esperar(14 + partes[i - 1].length * 3);
-          if (g !== geracao.current) return;
-          const parcial = partes.slice(0, i).join("");
-          setMsgs((m) => m.map((x) => (x.id === mid ? { ...x, texto: parcial } : x)));
-        }
-        setMsgs((m) => m.map((x) => (x.id === mid ? { ...x, texto: t, completo: true, ...extra } : x)));
-      }
-      setEscrevendo(false);
-      setAnuncio(t);
-      falar(t);
-    });
-    return fila.current;
-  };
-
-  const fazerPergunta = (r, prefixo = "") => {
-    const c = proximoCampo(r);
-    if (!c) {
-      setCampo("ajuste");
-      return escrever(`${prefixo ? `${prefixo}\n\n` : ""}Pronto, já tenho tudo. Confere o resumo:`, { resumo: resumo(r) });
-    }
-    setCampo(c);
-    const p = perguntar(c, r, emp);
-    return escrever(prefixo ? `${prefixo}\n\n${p.texto}` : p.texto, { chips: p.chips });
-  };
-
-  const comecar = async () => {
-    const g = ++geracao.current;
-    fila.current = Promise.resolve();
-    window.speechSynthesis?.cancel();
-    respostas.current = {};
-    setMsgs([]); setTexto(""); setCampo(null); setOcupado(true);
-    await escrever(saudacao(emp));
-    if (g !== geracao.current) return;
-    await fazerPergunta({});
-    if (g === geracao.current) setOcupado(false);
-  };
-  // Sair da tela invalida o que estava sendo escrito (e, no modo de
-  // desenvolvimento do React, a montagem dupla recomeça do zero).
-  useEffect(() => {
-    comecar();
-    return () => { geracao.current++; window.speechSynthesis?.cancel(); rec.current?.stop(); };
-  }, []);
-
-  const mostrarDoUsuario = (t) => setMsgs((m) => [
-    ...m.map((x) => (x.chips ? { ...x, chips: undefined } : x)),
-    { id: ++seq.current, de: "voce", texto: t, completo: true },
-  ]);
-
-  const responder = async (bruto, patchDireto = null) => {
-    const t = String(bruto || "").trim();
-    if (ocupado || campo === "fim" || (!t && !patchDireto)) return;
-    setTexto("");
-    mostrarDoUsuario(t);
-    setOcupado(true);
-    const g = geracao.current;
-    const patch = patchDireto || (campo === "ajuste" ? interpretarAjuste(t) : interpretar(t, campo));
-    const novas = { ...respostas.current, ...patch };
-    respostas.current = novas;
-
-    if (campo === "ajuste") {
-      if (!Object.keys(patch).length) await escrever('Não entendi o que mudar. Você pode dizer, por exemplo, "muda para 3 profissionais" ou "região: Campinas".', { resumo: resumo(novas) });
-      else await fazerPergunta(novas, `Feito! ${reagir(patch, novas, emp)}`.trim());
-    } else if (!Object.keys(patch).length) {
-      await escrever(pedirDeNovo(campo), { chips: perguntar(campo, novas, emp).chips });
-    } else {
-      await fazerPergunta(novas, reagir(patch, novas, emp));
-    }
-    if (g !== geracao.current) return;
-    setOcupado(false);
-    entrada.current?.focus();
-  };
-
-  const clicarChip = async (chip) => {
-    if (chip.patch) return responder(chip.rotulo, chip.patch);
-    if (ocupado) return;
-    mostrarDoUsuario(chip.rotulo);
-    setOcupado(true);
-    const g = geracao.current;
-    await escrever(chip.seguir || perguntar(campo, respostas.current, emp).texto);
-    if (g !== geracao.current) return;
-    setOcupado(false);
-    entrada.current?.focus();
-  };
-
-  const montar = async () => {
-    if (ocupado) return;
-    setCampo("fim");
-    setMsgs((m) => m.map((x) => (x.resumo ? { ...x, fechado: true } : x)));
-    setOcupado(true);
-    await escrever("Perfeito! Montando a sua campanha agora…");
-    const r = respostas.current;
-    const objetivo = r.objetivo || "reunioes";
-    const campanha = montarCampanha(objetivo, emp);
-    const { tarefas, orcamento } = calcularTarefasJarvas(r);
-    Object.assign(campanha, { objetivoChave: objetivo, regiao: r.regiao || "", vagas: Number(r.vagas) || 1, tarefas });
-    if (r.publico) campanha.publico = r.publico;
-    if (orcamento > 0) campanha.orcamento = orcamento;
-    campanha.titulo = [rotuloObjetivo(objetivo), r.regiao, `${campanha.vagas} prof.`, orcamento > 0 ? money(orcamento) : ""].filter(Boolean).join(" — ");
-    await esperar(movimentoReduzido() ? 0 : 700);
-    onCampanha(objetivo, campanha);
-  };
-
-  const ditar = () => {
-    if (ouvindo) { rec.current?.stop(); return; }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-    const r = new SR();
-    r.lang = "pt-BR"; r.continuous = false; r.interimResults = true;
-    let final = "";
-    r.onstart = () => setOuvindo(true);
-    r.onresult = (e) => { final = Array.from(e.results).map((x) => x[0].transcript).join(""); setTexto(final); };
-    r.onend = () => { setOuvindo(false); if (final.trim()) responder(final); };
-    r.onerror = () => setOuvindo(false);
-    rec.current = r;
-    r.start();
-  };
-
-  const ultimoResumo = [...msgs].reverse().find((m) => m.resumo)?.id;
-  const estadoOrb = ouvindo ? "listening" : digitando ? "thinking" : escrevendo ? "speaking" : msgs.length ? "idle" : "connecting";
-  const status = { listening: "Ouvindo você…", thinking: "Pensando…", speaking: "Respondendo…", connecting: "Conectando…", idle: campo === "fim" ? "Montando a campanha" : "Sua vez" }[estadoOrb];
-
-  return (
-    <div className="vx-jarvas">
-      <style>{`
-        .vx-jarvas-log{display:flex;flex-direction:column;gap:12px;max-height:440px;min-height:240px;overflow-y:auto;padding:4px 2px 8px;scroll-behavior:smooth}
-        .vx-jarvas-linha{display:flex;gap:8px;align-items:flex-end}
-        .vx-jarvas-linha[data-de="voce"]{justify-content:flex-end}
-        .vx-jarvas-topo{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 0 10px}
-        .vx-jarvas-topo .vx-mut{font-size:12.5px;min-height:18px}
-        .vx-jarvas-bolha{max-width:min(85%,560px);padding:10px 14px;border-radius:16px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
-        .vx-jarvas-linha[data-de="jarvas"] .vx-jarvas-bolha{background:var(--surface);border:1px solid var(--border);color:var(--ink);border-bottom-left-radius:4px}
-        .vx-jarvas-linha[data-de="voce"] .vx-jarvas-bolha{background:var(--brand);color:#fff;border-bottom-right-radius:4px}
-        .vx-jarvas-cursor{display:inline-block;width:7px;height:15px;margin-left:2px;vertical-align:-2px;background:var(--brand);border-radius:1px;animation:jv-pisca 1s steps(2) infinite}
-        .vx-jarvas-pontos{display:flex;gap:4px;padding:4px 2px}
-        .vx-jarvas-pontos span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:jv-ponto 1.2s infinite ease-in-out}
-        .vx-jarvas-pontos span:nth-child(2){animation-delay:.15s}.vx-jarvas-pontos span:nth-child(3){animation-delay:.3s}
-        .vx-jarvas-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 36px}
-        .vx-jarvas-chips .vx-btn{min-height:44px;border-radius:var(--radius-pill,999px);font-size:13px}
-        .vx-jarvas-resumo{margin:8px 0 0 36px;max-width:min(85%,560px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
-        .vx-jarvas-resumo dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px}
-        .vx-jarvas-resumo dt{color:var(--muted)}.vx-jarvas-resumo dd{margin:0;font-weight:600;color:var(--ink)}
-        .vx-jarvas-form{display:flex;gap:8px;align-items:center;margin-top:12px;padding:6px;border:1px solid var(--border);border-radius:var(--radius-pill,999px);background:var(--surface)}
-        .vx-jarvas-form:focus-within{box-shadow:0 0 0 3px var(--ring)}
-        .vx-jarvas-form input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:14.5px;padding:0 12px;min-height:44px;color:var(--ink)}
-        .vx-jarvas-icone{flex:none;width:44px;height:44px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;color:var(--muted)}
-        .vx-jarvas-icone[data-on="1"]{color:var(--red)}
-        .vx-jarvas-enviar{background:var(--brand);color:#fff}
-        .vx-jarvas-enviar:disabled{opacity:.4;cursor:default}
-        .vx-jarvas-rodape{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px}
-        @keyframes jv-ponto{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
-        @keyframes jv-pisca{to{visibility:hidden}}
-        @media (prefers-reduced-motion: reduce){.vx-jarvas-log{scroll-behavior:auto}.vx-jarvas-cursor,.vx-jarvas-pontos span{animation:none}}
-      `}</style>
-
-      <div className="vx-jarvas-topo">
-        <ThinkingOrb state={estadoOrb} size={64} />
-        <span className="vx-mut" aria-hidden="true">{status}</span>
-      </div>
-
-      <div ref={lista} className="vx-jarvas-log" aria-label="Conversa com o Jarvas" role="log" aria-busy={digitando || undefined}>
-        {msgs.map((m) => (
-          <div key={m.id}>
-            <div className="vx-jarvas-linha" data-de={m.de}>
-              {m.de === "jarvas" && <ThinkingOrb size={28} decorativo />}
-              <div className="vx-jarvas-bolha">
-                {m.de === "jarvas" && <span className="vx-sr">Jarvas: </span>}
-                {m.texto}
-                {!m.completo && <span className="vx-jarvas-cursor" aria-hidden="true" />}
-              </div>
-            </div>
-            {m.completo && m.chips?.length > 0 && (
-              <div className="vx-jarvas-chips">
-                {m.chips.map((c) => (
-                  <button key={c.rotulo} type="button" className="vx-btn vx-btn-sm" disabled={ocupado} onClick={() => clicarChip(c)}>{c.rotulo}</button>
-                ))}
-              </div>
-            )}
-            {m.completo && m.resumo && (
-              <div className="vx-jarvas-resumo">
-                <dl>{m.resumo.map(([k, v]) => <div key={k} style={{ display: "contents" }}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
-                {m.id === ultimoResumo && !m.fechado && (
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                    <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 44 }} disabled={ocupado} onClick={montar}>
-                      <Check size={14} /> Montar campanha
-                    </button>
-                    <span className="vx-mut" style={{ fontSize: 12.5, alignSelf: "center" }}>ou me diga o que ajustar</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-        {digitando && (
-          <div className="vx-jarvas-linha" data-de="jarvas">
-            <ThinkingOrb size={28} state="thinking" decorativo />
-            <div className="vx-jarvas-bolha" aria-label="Jarvas está digitando"><div className="vx-jarvas-pontos"><span /><span /><span /></div></div>
-          </div>
-        )}
-      </div>
-      <div className="vx-sr" aria-live="polite">{anuncio}</div>
-
-      <form className="vx-jarvas-form" onSubmit={(e) => { e.preventDefault(); responder(texto); }}>
-        <label htmlFor={`${id}-msg`} className="vx-sr">Mensagem para o Jarvas</label>
-        <input id={`${id}-msg`} ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} autoComplete="off"
-          disabled={campo === "fim"} placeholder={ouvindo ? "Ouvindo…" : campo === "ajuste" ? "Peça um ajuste ou clique em Montar campanha" : "Escreva sua resposta…"} />
-        {temMic && (
-          <button type="button" className="vx-jarvas-icone" data-on={ouvindo ? "1" : "0"} aria-pressed={ouvindo}
-            aria-label={ouvindo ? "Parar de ouvir" : "Responder falando"} onClick={ditar} disabled={campo === "fim"}>
-            {ouvindo ? <MicOff size={18} /> : <Mic size={18} />}
-          </button>
-        )}
-        <button type="submit" className="vx-jarvas-icone vx-jarvas-enviar" aria-label="Enviar" disabled={ocupado || !texto.trim() || campo === "fim"}>
-          <Send size={17} />
-        </button>
-      </form>
-      <div className="vx-jarvas-rodape">
-        <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }} aria-pressed={voz} onClick={() => { setVoz((v) => !v); window.speechSynthesis?.cancel(); }}>
-          {voz ? <Volume2 size={14} /> : <VolumeX size={14} />} {voz ? "Voz ligada" : "Ler em voz alta"}
-        </button>
-        <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }} onClick={comecar} disabled={campo === "fim"}>
-          <RotateCcw size={13} /> Recomeçar
-        </button>
-      </div>
-    </div>
-  );
 }
 
 function CampoOrcamento({ value, onChange }) {
@@ -508,16 +220,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Nova campanha</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            {iniciarComIA ? "Descreva o que você precisa — a IA monta a campanha e você revisa antes de publicar." : "Use a IA ou escolha o objetivo manualmente."}
+            {iniciarComIA ? "Converse com o Jarvas: ele pergunta, calcula o retorno e monta a campanha para você revisar." : "Converse com o Jarvas ou escolha o objetivo manualmente."}
           </p>
 
-          {/* Jarvas — conversa no ritmo de um chat */}
+          {/* Jarvas — conversa assistida por voz */}
           <div className="vx-card" style={{ padding: 20, marginTop: 4, borderColor: "var(--brand-200, var(--brand-100))", background: "linear-gradient(135deg, var(--brand-50) 0%, var(--indigo-50, var(--brand-50)) 100%)", borderWidth: 1.5 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
               <b style={{ fontSize: 15 }}>Jarvas</b>
               <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>IA · Recomendado</span>
             </div>
-            <Jarvas emp={emp} onCampanha={receberCampanhaDoJarvas} />
+            <ConversaJarvas emp={emp} onCampanha={receberCampanhaDoJarvas} />
           </div>
 
           {!iniciarComIA && <>
