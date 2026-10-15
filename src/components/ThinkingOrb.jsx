@@ -4,17 +4,17 @@ import { useEffect, useRef } from "react";
 //
 // Design escolhido pelo dono (adaptado do loader "joao-canais" do Uiverse):
 // um disco escuro com um anel de luz azul girando por dentro, feito de
-// sombras internas que mudam de tom enquanto giram, e o nome "Jarvas" no
-// centro com as letras acendendo em onda.
+// sombras internas que mudam de tom enquanto giram. Nada no centro (pedido
+// do dono).
 //
 // `nivel` é um ref com o volume do momento (0 a 1): a voz do Jarvas ou o
 // microfone. O orb lê esse valor a cada quadro e o anel pulsa e brilha no
 // ritmo do som, sem re-renderizar o React.
 //
-// Estados (mudam a velocidade do giro e das letras):
-// - idle:       devagar, letras quase apagadas
+// Estados (mudam a velocidade do giro):
+// - idle:       devagar
 // - connecting: giro do design original
-// - thinking:   mais rápido, letras em onda
+// - thinking:   mais rápido
 // - speaking:   reage ao volume da voz do Jarvas
 // - listening:  reage ao volume do microfone, tom mais claro
 //
@@ -48,10 +48,6 @@ const CSS = `
   background:linear-gradient(0deg,var(--blue-noite),var(--navy) 55%,var(--navy-600));
   box-shadow:0 calc(8 * var(--u)) calc(30 * var(--u)) calc(-8 * var(--u)) var(--blue-vivo)}
 .orb-anel{position:absolute;inset:0;border-radius:50%;animation:orb-anel calc(var(--vel) * 2.3s) linear infinite}
-.orb-letras{position:relative;z-index:1;display:flex;font-family:"Inter",sans-serif;font-weight:300;color:#fff;
-  font-size:calc(19 * var(--u));letter-spacing:.02em}
-.orb-letra{display:inline-block;opacity:.4;animation:orb-letra calc(var(--vel) * 2.4s) infinite}
-.orb[data-state="idle"] .orb-letra{animation:none;opacity:.55}
 .orb[data-state="listening"] .orb-disco{background:linear-gradient(0deg,var(--blue-800),var(--navy) 60%,var(--navy-600))}
 @keyframes orb-anel{
   0%{transform:rotate(90deg);box-shadow:${sombra("--sky", "--blue-vivo", "--blue-800")},${brilho(3, 1.2)}}
@@ -59,11 +55,6 @@ const CSS = `
   50%{transform:rotate(270deg);box-shadow:${sombra("--blue-400", "--sky-700", "--blue-vivo")},${brilho(3, 1.2)}}
   75%{transform:rotate(360deg);box-shadow:${sombra("--blue-500", "--sky-600", "--brand")},${brilho(6, 2.4)}}
   100%{transform:rotate(450deg);box-shadow:${sombra("--sky", "--blue-vivo", "--blue-800")},${brilho(3, 1.2)}}
-}
-@keyframes orb-letra{
-  0%,100%{opacity:.4;transform:translateY(0)}
-  20%{opacity:1;text-shadow:var(--sky-50) 0 0 calc(5 * var(--u))}
-  40%{opacity:.7;transform:translateY(0)}
 }
 @media (prefers-reduced-motion: reduce){.orb *{animation:none!important}}
 `;
@@ -77,8 +68,6 @@ function inserirCss() {
   document.head.appendChild(el);
   cssInserido = true;
 }
-
-const NOME = "Jarvas".split("");
 
 export default function ThinkingOrb({ state = "idle", size = 64, nivel = null, label, decorativo = false }) {
   inserirCss();
@@ -114,11 +103,6 @@ export default function ThinkingOrb({ state = "idle", size = 64, nivel = null, l
         <span className="orb-disco" />
         <span className="orb-anel" />
       </span>
-      {size >= 72 && (
-        <span className="orb-letras" aria-hidden="true">
-          {NOME.map((l, i) => <span key={i} className="orb-letra" style={{ animationDelay: `${i * 0.1}s` }}>{l}</span>)}
-        </span>
-      )}
     </span>
   );
 }

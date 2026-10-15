@@ -142,6 +142,19 @@ function lerCampo(campo, trecho) {
       const t = limparResposta(bruto);
       return t.length >= 3 ? capitalizar(t) : undefined;
     }
+    case "titulo": {
+      const t = limparResposta(bruto).replace(/^(d[ae]\s+campanha\s*)/i, "").replace(/^(para|pra|de|é|e|:)\s+/i, "").replace(/^["“]|["”]$/g, "");
+      return t.length >= 3 && t.length <= 90 ? capitalizar(t) : undefined;
+    }
+    case "valorPrincipal": case "valorVenda": case "orcamento": {
+      const v = numeroDe(bruto);
+      return v != null && v >= 0 ? v : undefined;
+    }
+    case "prazoHoras": {
+      const v = numeroDe(bruto);
+      if (v == null || v <= 0) return undefined;
+      return Math.round(/\bdias?\b/.test(n) ? v * 24 : v);
+    }
     default: return undefined;
   }
 }
@@ -154,7 +167,12 @@ const ROTULOS = [
   ["conversao", /\b(conversao|taxa de conversao|fecham)\b/],
   ["retorno", /\b(retorno|roi)\b/],
   ["meta", /\b(meta|reunioes por mes|vendas por mes)\b/],
-  ["fixoMensal", /\b(investimento|investir|fixo|orcamento|pagar)\b/],
+  ["titulo", /\b(nome da campanha|titulo|chamar a campanha|campanha se chama|o nome)\b/],
+  ["valorPrincipal", /\b(valor|preco|pagamento|pagar) (da|de|por|pela|cada) (reuniao|reunioes|visita|visitas|agendamento)\b/],
+  ["valorVenda", /\b(comiss\w*|(valor|preco|pagamento|pagar) (da|de|por|pela|cada) venda)\b/],
+  ["prazoHoras", /\bprazo\b/],
+  ["fixoMensal", /\b(fixo|por profissional)\b/],
+  ["orcamento", /\b(orcamento|investimento|custo|verba)\b/],
   ["visitasPorDia", /\b(visitas? por dia)\b/],
   ["vagas", /\b(profission\w*|vendedor\w*|pessoas|vagas|sdrs?|closers?)\b/],
   ["regiao", /\b(regiao|cidade|local)\b/],
@@ -174,7 +192,11 @@ function porRotulo(texto) {
     const depois = original.slice(m.index + m[0].length)
       .replace(/^\s*(m[eé]dio|m[eé]dia|mensal|desejado|ideal)?\s*(para|pra|por|é|e|eh|de|em|=|:)?\s*/i, "");
     const v = lerCampo(campo, depois.split(/[,;]|\s+e\s+(?=\D)/)[0]);
-    if (v !== undefined) r[campo] = v;
+    if (v === undefined) continue;
+    // Valor de uma tarefa vai para `valores` (sobrepõe o calculado).
+    if (campo === "valorPrincipal") r.valores = { ...r.valores, [/visita/.test(m[0]) ? "visita" : "agendamento"]: v };
+    else if (campo === "valorVenda") r.valores = { ...r.valores, venda: v };
+    else r[campo] = v;
   }
   return r;
 }
@@ -198,7 +220,9 @@ export function interpretar(texto, esperado = null) {
   }
   const regiao = extrairRegiao(bruto);
   if (regiao) r.regiao = regiao;
-  if (!campoDeTexto) {
+  // Em pedido de mudança, "para …" é o valor novo, não o público: o público
+  // só muda quando a pessoa diz "público".
+  if (!campoDeTexto && !mudando) {
     const publico = extrairPublico(bruto);
     if (publico) r.publico = publico;
   }
@@ -215,11 +239,19 @@ export function interpretar(texto, esperado = null) {
   if (m) r.retorno = numeroDe(m[1]);
   m = n.match(new RegExp(`(${NUMERO})\\s+(?:reunioes|reunioes agendadas|vendas|leads|agendamentos)\\s*(?:por|ao|\\/)\\s*mes`));
   if (m) r.meta = Math.round(numeroDe(m[1]));
+  // "R$ 200 por reunião", "500 reais por venda": valor de uma tarefa.
+  for (const [, num, acao] of n.matchAll(new RegExp(`(${NUMERO})\\s*(?:reais\\s*)?(?:por|cada|a)\\s+(reuniao|visita|venda)\\b`, "g"))) {
+    const v = numeroDe(num);
+    if (v != null) r.valores = { ...r.valores, [acao === "reuniao" ? "agendamento" : acao]: v };
+  }
 
   // Campo dito pelo nome. Numa resposta de texto livre (região, público),
   // só quando a pessoa pede a mudança: "indústrias com 10 profissionais" é
   // público, não quantidade.
   if (!campoDeTexto || mudando) Object.assign(r, porRotulo(bruto));
+
+  // "200 por reunião" fala do valor, não troca o objetivo da campanha.
+  if (r.valores && r.objetivo && !/\bobjetivo\b/.test(n)) delete r.objetivo;
 
   // Resposta curta para a pergunta em aberto, se a frase não falou de outra coisa.
   if (esperado && r[esperado] == null && !Object.keys(r).length) {
@@ -253,13 +285,20 @@ export const interpretarAjuste = (texto) => interpretar(texto, null);
 // O microfone ouve o próprio Jarvas falando. Se o que foi ouvido é quase
 // tudo palavra da fala dele, é eco, não a pessoa.
 export function pareceEco(ouvido, falado, limiar = 0.6) {
-  // Números sem separador ("15.000" e "15000" são a mesma palavra) e a fala
-  // comparada também na forma falada ("R$ 15.000" → "15.000 reais").
-  const palavras = (t) => (sem(t).replace(/(\d)[.,](?=\d)/g, "$1").match(/[a-z0-9]{3,}/g) || []);
-  const ditas = palavras(ouvido);
-  if (ditas.length < 2) return false;
-  const dele = new Set([...palavras(falado), ...palavras(paraFala(falado))]);
-  return ditas.filter((p) => dele.has(p)).length / ditas.length >= limiar;
+  // Eco repete a fala do Jarvas NA ORDEM; uma resposta pode repetir palavras
+  // da pergunta ("quero 3 profissionais" depois de "Quantos profissionais?")
+  // sem ser eco. Por isso a comparação é por pares de palavras seguidas.
+  // Números sem separador ("15.000" = "15000") e a fala também na forma
+  // falada ("R$ 15.000" → "15.000 reais").
+  const tokens = (t) => sem(t).replace(/(\d)[.,](?=\d)/g, "$1").match(/[a-z]{2,}|\d+/g) || [];
+  const ditas = tokens(ouvido);
+  if (!ditas.length) return false;
+  const fontes = [tokens(falado), tokens(paraFala(falado))];
+  if (ditas.length === 1) return fontes.some((f) => f.includes(ditas[0]));
+  const pares = (f) => f.slice(1).map((w, k) => `${f[k]} ${w}`);
+  const dele = new Set(fontes.flatMap(pares));
+  const meus = pares(ditas);
+  return meus.filter((x) => dele.has(x)).length / meus.length >= limiar;
 }
 
 // A frase parou numa palavra de ligação ("e…", "para…", "tipo…"): a pessoa
@@ -357,7 +396,32 @@ export function pedirDeNovo(campo, r = {}, emp = {}) {
 // valor da tarefa e a parte da comissão de venda. A comissão parte da
 // proporção do objetivo (8% do ticket) e nunca passa de 60% desse teto.
 // Fechamento (closer): a comissão por venda é ticket ÷ retorno.
+// Junta a resposta nova às anteriores (os valores por tarefa se somam).
+export function aplicar(anteriores, patch) {
+  const novas = { ...anteriores, ...patch };
+  if (patch.valores) novas.valores = { ...anteriores.valores, ...patch.valores };
+  return novas;
+}
+
+// Com o que a pessoa mudou no resumo por cima: valor de tarefa e orçamento.
 export function calcularTarefasJarvas(r) {
+  const base = calcularBase(r);
+  const valores = r.valores || {};
+  if (!Object.keys(valores).length && !(Number(r.orcamento) > 0)) return base;
+  const acoes = OBJETIVOS[r.objetivo]?.acoes || [];
+  const tarefas = { ...base.tarefas };
+  for (const [acao, v] of Object.entries(valores)) if (acoes.includes(acao)) tarefas[acao] = v;
+  let roi = base.roi;
+  if (roi) {
+    const p = roi.principal;
+    const investimento = Math.round(p === "venda" ? roi.unidades * tarefas.venda : roi.unidades * tarefas[p] + roi.vendas * (tarefas.venda || 0));
+    roi = { ...roi, investimento, multiplo: investimento ? roi.receita / investimento : null };
+  }
+  const orcamento = Number(r.orcamento) > 0 ? Number(r.orcamento) : roi ? roi.investimento : base.orcamento;
+  return { tarefas, orcamento, roi };
+}
+
+function calcularBase(r) {
   const obj = OBJETIVOS[r.objetivo] || OBJETIVOS.reunioes;
   const p = obj.principal;
   const ticket = Number(r.ticketMedio) || 0;
@@ -436,15 +500,22 @@ export function reagir(patch, r, emp = {}, anteriores = {}) {
   // Mudança de algo já respondido: "Feito." (frase fixa) e, se a conta mudou,
   // só os números novos.
   const campos = ["objetivo", "regiao", "publico", "vagas", "ticketMedio", "conversao", "retorno", "fixoMensal"];
-  const mudou = Object.keys(patch).some((k) => campos.includes(k) && anteriores[k] != null && anteriores[k] !== patch[k]);
+  const sempreMudanca = ["titulo", "valores", "orcamento", "prazoHoras"]; // só são ditos no resumo
+  const mudou = Object.keys(patch).some((k) => sempreMudanca.includes(k) || (campos.includes(k) && anteriores[k] != null && anteriores[k] !== patch[k]));
   if (mudou) {
     const antes = calcularTarefasJarvas(anteriores).roi;
-    const contaMudou = roi && roi.unidades > 0 && antes?.investimento !== roi.investimento;
+    const contaMudou = roi && roi.unidades > 0 && antes?.investimento !== roi.investimento && patch.orcamento == null;
     return ["Feito.", ...(contaMudou && patch.meta == null && patch.visitasPorDia == null
       ? [`${dinheiro(plano.tarefas[p])} por ${ACAO_CURTA[p]}.`, `${dinheiro(roi.receita)} por mês.`, custo()]
       : frases.filter((f) => !/^Feito/.test(f)))].join(" ");
   }
   return frases.join(" ");
+}
+
+// Nome da campanha: o que a pessoa disse, ou montado a partir das respostas.
+export function tituloPadrao(r) {
+  const { orcamento } = calcularTarefasJarvas(r);
+  return r.titulo || [rotuloObjetivo(r.objetivo), r.regiao, `${Number(r.vagas) || 1} prof.`, orcamento > 0 ? dinheiro(orcamento) : ""].filter(Boolean).join(" — ");
 }
 
 // Resumo final, em linhas [rótulo, valor].
@@ -453,6 +524,7 @@ export function resumo(r) {
   const { tarefas, orcamento, roi } = calcularTarefasJarvas(r);
   const p = principalDe(r);
   const linhas = [
+    ["Nome", tituloPadrao(r)],
     ["Objetivo", rotuloObjetivo(r.objetivo)],
     ["Região", r.regiao],
     ["Cliente ideal", r.publico],
@@ -469,6 +541,7 @@ export function resumo(r) {
     linhas.push(["Faturamento previsto", `${dinheiro(roi.receita)} por mês`]);
   }
   linhas.push(["Investimento mensal", orcamento ? dinheiro(orcamento) : "Em aberto"]);
+  if (r.prazoHoras) linhas.push(["Prazo por tarefa", r.prazoHoras % 24 ? `${r.prazoHoras} horas` : `${r.prazoHoras / 24} dias`]);
   if (roi?.multiplo) linhas.push(["Retorno estimado", `${decimal(roi.multiplo)} vezes`]);
   return linhas;
 }
@@ -536,4 +609,12 @@ export function frasesFixas() {
   [saudacao(), FECHAMENTO, "Feito.", "Montando sua campanha.", "Não entendi. O que mudo?", "Pode falar.",
     "Sem a taxa, vamos pelo orçamento.", "Usei 3 vezes; dá para mudar."].forEach(somar);
   return [...frases];
+}
+
+// A frase já responde a pergunta em aberto ("3", "sim", "Sorocaba")? Então
+// o Jarvas não precisa esperar a pausa longa para responder.
+export function respostaCompleta(texto, campo, r = {}, emp = {}) {
+  if (!campo || fraseIncompleta(texto)) return false;
+  if (campo === "ajuste") return confirmaMontagem(texto) || Object.keys(interpretarResposta(texto, campo, r, emp)).length > 0;
+  return interpretarResposta(texto, campo, r, emp)[campo] != null;
 }

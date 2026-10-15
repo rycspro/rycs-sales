@@ -2,11 +2,11 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Check, Keyboard, Mic, Pause, RotateCcw, Send, Volume2, VolumeX } from "lucide-react";
 import ThinkingOrb from "../ThinkingOrb.jsx";
 import { API_URL } from "../../lib/api.js";
-import { money } from "../../lib/utils.js";
 import { montarCampanha } from "../../../shared/objetivosCampanha.js";
 import {
   interpretarResposta, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo,
-  calcularTarefasJarvas, rotuloObjetivo, FECHAMENTO, confirmaMontagem, paraFala, pareceEco, segmentosDeFala, fraseIncompleta,
+  calcularTarefasJarvas, FECHAMENTO, confirmaMontagem, paraFala, pareceEco, segmentosDeFala, fraseIncompleta,
+  aplicar, tituloPadrao, respostaCompleta,
 } from "../../../shared/jarvas.js";
 
 // Conversa assistida por voz com o Jarvas, sem botão de falar.
@@ -34,6 +34,7 @@ const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.we
 const PAUSA_FIM_FALA = 1800;       // silêncio que encerra a vez da pessoa
 const PAUSA_FIM_PARCIAL = 2600;    // idem, quando a última parte ainda não é final
 const PAUSA_EXTRA_INCOMPLETA = 1500; // frase parada em "e…", "para…": espera mais
+const PAUSA_RESPOSTA_COMPLETA = 700;  // "3", "sim", "Sorocaba": já dá para responder
 const PALAVRAS_PARA_INTERROMPER = 5;
 const CONFIRMA_INTERRUPCAO = 900;  // a pessoa precisa seguir falando por esse tempo
 const ECO_FALANDO = 0.3;           // enquanto o Jarvas fala, 30% das palavras dele já é eco
@@ -286,9 +287,9 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       const recente = Date.now() - fimDaFala.current < CARENCIA_POS_FALA;
       const palavras = (dito.match(/\S+/g) || []).length;
 
-      // O microfone ouviu o próprio Jarvas: descarta. Enquanto ele fala (e
-      // logo depois), o filtro é mais rigoroso.
-      if (pareceEco(dito, falaAtual.current, f === "falando" || recente ? ECO_FALANDO : 0.6)) {
+      // O microfone ouviu o próprio Jarvas (enquanto ele fala ou logo depois):
+      // descarta. Fora desses momentos, tudo o que chega é a pessoa.
+      if ((f === "falando" || recente) && pareceEco(dito, falaAtual.current, ECO_FALANDO)) {
         clearTimeout(v.timer);
         vez.current = { final: "", parcial: "", timer: null };
         return;
@@ -314,7 +315,12 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       if (f !== "pensando") mudarFase("ouvindo");
       setOuvido(dito);
       clearTimeout(v.timer);
-      v.timer = setTimeout(encerrarVez, (v.parcial ? PAUSA_FIM_PARCIAL : PAUSA_FIM_FALA) + (fraseIncompleta(dito) ? PAUSA_EXTRA_INCOMPLETA : 0));
+      // Resposta completa ("3", "sim", "Sorocaba"): o Jarvas responde logo.
+      // Frase longa ou parada no meio: espera a pessoa terminar.
+      const espera = !v.parcial && respostaCompleta(dito, campo.current, respostas.current, emp)
+        ? PAUSA_RESPOSTA_COMPLETA
+        : (v.parcial ? PAUSA_FIM_PARCIAL : PAUSA_FIM_FALA) + (fraseIncompleta(dito) ? PAUSA_EXTRA_INCOMPLETA : 0);
+      v.timer = setTimeout(encerrarVez, espera);
     };
     r.onerror = (e) => {
       if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error))
@@ -365,7 +371,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       ocupado.current = false;
       return montar();
     }
-    const novas = { ...anteriores, ...patch };
+    const novas = aplicar(anteriores, patch);
     respostas.current = novas;
     let fala, proximo = atual, novosChips = [];
     if (!Object.keys(patch).length) {
@@ -404,7 +410,10 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     Object.assign(campanha, { objetivoChave: objetivo, regiao: r.regiao || "", vagas: Number(r.vagas) || 1, tarefas });
     if (r.publico) campanha.publico = r.publico;
     if (orcamento > 0) campanha.orcamento = orcamento;
-    campanha.titulo = [rotuloObjetivo(objetivo), r.regiao, `${campanha.vagas} prof.`, orcamento > 0 ? money(orcamento) : ""].filter(Boolean).join(" — ");
+    if (r.prazoHoras) campanha.prazoHoras = r.prazoHoras;
+    // Tudo o que foi mudado no resumo (nome, valores, orçamento, prazo) vai
+    // para a campanha montada.
+    campanha.titulo = tituloPadrao(r);
     await falar("Montando sua campanha.");
     if (g !== geracao.current) return;
     mudarFase("montando");

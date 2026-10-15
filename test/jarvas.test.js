@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas, fraseIncompleta } from "../shared/jarvas.js";
+import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas, fraseIncompleta, aplicar, tituloPadrao, respostaCompleta } from "../shared/jarvas.js";
 
 // Jarvas (shared/jarvas.js): entende português do dia a dia, pula o que já
 // sabe e reage com conta de verdade, sem provedor externo.
@@ -119,6 +119,8 @@ test("entende o contexto: confirmações, mudanças a qualquer momento e eco da 
 
   assert.ok(pareceEco("quantos profissionais", "Quantos profissionais?"));
   assert.ok(!pareceEco("três profissionais", "Quantos profissionais?"));
+  // Resposta que repete palavra da pergunta não é eco.
+  assert.ok(!pareceEco("quero 3 profissionais", "Quantos profissionais?", 0.3));
   assert.ok(confirmaMontagem("pode"));
 });
 
@@ -149,4 +151,34 @@ test("conversa sem cortes: eco com números e frase incompleta", () => {
   assert.ok(fraseIncompleta("quero agendar reuniões com"));
   assert.ok(fraseIncompleta("é, tipo"));
   assert.ok(!fraseIncompleta("quero agendar reuniões"));
+});
+
+test("no resumo muda qualquer coisa: nome, valores, orçamento, prazo", () => {
+  const r0 = { objetivo: "reunioes", regiao: "Sorocaba", publico: "x", vagas: 2, ticketMedio: 5000, conversao: 0.3, retorno: 5, meta: 40 };
+  const pedir = (t, r = r0) => interpretarResposta(t, "ajuste", r, {});
+  assert.deepEqual(pedir("muda o nome da campanha para Expansão Sorocaba"), { titulo: "Expansão Sorocaba" });
+  assert.deepEqual(pedir("coloca 200 reais por reunião"), { valores: { agendamento: 200 } });
+  assert.deepEqual(pedir("comissão de 600"), { valores: { venda: 600 } });
+  assert.deepEqual(pedir("o orçamento é 15 mil"), { orcamento: 15000 });
+  assert.deepEqual(pedir("prazo de 3 dias"), { prazoHoras: 72 });
+  assert.deepEqual(pedir("muda o objetivo para fechar vendas"), { objetivo: "vendas" });
+
+  let r = aplicar(r0, { valores: { agendamento: 200 } });
+  r = aplicar(r, { valores: { venda: 600 } });
+  const { tarefas, roi } = calcularTarefasJarvas(r);
+  assert.deepEqual(tarefas, { agendamento: 200, venda: 600 });
+  assert.equal(roi.investimento, 40 * 200 + 12 * 600);
+  assert.match(reagir({ valores: { agendamento: 200 } }, aplicar(r0, { valores: { agendamento: 200 } }), {}, r0), /^Feito\. R\$\s?200 por reunião\./);
+  assert.equal(tituloPadrao(aplicar(r, { titulo: "Expansão Sorocaba" })), "Expansão Sorocaba");
+  const linhas = Object.fromEntries(resumo(aplicar(r, { titulo: "Expansão Sorocaba", prazoHoras: 72 })));
+  assert.equal(linhas.Nome, "Expansão Sorocaba");
+  assert.equal(linhas["Prazo por tarefa"], "3 dias");
+});
+
+test("responde logo quando a resposta já está completa", () => {
+  assert.ok(respostaCompleta("3", "vagas"));
+  assert.ok(respostaCompleta("Sorocaba", "regiao"));
+  assert.ok(respostaCompleta("pode montar", "ajuste"));
+  assert.ok(!respostaCompleta("quero agendar reuniões com", "objetivo"));
+  assert.ok(!respostaCompleta("hum", "vagas"));
 });
