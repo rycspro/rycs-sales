@@ -372,7 +372,8 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     } else {
       const reacao = reagir(patch, novas, emp, anteriores);
       const prox = proximoCampo(novas);
-      if (!prox) { proximo = "ajuste"; fala = `${reacao} ${FECHAMENTO}`; }
+      // Depois de uma mudança no resumo, só a pergunta final (sem repetir o "Pronto.").
+      if (!prox) { proximo = "ajuste"; fala = `${reacao} ${atual === "ajuste" ? "Posso montar?" : FECHAMENTO}`; }
       else { proximo = prox; const q = perguntar(prox, novas, emp); fala = `${reacao} ${q.texto}`; novosChips = q.chips; }
     }
     fala = fala.trim();

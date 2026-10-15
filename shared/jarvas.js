@@ -28,6 +28,7 @@ export const rotuloObjetivo = (k) => OBJETIVO_OPCOES.find((o) => o.valor === k)?
 
 const DIAS_UTEIS = 22;
 const ACAO = { agendamento: "reunião agendada", visita: "visita", venda: "venda fechada" };
+const ACAO_CURTA = { agendamento: "reunião", visita: "visita", venda: "venda" };
 
 const sem = (t) => String(t || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "");
 export const dinheiro = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: Number(v) % 1 ? 2 : 0 });
@@ -312,7 +313,7 @@ export function perguntar(campo, r, emp = {}) {
     case "ticketMedio": {
       const t = ticketDoCadastro(emp);
       return t
-        ? { texto: `Ticket médio de ${dinheiro(t)}. Confirma?`,
+        ? { texto: `Ticket: ${dinheiro(t)}. Confirma?`,
             chips: [{ rotulo: `Sim, usar ${dinheiro(t)}`, patch: { ticketMedio: t } }, { rotulo: "É outro valor", seguir: "Qual o ticket médio?" }] }
         : { texto: "Qual o seu ticket médio?", chips: [{ rotulo: "Ainda não sei", patch: { ticketMedio: 0 } }] };
     }
@@ -402,36 +403,39 @@ export function calcularTarefasJarvas(r) {
 // importa: o retorno antes do custo, e o resultado do mês. `anteriores` são
 // as respostas antes desta frase: o que mudou é confirmado em poucas palavras.
 export function reagir(patch, r, emp = {}, anteriores = {}) {
+  // Frases com número são as únicas que gastam crédito de voz: o mínimo de
+  // palavras, cada número uma vez. O detalhe completo fica no resumo da tela.
   const frases = [];
   const p = principalDe(r);
   const plano = calcularTarefasJarvas(r);
   const roi = plano.roi;
+  const custo = () => `Custo: ${dinheiro(roi.investimento)}.`;
   if (patch.conversao != null) {
     frases.push(r.conversao > 0
-      ? `Então 10 ${UNIDADE[p]} viram ${dinheiro(r.ticketMedio * r.conversao * 10)} em vendas.`
+      ? `10 ${UNIDADE[p]}: ${dinheiro(r.ticketMedio * r.conversao * 10)}.`
       : "Sem a taxa, vamos pelo orçamento.");
   }
   if (patch.retorno != null && roi) {
-    frases.push(p === "venda"
-      ? `Comissão de até ${dinheiro(plano.tarefas.venda)} por venda.`
-      : `Então ${dinheiro(plano.tarefas[p])} por ${ACAO[p]} e ${dinheiro(plano.tarefas.venda || 0)} por venda.`);
+    if (p === "venda") frases.push(`${dinheiro(plano.tarefas.venda)} por venda.`);
+    else frases.push(`${dinheiro(plano.tarefas[p])} por ${ACAO_CURTA[p]}.`, `${dinheiro(plano.tarefas.venda || 0)} por venda.`);
     if (r.retornoSugerido) frases.push("Usei 3 vezes; dá para mudar.");
   }
   if ((patch.meta != null || patch.visitasPorDia != null) && roi && roi.unidades > 0) {
-    const vendas = p === "venda" ? "" : `${decimal(roi.vendas)} vendas, `;
-    frases.push(`${roi.unidades} ${UNIDADE[p]}: ${vendas}${dinheiro(roi.receita)} em vendas. Investimento de ${dinheiro(roi.investimento)}, retorno de ${decimal(roi.multiplo)} vezes.`);
+    if (p !== "venda") frases.push(`${decimal(roi.vendas)} vendas.`);
+    frases.push(`${dinheiro(roi.receita)} por mês.`, custo());
   }
   if (patch.fixoMensal != null && r.fixoMensal > 0)
-    frases.push(`Então ${dinheiro(plano.tarefas[p])} por ${ACAO[p] || "ação"}, ${dinheiro(plano.orcamento)} por mês.`);
-  // Mudança de algo já respondido: confirma em poucas palavras.
-  const confirmar = { objetivo: () => rotuloObjetivo(r.objetivo), regiao: () => r.regiao, vagas: () => `${r.vagas} profissionais`, ticketMedio: () => (r.ticketMedio ? `ticket de ${dinheiro(r.ticketMedio)}` : null) };
-  const mudancas = Object.keys(patch).filter((k) => confirmar[k] && anteriores[k] != null && anteriores[k] !== patch[k]);
-  if (mudancas.length) {
-    frases.unshift(`Feito: ${mudancas.map((k) => confirmar[k]()).filter(Boolean).join(", ")}.`);
-    // Mudou algo que mexe na conta: refaz o resultado do mês.
+    frases.push(`${dinheiro(plano.tarefas[p])} por ${ACAO_CURTA[p] || "ação"}.`, `${dinheiro(plano.orcamento)} por mês.`);
+  // Mudança de algo já respondido: "Feito." (frase fixa) e, se a conta mudou,
+  // só os números novos.
+  const campos = ["objetivo", "regiao", "publico", "vagas", "ticketMedio", "conversao", "retorno", "fixoMensal"];
+  const mudou = Object.keys(patch).some((k) => campos.includes(k) && anteriores[k] != null && anteriores[k] !== patch[k]);
+  if (mudou) {
     const antes = calcularTarefasJarvas(anteriores).roi;
-    if (roi && roi.unidades > 0 && patch.meta == null && patch.visitasPorDia == null && antes?.investimento !== roi.investimento)
-      frases.push(`Agora: ${dinheiro(plano.tarefas[p])} por ${ACAO[p]}, ${dinheiro(roi.receita)} em vendas e investimento de ${dinheiro(roi.investimento)} por mês.`);
+    const contaMudou = roi && roi.unidades > 0 && antes?.investimento !== roi.investimento;
+    return ["Feito.", ...(contaMudou && patch.meta == null && patch.visitasPorDia == null
+      ? [`${dinheiro(plano.tarefas[p])} por ${ACAO_CURTA[p]}.`, `${dinheiro(roi.receita)} por mês.`, custo()]
+      : frases.filter((f) => !/^Feito/.test(f)))].join(" ");
   }
   return frases.join(" ");
 }
@@ -522,7 +526,7 @@ export function frasesFixas() {
       }
     }
   }
-  [saudacao(), FECHAMENTO, "Montando sua campanha.", "Não entendi. O que mudo?", "Pode falar.",
+  [saudacao(), FECHAMENTO, "Feito.", "Montando sua campanha.", "Não entendi. O que mudo?", "Pode falar.",
     "Sem a taxa, vamos pelo orçamento.", "Usei 3 vezes; dá para mudar."].forEach(somar);
   return [...frases];
 }
