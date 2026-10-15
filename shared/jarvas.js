@@ -104,87 +104,159 @@ const PESSOAS = "(?:profission\\w*|vendedor\\w*|pessoas?|sdrs?|bdrs?|closers?|pr
 const capitalizar = (t) => (t ? t[0].toLocaleUpperCase("pt-BR") + t.slice(1) : t);
 const limparResposta = (t) => String(t || "").trim().replace(/^(e |é |eh |acho que |seria |sera |vai ser |fica )/i, "").replace(/[.!]+$/, "").trim();
 
+// Valor de um campo a partir de um trecho curto ("Sorocaba", "3", "5 mil").
+// undefined = não entendeu.
+function lerCampo(campo, trecho) {
+  const bruto = String(trecho || "").trim();
+  const n = sem(bruto);
+  if (!bruto) return undefined;
+  const naoSabe = NAO_SEI.test(n);
+  switch (campo) {
+    case "objetivo": {
+      const op = OBJETIVO_OPCOES.find((o) => sem(o.label) === n.replace(/[.!]+$/, ""));
+      return op?.valor || detectarObjetivo(bruto) || undefined;
+    }
+    case "vagas": case "visitasPorDia": case "meta": {
+      const v = numeroDe(bruto);
+      return v != null && v > 0 ? Math.round(v) : undefined;
+    }
+    case "ticketMedio": case "fixoMensal": {
+      const v = numeroDe(bruto);
+      return v != null ? v : naoSabe ? 0 : undefined;
+    }
+    case "conversao": {
+      if (naoSabe) return 0;
+      const v = taxaDe(bruto);
+      return v != null ? Math.round(v * 1000) / 1000 : undefined;
+    }
+    case "retorno":
+      return naoSabe ? undefined : multiploDe(bruto) || undefined;
+    case "regiao": {
+      if (naoSabe) return undefined;
+      const t = limparResposta(bruto).replace(/^(em|no|na|nos|nas|para|pra)\s+/i, "");
+      return /[a-zà-ú]{2}/i.test(t) && t.length <= 80 ? capitalizar(t) : undefined;
+    }
+    case "publico": {
+      if (naoSabe) return undefined;
+      const t = limparResposta(bruto);
+      return t.length >= 3 ? capitalizar(t) : undefined;
+    }
+    default: return undefined;
+  }
+}
+
+// Campo dito pelo nome, em qualquer momento da conversa: "muda o ticket para
+// 8 mil", "na verdade a região é Campinas", "coloca 4 profissionais". O
+// reconhecimento de voz escreve "ticket" de vários jeitos ("tíquete").
+const ROTULOS = [
+  ["ticketMedio", /\b(ticket|tiquete|tiket|tique|valor medio|venda media|preco medio)\b/],
+  ["conversao", /\b(conversao|taxa de conversao|fecham)\b/],
+  ["retorno", /\b(retorno|roi)\b/],
+  ["meta", /\b(meta|reunioes por mes|vendas por mes)\b/],
+  ["fixoMensal", /\b(investimento|investir|fixo|orcamento|pagar)\b/],
+  ["visitasPorDia", /\b(visitas? por dia)\b/],
+  ["vagas", /\b(profission\w*|vendedor\w*|pessoas|vagas|sdrs?|closers?)\b/],
+  ["regiao", /\b(regiao|cidade|local)\b/],
+  ["publico", /\b(publico|cliente ideal|perfil)\b/],
+  ["objetivo", /\b(objetivo|tipo de campanha)\b/],
+];
+const MUDANCA = /\b(mud\w*|alter\w*|troc\w*|corrig\w*|na verdade|ajust\w*|coloc\w*|poe|bota|em vez|ao inves)\b/;
+
+function porRotulo(texto) {
+  const original = String(texto || "");
+  const n = sem(original);
+  const r = {};
+  for (const [campo, re] of ROTULOS) {
+    const m = n.match(re);
+    if (!m) continue;
+    // O que vem depois do nome do campo, sem o "para", "é", "de"...
+    const depois = original.slice(m.index + m[0].length)
+      .replace(/^\s*(m[eé]dio|m[eé]dia|mensal|desejado|ideal)?\s*(para|pra|por|é|e|eh|de|em|=|:)?\s*/i, "");
+    const v = lerCampo(campo, depois.split(/[,;]|\s+e\s+(?=\D)/)[0]);
+    if (v !== undefined) r[campo] = v;
+  }
+  return r;
+}
+
 // O que a frase responde. `esperado` é a pergunta em aberto: uma resposta
-// curta ("Sorocaba", "3", "5 mil") vale para ela.
+// curta ("Sorocaba", "3", "5 mil") vale para ela. Campo dito pelo nome vale
+// sempre, em qualquer etapa.
 export function interpretar(texto, esperado = null) {
   const bruto = String(texto || "").trim();
   const n = sem(bruto);
   const r = {};
   if (!bruto) return r;
+  const mudando = MUDANCA.test(n);
+  const campoDeTexto = ["regiao", "publico"].includes(esperado);
 
-  // O objetivo só é lido quando é ele que está em aberto (ou numa frase
-  // livre): "5 visitas por dia" responde visitas, não troca a campanha.
-  const opcao = OBJETIVO_OPCOES.find((o) => sem(o.label) === n.replace(/[.!]+$/, ""));
-  const objetivo = opcao?.valor || (!esperado || esperado === "objetivo" ? detectarObjetivo(bruto) : null);
-  if (objetivo) r.objetivo = objetivo;
-
+  // O objetivo só é lido em frase livre, quando é ele que está em aberto ou
+  // quando a pessoa pede para mudar: "5 visitas por dia" não troca a campanha.
+  if (!esperado || esperado === "objetivo" || mudando) {
+    const objetivo = lerCampo("objetivo", bruto);
+    if (objetivo) r.objetivo = objetivo;
+  }
   const regiao = extrairRegiao(bruto);
   if (regiao) r.regiao = regiao;
-  const publico = extrairPublico(bruto);
-  if (publico) r.publico = publico;
+  if (!campoDeTexto) {
+    const publico = extrairPublico(bruto);
+    if (publico) r.publico = publico;
+  }
 
   let m = n.match(new RegExp(`(${NUMERO})\\s+${PESSOAS}`));
-  if (m) r.vagas = Math.round(numeroDe(m[1]));
+  if (m && !campoDeTexto) r.vagas = Math.round(numeroDe(m[1]));
   m = n.match(new RegExp(`(${NUMERO})\\s+visitas?\\s*(?:por|ao|\\/|a cada)\\s*dia`));
   if (m) r.visitasPorDia = Math.round(numeroDe(m[1]));
-  m = n.match(new RegExp(`(?:ticket|cada venda|venda media|vendas? de|vale)\\D{0,25}?(${NUMERO})`));
-  if (m) r.ticketMedio = numeroDe(m[1]);
   m = n.match(new RegExp(`(?:ate|maximo|pagar|investir|orcamento|fixo)\\D{0,25}?(${NUMERO})(?=[^\\d]{0,30}(?:por mes|mensal|\\/mes|ao mes|por profissional|cada profissional))`));
   if (m) r.fixoMensal = numeroDe(m[1]);
   m = n.match(new RegExp(`(${NUMERO})\\s+(?:de cada|a cada|em cada)\\s+(${NUMERO})\\s+(?:reunio|visita|contato|lead)`));
   if (m) r.conversao = taxaDe(`${m[1]} de ${m[2]}`);
-  m = n.match(new RegExp(`retorno de\\s+(${NUMERO})\\s*(?:x|vezes)|(${NUMERO})\\s*(?:x|vezes)\\s+(?:de |o )?retorno`));
-  if (m) r.retorno = numeroDe(m[1] || m[2]);
+  m = n.match(new RegExp(`(${NUMERO})\\s*(?:x|vezes)\\s+(?:de |o )?retorno`));
+  if (m) r.retorno = numeroDe(m[1]);
   m = n.match(new RegExp(`(${NUMERO})\\s+(?:reunioes|reunioes agendadas|vendas|leads|agendamentos)\\s*(?:por|ao|\\/)\\s*mes`));
   if (m) r.meta = Math.round(numeroDe(m[1]));
 
-  if (esperado && r[esperado] == null) {
-    const naoSabe = NAO_SEI.test(n);
-    if (["vagas", "visitasPorDia"].includes(esperado)) {
-      const v = numeroDe(bruto);
-      if (v != null && v > 0) r[esperado] = Math.round(v);
-    } else if (["ticketMedio", "fixoMensal"].includes(esperado)) {
-      const v = numeroDe(bruto);
-      if (v != null) r[esperado] = v;
-      else if (naoSabe) r[esperado] = 0;
-    } else if (esperado === "conversao") {
-      const v = naoSabe ? null : taxaDe(bruto);
-      if (v != null) r.conversao = Math.round(v * 1000) / 1000;
-      else if (naoSabe) r.conversao = 0;
-    } else if (esperado === "retorno") {
-      const v = naoSabe ? null : multiploDe(bruto);
-      if (v) r.retorno = v;
-      else if (naoSabe) { r.retorno = 3; r.retornoSugerido = true; }
-    } else if (esperado === "meta") {
-      const v = numeroDe(bruto);
-      if (v != null && v > 0) r.meta = Math.round(v);
-    } else if (esperado === "regiao" && !naoSabe) {
-      const t = limparResposta(bruto).replace(/^(em|no|na|nos|nas|para|pra)\s+/i, "");
-      if (/[a-zà-ú]{2}/i.test(t) && t.length <= 80) r.regiao = capitalizar(t);
-    } else if (esperado === "publico" && !naoSabe) {
-      const t = limparResposta(bruto);
-      if (t.length >= 3) r.publico = capitalizar(t);
-    }
+  // Campo dito pelo nome. Numa resposta de texto livre (região, público),
+  // só quando a pessoa pede a mudança: "indústrias com 10 profissionais" é
+  // público, não quantidade.
+  if (!campoDeTexto || mudando) Object.assign(r, porRotulo(bruto));
+
+  // Resposta curta para a pergunta em aberto, se a frase não falou de outra coisa.
+  if (esperado && r[esperado] == null && !Object.keys(r).length) {
+    const v = lerCampo(esperado, bruto);
+    if (v !== undefined) r[esperado] = v;
+    else if (esperado === "retorno" && NAO_SEI.test(n)) { r.retorno = 3; r.retornoSugerido = true; }
   }
   return r;
 }
 
-// Ajuste depois do resumo: "muda para 3 profissionais", "região: Campinas".
-export function interpretarAjuste(texto) {
-  const n = sem(texto);
-  const r = interpretar(texto);
-  const campo = [
-    ["regiao", /\b(regiao|cidade|local)\b/], ["publico", /\b(publico|cliente ideal|perfil)\b/],
-    ["vagas", /\b(profission\w*|vendedor\w*|pessoas|vagas)\b/], ["ticketMedio", /\bticket\b/],
-    ["conversao", /\b(convers\w*|de cada)\b/], ["retorno", /\bretorno\b/],
-    ["meta", /\b(meta|reunioes por mes|vendas por mes)\b/],
-    ["visitasPorDia", /\bvisitas?\b/], ["fixoMensal", /\b(fixo|mensal|por mes|orcamento|pagar)\b/],
-  ].find(([, re]) => re.test(n))?.[0];
-  if (campo && r[campo] == null) {
-    const depois = String(texto).split(/:|\bpara\b|\bpra\b|\bé\b|\bseja\b/i).slice(1).join(" ").trim() || String(texto);
-    Object.assign(r, interpretar(depois, campo));
+// Resposta à pergunta em aberto, entendendo também "sim", "mantenho" e o
+// texto dos botões de resposta rápida. Com `campo` "ajuste" (no resumo), vale
+// tudo o que a frase disser.
+const SIM = /^(sim|isso|isso mesmo|pode|pode ser|mant\w*|confirm\w*|ok|certo|correto|exato|claro|beleza|esse mesmo|isso ai)\b/;
+export function interpretarResposta(texto, campo, r = {}, emp = {}) {
+  const n = sem(texto).trim().replace(/[.!?]+$/, "");
+  const chips = campo && campo !== "ajuste" ? perguntar(campo, r, emp).chips : [];
+  const chip = chips.find((c) => c.patch && sem(c.rotulo) === n);
+  if (chip) return { ...chip.patch };
+  const p = interpretar(texto, campo === "ajuste" ? null : campo);
+  if (["publico", "ticketMedio"].includes(campo) && SIM.test(n) && chips[0]?.patch) {
+    const v = p[campo];
+    if (v == null || (campo === "publico" && sem(v) === n)) Object.assign(p, chips[0].patch);
   }
-  return r;
+  return p;
+}
+
+// Ajuste depois do resumo: tudo o que a frase disser, por nome ou não.
+export const interpretarAjuste = (texto) => interpretar(texto, null);
+
+// O microfone ouve o próprio Jarvas falando. Se o que foi ouvido é quase
+// tudo palavra da fala dele, é eco, não a pessoa.
+export function pareceEco(ouvido, falado) {
+  const palavras = (t) => (sem(t).match(/[a-z0-9]{3,}/g) || []);
+  const ditas = palavras(ouvido);
+  if (ditas.length < 2) return false;
+  const dele = new Set(palavras(falado));
+  return ditas.filter((p) => dele.has(p)).length / ditas.length >= 0.6;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,57 +297,46 @@ export function perguntar(campo, r, emp = {}) {
   const p = principalDe(r);
   switch (campo) {
     case "objetivo":
-      return { texto: "Me conta: o que você precisa que aconteça? Pode falar do seu jeito, tipo \"agendar reuniões com indústrias em Sorocaba\".",
+      return { texto: "Qual o objetivo da campanha?",
         chips: OBJETIVO_OPCOES.map((o) => ({ rotulo: o.label, patch: { objetivo: o.valor } })) };
     case "regiao":
-      return { texto: "Em qual cidade ou região essa campanha vai acontecer?", chips: [{ rotulo: "Todo o Brasil", patch: { regiao: "Todo o Brasil" } }] };
+      return { texto: "Em qual cidade ou região?", chips: [{ rotulo: "Todo o Brasil", patch: { regiao: "Todo o Brasil" } }] };
     case "publico":
       return emp.icp
-        ? { texto: `No seu cadastro, o cliente ideal é "${emp.icp}". Sigo com esse perfil ou quer focar em outro público nesta campanha?`,
-            chips: [{ rotulo: "Manter esse perfil", patch: { publico: emp.icp } }, { rotulo: "Outro público", seguir: "Me descreve o perfil de quem você quer atingir: segmento, porte ou cargo de quem decide." }] }
-        : { texto: "Quem é o cliente ideal dessa campanha? Me descreve o perfil de quem você quer atingir.", chips: [] };
+        ? { texto: `Público: ${emp.icp}. Mantenho?`,
+            chips: [{ rotulo: "Manter esse perfil", patch: { publico: emp.icp } }, { rotulo: "Outro público", seguir: "Qual público, então?" }] }
+        : { texto: "Quem é o cliente ideal?", chips: [] };
     case "vagas":
-      return { texto: `Quantos profissionais${obj ? ` de ${obj.funcao.toUpperCase()}` : ""} você quer nessa campanha?`,
+      return { texto: "Quantos profissionais?",
         chips: [1, 2, 3, 5].map((v) => ({ rotulo: String(v), patch: { vagas: v } })) };
     case "ticketMedio": {
       const t = ticketDoCadastro(emp);
       return t
-        ? { texto: `Vi no cadastro que o ticket médio é ${dinheiro(t)}. Uso esse valor para calcular o seu retorno?`,
-            chips: [{ rotulo: `Sim, usar ${dinheiro(t)}`, patch: { ticketMedio: t } }, { rotulo: "É outro valor", seguir: "Qual é o ticket médio, então? Pode falar do seu jeito, tipo \"5 mil\"." }] }
-        : { texto: "Quanto vale, em média, uma venda fechada para você?", chips: [{ rotulo: "Ainda não sei", patch: { ticketMedio: 0 } }] };
+        ? { texto: `Ticket médio de ${dinheiro(t)}. Confirma?`,
+            chips: [{ rotulo: `Sim, usar ${dinheiro(t)}`, patch: { ticketMedio: t } }, { rotulo: "É outro valor", seguir: "Qual o ticket médio?" }] }
+        : { texto: "Qual o seu ticket médio?", chips: [{ rotulo: "Ainda não sei", patch: { ticketMedio: 0 } }] };
     }
     case "conversao":
-      return { texto: `Agora uma pergunta importante para eu calcular o seu retorno: de cada 10 ${UNIDADE[p]}, quantas costumam virar venda?`,
+      return { texto: `De 10 ${UNIDADE[p]}, quantas fecham?`,
         chips: [...[1, 2, 3, 5].map((v) => ({ rotulo: `${v} de 10`, patch: { conversao: v / 10 } })), { rotulo: "Não sei", patch: { conversao: 0 } }] };
     case "retorno":
-      return { texto: "E quanto de retorno você quer? Por exemplo: para cada real investido, voltar 5 reais em vendas.",
+      return { texto: "Quer quantas vezes de retorno?",
         chips: [3, 5, 10].map((v) => ({ rotulo: `${v} vezes`, patch: { retorno: v } })) };
     case "meta":
-      return { texto: `Quantas ${UNIDADE_MES[p]} você quer por mês, somando todos os profissionais?`,
+      return { texto: `Quantas ${UNIDADE_MES[p]} por mês?`,
         chips: [10, 20, 40, 80].map((v) => ({ rotulo: String(v), patch: { meta: v } })) };
     case "visitasPorDia":
-      return { texto: "Quantas visitas por dia você espera de cada profissional?", chips: [3, 5, 8].map((v) => ({ rotulo: `${v} por dia`, patch: { visitasPorDia: v } })) };
+      return { texto: "Quantas visitas por dia?", chips: [3, 5, 8].map((v) => ({ rotulo: `${v} por dia`, patch: { visitasPorDia: v } })) };
     case "fixoMensal":
-      return { texto: "E quanto você quer investir por mês em cada profissional, no máximo?", chips: [{ rotulo: "Ainda não sei", patch: { fixoMensal: 0 } }] };
+      return { texto: "Investimento mensal por profissional?", chips: [{ rotulo: "Ainda não sei", patch: { fixoMensal: 0 } }] };
     default:
       return { texto: "", chips: [] };
   }
 }
 
 // Quando a resposta não foi entendida.
-export function pedirDeNovo(campo) {
-  return {
-    objetivo: "Hum, não consegui entender o objetivo. Você quer agendar reuniões, visitar clientes, fechar vendas ou reativar a base? Pode falar ou tocar numa opção.",
-    regiao: "Não peguei a região. Pode me dizer a cidade, o estado ou \"todo o Brasil\"?",
-    publico: "Me conta um pouco mais sobre quem é esse cliente: segmento, porte ou cargo de quem decide.",
-    vagas: "Não peguei a quantidade. Quantos profissionais? Pode ser só o número, tipo 3.",
-    ticketMedio: "Não entendi o valor. Pode me dizer em reais, tipo \"5 mil\"? Se ainda não souber, tudo bem.",
-    conversao: "Não peguei. De cada 10, quantas viram venda? Pode dizer só o número, tipo 3. Se não souber, tudo bem.",
-    retorno: "Quantas vezes o valor investido você quer de volta em vendas? Tipo 5 vezes.",
-    meta: "Quantas por mês? Pode ser só o número, tipo 40.",
-    visitasPorDia: "Quantas visitas por dia? Pode ser só o número, tipo 5.",
-    fixoMensal: "Não entendi o valor. Quanto por mês, em reais, para cada profissional? Se ainda não souber, sem problema.",
-  }[campo] || "Não entendi. Pode repetir de outro jeito?";
+export function pedirDeNovo(campo, r = {}, emp = {}) {
+  return `Não entendi. ${perguntar(campo, r, emp).texto}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -337,54 +398,40 @@ export function calcularTarefasJarvas(r) {
   return { tarefas, orcamento: fixoMensal > 0 ? fixoMensal * vagas : 0, roi: null };
 }
 
-// Variação sem sorteio: a mesma conversa dá as mesmas frases.
-const escolher = (lista, semente) => lista[Math.abs(semente) % lista.length];
-
-function fraseResultadoMes(roi) {
-  const u = roi.principal === "venda" ? "vendas" : UNIDADE_MES[roi.principal];
-  const vendas = roi.principal === "venda" ? "" : `, a média é de ${decimal(roi.vendas)} vendas`;
-  return `Com ${roi.unidades} ${u} por mês${vendas}: ${dinheiro(roi.receita)} em vendas, com investimento de ${dinheiro(roi.investimento)}. Um retorno de ${decimal(roi.multiplo)} vezes.`;
-}
-
-export function reagir(patch, r, emp = {}) {
+// Reação curta ao que acabou de ser dito. Só fala de número quando ele
+// importa: o retorno antes do custo, e o resultado do mês. `anteriores` são
+// as respostas antes desta frase: o que mudou é confirmado em poucas palavras.
+export function reagir(patch, r, emp = {}, anteriores = {}) {
   const frases = [];
-  const obj = OBJETIVOS[r.objetivo];
   const p = principalDe(r);
-  const s = Object.keys(r).length;
-  if (patch.objetivo && obj)
-    frases.push(`${escolher(["Boa escolha.", "Perfeito.", "Fechado."], s)} ${rotuloObjetivo(r.objetivo)}: ${obj.resumo.replace(/\.$/, "").toLowerCase()}. Vou buscar profissionais de ${obj.funcao.toUpperCase()} para isso.`);
-  if (patch.regiao)
-    frases.push(escolher([`${r.regiao}, anotado.`, `Certo, campanha em ${r.regiao}.`, `${r.regiao}, ótimo.`], s));
-  if (patch.publico)
-    frases.push(patch.publico === emp.icp ? "Mantive o perfil do cadastro." : escolher(["Entendi o perfil.", "Ótimo, isso ajuda a escolher os profissionais certos."], s));
-  if (patch.vagas != null) {
-    const v = r.vagas;
-    frases.push(v === 1 ? "Um profissional para começar, bom para validar antes de escalar."
-      : v <= 5 ? `${v} profissionais, um ótimo tamanho para começar.` : `${v} profissionais, uma operação de bom porte.`);
-  }
-  if (patch.ticketMedio != null)
-    frases.push(r.ticketMedio ? `Ticket de ${dinheiro(r.ticketMedio)}, anotado.` : "Sem problema. Sem ticket, os valores ficam em aberto para você ajustar na revisão.");
-
   const plano = calcularTarefasJarvas(r);
   const roi = plano.roi;
   if (patch.conversao != null) {
-    if (r.conversao > 0) {
-      const de10 = decimal(r.conversao * 10);
-      frases.push(`Então, a cada 10 ${UNIDADE[p]}, você fecha ${de10} ${r.conversao * 10 === 1 ? "negócio" : "negócios"}. Com ticket de ${dinheiro(r.ticketMedio)}, isso dá ${dinheiro(r.ticketMedio * r.conversao * 10)} em vendas a cada 10 ${UNIDADE[p]}.`);
-    } else frases.push("Sem problema. Sem essa taxa eu não consigo te mostrar o retorno com segurança, então vamos pelo orçamento.");
+    frases.push(r.conversao > 0
+      ? `Então 10 ${UNIDADE[p]} viram ${dinheiro(r.ticketMedio * r.conversao * 10)} em vendas.`
+      : "Sem a taxa, vamos pelo orçamento.");
   }
   if (patch.retorno != null && roi) {
-    if (p === "venda") frases.push(`Para ter ${decimal(r.retorno)} vezes de retorno, a comissão pode ser de até ${dinheiro(roi.porUnidade ?? plano.tarefas.venda)} por venda fechada.`);
-    else frases.push(`Para ter ${decimal(r.retorno)} vezes de retorno, dá para investir até ${dinheiro(Math.round(roi.porUnidade * 10))} a cada 10 ${UNIDADE[p]}. Na prática: ${dinheiro(plano.tarefas[p])} por ${ACAO[p]} e ${dinheiro(plano.tarefas.venda || 0)} de comissão por venda fechada.`);
-    if (r.retornoSugerido) frases.push("Usei 3 vezes como ponto de partida; você pode mudar na revisão.");
+    frases.push(p === "venda"
+      ? `Comissão de até ${dinheiro(plano.tarefas.venda)} por venda.`
+      : `Então ${dinheiro(plano.tarefas[p])} por ${ACAO[p]} e ${dinheiro(plano.tarefas.venda || 0)} por venda.`);
+    if (r.retornoSugerido) frases.push("Usei 3 vezes; dá para mudar.");
   }
-  if ((patch.meta != null || patch.visitasPorDia != null) && roi && roi.unidades > 0) frases.push(fraseResultadoMes(roi));
-  else if (patch.visitasPorDia != null)
-    frases.push(`${r.visitasPorDia} por dia dá umas ${r.visitasPorDia * DIAS_UTEIS} visitas por mês para cada profissional.`);
-  if (patch.fixoMensal != null) {
-    if (r.fixoMensal > 0 && obj) {
-      frases.push(`Com ${dinheiro(r.fixoMensal)} por profissional, cada ${ACAO[p] || "ação"} sai por cerca de ${dinheiro(plano.tarefas[p])}. No total, ${dinheiro(plano.orcamento)} por mês.`);
-    } else frases.push("Tudo bem. O orçamento fica em aberto e você define na revisão.");
+  if ((patch.meta != null || patch.visitasPorDia != null) && roi && roi.unidades > 0) {
+    const vendas = p === "venda" ? "" : `${decimal(roi.vendas)} vendas, `;
+    frases.push(`${roi.unidades} ${UNIDADE[p]}: ${vendas}${dinheiro(roi.receita)} em vendas. Investimento de ${dinheiro(roi.investimento)}, retorno de ${decimal(roi.multiplo)} vezes.`);
+  }
+  if (patch.fixoMensal != null && r.fixoMensal > 0)
+    frases.push(`Então ${dinheiro(plano.tarefas[p])} por ${ACAO[p] || "ação"}, ${dinheiro(plano.orcamento)} por mês.`);
+  // Mudança de algo já respondido: confirma em poucas palavras.
+  const confirmar = { objetivo: () => rotuloObjetivo(r.objetivo), regiao: () => r.regiao, vagas: () => `${r.vagas} profissionais`, ticketMedio: () => (r.ticketMedio ? `ticket de ${dinheiro(r.ticketMedio)}` : null) };
+  const mudancas = Object.keys(patch).filter((k) => confirmar[k] && anteriores[k] != null && anteriores[k] !== patch[k]);
+  if (mudancas.length) {
+    frases.unshift(`Feito: ${mudancas.map((k) => confirmar[k]()).filter(Boolean).join(", ")}.`);
+    // Mudou algo que mexe na conta: refaz o resultado do mês.
+    const antes = calcularTarefasJarvas(anteriores).roi;
+    if (roi && roi.unidades > 0 && patch.meta == null && patch.visitasPorDia == null && antes?.investimento !== roi.investimento)
+      frases.push(`Agora: ${dinheiro(plano.tarefas[p])} por ${ACAO[p]}, ${dinheiro(roi.receita)} em vendas e investimento de ${dinheiro(roi.investimento)} por mês.`);
   }
   return frases.join(" ");
 }
@@ -416,15 +463,15 @@ export function resumo(r) {
 }
 
 export function saudacao(emp = {}) {
-  return `Oi! Eu sou o Jarvas. Vou montar a campanha${emp.nome ? ` da ${emp.nome}` : ""} com você, leva uns dois minutinhos, e eu já calculo os valores e o orçamento.`;
+  return "Oi, sou o Jarvas. Vamos montar sua campanha.";
 }
 
 // Fim da conversa: a frase que convida a revisar e montar.
-export const FECHAMENTO = "Pronto, já tenho tudo! Dá uma olhada no resumo. Se estiver certo, é só dizer \"pode montar\", ou me fala o que você quer mudar.";
+export const FECHAMENTO = "Pronto. Confere o resumo. Posso montar?";
 
 // "Pode montar", "tá certo", "isso mesmo": confirma o resumo por voz.
 export const confirmaMontagem = (texto) =>
-  /\b(pode (montar|criar|seguir|fazer)|monta(r)?( a campanha)?|confirm\w*|ta (certo|otimo|bom)|esta (certo|otimo)|isso mesmo|perfeito|fechado|manda ver|bora)\b/.test(sem(texto));
+  /\b(pode( sim)?|sim|pode (montar|criar|seguir|fazer)|monta(r)?( a campanha)?|confirm\w*|ta (certo|otimo|bom)|esta (certo|otimo)|isso mesmo|perfeito|fechado|manda ver|bora|ok|beleza)\b/.test(sem(texto));
 
 // Texto para a voz: o que se lê bem na tela nem sempre soa bem falado.
 // "R$ 2.500" vira "2.500 reais", siglas de função viram palavras, aspas e

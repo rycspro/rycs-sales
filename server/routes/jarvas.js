@@ -12,7 +12,7 @@ import { paraFala } from "../../shared/jarvas.js";
 // perguntas) ficam em cache na memória, e cada empresa tem um teto diário.
 //
 // Variáveis: ELEVENLABS_API_KEY; ELEVENLABS_VOICE_ID (sem ela, usa a primeira
-// voz em português da conta, ou uma voz padrão multilíngue);
+// voz masculina em português da conta, ou uma voz padrão masculina);
 // ELEVENLABS_MODELO (padrão eleven_multilingual_v2, a mais natural);
 // JARVAS_VOZ_LIMITE_DIA (caracteres por empresa por dia, padrão 20000).
 
@@ -20,7 +20,8 @@ const router = Router();
 
 const BASE = (process.env.NODE_ENV === "test" && process.env.ELEVENLABS_BASE_URL) || "https://api.elevenlabs.io";
 const MODELO = process.env.ELEVENLABS_MODELO || "eleven_multilingual_v2";
-const VOZ_PADRAO = "EXAVITQu4vr4xnAeLu2u";
+// Voz padrão masculina e multilíngue ("Adam", da biblioteca padrão).
+const VOZ_PADRAO = "pNInz6obpgDQGcFmaJgB";
 const LIMITE_DIA = Number(process.env.JARVAS_VOZ_LIMITE_DIA) || 20000;
 const MAX_TEXTO = 700;
 const MAX_CACHE = 300;
@@ -34,8 +35,12 @@ async function vozId() {
   try {
     const r = await fetch(`${BASE}/v1/voices`, { headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY }, signal: AbortSignal.timeout(8000) });
     const { voices = [] } = r.ok ? await r.json() : {};
-    const pt = voices.find((v) => /portugu|brazil|brasil|pt-br/i.test(JSON.stringify(v.labels || {}) + (v.name || "")));
-    vozEscolhida = pt?.voice_id || VOZ_PADRAO;
+    // O Jarvas é masculino: primeiro voz masculina em português, depois
+    // qualquer voz masculina da conta.
+    const pt = (v) => /portugu|brazil|brasil|pt-br/i.test(JSON.stringify(v.labels || {}) + (v.name || ""));
+    const masculina = (v) => /\bmale\b|masculin/i.test(v.labels?.gender || "");
+    const escolhida = voices.find((v) => pt(v) && masculina(v)) || voices.find((v) => masculina(v) && v.category !== "premade");
+    vozEscolhida = escolhida?.voice_id || VOZ_PADRAO;
   } catch {
     vozEscolhida = VOZ_PADRAO;
   }

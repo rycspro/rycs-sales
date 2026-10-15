@@ -1,53 +1,53 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Keyboard, Mic, RotateCcw, Send, Volume2, VolumeX } from "lucide-react";
+import { Check, Keyboard, Mic, Pause, RotateCcw, Send, Volume2, VolumeX } from "lucide-react";
 import ThinkingOrb from "../ThinkingOrb.jsx";
 import { API_URL } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { montarCampanha } from "../../../shared/objetivosCampanha.js";
 import {
-  interpretar, interpretarAjuste, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo,
-  calcularTarefasJarvas, rotuloObjetivo, FECHAMENTO, confirmaMontagem, paraFala,
+  interpretarResposta, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo,
+  calcularTarefasJarvas, rotuloObjetivo, FECHAMENTO, confirmaMontagem, paraFala, pareceEco,
 } from "../../../shared/jarvas.js";
 
-// Conversa assistida por voz com o Jarvas.
+// Conversa assistida por voz com o Jarvas, sem botão de falar.
 //
-// O dono da empresa toca no orb e conversa. O Jarvas fala (voz humana do
-// ElevenLabs, pelo servidor; sem ela, a melhor voz do navegador), abre o
-// microfone sozinho, ouve, faz uma pausa curta de quem pensa e responde.
-// Tocar no orb enquanto ele fala interrompe e passa a vez; enquanto ouve,
-// encerra a fala da pessoa. A legenda acompanha a voz palavra por palavra.
-// Sem microfone (ou sem permissão), a mesma conversa segue digitando.
+// Um toque no orb abre a conversa (o navegador exige um gesto para liberar o
+// som e o microfone). Daí em diante é mãos livres, como numa ligação:
+// - o microfone fica aberto o tempo todo;
+// - a pessoa pode falar por cima do Jarvas: ele para na hora e escuta;
+// - quando a pessoa faz uma pausa curta, o Jarvas responde, sem esperar
+//   clique nenhum;
+// - o que o microfone capta da própria voz do Jarvas é descartado (eco).
+// Um novo toque no orb pausa e retoma. Sem microfone, a mesma conversa segue
+// digitando.
 //
-// O que a pessoa diz é entendido por shared/jarvas.js, dentro da RYCS.
+// Voz: ElevenLabs pelo servidor (masculina); sem ela, a melhor voz masculina
+// do navegador. O que a pessoa diz é entendido por shared/jarvas.js.
 
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
+const PAUSA_FIM_FALA = 800;      // silêncio que encerra a vez da pessoa
+const PAUSA_FIM_PARCIAL = 1300;  // idem, quando a última parte ainda não é final
 
-const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", aguardando: "idle", montando: "thinking" };
+const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", pausado: "idle", montando: "thinking" };
 const STATUS = {
   parado: "Toque no orbe para conversar com o Jarvas",
   conectando: "Conectando…",
-  falando: "Jarvas falando · toque para responder",
-  ouvindo: "Ouvindo você · toque quando terminar",
+  falando: "Jarvas falando · pode interromper",
+  ouvindo: "Ouvindo…",
   pensando: "Pensando…",
-  aguardando: "Toque no orbe e fale",
+  pausado: "Pausado · toque no orbe para continuar",
   montando: "Montando a campanha…",
 };
-const ROTULO_ORB = {
-  parado: "Começar a conversa com o Jarvas",
-  falando: "Interromper o Jarvas e responder",
-  ouvindo: "Terminar de falar",
-  aguardando: "Falar com o Jarvas",
-};
 
-// Melhor voz do navegador para quando o ElevenLabs não estiver disponível:
-// as "naturais"/neurais primeiro.
+// Melhor voz masculina do navegador, para quando o ElevenLabs não responder.
 function vozDoNavegador() {
   const vozes = window.speechSynthesis?.getVoices() || [];
   const pt = vozes.filter((v) => /^pt(-|_)?BR/i.test(v.lang));
-  return pt.find((v) => /natural|neural|online/i.test(v.name))
-    || pt.find((v) => /google/i.test(v.name))
-    || pt.find((v) => /luciana|francisca|thalita|felipe/i.test(v.name))
+  const masculina = (v) => /felipe|daniel|antonio|ant[oô]nio|male|masculin|fabio|ricardo|humberto/i.test(v.name);
+  return pt.find((v) => masculina(v) && /natural|neural|online/i.test(v.name))
+    || pt.find(masculina)
+    || pt.find((v) => /natural|neural|online/i.test(v.name))
     || pt[0] || vozes.find((v) => v.lang?.startsWith("pt")) || null;
 }
 
@@ -68,27 +68,32 @@ export default function ConversaJarvas({ emp, onCampanha }) {
   const respostas = useRef({});
   const campo = useRef(null);
   const geracao = useRef(0);
+  const faseRef = useRef("parado");
   const nivel = useRef(0);
-  const fonte = useRef(null); // analisador lido para o orb pulsar
   const ctx = useRef(null);
   const audioEl = useRef(null);
   const analisadorVoz = useRef(null);
   const analisadorMic = useRef(null);
   const micStream = useRef(null);
   const rec = useRef(null);
+  const escutando = useRef(false);  // a escuta contínua deve ficar ligada
   const interromper = useRef(null);
+  const falaAtual = useRef("");     // o que o Jarvas está dizendo (para filtrar eco)
+  const vez = useRef({ final: "", parcial: "", timer: null });
+  const ocupado = useRef(false);    // processando uma resposta
   const cacheAudio = useRef(new Map());
-  const vozHumana = useRef(null); // null = não sei ainda; false = usar a do navegador
+  const vozHumana = useRef(null);
   const mudoRef = useRef(false);
   const modoTextoRef = useRef(modoTexto);
   const entrada = useRef(null);
   mudoRef.current = mudo;
   modoTextoRef.current = modoTexto;
 
+  const mudarFase = (f) => { faseRef.current = f; setFase(f); };
+
   useEffect(() => {
     const ajustar = () => setTamanho(window.innerWidth < 480 ? 148 : 184);
     window.addEventListener("resize", ajustar);
-    // Já deixa a saudação pronta: a primeira fala sai sem espera.
     fetch(`${API_URL}/api/jarvas/voz`, { credentials: "include" }).then((r) => r.json()).then((r) => {
       vozHumana.current = !!r?.disponivel;
       if (r?.disponivel) obterAudio(primeiraFala());
@@ -96,19 +101,22 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     return () => {
       window.removeEventListener("resize", ajustar);
       geracao.current++;
-      pararTudo();
+      escutando.current = false;
+      pararFala();
+      pararEscuta();
       micStream.current?.getTracks().forEach((t) => t.stop());
       ctx.current?.close?.();
       for (const p of cacheAudio.current.values()) p.then((u) => u && URL.revokeObjectURL(u));
     };
   }, []);
 
-  // Volume → orb, a cada quadro.
+  // Volume → orb, a cada quadro: a voz do Jarvas enquanto ele fala, o
+  // microfone no resto do tempo.
   useEffect(() => {
     let q;
     const buf = new Uint8Array(512);
     const passo = () => {
-      const a = fonte.current;
+      const a = faseRef.current === "falando" ? analisadorVoz.current : faseRef.current === "ouvindo" ? analisadorMic.current : null;
       if (a) {
         a.getByteTimeDomainData(buf);
         let soma = 0;
@@ -123,7 +131,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
 
   const primeiraFala = () => `${saudacao(emp)} ${perguntar("objetivo", {}, emp).texto}`;
 
-  // ---- áudio -----------------------------------------------------------
+  // ---- som ---------------------------------------------------------------
 
   const prepararAudio = () => {
     if (ctx.current) { ctx.current.resume?.(); return; }
@@ -147,7 +155,6 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ texto: t }),
       }).then(async (r) => {
         if (!r.ok) {
-          // Sem voz humana configurada: não pergunta de novo nesta conversa.
           if (r.status === 503) vozHumana.current = false;
           cacheAudio.current.delete(chave);
           return null;
@@ -159,38 +166,34 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     return cacheAudio.current.get(chave);
   };
 
-  const pararTudo = () => {
+  const pararFala = () => {
     interromper.current?.();
     interromper.current = null;
     window.speechSynthesis?.cancel();
-    if (rec.current) { rec.current.onend = null; rec.current.abort?.(); rec.current = null; }
-    fonte.current = null;
   };
 
-  // Fala e acompanha a legenda palavra por palavra. Resolve true ao terminar
-  // (ou ao ser interrompida pela pessoa) e false se a conversa recomeçou.
+  // Fala com legenda palavra por palavra. Resolve ao terminar ou ao ser
+  // interrompida (pela pessoa falando por cima, ou por um toque).
   const falar = async (t) => {
     const g = geracao.current;
     const palavras = t.split(/\s+/).filter(Boolean);
+    falaAtual.current = t;
     setLegenda({ palavras, ate: 0 });
     setAnuncio(t);
     if (mudoRef.current) {
       setLegenda({ palavras, ate: palavras.length });
-      setFase("falando");
-      await esperar(500);
       return g === geracao.current;
     }
     const url = await obterAudio(t);
     if (g !== geracao.current) return false;
-    setFase("falando");
+    mudarFase("falando");
 
     await new Promise((fim) => {
       let acabou = false;
-      const terminar = () => { if (!acabou) { acabou = true; fonte.current = null; setLegenda({ palavras, ate: palavras.length }); fim(); } };
+      const terminar = () => { if (!acabou) { acabou = true; setLegenda((l) => ({ ...l, ate: l.palavras.length })); fim(); } };
       if (url && audioEl.current) {
         const el = audioEl.current;
         el.src = url;
-        fonte.current = analisadorVoz.current;
         let q;
         const acompanhar = () => {
           if (el.duration) setLegenda({ palavras, ate: Math.ceil(palavras.length * Math.min(1, (el.currentTime + 0.15) / el.duration)) });
@@ -202,10 +205,10 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         el.play().then(() => { q = requestAnimationFrame(acompanhar); }).catch(terminar);
       } else if (window.speechSynthesis) {
         const u = new SpeechSynthesisUtterance(paraFala(t));
-        u.lang = "pt-BR"; u.rate = 1.03; u.pitch = 1;
+        u.lang = "pt-BR"; u.rate = 1.08; u.pitch = 0.95;
         u.voice = vozDoNavegador();
         let contadas = 0;
-        u.onboundary = (e) => { if (e.name === "word" || e.charIndex != null) setLegenda({ palavras, ate: Math.min(palavras.length, ++contadas) }); };
+        u.onboundary = () => setLegenda({ palavras, ate: Math.min(palavras.length, ++contadas) });
         u.onend = terminar;
         u.onerror = terminar;
         interromper.current = () => { window.speechSynthesis.cancel(); terminar(); };
@@ -217,12 +220,12 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     return g === geracao.current;
   };
 
-  // ---- microfone -------------------------------------------------------
+  // ---- microfone: escuta contínua ------------------------------------------
 
   const prepararMic = async () => {
     if (micStream.current || !navigator.mediaDevices?.getUserMedia || !ctx.current) return;
     try {
-      micStream.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      micStream.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       const an = ctx.current.createAnalyser();
       an.fftSize = 512;
       ctx.current.createMediaStreamSource(micStream.current).connect(an);
@@ -233,47 +236,69 @@ export default function ConversaJarvas({ emp, onCampanha }) {
   const passarParaTexto = (msg) => {
     setAviso(msg);
     setModoTexto(true);
-    setFase("aguardando");
+    escutando.current = false;
+    pararEscuta();
+    if (["ouvindo", "pausado"].includes(faseRef.current)) mudarFase("ouvindo");
     setTimeout(() => entrada.current?.focus(), 50);
   };
 
-  const ouvir = async () => {
-    if (!SR) return passarParaTexto("");
-    const g = geracao.current;
-    setOuvido("");
-    setFase("ouvindo");
-    await prepararMic();
-    if (g !== geracao.current) return;
-    fonte.current = analisadorMic.current;
+  const pararEscuta = () => {
+    clearTimeout(vez.current.timer);
+    vez.current = { final: "", parcial: "", timer: null };
+    if (rec.current) { rec.current.onend = null; rec.current.abort?.(); rec.current = null; }
+  };
+
+  // Fim da vez da pessoa: entrega o que ela disse.
+  const encerrarVez = () => {
+    const dito = `${vez.current.final} ${vez.current.parcial}`.trim();
+    vez.current = { final: "", parcial: "", timer: null };
+    if (dito) responder(dito);
+  };
+
+  const iniciarEscuta = () => {
+    if (!SR || !escutando.current || rec.current || modoTextoRef.current) return;
     const r = new SR();
-    r.lang = "pt-BR"; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
-    let final = "", parcial = "";
+    r.lang = "pt-BR"; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
     r.onresult = (e) => {
-      final = ""; parcial = "";
-      for (const res of e.results) { if (res.isFinal) final += res[0].transcript; else parcial += res[0].transcript; }
-      setOuvido(`${final} ${parcial}`.trim());
+      let final = "", parcial = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript; else parcial += e.results[i][0].transcript;
+      }
+      const v = vez.current;
+      v.final = `${v.final} ${final}`.trim();
+      v.parcial = parcial.trim();
+      const dito = `${v.final} ${v.parcial}`.trim();
+      if (!dito) return;
+
+      // O microfone ouviu o próprio Jarvas: descarta.
+      if (pareceEco(dito, falaAtual.current)) { vez.current = { final: "", parcial: "", timer: null }; return; }
+      const f = faseRef.current;
+      if (f === "falando") {
+        // A pessoa começou a falar por cima: o Jarvas para e escuta.
+        if ((dito.match(/\S+/g) || []).length < 2) return;
+        pararFala();
+      }
+      if (f === "pausado" || f === "montando") return;
+      if (f !== "pensando") mudarFase("ouvindo");
+      setOuvido(dito);
+      clearTimeout(v.timer);
+      v.timer = setTimeout(encerrarVez, v.parcial ? PAUSA_FIM_PARCIAL : PAUSA_FIM_FALA);
     };
     r.onerror = (e) => {
       if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error))
         passarParaTexto("Não consegui acessar o microfone. Libere o microfone no navegador ou continue digitando.");
     };
-    r.onend = () => {
-      rec.current = null;
-      fonte.current = null;
-      if (g !== geracao.current) return;
-      const dito = `${final} ${parcial}`.trim();
-      if (dito) responder(dito);
-      else setFase((f) => (f === "ouvindo" ? "aguardando" : f));
-    };
+    // O navegador encerra a escuta de tempos em tempos: reabre na hora.
+    r.onend = () => { rec.current = null; if (escutando.current) setTimeout(iniciarEscuta, 120); };
     rec.current = r;
-    try { r.start(); } catch { setFase("aguardando"); }
+    try { r.start(); } catch { rec.current = null; }
   };
 
-  // ---- conversa --------------------------------------------------------
+  // ---- conversa ----------------------------------------------------------
 
-  const proximaVez = () => {
-    if (modoTextoRef.current) { setFase("aguardando"); setTimeout(() => entrada.current?.focus(), 50); }
-    else ouvir();
+  const depoisDeFalar = () => {
+    if (faseRef.current === "falando" || faseRef.current === "conectando") mudarFase("ouvindo");
+    if (modoTextoRef.current) setTimeout(() => entrada.current?.focus(), 50);
   };
 
   const comecar = async () => {
@@ -281,56 +306,64 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     const g = ++geracao.current;
     respostas.current = {};
     campo.current = "objetivo";
-    setLinhasResumo(null);
-    setOuvido("");
-    setAviso("");
-    setFase("conectando");
+    setLinhasResumo(null); setOuvido(""); setAviso("");
+    mudarFase("conectando");
     setChips(perguntar("objetivo", {}, emp).chips);
+    escutando.current = !!SR && !modoTextoRef.current;
+    await prepararMic();
+    iniciarEscuta();
     if (!(await falar(primeiraFala())) || g !== geracao.current) return;
-    proximaVez();
+    depoisDeFalar();
   };
 
   const responder = async (dito, patchDireto = null) => {
+    if (ocupado.current || faseRef.current === "montando") return;
+    ocupado.current = true;
     const g = geracao.current;
-    if (rec.current) { rec.current.onend = null; rec.current.abort?.(); rec.current = null; fonte.current = null; }
+    pararFala();
     setOuvido(dito);
     setChips([]);
-    setFase("pensando");
+    mudarFase("pensando");
     const atual = campo.current;
-    if (atual === "ajuste" && !patchDireto && confirmaMontagem(dito)) return montar();
+    const anteriores = respostas.current;
+    const patch = patchDireto || interpretarResposta(dito, atual, anteriores, emp);
 
-    const patch = patchDireto || (atual === "ajuste" ? interpretarAjuste(dito) : interpretar(dito, atual));
-    const novas = { ...respostas.current, ...patch };
+    // No resumo: pedido de mudança vale antes do "pode montar".
+    if (atual === "ajuste" && !patchDireto && !Object.keys(patch).length && confirmaMontagem(dito)) {
+      ocupado.current = false;
+      return montar();
+    }
+    const novas = { ...anteriores, ...patch };
     respostas.current = novas;
     let fala, proximo = atual, novosChips = [];
     if (!Object.keys(patch).length) {
-      fala = atual === "ajuste"
-        ? "Não entendi o que mudar. Pode dizer, por exemplo, \"muda para 3 profissionais\", ou \"pode montar\" se estiver tudo certo."
-        : pedirDeNovo(atual);
+      fala = atual === "ajuste" ? "Não entendi. O que mudo?" : pedirDeNovo(atual, novas, emp);
       if (atual !== "ajuste") novosChips = perguntar(atual, novas, emp).chips;
     } else {
-      const reacao = reagir(patch, novas, emp);
+      const reacao = reagir(patch, novas, emp, anteriores);
       const prox = proximoCampo(novas);
-      if (!prox) { proximo = "ajuste"; fala = `${atual === "ajuste" ? "Feito! " : ""}${reacao} ${FECHAMENTO}`; }
+      if (!prox) { proximo = "ajuste"; fala = `${reacao} ${FECHAMENTO}`; }
       else { proximo = prox; const q = perguntar(prox, novas, emp); fala = `${reacao} ${q.texto}`; novosChips = q.chips; }
     }
-    // Pausa de quem pensa, enquanto a voz da resposta já é preparada.
+    fala = fala.trim();
     obterAudio(fala);
-    await esperar(450 + Math.min(fala.length, 300));
-    if (g !== geracao.current) return;
+    await esperar(220);
+    if (g !== geracao.current) { ocupado.current = false; return; }
     campo.current = proximo;
     setLinhasResumo(proximo === "ajuste" ? resumo(novas) : null);
     setChips(novosChips);
-    if (!(await falar(fala.trim()))) return;
-    proximaVez();
+    ocupado.current = false;
+    if (!(await falar(fala))) return;
+    depoisDeFalar();
   };
 
   const montar = async () => {
     const g = geracao.current;
-    if (rec.current) { rec.current.onend = null; rec.current.abort?.(); rec.current = null; }
     setChips([]);
     campo.current = "fim";
-    setFase("montando");
+    mudarFase("montando");
+    escutando.current = false;
+    pararEscuta();
     const r = respostas.current;
     const objetivo = r.objetivo || "reunioes";
     const campanha = montarCampanha(objetivo, emp);
@@ -339,48 +372,69 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     if (r.publico) campanha.publico = r.publico;
     if (orcamento > 0) campanha.orcamento = orcamento;
     campanha.titulo = [rotuloObjetivo(objetivo), r.regiao, `${campanha.vagas} prof.`, orcamento > 0 ? money(orcamento) : ""].filter(Boolean).join(" — ");
-    await falar("Perfeito! Montando a sua campanha agora.");
+    await falar("Montando sua campanha.");
     if (g !== geracao.current) return;
-    setFase("montando");
+    mudarFase("montando");
     onCampanha(objetivo, campanha);
   };
 
   const recomecar = () => {
     geracao.current++;
-    pararTudo();
+    escutando.current = false;
+    ocupado.current = false;
+    pararFala();
+    pararEscuta();
     respostas.current = {};
     campo.current = null;
-    setFase("parado");
+    mudarFase("parado");
     setLegenda({ palavras: [], ate: 0 });
     setOuvido(""); setChips([]); setLinhasResumo(null); setTexto(""); setAviso("");
   };
 
+  // O orb abre a conversa e, depois, pausa e retoma.
   const tocarOrb = () => {
-    if (fase === "parado") return comecar();
-    if (fase === "falando") return interromper.current?.();
-    if (fase === "ouvindo") return rec.current?.stop();
-    if (fase === "aguardando") { prepararAudio(); return modoTexto ? entrada.current?.focus() : ouvir(); }
+    const f = faseRef.current;
+    if (f === "parado") return comecar();
+    if (f === "pausado") {
+      prepararAudio();
+      escutando.current = !!SR && !modoTextoRef.current;
+      mudarFase("ouvindo");
+      iniciarEscuta();
+      return;
+    }
+    if (f === "montando") return;
+    pararFala();
+    escutando.current = false;
+    pararEscuta();
+    mudarFase("pausado");
   };
 
   const enviarTexto = (e) => {
     e.preventDefault();
     const t = texto.trim();
-    if (!t || !["aguardando", "ouvindo", "falando"].includes(fase)) return;
-    if (fase === "falando") interromper.current?.();
+    if (!t || ["parado", "montando"].includes(faseRef.current)) return;
     setTexto("");
     responder(t);
   };
 
   const escolherChip = (c) => {
-    if (fase === "falando") { interromper.current?.(); }
     if (c.patch) return responder(c.rotulo, c.patch);
-    // Chip que só pede mais detalhe: o Jarvas pergunta e espera.
+    pararFala();
     setChips([]);
     setOuvido(c.rotulo);
-    (async () => { if (await falar(c.seguir || "Pode falar.")) proximaVez(); })();
+    (async () => { if (await falar(c.seguir || "Pode falar.")) depoisDeFalar(); })();
   };
 
-  const podeInteragir = ["falando", "ouvindo", "aguardando"].includes(fase);
+  const alternarTexto = () => {
+    const vaiDigitar = !modoTexto;
+    setModoTexto(vaiDigitar);
+    modoTextoRef.current = vaiDigitar;
+    setAviso("");
+    if (vaiDigitar) { escutando.current = false; pararEscuta(); setTimeout(() => entrada.current?.focus(), 50); }
+    else if (!["parado", "pausado", "montando"].includes(faseRef.current)) { escutando.current = true; iniciarEscuta(); }
+  };
+
+  const ativo = !["parado", "montando"].includes(fase);
 
   return (
     <div className="cj">
@@ -389,9 +443,8 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         .cj-orb{border:0;background:transparent;padding:10px;border-radius:50%;cursor:pointer;line-height:0;transition:transform .2s}
         .cj-orb:hover{transform:scale(1.02)}
         .cj-orb:focus-visible{outline:3px solid var(--ring,var(--brand));outline-offset:4px}
-        .cj-orb:disabled{cursor:default;transform:none}
         .cj-status{font-size:12.5px;color:var(--muted);margin:0;min-height:18px;letter-spacing:.01em}
-        .cj-legenda{font-size:clamp(17px,2.4vw,21px);line-height:1.5;font-weight:600;color:var(--ink);max-width:640px;margin:0;min-height:64px}
+        .cj-legenda{font-size:clamp(18px,2.6vw,23px);line-height:1.45;font-weight:600;color:var(--ink);max-width:640px;margin:0;min-height:34px}
         .cj-legenda span{transition:opacity .18s}
         .cj-legenda span[data-dita="0"]{opacity:.28}
         .cj-voce{font-size:15px;color:var(--brand);font-weight:500;margin:0;max-width:560px;min-height:22px}
@@ -409,11 +462,11 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         .cj-rodape .vx-btn{min-height:44px}
       `}</style>
 
-      <button type="button" className="cj-orb" onClick={tocarOrb} disabled={!ROTULO_ORB[fase]}
-        aria-label={ROTULO_ORB[fase] || STATUS[fase]}>
+      <button type="button" className="cj-orb" onClick={tocarOrb} disabled={fase === "montando"}
+        aria-label={fase === "parado" ? "Começar a conversa com o Jarvas" : fase === "pausado" ? "Continuar a conversa" : "Pausar a conversa"}>
         <ThinkingOrb state={ESTADO_ORB[fase]} size={tamanho} nivel={nivel} decorativo />
       </button>
-      <p className="cj-status" aria-hidden="true">{STATUS[fase]}</p>
+      <p className="cj-status" aria-hidden="true">{modoTexto && fase === "ouvindo" ? "Sua vez · escreva abaixo" : STATUS[fase]}</p>
 
       {legenda.palavras.length > 0 && (
         <p className="cj-legenda" aria-hidden="true">
@@ -423,7 +476,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       <div className="vx-sr" aria-live="polite">{anuncio}</div>
       {ouvido && <p className="cj-voce"><span className="vx-sr">Você disse: </span>“{ouvido}”</p>}
 
-      {chips.length > 0 && podeInteragir && (
+      {chips.length > 0 && ativo && (
         <div className="cj-chips" role="group" aria-label="Respostas rápidas">
           {chips.map((c) => <button key={c.rotulo} type="button" className="vx-btn vx-btn-sm" onClick={() => escolherChip(c)}>{c.rotulo}</button>)}
         </div>
@@ -433,7 +486,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         <div className="cj-resumo">
           <dl>{linhasResumo.map(([k, v]) => <div key={k} style={{ display: "contents" }}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
           <button type="button" className="vx-btn vx-btn-primary vx-btn-block" style={{ minHeight: 48, marginTop: 14 }}
-            onClick={montar} disabled={fase === "montando" || fase === "pensando"}>
+            onClick={montar} disabled={fase === "montando"}>
             <Check size={15} /> Montar campanha
           </button>
         </div>
@@ -441,24 +494,29 @@ export default function ConversaJarvas({ emp, onCampanha }) {
 
       {aviso && <p className="vx-onb-dica" role="status" style={{ margin: 0 }}>{aviso}</p>}
 
-      {modoTexto && fase !== "parado" && fase !== "montando" && (
+      {modoTexto && ativo && (
         <form className="cj-texto" onSubmit={enviarTexto}>
           <label htmlFor={`${id}-txt`} className="vx-sr">Responder ao Jarvas por escrito</label>
           <input id={`${id}-txt`} ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} autoComplete="off"
-            placeholder={campo.current === "ajuste" ? "Peça um ajuste ou diga \"pode montar\"" : "Escreva sua resposta…"} />
-          <button type="submit" className="cj-enviar" aria-label="Enviar" disabled={!texto.trim() || !podeInteragir}><Send size={17} /></button>
+            placeholder={campo.current === "ajuste" ? "Peça uma mudança ou diga \"pode montar\"" : "Escreva sua resposta…"} />
+          <button type="submit" className="cj-enviar" aria-label="Enviar" disabled={!texto.trim()}><Send size={17} /></button>
         </form>
       )}
 
       {fase !== "parado" && (
         <div className="cj-rodape">
           {SR && (
-            <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { setModoTexto((m) => !m); setAviso(""); }}>
+            <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={alternarTexto}>
               {modoTexto ? <><Mic size={14} /> Falar</> : <><Keyboard size={14} /> Prefiro digitar</>}
             </button>
           )}
+          {ativo && (
+            <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={tocarOrb}>
+              {fase === "pausado" ? <><Mic size={14} /> Continuar</> : <><Pause size={14} /> Pausar</>}
+            </button>
+          )}
           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" aria-pressed={mudo}
-            onClick={() => { setMudo((m) => !m); if (!mudo) interromper.current?.(); }}>
+            onClick={() => { setMudo((m) => !m); if (!mudo) pararFala(); }}>
             {mudo ? <><VolumeX size={14} /> Som desligado</> : <><Volume2 size={14} /> Som ligado</>}
           </button>
           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={recomecar} disabled={fase === "montando"}>
