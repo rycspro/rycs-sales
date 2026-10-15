@@ -11,6 +11,8 @@ import { emailStatusEmpresa } from "../services/email.js";
 import Anthropic from "@anthropic-ai/sdk";
 import { extrairTextoPdf } from "../services/reportPdf.js";
 import { montarDossieEmpresa, narrativaEmpresa } from "../services/dossieEmpresa.js";
+import { excluirEmpresa, arquivosDaEmpresa } from "../services/exclusaoEmpresa.js";
+import { remover as removerArquivo } from "../services/arquivos.js";
 
 const router = Router();
 
@@ -245,38 +247,20 @@ router.get("/company/finance/export", (req, res) => {
     .send("\ufeff" + [cabecalho.map(escapar).join(";"), ...linhas].join("\n"));
 });
 
-// Tabelas penduradas na empresa. Os filhos saem antes do pai, senão a
-// foreign key barra a exclusão.
-const DEPENDENTES = [
-  ["assistant_history", "companyId"],
-  ["knowledge_history", "companyId"],
-  ["knowledge_documents", "companyId"],
-  ["company_reports", "companyId"],
-  ["course_progress", "companyId"],
-  ["applications", "companyId"],
-  ["partnership_requests", "companyId"],
-  ["messages", "companyId"],
-  ["submissions", "companyId"],
-  ["company_score_dimensions", "companyId"],
-  ["voucher_redemptions", "companyId"],
-  ["subscriptions", "companyId"],
-  ["deposit_requests", "companyId"],
-];
-
-// Exclusão definitiva de uma empresa. Só a plataforma pode chamar.
+// Exclusão definitiva de uma empresa. Só a plataforma pode chamar, e a
+// plataforma sempre consegue: as dependências saem do próprio banco
+// (services/exclusaoEmpresa.js).
 //
-// Como no profissional, platform_earnings fica de fora: é a receita já
-// realizada da plataforma, não dado da empresa.
-router.delete("/companies/:id", (req, res) => {
+// Saldo em caixa e ações em análise não impedem mais nada. Na primeira
+// chamada a tela recebe o aviso (409) para o admin decidir; com ?forcar=true
+// a exclusão acontece de qualquer forma.
+router.delete("/companies/:id", async (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
 
   const { id } = req.params;
   const empresa = db.prepare("SELECT id, nome, saldo FROM companies WHERE id = ?").get(id);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 
-  // Saldo em caixa é dinheiro que a empresa aportou e ainda não gastou;
-  // ações em análise são trabalho de vendedor esperando veredito. Apagar
-  // qualquer um dos dois sem aviso deixa alguém no prejuízo.
   const emAnalise = db.prepare(
     "SELECT COUNT(*) n FROM submissions WHERE companyId = ? AND status IN ('analisando', 'ia_aprovado')"
   ).get(id).n;
@@ -287,44 +271,24 @@ router.delete("/companies/:id", (req, res) => {
       error: "Empresa com valores em aberto",
       saldo: empresa.saldo,
       acoesEmAnalise: emAnalise,
-      comoProsseguir: "Devolva o saldo e resolva as ações pendentes, ou repita com ?forcar=true.",
+      comoProsseguir: "Confirme para excluir mesmo assim.",
     });
   }
 
-  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(id);
-  const removidos = {};
+  const arquivos = arquivosDaEmpresa(id);
+  let removidos;
+  try {
+    removidos = excluirEmpresa(id);
+  } catch (e) {
+    // Mostra o motivo real ao admin, em vez de um erro genérico.
+    console.error(`[admin] falha ao excluir empresa ${empresa.nome}:`, e.message);
+    return res.status(500).json({ error: `Não foi possível excluir: ${e.message}` });
+  }
+  // Arquivos da Marketing Academy: depois do commit, sem travar a resposta.
+  for (const chave of arquivos) removerArquivo(chave).catch((e) => console.warn("[admin] arquivo não removido:", chave, e.message));
 
-  db.transaction(() => {
-    // lead_events aponta para leads, e campaign_applications para campaigns:
-    // os netos precisam sair antes dos filhos.
-    const leads = db.prepare("SELECT id FROM leads WHERE companyId = ?").all(id).map((l) => l.id);
-    for (const leadId of leads) db.prepare("DELETE FROM lead_events WHERE leadId = ?").run(leadId);
-    if (leads.length) removidos.leads = db.prepare("DELETE FROM leads WHERE companyId = ?").run(id).changes;
-
-    const campanhas = db.prepare("SELECT id FROM campaigns WHERE companyId = ?").all(id).map((c) => c.id);
-    for (const campaignId of campanhas) db.prepare("DELETE FROM campaign_applications WHERE campaignId = ?").run(campaignId);
-    if (campanhas.length) removidos.campaigns = db.prepare("DELETE FROM campaigns WHERE companyId = ?").run(id).changes;
-
-    for (const [tabela, coluna] of DEPENDENTES) {
-      const r = db.prepare(`DELETE FROM ${tabela} WHERE ${coluna} = ?`).run(id);
-      if (r.changes) removidos[tabela] = r.changes;
-    }
-    if (user) {
-      for (const tabela of ["notifications", "uploads"]) {
-        const r = db.prepare(`DELETE FROM ${tabela} WHERE userId = ?`).run(user.id);
-        if (r.changes) removidos[tabela] = r.changes;
-      }
-      const ref = db.prepare(
-        "DELETE FROM referrals WHERE indicadorUserId = ? OR indicadoUserId = ?"
-      ).run(user.id, user.id);
-      if (ref.changes) removidos.referrals = ref.changes;
-      db.prepare("DELETE FROM users WHERE id = ?").run(user.id);
-    }
-    db.prepare("DELETE FROM companies WHERE id = ?").run(id);
-  })();
-
-  console.log(`[admin] empresa excluída: ${empresa.nome}`);
-  res.json({ removido: { id, nome: empresa.nome }, registros: removidos, forcado: forcar });
+  console.log(`[admin] empresa excluída: ${empresa.nome}${forcar ? " (forçada)" : ""}`);
+  res.json({ removido: { id, nome: empresa.nome }, registros: removidos, forcado: forcar, saldoNaExclusao: empresa.saldo, acoesEmAnalise: emAnalise });
 });
 
 // Regras de aprovação automática da empresa.
