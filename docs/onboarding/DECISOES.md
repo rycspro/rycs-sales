@@ -13,4 +13,4 @@ Tomadas com o dono do produto em 2026-10-15, antes do passo 1. Quando o SPEC e e
 | Etapa 5 | Planos e preços de `shared/planos.js`. Cartão sempre tokenizado pelo Asaas, sem guardar número nem CVV. |
 | Etapa 6 sem saldo | "Publicar campanha" pede o depósito (Pix) ali mesmo. O onboarding só termina depois do depósito. |
 | Storage | Bucket da Railway (compatível com S3). Limites: documentos e apresentações 50 MB, fotos 20 MB, vídeos 500 MB, áudios 100 MB. |
-| Publicação | Mudou em 2026-10-15, depois do passo 1: cada passo é publicado ao terminar, com o onboarding ligado para todas as empresas, mesmo travando as atuais nas etapas ainda em construção (decisão do dono do produto). |
+| Publicação | Cada passo é publicado ao terminar. Até o fluxo ficar completo, só as etapas entregues (`ETAPAS_PRONTAS` em `shared/onboarding.js`) seguram a empresa fora do painel, e as empresas que já existiam só entram no fluxo quando ele estiver completo (ou com `ONBOARDING_EMPRESAS_EXISTENTES=1`). |

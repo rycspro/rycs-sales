@@ -17,6 +17,24 @@ export const ETAPAS = [
 
 export const CHAVES_ETAPAS = ETAPAS.map((e) => e.chave);
 
+// Etapas já entregues. Enquanto o fluxo não está completo, só elas seguram a
+// empresa fora do painel: parar numa etapa que ainda não existe trancaria a
+// conta sem ter o que preencher. Cada passo entregue entra nesta lista.
+export const ETAPAS_PRONTAS = ["acesso"];
+
+// Decide se o onboarding fica na frente do painel.
+//   - Concluído: nunca.
+//   - Empresa que já existia antes do onboarding: só quando o fluxo inteiro
+//     estiver pronto (ou se a operação ligar isso de propósito).
+//   - Demais: só se a etapa atual já foi entregue.
+export function onboardingBloqueia({ etapas, origem, exigirExistentes = false }) {
+  const atual = etapaAtual(etapas);
+  if (!atual) return false;
+  const fluxoCompleto = CHAVES_ETAPAS.every((c) => ETAPAS_PRONTAS.includes(c));
+  if (origem === "existente" && !fluxoCompleto && !exigirExistentes) return false;
+  return ETAPAS_PRONTAS.includes(atual.chave);
+}
+
 // Trial do link de convite "com trial". Os links sem trial e o cadastro pelo
 // site começam com cobrança normal.
 export const TRIAL_ONBOARDING_DIAS = 3;

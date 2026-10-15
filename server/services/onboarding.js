@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "crypto";
 import db, { agora } from "../db.js";
-import { normalizarEtapas, etapaAtual, concluirEtapa, onboardingConcluido } from "../../shared/onboarding.js";
+import { normalizarEtapas, etapaAtual, concluirEtapa, onboardingConcluido, onboardingBloqueia } from "../../shared/onboarding.js";
 
 // Progresso do onboarding no servidor. A tela pergunta aqui em vez de decidir
 // sozinha — o mesmo princípio do portão de assinatura.
@@ -49,6 +49,11 @@ export function serializar(linha) {
     etapas,
     atual: atual?.chave || null,
     concluido: !atual,
+    // Se o onboarding fica na frente do painel agora (ver onboardingBloqueia).
+    bloqueia: onboardingBloqueia({
+      etapas, origem: linha.origem,
+      exigirExistentes: process.env.ONBOARDING_EMPRESAS_EXISTENTES === "1",
+    }),
     trialDias: linha.trialDias || 0,
     origem: linha.origem,
     whatsapp: empresa?.whatsapp || "",

@@ -4,6 +4,7 @@ import {
   etapaAtual, podeAbrirEtapa, concluirEtapa, onboardingConcluido, normalizarEtapas,
   validarSenhaEmpresa, normalizarWhatsapp, podeReenviarReset, REENVIO_RESET_MS,
   estadoConviteOnboarding, conviteServeParaEmail, validadeConviteDias, CONVITE_VALIDADE_MAX_DIAS,
+  onboardingBloqueia, ETAPAS_PRONTAS,
 } from "../shared/onboarding.js";
 
 // ---------------------------------------------------------------------------
@@ -62,4 +63,17 @@ test("convite: uso único, validade, cancelamento e preso ao e-mail", () => {
   assert.equal(validadeConviteDias("abc"), 7);
   assert.equal(validadeConviteDias(500), CONVITE_VALIDADE_MAX_DIAS);
   assert.equal(validadeConviteDias(15), 15);
+});
+
+test("só etapa já entregue segura a empresa fora do painel", () => {
+  const prontas = new Set(ETAPAS_PRONTAS);
+  // Nova empresa parada numa etapa ainda não entregue entra no painel.
+  if (!prontas.has("empresa")) assert.equal(onboardingBloqueia({ etapas: { acesso: "concluida" }, origem: "site" }), false);
+  // Nova empresa sem acesso concluído fica no onboarding.
+  assert.equal(onboardingBloqueia({ etapas: {}, origem: "site" }), true);
+  // Empresa antiga só entra no fluxo quando ele estiver completo, ou se ligado.
+  if (prontas.size < 6) {
+    assert.equal(onboardingBloqueia({ etapas: {}, origem: "existente" }), false);
+    assert.equal(onboardingBloqueia({ etapas: {}, origem: "existente", exigirExistentes: true }), true);
+  }
 });

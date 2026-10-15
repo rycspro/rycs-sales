@@ -105,9 +105,9 @@ export default function App() {
     if (!user || previaQualificacao) return;
     if (user.role === "empresa") carregarOnboarding();
   }, [user, carregarOnboarding]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Onboarding concluído: o endereço de etapa não tem mais o que mostrar.
+  // Onboarding fora da frente do painel: o endereço de etapa não tem o que mostrar.
   useEffect(() => {
-    if (onb?.concluido && window.location.pathname.startsWith("/onboarding")) window.history.replaceState({}, "", "/");
+    if (onb && !onb.erro && !onb.bloqueia && window.location.pathname.startsWith("/onboarding")) window.history.replaceState({}, "", "/");
   }, [onb]);
 
   const carregarState = useCallback(async (usr) => {
@@ -265,7 +265,7 @@ export default function App() {
         </div>
       </div>
     );
-    if (!onb.concluido) return (
+    if (onb.bloqueia) return (
       <div className="vx-app">
         <style>{CSS}</style>
         <Onboarding estado={onb} setEstado={setOnb} email={user.email}

@@ -131,6 +131,7 @@ test("rotas do onboarding: cadastro, convite, retomada, permissões e recuperaç
   const cookieAntiga = assinar({ id: "u-antiga", role: "empresa", entityId: "antiga" });
   r = await req("/onboarding", { cookie: cookieAntiga });
   assert.equal(r.corpo.atual, "acesso"); assert.equal(r.corpo.origem, "existente");
+  assert.equal(r.corpo.bloqueia, false, "empresa antiga não fica presa enquanto o fluxo não está completo");
   r = await req("/onboarding/acesso", { cookie: cookieAntiga, body: { whatsapp: "123" } });
   assert.equal(r.status, 400);
   r = await req("/onboarding/acesso", { cookie: cookieAntiga, body: { whatsapp: "11 3456-7890" } });
