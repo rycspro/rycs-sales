@@ -69,6 +69,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [gerando, setGerando] = useState(false);
   const [explicacao, setExplicacao] = useState("");
   const [salvando, setSalvando] = useState(false);
+  // Os objetivos manuais ficam guardados atrás de um botão discreto: a
+  // experiência principal é conversar com o Jarvas.
+  const [manual, setManual] = useState(false);
 
   const [sugestaoIA, setSugestaoIA] = useState(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
@@ -220,7 +223,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Nova campanha</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            {iniciarComIA ? "Converse com o Jarvas: ele pergunta, calcula o retorno e monta a campanha para você revisar." : "Converse com o Jarvas ou escolha o objetivo manualmente."}
+            Converse com o Jarvas, seu assessor de vendas: ele pergunta, calcula o retorno e monta a campanha para você revisar.
           </p>
 
           {/* Jarvas — conversa assistida por voz */}
@@ -232,10 +235,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <ConversaJarvas emp={emp} onCampanha={receberCampanhaDoJarvas} />
           </div>
 
-          {!iniciarComIA && <>
+          {!iniciarComIA && manual && <>
             <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0 12px" }}>
               <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-              <span className="vx-mut" style={{ fontSize: 12 }}>ou escolha um objetivo manualmente</span>
+              <span className="vx-mut" style={{ fontSize: 12 }}>escolha o objetivo</span>
               <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             </div>
             <div className="vx-objective-grid">
@@ -260,7 +263,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </>}
 
-          <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ marginTop: 14 }} onClick={aoCancelar}>Cancelar</button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 14 }}>
+            <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }} onClick={aoCancelar}>Cancelar</button>
+            {!iniciarComIA && (
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" aria-expanded={manual}
+                style={{ minHeight: 44, color: "var(--muted)", fontWeight: 500, fontSize: 12.5 }}
+                onClick={() => setManual((m) => !m)}>
+                {manual ? "Ocultar objetivos" : "Criar manualmente"}
+              </button>
+            )}
+          </div>
         </>
       )}
 
