@@ -6,7 +6,7 @@ import db, { uid, agora } from "../db.js";
 import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
-import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset } from "../../shared/onboarding.js";
+import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
 import { criarOnboarding, hashToken } from "../services/onboarding.js";
 
 const router = Router();
@@ -81,7 +81,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite } = req.body;
+  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -99,6 +99,21 @@ router.post("/auth/register", async (req, res) => {
   if (role === "empresa" && !whatsEmpresa)
     return res.status(400).json({ error: "Informe um WhatsApp válido, com DDD.", campo: "whatsapp" });
 
+  // Empresa: nome e logo também são pedidos já no acesso (etapa 1).
+  let logoEmpresa = "";
+  if (role === "empresa") {
+    if (String(nome || "").trim().length < 2)
+      return res.status(400).json({ error: "Informe o nome da empresa.", campo: "nome" });
+    const mimetype = String(logo?.mimetype || "");
+    const buffer = Buffer.from(String(logo?.base64 || ""), "base64");
+    const erroLogo = avaliarLogo({
+      mimetype, tamanhoBytes: buffer.length,
+      svgTexto: mimetype === "image/svg+xml" ? buffer.toString("utf8") : "",
+    });
+    if (erroLogo) return res.status(400).json({ error: buffer.length ? erroLogo : "Envie o logo da empresa.", campo: "logo" });
+    logoEmpresa = `data:${mimetype};base64,${buffer.toString("base64")}`;
+  }
+
   // Convite de onboarding: preso ao e-mail para o qual foi gerado.
   const conviteRow = role === "empresa" && convite
     ? db.prepare("SELECT * FROM onboarding_convites WHERE tokenHash = ?").get(hashToken(convite))
@@ -114,7 +129,7 @@ router.post("/auth/register", async (req, res) => {
   const hash = bcrypt.hashSync(senha, 10);
   const userId = uid();
   let entityId = null;
-  const nomeClean = (nome || emailNorm.split("@")[0]).slice(0, 100);
+  const nomeClean = (String(nome || "").trim() || emailNorm.split("@")[0]).slice(0, 100);
 
   if (role === "vendedor") {
     entityId = uid();
@@ -137,9 +152,9 @@ router.post("/auth/register", async (req, res) => {
         if (!marca.changes) { conviteOk = false; return; }
       }
       db.prepare(`
-        INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor, totalAportado, criadoEm, comissoes, curso, aportes, whatsapp)
-        VALUES (?, ?, ?, ?, ?, 'saldo', 0, 0, 10, '#2563EB', 0, ?, '{}', '[]', '[]', ?)
-      `).run(entityId, nomeClean, produto || "", ticket || "", icp || "", agora(), whatsEmpresa);
+        INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor, totalAportado, criadoEm, comissoes, curso, aportes, whatsapp, logo)
+        VALUES (?, ?, ?, ?, ?, 'saldo', 0, 0, 10, '#2563EB', 0, ?, '{}', '[]', '[]', ?, ?)
+      `).run(entityId, nomeClean, produto || "", ticket || "", icp || "", agora(), whatsEmpresa, logoEmpresa);
       db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
         userId, emailNorm, hash, role, entityId, 1, agora()
       );

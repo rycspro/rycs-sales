@@ -70,7 +70,7 @@ test("etapas 3 a 6: materiais, IA com falha e nova tentativa, aprovação, cart�
   const cookieAdmin = assinar({ id: "admin-teste", role: "admin", entityId: null });
   let r = await req("/admin/onboarding-convites", { cookie: cookieAdmin, body: { email: "dono@exemplo.invalid", comTrial: true } });
   const token = r.corpo.url.split("/comecar/")[1];
-  r = await req("/auth/register", { body: { role: "empresa", email: "dono@exemplo.invalid", senha: "12345678", whats: "11912345678", aceitouTermos: true, convite: token } });
+  r = await req("/auth/register", { body: { role: "empresa", email: "dono@exemplo.invalid", senha: "12345678", whats: "11912345678", nome: "Empresa Teste", logo: { mimetype: "image/png", base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }, aceitouTermos: true, convite: token } });
   const ck = r.cookie;
   r = await req("/onboarding/empresa", { cookie: ck, body: { nome: "Acme", produto: "CRM para distribuidoras", publico: "Distribuidoras", concluir: true } });
   assert.equal(r.corpo.atual, "academy");
@@ -185,7 +185,7 @@ test("etapas 3 a 6: materiais, IA com falha e nova tentativa, aprovação, cart�
 test("etapa 4 sem IA configurada: segue sem estratégias, sem inventar nada", async (t) => {
   const { base } = await subirServidor(t);
   const req = cliente(base);
-  let r = await req("/auth/register", { body: { role: "empresa", email: "sem.ia@exemplo.invalid", senha: "12345678", whats: "11912345678", aceitouTermos: true } });
+  let r = await req("/auth/register", { body: { role: "empresa", email: "sem.ia@exemplo.invalid", senha: "12345678", whats: "11912345678", nome: "Empresa Teste", logo: { mimetype: "image/png", base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }, aceitouTermos: true } });
   const ck = r.cookie;
   await req("/onboarding/empresa", { cookie: ck, body: { nome: "Beta", produto: "Consultoria", publico: "PMEs", concluir: true } });
   r = await req("/onboarding/academy", { cookie: ck });

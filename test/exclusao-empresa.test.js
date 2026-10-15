@@ -16,7 +16,7 @@ test("admin exclui empresa com campanhas, saldo e registros em todas as tabelas 
   t.after(() => db.close());
   const agora = Date.now();
 
-  let r = await req("/auth/register", { body: { role: "empresa", email: "excluir@exemplo.invalid", senha: "12345678", whats: "11912345678", aceitouTermos: true } });
+  let r = await req("/auth/register", { body: { role: "empresa", email: "excluir@exemplo.invalid", senha: "12345678", whats: "11912345678", nome: "Empresa Teste", logo: { mimetype: "image/png", base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }, aceitouTermos: true } });
   const ckEmpresa = r.cookie;
   const companyId = db.prepare("SELECT entityId FROM users WHERE email = 'excluir@exemplo.invalid'").get().entityId;
   r = await req("/auth/register", { body: { role: "vendedor", email: "vend@exemplo.invalid", senha: "123456", aceitouTermos: true } });
@@ -60,7 +60,7 @@ test("admin exclui empresa com campanhas, saldo e registros em todas as tabelas 
 
   // A proteção dos eventos de campanha volta logo depois da exclusão.
   assert.ok(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'trigger' AND name = 'no_delete_campaign_events'").get());
-  r = await req("/auth/register", { body: { role: "empresa", email: "outra@exemplo.invalid", senha: "12345678", whats: "11912345678", aceitouTermos: true } });
+  r = await req("/auth/register", { body: { role: "empresa", email: "outra@exemplo.invalid", senha: "12345678", whats: "11912345678", nome: "Empresa Teste", logo: { mimetype: "image/png", base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }, aceitouTermos: true } });
   await req("/campaigns", { cookie: r.cookie, body: { titulo: "Outra" } });
   assert.throws(() => db.prepare("DELETE FROM campaign_events").run(), /imutáveis/);
 

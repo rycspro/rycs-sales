@@ -1,14 +1,15 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { ImagePlus, Trash2 } from "lucide-react";
 import { CampoSenha } from "../ui.jsx";
 import Termos from "../auth/Termos.jsx";
 import RecuperarSenha from "../auth/RecuperarSenha.jsx";
 import MolduraOnboarding from "./MolduraOnboarding.jsx";
 import { api } from "../../lib/api.js";
 import { parametro, limparConviteOnboarding } from "../../lib/rotas.js";
-import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, normalizarWhatsapp } from "../../../shared/onboarding.js";
+import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, normalizarWhatsapp, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
 
 // Etapa 1 do onboarding para quem ainda não tem conta: criar o acesso
-// (e-mail, senha e WhatsApp), entrar com uma conta existente ou recuperar a
+// (nome e logo da empresa, e-mail, senha e WhatsApp), entrar com uma conta existente ou recuperar a
 // senha, tudo na mesma tela. Quem chega por convite do admin tem o e-mail
 // travado no do convite.
 
@@ -22,6 +23,13 @@ function mascaraWhatsapp(valor) {
   if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
+
+const lerArquivo = (arquivo) => new Promise((ok, falha) => {
+  const r = new FileReader();
+  r.onload = () => ok(String(r.result));
+  r.onerror = () => falha(r.error);
+  r.readAsDataURL(arquivo);
+});
 
 function Campo({ id, label, erro, dica, children }) {
   return (
@@ -41,6 +49,10 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [nome, setNome] = useState("");
+  // Logo fica só no navegador até o cadastro: { dataUri, mimetype }.
+  const [logo, setLogo] = useState(null);
+  const inputLogo = useRef(null);
   const [indicacao, setIndicacao] = useState(() => (parametro("ref") || "").toUpperCase());
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState("");
@@ -70,9 +82,25 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
       const s = validarSenhaEmpresa(senha);
       if (s) e.senha = s;
       if (!normalizarWhatsapp(whatsapp)) e.whatsapp = "Informe um WhatsApp válido, com DDD.";
+      if (nome.trim().length < 2) e.nome = "Informe o nome da empresa.";
+      if (!logo) e.logo = "Envie o logo da empresa.";
     } else if (!senha) e.senha = "Informe sua senha.";
     setErros(e);
     return !Object.keys(e).length;
+  };
+
+  const escolherLogo = async (arquivo) => {
+    if (inputLogo.current) inputLogo.current.value = "";
+    if (!arquivo) return;
+    limparErro("logo");
+    try {
+      const svgTexto = arquivo.type === "image/svg+xml" ? await arquivo.text() : "";
+      const erro = avaliarLogo({ mimetype: arquivo.type, tamanhoBytes: arquivo.size, svgTexto });
+      if (erro) { setErros((e) => ({ ...e, logo: erro })); return; }
+      setLogo({ dataUri: await lerArquivo(arquivo), mimetype: arquivo.type });
+    } catch {
+      setErros((e) => ({ ...e, logo: "Não foi possível ler o arquivo. Tente outro." }));
+    }
   };
 
   const enviar = async (ev) => {
@@ -82,7 +110,8 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
     setSalvando(true);
     if (modo === "cadastro") {
       const r = await onRegister({
-        role: "empresa", email: email.trim(), senha, whats: whatsapp,
+        role: "empresa", email: email.trim(), senha, whats: whatsapp, nome: nome.trim(),
+        logo: { base64: logo.dataUri.split(",")[1], mimetype: logo.mimetype },
         aceitouTermos: true, indicacao: indicacao || undefined,
         convite: conviteValido ? conviteToken : undefined,
       });
@@ -111,9 +140,9 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
     }[e.chave],
   }));
 
-  const props = (nome) => ({
-    "aria-invalid": erros[nome] ? true : undefined,
-    "aria-describedby": [erros[nome] && `${id}-${nome}-erro`, `${id}-${nome}-dica`].filter(Boolean).join(" ") || undefined,
+  const props = (campo) => ({
+    "aria-invalid": erros[campo] ? true : undefined,
+    "aria-describedby": [erros[campo] && `${id}-${campo}-erro`, `${id}-${campo}-dica`].filter(Boolean).join(" ") || undefined,
   });
 
   return (
@@ -135,7 +164,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
             <form onSubmit={enviar} noValidate>
               <h2 className="vx-disp vx-onb-card-titulo">{modo === "cadastro" ? "Crie seu acesso" : "Acesse sua conta"}</h2>
               <p className="vx-mut vx-onb-card-apoio">
-                {modo === "cadastro" ? "Use seu e-mail, uma senha e o WhatsApp da empresa para começar." : "Use seu e-mail e sua senha para continuar o cadastro."}
+                {modo === "cadastro" ? "Informe a sua empresa, seu e-mail, uma senha e o WhatsApp para começar." : "Use seu e-mail e sua senha para continuar o cadastro."}
               </p>
 
               {convite?.carregando && <div className="vx-onb-aviso">Conferindo o convite…</div>}
@@ -145,6 +174,38 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
                 </div>
               )}
               {convite?.ok === false && <div className="vx-onb-erro" role="alert">{convite.erro}</div>}
+
+              {modo === "cadastro" && <>
+                <div className="vx-onb-campo">
+                  <span className="vx-label" id={`${id}-logo-rotulo`}>Logo da empresa</span>
+                  <div className="vx-onb-logo">
+                    <div className="vx-onb-logo-previa" aria-hidden={!logo}>
+                      {logo ? <img src={logo.dataUri} alt="Logo escolhido" /> : <ImagePlus size={22} aria-hidden="true" />}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button type="button" className="vx-btn" style={{ minHeight: 44 }}
+                        aria-describedby={[`${id}-logo-rotulo`, `${id}-logo-dica`, erros.logo && `${id}-logo-erro`].filter(Boolean).join(" ")}
+                        onClick={() => inputLogo.current?.click()}>
+                        {logo ? "Trocar logo" : "Enviar logo"}
+                      </button>
+                      {logo && (
+                        <button type="button" className="vx-btn vx-btn-ghost" style={{ minHeight: 44 }} onClick={() => setLogo(null)}>
+                          <Trash2 size={15} aria-hidden="true" /> Remover
+                        </button>
+                      )}
+                    </div>
+                    <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                      onChange={(e) => escolherLogo(e.target.files?.[0])} />
+                  </div>
+                  <div id={`${id}-logo-dica`} className="vx-onb-dica">PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
+                  {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
+                </div>
+
+                <Campo id={`${id}-nome`} label="Nome da empresa" erro={erros.nome}>
+                  <input id={`${id}-nome`} className="vx-input" autoComplete="organization" maxLength={100}
+                    value={nome} onChange={(e) => { setNome(e.target.value); limparErro("nome"); }} {...props("nome")} />
+                </Campo>
+              </>}
 
               <Campo id={`${id}-email`} label="E-mail" erro={erros.email}>
                 <input id={`${id}-email`} className="vx-input" type="email" autoComplete="email" inputMode="email"

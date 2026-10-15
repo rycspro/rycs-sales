@@ -17,16 +17,23 @@ test("rotas do onboarding: cadastro, convite, retomada, permissões e recuperaç
     return { status: r.status, corpo: await r.json(), cookie: set ? set.split(";")[0] : null };
   };
   const cookieAdmin = assinar({ id: "admin-teste", role: "admin", entityId: null });
-  const empresa = (email, extra = {}) => ({ role: "empresa", email, senha: "12345678", whats: "(11) 91234-5678", aceitouTermos: true, ...extra });
+  const empresa = (email, extra = {}) => ({ role: "empresa", email, senha: "12345678", whats: "(11) 91234-5678", nome: "Empresa Teste", logo: { mimetype: "image/png", base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }, aceitouTermos: true, ...extra });
 
   // Cadastro pelo site: senha curta e WhatsApp ausente voltam com o campo.
   let r = await req("/auth/register", { body: empresa("a@exemplo.invalid", { senha: "1234567" }) });
   assert.equal(r.status, 400); assert.equal(r.corpo.campo, "senha");
   r = await req("/auth/register", { body: empresa("a@exemplo.invalid", { whats: "" }) });
   assert.equal(r.status, 400); assert.equal(r.corpo.campo, "whatsapp");
+  // Nome e logo também são pedidos já na etapa 1.
+  r = await req("/auth/register", { body: empresa("a@exemplo.invalid", { nome: " " }) });
+  assert.equal(r.status, 400); assert.equal(r.corpo.campo, "nome");
+  r = await req("/auth/register", { body: empresa("a@exemplo.invalid", { logo: undefined }) });
+  assert.equal(r.status, 400); assert.equal(r.corpo.campo, "logo");
   r = await req("/auth/register", { body: empresa("a@exemplo.invalid") });
   assert.equal(r.status, 200);
   const cookieA = r.cookie;
+  r = await req("/onboarding/empresa", { cookie: cookieA });
+  assert.match(r.corpo.logo, /^data:image\/png;base64,/);
 
   // Retomada: o progresso vem do servidor, com a etapa 1 concluída e sem trial.
   r = await req("/onboarding", { cookie: cookieA });
@@ -90,10 +97,10 @@ test("rotas do onboarding: cadastro, convite, retomada, permissões e recuperaç
   r = await req("/onboarding/acesso", { cookie: cookieAntiga, body: { whatsapp: "11 3456-7890" } });
   assert.equal(r.corpo.atual, "empresa");
 
-  // Etapa 2: perfil. O nome provisório (começo do e-mail) não aparece como
-  // nome da empresa; obrigatórios seguram a conclusão, rascunho salva.
+  // Etapa 2: perfil. Nome e logo da etapa 1 já vêm preenchidos;
+  // obrigatórios seguram a conclusão, rascunho salva.
   r = await req("/onboarding/empresa", { cookie: cookieA });
-  assert.equal(r.corpo.nome, "");
+  assert.equal(r.corpo.nome, "Empresa Teste");
   r = await req("/onboarding", { cookie: cookieA });
   assert.equal(r.corpo.bloqueia, true, "empresa nova fica na etapa 2, que já existe");
   r = await req("/onboarding/empresa", { cookie: cookieA, body: { produto: "CRM", concluir: true } });
