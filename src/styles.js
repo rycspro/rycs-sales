@@ -29,6 +29,9 @@ body{-webkit-text-size-adjust:100%}
   --amber:#B45309; --amber-50:#FFFBEB; --amber-100:#FEF3C7;
   --red:#B42318; --red-50:#FEF2F1; --red-100:#FBDDDA;
   --indigo:#4338CA; --indigo-50:#EEF0FE; --indigo-100:#DEE1FB;
+  /* Orb do Jarvas (anel de luz): azuis do design escolhido pelo dono. */
+  --sky:#38BDF8; --sky-600:#0EA5E9; --sky-700:#0284C7; --sky-50:#F8FCFF;
+  --blue-400:#60A5FA; --blue-500:#3B82F6; --blue-vivo:#005DFF; --blue-800:#1E40AF; --blue-noite:#1A3379;
   --radius-lg:16px; --radius-md:13px; --radius-sm:10px; --radius-pill:999px;
   --shadow-card:0 1px 3px rgba(11,18,32,.05),0 4px 12px -4px rgba(11,18,32,.10);
   --shadow-pop:0 20px 48px -16px rgba(11,18,32,.26);

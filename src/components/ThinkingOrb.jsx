@@ -1,55 +1,70 @@
 import { useEffect, useRef } from "react";
 
-// Orb do Jarvas. Uso: <ThinkingOrb state="speaking" size={200} nivel={ref} />
+// Orb do Jarvas. Uso: <ThinkingOrb state="speaking" size={184} nivel={ref} />
 //
-// Uma esfera de vidro com luzes desfocadas girando por dentro, em camadas
-// com velocidades diferentes, e um halo por fora. `nivel` é um ref com o
-// volume do momento (0 a 1): a voz do Jarvas ou o microfone. O orb lê esse
-// valor a cada quadro e pulsa no ritmo do som, sem re-renderizar o React.
+// Design escolhido pelo dono (adaptado do loader "joao-canais" do Uiverse):
+// um disco escuro com um anel de luz azul girando por dentro, feito de
+// sombras internas que mudam de tom enquanto giram, e o nome "Jarvas" no
+// centro com as letras acendendo em onda.
 //
-// Estados:
-// - idle:       luz girando devagar, respirando
-// - connecting: mais rápido, halo pulsando
-// - thinking:   giro acelerado e brilho passando
+// `nivel` é um ref com o volume do momento (0 a 1): a voz do Jarvas ou o
+// microfone. O orb lê esse valor a cada quadro e o anel pulsa e brilha no
+// ritmo do som, sem re-renderizar o React.
+//
+// Estados (mudam a velocidade do giro e das letras):
+// - idle:       devagar, letras quase apagadas
+// - connecting: giro do design original
+// - thinking:   mais rápido, letras em onda
 // - speaking:   reage ao volume da voz do Jarvas
-// - listening:  tom mais frio e reage ao volume do microfone
+// - listening:  reage ao volume do microfone, tom mais claro
 //
-// Cores do design system (src/styles.js). Com prefers-reduced-motion, fica
-// parado e só muda de tom.
+// Medidas proporcionais ao tamanho (o design original tem 180px). Cores do
+// design system (src/styles.js). Com prefers-reduced-motion, fica parado.
 
 const ESTADOS = ["idle", "connecting", "thinking", "speaking", "listening"];
-const VELOCIDADE = { idle: 1, connecting: 0.45, thinking: 0.3, speaking: 0.6, listening: 0.55 };
+const VELOCIDADE = { idle: 2.4, connecting: 1, thinking: 0.6, speaking: 0.85, listening: 0.9 };
+
+// Sombra interna do anel, em unidades do design original (180px).
+const sombra = (a, b, c) => [
+  `0 calc(6 * var(--u)) calc(12 * var(--u)) 0 var(${a}) inset`,
+  `0 calc(12 * var(--u)) calc(18 * var(--u)) 0 var(${b}) inset`,
+  `0 calc(36 * var(--u)) calc(36 * var(--u)) 0 var(${c}) inset`,
+].join(",");
+
+// Brilho externo do anel, com a transparência do design original.
+const brilho = (borrao, espalha) => [
+  `0 0 calc(${borrao} * var(--u)) calc(${espalha} * var(--u)) color-mix(in srgb, var(--sky) 30%, transparent)`,
+  `0 0 calc(${borrao * 2} * var(--u)) calc(${espalha * 1.5} * var(--u)) color-mix(in srgb, var(--blue-vivo) 20%, transparent)`,
+].join(",");
 
 const CSS = `
-.orb{position:relative;flex:none;display:inline-block;--nivel:0;--vel:1}
-.orb-halo{position:absolute;inset:-16%;border-radius:50%;
-  background:radial-gradient(circle,var(--brand) 0%,var(--indigo,var(--brand)) 38%,transparent 70%);
-  filter:blur(calc(var(--d) * .08));opacity:calc(.28 + var(--nivel) * .55);
-  transform:scale(calc(.92 + var(--nivel) * .3));transition:opacity .25s}
-.orb-esfera{position:absolute;inset:0;border-radius:50%;overflow:hidden;isolation:isolate;
-  background:var(--grad-ai,linear-gradient(135deg,var(--indigo),var(--brand)));
-  transform:scale(calc(1 + var(--nivel) * .09));
-  box-shadow:0 calc(var(--d) * .08) calc(var(--d) * .28) calc(var(--d) * -.08) var(--brand),inset 0 0 calc(var(--d) * .1) rgba(255,255,255,.25)}
-.orb-luz{position:absolute;width:85%;height:85%;border-radius:50%;filter:blur(calc(var(--d) * .07))}
-.orb-l1{left:-18%;top:-12%;background:radial-gradient(circle,var(--navy) 0%,transparent 65%);opacity:.55;animation:orb-a calc(var(--vel) * 7s) ease-in-out infinite}
-.orb-l2{right:-22%;top:6%;background:radial-gradient(circle,var(--indigo,var(--brand)) 0%,transparent 62%);mix-blend-mode:screen;animation:orb-b calc(var(--vel) * 9s) ease-in-out infinite}
-.orb-l3{left:4%;bottom:-24%;background:radial-gradient(circle,#fff 0%,transparent 58%);mix-blend-mode:soft-light;opacity:.9;animation:orb-c calc(var(--vel) * 11s) ease-in-out infinite}
-.orb-l4{left:22%;top:20%;width:56%;height:56%;background:radial-gradient(circle,#fff 0%,transparent 62%);mix-blend-mode:screen;opacity:calc(.18 + var(--nivel) * .55);animation:orb-b calc(var(--vel) * 6s) ease-in-out infinite reverse}
-.orb-giro{position:absolute;inset:-20%;background:conic-gradient(from 0deg,transparent 0 60%,rgba(255,255,255,.28) 72%,transparent 84%);
-  mix-blend-mode:overlay;opacity:0;animation:orb-gira calc(var(--vel) * 4s) linear infinite}
-.orb[data-state="thinking"] .orb-giro,.orb[data-state="connecting"] .orb-giro{opacity:1}
-.orb[data-state="listening"] .orb-l1{background:radial-gradient(circle,var(--indigo,var(--brand)) 0%,transparent 65%);opacity:.8}
-.orb[data-state="listening"] .orb-l3{opacity:1;mix-blend-mode:screen}
-.orb[data-state="connecting"] .orb-halo{animation:orb-pulsa 1.2s ease-in-out infinite}
-.orb-vidro{position:absolute;inset:0;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.55) 0%,rgba(255,255,255,.08) 22%,transparent 40%),
-             radial-gradient(circle at 70% 85%,rgba(255,255,255,.12) 0%,transparent 35%);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 calc(var(--d) * -.04) calc(var(--d) * .1) rgba(0,0,0,.25)}
-@keyframes orb-a{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(28%,18%) scale(1.15)}66%{transform:translate(8%,32%) scale(.9)}}
-@keyframes orb-b{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-26%,22%) scale(.9)}66%{transform:translate(-10%,-14%) scale(1.2)}}
-@keyframes orb-c{0%,100%{transform:translate(0,0) scale(1.05)}50%{transform:translate(20%,-30%) scale(.88)}}
-@keyframes orb-gira{to{transform:rotate(360deg)}}
-@keyframes orb-pulsa{0%,100%{opacity:.25;transform:scale(.95)}50%{opacity:.6;transform:scale(1.12)}}
+.orb{position:relative;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  --nivel:0;--vel:1;--u:calc(var(--d) / 180);border-radius:50%;user-select:none;-webkit-user-select:none}
+.orb-halo{position:absolute;inset:-12%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--sky) 0%,var(--blue-vivo) 35%,transparent 68%);
+  filter:blur(calc(14 * var(--u)));opacity:calc(.12 + var(--nivel) * .55);transform:scale(calc(.9 + var(--nivel) * .25))}
+.orb-corpo{position:absolute;inset:0;border-radius:50%;transform:scale(calc(1 + var(--nivel) * .07))}
+.orb-disco{position:absolute;inset:0;border-radius:50%;
+  background:linear-gradient(0deg,var(--blue-noite),var(--navy) 55%,var(--navy-600));
+  box-shadow:0 calc(8 * var(--u)) calc(30 * var(--u)) calc(-8 * var(--u)) var(--blue-vivo)}
+.orb-anel{position:absolute;inset:0;border-radius:50%;animation:orb-anel calc(var(--vel) * 2.3s) linear infinite}
+.orb-letras{position:relative;z-index:1;display:flex;font-family:"Inter",sans-serif;font-weight:300;color:#fff;
+  font-size:calc(19 * var(--u));letter-spacing:.02em}
+.orb-letra{display:inline-block;opacity:.4;animation:orb-letra calc(var(--vel) * 2.4s) infinite}
+.orb[data-state="idle"] .orb-letra{animation:none;opacity:.55}
+.orb[data-state="listening"] .orb-disco{background:linear-gradient(0deg,var(--blue-800),var(--navy) 60%,var(--navy-600))}
+@keyframes orb-anel{
+  0%{transform:rotate(90deg);box-shadow:${sombra("--sky", "--blue-vivo", "--blue-800")},${brilho(3, 1.2)}}
+  25%{transform:rotate(180deg);box-shadow:${sombra("--sky-600", "--sky", "--blue-vivo")},${brilho(6, 2.4)}}
+  50%{transform:rotate(270deg);box-shadow:${sombra("--blue-400", "--sky-700", "--blue-vivo")},${brilho(3, 1.2)}}
+  75%{transform:rotate(360deg);box-shadow:${sombra("--blue-500", "--sky-600", "--brand")},${brilho(6, 2.4)}}
+  100%{transform:rotate(450deg);box-shadow:${sombra("--sky", "--blue-vivo", "--blue-800")},${brilho(3, 1.2)}}
+}
+@keyframes orb-letra{
+  0%,100%{opacity:.4;transform:translateY(0)}
+  20%{opacity:1;text-shadow:var(--sky-50) 0 0 calc(5 * var(--u))}
+  40%{opacity:.7;transform:translateY(0)}
+}
 @media (prefers-reduced-motion: reduce){.orb *{animation:none!important}}
 `;
 
@@ -62,6 +77,8 @@ function inserirCss() {
   document.head.appendChild(el);
   cssInserido = true;
 }
+
+const NOME = "Jarvas".split("");
 
 export default function ThinkingOrb({ state = "idle", size = 64, nivel = null, label, decorativo = false }) {
   inserirCss();
@@ -93,14 +110,15 @@ export default function ThinkingOrb({ state = "idle", size = 64, nivel = null, l
       style={{ width: size, height: size, "--d": `${size}px`, "--vel": VELOCIDADE[estado] }}
       role={decorativo ? undefined : "img"} aria-hidden={decorativo || undefined} aria-label={decorativo ? undefined : label}>
       <span className="orb-halo" />
-      <span className="orb-esfera">
-        <span className="orb-luz orb-l1" />
-        <span className="orb-luz orb-l2" />
-        <span className="orb-luz orb-l3" />
-        <span className="orb-luz orb-l4" />
-        <span className="orb-giro" />
+      <span className="orb-corpo">
+        <span className="orb-disco" />
+        <span className="orb-anel" />
       </span>
-      <span className="orb-vidro" />
+      {size >= 72 && (
+        <span className="orb-letras" aria-hidden="true">
+          {NOME.map((l, i) => <span key={i} className="orb-letra" style={{ animationDelay: `${i * 0.1}s` }}>{l}</span>)}
+        </span>
+      )}
     </span>
   );
 }
