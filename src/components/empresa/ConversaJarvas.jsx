@@ -6,7 +6,7 @@ import { money } from "../../lib/utils.js";
 import { montarCampanha } from "../../../shared/objetivosCampanha.js";
 import {
   interpretarResposta, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo,
-  calcularTarefasJarvas, rotuloObjetivo, FECHAMENTO, confirmaMontagem, paraFala, pareceEco, segmentosDeFala,
+  calcularTarefasJarvas, rotuloObjetivo, FECHAMENTO, confirmaMontagem, paraFala, pareceEco, segmentosDeFala, fraseIncompleta,
 } from "../../../shared/jarvas.js";
 
 // Conversa assistida por voz com o Jarvas, sem botão de falar.
@@ -31,11 +31,13 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 // Ritmo da conversa. Calibrado para não atropelar ninguém: a pessoa termina
 // a frase, e o Jarvas só para de falar quando alguém realmente fala por cima.
-const PAUSA_FIM_FALA = 1500;       // silêncio que encerra a vez da pessoa
-const PAUSA_FIM_PARCIAL = 2200;    // idem, quando a última parte ainda não é final
-const PALAVRAS_PARA_INTERROMPER = 3;
-const CONFIRMA_INTERRUPCAO = 500;  // a pessoa precisa seguir falando por esse tempo
-const CARENCIA_POS_FALA = 900;     // logo depois de o Jarvas falar, o que chega é quase sempre eco
+const PAUSA_FIM_FALA = 1800;       // silêncio que encerra a vez da pessoa
+const PAUSA_FIM_PARCIAL = 2600;    // idem, quando a última parte ainda não é final
+const PAUSA_EXTRA_INCOMPLETA = 1500; // frase parada em "e…", "para…": espera mais
+const PALAVRAS_PARA_INTERROMPER = 5;
+const CONFIRMA_INTERRUPCAO = 900;  // a pessoa precisa seguir falando por esse tempo
+const ECO_FALANDO = 0.3;           // enquanto o Jarvas fala, 30% das palavras dele já é eco
+const CARENCIA_POS_FALA = 1200;    // logo depois de o Jarvas falar, o que chega é quase sempre eco
 
 const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", pausado: "idle", montando: "thinking" };
 const STATUS = {
@@ -286,7 +288,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
 
       // O microfone ouviu o próprio Jarvas: descarta. Enquanto ele fala (e
       // logo depois), o filtro é mais rigoroso.
-      if (pareceEco(dito, falaAtual.current, f === "falando" || recente ? 0.4 : 0.6)) {
+      if (pareceEco(dito, falaAtual.current, f === "falando" || recente ? ECO_FALANDO : 0.6)) {
         clearTimeout(v.timer);
         vez.current = { final: "", parcial: "", timer: null };
         return;
@@ -298,12 +300,12 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         interrupcao.current = setTimeout(() => {
           interrupcao.current = null;
           const atual = `${vez.current.final} ${vez.current.parcial}`.trim();
-          if (faseRef.current !== "falando" || (atual.match(/\S+/g) || []).length < palavras || pareceEco(atual, falaAtual.current, 0.4)) return;
+          if (faseRef.current !== "falando" || (atual.match(/\S+/g) || []).length <= palavras || pareceEco(atual, falaAtual.current, ECO_FALANDO)) return;
           pararFala();
           mudarFase("ouvindo");
           setOuvido(atual);
           clearTimeout(vez.current.timer);
-          vez.current.timer = setTimeout(encerrarVez, PAUSA_FIM_PARCIAL);
+          vez.current.timer = setTimeout(encerrarVez, PAUSA_FIM_PARCIAL + (fraseIncompleta(atual) ? PAUSA_EXTRA_INCOMPLETA : 0));
         }, CONFIRMA_INTERRUPCAO);
         return;
       }
@@ -312,7 +314,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       if (f !== "pensando") mudarFase("ouvindo");
       setOuvido(dito);
       clearTimeout(v.timer);
-      v.timer = setTimeout(encerrarVez, v.parcial ? PAUSA_FIM_PARCIAL : PAUSA_FIM_FALA);
+      v.timer = setTimeout(encerrarVez, (v.parcial ? PAUSA_FIM_PARCIAL : PAUSA_FIM_FALA) + (fraseIncompleta(dito) ? PAUSA_EXTRA_INCOMPLETA : 0));
     };
     r.onerror = (e) => {
       if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error))

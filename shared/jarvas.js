@@ -253,12 +253,19 @@ export const interpretarAjuste = (texto) => interpretar(texto, null);
 // O microfone ouve o próprio Jarvas falando. Se o que foi ouvido é quase
 // tudo palavra da fala dele, é eco, não a pessoa.
 export function pareceEco(ouvido, falado, limiar = 0.6) {
-  const palavras = (t) => (sem(t).match(/[a-z0-9]{3,}/g) || []);
+  // Números sem separador ("15.000" e "15000" são a mesma palavra) e a fala
+  // comparada também na forma falada ("R$ 15.000" → "15.000 reais").
+  const palavras = (t) => (sem(t).replace(/(\d)[.,](?=\d)/g, "$1").match(/[a-z0-9]{3,}/g) || []);
   const ditas = palavras(ouvido);
   if (ditas.length < 2) return false;
-  const dele = new Set(palavras(falado));
+  const dele = new Set([...palavras(falado), ...palavras(paraFala(falado))]);
   return ditas.filter((p) => dele.has(p)).length / ditas.length >= limiar;
 }
+
+// A frase parou numa palavra de ligação ("e…", "para…", "tipo…"): a pessoa
+// ainda vai continuar, então o Jarvas espera mais antes de responder.
+export const fraseIncompleta = (texto) =>
+  /\b(e|de|da|do|das|dos|para|pra|com|que|o|a|os|as|um|uma|mais|em|no|na|tipo|entao|ne|ah|eh|hum|uhm|mas|ou|porque|se)$/.test(sem(texto).trim().replace(/[.,!?]+$/, ""));
 
 // ---------------------------------------------------------------------------
 // 2. Condução

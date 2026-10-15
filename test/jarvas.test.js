@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas } from "../shared/jarvas.js";
+import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas, fraseIncompleta } from "../shared/jarvas.js";
 
 // Jarvas (shared/jarvas.js): entende português do dia a dia, pula o que já
 // sabe e reage com conta de verdade, sem provedor externo.
@@ -140,4 +140,13 @@ test("frases que gastam crédito: curtas e só com número", () => {
     .flatMap(segmentosDeFala).filter((f) => !fixas.has(f));
   for (const f of pagas) assert.ok(f.split(/\s+/).length <= 4 && /\d/.test(f), f);
   assert.ok(fixas.has("Feito."));
+});
+
+test("conversa sem cortes: eco com números e frase incompleta", () => {
+  // O reconhecimento escreve o eco do Jarvas com números e "reais" do jeito falado.
+  assert.ok(pareceEco("10 reuniões 15000 reais", "10 reuniões: R$ 15.000.", 0.3));
+  assert.ok(!pareceEco("três de cada dez", "10 reuniões: R$ 15.000.", 0.3));
+  assert.ok(fraseIncompleta("quero agendar reuniões com"));
+  assert.ok(fraseIncompleta("é, tipo"));
+  assert.ok(!fraseIncompleta("quero agendar reuniões"));
 });
