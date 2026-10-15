@@ -3,8 +3,8 @@ import { randomBytes, createHash } from "crypto";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
-import { acessoDaEmpresa, primeiraCobranca } from "../../shared/assinatura.js";
-import { PLANOS, ORDEM_PLANOS, planoDe } from "../../shared/planos.js";
+import { acessoDaEmpresa, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../shared/assinatura.js";
+import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../shared/planos.js";
 import { calcularVoucher, normalizarVoucher, validarVoucher } from "../services/vouchers.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
 import { trialDoOnboarding, concluir as concluirEtapaOnboarding } from "../services/onboarding.js";
@@ -311,15 +311,15 @@ router.post("/subscription", async (req, res) => {
   if (!PLANOS[chave]) return res.status(400).json({ error: "Plano inválido" });
 
   const plano = PLANOS[chave];
-  // Checkout da etapa 5 do onboarding: só cartão, com o trial do convite (se
-  // houver) e o documento do titular servindo de documento da empresa quando
-  // ela ainda não tem um.
+  // Checkout da etapa 5 do onboarding: cartão ou Pix Automático, com o trial
+  // do convite (se houver) e o documento do titular servindo de documento da
+  // empresa quando ela ainda não tem um.
   const doOnboarding = req.body?.onboarding === true;
   if (doOnboarding) {
     if (!PLANOS[chave]?.preco) return res.status(400).json({ error: "Escolha um dos planos." });
-    req.body.formaPagamento = "CREDIT_CARD";
+    if (req.body.formaPagamento !== "PIX_AUTOMATICO") req.body.formaPagamento = "CREDIT_CARD";
     const doc = normalizarDocumento(req.body?.titular?.documento);
-    if (!doc) return res.status(400).json({ error: "Informe o CPF ou CNPJ do titular do cartão.", campo: "documento" });
+    if (!doc) return res.status(400).json({ error: req.body.formaPagamento === "PIX_AUTOMATICO" ? "Informe o CPF ou CNPJ da empresa." : "Informe o CPF ou CNPJ do titular do cartão.", campo: "documento" });
     db.prepare("UPDATE companies SET documento = ? WHERE id = ? AND (documento IS NULL OR documento = '')").run(doc, entityId);
   }
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
@@ -369,6 +369,11 @@ router.post("/subscription", async (req, res) => {
       try { await asaas(`/subscriptions/${pendente.asaasId}`, { method: "DELETE" }); }
       catch (e) { console.warn("[asaas] cancelamento do checkout anterior:", e.message); }
     }
+    // Pix Automático ainda não autorizado: o QR antigo não pode continuar valendo.
+    if (pendente.asaasAutorizacaoId && !pendente.asaasId && asaasAtivo()) {
+      try { await asaas(`/pix/automatic/authorizations/${pendente.asaasAutorizacaoId}`, { method: "DELETE" }); }
+      catch (e) { console.warn("[asaas] cancelamento da autorização anterior:", e.message); }
+    }
     db.transaction(() => {
       db.prepare("UPDATE subscriptions SET status = 'cancelada', atualizadoEm = ? WHERE id = ?").run(agora(), pendente.id);
       db.prepare("UPDATE voucher_redemptions SET status = 'cancelado' WHERE subscriptionId = ? AND status = 'reservado'").run(pendente.id);
@@ -403,11 +408,13 @@ router.post("/subscription", async (req, res) => {
     let voucher=null, calculo={valorOriginal:plano.preco,desconto:0,valorFinal:plano.preco};
     if(req.body?.voucher){const v=validarVoucher(db,{codigo:req.body.voucher,plano:chave,companyId:entityId});if(!v.ok)return res.status(422).json({error:v.error});voucher=v.voucher;calculo=calcularVoucher(plano.preco,voucher);}
     if(calculo.valorFinal<5)return res.status(422).json({error:"O total do checkout precisa ser de pelo menos R$ 5,00 para pagamento via Pix."});
-    // Cartão é a forma prioritária; Pix continua aceito e a estrutura já
-    // comporta o Pix Automático quando ele entrar.
+    // Cartão é a forma prioritária; Pix continua aceito, e o Pix Automático
+    // entra pela etapa 5 do onboarding.
     const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
-    if (!["CREDIT_CARD", "PIX"].includes(forma))
+    if (!["CREDIT_CARD", "PIX", "PIX_AUTOMATICO"].includes(forma))
       return res.status(400).json({ error: "Forma de pagamento inválida." });
+    if (forma === "PIX_AUTOMATICO" && !doOnboarding)
+      return res.status(400).json({ error: "O Pix Automático é contratado na etapa de plano do cadastro." });
 
     // Com trial, a primeira cobrança cai no fim dele. Sem trial, em 3 dias —
     // prazo que o Pix precisa para o boleto/QR não vencer antes de ser pago.
@@ -415,6 +422,11 @@ router.post("/subscription", async (req, res) => {
     const vencimento = trialDias
       ? primeiraCobranca({ trialDias })
       : new Date(Date.now() + 3 * 86400000);
+
+    if (forma === "PIX_AUTOMATICO") {
+      const r = await criarPixAutomatico({ subId, entityId, chave, plano, customerId, calculo, voucher, trialDias });
+      return res.json({ ok: true, subscriptionId: subId, ...calculo, ...r });
+    }
 
     const corpo = {
       customer: customerId,
@@ -500,6 +512,141 @@ router.post("/subscription", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Pix Automático (etapa 5 do onboarding).
+//
+// 1. A RYCS cria a autorização no Asaas, no modo SUBSCRIPTION: depois de
+//    ativa, o próprio Asaas gera e agenda a mensalidade todo mês.
+// 2. A autorização vem com um QR de pagamento imediato de
+//    TAXA_ATIVACAO_PIX_AUTOMATICO (R$ 1,00). Ao pagar, a empresa autoriza os
+//    débitos no app do banco dela.
+// 3. Quando o banco confirma, o Asaas manda PIX_AUTOMATIC_RECURRING_
+//    AUTHORIZATION_ACTIVATED. A tela também consulta o status, para não
+//    depender só do webhook. Aí a assinatura daqui ganha o id da assinatura
+//    do Asaas e segue o fluxo de sempre (pagamento confirmado ativa,
+//    vencido marca inadimplência).
+// O primeiro débito cai no fim do trial, nunca antes de 3 dias úteis.
+
+const iso = (d) => new Date(d).toISOString().split("T")[0];
+// Fim do dia do vencimento em Brasília: o débito acontece ao longo do dia.
+const fimDoDia = (d) => new Date(`${iso(d)}T23:59:59-03:00`).getTime();
+
+async function criarPixAutomatico({ subId, entityId, chave, plano, customerId, calculo, voucher, trialDias }) {
+  const vencimento = primeiroDebitoPixAutomatico({ trialDias });
+  const autorizacao = await asaas("/pix/automatic/authorizations", {
+    method: "POST",
+    body: {
+      customerId,
+      frequency: "MONTHLY",
+      contractId: `RYCS-${subId}`.slice(0, 35),
+      description: `RYCS ${plano.nome}`.slice(0, 35),
+      startDate: iso(vencimento),
+      value: calculo.valorFinal,
+      paymentCreationMode: "SUBSCRIPTION",
+      retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
+      immediateQrCode: {
+        originalValue: TAXA_ATIVACAO_PIX_AUTOMATICO,
+        expirationSeconds: 24 * 3600,
+        description: "Ativação do Pix Automático RYCS",
+      },
+    },
+  });
+
+  db.transaction(() => {
+    db.prepare(`INSERT INTO subscriptions (id, companyId, plano, status, asaasAutorizacaoId, valor, valorOriginal, desconto, voucherId, criadoEm, trialFim, trialDias, formaPagamento, proximaCobranca, atualizadoEm)
+                VALUES (?, ?, ?, 'pendente', ?, ?, ?, ?, ?, ?, ?, ?, 'PIX_AUTOMATICO', ?, ?)`)
+      .run(subId, entityId, chave, autorizacao.id, calculo.valorFinal, calculo.valorOriginal, calculo.desconto, voucher?.id || null, agora(),
+        trialDias > 0 ? fimDoDia(vencimento) : null, trialDias, vencimento.getTime(), agora());
+    if (voucher) db.prepare(`INSERT INTO voucher_redemptions (id,voucherId,companyId,subscriptionId,valorOriginal,desconto,valorFinal,status,criadoEm) VALUES (?,?,?,?,?,?,?,'reservado',?)`)
+      .run(uid(), voucher.id, entityId, subId, calculo.valorOriginal, calculo.desconto, calculo.valorFinal, agora());
+  })();
+
+  return {
+    status: "aguardando_autorizacao", formaPagamento: "PIX_AUTOMATICO", trialDias,
+    taxaAtivacao: TAXA_ATIVACAO_PIX_AUTOMATICO,
+    primeiraCobranca: vencimento.getTime(),
+    pixCopiaECola: autorizacao.payload || null,
+    pixQrCodeBase64: autorizacao.encodedImage || null,
+    expiraEm: autorizacao.immediateQrCode?.expirationDate || null,
+  };
+}
+
+// Autorização ativa no Asaas: a assinatura daqui passa a apontar para a
+// assinatura que o Asaas criou. Confere o status na API antes de mexer:
+// webhook e consulta da tela podem chegar juntos, e só um deve valer.
+export async function ativarPixAutomatico(autorizacaoId) {
+  const sub = db.prepare("SELECT * FROM subscriptions WHERE asaasAutorizacaoId = ?").get(autorizacaoId);
+  if (!sub || sub.asaasId || sub.status !== "pendente") return sub || null;
+  const aut = await asaas(`/pix/automatic/authorizations/${encodeURIComponent(autorizacaoId)}`);
+  if (aut?.status !== "ACTIVE") {
+    if (["REFUSED", "CANCELLED", "EXPIRED"].includes(aut?.status)) encerrarPixAutomatico(autorizacaoId, `Autorização ${aut.status}`);
+    return db.prepare("SELECT * FROM subscriptions WHERE id = ?").get(sub.id);
+  }
+
+  const status = sub.trialDias > 0 ? "trial" : "pendente";
+  const mudou = db.transaction(() => {
+    const r = db.prepare("UPDATE subscriptions SET asaasId = ?, status = ?, atualizadoEm = ? WHERE id = ? AND asaasId IS NULL")
+      .run(aut.subscriptionId || null, status, agora(), sub.id);
+    if (r.changes && status === "trial") db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(sub.plano, sub.companyId);
+    return r.changes > 0;
+  })();
+  if (!mudou) return db.prepare("SELECT * FROM subscriptions WHERE id = ?").get(sub.id);
+
+  // Débito autorizado equivale ao cartão cadastrado: a etapa 5 está cumprida.
+  concluirEtapaOnboarding(sub.companyId, "plano");
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(sub.companyId);
+  if (user) notificar(user.id, "assinatura", "Pix Automático autorizado",
+    `A mensalidade do plano ${planoDe(sub.plano).nome} será debitada automaticamente a partir de ${new Date(sub.proximaCobranca).toLocaleDateString("pt-BR")}.`);
+  console.log(`[assinatura] Pix Automático ativo: empresa ${sub.companyId}`);
+  return db.prepare("SELECT * FROM subscriptions WHERE id = ?").get(sub.id);
+}
+
+// Autorização recusada, cancelada pelo pagador ou expirada.
+export function encerrarPixAutomatico(autorizacaoId, motivo) {
+  const sub = db.prepare("SELECT * FROM subscriptions WHERE asaasAutorizacaoId = ?").get(autorizacaoId);
+  if (!sub || sub.status === "cancelada") return;
+  if (!sub.asaasId) {
+    // Nunca chegou a valer: o checkout fica cancelado e a empresa escolhe de novo.
+    db.transaction(() => {
+      db.prepare("UPDATE subscriptions SET status = 'cancelada', falhaMotivo = ?, atualizadoEm = ? WHERE id = ?").run(motivo, agora(), sub.id);
+      db.prepare("UPDATE voucher_redemptions SET status = 'cancelado' WHERE subscriptionId = ? AND status = 'reservado'").run(sub.id);
+    })();
+    return;
+  }
+  // Já valia: sem autorização, o próximo débito não acontece.
+  marcarInadimplencia(sub.asaasId, `Pix Automático: ${motivo}`);
+}
+
+// O Pix de ativação chega como cobrança avulsa e não é depósito de campanha.
+// Os depósitos do app sempre levam externalReference; a cobrança de ativação
+// não leva, é do valor da taxa e é de uma empresa com Pix Automático aberto.
+export function ehAtivacaoPixAutomatico(payment, companyId) {
+  if (!payment || payment.subscription || payment.externalReference) return null;
+  const porId = payment.pixAutomaticAuthorizationId
+    && db.prepare("SELECT * FROM subscriptions WHERE asaasAutorizacaoId = ?").get(payment.pixAutomaticAuthorizationId);
+  if (porId) return porId;
+  if (Number(payment.value) !== TAXA_ATIVACAO_PIX_AUTOMATICO) return null;
+  return db.prepare(`SELECT * FROM subscriptions WHERE companyId = ? AND formaPagamento = 'PIX_AUTOMATICO'
+                     AND asaasAutorizacaoId IS NOT NULL ORDER BY criadoEm DESC LIMIT 1`).get(companyId) || null;
+}
+
+// A tela da etapa 5 consulta aqui enquanto o QR está aberto.
+router.get("/subscription/pix-automatico", async (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  let sub = db.prepare(`SELECT * FROM subscriptions WHERE companyId = ? AND formaPagamento = 'PIX_AUTOMATICO'
+                        ORDER BY criadoEm DESC LIMIT 1`).get(req.user.entityId);
+  if (!sub) return res.json({ status: "nenhum" });
+  if (sub.status === "pendente" && !sub.asaasId && asaasAtivo()) {
+    try { sub = (await ativarPixAutomatico(sub.asaasAutorizacaoId)) || sub; }
+    catch (e) { console.warn("[asaas] consulta da autorização:", e.message); }
+  }
+  res.json({
+    status: sub.status === "cancelada" ? "cancelada" : sub.asaasId ? "autorizada" : "aguardando_autorizacao",
+    motivo: sub.status === "cancelada" ? sub.falhaMotivo || "" : "",
+    primeiraCobranca: sub.proximaCobranca, plano: sub.plano, valor: sub.valor,
+  });
+});
+
 router.delete("/subscription", async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
@@ -510,6 +657,12 @@ router.delete("/subscription", async (req, res) => {
   if (atual.asaasId && asaasAtivo()) {
     try { await asaas(`/subscriptions/${atual.asaasId}`, { method: "DELETE" }); }
     catch (e) { console.warn("[asaas] cancelamento:", e.message); }
+  }
+  // Pix Automático: sem cancelar a autorização, o banco da empresa continuaria
+  // com o débito autorizado.
+  if (atual.asaasAutorizacaoId && asaasAtivo()) {
+    try { await asaas(`/pix/automatic/authorizations/${atual.asaasAutorizacaoId}`, { method: "DELETE" }); }
+    catch (e) { console.warn("[asaas] cancelamento da autorização:", e.message); }
   }
 
   db.transaction(() => {

@@ -1,13 +1,16 @@
-import { useEffect, useId, useState } from "react";
-import { Check, ShieldCheck } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Check, Copy, ShieldCheck } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { formatarData, primeiraCobranca } from "../../../shared/assinatura.js";
+import { formatarData, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../../shared/assinatura.js";
+import { TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../../shared/planos.js";
 import { normalizarDocumento } from "../../../shared/onboarding.js";
 
-// Etapa 5: plano e cartão. Planos e preços vêm de shared/planos.js pelo
+// Etapa 5: plano e pagamento. Planos e preços vêm de shared/planos.js pelo
 // servidor; nada fixo aqui. O cartão vai ao gateway (Asaas) na requisição do
 // checkout e não fica na RYCS: o que volta é bandeira e quatro dígitos.
+// Pix Automático: a empresa paga um Pix de ativação pelo QR e autoriza, no
+// app do banco, o débito mensal; a etapa conclui quando o banco confirma.
 
 const digitos = (v) => String(v || "").replace(/\D/g, "");
 const mascaraCartao = (v) => digitos(v).slice(0, 19).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
@@ -38,6 +41,10 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
   const [erros, setErros] = useState({});
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [forma, setForma] = useState("cartao"); // cartao | pix
+  const [pix, setPix] = useState(null); // QR aberto: { payload, imagem, primeiraCobranca }
+  const [copiado, setCopiado] = useState(false);
+  const consulta = useRef(null);
 
   const carregar = async () => {
     setErroCarga("");
@@ -63,9 +70,50 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     aoAvancar(r);
   };
 
+  // Enquanto o QR está aberto, pergunta ao servidor se o banco já autorizou.
+  useEffect(() => {
+    if (!pix) return undefined;
+    let vivo = true;
+    const verificar = async () => {
+      const r = await api("/subscription/pix-automatico");
+      if (!vivo || !r || r.error) return;
+      if (r.status === "autorizada") { clearInterval(consulta.current); await terminar(); }
+      else if (r.status === "cancelada") {
+        clearInterval(consulta.current);
+        setPix(null);
+        setErro(`O Pix Automático não foi autorizado${r.motivo ? ` (${r.motivo})` : ""}. Tente de novo ou use o cartão.`);
+      }
+    };
+    consulta.current = setInterval(verificar, 4000);
+    return () => { vivo = false; clearInterval(consulta.current); };
+  }, [pix]);
+
+  const assinarPix = async () => {
+    const doc = normalizarDocumento(cartao.documento);
+    if (!doc) {
+      setErros({ documento: "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos)." });
+      document.getElementById(`${id}-documento`)?.focus();
+      return;
+    }
+    setErros({});
+    setEnviando(true);
+    const r = await api("/subscription", { plano, onboarding: true, formaPagamento: "PIX_AUTOMATICO", titular: { documento: doc } });
+    setEnviando(false);
+    if (!r || r.error) {
+      if (r?.campo) setErros({ [r.campo]: r.error });
+      return setErro(r?.error ? `O Pix Automático não está disponível agora: ${r.error}. Você pode usar o cartão de crédito.` : "Não foi possível gerar o Pix Automático. Tente de novo ou use o cartão.");
+    }
+    setPix({ payload: r.pixCopiaECola, imagem: r.pixQrCodeBase64, primeiraCobranca: r.primeiraCobranca });
+  };
+
+  const copiar = async () => {
+    try { await navigator.clipboard.writeText(pix.payload); setCopiado(true); setTimeout(() => setCopiado(false), 3000); } catch { /* o campo continua selecionável */ }
+  };
+
   const assinar = async (e) => {
     e.preventDefault();
     setErro("");
+    if (forma === "pix") return assinarPix();
     const v = validarCartao(cartao);
     setErros(v);
     if (Object.keys(v).length) {
@@ -102,7 +150,9 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
   const escolhido = dados.planos.find((p) => p.chave === plano);
   // Sem trial, a primeira cobrança do cartão é agendada para 3 dias (regra do
   // checkout em server/routes/subscriptions.js).
-  const cobrancaEm = trial ? primeiraCobranca({ trialDias: trial }) : primeiraCobranca({ trialDias: 3 });
+  const cobrancaEm = forma === "pix"
+    ? primeiroDebitoPixAutomatico({ trialDias: trial })
+    : trial ? primeiraCobranca({ trialDias: trial }) : primeiraCobranca({ trialDias: 3 });
 
   if (dados.atual) return (
     <div>
@@ -116,6 +166,35 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
         <div className="vx-onb-acoes">
           <button type="button" className="vx-btn" onClick={aoVoltar}>Voltar</button>
           <button type="button" className="vx-btn vx-btn-primary" onClick={manter} disabled={enviando}>{enviando ? "Salvando…" : "Continuar com este plano"}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (pix) return (
+    <div>
+      <div className="vx-onb-eyebrow">Passo 5 de 6</div>
+      <h1 className="vx-disp vx-onb-titulo">Autorize o Pix Automático</h1>
+      <div className="vx-onb-card vx-onb-secao" style={{ maxWidth: 640 }}>
+        <ol className="vx-mut" style={{ fontSize: 14, lineHeight: 1.7, paddingLeft: 18, margin: "0 0 14px" }}>
+          <li>Abra o app do banco da empresa e leia o QR Code (ou use o Pix copia e cola).</li>
+          <li>Confira e pague a ativação de <b>{money(TAXA_ATIVACAO_PIX_AUTOMATICO)}</b>. No mesmo passo o banco pede para autorizar o débito mensal da RYCS.</li>
+          <li>A mensalidade de <b>{escolhido ? money(escolhido.preco) : "—"}</b> é debitada automaticamente a partir de <b>{formatarData(pix.primeiraCobranca)}</b>. Você pode cancelar a autorização no app do banco quando quiser.</li>
+        </ol>
+        {pix.imagem && <img src={`data:image/png;base64,${pix.imagem}`} alt="QR Code do Pix Automático" width={220} height={220} style={{ display: "block", margin: "0 auto 14px" }} />}
+        {pix.payload && (
+          <div className="vx-onb-campo">
+            <label className="vx-label" htmlFor={`${id}-pix`}>Pix copia e cola</label>
+            <textarea id={`${id}-pix`} className="vx-input vx-mono" rows={3} readOnly value={pix.payload} onFocus={(e) => e.target.select()} />
+            <button type="button" className="vx-btn" style={{ minHeight: 44, marginTop: 8 }} onClick={copiar}>
+              <Copy size={15} aria-hidden="true" /> {copiado ? "Código copiado" : "Copiar código"}
+            </button>
+          </div>
+        )}
+        <p className="vx-onb-dica" role="status">Aguardando a confirmação do banco… Esta tela avança sozinha quando a autorização for confirmada.</p>
+        <div className="vx-onb-acoes">
+          <button type="button" className="vx-btn" onClick={() => { setPix(null); setForma("cartao"); }}>Usar cartão de crédito</button>
+          <span />
         </div>
       </div>
     </div>
@@ -156,31 +235,55 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
 
         <section className="vx-onb-card" aria-labelledby={`${id}-pag`}>
           <h2 id={`${id}-pag`} className="vx-disp" style={{ fontSize: 18, margin: "0 0 14px" }}>Pagamento</h2>
-          {campo("nome", "Nome no cartão", { autoComplete: "cc-name" })}
-          {campo("numero", "Número do cartão", { autoComplete: "cc-number", inputMode: "numeric" }, mascaraCartao)}
-          <div className="vx-onb-dois">
-            {campo("validade", "Validade", { autoComplete: "cc-exp", inputMode: "numeric", placeholder: "MM/AA" }, mascaraValidade)}
-            {campo("cvv", "CVV", { autoComplete: "cc-csc", inputMode: "numeric", maxLength: 4 }, (v) => digitos(v).slice(0, 4))}
-          </div>
-          {campo("documento", "CPF ou CNPJ do titular", { inputMode: "numeric" }, (v) => digitos(v).slice(0, 14))}
-          <div className="vx-onb-dois">
-            {campo("cep", "CEP de cobrança", { autoComplete: "postal-code", inputMode: "numeric" }, mascaraCep)}
-            {campo("numeroEndereco", "Número", { autoComplete: "address-line2" })}
-          </div>
+          <fieldset className="vx-onb-campo" style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
+            <legend className="vx-label">Forma de pagamento</legend>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {[["cartao", "Cartão de crédito"], ["pix", "Pix Automático"]].map(([v, rotulo]) => (
+                <label key={v} className="vx-btn" data-on={forma === v ? "1" : "0"}
+                  style={{ minHeight: 44, flex: 1, justifyContent: "center", ...(forma === v ? { borderColor: "var(--brand)", color: "var(--brand)" } : {}) }}>
+                  <input type="radio" name={`${id}-forma`} value={v} checked={forma === v}
+                    onChange={() => { setForma(v); setErros({}); setErro(""); }} style={{ marginRight: 6 }} />
+                  {rotulo}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {forma === "cartao" ? <>
+            {campo("nome", "Nome no cartão", { autoComplete: "cc-name" })}
+            {campo("numero", "Número do cartão", { autoComplete: "cc-number", inputMode: "numeric" }, mascaraCartao)}
+            <div className="vx-onb-dois">
+              {campo("validade", "Validade", { autoComplete: "cc-exp", inputMode: "numeric", placeholder: "MM/AA" }, mascaraValidade)}
+              {campo("cvv", "CVV", { autoComplete: "cc-csc", inputMode: "numeric", maxLength: 4 }, (v) => digitos(v).slice(0, 4))}
+            </div>
+            {campo("documento", "CPF ou CNPJ do titular", { inputMode: "numeric" }, (v) => digitos(v).slice(0, 14))}
+            <div className="vx-onb-dois">
+              {campo("cep", "CEP de cobrança", { autoComplete: "postal-code", inputMode: "numeric" }, mascaraCep)}
+              {campo("numeroEndereco", "Número", { autoComplete: "address-line2" })}
+            </div>
+          </> : <>
+            <p className="vx-mut" style={{ fontSize: 14, lineHeight: 1.6, margin: "0 0 12px" }}>
+              Você paga {money(TAXA_ATIVACAO_PIX_AUTOMATICO)} agora para ativar e autoriza, no app do banco, o débito automático da mensalidade. Dá para cancelar no próprio banco quando quiser.
+            </p>
+            {campo("documento", "CPF ou CNPJ da empresa", { inputMode: "numeric" }, (v) => digitos(v).slice(0, 14))}
+          </>}
 
           <dl className="vx-onb-resumo">
             <div><dt>Plano</dt><dd>{escolhido ? `${escolhido.nome} · ${money(escolhido.preco)}/mês` : "—"}</dd></div>
-            <div><dt>Cobrado hoje</dt><dd>{money(0)}</dd></div>
-            <div><dt>Primeira cobrança</dt><dd>{escolhido ? `${money(escolhido.preco)} em ${formatarData(cobrancaEm)}` : "—"}{trial ? ` (daqui a ${trial} dias)` : ""}</dd></div>
+            <div><dt>Cobrado hoje</dt><dd>{forma === "pix" ? `${money(TAXA_ATIVACAO_PIX_AUTOMATICO)} (ativação)` : money(0)}</dd></div>
+            <div><dt>{forma === "pix" ? "Primeiro débito automático" : "Primeira cobrança"}</dt><dd>{escolhido ? `${money(escolhido.preco)} em ${formatarData(cobrancaEm)}` : "—"}{trial && forma === "cartao" ? ` (daqui a ${trial} dias)` : ""}</dd></div>
           </dl>
 
           <div aria-live="polite">{erro && <div className="vx-onb-erro" role="alert">{erro}</div>}</div>
           <button type="submit" className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" disabled={enviando || !plano}>
-            {enviando ? "Cadastrando o cartão…" : trial ? `Começar os ${trial} dias grátis` : "Assinar e continuar"}
+            {forma === "pix"
+              ? (enviando ? "Gerando o Pix…" : "Gerar Pix de ativação")
+              : enviando ? "Cadastrando o cartão…" : trial ? `Começar os ${trial} dias grátis` : "Assinar e continuar"}
           </button>
           <p className="vx-onb-dica" style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
             <ShieldCheck size={15} aria-hidden="true" style={{ flex: "none", marginTop: 2 }} />
-            Os dados do cartão vão direto ao Asaas, nosso processador de pagamentos. A RYCS não guarda número nem CVV.
+            {forma === "pix"
+              ? "O Pix Automático é processado pelo Asaas e autorizado por você no app do seu banco."
+              : "Os dados do cartão vão direto ao Asaas, nosso processador de pagamentos. A RYCS não guarda número nem CVV."}
           </p>
         </section>
       </div>

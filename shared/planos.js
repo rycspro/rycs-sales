@@ -79,6 +79,12 @@ export const PLANOS = {
   },
 };
 
+// Pix Automático: o Asaas só registra a autorização junto com um primeiro Pix
+// pago na hora. A RYCS cobra este valor simbólico no cadastro; a mensalidade
+// do plano é debitada depois, automaticamente (decidido com o dono do produto
+// em 2026-10-15).
+export const TAXA_ATIVACAO_PIX_AUTOMATICO = 1;
+
 export const ORDEM_PLANOS = ["free", "starter", "growth", "scale"];
 
 export const PLANO_PADRAO = "free";

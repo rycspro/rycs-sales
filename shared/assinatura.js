@@ -158,5 +158,23 @@ export function primeiraCobranca({ trialDias = 0 } = {}, agora = agoraPadrao()) 
   return new Date(agora + Number(trialDias || 0) * 86400000);
 }
 
+// Primeiro débito do Pix Automático: no fim do trial e nunca antes de 3 dias,
+// como o cartão sem trial. O Asaas agenda cada débito de 2 a 10 dias úteis
+// antes do vencimento, e a autorização pode levar até o dia seguinte para
+// ficar ativa: por isso o vencimento fica a pelo menos 3 dias úteis de hoje.
+// Fim de semana conta como dia corrido, não útil (feriado não é considerado).
+export function primeiroDebitoPixAutomatico({ trialDias = 0 } = {}, agora = agoraPadrao()) {
+  const dia = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 15)); // 12h em Brasília
+  const hoje = dia(new Date(agora - 3 * 3600000));
+  let venc = new Date(hoje.getTime() + Math.max(Number(trialDias) || 0, 3) * 86400000);
+  let uteis = 0;
+  for (let d = new Date(hoje.getTime() + 86400000); d <= venc; d = new Date(d.getTime() + 86400000)) if (d.getUTCDay() % 6) uteis++;
+  while (uteis < 3) {
+    venc = new Date(venc.getTime() + 86400000);
+    if (venc.getUTCDay() % 6) uteis++;
+  }
+  return venc;
+}
+
 export const formatarData = (d) =>
   new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });

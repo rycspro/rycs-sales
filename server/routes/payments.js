@@ -3,7 +3,7 @@ import db, { uid, agora } from "../db.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente } from "../services/asaas.js";
-import { ativarAssinatura, marcarInadimplencia } from "./subscriptions.js";
+import { ativarAssinatura, marcarInadimplencia, ativarPixAutomatico, encerrarPixAutomatico, ehAtivacaoPixAutomatico } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
@@ -426,8 +426,8 @@ router.post("/payments/webhook", (req, res) => {
   if (!process.env.ASAAS_WEBHOOK_TOKEN || token !== process.env.ASAAS_WEBHOOK_TOKEN)
     return res.status(401).json({ error: "Token inválido" });
 
-  const { event, payment, transfer } = req.body || {};
-  const eventoId = req.body?.id || payment?.id || transfer?.id;
+  const { event, payment, transfer, authorization } = req.body || {};
+  const eventoId = req.body?.id || payment?.id || transfer?.id || authorization?.id;
   if (!event || !eventoId) return res.status(400).json({ error: "Evento inválido" });
 
   // O Asaas reentrega eventos. Sem esta trava, um depósito seria creditado
@@ -452,6 +452,16 @@ router.post("/payments/webhook", (req, res) => {
     if (payment?.subscription) {
       marcarInadimplencia(payment.subscription, `${event}${payment?.status ? ` (${payment.status})` : ""}`);
     }
+  } else if (event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED" && authorization?.id) {
+    // Confere na API antes de ativar; erro aqui não derruba o webhook.
+    ativarPixAutomatico(authorization.id).catch((e) => console.warn("[webhook] Pix Automático:", e.message));
+  } else if (
+    (event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_REFUSED" ||
+     event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_CANCELLED" ||
+     event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_EXPIRED") && authorization?.id
+  ) {
+    const motivo = { REFUSED: "autorização recusada pelo banco", CANCELLED: "autorização cancelada", EXPIRED: "autorização expirada" }[event.split("_").pop()];
+    encerrarPixAutomatico(authorization.id, authorization.cancellationReason ? `${motivo} (${authorization.cancellationReason})` : motivo);
   } else if (event === "TRANSFER_DONE") {
     concluirSaque(transfer);
   } else if (event === "TRANSFER_FAILED" || event === "TRANSFER_CANCELLED") {
@@ -476,6 +486,14 @@ function creditarDeposito(payment) {
     db.prepare("SELECT * FROM companies WHERE asaasCustomerId = ?").get(payment.customer);
 
   if (!empresa) return console.warn("[webhook] pagamento sem empresa:", payment.id);
+
+  // Pix de ativação do Pix Automático: é a taxa do cadastro, não caixa de
+  // campanha. Serve de sinal para conferir se a autorização já está ativa.
+  const ativacao = ehAtivacaoPixAutomatico(payment, empresa.id);
+  if (ativacao) {
+    if (ativacao.asaasAutorizacaoId) ativarPixAutomatico(ativacao.asaasAutorizacaoId).catch((e) => console.warn("[webhook] Pix Automático:", e.message));
+    return;
+  }
 
   const valor = Number(payment.value) || 0;
   if (valor <= 0) return;

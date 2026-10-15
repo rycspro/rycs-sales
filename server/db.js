@@ -963,6 +963,8 @@ adicionarColuna("subscriptions", "formaPagamento", "TEXT DEFAULT ''");
 adicionarColuna("subscriptions", "cartaoFinal", "TEXT DEFAULT ''");
 adicionarColuna("subscriptions", "cartaoBandeira", "TEXT DEFAULT ''");
 adicionarColuna("subscriptions", "falhaMotivo", "TEXT");
+// Pix Automático: autorização no Asaas (a assinatura de lá só nasce quando ela é ativada).
+adicionarColuna("subscriptions", "asaasAutorizacaoId", "TEXT");
 adicionarColuna("subscriptions", "atualizadoEm", "INTEGER");
 
 // Lista de contatos por campanha
