@@ -11,7 +11,7 @@
 // provedor configurado. Pendente não reprova e não inventa nota.
 
 export const LIMITES = {
-  tamanhoMaximoBytes: 2 * 1024 * 1024,
+  tamanhoMaximoBytes: 10 * 1024 * 1024,
   larguraMinima: 300,
   alturaMinima: 300,
   larguraIdeal: 600,

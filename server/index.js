@@ -114,7 +114,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "15mb" }));
 app.use(cookieParser());
 
 const authLimiter = rateLimit({
