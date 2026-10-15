@@ -1238,6 +1238,51 @@ adicionarColuna("companies", "whatsapp", "TEXT DEFAULT ''");
 adicionarColuna("companies", "nicho", "TEXT DEFAULT ''");
 adicionarColuna("companies", "regrasMarca", "TEXT DEFAULT ''");
 adicionarColuna("companies", "permissoesMarca", "TEXT DEFAULT '{}'");
+
+// Etapa 3: materiais da Marketing Academy. O arquivo fica no storage; aqui só
+// a chave, os metadados e o texto extraído para a IA.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS academy_materiais (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    categoria TEXT NOT NULL,             -- apresentacao | material | foto | video | audio | link
+    nome TEXT NOT NULL,
+    chave TEXT,                          -- chave no storage (vazio para link)
+    url TEXT,                            -- só para link
+    mimetype TEXT DEFAULT '',
+    tamanho INTEGER DEFAULT 0,
+    statusIndexacao TEXT NOT NULL DEFAULT 'pendente',  -- pendente | indexado | sem_texto | erro
+    textoExtraido TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_academy_materiais_empresa ON academy_materiais(companyId);
+
+  -- Etapa 4: cada geração da IA é uma versão. Pedir ajustes cria outra; as
+  -- anteriores ficam guardadas.
+  CREATE TABLE IF NOT EXISTS ia_geracoes (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    versao INTEGER NOT NULL,
+    status TEXT NOT NULL,                -- pendente | processando | falhou | pronta | aprovada | substituida
+    fases TEXT NOT NULL DEFAULT '{}',
+    contexto TEXT DEFAULT '',
+    conteudo TEXT NOT NULL DEFAULT '{}',
+    aprovacoes TEXT NOT NULL DEFAULT '{}',
+    pedidoAjuste TEXT DEFAULT '',
+    erro TEXT DEFAULT '',
+    tentativas INTEGER NOT NULL DEFAULT 0,
+    aprovadoEm INTEGER,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_ia_geracoes_empresa ON ia_geracoes(companyId, versao);
+`);
+adicionarColuna("companies", "suporteNome", "TEXT DEFAULT ''");
+adicionarColuna("companies", "suporteWhatsapp", "TEXT DEFAULT ''");
+adicionarColuna("companies", "suporteEmail", "TEXT DEFAULT ''");
+adicionarColuna("onboarding", "campanhaId", "TEXT");
+// Estratégias aprovadas no onboarding, aplicadas à campanha (somente leitura).
+adicionarColuna("campaigns", "estrategias", "TEXT DEFAULT ''");
 adicionarColuna("users", "resetEnviadoEm", "INTEGER");
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
@@ -1314,6 +1359,13 @@ seedAdmin();
   console.log(`[seed] Login empresa INNER: ${emailEmpresa} | senha: ${senhaTemp}`);
   console.log("[seed] Modalidade: pós-pago | Ciclo: fechamento dia 30 · repasse dia 15 do mês seguinte");
 })();
+
+// Onboarding do profissional: etapa atual e perfil DISC.
+adicionarColuna("sellers", "onboardingEtapa", "TEXT DEFAULT 'perfil'");
+adicionarColuna("sellers", "linkedin", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "disc", "TEXT DEFAULT '{}'");
+adicionarColuna("sellers", "discRespostas", "TEXT DEFAULT '{}'");
+adicionarColuna("sellers", "xpRespostas", "TEXT DEFAULT '{}'");
 
 export default db;
 export { uid, agora };

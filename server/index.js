@@ -36,6 +36,7 @@ import brainRoutes from "./routes/brain.js";
 import emailAdminRoutes from "./routes/emailAdmin.js";
 import billingRoutes from "./routes/billing.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
+import onboardingProRoutes from "./routes/onboardingProfissional.js";
 import { semearCatalogo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
@@ -173,6 +174,7 @@ app.use("/api", authMiddleware, brainRoutes);
 app.use("/api", authMiddleware, emailAdminRoutes);
 app.use("/api", authMiddleware, billingRoutes);
 app.use("/api", authMiddleware, onboardingRoutes);
+app.use("/api", authMiddleware, onboardingProRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

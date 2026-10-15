@@ -20,7 +20,7 @@ export const CHAVES_ETAPAS = ETAPAS.map((e) => e.chave);
 // Etapas já entregues. Enquanto o fluxo não está completo, só elas seguram a
 // empresa fora do painel: parar numa etapa que ainda não existe trancaria a
 // conta sem ter o que preencher. Cada passo entregue entra nesta lista.
-export const ETAPAS_PRONTAS = ["acesso", "empresa"];
+export const ETAPAS_PRONTAS = ["acesso", "empresa", "academy", "ia", "plano", "campanha"];
 
 // Decide se o onboarding fica na frente do painel.
 //   - Concluído: nunca.
@@ -221,4 +221,123 @@ export function avaliarLogo({ mimetype, tamanhoBytes, svgTexto = "" }) {
   if (mimetype === "image/svg+xml" && /<script|\son\w+\s*=|javascript:|<foreignObject/i.test(svgTexto))
     return "Este SVG tem conteúdo ativo (script). Exporte o logo de novo ou envie em PNG.";
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 3: Marketing Academy
+//
+// Limites por tipo definidos com o dono do produto. A extensão decide o tipo:
+// o navegador manda mimetype vazio para .key, .m4a e outros.
+
+const MB = 1024 * 1024;
+
+export const CATEGORIAS_ACADEMY = [
+  { chave: "apresentacao", label: "Apresentações", formatos: ["pdf", "ppt", "pptx", "key"], limite: 50 * MB },
+  { chave: "material", label: "Material explicativo detalhado", formatos: ["pdf", "doc", "docx", "xls", "xlsx", "txt"], limite: 50 * MB },
+  { chave: "foto", label: "Fotos", formatos: ["jpg", "jpeg", "png", "webp"], limite: 20 * MB },
+  { chave: "video", label: "Vídeos", formatos: ["mp4", "mov"], limite: 500 * MB },
+  { chave: "audio", label: "Áudios", formatos: ["mp3", "wav", "m4a"], limite: 100 * MB },
+];
+
+export const categoriaAcademy = (chave) => CATEGORIAS_ACADEMY.find((c) => c.chave === chave) || null;
+
+export const extensaoDe = (nome) => (String(nome || "").toLowerCase().match(/\.([a-z0-9]{1,5})$/) || [])[1] || "";
+
+export const formatarTamanho = (bytes) =>
+  bytes >= MB ? `${(bytes / MB).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+export function validarArquivoAcademy({ categoria, nome, tamanho }) {
+  const cat = categoriaAcademy(categoria);
+  if (!cat) return "Tipo de material inválido.";
+  const ext = extensaoDe(nome);
+  if (!cat.formatos.includes(ext)) return `${cat.label}: use ${cat.formatos.map((f) => f.toUpperCase()).join(", ")}.`;
+  if (!(tamanho > 0)) return "O arquivo está vazio.";
+  if (tamanho > cat.limite) return `${cat.label}: até ${formatarTamanho(cat.limite)} por arquivo.`;
+  return null;
+}
+
+// Só aceita http(s), sem credenciais embutidas na URL.
+export function normalizarLink(valor) {
+  let texto = String(valor || "").trim();
+  if (!texto) return null;
+  if (!/^https?:\/\//i.test(texto)) texto = `https://${texto}`;
+  try {
+    const u = new URL(texto);
+    if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || !u.hostname.includes(".")) return null;
+    return u.toString().slice(0, 2000);
+  } catch { return null; }
+}
+
+const EMAIL_SUPORTE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Contato para quem a IA encaminha quando precisa de uma pessoa. Opcional,
+// mas quem começar a preencher precisa de pelo menos um meio de contato.
+export function validarSuporte(dados = {}) {
+  const suporte = {
+    nome: String(dados.nome || "").trim().slice(0, 100),
+    whatsapp: dados.whatsapp ? normalizarWhatsapp(dados.whatsapp) : "",
+    email: String(dados.email || "").trim().toLowerCase().slice(0, 200),
+  };
+  const erros = {};
+  if (dados.whatsapp && !suporte.whatsapp) erros.whatsapp = "Informe um WhatsApp válido, com DDD.";
+  if (suporte.email && !EMAIL_SUPORTE.test(suporte.email)) erros.email = "Informe um e-mail válido.";
+  if (suporte.nome && !suporte.whatsapp && !suporte.email && !erros.whatsapp)
+    erros.whatsapp = "Informe o WhatsApp ou o e-mail do contato.";
+  return { suporte: { ...suporte, whatsapp: suporte.whatsapp || "" }, erros };
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 4: IA RAG
+
+export const FASES_IA = [
+  { chave: "analise", titulo: "Analisando as informações", frase: "Lendo o perfil da empresa e os materiais enviados." },
+  { chave: "script", titulo: "Criando o script", frase: "Montando abertura, qualificação, oferta e fechamento." },
+  { chave: "funil", titulo: "Criando as estratégias do funil de WhatsApp", frase: "Desenhando cada etapa da conversa, das boas-vindas ao fechamento." },
+  { chave: "followups", titulo: "Criando os follow-ups", frase: "Escrevendo as mensagens de retomada e quando enviar cada uma." },
+  { chave: "aprovacao", titulo: "Aguardando a sua aprovação", frase: "Tudo pronto para você revisar." },
+];
+
+// As três partes que o dono aprova. Nada fica ativo antes disso.
+export const PARTES_IA = [
+  { chave: "script", label: "Script de vendas", campos: [["abertura", "Abertura"], ["qualificacao", "Qualificação"], ["oferta", "Oferta"], ["fechamento", "Fechamento"]] },
+  { chave: "funil", label: "Funil de WhatsApp", campos: [["boasVindas", "Boas-vindas"], ["qualificacao", "Qualificação"], ["oferta", "Oferta"], ["objecoes", "Objeções"], ["fechamento", "Fechamento"]] },
+  { chave: "followups", label: "Follow-ups" },
+];
+
+export const VARIAVEIS_IA = ["{nome}", "{empresa}", "{produto}", "{ticket}", "{diferencial}", "{contato de suporte}"];
+
+// Fases de geração (sem a de aprovação), na ordem em que rodam.
+export const FASES_GERACAO = FASES_IA.filter((f) => f.chave !== "aprovacao").map((f) => f.chave);
+
+export function proximaFase(fases = {}) {
+  return FASES_GERACAO.find((f) => fases[f] !== "concluida") || null;
+}
+
+// Conteúdo editado pelo dono: mantém só os campos conhecidos, como texto.
+export function normalizarParte(parte, conteudo) {
+  const def = PARTES_IA.find((p) => p.chave === parte);
+  if (!def) return null;
+  if (parte === "followups") {
+    const lista = Array.isArray(conteudo) ? conteudo : [];
+    return lista.slice(0, 12).map((f) => ({
+      quando: String(f?.quando || "").trim().slice(0, 80),
+      mensagem: String(f?.mensagem || "").trim().slice(0, 2000),
+    })).filter((f) => f.quando && f.mensagem);
+  }
+  const base = conteudo && typeof conteudo === "object" ? conteudo : {};
+  return Object.fromEntries(def.campos.map(([c]) => [c, String(base[c] || "").trim().slice(0, 4000)]));
+}
+
+export function parteCompleta(parte, conteudo) {
+  if (parte === "followups") return Array.isArray(conteudo) && conteudo.length > 0;
+  const def = PARTES_IA.find((p) => p.chave === parte);
+  return !!def && def.campos.every(([c]) => String(conteudo?.[c] || "").trim());
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 5: documento do titular (CPF ou CNPJ, só dígitos)
+
+export function normalizarDocumento(valor) {
+  const d = String(valor || "").replace(/\D/g, "");
+  return d.length === 11 || d.length === 14 ? d : null;
 }

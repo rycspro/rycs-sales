@@ -12,6 +12,7 @@ import AcademyCatalogo from "./AcademyCatalogo.jsx";
 import Academy from "./Academy.jsx";
 import Indicacoes from "../Indicacoes.jsx";
 import Triagem from "./Triagem.jsx";
+import OnboardingProfissional from "./OnboardingProfissional.jsx";
 
 export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
@@ -24,6 +25,17 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
   if (!eu) return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
+
+  const emOnboarding = eu.onboardingEtapa && eu.onboardingEtapa !== "concluido";
+  if (emOnboarding && !refazendo)
+    return (
+      <OnboardingProfissional
+        aviso={aviso}
+        recarregar={recarregar}
+        aoConcluir={() => recarregar()}
+      />
+    );
+
   const precisaAvaliar = eu.status === "triagem" || eu.status === "recusado";
   if (precisaAvaliar || refazendo)
     return (
