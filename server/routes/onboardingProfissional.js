@@ -164,6 +164,7 @@ router.get("/onboarding-pro/oportunidades", (req, res) => {
   const campanhas = db.prepare(`
     SELECT c.id, c.titulo, c.descricao, c.produto, c.publico, c.objetivo,
       c.regiao, c.funcao, c.vagas, c.status, c.companyId,
+      c.orcamento, c.tarefas,
       co.nome AS empresaNome, co.cor AS empresaCor, co.logo AS empresaLogo,
       co.produto AS empresaProduto, co.icp AS empresaIcp
     FROM campaigns c
@@ -186,6 +187,7 @@ router.get("/onboarding-pro/oportunidades", (req, res) => {
         campanhas: [],
       });
     }
+    const tarefas = JSON.parse(c.tarefas || "{}");
     porEmpresa.get(c.companyId).campanhas.push({
       id: c.id,
       titulo: c.titulo,
@@ -196,6 +198,8 @@ router.get("/onboarding-pro/oportunidades", (req, res) => {
       regiao: c.regiao,
       funcao: c.funcao,
       vagas: c.vagas,
+      orcamento: c.orcamento || 0,
+      tarefas,
     });
   }
 
