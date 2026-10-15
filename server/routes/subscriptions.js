@@ -7,6 +7,8 @@ import { acessoDaEmpresa, primeiraCobranca } from "../../shared/assinatura.js";
 import { PLANOS, ORDEM_PLANOS, planoDe } from "../../shared/planos.js";
 import { calcularVoucher, normalizarVoucher, validarVoucher } from "../services/vouchers.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
+import { trialDoOnboarding, concluir as concluirEtapaOnboarding } from "../services/onboarding.js";
+import { normalizarDocumento } from "../../shared/onboarding.js";
 import { TRIAL_SECRETO_DIAS, TRIAL_LINK_VALIDADE_DIAS, podeConcederTrialSecreto, podeResgatarConvite, estadoDoConvite, MOTIVOS_CONVITE } from "../../shared/trialSecreto.js";
 
 const router = Router();
@@ -309,6 +311,17 @@ router.post("/subscription", async (req, res) => {
   if (!PLANOS[chave]) return res.status(400).json({ error: "Plano inválido" });
 
   const plano = PLANOS[chave];
+  // Checkout da etapa 5 do onboarding: só cartão, com o trial do convite (se
+  // houver) e o documento do titular servindo de documento da empresa quando
+  // ela ainda não tem um.
+  const doOnboarding = req.body?.onboarding === true;
+  if (doOnboarding) {
+    if (!PLANOS[chave]?.preco) return res.status(400).json({ error: "Escolha um dos planos." });
+    req.body.formaPagamento = "CREDIT_CARD";
+    const doc = normalizarDocumento(req.body?.titular?.documento);
+    if (!doc) return res.status(400).json({ error: "Informe o CPF ou CNPJ do titular do cartão.", campo: "documento" });
+    db.prepare("UPDATE companies SET documento = ? WHERE id = ? AND (documento IS NULL OR documento = '')").run(doc, entityId);
+  }
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 
@@ -398,7 +411,7 @@ router.post("/subscription", async (req, res) => {
 
     // Com trial, a primeira cobrança cai no fim dele. Sem trial, em 3 dias —
     // prazo que o Pix precisa para o boleto/QR não vencer antes de ser pago.
-    const trialDias = TRIAL_DIAS_PUBLICO;
+    const trialDias = doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO;
     const vencimento = trialDias
       ? primeiraCobranca({ trialDias })
       : new Date(Date.now() + 3 * 86400000);
@@ -459,9 +472,14 @@ router.post("/subscription", async (req, res) => {
       if (trialDias > 0) db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(chave, entityId);
       if(voucher)db.prepare(`INSERT INTO voucher_redemptions (id,voucherId,companyId,subscriptionId,valorOriginal,desconto,valorFinal,status,criadoEm) VALUES (?,?,?,?,?,?,?,'reservado',?)`).run(uid(),voucher.id,entityId,subId,calculo.valorOriginal,calculo.desconto,calculo.valorFinal,agora());})();
 
+    // Cartão cadastrado e cobrança agendada: a etapa 5 está cumprida. Se o
+    // cartão for recusado depois, o portão de assinatura cuida disso.
+    const onboarding = doOnboarding ? concluirEtapaOnboarding(entityId, "plano") : null;
+
     // O plano só passa a valer no primeiro pagamento confirmado — o webhook
     // é quem ativa. Liberar antes daria acesso sem receber.
     res.json({
+      onboardingConcluido: !!onboarding,
       ok: true, subscriptionId: subId, asaasId: cobranca.id, ...calculo,
       pixCopiaECola:pix?.payload||null, pixQrCodeBase64:pix?.encodedImage||null,
       invoiceUrl: pagamento?.invoiceUrl||cobranca.invoiceUrl||null,

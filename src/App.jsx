@@ -270,7 +270,14 @@ export default function App() {
         <style>{CSS}</style>
         <Onboarding estado={onb} email={user.email}
           // Saindo do onboarding, o painel precisa dos dados que acabaram de ser preenchidos.
-          setEstado={(novo) => { setOnb(novo); if (!novo.bloqueia) carregarState(); }}
+          setEstado={(novo) => {
+            setOnb(novo);
+            if (novo.bloqueia) return;
+            carregarState();
+            // Concluído: a empresa vai para a listagem de campanhas.
+            if (novo.concluido) setNav((n) => ({ ...n, empresa: "campanhas" }));
+          }}
+          emp={db.companies.find((c) => c.id === db.companyId)} aviso={aviso}
           etapaPedida={rota.tipo === "onboarding" ? rota.etapa : null} aoSair={logout} />
         {toastEl}
       </div>

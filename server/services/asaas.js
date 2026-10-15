@@ -16,6 +16,9 @@ const chaveEhProducao = () => String(process.env.ASAAS_API_KEY || "").includes("
 // errado não pode ser a diferença entre testar e movimentar dinheiro real:
 // na dúvida o gateway fica desligado, e o depósito é recusado com clareza.
 function resolverAmbiente() {
+  // Só nos testes automatizados: aponta o cliente para um gateway falso local.
+  if (process.env.NODE_ENV === "test" && process.env.ASAAS_BASE_URL_TESTE && process.env.ASAAS_API_KEY)
+    return { ok: true, base: process.env.ASAAS_BASE_URL_TESTE, ambiente: "teste" };
   const declarado = String(process.env.ASAAS_ENV || "").trim().toLowerCase();
   if (!process.env.ASAAS_API_KEY) return { ok: false, motivo: "ASAAS_API_KEY não configurada" };
 

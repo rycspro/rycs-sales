@@ -2,9 +2,13 @@ import { useEffect, useId, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import MolduraOnboarding from "./MolduraOnboarding.jsx";
 import EtapaEmpresa from "./EtapaEmpresa.jsx";
+import EtapaAcademy from "./EtapaAcademy.jsx";
+import EtapaIA from "./EtapaIA.jsx";
+import EtapaPlano from "./EtapaPlano.jsx";
+import EtapaCampanha from "./EtapaCampanha.jsx";
 import { api } from "../../lib/api.js";
 import { ROTAS } from "../../lib/rotas.js";
-import { ETAPAS, etapaDe, podeAbrirEtapa, normalizarWhatsapp, formatarWhatsapp } from "../../../shared/onboarding.js";
+import { ETAPAS, podeAbrirEtapa, normalizarWhatsapp, formatarWhatsapp } from "../../../shared/onboarding.js";
 
 // Onboarding da empresa já autenticada. O servidor diz em qual etapa ela
 // está; a URL só pode pedir uma etapa já liberada. Pedido de etapa à frente
@@ -72,20 +76,7 @@ function AcessoLogado({ estado, email, aoAtualizar, aoAvancar }) {
   );
 }
 
-// Etapas 2 a 6 entram nos próximos passos da entrega (SPEC §10).
-function EtapaPendenteDeEntrega({ chave, aoVoltar }) {
-  const etapa = etapaDe(chave);
-  return (
-    <div className="vx-onb-card" style={{ maxWidth: 640, margin: "0 auto" }}>
-      <div className="vx-onb-eyebrow">Passo {etapa.n} de {ETAPAS.length}</div>
-      <h1 className="vx-disp vx-onb-card-titulo" style={{ marginTop: 8 }}>{etapa.label}</h1>
-      <p className="vx-mut vx-onb-card-apoio">Esta etapa ainda está em construção.</p>
-      <Acoes aoVoltar={aoVoltar} tipo="button" desabilitado />
-    </div>
-  );
-}
-
-export default function Onboarding({ estado, setEstado, email, etapaPedida, aoSair }) {
+export default function Onboarding({ estado, setEstado, email, etapaPedida, aoSair, emp, aviso }) {
   const permitida = etapaPedida && podeAbrirEtapa(estado.etapas, etapaPedida);
   const [ativa, setAtiva] = useState(permitida ? etapaPedida : estado.atual);
 
@@ -109,7 +100,10 @@ export default function Onboarding({ estado, setEstado, email, etapaPedida, aoSa
     <MolduraOnboarding etapas={estado.etapas} ativa={ativa} aoAbrir={abrir} aoSair={aoSair}>
       {ativa === "acesso" ? <AcessoLogado estado={estado} email={email} aoAtualizar={setEstado} aoAvancar={avancar} />
         : ativa === "empresa" ? <EtapaEmpresa aoAtualizar={setEstado} aoAvancar={avancar} aoVoltar={() => abrir("acesso")} />
-        : <EtapaPendenteDeEntrega chave={ativa} aoVoltar={() => abrir(anterior(ativa))} />}
+        : ativa === "academy" ? <EtapaAcademy aoAtualizar={setEstado} aoAvancar={avancar} aoVoltar={() => abrir("empresa")} />
+        : ativa === "ia" ? <EtapaIA estado={estado} aoAtualizar={setEstado} aoAvancar={avancar} aoVoltar={() => abrir("academy")} />
+        : ativa === "plano" ? <EtapaPlano aoAtualizar={setEstado} aoAvancar={avancar} aoVoltar={() => abrir(anterior("plano"))} />
+        : <EtapaCampanha estado={estado} emp={emp} aviso={aviso} aoAtualizar={setEstado} aoAvancar={avancar} aoVoltar={() => abrir("plano")} />}
     </MolduraOnboarding>
   );
 }

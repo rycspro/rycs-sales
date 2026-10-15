@@ -14,3 +14,13 @@ Tomadas com o dono do produto em 2026-10-15, antes do passo 1. Quando o SPEC e e
 | Etapa 6 sem saldo | "Publicar campanha" pede o depósito (Pix) ali mesmo. O onboarding só termina depois do depósito. |
 | Storage | Bucket da Railway (compatível com S3). Limites: documentos e apresentações 50 MB, fotos 20 MB, vídeos 500 MB, áudios 100 MB. |
 | Publicação | Cada passo é publicado ao terminar. Até o fluxo ficar completo, só as etapas entregues (`ETAPAS_PRONTAS` em `shared/onboarding.js`) seguram a empresa fora do painel, e as empresas que já existiam só entram no fluxo quando ele estiver completo (ou com `ONBOARDING_EMPRESAS_EXISTENTES=1`). |
+
+## Como ficou implementado (2026-10-15)
+
+| Tema | Implementação |
+|---|---|
+| Storage | `server/services/arquivos.js`. Usa `S3_*` ou as variáveis que a Railway cria ao conectar o bucket (`BUCKET`, `ENDPOINT`, `REGION`, `ACCESS_KEY_ID`, `SECRET_ACCESS_KEY`). Bucket criado: `rycs-academy` (iad). Em produção, sem bucket conectado, o envio de arquivos aparece como indisponível e a etapa 3 segue com links e contato. |
+| IA | `server/services/iaOnboarding.js`, modelo `claude-opus-5-5` (troca por `IA_ONBOARDING_MODELO`), saída validada por JSON Schema e fila em `ia_geracoes`. Sem `ANTHROPIC_API_KEY`, a etapa 4 avisa que a IA não está ativa e deixa seguir sem estratégias. Nada é inventado no lugar. |
+| Cartão | O checkout é o `POST /subscription` de sempre, com `onboarding: true`: só cartão, trial do convite e o documento do titular. A RYCS guarda bandeira e 4 dígitos. |
+| Campanha | É criada pelo `NovaCampanha` de sempre. A etapa termina com a campanha criada e saldo no caixa. O que faltar para publicar aparece na lista e se resolve no painel. |
+| Fora do escopo | O score mínimo continua por empresa (Dados da Operação) e os materiais da Academy não são escolhidos por campanha. Os dois pedem regra nova antes. |

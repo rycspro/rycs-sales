@@ -36,6 +36,7 @@ import brainRoutes from "./routes/brain.js";
 import emailAdminRoutes from "./routes/emailAdmin.js";
 import billingRoutes from "./routes/billing.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
+import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
 import { semearCatalogo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
@@ -263,4 +264,5 @@ app.use((err, req, res, _next) => {
 app.listen(PORT, () => {
   console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);
   iniciarWorker();
+  iniciarWorkerIA();
 });

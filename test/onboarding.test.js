@@ -72,6 +72,7 @@ test("só etapa já entregue segura a empresa fora do painel", () => {
   // Nova empresa sem acesso concluído fica no onboarding.
   assert.equal(onboardingBloqueia({ etapas: {}, origem: "site" }), true);
   // Empresa antiga só entra no fluxo quando ele estiver completo, ou se ligado.
+  if (prontas.size === 6) assert.equal(onboardingBloqueia({ etapas: {}, origem: "existente" }), true);
   if (prontas.size < 6) {
     assert.equal(onboardingBloqueia({ etapas: {}, origem: "existente" }), false);
     assert.equal(onboardingBloqueia({ etapas: {}, origem: "existente", exigirExistentes: true }), true);

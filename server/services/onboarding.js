@@ -59,3 +59,11 @@ export function serializar(linha) {
     whatsapp: empresa?.whatsapp || "",
   };
 }
+
+// Trial que a etapa 5 oferece: o do convite, se a empresa nunca usou trial.
+export function trialDoOnboarding(companyId) {
+  const linha = obterOnboarding(companyId);
+  if (!linha?.trialDias) return 0;
+  const jaUsou = db.prepare("SELECT 1 FROM subscriptions WHERE companyId = ? AND trialDias > 0 LIMIT 1").get(companyId);
+  return jaUsou ? 0 : linha.trialDias;
+}

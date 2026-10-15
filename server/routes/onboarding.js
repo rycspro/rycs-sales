@@ -3,9 +3,15 @@ import db, { uid, agora } from "../db.js";
 import {
   TRIAL_ONBOARDING_DIAS, MOTIVOS_CONVITE_ONBOARDING, estadoConviteOnboarding, conviteServeParaEmail,
   validadeConviteDias, normalizarWhatsapp, validarPerfilEmpresa, normalizarPermissoes, ticketParaNumero,
-  formatarTicket, avaliarLogo,
+  formatarTicket, avaliarLogo, validarArquivoAcademy, normalizarLink, validarSuporte, extensaoDe, categoriaAcademy,
+  PARTES_IA, normalizarParte, parteCompleta,
 } from "../../shared/onboarding.js";
-import { hashToken, novoToken, obterOnboarding, concluir, serializar } from "../services/onboarding.js";
+import { hashToken, novoToken, obterOnboarding, concluir, serializar, trialDoOnboarding } from "../services/onboarding.js";
+import { armazenamentoDisponivel, salvar, remover, ArquivoGrandeDemais } from "../services/arquivos.js";
+import { iaDisponivel, geracaoAtual, serializarGeracao, criarGeracao, tentarDeNovo } from "../services/iaOnboarding.js";
+import { acessoDaEmpresa } from "../../shared/assinatura.js";
+import { PLANOS, ORDEM_PLANOS } from "../../shared/planos.js";
+import { requisitosPublicacao, saldoDisponivel, isPosPago, isPremium } from "../../shared/empresa.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const conviteDoToken = (token) =>
@@ -131,6 +137,292 @@ router.post("/onboarding/empresa/logo", (req, res) => {
   const logo = `data:${mimetype};base64,${buffer.toString("base64")}`;
   db.prepare("UPDATE companies SET logo = ? WHERE id = ?").run(logo, req.user.entityId);
   res.json({ ok: true, logo });
+});
+
+// ---------------------------------------------------------------------------
+// Etapa 3: Marketing Academy.
+
+const materialPublico = (m) => ({
+  id: m.id, categoria: m.categoria, nome: m.nome, url: m.url || null,
+  tamanho: m.tamanho || 0, mimetype: m.mimetype || "", criadoEm: m.criadoEm,
+});
+
+router.get("/onboarding/academy", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const materiais = db.prepare("SELECT * FROM academy_materiais WHERE companyId = ? ORDER BY criadoEm").all(req.user.entityId);
+  const e = db.prepare("SELECT suporteNome, suporteWhatsapp, suporteEmail FROM companies WHERE id = ?").get(req.user.entityId);
+  res.json({
+    materiais: materiais.map(materialPublico),
+    suporte: { nome: e?.suporteNome || "", whatsapp: e?.suporteWhatsapp || "", email: e?.suporteEmail || "" },
+    armazenamento: armazenamentoDisponivel(),
+  });
+});
+
+// Envio do arquivo: o corpo da requisição é o próprio arquivo, que segue em
+// stream para o storage. O nome vem no cabeçalho X-Arquivo-Nome.
+router.post("/onboarding/academy/arquivos/:categoria", async (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  if (!armazenamentoDisponivel())
+    return res.status(503).json({ error: "O envio de arquivos ainda não está disponível. Você pode adicionar links e seguir." });
+  let nome = "";
+  try { nome = decodeURIComponent(String(req.get("x-arquivo-nome") || "")); } catch { /* fica vazio */ }
+  nome = nome.replace(/[\\/\u0000-\u001f]/g, "").slice(0, 200);
+  const categoria = req.params.categoria;
+  const declarado = Number(req.get("content-length") || 0);
+  const erro = validarArquivoAcademy({ categoria, nome, tamanho: declarado });
+  if (erro) return res.status(422).json({ error: erro });
+
+  const id = uid();
+  const chave = `onboarding/${req.user.entityId}/${id}.${extensaoDe(nome)}`;
+  const mimetype = String(req.get("content-type") || "").split(";")[0].slice(0, 120);
+  try {
+    const tamanho = await salvar(chave, req, { contentType: mimetype, maxBytes: categoriaAcademy(categoria).limite });
+    db.prepare(`INSERT INTO academy_materiais (id, companyId, categoria, nome, chave, mimetype, tamanho, statusIndexacao, criadoEm)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'pendente', ?)`)
+      .run(id, req.user.entityId, categoria, nome, chave, mimetype, tamanho, agora());
+    res.status(201).json(materialPublico(db.prepare("SELECT * FROM academy_materiais WHERE id = ?").get(id)));
+  } catch (e) {
+    if (e instanceof ArquivoGrandeDemais) return res.status(413).json({ error: validarArquivoAcademy({ categoria, nome, tamanho: Infinity }) });
+    console.error("[onboarding] envio de arquivo:", e.message);
+    res.status(502).json({ error: "Não foi possível enviar o arquivo. Tente de novo." });
+  }
+});
+
+router.post("/onboarding/academy/links", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const url = normalizarLink(req.body?.url);
+  if (!url) return res.status(400).json({ error: "Informe um link válido, como https://suaempresa.com.br." });
+  const total = db.prepare("SELECT COUNT(*) n FROM academy_materiais WHERE companyId = ? AND categoria = 'link'").get(req.user.entityId).n;
+  if (total >= 50) return res.status(422).json({ error: "Limite de 50 links." });
+  const id = uid();
+  db.prepare(`INSERT INTO academy_materiais (id, companyId, categoria, nome, url, statusIndexacao, criadoEm)
+              VALUES (?, ?, 'link', ?, ?, 'sem_texto', ?)`).run(id, req.user.entityId, new URL(url).hostname, url, agora());
+  res.status(201).json(materialPublico(db.prepare("SELECT * FROM academy_materiais WHERE id = ?").get(id)));
+});
+
+// Excluir apaga o arquivo do storage também (LGPD: a empresa pode retirar o
+// que enviou).
+router.delete("/onboarding/academy/materiais/:id", async (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const m = db.prepare("SELECT * FROM academy_materiais WHERE id = ? AND companyId = ?").get(req.params.id, req.user.entityId);
+  if (!m) return res.status(404).json({ error: "Material não encontrado." });
+  if (m.chave) {
+    try { await remover(m.chave); }
+    catch (e) { console.error("[onboarding] remoção de arquivo:", e.message); return res.status(502).json({ error: "Não foi possível remover o arquivo. Tente de novo." }); }
+  }
+  db.prepare("DELETE FROM academy_materiais WHERE id = ?").run(m.id);
+  res.json({ ok: true });
+});
+
+function salvarSuporte(companyId, dados) {
+  const { suporte, erros } = validarSuporte(dados || {});
+  if (Object.keys(erros).length) return { erros };
+  db.prepare("UPDATE companies SET suporteNome = ?, suporteWhatsapp = ?, suporteEmail = ? WHERE id = ?")
+    .run(suporte.nome, suporte.whatsapp, suporte.email, companyId);
+  return { suporte };
+}
+
+router.post("/onboarding/academy/suporte", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const r = salvarSuporte(req.user.entityId, req.body);
+  if (r.erros) return res.status(400).json({ error: "Revise o contato de suporte.", erros: r.erros });
+  res.json({ ok: true, suporte: r.suporte });
+});
+
+// "Enviar para a IA analisar": conclui a etapa e põe a geração na fila.
+// Material não é obrigatório.
+router.post("/onboarding/academy/concluir", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  if (req.body?.suporte) {
+    const r = salvarSuporte(req.user.entityId, req.body.suporte);
+    if (r.erros) return res.status(400).json({ error: "Revise o contato de suporte.", erros: r.erros });
+  }
+  const linha = concluir(req.user.entityId, "academy");
+  if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
+  // Depois de aprovado, voltar aqui não refaz a geração.
+  if (JSON.parse(linha.etapas).ia !== "concluida" && iaDisponivel()) criarGeracao(req.user.entityId);
+  res.json({ ok: true, ...serializar(linha) });
+});
+
+// ---------------------------------------------------------------------------
+// Etapa 4: IA.
+
+router.get("/onboarding/ia", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  res.json({ disponivel: iaDisponivel(), geracao: serializarGeracao(geracaoAtual(req.user.entityId)) });
+});
+
+router.post("/onboarding/ia/gerar", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  if (!iaDisponivel()) return res.status(503).json({ error: "A IA não está disponível no momento." });
+  const atual = geracaoAtual(req.user.entityId);
+  if (atual && ["pendente", "processando"].includes(atual.status)) return res.json({ geracao: serializarGeracao(atual) });
+  res.json({ geracao: serializarGeracao(criarGeracao(req.user.entityId)) });
+});
+
+router.post("/onboarding/ia/tentar", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const g = tentarDeNovo(req.user.entityId);
+  if (!g) return res.status(409).json({ error: "Não há geração com falha para tentar de novo." });
+  res.json({ geracao: serializarGeracao(g) });
+});
+
+const geracaoPronta = (req, res) => {
+  const g = geracaoAtual(req.user.entityId);
+  if (!g || g.status !== "pronta") { res.status(409).json({ error: "As estratégias ainda não estão prontas para revisão." }); return null; }
+  return g;
+};
+
+router.post("/onboarding/ia/conteudo", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const g = geracaoPronta(req, res);
+  if (!g) return;
+  const parte = String(req.body?.parte || "");
+  const conteudo = normalizarParte(parte, req.body?.conteudo);
+  if (!conteudo) return res.status(400).json({ error: "Parte inválida." });
+  if (!parteCompleta(parte, conteudo)) return res.status(400).json({ error: "Preencha todos os campos desta parte." });
+  const atual = JSON.parse(g.conteudo || "{}");
+  const aprovacoes = JSON.parse(g.aprovacoes || "{}");
+  atual[parte] = conteudo;
+  aprovacoes[parte] = false; // editou, precisa aprovar de novo
+  db.prepare("UPDATE ia_geracoes SET conteudo = ?, aprovacoes = ?, atualizadoEm = ? WHERE id = ?")
+    .run(JSON.stringify(atual), JSON.stringify(aprovacoes), agora(), g.id);
+  res.json({ geracao: serializarGeracao(geracaoAtual(req.user.entityId)) });
+});
+
+router.post("/onboarding/ia/aprovar", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const g = geracaoPronta(req, res);
+  if (!g) return;
+  const parte = String(req.body?.parte || "");
+  if (!PARTES_IA.some((p) => p.chave === parte)) return res.status(400).json({ error: "Parte inválida." });
+  const aprovacoes = JSON.parse(g.aprovacoes || "{}");
+  aprovacoes[parte] = req.body?.aprovado !== false;
+  db.prepare("UPDATE ia_geracoes SET aprovacoes = ?, atualizadoEm = ? WHERE id = ?").run(JSON.stringify(aprovacoes), agora(), g.id);
+  res.json({ geracao: serializarGeracao(geracaoAtual(req.user.entityId)) });
+});
+
+router.post("/onboarding/ia/ajustes", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  if (!iaDisponivel()) return res.status(503).json({ error: "A IA não está disponível no momento." });
+  const pedido = String(req.body?.pedido || "").trim();
+  if (pedido.length < 5) return res.status(400).json({ error: "Conte o que você quer ajustar." });
+  const g = geracaoAtual(req.user.entityId);
+  if (!g || !["pronta", "falhou"].includes(g.status)) return res.status(409).json({ error: "Aguarde a geração atual terminar." });
+  res.json({ geracao: serializarGeracao(criarGeracao(req.user.entityId, { pedidoAjuste: pedido })) });
+});
+
+// Aprovar tudo: a versão aprovada fica registrada e a etapa conclui. Antes
+// disso, nada do que a IA gerou é usado em lugar nenhum.
+router.post("/onboarding/ia/aprovar-tudo", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const g = geracaoPronta(req, res);
+  if (!g) return;
+  const conteudo = JSON.parse(g.conteudo || "{}");
+  if (!PARTES_IA.every((p) => parteCompleta(p.chave, conteudo[p.chave])))
+    return res.status(409).json({ error: "Alguma parte está incompleta. Revise antes de aprovar." });
+  const t = agora();
+  db.prepare("UPDATE ia_geracoes SET status = 'aprovada', aprovacoes = ?, aprovadoEm = ?, atualizadoEm = ? WHERE id = ?")
+    .run(JSON.stringify(Object.fromEntries(PARTES_IA.map((p) => [p.chave, true]))), t, t, g.id);
+  const linha = concluir(req.user.entityId, "ia");
+  if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
+  res.json({ ok: true, ...serializar(linha) });
+});
+
+// Sem IA configurada, a etapa não tem como rodar. Seguir sem estratégias é
+// melhor do que prender a empresa ou mostrar texto inventado.
+router.post("/onboarding/ia/pular", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  if (iaDisponivel()) return res.status(409).json({ error: "A IA está disponível: gere e revise as estratégias." });
+  const linha = concluir(req.user.entityId, "ia");
+  if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
+  res.json({ ok: true, ...serializar(linha) });
+});
+
+// ---------------------------------------------------------------------------
+// Etapa 5: plano. O checkout em si é o POST /subscription, com onboarding:true.
+
+function acessoAtual(companyId) {
+  const billing = db.prepare("SELECT billing_status, access_status FROM company_billing WHERE companyId = ?").get(companyId);
+  const empresa = db.prepare("SELECT assinatura, tipoEmpresa, documento FROM companies WHERE id = ?").get(companyId);
+  const assinatura = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? AND status != 'cancelada' ORDER BY criadoEm DESC LIMIT 1").get(companyId);
+  if (billing?.billing_status === "isenta") return { liberado: true, estado: "ativa", plano: null, isenta: true, empresa };
+  return { ...acessoDaEmpresa({ empresa, assinatura: assinatura || null }), empresa };
+}
+
+router.get("/onboarding/plano", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const acesso = acessoAtual(req.user.entityId);
+  res.json({
+    planos: ORDEM_PLANOS.filter((k) => PLANOS[k]?.preco > 0).map((k) => ({ chave: k, ...PLANOS[k] })),
+    trialDias: trialDoOnboarding(req.user.entityId),
+    atual: acesso.liberado ? { plano: acesso.plano, estado: acesso.estado, nome: acesso.plano ? PLANOS[acesso.plano]?.nome || acesso.plano : null } : null,
+    temDocumento: !!acesso.empresa?.documento,
+  });
+});
+
+// Quem já tem acesso liberado (plano pago, trial, premium ou isenção) segue
+// com o que tem: nada é cobrado de novo.
+router.post("/onboarding/plano/manter", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  if (!acessoAtual(req.user.entityId).liberado) return res.status(409).json({ error: "Escolha um plano para continuar." });
+  const linha = concluir(req.user.entityId, "plano");
+  if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
+  res.json({ ok: true, ...serializar(linha) });
+});
+
+// ---------------------------------------------------------------------------
+// Etapa 6: primeira campanha. A criação usa o POST /campaigns de sempre; aqui
+// só se liga a campanha ao onboarding e se acompanha o que falta.
+
+const lerJson = (v, padrao) => { try { return JSON.parse(v || ""); } catch { return padrao; } };
+
+function estrategiasAprovadas(companyId) {
+  const g = db.prepare("SELECT conteudo FROM ia_geracoes WHERE companyId = ? AND status = 'aprovada' ORDER BY versao DESC LIMIT 1").get(companyId);
+  return g ? lerJson(g.conteudo, null) : null;
+}
+
+const caixaOk = (empresa) => isPosPago(empresa) || isPremium(empresa) || saldoDisponivel(empresa) > 0;
+
+router.get("/onboarding/campanha", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const linha = obterOnboarding(req.user.entityId);
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(req.user.entityId);
+  const c = linha?.campanhaId ? db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(linha.campanhaId, req.user.entityId) : null;
+  const campanha = c ? { ...c, tarefas: lerJson(c.tarefas, {}), treinamento: lerJson(c.treinamento, []) } : null;
+  res.json({
+    campanha: campanha ? { id: campanha.id, titulo: campanha.titulo, status: campanha.status, orcamento: Number(campanha.orcamento || 0) } : null,
+    requisitos: campanha ? requisitosPublicacao(campanha, empresa) : [],
+    saldoDisponivel: Number.isFinite(saldoDisponivel(empresa)) ? saldoDisponivel(empresa) : null,
+    caixaOk: caixaOk(empresa),
+    estrategias: estrategiasAprovadas(req.user.entityId),
+  });
+});
+
+router.post("/onboarding/campanha", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const c = db.prepare("SELECT id FROM campaigns WHERE id = ? AND companyId = ?").get(String(req.body?.campaignId || ""), req.user.entityId);
+  if (!c) return res.status(404).json({ error: "Campanha não encontrada." });
+  const estrategias = estrategiasAprovadas(req.user.entityId);
+  db.transaction(() => {
+    db.prepare("UPDATE onboarding SET campanhaId = ?, atualizadoEm = ? WHERE companyId = ?").run(c.id, agora(), req.user.entityId);
+    if (estrategias) db.prepare("UPDATE campaigns SET estrategias = ? WHERE id = ?").run(JSON.stringify(estrategias), c.id);
+  })();
+  res.json({ ok: true });
+});
+
+// O onboarding termina com a campanha criada e o caixa abastecido (decisão
+// em DECISOES.md). Se a publicação ainda tiver pendências (treinamento,
+// cadastro), a empresa resolve no painel, e a tela diz quais são.
+router.post("/onboarding/campanha/concluir", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const linha = obterOnboarding(req.user.entityId);
+  if (!linha?.campanhaId) return res.status(409).json({ error: "Crie a campanha primeiro." });
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(req.user.entityId);
+  if (!caixaOk(empresa)) return res.status(409).json({ error: "Adicione saldo para concluir. O depósito por Pix é confirmado automaticamente." });
+  const nova = concluir(req.user.entityId, "campanha");
+  if (!nova) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
+  res.json({ ok: true, ...serializar(nova) });
 });
 
 // Convite aberto por quem já tem conta: entra no login e o convite é aplicado
