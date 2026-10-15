@@ -7,6 +7,7 @@ import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
+import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { criarOnboarding, hashToken } from "../services/onboarding.js";
 
 const router = Router();
@@ -81,7 +82,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo } = req.body;
+  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -133,10 +134,19 @@ router.post("/auth/register", async (req, res) => {
 
   if (role === "vendedor") {
     entityId = uid();
+    let fotoDataUri = "";
+    let fotoScore = 0;
+    if (foto?.base64 && foto?.mimetype) {
+      const tamanhoBytes = Math.round((String(foto.base64).length * 3) / 4);
+      const avaliacao = avaliarFoto({ mimetype: foto.mimetype, tamanhoBytes, largura: Number(foto.largura), altura: Number(foto.altura) });
+      if (!avaliacao.aprovada) return res.status(422).json({ error: "A foto não passou na verificação.", campo: "foto" });
+      fotoDataUri = `data:${foto.mimetype};base64,${foto.base64}`;
+      fotoScore = avaliacao.score;
+    }
     db.prepare(`
-      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?)
-    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", agora());
+      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?)
+    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, agora());
     db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
       userId, emailNorm, hash, role, entityId, 1, agora()
     );
