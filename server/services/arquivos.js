@@ -36,7 +36,7 @@ const pastaLocal = () => process.env.ARQUIVOS_DIR
   || join(dirname(process.env.DB_PATH || join(dirname(fileURLToPath(import.meta.url)), "..", "data.db")), "arquivos");
 
 export function armazenamentoDisponivel() {
-  return !!configS3() || !PRODUCAO;
+  return !!configS3() || !PRODUCAO || !!process.env.ARQUIVOS_DIR;
 }
 
 let cliente = null;
@@ -86,7 +86,7 @@ export async function salvar(chave, origem, { contentType, maxBytes }) {
     await envio.done();
     return contador.total();
   }
-  if (PRODUCAO) throw new Error("Armazenamento de arquivos não configurado.");
+  if (PRODUCAO && !process.env.ARQUIVOS_DIR) throw new Error("Armazenamento de arquivos não configurado.");
   const destino = join(pastaLocal(), chave);
   mkdirSync(dirname(destino), { recursive: true });
   try {
