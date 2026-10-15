@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Check } from "lucide-react";
 import { api } from "../../lib/api.js";
 import OnbPerfil from "./OnbPerfil.jsx";
 import OnbQuizDisc from "./OnbQuizDisc.jsx";
@@ -20,10 +21,6 @@ function estadoEtapa(etapaAtual, chave) {
 }
 
 function BarraProgresso({ etapaAtual }) {
-  const total = ETAPAS.length;
-  const iAtual = etapaAtual === "concluido" ? total : ETAPAS.findIndex((e) => e.chave === etapaAtual);
-  const pct = Math.round(((iAtual) / total) * 100);
-
   return (
     <div className="vx-onb-topo">
       <div className="vx-onb-topo-inner">
@@ -31,28 +28,45 @@ function BarraProgresso({ etapaAtual }) {
           <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ height: 24 }} />
         </div>
         <nav>
-          <ol className="vx-onb-passos">
-            {ETAPAS.map((e) => {
+          <ol style={{
+            display: "flex", alignItems: "center", gap: 0, listStyle: "none",
+            margin: 0, padding: 0,
+          }}>
+            {ETAPAS.map((e, i) => {
               const st = estadoEtapa(etapaAtual, e.chave);
+              const concluida = st === "concluida";
+              const atual = st === "atual";
               return (
-                <li key={e.chave} data-estado={st}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <span className="vx-onb-passo-n">
-                      {st === "concluida" ? "✓" : e.n}
-                    </span>
-                    <span className="vx-onb-passo-txt">{e.label}</span>
-                  </span>
+                <li key={e.chave} style={{ display: "flex", alignItems: "center" }}>
+                  {i > 0 && (
+                    <div style={{
+                      width: 40, height: 2, margin: "0 4px",
+                      background: concluida || atual ? "var(--brand)" : "var(--surface-3, #e2e8f0)",
+                      transition: "background .4s",
+                    }} />
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 13, fontWeight: 700, transition: "all .3s",
+                      background: concluida ? "var(--brand)" : atual ? "var(--brand)" : "var(--surface-3, #e2e8f0)",
+                      color: concluida || atual ? "#fff" : "var(--muted)",
+                      boxShadow: atual ? "0 0 0 4px var(--brand-50, rgba(59,130,246,.2))" : "none",
+                    }}>
+                      {concluida ? <Check size={16} strokeWidth={3} /> : e.n}
+                    </div>
+                    <span style={{
+                      fontSize: 13, fontWeight: atual ? 700 : 500,
+                      color: concluida || atual ? "var(--ink)" : "var(--muted)",
+                      transition: "color .3s",
+                    }}>{e.label}</span>
+                  </div>
                 </li>
               );
             })}
           </ol>
         </nav>
-      </div>
-      <div style={{ height: 3, background: "var(--surface-3)" }}>
-        <div style={{
-          height: "100%", width: `${pct}%`, background: "var(--brand)",
-          borderRadius: "0 2px 2px 0", transition: "width .4s ease",
-        }} />
       </div>
     </div>
   );
