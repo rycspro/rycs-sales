@@ -9,7 +9,7 @@ const router = Router();
 
 const ETAPAS_ONBOARDING = ["perfil", "quiz", "concluido"];
 
-function calcularScoreOnboarding(xp, disc) {
+export function calcularScoreOnboarding(xp, disc) {
   let score = 0;
 
   // Experiência em vendas (xp1): 0-4 → 0-30 pontos

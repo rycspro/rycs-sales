@@ -1367,5 +1367,38 @@ adicionarColuna("sellers", "disc", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "discRespostas", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "xpRespostas", "TEXT DEFAULT '{}'");
 
+// Migração: recalcular scoreTriagem dos profissionais que completaram o
+// onboarding DISC mas ficaram com score 0 ou null.
+(() => {
+  const pendentes = db.prepare(
+    "SELECT id, xpRespostas, disc FROM sellers WHERE onboardingEtapa = 'concluido' AND (scoreTriagem IS NULL OR scoreTriagem = 0)"
+  ).all();
+  if (!pendentes.length) return;
+
+  // Import dinâmico evitado: reimplementa a fórmula inline (idêntica à de onboardingProfissional.js).
+  function calcScore(xp, disc) {
+    let s = 0;
+    s += Math.min(Number(xp?.xp1) || 0, 4) * 7.5;
+    const canais = Array.isArray(xp?.xp2) ? xp.xp2.filter((c) => c !== "Ainda não tenho canal definido") : [];
+    s += Math.min(canais.length, 6) * 3;
+    s += ({ ambos: 12, b2b: 10, b2c: 8, nenhuma: 2 })[xp?.xp3] || 2;
+    s += ({ integral: 20, meio: 15, parcial: 10, pontual: 5 })[xp?.xp4] || 5;
+    if (disc?.predominante) s += 10;
+    if (disc?.secundario && disc.secundario !== disc.predominante) s += 5;
+    s += 5;
+    return Math.min(Math.floor(s * 100) / 100, 100);
+  }
+
+  const upd = db.prepare("UPDATE sellers SET scoreTriagem = ? WHERE id = ?");
+  let n = 0;
+  for (const row of pendentes) {
+    const xp = JSON.parse(row.xpRespostas || "{}");
+    const disc = JSON.parse(row.disc || "{}");
+    const score = calcScore(xp, disc);
+    if (score > 0) { upd.run(score, row.id); n++; }
+  }
+  if (n) console.log(`[migração] scoreTriagem recalculado para ${n} profissional(is)`);
+})();
+
 export default db;
 export { uid, agora };
