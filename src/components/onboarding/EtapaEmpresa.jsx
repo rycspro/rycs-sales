@@ -89,9 +89,11 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
     setErroGeral("");
     if (concluirEtapa) {
       const { erros: e } = validarPerfilEmpresa(dados);
+      if (!logo) e.logo = "Envie o logo da empresa.";
       setErros(e);
       if (Object.keys(e).length) {
         setErroGeral("Revise os campos destacados.");
+        if (e.logo) setErroLogo(e.logo);
         document.getElementById(`${id}-${Object.keys(e)[0]}`)?.focus();
         return false;
       }
@@ -151,7 +153,7 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
         <section className="vx-onb-card vx-onb-secao" aria-labelledby={`${id}-s1`}>
           <h2 id={`${id}-s1`} className="vx-disp">Identidade</h2>
           <div className="vx-onb-campo">
-            <span className="vx-label" id={`${id}-logo-rotulo`}>Logo <span className="vx-onb-opcional">(recomendado)</span></span>
+            <span className="vx-label" id={`${id}-logo-rotulo`}>Logo <span aria-hidden="true" style={{ color: "var(--red)" }}> *</span></span>
             <div className="vx-onb-logo">
               <div className="vx-onb-logo-previa" aria-hidden={!logo}>
                 {logo ? <img src={logo} alt="Logo atual da empresa" /> : <ImagePlus size={22} aria-hidden="true" />}

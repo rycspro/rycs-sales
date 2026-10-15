@@ -100,6 +100,10 @@ router.post("/onboarding/empresa", (req, res) => {
   if (!soEmpresa(req, res)) return;
   const { perfil, erros } = validarPerfilEmpresa(req.body || {});
   const concluirEtapa = req.body?.concluir === true;
+  if (concluirEtapa) {
+    const empresa = db.prepare("SELECT logo FROM companies WHERE id = ?").get(req.user.entityId);
+    if (!empresa?.logo) erros.logo = "Envie o logo da empresa.";
+  }
   if (erros.ticket || (concluirEtapa && Object.keys(erros).length))
     return res.status(400).json({ error: "Revise os campos destacados.", erros });
 
