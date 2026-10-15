@@ -9,7 +9,7 @@ import { paraFala, frasesFixas } from "../../shared/jarvas.js";
 //
 // A chave fica só aqui (ELEVENLABS_API_KEY); a tela manda o texto e recebe o
 // áudio. Sem chave, ou se o ElevenLabs falhar, a resposta diz `fallback` e a
-// tela usa a voz do navegador: a conversa nunca trava por causa da voz.
+// tela mostra a frase só na legenda: a conversa nunca trava por causa da voz.
 //
 // Economia de créditos (o ElevenLabs cobra por caractere):
 // - a tela pede o áudio frase por frase (shared/jarvas.js, segmentosDeFala),
@@ -20,7 +20,8 @@ import { paraFala, frasesFixas } from "../../shared/jarvas.js";
 //   na subida do servidor, se ainda não estiverem no disco;
 // - duas pessoas pedindo a mesma frase ao mesmo tempo geram um áudio só;
 // - teto mensal de caracteres para a conta toda e teto diário por empresa.
-//   Passou do teto, a tela usa a voz do navegador até virar o mês/dia.
+//   Passou do teto, as frases já gravadas continuam tocando; a frase nova
+//   aparece só na legenda (a tela nunca usa a voz robótica do navegador).
 //
 // Variáveis: ELEVENLABS_API_KEY; ELEVENLABS_VOICE_ID (sem ela, usa a primeira
 // voz masculina em português da conta, ou uma voz padrão masculina);
@@ -187,7 +188,9 @@ export async function aquecerVozJarvas() {
 // ---- rotas -------------------------------------------------------------------
 
 router.get("/jarvas/voz", (req, res) => {
-  res.json({ disponivel: vozDisponivel() && usoDoMes().caracteres < LIMITE_MES });
+  // Disponível = há chave. O teto do mês vale frase a frase: as gravadas
+  // continuam tocando mesmo com o teto atingido.
+  res.json({ disponivel: vozDisponivel() });
 });
 
 router.post("/jarvas/voz", async (req, res) => {

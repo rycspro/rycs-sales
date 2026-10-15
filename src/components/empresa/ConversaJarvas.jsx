@@ -21,8 +21,11 @@ import {
 // Um novo toque no orb pausa e retoma. Sem microfone, a mesma conversa segue
 // digitando.
 //
-// Voz: ElevenLabs pelo servidor (masculina); sem ela, a melhor voz masculina
-// do navegador. O que a pessoa diz é entendido por shared/jarvas.js.
+// Voz: só a voz humana do ElevenLabs, pelo servidor, nunca a voz robótica do
+// navegador. A fala é tocada frase por frase (as fixas já vêm gravadas); se
+// alguma frase não tiver áudio (crédito do mês no teto ou falha do
+// ElevenLabs), ela aparece só na legenda e o resto segue falado.
+// O que a pessoa diz é entendido por shared/jarvas.js.
 
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
@@ -44,17 +47,6 @@ const STATUS = {
   pausado: "Pausado · toque no orbe para continuar",
   montando: "Montando a campanha…",
 };
-
-// Melhor voz masculina do navegador, para quando o ElevenLabs não responder.
-function vozDoNavegador() {
-  const vozes = window.speechSynthesis?.getVoices() || [];
-  const pt = vozes.filter((v) => /^pt(-|_)?BR/i.test(v.lang));
-  const masculina = (v) => /felipe|daniel|antonio|ant[oô]nio|male|masculin|fabio|ricardo|humberto/i.test(v.name);
-  return pt.find((v) => masculina(v) && /natural|neural|online/i.test(v.name))
-    || pt.find(masculina)
-    || pt.find((v) => /natural|neural|online/i.test(v.name))
-    || pt[0] || vozes.find((v) => v.lang?.startsWith("pt")) || null;
-}
 
 export default function ConversaJarvas({ emp, onCampanha }) {
   const id = useId();
@@ -156,12 +148,9 @@ export default function ConversaJarvas({ emp, onCampanha }) {
   };
 
   // Áudio frase por frase: as frases fixas vêm gravadas do servidor e só as
-  // frases com números próprios gastam crédito. Resolve com a lista de URLs,
-  // ou null se alguma frase não tiver voz humana (aí fala tudo pelo navegador).
-  const obterAudio = async (t) => {
-    const urls = await Promise.all(segmentosDeFala(t).map(obterFrase));
-    return urls.length && urls.every(Boolean) ? urls : null;
-  };
+  // frases com números próprios gastam crédito. Resolve com uma URL por frase
+  // (null na frase que ficou sem áudio).
+  const obterAudio = (t) => Promise.all(segmentosDeFala(t).map(obterFrase));
 
   const obterFrase = (t) => {
     const chave = paraFala(t);
@@ -184,7 +173,6 @@ export default function ConversaJarvas({ emp, onCampanha }) {
   const pararFala = () => {
     interromper.current?.();
     interromper.current = null;
-    window.speechSynthesis?.cancel();
   };
 
   // Fala com legenda palavra por palavra. Resolve ao terminar ou ao ser
@@ -208,39 +196,33 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     await new Promise((fim) => {
       let acabou = false;
       const terminar = () => { if (!acabou) { acabou = true; fimDaFala.current = Date.now(); setLegenda((l) => ({ ...l, ate: l.palavras.length })); fim(); } };
-      if (urls && audioEl.current) {
-        // Frases tocadas em sequência; a legenda avança pelas palavras de cada uma.
-        const el = audioEl.current;
-        const frases = segmentosDeFala(t).map((f) => f.split(/\s+/).filter(Boolean).length);
-        let i = 0, antes = 0, q;
-        const acompanhar = () => {
-          if (el.duration) setLegenda({ palavras, ate: antes + Math.ceil(frases[i] * Math.min(1, (el.currentTime + 0.15) / el.duration)) });
-          if (!acabou) q = requestAnimationFrame(acompanhar);
-        };
-        const tocar = () => {
+      // Frases em sequência; a legenda avança pelas palavras de cada uma. Frase
+      // sem áudio aparece na legenda, no tempo de leitura, sem voz.
+      const el = audioEl.current;
+      const frases = segmentosDeFala(t).map((f) => f.split(/\s+/).filter(Boolean).length);
+      let i = 0, antes = 0, q, espera;
+      const acompanhar = () => {
+        if (el?.duration) setLegenda({ palavras, ate: antes + Math.ceil(frases[i] * Math.min(1, (el.currentTime + 0.15) / el.duration)) });
+        if (!acabou) q = requestAnimationFrame(acompanhar);
+      };
+      const proxima = () => {
+        cancelAnimationFrame(q);
+        antes += frases[i] || 0;
+        i += 1;
+        if (i < frases.length && !acabou) tocar(); else terminar();
+      };
+      const tocar = () => {
+        if (urls[i] && el) {
           el.src = urls[i];
-          el.play().then(() => { cancelAnimationFrame(q); q = requestAnimationFrame(acompanhar); }).catch(() => { cancelAnimationFrame(q); terminar(); });
-        };
-        el.onended = () => {
-          antes += frases[i];
-          i += 1;
-          if (i < urls.length && !acabou) tocar(); else { cancelAnimationFrame(q); terminar(); }
-        };
-        el.onerror = () => { cancelAnimationFrame(q); terminar(); };
-        interromper.current = () => { el.pause(); cancelAnimationFrame(q); terminar(); };
-        tocar();
-      } else if (window.speechSynthesis) {
-        const u = new SpeechSynthesisUtterance(paraFala(t));
-        u.lang = "pt-BR"; u.rate = 1.08; u.pitch = 0.95;
-        u.voice = vozDoNavegador();
-        let contadas = 0;
-        u.onboundary = () => setLegenda({ palavras, ate: Math.min(palavras.length, ++contadas) });
-        u.onend = terminar;
-        u.onerror = terminar;
-        interromper.current = () => { window.speechSynthesis.cancel(); terminar(); };
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-      } else terminar();
+          el.play().then(() => { q = requestAnimationFrame(acompanhar); }).catch(proxima);
+        } else {
+          setLegenda({ palavras, ate: antes + frases[i] });
+          espera = setTimeout(proxima, Math.min(600 + frases[i] * 220, 3500));
+        }
+      };
+      if (el) { el.onended = proxima; el.onerror = proxima; }
+      interromper.current = () => { el?.pause(); clearTimeout(espera); cancelAnimationFrame(q); terminar(); };
+      if (frases.length) tocar(); else terminar();
     });
     interromper.current = null;
     return g === geracao.current;
