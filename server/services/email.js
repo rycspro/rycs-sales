@@ -23,7 +23,7 @@ function emailCadastro({ titulo, nome, mensagem, botao = "Acessar a RYCS" }) {
         <div style="text-align:center;margin:24px 0 18px">
           <a href="${seguro(APP_URL)}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">${seguro(botao)}</a>
         </div>
-        <p style="color:#6b7280;font-size:13px;margin:0">Equipe RYCS Sales Solutions</p>
+        <p style="color:#6b7280;font-size:13px;margin:0">Equipe RYCS Sales Machine</p>
       </div>
     </div>`;
 }
@@ -63,11 +63,11 @@ export function emailBoasVindas(nome, email, role) {
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:18px">Olá, ${seguro(nome)}!</h2>
         <p style="color:#4b5563;line-height:1.6">
-          Sua conta ${roleLabel} foi criada com sucesso na RYCS Sales Solutions.
+          Sua conta ${roleLabel} foi criada com sucesso na RYCS Sales Machine.
           ${role === "vendedor" ? "Complete a avaliação inicial para enviar seu perfil à análise da plataforma." : "Complete o cadastro empresarial e envie os dados para aprovação antes de publicar campanhas."}
         </p>
         <p style="color:#6b7280;font-size:13px;margin-top:16px">
-          Equipe RYCS Sales Solutions
+          Equipe RYCS Sales Machine
         </p>
       </div>
     </div>
@@ -251,7 +251,7 @@ export function emailFotoPendente({ nome, email, camposPendentes }) {
           <a href="${seguro(APP_URL)}/perfil" style="background:#2563EB;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Completar meu cadastro</a>
         </div>
         <hr style="border:0;border-top:1px solid #e5e7eb;margin:20px 0"/>
-        <p style="color:#9ca3af;font-size:12px;margin:0">Equipe RYCS Sales Solutions · <a href="${seguro(APP_URL)}" style="color:#6b7280">${seguro(APP_URL)}</a></p>
+        <p style="color:#9ca3af;font-size:12px;margin:0">Equipe RYCS Sales Machine · <a href="${seguro(APP_URL)}" style="color:#6b7280">${seguro(APP_URL)}</a></p>
       </div>
     </div>`;
   return sendEmail(email, "Seu cadastro na RYCS está incompleto — foto e dados pendentes", html);
@@ -280,7 +280,7 @@ export function emailCadastroCompletadoAdmin({ nomeProfissional, emailProfission
           <a href="${seguro(APP_URL)}/admin/profissionais" style="background:#2563EB;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Ver profissional no painel</a>
         </div>
         <hr style="border:0;border-top:1px solid #e5e7eb;margin:20px 0"/>
-        <p style="color:#9ca3af;font-size:12px;margin:0">RYCS Sales Solutions · Notificação automática</p>
+        <p style="color:#9ca3af;font-size:12px;margin:0">RYCS Sales Machine · Notificação automática</p>
       </div>
     </div>`;
   return sendEmail(adminEmail, `[RYCS] Cadastro completo: ${nomeProfissional}`, html);

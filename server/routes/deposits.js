@@ -74,7 +74,7 @@ const MINIMO_GATEWAY = 5;
 
 // Chave Pix da plataforma, mostrada à empresa na hora de depositar.
 const PIX_RYCS = process.env.PIX_RECEBIMENTO || "";
-const TITULAR_RYCS = process.env.PIX_TITULAR || "RYCS Sales Solutions";
+const TITULAR_RYCS = process.env.PIX_TITULAR || "RYCS Sales Machine";
 
 // ---------------------------------------------------------------------------
 // Empresa declara um depósito. Nada é creditado aqui — só registra a intenção

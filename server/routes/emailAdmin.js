@@ -119,7 +119,7 @@ function buildHtml({ assunto, preheader, conteudo, cta, teste }) {
         <div style="color:#4b5563;line-height:1.7;font-size:14px;white-space:pre-wrap">${esc(conteudo)}</div>
         ${ctaHtml}
         <hr style="border:0;border-top:1px solid #e5e7eb;margin:20px 0"/>
-        <p style="color:#9ca3af;font-size:12px;margin:0">Equipe RYCS Sales Solutions · <a href="${APP_URL}" style="color:#6b7280">${APP_URL}</a></p>
+        <p style="color:#9ca3af;font-size:12px;margin:0">Equipe RYCS Sales Machine · <a href="${APP_URL}" style="color:#6b7280">${APP_URL}</a></p>
       </div>
     </div>`;
 }

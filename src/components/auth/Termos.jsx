@@ -9,9 +9,9 @@ export default function Termos({ onAceitar, onVoltar }) {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 640 }}>
         <div className="vx-card" style={{ padding: 24, maxHeight: "80vh", overflowY: "auto" }}>
-          <div className="vx-disp" style={{ fontSize: 20, marginBottom: 16 }}>Termos de Uso — RYCS Sales Solutions</div>
+          <div className="vx-disp" style={{ fontSize: 20, marginBottom: 16 }}>Termos de Uso — RYCS Sales Machine</div>
           <div style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-2)" }}>
-            <p><b>1. Objeto.</b> A RYCS Sales Solutions é uma plataforma digital que conecta empresas contratantes a profissionais de vendas independentes, intermediando atividades comerciais verificadas por inteligência artificial.</p>
+            <p><b>1. Objeto.</b> A RYCS Sales Machine é uma plataforma digital que conecta empresas contratantes a profissionais de vendas independentes, intermediando atividades comerciais verificadas por inteligência artificial.</p>
             <p><b>2. Cadastro.</b> O usuário declara que as informações fornecidas são verdadeiras. A RYCS reserva-se o direito de recusar ou suspender cadastros com informações falsas.</p>
             <p><b>3. Papel da RYCS.</b> A RYCS atua como intermediadora. Não há vínculo empregatício entre a RYCS e os profissionais, nem entre as empresas e os profissionais. A remuneração é por ação verificada.</p>
             <p><b>4. Comissões e pagamentos.</b> As comissões são definidas por cada empresa em suas campanhas. A RYCS cobra uma taxa de serviço (take rate) sobre o volume transacionado. Os pagamentos aos profissionais são processados via Pix após liberação pela plataforma.</p>
