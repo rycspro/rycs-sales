@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
+import { mkdtempSync, readdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { subirServidor, assinar } from "./apoio/servidor.js";
 
 // Voz do Jarvas (server/routes/jarvas.js) contra um ElevenLabs falso local
@@ -22,6 +25,7 @@ test("sem chave do ElevenLabs a tela recebe fallback para a voz do navegador", a
 
 test("com chave: áudio do ElevenLabs, texto preparado para a fala, cache e limite diário", async (t) => {
   const pedidos = [];
+  const pasta = mkdtempSync(join(tmpdir(), "rycs-voz-"));
   const falso = http.createServer((req, res) => {
     let corpo = "";
     req.on("data", (d) => { corpo += d; });
@@ -36,7 +40,7 @@ test("com chave: áudio do ElevenLabs, texto preparado para a fala, cache e limi
 
   const { base } = await subirServidor(t, {
     ELEVENLABS_API_KEY: "chave-falsa", ELEVENLABS_BASE_URL: `http://127.0.0.1:${falso.address().port}`,
-    ELEVENLABS_VOICE_ID: "voz-br", JARVAS_VOZ_LIMITE_DIA: "100",
+    ELEVENLABS_VOICE_ID: "voz-br", JARVAS_VOZ_LIMITE_DIA: "100", JARVAS_VOZ_DIR: pasta,
   });
 
   let r = await pedir(base, "Com R$ 2.500 por profissional, cada visita sai por R$ 19.");
@@ -46,10 +50,14 @@ test("com chave: áudio do ElevenLabs, texto preparado para a fala, cache e limi
   assert.equal(pedidos[0].url, "/v1/text-to-speech/voz-br?output_format=mp3_44100_128");
   assert.equal(pedidos[0].chave, "chave-falsa");
   assert.equal(pedidos[0].corpo.text, "Com 2.500 reais por profissional, cada visita sai por 19 reais.");
+  assert.equal(r.headers.get("x-voz-gravada"), "0");
+  // Gravada em disco: sobrevive a deploy e reinício.
+  assert.equal(readdirSync(pasta).filter((n) => n.endsWith(".mp3")).length, 1);
 
   // Mesma frase de novo: vem do cache, sem nova chamada (e sem gastar o limite).
   r = await pedir(base, "Com R$ 2.500 por profissional, cada visita sai por R$ 19.");
   assert.equal(r.status, 200);
+  assert.equal(r.headers.get("x-voz-gravada"), "1");
   assert.equal(pedidos.length, 1);
 
   // Passou do limite diário de caracteres: fallback, sem chamar o ElevenLabs.

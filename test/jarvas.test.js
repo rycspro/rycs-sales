@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco } from "../shared/jarvas.js";
+import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas } from "../shared/jarvas.js";
 
 // Jarvas (shared/jarvas.js): entende português do dia a dia, pula o que já
 // sabe e reage com conta de verdade, sem provedor externo.
@@ -120,4 +120,15 @@ test("entende o contexto: confirmações, mudanças a qualquer momento e eco da 
   assert.ok(pareceEco("quantos profissionais", "Quantos profissionais?"));
   assert.ok(!pareceEco("três profissionais", "Quantos profissionais?"));
   assert.ok(confirmaMontagem("pode"));
+});
+
+test("voz por frase: fixas gravadas uma vez, só a frase com número da empresa gasta", () => {
+  assert.deepEqual(segmentosDeFala("Ticket médio de R$ 5.000. Confirma?"), ["Ticket médio de R$ 5.000.", "Confirma?"]);
+  assert.deepEqual(segmentosDeFala("Então 10 reuniões viram R$ 15.000 em vendas. Quer quantas vezes de retorno?"),
+    ["Então 10 reuniões viram R$ 15.000 em vendas.", "Quer quantas vezes de retorno?"]);
+  const fixas = frasesFixas();
+  for (const f of ["Confirma?", "Mantenho?", "Quantos profissionais?", "Quer quantas vezes de retorno?", "Oi, sou o Jarvas.", "Posso montar?"])
+    assert.ok(fixas.includes(f), f);
+  assert.ok(!fixas.some((f) => /R\$|\d{3}/.test(f)), "nenhuma frase fixa tem valor de empresa");
+  assert.ok(fixas.join("").length < 1000, "as fixas inteiras custam menos de 1.000 caracteres");
 });

@@ -251,12 +251,12 @@ export const interpretarAjuste = (texto) => interpretar(texto, null);
 
 // O microfone ouve o próprio Jarvas falando. Se o que foi ouvido é quase
 // tudo palavra da fala dele, é eco, não a pessoa.
-export function pareceEco(ouvido, falado) {
+export function pareceEco(ouvido, falado, limiar = 0.6) {
   const palavras = (t) => (sem(t).match(/[a-z0-9]{3,}/g) || []);
   const ditas = palavras(ouvido);
   if (ditas.length < 2) return false;
   const dele = new Set(palavras(falado));
-  return ditas.filter((p) => dele.has(p)).length / ditas.length >= 0.6;
+  return ditas.filter((p) => dele.has(p)).length / ditas.length >= limiar;
 }
 
 // ---------------------------------------------------------------------------
@@ -488,4 +488,41 @@ export function paraFala(texto) {
     .replace(/\s*\n+\s*/g, " ")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+// ---------------------------------------------------------------------------
+// Voz: economia de créditos do ElevenLabs.
+//
+// A fala é gerada e guardada frase por frase. Assim, as frases fixas
+// ("Quantos profissionais?", "Confirma?") são gravadas uma única vez e
+// reaproveitadas em qualquer conversa, mesmo quando vêm depois de uma frase
+// com números de uma empresa. Só as frases com números próprios custam.
+
+// "Ticket médio de R$ 5.000. Confirma?" → ["Ticket médio de R$ 5.000.", "Confirma?"].
+// O ponto de "5.000" não separa: só ponto seguido de espaço.
+export function segmentosDeFala(texto) {
+  return String(texto || "").split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+}
+
+// Todas as frases que não dependem de dado de empresa nenhuma. O servidor
+// grava essas uma única vez (services de voz: aquecerVozJarvas).
+export function frasesFixas() {
+  const frases = new Set();
+  const somar = (t) => segmentosDeFala(t).forEach((s) => frases.add(s));
+  const campos = ["objetivo", "regiao", "publico", "vagas", "ticketMedio", "conversao", "retorno", "meta", "visitasPorDia", "fixoMensal"];
+  for (const objetivo of Object.keys(OBJETIVOS)) {
+    for (const campo of campos) {
+      for (const emp of [{}, { icp: "x", ticket: "1" }]) {
+        const r = { objetivo, ticketMedio: 1 };
+        const p = perguntar(campo, r, emp);
+        // Perguntas com dado do cadastro: só a parte fixa ("Mantenho?", "Confirma?").
+        segmentosDeFala(p.texto).filter((s) => !/R\$|:/.test(s)).forEach((s) => frases.add(s));
+        for (const c of p.chips) if (c.seguir) somar(c.seguir);
+        segmentosDeFala(pedirDeNovo(campo, r, emp)).filter((s) => !/R\$|:/.test(s)).forEach((s) => frases.add(s));
+      }
+    }
+  }
+  [saudacao(), FECHAMENTO, "Montando sua campanha.", "Não entendi. O que mudo?", "Pode falar.",
+    "Sem a taxa, vamos pelo orçamento.", "Usei 3 vezes; dá para mudar."].forEach(somar);
+  return [...frases];
 }
