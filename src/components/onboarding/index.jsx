@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import MolduraOnboarding from "./MolduraOnboarding.jsx";
+import EtapaEmpresa from "./EtapaEmpresa.jsx";
 import { api } from "../../lib/api.js";
 import { ROTAS } from "../../lib/rotas.js";
 import { ETAPAS, etapaDe, podeAbrirEtapa, normalizarWhatsapp, formatarWhatsapp } from "../../../shared/onboarding.js";
@@ -106,8 +107,8 @@ export default function Onboarding({ estado, setEstado, email, etapaPedida, aoSa
 
   return (
     <MolduraOnboarding etapas={estado.etapas} ativa={ativa} aoAbrir={abrir} aoSair={aoSair}>
-      {ativa === "acesso"
-        ? <AcessoLogado estado={estado} email={email} aoAtualizar={setEstado} aoAvancar={avancar} />
+      {ativa === "acesso" ? <AcessoLogado estado={estado} email={email} aoAtualizar={setEstado} aoAvancar={avancar} />
+        : ativa === "empresa" ? <EtapaEmpresa aoAtualizar={setEstado} aoAvancar={avancar} aoVoltar={() => abrir("acesso")} />
         : <EtapaPendenteDeEntrega chave={ativa} aoVoltar={() => abrir(anterior(ativa))} />}
     </MolduraOnboarding>
   );

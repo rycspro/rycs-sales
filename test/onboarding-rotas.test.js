@@ -137,6 +137,37 @@ test("rotas do onboarding: cadastro, convite, retomada, permissões e recuperaç
   r = await req("/onboarding/acesso", { cookie: cookieAntiga, body: { whatsapp: "11 3456-7890" } });
   assert.equal(r.corpo.atual, "empresa");
 
+  // Etapa 2: perfil. O nome provisório (começo do e-mail) não aparece como
+  // nome da empresa; obrigatórios seguram a conclusão, rascunho salva.
+  r = await req("/onboarding/empresa", { cookie: cookieA });
+  assert.equal(r.corpo.nome, "");
+  r = await req("/onboarding", { cookie: cookieA });
+  assert.equal(r.corpo.bloqueia, true, "empresa nova fica na etapa 2, que já existe");
+  r = await req("/onboarding/empresa", { cookie: cookieA, body: { produto: "CRM", concluir: true } });
+  assert.equal(r.status, 400); assert.ok(r.corpo.erros.nome); assert.ok(r.corpo.erros.publico);
+  r = await req("/onboarding/empresa", { cookie: cookieA, body: { produto: "CRM para distribuidoras", ticket: "1.490,00" } });
+  assert.equal(r.status, 200); assert.equal(r.corpo.atual, "empresa");
+  r = await req("/onboarding/empresa", { cookie: cookieA });
+  assert.equal(r.corpo.produto, "CRM para distribuidoras"); assert.equal(r.corpo.ticket, 1490);
+  r = await req("/onboarding/empresa", { cookie: cookieA, body: {
+    nome: "Acme", produto: "CRM para distribuidoras", ticket: "1.490,00", publico: "Distribuidoras de 20 a 200 funcionários",
+    permissoesMarca: { usarEmojis: true }, concluir: true,
+  } });
+  assert.equal(r.status, 200); assert.equal(r.corpo.atual, "academy");
+  assert.equal(db.prepare("SELECT ticket FROM companies WHERE id = (SELECT entityId FROM users WHERE email = 'a@a.com')").get().ticket, "R$ 1.490,00");
+  r = await req("/onboarding/empresa", { cookie: assinar({ id: "x", role: "vendedor", entityId: "qualquer" }) });
+  assert.equal(r.status, 403);
+
+  // Logo: SVG com script é recusado; PNG pequeno passa e pode ser removido.
+  const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"></svg>').toString("base64");
+  r = await req("/onboarding/empresa/logo", { cookie: cookieA, body: { base64: svg, mimetype: "image/svg+xml" } });
+  assert.equal(r.status, 422);
+  const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  r = await req("/onboarding/empresa/logo", { cookie: cookieA, body: { base64: png, mimetype: "image/png" } });
+  assert.equal(r.status, 200); assert.match(r.corpo.logo, /^data:image\/png;base64,/);
+  r = await req("/onboarding/empresa/logo", { cookie: cookieA, body: { remover: true } });
+  assert.equal(r.corpo.logo, "");
+
   // Recuperação de senha: mesma resposta exista ou não o e-mail, token
   // guardado como hash, e reenvio imediato não troca o link.
   r = await req("/auth/forgot-password", { body: { email: "naoexiste@x.com" } });

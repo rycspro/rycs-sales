@@ -20,7 +20,7 @@ export const CHAVES_ETAPAS = ETAPAS.map((e) => e.chave);
 // Etapas já entregues. Enquanto o fluxo não está completo, só elas seguram a
 // empresa fora do painel: parar numa etapa que ainda não existe trancaria a
 // conta sem ter o que preencher. Cada passo entregue entra nesta lista.
-export const ETAPAS_PRONTAS = ["acesso"];
+export const ETAPAS_PRONTAS = ["acesso", "empresa"];
 
 // Decide se o onboarding fica na frente do painel.
 //   - Concluído: nunca.
@@ -144,4 +144,81 @@ export function validadeConviteDias(valor) {
   const n = Math.round(Number(valor));
   if (!Number.isFinite(n) || n < 1) return CONVITE_VALIDADE_PADRAO_DIAS;
   return Math.min(CONVITE_VALIDADE_MAX_DIAS, n);
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 2: perfil da empresa
+//
+// Nome, produto e público são obrigatórios; o resto é recomendado. Os textos
+// longos alimentam a IA da etapa 4, então o limite é generoso.
+
+export const TEXTO_CURTO_MAX = 100;
+export const TEXTO_LONGO_MAX = 4000;
+
+// O que a IA pode fazer sozinha numa conversa. Tudo começa desligado: a
+// empresa liga o que quiser.
+export const PERMISSOES_MARCA = [
+  { chave: "informarPrecos", label: "Informar preços ao cliente" },
+  { chave: "oferecerDescontos", label: "Oferecer descontos e condições especiais" },
+  { chave: "combinarPrazos", label: "Combinar prazos de entrega ou atendimento" },
+  { chave: "usarEmojis", label: "Usar emojis nas mensagens" },
+];
+
+export function normalizarPermissoes(valor) {
+  const base = valor && typeof valor === "object" ? valor : {};
+  return Object.fromEntries(PERMISSOES_MARCA.map((p) => [p.chave, base[p.chave] === true]));
+}
+
+// "1.490,50", "1490.5" ou "R$ 1.490" → 1490.5. Vazio ou inválido → null.
+export function ticketParaNumero(valor) {
+  const t = String(valor ?? "").replace(/[^\d.,]/g, "");
+  if (!t) return null;
+  let n;
+  if (t.includes(",")) n = Number(t.replace(/\./g, "").replace(",", "."));
+  else if (/\.\d{1,2}$/.test(t)) n = Number(t);
+  else n = Number(t.replace(/\./g, ""));
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
+}
+
+export const formatarTicket = (n) =>
+  n == null ? "" : `R$ ${Number(n).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Valida e limpa o que a tela mandou. Devolve { perfil, erros }; erros por
+// campo, com a mensagem que a tela mostra.
+export function validarPerfilEmpresa(dados = {}) {
+  const txt = (v, max) => String(v ?? "").trim().slice(0, max);
+  const perfil = {
+    nome: txt(dados.nome, TEXTO_CURTO_MAX),
+    produto: txt(dados.produto, TEXTO_LONGO_MAX),
+    ticket: null,
+    nicho: txt(dados.nicho, TEXTO_LONGO_MAX),
+    diferencial: txt(dados.diferencial, TEXTO_LONGO_MAX),
+    publico: txt(dados.publico, TEXTO_LONGO_MAX),
+    regrasMarca: txt(dados.regrasMarca, TEXTO_LONGO_MAX),
+    permissoesMarca: normalizarPermissoes(dados.permissoesMarca),
+  };
+  const erros = {};
+  if (perfil.nome.length < 2) erros.nome = "Informe o nome da empresa.";
+  if (perfil.produto.length < 3) erros.produto = "Conte o que a empresa vende.";
+  if (perfil.publico.length < 3) erros.publico = "Conte para quem a empresa vende.";
+  if (String(dados.ticket ?? "").trim()) {
+    perfil.ticket = ticketParaNumero(dados.ticket);
+    if (perfil.ticket == null) erros.ticket = "Informe o valor em reais, por exemplo 1.490,00.";
+  }
+  return { perfil, erros };
+}
+
+// Logo: PNG ou SVG (de preferência com fundo transparente); JPG e WebP também
+// passam. Guardado como data URI, como o logo que a plataforma já usa.
+export const LOGO_MAX_BYTES = 1024 * 1024;
+export const LOGO_TIPOS = ["image/png", "image/svg+xml", "image/jpeg", "image/webp"];
+
+export function avaliarLogo({ mimetype, tamanhoBytes, svgTexto = "" }) {
+  if (!LOGO_TIPOS.includes(mimetype)) return "Use PNG ou SVG (JPG e WebP também funcionam).";
+  if (!(tamanhoBytes > 0) || tamanhoBytes > LOGO_MAX_BYTES) return "O logo precisa ter até 1 MB.";
+  // SVG é texto e pode carregar script. Num <img> ele não roda, mas o arquivo
+  // fica guardado: melhor recusar do que guardar algo ativo.
+  if (mimetype === "image/svg+xml" && /<script|\son\w+\s*=|javascript:|<foreignObject/i.test(svgTexto))
+    return "Este SVG tem conteúdo ativo (script). Exporte o logo de novo ou envie em PNG.";
+  return null;
 }

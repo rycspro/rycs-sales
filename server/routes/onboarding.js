@@ -2,7 +2,8 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import {
   TRIAL_ONBOARDING_DIAS, MOTIVOS_CONVITE_ONBOARDING, estadoConviteOnboarding, conviteServeParaEmail,
-  validadeConviteDias, normalizarWhatsapp,
+  validadeConviteDias, normalizarWhatsapp, validarPerfilEmpresa, normalizarPermissoes, ticketParaNumero,
+  formatarTicket, avaliarLogo,
 } from "../../shared/onboarding.js";
 import { hashToken, novoToken, obterOnboarding, concluir, serializar } from "../services/onboarding.js";
 
@@ -51,6 +52,85 @@ router.post("/onboarding/acesso", (req, res) => {
   const linha = concluir(req.user.entityId, "acesso");
   if (!linha) return res.status(409).json({ error: "Não foi possível concluir esta etapa." });
   res.json(serializar(linha));
+});
+
+// ---------------------------------------------------------------------------
+// Etapa 2: perfil da empresa.
+
+function perfilDaEmpresa(companyId, emailUsuario) {
+  const c = db.prepare(`SELECT nome, produto, ticket, icp, segmento, nicho, diferenciais, regrasMarca, permissoesMarca, logo
+                        FROM companies WHERE id = ?`).get(companyId);
+  if (!c) return null;
+  let permissoes = {};
+  try { permissoes = JSON.parse(c.permissoesMarca || "{}"); } catch { /* fica o padrão */ }
+  // O cadastro da etapa 1 usa o começo do e-mail como nome provisório.
+  // Mostrar isso como se fosse o nome da empresa seria inventar um dado.
+  const provisorio = emailUsuario && c.nome === String(emailUsuario).split("@")[0];
+  return {
+    nome: provisorio ? "" : c.nome,
+    produto: c.produto || "",
+    ticket: ticketParaNumero(c.ticket),
+    nicho: c.nicho || c.segmento || "",
+    diferencial: c.diferenciais || "",
+    publico: c.icp || "",
+    regrasMarca: c.regrasMarca || "",
+    permissoesMarca: normalizarPermissoes(permissoes),
+    logo: c.logo || "",
+  };
+}
+
+const emailDoUsuario = (id) => db.prepare("SELECT email FROM users WHERE id = ?").get(id)?.email || "";
+
+router.get("/onboarding/empresa", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const perfil = perfilDaEmpresa(req.user.entityId, emailDoUsuario(req.user.id));
+  if (!perfil) return res.status(404).json({ error: "Empresa não encontrada." });
+  res.json(perfil);
+});
+
+// Salva o perfil. Com concluir=true, valida os obrigatórios e avança a etapa;
+// sem ele, guarda o que houver (o rascunho não se perde se a pessoa sair).
+router.post("/onboarding/empresa", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const { perfil, erros } = validarPerfilEmpresa(req.body || {});
+  const concluirEtapa = req.body?.concluir === true;
+  if (erros.ticket || (concluirEtapa && Object.keys(erros).length))
+    return res.status(400).json({ error: "Revise os campos destacados.", erros });
+
+  const sets = {
+    produto: perfil.produto, ticket: perfil.ticket == null ? "" : formatarTicket(perfil.ticket),
+    nicho: perfil.nicho, diferenciais: perfil.diferencial, icp: perfil.publico,
+    regrasMarca: perfil.regrasMarca, permissoesMarca: JSON.stringify(perfil.permissoesMarca),
+  };
+  // Nome vazio num rascunho não apaga o nome provisório: a coluna é obrigatória.
+  if (perfil.nome) sets.nome = perfil.nome;
+  const cols = Object.keys(sets);
+  db.prepare(`UPDATE companies SET ${cols.map((c) => `${c} = ?`).join(", ")} WHERE id = ?`)
+    .run(...cols.map((c) => sets[c]), req.user.entityId);
+
+  if (!concluirEtapa) return res.json({ ok: true, ...serializar(obterOnboarding(req.user.entityId)) });
+  const linha = concluir(req.user.entityId, "empresa");
+  if (!linha) return res.status(409).json({ error: "Conclua a etapa anterior primeiro." });
+  res.json({ ok: true, ...serializar(linha) });
+});
+
+router.post("/onboarding/empresa/logo", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  if (req.body?.remover === true) {
+    db.prepare("UPDATE companies SET logo = '' WHERE id = ?").run(req.user.entityId);
+    return res.json({ ok: true, logo: "" });
+  }
+  const base64 = String(req.body?.base64 || "");
+  const mimetype = String(req.body?.mimetype || "");
+  const buffer = Buffer.from(base64, "base64");
+  const erro = avaliarLogo({
+    mimetype, tamanhoBytes: buffer.length,
+    svgTexto: mimetype === "image/svg+xml" ? buffer.toString("utf8") : "",
+  });
+  if (erro) return res.status(422).json({ error: erro });
+  const logo = `data:${mimetype};base64,${buffer.toString("base64")}`;
+  db.prepare("UPDATE companies SET logo = ? WHERE id = ?").run(logo, req.user.entityId);
+  res.json({ ok: true, logo });
 });
 
 // Convite aberto por quem já tem conta: entra no login e o convite é aplicado

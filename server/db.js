@@ -1235,6 +1235,9 @@ db.exec(`
   );
 `);
 adicionarColuna("companies", "whatsapp", "TEXT DEFAULT ''");
+adicionarColuna("companies", "nicho", "TEXT DEFAULT ''");
+adicionarColuna("companies", "regrasMarca", "TEXT DEFAULT ''");
+adicionarColuna("companies", "permissoesMarca", "TEXT DEFAULT '{}'");
 adicionarColuna("users", "resetEnviadoEm", "INTEGER");
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este

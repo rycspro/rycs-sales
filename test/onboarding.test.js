@@ -4,7 +4,7 @@ import {
   etapaAtual, podeAbrirEtapa, concluirEtapa, onboardingConcluido, normalizarEtapas,
   validarSenhaEmpresa, normalizarWhatsapp, podeReenviarReset, REENVIO_RESET_MS,
   estadoConviteOnboarding, conviteServeParaEmail, validadeConviteDias, CONVITE_VALIDADE_MAX_DIAS,
-  onboardingBloqueia, ETAPAS_PRONTAS,
+  onboardingBloqueia, ETAPAS_PRONTAS, validarPerfilEmpresa, ticketParaNumero, avaliarLogo,
 } from "../shared/onboarding.js";
 
 // ---------------------------------------------------------------------------
@@ -76,4 +76,30 @@ test("só etapa já entregue segura a empresa fora do painel", () => {
     assert.equal(onboardingBloqueia({ etapas: {}, origem: "existente" }), false);
     assert.equal(onboardingBloqueia({ etapas: {}, origem: "existente", exigirExistentes: true }), true);
   }
+});
+
+test("perfil: nome, produto e público obrigatórios; ticket em reais", () => {
+  let { erros } = validarPerfilEmpresa({});
+  assert.deepEqual(Object.keys(erros).sort(), ["nome", "produto", "publico"]);
+  ({ erros } = validarPerfilEmpresa({ nome: "Acme", produto: "CRM", publico: "PMEs", ticket: "abc" }));
+  assert.ok(erros.ticket);
+  const { perfil, erros: ok } = validarPerfilEmpresa({
+    nome: " Acme ", produto: "CRM", publico: "PMEs", ticket: "1.490,50",
+    permissoesMarca: { usarEmojis: true, inventada: true },
+  });
+  assert.deepEqual(ok, {});
+  assert.equal(perfil.nome, "Acme");
+  assert.equal(perfil.ticket, 1490.5);
+  assert.deepEqual(perfil.permissoesMarca, { informarPrecos: false, oferecerDescontos: false, combinarPrazos: false, usarEmojis: true });
+  assert.equal(ticketParaNumero("1.490"), 1490);
+  assert.equal(ticketParaNumero(""), null);
+});
+
+test("logo: tipo, tamanho e SVG sem conteúdo ativo", () => {
+  assert.equal(avaliarLogo({ mimetype: "image/png", tamanhoBytes: 1000 }), null);
+  assert.ok(avaliarLogo({ mimetype: "image/gif", tamanhoBytes: 1000 }));
+  assert.ok(avaliarLogo({ mimetype: "image/png", tamanhoBytes: 5 * 1024 * 1024 }));
+  assert.equal(avaliarLogo({ mimetype: "image/svg+xml", tamanhoBytes: 50, svgTexto: "<svg><rect/></svg>" }), null);
+  assert.ok(avaliarLogo({ mimetype: "image/svg+xml", tamanhoBytes: 50, svgTexto: "<svg onload=\"x()\"></svg>" }));
+  assert.ok(avaliarLogo({ mimetype: "image/svg+xml", tamanhoBytes: 50, svgTexto: "<svg><script>x</script></svg>" }));
 });

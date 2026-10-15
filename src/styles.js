@@ -396,6 +396,24 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 .vx-onb-acoes .vx-btn{min-height:48px;min-width:140px}
 .vx-onb-acoes .vx-btn-primary{min-height:52px}
 .vx-onb-estado{padding:40px 20px;text-align:center;color:var(--muted)}
+.vx-onb-titulo{font-size:30px;line-height:1.2;margin:8px 0 8px}
+.vx-onb-opcional{font-weight:500;color:var(--muted)}
+.vx-onb-perfil{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;align-items:start}
+.vx-onb-secao{margin-bottom:16px}
+.vx-onb-secao h2,.vx-onb-lateral h2{font-size:18px;margin:0 0 16px}
+.vx-onb-secao textarea.vx-input{min-height:104px;resize:vertical;line-height:1.5}
+.vx-onb-lateral{position:sticky;top:20px}
+.vx-onb-lateral p{font-size:14px;line-height:1.6;margin:0}
+.vx-onb-lateral ul{margin:8px 0 0;padding-left:18px;font-size:14px;color:var(--ink-2);line-height:1.9}
+.vx-onb-logo{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.vx-onb-logo-previa{width:72px;height:72px;border-radius:var(--radius-md);border:1px dashed var(--border-strong);background:var(--surface-1);display:grid;place-items:center;color:var(--muted);overflow:hidden;flex:none}
+.vx-onb-logo-previa img{max-width:100%;max-height:100%;object-fit:contain}
+.vx-onb-moeda{position:relative}
+.vx-onb-moeda>span{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;pointer-events:none}
+.vx-onb-moeda .vx-input{padding-left:42px}
+.vx-onb-permissoes{border:0;padding:0;margin:0}
+.vx-onb-permissoes label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;cursor:pointer}
+.vx-onb-permissoes input{width:18px;height:18px;accent-color:var(--brand);flex:none}
 .vx-senha{position:relative}
 .vx-senha .vx-input{padding-right:52px}
 .vx-senha-olho{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:44px;height:44px;display:grid;place-items:center;background:none;border:0;border-radius:var(--radius-sm);color:var(--muted);cursor:pointer}
@@ -405,6 +423,8 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
   .vx-onb-duas{grid-template-columns:1fr;gap:26px}
   .vx-onb-hero h1{font-size:27px}
   .vx-onb-proximos{display:none}
+  .vx-onb-perfil{grid-template-columns:1fr}
+  .vx-onb-lateral{position:static}
 }
 @media(max-width:640px){
   .vx-onb-topo-inner{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px;padding:4px 16px 8px}

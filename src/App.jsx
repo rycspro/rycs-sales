@@ -268,7 +268,9 @@ export default function App() {
     if (onb.bloqueia) return (
       <div className="vx-app">
         <style>{CSS}</style>
-        <Onboarding estado={onb} setEstado={setOnb} email={user.email}
+        <Onboarding estado={onb} email={user.email}
+          // Saindo do onboarding, o painel precisa dos dados que acabaram de ser preenchidos.
+          setEstado={(novo) => { setOnb(novo); if (!novo.bloqueia) carregarState(); }}
           etapaPedida={rota.tipo === "onboarding" ? rota.etapa : null} aoSair={logout} />
         {toastEl}
       </div>
