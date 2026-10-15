@@ -68,7 +68,7 @@ export default function App() {
   const [user, setUser] = useState(() => previaQualificacao ? { role: "empresa", email: "preview@local" } : null);
   const [toast, setToast] = useState("");
   const [environment, setEnvironment] = useState("production");
-  const [nav, setNav] = useState({ vendedor: "empresas", empresa: previaQualificacao ? (previaEmpresa ? "painel" : "academy") : "painel", admin: "dashboard" });
+  const [nav, setNav] = useState({ vendedor: "oportunidades", empresa: previaQualificacao ? (previaEmpresa ? "painel" : "academy") : "painel", admin: "dashboard" });
   useEffect(() => {
     document.documentElement.style.background = "#F4F7FC";
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#F4F7FC");

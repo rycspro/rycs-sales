@@ -9,6 +9,35 @@ const router = Router();
 
 const ETAPAS_ONBOARDING = ["perfil", "quiz", "concluido"];
 
+function calcularScoreOnboarding(xp, disc) {
+  let score = 0;
+
+  // Experiência em vendas (xp1): 0-4 → 0-30 pontos
+  const anos = Number(xp?.xp1) || 0;
+  score += Math.min(anos, 4) * 7.5;
+
+  // Canais de venda (xp2): cada canal = 3pt, max 18pt
+  const canais = Array.isArray(xp?.xp2) ? xp.xp2.filter((c) => c !== "Ainda não tenho canal definido") : [];
+  score += Math.min(canais.length, 6) * 3;
+
+  // Tipo de venda (xp3): ambos=12, b2b=10, b2c=8, nenhuma=2
+  const tipoVenda = { ambos: 12, b2b: 10, b2c: 8, nenhuma: 2 };
+  score += tipoVenda[xp?.xp3] || 2;
+
+  // Dedicação (xp4): integral=20, meio=15, parcial=10, pontual=5
+  const dedicacao = { integral: 20, meio: 15, parcial: 10, pontual: 5 };
+  score += dedicacao[xp?.xp4] || 5;
+
+  // DISC: perfil predominante definido = 10pt, secundário diferente = 5pt
+  if (disc?.predominante) score += 10;
+  if (disc?.secundario && disc.secundario !== disc.predominante) score += 5;
+
+  // Completou o quiz inteiro = 5pt base
+  score += 5;
+
+  return Math.min(Math.floor(score * 100) / 100, 100);
+}
+
 function etapaIndex(etapa) {
   return ETAPAS_ONBOARDING.indexOf(etapa);
 }
@@ -111,16 +140,19 @@ router.post("/onboarding-pro/quiz", (req, res) => {
 
   const resultado = calcularDisc(respostaDisc);
 
+  const scoreTriagem = calcularScoreOnboarding(respostaXp, resultado);
+
   db.prepare(`UPDATE sellers SET
     disc = ?, discRespostas = ?, xpRespostas = ?,
     onboardingEtapa = 'concluido', status = 'aprovado',
-    perfilComercial = ?
+    perfilComercial = ?, scoreTriagem = ?
     WHERE id = ?`)
     .run(
       JSON.stringify(resultado),
       JSON.stringify(respostaDisc),
       JSON.stringify(respostaXp),
       JSON.stringify({ disc: resultado, experiencia: respostaXp }),
+      scoreTriagem,
       sellerId
     );
 

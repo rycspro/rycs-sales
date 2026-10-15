@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Cadastro from "./Cadastro.jsx";
 import PainelVendedor from "./PainelVendedor.jsx";
-import ListaEmpresas from "./ListaEmpresas.jsx";
+import Oportunidades from "./Oportunidades.jsx";
 import Workspace from "./Workspace.jsx";
 import CampanhaPage from "./CampanhaPage.jsx";
 import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
@@ -84,15 +84,14 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
 
   return (
     <>
-      {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("empresas")} />}
-      {aba === "empresas" && (
-        <ListaEmpresas
+      {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("oportunidades")} />}
+      {aba === "oportunidades" && (
+        <Oportunidades
           eu={eu}
           db={db}
-          up={up}
           aviso={aviso}
-          abrir={(companyId) => { setAbertaId(companyId); setModoTreinamento(false); }}
           recarregar={recarregar}
+          abrirCampanha={(c) => { setAbertaId(c.companyId); setCampanhaAbertaId(c.id); }}
         />
       )}
       {aba === "academy" && (academyFuncao

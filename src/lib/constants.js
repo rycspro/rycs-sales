@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2 } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -43,7 +43,7 @@ export const MOTIVO_COR = {
 export const NAV = {
   vendedor: [
     { key: "painel", label: "Painel", Icon: BarChart3 },
-    { key: "empresas", label: "Empresas", Icon: Building2 },
+    { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "indicar", label: "Indicar", Icon: Gift },
