@@ -1281,6 +1281,10 @@ adicionarColuna("companies", "suporteNome", "TEXT DEFAULT ''");
 adicionarColuna("companies", "suporteWhatsapp", "TEXT DEFAULT ''");
 adicionarColuna("companies", "suporteEmail", "TEXT DEFAULT ''");
 adicionarColuna("onboarding", "campanhaId", "TEXT");
+// Leitura dos materiais da etapa 3 pela IA: versão do leitor que já leu o
+// arquivo (sobe quando o leitor aprende um formato novo) e como foi lido.
+adicionarColuna("academy_materiais", "leituraVersao", "INTEGER DEFAULT 0");
+adicionarColuna("academy_materiais", "leitura", "TEXT DEFAULT ''");
 // Estratégias aprovadas no onboarding, aplicadas à campanha (somente leitura).
 adicionarColuna("campaigns", "estrategias", "TEXT DEFAULT ''");
 adicionarColuna("users", "resetEnviadoEm", "INTEGER");

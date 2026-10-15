@@ -4,25 +4,30 @@
 // como a fila de auditoria (services/audit/fila.js). Cada fase concluída fica
 // salva: se uma falhar, "tentar de novo" continua de onde parou.
 //
-// Base de conhecimento ("RAG"): o perfil da etapa 2, o texto extraído dos
-// materiais da etapa 3 e os trechos mais relevantes dos cursos de vendas do
-// Academy da RYCS, escolhidos pela busca do services/rag.js. Sem embeddings:
-// foi a decisão registrada em docs/onboarding/DECISOES.md.
+// Base de conhecimento ("RAG"), montada na fase de análise:
+// 1. o perfil da etapa 2;
+// 2. a ficha de cada material da etapa 3: apresentações, documentos, fotos,
+//    vídeos e áudios, lidos por services/leituraMateriais.js;
+// 3. as aulas do Academy da RYCS que mais combinam com o perfil e as fichas,
+//    inteiras, escolhidas por services/rag.js (sem embeddings, como ficou em
+//    docs/onboarding/DECISOES.md). O curso de WhatsApp tem prioridade, porque
+//    o funil e os follow-ups são de WhatsApp.
+// O script, o funil e os follow-ups aplicam essas estratégias ao caso da
+// empresa.
 //
 // Sem ANTHROPIC_API_KEY a geração não roda e a fase falha com essa mensagem.
 // Nada é inventado no lugar.
 
 import Anthropic from "@anthropic-ai/sdk";
 import db, { uid, agora } from "../db.js";
-import { recuperarTrechos } from "./rag.js";
-import { extrairTextoPdf } from "./reportPdf.js";
-import { lerBuffer } from "./arquivos.js";
-import { FASES_GERACAO, proximaFase, normalizarParte, extensaoDe, PERMISSOES_MARCA, normalizarPermissoes, formatarWhatsapp } from "../../shared/onboarding.js";
+import { escolherAulas } from "./rag.js";
+import { lerMaterial, LEITURA_VERSAO } from "./leituraMateriais.js";
+import { FASES_GERACAO, proximaFase, normalizarParte, PERMISSOES_MARCA, normalizarPermissoes, formatarWhatsapp } from "../../shared/onboarding.js";
 
 const MODELO = process.env.IA_ONBOARDING_MODELO || "claude-opus-5-5";
 const INTERVALO_MS = 3000;
-const MAX_TEXTO_MATERIAL = 15000;
-const MAX_TEXTO_MATERIAIS = 60000;
+const MAX_TEXTO_MATERIAIS = 80000;
+const MAX_FOTOS_LIDAS = 20;
 
 export const iaDisponivel = () => !!process.env.ANTHROPIC_API_KEY;
 
@@ -69,24 +74,29 @@ export function tentarDeNovo(companyId) {
 // ---------------------------------------------------------------------------
 // Fase 1: análise. Extrai o texto dos materiais e monta o contexto.
 
-async function extrairTexto(m) {
-  const ext = extensaoDe(m.nome);
-  if (!m.chave || !["pdf", "txt"].includes(ext)) return { status: "sem_texto", texto: "" };
-  try {
-    const buffer = await lerBuffer(m.chave);
-    const texto = ext === "pdf" ? extrairTextoPdf(buffer) : buffer.toString("utf8");
-    return texto.trim() ? { status: "indexado", texto: texto.slice(0, MAX_TEXTO_MATERIAL) } : { status: "sem_texto", texto: "" };
-  } catch (e) {
-    console.warn(`[ia-onboarding] extração de ${m.id}: ${e.message}`);
-    return { status: "erro", texto: "" };
-  }
+// Pedido de leitura à Claude (fotos, PDFs, quadros de vídeo, textos longos).
+const LEITOR = `Você lê materiais enviados por uma empresa e escreve, em português do Brasil, anotações para um estrategista comercial.
+Registre só o que está no material. Não invente números, preços, clientes nem resultados.`;
+
+async function descrever(blocos, pedido) {
+  const resposta = await claude().beta.messages.create({
+    model: MODELO,
+    max_tokens: 4000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "low" },
+    system: LEITOR,
+    messages: [{ role: "user", content: [...blocos, { type: "text", text: pedido }] }],
+  });
+  return resposta.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
 }
 
-function estrategiasRycs(pergunta) {
-  const aulas = db.prepare(`SELECT l.id, c.titulo || ' — ' || l.titulo AS titulo, l.conteudo
+function estrategiasRycs(base) {
+  const aulas = db.prepare(`SELECT l.id, l.titulo, c.titulo AS curso, l.conteudo
     FROM course_lessons l JOIN courses c ON c.id = l.courseId
-    WHERE c.status = 'publicado' AND l.conteudo != ''`).all();
-  return recuperarTrechos(pergunta, aulas, 8);
+    WHERE c.status = 'publicado' AND l.conteudo != ''
+    ORDER BY c.ordem, l.ordem`).all();
+  return escolherAulas(base, aulas, { prioridade: [/whats/i] });
 }
 
 async function faseAnalise(g) {
@@ -94,26 +104,32 @@ async function faseAnalise(g) {
   const permissoes = normalizarPermissoes(ler(e.permissoesMarca, {}));
   const materiais = db.prepare("SELECT * FROM academy_materiais WHERE companyId = ? ORDER BY criadoEm").all(g.companyId);
 
+  // Lê o que ainda não foi lido por esta versão do leitor (ou deu erro).
+  let fotos = 0;
+  for (const m of materiais) {
+    if (m.categoria === "link") continue;
+    if (m.categoria === "foto" && ++fotos > MAX_FOTOS_LIDAS) continue;
+    if (m.statusIndexacao !== "erro" && (m.leituraVersao || 0) >= LEITURA_VERSAO) continue;
+    const r = await lerMaterial(m, { descrever: iaDisponivel() ? descrever : null });
+    db.prepare("UPDATE academy_materiais SET statusIndexacao = ?, textoExtraido = ?, leitura = ?, leituraVersao = ? WHERE id = ?")
+      .run(r.status, r.texto, r.leitura, LEITURA_VERSAO, m.id);
+    Object.assign(m, { statusIndexacao: r.status, textoExtraido: r.texto, leitura: r.leitura });
+  }
+
   const textos = [];
   let total = 0;
   for (const m of materiais) {
-    if (m.categoria === "link") continue;
-    if (m.statusIndexacao === "pendente") {
-      const r = await extrairTexto(m);
-      db.prepare("UPDATE academy_materiais SET statusIndexacao = ?, textoExtraido = ? WHERE id = ?").run(r.status, r.texto, m.id);
-      m.textoExtraido = r.texto;
-    }
-    if (m.textoExtraido && total < MAX_TEXTO_MATERIAIS) {
-      const trecho = m.textoExtraido.slice(0, MAX_TEXTO_MATERIAIS - total);
-      total += trecho.length;
-      textos.push(`### ${m.nome}\n${trecho}`);
-    }
+    if (!m.textoExtraido || total >= MAX_TEXTO_MATERIAIS) continue;
+    const trecho = m.textoExtraido.slice(0, MAX_TEXTO_MATERIAIS - total);
+    total += trecho.length;
+    textos.push(`### ${m.nome} (${m.categoria})\n${trecho}`);
   }
   const links = materiais.filter((m) => m.categoria === "link").map((m) => `- ${m.url}`);
-  const outros = materiais.filter((m) => ["foto", "video", "audio"].includes(m.categoria)).map((m) => `- ${m.nome} (${m.categoria})`);
+  const naoLidos = materiais.filter((m) => m.categoria !== "link" && !m.textoExtraido).map((m) => `- ${m.nome} (${m.categoria})`);
 
-  const pergunta = [e.produto, e.icp, e.nicho, e.diferenciais, "whatsapp follow-up objeções qualificação fechamento"].join(" ");
-  const estrategias = estrategiasRycs(pergunta);
+  const base = [e.produto, e.icp, e.nicho, e.segmento, e.diferenciais, ...textos,
+    "whatsapp follow-up abertura objeções qualificação oferta fechamento"].join(" ");
+  const estrategias = estrategiasRycs(base);
 
   const contexto = [
     "## Perfil da empresa",
@@ -129,12 +145,12 @@ async function faseAnalise(g) {
     `Contato de suporte: ${[e.suporteNome, formatarWhatsapp(e.suporteWhatsapp), e.suporteEmail].filter(Boolean).join(" · ") || "(não informado)"}`,
     "",
     "## Materiais enviados pela empresa",
-    textos.length ? textos.join("\n\n") : "(nenhum material com texto legível)",
+    textos.length ? textos.join("\n\n") : "(nenhum material lido)",
     links.length ? `\nLinks informados:\n${links.join("\n")}` : "",
-    outros.length ? `\nArquivos de mídia (sem texto extraído):\n${outros.join("\n")}` : "",
+    naoLidos.length ? `\nArquivos que não puderam ser lidos (use só o nome como pista):\n${naoLidos.join("\n")}` : "",
     "",
-    "## Estratégias de vendas do Academy da RYCS (trechos)",
-    estrategias.length ? estrategias.map((t) => `### ${t.documento}\n${t.trecho}`).join("\n\n") : "(nenhum trecho relevante encontrado)",
+    "## Estratégias de vendas do Academy da RYCS",
+    estrategias.length ? estrategias.map((a) => `### ${a.curso} — ${a.titulo}\n${a.conteudo}`).join("\n\n") : "(nenhuma aula relevante encontrada)",
   ].filter((l) => l !== "").join("\n");
 
   db.prepare("UPDATE ia_geracoes SET contexto = ? WHERE id = ?").run(contexto, g.id);
@@ -168,7 +184,8 @@ const PEDIDOS = {
 
 const SISTEMA = `Você é estrategista comercial da RYCS e escreve materiais de vendas em português do Brasil para uma empresa cliente.
 Regras:
-- Use apenas o que está no perfil, nos materiais e nos trechos do Academy da RYCS. Não invente números, preços, prazos, garantias, prêmios ou clientes.
+- Monte cada parte aplicando as estratégias do Academy da RYCS ao caso da empresa: siga as técnicas das aulas (abertura, qualificação, tratamento de objeções, fechamento, cadência de follow-up) e preencha com o que os materiais da empresa mostram (oferta, provas, público, tom).
+- Use apenas o que está no perfil, nos materiais e no Academy da RYCS. Não invente números, preços, prazos, garantias, prêmios ou clientes.
 - Respeite as regras da marca e as permissões. Se a permissão estiver "NÃO", a mensagem não faz aquilo: encaminha ao contato de suporte.
 - Escreva no tom da marca, direto e humano, como uma pessoa escreveria no WhatsApp.
 - Use as variáveis {nome}, {empresa}, {produto}, {ticket}, {diferencial} e {contato de suporte} onde couber, exatamente com essa grafia. {ticket} só aparece se informar preços for permitido.

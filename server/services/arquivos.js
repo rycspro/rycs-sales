@@ -119,6 +119,21 @@ export async function lerBuffer(chave, maxBytes = 60 * 1024 * 1024) {
   return Buffer.concat(partes);
 }
 
+// Grava o arquivo num caminho local, em fluxo (vídeos de até 500 MB não
+// cabem bem na memória).
+export async function baixarPara(chave, destino) {
+  const c = configS3();
+  let origem;
+  if (c) {
+    const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+    origem = (await (await s3()).send(new GetObjectCommand({ Bucket: c.bucket, Key: chave }))).Body;
+  } else {
+    origem = createReadStream(join(pastaLocal(), chave));
+  }
+  await pipeline(origem, createWriteStream(destino));
+  return destino;
+}
+
 export async function remover(chave) {
   const c = configS3();
   if (c) {

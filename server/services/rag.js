@@ -1,4 +1,4 @@
-const termos = (texto) => String(texto || "").toLocaleLowerCase("pt-BR")
+export const termos = (texto) => String(texto || "").toLocaleLowerCase("pt-BR")
   .normalize("NFD").replace(/[\u0300-\u036f]/g, "").match(/[a-z0-9]{3,}/g) || [];
 
 export function recuperarTrechos(pergunta, documentos, limite = 4) {
@@ -25,4 +25,29 @@ export function responderComFontes(pergunta, documentos) {
     confianca: Math.min(95, 45 + fontes.reduce((n, f) => n + f.pontos * 8, 0)),
     informacaoAusente: false, acaoRecomendada: "Revise as fontes antes de executar qualquer alteração.",
   };
+}
+
+// Aulas inteiras, não trechos soltos: uma técnica de vendas só faz sentido com
+// o passo a passo junto. A nota é quantos termos distintos da base aparecem na
+// aula, dividida pela raiz do tamanho dela (aula longa não ganha só por ser
+// longa). Aulas dos cursos em `prioridade` ganham bônus. Para quando o total
+// de texto chega a `maxCaracteres`.
+export function escolherAulas(base, aulas, { prioridade = [], maxCaracteres = 30000, maxPorAula = 6000 } = {}) {
+  const busca = new Set(termos(base));
+  const notas = aulas.map((a) => {
+    const proprios = new Set(termos(`${a.titulo} ${a.conteudo}`));
+    let comuns = 0;
+    for (const t of proprios) if (busca.has(t)) comuns++;
+    const bonus = prioridade.some((re) => re.test(a.curso || "")) ? 1.5 : 1;
+    return { ...a, nota: (comuns / Math.sqrt(Math.max(proprios.size, 1))) * bonus };
+  }).filter((a) => a.nota > 0).sort((x, y) => y.nota - x.nota);
+  const escolhidas = [];
+  let total = 0;
+  for (const a of notas) {
+    const conteudo = String(a.conteudo).slice(0, maxPorAula);
+    if (total + conteudo.length > maxCaracteres) continue;
+    total += conteudo.length;
+    escolhidas.push({ ...a, conteudo });
+  }
+  return escolhidas;
 }

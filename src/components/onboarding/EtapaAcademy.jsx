@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { UploadCloud, Trash2, Link2, FileText, Image, Video, Music, Presentation } from "lucide-react";
 import { api, apiDelete, API_URL } from "../../lib/api.js";
-import { CATEGORIAS_ACADEMY, validarArquivoAcademy, formatarTamanho, formatarWhatsapp, validarSuporte, normalizarLink } from "../../../shared/onboarding.js";
+import { CATEGORIAS_ACADEMY, FORMATOS_SEM_LEITURA, extensaoDe, validarArquivoAcademy, formatarTamanho, formatarWhatsapp, validarSuporte, normalizarLink } from "../../../shared/onboarding.js";
 
 // Etapa 3: Marketing Academy. Todo o material de marketing e divulgação da
 // empresa entra aqui; a IA da etapa 4 lê o que tiver texto. Nada é
@@ -87,7 +87,10 @@ function CartaoEnvio({ categoria, materiais, disponivel, aoEnviado, aoRemover })
         {materiais.map((m) => (
           <li key={m.id}>
             <span className="vx-onb-arquivo-nome">{m.nome}</span>
-            <span className="vx-onb-dica" style={{ margin: 0 }}>{formatarTamanho(m.tamanho)}</span>
+            <span className="vx-onb-dica" style={{ margin: 0 }}>
+              {formatarTamanho(m.tamanho)}
+              {FORMATOS_SEM_LEITURA.includes(extensaoDe(m.nome)) && ` · a IA não lê .${extensaoDe(m.nome)}: envie também em PDF`}
+            </span>
             <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }} aria-label={`Remover ${m.nome}`} onClick={() => aoRemover(m)}>
               <Trash2 size={15} aria-hidden="true" />
             </button>

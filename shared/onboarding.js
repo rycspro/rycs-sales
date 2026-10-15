@@ -239,6 +239,10 @@ export const CATEGORIAS_ACADEMY = [
   { chave: "audio", label: "Áudios", formatos: ["mp3", "wav", "m4a"], limite: 100 * MB },
 ];
 
+// Aceitos no envio, mas a IA da etapa 4 não consegue ler: formatos binários
+// antigos e o Keynote. A tela pede uma cópia em PDF.
+export const FORMATOS_SEM_LEITURA = ["ppt", "doc", "xls", "key"];
+
 export const categoriaAcademy = (chave) => CATEGORIAS_ACADEMY.find((c) => c.chave === chave) || null;
 
 export const extensaoDe = (nome) => (String(nome || "").toLowerCase().match(/\.([a-z0-9]{1,5})$/) || [])[1] || "";

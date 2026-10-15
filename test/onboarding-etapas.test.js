@@ -128,6 +128,8 @@ test("etapas 3 a 6: materiais, IA com falha e nova tentativa, aprovação, cart�
   const ultimo = pedidosIA.at(-1);
   assert.match(ultimo.messages[0].content, /CRM para distribuidoras/);
   assert.match(ultimo.messages[0].content, /integra com o ERP/);
+  // E as aulas do Academy da RYCS, com o curso de WhatsApp entre elas.
+  assert.match(ultimo.messages[0].content, /### WhatsApp comercial sem parecer spam — /);
   assert.equal(ultimo.model, "claude-opus-5-5");
 
   // Editar uma parte tira a aprovação dela; campo vazio é recusado.
