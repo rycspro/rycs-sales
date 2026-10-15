@@ -1,40 +1,46 @@
-// Leitura dos materiais da etapa 3 (Marketing Academy) para a IA da etapa 4.
+// Leitura dos materiais da etapa 3 (Marketing Academy) para a etapa 4.
 //
-// Cada arquivo vira um texto curto que o estrategista consegue usar: a
-// "ficha" do material. A ficha fica guardada em academy_materiais
+// Cada arquivo vira um texto curto que o motor de estratégias consegue usar:
+// a "ficha" do material. A ficha fica guardada em academy_materiais
 // (textoExtraido), então pedir ajustes ou gerar de novo não lê tudo outra vez.
 //
-// Por formato:
+// Tudo roda dentro do servidor da RYCS, sem provedor externo:
 // - TXT, DOCX, PPTX (slides e notas), XLSX: texto extraído aqui mesmo.
-//   Texto longo vira ficha pela Claude; curto vai como está.
-// - PDF: a Claude lê o arquivo inteiro, com imagens e gráficos. Se não der
-//   (grande demais, IA fora do ar), vale o texto extraído localmente.
-// - Fotos: a Claude descreve o que a foto mostra que ajuda a vender.
-// - Vídeos: o ffmpeg tira quadros ao longo do vídeo e separa o áudio; a fala
-//   é transcrita (OpenAI, com OPENAI_API_KEY) e a Claude faz a ficha com os
-//   quadros e a transcrição.
-// - Áudios: transcrição, e ficha se for longa.
+// - PDF: texto do arquivo; PDF escaneado (só imagem) passa por OCR.
+// - Fotos: OCR (Tesseract) lê o texto que aparece na imagem.
+// - Vídeos: o ffmpeg tira quadros ao longo do vídeo (OCR do texto na tela) e
+//   separa o áudio, que o whisper.cpp transcreve localmente.
+// - Áudios: transcrição local.
+// - Texto longo vira resumo extrativo: só as frases com fato comercial
+//   (services/motorEstrategias.js), sem reescrever nada.
 // - PPT, DOC, XLS e KEY (formatos antigos/fechados): não são lidos; a tela
 //   pede para exportar em PDF.
 //
-// Sem ffmpeg ou sem chave de transcrição, o que der para ler é lido e o resto
+// Ferramentas instaladas pelo Dockerfile: ffmpeg, tesseract (com português),
+// poppler (pdftoppm) e whisper.cpp com o modelo em /modelos.
+//
+// Se houver chave da Claude (ANTHROPIC_API_KEY), ela é usada no lugar do OCR
+// para ler PDFs, fotos e vídeos com mais profundidade; se houver chave da
+// OpenAI e não houver whisper local, a fala vai para a OpenAI. Nenhuma das
+// duas é necessária. Sem uma ferramenta, o que der para ler é lido e o resto
 // fica registrado em `leitura`. Nada é inventado no lugar.
 
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { inflateRawSync } from "zlib";
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
+import { tmpdir, availableParallelism } from "os";
 import { join } from "path";
 import { extrairTextoPdf } from "./reportPdf.js";
 import { lerBuffer, baixarPara } from "./arquivos.js";
+import { resumoExtrativo } from "./motorEstrategias.js";
 import { extensaoDe, FORMATOS_SEM_LEITURA } from "../../shared/onboarding.js";
 
 const executar = promisify(execFile);
 
 // Sobe quando o leitor aprende um formato: materiais lidos por uma versão
 // anterior são lidos de novo na próxima análise.
-export const LEITURA_VERSAO = 2;
+export const LEITURA_VERSAO = 3;
 
 const MB = 1024 * 1024;
 export const MAX_TEXTO_MATERIAL = 15000;   // acima disso, vira ficha
@@ -43,10 +49,13 @@ const MAX_PDF_IA = 20 * MB;                // o pedido à API tem limite de 32 M
 const MAX_IMAGEM_IA = 3.5 * MB;            // 5 MB em base64; acima disso, reduz com ffmpeg
 const MAX_AUDIO_TRANSCRICAO = 24 * MB;     // limite da API de transcrição: 25 MB
 const QUADROS_VIDEO = 8;
-const MAX_MINUTOS_FALA = 60;
+const MAX_MINUTOS_FALA = 30;               // transcrição local roda na CPU do servidor
+const MAX_PAGINAS_OCR = 20;
 
 const MODELO_TRANSCRICAO = process.env.TRANSCRICAO_MODELO || "whisper-1";
-export const transcricaoDisponivel = () => !!process.env.OPENAI_API_KEY;
+const transcricaoExterna = () => !!process.env.OPENAI_API_KEY;
+const WHISPER_BIN = process.env.WHISPER_BIN || "whisper-cli";
+const WHISPER_MODELO = process.env.WHISPER_MODELO || "/modelos/ggml-small-q5_1.bin";
 
 // ---------------------------------------------------------------------------
 // Office (DOCX, PPTX, XLSX são zip com XML dentro). Leitor de zip mínimo, só
@@ -172,13 +181,6 @@ async function quadrosDoVideo(arquivo, pasta) {
   return { quadros, dur };
 }
 
-// Áudio mono, 16 kHz, 32 kbps: uma hora de fala cabe em ~15 MB.
-async function audioParaTranscricao(arquivo, pasta) {
-  const destino = join(pasta, "fala.mp3");
-  await ff(["-i", arquivo, "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k", "-t", String(MAX_MINUTOS_FALA * 60), destino]);
-  return destino;
-}
-
 async function reduzirImagem(buffer, pasta) {
   const origem = join(pasta, "foto-original");
   const destino = join(pasta, "foto.jpg");
@@ -188,13 +190,46 @@ async function reduzirImagem(buffer, pasta) {
 }
 
 // ---------------------------------------------------------------------------
-// Transcrição (OpenAI). Único provedor além da Claude, decidido com o dono
-// do produto em 2026-10-15 para ler a fala de vídeos e áudios.
+// Ferramentas locais: OCR e transcrição.
+
+const disponiveis = new Map();
+async function temComando(nome, args = ["--version"]) {
+  if (!disponiveis.has(nome)) {
+    disponiveis.set(nome, executar(nome, args, { timeout: 30000 }).then(() => true, () => false));
+  }
+  return disponiveis.get(nome);
+}
+const temTesseract = () => temComando("tesseract");
+const temPdftoppm = () => temComando("pdftoppm", ["-v"]);
+const temWhisper = async () => existsSync(WHISPER_MODELO) && (await temComando(WHISPER_BIN, ["--help"]));
+
+// Linha de OCR que é texto de verdade: duas palavras de três letras ou mais e
+// maioria de letras. Corta o "ruído" que o OCR acha em fotos sem texto.
+function linhasLegiveis(texto) {
+  return String(texto || "").split(/\n+/).map((l) => l.replace(/\s+/g, " ").trim()).filter((l) => {
+    const letras = (l.match(/[a-zà-ú]/gi) || []).length;
+    return (l.match(/[a-zà-ú]{3,}/gi) || []).length >= 2 && letras / Math.max(l.length, 1) >= 0.6;
+  });
+}
+
+async function ocr(caminho) {
+  const { stdout } = await executar("tesseract", [caminho, "stdout", "-l", "por+eng", "--psm", "3"], { timeout: 120000, maxBuffer: 20 * MB });
+  return linhasLegiveis(stdout).join("\n");
+}
+
+async function ocrPdf(buffer, pasta) {
+  const origem = join(pasta, "doc.pdf");
+  writeFileSync(origem, buffer);
+  await executar("pdftoppm", ["-r", "150", "-l", String(MAX_PAGINAS_OCR), "-png", origem, join(pasta, "pagina")], { timeout: 10 * 60 * 1000 });
+  const paginas = readdirSync(pasta).filter((n) => n.startsWith("pagina")).sort();
+  const textos = [];
+  for (const pg of paginas) textos.push(await ocr(join(pasta, pg)));
+  return textos.filter(Boolean).join("\n\n");
+}
 
 const TIPO_AUDIO = { mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4" };
 
-export async function transcrever(caminho, ext = "mp3") {
-  if (!transcricaoDisponivel()) return null;
+async function transcreverOpenAI(caminho, ext = "mp3") {
   const form = new FormData();
   form.append("file", new Blob([readFileSync(caminho)], { type: TIPO_AUDIO[ext] || "audio/mpeg" }), `fala.${ext}`);
   form.append("model", MODELO_TRANSCRICAO);
@@ -209,8 +244,34 @@ export async function transcrever(caminho, ext = "mp3") {
   return (await r.text()).trim();
 }
 
+// Fala de um vídeo ou áudio. Local (whisper.cpp) sempre que possível.
+// Devolve { fala, nota }.
+async function transcreverFala(arquivo, ext, pasta) {
+  const temFfmpeg = await ffmpegDisponivel();
+  if (temFfmpeg && (await temWhisper())) {
+    const wav = join(pasta, "fala.wav");
+    await ff(["-i", arquivo, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", "-t", String(MAX_MINUTOS_FALA * 60), wav]);
+    const threads = String(Math.max(1, Math.min(availableParallelism(), 8)));
+    await executar(WHISPER_BIN, ["-m", WHISPER_MODELO, "-f", wav, "-l", "pt", "-t", threads, "-nt", "-np", "-otxt", "-of", join(pasta, "fala")],
+      { timeout: 60 * 60 * 1000, maxBuffer: 20 * MB });
+    // O whisper marca trechos sem fala entre colchetes ("[Música]", "[Som de fone]").
+    const fala = readFileSync(join(pasta, "fala.txt"), "utf8").replace(/\[[^\]]{0,60}\]|\([^)]{0,30}\)/g, " ").replace(/\s+/g, " ").trim();
+    return { fala, nota: "fala transcrita na RYCS" };
+  }
+  if (transcricaoExterna()) {
+    if (temFfmpeg) {
+      const mp3 = join(pasta, "fala.mp3");
+      await ff(["-i", arquivo, "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k", "-t", String(MAX_MINUTOS_FALA * 60), mp3]);
+      return { fala: await transcreverOpenAI(mp3, "mp3"), nota: "fala transcrita" };
+    }
+    if (TIPO_AUDIO[ext] && statSync(arquivo).size <= MAX_AUDIO_TRANSCRICAO) return { fala: await transcreverOpenAI(arquivo, ext), nota: "fala transcrita" };
+  }
+  return { fala: "", nota: "fala não transcrita (transcrição indisponível no servidor)" };
+}
+
 // ---------------------------------------------------------------------------
-// Pedidos à Claude. `descrever(blocos, pedido)` vem de iaOnboarding.js.
+// Pedidos à Claude, quando houver chave. `descrever(blocos, pedido)` vem de
+// iaOnboarding.js; sem chave, é null e tudo segue pelo caminho interno.
 
 const FICHA = `Faça a ficha comercial deste material, em tópicos curtos:
 - oferta: o que a empresa vende e como funciona;
@@ -227,13 +288,13 @@ const FOTO = `Descreva, em até 120 palavras, o que esta foto mostra que ajuda a
 const imagem = (buffer, tipo = "image/jpeg") => ({ type: "image", source: { type: "base64", media_type: tipo, data: buffer.toString("base64") } });
 const TIPO_IMAGEM = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
 
+// Texto longo: ficha pela Claude, se houver; senão, resumo extrativo.
 async function fichaDeTexto(texto, descrever) {
-  if (texto.length <= MAX_TEXTO_MATERIAL || !descrever) return texto.slice(0, MAX_TEXTO_MATERIAL);
-  try {
-    return await descrever([{ type: "text", text: texto.slice(0, MAX_TEXTO_PARA_FICHA) }], FICHA);
-  } catch {
-    return texto.slice(0, MAX_TEXTO_MATERIAL);
+  if (texto.length <= MAX_TEXTO_MATERIAL) return texto;
+  if (descrever) {
+    try { return await descrever([{ type: "text", text: texto.slice(0, MAX_TEXTO_PARA_FICHA) }], FICHA); } catch { /* segue interno */ }
   }
+  return resumoExtrativo(texto, MAX_TEXTO_MATERIAL) || texto.slice(0, MAX_TEXTO_MATERIAL);
 }
 
 // ---------------------------------------------------------------------------
@@ -244,7 +305,7 @@ export async function lerMaterial(m, { descrever = null } = {}) {
   const ext = extensaoDe(m.nome);
   if (!m.chave) return { status: "sem_texto", texto: "", leitura: "Sem arquivo." };
   if (FORMATOS_SEM_LEITURA.includes(ext))
-    return { status: "sem_texto", texto: "", leitura: `Formato .${ext} não é lido. Exporte em PDF para a IA aproveitar.` };
+    return { status: "sem_texto", texto: "", leitura: `Formato .${ext} não é lido. Exporte em PDF para aproveitar o conteúdo.` };
 
   const pasta = mkdtempSync(join(tmpdir(), "rycs-leitura-"));
   try {
@@ -260,76 +321,99 @@ export async function lerMaterial(m, { descrever = null } = {}) {
       if (descrever && buffer.length <= MAX_PDF_IA) {
         try {
           const ficha = await descrever([{ type: "document", source: { type: "base64", media_type: "application/pdf", data: buffer.toString("base64") } }], FICHA);
-          if (ficha) return { status: "indexado", texto: ficha, leitura: "Lido pela IA, com imagens e gráficos." };
-        } catch { /* cai para o texto local */ }
+          if (ficha) return { status: "indexado", texto: ficha, leitura: "Lido com imagens e gráficos." };
+        } catch { /* segue interno */ }
       }
-      const texto = extrairTextoPdf(buffer).trim();
-      if (!texto) return { status: descrever ? "erro" : "sem_texto", texto: "", leitura: "PDF sem texto legível." };
-      return { status: "indexado", texto: await fichaDeTexto(texto, descrever), leitura: "Só o texto do PDF." };
+      let texto = extrairTextoPdf(buffer).trim();
+      let leitura = "Texto do PDF.";
+      if (!texto && (await temPdftoppm()) && (await temTesseract())) {
+        texto = (await ocrPdf(buffer, pasta)).trim();
+        leitura = `PDF escaneado, lido por OCR (até ${MAX_PAGINAS_OCR} páginas).`;
+      }
+      if (!texto) return { status: "sem_texto", texto: "", leitura: "PDF sem texto legível." };
+      return { status: "indexado", texto: await fichaDeTexto(texto, descrever), leitura };
     }
 
     if (TIPO_IMAGEM[ext]) {
-      if (!descrever) return { status: "erro", texto: "", leitura: "A IA não está ativa para ler fotos." };
       let buffer = await lerBuffer(m.chave);
-      let tipo = TIPO_IMAGEM[ext];
-      if (buffer.length > MAX_IMAGEM_IA) {
-        if (!(await ffmpegDisponivel())) return { status: "sem_texto", texto: "", leitura: "Foto grande demais para a IA ler." };
-        buffer = await reduzirImagem(buffer, pasta);
-        tipo = "image/jpeg";
+      if (descrever) {
+        let tipo = TIPO_IMAGEM[ext];
+        let enviar = buffer;
+        if (buffer.length > MAX_IMAGEM_IA && (await ffmpegDisponivel())) { enviar = await reduzirImagem(buffer, pasta); tipo = "image/jpeg"; }
+        if (enviar.length <= MAX_IMAGEM_IA) {
+          try {
+            const descricao = await descrever([imagem(enviar, tipo)], FOTO);
+            if (descricao) return { status: "indexado", texto: descricao, leitura: "Foto descrita." };
+          } catch { /* segue interno */ }
+        }
       }
-      const descricao = await descrever([imagem(buffer, tipo)], FOTO);
-      return descricao ? { status: "indexado", texto: descricao, leitura: "Descrita pela IA." } : { status: "erro", texto: "", leitura: "A IA não descreveu a foto." };
+      if (!(await temTesseract())) return { status: "sem_texto", texto: "", leitura: "Leitura de imagem indisponível no servidor." };
+      const caminho = join(pasta, `foto.${ext}`);
+      writeFileSync(caminho, buffer);
+      buffer = null;
+      const texto = await ocr(caminho);
+      if (texto.length < 15) return { status: "sem_texto", texto: "", leitura: "Foto sem texto legível. A leitura interna aproveita o texto que aparece nas imagens." };
+      return { status: "indexado", texto: `Texto na foto:\n${texto.slice(0, MAX_TEXTO_MATERIAL)}`, leitura: "Texto da foto lido por OCR." };
     }
 
     if (["mp4", "mov", "mp3", "wav", "m4a"].includes(ext)) {
       const video = ["mp4", "mov"].includes(ext);
-      const temFfmpeg = await ffmpegDisponivel();
       const arquivo = await baixarPara(m.chave, join(pasta, `original.${ext}`));
       const notas = [];
 
-      // Fala
       let fala = "";
-      if (!transcricaoDisponivel()) notas.push("fala não transcrita (transcrição não configurada)");
-      else {
-        try {
-          let audio = null, extAudio = "mp3";
-          if (temFfmpeg) audio = await audioParaTranscricao(arquivo, pasta);
-          else if (!video && statSync(arquivo).size <= MAX_AUDIO_TRANSCRICAO) { audio = arquivo; extAudio = ext; }
-          if (audio) fala = (await transcrever(audio, extAudio)) || "";
-          else notas.push("fala não transcrita (arquivo grande demais)");
-        } catch (e) {
-          notas.push(video ? "vídeo sem fala legível" : "fala não transcrita");
-          console.warn(`[leitura] transcrição de ${m.id}: ${e.message}`);
-        }
+      try {
+        const r = await transcreverFala(arquivo, ext, pasta);
+        fala = r.fala;
+        notas.push(r.nota);
+      } catch (e) {
+        notas.push(video ? "vídeo sem fala legível" : "fala não transcrita");
+        console.warn(`[leitura] transcrição de ${m.id}: ${e.message}`);
       }
 
       if (!video) {
-        if (!fala) return { status: transcricaoDisponivel() ? "erro" : "sem_texto", texto: "", leitura: `Áudio: ${notas.join("; ")}.` };
+        if (!fala) return { status: "sem_texto", texto: "", leitura: `Áudio: ${notas.join("; ")}.` };
         return { status: "indexado", texto: await fichaDeTexto(`Transcrição do áudio:\n${fala}`, descrever), leitura: "Áudio transcrito." };
       }
 
-      // Imagens do vídeo
       let quadros = [], dur = 0;
-      if (temFfmpeg) ({ quadros, dur } = await quadrosDoVideo(arquivo, pasta));
+      if (await ffmpegDisponivel()) ({ quadros, dur } = await quadrosDoVideo(arquivo, pasta));
       else notas.push("quadros não extraídos (ffmpeg ausente)");
 
-      if (!quadros.length && !fala) return { status: "sem_texto", texto: "", leitura: `Vídeo: ${notas.join("; ") || "nada legível"}.` };
-      if (!descrever) {
-        if (!fala) return { status: "erro", texto: "", leitura: "A IA não está ativa para ver o vídeo." };
-        return { status: "indexado", texto: `Transcrição do vídeo:\n${fala.slice(0, MAX_TEXTO_MATERIAL)}`, leitura: "Só a fala do vídeo." };
+      if (descrever && (quadros.length || fala)) {
+        try {
+          const blocos = [
+            ...quadros.map((q) => imagem(q)),
+            { type: "text", text: [
+              quadros.length ? `Acima: ${quadros.length} quadros do vídeo "${m.nome}", em ordem${dur ? `, ao longo de ${Math.round(dur)} segundos` : ""}.` : `Vídeo "${m.nome}" sem imagens extraídas.`,
+              fala ? `Transcrição da fala:\n${fala.slice(0, MAX_TEXTO_PARA_FICHA)}` : "Sem transcrição da fala.",
+            ].join("\n\n") },
+          ];
+          const ficha = await descrever(blocos, `${FICHA}\nInclua o que o vídeo mostra (demonstração, ambiente, textos na tela).`);
+          if (ficha) return { status: "indexado", texto: ficha, leitura: `Vídeo lido: ${[`${quadros.length} quadros`, ...notas].join(", ")}.` };
+        } catch { /* segue interno */ }
       }
-      const blocos = [
-        ...quadros.map((q) => imagem(q)),
-        { type: "text", text: [
-          quadros.length ? `Acima: ${quadros.length} quadros do vídeo "${m.nome}", em ordem${dur ? `, ao longo de ${Math.round(dur)} segundos` : ""}.` : `Vídeo "${m.nome}" sem imagens extraídas.`,
-          fala ? `Transcrição da fala:\n${fala.slice(0, MAX_TEXTO_PARA_FICHA)}` : "Sem transcrição da fala.",
-        ].join("\n\n") },
-      ];
-      const ficha = await descrever(blocos, `${FICHA}\nInclua o que o vídeo mostra (demonstração, ambiente, textos na tela).`);
-      return {
-        status: "indexado", texto: ficha,
-        leitura: ["Vídeo lido pela IA", quadros.length ? `${quadros.length} quadros` : "", fala ? "fala transcrita" : "", ...notas].filter(Boolean).join(", ") + ".",
-      };
+
+      // Caminho interno: OCR do texto na tela + fala.
+      let tela = [];
+      if (quadros.length && (await temTesseract())) {
+        const vistas = new Set();
+        for (const [i, q] of quadros.entries()) {
+          const caminho = join(pasta, `ocr-${i}.jpg`);
+          writeFileSync(caminho, q);
+          for (const linha of (await ocr(caminho)).split("\n")) {
+            const chave = linha.toLowerCase().replace(/[^a-z0-9à-ú]/g, "");
+            if (linha && !vistas.has(chave)) { vistas.add(chave); tela.push(linha); }
+          }
+        }
+        notas.push(`${quadros.length} quadros lidos por OCR`);
+      }
+      const partes = [
+        tela.length ? `Texto na tela:\n${tela.join("\n")}` : "",
+        fala ? `Fala:\n${fala}` : "",
+      ].filter(Boolean).join("\n\n");
+      if (!partes) return { status: "sem_texto", texto: "", leitura: `Vídeo: ${notas.join("; ") || "nada legível"}.` };
+      return { status: "indexado", texto: await fichaDeTexto(partes, null), leitura: `Vídeo: ${notas.join(", ")}.` };
     }
 
     return { status: "sem_texto", texto: "", leitura: "Formato não lido." };

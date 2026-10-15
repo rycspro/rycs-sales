@@ -169,6 +169,12 @@ function Aprovacao({ geracao, setGeracao, aoAtualizar, aoAvancar, aoVoltar }) {
 
   return (
     <div>
+      {geracao.conteudo?.fontes?.length > 0 && (
+        <div className="vx-onb-aviso">
+          Montado com as estratégias do Academy da RYCS: {geracao.conteudo.fontes.join("; ")}.
+        </div>
+      )}
+      {geracao.conteudo?.aviso && <div className="vx-onb-aviso" role="status">{geracao.conteudo.aviso}</div>}
       <div className="vx-onb-aviso">
         Os textos usam variáveis que a plataforma troca na hora de enviar: {VARIAVEIS_IA.map((v, i) => <span key={v}>{i ? ", " : ""}<code>{v}</code></span>)}. Mantenha as chaves ao editar.
       </div>
@@ -181,7 +187,12 @@ function Aprovacao({ geracao, setGeracao, aoAtualizar, aoAvancar, aoVoltar }) {
       {pedindo && (
         <section className="vx-onb-card vx-onb-secao">
           <label className="vx-label" htmlFor={`${id}-ajuste`}>O que você quer que a IA ajuste?</label>
-          <textarea id={`${id}-ajuste`} className="vx-input" rows={4} maxLength={2000} value={pedido} onChange={(e) => setPedido(e.target.value)}
+          {geracao.conteudo?.motor === "interno" && (
+            <div id={`${id}-ajuste-dica`} className="vx-onb-dica">
+              O motor da RYCS ajusta a forma: mais curto, mais formal ou mais informal, com ou sem emojis, sem falar de preço ou de prazo. Para mudar o conteúdo, edite o texto direto.
+            </div>
+          )}
+          <textarea id={`${id}-ajuste`} aria-describedby={geracao.conteudo?.motor === "interno" ? `${id}-ajuste-dica` : undefined} className="vx-input" rows={4} maxLength={2000} value={pedido} onChange={(e) => setPedido(e.target.value)}
             placeholder="Ex.: deixe a abertura mais curta e não fale de prazo de entrega." />
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             <button type="button" className="vx-btn" style={{ minHeight: 44 }} onClick={() => setPedindo(false)} disabled={ocupado}>Cancelar</button>
@@ -272,26 +283,6 @@ export default function EtapaIA({ estado, aoAtualizar, aoAvancar, aoVoltar }) {
         <div className="vx-onb-acoes" style={{ justifyContent: "center" }}>
           <button type="button" className="vx-btn" onClick={aoVoltar}>Voltar</button>
           <button type="button" className="vx-btn vx-btn-primary" onClick={() => aoAvancar(estado)}>Continuar</button>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (!dados.disponivel && !g) return (
-    <div>
-      {cabecalho}
-      <div className="vx-onb-card vx-onb-secao" role="status">
-        <h2 className="vx-disp">A IA ainda não está ativa</h2>
-        <p className="vx-mut" style={{ fontSize: 14, lineHeight: 1.6 }}>
-          A geração automática ainda não foi ligada pela RYCS. Você pode seguir o cadastro agora; as estratégias poderão ser criadas
-          depois, quando a IA estiver disponível. Nenhum texto é inventado no lugar.
-        </p>
-        {msgErro}
-        <div className="vx-onb-acoes">
-          <button type="button" className="vx-btn" onClick={aoVoltar}>Voltar</button>
-          <button type="button" className="vx-btn vx-btn-primary" onClick={async () => { const r = await acao("/onboarding/ia/pular"); if (r) { aoAtualizar(r); aoAvancar(r); } }}>
-            Continuar sem as estratégias
-          </button>
         </div>
       </div>
     </div>

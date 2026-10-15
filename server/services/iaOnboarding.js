@@ -15,13 +15,16 @@
 // O script, o funil e os follow-ups aplicam essas estratégias ao caso da
 // empresa.
 //
-// Sem ANTHROPIC_API_KEY a geração não roda e a fase falha com essa mensagem.
-// Nada é inventado no lugar.
+// Dois motores, como na montagem de campanha: sem ANTHROPIC_API_KEY (o padrão
+// da RYCS hoje), roda o motor interno (services/motorEstrategias.js), que não
+// depende de provedor nenhum; com a chave, a Claude escreve. Os dois usam a
+// mesma análise e nenhum inventa dado.
 
 import Anthropic from "@anthropic-ai/sdk";
 import db, { uid, agora } from "../db.js";
 import { escolherAulas } from "./rag.js";
 import { lerMaterial, LEITURA_VERSAO } from "./leituraMateriais.js";
+import { montarEstrategias } from "./motorEstrategias.js";
 import { FASES_GERACAO, proximaFase, normalizarParte, PERMISSOES_MARCA, normalizarPermissoes, formatarWhatsapp } from "../../shared/onboarding.js";
 
 const MODELO = process.env.IA_ONBOARDING_MODELO || "claude-opus-5-5";
@@ -30,6 +33,7 @@ const MAX_TEXTO_MATERIAIS = 80000;
 const MAX_FOTOS_LIDAS = 20;
 
 export const iaDisponivel = () => !!process.env.ANTHROPIC_API_KEY;
+export const motorAtual = () => (iaDisponivel() ? "claude" : "interno");
 
 const ler = (json, padrao) => { try { return JSON.parse(json || ""); } catch { return padrao; } };
 
@@ -222,6 +226,20 @@ async function gerarParte(parte, contexto, pedidoAjuste, anteriores) {
 }
 
 // ---------------------------------------------------------------------------
+// Motor interno: as três partes de uma vez, a partir do que a análise leu.
+
+function estrategiasInternas(g) {
+  const e = db.prepare("SELECT * FROM companies WHERE id = ?").get(g.companyId);
+  const materiais = db.prepare("SELECT nome, categoria, textoExtraido AS texto FROM academy_materiais WHERE companyId = ? AND textoExtraido != '' ORDER BY criadoEm").all(g.companyId);
+  const base = [e.produto, e.icp, e.nicho, e.segmento, e.diferenciais, ...materiais.map((m) => m.texto),
+    "whatsapp follow-up abertura objeções qualificação oferta fechamento"].join(" ");
+  return montarEstrategias({
+    empresa: e, permissoes: normalizarPermissoes(ler(e.permissoesMarca, {})),
+    materiais, aulas: estrategiasRycs(base), pedidoAjuste: g.pedidoAjuste,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Fila
 
 function reivindicar() {
@@ -239,6 +257,7 @@ export async function processarProxima() {
   const fases = ler(g.fases, {});
   const conteudo = ler(g.conteudo, {});
   let contexto = g.contexto;
+  let interno = null;
   const salvarFase = (fase, estado) => {
     fases[fase] = estado;
     db.prepare("UPDATE ia_geracoes SET fases = ?, conteudo = ?, atualizadoEm = ? WHERE id = ?")
@@ -248,7 +267,15 @@ export async function processarProxima() {
     for (let fase = proximaFase(fases); fase; fase = proximaFase(fases)) {
       salvarFase(fase, "atual");
       if (fase === "analise") contexto = await faseAnalise(g);
-      else conteudo[fase] = await gerarParte(fase, contexto, g.pedidoAjuste, Object.fromEntries(FASES_GERACAO.filter((f) => conteudo[f]).map((f) => [f, conteudo[f]])));
+      else if (iaDisponivel()) conteudo[fase] = await gerarParte(fase, contexto, g.pedidoAjuste, Object.fromEntries(FASES_GERACAO.filter((f) => conteudo[f]).map((f) => [f, conteudo[f]])));
+      else {
+        interno ||= estrategiasInternas(g);
+        conteudo[fase] = normalizarParte(fase, interno[fase]);
+        conteudo.fontes = interno.fontes;
+        conteudo.aviso = interno.ajusteEntendido === false
+          ? "O motor da RYCS não entendeu esse pedido de ajuste. Para mudar o conteúdo, edite o texto direto." : "";
+      }
+      conteudo.motor = motorAtual();
       salvarFase(fase, "concluida");
     }
     db.prepare("UPDATE ia_geracoes SET status = 'pronta', aprovacoes = '{}', atualizadoEm = ? WHERE id = ?").run(agora(), g.id);
@@ -274,5 +301,5 @@ export function iniciarWorkerIA() {
     try { while (await processarProxima()); } catch (e) { console.error("[ia-onboarding] worker:", e.message); }
     ocupado = false;
   }, INTERVALO_MS).unref?.();
-  console.log(`[ia-onboarding] worker ativo (${iaDisponivel() ? MODELO : "IA não configurada"})`);
+  console.log(`[ia-onboarding] worker ativo (${iaDisponivel() ? MODELO : "motor interno da RYCS"})`);
 }

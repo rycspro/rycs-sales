@@ -184,18 +184,43 @@ test("etapas 3 a 6: materiais, IA com falha e nova tentativa, aprovação, cart�
   assert.equal(r.corpo.bloqueia, false);
 });
 
-test("etapa 4 sem IA configurada: segue sem estratégias, sem inventar nada", async (t) => {
+test("etapa 4 sem chave de IA: o motor interno da RYCS lê o material e gera tudo", async (t) => {
   const { base } = await subirServidor(t);
   const req = cliente(base);
   let r = await req("/auth/register", { body: { role: "empresa", email: "sem.ia@exemplo.invalid", senha: "12345678", whats: "11912345678", nome: "Empresa Teste", logo: { mimetype: "image/png", base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" }, aceitouTermos: true } });
   const ck = r.cookie;
-  await req("/onboarding/empresa", { cookie: ck, body: { nome: "Beta", produto: "Consultoria", publico: "PMEs", concluir: true } });
+  await req("/onboarding/empresa", { cookie: ck, body: { nome: "Beta", produto: "Consultoria tributária", publico: "PMEs do comércio", concluir: true } });
   r = await req("/onboarding/academy", { cookie: ck });
   assert.equal(r.corpo.armazenamento, true, "fora de produção o disco local serve de storage");
+  await req("/onboarding/academy/arquivos/material", { cookie: ck, bruto: "Reduzimos em 20% a carga de impostos de PMEs do comércio.\nMais de 150 empresas atendidas.", headers: { "Content-Type": "text/plain", "X-Arquivo-Nome": "resumo.txt" } });
   await req("/onboarding/academy/concluir", { cookie: ck, body: {} });
-  r = await req("/onboarding/ia", { cookie: ck });
-  assert.equal(r.corpo.disponivel, false);
-  assert.equal(r.corpo.geracao, null);
-  r = await req("/onboarding/ia/pular", { cookie: ck, body: {} });
+
+  let g;
+  for (let i = 0; i < 60; i++) {
+    r = await req("/onboarding/ia", { cookie: ck });
+    g = r.corpo.geracao;
+    if (g?.status === "pronta" || g?.status === "falhou") break;
+    await esperar(500);
+  }
+  assert.equal(r.corpo.motor, "interno");
+  assert.equal(g.status, "pronta");
+  assert.equal(g.conteudo.motor, "interno");
+  assert.match(g.conteudo.script.oferta, /Reduzimos em 20%/);
+  assert.match(g.conteudo.script.oferta, /150 empresas/);
+  assert.ok(g.conteudo.fontes.length > 0, "aulas do Academy usadas");
+  assert.ok(g.conteudo.followups.length >= 3);
+
+  // Ajuste de forma, refeito pelo motor interno.
+  r = await req("/onboarding/ia/ajustes", { cookie: ck, body: { pedido: "Deixe mais curto" } });
+  assert.equal(r.status, 200);
+  for (let i = 0; i < 60; i++) {
+    g = (await req("/onboarding/ia", { cookie: ck })).corpo.geracao;
+    if (g?.status === "pronta") break;
+    await esperar(500);
+  }
+  assert.equal(g.versao, 2);
+  assert.equal(g.conteudo.aviso, "");
+
+  r = await req("/onboarding/ia/aprovar-tudo", { cookie: ck, body: {} });
   assert.equal(r.corpo.atual, "plano");
 });

@@ -8,7 +8,7 @@ import {
 } from "../../shared/onboarding.js";
 import { hashToken, novoToken, obterOnboarding, concluir, serializar, trialDoOnboarding } from "../services/onboarding.js";
 import { armazenamentoDisponivel, salvar, remover, ArquivoGrandeDemais } from "../services/arquivos.js";
-import { iaDisponivel, geracaoAtual, serializarGeracao, criarGeracao, tentarDeNovo } from "../services/iaOnboarding.js";
+import { motorAtual, geracaoAtual, serializarGeracao, criarGeracao, tentarDeNovo } from "../services/iaOnboarding.js";
 import { acessoDaEmpresa } from "../../shared/assinatura.js";
 import { PLANOS, ORDEM_PLANOS } from "../../shared/planos.js";
 import { requisitosPublicacao, saldoDisponivel, isPosPago, isPremium } from "../../shared/empresa.js";
@@ -244,7 +244,7 @@ router.post("/onboarding/academy/concluir", (req, res) => {
   const linha = concluir(req.user.entityId, "academy");
   if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
   // Depois de aprovado, voltar aqui não refaz a geração.
-  if (JSON.parse(linha.etapas).ia !== "concluida" && iaDisponivel()) criarGeracao(req.user.entityId);
+  if (JSON.parse(linha.etapas).ia !== "concluida") criarGeracao(req.user.entityId);
   res.json({ ok: true, ...serializar(linha) });
 });
 
@@ -253,12 +253,11 @@ router.post("/onboarding/academy/concluir", (req, res) => {
 
 router.get("/onboarding/ia", (req, res) => {
   if (!soEmpresa(req, res)) return;
-  res.json({ disponivel: iaDisponivel(), geracao: serializarGeracao(geracaoAtual(req.user.entityId)) });
+  res.json({ disponivel: true, motor: motorAtual(), geracao: serializarGeracao(geracaoAtual(req.user.entityId)) });
 });
 
 router.post("/onboarding/ia/gerar", (req, res) => {
   if (!soEmpresa(req, res)) return;
-  if (!iaDisponivel()) return res.status(503).json({ error: "A IA não está disponível no momento." });
   const atual = geracaoAtual(req.user.entityId);
   if (atual && ["pendente", "processando"].includes(atual.status)) return res.json({ geracao: serializarGeracao(atual) });
   res.json({ geracao: serializarGeracao(criarGeracao(req.user.entityId)) });
@@ -308,7 +307,6 @@ router.post("/onboarding/ia/aprovar", (req, res) => {
 
 router.post("/onboarding/ia/ajustes", (req, res) => {
   if (!soEmpresa(req, res)) return;
-  if (!iaDisponivel()) return res.status(503).json({ error: "A IA não está disponível no momento." });
   const pedido = String(req.body?.pedido || "").trim();
   if (pedido.length < 5) return res.status(400).json({ error: "Conte o que você quer ajustar." });
   const g = geracaoAtual(req.user.entityId);
@@ -328,16 +326,6 @@ router.post("/onboarding/ia/aprovar-tudo", (req, res) => {
   const t = agora();
   db.prepare("UPDATE ia_geracoes SET status = 'aprovada', aprovacoes = ?, aprovadoEm = ?, atualizadoEm = ? WHERE id = ?")
     .run(JSON.stringify(Object.fromEntries(PARTES_IA.map((p) => [p.chave, true]))), t, t, g.id);
-  const linha = concluir(req.user.entityId, "ia");
-  if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
-  res.json({ ok: true, ...serializar(linha) });
-});
-
-// Sem IA configurada, a etapa não tem como rodar. Seguir sem estratégias é
-// melhor do que prender a empresa ou mostrar texto inventado.
-router.post("/onboarding/ia/pular", (req, res) => {
-  if (!soEmpresa(req, res)) return;
-  if (iaDisponivel()) return res.status(409).json({ error: "A IA está disponível: gere e revise as estratégias." });
   const linha = concluir(req.user.entityId, "ia");
   if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
   res.json({ ok: true, ...serializar(linha) });
