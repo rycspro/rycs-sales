@@ -108,12 +108,13 @@ async function faseAnalise(g) {
   const permissoes = normalizarPermissoes(ler(e.permissoesMarca, {}));
   const materiais = db.prepare("SELECT * FROM academy_materiais WHERE companyId = ? ORDER BY criadoEm").all(g.companyId);
 
-  // Lê o que ainda não foi lido por esta versão do leitor (ou deu erro).
+  // Lê o que ainda não foi lido por esta versão do leitor.
   let fotos = 0;
   for (const m of materiais) {
     if (m.categoria === "link") continue;
     if (m.categoria === "foto" && ++fotos > MAX_FOTOS_LIDAS) continue;
-    if (m.statusIndexacao !== "erro" && (m.leituraVersao || 0) >= LEITURA_VERSAO) continue;
+    // Lido por esta versão do leitor, deu certo ou não: não tenta de novo.
+    if ((m.leituraVersao || 0) >= LEITURA_VERSAO) continue;
     const r = await lerMaterial(m, { descrever: iaDisponivel() ? descrever : null });
     db.prepare("UPDATE academy_materiais SET statusIndexacao = ?, textoExtraido = ?, leitura = ?, leituraVersao = ? WHERE id = ?")
       .run(r.status, r.texto, r.leitura, LEITURA_VERSAO, m.id);
@@ -196,7 +197,8 @@ Regras:
 - Quando faltar informação, escreva de forma que funcione sem ela, sem preencher a lacuna com suposição.`;
 
 let cliente = null;
-const claude = () => (cliente ||= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }));
+// Sem novas tentativas: se a integração falhar, o motor interno assume.
+const claude = () => (cliente ||= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 }));
 
 async function gerarParte(parte, contexto, pedidoAjuste, anteriores) {
   if (!iaDisponivel()) throw new Error("A IA não está configurada neste ambiente da RYCS.");
@@ -258,6 +260,7 @@ export async function processarProxima() {
   const conteudo = ler(g.conteudo, {});
   let contexto = g.contexto;
   let interno = null;
+  let usarClaude = iaDisponivel();
   const salvarFase = (fase, estado) => {
     fases[fase] = estado;
     db.prepare("UPDATE ia_geracoes SET fases = ?, conteudo = ?, atualizadoEm = ? WHERE id = ?")
@@ -267,7 +270,14 @@ export async function processarProxima() {
     for (let fase = proximaFase(fases); fase; fase = proximaFase(fases)) {
       salvarFase(fase, "atual");
       if (fase === "analise") contexto = await faseAnalise(g);
-      else if (iaDisponivel()) conteudo[fase] = await gerarParte(fase, contexto, g.pedidoAjuste, Object.fromEntries(FASES_GERACAO.filter((f) => conteudo[f]).map((f) => [f, conteudo[f]])));
+      else if (usarClaude && (conteudo[fase] = await gerarParte(fase, contexto, g.pedidoAjuste, Object.fromEntries(FASES_GERACAO.filter((f) => conteudo[f]).map((f) => [f, conteudo[f]])))
+        .catch((e) => {
+          // Integração externa falhou: não insiste. Esta e as próximas partes
+          // saem pelo motor interno da RYCS.
+          console.warn(`[ia-onboarding] Claude falhou na fase ${fase} (${e.message}); seguindo com o motor interno.`);
+          usarClaude = false;
+          return null;
+        }))) { /* gerado pela Claude */ }
       else {
         interno ||= estrategiasInternas(g);
         conteudo[fase] = normalizarParte(fase, interno[fase]);
@@ -275,7 +285,7 @@ export async function processarProxima() {
         conteudo.aviso = interno.ajusteEntendido === false
           ? "O motor da RYCS não entendeu esse pedido de ajuste. Para mudar o conteúdo, edite o texto direto." : "";
       }
-      conteudo.motor = motorAtual();
+      conteudo.motor = usarClaude ? "claude" : "interno";
       salvarFase(fase, "concluida");
     }
     db.prepare("UPDATE ia_geracoes SET status = 'pronta', aprovacoes = '{}', atualizadoEm = ? WHERE id = ?").run(agora(), g.id);

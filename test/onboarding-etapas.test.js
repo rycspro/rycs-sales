@@ -32,7 +32,7 @@ const RESPOSTAS_IA = {
   followups: { followups: [{ quando: "Após 1 dia", mensagem: "Oi {nome}, conseguiu ver?" }] },
 };
 
-test("etapas 3 a 6: materiais, IA com falha e nova tentativa, aprovação, cartão recusado e campanha", async (t) => {
+test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), aprovação, cartão recusado e campanha", async (t) => {
   // IA falsa: falha até ser liberada, depois responde conforme o schema pedido.
   let iaNoAr = false;
   const pedidosIA = [];
@@ -98,25 +98,23 @@ test("etapas 3 a 6: materiais, IA com falha e nova tentativa, aprovação, cart�
   r = await req("/onboarding/academy/concluir", { cookie: ck, body: { suporte: { nome: "Ana", whatsapp: "11 98888-7777", email: "ana@exemplo.invalid" } } });
   assert.equal(r.corpo.atual, "ia");
 
-  // Etapa 4: a IA falha; a análise (fase 1) fica guardada.
+  // Etapa 4: a Claude falha; o sistema não insiste e o motor interno gera tudo.
   let g;
   for (let i = 0; i < 60; i++) {
     g = (await req("/onboarding/ia", { cookie: ck })).corpo.geracao;
-    if (g?.status === "falhou") break;
+    if (g?.status === "pronta" || g?.status === "falhou") break;
     await esperar(500);
   }
-  assert.equal(g.status, "falhou");
-  assert.equal(g.fases.analise, "concluida");
-  assert.ok(g.erro);
+  assert.equal(g.status, "pronta");
+  assert.equal(g.conteudo.motor, "interno");
+  assert.ok(g.conteudo.script.abertura);
+  assert.equal(pedidosIA.length, 1, "uma falha e a Claude não é chamada de novo nesta geração");
   assert.equal(db.prepare("SELECT statusIndexacao FROM academy_materiais WHERE id = ?").get(material.id).statusIndexacao, "indexado");
-  // Nada aprovado não conclui a etapa.
-  r = await req("/onboarding/ia/aprovar-tudo", { cookie: ck, body: {} });
-  assert.equal(r.status, 409);
 
-  // Tentar de novo com a IA no ar: continua da fase que falhou.
+  // Com a Claude no ar, um pedido de ajuste sai por ela.
   iaNoAr = true;
-  r = await req("/onboarding/ia/tentar", { cookie: ck, body: {} });
-  assert.equal(r.corpo.geracao.status, "pendente");
+  r = await req("/onboarding/ia/ajustes", { cookie: ck, body: { pedido: "Deixe a abertura mais direta." } });
+  assert.equal(r.status, 200);
   for (let i = 0; i < 60; i++) {
     g = (await req("/onboarding/ia", { cookie: ck })).corpo.geracao;
     if (g?.status === "pronta") break;

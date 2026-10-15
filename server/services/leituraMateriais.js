@@ -253,7 +253,7 @@ async function transcreverFala(arquivo, ext, pasta) {
     await ff(["-i", arquivo, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", "-t", String(MAX_MINUTOS_FALA * 60), wav]);
     const threads = String(Math.max(1, Math.min(availableParallelism(), 8)));
     await executar(WHISPER_BIN, ["-m", WHISPER_MODELO, "-f", wav, "-l", "pt", "-t", threads, "-nt", "-np", "-otxt", "-of", join(pasta, "fala")],
-      { timeout: 60 * 60 * 1000, maxBuffer: 20 * MB });
+      { timeout: 20 * 60 * 1000, maxBuffer: 20 * MB });
     // O whisper marca trechos sem fala entre colchetes ("[Música]", "[Som de fone]").
     const fala = readFileSync(join(pasta, "fala.txt"), "utf8").replace(/\[[^\]]{0,60}\]|\([^)]{0,30}\)/g, " ").replace(/\s+/g, " ").trim();
     return { fala, nota: "fala transcrita na RYCS" };
@@ -299,7 +299,8 @@ async function fichaDeTexto(texto, descrever) {
 
 // ---------------------------------------------------------------------------
 // Leitura de um material. Devolve { status, texto, leitura }:
-// status: indexado | sem_texto | erro (erro é lido de novo na próxima vez).
+// status: indexado | sem_texto | erro. Ferramenta que falha não é forçada:
+// o material fica sem texto e o resto segue.
 
 export async function lerMaterial(m, { descrever = null } = {}) {
   const ext = extensaoDe(m.nome);
