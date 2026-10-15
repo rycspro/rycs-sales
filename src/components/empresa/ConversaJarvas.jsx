@@ -6,18 +6,21 @@ import { montarCampanha } from "../../../shared/objetivosCampanha.js";
 import {
   interpretarResposta, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo,
   calcularTarefasJarvas, FECHAMENTO, confirmaMontagem, paraFala, pareceEco, segmentosDeFala, fraseIncompleta,
-  aplicar, tituloPadrao, respostaCompleta,
+  aplicar, tituloPadrao, respostaCompleta, semEco,
 } from "../../../shared/jarvas.js";
 
 // Conversa assistida por voz com o Jarvas, sem botão de falar.
 //
 // Um toque no orb abre a conversa (o navegador exige um gesto para liberar o
 // som e o microfone). Daí em diante é mãos livres, como numa ligação:
-// - o microfone fica aberto o tempo todo;
-// - a pessoa pode falar por cima do Jarvas: ele para na hora e escuta;
-// - quando a pessoa faz uma pausa curta, o Jarvas responde, sem esperar
-//   clique nenhum;
-// - o que o microfone capta da própria voz do Jarvas é descartado (eco).
+// - o microfone fica aberto o tempo todo, sem pausa, nos dois sentidos;
+// - a pessoa começa a falar por cima e o Jarvas para na hora: um detector de
+//   fala simultânea compara, a cada quadro, o volume do microfone com o da
+//   voz dele (e aprende quanto da voz dele vaza de volta para o microfone);
+// - se o Jarvas já ia responder e a pessoa continua falando, ele desiste da
+//   resposta e junta tudo o que ela disse numa vez só;
+// - quando a pessoa termina, o Jarvas responde sem esperar clique nenhum;
+// - o que o reconhecimento transcreve da própria voz dele é descartado (eco).
 // Um novo toque no orb pausa e retoma. Sem microfone, a mesma conversa segue
 // digitando.
 //
@@ -35,8 +38,9 @@ const PAUSA_FIM_FALA = 1800;       // silêncio que encerra a vez da pessoa
 const PAUSA_FIM_PARCIAL = 2600;    // idem, quando a última parte ainda não é final
 const PAUSA_EXTRA_INCOMPLETA = 1500; // frase parada em "e…", "para…": espera mais
 const PAUSA_RESPOSTA_COMPLETA = 700;  // "3", "sim", "Sorocaba": já dá para responder
-const PALAVRAS_PARA_INTERROMPER = 5;
-const CONFIRMA_INTERRUPCAO = 900;  // a pessoa precisa seguir falando por esse tempo
+const PALAVRAS_PARA_INTERROMPER = 3; // pelo texto, quando o volume não deu para medir
+const FALA_SIMULTANEA_MS = 200;    // microfone acima do vazamento da voz dele por esse tempo = a pessoa falando
+const APRENDE_ECO_MS = 350;        // começo de cada fala do Jarvas: só aprende o vazamento
 const ECO_FALANDO = 0.3;           // enquanto o Jarvas fala, 30% das palavras dele já é eco
 const CARENCIA_POS_FALA = 1200;    // logo depois de o Jarvas falar, o que chega é quase sempre eco
 
@@ -80,7 +84,9 @@ export default function ConversaJarvas({ emp, onCampanha }) {
   const interromper = useRef(null);
   const falaAtual = useRef("");     // o que o Jarvas está dizendo (para filtrar eco)
   const fimDaFala = useRef(0);      // quando o Jarvas terminou de falar
-  const interrupcao = useRef(null); // confirmação de que a pessoa está falando por cima
+  const duplex = useRef({ vazamento: 0.6, piso: 0.01, acima: 0, inicio: 0 }); // detector de fala simultânea
+  const respostaId = useRef(0);     // resposta em preparo (cancelada se a pessoa continuar falando)
+  const ultimoDito = useRef("");    // o que a pessoa disse na última vez
   const vez = useRef({ final: "", parcial: "", timer: null });
   const ocupado = useRef(false);    // processando uma resposta
   const cacheAudio = useRef(new Map());
@@ -112,24 +118,58 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     };
   }, []);
 
-  // Volume → orb, a cada quadro: a voz do Jarvas enquanto ele fala, o
-  // microfone no resto do tempo.
+  // A cada quadro: volume para o orb e detector de fala simultânea.
+  // Enquanto o Jarvas fala, o microfone capta um pouco da voz dele (vazamento
+  // da caixa de som). O detector aprende essa proporção e, quando o microfone
+  // fica acima dela por FALA_SIMULTANEA_MS, é a pessoa falando: ele para.
   useEffect(() => {
-    let q;
-    const buf = new Uint8Array(512);
-    const passo = () => {
-      const a = faseRef.current === "falando" ? analisadorVoz.current : faseRef.current === "ouvindo" ? analisadorMic.current : null;
-      if (a) {
-        a.getByteTimeDomainData(buf);
-        let soma = 0;
-        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; soma += v * v; }
-        nivel.current = Math.min(1, Math.sqrt(soma / buf.length) * 4.5);
-      } else nivel.current = 0;
+    let q, ultimo = performance.now();
+    const bufMic = new Uint8Array(512), bufVoz = new Uint8Array(512);
+    const rms = (an, buf) => {
+      an.getByteTimeDomainData(buf);
+      let soma = 0;
+      for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; soma += v * v; }
+      return Math.sqrt(soma / buf.length);
+    };
+    const passo = (t) => {
+      const dt = Math.min(100, t - ultimo);
+      ultimo = t;
+      const mic = analisadorMic.current ? rms(analisadorMic.current, bufMic) : 0;
+      const voz = analisadorVoz.current ? rms(analisadorVoz.current, bufVoz) : 0;
+      const f = faseRef.current;
+      const d = duplex.current;
+      if (f === "falando" && analisadorMic.current && !mudoRef.current) {
+        const desde = t - d.inicio;
+        const esperado = d.vazamento * voz + d.piso;
+        if (voz > 0.015 && (desde < APRENDE_ECO_MS || mic < esperado * 1.4))
+          d.vazamento = d.vazamento * 0.92 + Math.min(2, Math.max(0, mic - d.piso) / voz) * 0.08;
+        const limite = d.vazamento * voz * 1.8 + d.piso * 2.5 + 0.02;
+        if (desde > APRENDE_ECO_MS && mic > limite) d.acima += dt; else d.acima = Math.max(0, d.acima - dt);
+        if (d.acima > FALA_SIMULTANEA_MS) { d.acima = 0; interromperPorFala(); }
+      } else {
+        d.acima = 0;
+        // Ruído de fundo: desce rápido, sobe devagar (fala não vira "ruído").
+        d.piso = mic < d.piso ? d.piso * 0.9 + mic * 0.1 : d.piso * 0.999 + Math.min(mic, 0.05) * 0.001;
+      }
+      nivel.current = f === "falando" ? Math.min(1, voz * 4.5) : f === "ouvindo" ? Math.min(1, mic * 4.5) : 0;
       q = requestAnimationFrame(passo);
     };
     q = requestAnimationFrame(passo);
     return () => cancelAnimationFrame(q);
   }, []);
+
+  // A pessoa começou a falar: o Jarvas para de falar ou desiste da resposta
+  // que estava preparando (e o que ela disse antes se junta ao que vem agora).
+  const interromperPorFala = () => {
+    const f = faseRef.current;
+    if (f === "falando") { pararFala(); mudarFase("ouvindo"); }
+    else if (f === "pensando") {
+      respostaId.current++;
+      ocupado.current = false;
+      vez.current.final = `${ultimoDito.current} ${vez.current.final}`.trim();
+      mudarFase("ouvindo");
+    }
+  };
 
   const primeiraFala = () => `${saudacao(emp)} ${perguntar("objetivo", {}, emp).texto}`;
 
@@ -180,12 +220,15 @@ export default function ConversaJarvas({ emp, onCampanha }) {
 
   // Fala com legenda palavra por palavra. Resolve ao terminar ou ao ser
   // interrompida (pela pessoa falando por cima, ou por um toque).
-  const falar = async (t) => {
+  // `valida`: a resposta ainda vale? (a pessoa pode ter voltado a falar
+  // enquanto a voz era preparada).
+  const falar = async (t, valida = null) => {
     const g = geracao.current;
     const palavras = t.split(/\s+/).filter(Boolean);
     falaAtual.current = t;
     // O que ficou no ouvido antes desta fala é velho (ou eco): começa limpo.
-    if (!interrupcao.current) { clearTimeout(vez.current.timer); vez.current = { final: "", parcial: "", timer: null }; }
+    clearTimeout(vez.current.timer);
+    vez.current = { final: "", parcial: "", timer: null };
     setLegenda({ palavras, ate: 0 });
     setAnuncio(t);
     if (mudoRef.current) {
@@ -193,7 +236,9 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       return g === geracao.current;
     }
     const urls = await obterAudio(t);
-    if (g !== geracao.current) return false;
+    if (g !== geracao.current || (valida && !valida())) return false;
+    duplex.current.inicio = performance.now();
+    duplex.current.acima = 0;
     mudarFase("falando");
 
     await new Promise((fim) => {
@@ -255,15 +300,13 @@ export default function ConversaJarvas({ emp, onCampanha }) {
 
   const pararEscuta = () => {
     clearTimeout(vez.current.timer);
-    clearTimeout(interrupcao.current);
-    interrupcao.current = null;
     vez.current = { final: "", parcial: "", timer: null };
     if (rec.current) { rec.current.onend = null; rec.current.abort?.(); rec.current = null; }
   };
 
   // Fim da vez da pessoa: entrega o que ela disse.
   const encerrarVez = () => {
-    const dito = `${vez.current.final} ${vez.current.parcial}`.trim();
+    const dito = semEco(`${vez.current.final} ${vez.current.parcial}`.trim(), falaAtual.current);
     vez.current = { final: "", parcial: "", timer: null };
     if (dito) responder(dito);
   };
@@ -294,26 +337,14 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         vez.current = { final: "", parcial: "", timer: null };
         return;
       }
-      if (f === "falando") {
-        // Falar por cima só interrompe com algumas palavras de verdade e a
-        // pessoa seguindo a frase por meio segundo; ruído e "hum" não param o Jarvas.
-        if (palavras < PALAVRAS_PARA_INTERROMPER || interrupcao.current) return;
-        interrupcao.current = setTimeout(() => {
-          interrupcao.current = null;
-          const atual = `${vez.current.final} ${vez.current.parcial}`.trim();
-          if (faseRef.current !== "falando" || (atual.match(/\S+/g) || []).length <= palavras || pareceEco(atual, falaAtual.current, ECO_FALANDO)) return;
-          pararFala();
-          mudarFase("ouvindo");
-          setOuvido(atual);
-          clearTimeout(vez.current.timer);
-          vez.current.timer = setTimeout(encerrarVez, PAUSA_FIM_PARCIAL + (fraseIncompleta(atual) ? PAUSA_EXTRA_INCOMPLETA : 0));
-        }, CONFIRMA_INTERRUPCAO);
-        return;
-      }
-      if (recente && palavras < 2) return;
       if (f === "pausado" || f === "montando") return;
-      if (f !== "pensando") mudarFase("ouvindo");
-      setOuvido(dito);
+      // Pelo texto também: palavras que não são eco, enquanto ele fala, param o
+      // Jarvas (o detector de volume costuma chegar antes).
+      if (f === "falando") { if (palavras < PALAVRAS_PARA_INTERROMPER) return; interromperPorFala(); }
+      // Ele ia responder e a pessoa continuou falando: junta e segue ouvindo.
+      if (f === "pensando") interromperPorFala();
+      if (faseRef.current !== "ouvindo") mudarFase("ouvindo");
+      setOuvido(`${vez.current.final} ${vez.current.parcial}`.trim());
       clearTimeout(v.timer);
       // Resposta completa ("3", "sim", "Sorocaba"): o Jarvas responde logo.
       // Frase longa ou parada no meio: espera a pessoa terminar.
@@ -358,6 +389,8 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     if (ocupado.current || faseRef.current === "montando") return;
     ocupado.current = true;
     const g = geracao.current;
+    const id = ++respostaId.current;
+    ultimoDito.current = dito;
     pararFala();
     setOuvido(dito);
     setChips([]);
@@ -372,7 +405,6 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       return montar();
     }
     const novas = aplicar(anteriores, patch);
-    respostas.current = novas;
     let fala, proximo = atual, novosChips = [];
     if (!Object.keys(patch).length) {
       fala = atual === "ajuste" ? "Não entendi. O que mudo?" : pedirDeNovo(atual, novas, emp);
@@ -387,12 +419,14 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     fala = fala.trim();
     obterAudio(fala);
     await esperar(220);
-    if (g !== geracao.current) { ocupado.current = false; return; }
+    // Recomeçou, ou a pessoa continuou falando: esta resposta não vale mais.
+    if (g !== geracao.current || id !== respostaId.current) { if (id === respostaId.current) ocupado.current = false; return; }
+    respostas.current = novas;
     campo.current = proximo;
     setLinhasResumo(proximo === "ajuste" ? resumo(novas) : null);
     setChips(novosChips);
     ocupado.current = false;
-    if (!(await falar(fala))) return;
+    if (!(await falar(fala, () => id === respostaId.current))) return;
     depoisDeFalar();
   };
 

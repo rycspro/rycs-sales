@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas, fraseIncompleta, aplicar, tituloPadrao, respostaCompleta } from "../shared/jarvas.js";
+import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas, fraseIncompleta, aplicar, tituloPadrao, respostaCompleta, semEco } from "../shared/jarvas.js";
 
 // Jarvas (shared/jarvas.js): entende português do dia a dia, pula o que já
 // sabe e reage com conta de verdade, sem provedor externo.
@@ -181,4 +181,9 @@ test("responde logo quando a resposta já está completa", () => {
   assert.ok(respostaCompleta("pode montar", "ajuste"));
   assert.ok(!respostaCompleta("quero agendar reuniões com", "objetivo"));
   assert.ok(!respostaCompleta("hum", "vagas"));
+});
+
+test("fala por cima: tira o eco do começo do que foi ouvido", () => {
+  assert.equal(semEco("quer quantas vezes de retorno cinco vezes", "Quer quantas vezes de retorno?"), "cinco vezes");
+  assert.equal(semEco("cinco vezes", "Quer quantas vezes de retorno?"), "cinco vezes");
 });

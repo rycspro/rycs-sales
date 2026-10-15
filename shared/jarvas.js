@@ -618,3 +618,15 @@ export function respostaCompleta(texto, campo, r = {}, emp = {}) {
   if (campo === "ajuste") return confirmaMontagem(texto) || Object.keys(interpretarResposta(texto, campo, r, emp)).length > 0;
   return interpretarResposta(texto, campo, r, emp)[campo] != null;
 }
+
+// Tira do começo do que foi ouvido o pedaço que é eco da fala do Jarvas
+// (quando a pessoa começa a falar por cima, o reconhecimento junta os dois).
+export function semEco(ouvido, falado) {
+  const norm = (w) => sem(w).replace(/(\d)[.,](?=\d)/g, "$1").replace(/[^a-z0-9]/g, "");
+  const fonte = [falado, paraFala(falado)].map((t) => String(t).split(/\s+/).map(norm).filter(Boolean));
+  const pares = new Set(fonte.flatMap((f) => f.slice(1).map((w, k) => `${f[k]} ${w}`)));
+  const palavras = String(ouvido || "").trim().split(/\s+/).filter(Boolean);
+  let i = 0;
+  while (i < palavras.length - 1 && pares.has(`${norm(palavras[i])} ${norm(palavras[i + 1])}`)) i++;
+  return (i > 0 ? palavras.slice(i + 1) : palavras).join(" ");
+}
