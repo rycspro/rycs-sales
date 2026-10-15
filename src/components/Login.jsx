@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { Campo } from "./ui.jsx";
+import { Campo, CampoSenha } from "./ui.jsx";
 import MolduraAuth from "./auth/MolduraAuth.jsx";
+import RecuperarSenha from "./auth/RecuperarSenha.jsx";
+import Termos from "./auth/Termos.jsx";
 import { api } from "../lib/api.js";
 import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 
@@ -18,8 +20,7 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotMsg, setForgotMsg] = useState("");
+  const [showTermos, setShowTermos] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [resetToken, setResetToken] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
@@ -49,14 +50,6 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
     setLoading(false);
   };
 
-  const enviarForgot = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const r = await api("/auth/forgot-password", { email: forgotEmail });
-    setForgotMsg(r?.message || "Link enviado, se o e-mail existir.");
-    setLoading(false);
-  };
-
   const enviarReset = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -69,24 +62,23 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
   if (showReset) return (
     <MolduraAuth titulo="Redefinir senha" largura={420}>
       <form onSubmit={enviarReset}>
-        <Campo label="Nova senha"><input className="vx-input" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} minLength={6} required /></Campo>
+        <Campo label="Nova senha">
+          <CampoSenha value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} minLength={6} autoComplete="new-password" descricao="dica-nova-senha" />
+          <div id="dica-nova-senha" className="vx-onb-dica">Contas de empresa: mínimo de 8 caracteres.</div>
+        </Campo>
         <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading}>Redefinir</button>
       </form>
-      {resetMsg && <div className="vx-mut" style={{ marginTop: 12, textAlign: "center" }}>{resetMsg}</div>}
+      {resetMsg && <div className="vx-mut" role="status" style={{ marginTop: 12, textAlign: "center" }}>{resetMsg}</div>}
     </MolduraAuth>
   );
 
   if (showForgot) return (
-    <MolduraAuth titulo="Esqueci minha senha" largura={420}
-      subtitulo="Informe seu e-mail para receber o link de redefinição.">
-      <form onSubmit={enviarForgot}>
-        <Campo label="E-mail"><input className="vx-input" type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required /></Campo>
-        <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading}>Enviar link</button>
-      </form>
-      {forgotMsg && <div className="vx-mut" style={{ marginTop: 12, textAlign: "center" }}>{forgotMsg}</div>}
-      <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setShowForgot(false)} style={{ marginTop: 8, width: "100%" }}>Voltar ao login</button>
+    <MolduraAuth largura={420}>
+      <RecuperarSenha emailInicial={email} onVoltar={() => setShowForgot(false)} />
     </MolduraAuth>
   );
+
+  if (showTermos) return <Termos onAceitar={() => setShowTermos(false)} onVoltar={() => setShowTermos(false)} />;
 
   return (
     <MolduraAuth
@@ -100,11 +92,15 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
           <input className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
         </Campo>
         <Campo label="Senha">
-          <input className="vx-input" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} />
+          <CampoSenha value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Sua senha" />
         </Campo>
         <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading} style={{ marginTop: 8 }}>
           {loading ? "Carregando…" : "Entrar"}
         </button>
+        <p className="vx-onb-termos">
+          Ao continuar, você aceita os{" "}
+          <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>Termos de Uso</button> da RYCS.
+        </p>
       </form>
 
       {beta && !conviteTrial && (

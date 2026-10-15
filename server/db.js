@@ -1205,6 +1205,38 @@ if (templateCount.n === 0) {
   for (const t of tpls) ins.run(t.id, t.nome, t.assunto, t.preheader, t.conteudo, t.cta, t.tipo, now);
 }
 
+// Onboarding da empresa (docs/onboarding/SPEC.md). Progresso salvo no
+// servidor, uma linha por empresa; convites gerados no admin, presos a um
+// e-mail, com o token guardado só como hash.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS onboarding (
+    companyId TEXT PRIMARY KEY,
+    etapas TEXT NOT NULL DEFAULT '{}',
+    origem TEXT NOT NULL DEFAULT 'site',   -- site | convite | existente
+    conviteId TEXT,
+    trialDias INTEGER NOT NULL DEFAULT 0,  -- trial que a etapa 5 vai oferecer
+    concluidoEm INTEGER,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS onboarding_convites (
+    id TEXT PRIMARY KEY,
+    tokenHash TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
+    trialDias INTEGER NOT NULL DEFAULT 0,  -- 0 = convite sem trial
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    expiraEm INTEGER NOT NULL,
+    usadoEm INTEGER,
+    usadoPor TEXT,                         -- companyId
+    revogadoEm INTEGER,
+    observacao TEXT DEFAULT ''
+  );
+`);
+adicionarColuna("companies", "whatsapp", "TEXT DEFAULT ''");
+adicionarColuna("users", "resetEnviadoEm", "INTEGER");
+
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@rycs.pro").toLowerCase().trim();

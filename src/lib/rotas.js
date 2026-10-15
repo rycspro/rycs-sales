@@ -15,6 +15,8 @@ export const ROTAS = {
   cadastroEmpresa: "/cadastro/empresa",
   plataforma: "/plataforma",
   trial: "/trial",
+  onboarding: "/onboarding",
+  comecar: "/comecar",
 };
 
 // Endereços alternativos que as pessoas digitam ou que ficam em links antigos.
@@ -44,6 +46,15 @@ export function resolver(caminho = typeof window !== "undefined" ? window.locati
     const token = bruto.slice("/trial/".length).split("/")[0];
     if (token) return { tipo: "trial", token };
   }
+  // Convite de onboarding gerado no admin: /comecar/<token>. Mesmo cuidado
+  // com maiúsculas do convite de trial.
+  if (bruto.startsWith("/comecar/")) {
+    const token = bruto.slice("/comecar/".length).split("/")[0];
+    if (token) return { tipo: "convite-onboarding", token };
+  }
+  // A etapa da URL é só um pedido: quem decide qual abre é o servidor.
+  if (p === ROTAS.onboarding || p.startsWith(`${ROTAS.onboarding}/`))
+    return { tipo: "onboarding", etapa: p.slice(ROTAS.onboarding.length + 1).split("/")[0] || null };
   if (p.startsWith("/plataforma")) return { tipo: "plataforma" };
   if (p === ROTAS.cadastroVendedor) return { tipo: "cadastro", role: "vendedor" };
   if (p === ROTAS.cadastroEmpresa) return { tipo: "cadastro", role: "empresa" };
@@ -94,4 +105,20 @@ export function lerConvite() {
 
 export function limparConvite() {
   try { window.sessionStorage?.removeItem(CHAVE_CONVITE); } catch { /* nada a fazer */ }
+}
+
+// Convite de onboarding: mesma razão do convite de trial — precisa sobreviver
+// ao cadastro ou ao login, que recarregam a tela.
+const CHAVE_CONVITE_ONBOARDING = "rycs-convite-onboarding";
+
+export function guardarConviteOnboarding(token) {
+  try { window.sessionStorage?.setItem(CHAVE_CONVITE_ONBOARDING, token); } catch { /* sessão bloqueada */ }
+}
+
+export function lerConviteOnboarding() {
+  try { return window.sessionStorage?.getItem(CHAVE_CONVITE_ONBOARDING) || null; } catch { return null; }
+}
+
+export function limparConviteOnboarding() {
+  try { window.sessionStorage?.removeItem(CHAVE_CONVITE_ONBOARDING); } catch { /* nada a fazer */ }
 }

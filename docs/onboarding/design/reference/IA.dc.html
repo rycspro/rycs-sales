@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Etapa 4 · IA trabalhando</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7490}
+@keyframes dcPulse{0%{transform:scale(.55);opacity:.8}100%{transform:scale(1.5);opacity:0}}
+@keyframes dcSpin{to{transform:rotate(360deg)}}
+@keyframes dcBlink{0%,100%{opacity:.25}50%{opacity:1}}
+.dc-ring{animation:dcPulse 2.4s ease-out infinite}
+.dc-ring2{animation:dcPulse 2.4s ease-out 0.8s infinite}
+.dc-ring3{animation:dcPulse 2.4s ease-out 1.6s infinite}
+.dc-orbit{animation:dcSpin 6s linear infinite}
+.dc-dot{animation:dcBlink 1.2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.dc-ring,.dc-ring2,.dc-ring3,.dc-orbit,.dc-dot{animation:none}}
+</style>
+</helmet>
+<div style="width:100%;min-height:900px;background:#F5F6FA;font-family:'Plus Jakarta Sans',sans-serif;color:#070B1E;display:flex;flex-direction:column">
+  <header style="background:#FFFFFF;border-bottom:1px solid #E3E5EE">
+    <div style="max-width:1200px;margin:0 auto;padding:20px 32px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#070B1E;color:#22D3EE;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">R</div>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">RYCS</span>
+      </div>
+      <nav aria-label="Etapas do cadastro" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:8px">
+            <sc-if value="{{s.isDone}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:#0F9D6B;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                <span style="font-size:13px;font-weight:600;color:#5B6075">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isCurrent}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:#0E7490;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">{{s.n}}</div>
+                <span style="font-size:13px;font-weight:700;color:#070B1E">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isTodo}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;border:1.5px solid #9097AE;color:#5B6075;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;box-sizing:border-box">{{s.n}}</div>
+                <span style="font-size:13px;font-weight:600;color:#5B6075">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.notLast}}" hint-placeholder-val="{{true}}">
+              <div style="width:20px;height:2px;background:#D5D8E3"></div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+    </div>
+  </header>
+
+  <main style="flex:1;width:100%;max-width:1200px;margin:0 auto;padding:48px 32px 72px;display:flex;flex-direction:column;gap:32px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:720px">
+      <span style="font-size:13px;font-weight:700;color:#0E7490;letter-spacing:0.08em;text-transform:uppercase">Passo 4 de 6 · IA RAG</span>
+      <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:40px;line-height:1.08;letter-spacing:-0.02em">A IA está montando tudo para você</h1>
+      <p style="margin:0;font-size:16px;line-height:1.55;color:#5B6075">Você não precisa fazer nada nesta etapa. Ela lê seus materiais e cria o script de vendas, o funil de WhatsApp e os follow-ups.</p>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:stretch">
+      <section style="flex:1 1 520px;min-width:0;min-height:460px;background:#070B1E;border-radius:24px;padding:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;box-sizing:border-box;color:#FFFFFF">
+        <div style="position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center">
+          <sc-if value="{{working}}" hint-placeholder-val="{{true}}">
+            <div style="position:absolute;inset:0">
+              <div class="dc-ring" style="position:absolute;inset:30px;border-radius:50%;border:2px solid #22D3EE"></div>
+              <div class="dc-ring2" style="position:absolute;inset:30px;border-radius:50%;border:2px solid #22D3EE"></div>
+              <div class="dc-ring3" style="position:absolute;inset:30px;border-radius:50%;border:2px solid #22D3EE"></div>
+              <div class="dc-orbit" style="position:absolute;inset:6px"><div style="position:absolute;top:0;left:50%;margin-left:-6px;width:12px;height:12px;border-radius:50%;background:#67E8F9"></div></div>
+            </div>
+          </sc-if>
+          <div style="position:relative;width:96px;height:96px;border-radius:28px;background:#0E7490;display:flex;align-items:center;justify-content:center">
+            <sc-if value="{{g0}}" hint-placeholder-val="{{false}}"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg></sc-if>
+            <sc-if value="{{g1}}" hint-placeholder-val="{{true}}"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg></sc-if>
+            <sc-if value="{{g2}}" hint-placeholder-val="{{false}}"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></sc-if>
+            <sc-if value="{{g3}}" hint-placeholder-val="{{false}}"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></sc-if>
+            <sc-if value="{{g4}}" hint-placeholder-val="{{false}}"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center" aria-live="polite">
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:700;line-height:1.15">{{headline}}</span>
+          <span style="font-size:15px;color:#B9BCCB">{{subline}}</span>
+          <sc-if value="{{working}}" hint-placeholder-val="{{true}}">
+            <div aria-hidden="true" style="display:flex;gap:6px;margin-top:4px">
+              <span class="dc-dot" style="width:8px;height:8px;border-radius:50%;background:#67E8F9"></span>
+              <span class="dc-dot" style="width:8px;height:8px;border-radius:50%;background:#67E8F9;animation-delay:0.2s"></span>
+              <span class="dc-dot" style="width:8px;height:8px;border-radius:50%;background:#67E8F9;animation-delay:0.4s"></span>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{finished}}" hint-placeholder-val="{{false}}">
+          <a href="Aprovacao.dc.html" style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 32px;border-radius:12px;background:#FFFFFF;color:#070B1E;font-size:16px;font-weight:700;text-decoration:none">Revisar estratégias</a>
+        </sc-if>
+        <span style="font-size:12px;color:#8F93A8">Espaço reservado para o GIF desta fase</span>
+      </section>
+
+      <section style="flex:1 1 320px;min-width:0;background:#FFFFFF;border:1px solid #E3E5EE;border-radius:24px;padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+        <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700">O que a IA está fazendo</h2>
+        <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{stages}}" as="t" hint-placeholder-count="5">
+            <li style="display:flex;align-items:center;gap:14px;padding:12px 0">
+              <sc-if value="{{t.isDone}}" hint-placeholder-val="{{false}}">
+                <div style="display:flex;align-items:center;gap:14px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#0F9D6B;display:flex;align-items:center;justify-content:center;flex:0 0 32px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                  <span style="font-size:15px;font-weight:600;color:#5B6075">{{t.label}}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{t.isCurrent}}" hint-placeholder-val="{{false}}">
+                <div style="display:flex;align-items:center;gap:14px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:#0E7490;color:#FFFFFF;display:flex;align-items:center;justify-content:center;flex:0 0 32px;font-size:13px;font-weight:700">{{t.n}}</div>
+                  <span style="font-size:15px;font-weight:700;color:#070B1E">{{t.label}}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{t.isTodo}}" hint-placeholder-val="{{true}}">
+                <div style="display:flex;align-items:center;gap:14px">
+                  <div style="width:32px;height:32px;border-radius:50%;border:1.5px solid #9097AE;color:#5B6075;display:flex;align-items:center;justify-content:center;flex:0 0 32px;font-size:13px;font-weight:600;box-sizing:border-box">{{t.n}}</div>
+                  <span style="font-size:15px;font-weight:600;color:#5B6075">{{t.label}}</span>
+                </div>
+              </sc-if>
+            </li>
+          </sc-for>
+        </ol>
+        <div style="margin-top:auto;border-top:1px solid #E3E5EE;padding-top:16px;font-size:13px;line-height:1.5;color:#5B6075">Nada é publicado sem a sua aprovação na última fase.</div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { stage: 1 };
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (this.state.stage < 4) this.setState({ stage: this.state.stage + 1 });
+      else clearInterval(this.timer);
+    }, 4000);
+  }
+  componentWillUnmount() {
+    if (this.timer) clearInterval(this.timer);
+  }
+  renderVals() {
+    const labels = ['Acesso', 'Empresa', 'Marketing Academy', 'IA RAG', 'Plano', 'Campanha'];
+    const cur = 4;
+    const stage = this.state.stage;
+    const names = [
+      'Analisando as informações',
+      'Criando o script',
+      'Criando as estratégias do funil de WhatsApp',
+      'Criando os follow-ups',
+      'Aguardando a sua aprovação'
+    ];
+    const heads = [
+      'Analisando as informações',
+      'Criando o script de vendas',
+      'Criando o funil de WhatsApp',
+      'Criando os follow-ups',
+      'Tudo pronto para revisar'
+    ];
+    const subs = [
+      'Lendo o perfil da empresa e os materiais enviados.',
+      'Escrevendo as mensagens no tom da sua marca.',
+      'Definindo as etapas da conversa até a venda.',
+      'Planejando os retornos para quem não respondeu.',
+      'A IA criou as estratégias. Falta só você aprovar.'
+    ];
+    return {
+      steps: labels.map((label, i) => ({
+        n: i + 1, label,
+        isDone: i + 1 < cur, isCurrent: i + 1 === cur, isTodo: i + 1 > cur,
+        notLast: i < labels.length - 1
+      })),
+      stages: names.map((label, i) => ({
+        n: i + 1, label,
+        isDone: i < stage, isCurrent: i === stage, isTodo: i > stage
+      })),
+      headline: heads[stage],
+      subline: subs[stage],
+      working: stage < 4,
+      finished: stage === 4,
+      g0: stage === 0, g1: stage === 1, g2: stage === 2, g3: stage === 3, g4: stage === 4
+    };
+  }
+}
+</script>
+</body>
+</html>

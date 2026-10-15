@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Eye, EyeOff } from "lucide-react";
 import { STATUS } from "../lib/constants.js";
 import { apiDeleteStatus } from "../lib/api.js";
 
@@ -27,6 +27,23 @@ export function Campo({ label, children }) {
     <div style={{ marginBottom: 12 }}>
       <label className="vx-label">{label}</label>
       {children}
+    </div>
+  );
+}
+
+// Campo de senha com o olho para mostrar ou ocultar. O botão fica dentro do
+// campo, com alvo de toque de 44px e rótulo que muda junto com o estado.
+export function CampoSenha({ id, value, onChange, placeholder, autoComplete = "current-password", minLength, required = true, invalido = false, descricao }) {
+  const [visivel, setVisivel] = useState(false);
+  return (
+    <div className="vx-senha">
+      <input id={id} className="vx-input" type={visivel ? "text" : "password"} value={value} onChange={onChange}
+        placeholder={placeholder} autoComplete={autoComplete} minLength={minLength} required={required}
+        aria-invalid={invalido || undefined} aria-describedby={descricao} />
+      <button type="button" className="vx-senha-olho" onClick={() => setVisivel((v) => !v)}
+        aria-label={visivel ? "Ocultar senha" : "Mostrar senha"} aria-pressed={visivel}>
+        {visivel ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+      </button>
     </div>
   );
 }

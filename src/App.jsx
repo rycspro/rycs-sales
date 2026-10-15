@@ -6,9 +6,10 @@ import Shell from "./components/Shell.jsx";
 import Login from "./components/Login.jsx";
 import LoginPlataforma from "./components/LoginPlataforma.jsx";
 import CadastroProfissional from "./components/auth/CadastroProfissional.jsx";
-import CadastroEmpresa from "./components/auth/CadastroEmpresa.jsx";
 import EscolhaCadastro from "./components/auth/EscolhaCadastro.jsx";
-import { useRota, guardarConvite } from "./lib/rotas.js";
+import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding, limparConviteOnboarding } from "./lib/rotas.js";
+import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
+import Onboarding from "./components/onboarding/index.jsx";
 import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
@@ -83,6 +84,31 @@ export default function App() {
   // passa por cadastro e login antes de conseguir resgatar, e a URL se perde
   // no caminho.
   useEffect(() => { if (rota.tipo === "trial" && rota.token) guardarConvite(rota.token); }, [rota]);
+  useEffect(() => { if (rota.tipo === "convite-onboarding" && rota.token) guardarConviteOnboarding(rota.token); }, [rota]);
+
+  // Onboarding da empresa: o servidor diz se está concluído e em qual etapa.
+  // null = ainda consultando; { erro } = falhou e a tela oferece tentar de novo.
+  const [onb, setOnb] = useState(null);
+  const carregarOnboarding = useCallback(async () => {
+    setOnb(null);
+    // Convite aberto por quem já tem conta: aplica antes de ler o progresso.
+    const convite = lerConviteOnboarding();
+    if (convite) {
+      const r = await api(`/onboarding/convites/${encodeURIComponent(convite)}/aplicar`, {});
+      limparConviteOnboarding();
+      if (r?.error) setToast(r.error);
+    }
+    const r = await api("/onboarding");
+    setOnb(r && !r.error ? r : { erro: r?.error || "Não foi possível carregar o seu cadastro." });
+  }, []);
+  useEffect(() => {
+    if (!user || previaQualificacao) return;
+    if (user.role === "empresa") carregarOnboarding();
+  }, [user, carregarOnboarding]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Onboarding concluído: o endereço de etapa não tem mais o que mostrar.
+  useEffect(() => {
+    if (onb?.concluido && window.location.pathname.startsWith("/onboarding")) window.history.replaceState({}, "", "/");
+  }, [onb]);
 
   const carregarState = useCallback(async (usr) => {
     const u = usr || userRef.current;
@@ -132,29 +158,34 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const login = async (email, senha) => {
+  // { silencioso } é para telas que mostram o erro no próprio campo.
+  const login = async (email, senha, { silencioso = false } = {}) => {
     const r = await api("/auth/login", { email, senha });
-    if (r?.error) { setToast(r.error); return false; }
-    if (r?.id) { setUser(r); userRef.current = r; await carregarState(r); return true; }
-    setToast("Erro ao fazer login."); return false;
+    if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error }; }
+    if (r?.id) { setUser(r); userRef.current = r; await carregarState(r); return { ok: true }; }
+    if (!silencioso) setToast("Erro ao fazer login.");
+    return { ok: false, error: "Erro ao fazer login." };
   };
 
-  const registrar = async (dados) => {
+  const registrar = async (dados, { silencioso = false } = {}) => {
     const r = await api("/auth/register", dados);
-    if (r?.error) { setToast(r.error); return false; }
+    if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error, campo: r.campo }; }
     if (r?.id) {
-      setUser(r); userRef.current = r; await carregarState(r);
       // A conta existe: o endereço de cadastro não deve sobreviver a um F5,
       // senão a pessoa recarrega e volta a ver um formulário já cumprido.
+      // Antes de trocar o usuário: o onboarding troca o endereço logo depois.
       window.history.replaceState({}, "", "/");
-      return true;
+      setUser(r); userRef.current = r; await carregarState(r);
+      return { ok: true };
     }
-    setToast("Erro ao registrar."); return false;
+    if (!silencioso) setToast("Erro ao registrar.");
+    return { ok: false, error: "Erro ao registrar." };
   };
 
   const logout = async () => {
     await api("/auth/logout", {});
     setUser(null);
+    setOnb(null);
     setDb(seed());
   };
 
@@ -199,7 +230,9 @@ export default function App() {
         : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
         : rota.tipo === "escolha" ? <EscolhaCadastro />
         : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
-        : rota.tipo === "cadastro" && rota.role === "empresa" ? <CadastroEmpresa onRegister={registrar} />
+        : (rota.tipo === "cadastro" && rota.role === "empresa") || rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
+          ? <EtapaAcesso conviteToken={rota.tipo === "convite-onboarding" ? rota.token : null}
+              onRegister={(d) => registrar(d, { silencioso: true })} onLogin={(e, s) => login(e, s, { silencioso: true })} />
         : <Login onLogin={login} beta={environment === "beta"} />}
       {toast && (
         <div className="vx-fade" style={{
@@ -212,6 +245,35 @@ export default function App() {
   );
 
   const roleLabel = { vendedor: "Vendedor", empresa: "Empresa", admin: "Plataforma" }[role] || "";
+
+  const toastEl = toast && (
+    <div className="vx-fade" role="status" style={{
+      position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
+      background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
+      boxShadow: "var(--shadow-pop)",
+    }}>{toast}</div>
+  );
+
+  // Empresa com onboarding em aberto não entra na plataforma: vê as etapas.
+  if (role === "empresa" && !previaQualificacao) {
+    if (!onb) return <div className="vx-app"><style>{CSS}</style><div className="vx-onb-estado" role="status">Carregando seu cadastro…</div></div>;
+    if (onb.erro) return (
+      <div className="vx-app"><style>{CSS}</style>
+        <div className="vx-onb-estado" role="alert">
+          <p>{onb.erro}</p>
+          <button className="vx-btn vx-btn-primary" style={{ minHeight: 48 }} onClick={carregarOnboarding}>Tentar novamente</button>
+        </div>
+      </div>
+    );
+    if (!onb.concluido) return (
+      <div className="vx-app">
+        <style>{CSS}</style>
+        <Onboarding estado={onb} setEstado={setOnb} email={user.email}
+          etapaPedida={rota.tipo === "onboarding" ? rota.etapa : null} aoSair={logout} />
+        {toastEl}
+      </div>
+    );
+  }
 
   return (
     <div className="vx-app">

@@ -35,6 +35,7 @@ import courseRoutes2 from "./routes/courses.js";
 import brainRoutes from "./routes/brain.js";
 import emailAdminRoutes from "./routes/emailAdmin.js";
 import billingRoutes from "./routes/billing.js";
+import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { semearCatalogo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
@@ -133,6 +134,9 @@ const apiLimiter = rateLimit({
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/admin/login", authLimiter);
+app.use("/api/auth/forgot-password", authLimiter);
+app.use("/api/auth/reset-password", authLimiter);
+app.use("/api/onboarding/convites", authLimiter);
 app.use("/api", apiLimiter);
 
 // --- Routes ---
@@ -140,6 +144,8 @@ app.use("/api", authRoutes);
 // Antes das rotas protegidas: o gateway chama o webhook sem cookie, e o
 // authMiddleware registrado abaixo responderia 401 antes de chegar aqui.
 app.use("/api", paymentRoutes);
+// Consulta do convite de onboarding: quem abre o link ainda não tem conta.
+app.use("/api", onboardingPublico);
 
 app.use("/api", authMiddleware, stateRoutes);
 app.use("/api", authMiddleware, sellersRoutes);
@@ -166,6 +172,7 @@ app.use("/api", authMiddleware, courseRoutes2);
 app.use("/api", authMiddleware, brainRoutes);
 app.use("/api", authMiddleware, emailAdminRoutes);
 app.use("/api", authMiddleware, billingRoutes);
+app.use("/api", authMiddleware, onboardingRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Etapa 4 · Aprovação</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7490}
+</style>
+</helmet>
+<div style="width:100%;min-height:1700px;background:#F5F6FA;font-family:'Plus Jakarta Sans',sans-serif;color:#070B1E;display:flex;flex-direction:column">
+  <header style="background:#FFFFFF;border-bottom:1px solid #E3E5EE">
+    <div style="max-width:1200px;margin:0 auto;padding:20px 32px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#070B1E;color:#22D3EE;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">R</div>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">RYCS</span>
+      </div>
+      <nav aria-label="Etapas do cadastro" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:8px">
+            <sc-if value="{{s.isDone}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:#0F9D6B;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                <span style="font-size:13px;font-weight:600;color:#5B6075">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isCurrent}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:#0E7490;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">{{s.n}}</div>
+                <span style="font-size:13px;font-weight:700;color:#070B1E">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isTodo}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;border:1.5px solid #9097AE;color:#5B6075;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;box-sizing:border-box">{{s.n}}</div>
+                <span style="font-size:13px;font-weight:600;color:#5B6075">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.notLast}}" hint-placeholder-val="{{true}}">
+              <div style="width:20px;height:2px;background:#D5D8E3"></div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+    </div>
+  </header>
+
+  <main style="flex:1;width:100%;max-width:1200px;margin:0 auto;padding:48px 32px 72px;display:flex;flex-direction:column;gap:28px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:760px">
+      <span style="font-size:13px;font-weight:700;color:#0E7490;letter-spacing:0.08em;text-transform:uppercase">Passo 4 de 6 · Aprovação do dono</span>
+      <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:40px;line-height:1.08;letter-spacing:-0.02em">Revise o que a IA criou para a sua empresa</h1>
+      <p style="margin:0;font-size:16px;line-height:1.55;color:#5B6075">Aprove cada parte ou peça ajustes. Só depois da sua aprovação as estratégias passam a valer na plataforma. Os textos usam variáveis, como {nome} e {produto}, que a IA preenche com os dados da sua empresa.</p>
+    </div>
+
+    <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:#DDF4FA;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0E7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg></div>
+          <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700">Script de vendas</h2>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" style="height:44px;padding:0 18px;border:1.5px solid #9097AE;border-radius:12px;background:#FFFFFF;color:#070B1E;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Editar</button>
+          <sc-if value="{{a0off}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{tog0}}" aria-pressed="false" style="height:44px;padding:0 20px;border:0;border-radius:12px;background:#0E7490;color:#FFFFFF;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Aprovar</button></sc-if>
+          <sc-if value="{{a0on}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{tog0}}" aria-pressed="true" style="height:44px;padding:0 20px;border:0;border-radius:12px;background:#0B7A53;color:#FFFFFF;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Aprovado</button></sc-if>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+        <div style="background:#F5F6FA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0E7490">1 · Abertura</span><span style="font-size:15px;line-height:1.55;color:#070B1E">Olá, {nome}! Aqui é da {empresa}. Vi que você pediu informações sobre {produto}. Posso te ajudar por aqui?</span></div>
+        <div style="background:#F5F6FA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0E7490">2 · Qualificação</span><span style="font-size:15px;line-height:1.55;color:#070B1E">Para indicar a melhor opção, me conta: o que você quer resolver e qual é a sua prioridade agora?</span></div>
+        <div style="background:#F5F6FA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0E7490">3 · Oferta</span><span style="font-size:15px;line-height:1.55;color:#070B1E">O {produto} resolve isso porque {diferencial}. O valor é {ticket}. Quer que eu explique como funciona?</span></div>
+        <div style="background:#F5F6FA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0E7490">4 · Fechamento</span><span style="font-size:15px;line-height:1.55;color:#070B1E">Posso reservar para você agora? Se preferir, passo a conversa para {contato de suporte}.</span></div>
+      </div>
+    </section>
+
+    <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:#DDF4FA;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0E7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></div>
+          <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700">Funil de WhatsApp</h2>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" style="height:44px;padding:0 18px;border:1.5px solid #9097AE;border-radius:12px;background:#FFFFFF;color:#070B1E;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Editar</button>
+          <sc-if value="{{a1off}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{tog1}}" aria-pressed="false" style="height:44px;padding:0 20px;border:0;border-radius:12px;background:#0E7490;color:#FFFFFF;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Aprovar</button></sc-if>
+          <sc-if value="{{a1on}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{tog1}}" aria-pressed="true" style="height:44px;padding:0 20px;border:0;border-radius:12px;background:#0B7A53;color:#FFFFFF;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Aprovado</button></sc-if>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:stretch;gap:12px">
+        <div style="flex:1 1 170px;background:#F5F6FA;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700">Boas-vindas</span><span style="font-size:14px;line-height:1.5;color:#5B6075">Cumprimenta o cliente e confirma o interesse.</span></div>
+        <div style="display:flex;align-items:center;color:#9097AE" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></div>
+        <div style="flex:1 1 170px;background:#F5F6FA;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700">Qualificação</span><span style="font-size:14px;line-height:1.5;color:#5B6075">Descobre a necessidade e a urgência.</span></div>
+        <div style="display:flex;align-items:center;color:#9097AE" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></div>
+        <div style="flex:1 1 170px;background:#F5F6FA;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700">Oferta</span><span style="font-size:14px;line-height:1.5;color:#5B6075">Apresenta produto, diferencial e valor.</span></div>
+        <div style="display:flex;align-items:center;color:#9097AE" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></div>
+        <div style="flex:1 1 170px;background:#F5F6FA;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700">Objeções</span><span style="font-size:14px;line-height:1.5;color:#5B6075">Responde dúvidas com o material da Academy.</span></div>
+        <div style="display:flex;align-items:center;color:#9097AE" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></div>
+        <div style="flex:1 1 170px;background:#F5F6FA;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700">Fechamento</span><span style="font-size:14px;line-height:1.5;color:#5B6075">Conduz à compra ou ao contato de suporte.</span></div>
+      </div>
+    </section>
+
+    <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:#DDF4FA;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0E7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>
+          <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700">Follow-ups</h2>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" style="height:44px;padding:0 18px;border:1.5px solid #9097AE;border-radius:12px;background:#FFFFFF;color:#070B1E;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Editar</button>
+          <sc-if value="{{a2off}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{tog2}}" aria-pressed="false" style="height:44px;padding:0 20px;border:0;border-radius:12px;background:#0E7490;color:#FFFFFF;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Aprovar</button></sc-if>
+          <sc-if value="{{a2on}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{tog2}}" aria-pressed="true" style="height:44px;padding:0 20px;border:0;border-radius:12px;background:#0B7A53;color:#FFFFFF;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Aprovado</button></sc-if>
+        </div>
+      </div>
+      <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px">
+        <li style="display:flex;gap:16px;align-items:flex-start;background:#F5F6FA;border-radius:14px;padding:16px"><span style="flex:0 0 140px;font-size:13px;font-weight:700;color:#0E7490">Follow-up 1 · após 1 hora</span><span style="font-size:15px;line-height:1.55">Oi, {nome}! Ficou alguma dúvida sobre {produto}? Posso te ajudar.</span></li>
+        <li style="display:flex;gap:16px;align-items:flex-start;background:#F5F6FA;border-radius:14px;padding:16px"><span style="flex:0 0 140px;font-size:13px;font-weight:700;color:#0E7490">Follow-up 2 · após 1 dia</span><span style="font-size:15px;line-height:1.55">{nome}, passando para lembrar do {produto}. Quer que eu envie mais detalhes?</span></li>
+        <li style="display:flex;gap:16px;align-items:flex-start;background:#F5F6FA;border-radius:14px;padding:16px"><span style="flex:0 0 140px;font-size:13px;font-weight:700;color:#0E7490">Follow-up 3 · após 3 dias</span><span style="font-size:15px;line-height:1.55">Oi, {nome}! Ainda faz sentido para você? Se preferir, posso passar para {contato de suporte}.</span></li>
+      </ol>
+    </section>
+
+    <sc-if value="{{adjust}}" hint-placeholder-val="{{false}}">
+      <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:12px">
+        <label for="ajuste" style="font-size:16px;font-weight:700">O que você quer ajustar?</label>
+        <textarea id="ajuste" rows="3" placeholder="Ex.: deixar o tom mais direto, ou mudar a ordem das perguntas." style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #9097AE;border-radius:12px;font-size:16px;font-family:inherit;line-height:1.5;color:#070B1E;background:#FFFFFF;resize:vertical"></textarea>
+        <div><button type="button" style="height:48px;padding:0 24px;border:0;border-radius:12px;background:#070B1E;color:#FFFFFF;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer">Enviar pedido à IA</button></div>
+      </section>
+    </sc-if>
+
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;background:#070B1E;border-radius:20px;padding:20px 24px;color:#FFFFFF">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span style="font-size:16px;font-weight:700" aria-live="polite">{{count}} de 3 partes aprovadas</span>
+        <span style="font-size:13px;color:#B9BCCB">Você pode aprovar tudo de uma vez.</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        <button type="button" onClick="{{toggleAdjust}}" style="height:52px;padding:0 24px;border:1.5px solid #8F93A8;border-radius:12px;background:transparent;color:#FFFFFF;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer">Pedir ajustes</button>
+        <a href="Plano.dc.html" style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 28px;border-radius:12px;background:#FFFFFF;color:#070B1E;font-size:16px;font-weight:700;text-decoration:none">Aprovar tudo e continuar</a>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1700}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { a0: false, a1: false, a2: false, adjust: false };
+  }
+  renderVals() {
+    const labels = ['Acesso', 'Empresa', 'Marketing Academy', 'IA RAG', 'Plano', 'Campanha'];
+    const cur = 4;
+    const st = this.state;
+    return {
+      steps: labels.map((label, i) => ({
+        n: i + 1, label,
+        isDone: i + 1 < cur, isCurrent: i + 1 === cur, isTodo: i + 1 > cur,
+        notLast: i < labels.length - 1
+      })),
+      a0on: st.a0, a0off: !st.a0,
+      a1on: st.a1, a1off: !st.a1,
+      a2on: st.a2, a2off: !st.a2,
+      count: (st.a0 ? 1 : 0) + (st.a1 ? 1 : 0) + (st.a2 ? 1 : 0),
+      adjust: st.adjust,
+      tog0: () => this.setState({ a0: !this.state.a0 }),
+      tog1: () => this.setState({ a1: !this.state.a1 }),
+      tog2: () => this.setState({ a2: !this.state.a2 }),
+      toggleAdjust: () => this.setState({ adjust: !this.state.adjust })
+    };
+  }
+}
+</script>
+</body>
+</html>

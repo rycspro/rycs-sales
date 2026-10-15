@@ -1,0 +1,35 @@
+/* Identidade visual RYCS para o onboarding.
+   Se o projeto já tiver design system, mapeie estes tokens para os existentes. */
+:root {
+  /* Cores */
+  --rycs-navy: #070B1E;
+  --rycs-navy-2: #14234A;
+  --rycs-cyan: #22D3EE;          /* só em fundos escuros */
+  --rycs-cyan-soft: #67E8F9;     /* detalhes em fundos escuros */
+  --rycs-accent: #0E7490;        /* botões, links, etapa atual (texto branco por cima) */
+  --rycs-accent-tint: #DDF4FA;
+  --rycs-accent-tint-2: #ECFAFD;
+  --rycs-bg: #F5F6FA;
+  --rycs-surface: #FFFFFF;
+  --rycs-line: #E3E5EE;
+  --rycs-step-line: #D5D8E3;
+  --rycs-field-border: #9097AE;
+  --rycs-text: #070B1E;
+  --rycs-text-muted: #5B6075;
+  --rycs-text-on-dark: #B9BCCB;
+  --rycs-success: #0F9D6B;       /* ícones */
+  --rycs-success-text: #0B7A53;  /* textos */
+  --rycs-success-bg: #E3F6EE;
+
+  /* Tipografia */
+  --rycs-font-display: 'Bricolage Grotesque', sans-serif;  /* títulos, pesos 600 a 800 */
+  --rycs-font-body: 'Plus Jakarta Sans', sans-serif;       /* corpo, pesos 400 a 700 */
+
+  /* Formas e tamanhos */
+  --rycs-radius-card: 20px;
+  --rycs-radius-control: 12px;
+  --rycs-field-height: 48px;
+  --rycs-button-height: 52px;
+  --rycs-touch-min: 44px;
+  --rycs-content-max: 1200px;
+}

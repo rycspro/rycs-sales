@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Etapa 2 · Perfil da empresa</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7490}
+</style>
+</helmet>
+<div style="width:100%;min-height:1700px;background:#F5F6FA;font-family:'Plus Jakarta Sans',sans-serif;color:#070B1E;display:flex;flex-direction:column">
+  <header style="background:#FFFFFF;border-bottom:1px solid #E3E5EE">
+    <div style="max-width:1200px;margin:0 auto;padding:20px 32px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#070B1E;color:#22D3EE;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">R</div>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">RYCS</span>
+      </div>
+      <nav aria-label="Etapas do cadastro" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:8px">
+            <sc-if value="{{s.isDone}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:#0F9D6B;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                <span style="font-size:13px;font-weight:600;color:#5B6075">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isCurrent}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;background:#0E7490;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">{{s.n}}</div>
+                <span style="font-size:13px;font-weight:700;color:#070B1E">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isTodo}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;border:1.5px solid #9097AE;color:#5B6075;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;box-sizing:border-box">{{s.n}}</div>
+                <span style="font-size:13px;font-weight:600;color:#5B6075">{{s.label}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.notLast}}" hint-placeholder-val="{{true}}">
+              <div style="width:20px;height:2px;background:#D5D8E3"></div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </nav>
+    </div>
+  </header>
+
+  <main style="flex:1;width:100%;max-width:1200px;margin:0 auto;padding:48px 32px 72px;display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start;box-sizing:border-box">
+    <div style="flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:13px;font-weight:700;color:#0E7490;letter-spacing:0.08em;text-transform:uppercase">Passo 2 de 6</span>
+        <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:40px;line-height:1.08;letter-spacing:-0.02em">Conte quem é a sua empresa</h1>
+        <p style="margin:0;font-size:16px;line-height:1.55;color:#5B6075;max-width:620px">A IA usa estas respostas para falar como a sua marca. Pode escrever do seu jeito, sem se preocupar com formato.</p>
+      </div>
+
+      <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+        <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700">Identidade</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+          <div style="flex:0 0 160px;display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:14px;font-weight:600">Logo</span>
+            <button type="button" aria-label="Enviar logo da empresa" style="width:160px;height:160px;border:2px dashed #9097AE;border-radius:16px;background:#F5F6FA;color:#5B6075;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+              Enviar logo
+            </button>
+            <span style="font-size:12px;color:#5B6075">PNG ou SVG, fundo transparente.</span>
+          </div>
+          <div style="flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:8px">
+            <label for="nome" style="font-size:14px;font-weight:600">Nome da empresa</label>
+            <input id="nome" type="text" placeholder="Como seus clientes conhecem a empresa" style="width:100%;height:48px;box-sizing:border-box;padding:0 14px;border:1.5px solid #9097AE;border-radius:12px;font-size:16px;font-family:inherit;color:#070B1E;background:#FFFFFF">
+          </div>
+        </div>
+      </section>
+
+      <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+        <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700">O que você vende</h2>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label for="produto" style="font-size:14px;font-weight:600">Produto e serviço</label>
+          <textarea id="produto" rows="4" placeholder="Descreva o que a empresa oferece e como funciona." style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #9097AE;border-radius:12px;font-size:16px;font-family:inherit;line-height:1.5;color:#070B1E;background:#FFFFFF;resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;max-width:280px">
+          <label for="ticket" style="font-size:14px;font-weight:600">Ticket do produto</label>
+          <div style="display:flex;align-items:center;height:48px;border:1.5px solid #9097AE;border-radius:12px;background:#FFFFFF;box-sizing:border-box;padding:0 14px;gap:8px">
+            <span style="font-size:16px;font-weight:600;color:#5B6075">R$</span>
+            <input id="ticket" type="text" inputmode="decimal" placeholder="0,00" style="flex:1;min-width:0;height:44px;border:0;outline-offset:4px;font-size:16px;font-family:inherit;color:#070B1E;background:transparent">
+          </div>
+          <span style="font-size:12px;color:#5B6075">Valor médio de uma venda.</span>
+        </div>
+      </section>
+
+      <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+        <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700">Mercado e posicionamento</h2>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label for="nicho" style="font-size:14px;font-weight:600">Detalhes do nicho</label>
+          <textarea id="nicho" rows="3" placeholder="Em que mercado você atua e o que o torna específico?" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #9097AE;border-radius:12px;font-size:16px;font-family:inherit;line-height:1.5;color:#070B1E;background:#FFFFFF;resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label for="dif" style="font-size:14px;font-weight:600">Diferencial</label>
+          <textarea id="dif" rows="3" placeholder="Por que o cliente escolhe você e não o concorrente?" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #9097AE;border-radius:12px;font-size:16px;font-family:inherit;line-height:1.5;color:#070B1E;background:#FFFFFF;resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label for="publico" style="font-size:14px;font-weight:600">Público</label>
+          <textarea id="publico" rows="3" placeholder="Quem compra: perfil, dores e o que esperam." style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #9097AE;border-radius:12px;font-size:16px;font-family:inherit;line-height:1.5;color:#070B1E;background:#FFFFFF;resize:vertical"></textarea>
+        </div>
+      </section>
+
+      <section style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+        <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700">Marca</h2>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label for="regras" style="font-size:14px;font-weight:600">Regras da marca</label>
+          <textarea id="regras" rows="4" placeholder="Tom de voz, palavras que sempre usa, o que nunca deve ser dito." style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #9097AE;border-radius:12px;font-size:16px;font-family:inherit;line-height:1.5;color:#070B1E;background:#FFFFFF;resize:vertical"></textarea>
+        </div>
+        <fieldset style="margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:4px">
+          <legend style="padding:0;margin-bottom:8px;font-size:14px;font-weight:600">Permissões da marca: o que a IA pode fazer sozinha</legend>
+          <label style="display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px"><input type="checkbox" style="width:20px;height:20px;accent-color:#0E7490;margin:0">Informar preços ao cliente</label>
+          <label style="display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px"><input type="checkbox" style="width:20px;height:20px;accent-color:#0E7490;margin:0">Oferecer descontos e condições especiais</label>
+          <label style="display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px"><input type="checkbox" style="width:20px;height:20px;accent-color:#0E7490;margin:0">Combinar prazos de entrega ou atendimento</label>
+          <label style="display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px"><input type="checkbox" style="width:20px;height:20px;accent-color:#0E7490;margin:0">Usar emojis nas mensagens</label>
+        </fieldset>
+      </section>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px">
+        <a href="Main.dc.html" style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;border:1.5px solid #9097AE;border-radius:12px;background:#FFFFFF;color:#070B1E;font-size:15px;font-weight:700;text-decoration:none">Voltar</a>
+        <a href="Academy.dc.html" style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 32px;border-radius:12px;background:#0E7490;color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none">Salvar e continuar</a>
+      </div>
+    </div>
+
+    <aside style="flex:1 1 280px;max-width:340px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <div style="background:#070B1E;color:#FFFFFF;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <span style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#67E8F9">Por que perguntamos</span>
+        <p style="margin:0;font-size:15px;line-height:1.55;color:#E3E5EE">Quanto mais claro o perfil, mais fiel é o script que a IA cria na etapa 4. Você poderá revisar tudo antes de aprovar.</p>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E3E5EE;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <span style="font-size:14px;font-weight:700">Nesta etapa</span>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px;color:#5B6075">
+          <li>Logo e nome</li>
+          <li>Produto, serviço e ticket</li>
+          <li>Nicho, diferencial e público</li>
+          <li>Regras e permissões da marca</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const labels = ['Acesso', 'Empresa', 'Marketing Academy', 'IA RAG', 'Plano', 'Campanha'];
+    const cur = 2;
+    return {
+      steps: labels.map((label, i) => ({
+        n: i + 1, label,
+        isDone: i + 1 < cur, isCurrent: i + 1 === cur, isTodo: i + 1 > cur,
+        notLast: i < labels.length - 1
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

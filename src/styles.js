@@ -24,7 +24,7 @@ body{-webkit-text-size-adjust:100%}
   --brand:#2563EB; --brand-600:#1D4ED8; --brand-50:#E8F0FE; --brand-100:#D3E1FD;
   --brand-200:#BFDBFE;
   --orange:#EA580C; --orange-600:#C2410C; --orange-50:#FFF7ED; --orange-100:#FFEDD5;
-  --green:#16A34A; --green-50:#F0FDF4; --green-100:#DCFCE7;
+  --green:#16A34A; --green-50:#F0FDF4; --green-100:#DCFCE7; --green-700:#15803D;
   --navy:#0F1A31; --navy-600:#0A1120;
   --amber:#B45309; --amber-50:#FFFBEB; --amber-100:#FEF3C7;
   --red:#B42318; --red-50:#FEF2F1; --red-100:#FBDDDA;
@@ -350,5 +350,70 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
   .vx-btn{font-size:13px;padding:9px 14px}
 }
 
-`;
 
+/* ── Onboarding da empresa (docs/onboarding/SPEC.md) ─────────────────────
+   Usa os tokens da plataforma. Campos de 48px, botões de 52px e alvos de
+   toque de 44px, como pede a especificação. */
+.vx-onb{min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+.vx-onb-topo{background:var(--bg);border-bottom:1px solid var(--border)}
+.vx-onb-topo-inner{max-width:1200px;margin:0 auto;padding:6px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
+.vx-onb-passos{display:flex;align-items:center;gap:6px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+.vx-onb-passos li{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.vx-onb-passos li+li::before{content:"";width:18px;height:1px;background:var(--border-strong);margin-right:2px}
+.vx-onb-passo-n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;border:1.5px solid var(--border-strong);background:var(--surface);color:var(--muted);flex:none}
+.vx-onb-passos li[data-estado="concluida"]{color:var(--green-700)}
+.vx-onb-passos li[data-estado="concluida"] .vx-onb-passo-n{background:var(--green);border-color:var(--green);color:#fff}
+.vx-onb-passos li[data-estado="atual"]{color:var(--ink)}
+.vx-onb-passos li[data-estado="atual"] .vx-onb-passo-n{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:var(--ring)}
+.vx-onb-passos button{appearance:none;background:none;border:0;padding:0;font:inherit;color:inherit;display:flex;align-items:center;gap:7px;cursor:pointer;min-height:44px}
+.vx-onb-passos button:focus-visible{outline:none;box-shadow:var(--ring);border-radius:8px}
+.vx-onb-corpo{width:100%;max-width:1200px;margin:0 auto;padding:36px 20px 56px;flex:1}
+.vx-onb-duas{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:48px;align-items:start}
+.vx-onb-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--brand)}
+.vx-onb-hero h1{font-size:34px;line-height:1.15;margin:10px 0 14px}
+.vx-onb-hero>p{font-size:16px;line-height:1.6;color:var(--muted);margin:0;max-width:480px}
+.vx-onb-proximos{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:10px}
+.vx-onb-proximos li{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--ink-2)}
+.vx-onb-proximos li span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--brand-50);color:var(--brand);font-size:12.5px;font-weight:700;flex:none}
+.vx-onb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:28px}
+.vx-onb-card-titulo{font-size:22px;margin:0 0 6px}
+.vx-onb-card-apoio{font-size:14px;line-height:1.6;margin:0 0 20px}
+.vx-onb-campo{margin-bottom:16px}
+.vx-onb .vx-input,.vx-onb-campo .vx-input,.vx-senha .vx-input{min-height:48px}
+.vx-onb-btn{min-height:48px;margin-top:10px}
+.vx-btn-primary.vx-onb-btn{min-height:52px;font-size:15px}
+.vx-onb-dica{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.vx-onb-erro{font-size:13px;color:var(--red);background:var(--red-50);border:1px solid var(--red-100);border-radius:var(--radius-sm);padding:9px 12px;margin:4px 0 8px;line-height:1.5}
+.vx-onb-campo .vx-onb-erro{background:none;border:0;padding:0;margin:6px 0 0}
+.vx-onb-ok{font-size:13px;color:var(--green-700);background:var(--green-50);border:1px solid var(--green-100);border-radius:var(--radius-sm);padding:9px 12px;margin:4px 0 8px}
+.vx-onb-aviso{font-size:13px;color:var(--ink-2);background:var(--brand-50);border:1px solid var(--brand-100);border-radius:var(--radius-sm);padding:10px 12px;margin:0 0 16px;line-height:1.5}
+.vx-input[aria-invalid="true"]{border-color:var(--red)}
+.vx-onb-termos{font-size:12.5px;color:var(--muted);text-align:center;margin:14px 0 0;line-height:1.5}
+.vx-onb-link{appearance:none;background:none;border:0;padding:0;font:inherit;color:var(--brand-600);text-decoration:underline;cursor:pointer}
+.vx-onb-link:focus-visible{outline:none;box-shadow:var(--ring);border-radius:4px}
+.vx-onb-icone{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--brand-50);color:var(--brand);margin-bottom:14px}
+.vx-onb-acoes{display:flex;gap:10px;justify-content:space-between;margin-top:22px;flex-wrap:wrap}
+.vx-onb-acoes .vx-btn{min-height:48px;min-width:140px}
+.vx-onb-acoes .vx-btn-primary{min-height:52px}
+.vx-onb-estado{padding:40px 20px;text-align:center;color:var(--muted)}
+.vx-senha{position:relative}
+.vx-senha .vx-input{padding-right:52px}
+.vx-senha-olho{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:44px;height:44px;display:grid;place-items:center;background:none;border:0;border-radius:var(--radius-sm);color:var(--muted);cursor:pointer}
+.vx-senha-olho:hover{color:var(--ink)}
+.vx-senha-olho:focus-visible{outline:none;box-shadow:var(--ring)}
+@media(max-width:900px){
+  .vx-onb-duas{grid-template-columns:1fr;gap:26px}
+  .vx-onb-hero h1{font-size:27px}
+  .vx-onb-proximos{display:none}
+}
+@media(max-width:640px){
+  .vx-onb-topo-inner{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px;padding:4px 16px 8px}
+  .vx-onb-topo-inner>nav{grid-column:1/-1;order:3}
+  .vx-onb-corpo{padding:22px 16px 40px}
+  .vx-onb-card{padding:20px}
+  .vx-onb-passos li[data-estado="pendente"] .vx-onb-passo-txt,.vx-onb-passos li[data-estado="concluida"] .vx-onb-passo-txt{display:none}
+  .vx-onb-passos li+li::before{width:8px}
+}
+@media (prefers-reduced-motion:reduce){.vx-onb *{transition:none!important;animation:none!important}}
+
+`;

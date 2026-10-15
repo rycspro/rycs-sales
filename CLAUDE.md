@@ -260,3 +260,16 @@ Ao finalizar uma tarefa, responda de forma curta com:
 - se commit/push foram feitos;
 - se o deploy foi disparado;
 - qualquer problema real que ainda precise de decisão humana.
+
+## Onboarding da empresa (RYCS)
+
+- A especificação do fluxo de cadastro da empresa está em `docs/onboarding/SPEC.md`, e as decisões que valem sobre ela estão em `docs/onboarding/DECISOES.md`. Leia as duas antes de mexer em qualquer tela ou rota do onboarding.
+- Identidade visual: o design system atual (`src/styles.js`). Use as variáveis de lá, nunca valores de cor soltos. Os tokens de `docs/onboarding/design/` não são usados.
+- Telas de referência em `docs/onboarding/design/reference/` servem só de referência: recrie no framework do projeto.
+- Interface sempre em português do Brasil.
+- O progresso do onboarding é salvo no servidor e pode ser retomado. Não permitir pular etapas pela URL.
+- Cartão de crédito: sempre tokenizado no gateway. Nunca guardar número de cartão ou CVV.
+- Nada gerado pela IA (script, funil, follow-ups) fica ativo antes da aprovação do dono da empresa.
+- Planos, preços e recursos vêm de `shared/planos.js`. Nunca fixar valores no código.
+- Acessibilidade: todo campo com `label`, foco visível, alvos de toque de 44px ou mais, contraste mínimo de 4.5:1.
+- Cada passo do onboarding segue o deploy automático normal ao terminar.

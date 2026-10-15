@@ -6,6 +6,8 @@ import db, { uid, agora } from "../db.js";
 import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
+import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset } from "../../shared/onboarding.js";
+import { criarOnboarding, hashToken } from "../services/onboarding.js";
 
 const router = Router();
 const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -79,18 +81,35 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao } = req.body;
+  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
-  if (senha.length < 6) return res.status(400).json({ error: "Senha deve ter pelo menos 6 caracteres" });
+  if (role === "empresa") {
+    const erroSenha = validarSenhaEmpresa(senha);
+    if (erroSenha) return res.status(400).json({ error: erroSenha, campo: "senha" });
+  } else if (senha.length < 6) return res.status(400).json({ error: "Senha deve ter pelo menos 6 caracteres" });
   if (!aceitouTermos) return res.status(400).json({ error: "Você deve aceitar os termos de uso" });
 
   const emailNorm = email.toLowerCase().trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm))
-    return res.status(400).json({ error: "E-mail inválido" });
+    return res.status(400).json({ error: "E-mail inválido", campo: "email" });
+
+  // Empresa: WhatsApp é obrigatório desde o acesso (etapa 1 do onboarding).
+  const whatsEmpresa = role === "empresa" ? normalizarWhatsapp(whats) : null;
+  if (role === "empresa" && !whatsEmpresa)
+    return res.status(400).json({ error: "Informe um WhatsApp válido, com DDD.", campo: "whatsapp" });
+
+  // Convite de onboarding: preso ao e-mail para o qual foi gerado.
+  const conviteRow = role === "empresa" && convite
+    ? db.prepare("SELECT * FROM onboarding_convites WHERE tokenHash = ?").get(hashToken(convite))
+    : null;
+  if (role === "empresa" && convite) {
+    const estado = conviteServeParaEmail(conviteRow, emailNorm);
+    if (!estado.ok) return res.status(409).json({ error: MOTIVOS_CONVITE_ONBOARDING[estado.motivo], motivo: estado.motivo });
+  }
 
   const exists = db.prepare("SELECT id FROM users WHERE email = ?").get(emailNorm);
-  if (exists) return res.status(409).json({ error: "E-mail já cadastrado" });
+  if (exists) return res.status(409).json({ error: "E-mail já cadastrado", campo: "email" });
 
   const hash = bcrypt.hashSync(senha, 10);
   const userId = uid();
@@ -103,17 +122,37 @@ router.post("/auth/register", async (req, res) => {
       INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
       VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?)
     `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", agora());
+    db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+      userId, emailNorm, hash, role, entityId, 1, agora()
+    );
   } else if (role === "empresa") {
     entityId = uid();
-    db.prepare(`
-      INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor, totalAportado, criadoEm, comissoes, curso, aportes)
-      VALUES (?, ?, ?, ?, ?, 'saldo', 0, 0, 10, '#2563EB', 0, ?, '{}', '[]', '[]')
-    `).run(entityId, nomeClean, produto || "", ticket || "", icp || "", agora());
+    let conviteOk = true;
+    // Empresa, usuário, onboarding e consumo do convite na mesma transação:
+    // dois cadastros simultâneos com o mesmo link, só um passa.
+    db.transaction(() => {
+      if (conviteRow) {
+        const marca = db.prepare("UPDATE onboarding_convites SET usadoEm = ?, usadoPor = ? WHERE id = ? AND usadoEm IS NULL AND revogadoEm IS NULL")
+          .run(agora(), entityId, conviteRow.id);
+        if (!marca.changes) { conviteOk = false; return; }
+      }
+      db.prepare(`
+        INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor, totalAportado, criadoEm, comissoes, curso, aportes, whatsapp)
+        VALUES (?, ?, ?, ?, ?, 'saldo', 0, 0, 10, '#2563EB', 0, ?, '{}', '[]', '[]', ?)
+      `).run(entityId, nomeClean, produto || "", ticket || "", icp || "", agora(), whatsEmpresa);
+      db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+        userId, emailNorm, hash, role, entityId, 1, agora()
+      );
+      criarOnboarding({
+        companyId: entityId,
+        origem: conviteRow ? "convite" : "site",
+        conviteId: conviteRow?.id || null,
+        trialDias: conviteRow?.trialDias || 0,
+        acessoConcluido: true,
+      });
+    })();
+    if (!conviteOk) return res.status(409).json({ error: MOTIVOS_CONVITE_ONBOARDING.usado, motivo: "usado" });
   }
-
-  db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
-    userId, emailNorm, hash, role, entityId, 1, agora()
-  );
 
   await emailBoasVindas(nomeClean, emailNorm, role);
   // Vínculo de indicação: nada é creditado agora, só registrado.
@@ -128,13 +167,20 @@ router.post("/auth/forgot-password", (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "E-mail é obrigatório" });
 
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email.toLowerCase().trim());
-  if (!user) return res.json({ ok: true, message: "Se o e-mail existir, enviaremos um link." });
+  // A resposta é a mesma em todos os casos: dizer que o e-mail não existe, ou
+  // que o reenvio foi barrado, entregaria quem tem conta na RYCS.
+  const resposta = { ok: true, message: "Se o e-mail existir, enviaremos um link." };
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(String(email).toLowerCase().trim());
+  if (!user) return res.json(resposta);
+  if (!podeReenviarReset(user.resetEnviadoEm)) return res.json(resposta);
 
   const resetToken = randomBytes(32).toString("hex");
   const resetExpira = agora() + 3600000; // 1 hour
 
-  db.prepare("UPDATE users SET resetToken = ?, resetExpira = ? WHERE id = ?").run(resetToken, resetExpira, user.id);
+  // O banco guarda o hash: link de redefinição é credencial. Um novo envio
+  // substitui o anterior, que deixa de valer.
+  db.prepare("UPDATE users SET resetToken = ?, resetExpira = ?, resetEnviadoEm = ? WHERE id = ?")
+    .run(hashToken(resetToken), resetExpira, agora(), user.id);
 
   const nome = user.role === "vendedor"
     ? db.prepare("SELECT nome FROM sellers WHERE id = ?").get(user.entityId)?.nome
@@ -144,18 +190,22 @@ router.post("/auth/forgot-password", (req, res) => {
 
   emailResetSenha(nome || "Usuário", user.email, resetToken, FRONTEND);
 
-  res.json({ ok: true, message: "Se o e-mail existir, enviaremos um link." });
+  res.json(resposta);
 });
 
 router.post("/auth/reset-password", (req, res) => {
   const { token, senha } = req.body;
   if (!token || !senha) return res.status(400).json({ error: "Token e senha são obrigatórios" });
-  if (senha.length < 6) return res.status(400).json({ error: "Senha deve ter pelo menos 6 caracteres" });
-
-  const user = db.prepare("SELECT * FROM users WHERE resetToken = ?").get(token);
+  // Só o hash é comparado. Aceitar também o valor cru deixaria o próprio hash
+  // do banco funcionar como link.
+  const user = db.prepare("SELECT * FROM users WHERE resetToken = ?").get(hashToken(token));
   if (!user || !user.resetExpira || user.resetExpira < agora()) {
     return res.status(400).json({ error: "Link expirado ou inválido. Solicite novamente." });
   }
+  if (user.role === "empresa") {
+    const erroSenha = validarSenhaEmpresa(senha);
+    if (erroSenha) return res.status(400).json({ error: erroSenha });
+  } else if (senha.length < 6) return res.status(400).json({ error: "Senha deve ter pelo menos 6 caracteres" });
 
   const hash = bcrypt.hashSync(senha, 10);
   db.prepare("UPDATE users SET senha = ?, resetToken = NULL, resetExpira = NULL WHERE id = ?").run(hash, user.id);
