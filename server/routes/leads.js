@@ -140,7 +140,7 @@ router.patch("/leads/:id", (req, res) => {
     return res.status(403).json({ error: "Sem permissão" });
   if (!exigirOportunidadesLiberadas(req, res, lead.sellerId)) return;
 
-  const permitidos = ["nome", "empresa", "cargo", "telefone", "email", "valorEstimado", "proximaAcao", "proximaAcaoEm"];
+  const permitidos = ["nome", "empresa", "cargo", "telefone", "email", "valorEstimado", "proximaAcao", "proximaAcaoEm", "responsavelEtapaId"];
   const sets = [], vals = [];
   for (const [k, v] of Object.entries(req.body)) {
     if (permitidos.includes(k)) { sets.push(`${k} = ?`); vals.push(v); }
@@ -150,9 +150,28 @@ router.patch("/leads/:id", (req, res) => {
   // que permite auditar a execução depois.
   const novaEtapa = req.body.etapa;
   if (novaEtapa) {
-    if (!etapaValida(novaEtapa)) return res.status(400).json({ error: "Etapa inválida" });
+    // Etapas padrão ou etapa customizada da campanha
+    const etapaOk = etapaValida(novaEtapa) || (lead.campaignId && (() => {
+      const camp = db.prepare("SELECT etapasPipeline FROM campaigns WHERE id = ?").get(lead.campaignId);
+      if (!camp) return false;
+      try { const eps = JSON.parse(camp.etapasPipeline || "[]"); return eps.some((e) => e.id === novaEtapa || e.nome === novaEtapa); } catch { return false; }
+    })());
+    if (!etapaOk) return res.status(400).json({ error: "Etapa inválida" });
     if (novaEtapa === "perdido" && !String(req.body.motivoPerda || "").trim())
       return res.status(400).json({ error: `Informe o motivo da perda (${MOTIVOS_PERDA.slice(0, 3).join(", ")}…)` });
+    // Ao mover para "ganho": valor da venda obrigatório; calcular comissão
+    if (novaEtapa === "ganho" || novaEtapa === "fechado") {
+      const valorVenda = Number(req.body.valorVenda) || 0;
+      if (valorVenda <= 0) return res.status(400).json({ error: "Informe o valor da venda para registrar como Fechado/Ganho" });
+      sets.push("valorVenda = ?"); vals.push(valorVenda);
+      if (lead.campaignId) {
+        const camp = db.prepare("SELECT percentualComissao FROM campaigns WHERE id = ?").get(lead.campaignId);
+        if (camp && Number(camp.percentualComissao) > 0) {
+          const comissao = Math.round(valorVenda * Number(camp.percentualComissao) / 100 * 100) / 100;
+          sets.push("comissaoCalculada = ?"); vals.push(comissao);
+        }
+      }
+    }
     sets.push("etapa = ?"); vals.push(novaEtapa);
     if (req.body.motivoPerda) { sets.push("motivoPerda = ?"); vals.push(String(req.body.motivoPerda).slice(0, 120)); }
   }
@@ -233,6 +252,38 @@ router.get("/leads-resumo", (req, res) => {
   ).get(entityId, agoraTs - 86400000).n;
 
   res.json({ porEtapa, atrasados, interacoesUltimas24h: hoje, etapas: ETAPAS });
+});
+
+// Painel de comissionamento — visão da empresa
+router.get("/leads/comissoes", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresas" });
+
+  const companyId = role === "empresa" ? entityId : req.query.companyId;
+  if (!companyId) return res.status(400).json({ error: "companyId obrigatório para admin" });
+
+  const rows = db.prepare(`
+    SELECT l.id, l.nome, l.sellerId, l.campaignId, l.valorVenda, l.comissaoCalculada, l.etapa, l.atualizadoEm,
+           s.nome AS sellerNome, c.titulo AS campanhaTitulo, c.percentualComissao
+    FROM leads l
+    JOIN sellers s ON s.id = l.sellerId
+    LEFT JOIN campaigns c ON c.id = l.campaignId
+    WHERE l.companyId = ? AND l.etapa IN ('ganho', 'fechado') AND l.valorVenda > 0
+    ORDER BY l.atualizadoEm DESC
+  `).all(companyId);
+
+  // Agrupa por vendedor
+  const porVendedor = {};
+  for (const r of rows) {
+    if (!porVendedor[r.sellerId]) porVendedor[r.sellerId] = { sellerId: r.sellerId, nome: r.sellerNome, fechamentos: 0, totalVendas: 0, totalComissoes: 0, leads: [] };
+    const v = porVendedor[r.sellerId];
+    v.fechamentos++;
+    v.totalVendas += Number(r.valorVenda) || 0;
+    v.totalComissoes += Number(r.comissaoCalculada) || 0;
+    v.leads.push(r);
+  }
+
+  res.json({ vendedores: Object.values(porVendedor), total: rows.length });
 });
 
 export default router;

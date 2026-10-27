@@ -34,15 +34,15 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 // Ritmo da conversa. Calibrado para não atropelar ninguém: a pessoa termina
 // a frase, e o Jarvas só para de falar quando alguém realmente fala por cima.
-const PAUSA_FIM_FALA = 1800;       // silêncio que encerra a vez da pessoa
-const PAUSA_FIM_PARCIAL = 2600;    // idem, quando a última parte ainda não é final
-const PAUSA_EXTRA_INCOMPLETA = 1500; // frase parada em "e…", "para…": espera mais
-const PAUSA_RESPOSTA_COMPLETA = 700;  // "3", "sim", "Sorocaba": já dá para responder
-const PALAVRAS_PARA_INTERROMPER = 3; // pelo texto, quando o volume não deu para medir
-const FALA_SIMULTANEA_MS = 200;    // microfone acima do vazamento da voz dele por esse tempo = a pessoa falando
-const APRENDE_ECO_MS = 350;        // começo de cada fala do Jarvas: só aprende o vazamento
-const ECO_FALANDO = 0.3;           // enquanto o Jarvas fala, 30% das palavras dele já é eco
-const CARENCIA_POS_FALA = 1200;    // logo depois de o Jarvas falar, o que chega é quase sempre eco
+const PAUSA_FIM_FALA = 800;        // buffer fim: 800ms silêncio encerra a vez da pessoa
+const PAUSA_FIM_PARCIAL = 1400;    // idem, quando a última parte ainda não é final
+const PAUSA_EXTRA_INCOMPLETA = 900; // frase parada em "e…", "para…": espera mais
+const PAUSA_RESPOSTA_COMPLETA = 300;  // buffer início: 300ms após resposta curta
+const PALAVRAS_PARA_INTERROMPER = 2; // limiar reduzido para detectar voz mais rápido
+const FALA_SIMULTANEA_MS = 120;    // limiar reduzido: detecta fala simultânea mais cedo
+const APRENDE_ECO_MS = 250;        // aprende vazamento mais rápido
+const ECO_FALANDO = 0.25;          // 25% das palavras capturadas durante fala = eco
+const CARENCIA_POS_FALA = 800;     // janela carência pós-fala reduzida
 
 const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", pausado: "idle", montando: "thinking" };
 const STATUS = {
@@ -543,6 +543,27 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         <ThinkingOrb state={ESTADO_ORB[fase]} size={tamanho} nivel={nivel} decorativo />
       </button>
       <p className="cj-status" aria-hidden="true">{modoTexto && fase === "ouvindo" ? "Sua vez · escreva abaixo" : STATUS[fase]}</p>
+
+      {/* Indicador visual de microfone — aparece quando o Jarvas está ouvindo */}
+      {fase === "ouvindo" && !modoTexto && (
+        <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--brand)" }}>
+          <Mic size={12} />
+          <span style={{ fontVariantNumeric: "tabular-nums" }}>Microfone ativo · fale normalmente</span>
+          <span style={{ display: "inline-flex", gap: 2, alignItems: "flex-end", height: 14 }}>
+            {[0.4, 0.7, 1, 0.7, 0.4].map((h, i) => (
+              <span key={i} style={{
+                width: 3, borderRadius: 2, background: "var(--brand)", opacity: 0.7 + i * 0.06,
+                height: `${h * 14}px`, animation: `micBar${i % 3} 0.8s ease-in-out ${i * 0.1}s infinite alternate`
+              }} />
+            ))}
+          </span>
+          <style>{`
+            @keyframes micBar0{from{transform:scaleY(.4)}to{transform:scaleY(1)}}
+            @keyframes micBar1{from{transform:scaleY(.6)}to{transform:scaleY(1)}}
+            @keyframes micBar2{from{transform:scaleY(.5)}to{transform:scaleY(.9)}}
+          `}</style>
+        </div>
+      )}
 
       {legenda.palavras.length > 0 && (
         <p className="cj-legenda" aria-hidden="true">

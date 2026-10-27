@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
 import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw } from "lucide-react";
 import { api } from "../../lib/api.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
@@ -310,6 +311,19 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <label><div className="vx-label">Quantos profissionais</div>
                 <input className="vx-input vx-mono" type="number" min="1" value={campanha.vagas}
                   onChange={(e) => set("vagas", Number(e.target.value))} /></label>
+            </div>
+            <CidadeEstadoSelector estado={campanha.estado||""} cidade={campanha.cidade||""} onEstado={(v)=>set("estado",v)} onCidade={(v)=>set("cidade",v)} />
+            <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
+              <label><div className="vx-label">% de comissão por venda <span className="vx-mut" style={{fontSize:11}}>(opcional)</span></div>
+                <div style={{position:"relative"}}><input className="vx-input vx-mono" type="number" min="0" max="100" step="0.5" value={campanha.percentualComissao||0} onChange={(e)=>set("percentualComissao",Number(e.target.value))} /><span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",color:"var(--muted)",fontSize:13}}>%</span></div>
+              </label>
+              <label><div className="vx-label">Assistente Jarvas <span className="vx-mut" style={{fontSize:11}}>(opcional)</span></div>
+                <select className="vx-input" value={campanha.modoJarvas||""} onChange={(e)=>set("modoJarvas",e.target.value)}>
+                  <option value="">Comportamento atual</option>
+                  <option value="voz">Voz (mãos livres)</option>
+                  <option value="escrita">Somente escrita</option>
+                </select>
+              </label>
             </div>
           </div>
 

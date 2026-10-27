@@ -1377,6 +1377,45 @@ adicionarColuna("sellers", "disc", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "discRespostas", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "xpRespostas", "TEXT DEFAULT '{}'");
 
+// Features: pipeline, geolocalização, comissionamento, campos personalizados, Jarvas
+adicionarColuna("campaigns", "cidade", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "estado", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "estado", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "lat", "REAL");
+adicionarColuna("campaigns", "lng", "REAL");
+adicionarColuna("campaigns", "percentualComissao", "REAL DEFAULT 0");
+adicionarColuna("campaigns", "etapasPipeline", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "fluxoDirecionamento", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "modoJarvas", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "camposPersonalizados", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "modelosCampos", "TEXT DEFAULT '[]'");
+adicionarColuna("sellers", "cidadeBase", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "estadoBase", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "raioKm", "REAL DEFAULT 50");
+adicionarColuna("sellers", "latBase", "REAL");
+adicionarColuna("sellers", "lngBase", "REAL");
+adicionarColuna("leads", "valorVenda", "REAL DEFAULT 0");
+adicionarColuna("leads", "comissaoCalculada", "REAL DEFAULT 0");
+adicionarColuna("leads", "responsavelEtapaId", "TEXT DEFAULT ''");
+
+// Backfill: campanhas existentes sem pipeline recebem as etapas padrão
+(() => {
+  const PIPELINE_PADRAO = JSON.stringify([
+    { id: "novo",      nome: "Novo",      cor: "#8496B4" },
+    { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
+    { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
+    { id: "reuniao",   nome: "Reunião",   cor: "#9AA6FF" },
+    { id: "proposta",  nome: "Proposta",  cor: "#F0B45E" },
+    { id: "fechado",   nome: "Fechado",   cor: "#5FD3A0" },
+    { id: "perdido",   nome: "Perdido",   cor: "#FF8A7A" },
+  ]);
+  const sem = db.prepare("SELECT id FROM campaigns WHERE etapasPipeline IS NULL OR etapasPipeline = '[]' OR etapasPipeline = ''").all();
+  if (!sem.length) return;
+  const upd = db.prepare("UPDATE campaigns SET etapasPipeline = ? WHERE id = ?");
+  db.transaction(() => sem.forEach((r) => upd.run(PIPELINE_PADRAO, r.id)))();
+  console.log(`[migração] pipeline padrão adicionado a ${sem.length} campanha(s)`);
+})();
+
 // Migração: recalcular scoreTriagem dos profissionais que completaram o
 // onboarding DISC mas ficaram com score 0 ou null.
 (() => {

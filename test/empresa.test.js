@@ -19,12 +19,12 @@ test("saldo disponível desconta reservas", () => {
 });
 
 test("campanha pronta pode ser publicada", () => {
-  const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [{ titulo: "Produto" }] };
+  const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", cidade: "São Paulo", estado: "SP", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [{ titulo: "Produto" }], etapasPipeline: [{ id: "novo", nome: "Novo" }] };
   assert.deepEqual(campanhaPodeSerPublicada(campanha, empresaPronta), { ok: true, pendencias: [] });
 });
 
 test("qualquer tarefa remunerada atende o requisito de publicação", () => {
-  const campanha = { titulo: "Prospecção", objetivo: "Contato", publico: "B2B", regiao: "Brasil", funcao: "bdr", orcamento: 1000, tarefas: { ligacao: 5 }, treinamento: [{ titulo: "Produto" }] };
+  const campanha = { titulo: "Prospecção", objetivo: "Contato", publico: "B2B", regiao: "Brasil", cidade: "São Paulo", estado: "SP", funcao: "bdr", orcamento: 1000, tarefas: { ligacao: 5 }, treinamento: [{ titulo: "Produto" }], etapasPipeline: [{ id: "novo", nome: "Novo" }] };
   assert.equal(campanhaPodeSerPublicada(campanha, empresaPronta).ok, true);
 });
 
@@ -45,7 +45,7 @@ test("planos seguem preços e taxas aprovados no plano de produto", () => {
 });
 
 // Campanha completa: o que falta nos testes abaixo é sempre da empresa.
-const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [{ titulo: "Produto" }] };
+const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", cidade: "São Paulo", estado: "SP", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [{ titulo: "Produto" }], etapasPipeline: [{ id: "novo", nome: "Novo" }] };
 
 test("premium não vê plano nem caixa no checklist de publicação", () => {
   // O wizard mostrava "Plano ativo" em vermelho para empresa premium enquanto

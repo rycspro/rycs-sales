@@ -168,11 +168,22 @@ router.post("/campaigns", (req, res) => {
 
   const { titulo, descricao, produto, publico, vagas, comissoes, treinamento, requisitos, objetivo, regiao,
     funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, limitePorProfissional,
-    aceitaLeadProprio, exigeCertificacao, duracaoDias, visitasPorDia } = req.body;
+    aceitaLeadProprio, exigeCertificacao, duracaoDias, visitasPorDia, cidade, estado, percentualComissao, modoJarvas } = req.body;
   if (!titulo) return res.status(400).json({ error: "Título é obrigatório" });
 
   const companyId = role === "empresa" ? entityId : req.body.companyId;
   if (!companyId) return res.status(400).json({ error: "companyId é obrigatório" });
+
+  // Pipeline padrão para toda nova campanha
+  const PIPELINE_PADRAO = JSON.stringify([
+    { id: "novo",      nome: "Novo",      cor: "#8496B4" },
+    { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
+    { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
+    { id: "reuniao",   nome: "Reunião",   cor: "#9AA6FF" },
+    { id: "proposta",  nome: "Proposta",  cor: "#F0B45E" },
+    { id: "fechado",   nome: "Fechado",   cor: "#5FD3A0" },
+    { id: "perdido",   nome: "Perdido",   cor: "#FF8A7A" },
+  ]);
 
   const id = uid();
   const criadoEm = agora();
@@ -180,14 +191,15 @@ router.post("/campaigns", (req, res) => {
     db.prepare(`
       INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento,
         requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, duracaoDias,
-        limitePorProfissional, aceitaLeadProprio, exigeCertificacao, visitasPorDia, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        limitePorProfissional, aceitaLeadProprio, exigeCertificacao, visitasPorDia, cidade, estado, percentualComissao, modoJarvas, etapasPipeline, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, companyId, titulo, descricao || "", produto || "", publico || "",
       vagas || 0, JSON.stringify(comissoes || {}), JSON.stringify(treinamento || []),
       requisitos || "", objetivo || "", regiao || "", funcao || "", Number(orcamento) || 0,
       JSON.stringify(tarefas || {}), JSON.stringify(evidencias || {}), JSON.stringify(criteriosAprovacao || {}),
       Math.max(1, Number(prazoHoras) || 48), Math.max(1, Number(duracaoDias) || 30), Math.max(0, Number(limitePorProfissional) || 0),
-      aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, Math.max(0, Number(visitasPorDia) || 0), criadoEm);
+      aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, Math.max(0, Number(visitasPorDia) || 0),
+      cidade || "", estado || "", Number(percentualComissao) || 0, modoJarvas || "", PIPELINE_PADRAO, criadoEm);
     registrarEventoCampanha({ companyId, campaignId: id, tipo: "CAMPAIGN_CREATED", actorId: req.user.id, actorRole: role, source: "USER", criadoEm });
   })();
 
@@ -202,8 +214,10 @@ router.patch("/campaigns/:id", (req, res) => {
     return res.status(403).json({ error: "Sem permissão" });
 
   const allowed = ["titulo", "descricao", "produto", "publico", "vagas", "requisitos", "objetivo", "regiao", "funcao",
-    "orcamento", "prazoHoras", "duracaoDias", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao", "visitasPorDia"];
-  const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao"];
+    "orcamento", "prazoHoras", "duracaoDias", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao", "visitasPorDia",
+    "cidade", "estado", "lat", "lng", "percentualComissao", "modoJarvas"];
+  const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
+    "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(req.body)) {
@@ -354,6 +368,10 @@ function parseCampaign(row) {
     quiz: JSON.parse(row.quiz || "[]").map(({ correta, ...q }) => q),
     aceitaLeadProprio: !!row.aceitaLeadProprio,
     exigeCertificacao: !!row.exigeCertificacao,
+    etapasPipeline: JSON.parse(row.etapasPipeline || "[]"),
+    fluxoDirecionamento: JSON.parse(row.fluxoDirecionamento || "[]"),
+    camposPersonalizados: JSON.parse(row.camposPersonalizados || "{}"),
+    modelosCampos: JSON.parse(row.modelosCampos || "[]"),
   };
 }
 

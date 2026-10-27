@@ -8,11 +8,15 @@ import { api, apiDelete, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
+import PipelineKanban from "./PipelineKanban.jsx";
+import ComissoesPanel from "./ComissoesPanel.jsx";
+import CriadorCampos from "./CriadorCampos.jsx";
 
 const ABAS = [
   ["geral", "Visão Geral"], ["profissionais", "Profissionais"], ["tarefas", "Tarefas"],
-  ["leads", "Leads"], ["reunioes", "Reuniões"], ["performance", "Performance"],
-  ["financeiro", "Financeiro"], ["contatos", "Lista de Contatos"],
+  ["pipeline", "Pipeline"], ["leads", "Leads"], ["reunioes", "Reuniões"], ["performance", "Performance"],
+  ["financeiro", "Financeiro"], ["comissoes", "Comissões"], ["campos", "Campos"],
+  ["contatos", "Lista de Contatos"],
   ["verificacao", "Verificação"], ["configuracoes", "Configurações"],
 ];
 const PERIODOS = [["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"], ["personalizado", "Personalizado"]];
@@ -284,6 +288,30 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
       </div>}
     </section>}
     {dados && aba === "tarefas" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Tarefas da campanha</h2><p>Execuções mais recentes, com o status real de auditoria.</p>{tarefas.length === 0 ? <Empty texto="Nenhuma tarefa executada nesta campanha." /> : <div className="vx-compact-list">{tarefas.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
+    {aba === "pipeline" && <section className="vx-card vx-detail-section">
+      <PipelineKanban
+        campanha={campanha}
+        leads={leads}
+        sellers={profissionais}
+        aviso={(msg) => console.log(msg)}
+        onLeadsAtualizado={() => setRecarregar((n) => n + 1)}
+      />
+    </section>}
+    {dados && aba === "comissoes" && <ComissoesPanel emp={{ id: campanha.companyId }} />}
+    {aba === "campos" && <section className="vx-card vx-detail-section">
+      <h2 className="vx-disp">Campos personalizados por tarefa</h2>
+      <p className="vx-mut" style={{ fontSize: 13 }}>Configure os dados que o vendedor deve preencher ao concluir cada tipo de tarefa.</p>
+      <CriadorCampos
+        campos={campanha.camposPersonalizados?.geral || []}
+        modelos={campanha.modelosCampos || []}
+        onChange={async (campos) => { await apiPatch(`/campaigns/${campanha.id}`, { camposPersonalizados: { ...(campanha.camposPersonalizados||{}), geral: campos } }); }}
+        onSalvarModelo={async (modelo) => {
+          const modelos = [...(campanha.modelosCampos || []), modelo];
+          await apiPatch(`/campaigns/${campanha.id}`, { modelosCampos: modelos });
+        }}
+        tarefa="geral"
+      />
+    </section>}
     {dados && aba === "leads" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Leads da campanha</h2><p>Registros vinculados exclusivamente a esta operação.</p>{leads.length === 0 ? <Empty texto="Nenhum lead gerado nesta campanha." /> : <div className="vx-compact-list">{leads.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.nome}</b><span>{item.empresa || "Empresa não informada"}</span></div><span className="vx-chip">{item.etapa}</span></div>)}</div>}</section>}
     {dados && aba === "reunioes" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Reuniões</h2><p>Agendamentos e reuniões realizadas vinculados à campanha.</p>{reunioes.length === 0 ? <Empty texto="Nenhuma reunião registrada nesta campanha." /> : <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? "Reunião realizada" : "Reunião agendada"}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
     {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Resultados ao longo do tempo</h2><p>Compare investimento, tarefas, leads, reuniões e vendas em {dados.periodo.label.toLowerCase()}.</p><PerformanceChart serie={dados.serie} /></section>}

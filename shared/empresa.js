@@ -37,6 +37,14 @@ export const isPremium = (empresa = {}) => empresa.tipoEmpresa === "premium";
 // Requisito que não se aplica à empresa sai da lista em vez de aparecer
 // satisfeito: premium não precisa de plano nem de caixa, e mostrar esses itens
 // marcados em verde sugeriria que ela pagou algo.
+// Uma campanha tem pipeline se tiver ao menos as etapas padrão ou etapas customizadas definidas.
+function temPipeline(campanha = {}) {
+  const etapas = campanha.etapasPipeline;
+  if (!etapas) return false;
+  if (Array.isArray(etapas)) return etapas.length > 0;
+  try { const p = JSON.parse(etapas); return Array.isArray(p) && p.length > 0; } catch { return false; }
+}
+
 export function requisitosPublicacao(campanha = {}, empresa = {}) {
   const posPago = isPosPago(empresa);
   const premium = isPremium(empresa);
@@ -52,10 +60,13 @@ export function requisitosPublicacao(campanha = {}, empresa = {}) {
     ["Objetivo", "objetivo", !!String(campanha.objetivo || "").trim(), true],
     ["ICP", "ICP da campanha", !!String(campanha.publico || "").trim(), true],
     ["Região", "região", !!String(campanha.regiao || "").trim(), true],
+    ["Cidade", "cidade da campanha", !!String(campanha.cidade || "").trim(), true],
+    ["Estado", "estado da campanha", !!String(campanha.estado || "").trim(), true],
     ["Função", "função comercial", !!String(campanha.funcao || "").trim(), true],
     ["Orçamento", "orçamento", Number(campanha.orcamento || 0) > 0, precisaDeCaixa],
     ["Tarefa remunerada", "ao menos uma tarefa remunerada", Object.values(tarefas).some((valor) => Number(valor) > 0), true],
     ["Treinamento obrigatório", "treinamento", (campanha.treinamento || []).length > 0, true],
+    ["Pipeline configurado", "pipeline da campanha não configurado (etapas obrigatórias)", temPipeline(campanha), true],
     ["Saldo suficiente", "orçamento superior ao saldo disponível", Number(campanha.orcamento || 0) <= disponivel, precisaDeCaixa],
   ]
     .filter(([, , , aplica]) => aplica)
