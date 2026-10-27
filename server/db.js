@@ -14,6 +14,10 @@ console.log(`[db] ${DB_PATH}`);
 
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
+db.pragma("cache_size = -32000");
+db.pragma("temp_store = MEMORY");
+db.pragma("synchronous = NORMAL");
+db.pragma("busy_timeout = 5000");
 
 // Marcador persistente exclusivo do banco Beta. Ele não contém dados de
 // negócio e permite que operações de teste confirmem o alvo antes de agir.
@@ -1405,6 +1409,20 @@ adicionarColuna("sellers", "xpRespostas", "TEXT DEFAULT '{}'");
   }
   if (n) console.log(`[migração] scoreTriagem recalculado para ${n} profissional(is)`);
 })();
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_messages_seller ON messages(sellerId, companyId);
+  CREATE INDEX IF NOT EXISTS idx_submissions_seller ON submissions(sellerId, criadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_submissions_company ON submissions(companyId, criadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_withdrawals_seller ON withdrawals(sellerId, criadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_leads_seller ON leads(sellerId, atualizadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_leads_company ON leads(companyId, atualizadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId, criadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_score_dimensions_seller ON score_dimensions(sellerId);
+  CREATE INDEX IF NOT EXISTS idx_applications_seller ON applications(sellerId);
+  CREATE INDEX IF NOT EXISTS idx_campaign_apps_seller ON campaign_applications(sellerId);
+  CREATE INDEX IF NOT EXISTS idx_course_certs_seller ON course_certificates(sellerId);
+`);
 
 export default db;
 export { uid, agora };

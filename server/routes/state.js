@@ -17,15 +17,10 @@ function parseSeller(row) {
   };
 }
 
-function parseCompany(row) {
-  // Dimensões do Company Score viajam junto da empresa: o profissional
-  // precisa dela na vitrine, antes de se candidatar.
-  const dims = {};
-  db.prepare("SELECT dimension, valor FROM company_score_dimensions WHERE companyId = ?").all(row.id)
-    .forEach((d) => { dims[d.dimension] = d.valor; });
+function parseCompany(row, preloadedDims) {
   return {
     ...row,
-    scoreDimensions: dims,
+    scoreDimensions: preloadedDims || {},
     destaque: !!row.destaque,
     comissoes: JSON.parse(row.comissoes || "{}"),
     curso: JSON.parse(row.curso || "[]"),
@@ -97,7 +92,14 @@ function buildSellersWithRelations(sellers) {
 
 export function getFullState() {
   const sellers = buildSellersWithRelations(db.prepare("SELECT * FROM sellers").all());
-  const companies = db.prepare("SELECT * FROM companies").all().map(parseCompany);
+
+  const allDims = db.prepare("SELECT companyId, dimension, valor FROM company_score_dimensions").all();
+  const dimsByCompany = {};
+  allDims.forEach((d) => {
+    if (!dimsByCompany[d.companyId]) dimsByCompany[d.companyId] = {};
+    dimsByCompany[d.companyId][d.dimension] = d.valor;
+  });
+  const companies = db.prepare("SELECT * FROM companies").all().map((row) => parseCompany(row, dimsByCompany[row.id]));
   const submissions = db.prepare("SELECT * FROM submissions ORDER BY criadoEm DESC").all().map(parseSub);
   const withdrawals = db.prepare("SELECT * FROM withdrawals ORDER BY criadoEm DESC").all();
   const messages = db.prepare("SELECT * FROM messages ORDER BY ts ASC").all();
@@ -136,19 +138,24 @@ function getFilteredState(user) {
       submissions: full.submissions.filter((s) => s.sellerId === meuId),
       withdrawals: full.withdrawals.filter((w) => w.sellerId === meuId),
       messages: full.messages.filter((m) => m.sellerId === meuId),
-      campaigns: oportunidadesLiberadas ? full.campaigns.filter((c) => c.status === "ativa").map((c) => {
-        const melhorTentativa = db.prepare(
-          "SELECT score, aprovado FROM campaign_quiz_attempts WHERE campaignId = ? AND sellerId = ? ORDER BY score DESC, criadoEm DESC LIMIT 1"
-        ).get(c.id, meuId);
-        return {
-          ...c,
-          candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
-          // Vendedor nunca recebe o gabarito embutido na campanha.
-          quiz: c.quiz.map(({ correta, ...q }) => q),
-          quizAprovado: melhorTentativa ? !!melhorTentativa.aprovado : false,
-          quizScore: melhorTentativa?.score ?? null,
-        };
-      }) : [],
+      campaigns: oportunidadesLiberadas ? (() => {
+        const ativas = full.campaigns.filter((c) => c.status === "ativa");
+        const tentativas = db.prepare(
+          "SELECT campaignId, MAX(score) as score, MAX(aprovado) as aprovado FROM campaign_quiz_attempts WHERE sellerId = ? GROUP BY campaignId"
+        ).all(meuId);
+        const quizByCamp = {};
+        tentativas.forEach((t) => { quizByCamp[t.campaignId] = t; });
+        return ativas.map((c) => {
+          const melhor = quizByCamp[c.id];
+          return {
+            ...c,
+            candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
+            quiz: c.quiz.map(({ correta, ...q }) => q),
+            quizAprovado: melhor ? !!melhor.aprovado : false,
+            quizScore: melhor?.score ?? null,
+          };
+        });
+      })() : [],
       leads: full.leads.filter((l) => l.sellerId === meuId),
     };
   }
