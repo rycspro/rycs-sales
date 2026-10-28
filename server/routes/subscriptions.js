@@ -34,9 +34,7 @@ router.post("/vouchers", (req, res) => {
   try{const id=uid();db.prepare(`INSERT INTO vouchers (id,codigo,tipo,valor,validadeEm,limiteTotal,limitePorEmpresa,planos,status,criadoEm) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(id,codigo,tipo,valor,req.body.validadeEm||null,Number(req.body.limiteTotal)||0,Number(req.body.limitePorEmpresa)||1,JSON.stringify(req.body.planos||[]),req.body.status||"ativo",agora());res.json({id,codigo});}catch{return res.status(409).json({error:"Código já existe"});}
 });
 
-// Trial não é uma oferta pública. A concessão de sete dias só existe na rota
-// administrativa abaixo; o checkout comum sempre começa com cobrança normal.
-const TRIAL_DIAS_PUBLICO = 0;
+const TRIAL_DIAS_PUBLICO = 5;
 
 // O estado de acesso da empresa. A tela pergunta aqui em vez de decidir
 // sozinha — duas decisões separadas produziriam o caso em que a tela libera e
