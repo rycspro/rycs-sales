@@ -50,7 +50,7 @@ export default function LoginPlataforma({ onEntrar }) {
             <Campo label="Senha">
               <div style={{ position: "relative" }}>
                 <input className="vx-input" type={verSenha ? "text" : "password"} value={senha}
-                  autoComplete="current-password" onChange={(e) => setSenha(e.target.value)}
+                  autoComplete="new-password" onChange={(e) => setSenha(e.target.value)}
                   required style={{ paddingRight: 38 }} />
                 <button type="button" onClick={() => setVerSenha(v => !v)} style={{
                   position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
