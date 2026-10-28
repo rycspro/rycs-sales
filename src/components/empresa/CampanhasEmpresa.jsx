@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CirclePause, ClipboardCheck, Plus, Rocket, Save, Wallet } from "lucide-react";
+import { CirclePause, ClipboardCheck, GitBranch, Plus, Rocket, Save, Wallet } from "lucide-react";
+import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
@@ -144,6 +145,28 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
     </div>
 
     <section className="vx-card" style={{ padding: 18, marginTop: 16 }}><div className="vx-row"><div><div className="vx-disp" style={{ fontSize: 17 }}>Treinamento específico</div><div className="vx-mut" style={{ fontSize: 12 }}>Ao menos um módulo é obrigatório para publicar.</div></div><button className="vx-btn vx-btn-sm" onClick={adicionarModulo}><Plus size={14} /> Módulo</button></div>{(campanha.treinamento || []).map((m, i) => <div key={m.id} className="vx-grid vx-g2" style={{ marginTop: 10 }}><input className="vx-input" placeholder="Título" value={m.titulo} onChange={(e) => set("treinamento", campanha.treinamento.map((x, n) => n === i ? { ...x, titulo: e.target.value } : x))} /><input className="vx-input" placeholder="Conteúdo ou URL" value={m.conteudo} onChange={(e) => set("treinamento", campanha.treinamento.map((x, n) => n === i ? { ...x, conteudo: e.target.value } : x))} /></div>)}</section>
+
+    <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
+      <div className="vx-row" style={{ marginBottom: 12 }}>
+        <div><div className="vx-disp" style={{ fontSize: 17 }}>Etapas do pipeline</div><div className="vx-mut" style={{ fontSize: 12 }}>Obrigatório para publicar. Configure as etapas do funil desta campanha.</div></div>
+        <GitBranch size={18} color="var(--brand)" />
+      </div>
+      <EditorEtapas
+        etapas={(campanha.etapasPipeline && campanha.etapasPipeline.length > 0) ? campanha.etapasPipeline : [
+          { id: "novo", nome: "Novo", cor: "#8496B4" },
+          { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
+          { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
+          { id: "reuniao", nome: "Reunião", cor: "#9AA6FF" },
+          { id: "proposta", nome: "Proposta", cor: "#F0B45E" },
+          { id: "fechado", nome: "Fechado", cor: "#5FD3A0" },
+          { id: "perdido", nome: "Perdido", cor: "#FF8A7A" },
+        ]}
+        onChange={(etapas) => {
+          set("etapasPipeline", etapas);
+        }}
+        onClose={null}
+      />
+    </section>
 
     {!!existente?.candidaturas?.length && <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
       <div className="vx-disp" style={{ fontSize: 17, marginBottom: 10 }}>Candidaturas</div>

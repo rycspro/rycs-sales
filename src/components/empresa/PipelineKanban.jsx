@@ -32,7 +32,7 @@ function nomeEtapa(etapaId, etapas) {
 }
 
 // --- Editor de etapas ---
-function EditorEtapas({ etapas, onChange, onClose }) {
+export function EditorEtapas({ etapas, onChange, onClose }) {
   const [lista, setLista] = useState(etapas.map((e) => ({ ...e })));
 
   const atualizar = (i, campo, valor) => setLista((prev) => prev.map((e, idx) => idx === i ? { ...e, [campo]: valor } : e));
@@ -43,7 +43,7 @@ function EditorEtapas({ etapas, onChange, onClose }) {
     <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
       <div className="vx-row" style={{ marginBottom: 12 }}>
         <div><b>Etapas do pipeline</b><div className="vx-mut" style={{ fontSize: 12 }}>Arraste para reordenar. "Fechado" e "Perdido" são especiais e não devem ser removidos.</div></div>
-        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose}>Fechar</button>
+        {onClose && <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose}>Fechar</button>}
       </div>
       {lista.map((e, i) => (
         <div key={e.id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>

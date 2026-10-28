@@ -191,6 +191,15 @@ export function montarCampanha(chave, empresa = {}) {
     treinamento: [],
     requisitos: "",
     objetivoChave: chave,
+    etapasPipeline: [
+      { id: "novo",      nome: "Novo",      cor: "#8496B4" },
+      { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
+      { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
+      { id: "reuniao",   nome: "Reunião",   cor: "#9AA6FF" },
+      { id: "proposta",  nome: "Proposta",  cor: "#F0B45E" },
+      { id: "fechado",   nome: "Fechado",   cor: "#5FD3A0" },
+      { id: "perdido",   nome: "Perdido",   cor: "#FF8A7A" },
+    ],
     // Fica registrado se os valores saíram do ticket ou vieram zerados, para a
     // tela poder dizer isso a quem publica em vez de deixar o zero sem
     // explicação.
