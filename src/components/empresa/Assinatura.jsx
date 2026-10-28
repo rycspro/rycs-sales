@@ -187,15 +187,27 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
         <ArrowLeft size={13} /> Trocar de plano
       </button>
 
+      {/* Banner de trial */}
+      {temTrial && (
+        <div style={{
+          background: "var(--success, #16a34a)", color: "#fff",
+          borderRadius: 10, padding: "12px 16px", marginBottom: 10,
+          display: "flex", alignItems: "center", gap: 10, fontSize: 14, fontWeight: 600,
+        }}>
+          <span style={{ fontSize: 20 }}>🎁</span>
+          <span>{trialDias} dias grátis · sem cobrança agora</span>
+        </div>
+      )}
+
       {/* O combinado, à vista, antes de qualquer campo */}
-      <div className="vx-card" style={{ padding: 18, borderColor: "var(--brand-100)", background: "var(--brand-50)" }}>
+      <div className="vx-card" style={{ padding: 18, borderColor: temTrial ? "var(--success, #16a34a)" : "var(--brand-100)", background: temTrial ? "#f0fdf4" : "var(--brand-50)" }}>
         <div className="vx-row"><b style={{ fontSize: 15 }}>Plano {detalhes.nome}</b>
           <b className="vx-mono" style={{ fontSize: 17, color: "var(--brand)" }}>{money(detalhes.preco)}/mês</b></div>
         <div style={{ marginTop: 10, fontSize: 13, color: "var(--text-2)", lineHeight: 1.7 }}>
           {temTrial ? (
             <>
-              Seu período gratuito termina em <b>{formatarData(cobrancaEm)}</b>.<br />
-              Após essa data, seu plano será cobrado automaticamente por <b>{money(detalhes.preco)}/mês</b>.
+              <b style={{ color: "var(--success, #16a34a)" }}>Cobrado hoje: R$ 0,00</b><br />
+              Primeira cobrança em <b>{formatarData(cobrancaEm)}</b> · {money(detalhes.preco)}/mês
             </>
           ) : (
             <>Primeira cobrança em <b>{formatarData(cobrancaEm)}</b>, e depois todo mês na mesma data.</>
