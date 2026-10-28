@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { Campo } from "./ui.jsx";
 import { api } from "../lib/api.js";
 
@@ -12,6 +12,8 @@ export default function LoginPlataforma({ onEntrar }) {
   const [chave, setChave] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [verSenha, setVerSenha] = useState(false);
+  const [verChave, setVerChave] = useState(false);
 
   const entrar = async (e) => {
     e.preventDefault();
@@ -46,12 +48,30 @@ export default function LoginPlataforma({ onEntrar }) {
                 onChange={(e) => setEmail(e.target.value)} required />
             </Campo>
             <Campo label="Senha">
-              <input className="vx-input" type="password" value={senha} autoComplete="current-password"
-                onChange={(e) => setSenha(e.target.value)} required />
+              <div style={{ position: "relative" }}>
+                <input className="vx-input" type={verSenha ? "text" : "password"} value={senha}
+                  autoComplete="current-password" onChange={(e) => setSenha(e.target.value)}
+                  required style={{ paddingRight: 38 }} />
+                <button type="button" onClick={() => setVerSenha(v => !v)} style={{
+                  position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                  background: "none", border: "none", cursor: "pointer", color: "var(--text-2)", padding: 2,
+                }}>
+                  {verSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </Campo>
             <Campo label="Chave de segurança">
-              <input className="vx-input vx-mono" type="password" value={chave} autoComplete="off"
-                onChange={(e) => setChave(e.target.value)} required />
+              <div style={{ position: "relative" }}>
+                <input className="vx-input vx-mono" type={verChave ? "text" : "password"} value={chave}
+                  autoComplete="off" onChange={(e) => setChave(e.target.value)}
+                  required style={{ paddingRight: 38 }} />
+                <button type="button" onClick={() => setVerChave(v => !v)} style={{
+                  position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                  background: "none", border: "none", cursor: "pointer", color: "var(--text-2)", padding: 2,
+                }}>
+                  {verChave ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </Campo>
 
             {erro && (
