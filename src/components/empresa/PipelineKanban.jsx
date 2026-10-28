@@ -6,7 +6,7 @@ import { ETAPAS, ORDEM_ETAPAS } from "../../../shared/pipeline.js";
 
 // Etapas padrão quando a campanha não tem etapas customizadas
 const ETAPAS_PADRAO = [
-  { id: "novo",      nome: "Novo",      cor: "#8496B4" },
+  { id: "novo",      nome: "Primeiro contato", cor: "#8496B4" },
   { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
   { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
   { id: "reuniao",   nome: "Reunião",   cor: "#9AA6FF" },

@@ -4,20 +4,22 @@
 // posição de cada etapa define o que a interface mostra como próxima ação.
 
 export const ETAPAS = {
-  novo:         { nome: "Novo",        ordem: 0, cor: "#8496B4", acao: "Fazer o primeiro contato" },
+  novo:         { nome: "Primeiro contato", ordem: 0, cor: "#8496B4", acao: "Fazer o primeiro contato" },
   contatado:    { nome: "Contatado",   ordem: 1, cor: "#5B8CFF", acao: "Aguardar retorno ou insistir" },
+  respondeu:    { nome: "Respondeu",   ordem: 2, cor: "#9AA6FF", acao: "Qualificar a dor" },
   conversando:  { nome: "Conversando", ordem: 2, cor: "#5B8CFF", acao: "Qualificar a dor" },
   reuniao:      { nome: "Reunião",     ordem: 3, cor: "#9AA6FF", acao: "Confirmar e realizar" },
   qualificado:  { nome: "Qualificado", ordem: 4, cor: "#9AA6FF", acao: "Montar a proposta" },
   proposta:     { nome: "Proposta",    ordem: 5, cor: "#F0B45E", acao: "Acompanhar a leitura" },
   negociacao:   { nome: "Negociação",  ordem: 6, cor: "#F0B45E", acao: "Tratar objeções" },
-  ganho:        { nome: "Ganho",       ordem: 7, cor: "#5FD3A0", acao: "Registrar a venda" },
+  fechado:      { nome: "Fechado",     ordem: 7, cor: "#5FD3A0", acao: "Registrar a venda" },
+  ganho:        { nome: "Fechado",     ordem: 7, cor: "#5FD3A0", acao: "Registrar a venda" },
   perdido:      { nome: "Perdido",     ordem: 8, cor: "#FF8A7A", acao: "Registrar o motivo" },
 };
 
 export const ORDEM_ETAPAS = [
-  "novo", "contatado", "conversando", "reuniao",
-  "qualificado", "proposta", "negociacao", "ganho", "perdido",
+  "novo", "contatado", "respondeu", "reuniao",
+  "proposta", "fechado", "perdido",
 ];
 
 export const ETAPAS_ABERTAS = ORDEM_ETAPAS.filter((e) => e !== "ganho" && e !== "perdido");

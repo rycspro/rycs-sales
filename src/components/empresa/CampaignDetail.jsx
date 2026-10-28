@@ -1,22 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, Award, BriefcaseBusiness, CalendarCheck, CheckCircle2, CircleDollarSign,
   CirclePause, Clock3, Ellipsis, ListChecks, Pencil, RefreshCw, Settings, Target,
   TrendingUp, Upload, UsersRound, X,
 } from "lucide-react";
-import { api, apiDelete, apiPatch } from "../../lib/api.js";
+import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
+import { lerArquivoLeads, sugerirMapeamento } from "../../lib/importers.js";
 import PipelineKanban from "./PipelineKanban.jsx";
 import ComissoesPanel from "./ComissoesPanel.jsx";
 import CriadorCampos from "./CriadorCampos.jsx";
 
 const ABAS = [
   ["geral", "Visão Geral"], ["profissionais", "Profissionais"], ["tarefas", "Tarefas"],
-  ["pipeline", "Pipeline"], ["leads", "Leads"], ["reunioes", "Reuniões"], ["performance", "Performance"],
+  ["pipeline", "Pipeline"], ["contatos", "Contatos"], ["reunioes", "Reuniões"], ["performance", "Performance"],
   ["financeiro", "Financeiro"], ["comissoes", "Comissões"], ["campos", "Campos"],
-  ["contatos", "Lista de Contatos"],
   ["verificacao", "Verificação"], ["configuracoes", "Configurações"],
 ];
 const PERIODOS = [["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"], ["personalizado", "Personalizado"]];
@@ -312,7 +312,6 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
         tarefa="geral"
       />
     </section>}
-    {dados && aba === "leads" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Leads da campanha</h2><p>Registros vinculados exclusivamente a esta operação.</p>{leads.length === 0 ? <Empty texto="Nenhum lead gerado nesta campanha." /> : <div className="vx-compact-list">{leads.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.nome}</b><span>{item.empresa || "Empresa não informada"}</span></div><span className="vx-chip">{item.etapa}</span></div>)}</div>}</section>}
     {dados && aba === "reunioes" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Reuniões</h2><p>Agendamentos e reuniões realizadas vinculados à campanha.</p>{reunioes.length === 0 ? <Empty texto="Nenhuma reunião registrada nesta campanha." /> : <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? "Reunião realizada" : "Reunião agendada"}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
     {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Resultados ao longo do tempo</h2><p>Compare investimento, tarefas, leads, reuniões e vendas em {dados.periodo.label.toLowerCase()}.</p><PerformanceChart serie={dados.serie} /></section>}
     {dados && aba === "financeiro" && <div className="vx-finance-stack">
@@ -327,7 +326,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
       <section className="vx-card vx-detail-section"><h2 className="vx-disp">Detalhamento dos custos</h2><p>Valores configurados e tarefas efetivamente liquidadas.</p>{dados.financeiro.detalhamento.length === 0 ? <Empty texto="Nenhum tipo de tarefa remunerada ou liquidada nesta campanha." /> : <div className="vx-cost-table"><div><span>Tipo de tarefa</span><span>Valor unitário</span><span>Quantidade</span><span>Total gasto</span></div>{dados.financeiro.detalhamento.map((item) => <div key={item.tipo}><b>{ACOES[item.tipo]?.nome || item.tipo}</b><span className="vx-mono" data-label="Valor unitário">{money(item.valorUnitario)}</span><span className="vx-mono" data-label="Quantidade">{item.quantidade}</span><span className="vx-mono" data-label="Total gasto">{money(item.total)}</span></div>)}</div>}</section>
     </div>}
     {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">Configurações da campanha</h2><p>Objetivo, público, região, valores, evidências, treinamento e regras de publicação continuam no editor completo.</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> Editar configuração</button></section>}
-    {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} />}
+    {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} aviso={(msg) => console.log("[contatos]", msg)} />}
     {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
     {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} campanha={campanha} onClose={() => setProfissionalAberto(null)} onStatusChange={async (status) => {
       await apiPatch(`/campaigns/${campanha.id}/applications/${profissionalAberto.applicationId || profissionalAberto.id}`, { status });
@@ -346,151 +345,152 @@ const MODELOS_VERIFICACAO = [
   { value: "integracao", label: "Integração automática", desc: "CRM ou sistema externo valida automaticamente" },
 ];
 
-function parseCSVFrontend(texto) {
-  const linhas = texto.trim().split(/\r?\n/);
-  if (linhas.length < 2) return [];
-  const cabecalho = linhas[0].split(/[,;]/).map((h) => h.trim().replace(/^"|"$/g, "").toLowerCase());
-  return linhas.slice(1).map((linha) => {
-    const cols = linha.split(/[,;]/).map((c) => c.trim().replace(/^"|"$/g, ""));
-    const obj = {};
-    cabecalho.forEach((h, i) => { obj[h] = cols[i] || ""; });
-    return obj;
-  }).filter((r) => Object.values(r).some((v) => v));
-}
+const CAMPOS_CONTATO = [["nome","Nome *"],["empresa","Empresa"],["cargo","Cargo"],["telefone","Telefone"],["email","E-mail"],["valorEstimado","Valor estimado"]];
 
-function ContatosCampanha({ campanha, profissionais }) {
-  const [contatos, setContatos] = useState([]);
-  const [total, setTotal] = useState(0);
+function ContatosCampanha({ campanha, profissionais, aviso }) {
+  const [leads, setLeads] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
-  const [aviso, setAviso] = useState("");
-  const [filtro, setFiltro] = useState("todos");
-  const [distribuindo, setDistribuindo] = useState(false);
+  const [aberto, setAberto] = useState(false);
+  const [tabela, setTabela] = useState({ colunas: [], linhas: [] });
+  const [mapa, setMapa] = useState({});
+  const [relatorio, setRelatorio] = useState(null);
+  const [redistribuindo, setRedistribuindo] = useState(false);
+  const [avisoLocal, setAvisoLocal] = useState("");
+  const fileRef = useRef(null);
+
+  const sellers = profissionais.filter((p) => p.candidaturaStatus === "aprovado");
 
   const carregar = async () => {
     setCarregando(true);
-    const r = await api(`/contacts/${campanha.id}?limit=200${filtro !== "todos" ? `&status=${filtro}` : ""}`);
-    setContatos(r?.contatos || []);
-    setTotal(r?.total || 0);
+    const r = await api(`/leads?campaignId=${campanha.id}`);
+    if (Array.isArray(r)) setLeads(r);
     setCarregando(false);
   };
 
-  useEffect(() => { carregar(); }, [campanha.id, filtro]);
+  useEffect(() => { carregar(); }, [campanha.id]);
 
-  const importar = async (file) => {
-    if (!file) return;
-    setEnviando(true);
-    setAviso("");
-    try {
-      let dados = [];
-      if (file.name.endsWith(".csv") || file.type === "text/csv") {
-        const texto = await file.text();
-        dados = parseCSVFrontend(texto);
-      } else {
-        setAviso("Use arquivos .csv. Suporte a .xlsx em breve.");
-        setEnviando(false);
-        return;
-      }
-      if (!dados.length) { setAviso("Arquivo vazio ou sem dados reconhecíveis."); setEnviando(false); return; }
-      const r = await api("/contacts/upload", { campaignId: campanha.id, companyId: campanha.companyId, dados });
-      if (r?.error) { setAviso(r.error); } else {
-        setAviso(`${r.inseridos} contatos importados. ${r.duplicados} duplicatas ignoradas.`);
-        await carregar();
-      }
-    } catch {
-      setAviso("Erro ao processar o arquivo.");
-    }
+  const normalizados = useMemo(() => tabela.linhas.map((linha) =>
+    Object.fromEntries(CAMPOS_CONTATO.map(([campo]) => [campo, mapa[campo] >= 0 ? linha[mapa[campo]] || "" : ""]))
+  ), [tabela, mapa]);
+
+  const aplicarTabela = (t) => { setTabela(t); setMapa(sugerirMapeamento(t.colunas)); setRelatorio(null); };
+  const lerArquivo = async (file) => { try { aplicarTabela(await lerArquivoLeads(file)); setAberto(true); } catch (e) { setAvisoLocal(e.message); } };
+
+  const importar = async () => {
+    if (mapa.nome == null || mapa.nome < 0) return setAvisoLocal("Mapeie a coluna Nome.");
+    setEnviando(true); setAvisoLocal("");
+    const r = await api("/leads/import", { campaignId: campanha.id, autoDistribuir: true, linhas: normalizados });
     setEnviando(false);
+    if (!r || r.error) return setAvisoLocal(r?.error || "Não foi possível importar.");
+    setRelatorio(r); setAberto(false); setTabela({ colunas: [], linhas: [] });
+    await carregar();
+    setAvisoLocal(`${r.importados} contato(s) importados e distribuídos entre ${sellers.length} profissional(is).`);
   };
 
-  const distribuir = async () => {
-    const aprovados = profissionais.filter((p) => p.candidaturaStatus === "aprovado").map((p) => p.sellerId || p.id);
-    if (!aprovados.length) { setAviso("Nenhum profissional aprovado para distribuir."); return; }
-    setDistribuindo(true);
-    const r = await api("/contacts/distribuir", { campaignId: campanha.id, sellers: aprovados });
-    setDistribuindo(false);
-    if (r?.error) { setAviso(r.error); return; }
-    setAviso(`${r.distribuidos} contatos distribuídos entre ${aprovados.length} profissional(is).`);
+  const redistribuir = async () => {
+    if (!sellers.length) return setAvisoLocal("Nenhum profissional aprovado para redistribuir.");
+    setRedistribuindo(true);
+    const r = await api("/leads/redistribuir", { campaignId: campanha.id });
+    setRedistribuindo(false);
+    if (r?.error) return setAvisoLocal(r.error);
+    setAvisoLocal(`${r.redistribuidos} contatos redistribuídos aleatoriamente.`);
     await carregar();
   };
 
-  const limpar = async () => {
-    if (!window.confirm("Remover todos os contatos disponíveis desta campanha?")) return;
-    await apiDelete(`/contacts/${campanha.id}`);
-    await carregar();
-  };
-
-  const FILTROS = [["todos", "Todos"], ["disponivel", "Disponíveis"], ["distribuido", "Distribuídos"], ["abordado", "Abordados"]];
+  const fechados = leads.filter((l) => l.etapa === "fechado" || l.etapa === "ganho").length;
+  const totalVendas = leads.filter((l) => l.etapa === "fechado" || l.etapa === "ganho").reduce((s, l) => s + (Number(l.valorVenda) || 0), 0);
 
   return (
     <div className="vx-fade">
       <div className="vx-row" style={{ marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
         <div>
-          <div className="vx-eyebrow">Prospecção ativa</div>
-          <h2 className="vx-disp" style={{ margin: "4px 0" }}>Lista de Contatos</h2>
-          <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Importe CSV para SDR, BDR, Cold Call, PAP, follow-up ou reativação.</p>
+          <div className="vx-eyebrow">Execução comercial</div>
+          <h2 className="vx-disp" style={{ margin: "4px 0" }}>Contatos da campanha</h2>
+          <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Contato é o lead. Importe CSV ou XLSX e os contatos entram direto no kanban como "Primeiro contato".</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span className="vx-chip">{total} contatos</span>
-          <label className="vx-btn">
-            <Upload size={13} /> {enviando ? "Importando..." : "Importar CSV"}
-            <input hidden type="file" accept=".csv,text/csv" disabled={enviando} onChange={(e) => importar(e.target.files?.[0])} />
-          </label>
-          <button className="vx-btn vx-btn-primary" disabled={distribuindo} onClick={distribuir}>
-            {distribuindo ? "Distribuindo..." : "Distribuir para profissionais"}
+          <span className="vx-chip">{leads.length} contatos</span>
+          <button className="vx-btn" onClick={() => { setAberto(!aberto); setAvisoLocal(""); }}><Upload size={13} /> Importar</button>
+          <button className="vx-btn" disabled={redistribuindo || !sellers.length} onClick={redistribuir}>
+            {redistribuindo ? "Redistribuindo..." : "Redistribuir"}
           </button>
         </div>
       </div>
 
-      {aviso && <div className="vx-notice" style={{ marginBottom: 12 }}>{aviso}</div>}
+      {avisoLocal && <div className="vx-notice" style={{ marginBottom: 12 }}>{avisoLocal}</div>}
 
-      <div className="vx-seg" style={{ marginBottom: 14 }}>
-        {FILTROS.map(([k, l]) => <button key={k} data-on={filtro === k ? "1" : "0"} onClick={() => setFiltro(k)}>{l}</button>)}
-      </div>
+      {aberto && (
+        <section className="vx-card" style={{ padding: 18, marginBottom: 18 }}>
+          <div className="vx-disp" style={{ fontSize: 16, marginBottom: 4 }}>Importação de contatos</div>
+          <div className="vx-mut" style={{ fontSize: 12, marginBottom: 14 }}>
+            Nome + telefone ou e-mail obrigatórios. Duplicatas removidas. Distribuição automática entre {sellers.length} profissional(is) aprovado(s).
+          </div>
+          <input ref={fileRef} hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            onChange={(e) => lerArquivo(e.target.files?.[0])} />
+          <button className="vx-btn" onClick={() => fileRef.current?.click()}><Upload size={13} /> Escolher CSV ou XLSX</button>
 
-      {carregando
-        ? <div className="vx-mut">Carregando...</div>
-        : !contatos.length
-          ? <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
-              <Upload size={24} color="var(--muted)" />
-              <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum contato importado. Use "Importar CSV" para começar.</p>
-              <p className="vx-mut" style={{ fontSize: 12 }}>Colunas reconhecidas: nome, empresa, cargo, telefone, email, cidade</p>
-            </div>
-          : <>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid var(--border)" }}>
-                      {["Nome", "Empresa", "Cargo", "Telefone", "E-mail", "Status", "Profissional"].map((h) => (
-                        <th key={h} style={{ padding: "6px 10px", textAlign: "left", color: "var(--muted)", fontWeight: 600 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contatos.map((c) => (
-                      <tr key={c.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                        <td style={{ padding: "7px 10px" }}>{c.nome || "—"}</td>
-                        <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{c.empresa || "—"}</td>
-                        <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{c.cargo || "—"}</td>
-                        <td style={{ padding: "7px 10px" }}>{c.telefone || "—"}</td>
-                        <td style={{ padding: "7px 10px" }}>{c.email || "—"}</td>
-                        <td style={{ padding: "7px 10px" }}>
-                          <span className="vx-chip" style={{ fontSize: 11 }}>{c.status}</span>
-                        </td>
-                        <td style={{ padding: "7px 10px", color: "var(--muted)", fontSize: 12 }}>
-                          {c.sellerId ? c.sellerId.slice(0, 8) + "..." : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+          {tabela.colunas.length > 0 && (
+            <>
+              <div className="vx-sep" />
+              <div className="vx-disp" style={{ fontSize: 14, marginBottom: 10 }}>Mapeamento de colunas</div>
+              <div className="vx-grid vx-g3">
+                {CAMPOS_CONTATO.map(([campo, label]) => (
+                  <label key={campo}>
+                    <span className="vx-label">{label}</span>
+                    <select className="vx-input" value={mapa[campo] ?? -1} onChange={(e) => setMapa({ ...mapa, [campo]: Number(e.target.value) })}>
+                      <option value={-1}>Ignorar</option>
+                      {tabela.colunas.map((c, i) => <option key={i} value={i}>{c}</option>)}
+                    </select>
+                  </label>
+                ))}
+              </div>
+              <div className="vx-table-wrap" style={{ marginTop: 12 }}>
+                <table className="vx-table">
+                  <thead><tr>{CAMPOS_CONTATO.map(([, l]) => <th key={l}>{l}</th>)}</tr></thead>
+                  <tbody>{normalizados.slice(0, 3).map((l, i) => <tr key={i}>{CAMPOS_CONTATO.map(([c]) => <td key={c}>{l[c] || "—"}</td>)}</tr>)}</tbody>
                 </table>
               </div>
-              {contatos.filter((c) => c.status === "disponivel").length > 0 && (
-                <button className="vx-btn vx-btn-sm" style={{ marginTop: 12, color: "var(--danger)" }} onClick={limpar}>
-                  Remover contatos disponíveis
-                </button>
-              )}
-            </>}
+              <div className="vx-chart-source">{normalizados.length} linha(s) · prévia de 3</div>
+              <button className="vx-btn vx-btn-primary" style={{ marginTop: 12 }} disabled={enviando || !normalizados.length} onClick={importar}>
+                {enviando ? "Importando..." : "Confirmar importação"}
+              </button>
+            </>
+          )}
+          {relatorio && (
+            <div className="vx-grid vx-g4" style={{ marginTop: 14 }}>
+              {[["Recebidos", relatorio.totalRecebido], ["Importados", relatorio.importados], ["Duplicados", relatorio.duplicados], ["Inválidos", relatorio.invalidos]].map(([l, v]) => (
+                <div className="vx-scenario" key={l}><span>{l}</span><strong className="vx-mono">{v}</strong></div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      <div className="vx-grid vx-g4" style={{ marginBottom: 16 }}>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Total</div><b className="vx-mono" style={{ fontSize: 19 }}>{leads.length}</b></div>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Fechados</div><b className="vx-mono" style={{ fontSize: 19 }}>{fechados}</b></div>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Conversão</div><b className="vx-mono" style={{ fontSize: 19 }}>{leads.length ? Math.round(fechados / leads.length * 100) : 0}%</b></div>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Total vendas</div><b className="vx-mono" style={{ fontSize: 19 }}>{money(totalVendas)}</b></div>
+      </div>
+
+      {carregando ? (
+        <div className="vx-mut">Carregando contatos...</div>
+      ) : leads.length === 0 ? (
+        <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
+          <Upload size={24} color="var(--muted)" />
+          <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum contato nesta campanha. Use "Importar" para começar.</p>
+          <p className="vx-mut" style={{ fontSize: 12 }}>Colunas reconhecidas: nome, empresa, cargo, telefone, email, valor</p>
+        </div>
+      ) : (
+        <PipelineKanban
+          campanha={campanha}
+          leads={leads}
+          sellers={sellers}
+          aviso={setAvisoLocal}
+          onLeadsAtualizado={carregar}
+        />
+      )}
     </div>
   );
 }

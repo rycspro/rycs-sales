@@ -1401,7 +1401,7 @@ adicionarColuna("leads", "responsavelEtapaId", "TEXT DEFAULT ''");
 // Backfill: campanhas existentes sem pipeline recebem as etapas padrão
 (() => {
   const PIPELINE_PADRAO = JSON.stringify([
-    { id: "novo",      nome: "Novo",      cor: "#8496B4" },
+    { id: "novo",      nome: "Primeiro contato", cor: "#8496B4" },
     { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
     { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
     { id: "reuniao",   nome: "Reunião",   cor: "#9AA6FF" },

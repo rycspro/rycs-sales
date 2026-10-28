@@ -30,8 +30,9 @@ router.get("/leads", (req, res) => {
 
   if (etapa && etapaValida(etapa)) { sql += " AND etapa = ?"; args.push(etapa); }
   if (companyId && role !== "empresa") { sql += " AND companyId = ?"; args.push(companyId); }
+  if (req.query.campaignId) { sql += " AND campaignId = ?"; args.push(req.query.campaignId); }
 
-  sql += " ORDER BY (proximaAcaoEm IS NULL), proximaAcaoEm ASC, atualizadoEm DESC LIMIT 300";
+  sql += " ORDER BY (proximaAcaoEm IS NULL), proximaAcaoEm ASC, atualizadoEm DESC LIMIT 500";
   res.json(db.prepare(sql).all(...args));
 });
 
@@ -47,25 +48,36 @@ router.get("/leads/:id", (req, res) => {
 router.post("/leads/import", (req, res) => {
   const { role, entityId: companyId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas a empresa pode importar listas" });
-  const { campaignId, sellerId, linhas } = req.body || {};
-  if (!campaignId || !sellerId) return res.status(400).json({ error: "Campanha e profissional responsável são obrigatórios" });
-  if (!Array.isArray(linhas) || !linhas.length || linhas.length > 1000) return res.status(400).json({ error: "Envie entre 1 e 1.000 leads" });
+  const { campaignId, sellerId, linhas, autoDistribuir } = req.body || {};
+  if (!campaignId) return res.status(400).json({ error: "Campanha é obrigatória" });
+  if (!Array.isArray(linhas) || !linhas.length || linhas.length > 1000) return res.status(400).json({ error: "Envie entre 1 e 1.000 contatos" });
   const campanha = db.prepare("SELECT id FROM campaigns WHERE id = ? AND companyId = ?").get(campaignId, companyId);
   if (!campanha) return res.status(404).json({ error: "Campanha não encontrada" });
-  const vinculo = db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(sellerId, companyId);
-  if (!vinculo) return res.status(422).json({ error: "O profissional escolhido não pertence ao time" });
+
+  // Pool de vendedores: auto-distribuir ou vendedor específico
+  let sellerPool = [];
+  if (autoDistribuir || !sellerId) {
+    const rows = db.prepare("SELECT sellerId FROM applications WHERE companyId = ? AND status = 'aprovado'").all(companyId);
+    sellerPool = rows.map((r) => r.sellerId).sort(() => Math.random() - 0.5);
+    if (!sellerPool.length) return res.status(422).json({ error: "Nenhum profissional aprovado para distribuir" });
+  } else {
+    const vinculo = db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(sellerId, companyId);
+    if (!vinculo) return res.status(422).json({ error: "O profissional escolhido não pertence ao time" });
+    sellerPool = [sellerId];
+  }
 
   const existentes = db.prepare("SELECT email, telefone FROM leads WHERE companyId = ?").all(companyId);
   const emails = new Set(existentes.map((l) => String(l.email || "").trim().toLowerCase()).filter(Boolean));
   const telefones = new Set(existentes.map((l) => String(l.telefone || "").replace(/\D/g, "")).filter(Boolean));
-  const validos = [], erros = []; let duplicados = 0;
+  const validos = [], erros = []; let duplicados = 0, sellerIdx = 0;
   linhas.forEach((linha, indice) => {
     const nome = String(linha?.nome || "").trim(), email = String(linha?.email || "").trim().toLowerCase(), telefone = String(linha?.telefone || "").replace(/\D/g, "");
     if (!nome) return erros.push({ linha: indice + 2, erro: "Nome obrigatório" });
     if (!email && !telefone) return erros.push({ linha: indice + 2, erro: "Informe telefone ou e-mail" });
     if ((email && emails.has(email)) || (telefone && telefones.has(telefone))) { duplicados++; return; }
     if (email) emails.add(email); if (telefone) telefones.add(telefone);
-    validos.push({ ...linha, nome, email, telefone });
+    const assignedSellerId = sellerPool[sellerIdx++ % sellerPool.length];
+    validos.push({ ...linha, nome, email, telefone, sellerId: assignedSellerId });
   });
   const ts = agora();
   db.transaction(() => validos.forEach((l) => {
@@ -73,8 +85,8 @@ router.post("/leads/import", (req, res) => {
     db.prepare(`INSERT INTO leads
       (id, sellerId, companyId, campaignId, nome, empresa, cargo, telefone, email, origem, etapa, valorEstimado, criadoEm, atualizadoEm)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'empresa', 'novo', ?, ?, ?)`)
-      .run(leadId, sellerId, companyId, campaignId, l.nome, String(l.empresa || ""), String(l.cargo || ""), l.telefone, l.email, Number(l.valorEstimado) || 0, ts, ts);
-    registrarEventoCampanha({ companyId, campaignId, tipo: "LEAD_CREATED", actorId: req.user.id, actorRole: role, sellerId, leadId, source: "USER", dados: { origem: "importacao" }, criadoEm: ts });
+      .run(leadId, l.sellerId, companyId, campaignId, l.nome, String(l.empresa || ""), String(l.cargo || ""), l.telefone, l.email, Number(l.valorEstimado) || 0, ts, ts);
+    registrarEventoCampanha({ companyId, campaignId, tipo: "LEAD_CREATED", actorId: req.user.id, actorRole: role, sellerId: l.sellerId, leadId, source: "USER", dados: { origem: "importacao" }, criadoEm: ts });
   }))();
   // A importação pode acontecer com a empresa em outra tela, e o profissional
   // recebe leads sem ter pedido nada. Os dois precisam saber.
@@ -82,11 +94,35 @@ router.post("/leads/import", (req, res) => {
     (duplicados ? `, ${duplicados} duplicado(s)` : "") +
     (erros.length ? `, ${erros.length} com erro` : "");
   const empUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
-  if (empUser) notificar(empUser.id, "importacao", "Importação de leads concluída", `${resumo} de ${linhas.length} linha(s) enviada(s).`);
-  const vendUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sellerId);
-  if (vendUser && validos.length) notificar(vendUser.id, "importacao", "Novos leads na sua fila", `${validos.length} lead(s) foram atribuídos a você.`);
+  if (empUser) notificar(empUser.id, "importacao", "Importação de contatos concluída", `${resumo} de ${linhas.length} linha(s) enviada(s).`);
+  // Notificar cada vendedor que recebeu contatos
+  const porSeller = {};
+  validos.forEach((l) => { porSeller[l.sellerId] = (porSeller[l.sellerId] || 0) + 1; });
+  for (const [sid, qtd] of Object.entries(porSeller)) {
+    const vendUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sid);
+    if (vendUser) notificar(vendUser.id, "importacao", "Novos contatos na sua fila", `${qtd} contato(s) foram atribuídos a você.`);
+  }
 
   res.json({ totalRecebido: linhas.length, validos: validos.length, invalidos: erros.length, duplicados, ignorados: erros.length + duplicados, importados: validos.length, erros });
+});
+
+// Redistribuir contatos abertos da campanha entre os profissionais aprovados
+router.post("/leads/redistribuir", (req, res) => {
+  const { role, entityId: companyId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas a empresa pode redistribuir" });
+  const { campaignId } = req.body || {};
+  if (!campaignId) return res.status(400).json({ error: "campaignId obrigatório" });
+  const campanha = db.prepare("SELECT id FROM campaigns WHERE id = ? AND companyId = ?").get(campaignId, companyId);
+  if (!campanha) return res.status(404).json({ error: "Campanha não encontrada" });
+  const rows = db.prepare("SELECT sellerId FROM applications WHERE companyId = ? AND status = 'aprovado'").all(companyId);
+  const sellerPool = rows.map((r) => r.sellerId).sort(() => Math.random() - 0.5);
+  if (!sellerPool.length) return res.status(422).json({ error: "Nenhum profissional aprovado" });
+  const abertos = db.prepare("SELECT id FROM leads WHERE campaignId = ? AND etapa NOT IN ('ganho','fechado','perdido')").all(campaignId);
+  if (!abertos.length) return res.json({ redistribuidos: 0 });
+  const ts = agora();
+  const upd = db.prepare("UPDATE leads SET sellerId = ?, atualizadoEm = ? WHERE id = ?");
+  db.transaction(() => abertos.forEach((l, i) => upd.run(sellerPool[i % sellerPool.length], ts, l.id)))();
+  res.json({ redistribuidos: abertos.length });
 });
 
 router.post("/leads", (req, res) => {
@@ -136,9 +172,11 @@ router.post("/leads", (req, res) => {
 router.patch("/leads/:id", (req, res) => {
   const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(req.params.id);
   if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
-  if (req.user.role !== "vendedor" || req.user.entityId !== lead.sellerId)
+  const isEmpresa = req.user.role === "empresa" && req.user.entityId === lead.companyId;
+  const isVendedor = req.user.role === "vendedor" && req.user.entityId === lead.sellerId;
+  if (!isEmpresa && !isVendedor && req.user.role !== "admin")
     return res.status(403).json({ error: "Sem permissão" });
-  if (!exigirOportunidadesLiberadas(req, res, lead.sellerId)) return;
+  if (isVendedor && !exigirOportunidadesLiberadas(req, res, lead.sellerId)) return;
 
   const permitidos = ["nome", "empresa", "cargo", "telefone", "email", "valorEstimado", "proximaAcao", "proximaAcaoEm", "responsavelEtapaId"];
   const sets = [], vals = [];
