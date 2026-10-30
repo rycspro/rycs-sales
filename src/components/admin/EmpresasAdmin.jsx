@@ -142,6 +142,16 @@ export default function EmpresasAdmin({ db, up, aviso }) {
   const [empresaCobranca, setEmpresaCobranca] = useState(null);
   const [criandoEmpresa, setCriandoEmpresa] = useState(false);
   const [empresaPagamento, setEmpresaPagamento] = useState(null);
+  const [resetando, setResetando] = useState(null);
+
+  const resetarSenha = async (c) => {
+    if (!window.confirm(`Redefinir a senha de acesso da empresa "${c.nome}"?`)) return;
+    setResetando(c.id);
+    const r = await api(`/admin/companies/${c.id}/reset-senha`, {});
+    setResetando(null);
+    if (!r || r.error) return aviso(r?.error || "Erro ao redefinir senha.");
+    window.alert(`Nova senha de "${c.nome}":\n\n${r.novaSenha}\n\nGuarde antes de fechar.`);
+  };
 
   const empresas = useMemo(() => {
     let list = db.companies.map((c) => {
@@ -279,12 +289,16 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                   )}
 
                   <hr className="vx-sep" />
-                  <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+                  <div style={{ marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button className="vx-btn vx-btn-sm" onClick={() => setEmpresaCobranca(c)}>
                       Cobrança e Acesso
                     </button>
                     <button className="vx-btn vx-btn-sm" onClick={() => setEmpresaPagamento(c)} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                       <CreditCard size={13} /> Pagamento
+                    </button>
+                    <button className="vx-btn vx-btn-sm" disabled={resetando === c.id}
+                      onClick={() => resetarSenha(c)} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      {resetando === c.id ? "Aguarde…" : "Redefinir senha"}
                     </button>
                   </div>
                   <DossieEmpresa companyId={c.id} />

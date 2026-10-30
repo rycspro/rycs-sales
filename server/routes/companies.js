@@ -388,6 +388,16 @@ router.post("/admin/companies", (req, res) => {
   res.json({ ok: true, companyId, userId, email: emailNorm, senhaTemporaria: senhaFinal });
 });
 
+// ─── ADMIN: Redefinir senha de uma empresa ────────────────────────────────────
+router.post("/admin/companies/:id/reset-senha", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(req.params.id);
+  if (!user) return res.status(404).json({ error: "Usuário da empresa não encontrado" });
+  const novaSenha = randomBytes(8).toString("base64url");
+  db.prepare("UPDATE users SET senha = ? WHERE id = ?").run(bcrypt.hashSync(novaSenha, 10), user.id);
+  res.json({ ok: true, novaSenha });
+});
+
 // ─── ADMIN: Configurar ciclo/modalidade de pagamento de uma empresa ────────────
 router.patch("/admin/companies/:id/pagamento", (req, res) => {
   if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
