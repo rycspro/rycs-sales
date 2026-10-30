@@ -1295,6 +1295,28 @@ adicionarColuna("academy_materiais", "leitura", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "estrategias", "TEXT DEFAULT ''");
 adicionarColuna("users", "resetEnviadoEm", "INTEGER");
 
+// Dois caminhos de entrada para empresas (Atualização 2):
+//   "guiado"  — fluxo de 6 etapas (padrão anterior); bloqueia a plataforma.
+//   "livre"   — "Criar conta": etapa 1 auto-concluída, plataforma livre, banner.
+adicionarColuna("onboarding", "caminho", "TEXT NOT NULL DEFAULT 'guiado'");
+// Confirmação de e-mail para o caminho "livre" (enviada pelo Resend).
+adicionarColuna("users", "emailVerificado", "INTEGER NOT NULL DEFAULT 0");
+adicionarColuna("users", "emailConfirmToken", "TEXT");
+adicionarColuna("users", "emailConfirmExpira", "INTEGER");
+
+// Funil de analytics: registra eventos-chave do onboarding para medir conversão.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS onboarding_eventos (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    evento TEXT NOT NULL,
+    dados TEXT NOT NULL DEFAULT '{}',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_onb_eventos_empresa ON onboarding_eventos(companyId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_onb_eventos_tipo ON onboarding_eventos(evento, criadoEm);
+`);
+
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@rycs.pro").toLowerCase().trim();

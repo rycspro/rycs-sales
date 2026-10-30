@@ -9,6 +9,8 @@ import CadastroProfissional from "./components/auth/CadastroProfissional.jsx";
 import EscolhaCadastro from "./components/auth/EscolhaCadastro.jsx";
 import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding, limparConviteOnboarding } from "./lib/rotas.js";
 import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
+import EntradaEmpresa from "./components/auth/EntradaEmpresa.jsx";
+import ConfirmarEmail from "./components/auth/ConfirmarEmail.jsx";
 import Onboarding from "./components/onboarding/index.jsx";
 import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
@@ -161,6 +163,11 @@ export default function App() {
   }, [toast]);
 
   // { silencioso } é para telas que mostram o erro no próprio campo.
+  // Usado após confirmação de e-mail: o cookie já foi setado pelo servidor.
+  const loginDireto = async (userData) => {
+    if (userData?.id) { window.history.replaceState({}, "", "/"); setUser(userData); userRef.current = userData; await carregarState(userData); }
+  };
+
   const login = async (email, senha, { silencioso = false } = {}) => {
     const r = await api("/auth/login", { email, senha });
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error }; }
@@ -232,9 +239,11 @@ export default function App() {
         : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
         : rota.tipo === "escolha" ? <EscolhaCadastro />
         : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
-        : (rota.tipo === "cadastro" && rota.role === "empresa") || rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
+        : rota.tipo === "cadastro" && rota.role === "empresa" ? <EntradaEmpresa />
+        : rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
           ? <EtapaAcesso conviteToken={rota.tipo === "convite-onboarding" ? rota.token : null}
               onRegister={(d) => registrar(d, { silencioso: true })} onLogin={(e, s) => login(e, s, { silencioso: true })} />
+        : rota.tipo === "confirmar-email" ? <ConfirmarEmail token={rota.token} onLogin={loginDireto} />
         : <Login onLogin={login} beta={environment === "beta"} />}
       {toast && (
         <div className="vx-fade" style={{

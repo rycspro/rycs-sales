@@ -1,12 +1,16 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import db, { uid, agora } from "../db.js";
+import { signToken } from "../middleware/auth.js";
 import {
   TRIAL_ONBOARDING_DIAS, MOTIVOS_CONVITE_ONBOARDING, estadoConviteOnboarding, conviteServeParaEmail,
   validadeConviteDias, normalizarWhatsapp, validarPerfilEmpresa, normalizarPermissoes, ticketParaNumero,
   formatarTicket, avaliarLogo, validarArquivoAcademy, normalizarLink, validarSuporte, extensaoDe, categoriaAcademy,
-  PARTES_IA, normalizarParte, parteCompleta,
+  PARTES_IA, normalizarParte, parteCompleta, validarSenhaEmpresa,
 } from "../../shared/onboarding.js";
-import { hashToken, novoToken, obterOnboarding, concluir, serializar, trialDoOnboarding } from "../services/onboarding.js";
+import { hashToken, novoToken, criarOnboarding, obterOnboarding, concluir, serializar, trialDoOnboarding } from "../services/onboarding.js";
+import { registrarEvento } from "../services/onboardingEventos.js";
+import { emailConfirmacaoConta } from "../services/email.js";
 import { armazenamentoDisponivel, salvar, remover, ArquivoGrandeDemais } from "../services/arquivos.js";
 import { motorAtual, geracaoAtual, serializarGeracao, criarGeracao, tentarDeNovo } from "../services/iaOnboarding.js";
 import { acessoDaEmpresa } from "../../shared/assinatura.js";
@@ -28,6 +32,78 @@ onboardingPublico.get("/onboarding/convites/:token", (req, res) => {
   const estado = estadoConviteOnboarding(convite);
   if (!estado.ok) return res.status(404).json({ ok: false, motivo: estado.motivo, error: MOTIVOS_CONVITE_ONBOARDING[estado.motivo] });
   res.json({ ok: true, email: convite.email, trialDias: convite.trialDias, expiraEm: convite.expiraEm });
+});
+
+// ---------------------------------------------------------------------------
+// Caminho "livre": criar conta sem fluxo guiado.
+// POST /api/onboarding/criar-conta — cria user + company + onboarding(caminho=livre), envia e-mail de confirmação.
+const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
+const CONFIRMAR_EMAIL_EXPIRA_MS = 24 * 60 * 60 * 1000;
+
+onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
+  const { email, senha } = req.body || {};
+  if (!email || !senha) return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
+
+  const emailNorm = String(email).toLowerCase().trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm))
+    return res.status(400).json({ error: "E-mail inválido.", campo: "email" });
+
+  const errSenha = validarSenhaEmpresa(senha);
+  if (errSenha) return res.status(400).json({ error: errSenha, campo: "senha" });
+
+  const existe = db.prepare("SELECT id FROM users WHERE email = ?").get(emailNorm);
+  if (existe) return res.status(409).json({ error: "E-mail já cadastrado.", campo: "email" });
+
+  const hash = bcrypt.hashSync(senha, 10);
+  const userId = uid();
+  const companyId = uid();
+  const nomeProvisorio = emailNorm.split("@")[0].slice(0, 100);
+  const token = novoToken();
+  const tokenHash = hashToken(token);
+  const expira = agora() + CONFIRMAR_EMAIL_EXPIRA_MS;
+  const t = agora();
+
+  db.prepare(`INSERT INTO companies (id, nome, produto, criadoEm) VALUES (?, ?, '', ?)`)
+    .run(companyId, nomeProvisorio, t);
+  db.prepare(`INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, emailVerificado, emailConfirmToken, emailConfirmExpira, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, 0, ?, ?, ?)`)
+    .run(userId, emailNorm, hash, companyId, tokenHash, expira, t);
+  criarOnboarding({ companyId, origem: "site", caminho: "livre", acessoConcluido: true });
+  registrarEvento(companyId, "criou_conta", { caminho: "livre" });
+
+  await emailConfirmacaoConta(nomeProvisorio, emailNorm, token, FRONTEND);
+
+  res.json({ ok: true });
+});
+
+// POST /api/onboarding/criar-conta/reenviar — reenvia o link se ainda não confirmou.
+onboardingPublico.post("/onboarding/criar-conta/reenviar", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: "E-mail é obrigatório." });
+
+  const emailNorm = String(email).toLowerCase().trim();
+  const user = db.prepare("SELECT id, emailVerificado, emailConfirmExpira FROM users WHERE email = ?").get(emailNorm);
+  if (!user) return res.status(404).json({ error: "Conta não encontrada." });
+  if (user.emailVerificado) return res.status(409).json({ error: "E-mail já confirmado." });
+
+  const token = novoToken();
+  const tokenHash = hashToken(token);
+  const expira = agora() + CONFIRMAR_EMAIL_EXPIRA_MS;
+  db.prepare("UPDATE users SET emailConfirmToken = ?, emailConfirmExpira = ? WHERE id = ?")
+    .run(tokenHash, expira, user.id);
+
+  const nome = emailNorm.split("@")[0];
+  await emailConfirmacaoConta(nome, emailNorm, token, FRONTEND);
+  res.json({ ok: true });
+});
+
+// POST /api/onboarding/evento — registro de evento de funil sem autenticação.
+// Apenas criou_conta e iniciou_onboarding são aceitos aqui (sem companyId: salva como anônimo).
+onboardingPublico.post("/onboarding/evento", (req, res) => {
+  const { evento, dados } = req.body || {};
+  const permitidos = ["iniciou_onboarding"];
+  if (!permitidos.includes(evento)) return res.status(400).json({ error: "Evento não permitido." });
+  registrarEvento("anonimo", evento, dados || {});
+  res.json({ ok: true });
 });
 
 // ---------------------------------------------------------------------------

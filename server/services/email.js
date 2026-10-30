@@ -161,6 +161,30 @@ export function emailResetSenha(nome, email, token, frontendUrl) {
   `);
 }
 
+export function emailConfirmacaoConta(nome, email, token, frontendUrl) {
+  const link = `${frontendUrl}/confirmar-email/${token}`;
+  return sendEmail(email, "Confirme seu e-mail — RYCS", `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
+        <span style="color:#2563EB;font-size:28px;font-weight:800">R</span>
+        <span style="color:#fff;font-size:20px;font-weight:700;margin-left:4px">RYCS</span>
+      </div>
+      <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
+        <h2 style="margin:0 0 12px;font-size:18px">Olá, ${nome}!</h2>
+        <p style="color:#4b5563;line-height:1.6">
+          Sua conta foi criada com sucesso. Clique no botão abaixo para confirmar seu e-mail e acessar a plataforma (válido por 24 horas):
+        </p>
+        <div style="text-align:center;margin:20px 0">
+          <a href="${link}" style="background:#2563EB;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
+            Confirmar e-mail e entrar
+          </a>
+        </div>
+        <p style="color:#9ca3af;font-size:12px">Se você não criou essa conta, ignore este e-mail.</p>
+      </div>
+    </div>
+  `);
+}
+
 export function emailStatusAcao(nome, email, acao, status) {
   const labels = { liberado: "aprovada", recusado: "recusada", revisao: "em revisão" };
   return sendEmail(email, `Ação ${labels[status] || status} — RYCS`, `

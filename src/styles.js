@@ -525,4 +525,59 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 }
 @media (prefers-reduced-motion:reduce){.vx-onb *{transition:none!important;animation:none!important}}
 
+/* ── BarraProgresso animada — Trilha Neon (Atualização 1) ────────────────
+   Fundo navy, linha gradiente ciano, anel pulsante no nó atual.
+   Variáveis usadas: --navy, --sky, --sky-600, --sky-700.
+   Topo do onboarding vira duas linhas: logo/sair + barra de progresso. */
+@keyframes vx-prog-pulse{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.6),0 0 14px 2px rgba(56,189,248,.2)}50%{box-shadow:0 0 0 6px rgba(56,189,248,0),0 0 22px 6px rgba(56,189,248,.15)}}
+@keyframes vx-prog-sfin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.vx-prog{background:var(--navy);width:100%}
+.vx-prog-inner{max-width:1200px;margin:0 auto;padding:14px 20px 12px}
+
+/* desktop (padrão) */
+.vx-prog-mob{display:none}
+.vx-prog-desktop{display:block}
+
+/* trilha dos nós */
+.vx-prog-track{display:flex;justify-content:space-between;align-items:flex-start;position:relative;padding:0 17px}
+.vx-prog-linha-bg{position:absolute;left:17px;right:17px;top:17px;height:2px;background:rgba(255,255,255,.1);border-radius:2px}
+.vx-prog-linha-fill{position:absolute;left:17px;top:17px;height:2px;background:linear-gradient(90deg,var(--sky-700) 0%,var(--sky) 100%);border-radius:2px;transition:width .55s cubic-bezier(.4,0,.2,1);box-shadow:0 0 8px rgba(56,189,248,.45)}
+
+/* nó */
+.vx-prog-no{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:2}
+.vx-prog-circulo{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);font-size:12.5px;font-weight:700;color:rgba(255,255,255,.35);flex:none;transition:border-color .3s,background .3s,color .3s,box-shadow .3s;font-family:'Space Grotesk',sans-serif}
+.vx-prog-no[data-estado="concluida"] .vx-prog-circulo{background:var(--sky-600);border-color:var(--sky-600);color:#fff;box-shadow:0 0 10px rgba(14,165,233,.4)}
+.vx-prog-no[data-estado="atual"] .vx-prog-circulo{background:var(--sky);border-color:var(--sky);color:var(--navy);animation:vx-prog-pulse 2s ease-in-out infinite;box-shadow:0 0 0 4px rgba(56,189,248,.15),0 0 18px rgba(56,189,248,.35)}
+.vx-prog-circulo button{appearance:none;border:0;padding:0;margin:0;background:transparent;font:inherit;color:inherit;cursor:pointer;width:34px;height:34px;border-radius:50%;display:grid;place-items:center}
+.vx-prog-circulo button:focus-visible{outline:2px solid var(--sky);outline-offset:3px;border-radius:50%}
+.vx-prog-circulo span{display:grid;place-items:center;width:34px;height:34px}
+.vx-prog-rotulo{font-size:10px;font-weight:600;color:rgba(255,255,255,.35);white-space:nowrap;letter-spacing:.03em;text-align:center;transition:color .3s;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+.vx-prog-no[data-estado="concluida"] .vx-prog-rotulo{color:rgba(255,255,255,.55)}
+.vx-prog-no[data-estado="atual"] .vx-prog-rotulo{color:#fff;font-weight:700}
+
+/* subfases IA */
+.vx-prog-subfases{display:flex;gap:8px;margin-top:10px;padding:0 17px;flex-wrap:wrap}
+.vx-prog-subfase{font-size:9.5px;font-weight:600;letter-spacing:.04em;padding:3px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.3);background:rgba(255,255,255,.03);animation:vx-prog-sfin .3s ease both;transition:border-color .25s,color .25s,background .25s}
+.vx-prog-subfase[data-estado="atual"]{border-color:var(--sky);color:var(--sky);background:rgba(56,189,248,.1)}
+.vx-prog-subfase[data-estado="concluida"]{border-color:rgba(14,165,233,.5);color:rgba(255,255,255,.65);background:rgba(14,165,233,.12)}
+
+/* mobile */
+@media(max-width:680px){
+  .vx-prog-desktop{display:none}
+  .vx-prog-mob{display:flex;align-items:center;gap:12px}
+}
+.vx-prog-mob-circulo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--sky);color:var(--navy);font-weight:700;font-size:15px;font-family:'Space Grotesk',sans-serif;flex:none;box-shadow:0 0 14px rgba(56,189,248,.5);animation:vx-prog-pulse 2s ease-in-out infinite}
+.vx-prog-mob-info{flex:1;min-width:0}
+.vx-prog-mob-rotulo{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vx-prog-mob-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.vx-prog-mob-pct{height:3px;background:rgba(255,255,255,.1);border-radius:99px;margin-top:7px;overflow:hidden}
+.vx-prog-mob-fill{height:100%;background:linear-gradient(90deg,var(--sky-700),var(--sky));border-radius:99px;transition:width .55s cubic-bezier(.4,0,.2,1)}
+
+@media(max-width:640px){.vx-onb-topo-inner{grid-template-columns:auto 1fr auto;padding:6px 14px}}
+
+@media(prefers-reduced-motion:reduce){.vx-prog *{transition:none!important;animation:none!important}}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
 `;

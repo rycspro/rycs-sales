@@ -22,12 +22,16 @@ export const CHAVES_ETAPAS = ETAPAS.map((e) => e.chave);
 // conta sem ter o que preencher. Cada passo entregue entra nesta lista.
 export const ETAPAS_PRONTAS = ["acesso", "empresa", "academy", "ia", "plano", "campanha"];
 
-// Decide se o onboarding fica na frente do painel.
-//   - Concluído: nunca.
-//   - Empresa que já existia antes do onboarding: só quando o fluxo inteiro
-//     estiver pronto (ou se a operação ligar isso de propósito).
-//   - Demais: só se a etapa atual já foi entregue.
-export function onboardingBloqueia({ etapas, origem, exigirExistentes = false }) {
+// Decide se o onboarding fica na frente do painel (bloqueia completamente).
+//
+// caminho === "guiado"  → comportamento original: bloqueia enquanto tiver
+//   etapa pendente e entregue (ETAPAS_PRONTAS). Empresas existentes só
+//   bloqueiam quando o fluxo inteiro estiver entregue (ou exigirExistentes=1).
+//
+// caminho === "livre"  → "Criar conta": nunca bloqueia. A plataforma fica
+//   acessível e um banner (BannerOnboarding) cuida de incentivar o avanço.
+export function onboardingBloqueia({ etapas, origem, caminho = "guiado", exigirExistentes = false }) {
+  if (caminho === "livre") return false;
   const atual = etapaAtual(etapas);
   if (!atual) return false;
   const fluxoCompleto = CHAVES_ETAPAS.every((c) => ETAPAS_PRONTAS.includes(c));

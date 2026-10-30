@@ -8,7 +8,7 @@ import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
-import { criarOnboarding, hashToken } from "../services/onboarding.js";
+import { criarOnboarding, hashToken, novoToken } from "../services/onboarding.js";
 
 const router = Router();
 const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -266,6 +266,27 @@ router.get("/auth/me", (req, res) => {
     res.clearCookie("sm_token", { path: "/" });
     return res.status(401).json({ error: "Sessão expirada" });
   }
+});
+
+// Confirmação de e-mail para empresas criadas pelo caminho "livre".
+// O link chega via e-mail; valida o token, faz login automático.
+router.get("/auth/confirmar-email/:token", (req, res) => {
+  const { token } = req.params;
+  if (!token) return res.status(400).json({ error: "Token inválido." });
+
+  const tokenHash = hashToken(token);
+  const user = db.prepare(`SELECT id, email, role, entityId, emailVerificado, emailConfirmExpira FROM users WHERE emailConfirmToken = ?`).get(tokenHash);
+
+  if (!user) return res.status(404).json({ error: "Link inválido ou já utilizado." });
+  if (user.emailVerificado) return res.status(409).json({ error: "E-mail já confirmado." });
+  if (user.emailConfirmExpira && user.emailConfirmExpira < agora())
+    return res.status(410).json({ error: "Link expirado. Solicite um novo link." });
+
+  db.prepare("UPDATE users SET emailVerificado = 1, emailConfirmToken = NULL, emailConfirmExpira = NULL WHERE id = ?").run(user.id);
+
+  const jwtToken = signToken({ id: user.id, role: user.role, entityId: user.entityId });
+  res.cookie("sm_token", jwtToken, COOKIE_OPTS);
+  res.json({ ok: true, id: user.id, email: user.email, role: user.role, entityId: user.entityId });
 });
 
 export default router;

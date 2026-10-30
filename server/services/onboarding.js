@@ -10,12 +10,12 @@ export const novoToken = () => randomBytes(32).toString("hex");
 
 const lerLinha = (companyId) => db.prepare("SELECT * FROM onboarding WHERE companyId = ?").get(companyId);
 
-export function criarOnboarding({ companyId, origem = "site", conviteId = null, trialDias = 0, acessoConcluido = false }) {
+export function criarOnboarding({ companyId, origem = "site", conviteId = null, trialDias = 0, acessoConcluido = false, caminho = "guiado" }) {
   const t = agora();
   const etapas = normalizarEtapas(acessoConcluido ? { acesso: "concluida" } : {});
-  db.prepare(`INSERT OR IGNORE INTO onboarding (companyId, etapas, origem, conviteId, trialDias, criadoEm, atualizadoEm)
-              VALUES (?, ?, ?, ?, ?, ?, ?)`)
-    .run(companyId, JSON.stringify(etapas), origem, conviteId, trialDias, t, t);
+  db.prepare(`INSERT OR IGNORE INTO onboarding (companyId, etapas, origem, conviteId, trialDias, caminho, criadoEm, atualizadoEm)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(companyId, JSON.stringify(etapas), origem, conviteId, trialDias, caminho, t, t);
   return lerLinha(companyId);
 }
 
@@ -44,14 +44,16 @@ export function concluir(companyId, chave) {
 export function serializar(linha) {
   const etapas = normalizarEtapas(JSON.parse(linha.etapas || "{}"));
   const atual = etapaAtual(etapas);
+  const caminho = linha.caminho || "guiado";
   const empresa = db.prepare("SELECT whatsapp FROM companies WHERE id = ?").get(linha.companyId);
   return {
     etapas,
     atual: atual?.chave || null,
     concluido: !atual,
-    // Se o onboarding fica na frente do painel agora (ver onboardingBloqueia).
+    caminho,
+    // Bloqueia só no caminho "guiado". Caminho "livre" mostra banner mas não bloqueia.
     bloqueia: onboardingBloqueia({
-      etapas, origem: linha.origem,
+      etapas, origem: linha.origem, caminho,
       exigirExistentes: process.env.ONBOARDING_EMPRESAS_EXISTENTES === "1",
     }),
     trialDias: linha.trialDias || 0,

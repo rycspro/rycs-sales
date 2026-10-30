@@ -59,6 +59,10 @@ export function resolver(caminho = typeof window !== "undefined" ? window.locati
   if (p === ROTAS.cadastroVendedor) return { tipo: "cadastro", role: "vendedor" };
   if (p === ROTAS.cadastroEmpresa) return { tipo: "cadastro", role: "empresa" };
   if (p === ROTAS.escolha) return { tipo: "escolha" };
+  if (bruto.startsWith("/confirmar-email/")) {
+    const token = bruto.slice("/confirmar-email/".length).split("/")[0];
+    if (token) return { tipo: "confirmar-email", token };
+  }
   return { tipo: "login" };
 }
 
