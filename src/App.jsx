@@ -16,6 +16,7 @@ import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
 import Notificacoes from "./components/Notificacoes.jsx";
+import BannerOnboarding from "./components/empresa/BannerOnboarding.jsx";
 
 const PREVIA_QUALIFICACAO = {
   id: "preview-empresa",
@@ -293,13 +294,19 @@ export default function App() {
         {toastEl}
       </div>
     );
+    // caminho=livre: onboarding incompleto mas a plataforma não bloqueia.
+    // Deixa cair no return principal com o banner.
   }
+
+  const bannerOnb = role === "empresa" && onb && !onb.concluido && !onb.bloqueia && !previaQualificacao;
 
   return (
     <div className="vx-app">
       <style>{CSS}</style>
 
-      <header className="vx-topbar">
+      {bannerOnb && <BannerOnboarding onb={onb} />}
+
+      <header className="vx-topbar" style={bannerOnb ? { marginTop: 48 } : undefined}>
         <div className="vx-topbar-inner">
           <div className="vx-word vx-disp" style={{ display: "flex", alignItems: "center" }}>
             <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ height: 26 }} />

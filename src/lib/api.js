@@ -1,12 +1,26 @@
 export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:3001" : "");
 
+// 409 ONBOARDING_PENDENTE → redireciona para a etapa atual.
+// Importação lazy para evitar dependência circular na inicialização.
+const tratarOnbPendente = (corpo) => {
+  if (corpo?.error === "ONBOARDING_PENDENTE" && corpo?.redirect) {
+    const url = corpo.redirect;
+    Promise.resolve().then(() => import("./rotas.js")).then(({ navegar }) => navegar?.(url)).catch(() => null);
+  }
+  return corpo;
+};
+
 export const api = (path, body) =>
   fetch(`${API_URL}/api${path}`, {
     method: body ? "POST" : "GET",
     headers: body ? { "Content-Type": "application/json" } : {},
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
-  }).then((r) => r.json()).catch(() => null);
+  }).then(async (r) => {
+    const corpo = await r.json();
+    if (r.status === 409) tratarOnbPendente(corpo);
+    return corpo;
+  }).catch(() => null);
 
 export const apiPatch = (path, body) =>
   fetch(`${API_URL}/api${path}`, {

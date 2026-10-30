@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import db from "./db.js";
 import { authMiddleware } from "./middleware/auth.js";
+import { onboardingGuard } from "./middleware/onboardingGuard.js";
 import { ACOES, CAMPOS, SISTEMA_AUDITOR } from "../shared/acoes.js";
 import authRoutes from "./routes/auth.js";
 import stateRoutes from "./routes/state.js";
@@ -149,6 +150,9 @@ app.use("/api", authRoutes);
 app.use("/api", paymentRoutes);
 // Consulta do convite de onboarding: quem abre o link ainda não tem conta.
 app.use("/api", onboardingPublico);
+
+// Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
+app.use("/api", authMiddleware, onboardingGuard);
 
 app.use("/api", authMiddleware, stateRoutes);
 app.use("/api", authMiddleware, sellersRoutes);
