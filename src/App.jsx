@@ -138,7 +138,9 @@ export default function App() {
         if (vivo && me?.id) {
           setUser(me);
           userRef.current = me;
+          if (vivo) setLoaded(true);
           await carregarState(me);
+          return;
         }
       } catch (e) {}
       if (vivo) setLoaded(true);
@@ -218,7 +220,7 @@ export default function App() {
   const aba = nav[role];
   const setAba = (k) => setNav((n) => ({ ...n, [role]: k }));
 
-  if (!loaded) return <div className="vx-app"><style>{CSS}</style></div>;
+  if (!loaded) return <div className="vx-app" style={{ background: "#F4F7FC", minHeight: "100dvh" }}><style>{CSS}</style></div>;
 
   const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
 
