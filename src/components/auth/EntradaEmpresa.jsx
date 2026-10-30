@@ -15,37 +15,34 @@ import { SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboardi
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function Opt({ titulo, descricao, itens, cta, onClick, icone: Icone, destaque = false }) {
+function Opt({ titulo, descricao, cta, onClick, icone: Icone, destaque = false }) {
   return (
     <div
       style={{
         border: `1.5px solid ${destaque ? "var(--brand)" : "var(--border)"}`,
-        borderRadius: 14, padding: 20, display: "flex", flexDirection: "column",
+        borderRadius: 14, padding: 16, display: "flex", flexDirection: "column",
         background: destaque ? "var(--brand-50)" : "var(--surface)",
         boxShadow: destaque ? "var(--shadow-brand)" : "var(--shadow-card)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}>
         <div style={{
-          width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center",
+          width: 32, height: 32, borderRadius: 8, display: "grid", placeItems: "center",
           background: destaque ? "var(--brand)" : "var(--surface-2)",
           color: destaque ? "#fff" : "var(--brand)", flexShrink: 0,
         }}>
-          <Icone size={18} strokeWidth={2.3} aria-hidden="true" />
+          <Icone size={15} strokeWidth={2.3} aria-hidden="true" />
         </div>
-        <span className="vx-disp" style={{ fontSize: 16 }}>{titulo}</span>
+        <span className="vx-disp" style={{ fontSize: 14.5 }}>{titulo}</span>
       </div>
-      <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 12px", lineHeight: 1.6 }}>{descricao}</p>
-      <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px", fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.9, flex: 1 }}>
-        {itens.map((i) => <li key={i}>• {i}</li>)}
-      </ul>
+      <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 12px", lineHeight: 1.55, flex: 1 }}>{descricao}</p>
       <button
         type="button"
         className={`vx-btn vx-btn-block${destaque ? " vx-btn-primary" : ""}`}
-        style={{ minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
+        style={{ minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, fontSize: 13 }}
         onClick={onClick}
       >
-        {cta} <ArrowRight size={15} strokeWidth={2.3} aria-hidden="true" />
+        {cta} <ArrowRight size={14} strokeWidth={2.3} aria-hidden="true" />
       </button>
     </div>
   );
@@ -219,6 +216,9 @@ export default function EntradaEmpresa() {
       tarja="Empresa"
       titulo="Como você quer começar?"
       subtitulo="Escolha o caminho que faz mais sentido para você agora."
+      logoWidth={140}
+      compact
+      largura={560}
       rodape={
         <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }}
           onClick={() => navegar(ROTAS.login)}>
@@ -226,12 +226,11 @@ export default function EntradaEmpresa() {
         </button>
       }
     >
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
         <Opt
           icone={Users}
           titulo="Criar conta"
-          descricao="Crie seu acesso agora e explore a plataforma. Você preenche os dados da empresa quando quiser."
-          itens={["Acesso imediato após confirmação", "Sem compromisso", "Configure no seu ritmo"]}
+          descricao="Crie seu acesso e explore a plataforma. Você preenche os dados da empresa quando quiser."
           cta="Criar conta"
           onClick={() => setModo("criar")}
         />
@@ -239,7 +238,6 @@ export default function EntradaEmpresa() {
           icone={Zap}
           titulo="Iniciar vendas"
           descricao="Configure tudo de uma vez: empresa, materiais, IA e plano. Pronto para sua primeira campanha."
-          itens={["Guia passo a passo", "IA cria seu script de vendas", "Campanha publicada ao final"]}
           cta="Iniciar vendas agora"
           destaque
           onClick={iniciarVendas}
