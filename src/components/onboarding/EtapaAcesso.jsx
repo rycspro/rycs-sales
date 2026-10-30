@@ -45,6 +45,7 @@ function Campo({ id, label, erro, dica, children }) {
 export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }) {
   const id = useId();
   const [modo, setModo] = useState("cadastro"); // cadastro | login | recuperar | termos
+  const [fase, setFase] = useState("intro"); // intro | form — só relevante quando modo=cadastro
   const [voltarPara, setVoltarPara] = useState("cadastro");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -59,7 +60,9 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const [salvando, setSalvando] = useState(false);
 
   // Convite: null = sem convite; { carregando } enquanto consulta.
+  // Quem chega por convite ou com conviteToken vai direto para o formulário.
   const [convite, setConvite] = useState(conviteToken ? { carregando: true } : null);
+  useEffect(() => { if (conviteToken) setFase("form"); }, [conviteToken]);
   useEffect(() => {
     if (!conviteToken) return;
     let vivo = true;
@@ -73,7 +76,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const conviteValido = convite?.ok === true;
 
   const limparErro = (campo) => setErros((e) => (e[campo] ? { ...e, [campo]: undefined } : e));
-  const trocarModo = (novo) => { setErros({}); setErroGeral(""); setModo(novo); };
+  const trocarModo = (novo) => { setErros({}); setErroGeral(""); setModo(novo); if (novo !== "cadastro") setFase("form"); };
 
   const validar = () => {
     const e = {};
@@ -145,117 +148,162 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
     "aria-describedby": [erros[campo] && `${id}-${campo}-erro`, `${id}-${campo}-dica`].filter(Boolean).join(" ") || undefined,
   });
 
-  return (
-    <MolduraOnboarding etapas={{}} ativa="acesso">
-      <div className="vx-onb-duas">
-        <section className="vx-onb-hero">
-          <div className="vx-onb-eyebrow">Passo 1 de 6</div>
-          <h1 className="vx-disp">Crie seu acesso e conecte sua empresa a profissionais de vendas.</h1>
-          <p>Em poucos passos a IA conhece o seu negócio, cria o script e o funil de WhatsApp e leva você até a sua primeira campanha.</p>
-          <ul className="vx-onb-proximos" aria-label="Próximos passos">
-            {proximos.map((e) => <li key={e.chave}><span aria-hidden="true">{e.n}</span>{e.texto}</li>)}
-          </ul>
-        </section>
-
-        <section className="vx-onb-card" aria-live="polite">
-          {modo === "recuperar" ? (
-            <RecuperarSenha emailInicial={email} onVoltar={() => trocarModo("login")} />
-          ) : (
-            <form onSubmit={enviar} noValidate>
-              <h2 className="vx-disp vx-onb-card-titulo">{modo === "cadastro" ? "Crie seu acesso" : "Acesse sua conta"}</h2>
-              <p className="vx-mut vx-onb-card-apoio">
-                {modo === "cadastro" ? "Informe a sua empresa, seu e-mail, uma senha e o WhatsApp para começar." : "Use seu e-mail e sua senha para continuar o cadastro."}
-              </p>
-
-              {convite?.carregando && <div className="vx-onb-aviso">Conferindo o convite…</div>}
-              {conviteValido && (
-                <div className="vx-onb-aviso">
-                  Convite da RYCS para <b>{convite.email}</b>.{trial ? ` Inclui ${trial} dias grátis no plano escolhido.` : ""}
-                </div>
-              )}
-              {convite?.ok === false && <div className="vx-onb-erro" role="alert">{convite.erro}</div>}
-
-              {modo === "cadastro" && <>
-                <div className="vx-onb-campo">
-                  <span className="vx-label" id={`${id}-logo-rotulo`}>Logo da empresa</span>
-                  <div className="vx-onb-logo">
-                    <div className="vx-onb-logo-previa" aria-hidden={!logo}>
-                      {logo ? <img src={logo.dataUri} alt="Logo escolhido" /> : <ImagePlus size={22} aria-hidden="true" />}
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <button type="button" className="vx-btn" style={{ minHeight: 44 }}
-                        aria-describedby={[`${id}-logo-rotulo`, `${id}-logo-dica`, erros.logo && `${id}-logo-erro`].filter(Boolean).join(" ")}
-                        onClick={() => inputLogo.current?.click()}>
-                        {logo ? "Trocar logo" : "Enviar logo"}
-                      </button>
-                      {logo && (
-                        <button type="button" className="vx-btn vx-btn-ghost" style={{ minHeight: 44 }} onClick={() => setLogo(null)}>
-                          <Trash2 size={15} aria-hidden="true" /> Remover
-                        </button>
-                      )}
-                    </div>
-                    <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
-                      onChange={(e) => escolherLogo(e.target.files?.[0])} />
-                  </div>
-                  <div id={`${id}-logo-dica`} className="vx-onb-dica">PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
-                  {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
-                </div>
-
-                <Campo id={`${id}-nome`} label="Nome da empresa" erro={erros.nome}>
-                  <input id={`${id}-nome`} className="vx-input" autoComplete="organization" maxLength={100}
-                    value={nome} onChange={(e) => { setNome(e.target.value); limparErro("nome"); }} {...props("nome")} />
-                </Campo>
-              </>}
-
-              <Campo id={`${id}-email`} label="E-mail" erro={erros.email}>
-                <input id={`${id}-email`} className="vx-input" type="email" autoComplete="email" inputMode="email"
-                  value={email} onChange={(e) => { setEmail(e.target.value); limparErro("email"); }} readOnly={conviteValido && modo === "cadastro"} {...props("email")} />
-              </Campo>
-
-              <Campo id={`${id}-senha`} label="Senha" erro={erros.senha}
-                dica={modo === "cadastro" ? `Mínimo de ${SENHA_MIN_EMPRESA} caracteres. Toque no olho para ver a senha.` : "Toque no olho para ver a senha."}>
-                <CampoSenha id={`${id}-senha`} value={senha} onChange={(e) => { setSenha(e.target.value); limparErro("senha"); }}
-                  autoComplete={modo === "cadastro" ? "new-password" : "current-password"} required={false}
-                  invalido={!!erros.senha} descricao={props("senha")["aria-describedby"]} />
-              </Campo>
-
-              {modo === "cadastro" && <>
-                <Campo id={`${id}-whatsapp`} label="WhatsApp" erro={erros.whatsapp} dica="Com DDD. É por onde a RYCS fala com você sobre a operação.">
-                  <input id={`${id}-whatsapp`} className="vx-input" type="tel" inputMode="numeric" autoComplete="tel-national"
-                    placeholder="(11) 91234-5678" value={whatsapp} onChange={(e) => { setWhatsapp(mascaraWhatsapp(e.target.value)); limparErro("whatsapp"); }} {...props("whatsapp")} />
-                </Campo>
-                {indicacao && (
-                  <Campo id={`${id}-indicacao`} label="Código de indicação">
-                    <input id={`${id}-indicacao`} className="vx-input vx-mono" value={indicacao}
-                      onChange={(e) => setIndicacao(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))} />
-                  </Campo>
-                )}
-              </>}
-
-              {modo === "login" && (
-                <button type="button" className="vx-onb-link" style={{ minHeight: 44 }} onClick={() => trocarModo("recuperar")}>
-                  Esqueci minha senha
-                </button>
-              )}
-
-              {erroGeral && <div className="vx-onb-erro" role="alert">{erroGeral}</div>}
-
-              <button className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" type="submit" disabled={salvando || convite?.carregando}>
-                {salvando ? (modo === "cadastro" ? "Criando acesso…" : "Entrando…") : "Continuar"}
+  // --- Tela intro do quiz ---
+  if (modo === "cadastro" && fase === "intro") {
+    return (
+      <MolduraOnboarding etapas={{}} ativa="acesso" semCabecalho>
+        <div style={{
+          minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "32px 20px", background: "var(--bg)",
+        }}>
+          <div className="vx-fade" style={{ width: "100%", maxWidth: 560 }}>
+            <div className="vx-onb-eyebrow" style={{ marginBottom: 16 }}>Passo 1 de 6</div>
+            <h1 style={{ fontSize: "clamp(26px, 5vw, 38px)", lineHeight: 1.15, fontFamily: "var(--font-disp)", fontWeight: 800, color: "var(--ink)", margin: "0 0 16px" }}>
+              Crie seu acesso e conecte sua empresa a profissionais de vendas.
+            </h1>
+            <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--muted)", margin: "0 0 28px" }}>
+              Em poucos passos a IA conhece o seu negócio, cria o script e o funil de WhatsApp e leva você até a sua primeira campanha.
+            </p>
+            <ul className="vx-onb-proximos" aria-label="Próximos passos" style={{ marginBottom: 36 }}>
+              {proximos.map((e) => <li key={e.chave}><span aria-hidden="true">{e.n}</span>{e.texto}</li>)}
+            </ul>
+            <button
+              className="vx-btn vx-btn-primary vx-btn-block"
+              style={{ minHeight: 54, fontSize: 16, fontWeight: 700 }}
+              onClick={() => setFase("form")}
+            >
+              Começar agora →
+            </button>
+            <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--muted)" }}>
+              Já tem conta?{" "}
+              <button type="button" className="vx-onb-link" onClick={() => { trocarModo("login"); setFase("form"); }}>
+                Entrar
               </button>
+            </p>
+          </div>
+        </div>
+      </MolduraOnboarding>
+    );
+  }
 
-              <p className="vx-onb-termos">
-                Ao continuar, você aceita os{" "}
-                <button type="button" className="vx-onb-link" onClick={() => { setVoltarPara(modo); setModo("termos"); }}>Termos de Uso</button> da RYCS.
-              </p>
-
-              <hr className="vx-sep" />
-              {modo === "cadastro"
-                ? <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("login")}>Já tenho conta — entrar</button>
-                : <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("cadastro")}>Ainda não tenho conta — criar acesso</button>}
-            </form>
+  // --- Tela de formulário (quiz) ---
+  return (
+    <MolduraOnboarding etapas={{}} ativa="acesso" semCabecalho>
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "32px 20px", background: "var(--bg)",
+      }}>
+        <div className="vx-fade" style={{ width: "100%", maxWidth: 520 }}>
+          {modo !== "recuperar" && (
+            <button
+              type="button" className="vx-onb-link"
+              style={{ fontSize: 13, marginBottom: 20, display: "inline-flex", alignItems: "center", gap: 4, minHeight: 44 }}
+              onClick={() => { trocarModo("cadastro"); setFase("intro"); }}
+            >
+              ← Voltar
+            </button>
           )}
-        </section>
+
+          <div className="vx-onb-card" aria-live="polite">
+            {modo === "recuperar" ? (
+              <RecuperarSenha emailInicial={email} onVoltar={() => trocarModo("login")} />
+            ) : (
+              <form onSubmit={enviar} noValidate>
+                <h2 className="vx-disp vx-onb-card-titulo">{modo === "cadastro" ? "Crie seu acesso" : "Acesse sua conta"}</h2>
+                <p className="vx-mut vx-onb-card-apoio">
+                  {modo === "cadastro" ? "Informe a sua empresa, seu e-mail, uma senha e o WhatsApp para começar." : "Use seu e-mail e sua senha para continuar o cadastro."}
+                </p>
+
+                {convite?.carregando && <div className="vx-onb-aviso">Conferindo o convite…</div>}
+                {conviteValido && (
+                  <div className="vx-onb-aviso">
+                    Convite da RYCS para <b>{convite.email}</b>.{trial ? ` Inclui ${trial} dias grátis no plano escolhido.` : ""}
+                  </div>
+                )}
+                {convite?.ok === false && <div className="vx-onb-erro" role="alert">{convite.erro}</div>}
+
+                {modo === "cadastro" && <>
+                  <div className="vx-onb-campo">
+                    <span className="vx-label" id={`${id}-logo-rotulo`}>Logo da empresa</span>
+                    <div className="vx-onb-logo">
+                      <div className="vx-onb-logo-previa" aria-hidden={!logo}>
+                        {logo ? <img src={logo.dataUri} alt="Logo escolhido" /> : <ImagePlus size={22} aria-hidden="true" />}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button type="button" className="vx-btn" style={{ minHeight: 44 }}
+                          aria-describedby={[`${id}-logo-rotulo`, `${id}-logo-dica`, erros.logo && `${id}-logo-erro`].filter(Boolean).join(" ")}
+                          onClick={() => inputLogo.current?.click()}>
+                          {logo ? "Trocar logo" : "Enviar logo"}
+                        </button>
+                        {logo && (
+                          <button type="button" className="vx-btn vx-btn-ghost" style={{ minHeight: 44 }} onClick={() => setLogo(null)}>
+                            <Trash2 size={15} aria-hidden="true" /> Remover
+                          </button>
+                        )}
+                      </div>
+                      <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                        onChange={(e) => escolherLogo(e.target.files?.[0])} />
+                    </div>
+                    <div id={`${id}-logo-dica`} className="vx-onb-dica">PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
+                    {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
+                  </div>
+
+                  <Campo id={`${id}-nome`} label="Nome da empresa" erro={erros.nome}>
+                    <input id={`${id}-nome`} className="vx-input" autoComplete="organization" maxLength={100}
+                      value={nome} onChange={(e) => { setNome(e.target.value); limparErro("nome"); }} {...props("nome")} />
+                  </Campo>
+                </>}
+
+                <Campo id={`${id}-email`} label="E-mail" erro={erros.email}>
+                  <input id={`${id}-email`} className="vx-input" type="email" autoComplete="email" inputMode="email"
+                    value={email} onChange={(e) => { setEmail(e.target.value); limparErro("email"); }} readOnly={conviteValido && modo === "cadastro"} {...props("email")} />
+                </Campo>
+
+                <Campo id={`${id}-senha`} label="Senha" erro={erros.senha}
+                  dica={modo === "cadastro" ? `Mínimo de ${SENHA_MIN_EMPRESA} caracteres. Toque no olho para ver a senha.` : "Toque no olho para ver a senha."}>
+                  <CampoSenha id={`${id}-senha`} value={senha} onChange={(e) => { setSenha(e.target.value); limparErro("senha"); }}
+                    autoComplete={modo === "cadastro" ? "new-password" : "current-password"} required={false}
+                    invalido={!!erros.senha} descricao={props("senha")["aria-describedby"]} />
+                </Campo>
+
+                {modo === "cadastro" && <>
+                  <Campo id={`${id}-whatsapp`} label="WhatsApp" erro={erros.whatsapp} dica="Com DDD. É por onde a RYCS fala com você sobre a operação.">
+                    <input id={`${id}-whatsapp`} className="vx-input" type="tel" inputMode="numeric" autoComplete="tel-national"
+                      placeholder="(11) 91234-5678" value={whatsapp} onChange={(e) => { setWhatsapp(mascaraWhatsapp(e.target.value)); limparErro("whatsapp"); }} {...props("whatsapp")} />
+                  </Campo>
+                  {indicacao && (
+                    <Campo id={`${id}-indicacao`} label="Código de indicação">
+                      <input id={`${id}-indicacao`} className="vx-input vx-mono" value={indicacao}
+                        onChange={(e) => setIndicacao(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))} />
+                    </Campo>
+                  )}
+                </>}
+
+                {modo === "login" && (
+                  <button type="button" className="vx-onb-link" style={{ minHeight: 44 }} onClick={() => trocarModo("recuperar")}>
+                    Esqueci minha senha
+                  </button>
+                )}
+
+                {erroGeral && <div className="vx-onb-erro" role="alert">{erroGeral}</div>}
+
+                <button className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" type="submit" disabled={salvando || convite?.carregando}>
+                  {salvando ? (modo === "cadastro" ? "Criando acesso…" : "Entrando…") : "Continuar"}
+                </button>
+
+                <p className="vx-onb-termos">
+                  Ao continuar, você aceita os{" "}
+                  <button type="button" className="vx-onb-link" onClick={() => { setVoltarPara(modo); setModo("termos"); }}>Termos de Uso</button> da RYCS.
+                </p>
+
+                <hr className="vx-sep" />
+                {modo === "cadastro"
+                  ? <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("login")}>Já tenho conta — entrar</button>
+                  : <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("cadastro")}>Ainda não tenho conta — criar acesso</button>}
+              </form>
+            )}
+          </div>
+        </div>
       </div>
     </MolduraOnboarding>
   );
