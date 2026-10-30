@@ -130,6 +130,8 @@ export default function EntradaEmpresa() {
         tarja="Empresa"
         titulo="Criar sua conta"
         subtitulo="Acesso rápido à plataforma. Você vai preencher os dados da empresa depois."
+        logoWidth={130}
+        compact
         rodape={
           <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }}
             onClick={() => setModo("inicio")}>
@@ -163,25 +165,27 @@ export default function EntradaEmpresa() {
           </div>
 
           <div className="vx-onb-campo">
-            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", minHeight: 44, fontSize: 13.5 }}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", minHeight: 44, fontSize: 13.5 }}>
               <input
                 type="checkbox" checked={termos} onChange={(e) => setTermos(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: "var(--brand)", flexShrink: 0 }}
+                style={{ width: 18, height: 18, marginTop: 2, accentColor: "var(--brand)", flexShrink: 0 }}
                 aria-describedby={erros.termos ? `${id}-termos-erro` : undefined}
               />
-              Concordo com os{" "}
-              <a
-                href="https://rycs.pro/termos" target="_blank" rel="noreferrer"
-                className="vx-onb-link" style={{ fontSize: "inherit" }}
-              >
-                Termos de Uso
-              </a>{" "}e a{" "}
-              <a
-                href="https://rycs.pro/privacidade" target="_blank" rel="noreferrer"
-                className="vx-onb-link" style={{ fontSize: "inherit" }}
-              >
-                Política de Privacidade
-              </a>
+              <span>
+                Concordo com os{" "}
+                <a
+                  href="https://rycs.pro/termos" target="_blank" rel="noreferrer"
+                  className="vx-onb-link" style={{ fontSize: "inherit" }}
+                >
+                  Termos de Uso
+                </a>{" "}e a{" "}
+                <a
+                  href="https://rycs.pro/privacidade" target="_blank" rel="noreferrer"
+                  className="vx-onb-link" style={{ fontSize: "inherit" }}
+                >
+                  Política de Privacidade
+                </a>
+              </span>
             </label>
             {erros.termos && <div id={`${id}-termos-erro`} className="vx-onb-erro" role="alert">{erros.termos}</div>}
           </div>
@@ -189,7 +193,7 @@ export default function EntradaEmpresa() {
           <button
             type="submit"
             className="vx-btn vx-btn-primary vx-btn-block"
-            style={{ minHeight: 52, marginTop: 8 }}
+            style={{ minHeight: 48, marginTop: 6 }}
             disabled={salvando}
           >
             {salvando ? "Criando conta…" : "Criar conta e confirmar e-mail"}
