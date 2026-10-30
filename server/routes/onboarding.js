@@ -9,7 +9,7 @@ import {
   PARTES_IA, normalizarParte, parteCompleta, validarSenhaEmpresa,
 } from "../../shared/onboarding.js";
 import { hashToken, novoToken, criarOnboarding, obterOnboarding, concluir, serializar, trialDoOnboarding } from "../services/onboarding.js";
-import { registrarEvento } from "../services/onboardingEventos.js";
+import { registrarEvento, metricas as metricasOnboarding } from "../services/onboardingEventos.js";
 import { emailConfirmacaoConta } from "../services/email.js";
 import { armazenamentoDisponivel, salvar, remover, ArquivoGrandeDemais } from "../services/arquivos.js";
 import { motorAtual, geracaoAtual, serializarGeracao, criarGeracao, tentarDeNovo } from "../services/iaOnboarding.js";
@@ -577,6 +577,12 @@ router.post("/admin/onboarding-convites/:id/revogar", (req, res) => {
     .run(agora(), req.params.id);
   if (!r.changes) return res.status(409).json({ error: "Este convite já foi usado ou cancelado." });
   res.json({ ok: true });
+});
+
+// Métricas de funil do onboarding (só admin).
+router.get("/admin/onboarding/metricas", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas administradores." });
+  res.json(metricasOnboarding());
 });
 
 export default router;

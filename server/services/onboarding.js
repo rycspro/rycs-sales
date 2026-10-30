@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import db, { agora } from "../db.js";
 import { normalizarEtapas, etapaAtual, concluirEtapa, onboardingConcluido, onboardingBloqueia } from "../../shared/onboarding.js";
+import { registrarEvento } from "./onboardingEventos.js";
 
 // Progresso do onboarding no servidor. A tela pergunta aqui em vez de decidir
 // sozinha — o mesmo princípio do portão de assinatura.
@@ -36,8 +37,13 @@ export function concluir(companyId, chave) {
   const novas = concluirEtapa(JSON.parse(linha.etapas || "{}"), chave);
   if (!novas) return null;
   const t = agora();
+  const foiConcluido = onboardingConcluido(novas);
   db.prepare("UPDATE onboarding SET etapas = ?, concluidoEm = ?, atualizadoEm = ? WHERE companyId = ?")
-    .run(JSON.stringify(novas), onboardingConcluido(novas) ? (linha.concluidoEm || t) : null, t, companyId);
+    .run(JSON.stringify(novas), foiConcluido ? (linha.concluidoEm || t) : null, t, companyId);
+  const ordemEtapas = ["acesso", "empresa", "academy", "ia", "plano", "campanha"];
+  const n = ordemEtapas.indexOf(chave) + 1;
+  registrarEvento(companyId, "etapa_concluida", { etapa: chave, n });
+  if (foiConcluido && !linha.concluidoEm) registrarEvento(companyId, "cadastro_concluido", {});
   return lerLinha(companyId);
 }
 
