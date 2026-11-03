@@ -107,7 +107,12 @@ export default function App() {
 
   // Acesso da empresa: prefetch em paralelo com onboarding, evita cascata.
   const [acesso, setAcesso] = useState(undefined);
-  const consultarAcesso = useCallback(() => api("/subscription/access").then((r) => setAcesso(r || null)), []);
+  const consultarAcesso = useCallback(() =>
+    api("/subscription/access").then((r) => {
+      if (r) { setAcesso(r); return r; }
+      setAcesso({ liberado: true, plano: "livre", motivo: "fallback" });
+      return null;
+    }), []);
 
   useEffect(() => {
     if (!user || previaQualificacao) return;

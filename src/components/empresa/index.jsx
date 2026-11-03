@@ -39,10 +39,11 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
 
   if (!emp) return null;
 
-  // Enquanto a resposta não chega, não mostra nem o painel nem o bloqueio:
-  // piscar a plataforma para quem não tem plano e tirar logo depois é pior que
-  // esperar meio segundo.
-  if (acesso === null) return <div className="vx-fade" style={{ padding: 20 }} />;
+  if (acesso === null) return (
+    <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}>
+      <div className="vx-spinner" />
+    </div>
+  );
 
   if (!acesso.liberado) {
     return (

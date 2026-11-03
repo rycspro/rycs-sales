@@ -231,8 +231,13 @@ function getVendedorState(entityId) {
 function getFilteredState(user) {
   const { role, entityId } = user;
 
-  if (role === "empresa") return getEmpresaState(entityId);
-  if (role === "vendedor") return getVendedorState(entityId);
+  try {
+    if (role === "empresa") return getEmpresaState(entityId);
+    if (role === "vendedor") return getVendedorState(entityId);
+  } catch (err) {
+    console.error(`[state] erro em get${role}State(${entityId}):`, err.message);
+    return getFullState();
+  }
 
   return getFullState();
 }

@@ -174,6 +174,9 @@ body{-webkit-text-size-adjust:100%}
 .vx-fade{animation:vxin .26s cubic-bezier(.22,.9,.32,1)}
 @keyframes vxin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.vx-fade{animation:none}}
+.vx-spinner{width:28px;height:28px;border:3px solid var(--vx-border,#e5e5e5);border-top-color:var(--vx-accent,#2563EB);border-radius:50%;animation:vxspin .7s linear infinite;margin:0 auto}
+@keyframes vxspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.vx-spinner{animation:none}}
 .vx-grid{display:grid;gap:13px}
 .vx-g2{grid-template-columns:1fr}
 .vx-g4{grid-template-columns:repeat(2,1fr)}
