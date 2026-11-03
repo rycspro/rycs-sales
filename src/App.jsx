@@ -104,10 +104,18 @@ export default function App() {
     const r = await api("/onboarding");
     setOnb(r && !r.error ? r : { erro: r?.error || "Não foi possível carregar o seu cadastro." });
   }, []);
+
+  // Acesso da empresa: prefetch em paralelo com onboarding, evita cascata.
+  const [acesso, setAcesso] = useState(undefined);
+  const consultarAcesso = useCallback(() => api("/subscription/access").then((r) => setAcesso(r || null)), []);
+
   useEffect(() => {
     if (!user || previaQualificacao) return;
-    if (user.role === "empresa") carregarOnboarding();
-  }, [user, carregarOnboarding]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (user.role === "empresa") {
+      carregarOnboarding();
+      consultarAcesso();
+    }
+  }, [user, carregarOnboarding, consultarAcesso]); // eslint-disable-line react-hooks/exhaustive-deps
   // Onboarding fora da frente do painel: o endereço de etapa não tem o que mostrar.
   useEffect(() => {
     if (onb && !onb.erro && !onb.bloqueia && window.location.pathname.startsWith("/onboarding")) window.history.replaceState({}, "", "/");
@@ -322,7 +330,7 @@ export default function App() {
 
       <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"}>
         {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
-        {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} />}
+        {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
         {role === "admin" && <Admin {...ctx} aba={aba} />}
       </Shell>
 

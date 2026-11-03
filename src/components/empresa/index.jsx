@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import PainelEmpresa from "./PainelEmpresa.jsx";
@@ -21,7 +21,7 @@ import Assinatura from "./Assinatura.jsx";
 import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
 import BannerCerebro from "./BannerCerebro.jsx";
 
-export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar }) {
+export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const sair = async () => {
     await api("/auth/logout", {});
     window.location.reload();
@@ -33,11 +33,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar 
   const [camposAcademyPendentes, setCamposAcademyPendentes] = useState([]);
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
 
-  // Portão de acesso. Quem decide é o servidor — a tela só pergunta e obedece.
-  // Decidir aqui também produziria o caso em que a tela libera e a API recusa.
-  const [acesso, setAcesso] = useState(null);
-  const consultarAcesso = () => api("/subscription/access").then((r) => setAcesso(r || null));
-  useEffect(() => { consultarAcesso(); }, []);
+  // Portão de acesso: prefetched no App.jsx em paralelo com onboarding.
+  const acesso = acessoProp === undefined ? null : acessoProp;
+  const consultarAcesso = consultarAcessoProp || (() => api("/subscription/access"));
 
   if (!emp) return null;
 

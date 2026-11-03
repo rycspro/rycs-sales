@@ -49,16 +49,36 @@ function parseCampaign(row) {
 }
 
 function buildSellersWithRelations(sellers) {
-  const apps = db.prepare("SELECT * FROM applications").all();
-  const progress = db.prepare("SELECT * FROM course_progress").all();
-  const scores = db.prepare("SELECT * FROM score_dimensions").all();
-  const certifications = db.prepare("SELECT * FROM certifications").all();
-  const courseCertifications = db.prepare(`
-    SELECT ce.sellerId, c.funcao, ce.percentual, ce.emitidoEm AS criadoEm, ce.codigo, c.titulo AS curso
-    FROM course_certificates ce
-    JOIN courses c ON c.id = ce.courseId
-    WHERE c.funcao != ''
-  `).all();
+  const ids = sellers.map((s) => s.id);
+  const usarFiltro = ids.length < 200 && ids.length > 0;
+
+  const placeholders = usarFiltro ? ids.map(() => "?").join(",") : null;
+
+  const apps = usarFiltro
+    ? db.prepare(`SELECT * FROM applications WHERE sellerId IN (${placeholders})`).all(...ids)
+    : db.prepare("SELECT * FROM applications").all();
+  const progress = usarFiltro
+    ? db.prepare(`SELECT * FROM course_progress WHERE sellerId IN (${placeholders})`).all(...ids)
+    : db.prepare("SELECT * FROM course_progress").all();
+  const scores = usarFiltro
+    ? db.prepare(`SELECT * FROM score_dimensions WHERE sellerId IN (${placeholders})`).all(...ids)
+    : db.prepare("SELECT * FROM score_dimensions").all();
+  const certifications = usarFiltro
+    ? db.prepare(`SELECT * FROM certifications WHERE sellerId IN (${placeholders})`).all(...ids)
+    : db.prepare("SELECT * FROM certifications").all();
+  const courseCertifications = usarFiltro
+    ? db.prepare(`
+        SELECT ce.sellerId, c.funcao, ce.percentual, ce.emitidoEm AS criadoEm, ce.codigo, c.titulo AS curso
+        FROM course_certificates ce
+        JOIN courses c ON c.id = ce.courseId
+        WHERE c.funcao != '' AND ce.sellerId IN (${placeholders})
+      `).all(...ids)
+    : db.prepare(`
+        SELECT ce.sellerId, c.funcao, ce.percentual, ce.emitidoEm AS criadoEm, ce.codigo, c.titulo AS curso
+        FROM course_certificates ce
+        JOIN courses c ON c.id = ce.courseId
+        WHERE c.funcao != ''
+      `).all();
 
   return sellers.map((s) => {
     const aplicacoes = {};
@@ -114,70 +134,107 @@ export function getFullState() {
   return { sellers, companies, submissions, withdrawals, messages, campaigns, leads };
 }
 
+// Queries diretas por papel — evita carregar o banco inteiro para filtrar em JS.
+
+function getEmpresaState(entityId) {
+  const meuId = entityId;
+
+  const dims = db.prepare("SELECT dimension, valor FROM company_score_dimensions WHERE companyId = ?").all(meuId);
+  const dimMap = {};
+  dims.forEach((d) => { dimMap[d.dimension] = d.valor; });
+  const companies = db.prepare("SELECT * FROM companies WHERE id = ?").all(meuId).map((row) => parseCompany(row, dimMap));
+
+  const campaigns = db.prepare("SELECT * FROM campaigns WHERE companyId = ? ORDER BY criadoEm DESC").all(meuId).map(parseCampaign);
+  const campIds = campaigns.map((c) => c.id);
+  const campaignApps = campIds.length
+    ? db.prepare(`SELECT * FROM campaign_applications WHERE campaignId IN (${campIds.map(() => "?").join(",")})`)
+        .all(...campIds)
+    : [];
+  campaigns.forEach((c) => { c.candidaturas = campaignApps.filter((a) => a.campaignId === c.id); });
+
+  const idsCandidatos = new Set(campaignApps.map((a) => a.sellerId));
+  const apps = db.prepare("SELECT * FROM applications WHERE companyId = ?").all(meuId);
+  apps.forEach((a) => idsCandidatos.add(a.sellerId));
+
+  const sellerIds = [...idsCandidatos];
+  let sellers = [];
+  if (sellerIds.length) {
+    const raw = db.prepare(`SELECT * FROM sellers WHERE id IN (${sellerIds.map(() => "?").join(",")})`)
+      .all(...sellerIds);
+    sellers = buildSellersWithRelations(raw);
+  }
+
+  const submissions = db.prepare("SELECT * FROM submissions WHERE companyId = ? ORDER BY criadoEm DESC").all(meuId).map(parseSub);
+  const messages = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(meuId);
+  const leads = db.prepare("SELECT * FROM leads WHERE companyId = ? ORDER BY atualizadoEm DESC").all(meuId);
+
+  return { sellers, companies, submissions, withdrawals: [], messages, campaigns, leads };
+}
+
+function getVendedorState(entityId) {
+  const meuId = entityId;
+  const rawSeller = db.prepare("SELECT * FROM sellers WHERE id = ?").all(meuId);
+  const sellers = buildSellersWithRelations(rawSeller);
+  const meuVendedor = sellers[0];
+  const oportunidadesLiberadas = ["aprovado", "parcial"].includes(meuVendedor?.status);
+
+  let companies = [];
+  if (oportunidadesLiberadas) {
+    const allDims = db.prepare("SELECT companyId, dimension, valor FROM company_score_dimensions").all();
+    const dimsByCompany = {};
+    allDims.forEach((d) => {
+      if (!dimsByCompany[d.companyId]) dimsByCompany[d.companyId] = {};
+      dimsByCompany[d.companyId][d.dimension] = d.valor;
+    });
+    companies = db.prepare("SELECT * FROM companies").all().map((row) => parseCompany(row, dimsByCompany[row.id])).map((c) => ({
+      ...c,
+      qualificacao: {
+        ...c.qualificacao,
+        questoes: (c.qualificacao?.questoes || []).map(({ correta, ...q }) => q),
+      },
+    }));
+  }
+
+  const submissions = db.prepare("SELECT * FROM submissions WHERE sellerId = ? ORDER BY criadoEm DESC").all(meuId).map(parseSub);
+  const withdrawals = db.prepare("SELECT * FROM withdrawals WHERE sellerId = ? ORDER BY criadoEm DESC").all(meuId);
+  const messages = db.prepare("SELECT * FROM messages WHERE sellerId = ? ORDER BY ts ASC").all(meuId);
+  const leads = db.prepare("SELECT * FROM leads WHERE sellerId = ? ORDER BY atualizadoEm DESC").all(meuId);
+
+  let campaigns = [];
+  if (oportunidadesLiberadas) {
+    campaigns = db.prepare("SELECT * FROM campaigns WHERE status = 'ativa' ORDER BY criadoEm DESC").all().map(parseCampaign);
+    const campIds = campaigns.map((c) => c.id);
+    const campaignApps = campIds.length
+      ? db.prepare(`SELECT * FROM campaign_applications WHERE campaignId IN (${campIds.map(() => "?").join(",")}) AND sellerId = ?`)
+          .all(...campIds, meuId)
+      : [];
+    const tentativas = db.prepare(
+      "SELECT campaignId, MAX(score) as score, MAX(aprovado) as aprovado FROM campaign_quiz_attempts WHERE sellerId = ? GROUP BY campaignId"
+    ).all(meuId);
+    const quizByCamp = {};
+    tentativas.forEach((t) => { quizByCamp[t.campaignId] = t; });
+    campaigns = campaigns.map((c) => {
+      const melhor = quizByCamp[c.id];
+      return {
+        ...c,
+        candidaturas: campaignApps.filter((a) => a.campaignId === c.id),
+        quiz: c.quiz.map(({ correta, ...q }) => q),
+        quizAprovado: melhor ? !!melhor.aprovado : false,
+        quizScore: melhor?.score ?? null,
+      };
+    });
+  }
+
+  return { sellers, companies, submissions, withdrawals, messages, campaigns, leads };
+}
+
 function getFilteredState(user) {
-  const full = getFullState();
   const { role, entityId } = user;
 
-  if (role === "admin") return full;
+  if (role === "empresa") return getEmpresaState(entityId);
+  if (role === "vendedor") return getVendedorState(entityId);
 
-  if (role === "vendedor") {
-    const meuId = entityId;
-    const meuVendedor = full.sellers.find((s) => s.id === meuId);
-    const oportunidadesLiberadas = ["aprovado", "parcial"].includes(meuVendedor?.status);
-    return {
-      sellers: full.sellers.filter((s) => s.id === meuId),
-      // A alternativa correta só existe no servidor. O vendedor recebe a
-      // pergunta e as opções, nunca o gabarito embutido no cadastro da empresa.
-      companies: oportunidadesLiberadas ? full.companies.map((c) => ({
-        ...c,
-        qualificacao: {
-          ...c.qualificacao,
-          questoes: (c.qualificacao?.questoes || []).map(({ correta, ...q }) => q),
-        },
-      })) : [],
-      submissions: full.submissions.filter((s) => s.sellerId === meuId),
-      withdrawals: full.withdrawals.filter((w) => w.sellerId === meuId),
-      messages: full.messages.filter((m) => m.sellerId === meuId),
-      campaigns: oportunidadesLiberadas ? (() => {
-        const ativas = full.campaigns.filter((c) => c.status === "ativa");
-        const tentativas = db.prepare(
-          "SELECT campaignId, MAX(score) as score, MAX(aprovado) as aprovado FROM campaign_quiz_attempts WHERE sellerId = ? GROUP BY campaignId"
-        ).all(meuId);
-        const quizByCamp = {};
-        tentativas.forEach((t) => { quizByCamp[t.campaignId] = t; });
-        return ativas.map((c) => {
-          const melhor = quizByCamp[c.id];
-          return {
-            ...c,
-            candidaturas: c.candidaturas.filter((a) => a.sellerId === meuId),
-            quiz: c.quiz.map(({ correta, ...q }) => q),
-            quizAprovado: melhor ? !!melhor.aprovado : false,
-            quizScore: melhor?.score ?? null,
-          };
-        });
-      })() : [],
-      leads: full.leads.filter((l) => l.sellerId === meuId),
-    };
-  }
-
-  if (role === "empresa") {
-    const meuId = entityId;
-    const idsCandidatosCampanha = new Set(full.campaigns
-      .filter((c) => c.companyId === meuId)
-      .flatMap((c) => c.candidaturas.map((a) => a.sellerId)));
-    const meusSellers = full.sellers.filter((s) => s.aplicacoes?.[meuId] || idsCandidatosCampanha.has(s.id));
-    return {
-      sellers: meusSellers,
-      companies: full.companies.filter((c) => c.id === meuId),
-      submissions: full.submissions.filter((s) => s.companyId === meuId),
-      withdrawals: [],
-      messages: full.messages.filter((m) => m.companyId === meuId),
-      campaigns: full.campaigns.filter((c) => c.companyId === meuId),
-      leads: full.leads.filter((l) => l.companyId === meuId),
-    };
-  }
-
-  return full;
+  return getFullState();
 }
 
 router.get("/state", (req, res) => {
