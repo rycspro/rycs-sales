@@ -175,7 +175,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
 
   return <div className="vx-fade">
     <div className="vx-page-head">
-      <div><div className="vx-eyebrow">Central de gestão</div><h1 className="vx-disp">Profissionais</h1><p>Gestão dos profissionais disponíveis, usando somente dados reais da plataforma.</p></div>
+      <div><h1 className="vx-disp">Profissionais</h1><p>Gestão dos profissionais disponíveis, usando somente dados reais da plataforma.</p></div>
       <span className="vx-chip"><UserRoundSearch size={13} />{filtrados.length} profissionais</span>
     </div>
 
