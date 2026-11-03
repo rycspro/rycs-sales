@@ -222,7 +222,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
             <article key={p.id} className="vx-card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer" }}
               onClick={() => { setSelecionado(p); setCampanhaDestino(""); }}>
               {/* foto */}
-              <div style={{ width: "100%", aspectRatio: "4/3", background: "var(--surface-2)", position: "relative", flexShrink: 0 }}>
+              <div style={{ width: "100%", aspectRatio: "16/9", background: "var(--surface-2)", position: "relative", flexShrink: 0 }}>
                 {p.foto
                   ? <img src={p.foto} alt={p.nome} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 40, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)", letterSpacing: -1 }}>{iniciais(p.nome)}</div>
