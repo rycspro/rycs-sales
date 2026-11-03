@@ -232,18 +232,18 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     )}
 
     {carregando ? <div className="vx-card vx-skeleton" style={{ height: 280 }} /> : (
-      <div className="vx-prof-grid" style={{ gridAutoRows: "1fr" }}>
+      <div className="vx-prof-grid">
         {filtrados.map((p) => {
           const scoreVal = nota(p.nota) || 100;
           const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
           const scoreBg  = scoreVal >= 80 ? "#ecfeff" : scoreVal >= 50 ? "#fffbeb" : "#fef2f2";
           return (
-            <article key={p.id} className="vx-card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer" }}
+            <article key={p.id} className="vx-card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", height: 340 }}
               onClick={() => { setSelecionado(p); setCampanhaDestino(""); }}>
-              {/* foto */}
-              <div style={{ width: "100%", aspectRatio: "3/1", background: "var(--surface-2)", position: "relative", flexShrink: 0 }}>
+              {/* foto — altura fixa, corta o excesso */}
+              <div style={{ width: "100%", height: 180, flexShrink: 0, background: "var(--surface-2)", position: "relative", overflow: "hidden" }}>
                 {p.foto
-                  ? <img src={p.foto} alt={p.nome} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  ? <img src={p.foto} alt={p.nome} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }} />
                   : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 40, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)", letterSpacing: -1 }}>{iniciais(p.nome)}</div>
                 }
                 {/* badge score canto superior direito */}
@@ -252,8 +252,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                 </span>
               </div>
 
-              {/* info */}
-              <div style={{ padding: "12px 14px 0", display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+              {/* info — flex:1 empurra o botão para baixo */}
+              <div style={{ padding: "12px 14px 0", display: "flex", flexDirection: "column", gap: 5, flex: 1, minHeight: 0 }}>
                 {/* linha 1: nome + idade */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                   <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p.nome}</span>
@@ -274,21 +274,22 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fitCultural(p).percentual}% compat.</span>
                 </div>
-                {/* botão convite */}
+                {/* botão convite — marginTop auto gruda no fundo */}
                 {(() => {
                   const status = convites[p.id];
+                  const base = { marginTop: "auto", width: "100%", border: "none", borderRadius: "0 0 10px 10px", fontSize: 13, fontWeight: 700, letterSpacing: ".01em", padding: "10px 0", cursor: "pointer" };
                   if (status === "aprovado") return (
-                    <div style={{ marginTop: 6, padding: "7px 0 0", borderTop: "1px solid var(--border)", fontSize: 12, fontWeight: 600, color: "var(--brand)", textAlign: "center" }}>✓ Parceria ativa</div>
+                    <div style={{ ...base, background: "#dcfce7", color: "#166534", textAlign: "center", cursor: "default" }}>✓ Parceria ativa</div>
                   );
                   if (status === "pendente") return (
-                    <div style={{ marginTop: 6, padding: "7px 0 0", borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--muted)", textAlign: "center" }}>Convite enviado · aguardando</div>
+                    <div style={{ ...base, background: "var(--surface-2)", color: "var(--muted)", textAlign: "center", cursor: "default", fontSize: 12 }}>Convite enviado · aguardando</div>
                   );
                   if (status === "recusado") return (
-                    <button onClick={(e) => enviarConvite(e, p.id)} style={{ marginTop: 6, width: "100%", padding: "7px 0", borderTop: "1px solid var(--border)", background: "none", border: "none", borderRadius: 0, fontSize: 12, color: "#EF4444", cursor: "pointer", fontWeight: 600 }}>Reenviar convite</button>
+                    <button onClick={(e) => enviarConvite(e, p.id)} style={{ ...base, background: "#fee2e2", color: "#b91c1c" }}>Reenviar convite</button>
                   );
                   return (
                     <button onClick={(e) => enviarConvite(e, p.id)} disabled={status === "enviando"}
-                      style={{ marginTop: 6, width: "100%", padding: "8px 0", background: "var(--brand)", color: "#fff", border: "none", borderRadius: "0 0 10px 10px", fontSize: 13, fontWeight: 700, cursor: status === "enviando" ? "default" : "pointer", opacity: status === "enviando" ? 0.7 : 1, letterSpacing: ".01em" }}>
+                      style={{ ...base, background: "var(--brand)", color: "#fff", opacity: status === "enviando" ? 0.7 : 1, cursor: status === "enviando" ? "default" : "pointer" }}>
                       {status === "enviando" ? "Enviando…" : "Enviar Convite"}
                     </button>
                   );
