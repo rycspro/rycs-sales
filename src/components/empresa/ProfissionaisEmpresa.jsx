@@ -237,63 +237,59 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
           const scoreVal = nota(p.nota) || 100;
           const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
           const scoreBg  = scoreVal >= 80 ? "#ecfeff" : scoreVal >= 50 ? "#fffbeb" : "#fef2f2";
+          const fit = fitCultural(p);
+          const conviteStatus = convites[p.id];
           return (
-            <article key={p.id} className="vx-card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", height: 340 }}
+            <article key={p.id} className="vx-prof-card"
               onClick={() => { setSelecionado(p); setCampanhaDestino(""); }}>
-              {/* foto — altura fixa, corta o excesso */}
-              <div style={{ width: "100%", height: 180, flexShrink: 0, background: "var(--surface-2)", position: "relative", overflow: "hidden" }}>
+
+              {/* FOTO — 220px fixos, qualquer proporção é cortada */}
+              <div className="vx-prof-card__img">
                 {p.foto
-                  ? <img src={p.foto} alt={p.nome} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }} />
-                  : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 40, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)", letterSpacing: -1 }}>{iniciais(p.nome)}</div>
+                  ? <img src={p.foto} alt={p.nome} loading="lazy" decoding="async" />
+                  : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 36, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(p.nome)}</div>
                 }
-                {/* badge score canto superior direito */}
-                <span style={{ position: "absolute", top: 10, right: 10, background: "#0E7490", color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 11px", backdropFilter: "blur(4px)", letterSpacing: ".01em" }}>
+                <span style={{ position: "absolute", top: 10, right: 10, background: "#0E7490", color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px", letterSpacing: ".01em" }}>
                   {scoreVal}
                 </span>
               </div>
 
-              {/* info — flex:1 empurra o botão para baixo */}
-              <div style={{ padding: "12px 14px 0", display: "flex", flexDirection: "column", gap: 5, flex: 1, minHeight: 0 }}>
-                {/* linha 1: nome + idade */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p.nome}</span>
-                  {calcularIdade(p.dataNascimento) !== null && (
-                    <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{calcularIdade(p.dataNascimento)} anos</span>
-                  )}
-                </div>
-                {/* linha 2: função */}
-                <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Função:</b> {PERFIL[p.perfil] || p.perfil || "Não informada"}</span>
-                {/* linha 3: localização */}
-                {[p.cidade, p.estado].filter(Boolean).length > 0 && (
-                  <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Local:</b> {[p.cidade, p.estado].filter(Boolean).join(", ")}</span>
-                )}
-                {/* linha 4: compatibilidade */}
-                <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 7 }}>
-                  <div style={{ flex: 1, height: 5, borderRadius: 99, background: "var(--surface-2)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${fitCultural(p).percentual}%`, borderRadius: 99, background: fitCultural(p).percentual >= 70 ? "var(--brand)" : fitCultural(p).percentual >= 40 ? "#F59E0B" : "#EF4444" }} />
+              {/* CONTEÚDO — flex:1, botão sempre no fundo */}
+              <div className="vx-prof-card__body">
+                <div className="vx-prof-card__info">
+                  {/* nome + idade */}
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p.nome}</span>
+                    {calcularIdade(p.dataNascimento) !== null && (
+                      <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{calcularIdade(p.dataNascimento)} anos</span>
+                    )}
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fitCultural(p).percentual}% compat.</span>
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Função:</b> {PERFIL[p.perfil] || p.perfil || "Não informada"}</span>
+                  {[p.cidade, p.estado].filter(Boolean).length > 0 && (
+                    <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Local:</b> {[p.cidade, p.estado].filter(Boolean).join(", ")}</span>
+                  )}
+                  {/* barra de compatibilidade */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 4 }}>
+                    <div style={{ flex: 1, height: 5, borderRadius: 99, background: "var(--surface-2)", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${fit.percentual}%`, borderRadius: 99, background: fit.percentual >= 70 ? "var(--brand)" : fit.percentual >= 40 ? "#F59E0B" : "#EF4444" }} />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fit.percentual}% compat.</span>
+                  </div>
                 </div>
-                {/* botão convite — marginTop auto gruda no fundo */}
-                {(() => {
-                  const status = convites[p.id];
-                  const base = { marginTop: "auto", width: "100%", border: "none", borderRadius: "0 0 10px 10px", fontSize: 13, fontWeight: 700, letterSpacing: ".01em", padding: "10px 0", cursor: "pointer" };
-                  if (status === "aprovado") return (
-                    <div style={{ ...base, background: "#dcfce7", color: "#166534", textAlign: "center", cursor: "default" }}>✓ Parceria ativa</div>
-                  );
-                  if (status === "pendente") return (
-                    <div style={{ ...base, background: "var(--surface-2)", color: "var(--muted)", textAlign: "center", cursor: "default", fontSize: 12 }}>Convite enviado · aguardando</div>
-                  );
-                  if (status === "recusado") return (
-                    <button onClick={(e) => enviarConvite(e, p.id)} style={{ ...base, background: "#fee2e2", color: "#b91c1c" }}>Reenviar convite</button>
-                  );
-                  return (
-                    <button onClick={(e) => enviarConvite(e, p.id)} disabled={status === "enviando"}
-                      style={{ ...base, background: "var(--brand)", color: "#fff", opacity: status === "enviando" ? 0.7 : 1, cursor: status === "enviando" ? "default" : "pointer" }}>
-                      {status === "enviando" ? "Enviando…" : "Enviar Convite"}
-                    </button>
-                  );
-                })()}
+
+                {/* BOTÃO — sempre no fundo via margin-top:auto */}
+                <div className="vx-prof-card__actions">
+                  {conviteStatus === "aprovado"
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled>✓ Parceria ativa</button>
+                    : conviteStatus === "pendente"
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--muted" disabled>Convite enviado · aguardando</button>
+                    : conviteStatus === "recusado"
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)}>Reenviar convite</button>
+                    : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)} style={{ opacity: conviteStatus === "enviando" ? 0.7 : 1 }}>
+                        {conviteStatus === "enviando" ? "Enviando…" : "Enviar Convite"}
+                      </button>
+                  }
+                </div>
               </div>
             </article>
           );

@@ -180,11 +180,22 @@ body{-webkit-text-size-adjust:100%}
 @keyframes vxspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.vx-spinner{animation:none}}
 .vx-grid{display:grid;gap:13px}
-.vx-prof-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start}
-.vx-prof-grid article{height:100%;display:flex;flex-direction:column}
-@media(max-width:1100px){.vx-prof-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:760px){.vx-prof-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:480px){.vx-prof-grid{grid-template-columns:1fr}}
+.vx-prof-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;align-items:stretch}
+.vx-prof-grid>.vx-prof-card{min-width:0;height:420px;display:flex;flex-direction:column;overflow:hidden;border-radius:16px;background:#fff;border:1px solid var(--border);box-shadow:0 4px 12px rgba(0,0,0,.06);cursor:pointer;transition:box-shadow .15s}
+.vx-prof-grid>.vx-prof-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.vx-prof-card__img{width:100%;height:220px;min-height:220px;max-height:220px;flex-shrink:0;overflow:hidden;position:relative;background:var(--surface-2)}
+.vx-prof-card__img img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+.vx-prof-card__body{display:flex;flex-direction:column;flex:1;padding:14px 16px 16px;min-height:0;overflow:hidden}
+.vx-prof-card__info{display:flex;flex-direction:column;gap:4px}
+.vx-prof-card__actions{margin-top:auto;padding-top:12px;width:100%}
+.vx-prof-card__btn{width:100%;height:48px;min-height:48px;border:none;border-radius:12px;background:var(--brand);color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;letter-spacing:.01em}
+.vx-prof-card__btn:hover:not(:disabled){background:#1d4ed8}
+.vx-prof-card__btn--success{background:#dcfce7;color:#166534;cursor:default}
+.vx-prof-card__btn--muted{background:var(--surface-2);color:var(--muted);cursor:default;font-size:12px;font-weight:500}
+.vx-prof-card__btn--danger{background:#fee2e2;color:#b91c1c}
+.vx-prof-card__btn--danger:hover{background:#fecaca}
+@media(max-width:1200px){.vx-prof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.vx-prof-grid{grid-template-columns:1fr}}
 .vx-g2{grid-template-columns:1fr}
 .vx-g4{grid-template-columns:repeat(2,1fr)}
 .vx-g3{grid-template-columns:1fr}
