@@ -224,7 +224,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
               {/* foto */}
               <div style={{ width: "100%", aspectRatio: "4/3", background: "var(--surface-2)", position: "relative", flexShrink: 0 }}>
                 {p.foto
-                  ? <img src={p.foto} alt={p.nome} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  ? <img src={p.foto} alt={p.nome} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 40, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)", letterSpacing: -1 }}>{iniciais(p.nome)}</div>
                 }
                 {/* badge score canto superior direito */}
@@ -258,7 +258,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
         <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 980 }}>
           <div className="vx-row"><div><div className="vx-eyebrow">Perfil completo</div><h2 className="vx-disp" style={{ margin: "4px 0" }}>{p.nome}</h2></div><button className="vx-btn vx-btn-ghost" onClick={() => setSelecionado(null)}><X size={16} /></button></div>
           <div className="vx-row" style={{ alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
-            <div className="vx-avatar" style={{ width: 76, height: 76, fontSize: 22, ...(p.foto ? { padding: 0, overflow: "hidden" } : {}) }}>{p.foto ? <img src={p.foto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : iniciais(p.nome)}</div>
+            <div className="vx-avatar" style={{ width: 76, height: 76, fontSize: 22, ...(p.foto ? { padding: 0, overflow: "hidden" } : {}) }}>{p.foto ? <img src={p.foto} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : iniciais(p.nome)}</div>
             <div style={{ flex: 1, minWidth: 240 }}><p className="vx-mut" style={{ marginTop: 0 }}>{text(p.bio || p.experiencia, "Apresentação em atualização.")}</p><Tags itens={[PERFIL[p.perfil] || p.perfil, ...arr(p.modalidades)].filter(Boolean)} /></div>
           </div>
 

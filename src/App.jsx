@@ -166,7 +166,7 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    const iv = setInterval(() => carregarState(), 30000);
+    const iv = setInterval(() => carregarState(), 60000);
     return () => clearInterval(iv);
   }, [user, carregarState]);
 

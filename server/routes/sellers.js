@@ -24,12 +24,25 @@ function notificarCadastroCompleto(sellerId) {
 
 const router = Router();
 
+// Cache de 60s para a lista base de profissionais (sem dados de empresa)
+let _profCache = null;
+let _profCacheTs = 0;
+function getProfissionaisBase() {
+  const now = Date.now();
+  if (_profCache && now - _profCacheTs < 60000) return _profCache;
+  _profCache = db.prepare(`SELECT id, nome, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial,
+    CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
+    titulo, bio, segmentos, modalidades, skills, disponibilidade, criadoEm, status
+    FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
+  _profCacheTs = now;
+  return _profCache;
+}
+export function invalidarCacheProfissionais() { _profCacheTs = 0; }
+
 router.get("/professionals/active", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
   const companyId = req.user.entityId;
-  const rows = db.prepare(`SELECT id, nome, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial,
-    foto, titulo, bio, segmentos, modalidades, skills, disponibilidade, criadoEm, status
-    FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
+  const rows = getProfissionaisBase();
   const certificacoes = db.prepare("SELECT sellerId, funcao, nivel, percentual FROM certifications").all();
   const pedidos = new Map(db.prepare("SELECT sellerId, status FROM partnership_requests WHERE companyId = ?").all(companyId).map((p) => [p.sellerId, p.status]));
   const notas = new Map(db.prepare("SELECT sellerId, observacao FROM professional_notes WHERE companyId = ?").all(companyId).map((n) => [n.sellerId, n.observacao]));
@@ -59,6 +72,8 @@ router.get("/professionals/active", (req, res) => {
     const ativas = cs.filter((c) => c.candidaturaStatus === "aprovado" && c.status !== "encerrada");
     return {
       ...s, perfilComercial,
+      foto: s.temFoto ? `/api/sellers/${s.id}/foto` : null,
+      temFoto: undefined,
       segmentos: lista(s.segmentos), modalidades: lista(s.modalidades), skills: lista(s.skills),
       certificacoes: certificacoes.filter((c) => c.sellerId === s.id),
       campanhas: cs,
@@ -77,6 +92,23 @@ router.get("/professionals/active", (req, res) => {
       parceria: pedidos.get(s.id) || null,
     };
   }));
+});
+
+// Foto do profissional — retorna a data URI como imagem real com cache de 1h
+router.get("/sellers/:id/foto", (req, res) => {
+  const row = db.prepare("SELECT foto FROM sellers WHERE id = ?").get(req.params.id);
+  if (!row?.foto) return res.status(404).end();
+  const dataUri = row.foto;
+  const match = dataUri.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return res.status(404).end();
+  const [, mime, b64] = match;
+  const buf = Buffer.from(b64, "base64");
+  res.set({
+    "Content-Type": mime,
+    "Cache-Control": "public, max-age=3600, immutable",
+    "Content-Length": buf.length,
+  });
+  res.end(buf);
 });
 
 router.post("/professionals/:id/note", (req, res) => {

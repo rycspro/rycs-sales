@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import compression from "compression";
 import rateLimit from "express-rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import db from "./db.js";
@@ -59,6 +60,9 @@ const isProd = process.env.NODE_ENV === "production";
 const client = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
+
+// --- Compression ---
+app.use(compression());
 
 // --- Security ---
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -231,10 +235,10 @@ if (isProd) {
   const { dirname, join } = await import("path");
   const { fileURLToPath } = await import("url");
   const __dirname = dirname(fileURLToPath(import.meta.url));
-  app.use(express.static(join(__dirname, "../dist")));
+  // Assets com hash no nome → cache longo (1 ano). HTML sempre sem cache.
+  app.use("/assets", express.static(join(__dirname, "../dist/assets"), { maxAge: "1y", immutable: true }));
+  app.use(express.static(join(__dirname, "../dist"), { maxAge: 0 }));
   app.get("*", (req, res) => {
-    // Não devolva o HTML para assets inexistentes: o browser recusaria o
-    // módulo por MIME type e a página ficaria em branco. 404 é mais honesto.
     if (req.path.startsWith("/assets/")) return res.status(404).end();
     res.sendFile(join(__dirname, "../dist/index.html"));
   });
