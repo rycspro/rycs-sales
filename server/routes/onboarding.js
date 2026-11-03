@@ -41,8 +41,10 @@ const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
 const CONFIRMAR_EMAIL_EXPIRA_MS = 24 * 60 * 60 * 1000;
 
 onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
-  const { email, senha } = req.body || {};
+  const { email, senha, nomeEmpresa, cnpj } = req.body || {};
   if (!email || !senha) return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
+  if (!nomeEmpresa || !String(nomeEmpresa).trim())
+    return res.status(400).json({ error: "Nome da empresa é obrigatório.", campo: "nomeEmpresa" });
 
   const emailNorm = String(email).toLowerCase().trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm))
@@ -51,26 +53,33 @@ onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
   const errSenha = validarSenhaEmpresa(senha);
   if (errSenha) return res.status(400).json({ error: errSenha, campo: "senha" });
 
+  const cnpjDigitos = String(cnpj || "").replace(/\D/g, "");
+  if (cnpjDigitos.length !== 14)
+    return res.status(400).json({ error: "CNPJ inválido.", campo: "cnpj" });
+
   const existe = db.prepare("SELECT id FROM users WHERE email = ?").get(emailNorm);
   if (existe) return res.status(409).json({ error: "E-mail já cadastrado.", campo: "email" });
+
+  const cnpjExiste = db.prepare("SELECT id FROM companies WHERE documento = ?").get(cnpjDigitos);
+  if (cnpjExiste) return res.status(409).json({ error: "CNPJ já cadastrado.", campo: "cnpj" });
 
   const hash = bcrypt.hashSync(senha, 10);
   const userId = uid();
   const companyId = uid();
-  const nomeProvisorio = emailNorm.split("@")[0].slice(0, 100);
+  const nomeFinal = String(nomeEmpresa).trim().slice(0, 200);
   const token = novoToken();
   const tokenHash = hashToken(token);
   const expira = agora() + CONFIRMAR_EMAIL_EXPIRA_MS;
   const t = agora();
 
-  db.prepare(`INSERT INTO companies (id, nome, produto, criadoEm) VALUES (?, ?, '', ?)`)
-    .run(companyId, nomeProvisorio, t);
+  db.prepare(`INSERT INTO companies (id, nome, produto, documento, criadoEm) VALUES (?, ?, '', ?, ?)`)
+    .run(companyId, nomeFinal, cnpjDigitos, t);
   db.prepare(`INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, emailVerificado, emailConfirmToken, emailConfirmExpira, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, 0, ?, ?, ?)`)
     .run(userId, emailNorm, hash, companyId, tokenHash, expira, t);
   criarOnboarding({ companyId, origem: "site", caminho: "livre", acessoConcluido: true });
   registrarEvento(companyId, "criou_conta", { caminho: "livre" });
 
-  await emailConfirmacaoConta(nomeProvisorio, emailNorm, token, FRONTEND);
+  await emailConfirmacaoConta(nomeFinal, emailNorm, token, FRONTEND);
 
   res.json({ ok: true });
 });

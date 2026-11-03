@@ -7,6 +7,29 @@ import { api } from "../../lib/api.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
 import { SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboarding.js";
 
+function formatarCnpj(valor) {
+  const d = valor.replace(/\D/g, "").slice(0, 14);
+  if (d.length <= 2) return d;
+  if (d.length <= 5) return `${d.slice(0,2)}.${d.slice(2)}`;
+  if (d.length <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
+  if (d.length <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
+  return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
+}
+
+function validarCnpj(valor) {
+  const d = valor.replace(/\D/g, "");
+  if (d.length !== 14) return "CNPJ inválido.";
+  if (/^(\d)\1+$/.test(d)) return "CNPJ inválido.";
+  const calc = (n) => {
+    let s = 0, p = n - 7;
+    for (let i = 0; i < n; i++) { s += parseInt(d[i]) * p--; if (p < 2) p = 9; }
+    const r = s % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  if (calc(12) !== parseInt(d[12]) || calc(13) !== parseInt(d[13])) return "CNPJ inválido.";
+  return null;
+}
+
 // Página pública de entrada da empresa.
 // Modo "inicio" — dois caminhos:
 //   "Criar conta" → formulário simples (e-mail, senha, termos) + e-mail de confirmação.
@@ -52,7 +75,10 @@ export default function EntradaEmpresa() {
   const id = useId();
   const [modo, setModo] = useState("inicio"); // inicio | criar | link-enviado | recuperar
   const [email, setEmail] = useState("");
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [cnpj, setCnpj] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmaSenha, setConfirmaSenha] = useState("");
   const [termos, setTermos] = useState(false);
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState("");
@@ -67,16 +93,25 @@ export default function EntradaEmpresa() {
   const enviarCriarConta = async (e) => {
     e.preventDefault();
     const novos = {};
+    if (!nomeEmpresa.trim()) novos.nomeEmpresa = "Nome da empresa é obrigatório.";
+    const errCnpj = validarCnpj(cnpj);
+    if (errCnpj) novos.cnpj = errCnpj;
     if (!EMAIL_RE.test(email.trim())) novos.email = "E-mail inválido.";
     const errSenha = validarSenhaEmpresa(senha);
     if (errSenha) novos.senha = errSenha;
+    if (senha !== confirmaSenha) novos.confirmaSenha = "As senhas não coincidem.";
     if (!termos) novos.termos = "Aceite os termos para continuar.";
     setErros(novos);
     if (Object.keys(novos).length) return;
 
     setErroGeral("");
     setSalvando(true);
-    const r = await api("/onboarding/criar-conta", { email: email.trim().toLowerCase(), senha });
+    const r = await api("/onboarding/criar-conta", {
+      email: email.trim().toLowerCase(),
+      senha,
+      nomeEmpresa: nomeEmpresa.trim(),
+      cnpj: cnpj.replace(/\D/g, ""),
+    });
     setSalvando(false);
 
     if (!r || r.error) {
@@ -143,6 +178,29 @@ export default function EntradaEmpresa() {
           {erroGeral && <div className="vx-onb-erro" role="alert" style={{ marginBottom: 14 }}>{erroGeral}</div>}
 
           <div className="vx-onb-campo">
+            <label className="vx-label" htmlFor={`${id}-nome`}>Nome da empresa</label>
+            <input
+              id={`${id}-nome`} className="vx-input" type="text" autoComplete="organization"
+              placeholder="Empresa Ltda" value={nomeEmpresa} onChange={(e) => setNomeEmpresa(e.target.value)}
+              aria-invalid={erros.nomeEmpresa ? true : undefined} aria-describedby={erros.nomeEmpresa ? `${id}-nome-erro` : undefined}
+              style={{ minHeight: 48 }}
+            />
+            {erros.nomeEmpresa && <div id={`${id}-nome-erro`} className="vx-onb-erro" role="alert">{erros.nomeEmpresa}</div>}
+          </div>
+
+          <div className="vx-onb-campo">
+            <label className="vx-label" htmlFor={`${id}-cnpj`}>CNPJ</label>
+            <input
+              id={`${id}-cnpj`} className="vx-input" type="text" inputMode="numeric" autoComplete="off"
+              placeholder="00.000.000/0000-00" value={cnpj}
+              onChange={(e) => setCnpj(formatarCnpj(e.target.value))}
+              aria-invalid={erros.cnpj ? true : undefined} aria-describedby={erros.cnpj ? `${id}-cnpj-erro` : undefined}
+              style={{ minHeight: 48 }}
+            />
+            {erros.cnpj && <div id={`${id}-cnpj-erro`} className="vx-onb-erro" role="alert">{erros.cnpj}</div>}
+          </div>
+
+          <div className="vx-onb-campo">
             <label className="vx-label" htmlFor={`${id}-email`}>E-mail</label>
             <input
               id={`${id}-email`} className="vx-input" type="email" autoComplete="email"
@@ -162,6 +220,16 @@ export default function EntradaEmpresa() {
             />
             <div id={`${id}-senha-dica`} className="vx-onb-dica">Mínimo de {SENHA_MIN_EMPRESA} caracteres.</div>
             {erros.senha && <div id={`${id}-senha-erro`} className="vx-onb-erro" role="alert">{erros.senha}</div>}
+          </div>
+
+          <div className="vx-onb-campo">
+            <label className="vx-label" htmlFor={`${id}-confirma-senha`}>Confirmar senha</label>
+            <CampoSenha
+              id={`${id}-confirma-senha`} value={confirmaSenha} onChange={(e) => setConfirmaSenha(e.target.value)}
+              autoComplete="new-password"
+              invalido={!!erros.confirmaSenha} descricao={erros.confirmaSenha ? `${id}-confirma-senha-erro` : undefined}
+            />
+            {erros.confirmaSenha && <div id={`${id}-confirma-senha-erro`} className="vx-onb-erro" role="alert">{erros.confirmaSenha}</div>}
           </div>
 
           <div className="vx-onb-campo">
