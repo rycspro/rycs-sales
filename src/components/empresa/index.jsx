@@ -20,6 +20,7 @@ import { AssistenteEmpresa, BaseConhecimento, RelatoriosEmpresa } from "./Empres
 import Assinatura from "./Assinatura.jsx";
 import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
 import BannerCerebro from "./BannerCerebro.jsx";
+import InicioEmpresa from "./InicioEmpresa.jsx";
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const sair = async () => {
@@ -77,6 +78,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {Number(emp.saldoReservado || 0) > 0 && <span className="vx-chip vx-mono">reservado {money(emp.saldoReservado)}</span>}
       </div>
 
+      {aba === "inicio" && <InicioEmpresa emp={emp} />}
       {aba === "painel" && <>
         <BannerCerebro onIr={() => { setSecaoAcademy("empresa"); setAba?.("academy"); }} />
         <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
