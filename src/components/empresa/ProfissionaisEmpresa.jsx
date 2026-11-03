@@ -192,7 +192,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     )}
 
     {carregando ? <div className="vx-card vx-skeleton" style={{ height: 280 }} /> : (
-      <div className="vx-prof-grid">
+      <div className="vx-prof-grid" style={{ gridAutoRows: "1fr" }}>
         {filtrados.map((p) => {
           const scoreVal = nota(p.nota) || 100;
           const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
