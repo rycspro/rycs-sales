@@ -178,6 +178,9 @@ body{-webkit-text-size-adjust:100%}
 @keyframes vxspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.vx-spinner{animation:none}}
 .vx-grid{display:grid;gap:13px}
+.vx-prof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.vx-prof-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.vx-prof-grid{grid-template-columns:1fr}}
 .vx-g2{grid-template-columns:1fr}
 .vx-g4{grid-template-columns:repeat(2,1fr)}
 .vx-g3{grid-template-columns:1fr}

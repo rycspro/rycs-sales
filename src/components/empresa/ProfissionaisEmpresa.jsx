@@ -191,26 +191,43 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
       </div>
     )}
 
-    {carregando ? <div className="vx-card vx-skeleton" style={{ height: 180 }} /> : <div className="vx-grid">
-      {filtrados.map((p) => <article key={p.id} className="vx-card" style={{ padding: 15 }}>
-        <div className="vx-row" style={{ alignItems: "flex-start", gap: 12 }}>
-          <div className="vx-avatar" style={p.foto ? { padding: 0, overflow: "hidden" } : undefined}>{p.foto ? <img src={p.foto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : iniciais(p.nome)}</div>
-          <div style={{ flex: 1, minWidth: 0 }}><b>{p.nome}</b><div className="vx-mut" style={{ fontSize: 12 }}>{PERFIL[p.perfil] || p.perfil || "Função não informada"} · {[p.cidade, p.estado].filter(Boolean).join(" / ") || "Região não informada"}</div></div>
-          <span className={`vx-badge vx-badge-${nota(p.nota) >= 80 ? "brand" : nota(p.nota) >= 50 ? "amber" : "red"}`} style={nota(p.nota) >= 30 && nota(p.nota) < 50 ? { background:"#fff0e6", color:"#c2410c" } : undefined}>{nota(p.nota) || 100} score</span>
-        </div>
-        <div className="vx-grid vx-g4" style={{ marginTop: 12 }}>
-          <Metric label="Campanhas" value={p.campanhasAtivas || 0} />
-          <Metric label="Tarefas" value={p.tarefasRealizadas || 0} />
-          <Metric label="Aprovação" value={`${p.taxaAprovacao || 0}%`} />
-          <Metric label="Resultados" value={p.resultadosGerados || 0} />
-        </div>
-        <div className="vx-row" style={{ marginTop: 12, flexWrap: "wrap" }}>
-          <span className="vx-chip">{STATUS[p.aplicacoes?.[emp.id] || p.parceria || p.status] || "Disponível"}</span>
-          <span className="vx-chip">Entrada {p.criadoEm ? dataCurta(p.criadoEm) : "não informada"}</span>
-          <button className="vx-btn vx-btn-sm" onClick={() => { setSelecionado(p); setCampanhaDestino(""); }}><Eye size={13} />Ver perfil</button>
-        </div>
-      </article>)}
-    </div>}
+    {carregando ? <div className="vx-card vx-skeleton" style={{ height: 280 }} /> : (
+      <div className="vx-prof-grid">
+        {filtrados.map((p) => {
+          const scoreVal = nota(p.nota) || 100;
+          const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
+          const scoreBg  = scoreVal >= 80 ? "#ecfeff" : scoreVal >= 50 ? "#fffbeb" : "#fef2f2";
+          return (
+            <article key={p.id} className="vx-card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer" }}
+              onClick={() => { setSelecionado(p); setCampanhaDestino(""); }}>
+              {/* foto */}
+              <div style={{ width: "100%", aspectRatio: "4/3", background: "var(--surface-2)", position: "relative", flexShrink: 0 }}>
+                {p.foto
+                  ? <img src={p.foto} alt={p.nome} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 40, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)", letterSpacing: -1 }}>{iniciais(p.nome)}</div>
+                }
+                {/* badge status canto superior direito */}
+                <span style={{ position: "absolute", top: 10, right: 10, background: "rgba(0,0,0,.55)", color: "#fff", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 9px", backdropFilter: "blur(4px)" }}>
+                  {STATUS[p.aplicacoes?.[emp.id] || p.parceria || p.status] || "Disponível"}
+                </span>
+              </div>
+
+              {/* info */}
+              <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", lineHeight: 1.2, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome}</span>
+                  <span style={{ background: scoreBg, color: scoreCor, fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "2px 9px", flexShrink: 0 }}>{scoreVal}</span>
+                </div>
+                <span style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.4 }}>
+                  {PERFIL[p.perfil] || p.perfil || "Função não informada"}
+                  {[p.cidade, p.estado].filter(Boolean).length > 0 && <> · {[p.cidade, p.estado].filter(Boolean).join(" / ")}</>}
+                </span>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    )}
 
     {!carregando && !filtrados.length && <div className="vx-card" style={{ padding: 28, textAlign: "center" }}><UserRoundSearch size={28} color="var(--muted)" /><h3 className="vx-disp">Nenhum profissional encontrado</h3><p className="vx-mut">Ajuste os filtros desta página.</p></div>}
 
