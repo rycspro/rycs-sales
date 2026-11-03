@@ -206,17 +206,16 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   ? <img src={p.foto} alt={p.nome} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 40, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)", letterSpacing: -1 }}>{iniciais(p.nome)}</div>
                 }
-                {/* badge status canto superior direito */}
-                <span style={{ position: "absolute", top: 10, right: 10, background: "rgba(0,0,0,.55)", color: "#fff", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 9px", backdropFilter: "blur(4px)" }}>
-                  {STATUS[p.aplicacoes?.[emp.id] || p.parceria || p.status] || "Disponível"}
+                {/* badge score canto superior direito */}
+                <span style={{ position: "absolute", top: 10, right: 10, background: "#0E7490", color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 11px", backdropFilter: "blur(4px)", letterSpacing: ".01em" }}>
+                  {scoreVal}
                 </span>
               </div>
 
               {/* info */}
               <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", lineHeight: 1.2, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome}</span>
-                  <span style={{ background: scoreBg, color: scoreCor, fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "2px 9px", flexShrink: 0 }}>{scoreVal}</span>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome}</span>
                 </div>
                 <span style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.4 }}>
                   {PERFIL[p.perfil] || p.perfil || "Função não informada"}
