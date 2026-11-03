@@ -319,8 +319,7 @@ export default function App() {
 
       {bannerOnb && <BannerOnboarding onb={onb} />}
 
-      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"}
-        notifications={db.notifications || []} onUpdateNotifications={recarregar} onLogout={logout}>
+      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"}>
         {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
         {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
         {role === "admin" && <Admin {...ctx} aba={aba} />}

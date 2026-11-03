@@ -112,7 +112,6 @@ body{-webkit-text-size-adjust:100%}
   .vx-sidebar-logo{padding:20px 16px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
   .vx-sidebar-logo img{height:52px;width:auto;object-fit:contain}
   .vx-sidebar>div:first-of-type{padding:12px 8px 0;gap:2px}
-  .vx-sidebar-foot{padding:10px 8px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px;flex-shrink:0}
   .vx-sidebar::-webkit-scrollbar{display:none}
   .vx-bottomnav{display:none}
   .vx-ai-trigger{bottom:22px}

@@ -1,7 +1,5 @@
 import { NAV } from "../lib/constants.js";
-import Notificacoes from "./Notificacoes.jsx";
-
-export default function Shell({ role, active, onSelect, counts, beta, notifications, onUpdateNotifications, onLogout, children }) {
+export default function Shell({ role, active, onSelect, counts, beta, children }) {
   const allItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const navItems = allItems.filter((item) => item.key);
   const bottomItems = navItems.slice(0, 5);
@@ -29,14 +27,6 @@ export default function Shell({ role, active, onSelect, counts, beta, notificati
           })}
         </div>
 
-        <div className="vx-sidebar-foot">
-          {notifications && <Notificacoes items={notifications} onUpdate={onUpdateNotifications} />}
-          {onLogout && (
-            <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ width: "100%", justifyContent: "flex-start" }} onClick={onLogout}>
-              Sair
-            </button>
-          )}
-        </div>
       </aside>
 
       <div className="vx-content">
