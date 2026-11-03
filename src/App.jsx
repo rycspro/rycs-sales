@@ -322,7 +322,7 @@ export default function App() {
       <header className="vx-topbar" style={bannerOnb ? { marginTop: 48 } : undefined}>
         <div className="vx-topbar-inner">
           <div className="vx-word vx-disp" style={{ display: "flex", alignItems: "center" }}>
-            <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ height: 26 }} />
+            <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ height: 48 }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {environment === "beta" && <span className="vx-beta-badge">AMBIENTE BETA — DADOS FICTÍCIOS</span>}

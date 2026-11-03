@@ -56,7 +56,7 @@ body{-webkit-text-size-adjust:100%}
 
 /* topbar */
 .vx-topbar{position:sticky;top:0;z-index:30;background:var(--topbar-bg,rgba(255,255,255,.85));backdrop-filter:blur(14px) saturate(1.6);
-  border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center}
+  border-bottom:1px solid var(--border);height:72px;display:flex;align-items:center}
 .vx-topbar-inner{width:100%;max-width:1240px;margin:0 auto;padding:0 max(18px,env(safe-area-inset-left,0px)) 0 max(18px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:space-between;gap:10px}
 .vx-mark{width:28px;height:28px;border-radius:9px;background:var(--navy);display:flex;align-items:center;justify-content:center;flex:none}
 .vx-word{font-size:17px;color:var(--ink);display:flex;align-items:center;gap:8px;white-space:nowrap;flex:none}
