@@ -24,7 +24,11 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
   const [modoTreinamento, setModoTreinamento] = useState(false);
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
-  if (!eu) return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
+  if (!eu) {
+    if (db.sellers.length === 0)
+      return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
+    return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
+  }
 
   const emOnboarding = eu.onboardingEtapa && eu.onboardingEtapa !== "concluido";
   if (emOnboarding && !refazendo)

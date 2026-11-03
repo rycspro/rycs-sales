@@ -37,7 +37,11 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   const acesso = acessoProp === undefined ? null : acessoProp;
   const consultarAcesso = consultarAcessoProp || (() => api("/subscription/access"));
 
-  if (!emp) return null;
+  if (!emp) {
+    if (db.companies.length === 0)
+      return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
+    return null;
+  }
 
   if (acesso === null) return (
     <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}>
