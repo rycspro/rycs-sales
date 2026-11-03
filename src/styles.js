@@ -110,7 +110,7 @@ body{-webkit-text-size-adjust:100%}
   .vx-sidebar{display:flex;flex-direction:column;gap:0;padding:0;border-right:1px solid var(--border);
     position:sticky;top:0;height:100vh;align-self:start;background:#fff}
   .vx-sidebar-logo{padding:20px 16px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
-  .vx-sidebar-logo img{height:52px;width:auto;object-fit:contain}
+  .vx-sidebar-logo img{height:80px;width:auto;object-fit:contain}
   .vx-sidebar>div:first-of-type{padding:12px 8px 0;gap:2px}
   .vx-sidebar::-webkit-scrollbar{display:none}
   .vx-bottomnav{display:none}
