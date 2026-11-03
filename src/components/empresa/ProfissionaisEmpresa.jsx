@@ -40,6 +40,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   const [obs, setObs] = useState({});
   const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" });
   const [filtroAberto, setFiltroAberto] = useState(false);
+  const [convites, setConvites] = useState({});
 
   const carregar = async () => {
     setCarregando(true);
@@ -47,8 +48,16 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     if (Array.isArray(r)) {
       setListaApi(r);
       setObs(Object.fromEntries(r.map((p) => [p.id, p.observacaoInterna || ""])));
+      setConvites(Object.fromEntries(r.map((p) => [p.id, p.parceria || null])));
     }
     setCarregando(false);
+  };
+
+  const enviarConvite = async (e, profId) => {
+    e.stopPropagation();
+    setConvites((prev) => ({ ...prev, [profId]: "enviando" }));
+    const r = await api(`/professionals/${profId}/partnership`, {});
+    setConvites((prev) => ({ ...prev, [profId]: r?.status || "pendente" }));
   };
 
   useEffect(() => { carregar(); }, [emp.id]);
@@ -244,7 +253,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
               </div>
 
               {/* info */}
-              <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+              <div style={{ padding: "12px 14px 0", display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
                 {/* linha 1: nome + idade */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                   <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p.nome}</span>
@@ -265,6 +274,25 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fitCultural(p).percentual}% compat.</span>
                 </div>
+                {/* botão convite */}
+                {(() => {
+                  const status = convites[p.id];
+                  if (status === "aprovado") return (
+                    <div style={{ marginTop: 6, padding: "7px 0 0", borderTop: "1px solid var(--border)", fontSize: 12, fontWeight: 600, color: "var(--brand)", textAlign: "center" }}>✓ Parceria ativa</div>
+                  );
+                  if (status === "pendente") return (
+                    <div style={{ marginTop: 6, padding: "7px 0 0", borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--muted)", textAlign: "center" }}>Convite enviado · aguardando</div>
+                  );
+                  if (status === "recusado") return (
+                    <button onClick={(e) => enviarConvite(e, p.id)} style={{ marginTop: 6, width: "100%", padding: "7px 0", borderTop: "1px solid var(--border)", background: "none", border: "none", borderRadius: 0, fontSize: 12, color: "#EF4444", cursor: "pointer", fontWeight: 600 }}>Reenviar convite</button>
+                  );
+                  return (
+                    <button onClick={(e) => enviarConvite(e, p.id)} disabled={status === "enviando"}
+                      style={{ marginTop: 6, width: "100%", padding: "8px 0", background: "var(--brand)", color: "#fff", border: "none", borderRadius: "0 0 10px 10px", fontSize: 13, fontWeight: 700, cursor: status === "enviando" ? "default" : "pointer", opacity: status === "enviando" ? 0.7 : 1, letterSpacing: ".01em" }}>
+                      {status === "enviando" ? "Enviando…" : "Enviar Convite"}
+                    </button>
+                  );
+                })()}
               </div>
             </article>
           );
