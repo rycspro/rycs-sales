@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Award, BarChart3, BriefcaseBusiness, CheckCircle2, ClipboardList, Eye, MapPin, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
+import { Award, BarChart3, BriefcaseBusiness, CheckCircle2, ClipboardList, Eye, Filter, MapPin, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
 
@@ -29,6 +29,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   const [campanhaDestino, setCampanhaDestino] = useState("");
   const [obs, setObs] = useState({});
   const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" });
+  const [filtroAberto, setFiltroAberto] = useState(false);
 
   const carregar = async () => {
     setCarregando(true);
@@ -149,21 +150,46 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     aviso?.(status === "aprovado" ? "Profissional aprovado." : status === "pendente" ? "Candidatura reaberta." : "Profissional removido do time.");
   };
 
+  const filtrosAtivos = [f.funcao, f.campanha, f.status, f.performance, f.regiao, f.score].filter(Boolean).length;
+
   return <div className="vx-fade">
     <div className="vx-page-head">
-      <div><div className="vx-eyebrow">Central de gestão</div><h1 className="vx-disp">Profissionais Ativos</h1><p>Gestão dos profissionais disponíveis, usando somente dados reais da plataforma.</p></div>
+      <div><div className="vx-eyebrow">Central de gestão</div><h1 className="vx-disp">Profissionais</h1><p>Gestão dos profissionais disponíveis, usando somente dados reais da plataforma.</p></div>
       <span className="vx-chip"><UserRoundSearch size={13} />{filtrados.length} profissionais</span>
     </div>
 
-    <div className="vx-card vx-filterbar" style={{ padding: 14, maxWidth: "none", marginBottom: 16 }}>
-      <label><span className="vx-label">Buscar por nome</span><div style={{ position: "relative" }}><Search size={14} style={{ position: "absolute", left: 11, top: 12, color: "var(--muted)" }} /><input className="vx-input" style={{ paddingLeft: 32 }} value={f.busca} onChange={(e) => setF({ ...f, busca: e.target.value })} /></div></label>
-      <label><span className="vx-label">Função</span><select className="vx-input" value={f.funcao} onChange={(e) => setF({ ...f, funcao: e.target.value })}><option value="">Todas</option>{opcoes.funcoes.map((x) => <option key={x} value={x}>{PERFIL[x] || x}</option>)}</select></label>
-      <label><span className="vx-label">Campanha</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">Todas</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
-      <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
-      <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
-      <label><span className="vx-label">Região</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todas</option>{opcoes.regioes.map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
-      <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
+    <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+      <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
+        <Search size={14} style={{ position: "absolute", left: 11, top: 13, color: "var(--muted)", pointerEvents: "none" }} />
+        <input className="vx-input" style={{ paddingLeft: 32 }} placeholder="Buscar por nome…" value={f.busca} onChange={(e) => setF({ ...f, busca: e.target.value })} />
+      </div>
+      <button
+        type="button"
+        className={`vx-btn${filtrosAtivos ? " vx-btn-primary" : ""}`}
+        style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+        onClick={() => setFiltroAberto((v) => !v)}
+      >
+        <Filter size={14} strokeWidth={2.3} />
+        Filtrar
+        {filtrosAtivos > 0 && <span style={{ background: filtrosAtivos ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
+      </button>
+      {filtrosAtivos > 0 && (
+        <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ alignSelf: "center" }} onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" })}>
+          Limpar filtros
+        </button>
+      )}
     </div>
+
+    {filtroAberto && (
+      <div className="vx-card vx-filterbar" style={{ padding: 14, maxWidth: "none", marginBottom: 16 }}>
+        <label><span className="vx-label">Função</span><select className="vx-input" value={f.funcao} onChange={(e) => setF({ ...f, funcao: e.target.value })}><option value="">Todas</option>{opcoes.funcoes.map((x) => <option key={x} value={x}>{PERFIL[x] || x}</option>)}</select></label>
+        <label><span className="vx-label">Campanha</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">Todas</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
+        <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
+        <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
+        <label><span className="vx-label">Região</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todas</option>{opcoes.regioes.map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
+        <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
+      </div>
+    )}
 
     {carregando ? <div className="vx-card vx-skeleton" style={{ height: 180 }} /> : <div className="vx-grid">
       {filtrados.map((p) => <article key={p.id} className="vx-card" style={{ padding: 15 }}>

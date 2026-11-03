@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { api } from "../../lib/api.js";
-import { money } from "../../lib/utils.js";
 import PainelEmpresa from "./PainelEmpresa.jsx";
 import ConferirEmpresa from "./ConferirEmpresa.jsx";
 import TimeEmpresa from "./TimeEmpresa.jsx";
@@ -70,14 +69,6 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
 
   return (
     <div className="vx-fade">
-      <div className="vx-row" style={{ marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
-        {/* Era um seletor para alternar entre empresas, do tempo em que não
-            havia login. Cada conta enxerga só a própria empresa. */}
-        <h1 className="vx-disp" style={{ fontSize: 20, margin: 0 }}>{emp.nome}</h1>
-        <span className="vx-chip vx-mono">disponível {money(Math.max(0, Number(emp.saldo || 0) - Number(emp.saldoReservado || 0)))}</span>
-        {Number(emp.saldoReservado || 0) > 0 && <span className="vx-chip vx-mono">reservado {money(emp.saldoReservado)}</span>}
-      </div>
-
       {aba === "inicio" && <InicioEmpresa emp={emp} />}
       {aba === "painel" && <>
         <BannerCerebro onIr={() => { setSecaoAcademy("empresa"); setAba?.("academy"); }} />
