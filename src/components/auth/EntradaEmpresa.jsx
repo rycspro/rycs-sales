@@ -79,7 +79,8 @@ export default function EntradaEmpresa() {
   const [cnpj, setCnpj] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
-  const [termos, setTermos] = useState(false);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [aceitouPrivacidade, setAceitouPrivacidade] = useState(false);
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -100,7 +101,8 @@ export default function EntradaEmpresa() {
     const errSenha = validarSenhaEmpresa(senha);
     if (errSenha) novos.senha = errSenha;
     if (senha !== confirmaSenha) novos.confirmaSenha = "As senhas não coincidem.";
-    if (!termos) novos.termos = "Aceite os termos para continuar.";
+    if (!aceitouTermos) novos.termos = "Aceite os Termos de Uso para continuar.";
+    if (!aceitouPrivacidade) novos.privacidade = "Aceite a Política de Privacidade para continuar.";
     setErros(novos);
     if (Object.keys(novos).length) return;
 
@@ -232,30 +234,50 @@ export default function EntradaEmpresa() {
             {erros.confirmaSenha && <div id={`${id}-confirma-senha-erro`} className="vx-onb-erro" role="alert">{erros.confirmaSenha}</div>}
           </div>
 
-          <div className="vx-onb-campo">
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", minHeight: 44, fontSize: 13.5 }}>
+          <div className="vx-onb-campo" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <label
+              style={{
+                display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
+                border: `1.5px solid ${erros.termos ? "var(--erro, #e53e3e)" : aceitouTermos ? "var(--brand)" : "var(--border)"}`,
+                borderRadius: 10, padding: "12px 14px", background: aceitouTermos ? "var(--brand-50, #f0fdff)" : "var(--surface)",
+                transition: "border-color .15s, background .15s",
+              }}
+            >
               <input
-                type="checkbox" checked={termos} onChange={(e) => setTermos(e.target.checked)}
-                style={{ width: 18, height: 18, marginTop: 2, accentColor: "var(--brand)", flexShrink: 0 }}
+                type="checkbox" checked={aceitouTermos} onChange={(e) => setAceitouTermos(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 1, accentColor: "var(--brand)", flexShrink: 0 }}
                 aria-describedby={erros.termos ? `${id}-termos-erro` : undefined}
               />
-              <span>
-                Concordo com os{" "}
-                <a
-                  href="https://rycs.pro/termos" target="_blank" rel="noreferrer"
-                  className="vx-onb-link" style={{ fontSize: "inherit" }}
-                >
+              <span style={{ fontSize: 13.5, lineHeight: 1.5 }}>
+                Li e aceito os{" "}
+                <a href="https://rycs.pro/termos" target="_blank" rel="noreferrer" className="vx-onb-link" style={{ fontSize: "inherit" }}>
                   Termos de Uso
-                </a>{" "}e a{" "}
-                <a
-                  href="https://rycs.pro/privacidade" target="_blank" rel="noreferrer"
-                  className="vx-onb-link" style={{ fontSize: "inherit" }}
-                >
-                  Política de Privacidade
                 </a>
               </span>
             </label>
             {erros.termos && <div id={`${id}-termos-erro`} className="vx-onb-erro" role="alert">{erros.termos}</div>}
+
+            <label
+              style={{
+                display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
+                border: `1.5px solid ${erros.privacidade ? "var(--erro, #e53e3e)" : aceitouPrivacidade ? "var(--brand)" : "var(--border)"}`,
+                borderRadius: 10, padding: "12px 14px", background: aceitouPrivacidade ? "var(--brand-50, #f0fdff)" : "var(--surface)",
+                transition: "border-color .15s, background .15s",
+              }}
+            >
+              <input
+                type="checkbox" checked={aceitouPrivacidade} onChange={(e) => setAceitouPrivacidade(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 1, accentColor: "var(--brand)", flexShrink: 0 }}
+                aria-describedby={erros.privacidade ? `${id}-privacidade-erro` : undefined}
+              />
+              <span style={{ fontSize: 13.5, lineHeight: 1.5 }}>
+                Li e aceito a{" "}
+                <a href="https://rycs.pro/privacidade" target="_blank" rel="noreferrer" className="vx-onb-link" style={{ fontSize: "inherit" }}>
+                  Política de Privacidade
+                </a>
+              </span>
+            </label>
+            {erros.privacidade && <div id={`${id}-privacidade-erro`} className="vx-onb-erro" role="alert">{erros.privacidade}</div>}
           </div>
 
           <button

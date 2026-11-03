@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { ArrowLeft, ImagePlus, Trash2 } from "lucide-react";
 import { CampoSenha } from "../ui.jsx";
 import Termos from "../auth/Termos.jsx";
 import RecuperarSenha from "../auth/RecuperarSenha.jsx";
 import MolduraOnboarding from "./MolduraOnboarding.jsx";
 import { api } from "../../lib/api.js";
-import { parametro, limparConviteOnboarding } from "../../lib/rotas.js";
+import { parametro, limparConviteOnboarding, ROTAS, navegar } from "../../lib/rotas.js";
 import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, normalizarWhatsapp, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
 
 // Etapa 1 do onboarding para quem ainda não tem conta: criar o acesso
@@ -157,6 +157,19 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
           padding: "32px 20px", background: "var(--bg)",
         }}>
           <div className="vx-fade" style={{ width: "100%", maxWidth: 560 }}>
+            <button
+              type="button"
+              onClick={() => navegar(ROTAS.cadastroEmpresa)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "none", border: "none", cursor: "pointer",
+                color: "var(--muted)", fontSize: 13.5, padding: "0 0 24px", fontFamily: "inherit",
+              }}
+              aria-label="Voltar para escolha de acesso"
+            >
+              <ArrowLeft size={15} strokeWidth={2.3} aria-hidden="true" />
+              Voltar
+            </button>
             <div className="vx-onb-eyebrow" style={{ marginBottom: 16 }}>Passo 1 de 6</div>
             <h1 style={{ fontSize: "clamp(26px, 5vw, 38px)", lineHeight: 1.15, fontFamily: "var(--font-disp)", fontWeight: 800, color: "var(--ink)", margin: "0 0 16px" }}>
               Crie seu acesso e conecte sua empresa a profissionais de vendas.
