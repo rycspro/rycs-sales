@@ -1419,6 +1419,7 @@ adicionarColuna("sellers", "lngBase", "REAL");
 adicionarColuna("leads", "valorVenda", "REAL DEFAULT 0");
 adicionarColuna("leads", "comissaoCalculada", "REAL DEFAULT 0");
 adicionarColuna("leads", "responsavelEtapaId", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "dataNascimento", "TEXT DEFAULT ''");
 
 // Backfill: campanhas existentes sem pipeline recebem as etapas padrão
 (() => {

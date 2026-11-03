@@ -14,6 +14,16 @@ function iniciais(nome = "") {
   return nome.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("") || "PR";
 }
 
+function calcularIdade(dataNascimento) {
+  if (!dataNascimento) return null;
+  const nasc = new Date(dataNascimento);
+  if (isNaN(nasc)) return null;
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - nasc.getFullYear();
+  if (hoje.getMonth() < nasc.getMonth() || (hoje.getMonth() === nasc.getMonth() && hoje.getDate() < nasc.getDate())) idade--;
+  return idade > 0 && idade < 100 ? idade : null;
+}
+
 function Metric({ label, value }) {
   return <div className="vx-scenario"><span>{label}</span><strong>{value}</strong></div>;
 }
@@ -234,14 +244,27 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
               </div>
 
               {/* info */}
-              <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome}</span>
+              <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+                {/* linha 1: nome + idade */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p.nome}</span>
+                  {calcularIdade(p.dataNascimento) !== null && (
+                    <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{calcularIdade(p.dataNascimento)} anos</span>
+                  )}
                 </div>
-                <span style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.4 }}>
-                  {PERFIL[p.perfil] || p.perfil || "Função não informada"}
-                  {[p.cidade, p.estado].filter(Boolean).length > 0 && <> · {[p.cidade, p.estado].filter(Boolean).join(" / ")}</>}
-                </span>
+                {/* linha 2: função */}
+                <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Função:</b> {PERFIL[p.perfil] || p.perfil || "Não informada"}</span>
+                {/* linha 3: localização */}
+                {[p.cidade, p.estado].filter(Boolean).length > 0 && (
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Local:</b> {[p.cidade, p.estado].filter(Boolean).join(", ")}</span>
+                )}
+                {/* linha 4: compatibilidade */}
+                <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 7 }}>
+                  <div style={{ flex: 1, height: 5, borderRadius: 99, background: "var(--surface-2)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${fitCultural(p).percentual}%`, borderRadius: 99, background: fitCultural(p).percentual >= 70 ? "var(--brand)" : fitCultural(p).percentual >= 40 ? "#F59E0B" : "#EF4444" }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fitCultural(p).percentual}% compat.</span>
+                </div>
               </div>
             </article>
           );

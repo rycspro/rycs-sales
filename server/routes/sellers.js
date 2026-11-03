@@ -32,7 +32,7 @@ function getProfissionaisBase() {
   if (_profCache && now - _profCacheTs < 60000) return _profCache;
   _profCache = db.prepare(`SELECT id, nome, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial,
     CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
-    titulo, bio, segmentos, modalidades, skills, disponibilidade, criadoEm, status
+    titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, criadoEm, status
     FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   _profCacheTs = now;
   return _profCache;
@@ -186,7 +186,7 @@ router.patch("/sellers/:id", (req, res) => {
   // pelo próprio vendedor: valem dinheiro real via Pix. Só o servidor os move,
   // ao liberar uma ação ou processar um saque.
   const sellerFields = ["nome", "email", "whats", "cidade", "estado", "perfil", "experiencia",
-    "pix", "pixTipo", "video", "titulo", "bio", "disponibilidade", "cidadeBase", "estadoBase", "raioKm", "latBase", "lngBase"];
+    "pix", "pixTipo", "video", "titulo", "bio", "disponibilidade", "cidadeBase", "estadoBase", "raioKm", "latBase", "lngBase", "dataNascimento"];
   // Campos de lista chegam como array e são guardados como JSON.
   const camposLista = ["segmentos", "modalidades", "regioes", "skills"];
   const adminFields = [...sellerFields, "status", "nota"];

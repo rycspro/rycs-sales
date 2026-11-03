@@ -75,7 +75,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
   const [form, setForm] = useState(() => ({
     nome: eu.nome || "", titulo: eu.titulo || "", bio: eu.bio || "",
-    cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "",
+    cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
     experiencia: eu.experiencia || "", disponibilidade: eu.disponibilidade || "",
     segmentos: eu.segmentos || [], modalidades: eu.modalidades || [],
     regioes: eu.regioes || [], skills: eu.skills || [],
@@ -318,6 +318,13 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             {campo("cidade", "Cidade")}
             {campo("estado", "Estado", { max: 40 })}
             {campo("whats", "WhatsApp")}
+          </div>
+          <div style={{ marginTop: 9 }}>
+            <label>
+              <div className="vx-label">Data de nascimento</div>
+              <input type="date" className="vx-input" style={{ maxWidth: 200 }} value={form.dataNascimento}
+                onChange={(e) => setForm({ ...form, dataNascimento: e.target.value })} />
+            </label>
           </div>
 
           <label style={{ display: "block", marginTop: 9 }}>
