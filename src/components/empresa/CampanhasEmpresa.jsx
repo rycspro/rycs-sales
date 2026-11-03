@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CirclePause, ClipboardCheck, GitBranch, Plus, Rocket, Save, Wallet } from "lucide-react";
+import { CirclePause, ClipboardCheck, GitBranch, Plus, Rocket, Save, Sparkles, Wallet } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -28,7 +28,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
   // editor completo, com todos os campos à mão.
   const [criando, setCriando] = useState(false);
   const [criarComIA, setCriarComIA] = useState(false);
-  const [modo, setModo] = useState("dashboard");
+  const [modo, setModo] = useState(campanhas.length ? "lista" : "lista");
   const [recarregarDashboard, setRecarregarDashboard] = useState(0);
   const [selecionada, setSelecionada] = useState(campanhas[0]?.id || "nova");
   const existente = campanhas.find((c) => c.id === selecionada);
@@ -102,24 +102,47 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
     />
   );
 
-  if (modo === "dashboard") return <CampaignsDashboard
-    campanhas={campanhas}
-    recarregarSinal={recarregarDashboard}
-    onCriar={() => { setCriarComIA(false); setCriando(true); }}
-    onCriarIA={() => { setCriarComIA(true); setCriando(true); }}
-    onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
-  />;
+  if (modo === "lista") return (
+    <div className="vx-fade">
+      <div className="vx-page-head">
+        <div><h1 className="vx-disp">Campanhas</h1><p className="vx-mut">Gerencie e crie campanhas para seus profissionais.</p></div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Criar manualmente</button>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(true); setCriando(true); }}><Sparkles size={14} /> Criar com IA</button>
+        </div>
+      </div>
+      {campanhas.length === 0 ? (
+        <div className="vx-card" style={{ padding: 40, textAlign: "center" }}>
+          <p className="vx-mut">Nenhuma campanha criada ainda.</p>
+          <button className="vx-btn vx-btn-primary" style={{ marginTop: 12 }} onClick={() => { setCriarComIA(true); setCriando(true); }}><Sparkles size={14} /> Criar com IA</button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {campanhas.map((c) => (
+            <div key={c.id} className="vx-card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}
+              onClick={() => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{c.titulo}</div>
+                <div className="vx-mut" style={{ fontSize: 13, marginTop: 2 }}>{c.funcao?.toUpperCase()} {c.regiao ? `· ${c.regiao}` : ""} · <span style={{ textTransform: "capitalize" }}>{c.status}</span></div>
+              </div>
+              <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={(e) => { e.stopPropagation(); setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}>Editar</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   if (modo === "detalhe" && existente) return <CampaignDetail
     campanha={existente}
     db={db}
-    onVoltar={() => setModo("dashboard")}
+    onVoltar={() => setModo("lista")}
     onEditar={() => { setEdicao({ ...existente }); setModo("editor"); }}
     onStatus={mudarStatus}
   />;
 
   return <div className="vx-fade">
-    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 4 }} onClick={() => setModo(existente ? "detalhe" : "dashboard")}>← {existente ? "Dashboard da campanha" : "Central de campanhas"}</button><div className="vx-eyebrow">Configuração da campanha</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>{campanha.titulo || "Nova campanha"}</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Ajuste orçamento, tarefas, evidências e treinamento.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Nova campanha</button></div>
+    <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 4 }} onClick={() => setModo(existente ? "detalhe" : "lista")}>← {existente ? "Detalhe da campanha" : "Campanhas"}</button><div className="vx-eyebrow">Configuração da campanha</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>{campanha.titulo || "Nova campanha"}</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Ajuste orçamento, tarefas, evidências e treinamento.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Nova campanha</button></div>
     <div className="vx-card" style={{padding:14,marginBottom:14}}><div className="vx-row"><b>Progresso da campanha</b><span className="vx-chip vx-mono">{concluidos}/10 {alterado?"· não salvo":"· salvo"}</span></div><div className="vx-meter-track" style={{margin:"10px 0"}}><div className="vx-meter-fill" style={{width:`${concluidos*10}%`,background:"var(--brand)"}}/></div><div className="vx-steps">{passos.map((p,i)=><span key={p} data-done={i<concluidos?"1":"0"}>{i+1}. {p}</span>)}</div></div>
 
     <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10 }}>{campanhas.map((c) => <button key={c.id} className="vx-btn vx-btn-sm" onClick={() => { setSelecionada(c.id); setEdicao({ ...c }); }} style={{ borderColor: selecionada === c.id ? "var(--brand)" : undefined }}>{c.titulo} · {c.status}</button>)}</div>

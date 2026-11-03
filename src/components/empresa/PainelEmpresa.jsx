@@ -6,8 +6,10 @@ import { ACOES } from "../../lib/constants.js";
 import { Donut, Stat } from "../ui.jsx";
 import CompanyScore from "../CompanyScore.jsx";
 import { metricasEmpresa, projetarROI, valorMonetario } from "../../../shared/analytics.js";
+import CampaignsDashboard from "./CampaignsDashboard.jsx";
 
 export default function PainelEmpresa({ emp, db, up, aviso, irParaCampanhas }) {
+  const [abaInsights, setAbaInsights] = useState("desempenho");
   const [rec, setRec] = useState("");
   const [cobranca, setCobranca] = useState(null);
   const [gerando, setGerando] = useState(false);
@@ -52,16 +54,49 @@ export default function PainelEmpresa({ emp, db, up, aviso, irParaCampanhas }) {
     setRec("");
   };
 
+  // Aba Campanhas dentro de Insights
+  if (abaInsights === "campanhas") {
+    const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
+    return (
+      <>
+        <div className="vx-page-head" style={{ paddingBottom: 0 }}>
+          <div><h1 className="vx-disp">Insights</h1></div>
+        </div>
+        <div style={{ display: "flex", gap: 6, margin: "0 0 20px", borderBottom: "1px solid var(--border)", paddingBottom: 0 }}>
+          {["desempenho", "campanhas"].map((a) => (
+            <button key={a} onClick={() => setAbaInsights(a)}
+              style={{ padding: "10px 18px", fontWeight: 600, fontSize: 14, background: "none", border: "none", borderBottom: a === abaInsights ? "2px solid var(--brand)" : "2px solid transparent", color: a === abaInsights ? "var(--brand)" : "var(--muted)", cursor: "pointer", textTransform: "capitalize" }}>
+              {a === "desempenho" ? "Desempenho" : "Campanhas"}
+            </button>
+          ))}
+        </div>
+        <CampaignsDashboard campanhas={campanhas} db={db} emp={emp} aviso={aviso}
+          onNova={() => irParaCampanhas?.()}
+          onAbrir={() => irParaCampanhas?.()} />
+      </>
+    );
+  }
+
   return (
     <>
-      <div className="vx-page-head">
-        <div><div className="vx-eyebrow">Visão do proprietário</div><h1 className="vx-disp">Desempenho comercial</h1><p>Indicadores calculados exclusivamente a partir dos registros da sua empresa.</p></div>
-        <div className="vx-filterbar">
+      <div className="vx-page-head" style={{ paddingBottom: 0 }}>
+        <div><h1 className="vx-disp">Insights</h1></div>
+        <div className="vx-filterbar" style={{ alignSelf: "flex-end" }}>
           <select className="vx-input" aria-label="Período" value={filtros.dias} onChange={(e) => setFiltros({ ...filtros, dias: e.target.value })}><option value="7">7 dias</option><option value="30">30 dias</option><option value="90">90 dias</option><option value="">Todo período</option></select>
           <select className="vx-input" aria-label="Campanha" value={filtros.campaignId} onChange={(e) => setFiltros({ ...filtros, campaignId: e.target.value })}><option value="">Todas campanhas</option>{(db.campaigns || []).filter((c) => c.companyId === emp.id).map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select>
           <select className="vx-input" aria-label="Profissional" value={filtros.sellerId} onChange={(e) => setFiltros({ ...filtros, sellerId: e.target.value })}><option value="">Todos profissionais</option>{db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado").map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}</select>
           <select className="vx-input" aria-label="Tipo de tarefa" value={filtros.tipo} onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}><option value="">Todas tarefas</option>{Object.entries(ACOES).map(([k, a]) => <option key={k} value={k}>{a.nome}</option>)}</select>
         </div>
+      </div>
+
+      {/* abas internas de Insights */}
+      <div style={{ display: "flex", gap: 6, margin: "0 0 20px", borderBottom: "1px solid var(--border)" }}>
+        {["desempenho", "campanhas"].map((a) => (
+          <button key={a} onClick={() => setAbaInsights(a)}
+            style={{ padding: "10px 18px", fontWeight: 600, fontSize: 14, background: "none", border: "none", borderBottom: a === abaInsights ? "2px solid var(--brand)" : "2px solid transparent", color: a === abaInsights ? "var(--brand)" : "var(--muted)", cursor: "pointer" }}>
+            {a === "desempenho" ? "Desempenho" : "Campanhas"}
+          </button>
+        ))}
       </div>
 
       {(db.campaigns || []).filter((c) => c.companyId === emp.id).length === 0 && (
