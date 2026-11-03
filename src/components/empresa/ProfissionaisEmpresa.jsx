@@ -106,19 +106,40 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     return partes.length ? partes.join(" ") : "Sem dados reais suficientes para gerar resumo confiável.";
   };
 
-  const filtrados = useMemo(() => profissionais.filter((p) => {
-    const regiao = [p.cidade, p.estado].filter(Boolean).join(" / ");
-    const campanhaMatch = !f.campanha || p.campanhas?.some((c) => c.id === f.campanha);
-    const performanceOk = !f.performance || (f.performance === "alta" ? p.taxaAprovacao >= 80 : f.performance === "media" ? p.taxaAprovacao >= 50 && p.taxaAprovacao < 80 : p.taxaAprovacao < 50);
-    const scoreOk = !f.score || (f.score === "80" ? nota(p.nota) >= 80 : f.score === "50" ? nota(p.nota) >= 50 && nota(p.nota) < 80 : nota(p.nota) < 50);
-    return (!f.busca || norm(p.nome).includes(norm(f.busca)))
-      && (!f.funcao || p.perfil === f.funcao)
-      && campanhaMatch
-      && (!f.status || p.status === f.status || p.parceria === f.status || p.aplicacoes?.[emp.id] === f.status)
-      && performanceOk
-      && (!f.regiao || regiao === f.regiao)
-      && scoreOk;
-  }), [profissionais, f, emp.id]);
+  const filtrados = useMemo(() => {
+    const lista = profissionais.filter((p) => {
+      const regiao = [p.cidade, p.estado].filter(Boolean).join(" / ");
+      const campanhaMatch = !f.campanha || p.campanhas?.some((c) => c.id === f.campanha);
+      const performanceOk = !f.performance || (f.performance === "alta" ? p.taxaAprovacao >= 80 : f.performance === "media" ? p.taxaAprovacao >= 50 && p.taxaAprovacao < 80 : p.taxaAprovacao < 50);
+      const scoreOk = !f.score || (f.score === "80" ? nota(p.nota) >= 80 : f.score === "50" ? nota(p.nota) >= 50 && nota(p.nota) < 80 : nota(p.nota) < 50);
+      return (!f.busca || norm(p.nome).includes(norm(f.busca)))
+        && (!f.funcao || p.perfil === f.funcao)
+        && campanhaMatch
+        && (!f.status || p.status === f.status || p.parceria === f.status || p.aplicacoes?.[emp.id] === f.status)
+        && performanceOk
+        && (!f.regiao || regiao === f.regiao)
+        && scoreOk;
+    });
+
+    const completude = (p) => {
+      let pts = 0;
+      if (p.foto) pts += 40;
+      if (p.nome) pts += 10;
+      if (p.perfil) pts += 8;
+      if (p.bio || p.experiencia) pts += 8;
+      if (p.cidade || p.estado) pts += 6;
+      if (arr(p.skills).length) pts += 6;
+      if (arr(p.segmentos).length) pts += 5;
+      if (arr(p.modalidades).length) pts += 4;
+      if (p.disponibilidade) pts += 4;
+      if (nota(p.nota) > 0) pts += 4;
+      if (p.tarefasRealizadas > 0) pts += 3;
+      if (p.whatsapp) pts += 2;
+      return pts;
+    };
+
+    return lista.sort((a, b) => completude(b) - completude(a));
+  }, [profissionais, f, emp.id]);
 
   const salvarObs = async (id, valor) => {
     const r = await api(`/professionals/${id}/note`, { observacao: valor });
