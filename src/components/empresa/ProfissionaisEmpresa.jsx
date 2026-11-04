@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
 import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
@@ -43,13 +43,14 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   const [selecionado, setSelecionado] = useState(null);
   const [campanhaDestino, setCampanhaDestino] = useState("");
   const [obs, setObs] = useState({});
-  const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" });
+  const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "" });
   const [filtroAberto, setFiltroAberto] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const buscaRef = useRef(null);
   const [convites, setConvites] = useState({});
   const [salvos, setSalvos] = useState({});
   const [chatRapido, setChatRapido] = useState(null);
+  const [mostrarSalvos, setMostrarSalvos] = useState(false);
 
   const carregar = async () => {
     setCarregando(true);
@@ -159,6 +160,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
 
   const filtrados = useMemo(() => {
     const lista = profissionais.filter((p) => {
+      if (mostrarSalvos && !salvos[p.id]) return false;
       const regiao = [p.cidade, p.estado].filter(Boolean).join(" / ");
       const campanhaMatch = !f.campanha || p.campanhas?.some((c) => c.id === f.campanha);
       const performanceOk = !f.performance || (f.performance === "alta" ? p.taxaAprovacao >= 80 : f.performance === "media" ? p.taxaAprovacao >= 50 && p.taxaAprovacao < 80 : p.taxaAprovacao < 50);
@@ -169,7 +171,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
         && (!f.status || p.status === f.status || p.parceria === f.status || p.aplicacoes?.[emp.id] === f.status)
         && performanceOk
         && (!f.regiao || regiao === f.regiao)
-        && scoreOk;
+        && scoreOk
+        && (!f.genero || p.genero === f.genero);
     });
 
     const completude = (p) => {
@@ -190,7 +193,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     };
 
     return lista.sort((a, b) => completude(b) - completude(a));
-  }, [profissionais, f, emp.id]);
+  }, [profissionais, f, emp.id, mostrarSalvos, salvos]);
 
   const salvarObs = async (id, valor) => {
     const r = await api(`/professionals/${id}/note`, { observacao: valor });
@@ -279,6 +282,17 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
             </div>
           )}
         </div>
+        <button
+          type="button"
+          className={`vx-btn${mostrarSalvos ? " vx-btn-primary" : ""}`}
+          style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+          onClick={() => setMostrarSalvos((v) => !v)}
+          title={mostrarSalvos ? "Ver todos" : "Ver salvos"}
+        >
+          <Bookmark size={14} fill={mostrarSalvos ? "currentColor" : "none"} strokeWidth={2.3} />
+          Salvos
+          {mostrarSalvos && <span style={{ background: "rgba(255,255,255,.25)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{Object.values(salvos).filter(Boolean).length}</span>}
+        </button>
         <button
           type="button"
           className={`vx-btn${filtrosAtivos ? " vx-btn-primary" : ""}`}
@@ -373,7 +387,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                     : conviteStatus === "recusado"
                     ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)} style={{ flex: 1 }}>Reenviar convite</button>
                     : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)}
-                        style={{ flex: 1, background: "transparent", color: "#64748b", border: "1.5px solid #cbd5e1", opacity: conviteStatus === "enviando" ? 0.6 : 1 }}>
+                        style={{ flex: 1, background: "transparent", color: "#64748b", border: "1.5px solid #cbd5e1", opacity: conviteStatus === "enviando" ? 0.6 : 1, fontWeight: 400 }}>
                         {conviteStatus === "enviando" ? "Enviando…" : "Enviar Convite"}
                       </button>
                   }

@@ -100,6 +100,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const nota = Number(eu.scoreTriagem) || 0;
 
   const salvar = async () => {
+    if (!form.bio?.trim()) return aviso("A apresentação é obrigatória.");
     setSalvando(true);
     const r = await apiPatch(`/sellers/${eu.id}`, form);
     setSalvando(false);
@@ -332,7 +333,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
           </div>
 
           <label style={{ display: "block", marginTop: 9 }}>
-            <div className="vx-label">Apresentação</div>
+            <div className="vx-label">Apresentação *</div>
             <textarea className="vx-input" rows={4} maxLength={1200} value={form.bio}
               placeholder="Conte sua experiência comercial, segmentos em que trabalhou e os tipos de venda em que tem mais experiência."
               onChange={(e) => setForm({ ...form, bio: e.target.value })} />
