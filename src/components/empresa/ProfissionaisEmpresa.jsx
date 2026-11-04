@@ -417,29 +417,49 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
             <button className="vx-btn vx-btn-ghost" onClick={() => setSelecionado(null)}><X size={16} /></button>
           </div>
 
-          {/* ── Bloco hero: foto grande + dados ao lado ── */}
+          {/* ── Bloco hero: coluna esquerda (foto + dados) + coluna direita (bio + métricas) ── */}
           <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
-            {/* Foto quadrada grande */}
-            <div style={{ width: 200, height: 200, minWidth: 200, borderRadius: 16, overflow: "hidden", background: "var(--surface-2)", flexShrink: 0, border: "1px solid var(--border)" }}>
-              {p.foto
-                ? <img src={p.foto} alt={nomeCompleto} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
-                : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 52, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(p.nome)}</div>
-              }
-            </div>
-
-            {/* Informações ao lado da foto */}
-            <div style={{ flex: 1, minWidth: 240 }}>
-              <h2 className="vx-disp" style={{ margin: "0 0 2px", fontSize: 24 }}>{nomeCompleto}</h2>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
-                <span style={{ fontSize: 13.5, color: "var(--brand)", fontWeight: 600 }}>{PERFIL[p.perfil] || p.perfil || "Profissional"}</span>
-                {idadeP && <span className="vx-chip">{idadeP} anos</span>}
-                {[p.cidade, p.estado].filter(Boolean).length > 0 && (
-                  <span className="vx-chip"><MapPin size={11} style={{ verticalAlign: -1 }} />{[p.cidade, p.estado].filter(Boolean).join(", ")}</span>
-                )}
+            {/* Coluna esquerda: foto + card de dados abaixo */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, flexShrink: 0 }}>
+              {/* Foto quadrada grande */}
+              <div style={{ width: 200, height: 200, borderRadius: 16, overflow: "hidden", background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                {p.foto
+                  ? <img src={p.foto} alt={nomeCompleto} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+                  : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 52, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(p.nome)}</div>
+                }
               </div>
 
+              {/* Card de dados do perfil abaixo da foto */}
+              <div className="vx-card" style={{ padding: 14, width: 200 }}>
+                <div className="vx-eyebrow" style={{ marginBottom: 8 }}>Dados do perfil</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 7, fontSize: 12.5 }}>
+                  <div><span className="vx-mut">Função:</span> <b>{text(PERFIL[p.perfil] || p.perfil)}</b></div>
+                  <div><span className="vx-mut">Localização:</span> <b>{text([p.cidade, p.estado].filter(Boolean).join(" / "), "—")}</b></div>
+                  {p.disponibilidade && <div><span className="vx-mut">Disponibilidade:</span> <b>{p.disponibilidade}</b></div>}
+                  {arr(p.segmentos).length > 0 && (
+                    <div><span className="vx-mut">Segmentos:</span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                        {arr(p.segmentos).slice(0, 4).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 10 }}>{s}</span>)}
+                      </div>
+                    </div>
+                  )}
+                  {arr(p.skills).length > 0 && (
+                    <div><span className="vx-mut">Habilidades:</span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                        {arr(p.skills).slice(0, 4).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 10 }}>{s}</span>)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Coluna direita: nome, bio, modalidades, métricas */}
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <h2 className="vx-disp" style={{ margin: "0 0 10px", fontSize: 24 }}>{nomeCompleto}</h2>
+
               {(p.bio || p.experiencia) && (
-                <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 12px" }}>{p.bio || p.experiencia}</p>
+                <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 12px", textAlign: "justify" }}>{p.bio || p.experiencia}</p>
               )}
               {!(p.bio || p.experiencia) && (
                 <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 12px" }}>Apresentação em atualização.</p>
@@ -462,30 +482,6 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                     <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginTop: 1 }}>{label}</div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Card lateral: dados do perfil */}
-            <div className="vx-card" style={{ padding: 14, minWidth: 200, maxWidth: 240, flexShrink: 0 }}>
-              <div className="vx-eyebrow" style={{ marginBottom: 8 }}>Dados do perfil</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 7, fontSize: 12.5 }}>
-                <div><span className="vx-mut">Função:</span> <b>{text(PERFIL[p.perfil] || p.perfil)}</b></div>
-                <div><span className="vx-mut">Localização:</span> <b>{text([p.cidade, p.estado].filter(Boolean).join(" / "), "—")}</b></div>
-                {p.disponibilidade && <div><span className="vx-mut">Disponibilidade:</span> <b>{p.disponibilidade}</b></div>}
-                {arr(p.segmentos).length > 0 && (
-                  <div><span className="vx-mut">Segmentos:</span>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
-                      {arr(p.segmentos).slice(0, 4).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 10 }}>{s}</span>)}
-                    </div>
-                  </div>
-                )}
-                {arr(p.skills).length > 0 && (
-                  <div><span className="vx-mut">Habilidades:</span>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
-                      {arr(p.skills).slice(0, 4).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 10 }}>{s}</span>)}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
