@@ -375,7 +375,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
         const ativo = f.funcao === opt.value;
         return (
           <button
-            key={opt.value}
+            key={`fn-${opt.value}`}
             type="button"
             onClick={() => setF({ ...f, funcao: opt.value === "" ? "" : (ativo ? "" : opt.value) })}
             style={{
