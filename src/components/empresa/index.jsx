@@ -21,6 +21,7 @@ import Assinatura from "./Assinatura.jsx";
 import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
 import BannerCerebro from "./BannerCerebro.jsx";
 import InicioEmpresa from "./InicioEmpresa.jsx";
+import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const sair = async () => {
@@ -91,6 +92,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={(pendencias) => { setCamposAcademyPendentes(pendencias.map((p) => p.campo)); setSecaoConta("cadastro"); setAba?.("conta"); }} />}
       </>}
       {aba === "conferir" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} />}
+      {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} />}
       {aba === "conta" && <>
         {submenu([["cadastro", "Configurações"], ["base", "Cérebro da Operação"], ["financeiro", "Financeiro"], ["relatorios", "Relatórios"], ["planos", "Plano"], ["notificacoes", "Notificações"], ["suporte", "Suporte"], ["indicar", "Indicar"], ["sair", "Sair"]], secaoConta, (key) => key === "sair" ? sair() : setSecaoConta(key))}
         {secaoConta === "cadastro" && <CadastroEmpresa emp={emp} up={up} aviso={aviso} camposDestacados={camposAcademyPendentes} />}
