@@ -156,6 +156,10 @@ function getEmpresaState(entityId) {
   const apps = db.prepare("SELECT * FROM applications WHERE companyId = ?").all(meuId);
   apps.forEach((a) => idsCandidatos.add(a.sellerId));
 
+  // inclui também sellers que têm mensagens com esta empresa
+  const messages = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(meuId);
+  messages.forEach((m) => { if (m.sellerId) idsCandidatos.add(m.sellerId); });
+
   const sellerIds = [...idsCandidatos];
   let sellers = [];
   if (sellerIds.length) {
@@ -165,7 +169,6 @@ function getEmpresaState(entityId) {
   }
 
   const submissions = db.prepare("SELECT * FROM submissions WHERE companyId = ? ORDER BY criadoEm DESC").all(meuId).map(parseSub);
-  const messages = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(meuId);
   const leads = db.prepare("SELECT * FROM leads WHERE companyId = ? ORDER BY atualizadoEm DESC").all(meuId);
 
   return { sellers, companies, submissions, withdrawals: [], messages, campaigns, leads };
