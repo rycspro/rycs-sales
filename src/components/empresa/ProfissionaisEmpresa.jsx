@@ -239,18 +239,26 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
               onClick={() => { setBuscaAberta(true); setTimeout(() => buscaRef.current?.focus(), 60); }}
               style={{
                 width: 40, height: 40, borderRadius: "50%", border: "1px solid var(--border)",
-                background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", transition: "background .2s"
+                background: filtrosAtivos ? "var(--brand)" : "var(--surface-2)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", transition: "background .2s", position: "relative"
               }}
-              title="Buscar profissional"
+              title="Buscar e filtrar"
             >
-              <Search size={16} color="var(--muted)" />
+              <Search size={16} color={filtrosAtivos ? "#fff" : "var(--muted)"} />
+              {filtrosAtivos > 0 && (
+                <span style={{
+                  position: "absolute", top: -4, right: -4, background: "var(--brand)",
+                  color: "#fff", borderRadius: 20, fontSize: 10, padding: "1px 5px", fontWeight: 700,
+                  border: "2px solid var(--surface)", lineHeight: 1.4
+                }}>{filtrosAtivos}</span>
+              )}
             </button>
           ) : (
             <div style={{
-              display: "flex", alignItems: "center", gap: 8, borderRadius: 24,
+              display: "flex", alignItems: "center", gap: 4, borderRadius: 24,
               border: "1px solid var(--border)", background: "var(--surface-2)",
-              padding: "0 8px 0 14px", height: 40, width: 280,
+              padding: "0 6px 0 14px", height: 40, width: 320,
               animation: "vxSearchExpand .25s ease-out"
             }}>
               <Search size={14} color="var(--muted)" style={{ flexShrink: 0 }} />
@@ -267,6 +275,29 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   borderRadius: 0, boxShadow: "none"
                 }}
               />
+              {/* Botão filtrar dentro da barra */}
+              <button
+                type="button"
+                onClick={() => setFiltroAberto((v) => !v)}
+                title="Filtrar"
+                style={{
+                  width: 32, height: 32, borderRadius: "50%", border: "none", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  background: filtrosAtivos ? "var(--brand)" : "transparent",
+                  color: filtrosAtivos ? "#fff" : "var(--muted)",
+                  position: "relative",
+                }}
+              >
+                <Filter size={13} strokeWidth={2.3} />
+                {filtrosAtivos > 0 && (
+                  <span style={{
+                    position: "absolute", top: 0, right: 0, background: "#fff",
+                    color: "var(--brand)", borderRadius: 20, fontSize: 9, padding: "0px 4px", fontWeight: 700,
+                    lineHeight: 1.6, border: "1px solid var(--brand)"
+                  }}>{filtrosAtivos}</span>
+                )}
+              </button>
+              {/* X fechar */}
               <button
                 type="button"
                 onClick={() => { setBuscaAberta(false); setF({ ...f, busca: "" }); }}
@@ -292,16 +323,6 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
           <Bookmark size={14} fill={mostrarSalvos ? "currentColor" : "none"} strokeWidth={2.3} />
           Salvos
           {mostrarSalvos && <span style={{ background: "rgba(255,255,255,.25)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{Object.values(salvos).filter(Boolean).length}</span>}
-        </button>
-        <button
-          type="button"
-          className={`vx-btn${filtrosAtivos ? " vx-btn-primary" : ""}`}
-          style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
-          onClick={() => setFiltroAberto((v) => !v)}
-        >
-          <Filter size={14} strokeWidth={2.3} />
-          Filtrar
-          {filtrosAtivos > 0 && <span style={{ background: filtrosAtivos ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
         </button>
         {filtrosAtivos > 0 && (
           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "" })}>
