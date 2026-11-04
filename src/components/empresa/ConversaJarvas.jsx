@@ -323,19 +323,28 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       const v = vez.current;
       v.final = `${v.final} ${final}`.trim();
       v.parcial = parcial.trim();
-      const dito = `${v.final} ${v.parcial}`.trim();
+      let dito = `${v.final} ${v.parcial}`.trim();
       if (!dito) return;
 
       const f = faseRef.current;
       const recente = Date.now() - fimDaFala.current < CARENCIA_POS_FALA;
-      const palavras = (dito.match(/\S+/g) || []).length;
+      let palavras = (dito.match(/\S+/g) || []).length;
 
-      // O microfone ouviu o próprio Jarvas (enquanto ele fala ou logo depois):
-      // descarta. Fora desses momentos, tudo o que chega é a pessoa.
+      // O microfone ouviu o próprio Jarvas (enquanto ele fala ou logo depois).
+      // Se o SR capturou eco + resposta juntos ("quantos profissionais três"),
+      // semEco preserva o que é da pessoa ("três") em vez de descartar tudo.
       if ((f === "falando" || recente) && pareceEco(dito, falaAtual.current, ECO_FALANDO)) {
-        clearTimeout(v.timer);
-        vez.current = { final: "", parcial: "", timer: null };
-        return;
+        const restante = semEco(dito, falaAtual.current);
+        if (restante && restante !== dito) {
+          v.final = restante;
+          v.parcial = "";
+          dito = restante;
+          palavras = (dito.match(/\S+/g) || []).length;
+        } else {
+          clearTimeout(v.timer);
+          vez.current = { final: "", parcial: "", timer: null };
+          return;
+        }
       }
       if (f === "pausado" || f === "montando") return;
       // Pelo texto também: palavras que não são eco, enquanto ele fala, param o
