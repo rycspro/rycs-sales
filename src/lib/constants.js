@@ -54,6 +54,7 @@ export const NAV = {
     { key: "painel", label: "Insights", Icon: BarChart3 },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
     { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch },
+    { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { key: "conferir", label: "Aprovações", Icon: ShieldCheck },
     { key: "conta", label: "Minha Conta", Icon: UserIcon },
   ],

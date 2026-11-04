@@ -14,6 +14,7 @@ import LeadsEmpresa from "./LeadsEmpresa.jsx";
 import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
 import NotificacoesEmpresa from "./NotificacoesEmpresa.jsx";
 import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
+import ConversasEmpresa from "./ConversasEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
 import { AssistenteEmpresa, BaseConhecimento, RelatoriosEmpresa } from "./EmpresaAI.jsx";
 import Assinatura from "./Assinatura.jsx";
@@ -82,6 +83,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoCampanhas === "tabela" && <TabelaEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       </>}
       {aba === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
+      {aba === "conversas" && <ConversasEmpresa emp={emp} db={db} up={up} />}
       {aba === "academy" && <>
         {submenu([["rycs", "Cursos da RYCS"], ["empresa", "Ensinar a RYCS"], ["qualificacao", "Dados da Operação"]], secaoAcademy, setSecaoAcademy)}
         {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}

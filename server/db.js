@@ -1422,6 +1422,7 @@ adicionarColuna("leads", "responsavelEtapaId", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "dataNascimento", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "sobrenome", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "pais", "TEXT DEFAULT 'Brasil'");
+adicionarColuna("messages", "lida", "INTEGER DEFAULT 0");
 
 // Backfill: campanhas existentes sem pipeline recebem as etapas padrão
 (() => {

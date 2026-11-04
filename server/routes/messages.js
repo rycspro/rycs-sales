@@ -44,9 +44,13 @@ router.post("/messages", (req, res) => {
     return res.status(403).json({ error: "Sem permissão" });
   if (role === "empresa" && entityId !== companyId)
     return res.status(403).json({ error: "Sem permissão" });
-  if (role !== "admin") {
+  if (role === "vendedor") {
     const vinculo = db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(sellerId, companyId);
     if (!vinculo) return res.status(403).json({ error: "Conversa disponível apenas para vínculos aprovados" });
+  }
+  if (role === "empresa") {
+    const prof = db.prepare("SELECT 1 FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(sellerId);
+    if (!prof) return res.status(403).json({ error: "Profissional não encontrado ou inativo" });
   }
 
   const de = role === "empresa" ? "empresa" : role === "vendedor" ? "vendedor" : "plataforma";
@@ -54,6 +58,16 @@ router.post("/messages", (req, res) => {
   db.prepare("INSERT INTO messages (id, companyId, sellerId, de, texto, ts) VALUES (?, ?, ?, ?, ?, ?)")
     .run(id, companyId, sellerId, de, String(texto).slice(0, 2000), agora());
   res.json({ id, de });
+});
+
+router.post("/messages/ler", (req, res) => {
+  const { sellerId, companyId } = req.body;
+  const { role, entityId } = req.user;
+  if (role === "empresa" && entityId !== companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && entityId !== sellerId) return res.status(403).json({ error: "Sem permissão" });
+  db.prepare("UPDATE messages SET lida = 1 WHERE companyId = ? AND sellerId = ? AND de != ?")
+    .run(companyId, sellerId, role === "empresa" ? "empresa" : "vendedor");
+  res.json({ ok: true });
 });
 
 export default router;

@@ -373,10 +373,18 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                     : conviteStatus === "recusado"
                     ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)} style={{ flex: 1 }}>Reenviar convite</button>
                     : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)}
-                        style={{ flex: 1, background: "transparent", color: "var(--brand)", border: "1.5px solid var(--brand)", opacity: conviteStatus === "enviando" ? 0.6 : 1 }}>
+                        style={{ flex: 1, background: "transparent", color: "#64748b", border: "1.5px solid #cbd5e1", opacity: conviteStatus === "enviando" ? 0.6 : 1 }}>
                         {conviteStatus === "enviando" ? "Enviando…" : "Enviar Convite"}
                       </button>
                   }
+                  <button
+                    className="vx-prof-card__btn"
+                    onClick={(e) => { e.stopPropagation(); setChatRapido({ sellerId: p.id, nome: p.nome, foto: p.foto }); }}
+                    title="Enviar mensagem"
+                    style={{ width: 44, minWidth: 44, flex: "none", background: "transparent", color: "var(--muted)", border: "1.5px solid var(--border)" }}
+                  >
+                    <MessageCircle size={14} />
+                  </button>
                   <button
                     className="vx-prof-card__btn"
                     onClick={(e) => toggleSalvo(e, p.id)}
@@ -551,5 +559,24 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
         </div>
       </div>;
     })()}
+
+    {/* ── Popup de chat rápido ── */}
+    {chatRapido && (
+      <div style={{
+        position: "fixed", bottom: 20, right: 20, width: 340, zIndex: 300,
+        background: "var(--surface)", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.18)",
+        border: "1px solid var(--border)", overflow: "hidden",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: "1px solid var(--border)", background: "var(--surface-2)" }}>
+          {chatRapido.foto
+            ? <img src={chatRapido.foto} style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} alt="" />
+            : <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>{iniciais(chatRapido.nome)}</div>
+          }
+          <span style={{ flex: 1, fontWeight: 600, fontSize: 13.5, color: "var(--ink)" }}>{capitalizar(chatRapido.nome)}</span>
+          <button className="vx-btn vx-btn-ghost" style={{ padding: "4px 6px" }} onClick={() => setChatRapido(null)}><X size={14} /></button>
+        </div>
+        <Chat empresa={emp} sellerId={chatRapido.sellerId} db={db} up={up} de="empresa" />
+      </div>
+    )}
   </div>;
 }
