@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  MessageSquare, Search, X, ChevronLeft, Users,
-  CheckCheck, Circle
+  MessageSquare, Search, X, ChevronLeft,
+  CheckCheck, Check
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora } from "../../lib/utils.js";
@@ -132,7 +132,7 @@ function ItemConversa({ c, ativo, onClick }) {
 
 // ── Área de mensagens ─────────────────────────────────────────────────────────
 
-function AreaMensagens({ msgs, companyId, nomeEmpresa }) {
+function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
   const fimRef = useRef(null);
   const itens = agruparPorData([...msgs].sort((a, b) => a.ts - b.ts));
 
@@ -160,9 +160,22 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa }) {
           </div>
         );
         const meu = item.de === "empresa";
+        const lida = !!item.lida;
         return (
-          <div key={item.id || i} style={{ display: "flex", justifyContent: meu ? "flex-end" : "flex-start", marginBottom: 4 }}>
+          <div key={item.id || i} style={{ display: "flex", justifyContent: meu ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 7, marginBottom: 4 }}>
+            {/* avatar do profissional nas mensagens dele */}
+            {!meu && (
+              <div style={{ flexShrink: 0, marginBottom: 20 }}>
+                <Avatar nome={seller?.nome} foto={seller?.foto} size={28} fontSize={10} />
+              </div>
+            )}
             <div style={{ maxWidth: "72%" }}>
+              {/* nome do profissional acima da primeira mensagem de cada grupo */}
+              {!meu && seller?.nome && (
+                <div style={{ fontSize: 11, color: "#64748B", fontWeight: 600, marginBottom: 2, paddingLeft: 2 }}>
+                  {capitalizar(seller.nome)}
+                </div>
+              )}
               <div style={{
                 background: meu ? "#2563EB" : "#F1F5F9",
                 color: meu ? "#fff" : "#1E293B",
@@ -173,8 +186,13 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa }) {
               }}>
                 {item.texto}
               </div>
-              <div style={{ fontSize: 10.5, color: "#94A3B8", marginTop: 3, textAlign: meu ? "right" : "left", paddingLeft: meu ? 0 : 4, paddingRight: meu ? 4 : 0 }}>
-                {new Date(item.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              <div style={{ fontSize: 10.5, color: "#94A3B8", marginTop: 3, display: "flex", alignItems: "center", gap: 3, justifyContent: meu ? "flex-end" : "flex-start", paddingLeft: meu ? 0 : 4, paddingRight: meu ? 4 : 0 }}>
+                <span>{new Date(item.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                {meu && (
+                  lida
+                    ? <CheckCheck size={13} color="#2563EB" strokeWidth={2.5} />
+                    : <Check size={13} color="#94A3B8" strokeWidth={2.5} />
+                )}
               </div>
             </div>
           </div>
@@ -475,7 +493,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
               </div>
 
               {/* mensagens */}
-              <AreaMensagens msgs={msgsSel} companyId={emp.id} nomeEmpresa={emp.nome} />
+              <AreaMensagens msgs={msgsSel} companyId={emp.id} nomeEmpresa={emp.nome} seller={selConv?.seller} />
 
               {/* campo de envio */}
               <CampoEnvio onEnviar={enviarMensagem} enviando={enviando} />
