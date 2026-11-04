@@ -1519,9 +1519,7 @@ db.exec(`
 })();
 
 // Migração: normalizar campo "estado" dos profissionais.
-// Converte siglas (SP, PR, GO…) para o nome completo e corrige grafias
-// sem acento ("Sao Paulo" → "São Paulo"). Idempotente: roda só quando
-// encontra valores que precisam de correção.
+// Converte siglas, grafias sem acento e variações para o nome oficial do estado.
 (() => {
   const UF = {
     AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",
@@ -1531,31 +1529,44 @@ db.exec(`
     RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",RR:"Roraima",
     SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins",
   };
-  const NOME_SEM_ACENTO = {};
-  for (const [, nome] of Object.entries(UF)) {
-    const sem = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-    NOME_SEM_ACENTO[sem] = nome;
+  const strip = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const POR_NOME = {};
+  const NOMES_VALIDOS = new Set();
+  for (const [sigla, nome] of Object.entries(UF)) {
+    POR_NOME[strip(nome)] = nome;
+    POR_NOME[sigla.toLowerCase()] = nome;
+    NOMES_VALIDOS.add(nome);
   }
 
   function normalizar(raw) {
     const s = raw.trim();
+    if (!s) return "";
+    if (NOMES_VALIDOS.has(s)) return s;
     const up = s.toUpperCase().replace(/[\s.]/g, "");
     if (UF[up]) return UF[up];
-    const lower = s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-    if (NOME_SEM_ACENTO[lower]) return NOME_SEM_ACENTO[lower];
+    const key = strip(s);
+    if (POR_NOME[key]) return POR_NOME[key];
     return s;
   }
 
   const todos = db.prepare("SELECT id, estado FROM sellers WHERE estado IS NOT NULL AND estado != ''").all();
   const upd = db.prepare("UPDATE sellers SET estado = ? WHERE id = ?");
-  let n = 0;
+  const alteracoes = [];
   db.transaction(() => {
     for (const row of todos) {
       const corrigido = normalizar(row.estado);
-      if (corrigido !== row.estado) { upd.run(corrigido, row.id); n++; }
+      if (corrigido !== row.estado) {
+        upd.run(corrigido, row.id);
+        alteracoes.push(`"${row.estado}" → "${corrigido}"`);
+      }
     }
   })();
-  if (n) console.log(`[migração] estado normalizado para ${n} profissional(is)`);
+  if (alteracoes.length) {
+    console.log(`[migração] estado normalizado para ${alteracoes.length} profissional(is):`);
+    alteracoes.forEach((a) => console.log(`  ${a}`));
+  }
+  const distintos = db.prepare("SELECT estado, COUNT(*) as n FROM sellers WHERE estado IS NOT NULL AND estado != '' GROUP BY estado ORDER BY n DESC").all();
+  if (distintos.length) console.log(`[migração] estados distintos: ${distintos.map((r) => `${r.estado} (${r.n})`).join(", ")}`);
 })();
 
 export default db;
