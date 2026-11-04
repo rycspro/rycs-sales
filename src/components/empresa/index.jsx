@@ -4,19 +4,13 @@ import PainelEmpresa from "./PainelEmpresa.jsx";
 import ConferirEmpresa from "./ConferirEmpresa.jsx";
 import TimeEmpresa from "./TimeEmpresa.jsx";
 import TabelaEmpresa from "./TabelaEmpresa.jsx";
-import ChatEmpresa from "./ChatEmpresa.jsx";
-import PlanosEmpresa from "./PlanosEmpresa.jsx";
-import Indicacoes from "../Indicacoes.jsx";
 import QualificacaoEmpresa from "./QualificacaoEmpresa.jsx";
-import CadastroEmpresa from "./CadastroEmpresa.jsx";
 import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
 import LeadsEmpresa from "./LeadsEmpresa.jsx";
 import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
-import NotificacoesEmpresa from "./NotificacoesEmpresa.jsx";
 import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
 import ConversasEmpresa from "./ConversasEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
-import { AssistenteEmpresa, BaseConhecimento, RelatoriosEmpresa } from "./EmpresaAI.jsx";
 import Assinatura from "./Assinatura.jsx";
 import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
 import BannerCerebro from "./BannerCerebro.jsx";
@@ -30,9 +24,8 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   };
 
   const [secaoCampanhas, setSecaoCampanhas] = useState("campanhas");
-  const [secaoConta, setSecaoConta] = useState("cadastro");
+  const [secaoInsights, setSecaoInsights] = useState("painel");
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
-  const [camposAcademyPendentes, setCamposAcademyPendentes] = useState([]);
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
 
   // Portão de acesso: prefetched no App.jsx em paralelo com onboarding.
@@ -73,8 +66,12 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     <div className="vx-fade">
       {aba === "inicio" && <InicioEmpresa emp={emp} />}
       {aba === "painel" && <>
-        <BannerCerebro onIr={() => { setSecaoAcademy("empresa"); setAba?.("academy"); }} />
-        <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
+        {submenu([["painel", "Insights"], ["financeiro", "Financeiro"]], secaoInsights, setSecaoInsights)}
+        {secaoInsights === "painel" && <>
+          <BannerCerebro onIr={() => { setSecaoAcademy("empresa"); setAba?.("academy"); }} />
+          <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
+        </>}
+        {secaoInsights === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
       </>}
       {aba === "campanhas" && <>
         {submenu([["campanhas", "Campanhas"], ["time", "Time"], ["leads", "Leads"], ["tabela", "Tarefas e valores"]], secaoCampanhas, setSecaoCampanhas)}
@@ -89,21 +86,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {submenu([["rycs", "Cursos da RYCS"], ["empresa", "Ensinar a RYCS"], ["qualificacao", "Dados da Operação"]], secaoAcademy, setSecaoAcademy)}
         {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}
         {secaoAcademy === "empresa" && <AcademyEmpresaHub emp={emp} aviso={aviso} />}
-        {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={(pendencias) => { setCamposAcademyPendentes(pendencias.map((p) => p.campo)); setSecaoConta("cadastro"); setAba?.("conta"); }} />}
+        {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("configuracoes"); }} />}
       </>}
       {aba === "conferir" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} />}
-      {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} />}
-      {aba === "conta" && <>
-        {submenu([["cadastro", "Configurações"], ["base", "Cérebro da Operação"], ["financeiro", "Financeiro"], ["relatorios", "Relatórios"], ["planos", "Plano"], ["notificacoes", "Notificações"], ["suporte", "Suporte"], ["indicar", "Indicar"], ["sair", "Sair"]], secaoConta, (key) => key === "sair" ? sair() : setSecaoConta(key))}
-        {secaoConta === "cadastro" && <CadastroEmpresa emp={emp} up={up} aviso={aviso} camposDestacados={camposAcademyPendentes} />}
-        {secaoConta === "base" && <BaseConhecimento emp={emp} db={db} aviso={aviso} />}
-        {secaoConta === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
-        {secaoConta === "relatorios" && <RelatoriosEmpresa emp={emp} db={db} />}
-        {secaoConta === "planos" && <PlanosEmpresa aviso={aviso} recarregar={recarregar} />}
-        {secaoConta === "notificacoes" && <NotificacoesEmpresa aviso={aviso} />}
-        {secaoConta === "suporte" && <ChatEmpresa emp={emp} db={db} up={up} />}
-        {secaoConta === "indicar" && <Indicacoes aviso={aviso} />}
-      </>}
+      {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}
     </div>
   );
 }

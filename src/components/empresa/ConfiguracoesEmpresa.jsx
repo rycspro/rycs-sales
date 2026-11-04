@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import {
-  Building2, Users, Palette, Bell, Lock, Save, Check, Settings,
+  Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe, LayoutGrid,
+  CreditCard, Headphones, Gift,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
+import PlanosEmpresa from "./PlanosEmpresa.jsx";
+import ChatEmpresa from "./ChatEmpresa.jsx";
+import Indicacoes from "../Indicacoes.jsx";
 
 // ── Data ─────────────────────────────────────────────────────────────
 
@@ -42,10 +46,12 @@ const SECOES_NAV = [
   { key: "dados", label: "Dados da empresa", icon: Building2 },
   { key: "contatos", label: "Contatos", icon: Users },
   { key: "comercial", label: "Comercial", icon: Briefcase },
-  { key: "visual", label: "Identidade visual", icon: Palette },
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "seguranca", label: "Segurança", icon: Lock },
   { key: "preferencias", label: "Preferências", icon: Settings },
+  { key: "planos", label: "Planos", icon: CreditCard },
+  { key: "suporte", label: "Suporte", icon: Headphones },
+  { key: "indicar", label: "Indicar", icon: Gift },
 ];
 
 // ── UI atoms ──────────────────────────────────────────────────────────
@@ -146,7 +152,7 @@ function InfoRow({ label, value }) {
 
 // ── Main component ────────────────────────────────────────────────────
 
-export default function ConfiguracoesEmpresa({ emp, up, aviso }) {
+export default function ConfiguracoesEmpresa({ emp, up, aviso, db, recarregar }) {
   const [secao, setSecao] = useState("geral");
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
   const [form, setForm] = useState(() => ({
@@ -314,29 +320,6 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso }) {
       </>
     ),
 
-    visual: (
-      <>
-        <PgHead title="Identidade visual" description="Personalize as cores da sua marca dentro da plataforma." />
-        <Block title="Cor da marca">
-          <div style={{ display: "flex", gap: 20, alignItems: "flex-end", flexWrap: "wrap" }}>
-            <label>
-              <div style={{ fontSize: 12, fontWeight: 500, color: "var(--muted)", marginBottom: 5 }}>Seletor de cor</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <input type="color" value={form.cor || "#2563EB"} onChange={(e) => set("cor")(e.target.value)} style={{ width: 44, height: 44, border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", cursor: "pointer", padding: 2 }} />
-                <input className="vx-input" value={form.cor || "#2563EB"} onChange={(e) => set("cor")(e.target.value)} placeholder="#2563EB" style={{ width: 120 }} />
-              </div>
-            </label>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: "var(--muted)", marginBottom: 5 }}>Prévia</div>
-              <div style={{ height: 44, borderRadius: "var(--radius-sm)", background: form.cor || "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 13, letterSpacing: 0.3, minWidth: 180, padding: "0 16px" }}>
-                {emp.nome || "Sua empresa"}
-              </div>
-            </div>
-          </div>
-        </Block>
-      </>
-    ),
-
     notificacoes: (
       <>
         <PgHead title="Notificações" description="Escolha quais alertas deseja receber por e-mail." />
@@ -381,9 +364,15 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso }) {
         </Block>
       </>
     ),
+
+    planos: <PlanosEmpresa aviso={aviso} recarregar={recarregar} />,
+
+    suporte: db ? <ChatEmpresa emp={emp} db={db} up={up} /> : null,
+
+    indicar: <Indicacoes aviso={aviso} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "geral"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "geral", "planos", "suporte", "indicar"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 
