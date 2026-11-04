@@ -1,106 +1,187 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   MessageSquare, Search, X, ChevronLeft,
-  CheckCheck, Check, MapPin, BriefcaseBusiness, CheckCircle2,
+  CheckCheck, Check, CheckCircle2,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
-import { uid, agora } from "../../lib/utils.js";
+import { uid, agora, money, dataCurta } from "../../lib/utils.js";
 
 const PERFIL_LABEL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
 const arr = (v) => Array.isArray(v) ? v : [];
 
 function PerfilModal({ seller, db, empId, onFechar }) {
-  const subs = (db.submissions || []).filter((s) => s.companyId === empId && s.sellerId === seller.id);
+  const [bioExpandida, setBioExpandida] = useState(false);
+  const p = seller;
+  const subs = (db.submissions || []).filter((s) => s.companyId === empId && s.sellerId === p.id);
+  const leads = (db.leads || []).filter((l) => l.companyId === empId && l.sellerId === p.id);
   const aprovadas = subs.filter((s) => s.status === "liberado").length;
+  const recusadas = subs.filter((s) => s.status === "recusado").length;
+  const reunioes = subs.filter((s) => s.status === "liberado" && s.tipo === "agendamento").length;
+  const visitas = subs.filter((s) => s.status === "liberado" && s.tipo === "realizada").length;
+  const vendas = subs.filter((s) => s.status === "liberado" && s.tipo === "venda").length;
+  const ganhos = subs.filter((s) => s.status === "liberado").reduce((t, s) => t + Number(s.liquido || s.valor || 0), 0);
   const taxa = subs.length ? Math.round(aprovadas / subs.length * 100) : 0;
-  const nome = capitalizar([seller.nome, seller.sobrenome].filter(Boolean).join(" ") || seller.nome || "");
-  const scoreVal = Number(seller.nota || 0);
-  const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
+  const nomeCompleto = capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome || "");
+
+  const canais = [
+    p.whats && { label: "WhatsApp", icon: "📱", href: `https://wa.me/${p.whats.replace(/\D/g, "")}` },
+    p.email && { label: "E-mail", icon: "✉️", href: `mailto:${p.email}` },
+    arr(p.modalidades).some((m) => /video|confer/i.test(m)) && { label: "Videoconferência", icon: "🎥", href: null },
+    p.telefone && { label: "Telefone", icon: "📞", href: `tel:${p.telefone}` },
+  ].filter(Boolean);
 
   return (
-    <div
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-      onClick={onFechar}
-    >
-      <div
-        style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 24px 64px rgba(0,0,0,.18)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* hero */}
-        <div style={{ position: "relative", height: 200, background: "#F1F5F9", borderRadius: "20px 20px 0 0", overflow: "hidden" }}>
-          {seller.foto
-            ? <img src={seller.foto} alt={nome} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
-            : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 64, fontWeight: 700, color: "#2563EB", fontFamily: "'Space Grotesk',sans-serif" }}>{iniciais(seller.nome)}</div>
-          }
-          <button onClick={onFechar} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,.35)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-            <X size={16} />
-          </button>
-          <span style={{ position: "absolute", top: 12, left: 12, background: scoreCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px" }}>
-            {scoreVal} pts
-          </span>
+    <div className="vx-overlay" onClick={onFechar}>
+      <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1020 }}>
+
+        {/* cabeçalho */}
+        <div className="vx-row" style={{ marginBottom: 16 }}>
+          <div className="vx-eyebrow">Perfil completo</div>
+          <button className="vx-btn vx-btn-ghost" onClick={onFechar}><X size={16} /></button>
         </div>
 
-        <div style={{ padding: "20px 24px 28px" }}>
-          {/* nome + função */}
-          <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif", color: "#0B1220" }}>{nome}</h2>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
-            {seller.perfil && (
-              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "#64748B" }}>
-                <BriefcaseBusiness size={13} /> {PERFIL_LABEL[seller.perfil] || seller.perfil}
-              </span>
-            )}
-            {(seller.cidade || seller.estado) && (
-              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "#64748B" }}>
-                <MapPin size={13} /> {[seller.cidade, seller.estado].filter(Boolean).join(", ")}
-              </span>
-            )}
+        {/* HERO: foto 3:4 + coluna direita */}
+        <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <div style={{ width: 180, minWidth: 180, flexShrink: 0 }}>
+            <div style={{ width: 180, height: 240, borderRadius: 16, overflow: "hidden", background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+              {p.foto
+                ? <img src={p.foto} alt={nomeCompleto} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+                : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 52, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(p.nome)}</div>
+              }
+            </div>
           </div>
 
-          {/* bio */}
-          {(seller.bio || seller.experiencia) && (
-            <p style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.65, margin: "0 0 16px" }}>
-              {(seller.bio || seller.experiencia).slice(0, 400)}{(seller.bio || seller.experiencia).length > 400 ? "…" : ""}
-            </p>
-          )}
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <h2 className="vx-disp" style={{ margin: "0 0 12px", fontSize: 24 }}>{nomeCompleto}</h2>
 
-          {/* métricas */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 }}>
+            {/* bio */}
+            <div style={{ marginBottom: 12 }}>
+              {(p.bio || p.experiencia) ? (
+                <>
+                  <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.65, margin: 0, display: "-webkit-box", WebkitLineClamp: 6, WebkitBoxOrient: "vertical", overflow: "hidden", textAlign: "justify" }}>
+                    {p.bio || p.experiencia}
+                  </p>
+                  {(p.bio || p.experiencia).length > 320 && (
+                    <button type="button" onClick={() => setBioExpandida(true)}
+                      style={{ background: "none", border: "none", padding: 0, marginTop: 4, fontSize: 12.5, color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>
+                      Ler biografia completa →
+                    </button>
+                  )}
+                </>
+              ) : (
+                <p className="vx-mut" style={{ fontSize: 13, margin: 0, fontStyle: "italic" }}>Apresentação em atualização.</p>
+              )}
+            </div>
+
+            {/* canais */}
+            {canais.length > 0 && (
+              <div>
+                <div className="vx-eyebrow" style={{ marginBottom: 7 }}>Canais de Atendimento</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {canais.map(({ label, icon, href }) =>
+                    href
+                      ? <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="vx-chip" style={{ fontSize: 12, textDecoration: "none", color: "var(--ink)" }}>{icon} {label}</a>
+                      : <span key={label} className="vx-chip" style={{ fontSize: 12 }}>{icon} {label}</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* DADOS DO PERFIL */}
+        <div className="vx-card" style={{ padding: "14px 18px", marginTop: 20 }}>
+          <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Dados do Perfil</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px 20px", fontSize: 13 }}>
+            <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Função</div><b>{PERFIL_LABEL[p.perfil] || p.perfil || "Não informada"}</b></div>
+            <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Localização</div><b>{[p.cidade, p.estado].filter(Boolean).join(" / ") || "—"}</b></div>
+            {p.disponibilidade && <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Disponibilidade</div><b>{p.disponibilidade}</b></div>}
+            {arr(p.segmentos).length > 0 && (
+              <div style={{ gridColumn: "span 2" }}>
+                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>Segmentos</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{arr(p.segmentos).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 11 }}>{s}</span>)}</div>
+              </div>
+            )}
+            {arr(p.skills).length > 0 && (
+              <div style={{ gridColumn: "span 2" }}>
+                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>Habilidades</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{arr(p.skills).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 11 }}>{s}</span>)}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* INDICADORES */}
+        <div style={{ marginTop: 16 }}>
+          <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Indicadores de Desempenho</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
             {[
+              { label: "Score", val: p.nota ?? 0 },
               { label: "Tarefas", val: `${aprovadas}/${subs.length}` },
               { label: "Aprovação", val: `${taxa}%` },
-              { label: "Score", val: scoreVal },
+              { label: "Vendas", val: vendas },
             ].map(({ label, val }) => (
-              <div key={label} style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "#2563EB" }}>{val}</div>
-                <div style={{ fontSize: 10.5, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 3 }}>{label}</div>
+              <div key={label} className="vx-card" style={{ padding: "12px 8px", textAlign: "center" }}>
+                <div className="vx-mono" style={{ fontSize: 22, fontWeight: 700, color: "var(--brand)" }}>{val}</div>
+                <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 4 }}>{label}</div>
               </div>
             ))}
           </div>
-
-          {/* skills */}
-          {arr(seller.skills).length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }}>Habilidades</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {arr(seller.skills).map((s) => <span key={s} style={{ background: "#EFF6FF", color: "#2563EB", fontSize: 12, fontWeight: 500, padding: "3px 10px", borderRadius: 20 }}>{s}</span>)}
-              </div>
-            </div>
-          )}
-
-          {/* certificações */}
-          {arr(seller.certificacoes).length > 0 && (
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }}>Certificações</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {arr(seller.certificacoes).map((c) => (
-                  <span key={`${c.funcao}-${c.percentual}`} style={{ display: "flex", alignItems: "center", gap: 4, background: "#F0FDF4", color: "#166534", fontSize: 12, fontWeight: 500, padding: "3px 10px", borderRadius: 20 }}>
-                    <CheckCircle2 size={11} /> {PERFIL_LABEL[c.funcao] || c.funcao} · {c.percentual}%
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* MÉTRICAS COMPLETAS */}
+        <div className="vx-grid vx-g4" style={{ marginTop: 20 }}>
+          {[
+            ["Score geral", p.nota ?? 0],
+            ["Tarefas aprovadas", `${aprovadas}/${subs.length}`],
+            ["Taxa de aprovação", `${taxa}%`],
+            ["Ganhos totais", money(ganhos)],
+            ["Reuniões", reunioes],
+            ["Visitas", visitas],
+            ["Vendas", vendas],
+            ["Leads", leads.length],
+          ].map(([label, val]) => (
+            <div key={label} className="vx-scenario"><span>{label}</span><strong>{val}</strong></div>
+          ))}
+        </div>
+
+        {/* CERTIFICAÇÕES */}
+        <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
+          <section className="vx-card" style={{ padding: 14 }}>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>Certificações</h3>
+            {p.certificacoes?.length
+              ? p.certificacoes.map((c) => (
+                  <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}>
+                    <CheckCircle2 size={12} />{PERFIL_LABEL[c.funcao] || c.funcao} · {c.percentual}%
+                  </span>
+                ))
+              : <p className="vx-mut">Nenhuma certificação publicada.</p>
+            }
+          </section>
+          <section className="vx-card" style={{ padding: 14 }}>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>Histórico de campanhas</h3>
+            {p.campanhas?.length
+              ? <div className="vx-compact-list">{p.campanhas.slice(0, 6).map((c) => (
+                  <div key={c.id}><div><b>{c.titulo}</b><span>{PERFIL_LABEL[c.funcao] || c.funcao || "Função não informada"}</span></div><span className="vx-chip">{c.candidaturaStatus || c.status}</span></div>
+                ))}</div>
+              : <p className="vx-mut">Sem histórico de campanhas.</p>
+            }
+            <p className="vx-mut" style={{ marginTop: 8 }}>Tarefas recusadas: {recusadas}</p>
+          </section>
+        </div>
+
+        {/* modal de bio completa */}
+        {bioExpandida && (
+          <div className="vx-overlay" onClick={() => setBioExpandida(false)} style={{ zIndex: 1100 }}>
+            <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
+              <div className="vx-row" style={{ marginBottom: 16 }}>
+                <h3 className="vx-disp" style={{ margin: 0 }}>Biografia — {nomeCompleto}</h3>
+                <button className="vx-btn vx-btn-ghost" onClick={() => setBioExpandida(false)}><X size={16} /></button>
+              </div>
+              <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", textAlign: "justify" }}>{p.bio || p.experiencia}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
