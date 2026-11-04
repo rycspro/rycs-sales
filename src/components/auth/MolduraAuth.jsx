@@ -6,16 +6,16 @@
 
 export default function MolduraAuth({ tarja, titulo, subtitulo, largura = 460, children, rodape, logoWidth = 200, compact = false }) {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: compact ? "12px 16px" : 16 }}>
+    <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 16px", overflowY: "auto" }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: largura }}>
-        <div style={{ textAlign: "center", marginBottom: compact ? 14 : 24 }}>
-          <img className="vx-logo" src="/logo-rycs.png" alt="RYCS Sales Machine" style={{ width: logoWidth, margin: `0 auto ${compact ? 8 : 14}px` }} />
+        <div style={{ textAlign: "center", marginBottom: compact ? 10 : 16 }}>
+          <img className="vx-logo" src="/logo-rycs.png" alt="RYCS Sales Machine" style={{ width: compact ? logoWidth : Math.min(logoWidth, 170), margin: `0 auto ${compact ? 6 : 10}px` }} />
           {tarja && <div className="vx-eyebrow" style={{ marginBottom: 6 }}>{tarja}</div>}
           {titulo && <div className="vx-disp" style={{ fontSize: 22 }}>{titulo}</div>}
-          {subtitulo && <p className="vx-mut" style={{ fontSize: 13.5, marginTop: 6, lineHeight: 1.6 }}>{subtitulo}</p>}
+          {subtitulo && <p className="vx-mut" style={{ fontSize: 13.5, marginTop: 6, lineHeight: 1.5 }}>{subtitulo}</p>}
         </div>
-        <div className="vx-card" style={{ padding: 22 }}>{children}</div>
-        {rodape && <div style={{ textAlign: "center", marginTop: 14 }}>{rodape}</div>}
+        <div className="vx-card" style={{ padding: compact ? 16 : 20 }}>{children}</div>
+        {rodape && <div style={{ textAlign: "center", marginTop: 12 }}>{rodape}</div>}
       </div>
     </div>
   );

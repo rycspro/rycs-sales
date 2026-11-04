@@ -94,10 +94,10 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
         <Campo label="Senha">
           <CampoSenha value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Sua senha" />
         </Campo>
-        <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading} style={{ marginTop: 8 }}>
+        <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading} style={{ marginTop: 4 }}>
           {loading ? "Carregando…" : "Entrar"}
         </button>
-        <p className="vx-onb-termos">
+        <p className="vx-onb-termos" style={{ marginTop: 8 }}>
           Ao continuar, você aceita os{" "}
           <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>Termos de Uso</button> da RYCS.
         </p>
@@ -114,13 +114,13 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
         </div>
       )}
 
-      <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setShowForgot(true)} style={{ width: "100%", marginTop: 8, fontSize: 12.5 }}>
+      <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setShowForgot(true)} style={{ width: "100%", marginTop: 4, fontSize: 12.5 }}>
         Esqueci minha senha
       </button>
 
-      <hr className="vx-sep" />
+      <hr className="vx-sep" style={{ margin: "8px 0" }} />
 
-      <div className="vx-eyebrow" style={{ textAlign: "center", marginBottom: 10 }}>Ainda não tem conta?</div>
+      <div className="vx-eyebrow" style={{ textAlign: "center", marginBottom: 6 }}>Ainda não tem conta?</div>
       <div style={{ display: "flex", gap: 8 }}>
         <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroVendedor)}>Sou profissional</button>
         <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroEmpresa)}>Sou empresa</button>
