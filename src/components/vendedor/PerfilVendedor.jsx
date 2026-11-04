@@ -74,8 +74,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   useEffect(() => { api("/courses/me/certificates").then((r) => setCertificados(r?.certificados || [])); }, []);
 
   const [form, setForm] = useState(() => ({
-    nome: eu.nome || "", titulo: eu.titulo || "", bio: eu.bio || "",
-    cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
+    nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "", bio: eu.bio || "",
+    pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
     experiencia: eu.experiencia || "", disponibilidade: eu.disponibilidade || "",
     segmentos: eu.segmentos || [], modalidades: eu.modalidades || [],
     regioes: eu.regioes || [], skills: eu.skills || [],
@@ -180,7 +180,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
           </div>
 
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div className="vx-disp" style={{ fontSize: 21 }}>{eu.nome}</div>
+            <div className="vx-disp" style={{ fontSize: 21 }}>{[eu.nome, eu.sobrenome].filter(Boolean).join(" ")}</div>
             <div style={{ fontSize: 13.5, color: "var(--brand)", fontWeight: 600 }}>
               {eu.titulo || `${PERFIS[eu.perfil] || "Profissional"} comercial`}
             </div>
@@ -311,13 +311,17 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
           <h3 className="vx-disp" style={{ fontSize: 17, margin: "3px 0 12px" }}>Suas informações</h3>
 
           <div className="vx-grid vx-g2">
-            {campo("nome", "Nome completo")}
+            {campo("nome", "Nome *")}
+            {campo("sobrenome", "Sobrenome *")}
+          </div>
+          <div className="vx-grid vx-g2" style={{ marginTop: 9 }}>
             {campo("titulo", "Título profissional", { placeholder: "Closer B2B | SaaS | Energia" })}
+            {campo("whats", "WhatsApp")}
           </div>
           <div className="vx-grid vx-g3" style={{ marginTop: 9 }}>
-            {campo("cidade", "Cidade")}
-            {campo("estado", "Estado", { max: 40 })}
-            {campo("whats", "WhatsApp")}
+            {campo("pais", "País *")}
+            {campo("estado", "Estado *", { max: 40 })}
+            {campo("cidade", "Cidade *")}
           </div>
           <div style={{ marginTop: 9 }}>
             <label>

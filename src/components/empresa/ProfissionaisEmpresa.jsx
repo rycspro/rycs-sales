@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Award, BarChart3, BriefcaseBusiness, CheckCircle2, ClipboardList, Eye, Filter, MapPin, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Eye, Filter, MapPin, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
 
@@ -12,6 +12,10 @@ const text = (v, empty = "Não informado") => v || empty;
 
 function iniciais(nome = "") {
   return nome.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("") || "PR";
+}
+
+function capitalizar(nome = "") {
+  return String(nome).toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function calcularIdade(dataNascimento) {
@@ -41,6 +45,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" });
   const [filtroAberto, setFiltroAberto] = useState(false);
   const [convites, setConvites] = useState({});
+  const [salvos, setSalvos] = useState({});
 
   const carregar = async () => {
     setCarregando(true);
@@ -52,6 +57,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     }
     setCarregando(false);
   };
+
+  const toggleSalvo = (e, id) => { e.stopPropagation(); setSalvos((prev) => ({ ...prev, [id]: !prev[id] })); };
 
   const enviarConvite = async (e, profId) => {
     e.stopPropagation();
@@ -234,7 +241,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     {carregando ? <div className="vx-card vx-skeleton" style={{ height: 280 }} /> : (
       <div className="vx-prof-grid">
         {filtrados.map((p) => {
-          const scoreVal = nota(p.nota) || 100;
+          const scoreVal = Number(p.nota ?? 100);
           const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
           const scoreBg  = scoreVal >= 80 ? "#ecfeff" : scoreVal >= 50 ? "#fffbeb" : "#fef2f2";
           const fit = fitCultural(p);
@@ -259,14 +266,16 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                 <div className="vx-prof-card__info">
                   {/* nome + idade */}
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p.nome}</span>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome)}</span>
                     {calcularIdade(p.dataNascimento) !== null && (
                       <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{calcularIdade(p.dataNascimento)} anos</span>
                     )}
                   </div>
                   <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Função:</b> {PERFIL[p.perfil] || p.perfil || "Não informada"}</span>
-                  {[p.cidade, p.estado].filter(Boolean).length > 0 && (
-                    <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Local:</b> {[p.cidade, p.estado].filter(Boolean).join(", ")}</span>
+                  {(p.bio || p.experiencia) && (
+                    <span style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginTop: 1 }}>
+                      {(p.bio || p.experiencia).slice(0, 120)}
+                    </span>
                   )}
                   {/* barra de compatibilidade */}
                   <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 4 }}>
@@ -278,17 +287,26 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                 </div>
 
                 {/* BOTÃO — sempre no fundo via margin-top:auto */}
-                <div className="vx-prof-card__actions">
+                <div className="vx-prof-card__actions" style={{ display: "flex", gap: 6 }}>
                   {conviteStatus === "aprovado"
-                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled>✓ Parceria ativa</button>
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled style={{ flex: 1 }}>✓ Parceria ativa</button>
                     : conviteStatus === "pendente"
-                    ? <button className="vx-prof-card__btn vx-prof-card__btn--muted" disabled>Convite enviado · aguardando</button>
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--muted" disabled style={{ flex: 1 }}>Enviado · aguardando</button>
                     : conviteStatus === "recusado"
-                    ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)}>Reenviar convite</button>
-                    : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)} style={{ opacity: conviteStatus === "enviando" ? 0.7 : 1 }}>
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)} style={{ flex: 1 }}>Reenviar convite</button>
+                    : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)}
+                        style={{ flex: 1, background: "transparent", color: "var(--brand)", border: "1.5px solid var(--brand)", opacity: conviteStatus === "enviando" ? 0.6 : 1 }}>
                         {conviteStatus === "enviando" ? "Enviando…" : "Enviar Convite"}
                       </button>
                   }
+                  <button
+                    className="vx-prof-card__btn"
+                    onClick={(e) => toggleSalvo(e, p.id)}
+                    title={salvos[p.id] ? "Remover dos salvos" : "Salvar profissional"}
+                    style={{ width: 44, minWidth: 44, flex: "none", background: salvos[p.id] ? "var(--brand)" : "transparent", color: salvos[p.id] ? "#fff" : "var(--muted)", border: salvos[p.id] ? "none" : "1.5px solid var(--border)" }}
+                  >
+                    <Bookmark size={14} fill={salvos[p.id] ? "#fff" : "none"} />
+                  </button>
                 </div>
               </div>
             </article>
