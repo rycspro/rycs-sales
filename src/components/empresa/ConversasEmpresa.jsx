@@ -342,7 +342,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
   const mostraChat = !mobile || !!selSellerId;
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 56px)", overflow: "hidden", background: "#F8FAFC" }}>
+    <div style={{ display: "flex", height: mobile ? "calc(100dvh - 56px - env(safe-area-inset-bottom,0px))" : "calc(100vh - 56px)", overflow: "hidden", background: "#F8FAFC" }}>
 
       {/* ── PAINEL 2: LISTA DE CONVERSAS ─────────────────────────────────── */}
       {mostraLista && (

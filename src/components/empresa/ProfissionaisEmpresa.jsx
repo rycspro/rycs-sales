@@ -9,6 +9,34 @@ const STATUS = { aprovado: "Ativo/aprovado", parcial: "Ativo parcial", pendente:
 const nota = (n) => Number(n || 0);
 const arr = (v) => Array.isArray(v) ? v : [];
 const norm = (v) => String(v || "").toLocaleLowerCase("pt-BR");
+
+const SIGLAS_UF = {
+  AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",
+  ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MT:"Mato Grosso",MS:"Mato Grosso do Sul",
+  MG:"Minas Gerais",PA:"Pará",PB:"Paraíba",PR:"Paraná",PE:"Pernambuco",PI:"Piauí",
+  RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",
+  RR:"Roraima",SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins",
+};
+
+function normalizarEstado(raw) {
+  if (!raw) return "";
+  const s = raw.trim();
+  // Sigla: 2 letras maiúsculas
+  if (/^[A-Z]{2}$/.test(s) && SIGLAS_UF[s]) return SIGLAS_UF[s];
+  // Sigla com espaço/ponto
+  const upper = s.toUpperCase().replace(/\s*\.\s*/g, "");
+  if (/^[A-Z]{2}$/.test(upper) && SIGLAS_UF[upper]) return SIGLAS_UF[upper];
+  // Reconstruir acentos comuns perdidos (ex: "Sao Paulo" → "São Paulo")
+  return s
+    .replace(/\bSao\b/g, "São")
+    .replace(/\bParana\b/gi, "Paraná")
+    .replace(/\bGoias\b/gi, "Goiás")
+    .replace(/\bCeara\b/gi, "Ceará")
+    .replace(/\bPara\b/gi, "Pará")
+    .replace(/\bPiaui\b/gi, "Piauí")
+    .replace(/\bRondonia\b/gi, "Rondônia")
+    .replace(/\bAmazonas\b/gi, "Amazonas");
+}
 const text = (v, empty = "Não informado") => v || empty;
 
 function iniciais(nome = "") {
@@ -129,16 +157,14 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   }), [listaApi, db, emp.id, campanhasEmpresa]);
 
   const opcoes = useMemo(() => {
-    const estadoMap = new Map();
+    const estados = new Set();
     profissionais.forEach((p) => {
-      const raw = (p.estado || "").trim();
-      if (!raw) return;
-      const key = norm(raw);
-      if (!estadoMap.has(key) || raw.length > estadoMap.get(key).length) estadoMap.set(key, raw);
+      const nome = normalizarEstado((p.estado || "").trim());
+      if (nome) estados.add(nome);
     });
     return {
       funcoes: [...new Set(profissionais.map((p) => p.perfil).filter(Boolean))],
-      regioes: [...estadoMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([key, label]) => ({ key, label })),
+      regioes: [...estados].sort((a, b) => a.localeCompare(b, "pt-BR")).map((label) => ({ key: norm(label), label })),
     };
   }, [profissionais]);
 
@@ -171,7 +197,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   const filtrados = useMemo(() => {
     const lista = profissionais.filter((p) => {
       if (mostrarSalvos && !salvos[p.id]) return false;
-      const regiao = p.estado || "";
+      const regiao = normalizarEstado((p.estado || "").trim());
       const campanhaMatch = !f.campanha || p.campanhas?.some((c) => c.id === f.campanha);
       const performanceOk = !f.performance || (f.performance === "alta" ? p.taxaAprovacao >= 80 : f.performance === "media" ? p.taxaAprovacao >= 50 && p.taxaAprovacao < 80 : p.taxaAprovacao < 50);
       const scoreOk = !f.score || (f.score === "80" ? nota(p.nota) >= 80 : f.score === "50" ? nota(p.nota) >= 50 && nota(p.nota) < 80 : nota(p.nota) < 50);
