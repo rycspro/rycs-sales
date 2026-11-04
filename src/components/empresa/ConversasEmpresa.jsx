@@ -1,10 +1,110 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   MessageSquare, Search, X, ChevronLeft,
-  CheckCheck, Check
+  CheckCheck, Check, MapPin, BriefcaseBusiness, CheckCircle2,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora } from "../../lib/utils.js";
+
+const PERFIL_LABEL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
+const arr = (v) => Array.isArray(v) ? v : [];
+
+function PerfilModal({ seller, db, empId, onFechar }) {
+  const subs = (db.submissions || []).filter((s) => s.companyId === empId && s.sellerId === seller.id);
+  const aprovadas = subs.filter((s) => s.status === "liberado").length;
+  const taxa = subs.length ? Math.round(aprovadas / subs.length * 100) : 0;
+  const nome = capitalizar([seller.nome, seller.sobrenome].filter(Boolean).join(" ") || seller.nome || "");
+  const scoreVal = Number(seller.nota || 0);
+  const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={onFechar}
+    >
+      <div
+        style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 24px 64px rgba(0,0,0,.18)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* hero */}
+        <div style={{ position: "relative", height: 200, background: "#F1F5F9", borderRadius: "20px 20px 0 0", overflow: "hidden" }}>
+          {seller.foto
+            ? <img src={seller.foto} alt={nome} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+            : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 64, fontWeight: 700, color: "#2563EB", fontFamily: "'Space Grotesk',sans-serif" }}>{iniciais(seller.nome)}</div>
+          }
+          <button onClick={onFechar} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,.35)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <X size={16} />
+          </button>
+          <span style={{ position: "absolute", top: 12, left: 12, background: scoreCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px" }}>
+            {scoreVal} pts
+          </span>
+        </div>
+
+        <div style={{ padding: "20px 24px 28px" }}>
+          {/* nome + função */}
+          <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif", color: "#0B1220" }}>{nome}</h2>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+            {seller.perfil && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "#64748B" }}>
+                <BriefcaseBusiness size={13} /> {PERFIL_LABEL[seller.perfil] || seller.perfil}
+              </span>
+            )}
+            {(seller.cidade || seller.estado) && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "#64748B" }}>
+                <MapPin size={13} /> {[seller.cidade, seller.estado].filter(Boolean).join(", ")}
+              </span>
+            )}
+          </div>
+
+          {/* bio */}
+          {(seller.bio || seller.experiencia) && (
+            <p style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.65, margin: "0 0 16px" }}>
+              {(seller.bio || seller.experiencia).slice(0, 400)}{(seller.bio || seller.experiencia).length > 400 ? "…" : ""}
+            </p>
+          )}
+
+          {/* métricas */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 }}>
+            {[
+              { label: "Tarefas", val: `${aprovadas}/${subs.length}` },
+              { label: "Aprovação", val: `${taxa}%` },
+              { label: "Score", val: scoreVal },
+            ].map(({ label, val }) => (
+              <div key={label} style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#2563EB" }}>{val}</div>
+                <div style={{ fontSize: 10.5, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 3 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* skills */}
+          {arr(seller.skills).length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }}>Habilidades</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {arr(seller.skills).map((s) => <span key={s} style={{ background: "#EFF6FF", color: "#2563EB", fontSize: 12, fontWeight: 500, padding: "3px 10px", borderRadius: 20 }}>{s}</span>)}
+              </div>
+            </div>
+          )}
+
+          {/* certificações */}
+          {arr(seller.certificacoes).length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }}>Certificações</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {arr(seller.certificacoes).map((c) => (
+                  <span key={`${c.funcao}-${c.percentual}`} style={{ display: "flex", alignItems: "center", gap: 4, background: "#F0FDF4", color: "#166534", fontSize: 12, fontWeight: 500, padding: "3px 10px", borderRadius: 20 }}>
+                    <CheckCircle2 size={11} /> {PERFIL_LABEL[c.funcao] || c.funcao} · {c.percentual}%
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── utilidades ────────────────────────────────────────────────────────────────
 
@@ -280,6 +380,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
   const [selSellerId, setSelSellerId] = useState(null);
   const [lidosLocal, setLidosLocal] = useState({});
   const [enviando, setEnviando] = useState(false);
+  const [perfilAberto, setPerfilAberto] = useState(false);
   const [mobile, setMobile] = useState(window.innerWidth < 768);
   const debounceRef = useRef(null);
 
@@ -485,12 +586,21 @@ export default function ConversasEmpresa({ emp, db, up }) {
                     <ChevronLeft size={20} />
                   </button>
                 )}
-                <Avatar nome={selConv.seller?.nome} foto={selConv.seller?.foto} size={38} fontSize={13} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14.5, color: "#0B1220", fontFamily: "'Space Grotesk', sans-serif" }}>{nomeSel}</div>
-                  <div style={{ fontSize: 12, color: "#94A3B8" }}>{msgsSel.length} {msgsSel.length === 1 ? "mensagem" : "mensagens"}</div>
-                </div>
+                <button
+                  onClick={() => setPerfilAberto(true)}
+                  style={{ display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", cursor: "pointer", padding: 0, flex: 1, minWidth: 0, textAlign: "left" }}
+                >
+                  <Avatar nome={selConv.seller?.nome} foto={selConv.seller?.foto} size={38} fontSize={13} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14.5, color: "#0B1220", fontFamily: "'Space Grotesk', sans-serif", textDecoration: "underline", textDecorationColor: "#CBD5E1", textUnderlineOffset: 3 }}>{nomeSel}</div>
+                    <div style={{ fontSize: 12, color: "#94A3B8" }}>{msgsSel.length} {msgsSel.length === 1 ? "mensagem" : "mensagens"}</div>
+                  </div>
+                </button>
               </div>
+
+              {perfilAberto && selConv?.seller && (
+                <PerfilModal seller={selConv.seller} db={db} empId={emp.id} onFechar={() => setPerfilAberto(false)} />
+              )}
 
               {/* mensagens */}
               <AreaMensagens msgs={msgsSel} companyId={emp.id} nomeEmpresa={emp.nome} seller={selConv?.seller} />
