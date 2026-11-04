@@ -39,10 +39,10 @@ const PAUSA_FIM_PARCIAL = 900;      // idem, quando a última parte ainda não �
 const PAUSA_EXTRA_INCOMPLETA = 600; // frase parada em "e…", "para…": espera mais
 const PAUSA_RESPOSTA_COMPLETA = 180;  // buffer início: 180ms após resposta curta
 const PALAVRAS_PARA_INTERROMPER = 3; // precisa de 3 palavras transcritas para interromper
-const FALA_SIMULTANEA_MS = 350;    // precisa de 350ms contínuos de voz real para interromper
-const APRENDE_ECO_MS = 450;        // mais tempo para aprender o eco antes de comparar
+const FALA_SIMULTANEA_MS = 150;    // 150ms de voz real para interromper (rápido, mas não noise)
+const APRENDE_ECO_MS = 450;        // 450ms para calibrar eco antes de comparar
 const ECO_FALANDO = 0.45;          // 45% de pares = eco (menos agressivo para preservar input real)
-const CARENCIA_POS_FALA = 600;     // janela carência pós-fala
+const CARENCIA_POS_FALA = 0;       // sem carência pós-fala: usuário pode falar imediatamente
 
 const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", pausado: "idle", montando: "thinking" };
 const STATUS = {
