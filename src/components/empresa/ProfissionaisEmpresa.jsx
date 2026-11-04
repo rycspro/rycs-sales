@@ -204,7 +204,57 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   return <div className="vx-fade">
     <div className="vx-page-head">
       <div><h1 className="vx-disp">Profissionais</h1><p>Gestão dos profissionais disponíveis, usando somente dados reais da plataforma.</p></div>
-      <span className="vx-chip"><UserRoundSearch size={13} />{filtrados.length} profissionais</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span className="vx-chip"><UserRoundSearch size={13} />{filtrados.length} profissionais</span>
+        <div style={{ position: "relative" }}>
+          {!buscaAberta ? (
+            <button
+              type="button"
+              onClick={() => { setBuscaAberta(true); setTimeout(() => buscaRef.current?.focus(), 60); }}
+              style={{
+                width: 40, height: 40, borderRadius: "50%", border: "1px solid var(--border)",
+                background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", transition: "background .2s"
+              }}
+              title="Buscar profissional"
+            >
+              <Search size={16} color="var(--muted)" />
+            </button>
+          ) : (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8, borderRadius: 24,
+              border: "1px solid var(--border)", background: "var(--surface-2)",
+              padding: "0 8px 0 14px", height: 40, width: 280,
+              animation: "vxSearchExpand .25s ease-out"
+            }}>
+              <Search size={14} color="var(--muted)" style={{ flexShrink: 0 }} />
+              <input
+                ref={buscaRef}
+                type="text"
+                value={f.busca}
+                onChange={(e) => setF({ ...f, busca: e.target.value })}
+                placeholder="Buscar por nome…"
+                style={{
+                  flex: 1, border: "none", outline: "none", background: "transparent",
+                  fontSize: 13, color: "var(--ink)", height: "100%"
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => { setBuscaAberta(false); setF({ ...f, busca: "" }); }}
+                style={{
+                  width: 28, height: 28, borderRadius: "50%", border: "none",
+                  background: "transparent", cursor: "pointer", display: "flex",
+                  alignItems: "center", justifyContent: "center", flexShrink: 0
+                }}
+                title="Fechar busca"
+              >
+                <X size={14} color="var(--muted)" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
 
     <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
