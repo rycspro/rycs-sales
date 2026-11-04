@@ -1,6 +1,7 @@
+import { LogOut } from "lucide-react";
 import { NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
-export default function Shell({ role, active, onSelect, counts, beta, children }) {
+export default function Shell({ role, active, onSelect, counts, beta, onLogout, children }) {
   const allItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const navItems = allItems.filter((item) => item.key);
   const bottomItems = navItems.slice(0, 5);
@@ -28,7 +29,18 @@ export default function Shell({ role, active, onSelect, counts, beta, children }
           })}
         </div>
 
-        <div style={{ padding: "12px 0", display: "flex", justifyContent: "center", borderTop: "1px solid var(--border)" }}>
+        {onLogout && (
+          <button
+            type="button"
+            className="vx-sidebtn"
+            onClick={onLogout}
+            style={{ margin: "0 8px 4px", color: "var(--muted)" }}
+          >
+            <LogOut size={16} strokeWidth={2.3} />
+            Sair
+          </button>
+        )}
+        <div style={{ padding: "10px 0", display: "flex", justifyContent: "center", borderTop: "1px solid var(--border)" }}>
           <ThemeSwitcher />
         </div>
       </aside>

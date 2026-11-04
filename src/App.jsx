@@ -11,6 +11,7 @@ import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding
 import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
 import EntradaEmpresa from "./components/auth/EntradaEmpresa.jsx";
 import ConfirmarEmail from "./components/auth/ConfirmarEmail.jsx";
+import LandingPage from "./components/LandingPage.jsx";
 import Onboarding from "./components/onboarding/index.jsx";
 import Vendedor from "./components/vendedor/index.jsx";
 import Empresa from "./components/empresa/index.jsx";
@@ -245,29 +246,32 @@ export default function App() {
 
   const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
 
-  if (!user) return (
-    <div className="vx-app">
-      <style>{CSS}</style>
-      {environment === "beta" && <div className="vx-beta-login-badge">AMBIENTE BETA — DADOS FICTÍCIOS</div>}
-      {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial beta={environment === "beta"} />
-        : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
-        : rota.tipo === "escolha" ? <EscolhaCadastro />
-        : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
-        : rota.tipo === "cadastro" && rota.role === "empresa" ? <EntradaEmpresa />
-        : rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
-          ? <EtapaAcesso conviteToken={rota.tipo === "convite-onboarding" ? rota.token : null}
-              onRegister={(d) => registrar(d, { silencioso: true })} onLogin={(e, s) => login(e, s, { silencioso: true })} />
-        : rota.tipo === "confirmar-email" ? <ConfirmarEmail token={rota.token} onLogin={loginDireto} />
-        : <Login onLogin={login} beta={environment === "beta"} />}
-      {toast && (
-        <div className="vx-fade" style={{
-          position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
-          background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
-          boxShadow: "var(--shadow-pop)",
-        }}>{toast}</div>
-      )}
-    </div>
-  );
+  if (!user) {
+    if (rota.tipo === "landing") return <div className="vx-app"><style>{CSS}</style><LandingPage /></div>;
+    return (
+      <div className="vx-app">
+        <style>{CSS}</style>
+        {environment === "beta" && <div className="vx-beta-login-badge">AMBIENTE BETA — DADOS FICTÍCIOS</div>}
+        {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial beta={environment === "beta"} />
+          : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
+          : rota.tipo === "escolha" ? <EscolhaCadastro />
+          : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
+          : rota.tipo === "cadastro" && rota.role === "empresa" ? <EntradaEmpresa />
+          : rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
+            ? <EtapaAcesso conviteToken={rota.tipo === "convite-onboarding" ? rota.token : null}
+                onRegister={(d) => registrar(d, { silencioso: true })} onLogin={(e, s) => login(e, s, { silencioso: true })} />
+          : rota.tipo === "confirmar-email" ? <ConfirmarEmail token={rota.token} onLogin={loginDireto} />
+          : <Login onLogin={login} beta={environment === "beta"} />}
+        {toast && (
+          <div className="vx-fade" style={{
+            position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
+            background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
+            boxShadow: "var(--shadow-pop)",
+          }}>{toast}</div>
+        )}
+      </div>
+    );
+  }
 
   const roleLabel = { vendedor: "Vendedor", empresa: "Empresa", admin: "Plataforma" }[role] || "";
 
@@ -319,7 +323,7 @@ export default function App() {
 
       {bannerOnb && <BannerOnboarding onb={onb} />}
 
-      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"}>
+      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout}>
         {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
         {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
         {role === "admin" && <Admin {...ctx} aba={aba} />}
