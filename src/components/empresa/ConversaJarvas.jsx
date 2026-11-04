@@ -34,15 +34,15 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 // Ritmo da conversa. Calibrado para não atropelar ninguém: a pessoa termina
 // a frase, e o Jarvas só para de falar quando alguém realmente fala por cima.
-const PAUSA_FIM_FALA = 800;        // buffer fim: 800ms silêncio encerra a vez da pessoa
-const PAUSA_FIM_PARCIAL = 1400;    // idem, quando a última parte ainda não é final
-const PAUSA_EXTRA_INCOMPLETA = 900; // frase parada em "e…", "para…": espera mais
-const PAUSA_RESPOSTA_COMPLETA = 300;  // buffer início: 300ms após resposta curta
-const PALAVRAS_PARA_INTERROMPER = 2; // limiar reduzido para detectar voz mais rápido
-const FALA_SIMULTANEA_MS = 120;    // limiar reduzido: detecta fala simultânea mais cedo
-const APRENDE_ECO_MS = 250;        // aprende vazamento mais rápido
-const ECO_FALANDO = 0.25;          // 25% das palavras capturadas durante fala = eco
-const CARENCIA_POS_FALA = 800;     // janela carência pós-fala reduzida
+const PAUSA_FIM_FALA = 600;         // buffer fim: 600ms silêncio encerra a vez da pessoa
+const PAUSA_FIM_PARCIAL = 900;      // idem, quando a última parte ainda não é final
+const PAUSA_EXTRA_INCOMPLETA = 600; // frase parada em "e…", "para…": espera mais
+const PAUSA_RESPOSTA_COMPLETA = 180;  // buffer início: 180ms após resposta curta
+const PALAVRAS_PARA_INTERROMPER = 3; // precisa de 3 palavras transcritas para interromper
+const FALA_SIMULTANEA_MS = 350;    // precisa de 350ms contínuos de voz real para interromper
+const APRENDE_ECO_MS = 450;        // mais tempo para aprender o eco antes de comparar
+const ECO_FALANDO = 0.45;          // 45% de pares = eco (menos agressivo para preservar input real)
+const CARENCIA_POS_FALA = 600;     // janela carência pós-fala
 
 const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", pausado: "idle", montando: "thinking" };
 const STATUS = {
@@ -418,7 +418,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     }
     fala = fala.trim();
     obterAudio(fala);
-    await esperar(220);
+    await esperar(50);
     // Recomeçou, ou a pessoa continuou falando: esta resposta não vale mais.
     if (g !== geracao.current || id !== respostaId.current) { if (id === respostaId.current) ocupado.current = false; return; }
     respostas.current = novas;
