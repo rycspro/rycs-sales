@@ -367,6 +367,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
 
       {/* Filtro função */}
       {[
+        { value: "", label: "Todos" },
         { value: "sdr", label: "SDR" },
         { value: "closer", label: "Closer" },
         { value: "bdr", label: "BDR" },
@@ -376,7 +377,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
           <button
             key={opt.value}
             type="button"
-            onClick={() => setF({ ...f, funcao: ativo ? "" : opt.value })}
+            onClick={() => setF({ ...f, funcao: opt.value === "" ? "" : (ativo ? "" : opt.value) })}
             style={{
               padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: ativo ? 600 : 500,
               border: ativo ? "2px solid var(--brand)" : "1px solid var(--border)",
