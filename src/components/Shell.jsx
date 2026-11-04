@@ -1,4 +1,5 @@
 import { NAV } from "../lib/constants.js";
+import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ role, active, onSelect, counts, beta, children }) {
   const allItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const navItems = allItems.filter((item) => item.key);
@@ -9,6 +10,9 @@ export default function Shell({ role, active, onSelect, counts, beta, children }
       <aside className="vx-sidebar">
         <div className="vx-sidebar-logo">
           <img src="/logo-rycs.png" alt="RYCS" style={{ width: "100%", display: "block" }} />
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 10, paddingBottom: 2 }}>
+            <ThemeSwitcher />
+          </div>
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, overflowY: "auto", scrollbarWidth: "none" }}>

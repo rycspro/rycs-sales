@@ -48,6 +48,26 @@ body{-webkit-text-size-adjust:100%}
   transition:background .25s,color .25s;
 }
 
+/* ── Tema escuro ─────────────────────────────────────────────────────────── */
+html.dark{background:#0D1424}
+html.dark .vx-app{
+  --bg:#0D1424; --bg-glow:transparent;
+  --surface:#131E35; --surface-1:#172340; --surface-2:#1E2D4F; --surface-3:#253762;
+  --border:#2A3D63; --border-strong:#3B5285;
+  --ink:#E8F0FE; --ink-2:#B0C4E0; --muted:#7C93B5; --muted-2:#4E6688;
+  --brand-50:rgba(37,99,235,.15); --brand-100:rgba(37,99,235,.25); --brand-200:rgba(37,99,235,.35);
+  --green-50:rgba(22,163,74,.12); --green-100:rgba(22,163,74,.22);
+  --orange-50:rgba(234,88,12,.12); --orange-100:rgba(234,88,12,.22);
+  --amber-50:rgba(180,83,9,.12); --amber-100:rgba(180,83,9,.22);
+  --red-50:rgba(180,35,24,.12); --red-100:rgba(180,35,24,.22);
+  --indigo-50:rgba(67,56,202,.12); --indigo-100:rgba(67,56,202,.22);
+  --sky-50:rgba(56,189,248,.06);
+  --glass:rgba(13,20,36,.85);
+  --shadow-card:0 1px 3px rgba(0,0,0,.25),0 4px 12px -4px rgba(0,0,0,.35);
+  --shadow-pop:0 20px 48px -16px rgba(0,0,0,.55);
+}
+html.dark .vx-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
+
 .vx-logo{display:block;object-fit:contain;mix-blend-mode:multiply}
 
 .vx-disp{font-family:'Space Grotesk','Inter',sans-serif;font-weight:600;letter-spacing:-.015em}
