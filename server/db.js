@@ -1518,8 +1518,7 @@ db.exec(`
   if (n) console.log(`[migração] gênero inferido para ${n} de ${sem.length} profissional(is)`);
 })();
 
-// Migração: normalizar campo "estado" dos profissionais.
-// Converte siglas, grafias sem acento e variações para o nome oficial do estado.
+// Migração: normalizar estado + extrair estado da cidade para todos os profissionais.
 (() => {
   const UF = {
     AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",
@@ -1529,18 +1528,65 @@ db.exec(`
     RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",RR:"Roraima",
     SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins",
   };
+  const SIGLAS = new Set(Object.keys(UF));
   const strip = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
   const POR_NOME = {};
-  const NOMES_VALIDOS = new Set();
   for (const [sigla, nome] of Object.entries(UF)) {
     POR_NOME[strip(nome)] = nome;
     POR_NOME[sigla.toLowerCase()] = nome;
-    NOMES_VALIDOS.add(nome);
+  }
+  const NOMES_VALIDOS = new Set(Object.values(UF));
+
+  // Cidades conhecidas → estado (cobre todos os casos reais do banco)
+  const CIDADE_ESTADO = {};
+  const map = (cidades, uf) => cidades.forEach((c) => { CIDADE_ESTADO[strip(c)] = UF[uf]; });
+  map(["Sorocaba","São Paulo","Sao Paulo","Guarulhos","Campinas","São José dos Campos",
+    "Ribeirão Preto","Santos","Osasco","Santo André","São Bernardo do Campo","Mauá",
+    "Taboão da Serra","Suzano","Indaiatuba","Limeira","Rio Claro","Itu","Piracicaba",
+    "Bauru","Marília","Presidente Prudente","Araçatuba","São Carlos","Ubatuba",
+    "Pindamonhangaba","Praia Grande","São Vicente","Cerquilho","Iepê","Jundiaí",
+    "Franca","Araraquara","Barueri","Diadema","Carapicuíba","Cotia","Atibaia",
+    "Sao Vicente","Taubaté","Mogi das Cruzes","Itapevi"], "SP");
+  map(["Curitiba","Londrina","Maringá","Apucarana","Cascavel","Ponta Grossa",
+    "Foz do Iguaçu","Guarapuava","Paranaguá","Toledo","Umuarama"], "PR");
+  map(["Rio de Janeiro","Niterói","São Gonçalo","Duque de Caxias","Nova Iguaçu",
+    "Petrópolis","Volta Redonda","Campos dos Goytacazes","Mendes","Três Rios"], "RJ");
+  map(["Belo Horizonte","Uberlândia","Contagem","Juiz de Fora","Betim","Montes Claros",
+    "Uberaba","Governador Valadares","Ipatinga","Santa Luzia","Pedralva","São Carlos"], "MG");
+  map(["Porto Alegre","Caxias do Sul","Pelotas","Canoas","Santa Maria","Novo Hamburgo",
+    "Pantano Grande","Pântano Grande"], "RS");
+  map(["Florianópolis","Joinville","Blumenau","Chapecó","Criciúma","Itajaí","Lages"], "SC");
+  map(["Goiânia","Aparecida de Goiânia","Anápolis","Rio Verde"], "GO");
+  map(["Brasília","Brasilia","Taguatinga","Ceilândia"], "DF");
+  map(["Cuiabá","Várzea Grande","Rondonópolis","Sinop"], "MT");
+  map(["Campo Grande","Dourados","Três Lagoas"], "MS");
+  map(["Salvador","Feira de Santana","Vitória da Conquista","Camaçari","Itabuna",
+    "Lauro de Freitas","Pindaí","Pindai"], "BA");
+  map(["Recife","Olinda","Jaboatão dos Guararapes","Caruaru","Petrolina"], "PE");
+  map(["Fortaleza","Caucaia","Juazeiro do Norte","Sobral","Maracanaú"], "CE");
+  map(["Belém","Ananindeua","Marabá","Santarém","Castanhal"], "PA");
+  map(["São Luís","São Luis","Imperatriz","Timon","Tutóia","Tutoia"], "MA");
+  map(["Manaus","Parintins","Itacoatiara"], "AM");
+  map(["Natal","Mossoró","Parnamirim"], "RN");
+  map(["João Pessoa","Campina Grande","Santa Rita"], "PB");
+  map(["Maceió","Arapiraca"], "AL");
+  map(["Aracaju","Nossa Senhora do Socorro"], "SE");
+  map(["Teresina","Parnaíba"], "PI");
+  map(["Vitória","Vila Velha","Serra","Cariacica"], "ES");
+  map(["Macapá","Santana"], "AP");
+  map(["Porto Velho","Ji-Paraná"], "RO");
+  map(["Boa Vista"], "RR");
+  map(["Rio Branco"], "AC");
+  map(["Palmas","Araguaína"], "TO");
+
+  function siglaParaEstado(sigla) {
+    const up = sigla.toUpperCase().replace(/[\s.]/g, "");
+    return UF[up] || null;
   }
 
-  function normalizar(raw) {
+  function normalizarEstado(raw) {
+    if (!raw) return "";
     const s = raw.trim();
-    if (!s) return "";
     if (NOMES_VALIDOS.has(s)) return s;
     const up = s.toUpperCase().replace(/[\s.]/g, "");
     if (UF[up]) return UF[up];
@@ -1549,24 +1595,87 @@ db.exec(`
     return s;
   }
 
-  const todos = db.prepare("SELECT id, estado FROM sellers WHERE estado IS NOT NULL AND estado != ''").all();
-  const upd = db.prepare("UPDATE sellers SET estado = ? WHERE id = ?");
-  const alteracoes = [];
+  // Extrai sigla de UF do campo cidade: "Sorocaba SP", "Sorocaba, SP", "Sorocaba - SP", "Sorocaba/SP", "Sorocaba-SP"
+  function extrairSiglaDaCidade(cidade) {
+    if (!cidade) return { cidade: "", sigla: null };
+    let s = cidade.trim();
+    // Padrões: "Cidade, UF", "Cidade - UF", "Cidade / UF", "Cidade-UF", "Cidade UF"
+    const m = s.match(/^(.+?)\s*[,\-\/]\s*([A-Za-z]{2})\s*$/);
+    if (m) {
+      const uf = m[2].toUpperCase();
+      if (SIGLAS.has(uf)) return { cidade: m[1].trim(), sigla: uf };
+    }
+    // "Cidade UF" no final (sem separador)
+    const m2 = s.match(/^(.+?)\s+([A-Za-z]{2})\s*$/);
+    if (m2) {
+      const uf = m2[2].toUpperCase();
+      if (SIGLAS.has(uf)) return { cidade: m2[1].trim(), sigla: uf };
+    }
+    return { cidade: s, sigla: null };
+  }
+
+  // Capitaliza nome da cidade
+  function capitalizarCidade(nome) {
+    const preps = new Set(["de","do","da","dos","das","e"]);
+    return nome.toLowerCase().replace(/\b\w+/g, (w, i) =>
+      i > 0 && preps.has(w) ? w : w[0].toUpperCase() + w.slice(1)
+    ).trim();
+  }
+
+  // --- Passo 1: normalizar quem já tem estado preenchido ---
+  const comEstado = db.prepare("SELECT id, estado FROM sellers WHERE estado IS NOT NULL AND estado != ''").all();
+  const updEstado = db.prepare("UPDATE sellers SET estado = ? WHERE id = ?");
+  let n1 = 0;
   db.transaction(() => {
-    for (const row of todos) {
-      const corrigido = normalizar(row.estado);
-      if (corrigido !== row.estado) {
-        upd.run(corrigido, row.id);
-        alteracoes.push(`"${row.estado}" → "${corrigido}"`);
-      }
+    for (const row of comEstado) {
+      const corrigido = normalizarEstado(row.estado);
+      if (corrigido !== row.estado) { updEstado.run(corrigido, row.id); n1++; }
     }
   })();
-  if (alteracoes.length) {
-    console.log(`[migração] estado normalizado para ${alteracoes.length} profissional(is):`);
-    alteracoes.forEach((a) => console.log(`  ${a}`));
-  }
+
+  // --- Passo 2: profissionais sem estado — extrair do campo cidade ---
+  const semEstado = db.prepare("SELECT id, cidade, estado FROM sellers WHERE estado IS NULL OR estado = ''").all();
+  const updAmbos = db.prepare("UPDATE sellers SET cidade = ?, estado = ? WHERE id = ?");
+  const updSoEstado = db.prepare("UPDATE sellers SET estado = ? WHERE id = ?");
+  let n2 = 0;
+  const naoResolvidos = [];
+  db.transaction(() => {
+    for (const row of semEstado) {
+      const cidadeOriginal = (row.cidade || "").trim();
+      if (!cidadeOriginal) continue;
+
+      const { cidade: cidadeLimpa, sigla } = extrairSiglaDaCidade(cidadeOriginal);
+
+      if (sigla) {
+        const estado = UF[sigla];
+        const cidadeFinal = capitalizarCidade(cidadeLimpa);
+        updAmbos.run(cidadeFinal, estado, row.id);
+        n2++;
+        continue;
+      }
+
+      // Sem sigla no campo — tentar inferir pela cidade
+      const key = strip(cidadeLimpa);
+      if (CIDADE_ESTADO[key]) {
+        const cidadeFinal = capitalizarCidade(cidadeLimpa);
+        updAmbos.run(cidadeFinal, CIDADE_ESTADO[key], row.id);
+        n2++;
+        continue;
+      }
+
+      naoResolvidos.push(`"${cidadeOriginal}"`);
+    }
+  })();
+
+  if (n1) console.log(`[migração] estado corrigido em ${n1} profissional(is) que já tinham estado`);
+  if (n2) console.log(`[migração] estado extraído/inferido para ${n2} profissional(is) a partir da cidade`);
+  if (naoResolvidos.length) console.log(`[migração] ${naoResolvidos.length} cidade(s) não resolvida(s): ${naoResolvidos.join(", ")}`);
+
   const distintos = db.prepare("SELECT estado, COUNT(*) as n FROM sellers WHERE estado IS NOT NULL AND estado != '' GROUP BY estado ORDER BY n DESC").all();
-  if (distintos.length) console.log(`[migração] estados distintos: ${distintos.map((r) => `${r.estado} (${r.n})`).join(", ")}`);
+  console.log(`[migração] estados: ${distintos.map((r) => `${r.estado}(${r.n})`).join(", ")}`);
+  const restam = db.prepare("SELECT COUNT(*) as n FROM sellers WHERE estado IS NULL OR estado = ''").get();
+  const total = db.prepare("SELECT COUNT(*) as n FROM sellers").get();
+  console.log(`[migração] ${total.n} profissionais, ${total.n - restam.n} com estado, ${restam.n} sem`);
 })();
 
 export default db;
