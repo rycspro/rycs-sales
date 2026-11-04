@@ -99,11 +99,14 @@ const decimal = (v) => Number(Number(v).toFixed(1)).toLocaleString("pt-BR");
 // ---------------------------------------------------------------------------
 // 1. Interpretação
 
-const NAO_SEI = /\b(nao sei|sei la|nao faco ideia|nao tenho (ideia|certeza)|pula|pular|depois|tanto faz|nao defini|ainda nao)\b/;
-const PESSOAS = "(?:profission\\w*|vendedor\\w*|pessoas?|sdrs?|bdrs?|closers?|promotor\\w*|representantes?|consultor\\w*|corretor\\w*)";
+const NAO_SEI = /\b(nao sei|sei la|nao faco ideia|nao tenho (ideia|certeza)|pula|pular|depois|tanto faz|nao defini|ainda nao|sem ideia|nenhuma ideia|nao tenho|n[aã]o decidi|skip|ignora|proxima|nao (tenho|sei) (esse|esse dado|isso)|n[aã]o (tenho|sei) ainda)\b/;
+const PESSOAS = "(?:profission\\w*|vendedor\\w*|pessoas?|sdrs?|bdrs?|closers?|promotor\\w*|representantes?|consultor\\w*|corretor\\w*|hunter\\w*|farmer\\w*|inside\\s+sales|account\\w*|agente\\w*|time de vendas?|equipe de vendas?)";
 
 const capitalizar = (t) => (t ? t[0].toLocaleUpperCase("pt-BR") + t.slice(1) : t);
-const limparResposta = (t) => String(t || "").trim().replace(/^(e |é |eh |acho que |seria |sera |vai ser |fica )/i, "").replace(/[.!]+$/, "").trim();
+const limparResposta = (t) => String(t || "").trim()
+  .replace(/^(e |é |eh |acho que |seria |sera |vai ser |fica |bom |ent[aã]o |tipo |pois |olha |ah |[oó]timo )/i, "")
+  .replace(/^(quero |gostaria de |preciso de |vou querer )/i, "")
+  .replace(/[.!]+$/, "").trim();
 
 // Valor de um campo a partir de um trecho curto ("Sorocaba", "3", "5 mil").
 // undefined = não entendeu.
@@ -163,23 +166,23 @@ function lerCampo(campo, trecho) {
 // 8 mil", "na verdade a região é Campinas", "coloca 4 profissionais". O
 // reconhecimento de voz escreve "ticket" de vários jeitos ("tíquete").
 const ROTULOS = [
-  ["ticketMedio", /\b(ticket|tiquete|tiket|tique|valor medio|venda media|preco medio)\b/],
-  ["conversao", /\b(conversao|taxa de conversao|fecham)\b/],
-  ["retorno", /\b(retorno|roi)\b/],
-  ["meta", /\b(meta|reunioes por mes|vendas por mes)\b/],
-  ["titulo", /\b(nome da campanha|titulo|chamar a campanha|campanha se chama|o nome)\b/],
+  ["ticketMedio", /\b(ticket|tiquete|tiket|tique|valor medio|venda media|preco medio|ticket medio|valor da venda|preco da venda)\b/],
+  ["conversao", /\b(conversao|taxa de conversao|fecham|taxa de fechamento|quantas fecham)\b/],
+  ["retorno", /\b(retorno|roi|quantas vezes)\b/],
+  ["meta", /\b(meta|reunioes por mes|vendas por mes|quantas por mes|objetivo mensal)\b/],
+  ["titulo", /\b(nome da campanha|titulo|chamar a campanha|campanha se chama|o nome|nome fica)\b/],
   ["valorPrincipal", /\b(valor|preco|pagamento|pagar) (da|de|por|pela|cada) (reuniao|reunioes|visita|visitas|agendamento)\b/],
   ["valorVenda", /\b(comiss\w*|(valor|preco|pagamento|pagar) (da|de|por|pela|cada) venda)\b/],
-  ["prazoHoras", /\bprazo\b/],
-  ["fixoMensal", /\b(fixo|por profissional)\b/],
-  ["orcamento", /\b(orcamento|investimento|custo|verba)\b/],
-  ["visitasPorDia", /\b(visitas? por dia)\b/],
-  ["vagas", /\b(profission\w*|vendedor\w*|pessoas|vagas|sdrs?|closers?)\b/],
-  ["regiao", /\b(regiao|cidade|local)\b/],
-  ["publico", /\b(publico|cliente ideal|perfil)\b/],
-  ["objetivo", /\b(objetivo|tipo de campanha)\b/],
+  ["prazoHoras", /\b(prazo|prazo de entrega|horas para|dias para)\b/],
+  ["fixoMensal", /\b(fixo|por profissional|salario|investimento por pessoa|custo por vendedor)\b/],
+  ["orcamento", /\b(orcamento|investimento|custo (total|mensal)?|verba|quanto (vou gastar|posso gastar|tenho para))\b/],
+  ["visitasPorDia", /\b(visitas? por dia|quantas visitas)\b/],
+  ["vagas", /\b(profission\w*|vendedor\w*|pessoas|vagas|sdrs?|closers?|hunters?|time|equipe|quantos (s[aã]o|ser[aã]o|ter))\b/],
+  ["regiao", /\b(regiao|cidade|local|estado|municipio|onde|aonde|localiza\w+)\b/],
+  ["publico", /\b(publico|cliente ideal|perfil|p[uú]blico.alvo|para quem|quem [eé] o cliente)\b/],
+  ["objetivo", /\b(objetivo|tipo de campanha|o que (quero|desejo|preciso) (fazer|montar)|tipo de a[cç][aã]o)\b/],
 ];
-const MUDANCA = /\b(mud\w*|alter\w*|troc\w*|corrig\w*|na verdade|ajust\w*|coloc\w*|poe|bota|em vez|ao inves)\b/;
+const MUDANCA = /\b(mud\w*|alter\w*|troc\w*|corrig\w*|na verdade|ajust\w*|coloc\w*|poe|bota|em vez|ao inves|quero mudar|quero alterar|muda (para|o)|errei|corrige|na verdade quero|quero corrig\w+)\b/;
 
 function porRotulo(texto) {
   const original = String(texto || "");
@@ -381,9 +384,39 @@ export function perguntar(campo, r, emp = {}) {
   }
 }
 
-// Quando a resposta não foi entendida.
+// Quando a resposta não foi entendida: pergunta de novo com contexto do que
+// já foi respondido e sugestão baseada no cadastro da empresa.
 export function pedirDeNovo(campo, r = {}, emp = {}) {
-  return `Não entendi. ${perguntar(campo, r, emp).texto}`;
+  const p = perguntar(campo, r, emp);
+  switch (campo) {
+    case "objetivo":
+      return "Não entendi o objetivo. É para agendar reuniões, fechar vendas, visitas presenciais ou prospecção?";
+    case "regiao": {
+      const seg = emp.segmento || "";
+      const dica = seg ? ` Pode ser uma cidade, estado ou "Todo o Brasil".` : " Pode ser uma cidade, estado ou região.";
+      return `Não entendi a região.${dica}`;
+    }
+    case "publico": {
+      const icp = emp.icp ? ` Seu cadastro tem: "${emp.icp.slice(0, 60)}${emp.icp.length > 60 ? "…" : ""}".` : "";
+      return `Não entendi o público.${icp} Descreva quem é o cliente ideal.`;
+    }
+    case "vagas":
+      return "Número não entendi. Quantos profissionais? Diga um número: 1, 2, 3…";
+    case "ticketMedio": {
+      const t = emp.ticket ? ` Seu cadastro tem ${emp.ticket}.` : "";
+      return `Não entendi o ticket.${t} Qual o valor médio de cada venda?`;
+    }
+    case "conversao":
+      return `Não entendi. De 10 ${UNIDADE[r.objetivo ? (OBJETIVOS[r.objetivo]?.principal || "agendamento") : "agendamento"]}, quantas viram venda? Diga um número de 1 a 10.`;
+    case "retorno":
+      return "Não entendi. Quantas vezes quer de retorno? Por exemplo: 3 vezes, 5 vezes.";
+    case "meta":
+      return `Não entendi. Quantas ${UNIDADE_MES[r.objetivo ? (OBJETIVOS[r.objetivo]?.principal || "agendamento") : "agendamento"]} quer por mês?`;
+    case "fixoMensal":
+      return "Não entendi. Qual o investimento mensal por profissional?";
+    default:
+      return `Não entendi. ${p.texto}`;
+  }
 }
 
 // ---------------------------------------------------------------------------
