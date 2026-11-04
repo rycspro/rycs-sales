@@ -1518,5 +1518,45 @@ db.exec(`
   if (n) console.log(`[migração] gênero inferido para ${n} de ${sem.length} profissional(is)`);
 })();
 
+// Migração: normalizar campo "estado" dos profissionais.
+// Converte siglas (SP, PR, GO…) para o nome completo e corrige grafias
+// sem acento ("Sao Paulo" → "São Paulo"). Idempotente: roda só quando
+// encontra valores que precisam de correção.
+(() => {
+  const UF = {
+    AC:"Acre",AL:"Alagoas",AP:"Amapá",AM:"Amazonas",BA:"Bahia",CE:"Ceará",
+    DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",
+    MT:"Mato Grosso",MS:"Mato Grosso do Sul",MG:"Minas Gerais",PA:"Pará",
+    PB:"Paraíba",PR:"Paraná",PE:"Pernambuco",PI:"Piauí",RJ:"Rio de Janeiro",
+    RN:"Rio Grande do Norte",RS:"Rio Grande do Sul",RO:"Rondônia",RR:"Roraima",
+    SC:"Santa Catarina",SP:"São Paulo",SE:"Sergipe",TO:"Tocantins",
+  };
+  const NOME_SEM_ACENTO = {};
+  for (const [, nome] of Object.entries(UF)) {
+    const sem = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    NOME_SEM_ACENTO[sem] = nome;
+  }
+
+  function normalizar(raw) {
+    const s = raw.trim();
+    const up = s.toUpperCase().replace(/[\s.]/g, "");
+    if (UF[up]) return UF[up];
+    const lower = s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    if (NOME_SEM_ACENTO[lower]) return NOME_SEM_ACENTO[lower];
+    return s;
+  }
+
+  const todos = db.prepare("SELECT id, estado FROM sellers WHERE estado IS NOT NULL AND estado != ''").all();
+  const upd = db.prepare("UPDATE sellers SET estado = ? WHERE id = ?");
+  let n = 0;
+  db.transaction(() => {
+    for (const row of todos) {
+      const corrigido = normalizar(row.estado);
+      if (corrigido !== row.estado) { upd.run(corrigido, row.id); n++; }
+    }
+  })();
+  if (n) console.log(`[migração] estado normalizado para ${n} profissional(is)`);
+})();
+
 export default db;
 export { uid, agora };
