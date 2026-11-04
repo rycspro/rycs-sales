@@ -333,7 +333,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
       </div>
     </div>
 
-    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+      {/* Filtro gênero */}
       {[
         { value: "", label: "Todos", Icon: UsersRound },
         { value: "feminino", label: "Mulher", Icon: UserRound, cor: "#e74694" },
@@ -356,6 +357,34 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
             }}
           >
             <opt.Icon size={15} color={ativo ? (opt.cor || "var(--brand)") : "var(--muted)"} />
+            {opt.label}
+          </button>
+        );
+      })}
+
+      {/* Divisor */}
+      <div style={{ width: 1, height: 28, background: "var(--border)", flexShrink: 0, margin: "0 2px" }} />
+
+      {/* Filtro função */}
+      {[
+        { value: "sdr", label: "SDR" },
+        { value: "closer", label: "Closer" },
+        { value: "bdr", label: "BDR" },
+      ].map((opt) => {
+        const ativo = f.funcao === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setF({ ...f, funcao: ativo ? "" : opt.value })}
+            style={{
+              padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: ativo ? 600 : 500,
+              border: ativo ? "2px solid var(--brand)" : "1px solid var(--border)",
+              background: ativo ? "var(--brand-50)" : "var(--surface-2)",
+              color: ativo ? "var(--brand)" : "var(--muted)",
+              cursor: "pointer", transition: "all .2s"
+            }}
+          >
             {opt.label}
           </button>
         );
