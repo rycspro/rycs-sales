@@ -130,7 +130,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
 
   const opcoes = useMemo(() => ({
     funcoes: [...new Set(profissionais.map((p) => p.perfil).filter(Boolean))],
-    regioes: [...new Set(profissionais.map((p) => [p.cidade, p.estado].filter(Boolean).join(" / ")).filter(Boolean))],
+    regioes: [...new Set(profissionais.map((p) => p.estado).filter(Boolean))].sort(),
   }), [profissionais]);
 
   const fitCultural = (p, campanhaId = f.campanha) => {
@@ -162,7 +162,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   const filtrados = useMemo(() => {
     const lista = profissionais.filter((p) => {
       if (mostrarSalvos && !salvos[p.id]) return false;
-      const regiao = [p.cidade, p.estado].filter(Boolean).join(" / ");
+      const regiao = p.estado || "";
       const campanhaMatch = !f.campanha || p.campanhas?.some((c) => c.id === f.campanha);
       const performanceOk = !f.performance || (f.performance === "alta" ? p.taxaAprovacao >= 80 : f.performance === "media" ? p.taxaAprovacao >= 50 && p.taxaAprovacao < 80 : p.taxaAprovacao < 50);
       const scoreOk = !f.score || (f.score === "80" ? nota(p.nota) >= 80 : f.score === "50" ? nota(p.nota) >= 50 && nota(p.nota) < 80 : nota(p.nota) < 50);
@@ -398,7 +398,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
         <label><span className="vx-label">Campanha</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">Todas</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
         <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
         <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
-        <label><span className="vx-label">Região</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todas</option>{opcoes.regioes.map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
+        <label><span className="vx-label">Estado</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todos</option>{opcoes.regioes.map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
         <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
       </div>
     )}
