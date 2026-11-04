@@ -2,7 +2,11 @@ import { LogOut } from "lucide-react";
 import { NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ role, active, onSelect, counts, beta, onLogout, children }) {
-  const allItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
+  const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
+  const configIdx = rawItems.findIndex((item) => item.key === "configuracoes");
+  const allItems = configIdx > -1
+    ? [...rawItems.filter((_, i) => i !== configIdx), rawItems[configIdx]]
+    : rawItems;
   const navItems = allItems.filter((item) => item.key);
   const bottomItems = navItems.slice(0, 5);
 
