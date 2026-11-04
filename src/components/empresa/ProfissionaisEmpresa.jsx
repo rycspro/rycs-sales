@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Eye, Filter, MapPin, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRoundSearch, X } from "lucide-react";
+import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
 
@@ -48,6 +49,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   const buscaRef = useRef(null);
   const [convites, setConvites] = useState({});
   const [salvos, setSalvos] = useState({});
+  const [chatRapido, setChatRapido] = useState(null);
 
   const carregar = async () => {
     setCarregando(true);
@@ -61,6 +63,27 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
   };
 
   const toggleSalvo = (e, id) => { e.stopPropagation(); setSalvos((prev) => ({ ...prev, [id]: !prev[id] })); };
+
+  // Tempo médio de resposta por vendedor (calculado das mensagens existentes)
+  const temposResposta = useMemo(() => {
+    const result = {};
+    const msgs = (db.messages || []).filter((m) => m.companyId === emp.id);
+    const sellers = [...new Set(msgs.map((m) => m.sellerId))];
+    for (const sellerId of sellers) {
+      const conv = msgs.filter((m) => m.sellerId === sellerId).sort((a, b) => a.ts - b.ts);
+      const gaps = [];
+      for (let i = 0; i < conv.length - 1; i++) {
+        if (conv[i].de === "empresa" && conv[i + 1].de === "vendedor") {
+          gaps.push((conv[i + 1].ts - conv[i].ts) / 1000 / 60);
+        }
+      }
+      if (gaps.length) {
+        const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+        result[sellerId] = avg < 60 ? "< 1h" : avg < 240 ? "1–4h" : avg < 1440 ? "< 24h" : "> 24h";
+      }
+    }
+    return result;
+  }, [db.messages, emp.id]);
 
   const enviarConvite = async (e, profId) => {
     e.stopPropagation();
@@ -230,13 +253,15 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
               <Search size={14} color="var(--muted)" style={{ flexShrink: 0 }} />
               <input
                 ref={buscaRef}
+                className="vx-input"
                 type="text"
                 value={f.busca}
                 onChange={(e) => setF({ ...f, busca: e.target.value })}
                 placeholder="Buscar por nome…"
                 style={{
                   flex: 1, border: "none", outline: "none", background: "transparent",
-                  fontSize: 13, color: "var(--ink)", height: "100%"
+                  fontSize: 14, color: "var(--ink)", height: "100%", padding: 0,
+                  borderRadius: 0, boxShadow: "none"
                 }}
               />
               <button
@@ -254,30 +279,24 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
             </div>
           )}
         </div>
+        <button
+          type="button"
+          className={`vx-btn${filtrosAtivos ? " vx-btn-primary" : ""}`}
+          style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+          onClick={() => setFiltroAberto((v) => !v)}
+        >
+          <Filter size={14} strokeWidth={2.3} />
+          Filtrar
+          {filtrosAtivos > 0 && <span style={{ background: filtrosAtivos ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
+        </button>
+        {filtrosAtivos > 0 && (
+          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" })}>
+            Limpar filtros
+          </button>
+        )}
       </div>
     </div>
 
-    <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-      <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-        <Search size={14} style={{ position: "absolute", left: 11, top: 13, color: "var(--muted)", pointerEvents: "none" }} />
-        <input className="vx-input" style={{ paddingLeft: 32 }} placeholder="Buscar por nome…" value={f.busca} onChange={(e) => setF({ ...f, busca: e.target.value })} />
-      </div>
-      <button
-        type="button"
-        className={`vx-btn${filtrosAtivos ? " vx-btn-primary" : ""}`}
-        style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
-        onClick={() => setFiltroAberto((v) => !v)}
-      >
-        <Filter size={14} strokeWidth={2.3} />
-        Filtrar
-        {filtrosAtivos > 0 && <span style={{ background: filtrosAtivos ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
-      </button>
-      {filtrosAtivos > 0 && (
-        <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ alignSelf: "center" }} onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" })}>
-          Limpar filtros
-        </button>
-      )}
-    </div>
 
     {filtroAberto && (
       <div className="vx-card vx-filterbar" style={{ padding: 14, maxWidth: "none", marginBottom: 16 }}>
@@ -336,6 +355,13 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fit.percentual}% compat.</span>
                   </div>
+                  {/* tempo de resposta */}
+                  {temposResposta[p.id] && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+                      <Clock size={10} color="var(--muted)" />
+                      <span style={{ fontSize: 10.5, color: "var(--muted)" }}>Resp. {temposResposta[p.id]}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* BOTÃO — sempre no fundo via margin-top:auto */}
