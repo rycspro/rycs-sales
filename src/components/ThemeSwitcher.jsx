@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Monitor, Sun, Moon } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { ler, gravar } from "../lib/armazenamento.js";
 
 function getSystemDark() {
@@ -13,7 +13,6 @@ function aplicar(tema) {
 
 const OPCOES = [
   { value: "light", Icon: Sun, label: "Claro" },
-  { value: "system", Icon: Monitor, label: "Sistema" },
   { value: "dark", Icon: Moon, label: "Escuro" },
 ];
 

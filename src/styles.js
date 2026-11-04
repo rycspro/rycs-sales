@@ -67,6 +67,7 @@ html.dark .vx-app{
   --shadow-pop:0 20px 48px -16px rgba(0,0,0,.55);
 }
 html.dark .vx-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
+html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 
 .vx-logo{display:block;object-fit:contain;mix-blend-mode:multiply}
 
@@ -128,8 +129,8 @@ html.dark .vx-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
   .vx-content{padding:30px 30px 56px;max-width:none}
   .vx-body{display:grid;grid-template-columns:220px 1fr;max-width:none;margin:0}
   .vx-sidebar{display:flex;flex-direction:column;gap:0;padding:0;border-right:1px solid var(--border);
-    position:sticky;top:0;height:100vh;align-self:start;background:#fff}
-  .vx-sidebar-logo{padding:6px 12px 4px;border-bottom:1px solid var(--border);flex-shrink:0}
+    position:sticky;top:0;height:100vh;align-self:start;background:var(--surface)}
+  .vx-sidebar-logo{padding:0 12px;border-bottom:1px solid var(--border);flex-shrink:0}
   .vx-sidebar-logo img{height:120px;width:auto;object-fit:contain;max-width:100%}
   .vx-sidebar>div:first-of-type{padding:12px 8px 0;gap:2px}
   .vx-sidebar::-webkit-scrollbar{display:none}

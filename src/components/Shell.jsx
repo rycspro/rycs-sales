@@ -10,9 +10,6 @@ export default function Shell({ role, active, onSelect, counts, beta, children }
       <aside className="vx-sidebar">
         <div className="vx-sidebar-logo">
           <img src="/logo-rycs.png" alt="RYCS" style={{ width: "100%", display: "block" }} />
-          <div style={{ display: "flex", justifyContent: "center", paddingTop: 10, paddingBottom: 2 }}>
-            <ThemeSwitcher />
-          </div>
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, overflowY: "auto", scrollbarWidth: "none" }}>
@@ -31,6 +28,9 @@ export default function Shell({ role, active, onSelect, counts, beta, children }
           })}
         </div>
 
+        <div style={{ padding: "12px 0", display: "flex", justifyContent: "center", borderTop: "1px solid var(--border)" }}>
+          <ThemeSwitcher />
+        </div>
       </aside>
 
       <div className="vx-content">
