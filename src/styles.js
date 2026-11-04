@@ -104,6 +104,7 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 .vx-body{max-width:1240px;margin:0 auto;display:block}
 .vx-sidebar{display:none}
 .vx-content{padding:24px max(16px,env(safe-area-inset-right,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:820px;margin:0 auto}
+.vx-content-chat{padding:0!important;max-width:none!important;margin:0!important;overflow:hidden;display:flex;flex-direction:column}
 .vx-bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--topbar-bg,rgba(255,255,255,.96));backdrop-filter:blur(14px);
   border-top:1px solid var(--border);display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom,0)}
 .vx-navbtn{min-width:0;background:none;border:0;font:inherit;padding:10px 1px 11px;cursor:pointer;overflow:hidden;
@@ -127,6 +128,7 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 
 @media (min-width:900px){
   .vx-content{padding:30px 30px 56px;max-width:none}
+  .vx-content-chat{padding:0!important;overflow:hidden}
   .vx-body{display:grid;grid-template-columns:220px 1fr;max-width:none;margin:0}
   .vx-sidebar{display:flex;flex-direction:column;gap:0;padding:0;border-right:1px solid var(--border);
     position:sticky;top:0;height:100vh;align-self:start;background:var(--surface)}

@@ -18,6 +18,7 @@ import Empresa from "./components/empresa/index.jsx";
 import Admin from "./components/admin/index.jsx";
 import Notificacoes from "./components/Notificacoes.jsx";
 import BannerOnboarding from "./components/empresa/BannerOnboarding.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 const PREVIA_QUALIFICACAO = {
   id: "preview-empresa",
@@ -323,7 +324,7 @@ export default function App() {
 
       {bannerOnb && <BannerOnboarding onb={onb} />}
 
-      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout}>
+      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"}>
         <ErrorBoundary>
           {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
           {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
