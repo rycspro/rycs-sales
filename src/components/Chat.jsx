@@ -18,8 +18,13 @@ export default function Chat({ empresa, sellerId, db, up, de }) {
 
   return (
     <div className="vx-card" style={{ padding: 16 }}>
-      <div style={{ maxHeight: 340, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-        {!msgs.length && <p className="vx-mut" style={{ fontSize: 13, textAlign: "center" }}>Sem mensagens. Combine aqui script, horário e dúvidas de produto.</p>}
+      <div style={{ minHeight: 200, maxHeight: 340, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+        {!msgs.length && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: "24px 0" }}>
+            <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", margin: 0 }}>Sem mensagens ainda.</p>
+            <p className="vx-mut" style={{ fontSize: 12, textAlign: "center", margin: 0 }}>Combine aqui script, horário e dúvidas de produto.</p>
+          </div>
+        )}
         {msgs.map((m) => {
           const meu = m.de === de;
           return (

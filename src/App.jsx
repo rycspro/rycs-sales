@@ -324,9 +324,11 @@ export default function App() {
       {bannerOnb && <BannerOnboarding onb={onb} />}
 
       <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout}>
-        {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
-        {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
-        {role === "admin" && <Admin {...ctx} aba={aba} />}
+        <ErrorBoundary>
+          {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
+          {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
+          {role === "admin" && <Admin {...ctx} aba={aba} />}
+        </ErrorBoundary>
       </Shell>
 
       {toast && (
