@@ -104,6 +104,13 @@ export default function App() {
       if (r?.error) setToast(r.error);
     }
     const r = await api("/onboarding");
+    if (r?.error === "Não autenticado" || r?.error === "Sessão expirada" || r?.error === "Usuário não encontrado") {
+      await api("/auth/logout", {});
+      setUser(null);
+      setOnb(null);
+      setDb(seed());
+      return;
+    }
     setOnb(r && !r.error ? r : { erro: r?.error || "Não foi possível carregar o seu cadastro." });
   }, []);
 
