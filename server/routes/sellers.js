@@ -186,7 +186,7 @@ router.patch("/sellers/:id", (req, res) => {
   // pelo próprio vendedor: valem dinheiro real via Pix. Só o servidor os move,
   // ao liberar uma ação ou processar um saque.
   const sellerFields = ["nome", "sobrenome", "pais", "email", "whats", "cidade", "estado", "perfil", "experiencia",
-    "pix", "pixTipo", "video", "titulo", "bio", "disponibilidade", "cidadeBase", "estadoBase", "raioKm", "latBase", "lngBase", "dataNascimento"];
+    "pix", "pixTipo", "video", "titulo", "bio", "disponibilidade", "cidadeBase", "estadoBase", "raioKm", "latBase", "lngBase", "dataNascimento", "genero"];
   // Campos de lista chegam como array e são guardados como JSON.
   const camposLista = ["segmentos", "modalidades", "regioes", "skills"];
   const adminFields = [...sellerFields, "status", "nota"];

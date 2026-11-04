@@ -76,6 +76,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const [form, setForm] = useState(() => ({
     nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "", bio: eu.bio || "",
     pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
+    genero: eu.genero || "",
     experiencia: eu.experiencia || "", disponibilidade: eu.disponibilidade || "",
     segmentos: eu.segmentos || [], modalidades: eu.modalidades || [],
     regioes: eu.regioes || [], skills: eu.skills || [],
@@ -324,11 +325,20 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             {campo("estado", "Estado *", { max: 40 })}
             {campo("cidade", "Cidade *")}
           </div>
-          <div style={{ marginTop: 9 }}>
+          <div style={{ display: "flex", gap: 14, marginTop: 9, flexWrap: "wrap" }}>
             <label>
               <div className="vx-label">Data de nascimento</div>
               <input type="date" className="vx-input" style={{ maxWidth: 200 }} value={form.dataNascimento}
                 onChange={(e) => setForm({ ...form, dataNascimento: e.target.value })} />
+            </label>
+            <label>
+              <div className="vx-label">Gênero</div>
+              <select className="vx-input" style={{ maxWidth: 180 }} value={form.genero}
+                onChange={(e) => setForm({ ...form, genero: e.target.value })}>
+                <option value="">Não informado</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+              </select>
             </label>
           </div>
 
