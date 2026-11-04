@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe, LayoutGrid,
-  CreditCard, Headphones, Gift,
+  CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
-import ChatEmpresa from "./ChatEmpresa.jsx";
 import Indicacoes from "../Indicacoes.jsx";
 
 // ── Data ─────────────────────────────────────────────────────────────
@@ -152,7 +151,7 @@ function InfoRow({ label, value }) {
 
 // ── Main component ────────────────────────────────────────────────────
 
-export default function ConfiguracoesEmpresa({ emp, up, aviso, db, recarregar }) {
+export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   const [secao, setSecao] = useState("geral");
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
   const [form, setForm] = useState(() => ({
@@ -367,7 +366,39 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, db, recarregar })
 
     planos: <PlanosEmpresa aviso={aviso} recarregar={recarregar} />,
 
-    suporte: db ? <ChatEmpresa emp={emp} db={db} up={up} /> : null,
+    suporte: (
+      <>
+        <PgHead title="Suporte" description="Entre em contato com a equipe RYCS." />
+        <Block title="Canais de atendimento">
+          {[
+            { icon: Mail, label: "E-mail", valor: "suporte@rycs.pro", href: "mailto:suporte@rycs.pro", desc: "Resposta em até 1 dia útil" },
+            { icon: MessageCircle, label: "WhatsApp", valor: "(11) 99999-9999", href: "https://wa.me/5511999999999", desc: "Atendimento em horário comercial" },
+          ].map(({ icon: Icon, label, valor, href, desc }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon size={16} strokeWidth={1.8} style={{ color: "var(--brand)" }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>{label}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{desc}</div>
+                </div>
+              </div>
+              <a href={href} target="_blank" rel="noreferrer" className="vx-btn vx-btn-sm" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <ExternalLink size={12} />
+                {valor}
+              </a>
+            </div>
+          ))}
+        </Block>
+        <Block title="Central de ajuda">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", color: "var(--muted)" }}>
+            <Globe size={18} strokeWidth={1.5} />
+            <span style={{ fontSize: 13.5 }}>Documentação e tutoriais em breve em <b>docs.rycs.pro</b>.</span>
+          </div>
+        </Block>
+      </>
+    ),
 
     indicar: <Indicacoes aviso={aviso} />,
   };
