@@ -338,7 +338,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
     setEnviando(true);
     const id = uid();
     const ts = agora();
-    up((d) => ({ messages: [...d.messages, { id, companyId: emp.id, sellerId: selSellerId, de: "empresa", texto, ts, lida: 1 }] }));
+    up((d) => ({ messages: [...d.messages, { id, companyId: emp.id, sellerId: selSellerId, de: "empresa", texto, ts, lida: 0 }] }));
     try {
       await api("/messages", { companyId: emp.id, sellerId: selSellerId, de: "empresa", texto });
     } catch {

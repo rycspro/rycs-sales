@@ -9,6 +9,17 @@ export default function Chat({ empresa, sellerId, db, up, de }) {
   const msgs = db.messages.filter((m) => m.companyId === empresa.id && m.sellerId === sellerId);
   useEffect(() => { fim.current?.scrollIntoView({ block: "nearest" }); }, [msgs.length]);
 
+  // vendedor abre o chat → marca mensagens da empresa como lidas
+  useEffect(() => {
+    if (de !== "vendedor") return;
+    api("/messages/ler", { companyId: empresa.id, sellerId });
+    up((d) => ({
+      messages: d.messages.map((m) =>
+        m.companyId === empresa.id && m.sellerId === sellerId && m.de === "empresa" ? { ...m, lida: 1 } : m
+      ),
+    }));
+  }, [empresa.id, sellerId, de]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const enviar = () => {
     if (!txt.trim()) return;
     api("/messages", { companyId: empresa.id, sellerId, de, texto: txt.trim() });
