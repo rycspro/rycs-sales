@@ -9,7 +9,8 @@
 import { useEffect, useState } from "react";
 
 export const ROTAS = {
-  login: "/",
+  landing: "/",
+  login: "/entrar",
   escolha: "/cadastro",
   cadastroVendedor: "/cadastro/profissional",
   cadastroEmpresa: "/cadastro/empresa",
@@ -63,6 +64,8 @@ export function resolver(caminho = typeof window !== "undefined" ? window.locati
     const token = bruto.slice("/confirmar-email/".length).split("/")[0];
     if (token) return { tipo: "confirmar-email", token };
   }
+  if (p === ROTAS.login || p === "/login") return { tipo: "login" };
+  if (p === ROTAS.landing) return { tipo: "landing" };
   return { tipo: "login" };
 }
 
