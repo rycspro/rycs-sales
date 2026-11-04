@@ -304,13 +304,41 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
           {filtrosAtivos > 0 && <span style={{ background: filtrosAtivos ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
         </button>
         {filtrosAtivos > 0 && (
-          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "" })}>
+          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "" })}>
             Limpar filtros
           </button>
         )}
       </div>
     </div>
 
+    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      {[
+        { value: "", label: "Todos", Icon: UsersRound },
+        { value: "feminino", label: "Mulher", Icon: UserRound, cor: "#e74694" },
+        { value: "masculino", label: "Homem", Icon: UserRound, cor: "#2563eb" },
+      ].map((opt) => {
+        const ativo = f.genero === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setF({ ...f, genero: opt.value })}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 10,
+              border: ativo ? "2px solid " + (opt.cor || "var(--brand)") : "1px solid var(--border)",
+              background: ativo ? (opt.cor || "var(--brand)") + "12" : "var(--surface-2)",
+              color: ativo ? (opt.cor || "var(--brand)") : "var(--muted)",
+              fontWeight: ativo ? 600 : 500, fontSize: 13,
+              cursor: "pointer", transition: "all .2s"
+            }}
+          >
+            <opt.Icon size={15} color={ativo ? (opt.cor || "var(--brand)") : "var(--muted)"} />
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
 
     {filtroAberto && (
       <div className="vx-card vx-filterbar" style={{ padding: 14, maxWidth: "none", marginBottom: 16 }}>

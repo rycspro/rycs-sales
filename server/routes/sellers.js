@@ -32,7 +32,7 @@ function getProfissionaisBase() {
   if (_profCache && now - _profCacheTs < 60000) return _profCache;
   _profCache = db.prepare(`SELECT id, nome, sobrenome, pais, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial,
     CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
-    titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, criadoEm, status
+    titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, genero, criadoEm, status
     FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   _profCacheTs = now;
   return _profCache;
