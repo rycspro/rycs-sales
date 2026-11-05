@@ -142,7 +142,7 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
   .vx-ai-panel{bottom:72px}
   .vx-sidebar-section{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);
     padding:14px 13px 5px;pointer-events:none;user-select:none}
-  .vx-sidebtn{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:var(--radius-sm);border:1px solid transparent;
+  .vx-sidebtn{display:flex;align-items:center;gap:10px;padding:7px 13px;border-radius:var(--radius-sm);border:1px solid transparent;
     background:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left;position:relative;transition:.16s}
   .vx-sidebtn:hover{background:var(--surface-2);color:var(--ink)}
   .vx-sidebtn[data-on="1"]{background:var(--brand-50);color:var(--brand);border-color:var(--brand-100)}

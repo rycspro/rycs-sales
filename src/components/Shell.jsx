@@ -17,10 +17,10 @@ export default function Shell({ role, active, onSelect, counts, beta, onLogout, 
           <img src="/logo-rycs.png" alt="RYCS" style={{ width: "100%", display: "block" }} />
         </div>
 
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, overflowY: "auto", scrollbarWidth: "none" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", scrollbarWidth: "none" }}>
           {allItems.map((item, i) => {
             if (item.divider) {
-              return <div key={`div-${i}`} style={{ margin: "5px 10px", borderTop: "1px solid var(--border)", opacity: 0.7 }} />;
+              return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
             }
             if (item.section) {
               return <div key={`sec-${i}`} className="vx-sidebar-section">{item.section}</div>;
