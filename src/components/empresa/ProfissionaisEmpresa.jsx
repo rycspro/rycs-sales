@@ -311,7 +311,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
               {/* X fechar */}
               <button
                 type="button"
-                onClick={() => { setBuscaAberta(false); setF({ ...f, busca: "" }); }}
+                onClick={() => { setBuscaAberta(false); setFiltroAberto(false); setF({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "" }); }}
                 style={{
                   width: 28, height: 28, borderRadius: "50%", border: "none",
                   background: "transparent", cursor: "pointer", display: "flex",
