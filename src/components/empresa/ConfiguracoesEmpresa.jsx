@@ -1,9 +1,12 @@
+import { documentoValido, mascararDocumento } from "../../../shared/documentoConta.js";
+import { useUnsavedChanges } from "../../lib/unsavedChanges.js";
+import SegurancaConta from "../conta/SegurancaConta.jsx";
 import { useState, useEffect, useRef } from "react";
 import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
-  ImagePlus, Trash2, Pencil,
+  ImagePlus, Trash2,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
@@ -146,10 +149,76 @@ function InfoRow({ label, value }) {
   );
 }
 
+function InlineField({ label, value, onChange, type = "text", placeholder, multiline = false, dark = false }) {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      try { inputRef.current.select?.(); } catch (_) {}
+    }
+  }, [editing]);
+
+  const baseText = {
+    fontSize: 13.5,
+    color: dark ? (value ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.5)") : (value ? "var(--ink)" : "var(--muted)"),
+    fontStyle: value ? "normal" : "italic",
+    marginTop: 1, lineHeight: 1.4,
+    overflowWrap: "break-word",
+  };
+
+  const inputStyle = {
+    width: "100%", fontSize: 13.5, fontFamily: "inherit",
+    border: `1.5px solid ${dark ? "rgba(255,255,255,.6)" : "var(--brand)"}`,
+    borderRadius: 6, padding: "4px 8px",
+    background: dark ? "rgba(255,255,255,.12)" : "var(--surface)",
+    color: dark ? "#fff" : "var(--ink)",
+    outline: "none", boxSizing: "border-box",
+    marginTop: 1,
+  };
+
+  return (
+    <div
+      style={{ marginBottom: 10, cursor: editing ? "default" : "text", borderRadius: 6, padding: "4px 6px", margin: "0 -6px 6px", transition: "background .12s" }}
+      onClick={() => !editing && setEditing(true)}
+      onMouseEnter={(e) => { if (!editing) e.currentTarget.style.background = dark ? "rgba(255,255,255,.1)" : "var(--surface-2)"; }}
+      onMouseLeave={(e) => { if (!editing) e.currentTarget.style.background = ""; }}
+      title={editing ? undefined : "Clique para editar"}
+    >
+      <div style={{ fontSize: 11, color: dark ? "rgba(255,255,255,.65)" : "var(--muted)", fontWeight: 500 }}>{label}</div>
+      {editing ? (
+        multiline ? (
+          <textarea
+            ref={inputRef}
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={() => setEditing(false)}
+            placeholder={placeholder}
+            style={{ ...inputStyle, minHeight: 68, resize: "vertical" }}
+          />
+        ) : (
+          <input
+            ref={inputRef}
+            type={type}
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={() => setEditing(false)}
+            placeholder={placeholder}
+            style={inputStyle}
+          />
+        )
+      ) : (
+        <div style={baseText}>{value || (placeholder ? `${placeholder}` : "Clique para editar")}</div>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────
 
-export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
-  const [secao, setSecao] = useState("dados");
+export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, secaoInicial = "dados", somenteConteudo = false }) {
+  const [secao, setSecao] = useState(secaoInicial);
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
   const [form, setForm] = useState(() => ({
     ...emp,
@@ -160,6 +229,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
     notifRelatorios: emp.notifRelatorios ?? false,
   }));
   const [changed, setChanged] = useState(false);
+  useUnsavedChanges(changed);
   const [salvando, setSalvando] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
   const [senhaAtual, setSenhaAtual] = useState("");
@@ -169,16 +239,18 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   const [logo, setLogo] = useState(emp?.logo || "");
   const [enviandoLogo, setEnviandoLogo] = useState(false);
   const inputLogoRef = useRef(null);
-  const editFormRef = useRef(null);
 
   const enviarLogo = async (e) => {
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
+    if (!["image/jpeg", "image/png"].includes(arquivo.type) || arquivo.size > 2 * 1024 * 1024) return aviso("Envie uma imagem JPG ou PNG de até 2 MB.");
     setEnviandoLogo(true);
     const reader = new FileReader();
+    reader.onerror = () => { setEnviandoLogo(false); aviso("Não foi possível ler a imagem."); };
     reader.onload = async () => {
       const dataUri = reader.result;
       const img = new Image();
+      img.onerror = () => { setEnviandoLogo(false); aviso("Imagem inválida."); };
       img.onload = async () => {
         const r = await api(`/companies/${emp.id}/logo`, {
           base64: dataUri.split(",")[1], mimetype: arquivo.type,
@@ -224,6 +296,9 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   };
 
   const salvar = async () => {
+    if (form.emailEmpresa && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailEmpresa)) return aviso("Informe um e-mail válido.");
+    if (form.telefoneEmpresa && !/^\d{10,13}$/.test(String(form.telefoneEmpresa).replace(/\D/g, ""))) return aviso("Informe um telefone válido com DDD.");
+    if (form.documento !== emp.documento && form.documento && !documentoValido(form.documento)) return aviso("Informe um CPF ou CNPJ completo.");
     setSalvando(true);
     const payload = {};
     [...CAMPOS_EMPRESA, ...CAMPOS_CONTATO, ...CAMPOS_COMERCIAL].forEach(([k]) => { payload[k] = form[k] || ""; });
@@ -245,179 +320,93 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
     aviso("Configurações salvas.");
   };
 
-  const alterarSenha = async () => {
-    if (!senhaAtual || !senhaNova) return aviso("Preencha a senha atual e a nova.");
-    if (senhaNova.length < 6) return aviso("A nova senha deve ter pelo menos 6 caracteres.");
-    if (senhaNova !== senhaConfirm) return aviso("As senhas não coincidem.");
-    setSalvandoSenha(true);
-    const r = await api("/auth/change-password", { senhaAtual, senhaNova });
-    setSalvandoSenha(false);
-    if (!r || r.error) return aviso(r?.error || "Não foi possível alterar a senha.");
-    setSenhaAtual(""); setSenhaNova(""); setSenhaConfirm("");
-    aviso("Senha alterada com sucesso.");
-  };
-
   // ── Section content ───────────────────────────────────────────────
 
   const secoes = {
     dados: (
       <>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12 }}>
-          <div>
-            <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>Dados da empresa</h2>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>Informações cadastradas na criação da conta.</p>
-          </div>
-          <button
-            onClick={() => editFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
-              borderRadius: 8, border: "1.5px solid var(--border)", background: "var(--surface-2)",
-              color: "var(--ink)", fontSize: 13, fontWeight: 500, cursor: "pointer",
-              flexShrink: 0, transition: "border-color .15s, background .15s",
-              fontFamily: "inherit",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.background = "var(--surface)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface-2)"; }}
-          >
-            <Pencil size={13} />
-            Editar informações
-          </button>
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>Dados da empresa</h2>
+          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>Clique em qualquer campo para editar diretamente.</p>
         </div>
 
-        {/* ── Cartão de identidade da empresa ── */}
+        {/* ── Cartão editável ── */}
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
-          {/* Header com cor da marca */}
-          <div style={{ background: `linear-gradient(135deg, ${form.cor || "var(--brand)"} 0%, ${form.cor || "#3b82f6"} 100%)`, padding: "24px 28px 20px", display: "flex", alignItems: "flex-end", gap: 18 }}>
+          {/* Header gradiente — nome e segmento editáveis */}
+          <div style={{ background: `linear-gradient(135deg, ${form.cor || "var(--brand)"} 0%, ${form.cor || "#3b82f6"} 100%)`, padding: "24px 28px 20px", display: "flex", alignItems: "center", gap: 18 }}>
             <div style={{ width: 60, height: 60, borderRadius: 14, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -1, flexShrink: 0, border: "2px solid rgba(255,255,255,.35)", overflow: "hidden" }}>
-              {logo ? <img src={logo} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (emp.nome || "?")[0].toUpperCase()}
+              {logo ? <img src={logo} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome || "?")[0].toUpperCase()}
             </div>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{emp.nome || "Empresa"}</div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,.8)", marginTop: 3 }}>
-                {[emp.segmento, emp.produto].filter(Boolean).join(" · ") || "Sem segmento informado"}
-              </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <InlineField label="" value={form.nome} onChange={(v) => { set("nome")(v); setChanged(true); }} placeholder="Nome fantasia" dark
+                extraStyle={{ fontSize: 20, fontWeight: 700 }} />
+              <InlineField label="" value={form.segmento} onChange={(v) => { set("segmento")(v); setChanged(true); }} placeholder="Segmento da empresa" dark />
             </div>
-          </div>
-
-          {/* Grid de informações */}
-          <div style={{ padding: "20px 28px 24px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: "0 32px" }}>
-              {/* Coluna 1: Dados cadastrais */}
-              <div>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Dados cadastrais</div>
-                {[
-                  ["Razão social", emp.razaoSocial],
-                  ["CNPJ / CPF", emp.documento],
-                  ["Segmento", emp.segmento],
-                ].map(([label, val]) => (
-                  <div key={label} style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</div>
-                    <div style={{ fontSize: 13.5, color: val ? "var(--ink)" : "var(--muted)", fontStyle: val ? "normal" : "italic", marginTop: 1, lineHeight: 1.4 }}>{val || "Não informado"}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Coluna 2: Contato */}
-              <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Contato</div>
-                {[
-                  ["Representante", emp.representanteLegal],
-                  ["E-mail", emp.emailEmpresa],
-                  ["Telefone", emp.telefoneEmpresa],
-                ].map(([label, val]) => (
-                  <div key={label} style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</div>
-                    <div style={{ fontSize: 13.5, color: val ? "var(--ink)" : "var(--muted)", fontStyle: val ? "normal" : "italic", marginTop: 1, lineHeight: 1.4, overflowWrap: "break-word" }}>{val || "Não informado"}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Coluna 3: Comercial + Localização */}
-              <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Comercial & Localização</div>
-                {[
-                  ["Ticket médio", emp.ticket],
-                  ["Região atendida", emp.regiao],
-                  ["Endereço", emp.endereco],
-                ].map(([label, val]) => (
-                  <div key={label} style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</div>
-                    <div style={{ fontSize: 13.5, color: val ? "var(--ink)" : "var(--muted)", fontStyle: val ? "normal" : "italic", marginTop: 1, lineHeight: 1.4 }}>{val || "Não informado"}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ICP + Produto em destaque */}
-            {(emp.icp || emp.produto) && (
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-                {emp.produto && (
-                  <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Produto / Serviço</div>
-                    <div style={{ fontSize: 13.5, color: "var(--ink)", lineHeight: 1.5 }}>{emp.produto}</div>
-                  </div>
-                )}
-                {emp.icp && (
-                  <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Perfil de cliente ideal (ICP)</div>
-                    <div style={{ fontSize: 13.5, color: "var(--ink)", lineHeight: 1.5 }}>{emp.icp}</div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Logo ── */}
-        <div ref={editFormRef} style={{ scrollMarginTop: 24 }} />
-        <Block title="Logo da empresa" description="Imagem exibida no perfil e campanhas. Formatos aceitos: JPG ou PNG, até 2 MB.">
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: 14, border: "2px dashed var(--border-strong, #cbd5e1)",
-              background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center",
-              overflow: "hidden", flexShrink: 0,
-            }}>
-              {logo
-                ? <img src={logo} alt="Logo atual" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <ImagePlus size={24} color="var(--muted)" />}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Logo upload inline no header */}
+            <div style={{ flexShrink: 0 }}>
               <input ref={inputLogoRef} type="file" accept="image/jpeg,image/png" onChange={enviarLogo} style={{ display: "none" }} />
-              <button className="vx-btn vx-btn-sm" disabled={enviandoLogo} onClick={() => inputLogoRef.current?.click()}>
+              <button
+                onClick={() => inputLogoRef.current?.click()}
+                disabled={enviandoLogo}
+                title={logo ? "Trocar logo" : "Enviar logo"}
+                style={{ background: "rgba(255,255,255,.18)", border: "1.5px solid rgba(255,255,255,.4)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: "#fff", fontSize: 12, fontFamily: "inherit" }}
+              >
                 <ImagePlus size={13} />
-                {enviandoLogo ? "Enviando…" : logo ? "Trocar logo" : "Enviar logo"}
+                {enviandoLogo ? "…" : logo ? "Trocar" : "Logo"}
               </button>
               {logo && (
-                <button className="vx-btn vx-btn-sm" disabled={enviandoLogo} onClick={removerLogo} style={{ color: "var(--red, #DC2626)" }}>
-                  <Trash2 size={13} />
-                  Remover
+                <button onClick={removerLogo} disabled={enviandoLogo} title="Remover logo"
+                  style={{ marginTop: 4, background: "rgba(255,0,0,.25)", border: "1.5px solid rgba(255,100,100,.5)", borderRadius: 8, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: "#fff", fontSize: 11, fontFamily: "inherit" }}>
+                  <Trash2 size={11} /> Remover
                 </button>
               )}
             </div>
           </div>
-        </Block>
 
-        {/* ── Formulários de edição ── */}
-        <Block title="Informações principais">
+          {/* Grid de campos editáveis */}
+          <div style={{ padding: "20px 28px 24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: "0 32px" }}>
+              {/* Coluna 1: Dados cadastrais */}
+              <div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Dados cadastrais</div>
+                <InlineField label="Razão social" value={form.razaoSocial} onChange={set("razaoSocial")} placeholder="Razão social completa" />
+                <InlineField label="CNPJ / CPF" value={mascararDocumento(form.documento)} onChange={v => set("documento")(mascararDocumento(v))} placeholder="00.000.000/0000-00" />
+              </div>
+
+              {/* Coluna 2: Contato */}
+              <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Contato</div>
+                <InlineField label="Representante" value={form.representanteLegal} onChange={set("representanteLegal")} placeholder="Nome do responsável" />
+                <InlineField label="E-mail" value={form.emailEmpresa} onChange={set("emailEmpresa")} type="email" placeholder="email@empresa.com.br" />
+                <InlineField label="Telefone" value={form.telefoneEmpresa} onChange={set("telefoneEmpresa")} placeholder="(11) 00000-0000" />
+              </div>
+
+              {/* Coluna 3: Comercial + Localização */}
+              <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Comercial & Localização</div>
+                <InlineField label="Ticket médio" value={form.ticket} onChange={set("ticket")} placeholder="Ex: R$ 2.000" />
+                <InlineField label="Região atendida" value={form.regiao} onChange={set("regiao")} placeholder="Ex: São Paulo e Grande SP" />
+                <InlineField label="Endereço" value={form.endereco} onChange={set("endereco")} placeholder="Rua, número, cidade, estado" />
+              </div>
+            </div>
+
+            {/* Produto + ICP editáveis */}
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+              <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Produto / Serviço</div>
+                <InlineField label="" value={form.produto} onChange={set("produto")} placeholder="O que você vende?" multiline />
+              </div>
+              <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Perfil de cliente ideal (ICP)</div>
+                <InlineField label="" value={form.icp} onChange={set("icp")} placeholder="Ex: PMEs do setor de saúde" multiline />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contatos adicionais */}
+        <Block title="Contatos adicionais" description="E-mails de acesso comercial e financeiro.">
           <FGrid>
-            <FInput label="Nome fantasia" value={form.nome} onChange={set("nome")} placeholder="Como a empresa é conhecida" />
-            <FInput label="Razão social" value={form.razaoSocial} onChange={set("razaoSocial")} placeholder="Razão social completa" />
-            <FInput label="CNPJ ou CPF" value={form.documento} onChange={set("documento")} placeholder="00.000.000/0000-00" />
-            <FInput label="Segmento" value={form.segmento} onChange={set("segmento")} placeholder="Ex: Tecnologia, Saúde, Varejo" />
-            <FInput label="Produto ou serviço" value={form.produto} onChange={set("produto")} placeholder="O que você vende?" span2 />
-          </FGrid>
-        </Block>
-        <Block title="Localização">
-          <FGrid>
-            <FInput label="Endereço completo" value={form.endereco} onChange={set("endereco")} placeholder="Rua, número, cidade, estado" span2 />
-            <FInput label="Região atendida" value={form.regiao} onChange={set("regiao")} placeholder="Ex: São Paulo e Grande SP" />
-          </FGrid>
-        </Block>
-        <Block title="Responsáveis e contatos">
-          <FGrid>
-            <FInput label="Representante legal" value={form.representanteLegal} onChange={set("representanteLegal")} placeholder="Nome do responsável" />
-            <FInput label="E-mail principal" value={form.emailEmpresa} onChange={set("emailEmpresa")} type="email" placeholder="email@empresa.com.br" />
-            <FInput label="Telefone" value={form.telefoneEmpresa} onChange={set("telefoneEmpresa")} placeholder="(11) 00000-0000" />
             <FInput label="E-mail comercial" value={form.contatoComercial} onChange={set("contatoComercial")} type="email" placeholder="comercial@empresa.com.br" />
             <FInput label="E-mail financeiro" value={form.contatoFinanceiro} onChange={set("contatoFinanceiro")} type="email" placeholder="financeiro@empresa.com.br" />
           </FGrid>
@@ -459,22 +448,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
       </>
     ),
 
-    seguranca: (
-      <>
-        <PgHead title="Segurança" description="Gerencie o acesso à sua conta." />
-        <Block title="Alterar senha" description="Use uma senha forte com pelo menos 8 caracteres.">
-          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: "14px 20px", maxWidth: 500 }}>
-            <FInput label="Senha atual" value={senhaAtual} onChange={setSenhaAtual} type="password" span2 />
-            <FInput label="Nova senha" value={senhaNova} onChange={setSenhaNova} type="password" />
-            <FInput label="Confirmar nova senha" value={senhaConfirm} onChange={setSenhaConfirm} type="password" />
-          </div>
-          <button className="vx-btn" disabled={salvandoSenha || !senhaAtual || !senhaNova} onClick={alterarSenha} style={{ marginTop: 16 }}>
-            <Lock size={14} />
-            {salvandoSenha ? "Alterando…" : "Alterar senha"}
-          </button>
-        </Block>
-      </>
-    ),
+    seguranca: <SegurancaConta aviso={aviso} />,
 
     preferencias: (
       <>
@@ -533,7 +507,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
     <div className="vx-fade" style={{ display: "flex", flexDirection: mobile ? "column" : "row", minHeight: "100%", minWidth: 0 }}>
 
       {/* Secondary navigation */}
-      {mobile ? (
+      {!somenteConteudo && (mobile ? (
         <div style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid var(--border)", scrollbarWidth: "none" }}>
           {SECOES_NAV.map(({ key, label, icon: Icon }) => (
             <button
@@ -559,7 +533,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
             </button>
           ))}
         </nav>
-      )}
+      ))}
 
       {/* Content area */}
       <div style={{ flex: 1, padding: mobile ? "20px 16px 40px" : "30px 32px 56px", minWidth: 0, overflowX: "hidden", overflowY: "auto" }}>
