@@ -185,56 +185,67 @@ function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
 
 function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
   const [campanhasAuto, setCampanhasAuto] = useState(null);
+  const scoreVal = Number(seller?.nota || 0);
+  const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
 
   return (
-    <div className="vx-card" style={{ padding: 18, display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", background: "var(--surface-2)", flexShrink: 0, display: "grid", placeItems: "center" }}>
+    <article className="vx-prof-card" style={{ cursor: "default", height: "auto", minHeight: 380 }}>
+      {/* FOTO */}
+      <div className="vx-prof-card__img" style={{ position: "relative" }}>
         {seller?.foto
-          ? <img src={typeof seller.foto === "string" && seller.foto.startsWith("data:") ? seller.foto : `/api/sellers/${seller.id}/foto`} alt={seller?.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <span style={{ fontSize: 20, fontWeight: 700, color: "var(--brand)" }}>{iniciais(seller?.nome)}</span>}
+          ? <img src={typeof seller.foto === "string" && seller.foto.startsWith("data:") ? seller.foto : `/api/sellers/${seller.id}/foto`} alt={seller?.nome} loading="lazy" decoding="async" />
+          : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 36, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(seller?.nome)}</div>
+        }
+        {typeof seller?.nota === "number" && (
+          <span style={{ position: "absolute", top: 10, right: 10, background: scoreCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px" }}>
+            {scoreVal} pts
+          </span>
+        )}
+        <span style={{ position: "absolute", bottom: 10, left: 10, background: "#fffbeb", color: "#92400e", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px" }}>
+          Aguardando aprovação
+        </span>
       </div>
-      <div style={{ flex: 1, minWidth: 200 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{capitalizar(seller?.nome || "Profissional")}</span>
-          {seller?.titulo && <span className="vx-mut" style={{ fontSize: 12 }}>{seller.titulo}</span>}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-          <span className="vx-mut" style={{ fontSize: 12 }}>
+
+      {/* CONTEÚDO */}
+      <div className="vx-prof-card__body">
+        <div className="vx-prof-card__info">
+          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {capitalizar(seller?.nome || "Profissional")}
+          </span>
+          {seller?.titulo && <span style={{ fontSize: 12, color: "var(--muted)" }}>{seller.titulo}</span>}
+          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
             <Clock size={11} style={{ marginRight: 3, verticalAlign: "-1px" }} />
             {solicitacao.criadoEm ? dataCurta(solicitacao.criadoEm) : "Data não registrada"}
+            {seller?.cidade && ` · ${seller.cidade}${seller?.estado ? `, ${seller.estado}` : ""}`}
           </span>
-          {seller?.cidade && <span className="vx-mut" style={{ fontSize: 12 }}>{seller.cidade}{seller?.estado ? `, ${seller.estado}` : ""}</span>}
-          {typeof seller?.nota === "number" && (
-            <span style={{ fontSize: 11, fontWeight: 600, background: seller.nota >= 80 ? "#dcfce7" : seller.nota >= 50 ? "#fffbeb" : "#fee2e2", color: seller.nota >= 80 ? "#166534" : seller.nota >= 50 ? "#92400e" : "#b91c1c", borderRadius: 12, padding: "2px 8px" }}>
-              {seller.nota} pts
-            </span>
+          {solicitacao.mensagem && (
+            <div style={{ padding: "7px 10px", background: "var(--surface-2)", borderRadius: 8, fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>
+              <MessageSquare size={11} style={{ marginRight: 4, verticalAlign: "-1px", color: "var(--muted)" }} />
+              {solicitacao.mensagem}
+            </div>
           )}
-        </div>
-        {solicitacao.mensagem && (
-          <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>
-            <MessageSquare size={12} style={{ marginRight: 5, verticalAlign: "-1px", color: "var(--muted)" }} />
-            {solicitacao.mensagem}
-          </div>
-        )}
-        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <button
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--muted)" }}
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--muted)", marginTop: 2 }}
             onClick={() => setCampanhasAuto((v) => v === null ? false : v === false ? true : null)}
           >
-            {campanhasAuto === true ? <ToggleRight size={18} color="var(--brand)" /> : <ToggleLeft size={18} />}
+            {campanhasAuto === true ? <ToggleRight size={16} color="var(--brand)" /> : <ToggleLeft size={16} />}
             {campanhasAuto === true ? "Auto em campanhas" : campanhasAuto === false ? "Manual por campanha" : "Usar padrão da empresa"}
           </button>
         </div>
-        <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ gap: 5 }} onClick={() => onAprovar(seller.id, campanhasAuto)}>
-            <CheckCircle2 size={13} /> Aprovar
-          </button>
-          <button className="vx-btn vx-btn-danger vx-btn-sm" style={{ gap: 5 }} onClick={() => onRecusar(seller.id)}>
-            <X size={13} /> Recusar
-          </button>
+
+        {/* AÇÕES */}
+        <div className="vx-prof-card__actions">
+          <div style={{ display: "flex", gap: 6 }}>
+            <button className="vx-prof-card__btn" style={{ flex: 1, fontSize: 12, height: 38, minHeight: 38, gap: 5 }} onClick={() => onAprovar(seller.id, campanhasAuto)}>
+              <CheckCircle2 size={13} /> Aprovar
+            </button>
+            <button className="vx-prof-card__btn vx-prof-card__btn--danger" style={{ flex: 1, fontSize: 12, height: 38, minHeight: 38, gap: 5 }} onClick={() => onRecusar(seller.id)}>
+              <X size={13} /> Recusar
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -316,7 +327,7 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
               </div>
             )
             : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+              <div className="vx-prof-grid" style={{ marginBottom: 32 }}>
                 {solicitacoes.map((sol) => {
                   const seller = db.sellers.find((s) => s.id === sol.sellerId);
                   return (
