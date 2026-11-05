@@ -92,7 +92,14 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
   const st = STATUS[sub.status] || STATUS.analisando;
 
   const tipoLabel = TIPO_LABEL[sub.tipo] || sub.tipo || "tarefa";
-  const textoInicial = `Olá! Tenho uma pergunta sobre o seu lead de ${tipoLabel}${camp?.titulo ? ` na campanha "${camp.titulo}"` : ""} registrado em ${dataCurta(sub.criadoEm)}. `;
+  const _linhasLead = [
+    prova.cliente    && `• Contato: ${prova.cliente}`,
+    prova.empresa    && `• Empresa: ${prova.empresa}`,
+    prova.telefone   && `• Telefone: ${prova.telefone}`,
+    prova.endereco   && `• Endereço: ${prova.endereco}`,
+    prova.resultado  && `• Resultado: ${prova.resultado}`,
+  ].filter(Boolean);
+  const textoInicial = `Olá! Preciso de mais informações sobre o seu lead de ${tipoLabel}${camp?.titulo ? ` na campanha "${camp.titulo}"` : ""} registrado em ${dataCurta(sub.criadoEm)}.${_linhasLead.length ? "\n\n" + _linhasLead.join("\n") : ""}\n\n`;
 
   const [compondo, setCompondo] = useState(false);
   const [texto, setTexto] = useState(textoInicial);
@@ -251,15 +258,15 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                 onClick={() => setCompondo(true)}
                 style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  padding: "11px 16px", borderRadius: 10, fontSize: 14, fontWeight: 600,
-                  border: "1.5px solid var(--border)", background: "var(--surface-2)",
-                  color: "var(--ink)", cursor: "pointer", transition: "border-color .15s, background .15s",
+                  padding: "12px 16px", borderRadius: 10, fontSize: 14, fontWeight: 600,
+                  border: "none", background: "var(--brand)",
+                  color: "#fff", cursor: "pointer", transition: "opacity .15s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.background = "var(--brand)0d"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface-2)"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
               >
-                <MessageSquare size={16} color="var(--brand)" />
-                Enviar mensagem ao vendedor
+                <MessageSquare size={16} />
+                Perguntar sobre este lead
               </button>
             )}
 
