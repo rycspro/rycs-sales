@@ -52,11 +52,15 @@ export const NAV = {
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },
     { key: "painel", label: "Insights", Icon: BarChart3 },
+    { divider: true },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
-    { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { key: "leads", label: "Leads", Icon: Target },
+    { divider: true },
     { key: "conferir", label: "Aprovações", Icon: ShieldCheck },
+    { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch },
+    { divider: true },
+    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard },
     { key: "configuracoes", label: "Configurações", Icon: Settings },
   ],
   admin: [
