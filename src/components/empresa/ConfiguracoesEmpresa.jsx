@@ -3,7 +3,7 @@ import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
-  ImagePlus, Trash2,
+  ImagePlus, Trash2, Pencil,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
@@ -169,6 +169,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   const [logo, setLogo] = useState(emp?.logo || "");
   const [enviandoLogo, setEnviandoLogo] = useState(false);
   const inputLogoRef = useRef(null);
+  const editFormRef = useRef(null);
 
   const enviarLogo = async (e) => {
     const arquivo = e.target.files?.[0];
@@ -261,7 +262,27 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   const secoes = {
     dados: (
       <>
-        <PgHead title="Dados da empresa" description="Informações cadastradas na criação da conta." />
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12 }}>
+          <div>
+            <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>Dados da empresa</h2>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>Informações cadastradas na criação da conta.</p>
+          </div>
+          <button
+            onClick={() => editFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
+              borderRadius: 8, border: "1.5px solid var(--border)", background: "var(--surface-2)",
+              color: "var(--ink)", fontSize: 13, fontWeight: 500, cursor: "pointer",
+              flexShrink: 0, transition: "border-color .15s, background .15s",
+              fontFamily: "inherit",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.background = "var(--surface)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface-2)"; }}
+          >
+            <Pencil size={13} />
+            Editar informações
+          </button>
+        </div>
 
         {/* ── Cartão de identidade da empresa ── */}
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
@@ -348,6 +369,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
         </div>
 
         {/* ── Logo ── */}
+        <div ref={editFormRef} style={{ scrollMarginTop: 24 }} />
         <Block title="Logo da empresa" description="Imagem exibida no perfil e campanhas. Formatos aceitos: JPG ou PNG, até 2 MB.">
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{
