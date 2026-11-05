@@ -64,7 +64,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
 
   return (
     <div className="vx-fade">
-      {aba === "inicio" && <InicioEmpresa emp={emp} />}
+      {aba === "inicio" && <InicioEmpresa emp={emp} db={db} setAba={setAba} />}
       {aba === "painel" && <>
         {submenu([["painel", "Insights"], ["financeiro", "Financeiro"]], secaoInsights, setSecaoInsights)}
         {secaoInsights === "painel" && <>
