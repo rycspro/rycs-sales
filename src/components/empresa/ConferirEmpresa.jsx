@@ -10,6 +10,7 @@ export const STATUS_CLIENTE = {
   perdido:          { label: "Perdido",           cor: "#DC2626", bg: "#FEF2F2" },
   sem_resposta:     { label: "Sem resposta",      cor: "#94A3B8", bg: "#F8FAFC" },
   reagendado:       { label: "Reagendado",        cor: "#0891B2", bg: "#ECFEFF" },
+  liberar_saldo:    { label: "Liberar saldo ↑",  cor: "#166534", bg: "#DCFCE7" },
 };
 import { api, apiPatch } from "../../lib/api.js";
 import RegrasAprovacao from "./RegrasAprovacao.jsx";
