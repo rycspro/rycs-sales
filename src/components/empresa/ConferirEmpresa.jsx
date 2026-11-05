@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye } from "lucide-react";
-import { apiPatch } from "../../lib/api.js";
+import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight } from "lucide-react";
+import { api, apiPatch } from "../../lib/api.js";
 import RegrasAprovacao from "./RegrasAprovacao.jsx";
 import TrilhaAuditoria from "./TrilhaAuditoria.jsx";
 import { ACOES, STATUS, MOTIVO_COR } from "../../lib/constants.js";
@@ -142,10 +142,121 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
   );
 }
 
-export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila" }) {
+function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
+  const [auto, setAuto] = useState(!!campanhasAutoDefault);
+  const [salvando, setSalvando] = useState(false);
 
+  const alternar = async () => {
+    setSalvando(true);
+    const novoValor = !auto;
+    const r = await apiPatch("/company/approval-config", { campanhasAutoDefault: novoValor });
+    setSalvando(false);
+    if (r?.error) return aviso(r.error);
+    setAuto(novoValor);
+    aviso(novoValor ? "Padrão alterado: profissionais aprovados entram em todas as campanhas automaticamente." : "Padrão alterado: cada campanha exigirá aprovação manual.");
+  };
+
+  return (
+    <div className="vx-card" style={{ padding: 20, marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+        <UserPlus size={20} color="var(--brand)" />
+        <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Aprovação de profissionais</h3>
+      </div>
+      <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 14px" }}>
+        Quando um profissional é aprovado para trabalhar com sua empresa, ele pode ser incluído em todas as campanhas automaticamente ou precisar de aprovação manual para cada campanha.
+      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <button
+          className="vx-btn vx-btn-sm"
+          style={{ gap: 6, opacity: salvando ? 0.6 : 1 }}
+          onClick={alternar}
+          disabled={salvando}
+        >
+          {auto ? <ToggleRight size={18} color="var(--brand)" /> : <ToggleLeft size={18} />}
+          {auto ? "Campanhas automáticas (ativo)" : "Aprovação manual por campanha (ativo)"}
+        </button>
+        <span className="vx-mut" style={{ fontSize: 12 }}>
+          Este é o padrão — pode ser ajustado por profissional na aprovação.
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
+  const [campanhasAuto, setCampanhasAuto] = useState(null);
+
+  return (
+    <div className="vx-card" style={{ padding: 18, display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", background: "var(--surface-2)", flexShrink: 0, display: "grid", placeItems: "center" }}>
+        {seller?.foto
+          ? <img src={typeof seller.foto === "string" && seller.foto.startsWith("data:") ? seller.foto : `/api/sellers/${seller.id}/foto`} alt={seller?.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <span style={{ fontSize: 20, fontWeight: 700, color: "var(--brand)" }}>{iniciais(seller?.nome)}</span>}
+      </div>
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{capitalizar(seller?.nome || "Profissional")}</span>
+          {seller?.titulo && <span className="vx-mut" style={{ fontSize: 12 }}>{seller.titulo}</span>}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+          <span className="vx-mut" style={{ fontSize: 12 }}>
+            <Clock size={11} style={{ marginRight: 3, verticalAlign: "-1px" }} />
+            {solicitacao.criadoEm ? dataCurta(solicitacao.criadoEm) : "Data não registrada"}
+          </span>
+          {seller?.cidade && <span className="vx-mut" style={{ fontSize: 12 }}>{seller.cidade}{seller?.estado ? `, ${seller.estado}` : ""}</span>}
+          {typeof seller?.nota === "number" && (
+            <span style={{ fontSize: 11, fontWeight: 600, background: seller.nota >= 80 ? "#dcfce7" : seller.nota >= 50 ? "#fffbeb" : "#fee2e2", color: seller.nota >= 80 ? "#166534" : seller.nota >= 50 ? "#92400e" : "#b91c1c", borderRadius: 12, padding: "2px 8px" }}>
+              {seller.nota} pts
+            </span>
+          )}
+        </div>
+        {solicitacao.mensagem && (
+          <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>
+            <MessageSquare size={12} style={{ marginRight: 5, verticalAlign: "-1px", color: "var(--muted)" }} />
+            {solicitacao.mensagem}
+          </div>
+        )}
+        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <button
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--muted)" }}
+            onClick={() => setCampanhasAuto((v) => v === null ? false : v === false ? true : null)}
+          >
+            {campanhasAuto === true ? <ToggleRight size={18} color="var(--brand)" /> : <ToggleLeft size={18} />}
+            {campanhasAuto === true ? "Auto em campanhas" : campanhasAuto === false ? "Manual por campanha" : "Usar padrão da empresa"}
+          </button>
+        </div>
+        <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ gap: 5 }} onClick={() => onAprovar(seller.id, campanhasAuto)}>
+            <CheckCircle2 size={13} /> Aprovar
+          </button>
+          <button className="vx-btn vx-btn-danger vx-btn-sm" style={{ gap: 5 }} onClick={() => onRecusar(seller.id)}>
+            <X size={13} /> Recusar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar }) {
+
+  const solicitacoes = db.solicitacoesPendentes || [];
   const revisao = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
   const iaAprovados = db.submissions.filter((s) => s.companyId === emp.id && ["ia_aprovado", "conferido"].includes(s.status));
+
+  const aprovarProfissional = async (sellerId, campanhasAuto) => {
+    const r = await apiPatch("/applications", { sellerId, companyId: emp.id, status: "aprovado", campanhasAuto });
+    if (r?.error) return aviso(r.error);
+    aviso("Profissional aprovado!");
+    recarregar?.();
+  };
+
+  const recusarProfissional = async (sellerId) => {
+    const r = await apiPatch("/applications", { sellerId, companyId: emp.id, status: "recusado" });
+    if (r?.error) return aviso(r.error);
+    aviso("Solicitação recusada.");
+    recarregar?.();
+  };
 
   const confirmar = async (sub) => {
     const r = await apiPatch(`/submissions/${sub.id}`, { status: "conferido", motivo: "Confirmado manualmente pela empresa." });
@@ -181,13 +292,49 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila" 
         <span className="vx-chip vx-mono">{revisao.length} pendentes</span>
       </div>
 
-      {secao === "regras" && <RegrasAprovacao aviso={aviso} />}
+      {secao === "regras" && <>
+        <ConfigAprovacaoProfissionais aviso={aviso} campanhasAutoDefault={db.campanhasAutoDefault} />
+        <RegrasAprovacao aviso={aviso} />
+      </>}
 
       {secao === "fila" && (
         <>
+          {/* ── Profissionais aguardando aprovação ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>
+              <UserPlus size={18} style={{ marginRight: 6, verticalAlign: "-3px" }} />
+              Profissionais aguardando aprovação
+            </h3>
+            {solicitacoes.length > 0 && <span className="vx-chip vx-mono">{solicitacoes.length}</span>}
+          </div>
+
+          {!solicitacoes.length
+            ? (
+              <div className="vx-card" style={{ padding: 24, textAlign: "center", marginBottom: 28 }}>
+                <Shield size={28} color="var(--muted)" style={{ display: "block", margin: "0 auto 10px" }} />
+                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum profissional aguardando aprovação no momento.</p>
+              </div>
+            )
+            : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+                {solicitacoes.map((sol) => {
+                  const seller = db.sellers.find((s) => s.id === sol.sellerId);
+                  return (
+                    <CardSolicitacao
+                      key={sol.sellerId}
+                      seller={seller}
+                      solicitacao={sol}
+                      onAprovar={aprovarProfissional}
+                      onRecusar={recusarProfissional}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
           {/* ── Revisão manual ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Revisão manual</h3>
+            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Revisão manual de tarefas</h3>
             {revisao.length > 0 && <span className="vx-chip vx-mono">{revisao.length}</span>}
           </div>
 

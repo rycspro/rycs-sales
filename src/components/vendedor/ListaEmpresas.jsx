@@ -7,16 +7,20 @@ import { CompanyScoreChip } from "../CompanyScore.jsx";
 export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) {
   const ordenadas = [...db.companies].sort((a, b) => Number(b.destaque) - Number(a.destaque));
   const [convites, setConvites] = useState([]);
+  const [msgAberta, setMsgAberta] = useState(null);
+  const [mensagem, setMensagem] = useState("");
   useEffect(() => { api("/partnerships/invitations").then((r) => { if (Array.isArray(r)) setConvites(r); }); }, []);
 
-  const recandidatar = async (companyId) => {
-    const r = await api("/applications", { sellerId: eu.id, companyId });
+  const candidatar = async (companyId) => {
+    const r = await api("/applications", { sellerId: eu.id, companyId, mensagem: mensagem.trim() });
     if (r?.error) return aviso(r.error);
+    setMsgAberta(null);
+    setMensagem("");
     up?.((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, aplicacoes: { ...s.aplicacoes, [companyId]: "pendente" } } : s) }));
     if (r?.pendencias?.length) {
-      aviso(`Candidatura enviada. Para aumentar suas chances, complete: ${r.pendencias.join(", ")}.`);
+      aviso(`Solicitação enviada. Para aumentar suas chances, complete: ${r.pendencias.join(", ")}.`);
     } else {
-      aviso("Candidatura enviada. A empresa irá analisar seu perfil.");
+      aviso("Solicitação enviada. A empresa irá analisar seu perfil.");
     }
   };
 
@@ -118,13 +122,33 @@ export default function ListaEmpresas({ eu, db, up, aviso, abrir, recarregar }) 
                     Abrir área da empresa
                   </button>
                 ) : st === "pendente" ? (
-                  <button className="vx-btn vx-btn-block" disabled>Candidatura em análise</button>
-                ) : st === "recusado" ? (
-                  <button className="vx-btn vx-btn-block" onClick={() => recandidatar(c.id)}>Solicitar aprovação novamente</button>
+                  <button className="vx-btn vx-btn-block" disabled>Solicitação em análise</button>
                 ) : (
-                  <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => abrir(c.id)}>
-                    Abrir área da empresa
-                  </button>
+                  <>
+                    {msgAberta === c.id ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <textarea
+                          style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", minHeight: 60, maxHeight: 120, boxSizing: "border-box", background: "var(--surface-2)", color: "var(--ink)" }}
+                          placeholder="Escreva uma mensagem para a empresa (opcional)"
+                          value={mensagem}
+                          onChange={(e) => setMensagem(e.target.value)}
+                          maxLength={600}
+                        />
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => candidatar(c.id)}>
+                            Enviar solicitação
+                          </button>
+                          <button className="vx-btn vx-btn-block" style={{ flex: "0 0 auto" }} onClick={() => { setMsgAberta(null); setMensagem(""); }}>
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setMsgAberta(c.id); setMensagem(""); }}>
+                        {st === "recusado" ? "Solicitar aprovação novamente" : "Solicitar aprovação"}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
