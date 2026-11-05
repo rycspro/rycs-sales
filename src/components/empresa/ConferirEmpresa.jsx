@@ -452,57 +452,6 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
               </div>
             )}
 
-          {/* ── Revisão manual ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Revisão manual de tarefas</h3>
-            {revisao.length > 0 && <span className="vx-chip vx-mono">{revisao.length}</span>}
-          </div>
-
-          {!revisao.length
-            ? (
-              <div className="vx-card" style={{ padding: 24, textAlign: "center", marginBottom: 28 }}>
-                <Clock size={28} color="var(--muted)" style={{ display: "block", margin: "0 auto 10px" }} />
-                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nada pendente de revisão humana no momento.</p>
-              </div>
-            )
-            : (
-              <div className="vx-prof-grid" style={{ marginBottom: 32 }}>
-                {revisao.map((sub) => {
-                  const seller = db.sellers.find((s) => s.id === sub.sellerId);
-                  return (
-                    <CardProfAprovacao
-                      key={sub.id}
-                      sub={sub}
-                      seller={seller}
-                      db={db}
-                      onConfirmar={confirmar}
-                      onRecusar={recusar}
-                      onContestar={contestar}
-                      modo="revisao"
-                    />
-                  );
-                })}
-              </div>
-            )}
-
-          {/* ── Decisões automáticas históricas — TABELA ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>
-              <TrendingUp size={17} style={{ marginRight: 6, verticalAlign: "-3px", color: "var(--brand)" }} />
-              Acompanhamento de clientes
-            </h3>
-            {iaAprovados.length > 0 && <span className="vx-chip vx-mono">{iaAprovados.length}</span>}
-          </div>
-
-          {!iaAprovados.length
-            ? (
-              <div className="vx-card" style={{ padding: 24, textAlign: "center" }}>
-                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum registro ainda.</p>
-              </div>
-            )
-            : (
-              <TabelaHistorico subs={iaAprovados} db={db} />
-            )}
         </>
       )}
     </>
