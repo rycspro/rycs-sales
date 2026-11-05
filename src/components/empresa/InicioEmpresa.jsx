@@ -56,18 +56,20 @@ function CardIndicador({ icon: Icon, label, valor, pct, onClick, cor = "var(--br
       onClick={onClick}
       style={{
         display: "flex", flexDirection: "column", gap: 10,
-        background: "var(--surface)", border: "1px solid var(--border)",
-        borderRadius: 14, padding: "18px 20px",
+        background: "var(--surface)", border: "1px solid var(--glass-border)",
+        borderRadius: 16, padding: "18px 20px",
         cursor: onClick ? "pointer" : "default",
         textAlign: "left", width: "100%",
-        transition: "box-shadow .15s, border-color .15s",
-        boxShadow: "0 1px 4px rgba(0,0,0,.04)",
+        transition: "box-shadow .2s, border-color .2s, transform .2s",
+        boxShadow: "var(--glass-shadow)",
+        backdropFilter: "var(--glass-blur)",
+        WebkitBackdropFilter: "var(--glass-blur)",
       }}
-      onMouseEnter={(e) => { if (onClick) { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(37,99,235,.12)"; } }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,.04)"; }}
+      onMouseEnter={(e) => { if (onClick) { e.currentTarget.style.borderColor = "rgba(37,99,235,.25)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(37,99,235,.12),inset 0 .5px 0 rgba(255,255,255,.5)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.boxShadow = "var(--glass-shadow)"; e.currentTarget.style.transform = ""; }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: cor + "18", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 38, height: 38, borderRadius: 12, background: cor + "14", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Icon size={17} color={cor} strokeWidth={2.2} />
         </div>
         {pct !== null && pct !== undefined && <VariacaoBadge pct={pct} />}
@@ -193,7 +195,8 @@ function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte
         style={{
           display: "flex", alignItems: "center", gap: 7,
           padding: "7px 12px", borderRadius: 10,
-          border: "1.5px solid var(--border)", background: "var(--surface)",
+          border: "1.5px solid var(--glass-border)", background: "var(--surface)",
+          backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
           cursor: "pointer", fontSize: 13, color: "var(--ink)",
           fontWeight: 500, transition: "border-color .15s",
           boxShadow: aberto ? "0 0 0 2px var(--brand)33" : "none",
@@ -210,8 +213,9 @@ function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte
       {aberto && (
         <div style={{
           position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 100,
-          background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+          background: "var(--surface)", border: "1px solid var(--glass-border)",
+          borderRadius: 14, boxShadow: "var(--shadow-pop)",
+          backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
           minWidth: 200, padding: "6px 0", overflow: "hidden",
         }}>
           {OPCOES_PERIODO.map((o) => (
@@ -404,7 +408,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       </div>
 
       {/* ── GRID PRINCIPAL ────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 16, alignItems: "start" }}>
+      <div className="inicio-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 18, alignItems: "start" }}>
 
         {/* COLUNA ESQUERDA */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -429,7 +433,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                 { label: "Leads no período", val: leads.filter((l) => { const t = Number(l.criadoEm || l.atualizadoEm); return t >= corte && t <= fimPeriodo; }).length, icon: Target, cor: "#D97706" },
                 { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone, cor: "#7C3AED" },
               ].map(({ label, val, icon: Ic, cor = "var(--brand)" }) => (
-                <div key={label} className="vx-card" style={{ padding: "12px 14px", background: "var(--surface-2)" }}>
+                <div key={label} style={{ padding: "12px 14px", background: "var(--surface-2)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", border: "1px solid var(--glass-border)", borderRadius: 12, boxShadow: "inset 0 .5px 0 rgba(255,255,255,.3)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
                     <Ic size={13} color={cor} />
                     <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</span>
@@ -448,7 +452,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                     const inscritos = c.candidaturas?.length || 0;
                     const aprovadas = submissions.filter((s) => s.campaignId === c.id && s.status === "liberado").length;
                     return (
-                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid var(--glass-border)" }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo || "Campanha"}</div>
                           <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>{inscritos} inscrito{inscritos !== 1 ? "s" : ""} · {aprovadas} aprovado{aprovadas !== 1 ? "s" : ""}</div>
@@ -553,8 +557,10 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       {/* ── LEMBRETES PENDENTES ────────────────────────────────────────── */}
       {pendencias.length > 0 ? (
         <div style={{
-          background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 14, padding: "16px 20px", marginTop: 16,
+          background: "var(--surface)", border: "1px solid var(--glass-border)",
+          borderRadius: 16, padding: "16px 20px", marginTop: 20,
+          backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
+          boxShadow: "var(--glass-shadow)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <AlertTriangle size={15} color="#D97706" />
@@ -570,7 +576,9 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                   display: "flex", alignItems: "center", gap: 12,
                   padding: "10px 14px", borderRadius: 10,
                   background: "var(--surface-2)", cursor: "pointer",
-                  transition: "background .12s",
+                  backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid var(--glass-border)",
+                  transition: "background .12s, transform .12s",
                 }}
                   onClick={() => ir(p.aba)}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3, #e2e8f0)"; }}
