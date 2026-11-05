@@ -309,8 +309,18 @@ function Avatar({ nome, foto, size = 40, fontSize = 15 }) {
 
 // ── Item da lista de conversas ─────────────────────────────────────────────────
 
-function ItemConversa({ c, ativo, onClick }) {
+function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
   const nome = capitalizar(c.seller?.nome || "Profissional");
+  const [menuAberto, setMenuAberto] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuAberto) return;
+    const handler = (e) => { if (!menuRef.current?.contains(e.target)) setMenuAberto(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuAberto]);
+
   const previewTexto = (() => {
     if (!c.ultima) return "Sem mensagens";
     const prefixo = c.ultima.de === "empresa" ? "Você: " : "";
@@ -321,62 +331,107 @@ function ItemConversa({ c, ativo, onClick }) {
         if (a.tipo === "audio") return prefixo + "🎤 Áudio";
         if (a.tipo === "gif") return prefixo + "GIF";
         if (a.tipo === "documento") return prefixo + `📄 ${a.nome || "Documento"}`;
+        if (a.tipo === "lead_card") return prefixo + "📋 Lead compartilhado";
       } catch { /* */ }
     }
     return prefixo + (c.ultima.texto || "");
   })();
-  const preview = previewTexto;
+
   return (
-    <button
-      onClick={onClick}
-      aria-pressed={ativo}
+    <div
       style={{
-        display: "flex", alignItems: "center", gap: 11, width: "100%",
-        padding: "11px 14px", textAlign: "left", border: "none", cursor: "pointer",
+        position: "relative",
         background: ativo ? "#EFF6FF" : "transparent",
         borderLeft: `3px solid ${ativo ? "#2563EB" : "transparent"}`,
         transition: "background .12s",
-        outline: "none",
       }}
       onMouseEnter={(e) => { if (!ativo) e.currentTarget.style.background = "#F8FAFC"; }}
-      onMouseLeave={(e) => { if (!ativo) e.currentTarget.style.background = "transparent"; }}
+      onMouseLeave={(e) => { if (!ativo) e.currentTarget.style.background = ativo ? "#EFF6FF" : "transparent"; }}
     >
-      <div style={{ position: "relative", flexShrink: 0 }}>
-        <Avatar nome={c.seller?.nome} foto={c.seller?.foto} size={40} fontSize={14} />
-        {c.naoLidas > 0 && (
-          <span style={{
-            position: "absolute", top: -2, right: -2,
-            width: 10, height: 10, borderRadius: "50%",
-            background: "#2563EB", border: "2px solid #fff",
-          }} />
-        )}
-      </div>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 4, marginBottom: 3 }}>
-          <span style={{
-            fontWeight: c.naoLidas > 0 ? 700 : 500,
-            fontSize: 13.5, color: "#0B1220",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }}>{nome}</span>
-          <span style={{ fontSize: 11, color: "#94A3B8", flexShrink: 0 }}>{horaOuData(c.ultima?.ts)}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 4 }}>
-          <span style={{
-            fontSize: 12.5, color: c.naoLidas > 0 ? "#334155" : "#94A3B8",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            fontWeight: c.naoLidas > 0 ? 500 : 400,
-          }}>{preview}</span>
+      <button
+        onClick={onClick}
+        aria-pressed={ativo}
+        style={{
+          display: "flex", alignItems: "center", gap: 11, width: "100%",
+          padding: "11px 14px", paddingRight: 36, textAlign: "left", border: "none", cursor: "pointer",
+          background: "transparent", outline: "none",
+        }}
+      >
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <Avatar nome={c.seller?.nome} foto={c.seller?.foto} size={40} fontSize={14} />
           {c.naoLidas > 0 && (
             <span style={{
-              background: "#2563EB", color: "#fff", borderRadius: 20,
-              fontSize: 10.5, padding: "1px 6px", fontWeight: 700, flexShrink: 0,
-              minWidth: 18, textAlign: "center",
-            }}>{c.naoLidas}</span>
+              position: "absolute", top: -2, right: -2,
+              width: 10, height: 10, borderRadius: "50%",
+              background: "#2563EB", border: "2px solid #fff",
+            }} />
           )}
         </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 4, marginBottom: 3 }}>
+            <span style={{
+              fontWeight: c.naoLidas > 0 ? 700 : 500,
+              fontSize: 13.5, color: "#0B1220",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{nome}</span>
+            <span style={{ fontSize: 11, color: "#94A3B8", flexShrink: 0 }}>{horaOuData(c.ultima?.ts)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 4 }}>
+            <span style={{
+              fontSize: 12.5, color: c.naoLidas > 0 ? "#334155" : "#94A3B8",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              fontWeight: c.naoLidas > 0 ? 500 : 400,
+            }}>{previewTexto}</span>
+            {c.naoLidas > 0 && (
+              <span style={{
+                background: "#2563EB", color: "#fff", borderRadius: 20,
+                fontSize: 10.5, padding: "1px 6px", fontWeight: 700, flexShrink: 0,
+                minWidth: 18, textAlign: "center",
+              }}>{c.naoLidas}</span>
+            )}
+          </div>
+        </div>
+      </button>
+
+      {/* botão 3 pontos */}
+      <div ref={menuRef} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); setMenuAberto((v) => !v); }}
+          style={{
+            width: 26, height: 26, borderRadius: 6, border: "none", background: menuAberto ? "#E2E8F0" : "transparent",
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#64748B", fontSize: 15, fontWeight: 700, letterSpacing: 1,
+          }}
+          title="Opções"
+        >⋯</button>
+        {menuAberto && (
+          <div style={{
+            position: "absolute", right: 0, top: 30, zIndex: 200,
+            background: "#fff", border: "1px solid #E2E8F0", borderRadius: 10,
+            boxShadow: "0 4px 20px rgba(0,0,0,.12)", minWidth: 170, overflow: "hidden",
+          }}>
+            {[
+              { label: arquivada ? "Desarquivar" : "Arquivar", action: () => { onArquivar(); setMenuAberto(false); } },
+              { label: "Apagar conversa", action: () => { onApagar(); setMenuAberto(false); }, danger: true },
+              { label: "Denunciar", action: () => { alert("Denúncia registrada. Nossa equipe vai analisar."); setMenuAberto(false); }, danger: true },
+            ].map((item) => (
+              <button
+                key={item.label}
+                onClick={(e) => { e.stopPropagation(); item.action(); }}
+                style={{
+                  display: "block", width: "100%", textAlign: "left",
+                  padding: "10px 14px", border: "none", background: "none",
+                  fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                  color: item.danger ? "#DC2626" : "#1E293B",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = item.danger ? "#FEF2F2" : "#F8FAFC"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+              >{item.label}</button>
+            ))}
+          </div>
+        )}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -448,6 +503,24 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
                   );
                   if (anexo?.tipo === "gif") return (
                     <img src={anexo.url} alt={anexo.nome || "GIF"} style={{ maxWidth: 260, maxHeight: 240, borderRadius: 10, display: "block" }} />
+                  );
+                  if (anexo?.tipo === "lead_card") return (
+                    <div style={{ padding: "10px 12px", minWidth: 220 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.7, marginBottom: 6, textTransform: "uppercase" }}>📋 Lead compartilhado</div>
+                      {anexo.tipo_acao && <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{anexo.tipo_acao}</div>}
+                      {anexo.campanha && <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 2 }}>📢 {anexo.campanha}</div>}
+                      {anexo.data && <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>🗓 {anexo.data}</div>}
+                      {(anexo.contato || anexo.empresa_lead || anexo.telefone || anexo.endereco || anexo.resultado) && (
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,.25)", paddingTop: 6, marginTop: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+                          {anexo.contato   && <div style={{ fontSize: 12 }}>👤 {anexo.contato}</div>}
+                          {anexo.empresa_lead && <div style={{ fontSize: 12 }}>🏢 {anexo.empresa_lead}</div>}
+                          {anexo.telefone  && <div style={{ fontSize: 12 }}>📞 {anexo.telefone}</div>}
+                          {anexo.endereco  && <div style={{ fontSize: 12 }}>📍 {anexo.endereco}</div>}
+                          {anexo.resultado && <div style={{ fontSize: 12 }}>✅ {anexo.resultado}</div>}
+                        </div>
+                      )}
+                      {anexo.texto_extra && <div style={{ fontSize: 12, opacity: 0.9, marginTop: 6, fontStyle: "italic" }}>{anexo.texto_extra}</div>}
+                    </div>
                   );
                   if (anexo?.tipo === "documento") return (
                     <a href={anexo.dados} download={anexo.nome} style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 10px", color: meu ? "#fff" : "#1E293B", textDecoration: "none" }}>
@@ -867,7 +940,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
 
 const FILTROS = [
   { id: "todas", label: "Todas" },
-  { id: "nao_lidas", label: "Não lidas" },
+  { id: "arquivadas", label: "Arquivadas" },
 ];
 
 export default function ConversasEmpresa({ emp, db, up }) {
@@ -876,6 +949,9 @@ export default function ConversasEmpresa({ emp, db, up }) {
   const [filtro, setFiltro] = useState("todas");
   const [selSellerId, setSelSellerId] = useState(null);
   const [lidosLocal, setLidosLocal] = useState({});
+  const [arquivadas, setArquivadas] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(`arq_${emp.id}`) || "[]")); } catch { return new Set(); }
+  });
   const [enviando, setEnviando] = useState(false);
   const [perfilAberto, setPerfilAberto] = useState(false);
   const [mobile, setMobile] = useState(window.innerWidth < 768);
@@ -913,8 +989,26 @@ export default function ConversasEmpresa({ emp, db, up }) {
 
   const totalNaoLidas = conversas.reduce((s, c) => s + c.naoLidas, 0);
 
+  const alternarArquivo = (sellerId) => {
+    setArquivadas((prev) => {
+      const next = new Set(prev);
+      next.has(sellerId) ? next.delete(sellerId) : next.add(sellerId);
+      try { localStorage.setItem(`arq_${emp.id}`, JSON.stringify([...next])); } catch { /* */ }
+      return next;
+    });
+  };
+
+  const apagarConversa = async (sellerId) => {
+    if (!confirm("Apagar toda a conversa? Essa ação não pode ser desfeita.")) return;
+    await api(`/messages/apagar`, { companyId: emp.id, sellerId });
+    up((d) => ({ messages: d.messages.filter((m) => !(m.companyId === emp.id && m.sellerId === sellerId)) }));
+    if (selSellerId === sellerId) setSelSellerId(null);
+  };
+
   const filtradas = conversas.filter((c) => {
-    if (filtro === "nao_lidas" && c.naoLidas === 0) return false;
+    const eArq = arquivadas.has(c.sellerId);
+    if (filtro === "arquivadas") return eArq;
+    if (eArq) return false; // esconde arquivadas em "todas"
     if (!buscaAtiva) return true;
     const nome = (c.seller?.nome || "").toLowerCase();
     return nome.includes(buscaAtiva.toLowerCase());
@@ -1031,8 +1125,8 @@ export default function ConversasEmpresa({ emp, db, up }) {
                 marginBottom: -1, transition: "color .12s",
               }}>
                 {f.label}
-                {f.id === "nao_lidas" && totalNaoLidas > 0 && (
-                  <span style={{ marginLeft: 5, background: "#EFF6FF", color: "#2563EB", borderRadius: 20, fontSize: 10, padding: "0 5px", fontWeight: 700 }}>{totalNaoLidas}</span>
+                {f.id === "arquivadas" && arquivadas.size > 0 && (
+                  <span style={{ marginLeft: 5, background: "#F1F5F9", color: "#64748B", borderRadius: 20, fontSize: 10, padding: "0 5px", fontWeight: 700 }}>{arquivadas.size}</span>
                 )}
               </button>
             ))}
@@ -1060,7 +1154,15 @@ export default function ConversasEmpresa({ emp, db, up }) {
               </div>
             )}
             {filtradas.map((c) => (
-              <ItemConversa key={c.sellerId} c={c} ativo={selSellerId === c.sellerId} onClick={() => abrirConversa(c.sellerId)} />
+              <ItemConversa
+                key={c.sellerId}
+                c={c}
+                ativo={selSellerId === c.sellerId}
+                onClick={() => abrirConversa(c.sellerId)}
+                arquivada={arquivadas.has(c.sellerId)}
+                onArquivar={() => alternarArquivo(c.sellerId)}
+                onApagar={() => apagarConversa(c.sellerId)}
+              />
             ))}
           </div>
         </div>

@@ -62,6 +62,15 @@ router.post("/messages", (req, res) => {
   res.json({ id, de });
 });
 
+router.post("/messages/apagar", (req, res) => {
+  const { sellerId, companyId } = req.body;
+  const { role, entityId } = req.user;
+  if (role !== "empresa" || entityId !== companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (!sellerId || !companyId) return res.status(400).json({ error: "sellerId e companyId obrigatórios" });
+  db.prepare("DELETE FROM messages WHERE companyId = ? AND sellerId = ?").run(companyId, sellerId);
+  res.json({ ok: true });
+});
+
 router.post("/messages/ler", (req, res) => {
   const { sellerId, companyId } = req.body;
   const { role, entityId } = req.user;

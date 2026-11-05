@@ -38,12 +38,48 @@ export default function Chat({ empresa, sellerId, db, up, de }) {
         )}
         {msgs.map((m) => {
           const meu = m.de === de;
+          let card = null;
+          try { if (m.anexo) card = JSON.parse(m.anexo); } catch { /* */ }
           return (
-            <div key={m.id} style={{ alignSelf: meu ? "flex-end" : "flex-start", maxWidth: "82%" }}>
-              <div style={{
-                background: meu ? "var(--brand)" : "var(--surface-2)", color: meu ? "#fff" : "var(--ink)",
-                padding: "9px 12px", borderRadius: 12, fontSize: 13.5,
-              }}>{m.texto}</div>
+            <div key={m.id} style={{ alignSelf: meu ? "flex-end" : "flex-start", maxWidth: "88%" }}>
+              {card?.tipo === "lead_card" ? (
+                <div style={{
+                  background: meu ? "var(--brand)" : "var(--surface-2)", color: meu ? "#fff" : "var(--ink)",
+                  borderRadius: 12, overflow: "hidden", fontSize: 13,
+                }}>
+                  <div style={{ padding: "10px 13px" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.65, marginBottom: 5, textTransform: "uppercase" }}>📋 Lead compartilhado</div>
+                    {card.tipo_acao && <div style={{ fontWeight: 600, marginBottom: 2 }}>{card.tipo_acao}</div>}
+                    {card.campanha  && <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 2 }}>📢 {card.campanha}</div>}
+                    {card.data      && <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>🗓 {card.data}</div>}
+                    <div style={{ borderTop: `1px solid ${meu ? "rgba(255,255,255,.25)" : "var(--border)"}`, paddingTop: 7, marginTop: 2, display: "flex", flexDirection: "column", gap: 3 }}>
+                      {card.contato     && <div style={{ fontSize: 12 }}>👤 {card.contato}</div>}
+                      {card.empresa_lead && <div style={{ fontSize: 12 }}>🏢 {card.empresa_lead}</div>}
+                      {card.telefone    && <div style={{ fontSize: 12 }}>📞 {card.telefone}</div>}
+                      {card.endereco    && <div style={{ fontSize: 12 }}>📍 {card.endereco}</div>}
+                      {card.resultado   && <div style={{ fontSize: 12 }}>✅ {card.resultado}</div>}
+                    </div>
+                    {card.texto_extra && <div style={{ fontSize: 12, opacity: 0.85, marginTop: 6, fontStyle: "italic" }}>{card.texto_extra}</div>}
+                  </div>
+                  {de === "vendedor" && (
+                    <button
+                      onClick={() => { window.history.pushState({}, "", "/plataforma"); window.dispatchEvent(new PopStateEvent("popstate")); }}
+                      style={{
+                        display: "block", width: "100%", padding: "9px 13px",
+                        background: meu ? "rgba(255,255,255,.18)" : "rgba(37,99,235,.08)",
+                        border: "none", borderTop: `1px solid ${meu ? "rgba(255,255,255,.2)" : "var(--border)"}`,
+                        color: meu ? "#fff" : "var(--brand)", fontSize: 12.5, fontWeight: 600,
+                        cursor: "pointer", textAlign: "center", fontFamily: "inherit",
+                      }}
+                    >Ver tarefa →</button>
+                  )}
+                </div>
+              ) : (
+                <div style={{
+                  background: meu ? "var(--brand)" : "var(--surface-2)", color: meu ? "#fff" : "var(--ink)",
+                  padding: "9px 12px", borderRadius: 12, fontSize: 13.5,
+                }}>{m.texto}</div>
+              )}
               <div className="vx-mut vx-mono" style={{ fontSize: 10.5, marginTop: 3, textAlign: meu ? "right" : "left" }}>
                 {m.de === "empresa" ? empresa.nome : "vendedor"} · {dataCurta(m.ts)}
               </div>

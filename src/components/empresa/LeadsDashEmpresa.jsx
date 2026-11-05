@@ -115,9 +115,22 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
   }, [compondo]);
 
   const enviarMensagem = () => {
-    if (!texto.trim() || !seller?.id || !emp?.id) return;
+    if (!seller?.id || !emp?.id) return;
+    const card = {
+      tipo: "lead_card",
+      tipo_acao: tipoLabel,
+      campanha: camp?.titulo || null,
+      data: dataCurta(sub.criadoEm),
+      contato: prova.cliente || null,
+      empresa_lead: prova.empresa || null,
+      telefone: prova.telefone || null,
+      endereco: prova.endereco || null,
+      resultado: prova.resultado || null,
+      texto_extra: texto.trim() !== textoInicial.trim() ? texto.trim() : null,
+      subId: sub.id,
+    };
     setEnviado(true);
-    api("/messages", { companyId: emp.id, sellerId: seller.id, de: "empresa", texto: texto.trim() });
+    api("/messages", { companyId: emp.id, sellerId: seller.id, de: "empresa", texto: "📋 Lead compartilhado", anexo: JSON.stringify(card) });
   };
 
   useEffect(() => {
