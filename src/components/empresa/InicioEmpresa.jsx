@@ -4,9 +4,10 @@ import {
   ShieldCheck, TrendingUp, ArrowRight, Bell,
   BarChart3, ChevronRight, Clock,
   CheckCircle2, AlertTriangle, Sparkles,
-  Activity, Target, Award,
+  Activity, Target, Award, Wallet,
 } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
+import { saldoDisponivel, isPosPago, isPremium } from "../../../shared/empresa.js";
 
 // ── utilidades ────────────────────────────────────────────────────────────────
 
@@ -75,45 +76,6 @@ function CardIndicador({ icon: Icon, label, valor, pct, onClick, cor = "var(--br
         <div style={{ fontSize: 24, fontWeight: 800, color: "var(--ink)", fontFamily: "var(--font-disp)", lineHeight: 1 }}>{valor}</div>
         <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, fontWeight: 500 }}>{label}</div>
       </div>
-    </button>
-  );
-}
-
-// ── ITEM DE ATENÇÃO ───────────────────────────────────────────────────────────
-
-function ItemAtencao({ icon: Icon, label, descricao, qtd, prioridade = "normal", onClick }) {
-  const cores = {
-    alta: { bg: "#fef2f2", brd: "#fecaca", ic: "#DC2626", txt: "#b91c1c" },
-    media: { bg: "#fffbeb", brd: "#fde68a", ic: "#D97706", txt: "#92400e" },
-    normal: { bg: "var(--surface-2)", brd: "var(--border)", ic: "var(--muted)", txt: "var(--ink)" },
-  };
-  const c = cores[prioridade];
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex", alignItems: "center", gap: 14, width: "100%",
-        padding: "13px 16px", borderRadius: 12,
-        background: c.bg, border: `1px solid ${c.brd}`,
-        cursor: "pointer", textAlign: "left",
-        transition: "opacity .12s",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.opacity = ".85"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-    >
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: c.ic + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon size={16} color={c.ic} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 13.5, color: "var(--ink)" }}>{label}</div>
-        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{descricao}</div>
-      </div>
-      {qtd > 0 && (
-        <span style={{ background: c.ic, color: "#fff", borderRadius: 20, fontSize: 11.5, fontWeight: 700, padding: "3px 10px", flexShrink: 0 }}>
-          {qtd}
-        </span>
-      )}
-      <ChevronRight size={15} color="var(--muted)" style={{ flexShrink: 0 }} />
     </button>
   );
 }
@@ -276,29 +238,32 @@ export default function InicioEmpresa({ emp, db, setAba }) {
   // Timeline
   const eventos = useMemo(() => eventosDaPlataforma(db, empId), [db, empId]);
 
-  // Banner contextual
-  const bannerMensagem = (() => {
-    if (profsPendentes.length > 0) return { texto: `${profsPendentes.length} profissional${profsPendentes.length > 1 ? "is" : ""} aguardando sua aprovação.`, cta: "Revisar aprovações", aba: "conferir", icone: ShieldCheck };
-    if (subsRevisao.length > 0) return { texto: `Existem ${subsRevisao.length} tarefa${subsRevisao.length > 1 ? "s" : ""} aguardando sua revisão.`, cta: "Revisar aprovações", aba: "conferir", icone: ShieldCheck };
-    if (naoLidas.length > 0) return { texto: `Você tem ${naoLidas.length} mensagem${naoLidas.length > 1 ? "s" : ""} não lida${naoLidas.length > 1 ? "s" : ""} de profissionais.`, cta: "Ver conversas", aba: "conversas", icone: Mail };
-    if (campanhasAtivas.length === 0 && campaigns.length === 0) return { texto: "Sua operação comercial está pronta para crescer. Crie a primeira campanha.", cta: "Criar campanha", aba: "campanhas", icone: Megaphone };
-    if (sellersAtivos.length === 0) return { texto: "Aprove profissionais para começar a operar suas campanhas.", cta: "Ver profissionais", aba: "conferir", icone: Users };
-    return { texto: `Sua operação está ativa com ${campanhasAtivas.length} campanha${campanhasAtivas.length > 1 ? "s" : ""} e ${sellersAtivos.length} profissional${sellersAtivos.length > 1 ? "is" : ""} no time.`, cta: "Ver insights", aba: "painel", icone: Sparkles };
-  })();
+  // Pendências da empresa
+  const saldo = saldoDisponivel(emp);
+  const semSaldo = !isPosPago(emp) && !isPremium(emp) && saldo <= 0;
+  const campsSemCandidatos = campanhasAtivas.filter((c) => !c.candidaturas?.length).length;
 
-  // Alertas de atenção
-  const alertas = [
+  const pendencias = [
     profsPendentes.length > 0 && {
-      icon: ShieldCheck, label: "Profissionais pendentes", descricao: "Profissionais aguardando aprovação", qtd: profsPendentes.length, prioridade: "alta", aba: "conferir",
+      icon: ShieldCheck, texto: `${profsPendentes.length} profissional${profsPendentes.length > 1 ? "is" : ""} aguardando aprovação`, cta: "Revisar", aba: "conferir", cor: "#DC2626",
     },
     subsRevisao.length > 0 && {
-      icon: ShieldCheck, label: "Tarefas em revisão", descricao: "Tarefas aguardando revisão manual", qtd: subsRevisao.length, prioridade: "alta", aba: "conferir",
+      icon: CheckCircle2, texto: `${subsRevisao.length} tarefa${subsRevisao.length > 1 ? "s" : ""} aguardando revisão`, cta: "Revisar", aba: "conferir", cor: "#D97706",
+    },
+    semSaldo && {
+      icon: Wallet, texto: "Adicione saldo para publicar campanhas", cta: "Ver financeiro", aba: "financeiro", cor: "#DC2626",
+    },
+    campanhasAtivas.length === 0 && campaigns.length === 0 && {
+      icon: Megaphone, texto: "Crie sua primeira campanha para começar", cta: "Criar campanha", aba: "campanhas", cor: "#7C3AED",
+    },
+    campsSemCandidatos > 0 && {
+      icon: Megaphone, texto: `${campsSemCandidatos} campanha${campsSemCandidatos > 1 ? "s" : ""} sem candidatos inscritos`, cta: "Ver campanhas", aba: "campanhas", cor: "#D97706",
     },
     naoLidas.length > 0 && {
-      icon: Mail, label: "Mensagens não lidas", descricao: "Profissionais aguardando resposta", qtd: naoLidas.length, prioridade: "media", aba: "conversas",
+      icon: Mail, texto: `${naoLidas.length} mensagem${naoLidas.length > 1 ? "s" : ""} não lida${naoLidas.length > 1 ? "s" : ""}`, cta: "Ver conversas", aba: "conversas", cor: "#2563EB",
     },
-    campanhasAtivas.filter((c) => !c.candidaturas?.length).length > 0 && {
-      icon: Megaphone, label: "Campanhas sem candidatos", descricao: "Campanhas ativas sem profissionais inscritos", qtd: campanhasAtivas.filter((c) => !c.candidaturas?.length).length, prioridade: "media", aba: "campanhas",
+    sellersAtivos.length === 0 && profsPendentes.length > 0 && {
+      icon: Users, texto: "Aprove profissionais para operar suas campanhas", cta: "Ver profissionais", aba: "conferir", cor: "#7C3AED",
     },
   ].filter(Boolean);
 
@@ -370,40 +335,66 @@ export default function InicioEmpresa({ emp, db, setAba }) {
         </div>
       </div>
 
-      {/* ── BANNER INTELIGENTE ────────────────────────────────────────────── */}
-      {(() => {
-        const { texto, cta, aba, icone: Icone } = bannerMensagem;
-        return (
-          <div style={{
-            background: "linear-gradient(135deg, #1e40af 0%, #2563EB 60%, #3b82f6 100%)",
-            borderRadius: 16, padding: "20px 24px",
-            display: "flex", alignItems: "center", gap: 16,
-            marginBottom: 28, flexWrap: "wrap",
-            boxShadow: "0 4px 24px rgba(37,99,235,.22)",
-          }}>
-            <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Icone size={20} color="#fff" />
-            </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <p style={{ margin: 0, fontSize: 14.5, color: "#fff", fontWeight: 500, lineHeight: 1.5 }}>{texto}</p>
-            </div>
-            <button
-              onClick={() => ir(aba)}
-              style={{
-                display: "flex", alignItems: "center", gap: 7,
-                background: "#fff", color: "#1e40af",
-                border: "none", borderRadius: 10, padding: "9px 16px",
-                fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0,
-                transition: "opacity .12s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = ".9"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-            >
-              {cta} <ArrowRight size={14} />
-            </button>
+      {/* ── LEMBRETES PENDENTES ────────────────────────────────────────── */}
+      {pendencias.length > 0 ? (
+        <div style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 14, padding: "16px 20px", marginBottom: 28,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <AlertTriangle size={15} color="#D97706" />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>
+              {pendencias.length} {pendencias.length === 1 ? "pendência" : "pendências"}
+            </span>
           </div>
-        );
-      })()}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {pendencias.map((p, i) => {
+              const Ic = p.icon;
+              return (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "10px 14px", borderRadius: 10,
+                  background: "var(--surface-2)", cursor: "pointer",
+                  transition: "background .12s",
+                }}
+                  onClick={() => ir(p.aba)}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3, #e2e8f0)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: p.cor + "14", display: "flex",
+                    alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <Ic size={16} color={p.cor} />
+                  </div>
+                  <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>{p.texto}</span>
+                  <span style={{
+                    fontSize: 12, fontWeight: 600, color: p.cor,
+                    display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+                  }}>
+                    {p.cta} <ArrowRight size={13} />
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div style={{
+          background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+          borderRadius: 14, padding: "16px 24px", marginBottom: 28,
+          display: "flex", alignItems: "center", gap: 14,
+          boxShadow: "0 4px 20px rgba(5,150,105,.18)",
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Sparkles size={18} color="#fff" />
+          </div>
+          <p style={{ margin: 0, fontSize: 14, color: "#fff", fontWeight: 500 }}>
+            Tudo em dia! Sua operação está ativa com {campanhasAtivas.length} campanha{campanhasAtivas.length !== 1 ? "s" : ""} e {sellersAtivos.length} profissional{sellersAtivos.length !== 1 ? "is" : ""}.
+          </p>
+        </div>
+      )}
 
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
@@ -421,23 +412,6 @@ export default function InicioEmpresa({ emp, db, setAba }) {
         {/* COLUNA ESQUERDA */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-          {/* ── CENTRAL DE ATENÇÃO ────────────────────────────────────────── */}
-          {alertas.length > 0 && (
-            <div className="vx-card" style={{ padding: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                <AlertTriangle size={16} color="#D97706" />
-                <h3 className="vx-disp" style={{ margin: 0, fontSize: 15 }}>Precisa da sua atenção</h3>
-                <span style={{ background: "#fef3c7", color: "#92400e", fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "2px 8px", marginLeft: "auto" }}>
-                  {alertas.length} {alertas.length === 1 ? "item" : "itens"}
-                </span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {alertas.map((a, i) => (
-                  <ItemAtencao key={i} {...a} onClick={() => ir(a.aba)} />
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* ── DESEMPENHO COMERCIAL ──────────────────────────────────────── */}
           <div className="vx-card" style={{ padding: 20 }}>
