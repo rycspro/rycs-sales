@@ -152,7 +152,7 @@ function InfoRow({ label, value }) {
 // ── Main component ────────────────────────────────────────────────────
 
 export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
-  const [secao, setSecao] = useState("geral");
+  const [secao, setSecao] = useState("dados");
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
   const [form, setForm] = useState(() => ({
     ...emp,
@@ -267,7 +267,93 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
 
     dados: (
       <>
-        <PgHead title="Dados da empresa" description="Informações cadastrais, endereço e segmento." />
+        <PgHead title="Dados da empresa" description="Informações cadastradas na criação da conta." />
+
+        {/* ── Cartão de identidade da empresa ── */}
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
+          {/* Header com cor da marca */}
+          <div style={{ background: `linear-gradient(135deg, ${form.cor || "var(--brand)"} 0%, ${form.cor || "#3b82f6"} 100%)`, padding: "24px 28px 20px", display: "flex", alignItems: "flex-end", gap: 18 }}>
+            <div style={{ width: 60, height: 60, borderRadius: 14, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -1, flexShrink: 0, border: "2px solid rgba(255,255,255,.35)" }}>
+              {(emp.nome || "?")[0].toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{emp.nome || "Empresa"}</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,.8)", marginTop: 3 }}>
+                {[emp.segmento, emp.produto].filter(Boolean).join(" · ") || "Sem segmento informado"}
+              </div>
+            </div>
+          </div>
+
+          {/* Grid de informações */}
+          <div style={{ padding: "20px 28px 24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: "0 32px" }}>
+              {/* Coluna 1: Dados cadastrais */}
+              <div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Dados cadastrais</div>
+                {[
+                  ["Razão social", emp.razaoSocial],
+                  ["CNPJ / CPF", emp.documento],
+                  ["Segmento", emp.segmento],
+                ].map(([label, val]) => (
+                  <div key={label} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</div>
+                    <div style={{ fontSize: 13.5, color: val ? "var(--ink)" : "var(--muted)", fontStyle: val ? "normal" : "italic", marginTop: 1, lineHeight: 1.4 }}>{val || "Não informado"}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Coluna 2: Contato */}
+              <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Contato</div>
+                {[
+                  ["Representante", emp.representanteLegal],
+                  ["E-mail", emp.emailEmpresa],
+                  ["Telefone", emp.telefoneEmpresa],
+                ].map(([label, val]) => (
+                  <div key={label} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</div>
+                    <div style={{ fontSize: 13.5, color: val ? "var(--ink)" : "var(--muted)", fontStyle: val ? "normal" : "italic", marginTop: 1, lineHeight: 1.4, overflowWrap: "break-word" }}>{val || "Não informado"}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Coluna 3: Comercial + Localização */}
+              <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Comercial & Localização</div>
+                {[
+                  ["Ticket médio", emp.ticket],
+                  ["Região atendida", emp.regiao],
+                  ["Endereço", emp.endereco],
+                ].map(([label, val]) => (
+                  <div key={label} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</div>
+                    <div style={{ fontSize: 13.5, color: val ? "var(--ink)" : "var(--muted)", fontStyle: val ? "normal" : "italic", marginTop: 1, lineHeight: 1.4 }}>{val || "Não informado"}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ICP + Produto em destaque */}
+            {(emp.icp || emp.produto) && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+                {emp.produto && (
+                  <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Produto / Serviço</div>
+                    <div style={{ fontSize: 13.5, color: "var(--ink)", lineHeight: 1.5 }}>{emp.produto}</div>
+                  </div>
+                )}
+                {emp.icp && (
+                  <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Perfil de cliente ideal (ICP)</div>
+                    <div style={{ fontSize: 13.5, color: "var(--ink)", lineHeight: 1.5 }}>{emp.icp}</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Formulários de edição ── */}
         <Block title="Informações principais">
           <FGrid>
             <FInput label="Nome fantasia" value={form.nome} onChange={set("nome")} placeholder="Como a empresa é conhecida" />
