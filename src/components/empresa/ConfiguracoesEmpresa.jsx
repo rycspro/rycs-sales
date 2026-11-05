@@ -42,7 +42,6 @@ const NOTIF_OPCOES = [
 
 const SECOES_NAV = [
   { key: "dados", label: "Dados da empresa", icon: Building2 },
-  { key: "contatos", label: "Contatos", icon: Users },
   { key: "comercial", label: "Comercial", icon: Briefcase },
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "seguranca", label: "Segurança", icon: Lock },
@@ -327,13 +326,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
             <FInput label="Região atendida" value={form.regiao} onChange={set("regiao")} placeholder="Ex: São Paulo e Grande SP" />
           </FGrid>
         </Block>
-      </>
-    ),
-
-    contatos: (
-      <>
-        <PgHead title="Contatos" description="Pessoas e canais de comunicação da empresa." />
-        <Block title="Responsáveis e canais">
+        <Block title="Responsáveis e contatos">
           <FGrid>
             <FInput label="Representante legal" value={form.representanteLegal} onChange={set("representanteLegal")} placeholder="Nome do responsável" />
             <FInput label="E-mail principal" value={form.emailEmpresa} onChange={set("emailEmpresa")} type="email" placeholder="email@empresa.com.br" />
