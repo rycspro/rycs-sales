@@ -237,6 +237,8 @@ export default function InicioEmpresa({ emp, db, setAba }) {
   const sellersAtivos = sellers.filter((s) => s.aplicacoes?.[empId] === "aprovado");
   const campanhasAtivas = campaigns.filter((c) => c.status === "ativa");
   const subsRevisao = submissions.filter((s) => s.status === "revisao");
+  const profsPendentes = db?.solicitacoesPendentes || [];
+  const totalAprovacoesPendentes = subsRevisao.length + profsPendentes.length;
   const naoLidas = messages.filter((m) => m.de === "vendedor" && !m.lida);
   const leadsTotal = leads.length;
 
@@ -276,17 +278,21 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
   // Banner contextual
   const bannerMensagem = (() => {
+    if (profsPendentes.length > 0) return { texto: `${profsPendentes.length} profissional${profsPendentes.length > 1 ? "is" : ""} aguardando sua aprovação.`, cta: "Revisar aprovações", aba: "conferir", icone: ShieldCheck };
     if (subsRevisao.length > 0) return { texto: `Existem ${subsRevisao.length} tarefa${subsRevisao.length > 1 ? "s" : ""} aguardando sua revisão.`, cta: "Revisar aprovações", aba: "conferir", icone: ShieldCheck };
     if (naoLidas.length > 0) return { texto: `Você tem ${naoLidas.length} mensagem${naoLidas.length > 1 ? "s" : ""} não lida${naoLidas.length > 1 ? "s" : ""} de profissionais.`, cta: "Ver conversas", aba: "conversas", icone: Mail };
     if (campanhasAtivas.length === 0 && campaigns.length === 0) return { texto: "Sua operação comercial está pronta para crescer. Crie a primeira campanha.", cta: "Criar campanha", aba: "campanhas", icone: Megaphone };
-    if (sellersAtivos.length === 0) return { texto: "Aprove profissionais para começar a operar suas campanhas.", cta: "Ver profissionais", aba: "profissionais", icone: Users };
+    if (sellersAtivos.length === 0) return { texto: "Aprove profissionais para começar a operar suas campanhas.", cta: "Ver profissionais", aba: "conferir", icone: Users };
     return { texto: `Sua operação está ativa com ${campanhasAtivas.length} campanha${campanhasAtivas.length > 1 ? "s" : ""} e ${sellersAtivos.length} profissional${sellersAtivos.length > 1 ? "is" : ""} no time.`, cta: "Ver insights", aba: "painel", icone: Sparkles };
   })();
 
   // Alertas de atenção
   const alertas = [
+    profsPendentes.length > 0 && {
+      icon: ShieldCheck, label: "Profissionais pendentes", descricao: "Profissionais aguardando aprovação", qtd: profsPendentes.length, prioridade: "alta", aba: "conferir",
+    },
     subsRevisao.length > 0 && {
-      icon: ShieldCheck, label: "Aprovações pendentes", descricao: "Tarefas aguardando revisão manual", qtd: subsRevisao.length, prioridade: "alta", aba: "conferir",
+      icon: ShieldCheck, label: "Tarefas em revisão", descricao: "Tarefas aguardando revisão manual", qtd: subsRevisao.length, prioridade: "alta", aba: "conferir",
     },
     naoLidas.length > 0 && {
       icon: Mail, label: "Mensagens não lidas", descricao: "Profissionais aguardando resposta", qtd: naoLidas.length, prioridade: "media", aba: "conversas",
@@ -406,7 +412,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
         <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} cor="#D97706" />
         <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} cor="#7C3AED" />
         <CardIndicador icon={Mail} label="Mensagens não lidas" valor={naoLidas.length} pct={pctMsgs} onClick={() => ir("conversas")} cor={naoLidas.length > 0 ? "#DC2626" : "var(--brand)"} />
-        <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={subsRevisao.length} onClick={() => ir("conferir")} cor={subsRevisao.length > 0 ? "#DC2626" : "#059669"} />
+        <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={totalAprovacoesPendentes} onClick={() => ir("conferir")} cor={totalAprovacoesPendentes > 0 ? "#DC2626" : "#059669"} />
         {leadsTotal > 0 && <CardIndicador icon={Target} label="Leads gerados" valor={leadsTotal} onClick={() => ir("campanhas")} cor="#D97706" />}
         {investimento > 0 && <CardIndicador icon={TrendingUp} label="Investimento total" valor={money(investimento)} onClick={() => ir("painel")} cor="#059669" />}
       </div>
