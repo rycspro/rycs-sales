@@ -70,9 +70,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [gerando, setGerando] = useState(false);
   const [explicacao, setExplicacao] = useState("");
   const [salvando, setSalvando] = useState(false);
-  // Os objetivos manuais ficam guardados atrás de um botão discreto: a
-  // experiência principal é conversar com o Jarvas.
-  const [manual, setManual] = useState(false);
+  const [manual, setManual] = useState(!iniciarComIA);
 
   const [sugestaoIA, setSugestaoIA] = useState(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
