@@ -128,7 +128,7 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
   background:var(--red);color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 
 @media (min-width:900px){
-  .vx-content{padding:30px 30px 56px;max-width:none}
+  .vx-content{padding:30px 30px 56px;max-width:none;margin:0;width:100%}
   .vx-content-chat{padding:0!important;overflow:hidden}
   .vx-body{display:grid;grid-template-columns:220px 1fr;max-width:none;margin:0}
   .vx-sidebar{display:flex;flex-direction:column;gap:0;padding:0;border-right:1px solid var(--border);
