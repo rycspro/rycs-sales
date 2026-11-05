@@ -407,11 +407,9 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
-        <CardIndicador icon={Users} label="Profissionais" valor={sellers.length} pct={pctSellers} onClick={() => ir("profissionais")} />
         <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} cor="#059669" />
         <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} cor="#D97706" />
         <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} cor="#7C3AED" />
-        <CardIndicador icon={Mail} label="Mensagens não lidas" valor={naoLidas.length} pct={pctMsgs} onClick={() => ir("conversas")} cor={naoLidas.length > 0 ? "#DC2626" : "var(--brand)"} />
         <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={totalAprovacoesPendentes} onClick={() => ir("conferir")} cor={totalAprovacoesPendentes > 0 ? "#DC2626" : "#059669"} />
         {leadsTotal > 0 && <CardIndicador icon={Target} label="Leads gerados" valor={leadsTotal} onClick={() => ir("campanhas")} cor="#D97706" />}
         {investimento > 0 && <CardIndicador icon={TrendingUp} label="Investimento total" valor={money(investimento)} onClick={() => ir("painel")} cor="#059669" />}
