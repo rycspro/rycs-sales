@@ -2,10 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Copy, Sparkles, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
+import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
+
+const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
+  chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui,
+}));
 
 export default function PlanosEmpresa({ aviso, recarregar }) {
   const [planos,setPlanos]=useState([]),[atual,setAtual]=useState(null),[selecionado,setSelecionado]=useState(null),[voucher,setVoucher]=useState(""),[desconto,setDesconto]=useState(null),[processando,setProcessando]=useState(false),[cobranca,setCobranca]=useState(null);
-  const carregar=useCallback(async()=>{const[p,s]=await Promise.all([api("/plans"),api("/subscription")]);if(Array.isArray(p))setPlanos(p.filter((x)=>x.preco>0));if(s&&!s.error)setAtual(s);},[]);
+  const carregar=useCallback(async()=>{const[p,s]=await Promise.all([api("/plans"),api("/subscription")]);if(Array.isArray(p)&&p.length>0)setPlanos(p.filter((x)=>x.preco>0));else setPlanos(PLANOS_ESTATICOS);if(s&&!s.error)setAtual(s);},[]);
   useEffect(()=>{carregar();},[carregar]);
   const aplicar=async()=>{const r=await api(`/vouchers/validate?codigo=${encodeURIComponent(voucher)}&plano=${selecionado.chave}`);if(r?.error){setDesconto(null);return aviso(r.error);}setDesconto(r);aviso("Voucher aplicado ao checkout.");};
   const contratar=async()=>{setProcessando(true);const r=await api("/subscription",{plano:selecionado.chave,voucher:voucher||undefined});setProcessando(false);if(r?.error)return aviso(r.error);setCobranca(r);await carregar();aviso("Checkout Pix criado. O plano só será ativado após confirmação do webhook.");};

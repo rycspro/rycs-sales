@@ -215,6 +215,11 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
         </button>
       </div>
 
+      {/* ── Planos disponíveis ── */}
+      <div style={{ marginBottom: 24 }}>
+        <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
+      </div>
+
       {/* ── 1. Plano da plataforma ── */}
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "20px 22px", marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 12 }}>Plano da plataforma</div>
@@ -245,7 +250,7 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
               </div>
               <span style={{ background: "#DCFCE7", color: "#16A34A", fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>Ativo</span>
             </div>
-            <button className="vx-btn vx-btn-sm" onClick={() => contratar(null)}>Alterar plano</button>
+            <button className="vx-btn vx-btn-sm" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Alterar plano</button>
           </div>
         )}
       </div>
@@ -404,11 +409,6 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* ── 5. Planos disponíveis ── */}
-      <div style={{ marginBottom: 24 }}>
-        <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
       </div>
 
       {/* ── Modal adicionar saldo ── */}
