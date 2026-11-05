@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CirclePause, ClipboardCheck, GitBranch, Megaphone, MoreHorizontal, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
+import { Archive, CirclePause, ClipboardCheck, GitBranch, Megaphone, MoreHorizontal, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -130,7 +130,29 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
           <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", margin: "0 0 3px", letterSpacing: -0.3 }}>Campanhas</h1>
           <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Gerencie oportunidades para seus profissionais de vendas.</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            onClick={() => setFiltro(filtro === "encerrada" ? "" : "encerrada")}
+            title="Arquivadas"
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+              border: `1.5px solid ${filtro === "encerrada" ? "var(--brand)" : "var(--border)"}`,
+              background: filtro === "encerrada" ? "var(--brand)" : "var(--surface-2)",
+              color: filtro === "encerrada" ? "#fff" : "var(--muted)",
+              cursor: "pointer", transition: "all .15s", fontFamily: "inherit",
+            }}
+          >
+            <Archive size={13} />
+            {filtro === "encerrada" ? "Ver todas" : "Arquivadas"}
+            {counts["encerrada"] > 0 && (
+              <span style={{
+                fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20,
+                background: filtro === "encerrada" ? "rgba(255,255,255,.25)" : "var(--border)",
+                color: filtro === "encerrada" ? "#fff" : "var(--muted)",
+              }}>{counts["encerrada"]}</span>
+            )}
+          </button>
           <button className="vx-btn vx-btn-sm" onClick={() => onCriar(false)}><Plus size={13} /> Manual</button>
           <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onCriar(true)}><Sparkles size={13} /> Criar com IA</button>
         </div>
