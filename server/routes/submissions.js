@@ -184,14 +184,19 @@ router.patch("/submissions/:id", (req, res) => {
   if (role === "empresa" && entityId !== sub.companyId)
     return res.status(403).json({ error: "Sem permissão" });
 
-  // Um vendedor não decide o destino da própria ação, e ninguém marca
-  // "liberado" por aqui: isso move dinheiro e só acontece em /liberar.
-  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  // Vendedor pode atualizar apenas statusCliente nas próprias submissões.
+  if (role === "vendedor") {
+    if (!("statusCliente" in req.body) || Object.keys(req.body).some((k) => k !== "statusCliente"))
+      return res.status(403).json({ error: "Sem permissão" });
+    db.prepare("UPDATE submissions SET statusCliente = ? WHERE id = ?").run(req.body.statusCliente, id);
+    return res.json({ ok: true });
+  }
+
   if (req.body.status === "liberado")
     return res.status(400).json({ error: "Use POST /submissions/:id/liberar" });
 
   const fields = req.body;
-  const allowed = ["status", "confianca", "motivo", "fonte"];
+  const allowed = ["status", "confianca", "motivo", "fonte", "statusCliente"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(fields)) {

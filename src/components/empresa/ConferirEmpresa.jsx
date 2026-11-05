@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight } from "lucide-react";
+import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight, TrendingUp } from "lucide-react";
+
+export const STATUS_CLIENTE = {
+  aguardando:       { label: "Aguardando",       cor: "#64748B", bg: "#F1F5F9" },
+  em_contato:       { label: "Em contato",       cor: "#2563EB", bg: "#EFF6FF" },
+  negociando:       { label: "Negociando",       cor: "#7C3AED", bg: "#F5F3FF" },
+  proposta_enviada: { label: "Proposta enviada", cor: "#D97706", bg: "#FFFBEB" },
+  ganho:            { label: "Ganho ✓",          cor: "#059669", bg: "#ECFDF5" },
+  perdido:          { label: "Perdido",           cor: "#DC2626", bg: "#FEF2F2" },
+  sem_resposta:     { label: "Sem resposta",      cor: "#94A3B8", bg: "#F8FAFC" },
+  reagendado:       { label: "Reagendado",        cor: "#0891B2", bg: "#ECFEFF" },
+};
 import { api, apiPatch } from "../../lib/api.js";
 import RegrasAprovacao from "./RegrasAprovacao.jsx";
 import TrilhaAuditoria from "./TrilhaAuditoria.jsx";
@@ -249,6 +260,85 @@ function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
   );
 }
 
+const TH = ({ children, right }) => (
+  <th style={{ padding: "10px 12px", fontSize: 11.5, fontWeight: 600, color: "var(--muted)", textAlign: right ? "right" : "left", whiteSpace: "nowrap", borderBottom: "1.5px solid var(--border)", background: "var(--surface-2)" }}>
+    {children}
+  </th>
+);
+
+const TD = ({ children, right, muted }) => (
+  <td style={{ padding: "10px 12px", fontSize: 13, color: muted ? "var(--muted)" : "var(--ink)", textAlign: right ? "right" : "left", borderBottom: "1px solid var(--border)", verticalAlign: "middle" }}>
+    {children}
+  </td>
+);
+
+function BadgeStatus({ val }) {
+  const st = STATUS_CLIENTE[val] || STATUS_CLIENTE.aguardando;
+  return (
+    <span style={{ background: st.bg, color: st.cor, fontSize: 11.5, fontWeight: 600, borderRadius: 20, padding: "3px 10px", whiteSpace: "nowrap" }}>
+      {st.label}
+    </span>
+  );
+}
+
+function TabelaHistorico({ subs, db }) {
+  return (
+    <div className="vx-card" style={{ padding: 0, overflow: "hidden", marginBottom: 32 }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
+          <thead>
+            <tr>
+              <TH>Profissional</TH>
+              <TH>Ação</TH>
+              <TH>Campanha</TH>
+              <TH right>Valor</TH>
+              <TH>Data</TH>
+              <TH>Status do cliente</TH>
+              <TH>Aprovação</TH>
+            </tr>
+          </thead>
+          <tbody>
+            {[...subs].sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0)).map((sub) => {
+              const seller = db.sellers.find((s) => s.id === sub.sellerId);
+              const campanha = db.campaigns?.find((c) => c.id === sub.campaignId);
+              const st = STATUS[sub.status] || STATUS.analisando;
+              const nome = capitalizar(seller?.nome || "Profissional");
+              return (
+                <tr key={sub.id} style={{ transition: "background .1s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = ""; }}
+                >
+                  <TD>
+                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                      {seller?.foto
+                        ? <img src={`/api/sellers/${seller.id}/foto`} alt={nome} style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                        : <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{iniciais(seller?.nome)}</div>
+                      }
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>{nome}</span>
+                    </div>
+                  </TD>
+                  <TD>{TIPO_LABEL[sub.tipo] || sub.tipo || "—"}</TD>
+                  <TD muted>{campanha?.titulo || "—"}</TD>
+                  <TD right><span style={{ fontWeight: 600, color: "var(--brand)" }}>{money(sub.valor)}</span></TD>
+                  <TD muted>{dataCurta(sub.criadoEm)}</TD>
+                  <TD><BadgeStatus val={sub.statusCliente} /></TD>
+                  <TD>
+                    <span style={{
+                      fontSize: 11.5, fontWeight: 600, borderRadius: 20, padding: "3px 10px",
+                      background: st.tone === "indigo" ? "#EEF2FF" : st.tone === "amber" ? "#FFFBEB" : st.tone === "red" ? "#FEF2F2" : "#F0FDF4",
+                      color: st.tone === "indigo" ? "#3730A1" : st.tone === "amber" ? "#92400E" : st.tone === "red" ? "#B91C1C" : "#166534",
+                    }}>{st.txt}</span>
+                  </TD>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar }) {
 
   const solicitacoes = db.solicitacoesPendentes || [];
@@ -376,36 +466,23 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
               </div>
             )}
 
-          {/* ── Decisões automáticas históricas ── */}
+          {/* ── Decisões automáticas históricas — TABELA ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Decisões automáticas históricas</h3>
+            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>
+              <TrendingUp size={17} style={{ marginRight: 6, verticalAlign: "-3px", color: "var(--brand)" }} />
+              Acompanhamento de clientes
+            </h3>
             {iaAprovados.length > 0 && <span className="vx-chip vx-mono">{iaAprovados.length}</span>}
           </div>
 
           {!iaAprovados.length
             ? (
               <div className="vx-card" style={{ padding: 24, textAlign: "center" }}>
-                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum nas últimas horas.</p>
+                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum registro ainda.</p>
               </div>
             )
             : (
-              <div className="vx-prof-grid">
-                {iaAprovados.map((sub) => {
-                  const seller = db.sellers.find((s) => s.id === sub.sellerId);
-                  return (
-                    <CardProfAprovacao
-                      key={sub.id}
-                      sub={sub}
-                      seller={seller}
-                      db={db}
-                      onConfirmar={confirmar}
-                      onRecusar={recusar}
-                      onContestar={contestar}
-                      modo="historico"
-                    />
-                  );
-                })}
-              </div>
+              <TabelaHistorico subs={iaAprovados} db={db} />
             )}
         </>
       )}

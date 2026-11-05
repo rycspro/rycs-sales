@@ -26,7 +26,7 @@ async function pedirRevisaoHumana(recarregar, aviso, sub) {
   aviso("Enviado para conferência humana da empresa.");
 }
 
-export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
+export default function Carteira({ eu, db, setDb, up, aviso, recarregar }) {
   const [pix, setPix] = useState(eu.pix || "");
   const [pixTipo, setPixTipo] = useState(eu.pixTipo || "");
   const [valor, setValor] = useState("");
@@ -108,7 +108,7 @@ export default function Carteira({ eu, db, setDb, aviso, recarregar }) {
       )}
 
       <h3 className="vx-disp" style={{ fontSize: 16, marginBottom: 10 }}>Extrato de ações</h3>
-      <MeusEnvios empresa={null} eu={eu} db={db} pedirRevisao={(sub) => pedirRevisaoHumana(recarregar, aviso, sub)} />
+      <MeusEnvios empresa={null} eu={eu} db={db} up={up} pedirRevisao={(sub) => pedirRevisaoHumana(recarregar, aviso, sub)} />
     </div>
   );
 }

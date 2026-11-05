@@ -938,6 +938,7 @@ adicionarColuna("submissions", "reviewRequired", "INTEGER DEFAULT 1");
 adicionarColuna("submissions", "reviewedBy", "TEXT");
 adicionarColuna("submissions", "reviewedEm", "INTEGER");
 adicionarColuna("submissions", "reviewChecklist", "TEXT DEFAULT '[]'");
+adicionarColuna("submissions", "statusCliente", "TEXT DEFAULT 'aguardando'");
 adicionarColuna("lead_events", "submissionId", "TEXT");
 adicionarColuna("course_progress", "quizScore", "INTEGER");
 adicionarColuna("course_progress", "quizAnswers", "TEXT DEFAULT '[]'");
