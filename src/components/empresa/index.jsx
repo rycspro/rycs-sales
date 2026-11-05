@@ -7,6 +7,7 @@ import TimeEmpresa from "./TimeEmpresa.jsx";
 import QualificacaoEmpresa from "./QualificacaoEmpresa.jsx";
 import CampanhasHub from "./CampanhasHub.jsx";
 import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
+import PagamentosEmpresa from "./PagamentosEmpresa.jsx";
 import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
 import ConversasEmpresa from "./ConversasEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
@@ -24,7 +25,7 @@ const CAMPOS_SORT = {
   leads:     [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "statusCliente", label: "Status" }],
   conferir:  [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
 };
-const ABAS_COM_FILTRO = new Set(["inicio", "painel", "campanhas", "leads", "conferir"]);
+const ABAS_COM_FILTRO = new Set(["painel", "campanhas", "leads", "conferir"]);
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const sair = async () => {
@@ -129,7 +130,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {filtroBar}
         <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} filtroData={filtroAtual} />
       </>}
-      {aba === "pagamentos" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
+      {aba === "pagamentos" && <PagamentosEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} />}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}
     </div>
   );
