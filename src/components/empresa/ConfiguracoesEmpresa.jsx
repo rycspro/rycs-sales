@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
+  ImagePlus, Trash2,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
@@ -167,6 +168,44 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   const [senhaNova, setSenhaNova] = useState("");
   const [senhaConfirm, setSenhaConfirm] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
+  const [logo, setLogo] = useState(emp?.logo || "");
+  const [enviandoLogo, setEnviandoLogo] = useState(false);
+  const inputLogoRef = useRef(null);
+
+  const enviarLogo = async (e) => {
+    const arquivo = e.target.files?.[0];
+    if (!arquivo) return;
+    setEnviandoLogo(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUri = reader.result;
+      const img = new Image();
+      img.onload = async () => {
+        const r = await api(`/companies/${emp.id}/logo`, {
+          base64: dataUri.split(",")[1], mimetype: arquivo.type,
+          largura: img.width, altura: img.height,
+        });
+        setEnviandoLogo(false);
+        if (!r || r.error) return aviso(r?.error || "Não foi possível enviar o logo.");
+        setLogo(r.logo);
+        up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, logo: r.logo } : c) }));
+        aviso("Logo atualizado.");
+      };
+      img.src = dataUri;
+    };
+    reader.readAsDataURL(arquivo);
+    e.target.value = "";
+  };
+
+  const removerLogo = async () => {
+    setEnviandoLogo(true);
+    const r = await apiPatch(`/companies/${emp.id}`, { logo: "" });
+    setEnviandoLogo(false);
+    if (!r || r.error) return aviso(r?.error || "Não foi possível remover o logo.");
+    setLogo("");
+    up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, logo: "" } : c) }));
+    aviso("Logo removido.");
+  };
 
   useEffect(() => {
     const h = () => setMobile(window.innerWidth < 768);
@@ -230,8 +269,8 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
           {/* Header com cor da marca */}
           <div style={{ background: `linear-gradient(135deg, ${form.cor || "var(--brand)"} 0%, ${form.cor || "#3b82f6"} 100%)`, padding: "24px 28px 20px", display: "flex", alignItems: "flex-end", gap: 18 }}>
-            <div style={{ width: 60, height: 60, borderRadius: 14, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -1, flexShrink: 0, border: "2px solid rgba(255,255,255,.35)" }}>
-              {(emp.nome || "?")[0].toUpperCase()}
+            <div style={{ width: 60, height: 60, borderRadius: 14, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -1, flexShrink: 0, border: "2px solid rgba(255,255,255,.35)", overflow: "hidden" }}>
+              {logo ? <img src={logo} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (emp.nome || "?")[0].toUpperCase()}
             </div>
             <div>
               <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{emp.nome || "Empresa"}</div>
@@ -309,6 +348,34 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
             )}
           </div>
         </div>
+
+        {/* ── Logo ── */}
+        <Block title="Logo da empresa" description="Imagem exibida no perfil e campanhas. Formatos aceitos: JPG ou PNG, até 2 MB.">
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: 14, border: "2px dashed var(--border-strong, #cbd5e1)",
+              background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden", flexShrink: 0,
+            }}>
+              {logo
+                ? <img src={logo} alt="Logo atual" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <ImagePlus size={24} color="var(--muted)" />}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <input ref={inputLogoRef} type="file" accept="image/jpeg,image/png" onChange={enviarLogo} style={{ display: "none" }} />
+              <button className="vx-btn vx-btn-sm" disabled={enviandoLogo} onClick={() => inputLogoRef.current?.click()}>
+                <ImagePlus size={13} />
+                {enviandoLogo ? "Enviando…" : logo ? "Trocar logo" : "Enviar logo"}
+              </button>
+              {logo && (
+                <button className="vx-btn vx-btn-sm" disabled={enviandoLogo} onClick={removerLogo} style={{ color: "var(--red, #DC2626)" }}>
+                  <Trash2 size={13} />
+                  Remover
+                </button>
+              )}
+            </div>
+          </div>
+        </Block>
 
         {/* ── Formulários de edição ── */}
         <Block title="Informações principais">
