@@ -953,6 +953,39 @@ adicionarColuna("partnership_requests", "mensagem", "TEXT DEFAULT ''");
 adicionarColuna("partnership_requests", "origem", "TEXT DEFAULT 'empresa'");
 // Default da empresa: 0 = cada campanha precisa aprovação manual, 1 = auto
 adicionarColuna("companies", "campanhasAutoDefault", "INTEGER DEFAULT 0");
+
+// Migração única: profissionais aprovados antes do sistema de aprovação voltam
+// para "pendente" para que a empresa revise cada um na página de Aprovações.
+{
+  const jaRodou = db.prepare("SELECT COUNT(*) n FROM applications WHERE criadoEm IS NOT NULL AND status = 'pendente'").get().n;
+  const semCriadoEm = db.prepare("SELECT COUNT(*) n FROM applications WHERE status = 'aprovado' AND criadoEm IS NULL").get().n;
+  if (semCriadoEm > 0) {
+    const now = Date.now();
+    const resetAprovados = db.prepare(
+      "UPDATE applications SET status = 'pendente', criadoEm = ? WHERE status = 'aprovado' AND criadoEm IS NULL"
+    ).run(now);
+    if (resetAprovados.changes > 0) console.log(`[migracao] ${resetAprovados.changes} aprovação(ões) antiga(s) enviada(s) para revisão na página Aprovações`);
+
+    // Sellers que interagem com empresas (campanhas, mensagens) mas não têm
+    // registro em applications precisam de um para aparecer na fila.
+    const semApp = db.prepare(`
+      SELECT DISTINCT ca.sellerId, c.companyId
+      FROM campaign_applications ca
+      JOIN campaigns c ON c.id = ca.campaignId
+      WHERE NOT EXISTS (SELECT 1 FROM applications a WHERE a.sellerId = ca.sellerId AND a.companyId = c.companyId)
+    `).all();
+    if (semApp.length) {
+      const ins = db.prepare("INSERT OR IGNORE INTO applications (sellerId, companyId, status, criadoEm) VALUES (?, ?, 'pendente', ?)");
+      let criados = 0;
+      for (const { sellerId, companyId } of semApp) {
+        const r = ins.run(sellerId, companyId, now);
+        if (r.changes) criados++;
+      }
+      if (criados) console.log(`[migracao] ${criados} profissional(is) sem application adicionado(s) à fila de aprovação`);
+    }
+  }
+}
+
 adicionarColuna("assistant_history", "contexto", "TEXT DEFAULT ''");
 adicionarColuna("assistant_history", "status", "TEXT DEFAULT 'proposto'");
 adicionarColuna("assistant_history", "acao", "TEXT DEFAULT 'registrar_analise'");
