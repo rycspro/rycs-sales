@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
-  Briefcase, AlertCircle, ChevronRight, Globe, LayoutGrid,
+  Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
@@ -41,7 +41,6 @@ const NOTIF_OPCOES = [
 ];
 
 const SECOES_NAV = [
-  { key: "geral", label: "Geral", icon: LayoutGrid },
   { key: "dados", label: "Dados da empresa", icon: Building2 },
   { key: "contatos", label: "Contatos", icon: Users },
   { key: "comercial", label: "Comercial", icon: Briefcase },
@@ -224,47 +223,6 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   // ── Section content ───────────────────────────────────────────────
 
   const secoes = {
-    geral: (
-      <>
-        <PgHead title="Visão geral" description="Resumo das informações cadastradas na sua conta." />
-        <Block>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18, paddingBottom: 18, borderBottom: "1px solid var(--border)" }}>
-            <div style={{ width: 48, height: 48, borderRadius: 10, background: form.cor || "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, color: "#fff", flexShrink: 0, letterSpacing: -1 }}>
-              {(emp.nome || "?")[0].toUpperCase()}
-            </div>
-            <div>
-              <div style={{ fontSize: 15.5, fontWeight: 600, color: "var(--ink)" }}>{emp.nome || "Empresa"}</div>
-              <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 1 }}>{emp.segmento || "Segmento não informado"}</div>
-            </div>
-          </div>
-          <InfoRow label="Razão social" value={emp.razaoSocial} />
-          <InfoRow label="CNPJ / CPF" value={emp.documento} />
-          <InfoRow label="Região atendida" value={emp.regiao} />
-          <InfoRow label="E-mail principal" value={emp.emailEmpresa} />
-          <InfoRow label="Telefone" value={emp.telefoneEmpresa} />
-        </Block>
-        <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 10 }}>
-          {[
-            { label: "Dados da empresa", key: "dados", desc: "Nome, CNPJ, segmento e endereço" },
-            { label: "Contatos", key: "contatos", desc: "E-mails e responsáveis" },
-            { label: "Comercial", key: "comercial", desc: "ICP, ticket e diferenciais" },
-          ].map(({ label, key, desc }) => (
-            <button
-              key={key}
-              onClick={() => setSecao(key)}
-              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", cursor: "pointer", textAlign: "left", transition: "border-color .15s" }}
-            >
-              <div>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>{label}</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{desc}</div>
-              </div>
-              <ChevronRight size={16} color="var(--muted)" style={{ flexShrink: 0 }} />
-            </button>
-          ))}
-        </div>
-      </>
-    ),
-
     dados: (
       <>
         <PgHead title="Dados da empresa" description="Informações cadastradas na criação da conta." />
@@ -489,7 +447,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
     indicar: <Indicacoes aviso={aviso} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "geral", "planos", "suporte", "indicar"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "planos", "suporte", "indicar"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 
