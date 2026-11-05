@@ -8,8 +8,35 @@ import { uid, agora, money, dataCurta } from "../../lib/utils.js";
 
 const PERFIL_LABEL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
 const arr = (v) => Array.isArray(v) ? v : [];
+const norm = (v) => String(v || "").toLocaleLowerCase("pt-BR");
 
-function PerfilModal({ seller, db, empId, onFechar }) {
+function fitCultural(p, emp, campanhas) {
+  const campanha = campanhas?.[0] || {};
+  const pontos = [];
+  const atencao = [];
+  let score = 35;
+  if (campanha.funcao && p.perfil === campanha.funcao) { score += 18; pontos.push("função alinhada à campanha"); } else if (campanha.funcao) atencao.push("função principal diferente da campanha");
+  if (campanha.regiao && norm(`${p.cidade} ${p.estado} ${arr(p.regioes).join(" ")}`).includes(norm(campanha.regiao))) { score += 10; pontos.push("região compatível"); } else if (campanha.regiao) atencao.push("região não confirmada");
+  if (campanha.segmento && arr(p.segmentos).some((s) => norm(campanha.segmento).includes(norm(s)) || norm(s).includes(norm(campanha.segmento)))) { score += 14; pontos.push("experiência no segmento"); } else if (campanha.segmento) atencao.push("segmento sem histórico explícito");
+  if (arr(p.modalidades).some((m) => norm(`${emp?.produto || ""} ${emp?.icp || ""} ${campanha.objetivo || ""}`).includes(norm(m)))) { score += 8; pontos.push("preferências próximas da operação"); }
+  if (p.disponibilidade) { score += 7; pontos.push("disponibilidade declarada"); } else atencao.push("disponibilidade não informada");
+  if (Number(p.nota || 0) >= 80) { score += 8; pontos.push("score operacional alto"); } else atencao.push("score requer acompanhamento");
+  return { campanha, percentual: Math.min(100, score), pontos: pontos.length ? pontos : ["dados reais disponíveis, sem compatibilidade forte registrada"], atencao: atencao.length ? atencao : ["sem ponto crítico identificado nos dados disponíveis"] };
+}
+
+function resumoIA(p) {
+  const partes = [];
+  if (p.perfilComercial?.estilo) partes.push(`Perfil comportamental: ${p.perfilComercial.estilo}.`);
+  if (p.experiencia) partes.push(`Experiência: ${p.experiencia}.`);
+  const fortes = [...arr(p.skills), ...arr(p.segmentos)].slice(0, 5);
+  if (fortes.length) partes.push(`Pontos fortes: ${fortes.join(", ")}.`);
+  if (p.perfil || arr(p.modalidades).length) partes.push(`Operação ideal: ${[PERFIL_LABEL[p.perfil] || p.perfil, ...arr(p.modalidades).slice(0, 3)].filter(Boolean).join(", ")}.`);
+  if (p.perfilComercial?.abordagem) partes.push(`Estilo de abordagem: ${p.perfilComercial.abordagem}.`);
+  if (p.tarefasRealizadas || p.resultadosGerados) partes.push(`Resultados históricos: ${p.tarefasAprovadas}/${p.tarefasRealizadas} tarefas aprovadas, ${p.resultadosGerados} resultado(s) gerado(s).`);
+  return partes.length ? partes.join(" ") : "Sem dados reais suficientes para gerar resumo confiável.";
+}
+
+function PerfilModal({ seller, db, emp, empId, onFechar }) {
   const [bioExpandida, setBioExpandida] = useState(false);
   const p = seller;
   const subs = (db.submissions || []).filter((s) => s.companyId === empId && s.sellerId === p.id);
@@ -22,6 +49,8 @@ function PerfilModal({ seller, db, empId, onFechar }) {
   const ganhos = subs.filter((s) => s.status === "liberado").reduce((t, s) => t + Number(s.liquido || s.valor || 0), 0);
   const taxa = subs.length ? Math.round(aprovadas / subs.length * 100) : 0;
   const nomeCompleto = capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome || "");
+  const campanhasEmpresa = (db.campaigns || []).filter((c) => c.companyId === empId);
+  const fit = fitCultural(p, emp, campanhasEmpresa);
 
   const canais = [
     p.whats && { label: "WhatsApp", icon: "📱", href: `https://wa.me/${p.whats.replace(/\D/g, "")}` },
@@ -45,7 +74,7 @@ function PerfilModal({ seller, db, empId, onFechar }) {
           <div style={{ width: 180, minWidth: 180, flexShrink: 0 }}>
             <div style={{ width: 180, height: 240, borderRadius: 16, overflow: "hidden", background: "var(--surface-2)", border: "1px solid var(--border)" }}>
               {p.foto
-                ? <img src={p.foto} alt={nomeCompleto} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+                ? <img src={p.foto} alt={nomeCompleto} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
                 : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 52, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(p.nome)}</div>
               }
             </div>
@@ -58,7 +87,7 @@ function PerfilModal({ seller, db, empId, onFechar }) {
             <div style={{ marginBottom: 12 }}>
               {(p.bio || p.experiencia) ? (
                 <>
-                  <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.65, margin: 0, display: "-webkit-box", WebkitLineClamp: 6, WebkitBoxOrient: "vertical", overflow: "hidden", textAlign: "justify" }}>
+                  <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.65, margin: 0, display: "-webkit-box", WebkitLineClamp: 6, WebkitBoxOrient: "vertical", overflow: "hidden", textAlign: "justify", maxHeight: "calc(1.65em * 6)" }}>
                     {p.bio || p.experiencia}
                   </p>
                   {(p.bio || p.experiencia).length > 320 && (
@@ -111,15 +140,16 @@ function PerfilModal({ seller, db, empId, onFechar }) {
           </div>
         </div>
 
-        {/* INDICADORES */}
+        {/* INDICADORES — 5 cards igual ao de Profissionais */}
         <div style={{ marginTop: 16 }}>
           <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Indicadores de Desempenho</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
             {[
               { label: "Score", val: p.nota ?? 0 },
               { label: "Tarefas", val: `${aprovadas}/${subs.length}` },
               { label: "Aprovação", val: `${taxa}%` },
               { label: "Vendas", val: vendas },
+              { label: "Compatibilidade", val: `${fit.percentual}%` },
             ].map(({ label, val }) => (
               <div key={label} className="vx-card" style={{ padding: "12px 8px", textAlign: "center" }}>
                 <div className="vx-mono" style={{ fontSize: 22, fontWeight: 700, color: "var(--brand)" }}>{val}</div>
@@ -128,6 +158,19 @@ function PerfilModal({ seller, db, empId, onFechar }) {
             ))}
           </div>
         </div>
+
+        {/* modal de bio completa */}
+        {bioExpandida && (
+          <div className="vx-overlay" onClick={() => setBioExpandida(false)} style={{ zIndex: 1100 }}>
+            <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
+              <div className="vx-row" style={{ marginBottom: 16 }}>
+                <h3 className="vx-disp" style={{ margin: 0 }}>Biografia — {nomeCompleto}</h3>
+                <button className="vx-btn vx-btn-ghost" onClick={() => setBioExpandida(false)}><X size={16} /></button>
+              </div>
+              <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", textAlign: "justify" }}>{p.bio || p.experiencia}</p>
+            </div>
+          </div>
+        )}
 
         {/* MÉTRICAS COMPLETAS */}
         <div className="vx-grid vx-g4" style={{ marginTop: 20 }}>
@@ -145,8 +188,16 @@ function PerfilModal({ seller, db, empId, onFechar }) {
           ))}
         </div>
 
-        {/* CERTIFICAÇÕES */}
+        {/* RESUMO COM IA + CERTIFICAÇÕES */}
         <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
+          <section className="vx-card" style={{ padding: 14 }}>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>Resumo com IA</h3>
+            <p className="vx-mut" style={{ lineHeight: 1.6 }}>{resumoIA(p)}</p>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>Fit cultural</h3>
+            <div className="vx-row"><b className="vx-mono" style={{ fontSize: 24 }}>{fit.percentual}%</b><span className="vx-chip">{fit.campanha?.titulo || "campanha de referência"}</span></div>
+            <p className="vx-mut">Compatibilidade: {fit.pontos.join("; ")}.</p>
+            <p className="vx-mut">Pontos de atenção: {fit.atencao.join("; ")}.</p>
+          </section>
           <section className="vx-card" style={{ padding: 14 }}>
             <h3 className="vx-disp" style={{ fontSize: 15 }}>Certificações</h3>
             {p.certificacoes?.length
@@ -157,31 +208,36 @@ function PerfilModal({ seller, db, empId, onFechar }) {
                 ))
               : <p className="vx-mut">Nenhuma certificação publicada.</p>
             }
-          </section>
-          <section className="vx-card" style={{ padding: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 15 }}>Histórico de campanhas</h3>
-            {p.campanhas?.length
-              ? <div className="vx-compact-list">{p.campanhas.slice(0, 6).map((c) => (
-                  <div key={c.id}><div><b>{c.titulo}</b><span>{PERFIL_LABEL[c.funcao] || c.funcao || "Função não informada"}</span></div><span className="vx-chip">{c.candidaturaStatus || c.status}</span></div>
-                ))}</div>
-              : <p className="vx-mut">Sem histórico de campanhas.</p>
-            }
-            <p className="vx-mut" style={{ marginTop: 8 }}>Tarefas recusadas: {recusadas}</p>
+            <p className="vx-mut" style={{ marginTop: 8 }}>Treinamentos concluídos: {p.certificacoes?.length || 0}</p>
           </section>
         </div>
 
-        {/* modal de bio completa */}
-        {bioExpandida && (
-          <div className="vx-overlay" onClick={() => setBioExpandida(false)} style={{ zIndex: 1100 }}>
-            <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
-              <div className="vx-row" style={{ marginBottom: 16 }}>
-                <h3 className="vx-disp" style={{ margin: 0 }}>Biografia — {nomeCompleto}</h3>
-                <button className="vx-btn vx-btn-ghost" onClick={() => setBioExpandida(false)}><X size={16} /></button>
-              </div>
-              <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", textAlign: "justify" }}>{p.bio || p.experiencia}</p>
-            </div>
-          </div>
-        )}
+        {/* HISTÓRICO + TREINAMENTOS */}
+        <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
+          <section className="vx-card" style={{ padding: 14 }}>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>Histórico e resultados</h3>
+            {p.campanhas?.length
+              ? <div className="vx-compact-list">{p.campanhas.slice(0, 8).map((c) => (
+                  <div key={c.id}><div><b>{c.titulo}</b><span>{PERFIL_LABEL[c.funcao] || c.funcao || "Função não informada"} · {c.regiao || "sem região"}</span></div><span className="vx-chip">{c.candidaturaStatus || c.status}</span></div>
+                ))}</div>
+              : <p className="vx-mut">Sem histórico de campanhas nesta empresa.</p>
+            }
+            <p className="vx-mut">Tarefas recusadas: {recusadas} · Leads: {leads.length}</p>
+          </section>
+          <section className="vx-card" style={{ padding: 14 }}>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>Treinamentos, feedbacks e certificações</h3>
+            {p.certificacoes?.length
+              ? p.certificacoes.map((c) => (
+                  <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}>
+                    <CheckCircle2 size={12} />{PERFIL_LABEL[c.funcao] || c.funcao} · {c.percentual}%
+                  </span>
+                ))
+              : <p className="vx-mut">Nenhuma certificação publicada.</p>
+            }
+            <p className="vx-mut">Treinamentos concluídos: {p.certificacoes?.length || 0}</p>
+            <p className="vx-mut">Feedbacks: não há feedbacks publicados para esta empresa.</p>
+          </section>
+        </div>
       </div>
     </div>
   );
@@ -680,7 +736,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
               </div>
 
               {perfilAberto && selConv?.seller && (
-                <PerfilModal seller={selConv.seller} db={db} empId={emp.id} onFechar={() => setPerfilAberto(false)} />
+                <PerfilModal seller={selConv.seller} db={db} emp={emp} empId={emp.id} onFechar={() => setPerfilAberto(false)} />
               )}
 
               {/* mensagens */}
