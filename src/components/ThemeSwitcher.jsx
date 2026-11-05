@@ -9,7 +9,7 @@ function getSystemDark() {
 function aplicar(tema) {
   const isDark = tema === "dark" || (tema === "system" && getSystemDark());
   document.documentElement.classList.toggle("dark", isDark);
-  const bg = isDark ? "#080E1E" : "#EEF1F6";
+  const bg = isDark ? "#08090C" : "#F6F7F9";
   document.documentElement.style.background = bg;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
 }

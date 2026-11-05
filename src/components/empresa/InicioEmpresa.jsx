@@ -39,8 +39,8 @@ function VariacaoBadge({ pct }) {
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 2,
       fontSize: 11, fontWeight: 700,
-      color: positivo ? "#059669" : "#DC2626",
-      background: positivo ? "#dcfce7" : "#fee2e2",
+      color: positivo ? "var(--green)" : "var(--red)",
+      background: positivo ? "var(--green-50)" : "var(--red-50)",
       borderRadius: 20, padding: "2px 7px",
     }}>
       {positivo ? "▲" : "▼"} {Math.abs(pct)}%
@@ -48,35 +48,33 @@ function VariacaoBadge({ pct }) {
   );
 }
 
-// ── CARD DE INDICADOR ─────────────────────────────────────────────────────────
+// ── CARD DE INDICADOR — monocromático premium ────────────────────────────────
 
-function CardIndicador({ icon: Icon, label, valor, pct, onClick, cor = "var(--brand)" }) {
+function CardIndicador({ icon: Icon, label, valor, pct, onClick }) {
   return (
     <button
       onClick={onClick}
       style={{
-        display: "flex", flexDirection: "column", gap: 10,
-        background: "var(--surface)", border: "1px solid var(--glass-border)",
-        borderRadius: 16, padding: "18px 20px",
+        display: "flex", flexDirection: "column", gap: 12,
+        background: "var(--surface)", border: "1px solid var(--border)",
+        borderRadius: 16, padding: "20px",
         cursor: onClick ? "pointer" : "default",
         textAlign: "left", width: "100%",
-        transition: "box-shadow .2s, border-color .2s, transform .2s",
-        boxShadow: "var(--glass-shadow)",
-        backdropFilter: "var(--glass-blur)",
-        WebkitBackdropFilter: "var(--glass-blur)",
+        transition: "box-shadow .2s, border-color .2s",
+        boxShadow: "var(--shadow-card)",
       }}
-      onMouseEnter={(e) => { if (onClick) { e.currentTarget.style.borderColor = "rgba(37,99,235,.25)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(37,99,235,.12),inset 0 .5px 0 rgba(255,255,255,.5)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.boxShadow = "var(--glass-shadow)"; e.currentTarget.style.transform = ""; }}
+      onMouseEnter={(e) => { if (onClick) { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(20,30,45,.08)"; } }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "var(--shadow-card)"; }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ width: 38, height: 38, borderRadius: 12, background: cor + "14", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon size={17} color={cor} strokeWidth={2.2} />
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--icon-primary)" }}>
+          <Icon size={16} strokeWidth={2} />
         </div>
         {pct !== null && pct !== undefined && <VariacaoBadge pct={pct} />}
       </div>
       <div>
-        <div style={{ fontSize: 24, fontWeight: 800, color: "var(--ink)", fontFamily: "var(--font-disp)", lineHeight: 1 }}>{valor}</div>
-        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4, fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)", lineHeight: 1 }}>{valor}</div>
+        <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 5, fontWeight: 500 }}>{label}</div>
       </div>
     </button>
   );
@@ -399,12 +397,12 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
-        <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} cor="#059669" />
-        <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} cor="#D97706" />
-        <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} cor="#7C3AED" />
-        <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={totalAprovacoesPendentes} onClick={() => ir("conferir")} cor={totalAprovacoesPendentes > 0 ? "#DC2626" : "#059669"} />
-        {leadsTotal > 0 && <CardIndicador icon={Target} label="Leads gerados" valor={leadsTotal} onClick={() => ir("campanhas")} cor="#D97706" />}
-        {investimento > 0 && <CardIndicador icon={TrendingUp} label="Investimento total" valor={money(investimento)} onClick={() => ir("painel")} cor="#059669" />}
+        <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} />
+        <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} />
+        <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} />
+        <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={totalAprovacoesPendentes} onClick={() => ir("conferir")} />
+        {leadsTotal > 0 && <CardIndicador icon={Target} label="Leads gerados" valor={leadsTotal} onClick={() => ir("campanhas")} />}
+        {investimento > 0 && <CardIndicador icon={TrendingUp} label="Investimento total" valor={money(investimento)} onClick={() => ir("painel")} />}
       </div>
 
       {/* ── GRID PRINCIPAL ────────────────────────────────────────────────── */}
@@ -429,16 +427,16 @@ export default function InicioEmpresa({ emp, db, setAba }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
               {[
                 { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
-                { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2, cor: "#059669" },
-                { label: "Leads no período", val: leads.filter((l) => { const t = Number(l.criadoEm || l.atualizadoEm); return t >= corte && t <= fimPeriodo; }).length, icon: Target, cor: "#D97706" },
-                { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone, cor: "#7C3AED" },
-              ].map(({ label, val, icon: Ic, cor = "var(--brand)" }) => (
-                <div key={label} style={{ padding: "12px 14px", background: "var(--surface-2)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", border: "1px solid var(--glass-border)", borderRadius: 12, boxShadow: "inset 0 .5px 0 rgba(255,255,255,.3)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
-                    <Ic size={13} color={cor} />
+                { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2 },
+                { label: "Leads no período", val: leads.filter((l) => { const t = Number(l.criadoEm || l.atualizadoEm); return t >= corte && t <= fimPeriodo; }).length, icon: Target },
+                { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone },
+              ].map(({ label, val, icon: Ic }) => (
+                <div key={label} style={{ padding: "14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+                    <Ic size={13} color="var(--icon-secondary)" strokeWidth={2} />
                     <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</span>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ink)", fontFamily: "var(--font-disp)" }}>{val}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ink)" }}>{val}</div>
                 </div>
               ))}
             </div>
@@ -509,7 +507,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                     </div>
                     {s.ganhos > 0 && (
                       <div style={{ textAlign: "right", flexShrink: 0, minWidth: 70 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#059669" }}>{money(s.ganhos)}</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink)" }}>{money(s.ganhos)}</div>
                         <div style={{ fontSize: 10.5, color: "var(--muted)" }}>gerado</div>
                       </div>
                     )}
@@ -536,8 +534,8 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                   const Ic = ev.icon;
                   return (
                     <div key={i} style={{ display: "flex", gap: 10, paddingBottom: i < eventos.length - 1 ? 12 : 0, marginBottom: i < eventos.length - 1 ? 12 : 0, borderBottom: i < eventos.length - 1 ? "1px solid var(--border)" : "none" }}>
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: ev.cor + "18", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Ic size={13} color={ev.cor} />
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--icon-secondary)" }}>
+                        <Ic size={12} strokeWidth={2} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12.5, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.texto}</div>
@@ -586,10 +584,11 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                 >
                   <div style={{
                     width: 32, height: 32, borderRadius: 8,
-                    background: p.cor + "14", display: "flex",
+                    background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex",
                     alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    color: "var(--icon-primary)",
                   }}>
-                    <Ic size={16} color={p.cor} />
+                    <Ic size={15} strokeWidth={2} />
                   </div>
                   <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>{p.texto}</span>
                   <span style={{
@@ -605,16 +604,16 @@ export default function InicioEmpresa({ emp, db, setAba }) {
         </div>
       ) : (
         <div style={{
-          background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
-          borderRadius: 14, padding: "16px 24px", marginTop: 16,
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 14, padding: "16px 24px", marginTop: 20,
           display: "flex", alignItems: "center", gap: 14,
-          boxShadow: "0 4px 20px rgba(5,150,105,.18)",
+          boxShadow: "var(--shadow-card)",
         }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Sparkles size={18} color="#fff" />
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--green)" }}>
+            <Sparkles size={16} strokeWidth={2} />
           </div>
-          <p style={{ margin: 0, fontSize: 14, color: "#fff", fontWeight: 500 }}>
-            Tudo em dia! Sua operação está ativa com {campanhasAtivas.length} campanha{campanhasAtivas.length !== 1 ? "s" : ""} e {sellersAtivos.length} profissional{sellersAtivos.length !== 1 ? "is" : ""}.
+          <p style={{ margin: 0, fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>
+            Tudo em dia — operação ativa com {campanhasAtivas.length} campanha{campanhasAtivas.length !== 1 ? "s" : ""} e {sellersAtivos.length} profissional{sellersAtivos.length !== 1 ? "is" : ""}.
           </p>
         </div>
       )}
