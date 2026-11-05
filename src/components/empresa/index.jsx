@@ -14,6 +14,7 @@ import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
 import BannerCerebro from "./BannerCerebro.jsx";
 import InicioEmpresa from "./InicioEmpresa.jsx";
 import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
+import LeadsDashEmpresa from "./LeadsDashEmpresa.jsx";
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const sair = async () => {
@@ -87,6 +88,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoConferir === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
         {secaoConferir === "regras" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} />}
       </>}
+      {aba === "leads" && <LeadsDashEmpresa emp={emp} db={db} recarregar={recarregar} />}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}
     </div>
   );
