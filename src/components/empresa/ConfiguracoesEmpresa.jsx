@@ -408,7 +408,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
   // ── Layout ────────────────────────────────────────────────────────
 
   return (
-    <div className="vx-fade" style={{ display: "flex", flexDirection: mobile ? "column" : "row", minHeight: 0 }}>
+    <div className="vx-fade" style={{ display: "flex", flexDirection: mobile ? "column" : "row", minHeight: 0, ...(mobile ? {} : { marginLeft: -30, marginTop: -30, marginBottom: -56 }) }}>
 
       {/* Secondary navigation */}
       {mobile ? (
@@ -425,7 +425,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
           ))}
         </div>
       ) : (
-        <nav style={{ width: 190, flexShrink: 0, borderRight: "1px solid var(--border)", paddingTop: 20, paddingBottom: 20 }}>
+        <nav style={{ width: 190, flexShrink: 0, borderRight: "1px solid var(--border)", paddingTop: 50, paddingBottom: 20, alignSelf: "stretch" }}>
           {SECOES_NAV.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -440,7 +440,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
       )}
 
       {/* Content area */}
-      <div style={{ flex: 1, padding: mobile ? "20px 16px 40px" : "24px 32px 40px", minWidth: 0, overflowX: "hidden" }}>
+      <div style={{ flex: 1, padding: mobile ? "20px 16px 40px" : "30px 30px 56px", minWidth: 0, overflowX: "hidden" }}>
 
         {/* Pending changes bar */}
         {changed && (
