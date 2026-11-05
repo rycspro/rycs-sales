@@ -407,11 +407,9 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
       </div>
 
       {/* ── 5. Planos disponíveis ── */}
-      {!premium && (
-        <div style={{ marginBottom: 24 }}>
-          <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
-        </div>
-      )}
+      <div style={{ marginBottom: 24 }}>
+        <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
+      </div>
 
       {/* ── Modal adicionar saldo ── */}
       {modalSaldo && (
