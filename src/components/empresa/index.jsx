@@ -81,13 +81,15 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   );
 
   const filtroBar = ABAS_COM_FILTRO.has(aba) && (
-    <FiltroData
-      key={aba}
-      campos={CAMPOS_SORT[aba] || []}
-      campoInicial={CAMPOS_SORT[aba]?.[0]?.key || ""}
-      onAplicar={setFiltroAtual}
-      onLimpar={limparFiltroAtual}
-    />
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+      <FiltroData
+        key={aba}
+        campos={CAMPOS_SORT[aba] || []}
+        campoInicial={CAMPOS_SORT[aba]?.[0]?.key || ""}
+        onAplicar={setFiltroAtual}
+        onLimpar={limparFiltroAtual}
+      />
+    </div>
   );
 
   return (
