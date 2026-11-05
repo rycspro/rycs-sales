@@ -319,6 +319,7 @@ function ItemConversa({ c, ativo, onClick }) {
         const a = JSON.parse(c.ultima.anexo);
         if (a.tipo === "imagem") return prefixo + "📷 Foto";
         if (a.tipo === "audio") return prefixo + "🎤 Áudio";
+        if (a.tipo === "gif") return prefixo + "GIF";
         if (a.tipo === "documento") return prefixo + `📄 ${a.nome || "Documento"}`;
       } catch { /* */ }
     }
@@ -445,6 +446,9 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
                       <audio controls src={anexo.dados} style={{ maxWidth: 240, height: 36 }} />
                     </div>
                   );
+                  if (anexo?.tipo === "gif") return (
+                    <img src={anexo.url} alt={anexo.nome || "GIF"} style={{ maxWidth: 260, maxHeight: 240, borderRadius: 10, display: "block" }} />
+                  );
                   if (anexo?.tipo === "documento") return (
                     <a href={anexo.dados} download={anexo.nome} style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 10px", color: meu ? "#fff" : "#1E293B", textDecoration: "none" }}>
                       <FileText size={18} />
@@ -506,16 +510,74 @@ function lerArquivoBase64(file) {
   });
 }
 
+const GIPHY_KEY = "dc6zaTOxFJmzC";
+
+const EMOJI_CATS = [
+  { label: "😀", emojis: ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😋","😛","😜","🤪","😎","🤩","🥳","😏","😒","😔","😟","😕","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","😱","😨","😰","🤔","🤭","🤫","😶","😐","😑","😬","🙄","😯","😮","😲","🥱","😴","🤐","🥴","🤢","🤮","🤧","😷"] },
+  { label: "👋", emojis: ["👋","✋","✌️","🤞","🤟","🤘","🤙","👌","🤌","🤏","👍","👎","✊","👊","🤛","🤜","👏","🙌","🙏","🤝","👐","🤲","💅","💪","🦾","👆","👇","👈","👉","☝️","✍️"] },
+  { label: "🐶", emojis: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐒","🐧","🦅","🦉","🦋","🐝","🌵","🌲","🌳","🌴","🌱","🌿","☘️","🍀","🌺","🌸","🌼","🌻","🌞","⭐","🌈","☁️","🌊","🔥","💧","❄️"] },
+  { label: "🍎", emojis: ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🌽","🌶","🧄","🥔","🍳","🧀","🍗","🍖","🌮","🌯","🥙","🍔","🍟","🍕","🌭","🍜","🍛","🍣","🍱","🧁","🎂","🍰","🍩","🍪","🍫","🍬","🍭","☕","🍵","🧋","🍺","🥂","🍾"] },
+  { label: "⚽", emojis: ["⚽","🏀","🏈","⚾","🎾","🏐","🏉","🎱","🏓","🏸","🥊","🎯","🎳","🎲","🎮","🎭","🎨","🎬","🎤","🎧","🎵","🎶","🎸","🎹","🥁","🎺","🎻","🎷","🎙","🏆","🥇","🏅","🎉","🎊","🎈","🎁","🎀","🎗","🎪","🎠","🎡","🎢"] },
+  { label: "🚗", emojis: ["🚗","🚕","🚌","🚎","🏎","🚓","🚑","🚒","🛻","🚚","🛵","🚲","✈️","🚀","🛸","🛶","⛵","🚢","⚓","🌍","🌎","🗺","🏔","🌋","🏕","🏖","🏠","🏡","🏢","🏥","🏦","🏨","🏪","🏫","🏯","🏰","⛩","🗼","🗽","⛪","🌃","🌄","🌅","🌆","🌇","🌉"] },
+  { label: "❤️", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","❤️‍🔥","💯","✨","🌟","⭐","✅","❌","⭕","🔴","🟡","🟢","🔵","🟣","⚫","⚪","🔶","🔷","🔸","🔹","💠","💫","⚡","🌙","☀️","⛅","🌧","⛈","❄️","🌈","☔"] },
+];
+
+const btnAnexoStyle = {
+  width: 36, height: 36, borderRadius: 9, border: "1.5px solid #E2E8F0",
+  background: "#F8FAFC", color: "#64748B", display: "flex", alignItems: "center",
+  justifyContent: "center", cursor: "pointer", transition: "all .15s",
+};
+
 function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
   const [txt, setTxt] = useState("");
   const [gravando, setGravando] = useState(false);
   const [tempoGrav, setTempoGrav] = useState(0);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [catEmoji, setCatEmoji] = useState(0);
+  const [showGif, setShowGif] = useState(false);
+  const [buscaGif, setBuscaGif] = useState("");
+  const [gifs, setGifs] = useState([]);
+  const [loadingGif, setLoadingGif] = useState(false);
+
   const ref = useRef(null);
   const fotoRef = useRef(null);
   const docRef = useRef(null);
   const mrRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
+  const rightRef = useRef(null);
+  const gifDebRef = useRef(null);
+
+  // Fechar painéis ao clicar fora
+  useEffect(() => {
+    if (!showEmoji && !showGif) return;
+    const handler = (e) => {
+      if (!rightRef.current?.contains(e.target)) {
+        setShowEmoji(false);
+        setShowGif(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showEmoji, showGif]);
+
+  // Carregar/buscar GIFs
+  useEffect(() => {
+    if (!showGif) return;
+    clearTimeout(gifDebRef.current);
+    const q = buscaGif.trim();
+    gifDebRef.current = setTimeout(() => {
+      setLoadingGif(true);
+      const url = q
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=16&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=16&rating=g`;
+      fetch(url)
+        .then((r) => r.json())
+        .then((d) => { setGifs(d.data || []); setLoadingGif(false); })
+        .catch(() => setLoadingGif(false));
+    }, q ? 400 : 0);
+    return () => clearTimeout(gifDebRef.current);
+  }, [buscaGif, showGif]);
 
   const submeter = () => {
     if (!txt.trim() || enviando) return;
@@ -591,6 +653,24 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
 
   const fmtTempo = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
+  const inserirEmoji = (emoji) => {
+    const el = ref.current;
+    if (!el) { setTxt((t) => t + emoji); return; }
+    const start = el.selectionStart ?? txt.length;
+    const end = el.selectionEnd ?? txt.length;
+    const novo = txt.slice(0, start) + emoji + txt.slice(end);
+    setTxt(novo);
+    setTimeout(() => { el.selectionStart = el.selectionEnd = start + [...emoji].length; el.focus(); }, 0);
+  };
+
+  const enviarGif = (gif) => {
+    const url = gif.images?.downsized?.url || gif.images?.fixed_height?.url || gif.images?.original?.url;
+    if (!url) return;
+    onEnviarAnexo({ tipo: "gif", url, nome: gif.title || "GIF" });
+    setShowGif(false);
+    setBuscaGif("");
+  };
+
   const podeSend = txt.trim() && !enviando;
 
   return (
@@ -608,25 +688,25 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
       )}
 
       <div style={{ padding: "10px 14px", display: "flex", gap: 8, alignItems: "flex-end" }}>
-        {/* Botões de anexo */}
+        {/* Botões de anexo — esquerda */}
         <div style={{ display: "flex", gap: 4, flexShrink: 0, paddingBottom: 1 }}>
           <input ref={fotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={enviarFoto} />
           <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style={{ display: "none" }} onChange={enviarDoc} />
 
           <button onClick={() => fotoRef.current?.click()} title="Enviar foto" disabled={gravando || enviando}
-            style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#64748B", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all .15s" }}
+            style={btnAnexoStyle}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
           ><Image size={15} /></button>
 
           <button onClick={() => docRef.current?.click()} title="Enviar documento" disabled={gravando || enviando}
-            style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#64748B", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all .15s" }}
+            style={btnAnexoStyle}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
           ><FileText size={15} /></button>
 
           <button onClick={gravando ? pararGravacao : iniciarGravacao} title={gravando ? "Parar gravação" : "Gravar áudio"} disabled={enviando}
-            style={{ width: 36, height: 36, borderRadius: 9, border: `1.5px solid ${gravando ? "#DC2626" : "#E2E8F0"}`, background: gravando ? "#FEF2F2" : "#F8FAFC", color: gravando ? "#DC2626" : "#64748B", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all .15s" }}
+            style={{ ...btnAnexoStyle, border: `1.5px solid ${gravando ? "#DC2626" : "#E2E8F0"}`, background: gravando ? "#FEF2F2" : "#F8FAFC", color: gravando ? "#DC2626" : "#64748B" }}
           >{gravando ? <MicOff size={15} /> : <Mic size={15} />}</button>
         </div>
 
@@ -642,7 +722,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
           style={{
             flex: 1, resize: "none", border: "1.5px solid #E2E8F0", borderRadius: 10,
             padding: "9px 13px", fontSize: 13.5, fontFamily: "inherit", lineHeight: 1.5,
-            outline: "none", color: "#1E293B", background: gravando ? "#F8FAFC" : "#F8FAFC",
+            outline: "none", color: "#1E293B", background: "#F8FAFC",
             transition: "border-color .15s", maxHeight: 120, overflowY: "auto",
             opacity: gravando ? 0.4 : 1,
           }}
@@ -652,24 +732,130 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
           aria-label="Campo de mensagem"
         />
 
-        {/* Botão enviar */}
-        <button
-          onClick={submeter}
-          disabled={!podeSend}
-          aria-label="Enviar mensagem"
-          style={{
-            width: 38, height: 38, borderRadius: 10, border: "none",
-            background: podeSend ? "#2563EB" : "#E2E8F0",
-            color: podeSend ? "#fff" : "#94A3B8",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: podeSend ? "pointer" : "not-allowed",
-            transition: "background .15s, color .15s", flexShrink: 0,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
-        </button>
+        {/* Botões direita: emoji + GIF + enviar */}
+        <div ref={rightRef} style={{ position: "relative", display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
+
+          {/* Painel emoji */}
+          {showEmoji && (
+            <div style={{
+              position: "absolute", bottom: 46, right: 0, width: 316,
+              background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)",
+              border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden",
+            }}>
+              <div style={{ display: "flex", gap: 1, padding: "8px 8px 0", borderBottom: "1px solid #F1F5F9", background: "#F8FAFC" }}>
+                {EMOJI_CATS.map((cat, i) => (
+                  <button key={i} onClick={() => setCatEmoji(i)} style={{
+                    flex: 1, fontSize: 16, padding: "5px 2px", border: "none", cursor: "pointer",
+                    background: catEmoji === i ? "#EFF6FF" : "transparent",
+                    borderRadius: 6, transition: "background .12s",
+                  }}>{cat.label}</button>
+                ))}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 2, padding: "6px 8px", maxHeight: 220, overflowY: "auto" }}>
+                {EMOJI_CATS[catEmoji].emojis.map((em) => (
+                  <button key={em} onClick={() => inserirEmoji(em)} title={em} style={{
+                    fontSize: 20, padding: 4, border: "none", background: "transparent",
+                    cursor: "pointer", borderRadius: 6, transition: "background .1s", lineHeight: 1.2,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#F1F5F9"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >{em}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Painel GIF */}
+          {showGif && (
+            <div style={{
+              position: "absolute", bottom: 46, right: 0, width: 316,
+              background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)",
+              border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden",
+            }}>
+              <div style={{ padding: "8px 8px 6px", borderBottom: "1px solid #F1F5F9" }}>
+                <input
+                  value={buscaGif}
+                  onChange={(e) => setBuscaGif(e.target.value)}
+                  placeholder="Buscar GIFs…"
+                  autoFocus
+                  style={{
+                    width: "100%", border: "1.5px solid #E2E8F0", borderRadius: 8,
+                    padding: "7px 10px", fontSize: 13, outline: "none", fontFamily: "inherit",
+                    boxSizing: "border-box", background: "#F8FAFC",
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = "#2563EB"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; }}
+                />
+              </div>
+              <div style={{ maxHeight: 240, overflowY: "auto", padding: 6, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                {loadingGif ? (
+                  <div style={{ gridColumn: "1/-1", display: "flex", justifyContent: "center", padding: 24 }}>
+                    <div className="vx-spinner" />
+                  </div>
+                ) : gifs.length === 0 ? (
+                  <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 20, color: "#94A3B8", fontSize: 13 }}>Nenhum GIF encontrado</div>
+                ) : gifs.map((gif) => (
+                  <button key={gif.id} onClick={() => enviarGif(gif)} style={{
+                    padding: 0, border: "none", borderRadius: 8, overflow: "hidden",
+                    cursor: "pointer", background: "#F1F5F9", aspectRatio: "16/9",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <img
+                      src={gif.images?.fixed_height_small?.url || gif.images?.downsized_small?.url}
+                      alt={gif.title}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      loading="lazy"
+                    />
+                  </button>
+                ))}
+              </div>
+              <div style={{ padding: "4px 8px 6px", textAlign: "right" }}>
+                <span style={{ fontSize: 10, color: "#94A3B8" }}>Powered by GIPHY</span>
+              </div>
+            </div>
+          )}
+
+          {/* Botão emoji */}
+          <button
+            onClick={() => { setShowEmoji((v) => !v); setShowGif(false); }}
+            title="Emoji"
+            disabled={gravando || enviando}
+            style={{ ...btnAnexoStyle, borderColor: showEmoji ? "#2563EB" : "#E2E8F0" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; }}
+            onMouseLeave={(e) => { if (!showEmoji) e.currentTarget.style.borderColor = "#E2E8F0"; }}
+          >
+            <span style={{ fontSize: 16, lineHeight: 1 }}>😊</span>
+          </button>
+
+          {/* Botão GIF */}
+          <button
+            onClick={() => { setShowGif((v) => !v); setShowEmoji(false); if (!showGif) setBuscaGif(""); }}
+            title="GIF"
+            disabled={gravando || enviando}
+            style={{ ...btnAnexoStyle, fontSize: 10, fontWeight: 700, letterSpacing: "0.03em", borderColor: showGif ? "#2563EB" : "#E2E8F0", color: showGif ? "#2563EB" : "#64748B" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
+            onMouseLeave={(e) => { if (!showGif) { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; } }}
+          >GIF</button>
+
+          {/* Botão enviar — sempre azul */}
+          <button
+            onClick={submeter}
+            disabled={!podeSend}
+            aria-label="Enviar mensagem"
+            style={{
+              width: 38, height: 38, borderRadius: 10, border: "none",
+              background: "#2563EB", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: podeSend ? "pointer" : "not-allowed",
+              opacity: podeSend ? 1 : 0.4,
+              transition: "opacity .15s", flexShrink: 0,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
