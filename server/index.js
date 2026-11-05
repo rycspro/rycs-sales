@@ -237,9 +237,15 @@ if (isProd) {
   const __dirname = dirname(fileURLToPath(import.meta.url));
   // Assets com hash no nome → cache longo (1 ano). HTML sempre sem cache.
   app.use("/assets", express.static(join(__dirname, "../dist/assets"), { maxAge: "1y", immutable: true }));
-  app.use(express.static(join(__dirname, "../dist"), { maxAge: 0 }));
+  app.use(express.static(join(__dirname, "../dist"), {
+    maxAge: 0,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith("index.html")) res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    },
+  }));
   app.get("*", (req, res) => {
     if (req.path.startsWith("/assets/")) return res.status(404).end();
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(join(__dirname, "../dist/index.html"));
   });
 }
