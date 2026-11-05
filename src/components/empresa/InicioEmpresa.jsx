@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Users, UserCheck, Megaphone, MessageSquare, Mail,
   ShieldCheck, TrendingUp, ArrowRight, Bell,
   BarChart3, ChevronRight, Clock,
   CheckCircle2, AlertTriangle, Sparkles,
-  Activity, Target, Award, Wallet,
+  Activity, Target, Award, Wallet, SlidersHorizontal, ChevronDown,
 } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
 import { saldoDisponivel, isPosPago, isPremium } from "../../../shared/empresa.js";
@@ -160,6 +160,101 @@ function MiniBar({ value, max, cor = "var(--brand)" }) {
   );
 }
 
+// ── PERÍODO DROPDOWN ─────────────────────────────────────────────────────────
+
+const OPCOES_PERIODO = [
+  { value: "1", label: "Hoje" },
+  { value: "7", label: "Últimos 7 dias" },
+  { value: "30", label: "Últimos 30 dias" },
+  { value: "90", label: "Últimos 90 dias" },
+  { value: "mes", label: "Este mês" },
+  { value: "ano", label: "Este ano" },
+  { value: "", label: "Todo o período" },
+  { value: "custom", label: "Personalizado..." },
+];
+
+function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte, setCustomAte }) {
+  const [aberto, setAberto] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!aberto) return;
+    const fechar = (e) => { if (ref.current && !ref.current.contains(e.target)) setAberto(false); };
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, [aberto]);
+
+  const labelAtual = OPCOES_PERIODO.find((o) => o.value === periodo)?.label || "Período";
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setAberto((v) => !v)}
+        style={{
+          display: "flex", alignItems: "center", gap: 7,
+          padding: "7px 12px", borderRadius: 10,
+          border: "1.5px solid var(--border)", background: "var(--surface)",
+          cursor: "pointer", fontSize: 13, color: "var(--ink)",
+          fontWeight: 500, transition: "border-color .15s",
+          boxShadow: aberto ? "0 0 0 2px var(--brand)33" : "none",
+          borderColor: aberto ? "var(--brand)" : "var(--border)",
+        }}
+        onMouseEnter={(e) => { if (!aberto) e.currentTarget.style.borderColor = "var(--brand)"; }}
+        onMouseLeave={(e) => { if (!aberto) e.currentTarget.style.borderColor = "var(--border)"; }}
+      >
+        <SlidersHorizontal size={14} color="var(--muted)" />
+        <span>{labelAtual}</span>
+        <ChevronDown size={13} color="var(--muted)" style={{ transform: aberto ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+      </button>
+
+      {aberto && (
+        <div style={{
+          position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 100,
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+          minWidth: 200, padding: "6px 0", overflow: "hidden",
+        }}>
+          {OPCOES_PERIODO.map((o) => (
+            <button
+              key={o.value}
+              onClick={() => { setPeriodo(o.value); if (o.value !== "custom") setAberto(false); }}
+              style={{
+                display: "block", width: "100%", textAlign: "left",
+                padding: "9px 16px", background: periodo === o.value ? "var(--surface-2)" : "transparent",
+                border: "none", cursor: "pointer", fontSize: 13.5,
+                color: periodo === o.value ? "var(--brand)" : "var(--ink)",
+                fontWeight: periodo === o.value ? 600 : 400,
+                transition: "background .1s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = periodo === o.value ? "var(--surface-2)" : "transparent"; }}
+            >
+              {o.label}
+            </button>
+          ))}
+          {periodo === "custom" && (
+            <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>DE</span>
+                <input type="date" className="vx-input" style={{ fontSize: 12, padding: "6px 10px" }}
+                  value={customDe} onChange={(e) => setCustomDe(e.target.value)} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>ATÉ</span>
+                <input type="date" className="vx-input" style={{ fontSize: 12, padding: "6px 10px" }}
+                  value={customAte} onChange={(e) => setCustomAte(e.target.value)} />
+              </div>
+              <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ width: "100%" }} onClick={() => setAberto(false)}>
+                Aplicar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 
 export default function InicioEmpresa({ emp, db, setAba }) {
@@ -287,52 +382,15 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           </p>
         </div>
 
-        {/* Seletor de período */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <select
-            value={periodo}
-            onChange={(e) => { setPeriodo(e.target.value); setCustomDe(""); setCustomAte(""); }}
-            className="vx-input"
-            style={{ fontSize: 12.5, padding: "6px 10px", minWidth: 140, borderRadius: 10 }}
-            aria-label="Período"
-          >
-            <option value="1">Hoje</option>
-            <option value="7">Últimos 7 dias</option>
-            <option value="30">Últimos 30 dias</option>
-            <option value="90">Últimos 90 dias</option>
-            <option value="mes">Este mês</option>
-            <option value="ano">Este ano</option>
-            <option value="">Todo o período</option>
-            <option value="custom">Personalizado...</option>
-          </select>
-          {periodo === "custom" && (
-            <>
-              <input
-                type="date"
-                className="vx-input"
-                style={{ fontSize: 12, padding: "6px 10px", borderRadius: 10 }}
-                value={customDe}
-                onChange={(e) => setCustomDe(e.target.value)}
-                aria-label="Data inicial"
-              />
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>até</span>
-              <input
-                type="date"
-                className="vx-input"
-                style={{ fontSize: 12, padding: "6px 10px", borderRadius: 10 }}
-                value={customAte}
-                onChange={(e) => setCustomAte(e.target.value)}
-                aria-label="Data final"
-              />
-            </>
-          )}
-          {(db?.notifications || []).filter((n) => !n.lida).length > 0 && (
-            <div style={{ position: "relative" }}>
-              <Bell size={18} color="var(--muted)" />
-              <span style={{ position: "absolute", top: -4, right: -4, width: 8, height: 8, background: "var(--red, #DC2626)", borderRadius: "50%", border: "2px solid var(--surface)" }} />
-            </div>
-          )}
-        </div>
+        {/* Seletor de período compacto */}
+        <PeriodoDropdown
+          periodo={periodo}
+          setPeriodo={(v) => { setPeriodo(v); setCustomDe(""); setCustomAte(""); }}
+          customDe={customDe}
+          setCustomDe={setCustomDe}
+          customAte={customAte}
+          setCustomAte={setCustomAte}
+        />
       </div>
 
       {/* ── LEMBRETES PENDENTES ────────────────────────────────────────── */}
