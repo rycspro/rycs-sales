@@ -309,7 +309,7 @@ const TD = ({ children, right, muted, check }) => (
   }}>{children}</td>
 );
 
-export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData }) {
+export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, filtroBtn }) {
   const [atualizadoEm, setAtualizadoEm] = useState(Date.now());
   const [refrescando, setRefrescando] = useState(false);
   const [filtroVendedor, setFiltroVendedor] = useState("");
@@ -401,8 +401,14 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData }
   return (
     <div className="vx-fade">
       {/* Cabeçalho */}
-      <div className="vx-row" style={{ marginBottom: 16, alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <div className="vx-row" style={{ marginBottom: 16, alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <h2 className="vx-disp" style={{ fontSize: 18, margin: 0, flex: 1 }}>Leads</h2>
+        {filtroBtn}
+        <button className="vx-btn vx-btn-sm" onClick={refrescar} disabled={refrescando}
+          style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <RefreshCw size={13} />
+          Atualizar
+        </button>
         <span style={{ fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 5 }}>
           <span style={{
             width: 8, height: 8, borderRadius: "50%",
@@ -411,16 +417,12 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData }
           }} />
           {refrescando ? "Atualizando…" : `Atualizado ${tempoRelativo(atualizadoEm)}`}
         </span>
-        <button className="vx-btn vx-btn-sm" onClick={refrescar} disabled={refrescando}
-          style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <RefreshCw size={13} />
-          Atualizar
-        </button>
       </div>
 
       {/* Filtros */}
       <div className="vx-row" style={{ marginBottom: 16, gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <Filter size={14} color="var(--muted)" />
+        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--muted)" }}>Filtros</span>
         <select className="vx-input" value={filtroVendedor} onChange={(e) => setFiltroVendedor(e.target.value)}
           style={{ fontSize: 13, padding: "5px 10px", minWidth: 160 }}>
           <option value="">Todos os vendedores</option>

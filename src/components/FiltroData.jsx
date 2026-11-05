@@ -91,7 +91,7 @@ export default function FiltroData({
         onMouseLeave={(e) => { if (!aberto && !temFiltro) e.currentTarget.style.borderColor = "var(--border)"; }}
       >
         <SlidersHorizontal size={14} color={temFiltro ? "var(--brand)" : "var(--muted)"} />
-        <span>Filtros{temFiltro ? " · ativo" : ""}</span>
+        <span>Período{temFiltro ? " · ativo" : ""}</span>
         <ChevronDown size={13} color="var(--muted)" style={{ transform: aberto ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
       </button>
 

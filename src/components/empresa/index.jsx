@@ -80,7 +80,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     </div>
   );
 
-  const filtroBar = ABAS_COM_FILTRO.has(aba) && (
+  const filtroBar = ABAS_COM_FILTRO.has(aba) && aba !== "leads" && (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
       <FiltroData
         key={aba}
@@ -90,6 +90,16 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         onLimpar={limparFiltroAtual}
       />
     </div>
+  );
+
+  const filtroLeadsBtn = aba === "leads" && (
+    <FiltroData
+      key="leads"
+      campos={CAMPOS_SORT.leads}
+      campoInicial={CAMPOS_SORT.leads[0]?.key || ""}
+      onAplicar={setFiltroAtual}
+      onLimpar={limparFiltroAtual}
+    />
   );
 
   return (
@@ -128,10 +138,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoConferir === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
         {secaoConferir === "regras" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} filtroData={filtroAtual} />}
       </>}
-      {aba === "leads" && <>
-        {filtroBar}
-        <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} filtroData={filtroAtual} />
-      </>}
+      {aba === "leads" && (
+        <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} filtroData={filtroAtual} filtroBtn={filtroLeadsBtn} />
+      )}
       {aba === "pagamentos" && <PagamentosEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} />}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}
     </div>
