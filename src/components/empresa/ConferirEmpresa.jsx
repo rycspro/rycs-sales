@@ -196,8 +196,10 @@ function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
 
 function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
   const [campanhasAuto, setCampanhasAuto] = useState(null);
-  const scoreVal = Number(seller?.nota || 0);
-  const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
+  const diasAguardando = solicitacao.criadoEm
+    ? Math.max(0, Math.floor((Date.now() - solicitacao.criadoEm) / (1000 * 60 * 60 * 24)))
+    : null;
+  const diasCor = diasAguardando === null ? "#64748B" : diasAguardando >= 8 ? "#DC2626" : diasAguardando >= 3 ? "#B45309" : "#16A34A";
 
   return (
     <article className="vx-prof-card" style={{ cursor: "default", height: "auto", minHeight: 380 }}>
@@ -207,9 +209,9 @@ function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
           ? <img src={typeof seller.foto === "string" && seller.foto.startsWith("data:") ? seller.foto : `/api/sellers/${seller.id}/foto`} alt={seller?.nome} loading="lazy" decoding="async" />
           : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 36, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(seller?.nome)}</div>
         }
-        {typeof seller?.nota === "number" && (
-          <span style={{ position: "absolute", top: 10, right: 10, background: scoreCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px" }}>
-            {scoreVal} pts
+        {diasAguardando !== null && (
+          <span style={{ position: "absolute", top: 10, right: 10, background: diasCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px" }}>
+            {diasAguardando === 0 ? "hoje" : `${diasAguardando}d`}
           </span>
         )}
         <span style={{ position: "absolute", bottom: 10, left: 10, background: "#fffbeb", color: "#92400e", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px" }}>
