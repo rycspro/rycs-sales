@@ -142,8 +142,7 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
   );
 }
 
-export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
-  const [secao, setSecao] = useState("fila");
+export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila" }) {
 
   const revisao = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
   const iaAprovados = db.submissions.filter((s) => s.companyId === emp.id && ["ia_aprovado", "conferido"].includes(s.status));
@@ -180,12 +179,6 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso }) {
           <p>Revisão manual, recusas, contestações e decisões rastreáveis.</p>
         </div>
         <span className="vx-chip vx-mono">{revisao.length} pendentes</span>
-      </div>
-
-      <div className="vx-seg vx-subnav" style={{ margin: "14px 0 20px" }}>
-        {[["fila", "Fila de revisão"], ["regras", "Regras automáticas"]].map(([k, label]) => (
-          <button key={k} data-on={secao === k ? "1" : "0"} onClick={() => setSecao(k)}>{label}</button>
-        ))}
       </div>
 
       {secao === "regras" && <RegrasAprovacao aviso={aviso} />}

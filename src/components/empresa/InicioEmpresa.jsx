@@ -202,6 +202,8 @@ function MiniBar({ value, max, cor = "var(--brand)" }) {
 
 export default function InicioEmpresa({ emp, db, setAba }) {
   const [periodo, setPeriodo] = useState("30");
+  const [customDe, setCustomDe] = useState("");
+  const [customAte, setCustomAte] = useState("");
 
   const empId = emp?.id;
 
@@ -213,8 +215,24 @@ export default function InicioEmpresa({ emp, db, setAba }) {
   const messages = useMemo(() => (db?.messages || []).filter((m) => m.companyId === empId), [db, empId]);
   const leads = useMemo(() => (db?.leads || []).filter((l) => l.companyId === empId), [db, empId]);
 
-  const corte = diasAtras(Number(periodo));
-  const cortePrev = diasAtras(Number(periodo) * 2);
+  const corte = useMemo(() => {
+    if (periodo === "custom") {
+      if (customDe) return new Date(customDe + "T00:00:00").getTime();
+      return diasAtras(30);
+    }
+    if (periodo === "mes") { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); }
+    if (periodo === "ano") { const d = new Date(); d.setMonth(0); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); }
+    if (periodo === "") return 0;
+    return diasAtras(Number(periodo));
+  }, [periodo, customDe]);
+
+  const fimPeriodo = useMemo(() => {
+    if (periodo === "custom" && customAte) return new Date(customAte + "T23:59:59").getTime();
+    return Date.now();
+  }, [periodo, customAte]);
+
+  const isNumericPreset = ["7", "30", "90"].includes(periodo);
+  const cortePrev = isNumericPreset ? diasAtras(Number(periodo) * 2) : 0;
 
   const sellersAtivos = sellers.filter((s) => s.aplicacoes?.[empId] === "aprovado");
   const campanhasAtivas = campaigns.filter((c) => c.status === "ativa");
@@ -223,13 +241,13 @@ export default function InicioEmpresa({ emp, db, setAba }) {
   const leadsTotal = leads.length;
 
   // variações (período atual vs período anterior)
-  const sellersPeriodo = sellers.filter((s) => s.criadoEm && Number(s.criadoEm) >= corte);
-  const sellersPrev = sellers.filter((s) => s.criadoEm && Number(s.criadoEm) >= cortePrev && Number(s.criadoEm) < corte);
-  const msgsPeriodo = messages.filter((m) => Number(m.ts) >= corte);
-  const msgsPrev = messages.filter((m) => Number(m.ts) >= cortePrev && Number(m.ts) < corte);
+  const sellersPeriodo = sellers.filter((s) => s.criadoEm && Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo);
+  const sellersPrev = isNumericPreset ? sellers.filter((s) => s.criadoEm && Number(s.criadoEm) >= cortePrev && Number(s.criadoEm) < corte) : [];
+  const msgsPeriodo = messages.filter((m) => Number(m.ts) >= corte && Number(m.ts) <= fimPeriodo);
+  const msgsPrev = isNumericPreset ? messages.filter((m) => Number(m.ts) >= cortePrev && Number(m.ts) < corte) : [];
 
-  const pctSellers = variacao(sellersPeriodo.length, sellersPrev.length);
-  const pctMsgs = variacao(msgsPeriodo.length, msgsPrev.length);
+  const pctSellers = isNumericPreset ? variacao(sellersPeriodo.length, sellersPrev.length) : null;
+  const pctMsgs = isNumericPreset ? variacao(msgsPeriodo.length, msgsPrev.length) : null;
 
   // conversas únicas
   const conversas = [...new Set(messages.map((m) => m.sellerId))].length;
@@ -300,11 +318,43 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
         {/* Seletor de período */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div className="vx-seg" style={{ fontSize: 12 }}>
-            {[["7", "7 dias"], ["30", "30 dias"], ["90", "90 dias"]].map(([v, l]) => (
-              <button key={v} data-on={periodo === v ? "1" : "0"} onClick={() => setPeriodo(v)} style={{ padding: "5px 11px", fontSize: 12 }}>{l}</button>
-            ))}
-          </div>
+          <select
+            value={periodo}
+            onChange={(e) => { setPeriodo(e.target.value); setCustomDe(""); setCustomAte(""); }}
+            className="vx-input"
+            style={{ fontSize: 12.5, padding: "6px 10px", minWidth: 140, borderRadius: 10 }}
+            aria-label="Período"
+          >
+            <option value="1">Hoje</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="mes">Este mês</option>
+            <option value="ano">Este ano</option>
+            <option value="">Todo o período</option>
+            <option value="custom">Personalizado...</option>
+          </select>
+          {periodo === "custom" && (
+            <>
+              <input
+                type="date"
+                className="vx-input"
+                style={{ fontSize: 12, padding: "6px 10px", borderRadius: 10 }}
+                value={customDe}
+                onChange={(e) => setCustomDe(e.target.value)}
+                aria-label="Data inicial"
+              />
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>até</span>
+              <input
+                type="date"
+                className="vx-input"
+                style={{ fontSize: 12, padding: "6px 10px", borderRadius: 10 }}
+                value={customAte}
+                onChange={(e) => setCustomAte(e.target.value)}
+                aria-label="Data final"
+              />
+            </>
+          )}
           {(db?.notifications || []).filter((n) => !n.lida).length > 0 && (
             <div style={{ position: "relative" }}>
               <Bell size={18} color="var(--muted)" />
@@ -399,10 +449,10 @@ export default function InicioEmpresa({ emp, db, setAba }) {
             {/* Métricas rápidas do período */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
               {[
-                { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte).length, icon: Activity },
-                { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && s.status === "liberado").length, icon: CheckCircle2, cor: "#059669" },
-                { label: "Leads no período", val: leads.filter((l) => Number(l.criadoEm || l.atualizadoEm) >= corte).length, icon: Target, cor: "#D97706" },
-                { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte).length, icon: Megaphone, cor: "#7C3AED" },
+                { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
+                { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2, cor: "#059669" },
+                { label: "Leads no período", val: leads.filter((l) => { const t = Number(l.criadoEm || l.atualizadoEm); return t >= corte && t <= fimPeriodo; }).length, icon: Target, cor: "#D97706" },
+                { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone, cor: "#7C3AED" },
               ].map(({ label, val, icon: Ic, cor = "var(--brand)" }) => (
                 <div key={label} className="vx-card" style={{ padding: "12px 14px", background: "var(--surface-2)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>

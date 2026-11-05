@@ -17,6 +17,9 @@ export default function PainelEmpresa({ emp, db, up, aviso, irParaCampanhas }) {
   const [minimo, setMinimo] = useState(1);
   const [financeiro, setFinanceiro] = useState(null);
   const [filtros, setFiltros] = useState({ dias: "30", campaignId: "", sellerId: "", tipo: "" });
+  const [customDe, setCustomDe] = useState("");
+  const [customAte, setCustomAte] = useState("");
+  const [tipoPeriodo, setTipoPeriodo] = useState("30");
   const [premissas, setPremissas] = useState({ metaVendas: 5, ticketMedio: valorMonetario(emp.ticket), taxaComparecimento: "", taxaConversao: "", custoAgendada: "" });
 
   useEffect(() => {
@@ -82,7 +85,43 @@ export default function PainelEmpresa({ emp, db, up, aviso, irParaCampanhas }) {
       <div className="vx-page-head" style={{ paddingBottom: 0 }}>
         <div><h1 className="vx-disp">Insights</h1></div>
         <div className="vx-filterbar" style={{ alignSelf: "flex-end" }}>
-          <select className="vx-input" aria-label="Período" value={filtros.dias} onChange={(e) => setFiltros({ ...filtros, dias: e.target.value })}><option value="7">7 dias</option><option value="30">30 dias</option><option value="90">90 dias</option><option value="">Todo período</option></select>
+          <select className="vx-input" aria-label="Período" value={tipoPeriodo} onChange={(e) => {
+            const v = e.target.value;
+            setTipoPeriodo(v);
+            setCustomDe(""); setCustomAte("");
+            if (v !== "custom" && v !== "mes" && v !== "ano") setFiltros((f) => ({ ...f, dias: v }));
+            else if (v === "mes") { const d = new Date(); const dias = d.getDate(); setFiltros((f) => ({ ...f, dias: String(dias) })); }
+            else if (v === "ano") { const d = new Date(); const start = new Date(d.getFullYear(), 0, 1); const dias = Math.ceil((d - start) / 86400000); setFiltros((f) => ({ ...f, dias: String(dias) })); }
+          }}>
+            <option value="1">Hoje</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="mes">Este mês</option>
+            <option value="ano">Este ano</option>
+            <option value="">Todo o período</option>
+            <option value="custom">Personalizado...</option>
+          </select>
+          {tipoPeriodo === "custom" && (
+            <>
+              <input type="date" className="vx-input" aria-label="De" value={customDe} onChange={(e) => {
+                setCustomDe(e.target.value);
+                const ate = customAte || new Date().toISOString().slice(0,10);
+                if (e.target.value) {
+                  const diff = Math.ceil((new Date(ate) - new Date(e.target.value)) / 86400000);
+                  if (diff > 0) setFiltros((f) => ({ ...f, dias: String(diff) }));
+                }
+              }} />
+              <span style={{ fontSize: 12, color: "var(--muted)", alignSelf: "center" }}>até</span>
+              <input type="date" className="vx-input" aria-label="Até" value={customAte} onChange={(e) => {
+                setCustomAte(e.target.value);
+                if (customDe && e.target.value) {
+                  const diff = Math.ceil((new Date(e.target.value) - new Date(customDe)) / 86400000);
+                  if (diff > 0) setFiltros((f) => ({ ...f, dias: String(diff) }));
+                }
+              }} />
+            </>
+          )}
           <select className="vx-input" aria-label="Campanha" value={filtros.campaignId} onChange={(e) => setFiltros({ ...filtros, campaignId: e.target.value })}><option value="">Todas campanhas</option>{(db.campaigns || []).filter((c) => c.companyId === emp.id).map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select>
           <select className="vx-input" aria-label="Profissional" value={filtros.sellerId} onChange={(e) => setFiltros({ ...filtros, sellerId: e.target.value })}><option value="">Todos profissionais</option>{db.sellers.filter((s) => s.aplicacoes?.[emp.id] === "aprovado").map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}</select>
           <select className="vx-input" aria-label="Tipo de tarefa" value={filtros.tipo} onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}><option value="">Todas tarefas</option>{Object.entries(ACOES).map(([k, a]) => <option key={k} value={k}>{a.nome}</option>)}</select>
