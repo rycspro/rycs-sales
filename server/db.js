@@ -1434,6 +1434,7 @@ adicionarColuna("sellers", "sobrenome", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "pais", "TEXT DEFAULT 'Brasil'");
 adicionarColuna("sellers", "genero", "TEXT DEFAULT ''");
 adicionarColuna("messages", "lida", "INTEGER DEFAULT 0");
+adicionarColuna("messages", "anexo", "TEXT DEFAULT ''");
 
 // Backfill: campanhas existentes sem pipeline recebem as etapas padrão
 (() => {

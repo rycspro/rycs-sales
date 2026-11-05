@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   MessageSquare, Search, X, ChevronLeft,
   CheckCheck, Check, CheckCircle2,
+  Paperclip, Image, FileText, Mic, MicOff, Download,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora, money, dataCurta } from "../../lib/utils.js";
@@ -310,9 +311,20 @@ function Avatar({ nome, foto, size = 40, fontSize = 15 }) {
 
 function ItemConversa({ c, ativo, onClick }) {
   const nome = capitalizar(c.seller?.nome || "Profissional");
-  const preview = c.ultima
-    ? `${c.ultima.de === "empresa" ? "Você: " : ""}${c.ultima.texto}`
-    : "Sem mensagens";
+  const previewTexto = (() => {
+    if (!c.ultima) return "Sem mensagens";
+    const prefixo = c.ultima.de === "empresa" ? "Você: " : "";
+    if (c.ultima.anexo) {
+      try {
+        const a = JSON.parse(c.ultima.anexo);
+        if (a.tipo === "imagem") return prefixo + "📷 Foto";
+        if (a.tipo === "audio") return prefixo + "🎤 Áudio";
+        if (a.tipo === "documento") return prefixo + `📄 ${a.nome || "Documento"}`;
+      } catch { /* */ }
+    }
+    return prefixo + (c.ultima.texto || "");
+  })();
+  const preview = previewTexto;
   return (
     <button
       onClick={onClick}
@@ -416,12 +428,35 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
               <div style={{
                 background: meu ? "#2563EB" : "#F1F5F9",
                 color: meu ? "#fff" : "#1E293B",
-                padding: "9px 13px",
+                padding: item.anexo ? "6px" : "9px 13px",
                 borderRadius: meu ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                 fontSize: 13.5, lineHeight: 1.5, wordBreak: "break-word",
                 boxShadow: meu ? "0 2px 8px rgba(37,99,235,.2)" : "0 1px 2px rgba(0,0,0,.04)",
+                overflow: "hidden",
               }}>
-                {item.texto}
+                {(() => {
+                  let anexo = null;
+                  try { anexo = item.anexo ? JSON.parse(item.anexo) : null; } catch { /* */ }
+                  if (anexo?.tipo === "imagem") return (
+                    <img src={anexo.dados} alt={anexo.nome || "Foto"} style={{ maxWidth: 260, maxHeight: 300, borderRadius: 10, display: "block" }} />
+                  );
+                  if (anexo?.tipo === "audio") return (
+                    <div style={{ padding: "4px 6px" }}>
+                      <audio controls src={anexo.dados} style={{ maxWidth: 240, height: 36 }} />
+                    </div>
+                  );
+                  if (anexo?.tipo === "documento") return (
+                    <a href={anexo.dados} download={anexo.nome} style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 10px", color: meu ? "#fff" : "#1E293B", textDecoration: "none" }}>
+                      <FileText size={18} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{anexo.nome}</div>
+                        <div style={{ fontSize: 11, opacity: 0.7 }}>Toque para baixar</div>
+                      </div>
+                      <Download size={14} style={{ marginLeft: 4, opacity: 0.7 }} />
+                    </a>
+                  );
+                  return item.texto;
+                })()}
               </div>
               <div style={{ fontSize: 10.5, color: "#94A3B8", marginTop: 3, display: "flex", alignItems: "center", gap: 3, justifyContent: meu ? "flex-end" : "flex-start", paddingLeft: meu ? 0 : 4, paddingRight: meu ? 4 : 0 }}>
                 <span>{new Date(item.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
@@ -442,9 +477,45 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
 
 // ── Campo de envio ────────────────────────────────────────────────────────────
 
-function CampoEnvio({ onEnviar, enviando }) {
+async function comprimirImagem(file) {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 1200;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+        else { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+    img.src = url;
+  });
+}
+
+function lerArquivoBase64(file) {
+  return new Promise((resolve) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.readAsDataURL(file);
+  });
+}
+
+function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
   const [txt, setTxt] = useState("");
+  const [gravando, setGravando] = useState(false);
+  const [tempoGrav, setTempoGrav] = useState(0);
   const ref = useRef(null);
+  const fotoRef = useRef(null);
+  const docRef = useRef(null);
+  const mrRef = useRef(null);
+  const chunksRef = useRef([]);
+  const timerRef = useRef(null);
 
   const submeter = () => {
     if (!txt.trim() || enviando) return;
@@ -457,48 +528,149 @@ function CampoEnvio({ onEnviar, enviando }) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submeter(); }
   };
 
+  const enviarFoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const dados = await comprimirImagem(file);
+    onEnviarAnexo({ tipo: "imagem", nome: file.name, mime: "image/jpeg", dados });
+  };
+
+  const enviarDoc = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (file.size > 5 * 1024 * 1024) { alert("Documento muito grande. Máximo 5MB."); return; }
+    const dados = await lerArquivoBase64(file);
+    onEnviarAnexo({ tipo: "documento", nome: file.name, mime: file.type, dados });
+  };
+
+  const iniciarGravacao = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg" });
+      mrRef.current = mr;
+      chunksRef.current = [];
+      mr.ondataavailable = (ev) => { if (ev.data.size > 0) chunksRef.current.push(ev.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const mime = mr.mimeType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: mime });
+        const r = new FileReader();
+        r.onload = () => onEnviarAnexo({ tipo: "audio", nome: "audio.webm", mime, dados: r.result });
+        r.readAsDataURL(blob);
+      };
+      mr.start(200);
+      setGravando(true);
+      setTempoGrav(0);
+      timerRef.current = setInterval(() => setTempoGrav((t) => t + 1), 1000);
+    } catch {
+      alert("Permissão de microfone negada.");
+    }
+  };
+
+  const pararGravacao = () => {
+    mrRef.current?.stop();
+    clearInterval(timerRef.current);
+    setGravando(false);
+    setTempoGrav(0);
+  };
+
+  const cancelarGravacao = () => {
+    chunksRef.current = [];
+    mrRef.current?.stream?.getTracks().forEach((t) => t.stop());
+    if (mrRef.current && mrRef.current.state !== "inactive") {
+      mrRef.current.ondataavailable = null;
+      mrRef.current.onstop = null;
+      mrRef.current.stop();
+    }
+    clearInterval(timerRef.current);
+    setGravando(false);
+    setTempoGrav(0);
+  };
+
+  const fmtTempo = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  const podeSend = txt.trim() && !enviando;
+
   return (
-    <div style={{ padding: "12px 16px", borderTop: "1px solid #F1F5F9", background: "#fff", display: "flex", gap: 10, alignItems: "flex-end" }}>
-      <textarea
-        ref={ref}
-        value={txt}
-        onChange={(e) => setTxt(e.target.value)}
-        onKeyDown={onKey}
-        placeholder="Escreva uma mensagem… (Enter para enviar, Shift+Enter para nova linha)"
-        rows={1}
-        style={{
-          flex: 1, resize: "none", border: "1.5px solid #E2E8F0", borderRadius: 10,
-          padding: "10px 13px", fontSize: 13.5, fontFamily: "inherit", lineHeight: 1.5,
-          outline: "none", color: "#1E293B", background: "#F8FAFC",
-          transition: "border-color .15s",
-          maxHeight: 120, overflowY: "auto",
-        }}
-        onFocus={(e) => { e.target.style.borderColor = "#2563EB"; e.target.style.background = "#fff"; }}
-        onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; e.target.style.background = "#F8FAFC"; }}
-        onInput={(e) => {
-          e.target.style.height = "auto";
-          e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
-        }}
-        aria-label="Campo de mensagem"
-      />
-      <button
-        onClick={submeter}
-        disabled={!txt.trim() || enviando}
-        aria-label="Enviar mensagem"
-        style={{
-          width: 40, height: 40, borderRadius: 10, border: "none",
-          background: txt.trim() && !enviando ? "#2563EB" : "#E2E8F0",
-          color: txt.trim() && !enviando ? "#fff" : "#94A3B8",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: txt.trim() && !enviando ? "pointer" : "not-allowed",
-          transition: "background .15s, color .15s",
-          flexShrink: 0,
-        }}
-      >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-        </svg>
-      </button>
+    <div style={{ borderTop: "1px solid #F1F5F9", background: "#fff" }}>
+      {/* Barra de gravação */}
+      {gravando && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", background: "#FEF2F2", borderBottom: "1px solid #FECACA" }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#DC2626", animation: "pulse 1s infinite", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: "#B91C1C", fontWeight: 600 }}>Gravando… {fmtTempo(tempoGrav)}</span>
+          <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+            <button onClick={cancelarGravacao} style={{ padding: "5px 12px", fontSize: 12, background: "none", border: "1px solid #FECACA", borderRadius: 8, color: "#B91C1C", cursor: "pointer" }}>Cancelar</button>
+            <button onClick={pararGravacao} style={{ padding: "5px 12px", fontSize: 12, background: "#DC2626", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontWeight: 600 }}>Enviar áudio</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ padding: "10px 14px", display: "flex", gap: 8, alignItems: "flex-end" }}>
+        {/* Botões de anexo */}
+        <div style={{ display: "flex", gap: 4, flexShrink: 0, paddingBottom: 1 }}>
+          <input ref={fotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={enviarFoto} />
+          <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style={{ display: "none" }} onChange={enviarDoc} />
+
+          <button onClick={() => fotoRef.current?.click()} title="Enviar foto" disabled={gravando || enviando}
+            style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#64748B", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all .15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
+          ><Image size={15} /></button>
+
+          <button onClick={() => docRef.current?.click()} title="Enviar documento" disabled={gravando || enviando}
+            style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#64748B", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all .15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
+          ><FileText size={15} /></button>
+
+          <button onClick={gravando ? pararGravacao : iniciarGravacao} title={gravando ? "Parar gravação" : "Gravar áudio"} disabled={enviando}
+            style={{ width: 36, height: 36, borderRadius: 9, border: `1.5px solid ${gravando ? "#DC2626" : "#E2E8F0"}`, background: gravando ? "#FEF2F2" : "#F8FAFC", color: gravando ? "#DC2626" : "#64748B", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all .15s" }}
+          >{gravando ? <MicOff size={15} /> : <Mic size={15} />}</button>
+        </div>
+
+        {/* Input de texto */}
+        <textarea
+          ref={ref}
+          value={txt}
+          onChange={(e) => setTxt(e.target.value)}
+          onKeyDown={onKey}
+          placeholder="Escreva uma mensagem… (Enter para enviar, Shift+Enter para nova linha)"
+          rows={1}
+          disabled={gravando}
+          style={{
+            flex: 1, resize: "none", border: "1.5px solid #E2E8F0", borderRadius: 10,
+            padding: "9px 13px", fontSize: 13.5, fontFamily: "inherit", lineHeight: 1.5,
+            outline: "none", color: "#1E293B", background: gravando ? "#F8FAFC" : "#F8FAFC",
+            transition: "border-color .15s", maxHeight: 120, overflowY: "auto",
+            opacity: gravando ? 0.4 : 1,
+          }}
+          onFocus={(e) => { if (!gravando) { e.target.style.borderColor = "#2563EB"; e.target.style.background = "#fff"; } }}
+          onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; e.target.style.background = "#F8FAFC"; }}
+          onInput={(e) => { e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
+          aria-label="Campo de mensagem"
+        />
+
+        {/* Botão enviar */}
+        <button
+          onClick={submeter}
+          disabled={!podeSend}
+          aria-label="Enviar mensagem"
+          style={{
+            width: 38, height: 38, borderRadius: 10, border: "none",
+            background: podeSend ? "#2563EB" : "#E2E8F0",
+            color: podeSend ? "#fff" : "#94A3B8",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: podeSend ? "pointer" : "not-allowed",
+            transition: "background .15s, color .15s", flexShrink: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -571,20 +743,24 @@ export default function ConversasEmpresa({ emp, db, up }) {
     }));
   }, [emp.id, up]);
 
-  const enviarMensagem = useCallback(async (texto) => {
+  const enviarMensagem = useCallback(async (texto, anexo) => {
     if (enviando || !selSellerId) return;
     setEnviando(true);
     const id = uid();
     const ts = agora();
-    up((d) => ({ messages: [...d.messages, { id, companyId: emp.id, sellerId: selSellerId, de: "empresa", texto, ts, lida: 0 }] }));
+    up((d) => ({ messages: [...d.messages, { id, companyId: emp.id, sellerId: selSellerId, de: "empresa", texto: texto || "", ts, lida: 0, anexo: anexo ? JSON.stringify(anexo) : "" }] }));
     try {
-      await api("/messages", { companyId: emp.id, sellerId: selSellerId, de: "empresa", texto });
+      await api("/messages", { companyId: emp.id, sellerId: selSellerId, de: "empresa", texto: texto || (anexo ? `[${anexo.tipo === "imagem" ? "📷 Foto" : anexo.tipo === "audio" ? "🎤 Áudio" : `📄 ${anexo.nome || "Documento"}`}]` : ""), anexo: anexo ? JSON.stringify(anexo) : undefined });
     } catch {
       up((d) => ({ messages: d.messages.filter((m) => m.id !== id) }));
     } finally {
       setEnviando(false);
     }
   }, [enviando, selSellerId, emp.id, up]);
+
+  const enviarAnexo = useCallback((anexo) => {
+    enviarMensagem("", anexo);
+  }, [enviarMensagem]);
 
   const selConv = conversas.find((c) => c.sellerId === selSellerId);
   const msgsSel = selConv
@@ -599,6 +775,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
 
   return (
     <div style={{ display: "flex", height: mobile ? "calc(100dvh - 56px - env(safe-area-inset-bottom,0px))" : "calc(100vh - 56px)", overflow: "hidden", background: "#F8FAFC" }}>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
 
       {/* ── PAINEL 2: LISTA DE CONVERSAS ─────────────────────────────────── */}
       {mostraLista && (
@@ -743,7 +920,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
               <AreaMensagens msgs={msgsSel} companyId={emp.id} nomeEmpresa={emp.nome} seller={selConv?.seller} />
 
               {/* campo de envio */}
-              <CampoEnvio onEnviar={enviarMensagem} enviando={enviando} />
+              <CampoEnvio onEnviar={enviarMensagem} onEnviarAnexo={enviarAnexo} enviando={enviando} />
             </>
           )}
         </div>
