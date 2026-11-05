@@ -139,7 +139,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoConferir === "regras" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} filtroData={filtroAtual} />}
       </>}
       {aba === "leads" && (
-        <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} filtroData={filtroAtual} filtroBtn={filtroLeadsBtn} />
+        <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} filtroData={filtroAtual} filtroBtn={filtroLeadsBtn} setAba={setAba} />
       )}
       {aba === "pagamentos" && <PagamentosEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} />}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}

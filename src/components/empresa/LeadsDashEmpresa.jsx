@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, Filter, Eye, X, CheckSquare, Square, Minus } from "lucide-react";
+import { RefreshCw, Filter, Eye, X, CheckSquare, Square, Minus, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { Vazio, Medidor } from "../ui.jsx";
 import { money, dataCurta } from "../../lib/utils.js";
-import { apiPatch } from "../../lib/api.js";
+import { api, apiPatch } from "../../lib/api.js";
 import { STATUS_CLIENTE } from "./ConferirEmpresa.jsx";
 import { STATUS, ACOES, CAMPOS, MOTIVO_COR } from "../../lib/constants.js";
 
@@ -82,7 +82,7 @@ function BadgeCliente({ statusCliente }) {
 }
 
 // ── Modal de detalhes ──────────────────────────────────────────────────────
-function ModalDetalhes({ sub, seller, camp, onFechar }) {
+function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
   const overlayRef = useRef(null);
   const acao = ACOES[sub.tipo] || { nome: sub.tipo || "Tarefa", prova: Object.keys(sub.prova || {}).filter((k) => k !== "evidencias") };
   const prova = sub.prova || {};
@@ -90,6 +90,30 @@ function ModalDetalhes({ sub, seller, camp, onFechar }) {
   const camposProva = (acao.prova || []).filter((k) => k !== "evidencias");
   const extraProva = Object.entries(prova).filter(([k]) => k !== "evidencias" && !camposProva.includes(k));
   const st = STATUS[sub.status] || STATUS.analisando;
+
+  const tipoLabel = TIPO_LABEL[sub.tipo] || sub.tipo || "tarefa";
+  const textoInicial = `Olá! Tenho uma pergunta sobre o seu lead de ${tipoLabel}${camp?.titulo ? ` na campanha "${camp.titulo}"` : ""} registrado em ${dataCurta(sub.criadoEm)}. `;
+
+  const [compondo, setCompondo] = useState(false);
+  const [texto, setTexto] = useState(textoInicial);
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (compondo && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(texto.length, texto.length);
+    }
+  }, [compondo]);
+
+  const enviarMensagem = async () => {
+    if (!texto.trim() || !seller?.id || !emp?.id) return;
+    setEnviando(true);
+    await api("/messages", { companyId: emp.id, sellerId: seller.id, de: "empresa", texto: texto.trim() });
+    setEnviando(false);
+    setEnviado(true);
+  };
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onFechar(); };
@@ -219,6 +243,96 @@ function ModalDetalhes({ sub, seller, camp, onFechar }) {
               })}
             </div>
           )}
+
+          {/* Botão / área de mensagem */}
+          <div style={{ marginTop: 24, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+            {!compondo && !enviado && (
+              <button
+                onClick={() => setCompondo(true)}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "11px 16px", borderRadius: 10, fontSize: 14, fontWeight: 600,
+                  border: "1.5px solid var(--border)", background: "var(--surface-2)",
+                  color: "var(--ink)", cursor: "pointer", transition: "border-color .15s, background .15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.background = "var(--brand)0d"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface-2)"; }}
+              >
+                <MessageSquare size={16} color="var(--brand)" />
+                Enviar mensagem ao vendedor
+              </button>
+            )}
+
+            {compondo && !enviado && (
+              <div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                  <MessageSquare size={12} />
+                  Mensagem para <b style={{ color: "var(--ink)" }}>{capitalizar(seller?.nome || "o vendedor")}</b>
+                </div>
+                <textarea
+                  ref={textareaRef}
+                  value={texto}
+                  onChange={(e) => setTexto(e.target.value)}
+                  rows={4}
+                  style={{
+                    width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: "inherit",
+                    border: "1.5px solid var(--border)", borderRadius: 10,
+                    background: "var(--surface-2)", color: "var(--ink)", resize: "vertical",
+                    outline: "none", boxSizing: "border-box", lineHeight: 1.5,
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = "var(--brand)"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
+                />
+                <div style={{ display: "flex", gap: 8, marginTop: 8, justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => { setCompondo(false); setTexto(textoInicial); }}
+                    style={{
+                      padding: "7px 14px", fontSize: 13, borderRadius: 8,
+                      border: "1.5px solid var(--border)", background: "var(--surface-2)",
+                      color: "var(--muted)", cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >Cancelar</button>
+                  <button
+                    onClick={enviarMensagem}
+                    disabled={enviando || !texto.trim()}
+                    style={{
+                      padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8,
+                      border: "none", background: "var(--brand)", color: "#fff",
+                      cursor: enviando ? "default" : "pointer", fontFamily: "inherit",
+                      display: "flex", alignItems: "center", gap: 6,
+                      opacity: !texto.trim() ? 0.5 : 1,
+                    }}
+                  >
+                    <Send size={13} />
+                    {enviando ? "Enviando…" : "Enviar"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {enviado && (
+              <div style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+                padding: "16px", background: "var(--surface-2)", borderRadius: 10, textAlign: "center",
+              }}>
+                <CheckCircle2 size={28} color="#16a34a" />
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Mensagem enviada!</div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                  {capitalizar(seller?.nome || "O vendedor")} vai receber sua mensagem nas Conversas.
+                </div>
+                {setAba && (
+                  <button
+                    onClick={() => { onFechar(); setAba("conversas"); }}
+                    style={{
+                      padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8,
+                      border: "1.5px solid var(--brand)", background: "transparent",
+                      color: "var(--brand)", cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >Ver conversa</button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -309,7 +423,7 @@ const TD = ({ children, right, muted, check }) => (
   }}>{children}</td>
 );
 
-export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, filtroBtn }) {
+export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, filtroBtn, setAba }) {
   const [atualizadoEm, setAtualizadoEm] = useState(Date.now());
   const [refrescando, setRefrescando] = useState(false);
   const [filtroVendedor, setFiltroVendedor] = useState("");
@@ -571,6 +685,8 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
           sub={modalSub}
           seller={db.sellers?.find((s) => s.id === modalSub.sellerId)}
           camp={db.campaigns?.find((c) => c.id === modalSub.campaignId)}
+          emp={emp}
+          setAba={setAba}
           onFechar={() => setModalSub(null)}
         />
       )}
