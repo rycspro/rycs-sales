@@ -393,67 +393,6 @@ export default function InicioEmpresa({ emp, db, setAba }) {
         />
       </div>
 
-      {/* ── LEMBRETES PENDENTES ────────────────────────────────────────── */}
-      {pendencias.length > 0 ? (
-        <div style={{
-          background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 14, padding: "16px 20px", marginBottom: 28,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <AlertTriangle size={15} color="#D97706" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>
-              {pendencias.length} {pendencias.length === 1 ? "pendência" : "pendências"}
-            </span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {pendencias.map((p, i) => {
-              const Ic = p.icon;
-              return (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  padding: "10px 14px", borderRadius: 10,
-                  background: "var(--surface-2)", cursor: "pointer",
-                  transition: "background .12s",
-                }}
-                  onClick={() => ir(p.aba)}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3, #e2e8f0)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
-                >
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: p.cor + "14", display: "flex",
-                    alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}>
-                    <Ic size={16} color={p.cor} />
-                  </div>
-                  <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>{p.texto}</span>
-                  <span style={{
-                    fontSize: 12, fontWeight: 600, color: p.cor,
-                    display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
-                  }}>
-                    {p.cta} <ArrowRight size={13} />
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div style={{
-          background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
-          borderRadius: 14, padding: "16px 24px", marginBottom: 28,
-          display: "flex", alignItems: "center", gap: 14,
-          boxShadow: "0 4px 20px rgba(5,150,105,.18)",
-        }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Sparkles size={18} color="#fff" />
-          </div>
-          <p style={{ margin: 0, fontSize: 14, color: "#fff", fontWeight: 500 }}>
-            Tudo em dia! Sua operação está ativa com {campanhasAtivas.length} campanha{campanhasAtivas.length !== 1 ? "s" : ""} e {sellersAtivos.length} profissional{sellersAtivos.length !== 1 ? "is" : ""}.
-          </p>
-        </div>
-      )}
-
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
         <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} cor="#059669" />
@@ -610,6 +549,67 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           </div>
         </div>
       </div>
+
+      {/* ── LEMBRETES PENDENTES ────────────────────────────────────────── */}
+      {pendencias.length > 0 ? (
+        <div style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 14, padding: "16px 20px", marginTop: 16,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <AlertTriangle size={15} color="#D97706" />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>
+              {pendencias.length} {pendencias.length === 1 ? "pendência" : "pendências"}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {pendencias.map((p, i) => {
+              const Ic = p.icon;
+              return (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "10px 14px", borderRadius: 10,
+                  background: "var(--surface-2)", cursor: "pointer",
+                  transition: "background .12s",
+                }}
+                  onClick={() => ir(p.aba)}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3, #e2e8f0)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: p.cor + "14", display: "flex",
+                    alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <Ic size={16} color={p.cor} />
+                  </div>
+                  <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>{p.texto}</span>
+                  <span style={{
+                    fontSize: 12, fontWeight: 600, color: p.cor,
+                    display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+                  }}>
+                    {p.cta} <ArrowRight size={13} />
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div style={{
+          background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+          borderRadius: 14, padding: "16px 24px", marginTop: 16,
+          display: "flex", alignItems: "center", gap: 14,
+          boxShadow: "0 4px 20px rgba(5,150,105,.18)",
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Sparkles size={18} color="#fff" />
+          </div>
+          <p style={{ margin: 0, fontSize: 14, color: "#fff", fontWeight: 500 }}>
+            Tudo em dia! Sua operação está ativa com {campanhasAtivas.length} campanha{campanhasAtivas.length !== 1 ? "s" : ""} e {sellersAtivos.length} profissional{sellersAtivos.length !== 1 ? "is" : ""}.
+          </p>
+        </div>
+      )}
 
       {/* Mobile: coluna direita vira bloco único embaixo */}
       <style>{`
