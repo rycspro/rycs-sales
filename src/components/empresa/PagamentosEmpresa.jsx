@@ -3,14 +3,13 @@ import {
   ArrowUpCircle, Check, ChevronRight, CreditCard, Download,
   Landmark, Lock, Plus, QrCode, TrendingUp, Wallet, X, Zap,
 } from "lucide-react";
+import PlanosEmpresa from "./PlanosEmpresa.jsx";
 import { api, API_URL } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
-import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
 import { isPosPago, isPremium } from "../../../shared/empresa.js";
+import { PLANOS } from "../../../shared/planos.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const PLANOS_VISIVEIS = ORDEM_PLANOS.filter((k) => PLANOS[k]?.preco > 0);
-
 const MOVIMENTOS = {
   deposito:        { nome: "Depósito",          cor: "var(--brand)" },
   reserva:         { nome: "Reserva",           cor: "var(--amber,#b45309)" },
@@ -156,51 +155,6 @@ function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   );
 }
 
-// ── Seção de planos ───────────────────────────────────────────────────────────
-function CardPlano({ chave, plano, atual, temAssinatura, onContratar }) {
-  const ehAtual = atual === chave;
-  return (
-    <div style={{
-      border: `2px solid ${ehAtual ? "var(--brand)" : "var(--border)"}`,
-      borderRadius: "var(--radius)", padding: "20px 18px",
-      background: ehAtual ? "#EFF6FF" : "var(--surface)",
-      position: "relative", display: "flex", flexDirection: "column", gap: 12,
-    }}>
-      {ehAtual && (
-        <span style={{ position: "absolute", top: -11, left: 16, background: "var(--brand)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>
-          Seu plano atual
-        </span>
-      )}
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>{plano.nome}</div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: ehAtual ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>
-          {plano.preco === 0 ? "Grátis" : money(plano.preco)}
-          {plano.preco > 0 && <span style={{ fontSize: 12, fontWeight: 400, color: "var(--muted)" }}>/mês</span>}
-        </div>
-        <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
-          Take rate: {(plano.takeRate * 100).toFixed(0)}%
-        </div>
-      </div>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 5 }}>
-        {(plano.inclui || []).map((item) => (
-          <li key={item} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, color: "var(--ink-2)" }}>
-            <Check size={13} color="var(--brand)" strokeWidth={2.5} />
-            {item}
-          </li>
-        ))}
-      </ul>
-      <button
-        className={ehAtual ? "vx-btn vx-btn-sm" : "vx-btn vx-btn-primary vx-btn-sm"}
-        style={{ marginTop: "auto", justifyContent: "center" }}
-        disabled={ehAtual}
-        onClick={() => !ehAtual && onContratar(chave)}
-      >
-        {ehAtual ? "Plano atual" : temAssinatura ? "Alterar para este plano" : "Contratar plano"}
-      </button>
-    </div>
-  );
-}
-
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
   const [dados, setDados] = useState(null);
@@ -233,11 +187,10 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
     aviso?.("Extrato exportado em CSV.");
   };
 
-  const planoAtual   = emp.assinatura || null;
-  const temAssinatura = !!planoAtual && planoAtual !== "free";
-  const infPlano     = planoAtual ? PLANOS[planoAtual] : null;
-  const premium      = isPremium(emp);
-  const posPago      = isPosPago(emp);
+  const planoAtual = emp.assinatura || null;
+  const infPlano   = planoAtual ? PLANOS[planoAtual] : null;
+  const premium    = isPremium(emp);
+  const posPago    = isPosPago(emp);
 
   const posicao  = dados?.posicao  || { saldo: 0, reservado: 0, disponivel: 0 };
   const resumo   = dados?.resumo   || { depositado: 0, utilizado: 0, taxas: 0, repassado: 0, movimentos: 0 };
@@ -248,10 +201,6 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
   const submissoes = (db.submissions || []).filter((s) => s.companyId === emp.id && s.status === "liberado");
   const resultadoGerado = submissoes.reduce((acc, s) => acc + Number(s.valor || 0), 0);
   const retorno = resumo.repassado > 0 ? (resultadoGerado / resumo.repassado).toFixed(1) : null;
-
-  const contratar = (chave) => {
-    aviso("Para alterar seu plano, acesse as configurações de assinatura.");
-  };
 
   return (
     <div className="vx-fade">
@@ -460,19 +409,7 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
       {/* ── 5. Planos disponíveis ── */}
       {!premium && (
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 12 }}>Conheça nossos planos</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-            {PLANOS_VISIVEIS.map((chave) => (
-              <CardPlano
-                key={chave}
-                chave={chave}
-                plano={PLANOS[chave]}
-                atual={planoAtual}
-                temAssinatura={temAssinatura}
-                onContratar={contratar}
-              />
-            ))}
-          </div>
+          <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
         </div>
       )}
 

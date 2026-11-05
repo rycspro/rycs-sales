@@ -6,7 +6,6 @@ import {
   ImagePlus, Trash2,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
-import PlanosEmpresa from "./PlanosEmpresa.jsx";
 import Indicacoes from "../Indicacoes.jsx";
 
 // ── Data ─────────────────────────────────────────────────────────────
@@ -47,7 +46,6 @@ const SECOES_NAV = [
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "seguranca", label: "Segurança", icon: Lock },
   { key: "preferencias", label: "Preferências", icon: Settings },
-  { key: "planos", label: "Planos", icon: CreditCard },
   { key: "suporte", label: "Suporte", icon: Headphones },
   { key: "indicar", label: "Indicar", icon: Gift },
 ];
@@ -468,8 +466,6 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
       </>
     ),
 
-    planos: <PlanosEmpresa aviso={aviso} recarregar={recarregar} />,
-
     suporte: (
       <>
         <PgHead title="Suporte" description="Entre em contato com a equipe RYCS." />
@@ -507,7 +503,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar }) {
     indicar: <Indicacoes aviso={aviso} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "planos", "suporte", "indicar"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "suporte", "indicar"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 
