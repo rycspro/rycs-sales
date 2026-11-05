@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../../lib/api.js";
+import FiltroData from "../FiltroData.jsx";
 import PainelEmpresa from "./PainelEmpresa.jsx";
 import ConferirEmpresa from "./ConferirEmpresa.jsx";
 import TimeEmpresa from "./TimeEmpresa.jsx";
@@ -16,6 +17,15 @@ import InicioEmpresa from "./InicioEmpresa.jsx";
 import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
 import LeadsDashEmpresa from "./LeadsDashEmpresa.jsx";
 
+const CAMPOS_SORT = {
+  inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
+  painel:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
+  campanhas: [{ key: "criadoEm", label: "Data" }, { key: "titulo", label: "Nome" }, { key: "valor", label: "Valor" }],
+  leads:     [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "statusCliente", label: "Status" }],
+  conferir:  [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
+};
+const ABAS_COM_FILTRO = new Set(["inicio", "painel", "campanhas", "leads", "conferir"]);
+
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const sair = async () => {
     await api("/auth/logout", {});
@@ -26,9 +36,13 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   const [secaoInsights, setSecaoInsights] = useState("painel");
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
   const [secaoConferir, setSecaoConferir] = useState("fila");
-  const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
+  const [filtros, setFiltros] = useState({});
 
-  // Portão de acesso: prefetched no App.jsx em paralelo com onboarding.
+  const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
+  const filtroAtual = filtros[aba] || null;
+  const setFiltroAtual = (f) => setFiltros((prev) => ({ ...prev, [aba]: f }));
+  const limparFiltroAtual = () => setFiltros((prev) => ({ ...prev, [aba]: null }));
+
   const acesso = acessoProp === undefined ? null : acessoProp;
   const consultarAcesso = consultarAcessoProp || (() => api("/subscription/access"));
 
@@ -57,23 +71,45 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     );
   }
 
-  const submenu = (itens, ativo, selecionar) => <div className="vx-seg vx-subnav" style={{ marginBottom: 18 }}>
-    {itens.map(([key, label]) => <button key={key} data-on={ativo === key ? "1" : "0"} onClick={() => selecionar(key)}>{label}</button>)}
-  </div>;
+  const submenu = (itens, ativo, selecionar) => (
+    <div className="vx-seg vx-subnav" style={{ marginBottom: 18 }}>
+      {itens.map(([key, label]) => (
+        <button key={key} data-on={ativo === key ? "1" : "0"} onClick={() => selecionar(key)}>{label}</button>
+      ))}
+    </div>
+  );
 
+  const filtroBar = ABAS_COM_FILTRO.has(aba) && (
+    <FiltroData
+      key={aba}
+      campos={CAMPOS_SORT[aba] || []}
+      campoInicial={CAMPOS_SORT[aba]?.[0]?.key || ""}
+      onAplicar={setFiltroAtual}
+      onLimpar={limparFiltroAtual}
+    />
+  );
 
   return (
     <div className="vx-fade">
-      {aba === "inicio" && <InicioEmpresa emp={emp} db={db} setAba={setAba} />}
+      {aba === "inicio" && <>
+        {filtroBar}
+        <InicioEmpresa emp={emp} db={db} setAba={setAba} filtroData={filtroAtual} />
+      </>}
       {aba === "painel" && <>
+        {filtroBar}
         {submenu([["painel", "Insights"], ["financeiro", "Financeiro"]], secaoInsights, setSecaoInsights)}
         {secaoInsights === "painel" && <>
           <BannerCerebro onIr={() => { setSecaoAcademy("empresa"); setAba?.("academy"); }} />
-          <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
+          <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} filtroData={filtroAtual}
+            irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
         </>}
-        {secaoInsights === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
+        {secaoInsights === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />}
       </>}
-      {aba === "campanhas" && <CampanhasHub emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} secao={secaoCampanhas} setSecao={setSecaoCampanhas} />}
+      {aba === "campanhas" && <>
+        {filtroBar}
+        <CampanhasHub emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
+          secao={secaoCampanhas} setSecao={setSecaoCampanhas} filtroData={filtroAtual} />
+      </>}
       {aba === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "conversas" && <ConversasEmpresa emp={emp} db={db} up={up} />}
       {aba === "academy" && <>
@@ -83,12 +119,16 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("configuracoes"); }} />}
       </>}
       {aba === "conferir" && <>
+        {filtroBar}
         {submenu([["fila", "Fila de revisão"], ["time", "Time"], ["regras", "Regras automáticas"]], secaoConferir, setSecaoConferir)}
-        {secaoConferir === "fila" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} />}
+        {secaoConferir === "fila" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} />}
         {secaoConferir === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
-        {secaoConferir === "regras" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} />}
+        {secaoConferir === "regras" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} filtroData={filtroAtual} />}
       </>}
-      {aba === "leads" && <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} />}
+      {aba === "leads" && <>
+        {filtroBar}
+        <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} filtroData={filtroAtual} />
+      </>}
       {aba === "pagamentos" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}
     </div>

@@ -260,8 +260,21 @@ const novaCampanha = (emp) => ({
   }, criteriosAprovacao: { agendamento: "Lead válido, não duplicado e reunião confirmada.", realizada: "Participantes presentes e reunião concluída conforme a campanha." }, treinamento: [], requisitos: "",
 });
 
-export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
-  const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
+export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtroData }) {
+  const campanhasBase = (db.campaigns || []).filter((c) => c.companyId === emp.id);
+  const campanhas = (() => {
+    if (!filtroData) return campanhasBase;
+    const { dataInicio, dataFim, campo, direcao } = filtroData;
+    let r = campanhasBase;
+    if (dataInicio) r = r.filter((c) => Number(c.criadoEm || 0) >= new Date(dataInicio).getTime());
+    if (dataFim)    r = r.filter((c) => Number(c.criadoEm || 0) <= new Date(dataFim + "T23:59:59").getTime());
+    if (campo) r = [...r].sort((a, b) => {
+      const va = a[campo] ?? ""; const vb = b[campo] ?? "";
+      const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR", { numeric: true });
+      return direcao === "asc" ? cmp : -cmp;
+    });
+    return r;
+  })();
   // Criar e editar deixam de ser a mesma tela. Criar é decisão comercial e
   // ganha um assistente de três passos; editar é ajuste fino e continua no
   // editor completo, com todos os campos à mão.

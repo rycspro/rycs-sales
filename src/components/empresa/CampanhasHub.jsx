@@ -26,7 +26,7 @@ function Badge({ n }) {
   );
 }
 
-export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, setSecao }) {
+export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, setSecao, filtroData }) {
   const badges = useMemo(() => {
     const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
     const leads = (db.leads || []).filter((l) => l.companyId === emp.id);
@@ -71,10 +71,10 @@ export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, se
       </div>
 
       {/* Content */}
-      {secao === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
-      {secao === "leads" && <LeadsEmpresa emp={emp} db={db} aviso={aviso} />}
-      {secao === "tarefas" && <TarefasEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} />}
-      {secao === "valores" && <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
+      {secao === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} filtroData={filtroData} />}
+      {secao === "leads" && <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroData} />}
+      {secao === "tarefas" && <TarefasEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} filtroData={filtroData} />}
+      {secao === "valores" && <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} filtroData={filtroData} />}
     </div>
   );
 }

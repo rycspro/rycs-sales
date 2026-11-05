@@ -309,7 +309,7 @@ const TD = ({ children, right, muted, check }) => (
   }}>{children}</td>
 );
 
-export default function LeadsDashEmpresa({ emp, db, up, recarregar }) {
+export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData }) {
   const [atualizadoEm, setAtualizadoEm] = useState(Date.now());
   const [refrescando, setRefrescando] = useState(false);
   const [filtroVendedor, setFiltroVendedor] = useState("");
@@ -343,14 +343,27 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar }) {
 
   const tiposPresentes = [...new Set(todasSubs.map((s) => s.tipo).filter(Boolean))];
 
-  const lista = todasSubs
-    .filter((s) => {
+  const lista = (() => {
+    let r = todasSubs.filter((s) => {
       if (filtroVendedor && s.sellerId !== filtroVendedor) return false;
       if (filtroTipo && s.tipo !== filtroTipo) return false;
       if (filtroStatus && s.statusCliente !== filtroStatus) return false;
+      if (filtroData?.dataInicio && Number(s.criadoEm) < new Date(filtroData.dataInicio).getTime()) return false;
+      if (filtroData?.dataFim && Number(s.criadoEm) > new Date(filtroData.dataFim + "T23:59:59").getTime()) return false;
       return true;
-    })
-    .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    });
+    if (filtroData?.campo) {
+      const { campo, direcao } = filtroData;
+      r = [...r].sort((a, b) => {
+        const va = a[campo] ?? ""; const vb = b[campo] ?? "";
+        const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR", { numeric: true });
+        return direcao === "asc" ? cmp : -cmp;
+      });
+    } else {
+      r = [...r].sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    }
+    return r;
+  })();
 
   const temFiltro = filtroVendedor || filtroTipo || filtroStatus;
   const idsVisiveis = lista.map((s) => s.id);

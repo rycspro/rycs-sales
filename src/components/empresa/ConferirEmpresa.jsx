@@ -342,11 +342,27 @@ function TabelaHistorico({ subs, db }) {
   );
 }
 
-export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar }) {
-
+export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar, filtroData }) {
   const solicitacoes = db.solicitacoesPendentes || [];
-  const revisao = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
-  const iaAprovados = db.submissions.filter((s) => s.companyId === emp.id && ["ia_aprovado", "conferido"].includes(s.status));
+  const revisaoBase = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
+  const iaAprovadosBase = db.submissions.filter((s) => s.companyId === emp.id && ["ia_aprovado", "conferido"].includes(s.status));
+
+  const aplicarFiltro = (lista) => {
+    if (!filtroData) return lista;
+    const { dataInicio, dataFim, campo, direcao } = filtroData;
+    let r = lista;
+    if (dataInicio) r = r.filter((s) => Number(s.criadoEm) >= new Date(dataInicio).getTime());
+    if (dataFim)    r = r.filter((s) => Number(s.criadoEm) <= new Date(dataFim + "T23:59:59").getTime());
+    if (campo) r = [...r].sort((a, b) => {
+      const va = a[campo] ?? ""; const vb = b[campo] ?? "";
+      const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR", { numeric: true });
+      return direcao === "asc" ? cmp : -cmp;
+    });
+    return r;
+  };
+
+  const revisao = aplicarFiltro(revisaoBase);
+  const iaAprovados = aplicarFiltro(iaAprovadosBase);
 
   const aprovarProfissional = async (sellerId, campanhasAuto) => {
     const r = await apiPatch("/applications", { sellerId, companyId: emp.id, status: "aprovado", campanhasAuto });
