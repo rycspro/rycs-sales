@@ -75,8 +75,10 @@ export default function App() {
   const [environment, setEnvironment] = useState("production");
   const [nav, setNav] = useState({ vendedor: "oportunidades", empresa: previaQualificacao ? (previaEmpresa ? "inicio" : "academy") : "inicio", admin: "dashboard" });
   useEffect(() => {
-    document.documentElement.style.background = "#F4F7FC";
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#F4F7FC");
+    const isDark = document.documentElement.classList.contains("dark");
+    const bg = isDark ? "#0B1121" : "#F2F4F8";
+    document.documentElement.style.background = bg;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
   }, []);
 
   const userRef = useRef(null);
@@ -250,7 +252,7 @@ export default function App() {
   const aba = nav[role];
   const setAba = (k) => setNav((n) => ({ ...n, [role]: k }));
 
-  if (!loaded) return <div className="vx-app" style={{ background: "#F4F7FC", minHeight: "100dvh" }}><style>{CSS}</style></div>;
+  if (!loaded) return <div className="vx-app" style={{ minHeight: "100dvh" }}><style>{CSS}</style></div>;
 
   const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
 

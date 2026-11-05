@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Monitor } from "lucide-react";
 import { ler, gravar } from "../lib/armazenamento.js";
 
 function getSystemDark() {
@@ -9,10 +9,14 @@ function getSystemDark() {
 function aplicar(tema) {
   const isDark = tema === "dark" || (tema === "system" && getSystemDark());
   document.documentElement.classList.toggle("dark", isDark);
+  const bg = isDark ? "#0B1121" : "#F2F4F8";
+  document.documentElement.style.background = bg;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
 }
 
 const OPCOES = [
   { value: "light", Icon: Sun, label: "Claro" },
+  { value: "system", Icon: Monitor, label: "Sistema" },
   { value: "dark", Icon: Moon, label: "Escuro" },
 ];
 
@@ -44,7 +48,9 @@ export default function ThemeSwitcher() {
       style={{
         display: "inline-flex", alignItems: "center", gap: 2,
         borderRadius: 999, background: "var(--surface-2)",
-        border: "1px solid var(--border)", padding: 3,
+        border: "1px solid var(--glass-border, var(--border))", padding: 3,
+        backdropFilter: "var(--glass-blur)",
+        WebkitBackdropFilter: "var(--glass-blur)",
       }}
     >
       {OPCOES.map(({ value, Icon, label }) => (
@@ -58,9 +64,9 @@ export default function ThemeSwitcher() {
           style={{
             width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
-            background: tema === value ? "var(--surface)" : "transparent",
+            background: tema === value ? "var(--surface-solid, var(--surface))" : "transparent",
             color: tema === value ? "var(--brand)" : "var(--muted)",
-            boxShadow: tema === value ? "0 1px 3px rgba(0,0,0,.12)" : "none",
+            boxShadow: tema === value ? "0 1px 4px rgba(0,0,0,.1)" : "none",
             transition: "background .2s, color .2s, box-shadow .2s",
           }}
         >

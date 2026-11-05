@@ -67,7 +67,7 @@ export default function Shell({ role, active, onSelect, counts, beta, onLogout, 
           <button key={key} className="vx-navbtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
             {active === key && <span className="vx-navbar-indicator" />}
             {counts?.[key] > 0 && <span className="vx-navdot">{counts[key]}</span>}
-            <Icon size={19} strokeWidth={2.3} />
+            <Icon size={20} strokeWidth={2.2} />
             <span>{label}</span>
           </button>
         ))}
