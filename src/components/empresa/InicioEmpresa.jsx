@@ -423,20 +423,20 @@ export default function InicioEmpresa({ emp, db, setAba }) {
               </button>
             </div>
 
-            {/* Métricas rápidas do período */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
+            {/* Métricas rápidas do período — região unificada com divisores sutis */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 0, marginBottom: 20, borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
               {[
                 { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
                 { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2 },
                 { label: "Leads no período", val: leads.filter((l) => { const t = Number(l.criadoEm || l.atualizadoEm); return t >= corte && t <= fimPeriodo; }).length, icon: Target },
                 { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone },
-              ].map(({ label, val, icon: Ic }) => (
-                <div key={label} style={{ padding: "14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
-                    <Ic size={13} color="var(--icon-secondary)" strokeWidth={2} />
+              ].map(({ label, val, icon: Ic }, i) => (
+                <div key={label} style={{ padding: "14px 16px", borderLeft: i === 0 ? "none" : "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <Ic size={14} color="var(--icon-secondary)" strokeWidth={1.85} />
                     <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</span>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ink)" }}>{val}</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.03em" }}>{val}</div>
                 </div>
               ))}
             </div>
@@ -455,7 +455,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                           <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo || "Campanha"}</div>
                           <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>{inscritos} inscrito{inscritos !== 1 ? "s" : ""} · {aprovadas} aprovado{aprovadas !== 1 ? "s" : ""}</div>
                         </div>
-                        <span style={{ background: "#dcfce7", color: "#166534", fontSize: 10.5, fontWeight: 700, borderRadius: 20, padding: "2px 8px", flexShrink: 0 }}>Ativa</span>
+                        <span style={{ background: "var(--green-100)", color: "var(--green-700)", fontSize: 10.5, fontWeight: 700, borderRadius: 20, padding: "2px 8px", flexShrink: 0 }}>Ativa</span>
                       </div>
                     );
                   })}

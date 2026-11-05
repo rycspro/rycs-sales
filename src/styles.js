@@ -34,6 +34,12 @@ body{-webkit-text-size-adjust:100%}
   --blue-400:#60A5FA; --blue-500:#3B82F6; --blue-vivo:#005DFF; --blue-800:#1E40AF; --blue-noite:#1A3379;
   /* geometria */
   --radius-lg:18px; --radius-md:14px; --radius-sm:10px; --radius-pill:999px;
+  /* escala de espaçamento — ritmo vertical e horizontal consistente */
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
+  --space-6:24px; --space-8:32px; --space-10:40px; --space-12:48px; --space-16:64px;
+  /* escala de ícones — tamanhos padronizados por contexto */
+  --icon-xs:14px; --icon-sm:16px; --icon-md:18px; --icon-nav:20px; --icon-lg:24px;
+  --icon-stroke:1.85;
   /* sombras refinadas */
   --shadow-card:0 2px 12px rgba(20,30,45,.035);
   --shadow-pop:0 8px 32px rgba(20,30,45,.12),0 2px 8px rgba(20,30,45,.05);
@@ -189,9 +195,10 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
   .vx-ai-panel{bottom:72px}
   .vx-sidebar-section{font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--muted-2);
     padding:18px 14px 4px;pointer-events:none;user-select:none;position:relative;z-index:1}
-  .vx-sidebtn{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:9px;border:0;
+  .vx-sidebtn{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;border:0;
     background:none;font:inherit;font-size:13px;font-weight:450;color:var(--icon-secondary);cursor:pointer;text-align:left;
     position:relative;z-index:1;transition:all .18s;letter-spacing:-.01em}
+  .vx-sidebtn>svg{flex-shrink:0}
   .vx-sidebtn:hover{background:rgba(17,24,39,.05);color:var(--ink)}
   html.dark .vx-sidebtn:hover{background:rgba(255,255,255,.06);color:var(--ink)}
   .vx-sidebtn[data-on="1"]{background:var(--brand-50);color:var(--brand);font-weight:600}
