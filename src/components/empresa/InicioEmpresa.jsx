@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import {
   Users, UserCheck, Megaphone, MessageSquare, Mail,
-  ShieldCheck, TrendingUp, Zap, ArrowRight, Bell,
-  Plus, BarChart3, ChevronRight, Clock,
+  ShieldCheck, TrendingUp, ArrowRight, Bell,
+  BarChart3, ChevronRight, Clock,
   CheckCircle2, AlertTriangle, Sparkles,
   Activity, Target, Award,
 } from "lucide-react";
@@ -493,40 +493,6 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
         {/* COLUNA DIREITA */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* ── ACESSO RÁPIDO ─────────────────────────────────────────────── */}
-          <div className="vx-card" style={{ padding: 18 }}>
-            <h3 className="vx-disp" style={{ margin: "0 0 12px", fontSize: 14, display: "flex", alignItems: "center", gap: 7 }}>
-              <Zap size={14} color="var(--brand)" /> Acesso rápido
-            </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {[
-                { label: "Nova campanha", icon: Plus, aba: "campanhas", cor: "#2563EB" },
-                { label: "Ver conversas", icon: MessageSquare, aba: "conversas", cor: "#7C3AED" },
-                { label: "Profissionais", icon: Users, aba: "profissionais", cor: "#059669" },
-                { label: "Insights & Análises", icon: BarChart3, aba: "painel", cor: "#D97706" },
-                { label: "Revisar aprovações", icon: ShieldCheck, aba: "conferir", cor: "#DC2626" },
-              ].map(({ label, icon: Ic, aba, cor }) => (
-                <button
-                  key={aba}
-                  onClick={() => ir(aba)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "10px 12px", borderRadius: 10,
-                    background: "var(--surface-2)", border: "1px solid var(--border)",
-                    cursor: "pointer", width: "100%", textAlign: "left",
-                    transition: "background .12s, border-color .12s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = cor + "10"; e.currentTarget.style.borderColor = cor + "60"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-                >
-                  <Ic size={15} color={cor} />
-                  <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>{label}</span>
-                  <ChevronRight size={13} color="var(--muted)" style={{ marginLeft: "auto" }} />
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* ── ATIVIDADE RECENTE ─────────────────────────────────────────── */}
           <div className="vx-card" style={{ padding: 18 }}>
