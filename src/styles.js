@@ -131,7 +131,7 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
   .vx-content{padding:30px 30px 56px;max-width:none;margin:0;width:100%}
   .vx-content-chat{padding:0!important;overflow:hidden}
   .vx-body{display:grid;grid-template-columns:220px 1fr;max-width:none;margin:0}
-  .vx-sidebar{display:flex;flex-direction:column;gap:0;padding:0;border-right:1px solid var(--border);
+  .vx-sidebar{display:flex;flex-direction:column;gap:0;padding:0;border-right:1.5px solid #9BB8D9;
     position:sticky;top:0;height:100vh;align-self:start;background:var(--surface)}
   .vx-sidebar-logo{padding:0 12px;border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden}
   .vx-sidebar-logo img{height:90px;width:auto;object-fit:contain;max-width:100%;display:block;margin:0 auto}
