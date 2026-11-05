@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CirclePause, ClipboardCheck, GitBranch, Plus, Rocket, Save, Sparkles, Wallet } from "lucide-react";
+import { CirclePause, ClipboardCheck, GitBranch, Megaphone, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -9,6 +9,187 @@ import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
 import CampaignsDashboard from "./CampaignsDashboard.jsx";
 import CampaignDetail from "./CampaignDetail.jsx";
+
+// ── Status config ────────────────────────────────────────────────────
+const STATUS_CONFIG = {
+  ativa:    { label: "Publicada",  bg: "#DCFCE7", color: "#16A34A" },
+  rascunho: { label: "Rascunho",   bg: "var(--surface-2)", color: "var(--muted)" },
+  pausada:  { label: "Pausada",    bg: "#FEF9C3", color: "#B45309" },
+  encerrada:{ label: "Encerrada",  bg: "var(--surface-2)", color: "var(--muted)" },
+  cancelada:{ label: "Cancelada",  bg: "#FEE2E2", color: "#DC2626" },
+};
+
+const FILTROS_STATUS = [
+  ["", "Todas"],
+  ["rascunho", "Rascunho"],
+  ["ativa", "Publicadas"],
+  ["pausada", "Pausadas"],
+  ["encerrada", "Encerradas"],
+  ["cancelada", "Canceladas"],
+];
+
+function StatusBadge({ status }) {
+  const cfg = STATUS_CONFIG[status] || { label: status, bg: "var(--surface-2)", color: "var(--muted)" };
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 600, padding: "3px 9px", borderRadius: 20, background: cfg.bg, color: cfg.color }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.color, flexShrink: 0 }} />
+      {cfg.label}
+    </span>
+  );
+}
+
+function MetricChip({ icon: Icon, label }) {
+  if (!label) return null;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--muted)" }}>
+      <Icon size={12} strokeWidth={2} />
+      {label}
+    </span>
+  );
+}
+
+function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar }) {
+  const [filtro, setFiltro] = useState("");
+
+  const counts = useMemo(() => Object.fromEntries(
+    FILTROS_STATUS.slice(1).map(([k]) => [k, campanhas.filter((c) => c.status === k).length])
+  ), [campanhas]);
+
+  const visiveis = useMemo(() =>
+    filtro ? campanhas.filter((c) => c.status === filtro) : campanhas
+  , [campanhas, filtro]);
+
+  const ativas = campanhas.filter((c) => c.status === "ativa").length;
+  const rascunhos = campanhas.filter((c) => c.status === "rascunho").length;
+  const totalPendentes = campanhas.reduce((acc, c) => acc + ((c.candidaturas || []).filter((a) => a.status === "pendente").length), 0);
+
+  return (
+    <div className="vx-fade">
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", margin: "0 0 3px", letterSpacing: -0.3 }}>Campanhas</h1>
+          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Gerencie oportunidades para seus profissionais de vendas.</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="vx-btn vx-btn-sm" onClick={() => onCriar(false)}><Plus size={13} /> Manual</button>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onCriar(true)}><Sparkles size={13} /> Criar com IA</button>
+        </div>
+      </div>
+
+      {/* Stats strip — só mostra quando há campanhas */}
+      {campanhas.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 20 }}>
+          {[
+            { label: "Publicadas", value: ativas, highlight: true },
+            { label: "Rascunhos", value: rascunhos, highlight: false },
+            { label: "Candidaturas pendentes", value: totalPendentes, highlight: totalPendentes > 0 },
+          ].map(({ label, value, highlight }) => (
+            <div key={label} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "12px 16px" }}>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>{label}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: highlight && value > 0 ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Filter pills */}
+      {campanhas.length > 0 && (
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 2, marginBottom: 16 }}>
+          {FILTROS_STATUS.map(([key, label]) => {
+            const ativa = filtro === key;
+            const count = key ? counts[key] : campanhas.length;
+            return (
+              <button
+                key={key}
+                onClick={() => setFiltro(key)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
+                  padding: "5px 12px", borderRadius: 20, border: `1px solid ${ativa ? "var(--brand)" : "var(--border)"}`,
+                  background: ativa ? "var(--brand)" : "var(--surface)", cursor: "pointer",
+                  fontSize: 12.5, fontWeight: ativa ? 600 : 400,
+                  color: ativa ? "#fff" : "var(--ink)", transition: "all .15s",
+                }}
+              >
+                {label}
+                {count > 0 && <span style={{ fontSize: 11, opacity: ativa ? 0.85 : 0.6 }}>{count}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {visiveis.length === 0 && (
+        <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
+          {campanhas.length === 0 ? (
+            <>
+              <Megaphone size={32} color="var(--muted)" style={{ marginBottom: 12 }} />
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Nenhuma campanha ainda</div>
+              <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 20px" }}>Crie sua primeira campanha para recrutar vendedores.</p>
+              <button className="vx-btn vx-btn-primary" onClick={() => onCriar(true)}><Sparkles size={14} /> Criar com IA</button>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 14, color: "var(--muted)" }}>Nenhuma campanha com este filtro.</div>
+              <button className="vx-btn vx-btn-sm" style={{ marginTop: 10 }} onClick={() => setFiltro("")}>Ver todas</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Campaign cards grid */}
+      {visiveis.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12 }}>
+          {visiveis.map((c) => {
+            const pendentes = (c.candidaturas || []).filter((a) => a.status === "pendente").length;
+            return (
+              <div
+                key={c.id}
+                onClick={() => onAbrir(c)}
+                style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "16px 18px", cursor: "pointer", transition: "border-color .15s, box-shadow .15s", display: "flex", flexDirection: "column", gap: 10 }}
+              >
+                {/* Top row: status + edit */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <StatusBadge status={c.status} />
+                  <button
+                    className="vx-btn vx-btn-ghost vx-btn-sm"
+                    onClick={(e) => { e.stopPropagation(); onEditar(c); }}
+                    style={{ padding: "3px 10px", fontSize: 12 }}
+                  >
+                    Editar
+                  </button>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3 }}>{c.titulo || "Sem título"}</div>
+                  {c.objetivo && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.objetivo}</div>}
+                </div>
+
+                {/* Metrics */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+                  {c.funcao && <MetricChip icon={Users} label={c.funcao.toUpperCase()} />}
+                  {c.regiao && <MetricChip icon={MapPin} label={c.regiao} />}
+                  {c.duracaoDias && <MetricChip icon={Clock} label={`${c.duracaoDias} dias`} />}
+                  {c.vagas > 0 && <MetricChip icon={Users} label={`${c.vagas} vaga${c.vagas !== 1 ? "s" : ""}`} />}
+                </div>
+
+                {/* Candidaturas pendentes alert */}
+                {pendentes > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "#EFF6FF", borderRadius: "var(--radius-sm)", fontSize: 12, color: "#1D4ED8", fontWeight: 500 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#1D4ED8", flexShrink: 0 }} />
+                    {pendentes} candidatura{pendentes !== 1 ? "s" : ""} pendente{pendentes !== 1 ? "s" : ""}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const novaCampanha = (emp) => ({
   titulo: "", descricao: "", produto: emp.produto || "", objetivo: "Gerar reuniões qualificadas",
@@ -102,36 +283,12 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
     />
   );
 
-  if (modo === "lista") return (
-    <div className="vx-fade">
-      <div className="vx-page-head">
-        <div><h1 className="vx-disp">Campanhas</h1><p className="vx-mut">Gerencie e crie campanhas para seus profissionais.</p></div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Criar manualmente</button>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(true); setCriando(true); }}><Sparkles size={14} /> Criar com IA</button>
-        </div>
-      </div>
-      {campanhas.length === 0 ? (
-        <div className="vx-card" style={{ padding: 40, textAlign: "center" }}>
-          <p className="vx-mut">Nenhuma campanha criada ainda.</p>
-          <button className="vx-btn vx-btn-primary" style={{ marginTop: 12 }} onClick={() => { setCriarComIA(true); setCriando(true); }}><Sparkles size={14} /> Criar com IA</button>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {campanhas.map((c) => (
-            <div key={c.id} className="vx-card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}
-              onClick={() => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>{c.titulo}</div>
-                <div className="vx-mut" style={{ fontSize: 13, marginTop: 2 }}>{c.funcao?.toUpperCase()} {c.regiao ? `· ${c.regiao}` : ""} · <span style={{ textTransform: "capitalize" }}>{c.status}</span></div>
-              </div>
-              <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={(e) => { e.stopPropagation(); setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}>Editar</button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  if (modo === "lista") return <CampanhaLista
+    campanhas={campanhas}
+    onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
+    onEditar={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
+    onCriar={(ia) => { setCriarComIA(ia); setCriando(true); }}
+  />;
 
   if (modo === "detalhe" && existente) return <CampaignDetail
     campanha={existente}

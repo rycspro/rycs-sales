@@ -4,11 +4,8 @@ import PainelEmpresa from "./PainelEmpresa.jsx";
 import ConferirEmpresa from "./ConferirEmpresa.jsx";
 import TimeEmpresa from "./TimeEmpresa.jsx";
 import QualificacaoEmpresa from "./QualificacaoEmpresa.jsx";
-import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
-import LeadsEmpresa from "./LeadsEmpresa.jsx";
+import CampanhasHub from "./CampanhasHub.jsx";
 import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
-import TarefasEmpresa from "./TarefasEmpresa.jsx";
-import ValoresEmpresa from "./ValoresEmpresa.jsx";
 import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
 import ConversasEmpresa from "./ConversasEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
@@ -75,13 +72,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         </>}
         {secaoInsights === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} />}
       </>}
-      {aba === "campanhas" && <>
-        {submenu([["campanhas", "Campanhas"], ["leads", "Leads"], ["tarefas", "Tarefas"], ["valores", "Valores"]], secaoCampanhas, setSecaoCampanhas)}
-        {secaoCampanhas === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
-        {secaoCampanhas === "leads" && <LeadsEmpresa emp={emp} db={db} aviso={aviso} />}
-        {secaoCampanhas === "tarefas" && <TarefasEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} />}
-        {secaoCampanhas === "valores" && <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
-      </>}
+      {aba === "campanhas" && <CampanhasHub emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} secao={secaoCampanhas} setSecao={setSecaoCampanhas} />}
       {aba === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "conversas" && <ConversasEmpresa emp={emp} db={db} up={up} />}
       {aba === "academy" && <>
