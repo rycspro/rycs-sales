@@ -277,11 +277,22 @@ router.post("/campaigns/:id/apply", (req, res) => {
 
   const id = uid();
   const criadoEm = agora();
+  const app = db.prepare("SELECT campanhasAuto FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(entityId, campaign.companyId);
+  let autoAprovado = false;
+  if (app) {
+    const empDefault = db.prepare("SELECT campanhasAutoDefault FROM companies WHERE id = ?").get(campaign.companyId);
+    const efetivo = app.campanhasAuto != null ? !!app.campanhasAuto : !!(empDefault?.campanhasAutoDefault);
+    autoAprovado = efetivo;
+  }
+  const statusCand = autoAprovado ? "aprovado" : "pendente";
   db.transaction(() => {
-    db.prepare("INSERT INTO campaign_applications (id, campaignId, sellerId, status, criadoEm) VALUES (?, ?, ?, 'pendente', ?)").run(id, req.params.id, entityId, criadoEm);
+    db.prepare("INSERT INTO campaign_applications (id, campaignId, sellerId, status, criadoEm) VALUES (?, ?, ?, ?, ?)").run(id, req.params.id, entityId, statusCand, criadoEm);
     registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "PROFESSIONAL_APPLIED", actorId: req.user.id, actorRole: role, sellerId: entityId, source: "USER", criadoEm });
+    if (autoAprovado) {
+      registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "PROFESSIONAL_APPROVED", actorId: "sistema", actorRole: "sistema", sellerId: entityId, source: "SYSTEM" });
+    }
   })();
-  res.json({ id });
+  res.json({ id, status: statusCand });
 });
 
 router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {

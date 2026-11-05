@@ -98,7 +98,7 @@ function buildSellersWithRelations(sellers) {
 
     const aplicacoesDetalhe = {};
     apps.filter((a) => a.sellerId === s.id).forEach((a) => {
-      aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: JSON.parse(a.criterios || "[]"), quizScore: a.quizScore };
+      aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: JSON.parse(a.criterios || "[]"), quizScore: a.quizScore, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null, campanhasAuto: a.campanhasAuto };
     });
     return {
       ...parseSeller(s), aplicacoes, aplicacoesDetalhe, curso, scoreDimensions,
@@ -156,6 +156,11 @@ function getEmpresaState(entityId) {
   const apps = db.prepare("SELECT * FROM applications WHERE companyId = ?").all(meuId);
   apps.forEach((a) => idsCandidatos.add(a.sellerId));
 
+  // Solicitações pendentes de profissionais (com mensagem e data)
+  const solicitacoesPendentes = apps
+    .filter((a) => a.status === "pendente")
+    .map((a) => ({ sellerId: a.sellerId, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null }));
+
   // inclui também sellers que têm mensagens com esta empresa
   const messages = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(meuId);
   messages.forEach((m) => { if (m.sellerId) idsCandidatos.add(m.sellerId); });
@@ -171,7 +176,9 @@ function getEmpresaState(entityId) {
   const submissions = db.prepare("SELECT * FROM submissions WHERE companyId = ? ORDER BY criadoEm DESC").all(meuId).map(parseSub);
   const leads = db.prepare("SELECT * FROM leads WHERE companyId = ? ORDER BY atualizadoEm DESC").all(meuId);
 
-  return { sellers, companies, submissions, withdrawals: [], messages, campaigns, leads };
+  const campanhasAutoDefault = companies[0]?.campanhasAutoDefault ?? 0;
+
+  return { sellers, companies, submissions, withdrawals: [], messages, campaigns, leads, solicitacoesPendentes, campanhasAutoDefault: !!campanhasAutoDefault };
 }
 
 function getVendedorState(entityId) {

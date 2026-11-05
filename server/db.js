@@ -943,6 +943,16 @@ adicionarColuna("course_progress", "quizScore", "INTEGER");
 adicionarColuna("course_progress", "quizAnswers", "TEXT DEFAULT '[]'");
 adicionarColuna("applications", "criterios", "TEXT DEFAULT '[]'");
 adicionarColuna("applications", "quizScore", "INTEGER");
+// Aprovação de profissionais: mensagem do vendedor, datas, config de campanhas
+adicionarColuna("applications", "mensagem", "TEXT DEFAULT ''");
+adicionarColuna("applications", "criadoEm", "INTEGER");
+adicionarColuna("applications", "respondidoEm", "INTEGER");
+// null = usar default da empresa, 0 = manual por campanha, 1 = auto em todas
+adicionarColuna("applications", "campanhasAuto", "INTEGER");
+adicionarColuna("partnership_requests", "mensagem", "TEXT DEFAULT ''");
+adicionarColuna("partnership_requests", "origem", "TEXT DEFAULT 'empresa'");
+// Default da empresa: 0 = cada campanha precisa aprovação manual, 1 = auto
+adicionarColuna("companies", "campanhasAutoDefault", "INTEGER DEFAULT 0");
 adicionarColuna("assistant_history", "contexto", "TEXT DEFAULT ''");
 adicionarColuna("assistant_history", "status", "TEXT DEFAULT 'proposto'");
 adicionarColuna("assistant_history", "acao", "TEXT DEFAULT 'registrar_analise'");

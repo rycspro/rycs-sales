@@ -128,10 +128,11 @@ router.post("/professionals/:id/partnership", (req, res) => {
   const seller = db.prepare("SELECT id, status FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(req.params.id);
   if (!seller) return res.status(404).json({ error: "Profissional ativo não encontrado" });
   const id = uid();
-  db.prepare(`INSERT INTO partnership_requests (id, companyId, sellerId, status, criadoEm)
-    VALUES (?, ?, ?, 'pendente', ?)
-    ON CONFLICT(companyId, sellerId) DO UPDATE SET status = 'pendente', criadoEm = excluded.criadoEm, respondidoEm = NULL`)
-    .run(id, req.user.entityId, seller.id, agora());
+  const mensagem = String(req.body?.mensagem || "").slice(0, 600);
+  db.prepare(`INSERT INTO partnership_requests (id, companyId, sellerId, status, mensagem, origem, criadoEm)
+    VALUES (?, ?, ?, 'pendente', ?, 'empresa', ?)
+    ON CONFLICT(companyId, sellerId) DO UPDATE SET status = 'pendente', mensagem = excluded.mensagem, criadoEm = excluded.criadoEm, respondidoEm = NULL`)
+    .run(id, req.user.entityId, seller.id, mensagem, agora());
   const user = db.prepare("SELECT id FROM users WHERE role = 'vendedor' AND entityId = ?").get(seller.id);
   const company = db.prepare("SELECT nome FROM companies WHERE id = ?").get(req.user.entityId);
   if (user) notificar(user.id, "parceria", `${company?.nome || "Uma empresa"} solicitou parceria`, "Revise o convite na área de empresas.");
