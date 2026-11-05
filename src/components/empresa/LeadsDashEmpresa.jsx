@@ -608,12 +608,12 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                           : <Square size={16} />}
                     </button>
                   </TH>
-                  <TH>Vendedor</TH>
-                  <TH>Campanha / Ação</TH>
+                  <TH>Lead / Contato</TH>
                   <TH>Status do cliente</TH>
                   <TH>Aprovação</TH>
                   <TH right>Valor</TH>
                   <TH>Quando</TH>
+                  <TH>Vendedor</TH>
                   <TH></TH>
                 </tr>
               </thead>
@@ -638,16 +638,13 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                         </button>
                       </TD>
                       <TD>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <MiniAvatar seller={seller} />
-                          <span style={{ fontWeight: 600, fontSize: 13 }}>
-                            {capitalizar(seller?.nome || "Profissional")}
-                          </span>
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>
+                          {capitalizar(sub.prova?.empresa || sub.prova?.cliente || camp?.titulo || "Lead")}
                         </div>
-                      </TD>
-                      <TD>
-                        <div style={{ fontWeight: 500, fontSize: 13 }}>{TIPO_LABEL[sub.tipo] || sub.tipo || "—"}</div>
-                        {camp?.titulo && <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>{camp.titulo}</div>}
+                        <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
+                          {TIPO_LABEL[sub.tipo] || sub.tipo || "—"}
+                          {camp?.titulo && <span> · {camp.titulo}</span>}
+                        </div>
                       </TD>
                       <TD><BadgeCliente statusCliente={sub.statusCliente || "aguardando"} /></TD>
                       <TD><BadgeStatus status={sub.status} /></TD>
@@ -656,6 +653,14 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                       </TD>
                       <TD muted>
                         <span title={dataCurta(sub.criadoEm)}>{tempoRelativo(sub.criadoEm)}</span>
+                      </TD>
+                      <TD>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          <MiniAvatar seller={seller} />
+                          <span style={{ fontWeight: 500, fontSize: 12.5 }}>
+                            {capitalizar(seller?.nome || "Profissional")}
+                          </span>
+                        </div>
                       </TD>
                       <TD>
                         <button
