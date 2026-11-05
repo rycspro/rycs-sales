@@ -1,5 +1,5 @@
 export const STATUS_EMPRESA = ["rascunho", "em_analise", "aprovada", "suspensa"];
-export const STATUS_CAMPANHA = ["rascunho", "em_revisao", "ativa", "pausada", "encerrada"];
+export const STATUS_CAMPANHA = ["rascunho", "em_revisao", "ativa", "pausada", "encerrada", "cancelada"];
 
 export const EVIDENCIAS_PILOTO = {
   agendamento: ["cliente", "telefone", "datahora", "video"],

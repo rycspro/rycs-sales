@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { CirclePause, ClipboardCheck, GitBranch, Megaphone, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CirclePause, ClipboardCheck, GitBranch, Megaphone, MoreHorizontal, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -48,7 +48,66 @@ function MetricChip({ icon: Icon, label }) {
   );
 }
 
-function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar }) {
+function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir }) {
+  const [aberto, setAberto] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!aberto) return;
+    const fechar = (e) => { if (ref.current && !ref.current.contains(e.target)) setAberto(false); };
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, [aberto]);
+
+  const opcoes = [
+    { label: "Editar", acao: () => { setAberto(false); onEditar(campanha); } },
+    { label: "Arquivar", acao: () => { setAberto(false); onArquivar(campanha); }, cor: "var(--muted)" },
+    { label: "Excluir", acao: () => { setAberto(false); onExcluir(campanha); }, cor: "#DC2626" },
+  ];
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        className="vx-btn vx-btn-ghost vx-btn-sm"
+        onClick={(e) => { e.stopPropagation(); setAberto((v) => !v); }}
+        style={{ padding: "4px 6px", lineHeight: 1, color: "var(--muted)" }}
+        title="Mais opções"
+      >
+        <MoreHorizontal size={16} strokeWidth={2} />
+      </button>
+      {aberto && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50,
+            background: "var(--surface)", border: "1px solid var(--border)",
+            borderRadius: "var(--radius-sm)", boxShadow: "0 4px 16px rgba(0,0,0,.12)",
+            minWidth: 140, overflow: "hidden",
+          }}
+        >
+          {opcoes.map(({ label, acao, cor }) => (
+            <button
+              key={label}
+              onClick={acao}
+              style={{
+                display: "block", width: "100%", textAlign: "left",
+                padding: "9px 14px", border: "none", background: "transparent",
+                fontSize: 13, cursor: "pointer", color: cor || "var(--ink)",
+                transition: "background .1s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onExcluir }) {
   const [filtro, setFiltro] = useState("");
 
   const counts = useMemo(() => Object.fromEntries(
@@ -149,16 +208,15 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar }) {
                 onClick={() => onAbrir(c)}
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "16px 18px", cursor: "pointer", transition: "border-color .15s, box-shadow .15s", display: "flex", flexDirection: "column", gap: 10 }}
               >
-                {/* Top row: status + edit */}
+                {/* Top row: status + menu */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <StatusBadge status={c.status} />
-                  <button
-                    className="vx-btn vx-btn-ghost vx-btn-sm"
-                    onClick={(e) => { e.stopPropagation(); onEditar(c); }}
-                    style={{ padding: "3px 10px", fontSize: 12 }}
-                  >
-                    Editar
-                  </button>
+                  <MenuCampanha
+                    campanha={c}
+                    onEditar={onEditar}
+                    onArquivar={onArquivar}
+                    onExcluir={onExcluir}
+                  />
                 </div>
 
                 {/* Title */}
@@ -283,11 +341,29 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar }) {
     />
   );
 
+  const arquivarCampanha = async (c) => {
+    if (!window.confirm(`Arquivar "${c.titulo || "esta campanha"}"? Ela ficará como encerrada.`)) return;
+    const r = await api(`/campaigns/${c.id}/status`, { status: "encerrada" });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível arquivar a campanha.");
+    up((d) => ({ campaigns: d.campaigns.map((x) => x.id === c.id ? { ...x, status: "encerrada" } : x) }));
+    aviso("Campanha arquivada.");
+  };
+
+  const excluirCampanha = async (c) => {
+    if (!window.confirm(`Excluir "${c.titulo || "esta campanha"}"? Esta ação não pode ser desfeita.`)) return;
+    const r = await api(`/campaigns/${c.id}/status`, { status: "cancelada" });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível excluir a campanha.");
+    up((d) => ({ campaigns: d.campaigns.map((x) => x.id === c.id ? { ...x, status: "cancelada" } : x) }));
+    aviso("Campanha excluída.");
+  };
+
   if (modo === "lista") return <CampanhaLista
     campanhas={campanhas}
     onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
     onEditar={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
     onCriar={(ia) => { setCriarComIA(ia); setCriando(true); }}
+    onArquivar={arquivarCampanha}
+    onExcluir={excluirCampanha}
   />;
 
   if (modo === "detalhe" && existente) return <CampaignDetail
