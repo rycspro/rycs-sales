@@ -114,12 +114,10 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
     }
   }, [compondo]);
 
-  const enviarMensagem = async () => {
+  const enviarMensagem = () => {
     if (!texto.trim() || !seller?.id || !emp?.id) return;
-    setEnviando(true);
-    await api("/messages", { companyId: emp.id, sellerId: seller.id, de: "empresa", texto: texto.trim() });
-    setEnviando(false);
     setEnviado(true);
+    api("/messages", { companyId: emp.id, sellerId: seller.id, de: "empresa", texto: texto.trim() });
   };
 
   useEffect(() => {
@@ -301,17 +299,17 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                   >Cancelar</button>
                   <button
                     onClick={enviarMensagem}
-                    disabled={enviando || !texto.trim()}
+                    disabled={!texto.trim()}
                     style={{
                       padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8,
                       border: "none", background: "var(--brand)", color: "#fff",
-                      cursor: enviando ? "default" : "pointer", fontFamily: "inherit",
+                      cursor: "pointer", fontFamily: "inherit",
                       display: "flex", alignItems: "center", gap: 6,
                       opacity: !texto.trim() ? 0.5 : 1,
                     }}
                   >
                     <Send size={13} />
-                    {enviando ? "Enviando…" : "Enviar"}
+                    Enviar
                   </button>
                 </div>
               </div>

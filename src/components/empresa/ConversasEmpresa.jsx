@@ -566,17 +566,19 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
     if (!showGif) return;
     clearTimeout(gifDebRef.current);
     const q = buscaGif.trim();
+    let ctrl;
     gifDebRef.current = setTimeout(() => {
+      ctrl = new AbortController();
       setLoadingGif(true);
       const url = q
         ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=16&rating=g`
         : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=16&rating=g`;
-      fetch(url)
-        .then((r) => r.json())
-        .then((d) => { setGifs(d.data || []); setLoadingGif(false); })
-        .catch(() => setLoadingGif(false));
+      fetch(url, { signal: ctrl.signal })
+        .then((r) => r.ok ? r.json() : Promise.reject())
+        .then((d) => { setGifs(Array.isArray(d.data) ? d.data : []); setLoadingGif(false); })
+        .catch(() => { setGifs([]); setLoadingGif(false); });
     }, q ? 400 : 0);
-    return () => clearTimeout(gifDebRef.current);
+    return () => { clearTimeout(gifDebRef.current); ctrl?.abort(); };
   }, [buscaGif, showGif]);
 
   const submeter = () => {
