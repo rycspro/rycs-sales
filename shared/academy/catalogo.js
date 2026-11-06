@@ -10,6 +10,7 @@
 // depender de arquivo externo que precisaria de storage.
 
 export const CATEGORIAS = [
+  "Plataforma RYCS",
   "Prospecção", "SDR", "BDR", "Cold Call", "WhatsApp", "Vendas consultivas",
   "Negociação", "Fechamento", "Follow-up", "Porta a porta", "Social Selling",
   "CRM", "Objeções", "Comunicação", "Gestão de carteira", "Produtividade",
@@ -659,7 +660,183 @@ const CHALLENGER_SDR = {
   ],
 };
 
-export const CATALOGO_INICIAL = [SDR, CHALLENGER_SDR, COLD_CALL, CHALLENGER_COLD, CHALLENGER_VIDEO, WHATSAPP];
+// -------------------------------------------------------------------------
+// Curso de boas-vindas: como a RYCS funciona, passo a passo.
+//
+// É o primeiro curso que todo profissional deveria fazer. Não ensina técnica
+// de venda: ensina a plataforma — o caminho do cadastro ao primeiro pagamento,
+// quais são as telas, o que cada ação gera e por que a evidência auditada é o
+// que faz a empresa pagar por resultado sem conhecer você. Segue a jornada
+// real: Painel, Oportunidades, Academy, Carteira, Indicar, Perfil.
+// -------------------------------------------------------------------------
+
+const PLATAFORMA = {
+  slug: "como-a-rycs-funciona",
+  titulo: "Como a RYCS funciona, passo a passo",
+  subtitulo: "Do cadastro ao primeiro pagamento, tela por tela",
+  categoria: "Plataforma RYCS",
+  nivel: "fundamentos",
+  professor: "RYCS Academy",
+  funcao: "",
+  gratuito: true,
+  preco: 0,
+  descricao:
+    "Antes de prospectar qualquer cliente, entenda onde você está. Este curso percorre a " +
+    "plataforma inteira do ponto de vista do profissional: o que é a RYCS, como o dinheiro " +
+    "chega até você, como entrar e ser aprovado, como encontrar campanhas, como registrar e " +
+    "comprovar o seu trabalho, como receber e como crescer de nível. Ao final você faz a prova " +
+    "e, com 70% ou mais, recebe o certificado de reconhecimento da plataforma.",
+  requisitos: "Nenhum. É o ponto de partida para quem acabou de chegar à RYCS.",
+  modulos: [
+    modulo("O que é a RYCS", "O modelo, os papéis e como o dinheiro chega até você.", [
+      aula("A RYCS fica no meio, de propósito", 5,
+        "A RYCS conecta dois lados: a **empresa**, que precisa de resultado comercial, e o **profissional**, que faz esse trabalho. Entre os dois fica a plataforma — e ela fica no meio de propósito.\n\n" +
+        "Você não negocia preço com a empresa, não corre atrás de pagamento e não depende de conhecer ninguém lá dentro. A empresa também não escolhe você pela sua cara: escolhe pela sua evidência de trabalho e pelo seu histórico. A RYCS intermedia tudo — treinamento, distribuição de campanhas, auditoria e pagamento.\n\n" +
+        "Isso protege os dois lados. A empresa paga por resultado comprovado; você trabalha sabendo que o combinado está registrado na plataforma, não num acordo de boca.\n\n" +
+        "**Guarde isto:** a empresa compra resultado, não horas. Quem organiza esse resultado em algo pagável é a plataforma."),
+      aula("Os papéis: empresa, profissional e RYCS", 5,
+        "Três papéis se encontram na plataforma:\n\n" +
+        "- **Empresa** — cria campanhas com um produto, um público-alvo, um treinamento e valores por atividade. Ela quer gente vendendo para ela sem montar um time fixo.\n" +
+        "- **Profissional (você)** — se cadastra, é avaliado, entra em campanhas e executa o trabalho comercial. Pode atuar como SDR, BDR, Closer ou PAP (porta a porta).\n" +
+        "- **RYCS** — a plataforma que recruta, treina, distribui, audita e paga.\n\n" +
+        "Empresa e profissional não conversam direto. Todo o fluxo passa pela plataforma, e é isso que torna possível uma empresa confiar em alguém que nunca viu.\n\n" +
+        "**Aplique hoje:** decida em qual papel você quer começar. A RYCS te mede por função, então começar com foco rende mais que tentar tudo ao mesmo tempo."),
+      aula("Como o dinheiro chega até você", 6,
+        "O caminho do dinheiro é simples de entender e importante de confiar:\n\n" +
+        "1. A empresa define quanto vale cada atividade da campanha — por exemplo, um valor por conversa conectada, outro por reunião agendada, outro por reunião realizada e um percentual por venda. Esses valores quem fixa é a empresa, não você.\n" +
+        "2. Você executa a atividade e registra a evidência na plataforma.\n" +
+        "3. A RYCS audita a evidência.\n" +
+        "4. Aprovada, a atividade vira saldo na sua **Carteira**.\n" +
+        "5. Você saca o saldo liberado.\n\n" +
+        "A RYCS faz a ponte financeira entre empresa e profissional (split), então você recebe da plataforma, não da empresa diretamente.\n\n" +
+        "**Guarde isto:** nenhuma atividade vira dinheiro antes de ser comprovada e auditada. A evidência é a moeda."),
+      aula("As telas que você vai usar", 5,
+        "O menu do profissional tem seis lugares, e cada um tem uma função clara:\n\n" +
+        "- **Painel** — sua visão geral: score, atividade recente, para onde ir.\n" +
+        "- **Oportunidades** — as empresas e campanhas disponíveis para você.\n" +
+        "- **Academy** — os cursos e certificações, inclusive este.\n" +
+        "- **Carteira** — seu saldo, o que está liberado e o saque.\n" +
+        "- **Indicar** — convidar outros profissionais e ganhar por isso.\n" +
+        "- **Perfil** — seu score por função, seu nível e o que a empresa vê de você.\n\n" +
+        "No menu da conta ficam ainda **Minha Conta** e **Configurações**.\n\n" +
+        "**Aplique hoje:** abra cada uma das seis telas uma vez. Só de reconhecer onde fica cada coisa, o resto do curso fica mais fácil."),
+    ]),
+
+    modulo("Entrar e ser aprovado", "Cadastro, onboarding, avaliação e perfil.", [
+      aula("Cadastro e onboarding", 5,
+        "Ao entrar na RYCS você passa por um onboarding guiado. Ele é curto e serve para a plataforma entender quem você é: dados, função que pretende exercer e o básico de como você trabalha.\n\n" +
+        "O onboarding é salvo no servidor e pode ser retomado — se você sair no meio, volta de onde parou. Não dá para pular etapa pela URL: cada passo libera o próximo.\n\n" +
+        "Não é uma formalidade. O que você preenche aqui alimenta a forma como as empresas vão te enxergar depois.\n\n" +
+        "**Aplique hoje:** termine o onboarding com calma e honestidade. Informação torta aqui vira campanha errada lá na frente."),
+      aula("A triagem: por que você é avaliado", 6,
+        "Depois do cadastro vem a **triagem** — a avaliação inicial. A plataforma não libera campanha para qualquer um: ela confere se você está pronto para representar uma empresa.\n\n" +
+        "Enquanto você está em triagem, as telas de trabalho ficam bloqueadas e a plataforma te direciona para a avaliação. Isso não é punição: é o que faz valer o seu certificado e o que faz a empresa confiar em quem a RYCS envia.\n\n" +
+        "Se a avaliação não passar de primeira, você pode estudar na Academy e refazer. O caminho está sempre aberto.\n\n" +
+        "**Aplique hoje:** encare a triagem como a primeira impressão que a plataforma tem de você. Se precisar, estude antes de tentar."),
+      aula("Seu Perfil é o seu currículo na RYCS", 5,
+        "O **Perfil** é o que a empresa vê — não o seu nome na agenda dela, mas o seu histórico na plataforma: função, score por função, nível e certificações.\n\n" +
+        "Você não precisa se vender para cada empresa. O perfil faz isso por você, com base no que você já comprovou. Quanto mais consistente o seu trabalho, mais forte o perfil, e mais no topo da fila você fica.\n\n" +
+        "**Aplique hoje:** abra o seu Perfil e veja o que já aparece. É assim que a empresa te vê hoje."),
+    ]),
+
+    modulo("Encontrar trabalho", "Oportunidades, treinamento da empresa e certificação.", [
+      aula("Oportunidades: onde o trabalho aparece", 5,
+        "A tela **Oportunidades** lista as empresas e campanhas disponíveis para o seu perfil. Cada campanha diz o que a empresa vende, para quem, o que espera de você e quanto paga por atividade.\n\n" +
+        "Não é uma lista fixa igual para todo mundo: ela leva em conta a sua função e o seu histórico. Ler a campanha inteira antes de aplicar evita entrar em algo que não combina com você.\n\n" +
+        "**Aplique hoje:** abra uma campanha e localize três coisas: o público-alvo, o que conta como atividade paga e o valor de cada uma."),
+      aula("Treinamento e certificação da empresa", 6,
+        "Ao abrir uma empresa em que você ainda não foi aprovado, a plataforma mostra o **treinamento** daquela empresa antes de liberar as campanhas. Faz sentido: cada empresa tem produto, público e argumentos próprios, e você precisa dominá-los para representá-la.\n\n" +
+        "Algumas campanhas exigem **certificação** — você estuda, faz a prova e só então é liberado. É o mesmo princípio da Academy: o selo é conquistado, não comprado.\n\n" +
+        "Depois de aprovado naquela empresa, a tela passa a mostrar as campanhas direto, sem repetir o treinamento.\n\n" +
+        "**Aplique hoje:** se uma campanha pede certificação, faça o curso ligado a ela antes de tentar aplicar. O atalho é estudar, não forçar."),
+      aula("Aplicar e ser aprovado na campanha", 5,
+        "Aprovado no treinamento, você aplica para a campanha. A partir daí ela aparece como sua, e a página da campanha passa a ser o seu posto de trabalho: é de lá que você registra cada atividade.\n\n" +
+        "Estar aprovado numa empresa não te prende a ela. Você pode atuar em várias campanhas, de empresas diferentes, respeitando o que cada uma exige.\n\n" +
+        "**Aplique hoje:** depois de aprovado, abra a página da campanha e encontre onde se registra uma atividade. É ali que o seu trabalho vira evidência."),
+    ]),
+
+    modulo("Trabalhar e comprovar", "Registrar atividades, evidência e auditoria.", [
+      aula("Toda atividade vira evidência", 6,
+        "Na RYCS, trabalhar e comprovar são a mesma ação. Cada conversa, reunião agendada, reunião realizada ou venda que você registra precisa vir com a prova daquilo: o contato, o que aconteceu, o combinado.\n\n" +
+        "Não é controle por desconfiança. É o que permite a empresa pagar por resultado sem acompanhar você em tempo real. A evidência é o que transforma esforço em algo pagável.\n\n" +
+        "**Aplique hoje:** antes de registrar qualquer atividade, pergunte-se: eu conseguiria comprovar isto se a plataforma perguntasse? Se não, ajuste antes de registrar."),
+      aula("Como a auditoria funciona", 6,
+        "Toda evidência registrada passa por auditoria — boa parte com apoio de IA, em volume. A auditoria confere se a atividade é real, se não está duplicada e se bate com o que a campanha pede.\n\n" +
+        "Dado inventado, evidência reciclada e contato repetido entre profissionais são detectados. Uma recusa não só derruba aquela atividade: derruba o seu score, e o score é o que te coloca na frente das empresas.\n\n" +
+        "O lado bom: evidência consistente acelera a sua liberação e levanta o seu score com o tempo.\n\n" +
+        "**Guarde isto:** não vale o risco de forçar. Um registro falso custa mais caro que dez registros honestos valem."),
+      aula("Contato duplicado e o trabalho em equipe", 5,
+        "Numa mesma campanha, vários profissionais podem estar prospectando ao mesmo tempo. Trabalhar o mesmo contato que outra pessoa já pegou queima a evidência dos dois — a auditoria detecta a duplicidade.\n\n" +
+        "Por isso a higiene de lista importa: antes de abordar, confirme que aquele contato é seu para trabalhar dentro das regras da campanha.\n\n" +
+        "**Aplique hoje:** ao montar seu dia, separe contatos que claramente são seus para trabalhar. Qualidade de lista evita retrabalho e recusa."),
+    ]),
+
+    modulo("Receber e crescer", "Carteira, saque, score, níveis e indicações.", [
+      aula("Carteira: saldo, liberação e saque", 6,
+        "A **Carteira** é onde o seu trabalho vira dinheiro visível. Cada atividade aprovada soma saldo. Parte dele fica liberada para saque conforme as regras da plataforma e da campanha.\n\n" +
+        "Você saca o saldo liberado pela própria Carteira. Como a RYCS intermedia o pagamento (split), você recebe da plataforma, com histórico de cada valor e de onde ele veio.\n\n" +
+        "**Aplique hoje:** abra a Carteira e identifique a diferença entre saldo total, saldo liberado e o que já foi sacado. Entender isso evita ansiedade sobre quando o dinheiro chega."),
+      aula("O RYCS Score e por que ele decide tudo", 6,
+        "O **RYCS Score** é a sua reputação medida pela plataforma. Ele não é uma nota única: combina dimensões como desempenho, conhecimento, comunicação, confiabilidade, conversão, qualidade e consistência.\n\n" +
+        "O score é **por função** — o seu desempenho como SDR não se mistura com o de Closer — e o que é recente pesa mais que o que é antigo. Score bom te coloca no topo da fila das empresas; score ruim te tira dela.\n\n" +
+        "**Aplique hoje:** veja no seu Perfil quais dimensões do score estão mais fracas. É nelas que uma semana de atenção rende mais pontos."),
+      aula("Níveis e certificações", 5,
+        "Conforme você acumula trabalho comprovado, boas avaliações e treinamento, você sobe de **nível** na plataforma. Nível mais alto significa mais acesso e mais confiança das empresas.\n\n" +
+        "A **Academy** é parte desse crescimento: cada curso concluído e certificado fortalece o seu perfil, e alguns certificados liberam campanhas que exigem certificação. O selo é conquistado com curso e prova — nunca comprado.\n\n" +
+        "**Aplique hoje:** escolha o próximo curso da Academy ligado à sua função. Terminar este é o primeiro passo; o segundo é o da sua especialidade."),
+      aula("Indicar: crescer trazendo gente boa", 4,
+        "A tela **Indicar** te deixa convidar outros profissionais para a RYCS. Quando alguém entra pela sua indicação e trabalha, você é reconhecido por isso.\n\n" +
+        "É uma forma honesta de crescer: você ganha trazendo gente que realmente trabalha, não números vazios. Indicação de quem sustenta boa evidência vale muito mais do que volume.\n\n" +
+        "**Aplique hoje:** pense em uma pessoa que você sabe que seria um bom profissional na plataforma. Essa é a indicação que vale a pena fazer."),
+      aula("O ciclo completo, do zero ao pagamento", 5,
+        "Juntando tudo, a sua jornada na RYCS é um ciclo que se repete e melhora:\n\n" +
+        "1. **Cadastro e onboarding** — a plataforma te conhece.\n" +
+        "2. **Triagem** — você é avaliado e liberado.\n" +
+        "3. **Oportunidades** — você encontra empresas e campanhas.\n" +
+        "4. **Treinamento e certificação** — você fica apto para a empresa.\n" +
+        "5. **Trabalho com evidência** — você executa e comprova.\n" +
+        "6. **Auditoria** — a plataforma valida.\n" +
+        "7. **Carteira e saque** — a evidência vira dinheiro.\n" +
+        "8. **Score e níveis** — o histórico te coloca na frente da próxima campanha.\n\n" +
+        "Cada volta deixa o seu perfil mais forte e o próximo trabalho mais fácil de conseguir.\n\n" +
+        "**Guarde isto:** a plataforma recompensa consistência. Quem comprova bem e com constância sobe; quem força atalho, cai."),
+    ]),
+  ],
+  prova: [
+    questao("Qual é o papel da RYCS entre a empresa e o profissional?",
+      ["Ela só divulga vagas e sai do caminho", "Ela intermedia tudo: treinamento, distribuição, auditoria e pagamento", "Ela deixa empresa e profissional negociarem direto", "Ela apenas processa o pagamento no fim"], 1,
+      "A RYCS fica no meio de propósito: é ela que recruta, treina, distribui campanhas, audita e paga."),
+    questao("Quando uma atividade registrada vira dinheiro na sua Carteira?",
+      ["Assim que você registra", "Quando a empresa te liga", "Depois de ser comprovada e auditada", "No fim do mês, automaticamente"], 2,
+      "Nenhuma atividade vira saldo antes de ser comprovada e passar pela auditoria. A evidência é a moeda."),
+    questao("O que acontece enquanto você está em triagem?",
+      ["Você já pode aplicar para qualquer campanha", "As telas de trabalho ficam bloqueadas e a plataforma te leva para a avaliação", "Seu perfil fica invisível para sempre", "Você recebe um adiantamento"], 1,
+      "A triagem avalia se você está pronto para representar uma empresa; até passar, o trabalho fica bloqueado."),
+    questao("Para que serve o treinamento que aparece ao abrir uma empresa nova?",
+      ["É opcional e pode ser pulado pela URL", "Prepara você no produto e no público daquela empresa antes de liberar as campanhas", "Serve só para a empresa, não para você", "É o mesmo para todas as empresas"], 1,
+      "Cada empresa tem produto e público próprios; o treinamento te deixa apto a representá-la, e algumas campanhas ainda exigem certificação."),
+    questao("Por que registrar evidência de cada atividade?",
+      ["Para a plataforma te vigiar", "Porque é o que permite a empresa pagar por resultado sem acompanhar você em tempo real", "Porque a empresa exige ligar para cada cliente", "Não é obrigatório"], 1,
+      "A evidência transforma esforço em algo pagável e auditável — é o que sustenta o modelo."),
+    questao("O que a auditoria detecta e penaliza?",
+      ["Apenas erros de digitação", "Dado inventado, evidência reciclada e contato duplicado entre profissionais", "Somente atrasos", "Nada, ela só confirma"], 1,
+      "A auditoria, muitas vezes com IA, pega fraude e duplicidade. Uma recusa derruba a atividade e o seu score."),
+    questao("O que caracteriza o RYCS Score?",
+      ["Uma nota única e geral", "Várias dimensões, medido por função, com o recente pesando mais", "Só o número de reuniões marcadas", "Um valor que você compra com nível"], 1,
+      "O score combina dimensões (desempenho, confiabilidade, conversão, qualidade...), é por função e dá mais peso ao recente."),
+    questao("Onde você acompanha saldo, saldo liberado e saque?",
+      ["No Painel", "Na Carteira", "No Perfil", "Em Oportunidades"], 1,
+      "A Carteira é onde o trabalho comprovado vira dinheiro visível e de onde você saca o saldo liberado."),
+    questao("Como se conquista um certificado da Academy?",
+      ["Comprando o selo", "Fazendo o curso e passando na prova", "Pedindo para a empresa", "Automaticamente ao se cadastrar"], 1,
+      "O selo é conquistado com curso e prova, nunca comprado, e alguns certificados liberam campanhas que o exigem."),
+    questao("Qual é a ordem correta do ciclo na plataforma?",
+      ["Carteira → triagem → cadastro → campanha", "Cadastro → triagem → oportunidades → trabalho com evidência → auditoria → carteira", "Campanha → pagamento → cadastro → score", "Oportunidades → saque → onboarding → prova"], 1,
+      "A jornada vai do cadastro e triagem às oportunidades, ao trabalho comprovado, à auditoria e, enfim, à Carteira — e o histórico alimenta o próximo ciclo."),
+  ],
+};
+
+export const CATALOGO_INICIAL = [PLATAFORMA, SDR, CHALLENGER_SDR, COLD_CALL, CHALLENGER_COLD, CHALLENGER_VIDEO, WHATSAPP];
 
 // Estatísticas derivadas, usadas no card e na página do curso.
 export function resumirCurso(curso) {
