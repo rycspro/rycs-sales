@@ -1,21 +1,64 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft, Award, BookOpen, CheckCircle2, ChevronDown, ChevronRight,
-  Circle, Clock3, GraduationCap, Lock, Play, RotateCcw,
+  ArrowLeft, ArrowUpRight, Award, BookOpen, CheckCircle2, ChevronDown, ChevronRight,
+  Circle, Clock3, GraduationCap, Lock, Play, RotateCcw, Sparkles,
 } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
+import { DEMOS, temDemo } from "./academyDemos.jsx";
+
+// Rótulo das abas para onde um passo interativo pode levar o aluno.
+const ABA_LABEL = {
+  painel: "Painel", oportunidades: "Oportunidades", academy: "Academy",
+  carteira: "Carteira", indicar: "Indicar", perfil: "Perfil",
+};
+
+// Diretiva de aula interativa, numa linha só:
+//   [[ir:carteira|Abrir a Carteira]]  -> botão que leva à tela real
+//   [[demo:menu]]                     -> widget de demonstração embutido
+const DIRETIVA = /^\[\[(ir|demo):([a-z-]+)(?:\|([^\]]+))?\]\]$/;
 
 // Renderização leve do conteúdo da aula: negrito, citação e lista. Não é
 // Markdown completo de propósito — carregar um parser inteiro para três
 // marcações seria peso sem retorno.
-function Conteudo({ texto }) {
+// Passo interativo: leva o aluno para a tela real da plataforma.
+function PassoIr({ aba, rotulo, navegar }) {
+  const label = rotulo || `Abrir ${ABA_LABEL[aba] || aba}`;
+  const valida = !!ABA_LABEL[aba] && aba !== "academy";
+  if (!valida || !navegar) {
+    // Sem ponte de navegação (ou aba inválida): não deixa um botão morto na tela.
+    return <div className="vx-chart-source" style={{ margin: "14px 0" }}>Abra {ABA_LABEL[aba] || aba} no menu para praticar este passo.</div>;
+  }
+  return (
+    <div style={{ margin: "16px 0" }}>
+      <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 44 }}
+        aria-label={label} onClick={() => navegar(aba)}>
+        <ArrowUpRight size={15} /> {label}
+      </button>
+      <div className="vx-chart-source" style={{ marginTop: 6 }}>
+        Abre a ferramenta de verdade. Depois use “Voltar ao curso” para retomar daqui.
+      </div>
+    </div>
+  );
+}
+
+function Conteudo({ texto, navegar }) {
   const blocos = String(texto || "").split("\n").filter((l) => l.trim() !== "");
   return (
     <div style={{ fontSize: 14.5, lineHeight: 1.72 }}>
       {blocos.map((linha, i) => {
         const t = linha.trim();
+        const dir = t.match(DIRETIVA);
+        if (dir) {
+          const [, tipo, chave, rotulo] = dir;
+          if (tipo === "ir") return <PassoIr key={i} aba={chave} rotulo={rotulo} navegar={navegar} />;
+          if (tipo === "demo" && temDemo(chave)) {
+            const Demo = DEMOS[chave];
+            return <Demo key={i} navegar={navegar} />;
+          }
+          return null; // diretiva desconhecida não vira texto cru
+        }
         if (t.startsWith("> ")) {
           return (
             <blockquote key={i} style={{
@@ -44,7 +87,7 @@ function Negrito({ texto }) {
       : <span key={i}>{p}</span>);
 }
 
-export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified }) {
+export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, navegar, aulaInicialId }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
   const [aulaId, setAulaId] = useState(null);
@@ -60,13 +103,22 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified }
     if (!r || r.error) return setErro(r?.error || "Curso indisponível.");
     setDados(r);
     setAbertos(Object.fromEntries(r.curso.modulos.map((m) => [m.id, true])));
-    if (!aulaId) setAulaId(r.progresso?.proximaAula?.id || r.curso.modulos[0]?.aulas[0]?.id || null);
+    // Ao voltar de um tour na ferramenta real, retoma exatamente a aula de onde
+    // o aluno saiu; só então cai para "próxima aula" ou a primeira.
+    const todas = r.curso.modulos.flatMap((m) => m.aulas);
+    const retomar = aulaInicialId && todas.some((a) => a.id === aulaInicialId) ? aulaInicialId : null;
+    if (retomar) setAulaId(retomar);
+    else if (!aulaId) setAulaId(r.progresso?.proximaAula?.id || todas[0]?.id || null);
   };
 
   useEffect(() => { carregar(); /* eslint-disable-next-line */ }, [courseId]);
 
   const aulas = useMemo(() => dados?.curso.modulos.flatMap((m) => m.aulas) || [], [dados]);
   const aula = aulas.find((a) => a.id === aulaId) || null;
+
+  // Passo interativo: abre a ferramenta real levando o contexto para que o aluno
+  // consiga voltar a esta aula. Sem ponte (ex.: prévia), o botão some sozinho.
+  const irFerramenta = navegar ? (aba) => navegar(aba, { courseId, aulaId }) : null;
   const indice = aulas.findIndex((a) => a.id === aulaId);
   const concluidas = new Set(dados?.progresso?.aulasConcluidas || []);
 
@@ -338,7 +390,14 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified }
             </div>
           ) : (
             <div className="vx-card" style={{ padding: 22 }}>
-              <div className="vx-eyebrow">Aula {indice + 1} de {aulas.length} · {aula.duracaoMin} min</div>
+              <div className="vx-row" style={{ gap: 8 }}>
+                <div className="vx-eyebrow">Aula {indice + 1} de {aulas.length} · {aula.duracaoMin} min</div>
+                {aula.tipo === "interativo" && (
+                  <span className="vx-badge vx-badge-brand" style={{ flexShrink: 0 }}>
+                    <Sparkles size={11} /> Interativa
+                  </span>
+                )}
+              </div>
               <h2 className="vx-disp" style={{ fontSize: 20, margin: "5px 0 14px" }}>{aula.titulo}</h2>
 
               {aula.tipo === "video" && aula.videoUrl && (
@@ -348,7 +407,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified }
                 </div>
               )}
 
-              <Conteudo texto={aula.conteudo} />
+              <Conteudo texto={aula.conteudo} navegar={irFerramenta} />
 
               {!!aula.materiais?.length && (
                 <div style={{ marginTop: 16 }}>

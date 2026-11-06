@@ -53,7 +53,7 @@ ${linhas.map((l, i) => `<text x="34" y="${138 + i * 34}" font-family="system-ui,
   return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`;
 }
 
-const aula = (titulo, duracaoMin, conteudo) => ({ titulo, duracaoMin, conteudo, tipo: "texto" });
+const aula = (titulo, duracaoMin, conteudo, tipo = "texto") => ({ titulo, duracaoMin, conteudo, tipo });
 const modulo = (titulo, resumo, aulas) => ({ titulo, resumo, aulas });
 const questao = (pergunta, alternativas, correta, explicacao) => ({ pergunta, alternativas, correta, explicacao });
 
@@ -709,7 +709,8 @@ const PLATAFORMA = {
         "4. Aprovada, a atividade vira saldo na sua **Carteira**.\n" +
         "5. Você saca o saldo liberado.\n\n" +
         "A RYCS faz a ponte financeira entre empresa e profissional (split), então você recebe da plataforma, não da empresa diretamente.\n\n" +
-        "**Guarde isto:** nenhuma atividade vira dinheiro antes de ser comprovada e auditada. A evidência é a moeda."),
+        "**Guarde isto:** nenhuma atividade vira dinheiro antes de ser comprovada e auditada. A evidência é a moeda.\n\n" +
+        "[[demo:ciclo]]", "interativo"),
       aula("As telas que você vai usar", 5,
         "O menu do profissional tem seis lugares, e cada um tem uma função clara:\n\n" +
         "- **Painel** — sua visão geral: score, atividade recente, para onde ir.\n" +
@@ -719,7 +720,8 @@ const PLATAFORMA = {
         "- **Indicar** — convidar outros profissionais e ganhar por isso.\n" +
         "- **Perfil** — seu score por função, seu nível e o que a empresa vê de você.\n\n" +
         "No menu da conta ficam ainda **Minha Conta** e **Configurações**.\n\n" +
-        "**Aplique hoje:** abra cada uma das seis telas uma vez. Só de reconhecer onde fica cada coisa, o resto do curso fica mais fácil."),
+        "**Aplique hoje:** abra cada uma das seis telas uma vez. Só de reconhecer onde fica cada coisa, o resto do curso fica mais fácil.\n\n" +
+        "[[demo:menu]]", "interativo"),
     ]),
 
     modulo("Entrar e ser aprovado", "Cadastro, onboarding, avaliação e perfil.", [
@@ -736,14 +738,16 @@ const PLATAFORMA = {
       aula("Seu Perfil é o seu currículo na RYCS", 5,
         "O **Perfil** é o que a empresa vê — não o seu nome na agenda dela, mas o seu histórico na plataforma: função, score por função, nível e certificações.\n\n" +
         "Você não precisa se vender para cada empresa. O perfil faz isso por você, com base no que você já comprovou. Quanto mais consistente o seu trabalho, mais forte o perfil, e mais no topo da fila você fica.\n\n" +
-        "**Aplique hoje:** abra o seu Perfil e veja o que já aparece. É assim que a empresa te vê hoje."),
+        "**Aplique hoje:** abra o seu Perfil e veja o que já aparece. É assim que a empresa te vê hoje.\n\n" +
+        "[[ir:perfil|Abrir meu Perfil]]", "interativo"),
     ]),
 
     modulo("Encontrar trabalho", "Oportunidades, treinamento da empresa e certificação.", [
       aula("Oportunidades: onde o trabalho aparece", 5,
         "A tela **Oportunidades** lista as empresas e campanhas disponíveis para o seu perfil. Cada campanha diz o que a empresa vende, para quem, o que espera de você e quanto paga por atividade.\n\n" +
         "Não é uma lista fixa igual para todo mundo: ela leva em conta a sua função e o seu histórico. Ler a campanha inteira antes de aplicar evita entrar em algo que não combina com você.\n\n" +
-        "**Aplique hoje:** abra uma campanha e localize três coisas: o público-alvo, o que conta como atividade paga e o valor de cada uma."),
+        "**Aplique hoje:** abra uma campanha e localize três coisas: o público-alvo, o que conta como atividade paga e o valor de cada uma.\n\n" +
+        "[[ir:oportunidades|Abrir Oportunidades]]", "interativo"),
       aula("Treinamento e certificação da empresa", 6,
         "Ao abrir uma empresa em que você ainda não foi aprovado, a plataforma mostra o **treinamento** daquela empresa antes de liberar as campanhas. Faz sentido: cada empresa tem produto, público e argumentos próprios, e você precisa dominá-los para representá-la.\n\n" +
         "Algumas campanhas exigem **certificação** — você estuda, faz a prova e só então é liberado. É o mesmo princípio da Academy: o selo é conquistado, não comprado.\n\n" +
@@ -759,7 +763,8 @@ const PLATAFORMA = {
       aula("Toda atividade vira evidência", 6,
         "Na RYCS, trabalhar e comprovar são a mesma ação. Cada conversa, reunião agendada, reunião realizada ou venda que você registra precisa vir com a prova daquilo: o contato, o que aconteceu, o combinado.\n\n" +
         "Não é controle por desconfiança. É o que permite a empresa pagar por resultado sem acompanhar você em tempo real. A evidência é o que transforma esforço em algo pagável.\n\n" +
-        "**Aplique hoje:** antes de registrar qualquer atividade, pergunte-se: eu conseguiria comprovar isto se a plataforma perguntasse? Se não, ajuste antes de registrar."),
+        "**Aplique hoje:** antes de registrar qualquer atividade, pergunte-se: eu conseguiria comprovar isto se a plataforma perguntasse? Se não, ajuste antes de registrar.\n\n" +
+        "[[demo:evidencia]]", "interativo"),
       aula("Como a auditoria funciona", 6,
         "Toda evidência registrada passa por auditoria — boa parte com apoio de IA, em volume. A auditoria confere se a atividade é real, se não está duplicada e se bate com o que a campanha pede.\n\n" +
         "Dado inventado, evidência reciclada e contato repetido entre profissionais são detectados. Uma recusa não só derruba aquela atividade: derruba o seu score, e o score é o que te coloca na frente das empresas.\n\n" +
@@ -775,11 +780,13 @@ const PLATAFORMA = {
       aula("Carteira: saldo, liberação e saque", 6,
         "A **Carteira** é onde o seu trabalho vira dinheiro visível. Cada atividade aprovada soma saldo. Parte dele fica liberada para saque conforme as regras da plataforma e da campanha.\n\n" +
         "Você saca o saldo liberado pela própria Carteira. Como a RYCS intermedia o pagamento (split), você recebe da plataforma, com histórico de cada valor e de onde ele veio.\n\n" +
-        "**Aplique hoje:** abra a Carteira e identifique a diferença entre saldo total, saldo liberado e o que já foi sacado. Entender isso evita ansiedade sobre quando o dinheiro chega."),
+        "**Aplique hoje:** abra a Carteira e identifique a diferença entre saldo total, saldo liberado e o que já foi sacado. Entender isso evita ansiedade sobre quando o dinheiro chega.\n\n" +
+        "[[demo:carteira]]\n\n[[ir:carteira|Abrir a Carteira]]", "interativo"),
       aula("O RYCS Score e por que ele decide tudo", 6,
         "O **RYCS Score** é a sua reputação medida pela plataforma. Ele não é uma nota única: combina dimensões como desempenho, conhecimento, comunicação, confiabilidade, conversão, qualidade e consistência.\n\n" +
         "O score é **por função** — o seu desempenho como SDR não se mistura com o de Closer — e o que é recente pesa mais que o que é antigo. Score bom te coloca no topo da fila das empresas; score ruim te tira dela.\n\n" +
-        "**Aplique hoje:** veja no seu Perfil quais dimensões do score estão mais fracas. É nelas que uma semana de atenção rende mais pontos."),
+        "**Aplique hoje:** veja no seu Perfil quais dimensões do score estão mais fracas. É nelas que uma semana de atenção rende mais pontos.\n\n" +
+        "[[demo:score]]", "interativo"),
       aula("Níveis e certificações", 5,
         "Conforme você acumula trabalho comprovado, boas avaliações e treinamento, você sobe de **nível** na plataforma. Nível mais alto significa mais acesso e mais confiança das empresas.\n\n" +
         "A **Academy** é parte desse crescimento: cada curso concluído e certificado fortalece o seu perfil, e alguns certificados liberam campanhas que exigem certificação. O selo é conquistado com curso e prova — nunca comprado.\n\n" +
@@ -787,7 +794,8 @@ const PLATAFORMA = {
       aula("Indicar: crescer trazendo gente boa", 4,
         "A tela **Indicar** te deixa convidar outros profissionais para a RYCS. Quando alguém entra pela sua indicação e trabalha, você é reconhecido por isso.\n\n" +
         "É uma forma honesta de crescer: você ganha trazendo gente que realmente trabalha, não números vazios. Indicação de quem sustenta boa evidência vale muito mais do que volume.\n\n" +
-        "**Aplique hoje:** pense em uma pessoa que você sabe que seria um bom profissional na plataforma. Essa é a indicação que vale a pena fazer."),
+        "**Aplique hoje:** pense em uma pessoa que você sabe que seria um bom profissional na plataforma. Essa é a indicação que vale a pena fazer.\n\n" +
+        "[[ir:indicar|Abrir Indicar]]", "interativo"),
       aula("O ciclo completo, do zero ao pagamento", 5,
         "Juntando tudo, a sua jornada na RYCS é um ciclo que se repete e melhora:\n\n" +
         "1. **Cadastro e onboarding** — a plataforma te conhece.\n" +
@@ -799,7 +807,8 @@ const PLATAFORMA = {
         "7. **Carteira e saque** — a evidência vira dinheiro.\n" +
         "8. **Score e níveis** — o histórico te coloca na frente da próxima campanha.\n\n" +
         "Cada volta deixa o seu perfil mais forte e o próximo trabalho mais fácil de conseguir.\n\n" +
-        "**Guarde isto:** a plataforma recompensa consistência. Quem comprova bem e com constância sobe; quem força atalho, cai."),
+        "**Guarde isto:** a plataforma recompensa consistência. Quem comprova bem e com constância sobe; quem força atalho, cai.\n\n" +
+        "[[demo:ciclo]]", "interativo"),
     ]),
   ],
   prova: [

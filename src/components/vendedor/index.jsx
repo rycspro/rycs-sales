@@ -1,4 +1,7 @@
-import { useState } from "react";
+import MinhaConta from "../conta/MinhaConta.jsx";
+import AtividadeProfissional from "../conta/AtividadeProfissional.jsx";
+import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
 import Cadastro from "./Cadastro.jsx";
 import PainelVendedor from "./PainelVendedor.jsx";
 import Oportunidades from "./Oportunidades.jsx";
@@ -14,16 +17,23 @@ import Indicacoes from "../Indicacoes.jsx";
 import Triagem from "./Triagem.jsx";
 import OnboardingProfissional from "./OnboardingProfissional.jsx";
 
-export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar }) {
+export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, setAba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
   const [campanhaAbertaId, setCampanhaAbertaId] = useState(null);
   const [academyFuncao, setAcademyFuncao] = useState(null);
+  // Tour de aula interativa: o aluno saiu de uma aula para usar a ferramenta
+  // real; guardamos curso + aula para ele voltar exatamente de onde parou.
+  const [tour, setTour] = useState(null);
+  const navegar = (destino, ctx) => { if (ctx) setTour(ctx); setAba(destino); };
   const [refazendo, setRefazendo] = useState(false);
   // Quando true, o profissional abriu a empresa mas ainda não está aprovado:
   // mostra TreinamentoEmpresa em vez de CampanhasEmpresa.
   const [modoTreinamento, setModoTreinamento] = useState(false);
   const eu = db.sellers.find((s) => s.id === db.sellerId);
 
+  useEffect(() => {
+    if (aba !== "oportunidades") { setAbertaId(null); setCampanhaAbertaId(null); }
+  }, [aba]);
   if (!eu) {
     if (db.sellers.length === 0)
       return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
@@ -31,7 +41,7 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
   }
 
   const emOnboarding = eu.onboardingEtapa && eu.onboardingEtapa !== "concluido";
-  if (emOnboarding && !refazendo)
+  if (emOnboarding && !refazendo && !["conta", "configuracoes", "suporte-conta"].includes(aba))
     return (
       <OnboardingProfissional
         aviso={aviso}
@@ -41,7 +51,7 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
     );
 
   const precisaAvaliar = eu.status === "triagem" || eu.status === "recusado";
-  if (precisaAvaliar || refazendo)
+  if ((precisaAvaliar || refazendo) && !["conta", "configuracoes", "suporte-conta"].includes(aba))
     return (
       <Triagem
         aviso={aviso}
@@ -99,11 +109,31 @@ export default function Vendedor({ db, setDb, up, aviso, aba, setAba, recarregar
         />
       )}
       {aba === "academy" && (academyFuncao
-        ? <Academy eu={eu} aviso={aviso} funcaoInicial={academyFuncao} recarregar={recarregar} />
-        : <AcademyCatalogo eu={eu} aviso={aviso} />)}
+        ? <Academy eu={eu} aviso={aviso} funcaoInicial={academyFuncao} recarregar={recarregar}
+            navegar={navegar} tour={tour} limparTour={() => setTour(null)} />
+        : <AcademyCatalogo eu={eu} aviso={aviso}
+            navegar={navegar} tour={tour} limparTour={() => setTour(null)} />)}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
-      {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} setDb={setDb} aviso={aviso} refazerAvaliacao={() => setRefazendo(true)} />}
+      {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} refazerAvaliacao={() => setRefazendo(true)} />}
+      {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} aviso={aviso} refazerAvaliacao={() => setRefazendo(true)} />}
+      {["tarefas", "conversas"].includes(aba) && <AtividadeProfissional conversas={aba === "conversas"} eu={eu} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
+
+      {/* Tour de aula: enquanto o aluno explora a ferramenta real, um atalho
+          sempre visível o traz de volta à aula de onde saiu. */}
+      {tour && aba !== "academy" && (
+        <button type="button" onClick={() => setAba("academy")}
+          aria-label="Voltar ao curso"
+          style={{
+            position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 76, zIndex: 60,
+            display: "flex", alignItems: "center", gap: 8, minHeight: 44, padding: "10px 18px",
+            borderRadius: 999, border: "1px solid var(--brand)", cursor: "pointer",
+            background: "var(--brand)", color: "#fff", font: "inherit", fontSize: 13.5, fontWeight: 600,
+            boxShadow: "0 8px 24px rgba(0,0,0,.28)",
+          }}>
+          <ArrowLeft size={15} /> Voltar ao curso
+        </button>
+      )}
     </>
   );
 }

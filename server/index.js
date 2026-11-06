@@ -41,7 +41,7 @@ import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
 import jarvasRoutes, { aquecerVozJarvas } from "./routes/jarvas.js";
-import { semearCatalogo } from "./services/academy.js";
+import { semearCatalogo, sincronizarCursoInterativo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
 // camada de providers. Trocar de fornecedor é trocar esta linha.
@@ -144,6 +144,7 @@ app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/admin/login", authLimiter);
 app.use("/api/auth/forgot-password", authLimiter);
 app.use("/api/auth/reset-password", authLimiter);
+app.use("/api/auth/change-password", authLimiter);
 app.use("/api/onboarding/convites", authLimiter);
 app.use("/api", apiLimiter);
 
@@ -260,6 +261,7 @@ if (isBetaEnvironment() && !db.prepare("SELECT 1 FROM beta_environment WHERE id 
 garantirDadosCriticosProfissionalBeta();
 semearPoliticasPadrao();
 semearCatalogo();
+sincronizarCursoInterativo();
 const capacidades = capacidadesDisponiveis();
 console.log("[audit] capacidades:", Object.entries(capacidades)
   .map(([c, v]) => `${c}=${v.disponivel ? v.provider : "não configurado"}`).join(" "));

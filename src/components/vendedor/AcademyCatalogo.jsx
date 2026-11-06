@@ -61,7 +61,7 @@ function CardCurso({ curso, abrir }) {
   );
 }
 
-export default function AcademyCatalogo({ eu, aviso }) {
+export default function AcademyCatalogo({ eu, aviso, navegar, tour, limparTour }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
   const [aba, setAba] = useState("explorar");
@@ -77,6 +77,13 @@ export default function AcademyCatalogo({ eu, aviso }) {
   };
 
   useEffect(() => { carregar(); }, []);
+
+  // Voltando de um tour na ferramenta real: reabre o curso de onde o aluno saiu.
+  useEffect(() => {
+    if (!dados || !tour?.courseId || aberto) return;
+    const curso = dados.cursos.find((c) => c.id === tour.courseId);
+    if (curso) setAberto(curso);
+  }, [dados, tour, aberto]);
   useEffect(() => {
     if (aba === "certificados") api("/courses/me/certificates").then((r) => setCertificados(r?.certificados || []));
   }, [aba]);
@@ -102,7 +109,9 @@ export default function AcademyCatalogo({ eu, aviso }) {
 
   if (aberto) {
     return <CursoPlayer courseId={aberto.id} eu={eu} aviso={aviso}
-      voltar={() => { setAberto(null); carregar(); }} />;
+      navegar={navegar}
+      aulaInicialId={tour?.courseId === aberto.id ? tour.aulaId : undefined}
+      voltar={() => { setAberto(null); limparTour?.(); carregar(); }} />;
   }
 
   // Categorias com curso de verdade. Filtro que nunca retorna nada é ruído.

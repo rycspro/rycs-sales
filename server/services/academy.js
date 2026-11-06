@@ -31,6 +31,43 @@ export function semearCatalogo() {
   return novos.length;
 }
 
+// O curso de reconhecimento da plataforma ganhou aulas interativas (diretivas
+// [[ir:...]] / [[demo:...]] no conteúdo). Como ele já existe no banco de
+// produção, o seed por slug não o reescreve. Esta sincronização atualiza o
+// CONTEÚDO das aulas em lugar, casando por ordem de módulo e de aula — preserva
+// o lessonId e todo o progresso (não apaga nem recria aula). Idempotente: na
+// segunda execução não há nada a atualizar. Restrita a um único slug.
+const SLUG_INTERATIVO = "como-a-rycs-funciona";
+
+export function sincronizarCursoInterativo() {
+  const curso = db.prepare("SELECT id FROM courses WHERE slug = ?").get(SLUG_INTERATIVO);
+  const fonte = CATALOGO_INICIAL.find((c) => c.slug === SLUG_INTERATIVO);
+  if (!curso || !fonte) return 0; // banco novo já nasce correto pelo seed
+
+  const modulos = db.prepare("SELECT id FROM course_modules WHERE courseId = ? ORDER BY ordem").all(curso.id);
+  let mudadas = 0;
+
+  db.transaction(() => {
+    fonte.modulos.forEach((mFonte, mi) => {
+      const mod = modulos[mi];
+      if (!mod) return;
+      const aulas = db.prepare("SELECT id, conteudo, tipo FROM course_lessons WHERE moduleId = ? ORDER BY ordem").all(mod.id);
+      (mFonte.aulas || []).forEach((aFonte, ai) => {
+        const atual = aulas[ai];
+        if (!atual) return;
+        const conteudo = aFonte.conteudo || "";
+        const tipo = aFonte.tipo || "texto";
+        if (atual.conteudo === conteudo && atual.tipo === tipo) return; // nada a fazer
+        db.prepare("UPDATE course_lessons SET conteudo = ?, tipo = ? WHERE id = ?").run(conteudo, tipo, atual.id);
+        mudadas += 1;
+      });
+    });
+  })();
+
+  if (mudadas) console.log(`[academy] curso ${SLUG_INTERATIVO}: ${mudadas} aula(s) sincronizada(s) para o formato interativo`);
+  return mudadas;
+}
+
 // --------------------------------------------------------------- CRUD ----
 
 export function criarCurso(dados) {

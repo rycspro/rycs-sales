@@ -12,7 +12,7 @@ const FUNCAO_LABEL = {
   "sem-exp": "Iniciante",
 };
 
-export default function Academy({ eu, aviso, funcaoInicial, recarregar }) {
+export default function Academy({ eu, aviso, funcaoInicial, recarregar, navegar, tour, limparTour }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
   const [cursoAberto, setCursoAberto] = useState(null);
@@ -45,7 +45,11 @@ export default function Academy({ eu, aviso, funcaoInicial, recarregar }) {
         eu={eu}
         aviso={aviso}
         onCertified={recarregar}
-        voltar={cursoAberto ? () => { setCursoAberto(null); carregar(); } : carregar}
+        navegar={navegar}
+        aulaInicialId={tour?.courseId === curso.id ? tour.aulaId : undefined}
+        voltar={cursoAberto
+          ? () => { setCursoAberto(null); limparTour?.(); carregar(); }
+          : () => { limparTour?.(); carregar(); }}
       />
     );
   }
