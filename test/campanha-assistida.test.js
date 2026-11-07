@@ -49,7 +49,9 @@ test("a região não arrasta o resto da frase junto", () => {
 test("valores por ação saem do ticket da empresa, e zeram sem ticket", () => {
   const com = montarCampanha("reunioes", empresa);
   assert.ok(com.tarefas.agendamento > 0);
-  assert.ok(com.tarefas.realizada > com.tarefas.agendamento, "reunião realizada vale mais que agendada");
+  // Modelo de comissão simplificado: ação principal (reunião agendada) + comissão
+  // por venda fechada. A comissão de venda vale mais que a reunião agendada.
+  assert.ok(com.tarefas.venda > com.tarefas.agendamento, "a comissão de venda vale mais que a reunião agendada");
   assert.equal(com.valoresDerivadosDoTicket, true);
 
   // Sem ticket, zero e aviso — nunca um número arbitrário apresentado como
@@ -64,7 +66,10 @@ test("cada objetivo traz a função e as ações que fazem sentido nele", () => 
   assert.equal(montarCampanha("prospeccao", empresa).funcao, "bdr");
   assert.equal(montarCampanha("campo", empresa).funcao, "pap");
   assert.ok("venda" in montarCampanha("vendas", empresa).tarefas);
-  assert.ok(!("venda" in montarCampanha("reunioes", empresa).tarefas));
+  // Reunião se paga por agendamento (ação principal), não por visita presencial —
+  // essa é a ação das campanhas de campo.
+  assert.ok("agendamento" in montarCampanha("reunioes", empresa).tarefas);
+  assert.ok(!("visita" in montarCampanha("reunioes", empresa).tarefas));
 });
 
 test("toda ação remunerada nasce com evidência e critério exigidos", () => {

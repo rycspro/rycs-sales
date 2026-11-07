@@ -132,7 +132,11 @@ test("voz por frase: fixas gravadas uma vez, só a frase com número da empresa 
   for (const f of ["Confirma?", "Mantenho?", "Quantos profissionais?", "Quer quantas vezes de retorno?", "Oi, sou o Jarvas.", "Posso montar?"])
     assert.ok(fixas.includes(f), f);
   assert.ok(!fixas.some((f) => /R\$|\d{3}/.test(f)), "nenhuma frase fixa tem valor de empresa");
-  assert.ok(fixas.join("").length < 1000, "as fixas inteiras custam menos de 1.000 caracteres");
+  // As fixas são gravadas uma única vez (TTS), então o custo é o total de
+  // caracteres do conjunto — o guard existe para esse total não crescer sem
+  // controle. Hoje são ~1.250 com as variantes por objetivo (reuniões, visitas,
+  // vendas, retorno, investimento); o teto dá folga sobre isso.
+  assert.ok(fixas.join("").length < 1500, "as fixas inteiras custam menos de 1.500 caracteres");
 });
 
 test("frases que gastam crédito: curtas e só com número", () => {

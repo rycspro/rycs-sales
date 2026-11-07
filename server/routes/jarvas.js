@@ -16,7 +16,7 @@ import { paraFala, frasesFixas } from "../../shared/jarvas.js";
 //   então as perguntas fixas são reaproveitadas em qualquer conversa;
 // - cada frase gerada é gravada em disco, no volume da Railway: gerou uma
 //   vez, nunca mais paga, nem depois de um deploy;
-// - as frases fixas (frasesFixas, ~640 caracteres) são gravadas uma única vez
+// - as frases fixas (frasesFixas, ~1.250 caracteres) são gravadas uma única vez
 //   na subida do servidor, se ainda não estiverem no disco;
 // - duas pessoas pedindo a mesma frase ao mesmo tempo geram um áudio só;
 // - teto mensal de caracteres para a conta toda e teto diário por empresa.
