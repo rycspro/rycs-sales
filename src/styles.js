@@ -724,6 +724,51 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 .vx-account-section{min-width:0}.vx-account-section>h2{font-size:22px;margin:20px 0}.vx-account-form{display:grid;gap:18px;max-width:560px}.vx-account-form label,.vx-account-email{display:grid;gap:8px;font-size:14px}.vx-account-form .vx-btn{justify-self:start;min-height:44px}.vx-account-email{max-width:560px;margin-bottom:20px}.vx-account :is(input,textarea,select){max-width:100%;min-width:0}.vx-account .vx-grid{min-width:0}.vx-account-notification{border-bottom:1px solid var(--border);padding:16px 0;overflow-wrap:anywhere}.vx-account-notification p{font-size:14px}.vx-account-notification .vx-chip{margin-left:8px}
 .vx-sidebar-account{position:relative;margin:8px 10px}.vx-account-trigger{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--ink);padding:10px;cursor:pointer;text-align:left;min-height:60px}.vx-account-trigger>img,.vx-account-initial{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}.vx-account-initial{display:grid;place-items:center;background:var(--surface-2);color:var(--brand)}.vx-account-trigger>span:not(.vx-account-initial){flex:1;min-width:0}.vx-account-trigger strong{display:block;font-size:13px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.vx-account-trigger small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
 .vx-account-menu{position:absolute;bottom:calc(100% + 8px);left:0;right:0;z-index:60;padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-pop);max-height:calc(100dvh - 120px);overflow-y:auto}.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
+/* ── Glass workspace ──────────────────────────────────────────────────────
+   Material de vidro em toda a plataforma: fundo ambiente com luz difusa,
+   painéis translúcidos com reflexo na borda superior, trilho lateral e
+   conteúdo flutuando como cartões arredondados, dock flutuante no celular. */
+.vx-app{position:relative;isolation:isolate;
+  --glass-edge:inset 0 1px 0 rgba(255,255,255,.80),inset 0 0 0 1px rgba(255,255,255,.30);
+  --glass-panel:rgba(255,255,255,.52)}
+html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.10),inset 0 0 0 1px rgba(255,255,255,.05);--glass-panel:rgba(20,22,28,.52)}
+.vx-app::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(900px 560px at 8% -8%,rgba(37,99,235,.16),transparent 62%),
+    radial-gradient(760px 520px at 100% 18%,rgba(67,56,202,.12),transparent 62%),
+    radial-gradient(720px 480px at 50% 112%,rgba(14,165,233,.12),transparent 62%)}
+html.dark .vx-app::before{background:
+    radial-gradient(900px 560px at 8% -8%,rgba(37,99,235,.20),transparent 62%),
+    radial-gradient(760px 520px at 100% 18%,rgba(67,56,202,.16),transparent 62%),
+    radial-gradient(720px 480px at 50% 112%,rgba(14,165,233,.10),transparent 62%)}
+.vx-card,.vx-stat,.vx-account-group,.vx-onb-card,.vx-empresa-card,.vx-glass-card,.vx-prof-grid>.vx-prof-card,.vx-sheet,.vx-context-menu,.vx-account-menu,.vx-account-trigger,.vx-account-logout,.vx-table-wrap,.vx-campaign-team-table,.vx-cost-table{
+  box-shadow:var(--glass-edge),var(--glass-shadow)}
+.vx-stat,.vx-account-group,.vx-account-trigger,.vx-account-logout,.vx-context-menu,.vx-account-menu{
+  background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-color:var(--glass-border)}
+.vx-card:hover,.vx-stat:hover{box-shadow:var(--glass-edge),0 10px 30px -10px rgba(11,18,32,.12)}
+html.dark .vx-card:hover,html.dark .vx-stat:hover{box-shadow:var(--glass-edge),0 10px 30px -10px rgba(0,0,0,.45)}
+.vx-content>*{animation:vxin .32s cubic-bezier(.22,.9,.32,1) both}
+@media(min-width:900px){
+  .vx-body{grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px}
+  .vx-sidebar{top:16px;height:calc(100vh - 32px);border-radius:23px;border:1px solid var(--glass-border);border-right:1px solid var(--glass-border);
+    overflow:hidden;box-shadow:var(--glass-edge),var(--glass-shadow)}
+  html.dark .vx-sidebar{border-right:1px solid var(--glass-border);box-shadow:var(--glass-edge),var(--glass-shadow)}
+  .vx-sidebar-logo{border-bottom-color:var(--glass-border-subtle)}
+  .vx-content{min-height:calc(100vh - 32px);background:var(--glass-panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-border);border-radius:27px;box-shadow:var(--glass-edge),var(--glass-shadow);padding:30px 32px 48px}
+  .vx-content-chat,.vx-content-settings{border-radius:27px;overflow:hidden}
+}
+@media(max-width:899px){
+  .vx-bottomnav{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:6px;gap:2px;border-radius:30px;
+    border:1px solid var(--glass-border);background:var(--glass-strong);box-shadow:var(--glass-edge),var(--shadow-pop);min-height:0}
+  .vx-navbtn{min-height:54px;border-radius:24px;padding:8px 2px 7px;transition:background .2s,color .2s}
+  .vx-navbtn[data-on="1"]{background:var(--brand-50)}
+  .vx-navbar-indicator{display:none}
+}
+@supports not (backdrop-filter:blur(1px)){.vx-content,.vx-stat,.vx-account-group{background:var(--surface-solid)}}
+@media(prefers-reduced-transparency:reduce){.vx-content,.vx-stat,.vx-account-group,.vx-context-menu,.vx-account-menu{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--surface-solid)}}
+@media(prefers-reduced-motion:reduce){.vx-content>*{animation:none}}
+
 @media(max-width:899px){.vx-bottomnav{background:var(--surface);min-height:calc(64px + env(safe-area-inset-bottom,0px))}.vx-navbtn{min-height:64px}.vx-navbtn span{font-size:10px}.vx-account-grid{grid-template-columns:1fr;gap:20px}.vx-account-heading h1{font-size:24px}.vx-account-avatar{width:52px;height:52px}.vx-account-identity{gap:12px;flex-wrap:wrap}.vx-account-identity>div{flex-basis:calc(100% - 64px)}.vx-account-identity>.vx-btn{margin-left:64px;min-height:44px}.vx-content-settings .vx-account{padding:20px 16px calc(100px + env(safe-area-inset-bottom,0px))}.vx-account-section .vx-card{max-width:100%}.vx-account-form{width:100%}.vx-account-section>div>nav{max-width:100%}}
 `;
 

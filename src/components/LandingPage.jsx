@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { ArrowRight, ChevronDown, MessageCircle, Sparkles } from "lucide-react";
 import { navegar } from "../lib/rotas.js";
+import { PLANOS, ORDEM_PLANOS } from "../../shared/planos.js";
 
 const ABAS = ["empresa", "profissional"];
 
@@ -115,6 +117,87 @@ function MobileMenu({ open, onClose, onNav }) {
   );
 }
 
+const brl = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: v % 1 ? 2 : 0 });
+const planosPagos = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0)
+  .map((k) => `${PLANOS[k].nome} (${brl(PLANOS[k].preco)}/mês, taxa de ${Math.round(PLANOS[k].takeRate * 100)}%)`)
+  .join(", ");
+
+const FAQS = {
+  empresa: [
+    { q: "O que é a RYCS Sales Machine?", a: "Uma plataforma de execução comercial que conecta sua empresa a vendedores autônomos qualificados. Você cria a campanha, escolhe quem entra no time e paga apenas pelas ações verificadas: leads, visitas, reuniões e vendas." },
+    { q: "Quanto custa para a empresa?", a: `A assinatura dá acesso e limites; o caixa de campanha paga as ações. Planos: ${planosPagos}. Quanto maior o plano, menor a taxa sobre cada ação. O ${PLANOS.free.nome} é gratuito para configurar a conta antes de publicar.` },
+    { q: "Como funciona o pagamento por resultado?", a: "Você define a remuneração por ação ao criar a campanha. Cada envio do profissional reserva o valor no seu caixa; quando você aprova, o pagamento vai integralmente ao vendedor e a taxa do plano é registrada à parte. Se recusar, a reserva é estornada." },
+    { q: "Como os vendedores são selecionados?", a: "Profissionais se candidatam, passam pela qualificação da sua campanha (treinamento e quiz) e só entram depois da sua aprovação. Cada um tem score e histórico verificados na plataforma." },
+    { q: "O que é a auditoria de ações?", a: "Todo lead, visita e venda é registrado com evidências: fotos, localização e detalhes. A IA e as regras da plataforma conferem cada ação antes de liberar o pagamento. Sem achismo, sem briga por comissão." },
+    { q: "Preciso contratar CLT?", a: "Não. Os vendedores são autônomos e trabalham por campanha. Sem vínculo empregatício, sem custo fixo e sem burocracia de contratação." },
+  ],
+  profissional: [
+    { q: "Preciso pagar para usar a RYCS?", a: "Não. O cadastro e o acesso às campanhas são gratuitos para profissionais. Você só precisa de um perfil completo e aprovação na qualificação de cada campanha." },
+    { q: "Como e quando recebo?", a: "Ao registrar uma ação na plataforma, o valor fica reservado no caixa da empresa. Quando ela aprova, o valor cai integralmente na sua carteira RYCS e você solicita o saque. A taxa da plataforma é paga pela empresa, não por você." },
+    { q: "Quanto posso ganhar?", a: "Depende das campanhas que você escolhe: cada uma mostra o valor por lead, visita, reunião ou venda antes de você se candidatar. Você sabe exatamente quanto vai receber por cada ação." },
+    { q: "O que é o score?", a: "Sua pontuação verificada, construída a cada entrega aprovada. Score alto dá prioridade nas melhores campanhas e mais chance de aprovação pelas empresas." },
+    { q: "Posso trabalhar em várias campanhas?", a: "Sim. Você é autônomo: candidate-se a quantas campanhas quiser, na sua região e no horário que preferir." },
+    { q: "Como as minhas ações são verificadas?", a: "Você registra tudo pelo celular: fotos, localização e detalhes da ação. A plataforma audita as evidências e a empresa aprova. Tudo fica rastreável no seu histórico." },
+  ],
+};
+
+function FaqSection({ aba }) {
+  const [open, setOpen] = useState(0);
+  const itens = FAQS[aba];
+  useEffect(() => setOpen(0), [aba]);
+  return (
+    <section id="faq" style={st.faqSection}>
+      <div style={st.faqInner}>
+        <div style={st.faqHead}>
+          <span style={st.faqPill}><Sparkles size={12} color="#F59E0B" aria-hidden="true" /> FAQ</span>
+          <h2 style={st.faqTitle}>Perguntas frequentes</h2>
+          <p style={st.faqSub}>
+            Respostas rápidas para as dúvidas mais comuns. Não achou a sua? Escreva para{" "}
+            <a href="mailto:contato@rycs.com.br" style={st.faqLink}>contato@rycs.com.br</a>.
+          </p>
+        </div>
+
+        <div style={st.faqList}>
+          {itens.map((f, i) => {
+            const ativo = open === i;
+            return (
+              <div key={f.q} style={st.faqItem}>
+                <button
+                  type="button"
+                  className="lp-faq-trigger"
+                  style={st.faqTrigger}
+                  aria-expanded={ativo}
+                  aria-controls={`faq-${aba}-${i}`}
+                  onClick={() => setOpen(ativo ? -1 : i)}
+                >
+                  {f.q}
+                  <ChevronDown size={18} aria-hidden="true" style={{ ...st.faqChevron, transform: ativo ? "rotate(180deg)" : "none" }} />
+                </button>
+                <div id={`faq-${aba}-${i}`} role="region" style={{ ...st.faqPanel, gridTemplateRows: ativo ? "1fr" : "0fr" }}>
+                  <div style={st.faqPanelInner}><p style={st.faqAnswer}>{f.a}</p></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="lp-faq-box" style={st.faqBox}>
+          <div style={st.faqBoxLeft}>
+            <span style={st.faqBoxIcon}><MessageCircle size={16} aria-hidden="true" /></span>
+            <div>
+              <p style={st.faqBoxTitle}>Ainda tem alguma dúvida?</p>
+              <p style={st.faqBoxText}>Respondemos em até um dia útil.</p>
+            </div>
+          </div>
+          <a href="mailto:contato@rycs.com.br" className="lp-faq-box-btn" style={st.faqBoxBtn}>
+            Falar com a RYCS <ArrowRight size={15} aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const [aba, setAba] = useState("empresa");
   const [email, setEmail] = useState("");
@@ -139,7 +222,10 @@ export default function LandingPage() {
           .lp-hero-title { font-size: 32px !important; }
           .lp-stats-row { flex-direction: column !important; gap: 16px !important; }
           .lp-footer-grid { grid-template-columns: 1fr !important; }
+          .lp-faq-box { flex-direction: column !important; align-items: flex-start !important; }
         }
+        .lp-faq-trigger:hover { color: ${BRAND} !important; }
+        .lp-faq-box-btn:hover { background: ${BRAND} !important; }
       `}</style>
 
       {/* ── HEADER ──────────────────────────────────────────────────────── */}
@@ -168,8 +254,8 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section style={st.hero}>
-        {/* Glow decorativo */}
-        <div style={st.heroGlow} />
+        <div style={st.heroGrid} aria-hidden="true"><div style={st.heroGridGlow} /></div>
+        <div style={st.heroInner}>
 
         {/* Abas */}
         <div style={st.tabBar}>
@@ -223,6 +309,7 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+        </div>
       </section>
 
       {/* ── BRAND SLIDER ───────────────────────────────────────────────── */}
@@ -272,6 +359,9 @@ export default function LandingPage() {
           {c.ctaPrimario.label}
         </button>
       </section>
+
+      {/* ── FAQ ────────────────────────────────────────────────────────── */}
+      <FaqSection aba={aba} />
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer style={st.footer}>
@@ -519,20 +609,29 @@ const st = {
     position: "relative",
     textAlign: "center",
     padding: "120px 24px 56px",
-    maxWidth: 820,
-    margin: "0 auto",
     overflow: "hidden",
   },
-  heroGlow: {
+  heroInner: {
+    maxWidth: 820,
+    margin: "0 auto",
+    position: "relative",
+    zIndex: 1,
+  },
+  heroGrid: {
     position: "absolute",
-    top: -120,
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: 600,
-    height: 400,
-    background: `radial-gradient(ellipse at center, rgba(37,99,235,.08) 0%, transparent 70%)`,
-    pointerEvents: "none",
+    inset: 0,
     zIndex: 0,
+    pointerEvents: "none",
+    backgroundImage: "linear-gradient(to right, #f0f0f0 1px, transparent 1px), linear-gradient(to bottom, #f0f0f0 1px, transparent 1px)",
+    backgroundColor: BG,
+    backgroundSize: "6rem 4rem",
+    maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+    WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+  },
+  heroGridGlow: {
+    position: "absolute",
+    inset: 0,
+    background: "radial-gradient(circle 500px at 50% 200px, #C9EBFF, transparent)",
   },
   tabBar: {
     display: "inline-flex",
@@ -764,6 +863,51 @@ const st = {
     background: "#fff", color: BRAND, border: "none", borderRadius: 12,
     padding: "15px 32px", fontWeight: 700, fontSize: 15.5, cursor: "pointer", minHeight: 50,
     boxShadow: "0 4px 20px rgba(0,0,0,.15)",
+  },
+
+  /* ── FAQ ─────────────────────────────────────────────────────────── */
+  faqSection: { padding: "88px 24px", background: BG },
+  faqInner: { maxWidth: 760, margin: "0 auto" },
+  faqHead: { display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center" },
+  faqPill: {
+    display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 999,
+    border: `1px solid ${BORDER}`, background: BG, padding: "4px 12px",
+    fontSize: 12, fontWeight: 600, color: MUTED, boxShadow: "0 1px 2px rgba(0,0,0,.05)",
+  },
+  faqTitle: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: "clamp(29px, 4vw, 44px)", fontWeight: 700, letterSpacing: "-.03em", lineHeight: 1.08,
+    margin: 0, color: INK, textWrap: "balance",
+  },
+  faqSub: { maxWidth: 560, margin: 0, color: MUTED, fontSize: 15.5, lineHeight: 1.6, textWrap: "balance" },
+  faqLink: { color: INK, fontWeight: 500, textDecoration: "underline", textUnderlineOffset: 4 },
+  faqList: { marginTop: 48, borderTop: `1px solid ${BORDER}` },
+  faqItem: { borderBottom: `1px solid ${BORDER}` },
+  faqTrigger: {
+    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
+    width: "100%", padding: "18px 0", background: "none", border: 0, cursor: "pointer",
+    fontFamily: "inherit", fontSize: 15.5, fontWeight: 600, color: INK, textAlign: "left",
+    transition: "color .15s",
+  },
+  faqChevron: { flexShrink: 0, color: MUTED, transition: "transform .2s" },
+  faqPanel: { display: "grid", transition: "grid-template-rows .25s ease" },
+  faqPanelInner: { overflow: "hidden" },
+  faqAnswer: { margin: 0, padding: "0 32px 18px 0", color: MUTED, fontSize: 14.5, lineHeight: 1.65 },
+  faqBox: {
+    marginTop: 40, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
+    borderRadius: 18, border: `1px dashed ${BORDER}`, background: BG_PAGE, padding: 20,
+  },
+  faqBoxLeft: { display: "flex", alignItems: "center", gap: 12 },
+  faqBoxIcon: {
+    display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: "50%",
+    background: INK, color: "#fff", flexShrink: 0,
+  },
+  faqBoxTitle: { margin: 0, fontSize: 14, fontWeight: 600, color: INK },
+  faqBoxText: { margin: "2px 0 0", fontSize: 12.5, color: MUTED },
+  faqBoxBtn: {
+    display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 999,
+    background: INK, color: "#fff", padding: "10px 16px", fontSize: 13.5, fontWeight: 600,
+    textDecoration: "none", whiteSpace: "nowrap", transition: "background .15s",
   },
 
   /* ── FOOTER ──────────────────────────────────────────────────────── */

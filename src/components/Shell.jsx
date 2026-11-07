@@ -11,8 +11,18 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   const navItems = allItems.filter((item) => item.key);
   const bottomItems = MOBILE_NAV[role] || navItems.slice(0, 5);
   const accountRole = role === "empresa" || role === "vendedor";
-  const mobileActive = accountRole && ["conta", "configuracoes", "perfil", "carteira", "academy", "indicar", "suporte-conta"].includes(active)
-    ? "conta" : role === "empresa" && ["leads", "conferir", "profissionais"].includes(active) ? "campanhas" : active;
+  // Destaque da barra inferior: telas sem aba própria no celular acendem a aba
+  // que as contém. Perfil, Indicar e Configurações do profissional vivem em
+  // "Conta"; no lado empresa, a conta inteira acende "Conta" (configuracoes), e
+  // Leads/Aprovações/Profissionais acendem "Campanhas".
+  const mobileActive = (() => {
+    if (role === "vendedor" && ["conta", "configuracoes", "perfil", "indicar", "suporte-conta"].includes(active)) return "conta";
+    if (role === "empresa") {
+      if (["conta", "configuracoes", "perfil", "carteira", "academy", "indicar", "suporte-conta"].includes(active)) return "configuracoes";
+      if (["leads", "conferir", "profissionais"].includes(active)) return "campanhas";
+    }
+    return active;
+  })();
 
   return (
     <div className="vx-body">
