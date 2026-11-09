@@ -876,6 +876,39 @@ html[data-versao="sol"] .vx-navbtn[data-on="1"]{color:#318CE7}
 html[data-versao="sol"] .vx-badge-brand{background:#EAF4FF;color:#318CE7}
 html[data-versao="sol"] .vx-meter-fill{background:#318CE7}
 html[data-versao="sol"] .vx-lrow-icon,html[data-versao="sol"] .vx-stat-icon{border-radius:8px}
+
+/* Sol: sem círculos — pills, badges, tabs, segmentos e avatares viram
+   retangulares (cantos 8px), padrão em todas as páginas. O spinner continua
+   redondo por ser funcional. */
+html[data-versao="sol"] .vx-chip,
+html[data-versao="sol"] .vx-badge,
+html[data-versao="sol"] .vx-beta-badge,
+html[data-versao="sol"] .vx-beta-login-badge,
+html[data-versao="sol"] .vx-chrome-badge,
+html[data-versao="sol"] .vx-campaign-status,
+html[data-versao="sol"] .vx-plan-ribbon,
+html[data-versao="sol"] .vx-tab,
+html[data-versao="sol"] .vx-seg,
+html[data-versao="sol"] .vx-seg button,
+html[data-versao="sol"] .vx-campaign-filters button,
+html[data-versao="sol"] .vx-campaign-filters button span,
+html[data-versao="sol"] .vx-professional-filters button,
+html[data-versao="sol"] .vx-steps span,
+html[data-versao="sol"] .vx-prog-subfase,
+html[data-versao="sol"] .vx-navdot,
+html[data-versao="sol"] .vx-sidedot,
+html[data-versao="sol"] .vx-dock,
+html[data-versao="sol"] .vx-navbtn{border-radius:8px!important}
+/* Avatares e círculos de ícone → quadrado arredondado */
+html[data-versao="sol"] .vx-account-avatar,
+html[data-versao="sol"] .vx-account-initial,
+html[data-versao="sol"] .vx-account-trigger>img,
+html[data-versao="sol"] .vx-avatar,
+html[data-versao="sol"] .vx-team-person i,
+html[data-versao="sol"] .vx-onb-icone,
+html[data-versao="sol"] .vx-onb-passo-n,
+html[data-versao="sol"] .vx-prof-card__img,
+html[data-versao="sol"] .vx-conv-avatar{border-radius:8px!important}
 @media(min-width:900px){
   .vx-body{grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px}
   .vx-sidebar{top:16px;height:calc(100vh - 32px);border-radius:23px;border:1px solid var(--glass-border);border-right:1px solid var(--glass-border);

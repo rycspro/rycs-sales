@@ -289,15 +289,15 @@ function agruparPorData(msgs) {
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 
-function Avatar({ nome, foto, size = 40, fontSize = 15 }) {
+function Avatar({ nome, foto, size = 40, fontSize = 15, className = "" }) {
   const [err, setErr] = useState(false);
   const cores = ["#2563EB", "#7C3AED", "#059669", "#DC2626", "#D97706"];
   const cor = cores[(nome?.charCodeAt(0) || 0) % cores.length];
   if (foto && !err)
-    return <img src={foto} alt={nome} onError={() => setErr(true)}
+    return <img src={foto} alt={nome} onError={() => setErr(true)} className={className}
       style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   return (
-    <div style={{
+    <div className={className} style={{
       width: size, height: size, borderRadius: "50%", background: cor,
       color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
       fontSize, fontWeight: 700, flexShrink: 0, fontFamily: "'Space Grotesk', sans-serif",
@@ -352,33 +352,33 @@ function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
         onClick={onClick}
         aria-pressed={ativo}
         style={{
-          display: "flex", alignItems: "center", gap: 11, width: "100%",
-          padding: "11px 14px", paddingRight: 36, textAlign: "left", border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 13, width: "100%",
+          padding: "15px 16px", paddingRight: 38, textAlign: "left", border: "none", cursor: "pointer",
           background: "transparent", outline: "none",
         }}
       >
         <div style={{ position: "relative", flexShrink: 0 }}>
-          <Avatar nome={c.seller?.nome} foto={c.seller?.foto} size={40} fontSize={14} />
+          <Avatar nome={c.seller?.nome} foto={c.seller?.foto} size={52} fontSize={18} className="vx-conv-avatar" />
           {c.naoLidas > 0 && (
             <span style={{
               position: "absolute", top: -2, right: -2,
-              width: 10, height: 10, borderRadius: "50%",
+              width: 11, height: 11, borderRadius: "50%",
               background: "#2563EB", border: "2px solid #fff",
             }} />
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 4, marginBottom: 3 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
             <span style={{
               fontWeight: c.naoLidas > 0 ? 700 : 500,
-              fontSize: 13.5, color: "#0B1220",
+              fontSize: 15, color: "#0B1220",
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>{nome}</span>
-            <span style={{ fontSize: 11, color: "#94A3B8", flexShrink: 0 }}>{horaOuData(c.ultima?.ts)}</span>
+            <span style={{ fontSize: 11.5, color: "#94A3B8", flexShrink: 0 }}>{horaOuData(c.ultima?.ts)}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 4 }}>
             <span style={{
-              fontSize: 12.5, color: c.naoLidas > 0 ? "#334155" : "#94A3B8",
+              fontSize: 13.5, color: c.naoLidas > 0 ? "#334155" : "#94A3B8",
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               fontWeight: c.naoLidas > 0 ? 500 : 400,
             }}>{previewTexto}</span>
