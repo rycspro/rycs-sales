@@ -749,8 +749,8 @@ html.dark .vx-app::before{background:
     radial-gradient(720px 480px at 50% 112%,rgba(14,165,233,.10),transparent 62%)}
 .vx-card,.vx-stat,.vx-account-group,.vx-onb-card,.vx-empresa-card,.vx-glass-card,.vx-prof-grid>.vx-prof-card,.vx-sheet,.vx-context-menu,.vx-account-menu,.vx-account-trigger,.vx-account-logout,.vx-table-wrap,.vx-campaign-team-table,.vx-cost-table{
   box-shadow:var(--glass-edge),var(--glass-shadow)}
-.vx-stat,.vx-account-group,.vx-account-trigger,.vx-account-logout,.vx-context-menu,.vx-account-menu{
-  background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-color:var(--glass-border)}
+.vx-card,.vx-stat,.vx-account-group,.vx-account-trigger,.vx-account-logout,.vx-context-menu,.vx-account-menu{
+  background:var(--glass);backdrop-filter:var(--glass-blur-strong);-webkit-backdrop-filter:var(--glass-blur-strong);border-color:var(--glass-border)}
 .vx-card:hover,.vx-stat:hover{box-shadow:var(--glass-edge),0 10px 30px -10px rgba(11,18,32,.12)}
 html.dark .vx-card:hover,html.dark .vx-stat:hover{box-shadow:var(--glass-edge),0 10px 30px -10px rgba(0,0,0,.45)}
 .vx-content>*{animation:vxin .32s cubic-bezier(.22,.9,.32,1) both}

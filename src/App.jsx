@@ -117,7 +117,9 @@ export default function App() {
   }, []);
 
   // Acesso da empresa: prefetch em paralelo com onboarding, evita cascata.
-  const [acesso, setAcesso] = useState(undefined);
+  // No modo de pré-visualização (DEV, /preview/*) não há API: libera por padrão
+  // para a tela montar com os dados demo.
+  const [acesso, setAcesso] = useState(() => previaQualificacao ? { liberado: true, plano: "premium", motivo: "preview" } : undefined);
   const consultarAcesso = useCallback(() =>
     api("/subscription/access").then((r) => {
       if (r) { setAcesso(r); return r; }
