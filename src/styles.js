@@ -731,28 +731,38 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
    painéis translúcidos com reflexo na borda superior, trilho lateral e
    conteúdo flutuando como cartões arredondados, dock flutuante no celular. */
 .vx-app{position:relative;isolation:isolate;
-  --glass-edge:inset 0 1px 0 rgba(255,255,255,.80),inset 0 0 0 1px rgba(255,255,255,.30);
-  --glass-panel:rgba(255,255,255,.52)}
-html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.10),inset 0 0 0 1px rgba(255,255,255,.05);--glass-panel:rgba(20,22,28,.52)}
+  --glass-edge:inset 0 1px 0 rgba(255,255,255,.90),inset 0 0 0 1px rgba(255,255,255,.45);
+  --glass-lift:0 12px 30px -16px rgba(23,37,84,.28),0 2px 8px -4px rgba(23,37,84,.10);
+  --glass-lift-hover:0 18px 44px -18px rgba(23,37,84,.34),0 3px 10px -4px rgba(23,37,84,.12);
+  --glass-panel:rgba(255,255,255,.50)}
+html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.06);
+  --glass-lift:0 14px 34px -16px rgba(0,0,0,.55),0 2px 8px -4px rgba(0,0,0,.4);
+  --glass-lift-hover:0 20px 48px -18px rgba(0,0,0,.6),0 3px 10px -4px rgba(0,0,0,.45);
+  --glass-panel:rgba(20,22,28,.52)}
 /* Painel de vidro reutilizável — aplique em qualquer card inline para trazê-lo
    ao mesmo material dos primitivos (translúcido, luz na borda, sombra suave). */
-.vx-glass-panel{background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-border);box-shadow:var(--glass-edge),var(--glass-shadow)}
+.vx-glass-panel{background:var(--glass);backdrop-filter:var(--glass-blur-strong);-webkit-backdrop-filter:var(--glass-blur-strong);
+  border:0;border-radius:18px;box-shadow:var(--glass-edge),var(--glass-lift)}
+/* Fundo ambiente com cor de verdade: é o que faz o vidro translúcido "aparecer"
+   em tema claro — sem isso, painel branco sobre fundo branco fica invisível. */
 .vx-app::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(900px 560px at 8% -8%,rgba(37,99,235,.16),transparent 62%),
-    radial-gradient(760px 520px at 100% 18%,rgba(67,56,202,.12),transparent 62%),
-    radial-gradient(720px 480px at 50% 112%,rgba(14,165,233,.12),transparent 62%)}
+    radial-gradient(1000px 620px at 6% -10%,rgba(37,99,235,.30),transparent 60%),
+    radial-gradient(860px 560px at 102% 12%,rgba(99,102,241,.26),transparent 60%),
+    radial-gradient(820px 560px at 50% 116%,rgba(14,165,233,.22),transparent 60%),
+    linear-gradient(180deg,rgba(37,99,235,.05),transparent 40%)}
 html.dark .vx-app::before{background:
-    radial-gradient(900px 560px at 8% -8%,rgba(37,99,235,.20),transparent 62%),
-    radial-gradient(760px 520px at 100% 18%,rgba(67,56,202,.16),transparent 62%),
-    radial-gradient(720px 480px at 50% 112%,rgba(14,165,233,.10),transparent 62%)}
-.vx-card,.vx-stat,.vx-account-group,.vx-onb-card,.vx-empresa-card,.vx-glass-card,.vx-prof-grid>.vx-prof-card,.vx-sheet,.vx-context-menu,.vx-account-menu,.vx-account-trigger,.vx-account-logout,.vx-table-wrap,.vx-campaign-team-table,.vx-cost-table{
-  box-shadow:var(--glass-edge),var(--glass-shadow)}
-.vx-card,.vx-stat,.vx-account-group,.vx-account-trigger,.vx-account-logout,.vx-context-menu,.vx-account-menu{
-  background:var(--glass);backdrop-filter:var(--glass-blur-strong);-webkit-backdrop-filter:var(--glass-blur-strong);border-color:var(--glass-border)}
-.vx-card:hover,.vx-stat:hover{box-shadow:var(--glass-edge),0 10px 30px -10px rgba(11,18,32,.12)}
-html.dark .vx-card:hover,html.dark .vx-stat:hover{box-shadow:var(--glass-edge),0 10px 30px -10px rgba(0,0,0,.45)}
+    radial-gradient(1000px 620px at 6% -10%,rgba(37,99,235,.24),transparent 60%),
+    radial-gradient(860px 560px at 102% 12%,rgba(99,102,241,.20),transparent 60%),
+    radial-gradient(820px 560px at 50% 116%,rgba(14,165,233,.12),transparent 60%)}
+/* Cards como tiles de vidro elevados: sem borda dura, luz no topo, sombra que
+   levanta do fundo, cantos arredondados. */
+.vx-card,.vx-stat,.vx-account-group,.vx-onb-card,.vx-empresa-card,.vx-glass-card,.vx-prof-grid>.vx-prof-card,.vx-sheet,.vx-context-menu,.vx-account-menu,.vx-account-trigger,.vx-account-logout{
+  border:0!important;box-shadow:var(--glass-edge),var(--glass-lift)!important}
+.vx-card,.vx-stat,.vx-account-group,.vx-onb-card,.vx-empresa-card,.vx-account-trigger,.vx-account-logout,.vx-context-menu,.vx-account-menu{
+  background:var(--glass)!important;backdrop-filter:var(--glass-blur-strong);-webkit-backdrop-filter:var(--glass-blur-strong)}
+.vx-stat{border-radius:18px}
+.vx-card:hover,.vx-stat:hover{box-shadow:var(--glass-edge),var(--glass-lift-hover)!important;transform:translateY(-2px)}
 .vx-content>*{animation:vxin .32s cubic-bezier(.22,.9,.32,1) both}
 @media(min-width:900px){
   .vx-body{grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px}
