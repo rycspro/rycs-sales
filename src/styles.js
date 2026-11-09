@@ -849,11 +849,16 @@ html[data-versao="sol"] .vx-ph-title>svg{color:#888;opacity:1}
 html[data-versao="sol"] .vx-tile-top{text-transform:uppercase;letter-spacing:.04em;font-size:12px;font-weight:500;color:#666}
 html[data-versao="sol"] .vx-tile-top>svg{opacity:1;color:#888}
 
-/* Números dos indicadores: sans geométrica tecnológica larga (Michroma), 30px */
-html[data-versao="sol"] .vx-tile-val{font-family:'Michroma','General Sans',sans-serif;font-weight:400;font-size:30px;
-  letter-spacing:-.01em;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums}
-@media(max-width:1024px){html[data-versao="sol"] .vx-tile-val{font-size:28px}}
-@media(max-width:640px){html[data-versao="sol"] .vx-tile-val{font-size:26px}}
+/* Números dos indicadores (em TODAS as páginas da Sol): sans geométrica
+   tecnológica larga (Michroma), encorpada e um pouco menor. Cobre os tiles da
+   Visão Geral (.vx-tile-val) e o componente de stat compartilhado (.vx-stat-val)
+   usado nas demais telas. */
+html[data-versao="sol"] .vx-tile-val,
+html[data-versao="sol"] .vx-stat-val{font-family:'Michroma','General Sans',sans-serif!important;font-weight:700;font-size:26px;
+  letter-spacing:-.01em;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums;
+  -webkit-text-stroke:.35px #171717}
+@media(max-width:1024px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val{font-size:24px}}
+@media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val{font-size:22px}}
 
 /* Azul estratégico: botões, links, ativos */
 html[data-versao="sol"] .vx-btn-primary{background:#318CE7!important;border:1px solid #318CE7!important;border-radius:8px!important;
