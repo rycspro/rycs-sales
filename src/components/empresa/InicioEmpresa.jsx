@@ -54,27 +54,20 @@ function CardIndicador({ icon: Icon, label, valor, pct, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="vx-glass-panel"
+      className="vx-glass-panel vx-tile"
       style={{
-        display: "flex", flexDirection: "column", gap: 12,
-        borderRadius: 16, padding: "20px",
         cursor: onClick ? "pointer" : "default",
         textAlign: "left", width: "100%",
-        transition: "box-shadow .2s, border-color .2s, transform .2s",
+        transition: "box-shadow .2s, transform .2s",
       }}
-      onMouseEnter={(e) => { if (onClick) { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.transform = "none"; }}
+      onMouseEnter={(e) => { if (onClick) e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--icon-primary)" }}>
-          <Icon size={16} strokeWidth={1.9} />
-        </div>
-        {pct !== null && pct !== undefined && <VariacaoBadge pct={pct} />}
+      <div className="vx-tile-top">
+        <span>{label}</span>
+        {pct !== null && pct !== undefined ? <VariacaoBadge pct={pct} /> : <Icon size={17} strokeWidth={1.7} aria-hidden="true" />}
       </div>
-      <div>
-        <div style={{ fontSize: 27, fontWeight: 600, color: "var(--ink)", lineHeight: 1, letterSpacing: "-.035em", fontVariantNumeric: "tabular-nums" }}>{valor}</div>
-        <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 6, fontWeight: 500 }}>{label}</div>
-      </div>
+      <div className="vx-tile-val">{valor}</div>
     </button>
   );
 }
@@ -413,11 +406,9 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
           {/* ── DESEMPENHO COMERCIAL ──────────────────────────────────────── */}
           <div className="vx-card" style={{ padding: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-              <h3 className="vx-disp" style={{ margin: 0, fontSize: 15, display: "flex", alignItems: "center", gap: 7 }}>
-                <BarChart3 size={16} color="var(--brand)" /> Desempenho Comercial
-              </h3>
-              <button onClick={() => ir("painel")} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontSize: 12.5, color: "var(--brand)", fontWeight: 600, padding: 0 }}>
+            <div className="vx-ph">
+              <h3 className="vx-ph-title"><BarChart3 size={16} strokeWidth={1.8} /> Desempenho Comercial</h3>
+              <button className="vx-ph-link" onClick={() => ir("painel")}>
                 Ver análise completa <ArrowRight size={13} />
               </button>
             </div>
@@ -431,11 +422,11 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                 { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone },
               ].map(({ label, val, icon: Ic }, i) => (
                 <div key={label} style={{ padding: "14px 16px", borderLeft: i === 0 ? "none" : "1px solid var(--border)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <Ic size={14} color="var(--icon-secondary)" strokeWidth={1.85} />
-                    <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</span>
+                  <div className="vx-tile-top" style={{ marginBottom: 10 }}>
+                    <span>{label}</span>
+                    <Ic size={15} strokeWidth={1.7} />
                   </div>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.03em" }}>{val}</div>
+                  <div className="vx-tile-val" style={{ fontSize: 24 }}>{val}</div>
                 </div>
               ))}
             </div>
@@ -443,18 +434,19 @@ export default function InicioEmpresa({ emp, db, setAba }) {
             {/* Campanhas listadas */}
             {campanhasAtivas.length > 0 ? (
               <div>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>Campanhas ativas</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-2)", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 4 }}>Campanhas ativas</div>
+                <div>
                   {campanhasAtivas.slice(0, 4).map((c) => {
                     const inscritos = c.candidaturas?.length || 0;
                     const aprovadas = submissions.filter((s) => s.campaignId === c.id && s.status === "liberado").length;
                     return (
-                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid var(--glass-border)" }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo || "Campanha"}</div>
-                          <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>{inscritos} inscrito{inscritos !== 1 ? "s" : ""} · {aprovadas} aprovado{aprovadas !== 1 ? "s" : ""}</div>
+                      <div className="vx-lrow" key={c.id}>
+                        <span className="vx-lrow-icon"><Megaphone size={16} strokeWidth={1.8} /></span>
+                        <div className="vx-lrow-main">
+                          <b>{c.titulo || "Campanha"}</b>
+                          <span>{inscritos} inscrito{inscritos !== 1 ? "s" : ""} · {aprovadas} aprovado{aprovadas !== 1 ? "s" : ""}</span>
                         </div>
-                        <span style={{ background: "var(--green-100)", color: "var(--green-700)", fontSize: 10.5, fontWeight: 700, borderRadius: 20, padding: "2px 8px", flexShrink: 0 }}>Ativa</span>
+                        <span style={{ background: "var(--green-100)", color: "var(--green-700)", fontSize: 10.5, fontWeight: 600, borderRadius: 20, padding: "3px 9px", flexShrink: 0 }}>Ativa</span>
                       </div>
                     );
                   })}
@@ -474,18 +466,16 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           {/* ── PROFISSIONAIS EM DESTAQUE ────────────────────────────────── */}
           {topSellers.length > 0 && (
             <div className="vx-card" style={{ padding: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <h3 className="vx-disp" style={{ margin: 0, fontSize: 15, display: "flex", alignItems: "center", gap: 7 }}>
-                  <Award size={16} color="#D97706" /> Profissionais em Destaque
-                </h3>
-                <button onClick={() => ir("profissionais")} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontSize: 12.5, color: "var(--brand)", fontWeight: 600, padding: 0 }}>
+              <div className="vx-ph">
+                <h3 className="vx-ph-title"><Award size={16} strokeWidth={1.8} /> Profissionais em Destaque</h3>
+                <button className="vx-ph-link" onClick={() => ir("profissionais")}>
                   Ver todos <ArrowRight size={13} />
                 </button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {topSellers.map((s, i) => (
                   <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ width: 20, fontSize: 12.5, fontWeight: 700, color: i === 0 ? "#D97706" : "var(--muted)", textAlign: "center", flexShrink: 0 }}>
+                    <span style={{ width: 20, fontSize: 12.5, fontWeight: 600, color: i === 0 ? "#D97706" : "var(--muted-2)", textAlign: "center", flexShrink: 0 }}>
                       {i + 1}
                     </span>
                     <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0, overflow: "hidden" }}>
@@ -501,12 +491,12 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                       <MiniBar value={s.subsAprovadas} max={maxSubs} cor={i === 0 ? "#D97706" : "var(--brand)"} />
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{s.subsAprovadas}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: "-.02em" }}>{s.subsAprovadas}</div>
                       <div style={{ fontSize: 10.5, color: "var(--muted)" }}>tarefas</div>
                     </div>
                     {s.ganhos > 0 && (
                       <div style={{ textAlign: "right", flexShrink: 0, minWidth: 70 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink)" }}>{money(s.ganhos)}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: "-.02em" }}>{money(s.ganhos)}</div>
                         <div style={{ fontSize: 10.5, color: "var(--muted)" }}>gerado</div>
                       </div>
                     )}
@@ -522,25 +512,21 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
           {/* ── ATIVIDADE RECENTE ─────────────────────────────────────────── */}
           <div className="vx-card" style={{ padding: 18 }}>
-            <h3 className="vx-disp" style={{ margin: "0 0 14px", fontSize: 14, display: "flex", alignItems: "center", gap: 7 }}>
-              <Activity size={14} color="var(--brand)" /> Atividade recente
-            </h3>
+            <div className="vx-ph" style={{ marginBottom: 14 }}>
+              <h3 className="vx-ph-title"><Activity size={15} strokeWidth={1.8} /> Atividade recente</h3>
+            </div>
             {eventos.length === 0 ? (
               <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", padding: "16px 0" }}>Nenhuma atividade registrada.</p>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              <div>
                 {eventos.map((ev, i) => {
                   const Ic = ev.icon;
                   return (
-                    <div key={i} style={{ display: "flex", gap: 10, paddingBottom: i < eventos.length - 1 ? 12 : 0, marginBottom: i < eventos.length - 1 ? 12 : 0, borderBottom: i < eventos.length - 1 ? "1px solid var(--border)" : "none" }}>
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--icon-secondary)" }}>
-                        <Ic size={12} strokeWidth={2} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12.5, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.texto}</div>
-                        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1, display: "flex", alignItems: "center", gap: 3 }}>
-                          <Clock size={10} /> {dataCurta(ev.ts)}
-                        </div>
+                    <div className="vx-lrow" key={i}>
+                      <span className="vx-lrow-icon"><Ic size={15} strokeWidth={1.8} /></span>
+                      <div className="vx-lrow-main">
+                        <b>{ev.texto}</b>
+                        <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={10} /> {dataCurta(ev.ts)}</span>
                       </div>
                     </div>
                   );

@@ -60,9 +60,9 @@ body{-webkit-text-size-adjust:100%}
   --grad-brand:linear-gradient(135deg,#2563EB 0%,#4338CA 100%);
   --grad-orange:linear-gradient(135deg,#EA580C 0%,#F59E0B 100%);
   --grad-ai:linear-gradient(135deg,#4338CA 0%,#2563EB 60%,#0EA5E9 100%);
-  /* background minimalista branco-dominante */
+  /* Fundo com lavagem de cor: dá contraste para o material de vidro aparecer. */
   min-height:100vh;
-  background:#F6F7F9;
+  background:linear-gradient(135deg,#E9EEFB 0%,#F0ECFB 46%,#E7F2FB 100%) fixed;
   color:var(--ink);
   font-family:'Geist','Inter',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6;
   letter-spacing:-.012em;
@@ -734,7 +734,7 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
   --glass-edge:inset 0 1px 0 rgba(255,255,255,.90),inset 0 0 0 1px rgba(255,255,255,.45);
   --glass-lift:0 12px 30px -16px rgba(23,37,84,.28),0 2px 8px -4px rgba(23,37,84,.10);
   --glass-lift-hover:0 18px 44px -18px rgba(23,37,84,.34),0 3px 10px -4px rgba(23,37,84,.12);
-  --glass-panel:rgba(255,255,255,.50)}
+  --glass-panel:rgba(255,255,255,.38)}
 html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.06);
   --glass-lift:0 14px 34px -16px rgba(0,0,0,.55),0 2px 8px -4px rgba(0,0,0,.4);
   --glass-lift-hover:0 20px 48px -18px rgba(0,0,0,.6),0 3px 10px -4px rgba(0,0,0,.45);
@@ -764,6 +764,30 @@ html.dark .vx-app::before{background:
 .vx-stat{border-radius:18px}
 .vx-card:hover,.vx-stat:hover{box-shadow:var(--glass-edge),var(--glass-lift-hover)!important;transform:translateY(-2px)}
 .vx-content>*{animation:vxin .32s cubic-bezier(.22,.9,.32,1) both}
+
+/* ── Linguagem interna da referência (glass dashboard) ───────────────────
+   Padrões reutilizáveis para o CONTEÚDO dos blocos, iguais aos .gw-* da
+   referência: cabeçalho de painel discreto, tiles de métrica com número leve,
+   e linhas de lista com ícone em tile. Use em qualquer página. */
+.vx-ph{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;color:var(--muted);font-size:12px}
+.vx-ph-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;letter-spacing:-.02em;color:var(--ink)}
+.vx-ph-title>svg{color:var(--icon-secondary);opacity:.7;flex:none}
+.vx-ph-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--brand);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap}
+.vx-ph-link:hover{color:var(--brand-600)}
+.vx-tile{display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:16px;min-width:0}
+.vx-tile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;font-weight:500}
+.vx-tile-top>svg{opacity:.6;flex:none;color:var(--icon-secondary)}
+.vx-tile-val{font-size:27px;font-weight:500;letter-spacing:-.04em;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
+.vx-tile-sub{font-size:11.5px;color:var(--muted)}
+.vx-lrow{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--border);min-width:0}
+.vx-lrow:first-child{border-top:0;padding-top:0}
+.vx-lrow:last-child{padding-bottom:0}
+.vx-lrow-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--surface-2);color:var(--icon-secondary);flex:none}
+.vx-lrow-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.vx-lrow-main b{font-size:12.5px;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vx-lrow-main span{font-size:10.5px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vx-lrow-val{font-size:12.5px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
+.vx-lrow-sub{font-size:10.5px;color:var(--muted);flex:none;white-space:nowrap}
 @media(min-width:900px){
   .vx-body{grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px}
   .vx-sidebar{top:16px;height:calc(100vh - 32px);border-radius:23px;border:1px solid var(--glass-border);border-right:1px solid var(--glass-border);
