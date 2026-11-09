@@ -1,6 +1,6 @@
 export const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Michroma&display=swap');
 @import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap');
 *{box-sizing:border-box}
 
@@ -849,9 +849,11 @@ html[data-versao="sol"] .vx-ph-title>svg{color:#888;opacity:1}
 html[data-versao="sol"] .vx-tile-top{text-transform:uppercase;letter-spacing:.04em;font-size:12px;font-weight:500;color:#666}
 html[data-versao="sol"] .vx-tile-top>svg{opacity:1;color:#888}
 
-/* Números dos indicadores: SERIFA EDITORIAL Bodoni Moda, ~32px */
-html[data-versao="sol"] .vx-tile-val{font-family:'Bodoni Moda',Georgia,serif;font-weight:500;font-size:32px;
-  letter-spacing:0;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums}
+/* Números dos indicadores: sans geométrica tecnológica larga (Michroma), 30px */
+html[data-versao="sol"] .vx-tile-val{font-family:'Michroma','General Sans',sans-serif;font-weight:400;font-size:30px;
+  letter-spacing:-.01em;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums}
+@media(max-width:1024px){html[data-versao="sol"] .vx-tile-val{font-size:28px}}
+@media(max-width:640px){html[data-versao="sol"] .vx-tile-val{font-size:26px}}
 
 /* Azul estratégico: botões, links, ativos */
 html[data-versao="sol"] .vx-btn-primary{background:#318CE7!important;border:1px solid #318CE7!important;border-radius:8px!important;
