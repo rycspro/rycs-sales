@@ -6,7 +6,7 @@ export const CSS = `
    faixa da cor da página em volta do app inteiro — é a "moldura branca" que
    aparece no celular. html e body também precisam da cor de fundo: acima da
    área do app, o que o iOS mostra ao rolar além do limite é o fundo do html. */
-html,body{margin:0;padding:0;min-height:100%;background:#4168B4;overscroll-behavior-y:none}
+html,body{margin:0;padding:0;min-height:100%;background:#CFE1F8;overscroll-behavior-y:none}
 html.dark,html.dark body{background:#08090C}
 body{-webkit-text-size-adjust:100%}
 #root{min-height:100vh}
@@ -60,9 +60,9 @@ body{-webkit-text-size-adjust:100%}
   --grad-brand:linear-gradient(135deg,#2563EB 0%,#4338CA 100%);
   --grad-orange:linear-gradient(135deg,#EA580C 0%,#F59E0B 100%);
   --grad-ai:linear-gradient(135deg,#4338CA 0%,#2563EB 60%,#0EA5E9 100%);
-  /* Fundo azul (médio/claro): o material de vidro flutua claro sobre ele. */
+  /* Fundo azul bem claro: o material de vidro flutua sobre ele. */
   min-height:100vh;
-  background:linear-gradient(140deg,#3A5EA8 0%,#5A82CC 48%,#4168B4 100%) fixed;
+  background:linear-gradient(140deg,#D6E6FA 0%,#E8F1FD 48%,#CFE1F8 100%) fixed;
   color:var(--ink);
   font-family:'Geist','Inter',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6;
   letter-spacing:-.012em;
@@ -747,9 +747,9 @@ html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1
    em tema claro — sem isso, painel branco sobre fundo branco fica invisível. */
 .vx-app::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(1000px 620px at 6% -10%,rgba(59,130,246,.28),transparent 58%),
-    radial-gradient(880px 560px at 102% 10%,rgba(37,99,235,.24),transparent 58%),
-    radial-gradient(820px 560px at 50% 120%,rgba(29,78,216,.22),transparent 60%)}
+    radial-gradient(1000px 620px at 6% -10%,rgba(59,130,246,.18),transparent 60%),
+    radial-gradient(880px 560px at 102% 10%,rgba(37,99,235,.15),transparent 60%),
+    radial-gradient(820px 560px at 50% 120%,rgba(14,165,233,.14),transparent 62%)}
 html.dark .vx-app::before{background:
     radial-gradient(1000px 620px at 6% -10%,rgba(37,99,235,.24),transparent 60%),
     radial-gradient(860px 560px at 102% 12%,rgba(99,102,241,.20),transparent 60%),
