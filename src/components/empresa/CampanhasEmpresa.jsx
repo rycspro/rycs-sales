@@ -168,7 +168,7 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
           ].map(({ label, value, highlight }) => (
             <div key={label} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "12px 16px" }}>
               <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>{label}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: highlight && value > 0 ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{value}</div>
+              <div className="vx-num" style={{ fontSize: 22, fontWeight: 700, color: highlight && value > 0 ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{value}</div>
             </div>
           ))}
         </div>

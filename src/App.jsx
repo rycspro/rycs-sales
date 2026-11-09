@@ -329,13 +329,21 @@ export default function App() {
 
   const bannerOnb = role === "empresa" && onb && !onb.concluido && !onb.bloqueia && !previaQualificacao;
 
+  // Entidade do usuário logado — alimenta o cartão de conta na barra lateral
+  // (nome + logo da empresa ou foto do profissional).
+  const entidadeConta = role === "empresa"
+    ? db.companies.find((c) => c.id === db.companyId)
+    : role === "vendedor"
+      ? db.sellers.find((s) => s.id === db.sellerId)
+      : null;
+
   return (
     <div className="vx-app">
       <style>{CSS}</style>
 
       {bannerOnb && <BannerOnboarding onb={onb} />}
 
-      <Shell role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "configuracoes"}>
+      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "configuracoes"}>
         <ErrorBoundary>
           {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
           {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}

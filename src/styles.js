@@ -854,11 +854,16 @@ html[data-versao="sol"] .vx-tile-top>svg{opacity:1;color:#888}
    Visão Geral (.vx-tile-val) e o componente de stat compartilhado (.vx-stat-val)
    usado nas demais telas. */
 html[data-versao="sol"] .vx-tile-val,
-html[data-versao="sol"] .vx-stat-val{font-family:'Michroma','General Sans',sans-serif!important;font-weight:700;font-size:26px;
-  letter-spacing:-.01em;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums;
+html[data-versao="sol"] .vx-stat-val,
+html[data-versao="sol"] .vx-num,
+html[data-versao="sol"] .vx-balance-value{font-family:'Michroma','General Sans',sans-serif!important;font-weight:700!important;font-size:26px!important;
+  letter-spacing:-.01em!important;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums;
   -webkit-text-stroke:.35px #171717}
-@media(max-width:1024px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val{font-size:24px}}
-@media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val{font-size:22px}}
+@media(max-width:1024px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:24px!important}}
+@media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:22px!important}}
+/* Valores de moeda (preços de plano): Michroma é larga; tamanho menor p/ caber */
+html[data-versao="sol"] .vx-plan-price{font-family:'Michroma','General Sans',sans-serif!important;font-weight:700;font-size:19px;letter-spacing:-.03em;color:#171717}
+html[data-versao="sol"] .vx-plan-price small{font-family:'General Sans',sans-serif;font-size:11px}
 
 /* Azul estratégico: botões, links, ativos */
 html[data-versao="sol"] .vx-btn-primary{background:#318CE7!important;border:1px solid #318CE7!important;border-radius:8px!important;
