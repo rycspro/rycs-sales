@@ -6,7 +6,7 @@ export const CSS = `
    faixa da cor da página em volta do app inteiro — é a "moldura branca" que
    aparece no celular. html e body também precisam da cor de fundo: acima da
    área do app, o que o iOS mostra ao rolar além do limite é o fundo do html. */
-html,body{margin:0;padding:0;min-height:100%;background:#F6F7F9;overscroll-behavior-y:none}
+html,body{margin:0;padding:0;min-height:100%;background:#0A1A3E;overscroll-behavior-y:none}
 html.dark,html.dark body{background:#08090C}
 body{-webkit-text-size-adjust:100%}
 #root{min-height:100vh}
@@ -60,9 +60,9 @@ body{-webkit-text-size-adjust:100%}
   --grad-brand:linear-gradient(135deg,#2563EB 0%,#4338CA 100%);
   --grad-orange:linear-gradient(135deg,#EA580C 0%,#F59E0B 100%);
   --grad-ai:linear-gradient(135deg,#4338CA 0%,#2563EB 60%,#0EA5E9 100%);
-  /* Fundo com lavagem de cor: dá contraste para o material de vidro aparecer. */
+  /* Fundo em tons de azul escuro: o material de vidro flutua claro sobre ele. */
   min-height:100vh;
-  background:linear-gradient(135deg,#E9EEFB 0%,#F0ECFB 46%,#E7F2FB 100%) fixed;
+  background:linear-gradient(140deg,#081634 0%,#0C2150 48%,#0A1A3E 100%) fixed;
   color:var(--ink);
   font-family:'Geist','Inter',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6;
   letter-spacing:-.012em;
@@ -734,7 +734,7 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
   --glass-edge:inset 0 1px 0 rgba(255,255,255,.90),inset 0 0 0 1px rgba(255,255,255,.45);
   --glass-lift:0 12px 30px -16px rgba(23,37,84,.28),0 2px 8px -4px rgba(23,37,84,.10);
   --glass-lift-hover:0 18px 44px -18px rgba(23,37,84,.34),0 3px 10px -4px rgba(23,37,84,.12);
-  --glass-panel:rgba(255,255,255,.38)}
+  --glass-panel:rgba(255,255,255,.86)}
 html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.06);
   --glass-lift:0 14px 34px -16px rgba(0,0,0,.55),0 2px 8px -4px rgba(0,0,0,.4);
   --glass-lift-hover:0 20px 48px -18px rgba(0,0,0,.6),0 3px 10px -4px rgba(0,0,0,.45);
@@ -747,10 +747,9 @@ html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1
    em tema claro — sem isso, painel branco sobre fundo branco fica invisível. */
 .vx-app::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(1000px 620px at 6% -10%,rgba(37,99,235,.30),transparent 60%),
-    radial-gradient(860px 560px at 102% 12%,rgba(99,102,241,.26),transparent 60%),
-    radial-gradient(820px 560px at 50% 116%,rgba(14,165,233,.22),transparent 60%),
-    linear-gradient(180deg,rgba(37,99,235,.05),transparent 40%)}
+    radial-gradient(1000px 620px at 6% -10%,rgba(59,130,246,.28),transparent 58%),
+    radial-gradient(880px 560px at 102% 10%,rgba(37,99,235,.24),transparent 58%),
+    radial-gradient(820px 560px at 50% 120%,rgba(29,78,216,.22),transparent 60%)}
 html.dark .vx-app::before{background:
     radial-gradient(1000px 620px at 6% -10%,rgba(37,99,235,.24),transparent 60%),
     radial-gradient(860px 560px at 102% 12%,rgba(99,102,241,.20),transparent 60%),
