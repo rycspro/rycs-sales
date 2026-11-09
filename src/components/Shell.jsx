@@ -28,7 +28,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     <div className="vx-body">
       <aside className="vx-sidebar">
         <div className="vx-sidebar-logo">
-          <img src="/logo-rycs.png" alt="RYCS" style={{ width: "100%", display: "block" }} />
+          <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" style={{ height: 38, width: "auto", maxWidth: "100%", display: "block", margin: "0 auto" }} />
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", scrollbarWidth: "none" }}>
