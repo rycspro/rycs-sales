@@ -12,7 +12,7 @@ function aplicar(versao) {
   const isDark = versao === "lua";
   document.documentElement.classList.toggle("dark", isDark);
   document.documentElement.setAttribute("data-versao", versao);
-  const bg = isDark ? "#08090C" : "#CFE1F8";
+  const bg = isDark ? "#08090C" : versao === "sol" ? "#FFFFFF" : "#CFE1F8";
   document.documentElement.style.background = bg;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
 }

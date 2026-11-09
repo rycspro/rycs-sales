@@ -1,5 +1,7 @@
 export const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap');
 *{box-sizing:border-box}
 
 /* O navegador aplica margin:8px no body por padrão. Sem zerar, sobra uma
@@ -788,62 +790,80 @@ html.dark .vx-app::before{background:
 .vx-lrow-val{font-size:12.5px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
 .vx-lrow-sub{font-size:10.5px;color:var(--muted);flex:none;white-space:nowrap}
 
-/* ═══ Versão SOL ═══════════════════════════════════════════════════════════
-   Layout novo do zero, inspirado no "glowing pricing": fundo claro e quente,
-   cantos MUITO arredondados, tipografia pesada (bold/black) com tracking
-   negativo, rótulos em maiúsculas espaçadas, acento em gradiente quente
-   (laranja→vermelho→rosa→roxo, estilo Instagram) com brilho. Tudo escopado em
-   [data-versao="sol"], então não toca em Água nem Lua. */
+/* ═══ Versão SOL — White Editorial Blue ════════════════════════════════════
+   Redesign premium SaaS: fundo branco, azul #318CE7 estratégico, tipografia
+   editorial (títulos General Sans, números em serifa Bodoni Moda), sidebar
+   compacta #FAFAFA integrada, bordas finas 1px, cantos 8–12px, sem sombras
+   pesadas nem gradientes de fundo. Tudo escopado em [data-versao="sol"]. */
 html[data-versao="sol"] .vx-app{
-  --brand:#cc2366;--brand-600:#bc1888;
-  --brand-50:rgba(204,35,102,.08);--brand-100:rgba(204,35,102,.14);--brand-200:rgba(204,35,102,.24);
-  --sol-grad:linear-gradient(135deg,#f09433 0%,#dc2743 48%,#bc1888 100%);
-  --sol-glow:0 12px 40px -12px rgba(204,35,102,.5);
-  background:
-    radial-gradient(920px 640px at 100% -12%,rgba(240,148,51,.22),transparent 56%),
-    radial-gradient(840px 600px at -8% 8%,rgba(204,35,102,.16),transparent 56%),
-    linear-gradient(180deg,#FFFCFA 0%,#FFF3EE 100%) fixed;}
+  --brand:#318CE7;--brand-600:#2676CC;--brand-50:#EAF4FF;--brand-100:#EAF4FF;--brand-200:#D4E8FB;
+  --bg:#FFFFFF;--surface:#FFFFFF;--surface-solid:#FFFFFF;--surface-1:#FFFFFF;--surface-2:#FAFAFA;--surface-3:#F3F4F6;
+  --ink:#171717;--ink-2:#333333;--muted:#666666;--muted-2:#888888;
+  --border:#EAEAEA;--border-strong:#E0E0E0;--glass-border:#EAEAEA;
+  --glass:#FFFFFF;--glass-strong:#FFFFFF;--glass-panel:#FFFFFF;
+  --icon-primary:#333333;--icon-secondary:#666666;--icon-brand:#318CE7;
+  --radius-lg:12px;--radius-md:10px;--radius-sm:8px;
+  background:#FFFFFF;
+  font-family:'General Sans','Inter',system-ui,-apple-system,sans-serif;
+  letter-spacing:normal;font-variant-numeric:normal;}
 html[data-versao="sol"] .vx-app::before{display:none}
 
-/* Painéis: branco limpo, cantos grandes, sombra quente suave, sem vidro */
-html[data-versao="sol"] .vx-content{
-  background:#fff;border:1px solid rgba(17,24,39,.06);border-radius:36px;
-  box-shadow:0 30px 70px -40px rgba(188,24,136,.28),inset 0 1px 0 #fff;
-  backdrop-filter:none;-webkit-backdrop-filter:none}
+/* Layout integrado: sidebar plana colada, conteúdo branco full-bleed */
+html[data-versao="sol"] .vx-body{padding:0!important;gap:0!important}
+@media(min-width:900px){html[data-versao="sol"] .vx-body{grid-template-columns:240px minmax(0,1fr)!important}}
+html[data-versao="sol"] .vx-sidebar{background:#FAFAFA!important;border:0!important;border-right:1px solid #EAEAEA!important;
+  border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  top:0!important;height:100vh!important}
+html[data-versao="sol"] .vx-sidebar::before{display:none}
+html[data-versao="sol"] .vx-content{background:#FFFFFF!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-height:100vh}
+
+/* Itens da sidebar */
+html[data-versao="sol"] .vx-sidebtn{min-height:44px;font-size:15px;font-weight:500;border-radius:8px;gap:11px;color:#444}
+html[data-versao="sol"] .vx-sidebtn:hover{background:#F2F8FF;color:#171717}
+html[data-versao="sol"] .vx-sidebtn[data-on="1"]{background:#EAF4FF;color:#318CE7;font-weight:500}
+html[data-versao="sol"] .vx-sidebtn[data-on="1"]::before{display:none}
+html[data-versao="sol"] .vx-sidebtn[data-on="1"]>svg{color:#318CE7}
+html[data-versao="sol"] .vx-sidebar-logo{border-bottom:1px solid #EAEAEA}
+
+/* Cards: branco, borda fina 1px, cantos 10px, sem sombra, sem lift */
 html[data-versao="sol"] .vx-card,
 html[data-versao="sol"] .vx-stat,
 html[data-versao="sol"] .vx-glass-panel,
-html[data-versao="sol"] .vx-account-group{
-  background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
-  border:1px solid rgba(17,24,39,.07)!important;border-radius:26px!important;
-  box-shadow:0 12px 30px -20px rgba(17,24,39,.22)!important}
+html[data-versao="sol"] .vx-account-group,
+html[data-versao="sol"] .vx-account-trigger{
+  background:#FFFFFF!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  border:1px solid #EAEAEA!important;border-radius:10px!important;box-shadow:none!important}
 html[data-versao="sol"] .vx-card:hover,
-html[data-versao="sol"] .vx-stat:hover{
-  transform:translateY(-3px)!important;box-shadow:0 24px 46px -24px rgba(204,35,102,.32)!important}
-html[data-versao="sol"] .vx-sidebar{border-radius:30px}
+html[data-versao="sol"] .vx-stat:hover{transform:none!important;border-color:#318CE7!important;box-shadow:none!important}
+html[data-versao="sol"] .vx-tile{padding:18px 20px}
 
-/* Tipografia pesada com tracking negativo */
-html[data-versao="sol"] .vx-tile-val{font-weight:800;letter-spacing:-.05em}
-html[data-versao="sol"] .vx-page-head h1,
-html[data-versao="sol"] .vx-ph-title,
-html[data-versao="sol"] .vx-disp{font-weight:800;letter-spacing:-.035em}
+/* Tipografia: títulos editoriais General Sans */
+html[data-versao="sol"] .vx-disp,
+html[data-versao="sol"] .vx-page-head h1{font-family:'General Sans',sans-serif;font-weight:600;letter-spacing:-.02em;color:#171717}
+html[data-versao="sol"] .vx-page-head h1{font-size:24px;line-height:1.2}
+html[data-versao="sol"] .vx-ph-title{font-family:'General Sans',sans-serif;font-weight:600;font-size:18px;letter-spacing:-.01em;color:#171717}
+html[data-versao="sol"] .vx-ph-title>svg{color:#888;opacity:1}
 
-/* Rótulos em maiúsculas espaçadas (como "What's included" da referência) */
-html[data-versao="sol"] .vx-tile-top{text-transform:uppercase;letter-spacing:.11em;font-size:10px;font-weight:700}
+/* Rótulos de indicador: General Sans, caixa alta, discreto */
+html[data-versao="sol"] .vx-tile-top{text-transform:uppercase;letter-spacing:.04em;font-size:12px;font-weight:500;color:#666}
+html[data-versao="sol"] .vx-tile-top>svg{opacity:1;color:#888}
 
-/* Acento quente: botões, ativos, links, chips, cantos */
-html[data-versao="sol"] .vx-btn-primary{
-  background:var(--sol-grad)!important;border:0!important;border-radius:14px!important;
-  box-shadow:var(--sol-glow)!important;color:#fff!important}
-html[data-versao="sol"] .vx-btn-primary:hover{filter:brightness(1.06)}
-html[data-versao="sol"] .vx-sidebtn[data-on="1"]{background:var(--brand-50);color:var(--brand)}
-html[data-versao="sol"] .vx-sidebtn[data-on="1"]::before{background:var(--sol-grad)}
-html[data-versao="sol"] .vx-navbtn[data-on="1"]{color:var(--brand)}
-html[data-versao="sol"] .vx-ph-link,html[data-versao="sol"] .vx-positive{color:var(--brand)}
-html[data-versao="sol"] .vx-chip,html[data-versao="sol"] .vx-badge{border-radius:999px}
-html[data-versao="sol"] .vx-btn,html[data-versao="sol"] .vx-input{border-radius:14px}
-html[data-versao="sol"] .vx-badge-brand{background:var(--brand-100);color:var(--brand)}
-html[data-versao="sol"] .vx-lrow-icon,html[data-versao="sol"] .vx-stat-icon{border-radius:12px}
+/* Números dos indicadores: SERIFA EDITORIAL Bodoni Moda, ~32px */
+html[data-versao="sol"] .vx-tile-val{font-family:'Bodoni Moda',Georgia,serif;font-weight:500;font-size:32px;
+  letter-spacing:0;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums}
+
+/* Azul estratégico: botões, links, ativos */
+html[data-versao="sol"] .vx-btn-primary{background:#318CE7!important;border:1px solid #318CE7!important;border-radius:8px!important;
+  box-shadow:none!important;color:#fff!important}
+html[data-versao="sol"] .vx-btn-primary:hover{background:#2676CC!important;border-color:#2676CC!important;filter:none}
+html[data-versao="sol"] .vx-btn{border-radius:8px}
+html[data-versao="sol"] .vx-input{border-radius:8px;background:#fff}
+html[data-versao="sol"] .vx-ph-link,html[data-versao="sol"] .vx-positive{color:#318CE7}
+html[data-versao="sol"] .vx-navbtn[data-on="1"]{color:#318CE7}
+html[data-versao="sol"] .vx-badge-brand{background:#EAF4FF;color:#318CE7}
+html[data-versao="sol"] .vx-meter-fill{background:#318CE7}
+html[data-versao="sol"] .vx-lrow-icon,html[data-versao="sol"] .vx-stat-icon{border-radius:8px}
 @media(min-width:900px){
   .vx-body{grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px}
   .vx-sidebar{top:16px;height:calc(100vh - 32px);border-radius:23px;border:1px solid var(--glass-border);border-right:1px solid var(--glass-border);
