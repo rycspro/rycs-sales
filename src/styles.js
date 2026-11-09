@@ -6,7 +6,7 @@ export const CSS = `
    faixa da cor da página em volta do app inteiro — é a "moldura branca" que
    aparece no celular. html e body também precisam da cor de fundo: acima da
    área do app, o que o iOS mostra ao rolar além do limite é o fundo do html. */
-html,body{margin:0;padding:0;min-height:100%;background:#0A1A3E;overscroll-behavior-y:none}
+html,body{margin:0;padding:0;min-height:100%;background:#4168B4;overscroll-behavior-y:none}
 html.dark,html.dark body{background:#08090C}
 body{-webkit-text-size-adjust:100%}
 #root{min-height:100vh}
@@ -60,9 +60,9 @@ body{-webkit-text-size-adjust:100%}
   --grad-brand:linear-gradient(135deg,#2563EB 0%,#4338CA 100%);
   --grad-orange:linear-gradient(135deg,#EA580C 0%,#F59E0B 100%);
   --grad-ai:linear-gradient(135deg,#4338CA 0%,#2563EB 60%,#0EA5E9 100%);
-  /* Fundo em tons de azul escuro: o material de vidro flutua claro sobre ele. */
+  /* Fundo azul (médio/claro): o material de vidro flutua claro sobre ele. */
   min-height:100vh;
-  background:linear-gradient(140deg,#081634 0%,#0C2150 48%,#0A1A3E 100%) fixed;
+  background:linear-gradient(140deg,#3A5EA8 0%,#5A82CC 48%,#4168B4 100%) fixed;
   color:var(--ink);
   font-family:'Geist','Inter',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6;
   letter-spacing:-.012em;
