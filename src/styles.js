@@ -65,6 +65,8 @@ body{-webkit-text-size-adjust:100%}
   background:#F6F7F9;
   color:var(--ink);
   font-family:'Geist','Inter',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6;
+  letter-spacing:-.012em;
+  font-variant-numeric:tabular-nums;
   -webkit-font-smoothing:antialiased;
   transition:background .3s,color .3s;
 }
@@ -250,7 +252,7 @@ html.dark .vx-card:hover{border-color:var(--border-strong);box-shadow:0 4px 20px
 .vx-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .vx-mut{color:var(--muted)}
 .vx-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px;flex-wrap:wrap}
-.vx-page-head h1{font-size:27px;margin:2px 0 5px;letter-spacing:-.03em}.vx-page-head p{font-size:13px;color:var(--muted);margin:0;letter-spacing:-.01em}
+.vx-page-head h1{font-size:27px;margin:2px 0 5px;letter-spacing:-.03em;font-weight:600}.vx-page-head p{font-size:13px;color:var(--muted);margin:0;letter-spacing:-.01em}
 .vx-filterbar{display:grid;grid-template-columns:repeat(2,minmax(130px,1fr));gap:7px;flex:1;max-width:620px}.vx-filterbar .vx-input{padding:8px 10px;font-size:12px}
 .vx-notice{padding:11px 13px;border-radius:var(--radius-sm);font-size:12.5px;border:1px solid var(--glass-border);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
 .vx-notice-amber{background:var(--amber-50);border-color:var(--amber-100);color:#7C3B0A}
@@ -296,7 +298,7 @@ html.dark .vx-stat{border-color:var(--border);box-shadow:var(--shadow-card)}
 html.dark .vx-stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.24);border-color:var(--border-strong)}
 .vx-stat-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;
   background:var(--surface-2);border:1px solid var(--border);color:var(--icon-secondary)}
-.vx-stat-val{font-family:'Geist','Inter',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.04em;color:var(--fg)}
+.vx-stat-val{font-family:'Geist','Inter',sans-serif;font-weight:600;font-size:26px;letter-spacing:-.04em;color:var(--ink);font-variant-numeric:tabular-nums}
 
 /* gráficos e cenários compartilhados */
 .vx-chart-card{padding:17px;min-height:230px}.vx-donut-layout{display:grid;grid-template-columns:118px 1fr;align-items:center;gap:18px;margin-top:15px}
@@ -732,6 +734,10 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
   --glass-edge:inset 0 1px 0 rgba(255,255,255,.80),inset 0 0 0 1px rgba(255,255,255,.30);
   --glass-panel:rgba(255,255,255,.52)}
 html.dark .vx-app{--glass-edge:inset 0 1px 0 rgba(255,255,255,.10),inset 0 0 0 1px rgba(255,255,255,.05);--glass-panel:rgba(20,22,28,.52)}
+/* Painel de vidro reutilizável — aplique em qualquer card inline para trazê-lo
+   ao mesmo material dos primitivos (translúcido, luz na borda, sombra suave). */
+.vx-glass-panel{background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);box-shadow:var(--glass-edge),var(--glass-shadow)}
 .vx-app::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
     radial-gradient(900px 560px at 8% -8%,rgba(37,99,235,.16),transparent 62%),

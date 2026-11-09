@@ -54,27 +54,26 @@ function CardIndicador({ icon: Icon, label, valor, pct, onClick }) {
   return (
     <button
       onClick={onClick}
+      className="vx-glass-panel"
       style={{
         display: "flex", flexDirection: "column", gap: 12,
-        background: "var(--surface)", border: "1px solid var(--border)",
         borderRadius: 16, padding: "20px",
         cursor: onClick ? "pointer" : "default",
         textAlign: "left", width: "100%",
-        transition: "box-shadow .2s, border-color .2s",
-        boxShadow: "var(--shadow-card)",
+        transition: "box-shadow .2s, border-color .2s, transform .2s",
       }}
-      onMouseEnter={(e) => { if (onClick) { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(20,30,45,.08)"; } }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "var(--shadow-card)"; }}
+      onMouseEnter={(e) => { if (onClick) { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.transform = "none"; }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--icon-primary)" }}>
-          <Icon size={16} strokeWidth={2} />
+          <Icon size={16} strokeWidth={1.9} />
         </div>
         {pct !== null && pct !== undefined && <VariacaoBadge pct={pct} />}
       </div>
       <div>
-        <div style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)", lineHeight: 1 }}>{valor}</div>
-        <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 5, fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 27, fontWeight: 600, color: "var(--ink)", lineHeight: 1, letterSpacing: "-.035em", fontVariantNumeric: "tabular-nums" }}>{valor}</div>
+        <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 6, fontWeight: 500 }}>{label}</div>
       </div>
     </button>
   );
@@ -376,7 +375,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
         <div>
           <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 4, fontWeight: 500 }}>{dataHoje()}</div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "var(--ink)", fontFamily: "var(--font-disp)", lineHeight: 1.1 }}>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: "var(--ink)", fontFamily: "var(--font-disp)", lineHeight: 1.1, letterSpacing: "-.03em" }}>
             {saudacao()}, {primeiroNome} 👋
           </h1>
           <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>
