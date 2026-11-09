@@ -803,19 +803,19 @@ html[data-versao="sol"] .vx-app{
   --glass:#FFFFFF;--glass-strong:#FFFFFF;--glass-panel:#FFFFFF;
   --icon-primary:#333333;--icon-secondary:#666666;--icon-brand:#318CE7;
   --radius-lg:12px;--radius-md:10px;--radius-sm:8px;
-  background:#FFFFFF;
+  background:#FAFAFA;
   font-family:'General Sans','Inter',system-ui,-apple-system,sans-serif;
   letter-spacing:normal;font-variant-numeric:normal;}
 html[data-versao="sol"] .vx-app::before{display:none}
 
-/* Layout integrado: sidebar plana colada, conteúdo branco full-bleed */
+/* Layout integrado: sidebar branca colada, conteúdo sobre fundo cinza claro */
 html[data-versao="sol"] .vx-body{padding:0!important;gap:0!important}
 @media(min-width:900px){html[data-versao="sol"] .vx-body{grid-template-columns:240px minmax(0,1fr)!important}}
-html[data-versao="sol"] .vx-sidebar{background:#FAFAFA!important;border:0!important;border-right:1px solid #EAEAEA!important;
+html[data-versao="sol"] .vx-sidebar{background:#FFFFFF!important;border:0!important;border-right:1px solid #EAEAEA!important;
   border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   top:0!important;height:100vh!important}
 html[data-versao="sol"] .vx-sidebar::before{display:none}
-html[data-versao="sol"] .vx-content{background:#FFFFFF!important;border:0!important;border-radius:0!important;
+html[data-versao="sol"] .vx-content{background:#FAFAFA!important;border:0!important;border-radius:0!important;
   box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-height:100vh}
 
 /* Itens da sidebar */
