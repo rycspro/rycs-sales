@@ -29,8 +29,8 @@ jobs:
               --restart unless-stopped \
               --env-file /home/ec2-user/env_producao.txt \
               -v /data:/data \
-              -p 80:3001 \
+              -p 127.0.0.1:3001:3001 \
               rycs-app
             sleep 5
             docker ps
-            curl -sf http://localhost/api/health && echo "Deploy OK" || echo "ALERTA: health check falhou apos deploy"
+            curl -sf http://127.0.0.1:3001/api/health && echo "Deploy OK" || echo "ALERTA: health check falhou apos deploy"
