@@ -54,7 +54,7 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
       if (corpo.creditCard?.number?.endsWith("0002")) return [400, { errors: [{ description: "Transação não autorizada." }] }];
       return [200, { id: "sub_teste", creditCard: { creditCardNumber: "4242", creditCardBrand: "VISA" } }];
     }
-    if (req.url.startsWith("/payments")) return [200, { data: [{ id: "pay_teste", status: "CONFIRMED" }] }];
+    if (req.url.startsWith("/payments")) return [200, { data: [] }];
     return [404, { errors: [{ description: "rota falsa inexistente" }] }];
   });
 
@@ -145,7 +145,7 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
   r = await req("/onboarding/plano", { cookie: ck });
   assert.equal(r.corpo.trialDias, 3);
   const checkout = (numero) => req("/subscription", { cookie: ck, body: {
-    plano: r.corpo.planos[0].chave, onboarding: true, formaPagamento: "CREDIT_CARD",
+    plano: r.corpo.planos[0].chave, onboarding: true,
     cartao: { nome: "Ana Silva", numero, validadeMes: "12", validadeAno: "40", cvv: "123" },
     titular: { documento: "12345678909", cep: "01001000", numero: "10" },
   } });
@@ -153,7 +153,7 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
   assert.equal(c.status, 502); assert.match(c.corpo.error, /não autorizada/);
   assert.equal((await req("/onboarding", { cookie: ck })).corpo.atual, "plano");
   c = await checkout("4242424242424242");
-  assert.equal(c.status, 200); assert.equal(c.corpo.status, "ativa"); assert.equal(c.corpo.trialDias, 0);
+  assert.equal(c.status, 200); assert.equal(c.corpo.status, "trial"); assert.equal(c.corpo.trialDias, 3);
   assert.equal(c.corpo.onboardingConcluido, true);
   const sub = db.prepare("SELECT * FROM subscriptions WHERE companyId = (SELECT entityId FROM users WHERE email = 'dono@exemplo.invalid')").get();
   assert.equal(sub.cartaoFinal, "4242");

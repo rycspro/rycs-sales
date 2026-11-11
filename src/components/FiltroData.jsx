@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { SlidersHorizontal, ArrowUp, ArrowDown, X, CalendarDays, ChevronDown } from "lucide-react";
-import { useI18n } from "../lib/i18n.jsx";
 
 /**
  * FiltroData — botão compacto com dropdown de filtragem por período e classificação.
@@ -19,7 +18,6 @@ export default function FiltroData({
   onAplicar,
   onLimpar,
 }) {
-  const { t } = useI18n();
   const campoDefault = campoInicial || campos[0]?.key || "";
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
@@ -45,7 +43,7 @@ export default function FiltroData({
 
   const validar = () => {
     if (dataInicio && dataFim && dataFim < dataInicio) {
-      setErroData(t("filter.endBeforeStart"));
+      setErroData("Data final não pode ser anterior à data inicial.");
       return false;
     }
     setErroData("");
@@ -93,7 +91,7 @@ export default function FiltroData({
         onMouseLeave={(e) => { if (!aberto && !temFiltro) e.currentTarget.style.borderColor = "var(--border)"; }}
       >
         <SlidersHorizontal size={14} color={temFiltro ? "var(--brand)" : "var(--muted)"} />
-        <span>{t("filter.period")}{temFiltro ? ` · ${t("filter.active")}` : ""}</span>
+        <span>Período{temFiltro ? " · ativo" : ""}</span>
         <ChevronDown size={13} color="var(--muted)" style={{ transform: aberto ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
       </button>
 
@@ -110,7 +108,7 @@ export default function FiltroData({
             <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
               {/* Data início */}
               <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>{t("filter.from")}</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>DE</label>
                 <div style={{ position: "relative" }}>
                   <CalendarDays size={13} color="var(--muted)" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
                   <input
@@ -132,7 +130,7 @@ export default function FiltroData({
               <span style={{ color: "var(--muted)", fontSize: 13, paddingBottom: 8, flexShrink: 0 }}>→</span>
               {/* Data fim */}
               <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>{t("filter.to")}</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>ATÉ</label>
                 <div style={{ position: "relative" }}>
                   <CalendarDays size={13} color="var(--muted)" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
                   <input
@@ -156,7 +154,7 @@ export default function FiltroData({
             {/* Classificar por */}
             {campos.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>{t("filter.sortBy")}</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>CLASSIFICAR POR</label>
                 <div style={{ display: "flex", gap: 6 }}>
                   <select
                     value={campo}
@@ -177,7 +175,7 @@ export default function FiltroData({
                   </select>
                   <button
                     onClick={toggleDir}
-                    title={direcao === "asc" ? t("filter.ascClick") : t("filter.descClick")}
+                    title={direcao === "asc" ? "Crescente — clique para decrescente" : "Decrescente — clique para crescente"}
                     style={{
                       width: 36, height: 36, flexShrink: 0,
                       border: "1.5px solid var(--border)", borderRadius: 8,
@@ -213,7 +211,7 @@ export default function FiltroData({
                   cursor: "pointer",
                 }}
               >
-                <X size={12} /> {t("filter.clear")}
+                <X size={12} /> Limpar
               </button>
             )}
             <button
@@ -225,7 +223,7 @@ export default function FiltroData({
                 cursor: "pointer",
               }}
             >
-              {t("filter.apply")}
+              Aplicar filtros
             </button>
           </div>
         </div>

@@ -2,13 +2,11 @@ import { useState } from "react";
 import { ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { Campo } from "./ui.jsx";
 import { api } from "../lib/api.js";
-import { useI18n } from "../lib/i18n.jsx";
 
 // Entrada da plataforma, separada do login comum e em endereço próprio.
 // Exige a chave de segurança além da senha: quem opera aqui aprova saques e
 // enxerga todas as empresas.
 export default function LoginPlataforma({ onEntrar }) {
-  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [chave, setChave] = useState("");
@@ -23,7 +21,7 @@ export default function LoginPlataforma({ onEntrar }) {
     setCarregando(true);
     const r = await api("/auth/admin/login", { email, senha, chave });
     setCarregando(false);
-    if (!r || r.error) return setErro(r?.error || t("adminLogin.failed"));
+    if (!r || r.error) return setErro(r?.error || "Não foi possível entrar.");
     onEntrar(r);
   };
 
@@ -37,9 +35,9 @@ export default function LoginPlataforma({ onEntrar }) {
           }}>
             <ShieldCheck size={22} color="var(--brand)" strokeWidth={2.2} />
           </div>
-          <div className="vx-disp" style={{ fontSize: 21 }}>{t("adminLogin.title")}</div>
+          <div className="vx-disp" style={{ fontSize: 21 }}>Plataforma RYCS</div>
           <p className="vx-mut" style={{ fontSize: 13.5, marginTop: 6 }}>
-            {t("adminLogin.subtitle")}
+            Acesso restrito à administração.
           </p>
         </div>
 
@@ -49,7 +47,7 @@ export default function LoginPlataforma({ onEntrar }) {
               <input className="vx-input" type="email" value={email} autoComplete="username"
                 onChange={(e) => setEmail(e.target.value)} required />
             </Campo>
-            <Campo label={t("adminLogin.password")}>
+            <Campo label="Senha">
               <div style={{ position: "relative" }}>
                 <input className="vx-input" type={verSenha ? "text" : "password"} value={senha}
                   autoComplete="new-password" onChange={(e) => setSenha(e.target.value)}
@@ -62,7 +60,7 @@ export default function LoginPlataforma({ onEntrar }) {
                 </button>
               </div>
             </Campo>
-            <Campo label={t("adminLogin.securityKey")}>
+            <Campo label="Chave de segurança">
               <div style={{ position: "relative" }}>
                 <input className="vx-input vx-mono" type={verChave ? "text" : "password"} value={chave}
                   autoComplete="off" onChange={(e) => setChave(e.target.value)}
@@ -84,13 +82,13 @@ export default function LoginPlataforma({ onEntrar }) {
             )}
 
             <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={carregando}>
-              {carregando ? t("adminLogin.verifying") : t("adminLogin.enter")}
+              {carregando ? "Verificando…" : "Entrar na plataforma"}
             </button>
           </form>
         </div>
 
         <p className="vx-mut" style={{ fontSize: 12, textAlign: "center", marginTop: 14 }}>
-          {t("adminLogin.mainPageNote")} <a href="/" style={{ color: "var(--brand)" }}>{t("adminLogin.mainPage")}</a>.
+          Empresas e profissionais entram pela <a href="/" style={{ color: "var(--brand)" }}>página principal</a>.
         </p>
       </div>
     </div>

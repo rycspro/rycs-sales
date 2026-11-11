@@ -4,17 +4,17 @@ import { api, API_URL } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { Stat, Vazio, Donut } from "../ui.jsx";
 import { ACOES } from "../../lib/constants.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
-const MOVIMENTOS_KEYS = {
-  deposito: { key: "fin.mov.deposit", tom: "brand" },
-  reserva: { key: "fin.mov.reserve", tom: "amber" },
-  estorno_reserva: { key: "fin.mov.reversal", tom: "muted" },
-  liquidacao: { key: "fin.mov.released", tom: "red" },
+// Nomes que a empresa entende. O razão guarda o tipo técnico do movimento;
+// traduzir aqui mantém o banco estável e a tela legível.
+const MOVIMENTOS = {
+  deposito: { nome: "Depósito", tom: "brand", sinal: "entrada" },
+  reserva: { nome: "Reserva de ação", tom: "amber", sinal: "bloqueio" },
+  estorno_reserva: { nome: "Reserva devolvida", tom: "muted", sinal: "liberação" },
+  liquidacao: { nome: "Ação liberada", tom: "red", sinal: "saída" },
 };
 
 export default function FinanceiroEmpresa({ emp, db, aviso }) {
-  const { t } = useI18n();
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -41,7 +41,7 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
     api(`/company/finance?${query}`).then((r) => {
       if (!ativo) return;
       setCarregando(false);
-      if (!r || r.error) return setErro(r?.error || t("fin.loadError"));
+      if (!r || r.error) return setErro(r?.error || "Não foi possível carregar o financeiro.");
       setDados(r);
     });
     return () => { ativo = false; };
@@ -51,7 +51,7 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
     // O download precisa do cookie de sessão, então vai pelo próprio
     // navegador em vez de fetch — o arquivo chega direto na pasta do usuário.
     window.open(`${API_URL}/api/company/finance/export?${query}`, "_blank");
-    aviso?.(t("fin.exportDone"));
+    aviso?.("Extrato exportado em CSV.");
   };
 
   const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
@@ -62,83 +62,83 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
     <div className="vx-fade">
       <div className="vx-page-head">
         <div>
-          <div className="vx-eyebrow">{t("fin.eyebrow")}</div>
-          <h1 className="vx-disp">{t("fin.title")}</h1>
-          <p>{t("fin.desc")}</p>
+          <div className="vx-eyebrow">Caixa e razão</div>
+          <h1 className="vx-disp">Financeiro</h1>
+          <p>Valores vindos do motor financeiro determinístico. Cada linha aponta a tarefa, a campanha e o profissional que a originaram.</p>
         </div>
         <button className="vx-btn" onClick={exportar} disabled={!dados?.extrato?.length}>
-          <Download size={14} /> {t("fin.exportCsv")}
+          <Download size={14} /> Exportar CSV
         </button>
       </div>
 
       <div className="vx-grid vx-g3" style={{ marginTop: 4 }}>
         <label>
-          <span className="vx-label">{t("fin.period")}</span>
+          <span className="vx-label">Período</span>
           <select className="vx-input" value={periodo} onChange={(e) => {
             const v = e.target.value;
             setPeriodo(v);
             if (v === "custom") setFiltros((f) => ({ ...f, dias: "" }));
             else setFiltros((f) => ({ ...f, dias: v, de: "", ate: "" }));
           }}>
-            <option value="7">{t("period.last7")}</option>
-            <option value="30">{t("period.last30")}</option>
-            <option value="90">{t("period.last90")}</option>
-            <option value="">{t("period.all")}</option>
-            <option value="custom">{t("period.custom")}</option>
+            <option value="7">7 dias</option>
+            <option value="30">30 dias</option>
+            <option value="90">90 dias</option>
+            <option value="">Todo período</option>
+            <option value="custom">Personalizado…</option>
           </select>
         </label>
         {periodo === "custom" && (
           <>
             <label>
-              <span className="vx-label">{t("period.from")}</span>
+              <span className="vx-label">De</span>
               <input type="date" className="vx-input" value={filtros.de} max={filtros.ate || undefined}
                 onChange={(e) => setFiltros((f) => ({ ...f, de: e.target.value }))} />
             </label>
             <label>
-              <span className="vx-label">{t("period.to")}</span>
+              <span className="vx-label">Até</span>
               <input type="date" className="vx-input" value={filtros.ate} min={filtros.de || undefined}
                 onChange={(e) => setFiltros((f) => ({ ...f, ate: e.target.value }))} />
             </label>
           </>
         )}
         <label>
-          <span className="vx-label">{t("fin.movement")}</span>
+          <span className="vx-label">Movimento</span>
           <select className="vx-input" value={filtros.tipo} onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}>
-            <option value="">{t("fin.allMovements")}</option>
-            {Object.entries(MOVIMENTOS_KEYS).map(([k, m]) => <option key={k} value={k}>{t(m.key)}</option>)}
+            <option value="">Todos os movimentos</option>
+            {Object.entries(MOVIMENTOS).map(([k, m]) => <option key={k} value={k}>{m.nome}</option>)}
           </select>
         </label>
         <label>
-          <span className="vx-label">{t("fin.campaign")}</span>
+          <span className="vx-label">Campanha</span>
           <select className="vx-input" value={filtros.campaignId} onChange={(e) => setFiltros({ ...filtros, campaignId: e.target.value })}>
-            <option value="">{t("fin.allCampaigns")}</option>
+            <option value="">Todas as campanhas</option>
             {campanhas.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
           </select>
         </label>
       </div>
 
       <div className="vx-grid vx-g3" style={{ marginTop: 16 }}>
-        <Stat label={t("fin.available")} value={money(posicao.disponivel)} Icon={Wallet} tone="brand" />
-        <Stat label={t("fin.reservedActions")} value={money(posicao.reservado)} Icon={Lock} tone="amber" />
-        <Stat label={t("fin.balance")} value={money(posicao.saldo)} Icon={Landmark} tone="muted" />
+        <Stat label="Disponível" value={money(posicao.disponivel)} Icon={Wallet} tone="brand" />
+        <Stat label="Reservado em ações" value={money(posicao.reservado)} Icon={Lock} tone="amber" />
+        <Stat label="Saldo em caixa" value={money(posicao.saldo)} Icon={Landmark} tone="muted" />
       </div>
 
       <div className="vx-grid vx-g4" style={{ marginTop: 12 }}>
-        <Stat label={t("fin.deposited")} value={money(resumo.depositado)} Icon={Landmark} tone="brand" />
-        <Stat label={t("fin.utilized")} value={money(resumo.utilizado)} Icon={TrendingDown} tone="red" />
-        <Stat label={t("fin.platformFee")} value={money(resumo.taxas)} Icon={Receipt} tone="amber" />
-        <Stat label={t("fin.paidToPros")} value={money(resumo.repassado)} Icon={Wallet} tone="muted" />
+        <Stat label="Depositado no período" value={money(resumo.depositado)} Icon={Landmark} tone="brand" />
+        <Stat label="Utilizado no período" value={money(resumo.utilizado)} Icon={TrendingDown} tone="red" />
+        <Stat label="Taxa da plataforma" value={money(resumo.taxas)} Icon={Receipt} tone="amber" />
+        <Stat label="Repassado a profissionais" value={money(resumo.repassado)} Icon={Wallet} tone="muted" />
       </div>
 
       {(resumo.taxas > 0 || resumo.repassado > 0) && (
         <div style={{ marginTop: 16 }}>
           <Donut
-            titulo={t("fin.whereItWent")}
+            titulo="Para onde foi o valor utilizado"
             centro={money(resumo.utilizado)}
             formatar={money}
             itens={[
-              { nome: t("fin.paidToPro"), valor: resumo.repassado, cor: "var(--brand)" },
-              { nome: t("fin.platformFee"), valor: resumo.taxas, cor: "var(--amber)" },
+              { nome: "Repassado ao profissional", valor: resumo.repassado, cor: "var(--brand)" },
+              { nome: "Taxa da plataforma", valor: resumo.taxas, cor: "var(--amber)" },
             ]}
           />
         </div>
@@ -146,8 +146,8 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
 
       <div style={{ marginTop: 20 }}>
         <div className="vx-row" style={{ marginBottom: 10 }}>
-          <h2 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>{t("fin.statement")}</h2>
-          <span className="vx-chip vx-mono">{resumo.movimentos} {t("fin.movementCount", { count: resumo.movimentos })}</span>
+          <h2 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>Extrato</h2>
+          <span className="vx-chip vx-mono">{resumo.movimentos} movimento{resumo.movimentos === 1 ? "" : "s"}</span>
         </div>
 
         {carregando && <div className="vx-card" style={{ padding: 18 }}><div className="vx-skeleton" style={{ height: 18, marginBottom: 9 }} /><div className="vx-skeleton" style={{ height: 18, marginBottom: 9 }} /><div className="vx-skeleton" style={{ height: 18 }} /></div>}
@@ -156,8 +156,8 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
 
         {!carregando && !erro && !dados?.extrato?.length && (
           <Vazio
-            titulo={t("fin.noMovements")}
-            texto={t("fin.noMovementsDesc")}
+            titulo="Nenhum movimento no filtro"
+            texto="Depósitos, reservas e liberações de ação aparecem aqui assim que acontecerem. Amplie o período ou limpe os filtros."
           />
         )}
 
@@ -166,16 +166,15 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
             <table className="vx-table">
               <thead>
                 <tr>
-                  <th>{t("fin.date")}</th><th>{t("fin.movement")}</th><th>{t("fin.origin")}</th>
-                  <th style={{ textAlign: "right" }}>{t("fin.gross")}</th>
-                  <th style={{ textAlign: "right" }}>{t("fin.fee")}</th>
-                  <th style={{ textAlign: "right" }}>{t("fin.value")}</th>
+                  <th>Data</th><th>Movimento</th><th>Origem</th>
+                  <th style={{ textAlign: "right" }}>Bruto</th>
+                  <th style={{ textAlign: "right" }}>Taxa</th>
+                  <th style={{ textAlign: "right" }}>Valor</th>
                 </tr>
               </thead>
               <tbody>
                 {dados.extrato.map((l) => {
-                  const mk = MOVIMENTOS_KEYS[l.tipo];
-                  const m = mk ? { nome: t(mk.key), tom: mk.tom } : { nome: l.tipo, tom: "muted" };
+                  const m = MOVIMENTOS[l.tipo] || { nome: l.tipo, tom: "muted" };
                   return (
                     <tr key={l.id}>
                       <td className="vx-mono" style={{ whiteSpace: "nowrap" }}>{dataCurta(l.criadoEm)}</td>
@@ -202,7 +201,8 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
         )}
 
         <div className="vx-chart-source">
-          {t("fin.disclaimer")}
+          Reserva bloqueia o valor quando a ação é enviada; a liberação debita o caixa e repassa o líquido ao profissional.
+          Nenhum valor desta tela é calculado no navegador.
         </div>
       </div>
     </div>

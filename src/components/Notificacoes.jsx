@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, Check, X } from "lucide-react";
 import { api, apiPatch } from "../lib/api.js";
 import { dataCurta } from "../lib/utils.js";
-import { useI18n } from "../lib/i18n.jsx";
 
 const TIPO_COR = {
   submissao: "var(--brand)",
@@ -11,7 +10,6 @@ const TIPO_COR = {
 };
 
 export default function Notificacoes({ items = [], onUpdate }) {
-  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const naoLidas = items.filter((n) => !n.lida).length;
@@ -47,17 +45,17 @@ export default function Notificacoes({ items = [], onUpdate }) {
           boxShadow: "var(--shadow-pop)", zIndex: 50, overflow: "hidden",
         }}>
           <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontWeight: 600, fontSize: 14 }}>{t("notifications.title")}</span>
+            <span style={{ fontWeight: 600, fontSize: 14 }}>Notificações</span>
             {naoLidas > 0 && (
               <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={marcarTodas} style={{ fontSize: 11, gap: 4 }}>
-                <Check size={13} /> {t("notifications.markRead")}
+                <Check size={13} /> Marcar lidas
               </button>
             )}
           </div>
 
           <div style={{ maxHeight: 360, overflowY: "auto" }}>
             {items.length === 0 && (
-              <div style={{ padding: 28, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>{t("notifications.none")}</div>
+              <div style={{ padding: 28, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Nenhuma notificação</div>
             )}
             {items.map((n) => (
               <div key={n.id} style={{

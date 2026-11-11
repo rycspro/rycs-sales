@@ -2,7 +2,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { UploadCloud, Trash2, Link2, FileText, Image, Video, Music, Presentation } from "lucide-react";
 import { api, apiDelete, API_URL } from "../../lib/api.js";
 import { CATEGORIAS_ACADEMY, FORMATOS_SEM_LEITURA, extensaoDe, validarArquivoAcademy, formatarTamanho, formatarWhatsapp, validarSuporte, normalizarLink } from "../../../shared/onboarding.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // Etapa 3: Marketing Academy. Todo o material de marketing e divulgação da
 // empresa entra aqui; a IA da etapa 4 lê o que tiver texto. Nada é
@@ -30,7 +29,6 @@ function enviarArquivo(categoria, arquivo, aoProgresso) {
 }
 
 function CartaoEnvio({ categoria, materiais, disponivel, aoEnviado, aoRemover }) {
-  const { t } = useI18n();
   const id = useId();
   const input = useRef(null);
   const [arrastando, setArrastando] = useState(false);
@@ -69,9 +67,9 @@ function CartaoEnvio({ categoria, materiais, disponivel, aoEnviado, aoRemover })
           onDragLeave={() => setArrastando(false)}
           onDrop={(e) => { e.preventDefault(); setArrastando(false); receber(e.dataTransfer.files); }}>
           <UploadCloud size={20} aria-hidden="true" />
-          <span>{t("onb.academy.dragOrClick")}</span>
+          <span>Arraste aqui ou</span>
           <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} aria-describedby={`${id}-d`} onClick={() => input.current?.click()}>
-            {t("onb.academy.chooseFiles")}
+            Escolher arquivos
           </button>
           <input ref={input} type="file" hidden multiple accept={categoria.formatos.map((f) => `.${f}`).join(",")} onChange={(e) => receber(e.target.files)} />
         </div>
@@ -82,7 +80,7 @@ function CartaoEnvio({ categoria, materiais, disponivel, aoEnviado, aoRemover })
             <span className="vx-onb-arquivo-nome">{x.nome}</span>
             {x.erro
               ? <><span className="vx-onb-erro-inline" role="alert">{x.erro}</span>
-                  <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" aria-label={`${t("onb.academy.dismiss")} ${x.nome}`} onClick={() => setEnviando((e) => e.filter((y) => y.chave !== x.chave))}>{t("onb.academy.dismiss")}</button></>
+                  <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" aria-label={`Dispensar ${x.nome}`} onClick={() => setEnviando((e) => e.filter((y) => y.chave !== x.chave))}>Dispensar</button></>
               : <progress max={100} value={x.progresso} aria-label={`Enviando ${x.nome}`}>{x.progresso}%</progress>}
           </li>
         ))}
@@ -104,7 +102,6 @@ function CartaoEnvio({ categoria, materiais, disponivel, aoEnviado, aoRemover })
 }
 
 export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
-  const { t } = useI18n();
   const id = useId();
   const [dados, setDados] = useState(null);
   const [erroCarga, setErroCarga] = useState("");
@@ -119,7 +116,7 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
     setErroCarga("");
     setDados(null);
     const r = await api("/onboarding/academy");
-    if (!r || r.error) return setErroCarga(r?.error || t("onb.academy.errLoad"));
+    if (!r || r.error) return setErroCarga(r?.error || "Não foi possível carregar os materiais.");
     setDados(r);
     setSuporte({ ...r.suporte, whatsapp: r.suporte.whatsapp ? formatarWhatsapp(r.suporte.whatsapp) : "" });
   };
@@ -128,16 +125,16 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
   const adicionar = (m) => setDados((d) => ({ ...d, materiais: [...d.materiais, m] }));
   const remover = async (m) => {
     const r = await apiDelete(`/onboarding/academy/materiais/${m.id}`);
-    if (!r?.ok) return setErroGeral(r?.error || t("onb.academy.errRemove"));
+    if (!r?.ok) return setErroGeral(r?.error || "Não foi possível remover. Tente de novo.");
     setDados((d) => ({ ...d, materiais: d.materiais.filter((x) => x.id !== m.id) }));
   };
 
   const adicionarLink = async (e) => {
     e.preventDefault();
     setErroLink("");
-    if (!normalizarLink(link)) return setErroLink(t("onb.academy.errLink"));
+    if (!normalizarLink(link)) return setErroLink("Informe um link válido, como https://suaempresa.com.br.");
     const r = await api("/onboarding/academy/links", { url: link });
-    if (!r || r.error) return setErroLink(r?.error || t("onb.academy.errAddLink"));
+    if (!r || r.error) return setErroLink(r?.error || "Não foi possível adicionar o link.");
     adicionar(r);
     setLink("");
   };
@@ -146,13 +143,13 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
     setErroGeral("");
     const { erros } = validarSuporte(suporte);
     setErrosSuporte(erros);
-    if (Object.keys(erros).length) return setErroGeral(t("onb.academy.errSupport"));
+    if (Object.keys(erros).length) return setErroGeral("Revise o contato de suporte.");
     setSalvando(true);
     const r = await api("/onboarding/academy/concluir", { suporte });
     setSalvando(false);
     if (!r || r.error) {
       if (r?.erros) setErrosSuporte(r.erros);
-      return setErroGeral(r?.error || t("onb.academy.errContinue"));
+      return setErroGeral(r?.error || "Não foi possível continuar. Tente de novo.");
     }
     aoAtualizar(r);
     aoAvancar(r);
@@ -161,10 +158,10 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
   if (erroCarga) return (
     <div className="vx-onb-card vx-onb-estado" role="alert" style={{ maxWidth: 560, margin: "0 auto" }}>
       <p>{erroCarga}</p>
-      <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 48 }} onClick={carregar}>{t("onb.tryAgain")}</button>
+      <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 48 }} onClick={carregar}>Tentar novamente</button>
     </div>
   );
-  if (!dados) return <div className="vx-onb-estado" role="status">{t("onb.academy.loading")}</div>;
+  if (!dados) return <div className="vx-onb-estado" role="status">Carregando os materiais…</div>;
 
   const links = dados.materiais.filter((m) => m.categoria === "link");
   const mudarSuporte = (campo) => (e) => {
@@ -174,12 +171,12 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
 
   return (
     <div>
-      <div className="vx-onb-eyebrow">{t("onb.stepOf", { n: 3, total: 6 })}</div>
-      <h1 className="vx-disp vx-onb-titulo">{t("onb.academy.title")}</h1>
-      <p className="vx-mut vx-onb-card-apoio">{t("onb.academy.desc")}</p>
+      <div className="vx-onb-eyebrow">Passo 3 de 6</div>
+      <h1 className="vx-disp vx-onb-titulo">Marketing Academy: seus materiais</h1>
+      <p className="vx-mut vx-onb-card-apoio">Tudo o que a sua empresa usa para vender e divulgar: apresentações, materiais, fotos, vídeos, áudios e links. A IA lê esses materiais para conhecer o seu negócio.</p>
 
       {!dados.armazenamento && (
-        <div className="vx-onb-aviso" role="status">{t("onb.academy.uploadUnavailable")}</div>
+        <div className="vx-onb-aviso" role="status">O envio de arquivos ainda não está disponível. Você pode adicionar links, o contato de suporte e seguir; os arquivos podem ser enviados depois.</div>
       )}
 
       <div className="vx-onb-grade-envio">
@@ -192,15 +189,15 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
           <div className="vx-onb-envio-topo">
             <span className="vx-onb-icone" aria-hidden="true"><Link2 size={20} /></span>
             <div>
-              <h2 id={`${id}-links`} className="vx-disp">{t("onb.academy.links")}</h2>
-              <div className="vx-onb-dica">{t("onb.academy.linksHint")}</div>
+              <h2 id={`${id}-links`} className="vx-disp">Links</h2>
+              <div className="vx-onb-dica">Site, redes, catálogo, YouTube, páginas de venda.</div>
             </div>
           </div>
           <form onSubmit={adicionarLink} className="vx-onb-linha" noValidate>
             <label className="vx-label" htmlFor={`${id}-url`} style={{ position: "absolute", left: -9999 }}>Endereço do link</label>
             <input id={`${id}-url`} className="vx-input" type="url" inputMode="url" placeholder="https://" value={link}
               onChange={(e) => { setLink(e.target.value); setErroLink(""); }} aria-invalid={erroLink ? true : undefined} aria-describedby={erroLink ? `${id}-url-erro` : undefined} />
-            <button type="submit" className="vx-btn" style={{ minHeight: 48 }}>{t("onb.academy.add")}</button>
+            <button type="submit" className="vx-btn" style={{ minHeight: 48 }}>Adicionar</button>
           </form>
           {erroLink && <div id={`${id}-url-erro`} className="vx-onb-erro" role="alert">{erroLink}</div>}
           <ul className="vx-onb-arquivos">
@@ -217,8 +214,8 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
       </div>
 
       <section className="vx-onb-card vx-onb-secao" aria-labelledby={`${id}-sup`} style={{ marginTop: 16 }}>
-        <h2 id={`${id}-sup`} className="vx-disp">{t("onb.academy.supportContact")}</h2>
-        <p className="vx-mut" style={{ marginTop: -8, fontSize: 14 }}>{t("onb.academy.supportContactDesc")}</p>
+        <h2 id={`${id}-sup`} className="vx-disp">Contato de suporte</h2>
+        <p className="vx-mut" style={{ marginTop: -8, fontSize: 14 }}>Para quem a IA encaminha a conversa quando precisar de uma pessoa.</p>
         <div className="vx-onb-tres">
           {[["nome", "Nome", "text", "name"], ["whatsapp", "WhatsApp", "tel", "tel-national"], ["email", "E-mail", "email", "email"]].map(([campo, label, tipo, auto]) => (
             <div className="vx-onb-campo" key={campo}>
@@ -231,12 +228,12 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
         </div>
       </section>
 
-      {dados.materiais.length === 0 && <div className="vx-onb-aviso">{t("onb.academy.recommendUpload")}</div>}
+      {dados.materiais.length === 0 && <div className="vx-onb-aviso">Recomendado: envie ao menos um material ou link. A IA trabalha melhor com eles, mas dá para seguir sem.</div>}
       <div aria-live="polite">{erroGeral && <div className="vx-onb-erro" role="alert">{erroGeral}</div>}</div>
       <div className="vx-onb-acoes">
-        <button type="button" className="vx-btn" onClick={aoVoltar} disabled={salvando}>{t("onb.back")}</button>
+        <button type="button" className="vx-btn" onClick={aoVoltar} disabled={salvando}>Voltar</button>
         <button type="button" className="vx-btn vx-btn-primary" onClick={concluir} disabled={salvando}>
-          {salvando ? t("onb.academy.sending") : t("onb.academy.sendToAI")}
+          {salvando ? "Enviando…" : "Enviar para a IA analisar"}
         </button>
       </div>
     </div>

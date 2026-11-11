@@ -3,10 +3,8 @@ import { Banknote, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { Vazio } from "../ui.jsx";
-import { useI18n } from "../../lib/i18n.jsx";
 
 export default function DepositosAdmin({ aviso, recarregar }) {
-  const { t } = useI18n();
   const [lista, setLista] = useState(null);
   const [processando, setProcessando] = useState("");
   const [motivo, setMotivo] = useState({});
@@ -20,7 +18,7 @@ export default function DepositosAdmin({ aviso, recarregar }) {
 
   const decidir = async (d, status) => {
     if (status === "confirmado" &&
-        !window.confirm(t("admin.deposits.confirmEntry", { amount: money(d.valor), company: d.empresaNome })))
+        !window.confirm(`Confirmar entrada de ${money(d.valor)} de ${d.empresaNome}?\n\nIsso credita o caixa da empresa. Só confirme se o Pix caiu de fato.`))
       return;
 
     setProcessando(d.id);
@@ -29,10 +27,10 @@ export default function DepositosAdmin({ aviso, recarregar }) {
     if (r?.error) return aviso(r.error);
     await carregar();
     await recarregar?.();
-    aviso(status === "confirmado" ? t("admin.deposits.credited", { amount: money(d.valor) }) : t("admin.deposits.rejected"));
+    aviso(status === "confirmado" ? `${money(d.valor)} creditados.` : "Depósito recusado.");
   };
 
-  if (!lista) return <div className="vx-mut" style={{ padding: 20 }}>{t("common.loading")}</div>;
+  if (!lista) return <div className="vx-mut" style={{ padding: 20 }}>Carregando…</div>;
 
   const pendentes = lista.filter((d) => d.status === "pendente");
   const resolvidos = lista.filter((d) => d.status !== "pendente");
@@ -49,20 +47,21 @@ export default function DepositosAdmin({ aviso, recarregar }) {
             <Banknote size={19} color="var(--amber)" strokeWidth={2.1} />
           </div>
           <div>
-            <div className="vx-disp" style={{ fontSize: 17 }}>{t("admin.deposits.title")}</div>
+            <div className="vx-disp" style={{ fontSize: 17 }}>Depósitos manuais</div>
             <p className="vx-mut" style={{ fontSize: 13, marginTop: 3 }}>
-              {t("admin.deposits.instructions")}
+              Confirme apenas depois de ver o Pix na conta da RYCS. Confirmar credita
+              o caixa da empresa, e o valor passa a pagar profissionais.
             </p>
           </div>
         </div>
       </div>
 
       <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>
-        {t("admin.deposits.awaitingConfirmation")} {pendentes.length > 0 && `(${pendentes.length})`}
+        Aguardando confirmação {pendentes.length > 0 && `(${pendentes.length})`}
       </h3>
 
       {pendentes.length === 0 ? (
-        <Vazio texto={t("admin.deposits.emptyText")} />
+        <Vazio texto="Nenhum depósito aguardando." />
       ) : (
         <div className="vx-grid" style={{ marginBottom: 24 }}>
           {pendentes.map((d) => (
@@ -74,26 +73,26 @@ export default function DepositosAdmin({ aviso, recarregar }) {
                     {d.empresaNome} · {dataCurta(d.criadoEm)}
                   </div>
                 </div>
-                <span className="vx-badge vx-badge-amber"><Clock size={11} /> {t("admin.deposits.pending")}</span>
+                <span className="vx-badge vx-badge-amber"><Clock size={11} /> Pendente</span>
               </div>
 
               <div style={{ padding: "9px 12px", borderRadius: 9, background: "var(--surface-2)", border: "1px solid var(--border)", marginBottom: 10 }}>
-                <span className="vx-mut" style={{ fontSize: 11.5 }}>{t("admin.deposits.reference")}</span>
+                <span className="vx-mut" style={{ fontSize: 11.5 }}>Referência informada à empresa</span>
                 <div className="vx-mono" style={{ fontSize: 13.5, color: "var(--brand)" }}>{d.referencia}</div>
               </div>
 
-              <input className="vx-input" placeholder={t("admin.deposits.notePlaceholder")}
+              <input className="vx-input" placeholder="Observação (obrigatória para recusar)"
                 value={motivo[d.id] || ""} onChange={(e) => setMotivo((m) => ({ ...m, [d.id]: e.target.value }))} />
 
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 <button className="vx-btn vx-btn-primary" style={{ flex: 1 }}
                   disabled={processando === d.id} onClick={() => decidir(d, "confirmado")}>
-                  <CheckCircle2 size={14} /> {t("admin.deposits.received")}
+                  <CheckCircle2 size={14} /> Recebi o Pix
                 </button>
                 <button className="vx-btn vx-btn-danger" style={{ flex: "none" }}
                   disabled={processando === d.id || !(motivo[d.id] || "").trim()}
                   onClick={() => decidir(d, "recusado")}>
-                  <XCircle size={14} /> {t("admin.deposits.reject")}
+                  <XCircle size={14} /> Recusar
                 </button>
               </div>
             </div>
@@ -103,7 +102,7 @@ export default function DepositosAdmin({ aviso, recarregar }) {
 
       {resolvidos.length > 0 && (
         <>
-          <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>{t("admin.deposits.history")}</h3>
+          <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>Histórico</h3>
           <div className="vx-grid">
             {resolvidos.slice(0, 20).map((d) => {
               const ok = d.status === "confirmado";
@@ -117,7 +116,7 @@ export default function DepositosAdmin({ aviso, recarregar }) {
                     </div>
                   </div>
                   <span className={"vx-badge " + (ok ? "vx-badge-brand" : "vx-badge-red")}>
-                    {ok ? t("admin.deposits.confirmed") : t("admin.deposits.refused")}
+                    {ok ? "Confirmado" : "Recusado"}
                   </span>
                 </div>
               );

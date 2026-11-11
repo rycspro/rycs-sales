@@ -12,35 +12,34 @@ import { lerArquivoLeads, sugerirMapeamento } from "../../lib/importers.js";
 import PipelineKanban from "./PipelineKanban.jsx";
 import ComissoesPanel from "./ComissoesPanel.jsx";
 import CriadorCampos from "./CriadorCampos.jsx";
-import { useI18n } from "../../lib/i18n.jsx";
 
-const ABAS_KEYS = [
-  ["geral", "camp.detail.tab.overview"], ["profissionais", "camp.detail.tab.professionals"], ["tarefas", "camp.detail.tab.tasks"],
-  ["pipeline", "camp.detail.tab.pipeline"], ["contatos", "camp.detail.tab.contacts"], ["reunioes", "camp.detail.tab.meetings"], ["performance", "camp.detail.tab.performance"],
-  ["financeiro", "camp.detail.tab.financial"], ["comissoes", "camp.detail.tab.commissions"], ["campos", "camp.detail.tab.fields"],
-  ["verificacao", "camp.detail.tab.verification"], ["configuracoes", "camp.detail.tab.settings"],
+const ABAS = [
+  ["geral", "Visão Geral"], ["profissionais", "Profissionais"], ["tarefas", "Tarefas"],
+  ["pipeline", "Pipeline"], ["contatos", "Contatos"], ["reunioes", "Reuniões"], ["performance", "Performance"],
+  ["financeiro", "Financeiro"], ["comissoes", "Comissões"], ["campos", "Campos"],
+  ["verificacao", "Verificação"], ["configuracoes", "Configurações"],
 ];
-const PERIODOS_KEYS = [["hoje", "camp.detail.period.today"], ["7d", "camp.detail.period.7d"], ["30d", "camp.detail.period.30d"], ["personalizado", "camp.detail.period.custom"]];
-const FILTROS_PROFISSIONAIS_KEYS = [
-  ["todos", "camp.detail.filterAll"], ["online", "camp.detail.filterOnline"], ["alta", "camp.detail.filterHighPerf"],
-  ["sem_atividade", "camp.detail.filterNoActivity"], ["pendente", "camp.detail.filterPending"],
+const PERIODOS = [["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"], ["personalizado", "Personalizado"]];
+const FILTROS_PROFISSIONAIS = [
+  ["todos", "Todos"], ["online", "Ativos agora"], ["alta", "Alta performance"],
+  ["sem_atividade", "Sem atividade"], ["pendente", "Pendentes"],
 ];
-const EVENTOS_LABEL_KEYS = {
-  CAMPAIGN_CREATED: "camp.event.created", CAMPAIGN_PUBLISHED: "camp.event.published",
-  CAMPAIGN_PAUSED: "camp.event.paused", CAMPAIGN_CLOSED: "camp.event.closed",
-  PROFESSIONAL_APPLIED: "camp.event.applied", PROFESSIONAL_APPROVED: "camp.event.approved",
-  PROFESSIONAL_REJECTED: "camp.event.rejected", PROFESSIONAL_JOINED: "camp.event.joined",
-  TASK_STARTED: "camp.event.taskStarted", TASK_COMPLETED: "camp.event.taskCompleted", TASK_APPROVED: "camp.event.taskApproved",
-  TASK_REJECTED: "camp.event.taskRejected", LEAD_CREATED: "camp.event.leadCreated", MEETING_SCHEDULED: "camp.event.meetingScheduled",
-  MEETING_COMPLETED: "camp.event.meetingCompleted", SALE_RECORDED: "camp.event.saleRecorded",
-  EVIDENCE_SUBMITTED: "camp.event.evidenceSubmitted", PAYMENT_RELEASED: "camp.event.paymentReleased",
+const EVENTOS_LABEL = {
+  CAMPAIGN_CREATED: "Campanha criada", CAMPAIGN_PUBLISHED: "Campanha publicada",
+  CAMPAIGN_PAUSED: "Campanha pausada", CAMPAIGN_CLOSED: "Campanha encerrada",
+  PROFESSIONAL_APPLIED: "Nova candidatura recebida", PROFESSIONAL_APPROVED: "Profissional aprovado",
+  PROFESSIONAL_REJECTED: "Candidatura recusada", PROFESSIONAL_JOINED: "Profissional entrou na campanha",
+  TASK_STARTED: "Tarefa iniciada", TASK_COMPLETED: "Tarefa concluída", TASK_APPROVED: "Tarefa aprovada",
+  TASK_REJECTED: "Tarefa recusada", LEAD_CREATED: "Novo lead criado", MEETING_SCHEDULED: "Reunião agendada",
+  MEETING_COMPLETED: "Reunião realizada", SALE_RECORDED: "Venda registrada",
+  EVIDENCE_SUBMITTED: "Evidência enviada", PAYMENT_RELEASED: "Pagamento liberado",
 };
-const SERIES_KEYS = {
-  investimento: { i18n: "camp.detail.investment", cor: "#F0B45E", monetario: true },
-  tarefas: { i18n: "camp.detail.tasks", cor: "#5B8CFF" },
-  leads: { i18n: "camp.detail.leads", cor: "#9AA6FF" },
-  reunioes: { i18n: "camp.detail.meetings", cor: "#22A06B" },
-  vendas: { i18n: "camp.detail.sales", cor: "#FF8A7A" },
+const SERIES = {
+  investimento: { label: "Investimento", cor: "#F0B45E", monetario: true },
+  tarefas: { label: "Tarefas", cor: "#5B8CFF" },
+  leads: { label: "Leads", cor: "#9AA6FF" },
+  reunioes: { label: "Reuniões", cor: "#22A06B" },
+  vendas: { label: "Vendas", cor: "#FF8A7A" },
 };
 
 function dataInput(ms) {
@@ -54,8 +53,7 @@ function timestampSaoPaulo(data, fim = false) {
 }
 
 function Variacao({ valor }) {
-  const { t } = useI18n();
-  if (valor == null) return <span className="vx-mut">{t("camp.detail.noComparison")}</span>;
+  if (valor == null) return <span className="vx-mut">sem comparação</span>;
   return <span className={valor >= 0 ? "vx-positive" : "vx-negative"}>{valor >= 0 ? "↑" : "↓"} {Math.abs(valor).toLocaleString("pt-BR")}%</span>;
 }
 
@@ -64,33 +62,30 @@ function Empty({ texto }) {
 }
 
 function ActivityFeed({ eventos = [], onRefresh }) {
-  const { t } = useI18n();
   return <section className="vx-card vx-activity-card">
-    <div className="vx-row"><div><div className="vx-eyebrow">{t("camp.detail.realtimeActivity")}</div><h2 className="vx-disp">{t("camp.detail.happeningNow")}</h2></div><button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onRefresh} title={t("camp.detail.refresh")}><RefreshCw size={14} /> {t("camp.detail.refresh")}</button></div>
-    {eventos.length === 0 ? <Empty texto={t("camp.detail.activityEmpty")} /> : <div className="vx-activity-list">
+    <div className="vx-row"><div><div className="vx-eyebrow">Atividade em tempo real</div><h2 className="vx-disp">Acontecendo agora</h2></div><button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onRefresh} title="Atualizar atividade"><RefreshCw size={14} /> Atualizar</button></div>
+    {eventos.length === 0 ? <Empty texto="A atividade aparecerá aqui assim que a operação começar." /> : <div className="vx-activity-list">
       {eventos.slice(0, 12).map((evento) => <div key={evento.id}>
         <time className="vx-mono">{new Date(evento.criadoEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time>
         <i className={`is-${evento.tipo.toLowerCase()}`} />
-        <div><b>{evento.sellerNome ? `${evento.sellerNome} — ` : ""}{EVENTOS_LABEL_KEYS[evento.tipo] ? t(EVENTOS_LABEL_KEYS[evento.tipo]) : evento.tipo}</b><span>{evento.source === "BACKFILL" ? t("camp.detail.existingHistory") : new Date(evento.criadoEm).toLocaleDateString("pt-BR")}</span></div>
+        <div><b>{evento.sellerNome ? `${evento.sellerNome} — ` : ""}{EVENTOS_LABEL[evento.tipo] || evento.tipo}</b><span>{evento.source === "BACKFILL" ? "Histórico existente" : new Date(evento.criadoEm).toLocaleDateString("pt-BR")}</span></div>
       </div>)}
     </div>}
-    <div className="vx-chart-source">{t("camp.detail.activitySource")}</div>
+    <div className="vx-chart-source">Atualização sob demanda e pelo ciclo seguro da aplicação; sem polling agressivo.</div>
   </section>;
 }
 
 function AttentionNeeded({ alertas = [] }) {
-  const { t } = useI18n();
   return <section className="vx-card vx-alerts-card">
-    <div className="vx-eyebrow">{t("camp.detail.deterministicMonitoring")}</div><h2 className="vx-disp">{t("camp.detail.attentionNeeded")}</h2>
-    {alertas.length === 0 ? <div className="vx-alert-row is-positive"><CheckCircle2 size={16} /><span>{t("camp.detail.noAlerts")}</span></div> : alertas.map((alerta) => <div className={`vx-alert-row is-${alerta.nivel}`} key={alerta.codigo}><span className="vx-alert-dot" /><span>{alerta.texto}</span></div>)}
+    <div className="vx-eyebrow">Monitoramento determinístico</div><h2 className="vx-disp">Atenção necessária</h2>
+    {alertas.length === 0 ? <div className="vx-alert-row is-positive"><CheckCircle2 size={16} /><span>Nenhum alerta operacional detectado com os dados disponíveis.</span></div> : alertas.map((alerta) => <div className={`vx-alert-row is-${alerta.nivel}`} key={alerta.codigo}><span className="vx-alert-dot" /><span>{alerta.texto}</span></div>)}
   </section>;
 }
 
 function PerformanceChart({ serie = [] }) {
-  const { t } = useI18n();
-  const [visiveis, setVisiveis] = useState(() => new Set(Object.keys(SERIES_KEYS)));
+  const [visiveis, setVisiveis] = useState(() => new Set(Object.keys(SERIES)));
   const largura = 640, altura = 220, margemX = 18, margemY = 20;
-  const temDados = serie.some((dia) => Object.keys(SERIES_KEYS).some((chave) => Number(dia[chave]) > 0));
+  const temDados = serie.some((dia) => Object.keys(SERIES).some((chave) => Number(dia[chave]) > 0));
   const alternar = (chave) => setVisiveis((atual) => {
     const proximo = new Set(atual);
     if (proximo.has(chave) && proximo.size > 1) proximo.delete(chave); else proximo.add(chave);
@@ -105,23 +100,22 @@ function PerformanceChart({ serie = [] }) {
     });
   };
   return <div className="vx-performance-chart">
-    <div className="vx-chart-toggles">{Object.entries(SERIES_KEYS).map(([chave, config]) => <button key={chave} data-on={visiveis.has(chave) ? "1" : "0"} onClick={() => alternar(chave)}><i style={{ background: config.cor }} />{t(config.i18n)}</button>)}</div>
-    {!temDados ? <Empty texto={t("camp.detail.chartNoData")} /> : <>
-      <svg role="img" aria-label={t("camp.detail.chartLabel")} viewBox={`0 0 ${largura} ${altura}`} preserveAspectRatio="none">
+    <div className="vx-chart-toggles">{Object.entries(SERIES).map(([chave, config]) => <button key={chave} data-on={visiveis.has(chave) ? "1" : "0"} onClick={() => alternar(chave)}><i style={{ background: config.cor }} />{config.label}</button>)}</div>
+    {!temDados ? <Empty texto="Ainda não há atividade suficiente para o gráfico." /> : <>
+      <svg role="img" aria-label="Resultados ao longo do tempo" viewBox={`0 0 ${largura} ${altura}`} preserveAspectRatio="none">
         {[0, .25, .5, .75, 1].map((p) => <line key={p} x1={margemX} x2={largura - margemX} y1={margemY + p * (altura - margemY * 2)} y2={margemY + p * (altura - margemY * 2)} className="vx-chart-gridline" />)}
-        {Object.entries(SERIES_KEYS).filter(([chave]) => visiveis.has(chave)).map(([chave, config]) => {
+        {Object.entries(SERIES).filter(([chave]) => visiveis.has(chave)).map(([chave, config]) => {
           const lista = pontos(chave);
-          return <g key={chave}><polyline points={lista.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={config.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" />{lista.map((p) => <circle key={p.data} cx={p.x} cy={p.y} r="4" fill={config.cor}><title>{`${t(config.i18n)} · ${p.data}: ${config.monetario ? money(p.valor) : p.valor}`}</title></circle>)}</g>;
+          return <g key={chave}><polyline points={lista.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={config.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" />{lista.map((p) => <circle key={p.data} cx={p.x} cy={p.y} r="4" fill={config.cor}><title>{`${config.label} · ${p.data}: ${config.monetario ? money(p.valor) : p.valor}`}</title></circle>)}</g>;
         })}
       </svg>
       <div className="vx-chart-axis"><span>{serie[0]?.data?.slice(5).split("-").reverse().join("/")}</span><span>{serie.at(-1)?.data?.slice(5).split("-").reverse().join("/")}</span></div>
     </>}
-    <div className="vx-chart-source">{t("camp.detail.chartSource")}</div>
+    <div className="vx-chart-source">Cada série usa sua própria escala para comparar tendências. Passe pelos pontos para ver os valores reais.</div>
   </div>;
 }
 
 function ProfessionalProfile({ item, tarefas, leads, campanha, onClose, onStatusChange }) {
-  const { t } = useI18n();
   const sellerId = item.sellerId;
   const tarefasProfissional = tarefas.filter((t) => t.sellerId === sellerId);
   const leadsProfissional = leads.filter((l) => l.sellerId === sellerId);
@@ -138,19 +132,19 @@ function ProfessionalProfile({ item, tarefas, leads, campanha, onClose, onStatus
   const maximo = Math.max(1, ...serie.map(([, total]) => total));
   return <div className="vx-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
     <div className="vx-sheet vx-professional-sheet">
-      <div className="vx-row"><div><div className="vx-eyebrow">{t("camp.detail.profileInCampaign")}</div><h2 className="vx-disp">{item.nome || t("camp.detail.professional")}</h2></div><button className="vx-btn vx-btn-ghost" aria-label={t("app.close")} onClick={onClose}><X size={18} /></button></div>
-      <div className="vx-professional-identity"><div className="vx-avatar">{String(item.nome || "P").split(" ").slice(0, 2).map((n) => n[0]).join("")}</div><div><b>{item.titulo || item.perfil || t("camp.detail.commercialPro")}</b><span>{item.cidade || t("camp.detail.locationUnknown")}</span></div><span className={`vx-campaign-person-status is-${item.statusOperacional}`}>{item.statusOperacional.replace("_", " ")}</span></div>
+      <div className="vx-row"><div><div className="vx-eyebrow">Perfil na campanha</div><h2 className="vx-disp">{item.nome || "Profissional"}</h2></div><button className="vx-btn vx-btn-ghost" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
+      <div className="vx-professional-identity"><div className="vx-avatar">{String(item.nome || "P").split(" ").slice(0, 2).map((n) => n[0]).join("")}</div><div><b>{item.titulo || item.perfil || "Profissional comercial"}</b><span>{item.cidade || "Localização não informada"}</span></div><span className={`vx-campaign-person-status is-${item.statusOperacional}`}>{item.statusOperacional.replace("_", " ")}</span></div>
       <div className="vx-profile-stats">
-        {[[t("camp.detail.tasks"), tarefasProfissional.length], [t("camp.detail.approved"), item.aprovadas], [t("camp.detail.rejected"), item.recusadas], [t("camp.detail.leads"), leadsProfissional.length], [t("camp.detail.meetings"), reunioes], [t("camp.detail.completed"), realizadas], [t("camp.detail.sales"), vendas], [t("camp.detail.earnings"), money(item.ganhos)]].map(([label, total]) => <div key={label}><span>{label}</span><b className="vx-mono">{total}</b></div>)}
+        {[["Tarefas", tarefasProfissional.length], ["Aprovadas", item.aprovadas], ["Recusadas", item.recusadas], ["Leads", leadsProfissional.length], ["Reuniões", reunioes], ["Realizadas", realizadas], ["Vendas", vendas], ["Ganhos", money(item.ganhos)]].map(([label, total]) => <div key={label}><span>{label}</span><b className="vx-mono">{total}</b></div>)}
       </div>
-      <div className="vx-grid vx-g2" style={{ marginTop: 13 }}><div className="vx-scenario"><span>{t("camp.detail.approvalRate")}</span><strong>{item.taxaAprovacao == null ? t("camp.detail.noBase") : `${item.taxaAprovacao.toLocaleString("pt-BR")}%`}</strong></div><div className="vx-scenario"><span>Score</span><strong>{item.score || t("camp.detail.noScore")}</strong></div></div>
-      <div className="vx-profile-chart"><div className="vx-eyebrow">{t("camp.detail.dailyPerformance")}</div>{serie.length === 0 ? <Empty texto={t("camp.detail.proNoActivity")} /> : serie.map(([data, total]) => <div key={data}><span>{data}</span><i><b style={{ width: `${(total / maximo) * 100}%` }} /></i><strong>{total}</strong></div>)}</div>
-      <div className="vx-eyebrow" style={{ marginTop: 17 }}>{t("camp.detail.evidenceHistory")}</div>
-      {evidencias.length === 0 ? <Empty texto={t("camp.detail.noEvidence")} /> : <div className="vx-compact-list">{evidencias.slice(0, 8).map((tt) => <div key={tt.id}><div><b>{tt.tipo}</b><span>{new Date(tt.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{tt.status}</span></div>)}</div>}
+      <div className="vx-grid vx-g2" style={{ marginTop: 13 }}><div className="vx-scenario"><span>Taxa de aprovação</span><strong>{item.taxaAprovacao == null ? "Sem base" : `${item.taxaAprovacao.toLocaleString("pt-BR")}%`}</strong></div><div className="vx-scenario"><span>Score</span><strong>{item.score || "Sem score"}</strong></div></div>
+      <div className="vx-profile-chart"><div className="vx-eyebrow">Performance diária</div>{serie.length === 0 ? <Empty texto="Ainda não há atividade deste profissional na campanha." /> : serie.map(([data, total]) => <div key={data}><span>{data}</span><i><b style={{ width: `${(total / maximo) * 100}%` }} /></i><strong>{total}</strong></div>)}</div>
+      <div className="vx-eyebrow" style={{ marginTop: 17 }}>Evidências e histórico recente</div>
+      {evidencias.length === 0 ? <Empty texto="Nenhuma evidência enviada nesta campanha." /> : <div className="vx-compact-list">{evidencias.slice(0, 8).map((t) => <div key={t.id}><div><b>{t.tipo}</b><span>{new Date(t.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{t.status}</span></div>)}</div>}
       {item.candidaturaStatus === "pendente" && (
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-          <button className="vx-btn vx-btn-primary" style={{ flex: 1 }} onClick={() => onStatusChange("aprovado")}><CheckCircle2 size={14} /> {t("camp.detail.approvePro")}</button>
-          <button className="vx-btn vx-btn-danger" style={{ flex: 1 }} onClick={() => onStatusChange("recusado")}><X size={14} /> {t("camp.detail.reject")}</button>
+          <button className="vx-btn vx-btn-primary" style={{ flex: 1 }} onClick={() => onStatusChange("aprovado")}><CheckCircle2 size={14} /> Aprovar profissional</button>
+          <button className="vx-btn vx-btn-danger" style={{ flex: 1 }} onClick={() => onStatusChange("recusado")}><X size={14} /> Recusar</button>
         </div>
       )}
     </div>
@@ -158,7 +152,6 @@ function ProfessionalProfile({ item, tarefas, leads, campanha, onClose, onStatus
 }
 
 export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onStatus }) {
-  const { t } = useI18n();
   const [aba, setAba] = useState("geral");
   const [periodo, setPeriodo] = useState("7d");
   const [dados, setDados] = useState(null);
@@ -208,37 +201,37 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
   };
 
   return <div className="vx-fade">
-    <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 10 }} onClick={onVoltar}><ArrowLeft size={14} /> {t("camp.detail.backToCampaigns")}</button>
+    <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 10 }} onClick={onVoltar}><ArrowLeft size={14} /> Central de campanhas</button>
     <div className="vx-campaign-detail-head">
       <div>
         <div className="vx-row" style={{ justifyContent: "flex-start", flexWrap: "wrap", gap: 8 }}>
           <h1 className="vx-disp">{campanha.titulo}</h1>
           <span className={`vx-campaign-status is-${campanha.status}`}>{STATUS_CAMPANHA_UI[campanha.status] || campanha.status}</span>
         </div>
-        <p>{campanha.descricao || campanha.objetivo || t("camp.detail.defaultDesc")}</p>
+        <p>{campanha.descricao || campanha.objetivo || "Operação comercial RYCS"}</p>
         <div className="vx-campaign-detail-meta">
-          <span><BriefcaseBusiness size={13} /> {campanha.funcao ? campanha.funcao.toUpperCase() : t("camp.dash.roleUndefined")}</span>
+          <span><BriefcaseBusiness size={13} /> {campanha.funcao ? campanha.funcao.toUpperCase() : "Função não definida"}</span>
           {campanha.regiao && <span><Target size={13} /> {campanha.regiao}</span>}
-          <span><UsersRound size={13} /> {dados?.campanha?.profissionaisAtivos ?? profissionais.filter((p) => p.candidaturaStatus === "aprovado").length} {t("camp.dash.activeProsLabel")}</span>
+          <span><UsersRound size={13} /> {dados?.campanha?.profissionaisAtivos ?? profissionais.filter((p) => p.candidaturaStatus === "aprovado").length} profissionais ativos</span>
         </div>
       </div>
       <div className="vx-campaign-detail-actions">
-        {campanha.status === "ativa" && <button className="vx-btn" onClick={() => alterarStatus("pausada")}><CirclePause size={14} /> {t("camp.detail.pause")}</button>}
-        <button className="vx-btn" onClick={onEditar}><Pencil size={14} /> {t("camp.detail.edit")}</button>
-        <div className="vx-context-wrap"><button className="vx-btn" aria-label={t("camp.detail.moreActions")} onClick={() => setMenu((v) => !v)}><Ellipsis size={16} /></button>{menu && <div className="vx-context-menu">
-          {campanha.status === "pausada" && <button onClick={() => alterarStatus("ativa")}>{t("camp.detail.resume")}</button>}
-          {!['encerrada'].includes(campanha.status) && <button className="is-danger" onClick={() => alterarStatus("encerrada")}>{t("camp.detail.close")}</button>}
+        {campanha.status === "ativa" && <button className="vx-btn" onClick={() => alterarStatus("pausada")}><CirclePause size={14} /> Pausar</button>}
+        <button className="vx-btn" onClick={onEditar}><Pencil size={14} /> Editar</button>
+        <div className="vx-context-wrap"><button className="vx-btn" aria-label="Mais ações" onClick={() => setMenu((v) => !v)}><Ellipsis size={16} /></button>{menu && <div className="vx-context-menu">
+          {campanha.status === "pausada" && <button onClick={() => alterarStatus("ativa")}>Retomar campanha</button>}
+          {!['encerrada'].includes(campanha.status) && <button className="is-danger" onClick={() => alterarStatus("encerrada")}>Encerrar campanha</button>}
         </div>}</div>
       </div>
     </div>
 
     <div className="vx-campaign-inner-tabs" role="tablist">
-      {ABAS_KEYS.map(([chave, i18nKey]) => <button key={chave} role="tab" aria-selected={aba === chave} data-on={aba === chave ? "1" : "0"} onClick={() => setAba(chave)}>{t(i18nKey)}</button>)}
+      {ABAS.map(([chave, label]) => <button key={chave} role="tab" aria-selected={aba === chave} data-on={aba === chave ? "1" : "0"} onClick={() => setAba(chave)}>{label}</button>)}
     </div>
 
     {["geral", "performance", "financeiro"].includes(aba) && <div className="vx-campaign-periods">
-      {PERIODOS_KEYS.map(([chave, i18nKey]) => <button key={chave} data-on={periodo === chave ? "1" : "0"} onClick={() => setPeriodo(chave)}>{t(i18nKey)}</button>)}
-      {periodo === "personalizado" && <div className="vx-custom-dates"><label>{t("camp.detail.from")}<input type="date" value={dataDe} max={dataAte} onChange={(e) => setDataDe(e.target.value)} /></label><label>{t("camp.detail.to")}<input type="date" value={dataAte} min={dataDe} onChange={(e) => setDataAte(e.target.value)} /></label></div>}
+      {PERIODOS.map(([chave, label]) => <button key={chave} data-on={periodo === chave ? "1" : "0"} onClick={() => setPeriodo(chave)}>{label}</button>)}
+      {periodo === "personalizado" && <div className="vx-custom-dates"><label>De<input type="date" value={dataDe} max={dataAte} onChange={(e) => setDataDe(e.target.value)} /></label><label>Até<input type="date" value={dataAte} min={dataDe} onChange={(e) => setDataAte(e.target.value)} /></label></div>}
     </div>}
 
     {erro && <div className="vx-notice vx-notice-amber">{erro}</div>}
@@ -247,10 +240,10 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     {dados && aba === "geral" && <>
       <div className="vx-campaign-overview-stats">
         {[
-          ["investimento", "camp.detail.investment", CircleDollarSign, true], ["tarefas", "camp.detail.tasks", ListChecks, false],
-          ["leads", "camp.detail.leads", Target, false], ["reunioes", "camp.detail.meetings", CalendarCheck, false], ["vendas", "camp.detail.sales", TrendingUp, false],
-        ].map(([chave, labelKey, Icone, monetario]) => <article className="vx-stat" key={chave}>
-          <div className="vx-campaign-stat-top"><span>{t(labelKey)}</span><Icone size={16} /></div>
+          ["investimento", "Investimento", CircleDollarSign, true], ["tarefas", "Tarefas", ListChecks, false],
+          ["leads", "Leads", Target, false], ["reunioes", "Reuniões", CalendarCheck, false], ["vendas", "Vendas", TrendingUp, false],
+        ].map(([chave, label, Icone, monetario]) => <article className="vx-stat" key={chave}>
+          <div className="vx-campaign-stat-top"><span>{label}</span><Icone size={16} /></div>
           <strong className="vx-stat-val vx-mono">{monetario ? money(dados.metricas[chave].valor) : dados.metricas[chave].valor.toLocaleString("pt-BR")}</strong>
           <Variacao valor={dados.metricas[chave].variacao} />
         </article>)}
@@ -258,18 +251,18 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
 
       <div className="vx-campaign-detail-grid">
         <section className="vx-card vx-funnel-card">
-          <div className="vx-row"><div><div className="vx-eyebrow">{t("camp.detail.salesFunnel")}</div><h2 className="vx-disp">{t("camp.detail.operationConversion")}</h2></div><span className="vx-chip">{dados.periodo.label}</span></div>
+          <div className="vx-row"><div><div className="vx-eyebrow">Funil comercial</div><h2 className="vx-disp">Conversão da operação</h2></div><span className="vx-chip">{dados.periodo.label}</span></div>
           <div className="vx-funnel">
             {dados.funil.map((etapa, i) => <div className="vx-funnel-step" key={etapa.chave}>
               <div><b className="vx-mono">{etapa.valor.toLocaleString("pt-BR")}</b><span>{etapa.label}</span></div>
-              {i > 0 && <small>{etapa.taxa == null ? t("camp.detail.noBase") : `${etapa.taxa.toLocaleString("pt-BR")}%`}</small>}
+              {i > 0 && <small>{etapa.taxa == null ? "sem base" : `${etapa.taxa.toLocaleString("pt-BR")}%`}</small>}
             </div>)}
           </div>
-          <div className="vx-chart-source">{t("camp.detail.funnelSource")}</div>
+          <div className="vx-chart-source">Resultados contam somente execuções liberadas. Leads vêm dos registros vinculados à campanha.</div>
         </section>
         <section className="vx-card vx-cost-card">
-          <div className="vx-eyebrow">{t("camp.detail.costPerResult")}</div><h2 className="vx-disp">{t("camp.detail.efficiency")}</h2>
-          {[["lead", t("camp.detail.costPerLead")], ["reuniao", t("camp.detail.costPerMeeting")], ["venda", t("camp.detail.costPerSale")]].map(([chave, label]) => <div className="vx-cost-row" key={chave}><span>{label}</span><b className="vx-mono">{dados.custos[chave] == null ? t("camp.detail.noResult") : money(dados.custos[chave])}</b></div>)}
+          <div className="vx-eyebrow">Custo por resultado</div><h2 className="vx-disp">Eficiência</h2>
+          {[["lead", "Custo por lead"], ["reuniao", "Custo por reunião"], ["venda", "Custo por venda"]].map(([chave, label]) => <div className="vx-cost-row" key={chave}><span>{label}</span><b className="vx-mono">{dados.custos[chave] == null ? "Sem resultado" : money(dados.custos[chave])}</b></div>)}
           <div className="vx-chart-source">Base: {dados.origem.investimento}.</div>
         </section>
       </div>
@@ -278,23 +271,23 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     </>}
 
     {dados && aba === "profissionais" && <section className="vx-card vx-detail-section">
-      <div className="vx-row" style={{ alignItems: "end", flexWrap: "wrap" }}><div><h2 className="vx-disp">{t("camp.detail.activeTeam")}</h2><p>{t("camp.detail.approvedPros", { n: profissionais.filter((p) => p.candidaturaStatus === "aprovado").length })}</p></div><span className="vx-chip"><UsersRound size={12} /> {profissionais.length} {t("camp.detail.records")}</span></div>
-      <div className="vx-professional-filters">{FILTROS_PROFISSIONAIS_KEYS.map(([chave, i18nKey]) => <button key={chave} data-on={filtroProfissional === chave ? "1" : "0"} onClick={() => setFiltroProfissional(chave)}>{t(i18nKey)}</button>)}</div>
-      {profissionaisFiltrados.length === 0 ? <Empty texto={t("camp.detail.noProInFilter")} /> : <div className="vx-campaign-team-table">
-        <div className="vx-team-head"><span>{t("camp.detail.professional")}</span><span>{t("camp.detail.role")}</span><span>Status</span><span>{t("camp.dash.today")}</span><span>{t("camp.detail.result")}</span><span>{t("camp.detail.earnings")}</span><span>Score</span><span>{t("camp.detail.actions")}</span></div>
+      <div className="vx-row" style={{ alignItems: "end", flexWrap: "wrap" }}><div><h2 className="vx-disp">Equipe ativa</h2><p>{profissionais.filter((p) => p.candidaturaStatus === "aprovado").length} profissionais aprovados nesta campanha.</p></div><span className="vx-chip"><UsersRound size={12} /> {profissionais.length} registros</span></div>
+      <div className="vx-professional-filters">{FILTROS_PROFISSIONAIS.map(([chave, label]) => <button key={chave} data-on={filtroProfissional === chave ? "1" : "0"} onClick={() => setFiltroProfissional(chave)}>{label}</button>)}</div>
+      {profissionaisFiltrados.length === 0 ? <Empty texto="Nenhum profissional neste filtro." /> : <div className="vx-campaign-team-table">
+        <div className="vx-team-head"><span>Profissional</span><span>Função</span><span>Status</span><span>Hoje</span><span>Resultado</span><span>Ganhos</span><span>Score</span><span>Ações</span></div>
         {profissionaisFiltrados.map((item) => <button className="vx-team-row" key={item.applicationId || item.id} onClick={() => setProfissionalAberto(item)}>
           <span className="vx-team-person"><i>{String(item.nome || "P").split(" ").slice(0, 2).map((n) => n[0]).join("")}</i><b>{item.nome || "Profissional"}</b></span>
           <span data-label="Função">{item.titulo || item.perfil || campanha.funcao || "—"}</span>
           <span data-label="Status"><em className={`vx-campaign-person-status is-${item.statusOperacional}`}>{item.statusOperacional.replace("_", " ")}</em></span>
-          <span data-label={t("camp.dash.today")} className="vx-mono">{item.tarefasHoje || 0} {t("camp.detail.tasks").toLowerCase()}</span>
+          <span data-label="Hoje" className="vx-mono">{item.tarefasHoje || 0} tarefas</span>
           <span data-label="Resultado" className="vx-mono">{(item.reunioes || 0) + (item.vendas || 0)}</span>
           <span data-label="Ganhos" className="vx-mono">{money(item.ganhos)}</span>
           <span data-label="Score" className="vx-mono">{item.score || "—"}</span>
-          <span className="vx-team-action">{t("camp.detail.viewProfile")} →</span>
+          <span className="vx-team-action">Ver perfil →</span>
         </button>)}
       </div>}
     </section>}
-    {dados && aba === "tarefas" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">{t("camp.detail.campaignTasks")}</h2><p>{t("camp.detail.campaignTasksDesc")}</p>{tarefas.length === 0 ? <Empty texto={t("camp.detail.noTasks")} /> : <div className="vx-compact-list">{tarefas.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
+    {dados && aba === "tarefas" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Tarefas da campanha</h2><p>Execuções mais recentes, com o status real de auditoria.</p>{tarefas.length === 0 ? <Empty texto="Nenhuma tarefa executada nesta campanha." /> : <div className="vx-compact-list">{tarefas.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
     {aba === "pipeline" && <section className="vx-card vx-detail-section">
       <PipelineKanban
         campanha={campanha}
@@ -306,8 +299,8 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     </section>}
     {dados && aba === "comissoes" && <ComissoesPanel emp={{ id: campanha.companyId }} />}
     {aba === "campos" && <section className="vx-card vx-detail-section">
-      <h2 className="vx-disp">{t("camp.detail.customFields")}</h2>
-      <p className="vx-mut" style={{ fontSize: 13 }}>{t("camp.detail.customFieldsDesc")}</p>
+      <h2 className="vx-disp">Campos personalizados por tarefa</h2>
+      <p className="vx-mut" style={{ fontSize: 13 }}>Configure os dados que o vendedor deve preencher ao concluir cada tipo de tarefa.</p>
       <CriadorCampos
         campos={campanha.camposPersonalizados?.geral || []}
         modelos={campanha.modelosCampos || []}
@@ -319,20 +312,20 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
         tarefa="geral"
       />
     </section>}
-    {dados && aba === "reunioes" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">{t("camp.detail.meetings")}</h2><p>{t("camp.detail.meetingsDesc")}</p>{reunioes.length === 0 ? <Empty texto={t("camp.detail.noMeetings")} /> : <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? t("camp.detail.meetingCompleted") : t("camp.detail.meetingScheduled")}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
-    {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">{t("camp.detail.resultsOverTime")}</h2><p>{t("camp.detail.compareMetrics", { period: dados.periodo.label.toLowerCase() })}</p><PerformanceChart serie={dados.serie} /></section>}
+    {dados && aba === "reunioes" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Reuniões</h2><p>Agendamentos e reuniões realizadas vinculados à campanha.</p>{reunioes.length === 0 ? <Empty texto="Nenhuma reunião registrada nesta campanha." /> : <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? "Reunião realizada" : "Reunião agendada"}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
+    {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Resultados ao longo do tempo</h2><p>Compare investimento, tarefas, leads, reuniões e vendas em {dados.periodo.label.toLowerCase()}.</p><PerformanceChart serie={dados.serie} /></section>}
     {dados && aba === "financeiro" && <div className="vx-finance-stack">
       <section className="vx-card vx-detail-section">
-        <div className="vx-row" style={{ alignItems: "flex-start", flexWrap: "wrap" }}><div><h2 className="vx-disp">{t("camp.detail.campaignFinancial")}</h2><p>{t("camp.detail.financialPosition")}</p></div><span className={`vx-budget-risk ${dados.financeiro.diasRestantes != null && dados.financeiro.diasRestantes <= 2 ? "is-danger" : "is-ok"}`}><i />{dados.financeiro.diasRestantes == null ? t("camp.dash.noConsumption") : t("camp.detail.estimatedDays", { n: dados.financeiro.diasRestantes.toLocaleString("pt-BR") })}</span></div>
-        <div className="vx-finance-budget"><div className="vx-row"><span>{t("camp.dash.budget")}</span><b className="vx-mono">{money(dados.financeiro.consumido)} / {money(dados.financeiro.limite)}</b></div><div className="vx-meter-track"><div className="vx-meter-fill" style={{ width: `${Math.min(100, dados.financeiro.limite > 0 ? (dados.financeiro.consumido / dados.financeiro.limite) * 100 : 0)}%`, background: "var(--brand)" }} /></div></div>
+        <div className="vx-row" style={{ alignItems: "flex-start", flexWrap: "wrap" }}><div><h2 className="vx-disp">Financeiro da campanha</h2><p>Posição financeira real da operação.</p></div><span className={`vx-budget-risk ${dados.financeiro.diasRestantes != null && dados.financeiro.diasRestantes <= 2 ? "is-danger" : "is-ok"}`}><i />{dados.financeiro.diasRestantes == null ? "Aguardando consumo" : `${dados.financeiro.diasRestantes.toLocaleString("pt-BR")} dias estimados`}</span></div>
+        <div className="vx-finance-budget"><div className="vx-row"><span>Orçamento</span><b className="vx-mono">{money(dados.financeiro.consumido)} / {money(dados.financeiro.limite)}</b></div><div className="vx-meter-track"><div className="vx-meter-fill" style={{ width: `${Math.min(100, dados.financeiro.limite > 0 ? (dados.financeiro.consumido / dados.financeiro.limite) * 100 : 0)}%`, background: "var(--brand)" }} /></div></div>
         <div className="vx-finance-kpis">
-          {[[t("camp.detail.reservedBalance"), dados.financeiro.reservado, true], [t("camp.detail.consumed"), dados.financeiro.consumido, true], [t("camp.detail.available"), dados.financeiro.disponivel, true], [t("camp.dash.avgDailySpend"), dados.financeiro.gastoMedioDiario, true], [t("camp.detail.monthlyProjection"), dados.financeiro.projecaoMensal, true], [t("camp.dash.estimatedDuration"), dados.financeiro.diasRestantes, false]].map(([label, valor, monetario]) => <div key={label}><span>{label}</span><b className="vx-mono">{monetario ? money(valor) : valor == null ? t("camp.dash.noConsumption") : t("camp.dash.daysLeft", { n: valor.toLocaleString("pt-BR") })}</b></div>)}
+          {[["Saldo reservado", dados.financeiro.reservado, true], ["Consumido", dados.financeiro.consumido, true], ["Disponível", dados.financeiro.disponivel, true], ["Gasto médio diário", dados.financeiro.gastoMedioDiario, true], ["Projeção mensal", dados.financeiro.projecaoMensal, true], ["Estimativa de duração", dados.financeiro.diasRestantes, false]].map(([label, valor, monetario]) => <div key={label}><span>{label}</span><b className="vx-mono">{monetario ? money(valor) : valor == null ? "Sem consumo" : `${valor.toLocaleString("pt-BR")} dias`}</b></div>)}
         </div>
       </section>
-      <section className="vx-card vx-detail-section"><h2 className="vx-disp">{t("camp.detail.dailySpendResults")}</h2><p>{t("camp.detail.dailySpendDesc")}</p><PerformanceChart serie={dados.financeiro.serie} /></section>
-      <section className="vx-card vx-detail-section"><h2 className="vx-disp">{t("camp.detail.costBreakdown")}</h2><p>{t("camp.detail.costBreakdownDesc")}</p>{dados.financeiro.detalhamento.length === 0 ? <Empty texto={t("camp.detail.noCostBreakdown")} /> : <div className="vx-cost-table"><div><span>{t("camp.detail.taskType")}</span><span>{t("camp.detail.unitValue")}</span><span>{t("camp.detail.quantity")}</span><span>{t("camp.detail.totalSpent")}</span></div>{dados.financeiro.detalhamento.map((item) => <div key={item.tipo}><b>{ACOES[item.tipo]?.nome || item.tipo}</b><span className="vx-mono" data-label="Valor unitário">{money(item.valorUnitario)}</span><span className="vx-mono" data-label="Quantidade">{item.quantidade}</span><span className="vx-mono" data-label="Total gasto">{money(item.total)}</span></div>)}</div>}</section>
+      <section className="vx-card vx-detail-section"><h2 className="vx-disp">Gasto diário × Resultados</h2><p>Séries do período selecionado, com valores reais em cada ponto.</p><PerformanceChart serie={dados.financeiro.serie} /></section>
+      <section className="vx-card vx-detail-section"><h2 className="vx-disp">Detalhamento dos custos</h2><p>Valores configurados e tarefas efetivamente liquidadas.</p>{dados.financeiro.detalhamento.length === 0 ? <Empty texto="Nenhum tipo de tarefa remunerada ou liquidada nesta campanha." /> : <div className="vx-cost-table"><div><span>Tipo de tarefa</span><span>Valor unitário</span><span>Quantidade</span><span>Total gasto</span></div>{dados.financeiro.detalhamento.map((item) => <div key={item.tipo}><b>{ACOES[item.tipo]?.nome || item.tipo}</b><span className="vx-mono" data-label="Valor unitário">{money(item.valorUnitario)}</span><span className="vx-mono" data-label="Quantidade">{item.quantidade}</span><span className="vx-mono" data-label="Total gasto">{money(item.total)}</span></div>)}</div>}</section>
     </div>}
-    {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">{t("camp.detail.campaignSettings")}</h2><p>{t("camp.detail.campaignSettingsDesc")}</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> {t("camp.detail.editSettings")}</button></section>}
+    {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">Configurações da campanha</h2><p>Objetivo, público, região, valores, evidências, treinamento e regras de publicação continuam no editor completo.</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> Editar configuração</button></section>}
     {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} aviso={(msg) => console.log("[contatos]", msg)} />}
     {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
     {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} campanha={campanha} onClose={() => setProfissionalAberto(null)} onStatusChange={async (status) => {
@@ -345,17 +338,16 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
 
 // ── Lista de Contatos ────────────────────────────────────────────────────────
 
-const MODELOS_VERIFICACAO_KEYS = [
-  { value: "ia", labelKey: "camp.detail.verif.ai", descKey: "camp.detail.verif.aiDesc" },
-  { value: "manual", labelKey: "camp.detail.verif.manual", descKey: "camp.detail.verif.manualDesc" },
-  { value: "ia_manual", labelKey: "camp.detail.verif.aiManual", descKey: "camp.detail.verif.aiManualDesc" },
-  { value: "integracao", labelKey: "camp.detail.verif.integration", descKey: "camp.detail.verif.integrationDesc" },
+const MODELOS_VERIFICACAO = [
+  { value: "ia", label: "IA", desc: "Avaliação automática por inteligência artificial" },
+  { value: "manual", label: "Manual", desc: "Gestor revisa e aprova cada evidência" },
+  { value: "ia_manual", label: "IA + aprovação manual", desc: "IA filtra, gestor aprova o que ficou em dúvida" },
+  { value: "integracao", label: "Integração automática", desc: "CRM ou sistema externo valida automaticamente" },
 ];
 
-const CAMPOS_CONTATO_KEYS = [["nome","camp.detail.contacts.name"],["empresa","camp.detail.contacts.company"],["cargo","camp.detail.contacts.role"],["telefone","camp.detail.contacts.phone"],["email","camp.detail.contacts.email"],["valorEstimado","camp.detail.contacts.estValue"]];
+const CAMPOS_CONTATO = [["nome","Nome *"],["empresa","Empresa"],["cargo","Cargo"],["telefone","Telefone"],["email","E-mail"],["valorEstimado","Valor estimado"]];
 
 function ContatosCampanha({ campanha, profissionais, aviso }) {
-  const { t } = useI18n();
   const [leads, setLeads] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
@@ -379,30 +371,30 @@ function ContatosCampanha({ campanha, profissionais, aviso }) {
   useEffect(() => { carregar(); }, [campanha.id]);
 
   const normalizados = useMemo(() => tabela.linhas.map((linha) =>
-    Object.fromEntries(CAMPOS_CONTATO_KEYS.map(([campo]) => [campo, mapa[campo] >= 0 ? linha[mapa[campo]] || "" : ""]))
+    Object.fromEntries(CAMPOS_CONTATO.map(([campo]) => [campo, mapa[campo] >= 0 ? linha[mapa[campo]] || "" : ""]))
   ), [tabela, mapa]);
 
-  const aplicarTabela = (tb) => { setTabela(tb); setMapa(sugerirMapeamento(tb.colunas)); setRelatorio(null); };
+  const aplicarTabela = (t) => { setTabela(t); setMapa(sugerirMapeamento(t.colunas)); setRelatorio(null); };
   const lerArquivo = async (file) => { try { aplicarTabela(await lerArquivoLeads(file)); setAberto(true); } catch (e) { setAvisoLocal(e.message); } };
 
   const importar = async () => {
-    if (mapa.nome == null || mapa.nome < 0) return setAvisoLocal(t("camp.detail.contacts.mapName"));
+    if (mapa.nome == null || mapa.nome < 0) return setAvisoLocal("Mapeie a coluna Nome.");
     setEnviando(true); setAvisoLocal("");
     const r = await api("/leads/import", { campaignId: campanha.id, autoDistribuir: true, linhas: normalizados });
     setEnviando(false);
-    if (!r || r.error) return setAvisoLocal(r?.error || t("camp.detail.contacts.importError"));
+    if (!r || r.error) return setAvisoLocal(r?.error || "Não foi possível importar.");
     setRelatorio(r); setAberto(false); setTabela({ colunas: [], linhas: [] });
     await carregar();
-    setAvisoLocal(t("camp.detail.contacts.importSuccess", { imported: r.importados, sellers: sellers.length }));
+    setAvisoLocal(`${r.importados} contato(s) importados e distribuídos entre ${sellers.length} profissional(is).`);
   };
 
   const redistribuir = async () => {
-    if (!sellers.length) return setAvisoLocal(t("camp.detail.contacts.noProsRedist"));
+    if (!sellers.length) return setAvisoLocal("Nenhum profissional aprovado para redistribuir.");
     setRedistribuindo(true);
     const r = await api("/leads/redistribuir", { campaignId: campanha.id });
     setRedistribuindo(false);
     if (r?.error) return setAvisoLocal(r.error);
-    setAvisoLocal(t("camp.detail.contacts.redistSuccess", { n: r.redistribuidos }));
+    setAvisoLocal(`${r.redistribuidos} contatos redistribuídos aleatoriamente.`);
     await carregar();
   };
 
@@ -413,15 +405,15 @@ function ContatosCampanha({ campanha, profissionais, aviso }) {
     <div className="vx-fade">
       <div className="vx-row" style={{ marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
         <div>
-          <div className="vx-eyebrow">{t("camp.detail.contacts.eyebrow")}</div>
-          <h2 className="vx-disp" style={{ margin: "4px 0" }}>{t("camp.detail.contacts.title")}</h2>
-          <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>{t("camp.detail.contacts.subtitle")}</p>
+          <div className="vx-eyebrow">Execução comercial</div>
+          <h2 className="vx-disp" style={{ margin: "4px 0" }}>Contatos da campanha</h2>
+          <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Contato é o lead. Importe CSV ou XLSX e os contatos entram direto no kanban como "Primeiro contato".</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span className="vx-chip">{t("camp.detail.contacts.count", { n: leads.length })}</span>
-          <button className="vx-btn" onClick={() => { setAberto(!aberto); setAvisoLocal(""); }}><Upload size={13} /> {t("camp.detail.contacts.import")}</button>
+          <span className="vx-chip">{leads.length} contatos</span>
+          <button className="vx-btn" onClick={() => { setAberto(!aberto); setAvisoLocal(""); }}><Upload size={13} /> Importar</button>
           <button className="vx-btn" disabled={redistribuindo || !sellers.length} onClick={redistribuir}>
-            {redistribuindo ? t("camp.detail.contacts.redistributing") : t("camp.detail.contacts.redistribute")}
+            {redistribuindo ? "Redistribuindo..." : "Redistribuir"}
           </button>
         </div>
       </div>
@@ -430,24 +422,24 @@ function ContatosCampanha({ campanha, profissionais, aviso }) {
 
       {aberto && (
         <section className="vx-card" style={{ padding: 18, marginBottom: 18 }}>
-          <div className="vx-disp" style={{ fontSize: 16, marginBottom: 4 }}>{t("camp.detail.contacts.importTitle")}</div>
+          <div className="vx-disp" style={{ fontSize: 16, marginBottom: 4 }}>Importação de contatos</div>
           <div className="vx-mut" style={{ fontSize: 12, marginBottom: 14 }}>
-            {t("camp.detail.contacts.importDesc", { sellers: sellers.length })}
+            Nome + telefone ou e-mail obrigatórios. Duplicatas removidas. Distribuição automática entre {sellers.length} profissional(is) aprovado(s).
           </div>
           <input ref={fileRef} hidden type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={(e) => lerArquivo(e.target.files?.[0])} />
-          <button className="vx-btn" onClick={() => fileRef.current?.click()}><Upload size={13} /> {t("camp.detail.contacts.chooseFile")}</button>
+          <button className="vx-btn" onClick={() => fileRef.current?.click()}><Upload size={13} /> Escolher CSV ou XLSX</button>
 
           {tabela.colunas.length > 0 && (
             <>
               <div className="vx-sep" />
-              <div className="vx-disp" style={{ fontSize: 14, marginBottom: 10 }}>{t("camp.detail.contacts.columnMapping")}</div>
+              <div className="vx-disp" style={{ fontSize: 14, marginBottom: 10 }}>Mapeamento de colunas</div>
               <div className="vx-grid vx-g3">
-                {CAMPOS_CONTATO_KEYS.map(([campo, labelKey]) => (
+                {CAMPOS_CONTATO.map(([campo, label]) => (
                   <label key={campo}>
-                    <span className="vx-label">{t(labelKey)}</span>
+                    <span className="vx-label">{label}</span>
                     <select className="vx-input" value={mapa[campo] ?? -1} onChange={(e) => setMapa({ ...mapa, [campo]: Number(e.target.value) })}>
-                      <option value={-1}>{t("camp.detail.contacts.ignore")}</option>
+                      <option value={-1}>Ignorar</option>
                       {tabela.colunas.map((c, i) => <option key={i} value={i}>{c}</option>)}
                     </select>
                   </label>
@@ -455,19 +447,19 @@ function ContatosCampanha({ campanha, profissionais, aviso }) {
               </div>
               <div className="vx-table-wrap" style={{ marginTop: 12 }}>
                 <table className="vx-table">
-                  <thead><tr>{CAMPOS_CONTATO_KEYS.map(([, lk]) => <th key={lk}>{t(lk)}</th>)}</tr></thead>
-                  <tbody>{normalizados.slice(0, 3).map((l, i) => <tr key={i}>{CAMPOS_CONTATO_KEYS.map(([c]) => <td key={c}>{l[c] || "—"}</td>)}</tr>)}</tbody>
+                  <thead><tr>{CAMPOS_CONTATO.map(([, l]) => <th key={l}>{l}</th>)}</tr></thead>
+                  <tbody>{normalizados.slice(0, 3).map((l, i) => <tr key={i}>{CAMPOS_CONTATO.map(([c]) => <td key={c}>{l[c] || "—"}</td>)}</tr>)}</tbody>
                 </table>
               </div>
-              <div className="vx-chart-source">{t("camp.detail.contacts.rowsPreview", { rows: normalizados.length })}</div>
+              <div className="vx-chart-source">{normalizados.length} linha(s) · prévia de 3</div>
               <button className="vx-btn vx-btn-primary" style={{ marginTop: 12 }} disabled={enviando || !normalizados.length} onClick={importar}>
-                {enviando ? t("camp.detail.contacts.importing") : t("camp.detail.contacts.confirmImport")}
+                {enviando ? "Importando..." : "Confirmar importação"}
               </button>
             </>
           )}
           {relatorio && (
             <div className="vx-grid vx-g4" style={{ marginTop: 14 }}>
-              {[[t("camp.detail.contacts.received"), relatorio.totalRecebido], [t("camp.detail.contacts.imported"), relatorio.importados], [t("camp.detail.contacts.duplicates"), relatorio.duplicados], [t("camp.detail.contacts.invalid"), relatorio.invalidos]].map(([l, v]) => (
+              {[["Recebidos", relatorio.totalRecebido], ["Importados", relatorio.importados], ["Duplicados", relatorio.duplicados], ["Inválidos", relatorio.invalidos]].map(([l, v]) => (
                 <div className="vx-scenario" key={l}><span>{l}</span><strong className="vx-mono">{v}</strong></div>
               ))}
             </div>
@@ -476,19 +468,19 @@ function ContatosCampanha({ campanha, profissionais, aviso }) {
       )}
 
       <div className="vx-grid vx-g4" style={{ marginBottom: 16 }}>
-        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>{t("common.total")}</div><b className="vx-mono" style={{ fontSize: 19 }}>{leads.length}</b></div>
-        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>{t("camp.detail.contacts.closed")}</div><b className="vx-mono" style={{ fontSize: 19 }}>{fechados}</b></div>
-        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>{t("camp.detail.contacts.conversion")}</div><b className="vx-mono" style={{ fontSize: 19 }}>{leads.length ? Math.round(fechados / leads.length * 100) : 0}%</b></div>
-        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>{t("camp.detail.contacts.totalSales")}</div><b className="vx-mono" style={{ fontSize: 19 }}>{money(totalVendas)}</b></div>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Total</div><b className="vx-mono" style={{ fontSize: 19 }}>{leads.length}</b></div>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Fechados</div><b className="vx-mono" style={{ fontSize: 19 }}>{fechados}</b></div>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Conversão</div><b className="vx-mono" style={{ fontSize: 19 }}>{leads.length ? Math.round(fechados / leads.length * 100) : 0}%</b></div>
+        <div className="vx-card" style={{ padding: 14 }}><div className="vx-mut" style={{ fontSize: 12 }}>Total vendas</div><b className="vx-mono" style={{ fontSize: 19 }}>{money(totalVendas)}</b></div>
       </div>
 
       {carregando ? (
-        <div className="vx-mut">{t("camp.detail.contacts.loading")}</div>
+        <div className="vx-mut">Carregando contatos...</div>
       ) : leads.length === 0 ? (
         <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
           <Upload size={24} color="var(--muted)" />
-          <p className="vx-mut" style={{ marginTop: 10 }}>{t("camp.detail.contacts.empty")}</p>
-          <p className="vx-mut" style={{ fontSize: 12 }}>{t("camp.detail.contacts.recognizedCols")}</p>
+          <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum contato nesta campanha. Use "Importar" para começar.</p>
+          <p className="vx-mut" style={{ fontSize: 12 }}>Colunas reconhecidas: nome, empresa, cargo, telefone, email, valor</p>
         </div>
       ) : (
         <PipelineKanban
@@ -506,7 +498,6 @@ function ContatosCampanha({ campanha, profissionais, aviso }) {
 // ── Modelo de Verificação ────────────────────────────────────────────────────
 
 function VerificacaoCampanha({ campanha }) {
-  const { t } = useI18n();
   const tarefasCampanha = (() => {
     try { return JSON.parse(campanha.tarefas || "[]"); } catch { return []; }
   })();
@@ -522,35 +513,35 @@ function VerificacaoCampanha({ campanha }) {
   const [aviso, setAviso] = useState("");
 
   const EVIDENCIA_POR_TIPO = {
-    agendamento: [t("camp.detail.verif.ev.crmRecord"), t("camp.detail.verif.ev.confirmSent")],
-    realizada: [t("camp.detail.verif.ev.recording"), t("camp.detail.verif.ev.leadConfirm")],
-    venda: [t("camp.detail.verif.ev.contract"), t("camp.detail.verif.ev.crmRecord")],
-    ligacao: [t("camp.detail.verif.ev.audioRecord"), t("camp.detail.verif.ev.callLog")],
-    follow: [t("camp.detail.verif.ev.messageSent"), t("camp.detail.verif.ev.leadReply")],
-    pap: [t("camp.detail.verif.ev.onSitePhoto"), t("camp.detail.verif.ev.geoConfirm")],
+    agendamento: ["Registro no CRM", "Confirmação enviada ao lead"],
+    realizada: ["Gravação da chamada ou ata", "Confirmação do lead"],
+    venda: ["Comprovante / contrato assinado", "Registro no CRM"],
+    ligacao: ["Gravação de áudio (IA analisa)", "Log da ligação"],
+    follow: ["Mensagem ou e-mail enviado", "Resposta do lead (se houver)"],
+    pap: ["Foto no local", "Confirmação de geolocalização"],
   };
 
   const salvar = async () => {
     setSalvando(true);
     const r = await apiPatch(`/campaigns/${campanha.id}`, { modelosVerificacao: modelos });
     setSalvando(false);
-    setAviso(r?.error ? r.error : t("camp.detail.verif.saved"));
+    setAviso(r?.error ? r.error : "Modelos de verificação salvos.");
   };
 
   return (
     <div className="vx-fade">
       <div style={{ marginBottom: 20 }}>
-        <div className="vx-eyebrow">{t("camp.detail.verif.eyebrow")}</div>
-        <h2 className="vx-disp" style={{ margin: "4px 0" }}>{t("camp.detail.verif.title")}</h2>
-        <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>{t("camp.detail.verif.subtitle")}</p>
+        <div className="vx-eyebrow">Qualidade e conformidade</div>
+        <h2 className="vx-disp" style={{ margin: "4px 0" }}>Modelo de Verificação</h2>
+        <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Defina como cada tipo de tarefa será verificada antes do pagamento.</p>
       </div>
 
       {aviso && <div className="vx-notice" style={{ marginBottom: 14 }}>{aviso}</div>}
 
       {tarefasCampanha.length === 0
         ? <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
-            <p className="vx-mut">{t("camp.detail.verif.noTasks")}</p>
-            <p className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>{t("camp.detail.verif.noTasksHint")}</p>
+            <p className="vx-mut">Esta campanha não tem tarefas configuradas. Edite a campanha para adicionar tarefas.</p>
+            <p className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>As evidências exigidas em cada tarefa aparecerão aqui para configuração.</p>
           </div>
         : <>
             <div style={{ display: "grid", gap: 14 }}>
@@ -564,15 +555,15 @@ function VerificacaoCampanha({ campanha }) {
                       <div>
                         <b style={{ fontSize: 15 }}>{ACOES[tipo]?.nome || tipo}</b>
                         <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>
-                          {t("camp.detail.verif.valuePerExec", { amount: money(tarefa.valor || 0) })}
+                          Valor: {money(tarefa.valor || 0)} por execução
                         </div>
                       </div>
-                      <span className="vx-chip">{(() => { const mv = MODELOS_VERIFICACAO_KEYS.find((m) => m.value === modeloAtual); return mv ? t(mv.labelKey) : modeloAtual; })()}</span>
+                      <span className="vx-chip">{MODELOS_VERIFICACAO.find((m) => m.value === modeloAtual)?.label || modeloAtual}</span>
                     </div>
 
-                    <div className="vx-label" style={{ marginBottom: 6 }}>{t("camp.detail.verif.model")}</div>
+                    <div className="vx-label" style={{ marginBottom: 6 }}>Modelo de verificação</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-                      {MODELOS_VERIFICACAO_KEYS.map((m) => (
+                      {MODELOS_VERIFICACAO.map((m) => (
                         <label key={m.value} style={{ display: "flex", alignItems: "flex-start", gap: 6, cursor: "pointer", fontSize: 13 }}>
                           <input
                             type="radio"
@@ -583,8 +574,8 @@ function VerificacaoCampanha({ campanha }) {
                             style={{ marginTop: 2 }}
                           />
                           <span>
-                            <b>{t(m.labelKey)}</b>
-                            <div className="vx-mut" style={{ fontSize: 11 }}>{t(m.descKey)}</div>
+                            <b>{m.label}</b>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>{m.desc}</div>
                           </span>
                         </label>
                       ))}
@@ -592,7 +583,7 @@ function VerificacaoCampanha({ campanha }) {
 
                     {evidencias.length > 0 && (
                       <div>
-                        <div className="vx-label" style={{ marginBottom: 6 }}>{t("camp.detail.verif.evidenceRequired")}</div>
+                        <div className="vx-label" style={{ marginBottom: 6 }}>Evidências exigidas</div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {evidencias.map((ev) => (
                             <span key={ev} className="vx-chip" style={{ fontSize: 11 }}>
@@ -607,7 +598,7 @@ function VerificacaoCampanha({ campanha }) {
               })}
             </div>
             <button className="vx-btn vx-btn-primary" style={{ marginTop: 16 }} disabled={salvando} onClick={salvar}>
-              {salvando ? t("common.saving") : t("camp.detail.verif.saveBtn")}
+              {salvando ? "Salvando..." : "Salvar modelos de verificação"}
             </button>
           </>}
     </div>

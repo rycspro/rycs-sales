@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Trash2, Eye, EyeOff } from "lucide-react";
 import { STATUS } from "../lib/constants.js";
 import { apiDeleteStatus } from "../lib/api.js";
-import { useI18n } from "../lib/i18n.jsx";
 
 export function Selo({ s }) {
   const v = STATUS[s] || STATUS.analisando;
@@ -35,7 +34,6 @@ export function Campo({ label, children }) {
 // Campo de senha com o olho para mostrar ou ocultar. O botão fica dentro do
 // campo, com alvo de toque de 44px e rótulo que muda junto com o estado.
 export function CampoSenha({ id, value, onChange, placeholder, autoComplete = "current-password", minLength, required = true, invalido = false, descricao }) {
-  const { t } = useI18n();
   const [visivel, setVisivel] = useState(false);
   return (
     <div className="vx-senha">
@@ -43,7 +41,7 @@ export function CampoSenha({ id, value, onChange, placeholder, autoComplete = "c
         placeholder={placeholder} autoComplete={autoComplete} minLength={minLength} required={required}
         aria-invalid={invalido || undefined} aria-describedby={descricao} />
       <button type="button" className="vx-senha-olho" onClick={() => setVisivel((v) => !v)}
-        aria-label={visivel ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={visivel}>
+        aria-label={visivel ? "Ocultar senha" : "Mostrar senha"} aria-pressed={visivel}>
         {visivel ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
       </button>
     </div>
@@ -73,9 +71,10 @@ export function Stat({ label, value, Icon, tone = "brand", mono = true }) {
 }
 
 export function Donut({ titulo, itens = [], centro, legenda = true, formatar }) {
-  const { t } = useI18n();
   const cores = ["var(--brand)", "var(--indigo)", "var(--amber)", "var(--red)", "var(--muted)", "#2DBE91"];
   const total = itens.reduce((s, i) => s + Number(i.valor || 0), 0);
+  // Sem formatador, o valor sai cru — que é o certo para contagens e errado
+  // para dinheiro. Quem sabe qual é o caso é a tela que chama.
   const rotular = formatar || ((v) => v);
   let cursor = 0;
   const stops = total ? itens.map((item, i) => {
@@ -86,12 +85,12 @@ export function Donut({ titulo, itens = [], centro, legenda = true, formatar }) 
   return <div className="vx-card vx-chart-card">
     <div className="vx-row"><b>{titulo}</b><span className="vx-chip vx-mono">{rotular(total)}</span></div>
     <div className="vx-donut-layout">
-      <div className="vx-donut" role="img" aria-label={`${titulo}: ${total} ${t("misc.records")}`} style={{ background: `conic-gradient(${stops})` }}>
-        <div><strong className="vx-mono">{centro ?? rotular(total)}</strong><span>{t("misc.total")}</span></div>
+      <div className="vx-donut" role="img" aria-label={`${titulo}: ${total} registros`} style={{ background: `conic-gradient(${stops})` }}>
+        <div><strong className="vx-mono">{centro ?? rotular(total)}</strong><span>total</span></div>
       </div>
-      {legenda && <div className="vx-chart-legend">{itens.length ? itens.map((item, i) => <div key={`${item.nome}-${i}`} title={item.fonte || `${item.valor} ${t("misc.records")}`}><i style={{ background: item.cor || cores[i % cores.length] }} /><span>{item.nome}</span><b className="vx-mono">{rotular(item.valor)}{total ? ` · ${Math.round(item.valor / total * 100)}%` : ""}</b></div>) : <span className="vx-mut">{t("misc.noRecordsInFilter")}</span>}</div>}
+      {legenda && <div className="vx-chart-legend">{itens.length ? itens.map((item, i) => <div key={`${item.nome}-${i}`} title={item.fonte || `${item.valor} registro(s)`}><i style={{ background: item.cor || cores[i % cores.length] }} /><span>{item.nome}</span><b className="vx-mono">{rotular(item.valor)}{total ? ` · ${Math.round(item.valor / total * 100)}%` : ""}</b></div>) : <span className="vx-mut">Sem registros no filtro</span>}</div>}
     </div>
-    <div className="vx-chart-source">{t("misc.chartSource")}</div>
+    <div className="vx-chart-source">Fonte: registros operacionais filtrados da empresa</div>
   </div>;
 }
 
@@ -102,7 +101,6 @@ export function Donut({ titulo, itens = [], centro, legenda = true, formatar }) 
 // Um confirm() do browser esconderia justamente o número que a plataforma
 // precisa ler antes de decidir — e há navegadores que o suprimem sem avisar.
 export function Excluir({ rota, label, conflito, sucesso, onRemovido, aviso }) {
-  const { t } = useI18n();
   const [armado, setArmado] = useState(false);
   const [pendencia, setPendencia] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
@@ -115,10 +113,12 @@ export function Excluir({ rota, label, conflito, sucesso, onRemovido, aviso }) {
     setExcluindo(false);
 
     if (status === 409) return setPendencia(corpo);
-    if (status !== 200) return aviso?.(corpo.error || t("misc.deleteFailed"));
+    if (status !== 200) return aviso?.(corpo.error || "Não foi possível excluir.");
 
     cancelar();
     onRemovido?.();
+    // A mensagem vem de quem chama: um nome de pessoa não diz o gênero
+    // dela, e uma frase fixa acabaria escolhendo um por conta própria.
     aviso?.(sucesso);
   };
 
@@ -132,11 +132,11 @@ export function Excluir({ rota, label, conflito, sucesso, onRemovido, aviso }) {
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
       <span style={{ fontSize: 12.5, color: "var(--red)", flex: 1, minWidth: 190 }}>
-        {pendencia ? conflito(pendencia) : t("misc.deleteWarning")}
+        {pendencia ? conflito(pendencia) : "Apaga o cadastro e todo o histórico ligado a ele. Não tem volta."}
       </span>
-      <button className="vx-btn" onClick={cancelar} disabled={excluindo}>{t("misc.cancel")}</button>
+      <button className="vx-btn" onClick={cancelar} disabled={excluindo}>Cancelar</button>
       <button className="vx-btn vx-btn-danger" onClick={() => excluir(!!pendencia)} disabled={excluindo}>
-        {excluindo ? t("misc.deleting") : pendencia ? t("misc.deleteAnyway") : t("misc.confirmDelete")}
+        {excluindo ? "Excluindo…" : pendencia ? "Excluir mesmo assim" : "Confirmar exclusão"}
       </button>
     </div>
   );

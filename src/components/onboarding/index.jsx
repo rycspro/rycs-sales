@@ -9,7 +9,6 @@ import EtapaCampanha from "./EtapaCampanha.jsx";
 import { api } from "../../lib/api.js";
 import { ROTAS } from "../../lib/rotas.js";
 import { ETAPAS, podeAbrirEtapa, normalizarWhatsapp, formatarWhatsapp } from "../../../shared/onboarding.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // Onboarding da empresa já autenticada. O servidor diz em qual etapa ela
 // está; a URL só pode pedir uma etapa já liberada. Pedido de etapa à frente
@@ -17,13 +16,12 @@ import { useI18n } from "../../lib/i18n.jsx";
 
 function caminhoDe(chave) { return `${ROTAS.onboarding}/${chave}`; }
 
-function Acoes({ aoVoltar, rotuloContinuar, salvando, desabilitado, tipo = "submit", aoContinuar }) {
-  const { t } = useI18n();
+function Acoes({ aoVoltar, rotuloContinuar = "Continuar", salvando, desabilitado, tipo = "submit", aoContinuar }) {
   return (
     <div className="vx-onb-acoes">
-      {aoVoltar ? <button type="button" className="vx-btn" onClick={aoVoltar}>{t("onb.back")}</button> : <span />}
+      {aoVoltar ? <button type="button" className="vx-btn" onClick={aoVoltar}>Voltar</button> : <span />}
       <button type={tipo} className="vx-btn vx-btn-primary" disabled={salvando || desabilitado} onClick={aoContinuar}>
-        {salvando ? t("onb.saving") : rotuloContinuar || t("onb.continue")}
+        {salvando ? "Salvando…" : rotuloContinuar}
       </button>
     </div>
   );
@@ -31,7 +29,6 @@ function Acoes({ aoVoltar, rotuloContinuar, salvando, desabilitado, tipo = "subm
 
 // Etapa 1 para quem já está logado: conta antiga sem WhatsApp, ou revisão.
 function AcessoLogado({ estado, email, aoAtualizar, aoAvancar }) {
-  const { t } = useI18n();
   const id = useId();
   const concluida = estado.etapas.acesso === "concluida";
   const [whatsapp, setWhatsapp] = useState(estado.whatsapp ? formatarWhatsapp(estado.whatsapp) : "");
@@ -40,12 +37,12 @@ function AcessoLogado({ estado, email, aoAtualizar, aoAvancar }) {
 
   const enviar = async (e) => {
     e.preventDefault();
-    if (!normalizarWhatsapp(whatsapp)) { setErro(t("onb.access.errWhatsapp")); return; }
+    if (!normalizarWhatsapp(whatsapp)) { setErro("Informe um WhatsApp válido, com DDD."); return; }
     setErro("");
     setSalvando(true);
     const r = await api("/onboarding/acesso", { whatsapp });
     setSalvando(false);
-    if (!r || r.error) { setErro(r?.error || t("onb.access.errSave")); return; }
+    if (!r || r.error) { setErro(r?.error || "Não foi possível salvar. Tente de novo."); return; }
     aoAtualizar(r);
     aoAvancar(r);
   };
@@ -53,24 +50,26 @@ function AcessoLogado({ estado, email, aoAtualizar, aoAvancar }) {
   return (
     <div className="vx-onb-duas">
       <section className="vx-onb-hero">
-        <div className="vx-onb-eyebrow">{t("onb.stepOf", { n: 1, total: 6 })}</div>
-        <h1 className="vx-disp">{concluida ? t("onb.access.titleDone") : t("onb.access.title")}</h1>
-        <p>{concluida ? t("onb.access.descDone") : t("onb.access.desc")}</p>
+        <div className="vx-onb-eyebrow">Passo 1 de 6</div>
+        <h1 className="vx-disp">{concluida ? "Seu acesso está pronto." : "Confirme o seu acesso."}</h1>
+        <p>{concluida
+          ? "Você pode ajustar o WhatsApp da empresa aqui e seguir para o perfil."
+          : "Antes de seguir, precisamos do WhatsApp da empresa. É por onde a RYCS fala com você sobre a operação."}</p>
       </section>
       <section className="vx-onb-card">
         <form onSubmit={enviar} noValidate>
           {concluida && <div className="vx-onb-icone" aria-hidden="true"><CheckCircle2 size={22} /></div>}
-          <h2 className="vx-disp vx-onb-card-titulo">{t("onb.access.heading")}</h2>
-          <p className="vx-mut vx-onb-card-apoio">{t("onb.access.signingInAs")} <b>{email}</b>.</p>
+          <h2 className="vx-disp vx-onb-card-titulo">Acesso</h2>
+          <p className="vx-mut vx-onb-card-apoio">Entrando como <b>{email}</b>.</p>
           <div className="vx-onb-campo">
             <label className="vx-label" htmlFor={`${id}-w`}>WhatsApp</label>
             <input id={`${id}-w`} className="vx-input" type="tel" inputMode="numeric" autoComplete="tel-national"
               placeholder="(11) 91234-5678" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)}
               aria-invalid={erro ? true : undefined} aria-describedby={erro ? `${id}-erro` : `${id}-dica`} />
-            <div id={`${id}-dica`} className="vx-onb-dica">{t("onb.access.whatsappHint")}</div>
+            <div id={`${id}-dica`} className="vx-onb-dica">Com DDD.</div>
             {erro && <div id={`${id}-erro`} className="vx-onb-erro" role="alert">{erro}</div>}
           </div>
-          <Acoes salvando={salvando} rotuloContinuar={concluida ? t("onb.saveAndContinue") : t("onb.continue")} />
+          <Acoes salvando={salvando} rotuloContinuar={concluida ? "Salvar e continuar" : "Continuar"} />
         </form>
       </section>
     </div>

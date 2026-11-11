@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link2, RefreshCw, Unplug, CheckCircle2, AlertTriangle } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // Integração com a Meta: a empresa conecta a própria conta, escolhe a Página
 // (de onde vêm os leads dos formulários) e a conta de anúncios (métricas).

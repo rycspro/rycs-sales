@@ -1,35 +1,26 @@
 import { useState } from "react";
 import { BookTemplate, GripVertical, Plus, Save, Trash2 } from "lucide-react";
-import { useI18n } from "../../lib/i18n.jsx";
 
-export function buildTiposCampo(t) {
-  return [
-    { id: "texto",          nome: t("fields.freeText") },
-    { id: "numerico",       nome: t("fields.numeric") },
-    { id: "telefone",       nome: t("fields.phone") },
-    { id: "cpf",            nome: "CPF" },
-    { id: "cnpj",           nome: "CNPJ" },
-    { id: "data",           nome: t("fields.date") },
-    { id: "datahora",       nome: t("fields.dateTime") },
-    { id: "selecao_unica",  nome: t("fields.singleSelect") },
-    { id: "multipla",       nome: t("fields.multipleChoice") },
-    { id: "upload_imagem",  nome: t("fields.imageUpload") },
-    { id: "upload_arquivo", nome: t("fields.fileUpload") },
-    { id: "assinatura",     nome: t("fields.signature") },
-  ];
-}
-export const TIPOS_CAMPO = buildTiposCampo((k) => {
-  const map = { "fields.freeText": "Texto livre", "fields.numeric": "Numérico", "fields.phone": "Telefone", "fields.date": "Data", "fields.dateTime": "Data e hora", "fields.singleSelect": "Seleção única", "fields.multipleChoice": "Múltipla escolha", "fields.imageUpload": "Upload de imagem", "fields.fileUpload": "Upload de arquivo", "fields.signature": "Assinatura" };
-  return map[k] || k;
-});
+export const TIPOS_CAMPO = [
+  { id: "texto",          nome: "Texto livre" },
+  { id: "numerico",       nome: "Numérico" },
+  { id: "telefone",       nome: "Telefone" },
+  { id: "cpf",            nome: "CPF" },
+  { id: "cnpj",           nome: "CNPJ" },
+  { id: "data",           nome: "Data" },
+  { id: "datahora",       nome: "Data e hora" },
+  { id: "selecao_unica",  nome: "Seleção única" },
+  { id: "multipla",       nome: "Múltipla escolha" },
+  { id: "upload_imagem",  nome: "Upload de imagem" },
+  { id: "upload_arquivo", nome: "Upload de arquivo" },
+  { id: "assinatura",     nome: "Assinatura" },
+];
 
 function novoCampo() {
   return { id: `campo_${Date.now()}_${Math.random().toString(36).slice(2)}`, nome: "", tipo: "texto", obrigatorio: false, opcoes: [] };
 }
 
 function CampoEditor({ campo, onChange, onRemover }) {
-  const { t } = useI18n();
-  const TIPOS = buildTiposCampo(t);
   const precisaOpcoes = ["selecao_unica", "multipla"].includes(campo.tipo);
 
   return (
@@ -38,22 +29,22 @@ function CampoEditor({ campo, onChange, onRemover }) {
         <GripVertical size={16} color="var(--muted)" style={{ marginTop: 10, cursor: "grab", flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
           <div className="vx-grid vx-g3" style={{ marginBottom: 8 }}>
-            <label><span className="vx-label">{t("fields.fieldName")} *</span>
+            <label><span className="vx-label">Nome do campo *</span>
               <input className="vx-input" value={campo.nome} onChange={(e) => onChange({ ...campo, nome: e.target.value })} placeholder="Ex: CPF do cliente" />
             </label>
-            <label><span className="vx-label">{t("fields.type")}</span>
+            <label><span className="vx-label">Tipo</span>
               <select className="vx-input" value={campo.tipo} onChange={(e) => onChange({ ...campo, tipo: e.target.value })}>
-                {TIPOS.map((tp) => <option key={tp.id} value={tp.id}>{tp.nome}</option>)}
+                {TIPOS_CAMPO.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
               </select>
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 22 }}>
               <input type="checkbox" checked={campo.obrigatorio} onChange={(e) => onChange({ ...campo, obrigatorio: e.target.checked })} />
-              <span style={{ fontSize: 13 }}>{t("fields.required")}</span>
+              <span style={{ fontSize: 13 }}>Obrigatório</span>
             </label>
           </div>
           {precisaOpcoes && (
             <div>
-              <div className="vx-label">{t("fields.optionsPerLine")}</div>
+              <div className="vx-label">Opções (uma por linha)</div>
               <textarea className="vx-input" rows={3} style={{ fontSize: 12 }}
                 value={(campo.opcoes || []).join("\n")}
                 onChange={(e) => onChange({ ...campo, opcoes: e.target.value.split("\n").filter(Boolean) })}
@@ -69,7 +60,6 @@ function CampoEditor({ campo, onChange, onRemover }) {
 }
 
 export default function CriadorCampos({ campos = [], modelos = [], onChange, onSalvarModelo, tarefa = "" }) {
-  const { t } = useI18n();
   const [lista, setLista] = useState(campos.map((c) => ({ ...c })));
   const [nomeModelo, setNomeModelo] = useState("");
   const [salvandoModelo, setSalvandoModelo] = useState(false);
@@ -110,7 +100,7 @@ export default function CriadorCampos({ campos = [], modelos = [], onChange, onS
     <div>
       {modelos.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div className="vx-label">{t("fields.useSavedTemplate")}</div>
+          <div className="vx-label">Usar modelo salvo</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {modelos.map((m, i) => (
               <button key={i} className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => carregarModelo(m)}>
@@ -126,19 +116,19 @@ export default function CriadorCampos({ campos = [], modelos = [], onChange, onS
       ))}
 
       <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-        <button className="vx-btn vx-btn-sm" onClick={adicionar}><Plus size={13} /> {t("fields.addField")}</button>
+        <button className="vx-btn vx-btn-sm" onClick={adicionar}><Plus size={13} /> Adicionar campo</button>
         {lista.length > 0 && !salvandoModelo && (
           <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setSalvandoModelo(true)}>
-            <Save size={12} /> {t("fields.saveAsTemplate")}
+            <Save size={12} /> Salvar como modelo
           </button>
         )}
       </div>
 
       {salvandoModelo && (
         <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
-          <input className="vx-input" style={{ maxWidth: 220 }} value={nomeModelo} onChange={(e) => setNomeModelo(e.target.value)} placeholder={t("fields.templateName")} />
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={salvarComoModelo} disabled={!nomeModelo.trim()}>{t("app.save")}</button>
-          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setSalvandoModelo(false)}>{t("app.cancel")}</button>
+          <input className="vx-input" style={{ maxWidth: 220 }} value={nomeModelo} onChange={(e) => setNomeModelo(e.target.value)} placeholder="Nome do modelo" />
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={salvarComoModelo} disabled={!nomeModelo.trim()}>Salvar</button>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setSalvandoModelo(false)}>Cancelar</button>
         </div>
       )}
     </div>
@@ -178,7 +168,7 @@ export function FormularioCampos({ campos = [], valores = {}, onChange, disabled
           <label key={campo.id} style={{ display: "block", marginBottom: 10 }}>
             {label}
             <select className="vx-input" value={v} onChange={(e) => set(campo.id, e.target.value)} disabled={disabled}>
-              <option value="">{t("app.select")}</option>
+              <option value="">Selecione</option>
               {(campo.opcoes || []).map((op) => <option key={op} value={op}>{op}</option>)}
             </select>
           </label>
@@ -216,7 +206,7 @@ export function FormularioCampos({ campos = [], valores = {}, onChange, disabled
           <div key={campo.id} style={{ marginBottom: 10 }}>
             {label}
             <div style={{ border: "1px solid var(--border)", borderRadius: 8, height: 80, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 12 }}>
-              {t("fields.digitalSignature")}
+              Assinatura digital · implementação via upload de imagem
             </div>
           </div>
         );

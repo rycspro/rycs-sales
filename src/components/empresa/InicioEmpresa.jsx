@@ -9,21 +9,18 @@ import {
 import { money, dataCurta } from "../../lib/utils.js";
 import { saldoDisponivel, isPosPago, isPremium } from "../../../shared/empresa.js";
 import { api } from "../../lib/api.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // ── utilidades ────────────────────────────────────────────────────────────────
 
-const LANG_LOCALE = { en: "en-US", "pt-BR": "pt-BR", hi: "hi-IN" };
-
-function saudacao(t, name) {
+function saudacao() {
   const h = new Date().getHours();
-  if (h < 12) return t("dash.greeting.morning", { name });
-  if (h < 18) return t("dash.greeting.afternoon", { name });
-  return t("dash.greeting.evening", { name });
+  if (h < 12) return "Bom dia";
+  if (h < 18) return "Boa tarde";
+  return "Boa noite";
 }
 
-function dataHoje(lang) {
-  return new Date().toLocaleDateString(LANG_LOCALE[lang] || "en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+function dataHoje() {
+  return new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
 function diasAtras(dias) {
@@ -78,9 +75,10 @@ function CardIndicador({ icon: Icon, label, valor, pct, onClick }) {
 
 // ── TIMELINE ─────────────────────────────────────────────────────────────────
 
-function eventosDaPlataforma(db, empId, t) {
+function eventosDaPlataforma(db, empId) {
   const eventos = [];
 
+  // Novos sellers cadastrados (candidaturas recentes)
   const apps = (db.sellers || [])
     .filter((s) => s.aplicacoes?.[empId])
     .slice(0, 5)
@@ -88,11 +86,12 @@ function eventosDaPlataforma(db, empId, t) {
       tipo: "profissional",
       icon: UserCheck,
       cor: "#7C3AED",
-      texto: t("dash.event.applied", { name: s.nome || t("dash.event.professional") }),
+      texto: `${s.nome || "Profissional"} se candidatou`,
       ts: s.criadoEm || Date.now() - 86400000 * 3,
     }));
   eventos.push(...apps);
 
+  // Mensagens recentes
   const msgs = (db.messages || [])
     .filter((m) => m.companyId === empId && m.de === "vendedor")
     .slice(-5)
@@ -102,12 +101,13 @@ function eventosDaPlataforma(db, empId, t) {
         tipo: "mensagem",
         icon: MessageSquare,
         cor: "#2563EB",
-        texto: t("dash.event.messageFrom", { name: seller?.nome || t("dash.event.professional") }),
+        texto: `Mensagem de ${seller?.nome || "Profissional"}`,
         ts: m.ts,
       };
     });
   eventos.push(...msgs);
 
+  // Submissões aprovadas
   const subs = (db.submissions || [])
     .filter((s) => s.companyId === empId && ["liberado", "conferido"].includes(s.status))
     .slice(-5)
@@ -117,12 +117,13 @@ function eventosDaPlataforma(db, empId, t) {
         tipo: "aprovacao",
         icon: CheckCircle2,
         cor: "#059669",
-        texto: t("dash.event.taskApproved", { name: seller?.nome || t("dash.event.professional") }),
+        texto: `Tarefa aprovada — ${seller?.nome || "Profissional"}`,
         ts: s.criadoEm,
       };
     });
   eventos.push(...subs);
 
+  // Campanhas criadas
   const camps = (db.campaigns || [])
     .filter((c) => c.companyId === empId)
     .slice(-3)
@@ -130,7 +131,7 @@ function eventosDaPlataforma(db, empId, t) {
       tipo: "campanha",
       icon: Megaphone,
       cor: "#D97706",
-      texto: t("dash.event.campaign", { title: c.titulo || t("dash.event.untitled") }),
+      texto: `Campanha "${c.titulo || "sem título"}"`,
       ts: c.criadoEm,
     }));
   eventos.push(...camps);
@@ -154,24 +155,20 @@ function MiniBar({ value, max, cor = "var(--brand)" }) {
 
 // ── PERÍODO DROPDOWN ─────────────────────────────────────────────────────────
 
-function buildPeriodOptions(t) {
-  return [
-    { value: "1", label: t("period.today") },
-    { value: "7", label: t("period.last7") },
-    { value: "30", label: t("period.last30") },
-    { value: "90", label: t("period.last90") },
-    { value: "mes", label: t("period.thisMonth") },
-    { value: "ano", label: t("period.thisYear") },
-    { value: "", label: t("period.allTime") },
-    { value: "custom", label: t("period.custom") },
-  ];
-}
+const OPCOES_PERIODO = [
+  { value: "1", label: "Hoje" },
+  { value: "7", label: "Últimos 7 dias" },
+  { value: "30", label: "Últimos 30 dias" },
+  { value: "90", label: "Últimos 90 dias" },
+  { value: "mes", label: "Este mês" },
+  { value: "ano", label: "Este ano" },
+  { value: "", label: "Todo o período" },
+  { value: "custom", label: "Personalizado..." },
+];
 
 function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte, setCustomAte }) {
-  const { t } = useI18n();
   const [aberto, setAberto] = useState(false);
   const ref = useRef(null);
-  const opcoes = buildPeriodOptions(t);
 
   useEffect(() => {
     if (!aberto) return;
@@ -180,7 +177,7 @@ function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte
     return () => document.removeEventListener("mousedown", fechar);
   }, [aberto]);
 
-  const labelAtual = opcoes.find((o) => o.value === periodo)?.label || t("period.label");
+  const labelAtual = OPCOES_PERIODO.find((o) => o.value === periodo)?.label || "Período";
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
@@ -212,7 +209,7 @@ function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte
           backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
           minWidth: 200, padding: "6px 0", overflow: "hidden",
         }}>
-          {opcoes.map((o) => (
+          {OPCOES_PERIODO.map((o) => (
             <button
               key={o.value}
               onClick={() => { setPeriodo(o.value); if (o.value !== "custom") setAberto(false); }}
@@ -233,17 +230,17 @@ function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte
           {periodo === "custom" && (
             <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>{t("period.from")}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>DE</span>
                 <input type="date" className="vx-input" style={{ fontSize: 12, padding: "6px 10px" }}
                   value={customDe} onChange={(e) => setCustomDe(e.target.value)} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>{t("period.to")}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.03em" }}>ATÉ</span>
                 <input type="date" className="vx-input" style={{ fontSize: 12, padding: "6px 10px" }}
                   value={customAte} onChange={(e) => setCustomAte(e.target.value)} />
               </div>
               <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ width: "100%" }} onClick={() => setAberto(false)}>
-                {t("period.apply")}
+                Aplicar
               </button>
             </div>
           )}
@@ -256,7 +253,6 @@ function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 
 export default function InicioEmpresa({ emp, db, setAba }) {
-  const { t, lang } = useI18n();
   const [periodo, setPeriodo] = useState("30");
   const [cerebro, setCerebro] = useState(null);
   useEffect(() => { api("/brain/score").then((r) => setCerebro(r && !r.error ? r : null)).catch(() => {}); }, []);
@@ -332,7 +328,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
   const maxSubs = topSellers[0]?.subsAprovadas || 1;
 
   // Timeline
-  const eventos = useMemo(() => eventosDaPlataforma(db, empId, t), [db, empId, t]);
+  const eventos = useMemo(() => eventosDaPlataforma(db, empId), [db, empId]);
 
   // Pendências da empresa
   const saldo = saldoDisponivel(emp);
@@ -341,25 +337,25 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
   const pendencias = [
     profsPendentes.length > 0 && {
-      icon: ShieldCheck, texto: t("dash.pending.pros", { count: profsPendentes.length }), cta: t("dash.pending.review"), aba: "conferir-fila", cor: "#DC2626",
+      icon: ShieldCheck, texto: `${profsPendentes.length} profissional${profsPendentes.length > 1 ? "is" : ""} aguardando aprovação`, cta: "Revisar", aba: "conferir-fila", cor: "#DC2626",
     },
     subsRevisao.length > 0 && {
-      icon: CheckCircle2, texto: t("dash.pending.tasks", { count: subsRevisao.length }), cta: t("dash.pending.review"), aba: "conferir-fila", cor: "#D97706",
+      icon: CheckCircle2, texto: `${subsRevisao.length} tarefa${subsRevisao.length > 1 ? "s" : ""} aguardando revisão`, cta: "Revisar", aba: "conferir-fila", cor: "#D97706",
     },
     semSaldo && {
-      icon: Wallet, texto: t("dash.pending.addBalance"), cta: t("dash.pending.addBalanceCta"), aba: "pagamentos-campanhas", cor: "#DC2626",
+      icon: Wallet, texto: "Adicione saldo para publicar campanhas", cta: "Adicionar saldo", aba: "pagamentos-campanhas", cor: "#DC2626",
     },
     campanhasAtivas.length === 0 && campaigns.length === 0 && {
-      icon: Megaphone, texto: t("dash.pending.firstCampaign"), cta: t("dash.createCampaign"), aba: "campanhas", cor: "#7C3AED",
+      icon: Megaphone, texto: "Crie sua primeira campanha para começar", cta: "Criar campanha", aba: "campanhas", cor: "#7C3AED",
     },
     campsSemCandidatos > 0 && {
-      icon: Megaphone, texto: t("dash.pending.noCandidates", { count: campsSemCandidatos }), cta: t("dash.pending.viewCampaigns"), aba: "campanhas", cor: "#D97706",
+      icon: Megaphone, texto: `${campsSemCandidatos} campanha${campsSemCandidatos > 1 ? "s" : ""} sem candidatos inscritos`, cta: "Ver campanhas", aba: "campanhas", cor: "#D97706",
     },
     naoLidas.length > 0 && {
-      icon: Mail, texto: t("dash.pending.unreadMessages", { count: naoLidas.length }), cta: t("dash.pending.viewConversations"), aba: "conversas", cor: "#2563EB",
+      icon: Mail, texto: `${naoLidas.length} mensagem${naoLidas.length > 1 ? "s" : ""} não lida${naoLidas.length > 1 ? "s" : ""}`, cta: "Ver conversas", aba: "conversas", cor: "#2563EB",
     },
     sellersAtivos.length === 0 && profsPendentes.length > 0 && {
-      icon: Users, texto: t("dash.pending.approvePros"), cta: t("dash.pending.viewPros"), aba: "conferir-fila", cor: "#7C3AED",
+      icon: Users, texto: "Aprove profissionais para operar suas campanhas", cta: "Ver profissionais", aba: "conferir-fila", cor: "#7C3AED",
     },
   ].filter(Boolean);
 
@@ -375,11 +371,11 @@ export default function InicioEmpresa({ emp, db, setAba }) {
     ...(cerebroVisivel ? [{
       key: "cerebro",
       emoji: "🧠",
-      title: t("dash.brain.title", { pct: cerebro.score }),
+      title: `Seu Cérebro da Operação está ${cerebro.score}% completo.`,
       desc: lacunasCerebro > 0
-        ? t("dash.brain.desc", { count: lacunasCerebro })
-        : t("dash.brain.descDefault"),
-      cta: t("dash.brain.cta", { min: cerebro.tempoEstimadoMin || 5 }),
+        ? `Complete mais ${lacunasCerebro} informação(ões) para melhorar campanhas e treinamentos.`
+        : "Continue preenchendo sua base de conhecimento.",
+      cta: `Completar em ${cerebro.tempoEstimadoMin || 5} minuto(s)`,
       onClick: () => ir("academy"),
     }] : []),
     ...pendencias.map((p, i) => ({ key: `p${i}`, Icon: p.icon, title: p.texto, cta: p.cta, onClick: () => ir(p.aba) })),
@@ -391,12 +387,12 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       {/* ── CABEÇALHO ─────────────────────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
         <div>
-          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 4, fontWeight: 500 }}>{dataHoje(lang)}</div>
+          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 4, fontWeight: 500 }}>{dataHoje()}</div>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: "var(--ink)", fontFamily: "var(--font-disp)", lineHeight: 1.1, letterSpacing: "-.03em" }}>
-            {saudacao(t, primeiroNome)} 👋
+            {saudacao()}, {primeiroNome} 👋
           </h1>
           <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--muted)" }}>
-            {t("dash.overview", { company: nomeEmpresa })}
+            Visão geral da operação comercial da {nomeEmpresa}.
           </p>
         </div>
 
@@ -413,12 +409,12 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 6 }}>
-        <CardIndicador icon={UserCheck} label={t("dash.activePros")} valor={sellersAtivos.length} onClick={() => ir("profissionais")} />
-        <CardIndicador icon={Megaphone} label={t("dash.activeCampaigns")} valor={campanhasAtivas.length} onClick={() => ir("campanhas")} />
-        <CardIndicador icon={MessageSquare} label={t("dash.conversations")} valor={conversas} onClick={() => ir("conversas")} />
-        <CardIndicador icon={ShieldCheck} label={t("dash.pendingApprovals")} valor={totalAprovacoesPendentes} onClick={() => ir("conferir-fila")} />
-        {leadsTotal > 0 && <CardIndicador icon={Target} label={t("dash.leadsGenerated")} valor={leadsTotal} onClick={() => ir("campanhas")} />}
-        {investimento > 0 && <CardIndicador icon={TrendingUp} label={t("dash.totalInvestment")} valor={money(investimento)} onClick={() => ir("painel")} />}
+        <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} />
+        <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} />
+        <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} />
+        <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={totalAprovacoesPendentes} onClick={() => ir("conferir-fila")} />
+        {leadsTotal > 0 && <CardIndicador icon={Target} label="Leads gerados" valor={leadsTotal} onClick={() => ir("campanhas")} />}
+        {investimento > 0 && <CardIndicador icon={TrendingUp} label="Investimento total" valor={money(investimento)} onClick={() => ir("painel")} />}
       </div>
 
       {/* ── GRID PRINCIPAL ────────────────────────────────────────────────── */}
@@ -431,9 +427,9 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           {/* ── DESEMPENHO COMERCIAL ──────────────────────────────────────── */}
           <div>
           <div className="vx-ph" style={{ marginBottom: 4 }}>
-            <h3 className="vx-ph-title"><BarChart3 size={16} strokeWidth={1.8} /> {t("dash.performance")}</h3>
+            <h3 className="vx-ph-title"><BarChart3 size={16} strokeWidth={1.8} /> Desempenho Comercial</h3>
             <button className="vx-ph-link" onClick={() => ir("painel")}>
-              {t("dash.fullAnalysis")} <ArrowRight size={13} />
+              Ver análise completa <ArrowRight size={13} />
             </button>
           </div>
           <div className="vx-card" style={{ padding: "6px 20px 20px" }}>
@@ -441,10 +437,10 @@ export default function InicioEmpresa({ emp, db, setAba }) {
             {/* Métricas rápidas do período — região unificada com divisores sutis */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 0, marginBottom: 20, borderBottom: "1px solid var(--border)" }}>
               {[
-                { label: t("dash.tasksInPeriod"), val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
-                { label: t("dash.approved"), val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2 },
-                { label: t("dash.leadsInPeriod"), val: leads.filter((l) => { const ts = Number(l.criadoEm || l.atualizadoEm); return ts >= corte && ts <= fimPeriodo; }).length, icon: Target },
-                { label: t("dash.campaignsCreated"), val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone },
+                { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
+                { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2 },
+                { label: "Leads no período", val: leads.filter((l) => { const t = Number(l.criadoEm || l.atualizadoEm); return t >= corte && t <= fimPeriodo; }).length, icon: Target },
+                { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone },
               ].map(({ label, val, icon: Ic }, i) => (
                 <div key={label} style={{ padding: "14px 16px", borderLeft: i === 0 ? "none" : "1px solid var(--border)" }}>
                   <div className="vx-tile-top" style={{ marginBottom: 10 }}>
@@ -459,7 +455,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
             {/* Campanhas listadas */}
             {campanhasAtivas.length > 0 ? (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-2)", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 4 }}>{t("dash.activeCampaignsTitle")}</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-2)", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 4 }}>Campanhas ativas</div>
                 <div>
                   {campanhasAtivas.slice(0, 4).map((c) => {
                     const inscritos = c.candidaturas?.length || 0;
@@ -468,10 +464,10 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                       <div className="vx-lrow" key={c.id}>
                         <span className="vx-lrow-icon"><Megaphone size={16} strokeWidth={1.8} /></span>
                         <div className="vx-lrow-main">
-                          <b>{c.titulo || t("dash.event.campaignDefault")}</b>
-                          <span>{t("dash.enrolled", { count: inscritos })} · {t("dash.approvedCount", { count: aprovadas })}</span>
+                          <b>{c.titulo || "Campanha"}</b>
+                          <span>{inscritos} inscrito{inscritos !== 1 ? "s" : ""} · {aprovadas} aprovado{aprovadas !== 1 ? "s" : ""}</span>
                         </div>
-                        <span style={{ background: "var(--green-100)", color: "var(--green-700)", fontSize: 10.5, fontWeight: 600, borderRadius: 20, padding: "3px 9px", flexShrink: 0 }}>{t("dash.activeLabel")}</span>
+                        <span style={{ background: "var(--green-100)", color: "var(--green-700)", fontSize: 10.5, fontWeight: 600, borderRadius: 20, padding: "3px 9px", flexShrink: 0 }}>Ativa</span>
                       </div>
                     );
                   })}
@@ -480,9 +476,9 @@ export default function InicioEmpresa({ emp, db, setAba }) {
             ) : (
               <div style={{ textAlign: "center", padding: "20px 0", color: "var(--muted)" }}>
                 <Megaphone size={24} style={{ display: "block", margin: "0 auto 8px" }} strokeWidth={1.5} />
-                <p style={{ margin: 0, fontSize: 13 }}>{t("dash.noCampaignsActive")}</p>
+                <p style={{ margin: 0, fontSize: 13 }}>Nenhuma campanha ativa no momento</p>
                 <button onClick={() => ir("campanhas")} style={{ marginTop: 10, background: "none", border: "1.5px solid var(--border)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12.5, color: "var(--brand)", fontWeight: 600 }}>
-                  {t("dash.createCampaign")}
+                  Criar campanha
                 </button>
               </div>
             )}
@@ -493,9 +489,9 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           {topSellers.length > 0 && (
             <div className="vx-card" style={{ padding: 20 }}>
               <div className="vx-ph">
-                <h3 className="vx-ph-title"><Award size={16} strokeWidth={1.8} /> {t("dash.featuredPros")}</h3>
+                <h3 className="vx-ph-title"><Award size={16} strokeWidth={1.8} /> Profissionais em Destaque</h3>
                 <button className="vx-ph-link" onClick={() => ir("profissionais")}>
-                  {t("dash.viewAll")} <ArrowRight size={13} />
+                  Ver todos <ArrowRight size={13} />
                 </button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -512,18 +508,18 @@ export default function InicioEmpresa({ emp, db, setAba }) {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {s.nome || t("dash.event.professional")}
+                        {s.nome || "Profissional"}
                       </div>
                       <MiniBar value={s.subsAprovadas} max={maxSubs} cor={i === 0 ? "#D97706" : "var(--brand)"} />
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: "-.02em" }}>{s.subsAprovadas}</div>
-                      <div style={{ fontSize: 10.5, color: "var(--muted)" }}>{t("dash.tasks")}</div>
+                      <div style={{ fontSize: 10.5, color: "var(--muted)" }}>tarefas</div>
                     </div>
                     {s.ganhos > 0 && (
                       <div style={{ textAlign: "right", flexShrink: 0, minWidth: 70 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: "-.02em" }}>{money(s.ganhos)}</div>
-                        <div style={{ fontSize: 10.5, color: "var(--muted)" }}>{t("dash.generated")}</div>
+                        <div style={{ fontSize: 10.5, color: "var(--muted)" }}>gerado</div>
                       </div>
                     )}
                   </div>
@@ -538,11 +534,11 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       {/* ── PENDÊNCIAS (lista unificada, no formato do Cérebro) ─────────── */}
       <div style={{ marginTop: 20 }}>
         <div className="vx-ph" style={{ marginBottom: 4 }}>
-          <h3 className="vx-ph-title"><AlertTriangle size={16} strokeWidth={1.8} /> {t("dash.pendencies")}</h3>
+          <h3 className="vx-ph-title"><AlertTriangle size={16} strokeWidth={1.8} /> Pendências</h3>
         </div>
         <div className="vx-card" style={{ padding: "16px 18px" }}>
           {itensPendencia.length === 0 ? (
-            <p className="vx-mut" style={{ margin: 0, fontSize: 13.5, textAlign: "center", padding: "10px 0" }}>{t("dash.noPendencies")}</p>
+            <p className="vx-mut" style={{ margin: 0, fontSize: 13.5, textAlign: "center", padding: "10px 0" }}>Sem pendências.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {itensPendencia.map((item) => {
@@ -574,11 +570,11 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       {/* ── ATIVIDADE RECENTE (largura total, no final da página) ───────── */}
       <div style={{ marginTop: 20 }}>
         <div className="vx-ph" style={{ marginBottom: 4 }}>
-          <h3 className="vx-ph-title"><Activity size={16} strokeWidth={1.8} /> {t("dash.recentActivity")}</h3>
+          <h3 className="vx-ph-title"><Activity size={16} strokeWidth={1.8} /> Atividade recente</h3>
         </div>
         <div className="vx-card" style={{ padding: "6px 18px 18px" }}>
         {eventos.length === 0 ? (
-          <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", padding: "16px 0" }}>{t("dash.noActivity")}</p>
+          <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", padding: "16px 0" }}>Nenhuma atividade registrada.</p>
         ) : (
           <div>
             {eventos.map((ev, i) => {

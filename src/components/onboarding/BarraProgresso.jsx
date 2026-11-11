@@ -1,18 +1,16 @@
 import { Check } from "lucide-react";
 import { ETAPAS, normalizarEtapas, podeAbrirEtapa } from "../../../shared/onboarding.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // Subfases exibidas dentro do nó 4 (IA RAG) quando ativa === "ia".
 // O índice 0–3 corresponde à fase em andamento; null = IA ainda não começou.
-export const SUBFASES_IA_KEYS = [
-  "onb.ia.subphase.analyzing",
-  "onb.ia.subphase.script",
-  "onb.ia.subphase.funnel",
-  "onb.ia.subphase.followups",
+export const SUBFASES_IA = [
+  "Analisando informações",
+  "Criando o script",
+  "Funil de WhatsApp",
+  "Follow-ups",
 ];
 
 export default function BarraProgresso({ etapas, ativa, subfase = null, aoAbrir }) {
-  const { t } = useI18n();
   const e = normalizarEtapas(etapas);
   const ativaObj = ETAPAS.find((x) => x.chave === ativa) || ETAPAS[0];
   const n = ativaObj.n;
@@ -36,7 +34,7 @@ export default function BarraProgresso({ etapas, ativa, subfase = null, aoAbrir 
       aria-valuenow={pctNum}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-label={t("onb.progress.ariaLabel", { n, total: ETAPAS.length, label: ativaObj.label })}
+      aria-label={`Cadastro: passo ${n} de ${ETAPAS.length} — ${ativaObj.label}`}
     >
       <div className="vx-prog-inner">
 
@@ -45,7 +43,7 @@ export default function BarraProgresso({ etapas, ativa, subfase = null, aoAbrir 
           <div className="vx-prog-mob-circulo">{n}</div>
           <div className="vx-prog-mob-info">
             <div className="vx-prog-mob-rotulo">{ativaObj.label}</div>
-            <div className="vx-prog-mob-sub">{t("onb.stepOf", { n, total: ETAPAS.length })}</div>
+            <div className="vx-prog-mob-sub">Passo {n} de {ETAPAS.length}</div>
             <div className="vx-prog-mob-pct">
               <div className="vx-prog-mob-fill" style={{ width: `${pctNum}%` }} />
             </div>
@@ -65,7 +63,7 @@ export default function BarraProgresso({ etapas, ativa, subfase = null, aoAbrir 
                 : e[etapa.chave] === "concluida" ? "concluida"
                 : "pendente";
               const clicavel = aoAbrir && estado !== "atual" && podeAbrirEtapa(etapas, etapa.chave);
-              const rotulo = `${etapa.label}: ${estado === "atual" ? t("onb.progress.current") : estado === "concluida" ? t("onb.progress.done") : t("onb.progress.pending")}`;
+              const rotulo = `${etapa.label}: ${estado === "atual" ? "etapa atual" : estado === "concluida" ? "concluída" : "pendente"}`;
               const icone = estado === "concluida"
                 ? <Check size={14} strokeWidth={3} />
                 : etapa.n;
@@ -99,9 +97,8 @@ export default function BarraProgresso({ etapas, ativa, subfase = null, aoAbrir 
 
           {/* Subfases da IA (visíveis apenas na etapa 4) */}
           {ativa === "ia" && (
-            <div className="vx-prog-subfases" role="list" aria-label={t("onb.ia.subphaseLabel")}>
-              {SUBFASES_IA_KEYS.map((key, i) => {
-                const fase = t(key);
+            <div className="vx-prog-subfases" role="list" aria-label="Fases em andamento na IA">
+              {SUBFASES_IA.map((fase, i) => {
                 const sfEstado = subfase == null ? "pendente"
                   : i < subfase ? "concluida"
                   : i === subfase ? "atual"

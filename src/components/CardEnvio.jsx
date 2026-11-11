@@ -3,10 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { ACOES, CAMPOS, STATUS, MOTIVO_COR } from "../lib/constants.js";
 import { money, dataCurta } from "../lib/utils.js";
 import { Selo, Medidor } from "./ui.jsx";
-import { useI18n } from "../lib/i18n.jsx";
 
 export default function CardEnvio({ sub, db, extra }) {
-  const { t } = useI18n();
   const [aberto, setAberto] = useState(false);
   const c = db.companies.find((x) => x.id === sub.companyId);
   const campanha = db.campaigns?.find((x) => x.id === sub.campaignId);
@@ -18,7 +16,7 @@ export default function CardEnvio({ sub, db, extra }) {
       <div className="vx-row" style={{ alignItems: "flex-start" }}>
         <div>
           <div style={{ fontWeight: 600, fontSize: 14 }}>{acao.nome}</div>
-          <div className="vx-mut" style={{ fontSize: 12 }}>{campanha?.titulo || t("misc.noCampaign")} · {c?.nome || t("misc.company")} · {dataCurta(sub.criadoEm)}</div>
+          <div className="vx-mut" style={{ fontSize: 12 }}>{campanha?.titulo || "Sem campanha"} · {c?.nome || "Empresa"} · {dataCurta(sub.criadoEm)}</div>
         </div>
         <div className="vx-disp vx-mono" style={{ fontSize: 17, color: "var(--brand)" }}>{money(sub.valor)}</div>
       </div>
@@ -27,7 +25,7 @@ export default function CardEnvio({ sub, db, extra }) {
         <Selo s={sub.status} />
         {typeof sub.confianca === "number" && (
           <span className="vx-mut vx-mono" style={{ fontSize: 11.5 }}>
-            {sub.confianca}% · {sub.fonte === "ia" ? t("misc.aiAnalysis") : t("misc.localCheck")}
+            {sub.confianca}% · {sub.fonte === "ia" ? "análise por IA" : "checagem local"}
           </span>
         )}
       </div>
@@ -38,7 +36,7 @@ export default function CardEnvio({ sub, db, extra }) {
       )}
 
       {sub.status === "analisando" && (
-        <div className="vx-mut vx-mono" style={{ fontSize: 12, marginBottom: 8 }}>{t("misc.aiProcessing")}</div>
+        <div className="vx-mut vx-mono" style={{ fontSize: 12, marginBottom: 8 }}>A IA está cruzando os dados enviados…</div>
       )}
       {sub.motivo && (
         <div style={{ fontSize: 12.5, color: MOTIVO_COR[sub.status] || "var(--muted)", marginBottom: 10 }}>{sub.motivo}</div>
@@ -46,18 +44,18 @@ export default function CardEnvio({ sub, db, extra }) {
 
       <button className="vx-btn vx-btn-sm vx-btn-block" onClick={() => setAberto((v) => !v)}>
         <ChevronDown size={14} style={{ transform: aberto ? "rotate(180deg)" : "none", transition: ".15s" }} />
-        {aberto ? t("misc.hideDetails") : t("misc.showDetails")}
+        {aberto ? "Ocultar detalhes" : "Abrir detalhes"}
       </button>
 
       {aberto && (
         <div className="vx-mono" style={{ fontSize: 12, color: "var(--ink-2)", background: "var(--surface-2)", padding: 11, borderRadius: 10, marginTop: 10 }}>
           {[
-            [t("misc.campaign"), campanha?.titulo || t("misc.noCampaign")],
-            [t("misc.company"), c?.nome || "—"],
-            [t("misc.task"), acao.nome],
-            [t("misc.type"), sub.tipo],
-            [t("misc.date"), dataCurta(sub.criadoEm)],
-            [t("misc.value"), money(sub.valor)],
+            ["Campanha", campanha?.titulo || "Sem campanha"],
+            ["Empresa", c?.nome || "—"],
+            ["Tarefa", acao.nome],
+            ["Tipo", sub.tipo],
+            ["Data", dataCurta(sub.criadoEm)],
+            ["Valor", money(sub.valor)],
             ["Status", st.txt],
           ].map(([label, value]) => (
             <div key={label} className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
@@ -81,7 +79,7 @@ export default function CardEnvio({ sub, db, extra }) {
           {(sub.prova?.evidencias || []).length > 0 ? (
             <>
               <hr className="vx-sep" style={{ margin: "6px 0" }} />
-              <div style={{ fontWeight: 700, fontSize: 11, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-3)" }}>{t("misc.evidence")}</div>
+              <div style={{ fontWeight: 700, fontSize: 11, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-3)" }}>Evidências</div>
               {sub.prova.evidencias.map((ev, i) => {
                 const val = String(ev.valor || "");
                 const isDataImg = val.startsWith("data:image");
@@ -95,7 +93,7 @@ export default function CardEnvio({ sub, db, extra }) {
                     ) : isDataVid ? (
                       <video src={val} controls style={{ width: "100%", maxHeight: 140, borderRadius: 6 }} />
                     ) : isLink ? (
-                      <a href={val} target="_blank" rel="noreferrer" style={{ color: "var(--brand)", fontSize: 12, wordBreak: "break-all" }}>{t("misc.openLink")}</a>
+                      <a href={val} target="_blank" rel="noreferrer" style={{ color: "var(--brand)", fontSize: 12, wordBreak: "break-all" }}>Abrir link</a>
                     ) : (
                       <span style={{ fontSize: 12, wordBreak: "break-word" }}>{val || "—"}</span>
                     )}
@@ -120,7 +118,7 @@ export default function CardEnvio({ sub, db, extra }) {
             </>
           ) : (
             <div className="vx-row" style={{ padding: "2px 0", gap: 10 }}>
-              <span className="vx-mut">{t("misc.evidence")}</span>
+              <span className="vx-mut">Evidência</span>
               <b style={{ textAlign: "right", wordBreak: "break-all" }}>{sub.prova?.video || sub.prova?.contrato || (sub.arquivos || []).join(", ") || "—"}</b>
             </div>
           )}

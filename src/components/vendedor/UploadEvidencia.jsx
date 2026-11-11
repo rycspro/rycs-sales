@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Upload, X, Image, Film, FileText, Link2 } from "lucide-react";
 import { parse as parseExif, gps as parseGps } from "exifr";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // A captura de câmera feita dentro de um site (não pelo app nativo) às vezes
 // não grava GPS no EXIF, mesmo com a permissão de localização ligada — é uma
@@ -76,7 +75,6 @@ function allowLink(slot) {
 }
 
 export default function UploadEvidencia({ slot, value, onChange, placeholder }) {
-  const { t } = useI18n();
   const fileRef = useRef();
   const tipo = tipoDoSlot(slot);
   const podeLink = allowLink(slot);
@@ -142,7 +140,7 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
             style={{ flex: 1, fontSize: 11.5 }}
             onClick={() => setModo("upload")}
           >
-            <Upload size={12} /> {t("seller.upload.upload")}
+            <Upload size={12} /> Fazer upload
           </button>
           <button
             type="button"
@@ -151,7 +149,7 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
             style={{ flex: 1, fontSize: 11.5 }}
             onClick={() => setModo("link")}
           >
-            <Link2 size={12} /> {t("seller.upload.pasteLink")}
+            <Link2 size={12} /> Colar link
           </button>
         </div>
       )}
@@ -207,10 +205,10 @@ export default function UploadEvidencia({ slot, value, onChange, placeholder }) 
             >
               <Icon size={20} color="var(--brand)" />
               <span style={{ fontSize: 12.5, fontWeight: 600 }}>
-                {forcarCamera ? t("seller.upload.takePhoto") : tipo === "image" ? t("seller.upload.selectImage") : tipo === "video" ? t("seller.upload.selectVideo") : t("seller.upload.selectFile")}
+                {forcarCamera ? "Tirar foto agora" : tipo === "image" ? "Selecionar imagem" : tipo === "video" ? "Selecionar vídeo" : "Selecionar arquivo"}
               </span>
               <span style={{ fontSize: 11 }}>
-                {forcarCamera ? t("seller.upload.cameraOnly") : `PNG, JPG, WEBP${tipo === "video" ? ", MP4, WEBM" : ""} · ${t("seller.upload.maxSize")}`}
+                {forcarCamera ? "Abre a câmera do aparelho — não é possível escolher da galeria" : `PNG, JPG, WEBP${tipo === "video" ? ", MP4, WEBM" : ""} · máx 50MB`}
               </span>
             </button>
           )}

@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // Card "Abastecer caixa": depósito por Pix da empresa. Antes vivia dentro de
 // Insights › Desempenho; movido para Pagamentos › Campanhas.
 export default function AbastecerCaixa({ emp, db, up, aviso }) {
-  const { t } = useI18n();
   const [rec, setRec] = useState("");
   const [cobranca, setCobranca] = useState(null);
   const [gerando, setGerando] = useState(false);
@@ -45,20 +43,20 @@ export default function AbastecerCaixa({ emp, db, up, aviso }) {
 
   return (
     <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
-      <div className="vx-disp" style={{ fontSize: 17, marginBottom: 8 }}>{t("deposit.title")}</div>
+      <div className="vx-disp" style={{ fontSize: 17, marginBottom: 8 }}>Abastecer caixa</div>
       <p className="vx-mut" style={{ fontSize: 13, marginTop: 0 }}>
-        {t("deposit.desc")}
+        Você só paga pelo que foi conferido. O valor sai do caixa no momento em que a ação é liberada.
       </p>
       {!emp.documento && (
         <div style={{ marginBottom: 10 }}>
-          <div className="vx-label">{t("deposit.holderDoc")}</div>
+          <div className="vx-label">CNPJ ou CPF do titular</div>
           <div style={{ display: "flex", gap: 8 }}>
             <input className="vx-input vx-mono" value={doc} onChange={(e) => setDoc(e.target.value)}
               placeholder="00.000.000/0001-00" inputMode="numeric" />
-            <button className="vx-btn" onClick={salvarDocumento}>{t("app.save")}</button>
+            <button className="vx-btn" onClick={salvarDocumento}>Salvar</button>
           </div>
           <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>
-            {t("deposit.docRequired")}
+            Exigido pelo banco para emitir a cobrança em nome da sua empresa.
           </div>
         </div>
       )}
@@ -69,7 +67,7 @@ export default function AbastecerCaixa({ emp, db, up, aviso }) {
         ))}
       </div>
       <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }} disabled={gerando} onClick={abastecer}>
-        {gerando ? t("deposit.registering") : t("deposit.depositViaPix")}
+        {gerando ? "Registrando…" : "Depositar por Pix"}
       </button>
 
       {cobranca && (
@@ -94,23 +92,23 @@ export default function AbastecerCaixa({ emp, db, up, aviso }) {
           {cobranca.pixCopiaECola && (
             <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 6 }}
               onClick={() => { navigator.clipboard?.writeText(cobranca.pixCopiaECola); aviso("Código Pix copiado."); }}>
-              {t("deposit.copyPixCode")}
+              Copiar código Pix
             </button>
           )}
 
           {cobranca.invoiceUrl && (
             <a className="vx-btn vx-btn-sm vx-btn-block" style={{ marginTop: 6 }} target="_blank" rel="noreferrer" href={cobranca.invoiceUrl}>
-              {t("deposit.openInvoice")}
+              Abrir fatura
             </a>
           )}
 
           {cobranca.pix && (
             <div style={{ marginTop: 12 }}>
-              <div className="vx-label">{t("deposit.pixKey")}</div>
+              <div className="vx-label">Chave Pix da RYCS</div>
               <div className="vx-row" style={{ padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                 <span className="vx-mono" style={{ fontSize: 13, wordBreak: "break-all" }}>{cobranca.pix}</span>
                 <button className="vx-btn vx-btn-sm" style={{ flex: "none" }}
-                  onClick={() => { navigator.clipboard?.writeText(cobranca.pix); aviso(t("deposit.pixKeyCopied")); }}>{t("misc.copy")}</button>
+                  onClick={() => { navigator.clipboard?.writeText(cobranca.pix); aviso("Chave Pix copiada."); }}>Copiar</button>
               </div>
               <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>Titular: {cobranca.titular}</div>
             </div>
@@ -118,24 +116,24 @@ export default function AbastecerCaixa({ emp, db, up, aviso }) {
 
           {cobranca.referencia && (
             <div style={{ marginTop: 12 }}>
-              <div className="vx-label">{t("deposit.referenceLabel")}</div>
+              <div className="vx-label">Coloque esta referência na transferência</div>
               <div className="vx-row" style={{ padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                 <span className="vx-mono vx-disp" style={{ fontSize: 15, color: "var(--brand)" }}>{cobranca.referencia}</span>
                 <button className="vx-btn vx-btn-sm" style={{ flex: "none" }}
-                  onClick={() => { navigator.clipboard?.writeText(cobranca.referencia); aviso(t("deposit.referenceCopied")); }}>{t("misc.copy")}</button>
+                  onClick={() => { navigator.clipboard?.writeText(cobranca.referencia); aviso("Referência copiada."); }}>Copiar</button>
               </div>
             </div>
           )}
 
-          <button className="vx-btn vx-btn-ghost vx-btn-sm vx-btn-block" style={{ marginTop: 10 }} onClick={() => setCobranca(null)}>{t("app.close")}</button>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm vx-btn-block" style={{ marginTop: 10 }} onClick={() => setCobranca(null)}>Fechar</button>
         </div>
       )}
       <hr className="vx-sep" />
       <div className="vx-row" style={{ fontSize: 13 }}>
-        <span className="vx-mut">{t("deposit.paidCommissions")}</span><b className="vx-mono">{money(gasto)}</b>
+        <span className="vx-mut">Pago em comissões</span><b className="vx-mono">{money(gasto)}</b>
       </div>
       <div className="vx-row" style={{ fontSize: 13, marginTop: 6 }}>
-        <span className="vx-mut">{t("deposit.totalInvested")}</span><b className="vx-mono">{money(emp.totalAportado || 0)}</b>
+        <span className="vx-mut">Total já investido na plataforma</span><b className="vx-mono">{money(emp.totalAportado || 0)}</b>
       </div>
     </div>
   );

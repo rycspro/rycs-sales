@@ -3,7 +3,6 @@ import { Bell, BellOff, CheckCheck, FileText, GraduationCap, Handshake, Landmark
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Vazio } from "../ui.jsx";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // Cada tipo emitido pelo backend ganha ícone e rótulo. O tipo desconhecido
 // não quebra a tela: cai no genérico e continua legível.
@@ -24,7 +23,6 @@ const TIPOS = {
 const generico = { nome: "Geral", Icon: Bell, tom: "muted" };
 
 export default function NotificacoesEmpresa({ aviso }) {
-  const { t } = useI18n();
   const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -35,7 +33,7 @@ export default function NotificacoesEmpresa({ aviso }) {
     setErro("");
     const r = await api("/notifications");
     setCarregando(false);
-    if (!Array.isArray(r)) return setErro(r?.error || t("notif.loadError"));
+    if (!Array.isArray(r)) return setErro(r?.error || "Não foi possível carregar as notificações.");
     setLista(r);
   };
 
@@ -45,7 +43,7 @@ export default function NotificacoesEmpresa({ aviso }) {
     const r = await apiPatch("/notifications/read-all", {});
     if (r?.error) return aviso?.(r.error);
     setLista((l) => l.map((n) => ({ ...n, lida: 1 })));
-    aviso?.(t("notif.allRead"));
+    aviso?.("Todas as notificações foram marcadas como lidas.");
   };
 
   const abrir = async (n) => {
@@ -60,7 +58,7 @@ export default function NotificacoesEmpresa({ aviso }) {
   // um filtro que nunca tem resultado é ruído na tela.
   const abas = useMemo(() => {
     const presentes = [...new Set(lista.map((n) => n.tipo))];
-    return [["todas", t("notif.all")], ["nao-lidas", `${t("notif.unread")}${naoLidas ? ` (${naoLidas})` : ""}`],
+    return [["todas", "Todas"], ["nao-lidas", `Não lidas${naoLidas ? ` (${naoLidas})` : ""}`],
       ...presentes.map((t) => [t, (TIPOS[t] || generico).nome])];
   }, [lista, naoLidas]);
 
@@ -70,12 +68,12 @@ export default function NotificacoesEmpresa({ aviso }) {
     <div className="vx-fade">
       <div className="vx-page-head">
         <div>
-          <div className="vx-eyebrow">{t("notif.hub")}</div>
-          <h1 className="vx-disp">{t("notif.title")}</h1>
-          <p>{t("notif.desc")}</p>
+          <div className="vx-eyebrow">Central de avisos</div>
+          <h1 className="vx-disp">Notificações</h1>
+          <p>Tudo que aconteceu na sua operação: aprovações, parcerias, importações, Academy, relatórios, pagamentos e indicações.</p>
         </div>
         <button className="vx-btn" onClick={marcarTodas} disabled={!naoLidas}>
-          <CheckCheck size={14} /> {t("notif.markAllRead")}
+          <CheckCheck size={14} /> Marcar todas como lidas
         </button>
       </div>
 
@@ -95,10 +93,10 @@ export default function NotificacoesEmpresa({ aviso }) {
 
       {!carregando && !erro && !visiveis.length && (
         <Vazio
-          titulo={filtro === "nao-lidas" ? t("notif.nothingPending") : t("notif.noNotifications")}
+          titulo={filtro === "nao-lidas" ? "Nada pendente" : "Nenhuma notificação"}
           texto={filtro === "nao-lidas"
-            ? t("notif.allReadDesc")
-            : t("notif.emptyDesc")}
+            ? "Você já leu tudo. Novos avisos aparecem aqui e no sino do cabeçalho."
+            : "Avisos da operação aparecem aqui assim que houver movimento — uma ação enviada, uma parceria aceita, um pagamento confirmado."}
         />
       )}
 
@@ -128,7 +126,7 @@ export default function NotificacoesEmpresa({ aviso }) {
                   {n.corpo && <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3, whiteSpace: "pre-wrap" }}>{n.corpo}</div>}
                   <span className="vx-chip" style={{ marginTop: 7 }}>{t.nome}</span>
                 </div>
-                {!n.lida && <span className="vx-badge vx-badge-brand" style={{ flexShrink: 0 }}>{t("notif.new")}</span>}
+                {!n.lida && <span className="vx-badge vx-badge-brand" style={{ flexShrink: 0 }}>Nova</span>}
               </button>
             );
           })}
@@ -138,7 +136,7 @@ export default function NotificacoesEmpresa({ aviso }) {
       {!carregando && !erro && !!lista.length && (
         <div className="vx-chart-source">
           <BellOff size={11} style={{ verticalAlign: -1, marginRight: 4 }} />
-          {t("notif.footer")}
+          As 50 notificações mais recentes. Clicar em uma marca como lida.
         </div>
       )}
     </div>

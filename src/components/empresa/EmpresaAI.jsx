@@ -3,7 +3,6 @@ import { BookOpen, Bot, CheckCircle2, Download, FileText, FileUp, History, Mic, 
 import { api, apiDelete, API_URL } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { TIPOS_RELATORIO } from "../../../shared/reporting.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 const TIPOS_MATERIAL = [
   { value: "texto", label: "Texto / FAQ" },

@@ -11,70 +11,56 @@ import {
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
 import IntegracaoMeta from "./IntegracaoMeta.jsx";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // ── Data ─────────────────────────────────────────────────────────────
 
-const CAMPOS_EMPRESA_KEYS = ["nome", "razaoSocial", "documento", "segmento", "produto", "endereco", "regiao"];
-const CAMPOS_CONTATO_KEYS = ["representanteLegal", "emailEmpresa", "telefoneEmpresa", "contatoComercial", "contatoFinanceiro"];
-const CAMPOS_COMERCIAL_KEYS = ["ticket", "icp"];
+const CAMPOS_EMPRESA = [
+  ["nome", "Nome fantasia", "Como a empresa é conhecida"],
+  ["razaoSocial", "Razão social", "Razão social completa"],
+  ["documento", "CNPJ ou CPF", "00.000.000/0000-00"],
+  ["segmento", "Segmento", "Ex: Tecnologia, Saúde, Varejo"],
+  ["produto", "Produto ou serviço", "O que você vende?"],
+  ["endereco", "Endereço completo", "Rua, número, cidade, estado"],
+  ["regiao", "Região atendida", "Ex: São Paulo e Grande SP"],
+];
 
-function buildCamposEmpresa(t) {
-  return [
-    ["nome", t("cfg.field.tradeName"), t("cfg.field.tradeName.ph")],
-    ["razaoSocial", t("cfg.field.legalName"), t("cfg.field.legalName.ph")],
-    ["documento", t("cfg.field.taxId"), "00.000.000/0000-00"],
-    ["segmento", t("cfg.field.segment"), t("cfg.field.segment.ph")],
-    ["produto", t("cfg.field.product"), t("cfg.field.product.ph")],
-    ["endereco", t("cfg.field.address"), t("cfg.field.address.ph")],
-    ["regiao", t("cfg.field.region"), t("cfg.field.region.ph")],
-  ];
-}
+const CAMPOS_CONTATO = [
+  ["representanteLegal", "Representante legal", "Nome do responsável"],
+  ["emailEmpresa", "E-mail principal", "email@empresa.com.br"],
+  ["telefoneEmpresa", "Telefone", "(11) 00000-0000"],
+  ["contatoComercial", "E-mail comercial", "comercial@empresa.com.br"],
+  ["contatoFinanceiro", "E-mail financeiro", "financeiro@empresa.com.br"],
+];
 
-function buildCamposContato(t) {
-  return [
-    ["representanteLegal", t("cfg.field.representative"), t("cfg.field.representative.ph")],
-    ["emailEmpresa", t("cfg.field.mainEmail"), "email@empresa.com.br"],
-    ["telefoneEmpresa", t("cfg.field.phone"), "(11) 00000-0000"],
-    ["contatoComercial", t("cfg.field.bizEmail"), "comercial@empresa.com.br"],
-    ["contatoFinanceiro", t("cfg.field.finEmail"), "financeiro@empresa.com.br"],
-  ];
-}
+const CAMPOS_COMERCIAL = [
+  ["ticket", "Ticket médio", "Ex: R$ 2.000"],
+  ["icp", "Perfil de cliente ideal (ICP)", "Ex: PMEs do setor de saúde"],
+];
 
-function buildCamposComercial(t) {
-  return [
-    ["ticket", t("cfg.field.avgTicket"), t("cfg.field.avgTicket.ph")],
-    ["icp", t("cfg.field.icp"), t("cfg.field.icp.ph")],
-  ];
-}
+const NOTIF_OPCOES = [
+  ["notifSubmissoes", "Envio de ações", "Quando um profissional envia uma ação de uma campanha."],
+  ["notifCandidaturas", "Novas candidaturas", "Quando alguém se candidata a uma campanha."],
+  ["notifFinanceiro", "Movimentações financeiras", "Depósitos, cobranças e confirmações de pagamento."],
+  ["notifRelatorios", "Relatórios periódicos", "Resumos semanais de desempenho das campanhas."],
+];
 
-function buildNotifOpcoes(t) {
-  return [
-    ["notifSubmissoes", t("cfg.notif.submissions"), t("cfg.notif.submissions.desc")],
-    ["notifCandidaturas", t("cfg.notif.applications"), t("cfg.notif.applications.desc")],
-    ["notifFinanceiro", t("cfg.notif.financial"), t("cfg.notif.financial.desc")],
-    ["notifRelatorios", t("cfg.notif.reports"), t("cfg.notif.reports.desc")],
-  ];
-}
+const SECOES_NAV = [
+  { key: "dados", label: "Dados da empresa", icon: Building2 },
+  { key: "comercial", label: "Comercial", icon: Briefcase },
+  { key: "integracoes", label: "Integrações", icon: Plug },
+  { key: "notificacoes", label: "Notificações", icon: Bell },
+  { key: "seguranca", label: "Segurança", icon: Lock },
+  { key: "preferencias", label: "Preferências", icon: Settings },
+  { key: "idiomas", label: "Idiomas", icon: Globe },
+  { key: "suporte", label: "Suporte", icon: Headphones },
+  { key: "indicar", label: "Indicar", icon: Gift },
+];
 
-function buildSecoesNav(t) {
-  return [
-    { key: "dados", label: t("cfg.nav.companyData"), icon: Building2 },
-    { key: "comercial", label: t("cfg.nav.commercial"), icon: Briefcase },
-    { key: "integracoes", label: t("cfg.nav.integrations"), icon: Plug },
-    { key: "notificacoes", label: t("cfg.nav.notifications"), icon: Bell },
-    { key: "seguranca", label: t("cfg.nav.security"), icon: Lock },
-    { key: "preferencias", label: t("cfg.nav.preferences"), icon: Settings },
-    { key: "idiomas", label: t("cfg.nav.languages"), icon: Globe },
-    { key: "suporte", label: t("cfg.nav.support"), icon: Headphones },
-    { key: "indicar", label: t("cfg.nav.refer"), icon: Gift },
-  ];
-}
-
+// Idiomas disponíveis para a interface. A preferência fica salva por navegador.
 const IDIOMAS = [
   { code: "pt-BR", nome: "Português (Brasil)", flag: "🇧🇷" },
   { code: "en",    nome: "English",            flag: "🇺🇸" },
-  { code: "hi",    nome: "हिन्दी",              flag: "🇮🇳" },
+  { code: "es",    nome: "Español",            flag: "🇪🇸" },
 ];
 
 // ── UI atoms ──────────────────────────────────────────────────────────
@@ -168,7 +154,7 @@ function InfoRow({ label, value }) {
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
       <div style={{ width: 148, fontSize: 12.5, color: "var(--muted)", fontWeight: 500, flexShrink: 0, paddingTop: 1 }}>{label}</div>
-      <div style={{ fontSize: 13.5, color: value ? "var(--ink)" : "var(--muted)", fontStyle: value ? "normal" : "italic" }}>{value || "—"}</div>
+      <div style={{ fontSize: 13.5, color: value ? "var(--ink)" : "var(--muted)", fontStyle: value ? "normal" : "italic" }}>{value || "Não informado"}</div>
     </div>
   );
 }
@@ -208,7 +194,7 @@ function InlineField({ label, value, onChange, type = "text", placeholder, multi
       onClick={() => !editing && setEditing(true)}
       onMouseEnter={(e) => { if (!editing) e.currentTarget.style.background = dark ? "rgba(255,255,255,.1)" : "var(--surface-2)"; }}
       onMouseLeave={(e) => { if (!editing) e.currentTarget.style.background = ""; }}
-      title={editing ? undefined : undefined}
+      title={editing ? undefined : "Clique para editar"}
     >
       <div style={{ fontSize: 11, color: dark ? "rgba(255,255,255,.65)" : "var(--muted)", fontWeight: 500 }}>{label}</div>
       {editing ? (
@@ -233,7 +219,7 @@ function InlineField({ label, value, onChange, type = "text", placeholder, multi
           />
         )
       ) : (
-        <div style={baseText}>{value || placeholder || "—"}</div>
+        <div style={baseText}>{value || (placeholder ? `${placeholder}` : "Clique para editar")}</div>
       )}
     </div>
   );
@@ -242,14 +228,8 @@ function InlineField({ label, value, onChange, type = "text", placeholder, multi
 // ── Main component ────────────────────────────────────────────────────
 
 export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, secaoInicial = "dados", somenteConteudo = false }) {
-  const { t } = useI18n();
   const [secao, setSecao] = useState(secaoInicial);
   const campanhasEmpresa = (db?.campaigns || []).filter((c) => c.companyId === emp.id);
-  const CAMPOS_EMPRESA = buildCamposEmpresa(t);
-  const CAMPOS_CONTATO = buildCamposContato(t);
-  const CAMPOS_COMERCIAL = buildCamposComercial(t);
-  const NOTIF_OPCOES = buildNotifOpcoes(t);
-  const SECOES_NAV = buildSecoesNav(t);
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
   const [form, setForm] = useState(() => ({
     ...emp,
@@ -279,30 +259,30 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     setIdioma(code);
     try { localStorage.setItem("rycs-idioma", code); } catch { /* ignore */ }
     document.documentElement.lang = code;
-    aviso?.(t("cfg.lang.changed", { lang: IDIOMAS.find((i) => i.code === code)?.nome || code }));
+    aviso?.(`Idioma alterado para ${IDIOMAS.find((i) => i.code === code)?.nome || code}.`);
   };
 
   const enviarLogo = async (e) => {
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
-    if (!["image/jpeg", "image/png"].includes(arquivo.type) || arquivo.size > 2 * 1024 * 1024) return aviso(t("cfg.logo.invalidFile"));
+    if (!["image/jpeg", "image/png"].includes(arquivo.type) || arquivo.size > 2 * 1024 * 1024) return aviso("Envie uma imagem JPG ou PNG de até 2 MB.");
     setEnviandoLogo(true);
     const reader = new FileReader();
-    reader.onerror = () => { setEnviandoLogo(false); aviso(t("cfg.logo.readError")); };
+    reader.onerror = () => { setEnviandoLogo(false); aviso("Não foi possível ler a imagem."); };
     reader.onload = async () => {
       const dataUri = reader.result;
       const img = new Image();
-      img.onerror = () => { setEnviandoLogo(false); aviso(t("cfg.logo.invalid")); };
+      img.onerror = () => { setEnviandoLogo(false); aviso("Imagem inválida."); };
       img.onload = async () => {
         const r = await api(`/companies/${emp.id}/logo`, {
           base64: dataUri.split(",")[1], mimetype: arquivo.type,
           largura: img.width, altura: img.height,
         });
         setEnviandoLogo(false);
-        if (!r || r.error) return aviso(r?.error || t("cfg.logo.uploadError"));
+        if (!r || r.error) return aviso(r?.error || "Não foi possível enviar o logo.");
         setLogo(r.logo);
         up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, logo: r.logo } : c) }));
-        aviso(t("cfg.logo.updated"));
+        aviso("Logo atualizado.");
       };
       img.src = dataUri;
     };
@@ -314,10 +294,10 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     setEnviandoLogo(true);
     const r = await apiPatch(`/companies/${emp.id}`, { logo: "" });
     setEnviandoLogo(false);
-    if (!r || r.error) return aviso(r?.error || t("cfg.logo.removeError"));
+    if (!r || r.error) return aviso(r?.error || "Não foi possível remover o logo.");
     setLogo("");
     up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, logo: "" } : c) }));
-    aviso(t("cfg.logo.removed"));
+    aviso("Logo removido.");
   };
 
   useEffect(() => {
@@ -338,12 +318,12 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
   };
 
   const salvar = async () => {
-    if (form.emailEmpresa && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailEmpresa)) return aviso(t("cfg.validation.email"));
-    if (form.telefoneEmpresa && !/^\d{10,13}$/.test(String(form.telefoneEmpresa).replace(/\D/g, ""))) return aviso(t("cfg.validation.phone"));
-    if (form.documento !== emp.documento && form.documento && !documentoValido(form.documento)) return aviso(t("cfg.validation.taxId"));
+    if (form.emailEmpresa && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailEmpresa)) return aviso("Informe um e-mail válido.");
+    if (form.telefoneEmpresa && !/^\d{10,13}$/.test(String(form.telefoneEmpresa).replace(/\D/g, ""))) return aviso("Informe um telefone válido com DDD.");
+    if (form.documento !== emp.documento && form.documento && !documentoValido(form.documento)) return aviso("Informe um CPF ou CNPJ completo.");
     setSalvando(true);
     const payload = {};
-    [...CAMPOS_EMPRESA_KEYS, ...CAMPOS_CONTATO_KEYS, ...CAMPOS_COMERCIAL_KEYS].forEach((k) => { payload[k] = form[k] || ""; });
+    [...CAMPOS_EMPRESA, ...CAMPOS_CONTATO, ...CAMPOS_COMERCIAL].forEach(([k]) => { payload[k] = form[k] || ""; });
     payload.diferenciais = form.diferenciais || "";
     payload.objecoes = form.objecoes || "";
     payload.cor = form.cor || "";
@@ -354,12 +334,12 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     payload.notifRelatorios = form.notifRelatorios;
     const r = await apiPatch(`/companies/${emp.id}`, payload);
     setSalvando(false);
-    if (!r || r.error) return aviso(r?.error || t("cfg.saveError"));
+    if (!r || r.error) return aviso(r?.error || "Não foi possível salvar.");
     up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, ...payload } : c) }));
     setChanged(false);
     setSavedOk(true);
     setTimeout(() => setSavedOk(false), 3500);
-    aviso(t("cfg.saved"));
+    aviso("Configurações salvas.");
   };
 
   // Visibilidade na vitrine: quando desligada, a empresa (e suas campanhas) não
@@ -369,9 +349,9 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     const novo = !visivel;
     setForm((f) => ({ ...f, visivel: novo }));
     const r = await apiPatch(`/companies/${emp.id}`, { visivel: novo });
-    if (!r || r.error) { setForm((f) => ({ ...f, visivel: !novo })); return aviso(r?.error || t("cfg.visibility.error")); }
+    if (!r || r.error) { setForm((f) => ({ ...f, visivel: !novo })); return aviso(r?.error || "Não foi possível atualizar a visibilidade."); }
     up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, visivel: novo } : c) }));
-    aviso(novo ? t("cfg.visibility.visible") : t("cfg.visibility.hidden"));
+    aviso(novo ? "Empresa visível para os profissionais." : "Empresa oculta — não aparece para nenhum profissional.");
   };
 
   // ── Section content ───────────────────────────────────────────────
@@ -381,12 +361,12 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
       <>
         <div style={{ marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>{t("cfg.nav.companyData")}</h2>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>{t("cfg.data.clickToEdit")}</p>
+            <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>Dados da empresa</h2>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>Clique em qualquer campo para editar diretamente.</p>
           </div>
           <button
             type="button" role="switch" aria-checked={visivel} onClick={alternarVisivel}
-            title={visivel ? t("cfg.visibility.visibleTip") : t("cfg.visibility.hiddenTip")}
+            title={visivel ? "Sua empresa aparece para os profissionais" : "Sua empresa está oculta para todos os profissionais"}
             style={{
               display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", borderRadius: 999,
               cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
@@ -396,7 +376,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
             }}
           >
             {visivel ? <Eye size={15} /> : <EyeOff size={15} />}
-            <span style={{ fontSize: 13, fontWeight: 600 }}>{t("cfg.visibility.toggle")}</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Deixar visível</span>
             <span style={{ width: 38, height: 22, borderRadius: 999, padding: 2, background: visivel ? "var(--brand)" : "var(--surface-3, #d1d5db)", transition: "background .2s", display: "inline-block" }}>
               <span style={{ display: "block", width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transform: visivel ? "translateX(16px)" : "translateX(0)", transition: "transform .2s" }} />
             </span>
@@ -411,9 +391,9 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
               {logo ? <img src={logo} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome || "?")[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <InlineField label="" value={form.nome} onChange={(v) => { set("nome")(v); setChanged(true); }} placeholder={t("cfg.field.tradeName")} dark
+              <InlineField label="" value={form.nome} onChange={(v) => { set("nome")(v); setChanged(true); }} placeholder="Nome fantasia" dark
                 extraStyle={{ fontSize: 20, fontWeight: 700 }} />
-              <InlineField label="" value={form.segmento} onChange={(v) => { set("segmento")(v); setChanged(true); }} placeholder={t("cfg.field.segment")} dark />
+              <InlineField label="" value={form.segmento} onChange={(v) => { set("segmento")(v); setChanged(true); }} placeholder="Segmento da empresa" dark />
             </div>
             {/* Logo upload inline no header */}
             <div style={{ flexShrink: 0 }}>
@@ -421,16 +401,16 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
               <button
                 onClick={() => inputLogoRef.current?.click()}
                 disabled={enviandoLogo}
-                title={logo ? t("cfg.logo.change") : t("cfg.logo.upload")}
+                title={logo ? "Trocar logo" : "Enviar logo"}
                 style={{ background: "rgba(255,255,255,.18)", border: "1.5px solid rgba(255,255,255,.4)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: "#fff", fontSize: 12, fontFamily: "inherit" }}
               >
                 <ImagePlus size={13} />
-                {enviandoLogo ? "…" : logo ? t("cfg.logo.changeShort") : t("cfg.logo.label")}
+                {enviandoLogo ? "…" : logo ? "Trocar" : "Logo"}
               </button>
               {logo && (
-                <button onClick={removerLogo} disabled={enviandoLogo} title={t("cfg.logo.remove")}
+                <button onClick={removerLogo} disabled={enviandoLogo} title="Remover logo"
                   style={{ marginTop: 4, background: "rgba(255,0,0,.25)", border: "1.5px solid rgba(255,100,100,.5)", borderRadius: 8, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: "#fff", fontSize: 11, fontFamily: "inherit" }}>
-                  <Trash2 size={11} /> {t("cfg.logo.remove")}
+                  <Trash2 size={11} /> Remover
                 </button>
               )}
             </div>
@@ -441,47 +421,47 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
             <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: "0 32px" }}>
               {/* Coluna 1: Dados cadastrais */}
               <div>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>{t("cfg.col.registration")}</div>
-                <InlineField label={t("cfg.field.legalName")} value={form.razaoSocial} onChange={set("razaoSocial")} placeholder={t("cfg.field.legalName.ph")} />
-                <InlineField label={t("cfg.field.taxId")} value={mascararDocumento(form.documento)} onChange={v => set("documento")(mascararDocumento(v))} placeholder="00.000.000/0000-00" />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Dados cadastrais</div>
+                <InlineField label="Razão social" value={form.razaoSocial} onChange={set("razaoSocial")} placeholder="Razão social completa" />
+                <InlineField label="CNPJ / CPF" value={mascararDocumento(form.documento)} onChange={v => set("documento")(mascararDocumento(v))} placeholder="00.000.000/0000-00" />
               </div>
 
               {/* Coluna 2: Contato */}
               <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>{t("cfg.col.contact")}</div>
-                <InlineField label={t("cfg.field.representative")} value={form.representanteLegal} onChange={set("representanteLegal")} placeholder={t("cfg.field.representative.ph")} />
-                <InlineField label={t("app.email")} value={form.emailEmpresa} onChange={set("emailEmpresa")} type="email" placeholder="email@empresa.com.br" />
-                <InlineField label={t("app.phone")} value={form.telefoneEmpresa} onChange={set("telefoneEmpresa")} placeholder="(11) 00000-0000" />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Contato</div>
+                <InlineField label="Representante" value={form.representanteLegal} onChange={set("representanteLegal")} placeholder="Nome do responsável" />
+                <InlineField label="E-mail" value={form.emailEmpresa} onChange={set("emailEmpresa")} type="email" placeholder="email@empresa.com.br" />
+                <InlineField label="Telefone" value={form.telefoneEmpresa} onChange={set("telefoneEmpresa")} placeholder="(11) 00000-0000" />
               </div>
 
               {/* Coluna 3: Comercial + Localização */}
               <div style={{ borderLeft: mobile ? "none" : "1px solid var(--border)", borderTop: mobile ? "1px solid var(--border)" : "none", paddingLeft: mobile ? 0 : 32, paddingTop: mobile ? 16 : 0, marginTop: mobile ? 16 : 0 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>{t("cfg.col.bizLocation")}</div>
-                <InlineField label={t("cfg.field.avgTicket")} value={form.ticket} onChange={set("ticket")} placeholder={t("cfg.field.avgTicket.ph")} />
-                <InlineField label={t("cfg.field.region")} value={form.regiao} onChange={set("regiao")} placeholder={t("cfg.field.region.ph")} />
-                <InlineField label={t("cfg.field.address")} value={form.endereco} onChange={set("endereco")} placeholder={t("cfg.field.address.ph")} />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Comercial & Localização</div>
+                <InlineField label="Ticket médio" value={form.ticket} onChange={set("ticket")} placeholder="Ex: R$ 2.000" />
+                <InlineField label="Região atendida" value={form.regiao} onChange={set("regiao")} placeholder="Ex: São Paulo e Grande SP" />
+                <InlineField label="Endereço" value={form.endereco} onChange={set("endereco")} placeholder="Rua, número, cidade, estado" />
               </div>
             </div>
 
             {/* Produto + ICP editáveis */}
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
               <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>{t("cfg.field.product")}</div>
-                <InlineField label="" value={form.produto} onChange={set("produto")} placeholder={t("cfg.field.product.ph")} multiline />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Produto / Serviço</div>
+                <InlineField label="" value={form.produto} onChange={set("produto")} placeholder="O que você vende?" multiline />
               </div>
               <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px" }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>{t("cfg.field.icp")}</div>
-                <InlineField label="" value={form.icp} onChange={set("icp")} placeholder={t("cfg.field.icp.ph")} multiline />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Perfil de cliente ideal (ICP)</div>
+                <InlineField label="" value={form.icp} onChange={set("icp")} placeholder="Ex: PMEs do setor de saúde" multiline />
               </div>
             </div>
           </div>
         </div>
 
         {/* Contatos adicionais */}
-        <Block title={t("cfg.data.additionalContacts")} description={t("cfg.data.additionalContacts.desc")}>
+        <Block title="Contatos adicionais" description="E-mails de acesso comercial e financeiro.">
           <FGrid>
-            <FInput label={t("cfg.field.bizEmail")} value={form.contatoComercial} onChange={set("contatoComercial")} type="email" placeholder="comercial@empresa.com.br" />
-            <FInput label={t("cfg.field.finEmail")} value={form.contatoFinanceiro} onChange={set("contatoFinanceiro")} type="email" placeholder="financeiro@empresa.com.br" />
+            <FInput label="E-mail comercial" value={form.contatoComercial} onChange={set("contatoComercial")} type="email" placeholder="comercial@empresa.com.br" />
+            <FInput label="E-mail financeiro" value={form.contatoFinanceiro} onChange={set("contatoFinanceiro")} type="email" placeholder="financeiro@empresa.com.br" />
           </FGrid>
         </Block>
       </>
@@ -489,17 +469,17 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     comercial: (
       <>
-        <PgHead title={t("cfg.biz.title")} description={t("cfg.biz.desc")} />
-        <Block title={t("cfg.biz.dataTitle")}>
+        <PgHead title="Informações comerciais" description="Configure seu perfil de cliente ideal e argumentação de vendas." />
+        <Block title="Dados comerciais">
           <FGrid>
-            <FInput label={t("cfg.field.avgTicket")} value={form.ticket} onChange={set("ticket")} placeholder={t("cfg.field.avgTicket.ph")} />
-            <FInput label={t("cfg.field.icp")} value={form.icp} onChange={set("icp")} placeholder={t("cfg.field.icp.ph")} />
+            <FInput label="Ticket médio" value={form.ticket} onChange={set("ticket")} placeholder="Ex: R$ 2.000" />
+            <FInput label="Perfil de cliente ideal (ICP)" value={form.icp} onChange={set("icp")} placeholder="Ex: PMEs do setor de saúde" />
           </FGrid>
         </Block>
-        <Block title={t("cfg.biz.salesArgs")} description={t("cfg.biz.salesArgs.desc")}>
+        <Block title="Argumentação de vendas" description="Ajuda os profissionais a apresentar e defender sua solução.">
           <FGrid cols={1}>
-            <FTextarea label={t("cfg.biz.differentials")} value={form.diferenciais} onChange={set("diferenciais")} placeholder={t("cfg.biz.differentials.ph")} />
-            <FTextarea label={t("cfg.biz.objections")} value={form.objecoes} onChange={set("objecoes")} placeholder={t("cfg.biz.objections.ph")} />
+            <FTextarea label="Diferenciais" value={form.diferenciais} onChange={set("diferenciais")} placeholder="O que torna sua solução única?" />
+            <FTextarea label="Objeções mais comuns" value={form.objecoes} onChange={set("objecoes")} placeholder="Quais dúvidas ou resistências o cliente costuma ter?" />
           </FGrid>
         </Block>
       </>
@@ -507,12 +487,12 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     notificacoes: (
       <>
-        <PgHead title={t("cfg.nav.notifications")} description={t("cfg.notif.desc")} />
-        <Block title={t("cfg.notif.channel")}>
-          <Toggle value={form.notifEmail} onChange={tog("notifEmail")} label={t("cfg.notif.emailToggle")} desc={t("cfg.notif.emailToggle.desc")} />
+        <PgHead title="Notificações" description="Escolha quais alertas deseja receber por e-mail." />
+        <Block title="Canal">
+          <Toggle value={form.notifEmail} onChange={tog("notifEmail")} label="Notificações por e-mail" desc="Receba alertas no e-mail principal da conta." />
         </Block>
         {form.notifEmail && (
-          <Block title={t("cfg.notif.events")}>
+          <Block title="Eventos notificados">
             {NOTIF_OPCOES.map(([chave, label, desc]) => (
               <CkBox key={chave} value={form[chave]} onChange={tog(chave)} label={label} desc={desc} />
             ))}
@@ -525,11 +505,11 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     preferencias: (
       <>
-        <PgHead title={t("cfg.nav.preferences")} description={t("cfg.pref.desc")} />
+        <PgHead title="Preferências" description="Configurações de interface e experiência." />
         <Block>
           <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", color: "var(--muted)" }}>
             <Globe size={18} strokeWidth={1.5} />
-            <span style={{ fontSize: 13.5 }}>{t("cfg.pref.comingSoon")}</span>
+            <span style={{ fontSize: 13.5 }}>Preferências adicionais estarão disponíveis em breve.</span>
           </div>
         </Block>
       </>
@@ -537,7 +517,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     idiomas: (
       <>
-        <PgHead title={t("cfg.nav.languages")} description={t("cfg.lang.desc")} />
+        <PgHead title="Idiomas" description="Escolha o idioma da interface do sistema." />
         <Block>
           <div style={{ display: "grid", gap: 8 }}>
             {IDIOMAS.map((i) => {
@@ -561,7 +541,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
             })}
           </div>
           <p style={{ fontSize: 12, color: "var(--muted)", margin: "12px 2px 0", lineHeight: 1.6 }}>
-            {t("cfg.lang.savedInBrowser")}
+            A escolha fica salva neste navegador e define o idioma da interface.
           </p>
         </Block>
       </>
@@ -569,11 +549,11 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     suporte: (
       <>
-        <PgHead title={t("cfg.nav.support")} description={t("cfg.support.desc")} />
-        <Block title={t("cfg.support.channels")}>
+        <PgHead title="Suporte" description="Entre em contato com a equipe RYCS." />
+        <Block title="Canais de atendimento">
           {[
-            { icon: Mail, label: t("app.email"), valor: "suporte@rycs.pro", href: "mailto:suporte@rycs.pro", desc: t("cfg.support.emailReply") },
-            { icon: MessageCircle, label: "WhatsApp", valor: "(11) 99999-9999", href: "https://wa.me/5511999999999", desc: t("cfg.support.whatsappHours") },
+            { icon: Mail, label: "E-mail", valor: "suporte@rycs.pro", href: "mailto:suporte@rycs.pro", desc: "Resposta em até 1 dia útil" },
+            { icon: MessageCircle, label: "WhatsApp", valor: "(11) 99999-9999", href: "https://wa.me/5511999999999", desc: "Atendimento em horário comercial" },
           ].map(({ icon: Icon, label, valor, href, desc }) => (
             <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -592,10 +572,10 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
             </div>
           ))}
         </Block>
-        <Block title={t("cfg.support.helpCenter")}>
+        <Block title="Central de ajuda">
           <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", color: "var(--muted)" }}>
             <Globe size={18} strokeWidth={1.5} />
-            <span style={{ fontSize: 13.5 }}>{t("cfg.support.docsComingSoon")}</span>
+            <span style={{ fontSize: 13.5 }}>Documentação e tutoriais em breve em <b>docs.rycs.pro</b>.</span>
           </div>
         </Block>
       </>
@@ -650,13 +630,13 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 14px", marginBottom: 20, gap: 12, boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
             <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: "var(--ink)" }}>
               <AlertCircle size={14} style={{ color: "var(--brand)", flexShrink: 0 }} />
-              {t("cfg.unsavedChanges")}
+              Alterações não salvas
             </span>
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="vx-btn vx-btn-sm" onClick={descartar}>{t("cfg.discard")}</button>
+              <button className="vx-btn vx-btn-sm" onClick={descartar}>Descartar</button>
               <button className="vx-btn vx-btn-primary vx-btn-sm" disabled={salvando} onClick={salvar}>
                 <Save size={12} />
-                {salvando ? t("cfg.saving") : t("app.save")}
+                {salvando ? "Salvando…" : "Salvar"}
               </button>
             </div>
           </div>
@@ -666,7 +646,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
         {savedOk && !changed && (
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "var(--radius-sm)", padding: "10px 14px", marginBottom: 20, color: "#15803D" }}>
             <Check size={14} />
-            {t("cfg.savedSuccess")}
+            Configurações salvas com sucesso
           </div>
         )}
 
@@ -678,7 +658,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
           <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 8, borderTop: "1px solid var(--border)", marginTop: 8 }}>
             <button className="vx-btn vx-btn-primary" disabled={salvando || !changed} onClick={salvar} style={{ minWidth: 164, opacity: changed ? 1 : 0.4 }}>
               <Save size={14} />
-              {salvando ? t("cfg.saving") : t("cfg.saveChanges")}
+              {salvando ? "Salvando…" : "Salvar alterações"}
             </button>
           </div>
         )}

@@ -2,10 +2,8 @@ import { useState } from "react";
 import { Vazio } from "../ui.jsx";
 import Chat from "../Chat.jsx";
 import { api } from "../../lib/api.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 export default function ChatEmpresa({ emp, db, up }) {
-  const { t } = useI18n();
   const time = db.sellers.filter((s) => {
     const st = s.aplicacoes?.[emp.id];
     return st === "aprovado" || st === "parcial";
@@ -22,7 +20,7 @@ export default function ChatEmpresa({ emp, db, up }) {
     }));
   };
 
-  if (!time.length) return <Vazio titulo={t("chat.noConversations")} texto={t("chat.noConversationsDesc")} />;
+  if (!time.length) return <Vazio titulo="Sem conversas" texto="O chat abre quando você aprova um vendedor na aba Time." />;
   return (
     <>
       <div className="vx-tabs" style={{ marginBottom: 14 }}>

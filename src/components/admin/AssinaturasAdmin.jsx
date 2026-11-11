@@ -3,13 +3,21 @@ import { Search, AlertTriangle, Gift, Link2, Copy } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { ORDEM_PLANOS, PLANOS } from "../../../shared/planos.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 // Cobrança das empresas, na visão da plataforma.
 //
 // Lista TODAS as empresas, inclusive as que nunca assinaram. Mostrar só quem
 // tem assinatura esconderia exatamente o grupo que a operação precisa ver: as
 // empresas usando a RYCS sem pagar.
+
+const ROTULOS = {
+  ativa: "Ativo",
+  premium: "Premium",
+  trial: "Trial",
+  pendente: "Pendente",
+  inadimplente: "Inadimplente",
+  sem: "Sem assinatura",
+};
 
 const TONS = {
   ativa: "brand",
@@ -20,19 +28,17 @@ const TONS = {
   sem: "muted",
 };
 
+const FILTROS = [
+  ["todos", "Todos"],
+  ["ativa", "Ativos"],
+  ["premium", "Premium"],
+  ["trial", "Trial"],
+  ["pendente", "Pendentes"],
+  ["inadimplente", "Inadimplentes"],
+  ["sem", "Sem assinatura"],
+];
+
 export default function AssinaturasAdmin() {
-  const { t } = useI18n();
-  const ROTULOS = {
-    ativa: t("admin.subs.statusActive"), premium: "Premium", trial: "Trial",
-    pendente: t("admin.subs.statusPending"), inadimplente: t("admin.subs.statusOverdue"),
-    sem: t("admin.subs.statusNone"),
-  };
-  const FILTROS = [
-    ["todos", t("admin.subs.filterAll")], ["ativa", t("admin.subs.filterActive")],
-    ["premium", "Premium"], ["trial", "Trial"],
-    ["pendente", t("admin.subs.filterPending")], ["inadimplente", t("admin.subs.filterOverdue")],
-    ["sem", t("admin.subs.statusNone")],
-  ];
   const [dados, setDados] = useState(null);
   const [filtro, setFiltro] = useState("todos");
   const [busca, setBusca] = useState("");
@@ -58,7 +64,7 @@ export default function AssinaturasAdmin() {
   const planosPagos = ORDEM_PLANOS.filter((chave) => PLANOS[chave]?.preco > 0);
   const liberarTrial = async (linha) => {
     const plano = planosTrial[linha.companyId] || planosPagos[0]?.chave;
-    if (!plano || !window.confirm(t("admin.subs.confirmTrial", { plan: PLANOS[plano].nome, company: linha.empresa }))) return;
+    if (!plano || !window.confirm(`Liberar 7 dias de acesso ao plano ${PLANOS[plano].nome} para ${linha.empresa}?`)) return;
     setLiberando(linha.companyId);
     const r = await api(`/admin/subscriptions/${linha.companyId}/secret-trial`, { plano });
     setLiberando("");
@@ -76,7 +82,7 @@ export default function AssinaturasAdmin() {
     return l;
   }, [dados, filtro, busca]);
 
-  if (!dados) return <div className="vx-fade"><div className="vx-mut" style={{ fontSize: 13 }}>{t("common.loading")}</div></div>;
+  if (!dados) return <div className="vx-fade"><div className="vx-mut" style={{ fontSize: 13 }}>Carregando…</div></div>;
 
   const resumo = dados.resumo || {};
 
@@ -84,18 +90,18 @@ export default function AssinaturasAdmin() {
     <div className="vx-fade">
       <div className="vx-row" style={{ marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div className="vx-disp" style={{ fontSize: 22 }}>{t("admin.subs.title")}</div>
-          <span className="vx-badge vx-badge-muted">{dados.total} {t("admin.subs.companies")}</span>
+          <div className="vx-disp" style={{ fontSize: 22 }}>Cobrança</div>
+          <span className="vx-badge vx-badge-muted">{dados.total} empresas</span>
         </div>
         <button className="vx-btn vx-btn-sm" onClick={gerarLink} disabled={gerando}>
-          <Link2 size={13} /> {gerando ? t("admin.subs.generating") : t("admin.subs.generateTrial")}
+          <Link2 size={13} /> {gerando ? "Gerando…" : "Gerar link de trial"}
         </button>
       </div>
 
       {convite && (
         <div className="vx-card" style={{ padding: 16, marginBottom: 16, borderColor: "var(--brand)", background: "var(--brand-50)" }}>
           <div className="vx-eyebrow" style={{ color: "var(--brand)", marginBottom: 7 }}>
-            {t("admin.subs.trialLinkTitle", { days: convite.dias })}
+            Link de {convite.dias} dias — copie agora
           </div>
           <div className="vx-mono" style={{
             fontSize: 12, wordBreak: "break-all", background: "var(--surface)",
@@ -103,10 +109,10 @@ export default function AssinaturasAdmin() {
           }}>{convite.url}</div>
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             <button className="vx-btn vx-btn-primary vx-btn-sm"
-              onClick={() => { navigator.clipboard?.writeText(convite.url); window.alert(t("admin.subs.linkCopied")); }}>
-              <Copy size={13} /> {t("admin.subs.copyLink")}
+              onClick={() => { navigator.clipboard?.writeText(convite.url); window.alert("Link copiado."); }}>
+              <Copy size={13} /> Copiar link
             </button>
-            <button className="vx-btn vx-btn-sm" onClick={() => setConvite(null)}>{t("common.close")}</button>
+            <button className="vx-btn vx-btn-sm" onClick={() => setConvite(null)}>Fechar</button>
           </div>
           <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10, lineHeight: 1.6 }}>
             {convite.aviso} Vale para uma única empresa, expira em {new Date(convite.expiraEm).toLocaleDateString("pt-BR")},
@@ -121,8 +127,8 @@ export default function AssinaturasAdmin() {
           <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
             <AlertTriangle size={16} color="var(--amber)" style={{ flexShrink: 0, marginTop: 1 }} />
             <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6 }}>
-              {resumo.sem > 0 && <><b>{resumo.sem}</b> {t("admin.subs.noSubWarning")} </>}
-              {resumo.inadimplente > 0 && <><b>{resumo.inadimplente}</b> {t("admin.subs.overdueWarning")}</>}
+              {resumo.sem > 0 && <><b>{resumo.sem}</b> empresa(s) usando a plataforma sem assinatura. </>}
+              {resumo.inadimplente > 0 && <><b>{resumo.inadimplente}</b> com pagamento pendente de regularização.</>}
             </div>
           </div>
         </div>
@@ -132,12 +138,12 @@ export default function AssinaturasAdmin() {
         <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
           <Search size={15} style={{ position: "absolute", left: 10, top: 11, color: "var(--muted)" }} />
           <input className="vx-input" value={busca} onChange={(e) => setBusca(e.target.value)}
-            placeholder={t("admin.subs.searchCompany")} style={{ paddingLeft: 32 }} />
+            placeholder="Buscar empresa" style={{ paddingLeft: 32 }} />
         </div>
         <div className="vx-seg">
-          {FILTROS.map(([k, label]) => (
+          {FILTROS.map(([k, t]) => (
             <button key={k} data-on={filtro === k ? "1" : "0"} onClick={() => setFiltro(k)}>
-              {label}{k !== "todos" && resumo[k] ? ` ${resumo[k]}` : ""}
+              {t}{k !== "todos" && resumo[k] ? ` ${resumo[k]}` : ""}
             </button>
           ))}
         </div>
@@ -148,9 +154,9 @@ export default function AssinaturasAdmin() {
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
             <thead>
               <tr>
-                {[t("admin.subs.colCompany"), t("admin.subs.colPlan"), t("admin.subs.colAmount"), "Status", t("admin.subs.colNextBilling"), t("admin.subs.colAction")].map((h, i) => (
+                {["Empresa", "Plano", "Valor", "Status", "Próxima cobrança", "Ação interna"].map((h) => (
                   <th key={h} style={{
-                    textAlign: i === 2 ? "right" : "left", padding: "11px 14px",
+                    textAlign: h === "Valor" ? "right" : "left", padding: "11px 14px",
                     fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase",
                     color: "var(--muted)", fontWeight: 600, borderBottom: "1px solid var(--border)",
                     whiteSpace: "nowrap",
@@ -177,25 +183,25 @@ export default function AssinaturasAdmin() {
                   </td>
                   <td style={{ padding: "11px 14px", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
                     {l.proximaCobranca
-                      ? <>{dataCurta(l.proximaCobranca)}{l.estado === "trial" && <div className="vx-mut" style={{ fontSize: 11 }}>{t("admin.subs.trialEnd")}</div>}</>
+                      ? <>{dataCurta(l.proximaCobranca)}{l.estado === "trial" && <div className="vx-mut" style={{ fontSize: 11 }}>fim do trial</div>}</>
                       : <span className="vx-mut">—</span>}
                   </td>
                   <td style={{ padding: "9px 14px", borderBottom: "1px solid var(--border)", minWidth: 210 }}>
                     {l.trialElegivel ? (
                       <div style={{ display: "flex", gap: 6 }}>
-                        <select className="vx-input" aria-label={t("admin.subs.trialPlanFor", { company: l.empresa })}
+                        <select className="vx-input" aria-label={`Plano do trial para ${l.empresa}`}
                           value={planosTrial[l.companyId] || planosPagos[0]?.chave || ""}
                           onChange={(e) => setPlanosTrial((atual) => ({ ...atual, [l.companyId]: e.target.value }))}
                           style={{ minWidth: 0, padding: "6px 8px", fontSize: 12 }}>
                           {planosPagos.map((chave) => <option key={chave} value={chave}>{PLANOS[chave].nome}</option>)}
                         </select>
                         <button className="vx-btn vx-btn-sm" onClick={() => liberarTrial(l)} disabled={liberando === l.companyId}
-                          title={t("admin.subs.grantTrialTitle")}>
-                          <Gift size={13} />{liberando === l.companyId ? "…" : t("admin.subs.sevenDays")}
+                          title="Conceder trial interno de sete dias">
+                          <Gift size={13} />{liberando === l.companyId ? "…" : "7 dias"}
                         </button>
                       </div>
-                    ) : l.trialUsado ? <span className="vx-mut" style={{ fontSize: 12 }}>{t("admin.subs.trialUsed")}</span>
-                      : <span className="vx-mut" style={{ fontSize: 12 }}>{t("admin.subs.unavailable")}</span>}
+                    ) : l.trialUsado ? <span className="vx-mut" style={{ fontSize: 12 }}>Trial já utilizado</span>
+                      : <span className="vx-mut" style={{ fontSize: 12 }}>Indisponível neste status</span>}
                   </td>
                 </tr>
               ))}
@@ -204,7 +210,7 @@ export default function AssinaturasAdmin() {
         </div>
         {linhas.length === 0 && (
           <div className="vx-mut" style={{ padding: 20, textAlign: "center", fontSize: 13 }}>
-            {t("admin.subs.noCompanies")}
+            Nenhuma empresa neste filtro.
           </div>
         )}
       </div>

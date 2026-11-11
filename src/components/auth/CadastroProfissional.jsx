@@ -6,10 +6,8 @@ import MolduraAuth from "./MolduraAuth.jsx";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
 import { ROTAS, navegar, parametro } from "../../lib/rotas.js";
 import { LIMITES, avaliarFoto, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 export default function CadastroProfissional({ onRegister }) {
-  const { t } = useI18n();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -40,8 +38,8 @@ export default function CadastroProfissional({ onRegister }) {
     if (!arquivo) return;
     setCurriculoErro("");
     const tiposOk = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-    if (!tiposOk.includes(arquivo.type)) { setCurriculoErro(t("auth.register.cvFormatError")); return; }
-    if (arquivo.size > 8 * 1024 * 1024) { setCurriculoErro(t("auth.register.cvSizeError")); return; }
+    if (!tiposOk.includes(arquivo.type)) { setCurriculoErro("Envie o currículo em PDF ou Word."); return; }
+    if (arquivo.size > 8 * 1024 * 1024) { setCurriculoErro("O arquivo deve ter no máximo 8MB."); return; }
     const reader = new FileReader();
     reader.onload = () => setCurriculo({ base64: reader.result.split(",")[1], mimetype: arquivo.type, nome: arquivo.name });
     reader.readAsDataURL(arquivo);
@@ -60,7 +58,7 @@ export default function CadastroProfissional({ onRegister }) {
       });
       if (!avaliacao.aprovada) {
         const problema = avaliacao.problemas[0];
-        setFotoErro(problema ? problema.comoResolver : t("auth.register.photoRejected"));
+        setFotoErro(problema ? problema.comoResolver : "Foto não aprovada. Tente outra.");
         return;
       }
       const reader = new FileReader();
@@ -70,7 +68,7 @@ export default function CadastroProfissional({ onRegister }) {
       };
       reader.readAsDataURL(arquivo);
     };
-    img.onerror = () => setFotoErro(t("auth.register.photoReadError"));
+    img.onerror = () => setFotoErro("Não foi possível ler a imagem. Tente outra.");
     img.src = URL.createObjectURL(arquivo);
   };
 
@@ -86,9 +84,9 @@ export default function CadastroProfissional({ onRegister }) {
     e.preventDefault();
     setErroSenha("");
     if (!aceitouTermos) return;
-    if (senha.length < 6) { setErroSenha(t("auth.register.minChars")); return; }
-    if (senha !== senhaConfirm) { setErroSenha(t("auth.register.passwordMismatch")); return; }
-    if (!foto) { setFotoErro(t("auth.register.photoRequired")); return; }
+    if (senha.length < 6) { setErroSenha("Mínimo 6 caracteres."); return; }
+    if (senha !== senhaConfirm) { setErroSenha("As senhas não coincidem."); return; }
+    if (!foto) { setFotoErro("Foto de perfil é obrigatória."); return; }
     setLoading(true);
     await onRegister({
       role: "vendedor", nome, email, senha, whats, cidade, perfil,
@@ -105,15 +103,15 @@ export default function CadastroProfissional({ onRegister }) {
 
   return (
     <MolduraAuth
-      tarja={t("auth.register.proTag")}
-      titulo={t("auth.register.proTitle")}
-      subtitulo={t("auth.register.proSubtitle")}
+      tarja="Profissional de vendas"
+      titulo="Crie sua conta de profissional"
+      subtitulo="Você recebe campanhas de empresas, registra suas ações e é remunerado por ação verificada."
       rodape={
         <>
-          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => navegar(ROTAS.login)}>{t("auth.register.hasAccount")}</button>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => navegar(ROTAS.login)}>Já tenho conta — entrar</button>
           <div style={{ marginTop: 4 }}>
             <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => navegar(ROTAS.cadastroEmpresa)} style={{ fontSize: 12.5 }}>
-              {t("auth.register.isCompany")}
+              Sou empresa e quero contratar
             </button>
           </div>
         </>
@@ -123,7 +121,7 @@ export default function CadastroProfissional({ onRegister }) {
         {/* Foto de perfil */}
         <div style={{ marginBottom: 16 }}>
           <label className="vx-label" style={{ display: "block", marginBottom: 6 }}>
-            {t("auth.register.profilePhoto")} <span style={{ color: "var(--red)" }}>*</span>
+            Foto de perfil <span style={{ color: "var(--red)" }}>*</span>
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button type="button" onClick={abrirSeletorFoto}
@@ -133,12 +131,12 @@ export default function CadastroProfissional({ onRegister }) {
                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0,
               }}>
               {fotoPrevia
-                ? <img src={fotoPrevia} alt={t("auth.register.photoPreview")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ? <img src={fotoPrevia} alt="Prévia" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <Camera size={24} style={{ color: "var(--text-3)" }} />}
             </button>
             <div style={{ flex: 1 }}>
               <button type="button" className="vx-btn vx-btn-sm" onClick={abrirSeletorFoto} style={{ minHeight: 36 }}>
-                {fotoPrevia ? t("auth.register.changePhoto") : t("auth.register.uploadPhoto")}
+                {fotoPrevia ? "Trocar foto" : "Enviar foto"}
               </button>
               <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>JPG, PNG ou WebP. Até {Math.round(LIMITES.tamanhoMaximoBytes / 1024 / 1024)} MB.</div>
             </div>
@@ -151,11 +149,11 @@ export default function CadastroProfissional({ onRegister }) {
         {/* Currículo (opcional) */}
         <div style={{ marginBottom: 16 }}>
           <label className="vx-label" style={{ display: "block", marginBottom: 6 }}>
-            {t("auth.register.cv")} <span className="vx-mut" style={{ fontWeight: 400 }}>({t("auth.register.cvHint")})</span>
+            Currículo <span className="vx-mut" style={{ fontWeight: 400 }}>(opcional · PDF ou Word · a empresa pode visualizar)</span>
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <button type="button" className="vx-btn vx-btn-sm" onClick={() => inputCurriculo.current?.click()}>
-              {curriculo ? t("auth.register.changeFile") : t("auth.register.uploadCv")}
+              {curriculo ? "Trocar arquivo" : "Enviar currículo"}
             </button>
             {curriculo && <span style={{ fontSize: 12.5, color: "var(--muted)" }}>{curriculo.nome}</span>}
           </div>
@@ -165,21 +163,22 @@ export default function CadastroProfissional({ onRegister }) {
           {curriculoErro && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 6 }}>{curriculoErro}</div>}
         </div>
 
-        <Campo label={t("auth.register.yourName")}>
-          <input className="vx-input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder={t("auth.register.namePlaceholder")} required />
+        <Campo label="Seu nome">
+          <input className="vx-input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Como você quer ser chamado" required />
         </Campo>
-        <Campo label={t("login.email")}>
+        <Campo label="E-mail">
           <input className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
         </Campo>
 
-        <Campo label={t("login.password")}>
+        {/* Senha com olhinho */}
+        <Campo label="Senha">
           <div style={{ position: "relative" }}>
             <input className="vx-input" type={verSenha ? "text" : "password"} value={senha}
               onChange={(e) => { setSenha(e.target.value); setErroSenha(""); }}
-              placeholder={t("auth.register.minChars")} required minLength={6}
+              placeholder="Mínimo 6 caracteres" required minLength={6}
               style={{ paddingRight: 42 }} />
             <button type="button" onClick={() => setVerSenha(!verSenha)} tabIndex={-1}
-              aria-label={verSenha ? t("auth.hidePassword") : t("auth.showPassword")}
+              aria-label={verSenha ? "Ocultar senha" : "Mostrar senha"}
               style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--text-3)" }}>
               {verSenha ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -187,14 +186,14 @@ export default function CadastroProfissional({ onRegister }) {
         </Campo>
 
         {/* Confirmar senha */}
-        <Campo label={t("auth.register.confirmPassword")}>
+        <Campo label="Confirmar senha">
           <div style={{ position: "relative" }}>
             <input className="vx-input" type={verSenhaConfirm ? "text" : "password"} value={senhaConfirm}
               onChange={(e) => { setSenhaConfirm(e.target.value); setErroSenha(""); }}
-              placeholder={t("auth.register.repeatPassword")} required minLength={6}
+              placeholder="Repita a senha" required minLength={6}
               style={{ paddingRight: 42 }} />
             <button type="button" onClick={() => setVerSenhaConfirm(!verSenhaConfirm)} tabIndex={-1}
-              aria-label={verSenhaConfirm ? t("auth.hidePassword") : t("auth.showPassword")}
+              aria-label={verSenhaConfirm ? "Ocultar senha" : "Mostrar senha"}
               style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--text-3)" }}>
               {verSenhaConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -209,13 +208,13 @@ export default function CadastroProfissional({ onRegister }) {
             </Campo>
           </div>
           <div style={{ flex: 1 }}>
-            <Campo label={t("auth.register.city")}>
-              <input className="vx-input" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder={t("auth.register.cityPlaceholder")} />
+            <Campo label="Cidade">
+              <input className="vx-input" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="São Paulo, SP" />
             </Campo>
           </div>
         </div>
 
-        <Campo label={t("auth.register.howYouWork")}>
+        <Campo label="Como você atua hoje">
           <select className="vx-input" value={perfil} onChange={(e) => setPerfil(e.target.value)}>
             {ORDEM_FUNCOES.map((k) => (
               <option key={k} value={k}>{FUNCOES[k].nome} — {FUNCOES[k].completo}</option>
@@ -226,7 +225,7 @@ export default function CadastroProfissional({ onRegister }) {
           {FUNCOES[perfil]?.descricao}
         </p>
 
-        <Campo label={t("auth.register.referralCode")}>
+        <Campo label="Código de indicação (opcional)">
           <input className="vx-input vx-mono" value={indicacao} placeholder="Ex.: SXMD9JG"
             onChange={(e) => setIndicacao(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))}
             style={{ letterSpacing: ".08em" }} />
@@ -235,21 +234,23 @@ export default function CadastroProfissional({ onRegister }) {
         <label style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "12px 0", cursor: "pointer", fontSize: 12.5, color: "var(--text-2)" }}>
           <input type="checkbox" checked={aceitouTermos} onChange={(e) => setAceitouTermos(e.target.checked)} style={{ marginTop: 2 }} />
           <span>
-            {t("auth.register.acceptTermsPrefix")}{" "}
+            Li e aceito os{" "}
             <button type="button" onClick={() => setShowTermos(true)} style={{ color: "var(--brand)", textDecoration: "underline", background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: "inherit" }}>
-              {t("auth.register.termsLink")}
+              Termos de Uso e Política de Privacidade
             </button>
           </span>
         </label>
 
         <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading || !aceitouTermos}>
-          {loading ? t("auth.register.creating") : t("auth.register.createProAccount")}
+          {loading ? "Criando…" : "Criar conta de profissional"}
         </button>
       </form>
 
       <hr className="vx-sep" />
       <div className="vx-mut" style={{ fontSize: 12.3, lineHeight: 1.6 }}>
-        <b style={{ color: "var(--text-2)" }}>{t("auth.register.whatHappensTitle")}</b> {t("auth.register.whatHappensDesc")}
+        <b style={{ color: "var(--text-2)" }}>O que acontece depois:</b> sua conta passa por uma triagem curta antes de
+        liberar as campanhas. Se o resultado for parcial, você é direcionado ao RYCS Academy para completar a trilha e
+        tentar de novo.
       </div>
 
       {/* Modal guia de foto */}
@@ -257,7 +258,7 @@ export default function CadastroProfissional({ onRegister }) {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 900, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={(e) => { if (e.target === e.currentTarget) setMostrarGuia(false); }}>
           <div style={{ background: "var(--bg)", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%", maxHeight: "90vh", overflowY: "auto", position: "relative" }}>
-            <button type="button" onClick={() => setMostrarGuia(false)} aria-label={t("app.close")}
+            <button type="button" onClick={() => setMostrarGuia(false)} aria-label="Fechar"
               style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--text-3)" }}>
               <X size={20} />
             </button>
@@ -273,7 +274,7 @@ export default function CadastroProfissional({ onRegister }) {
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, color: "var(--text-2)" }}>{t("auth.register.photoRequirements")}</div>
+              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, color: "var(--text-2)" }}>Requisitos</div>
               {GUIA_FOTO.requisitos.map((r) => (
                 <div key={r.chave} style={{ fontSize: 12.5, marginBottom: 4, lineHeight: 1.5 }}>
                   <b>{r.texto}</b> — {r.detalhe}
@@ -284,7 +285,7 @@ export default function CadastroProfissional({ onRegister }) {
             <div style={{ display: "flex", gap: 16, marginBottom: 18 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4, color: "var(--green, #22c55e)" }}>
-                  <CheckCircle size={13} style={{ verticalAlign: -2, marginRight: 3 }} />{t("auth.register.recommended")}
+                  <CheckCircle size={13} style={{ verticalAlign: -2, marginRight: 3 }} />Recomendado
                 </div>
                 {GUIA_FOTO.recomendado.map((t, i) => (
                   <div key={i} style={{ fontSize: 11.5, lineHeight: 1.5, marginBottom: 2 }}>{t}</div>
@@ -292,7 +293,7 @@ export default function CadastroProfissional({ onRegister }) {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4, color: "var(--red, #ef4444)" }}>
-                  <XCircle size={13} style={{ verticalAlign: -2, marginRight: 3 }} />{t("auth.register.avoid")}
+                  <XCircle size={13} style={{ verticalAlign: -2, marginRight: 3 }} />Evitar
                 </div>
                 {GUIA_FOTO.evitar.map((t, i) => (
                   <div key={i} style={{ fontSize: 11.5, lineHeight: 1.5, marginBottom: 2 }}>{t}</div>
@@ -302,7 +303,7 @@ export default function CadastroProfissional({ onRegister }) {
 
             <button type="button" className="vx-btn vx-btn-primary vx-btn-block" style={{ minHeight: 44 }}
               onClick={() => { setMostrarGuia(false); inputFoto.current?.click(); }}>
-              {t("auth.register.gotItChoosePhoto")}
+              Entendi, escolher foto
             </button>
           </div>
         </div>

@@ -3,7 +3,6 @@ import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Bookmark, BriefcaseBusi
 import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
-import { useI18n } from "../../lib/i18n.jsx";
 
 const PERFIL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
 
@@ -22,7 +21,7 @@ const arr = (v) => Array.isArray(v) ? v : [];
 // Minúsculo e SEM acentos: busca por "monica" encontra "Mônica", "jose" → "José" etc.
 const norm = (v) => String(v || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-const text = (v, empty) => v || empty;
+const text = (v, empty = "Não informado") => v || empty;
 
 function iniciais(nome = "") {
   return nome.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("") || "PR";
@@ -46,12 +45,11 @@ function Metric({ label, value }) {
   return <div className="vx-scenario"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function Tags({ itens, emptyLabel }) {
-  return arr(itens).length ? <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>{itens.map((x) => <span key={x} className="vx-chip">{x}</span>)}</div> : <span className="vx-mut">{emptyLabel}</span>;
+function Tags({ itens }) {
+  return arr(itens).length ? <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>{itens.map((x) => <span key={x} className="vx-chip">{x}</span>)}</div> : <span className="vx-mut">Não informado</span>;
 }
 
 export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, bloqueado, irParaPlano }) {
-  const { t } = useI18n();
   const [popupPlano, setPopupPlano] = useState(false);
   const [listaApi, setListaApi] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -271,9 +269,9 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
 
   return <div className="vx-fade">
     <div className="vx-page-head">
-      <div><h1 className="vx-disp">{t("professionals.title")}</h1><p>{t("professionals.subtitle")}</p></div>
+      <div><h1 className="vx-disp">Profissionais</h1><p>Gestão dos profissionais disponíveis, usando somente dados reais da plataforma.</p></div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="vx-chip"><UserRoundSearch size={13} />{t("professionals.count", { n: filtrados.length })}</span>
+        <span className="vx-chip"><UserRoundSearch size={13} />{filtrados.length} profissionais</span>
         <div style={{ position: "relative" }}>
           {!buscaAberta ? (
             <button
@@ -285,7 +283,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                 display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: "pointer", transition: "background .2s", position: "relative"
               }}
-              title={t("professionals.searchAndFilter")}
+              title="Buscar e filtrar"
             >
               <Search size={16} color={filtrosAtivos ? "#fff" : "var(--muted)"} />
               {filtrosAtivos > 0 && (
@@ -310,7 +308,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                 type="text"
                 value={f.busca}
                 onChange={(e) => setF({ ...f, busca: e.target.value })}
-                placeholder={t("professionals.searchPlaceholder")}
+                placeholder="Buscar por nome…"
                 style={{
                   flex: 1, border: "none", outline: "none", background: "transparent",
                   fontSize: 14, color: "var(--ink)", height: "100%", padding: 0,
@@ -326,7 +324,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   background: "transparent", cursor: "pointer", display: "flex",
                   alignItems: "center", justifyContent: "center", flexShrink: 0
                 }}
-                title={t("professionals.closeSearch")}
+                title="Fechar busca"
               >
                 <X size={14} color="var(--muted)" />
               </button>
@@ -338,10 +336,10 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           className={`vx-btn${mostrarSalvos ? " vx-btn-primary" : ""}`}
           style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
           onClick={() => setMostrarSalvos((v) => !v)}
-          title={mostrarSalvos ? t("professionals.viewAll") : t("professionals.viewSaved")}
+          title={mostrarSalvos ? "Ver todos" : "Ver salvos"}
         >
           <Bookmark size={14} fill={mostrarSalvos ? "currentColor" : "none"} strokeWidth={2.3} />
-          {t("professionals.saved")}
+          Salvos
           {mostrarSalvos && <span style={{ background: "rgba(255,255,255,.25)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{Object.values(salvos).filter(Boolean).length}</span>}
         </button>
         <button
@@ -349,10 +347,10 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           className={`vx-btn${filtroAberto ? " vx-btn-primary" : ""}`}
           style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
           onClick={() => setFiltroAberto((v) => !v)}
-          title={t("professionals.filterProfessionals")}
+          title="Filtrar profissionais"
         >
           <Filter size={14} strokeWidth={2.3} />
-          {t("professionals.filter")}
+          Filtrar
           {filtrosAtivos > 0 && <span style={{ background: filtroAberto ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
         </button>
         <div style={{ position: "relative" }}>
@@ -361,19 +359,19 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
             className={`vx-btn${ordenar.campo ? " vx-btn-primary" : ""}`}
             style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
             onClick={() => setOrdenarAberto((v) => !v)}
-            title={t("professionals.sortProfessionals")}
+            title="Classificar profissionais"
           >
             <ArrowUpDown size={14} strokeWidth={2.3} />
-            {t("professionals.sort")}
+            Classificar
           </button>
           {ordenarAberto && (
             <>
               <div onClick={() => setOrdenarAberto(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
               <div className="vx-card" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, width: 232, padding: 12, boxShadow: "0 10px 28px rgba(0,0,0,.14)", display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
-                  <span className="vx-label">{t("professionals.sortBy")}</span>
+                  <span className="vx-label">Classificar por</span>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 7 }}>
-                    {[["score", t("professionals.score")], ["compatibilidade", t("professionals.compatibility")], ["idade", t("professionals.age")]].map(([campo, label]) => {
+                    {[["score", "Score"], ["compatibilidade", "Compatibilidade"], ["idade", "Idade"]].map(([campo, label]) => {
                       const on = ordenar.campo === campo;
                       return (
                         <button key={campo} type="button"
@@ -386,9 +384,9 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   </div>
                 </div>
                 <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-                  <span className="vx-label">{t("professionals.order")}</span>
+                  <span className="vx-label">Ordem</span>
                   <div style={{ display: "flex", gap: 6, marginTop: 7 }}>
-                    {[["desc", t("professionals.highToLow"), ArrowDown], ["asc", t("professionals.lowToHigh"), ArrowUp]].map(([dir, label, Icone]) => {
+                    {[["desc", "Maior → menor", ArrowDown], ["asc", "Menor → maior", ArrowUp]].map(([dir, label, Icone]) => {
                       const on = ordenar.direcao === dir;
                       return (
                         <button key={dir} type="button" disabled={!ordenar.campo}
@@ -402,7 +400,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                 </div>
                 {ordenar.campo && (
                   <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setOrdenar({ campo: "", direcao: "desc" })}>
-                    {t("professionals.clearSort")}
+                    Limpar classificação
                   </button>
                 )}
               </div>
@@ -411,7 +409,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
         </div>
         {filtrosAtivos > 0 && (
           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "", pais: "" })}>
-            {t("professionals.clearFilters")}
+            Limpar filtros
           </button>
         )}
       </div>
@@ -421,12 +419,12 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
       <div className="vx-card" style={{ padding: 16, maxWidth: "none", marginBottom: 16, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Gênero */}
         <div>
-          <span className="vx-label">{t("professionals.gender")}</span>
+          <span className="vx-label">Gênero</span>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 7 }}>
             {[
-              { value: "", label: t("professionals.all"), Icon: UsersRound },
-              { value: "feminino", label: t("professionals.female"), Icon: UserRound, cor: "#e74694" },
-              { value: "masculino", label: t("professionals.male"), Icon: UserRound, cor: "#2563eb" },
+              { value: "", label: "Todos", Icon: UsersRound },
+              { value: "feminino", label: "Mulher", Icon: UserRound, cor: "#e74694" },
+              { value: "masculino", label: "Homem", Icon: UserRound, cor: "#2563eb" },
             ].map((opt) => {
               const ativo = f.genero === opt.value;
               return (
@@ -448,10 +446,10 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
 
         {/* Função */}
         <div>
-          <span className="vx-label">{t("professionals.role")}</span>
+          <span className="vx-label">Função</span>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 7 }}>
             {[
-              { value: "", label: t("professionals.all") },
+              { value: "", label: "Todos" },
               { value: "sdr", label: "SDR" },
               { value: "closer", label: "Closer" },
               { value: "bdr", label: "BDR" },
@@ -475,12 +473,12 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
 
         {/* Demais filtros */}
         <div className="vx-filterbar" style={{ maxWidth: "none" }}>
-          <label><span className="vx-label">{t("professionals.campaign")}</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">{t("professionals.allFem")}</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
-          <label><span className="vx-label">{t("professionals.status")}</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">{t("professionals.all")}</option><option value="aprovado">{t("professionals.statusActive")}</option><option value="pendente">{t("professionals.statusPending")}</option><option value="recusado">{t("professionals.statusRemoved")}</option></select></label>
-          <label><span className="vx-label">{t("professionals.performance")}</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">{t("professionals.allFem")}</option><option value="alta">{t("professionals.perfHigh")}</option><option value="media">{t("professionals.perfMedium")}</option><option value="baixa">{t("professionals.perfLow")}</option></select></label>
-          <label><span className="vx-label">{t("professionals.country")}</span><select className="vx-input" value={f.pais} onChange={(e) => setF({ ...f, pais: e.target.value })}><option value="">{t("professionals.all")}</option>{opcoes.paises.map((x) => <option key={x} value={x}>{bandeiraPais(x)} {x}</option>)}</select></label>
-          <label><span className="vx-label">{t("professionals.state")}</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">{t("professionals.all")}</option>{opcoes.regioes.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
-          <label><span className="vx-label">{t("professionals.score")}</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">{t("professionals.all")}</option><option value="80">{t("professionals.scoreHigh")}</option><option value="50">{t("professionals.scoreMid")}</option><option value="0">{t("professionals.scoreLow")}</option></select></label>
+          <label><span className="vx-label">Campanha</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">Todas</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
+          <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
+          <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
+          <label><span className="vx-label">País</span><select className="vx-input" value={f.pais} onChange={(e) => setF({ ...f, pais: e.target.value })}><option value="">Todos</option>{opcoes.paises.map((x) => <option key={x} value={x}>{bandeiraPais(x)} {x}</option>)}</select></label>
+          <label><span className="vx-label">Estado</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todos</option>{opcoes.regioes.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
+          <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
         </div>
       </div>
     )}
@@ -514,14 +512,14 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   {/* nome + idade */}
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                     <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                      <span title={p.pais || t("professionals.countryNotSet")} style={{ marginRight: 5 }}>{bandeiraPais(p.pais)}</span>
+                      <span title={p.pais || "País não informado"} style={{ marginRight: 5 }}>{bandeiraPais(p.pais)}</span>
                       {capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome)}
                     </span>
                     {calcularIdade(p.dataNascimento) !== null && (
-                      <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{t("professionals.yearsOld", { n: calcularIdade(p.dataNascimento) })}</span>
+                      <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{calcularIdade(p.dataNascimento)} anos</span>
                     )}
                   </div>
-                  <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>{t("professionals.roleLabel")}:</b> {PERFIL[p.perfil] || p.perfil || t("professionals.roleNotSet")}</span>
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Função:</b> {PERFIL[p.perfil] || p.perfil || "Não informada"}</span>
                   {(p.bio || p.experiencia) && (
                     <span style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginTop: 1 }}>
                       {(p.bio || p.experiencia).slice(0, 120)}
@@ -532,13 +530,13 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                     <div style={{ flex: 1, height: 5, borderRadius: 99, background: "var(--surface-2)", overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${fit.percentual}%`, borderRadius: 99, background: fit.percentual >= 70 ? "var(--brand)" : fit.percentual >= 40 ? "#F59E0B" : "#EF4444" }} />
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fit.percentual}% {t("professionals.compat")}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{fit.percentual}% compat.</span>
                   </div>
                   {/* tempo de resposta */}
                   {temposResposta[p.id] && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
                       <Clock size={10} color="var(--muted)" />
-                      <span style={{ fontSize: 10.5, color: "var(--muted)" }}>{t("professionals.resp")} {temposResposta[p.id]}</span>
+                      <span style={{ fontSize: 10.5, color: "var(--muted)" }}>Resp. {temposResposta[p.id]}</span>
                     </div>
                   )}
                 </div>
@@ -546,20 +544,20 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                 {/* BOTÃO — sempre no fundo via margin-top:auto */}
                 <div className="vx-prof-card__actions" style={{ display: "flex", gap: 6 }}>
                   {conviteStatus === "aprovado"
-                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled style={{ flex: 1 }}>✓ {t("professionals.partnershipActive")}</button>
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled style={{ flex: 1 }}>✓ Parceria ativa</button>
                     : conviteStatus === "pendente"
-                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled style={{ flex: 1 }}>✓ {t("professionals.sent")}</button>
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled style={{ flex: 1 }}>✓ Enviado</button>
                     : conviteStatus === "recusado"
-                    ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)} style={{ flex: 1 }}>{t("professionals.resendInvite")}</button>
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)} style={{ flex: 1 }}>Reenviar convite</button>
                     : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)}
                         style={{ flex: 1, background: "transparent", color: "var(--muted)", border: "1.5px solid var(--border-strong)", opacity: conviteStatus === "enviando" ? 0.6 : 1, fontWeight: 400 }}>
-                        {conviteStatus === "enviando" ? t("professionals.sending") : t("professionals.sendInvite")}
+                        {conviteStatus === "enviando" ? "Enviando…" : "Enviar Convite"}
                       </button>
                   }
                   <button
                     className="vx-prof-card__btn"
                     onClick={(e) => { e.stopPropagation(); if (bloqueado) { setPopupPlano(true); return; } setChatRapido({ sellerId: p.id, nome: p.nome, foto: p.foto }); }}
-                    title={t("professionals.sendMessage")}
+                    title="Enviar mensagem"
                     style={{ width: 44, minWidth: 44, flex: "none", background: "transparent", color: "var(--muted)", border: "1.5px solid var(--border)" }}
                   >
                     <MessageCircle size={14} />
@@ -567,7 +565,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   <button
                     className="vx-prof-card__btn"
                     onClick={(e) => toggleSalvo(e, p.id)}
-                    title={salvos[p.id] ? t("professionals.removeSaved") : t("professionals.saveProfessional")}
+                    title={salvos[p.id] ? "Remover dos salvos" : "Salvar profissional"}
                     style={{ width: 44, minWidth: 44, flex: "none", background: salvos[p.id] ? "var(--brand)" : "transparent", color: salvos[p.id] ? "#fff" : "var(--muted)", border: salvos[p.id] ? "none" : "1.5px solid var(--border)" }}
                   >
                     <Bookmark size={14} fill={salvos[p.id] ? "#fff" : "none"} />
@@ -580,7 +578,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
       </div>
     )}
 
-    {!carregando && !filtrados.length && <div className="vx-card" style={{ padding: 28, textAlign: "center" }}><UserRoundSearch size={28} color="var(--muted)" /><h3 className="vx-disp">{t("professionals.noneFound")}</h3><p className="vx-mut">{t("professionals.adjustFilters")}</p></div>}
+    {!carregando && !filtrados.length && <div className="vx-card" style={{ padding: 28, textAlign: "center" }}><UserRoundSearch size={28} color="var(--muted)" /><h3 className="vx-disp">Nenhum profissional encontrado</h3><p className="vx-mut">Ajuste os filtros desta página.</p></div>}
 
     {selecionado && (() => {
       const p = profissionais.find((x) => x.id === selecionado.id) || selecionado;
@@ -592,7 +590,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
 
           {/* ── Cabeçalho: fechar ── */}
           <div className="vx-row" style={{ marginBottom: 16 }}>
-            <div className="vx-eyebrow">{t("professionals.fullProfile")}</div>
+            <div className="vx-eyebrow">Perfil completo</div>
             <button className="vx-btn vx-btn-ghost" onClick={() => setSelecionado(null)}><X size={16} /></button>
           </div>
 
@@ -629,25 +627,25 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                         type="button"
                         onClick={() => setBioExpandida(true)}
                         style={{ background: "none", border: "none", padding: 0, marginTop: 4, fontSize: 12.5, color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}
-                      >{t("professionals.readFullBio")}</button>
+                      >Ler biografia completa →</button>
                     )}
                   </>
                 ) : (
-                  <p className="vx-mut" style={{ fontSize: 13, margin: 0, fontStyle: "italic" }}>{t("professionals.bioUpdating")}</p>
+                  <p className="vx-mut" style={{ fontSize: 13, margin: 0, fontStyle: "italic" }}>Apresentação em atualização.</p>
                 )}
               </div>
 
               {/* C. Canais de Atendimento */}
               {(() => {
                 const canais = [
-                  p.whats && { label: t("professionals.channelWhatsApp"), icon: "📱", href: `https://wa.me/${p.whats.replace(/\D/g, "")}` },
-                  p.email && { label: t("professionals.channelEmail"), icon: "✉️", href: `mailto:${p.email}` },
-                  arr(p.modalidades).some((m) => /video|confer/i.test(m)) && { label: t("professionals.channelVideo"), icon: "🎥", href: null },
-                  p.telefone && { label: t("professionals.channelPhone"), icon: "📞", href: `tel:${p.telefone}` },
+                  p.whats && { label: "WhatsApp", icon: "📱", href: `https://wa.me/${p.whats.replace(/\D/g, "")}` },
+                  p.email && { label: "E-mail", icon: "✉️", href: `mailto:${p.email}` },
+                  arr(p.modalidades).some((m) => /video|confer/i.test(m)) && { label: "Videoconferência", icon: "🎥", href: null },
+                  p.telefone && { label: "Telefone", icon: "📞", href: `tel:${p.telefone}` },
                 ].filter(Boolean);
                 return canais.length > 0 ? (
                   <div>
-                    <div className="vx-eyebrow" style={{ marginBottom: 7 }}>{t("professionals.channels")}</div>
+                    <div className="vx-eyebrow" style={{ marginBottom: 7 }}>Canais de Atendimento</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                       {canais.map(({ label, icon, href }) =>
                         href
@@ -662,9 +660,9 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
               {/* Currículo enviado pelo profissional */}
               {p.curriculo && (
                 <div>
-                  <div className="vx-eyebrow" style={{ marginBottom: 7 }}>{t("professionals.resume")}</div>
+                  <div className="vx-eyebrow" style={{ marginBottom: 7 }}>Currículo</div>
                   <a href={p.curriculo} target="_blank" rel="noopener noreferrer" className="vx-btn vx-btn-sm" style={{ textDecoration: "none", gap: 7 }}>
-                    📄 {t("professionals.viewResume")}{p.curriculoNome ? ` · ${p.curriculoNome}` : ""}
+                    📄 Ver currículo{p.curriculoNome ? ` · ${p.curriculoNome}` : ""}
                   </a>
                 </div>
               )}
@@ -673,25 +671,25 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
 
           {/* ── Dados do Perfil — card horizontal largura total ── */}
           <div className="vx-card" style={{ padding: "14px 18px", marginTop: 20 }}>
-            <div className="vx-eyebrow" style={{ marginBottom: 12 }}>{t("professionals.profileData")}</div>
+            <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Dados do Perfil</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px 20px", fontSize: 13 }}>
               <div>
-                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>{t("professionals.role")}</div>
-                <b>{text(PERFIL[p.perfil] || p.perfil, t("misc.notInformed"))}</b>
+                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Função</div>
+                <b>{text(PERFIL[p.perfil] || p.perfil)}</b>
               </div>
               <div>
-                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>{t("professionals.location")}</div>
+                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Localização</div>
                 <b>{text([p.cidade, p.estado].filter(Boolean).join(" / "), "—")}</b>
               </div>
               {p.disponibilidade && (
                 <div>
-                  <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>{t("professionals.availability")}</div>
+                  <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Disponibilidade</div>
                   <b>{p.disponibilidade}</b>
                 </div>
               )}
               {arr(p.segmentos).length > 0 && (
                 <div style={{ gridColumn: "span 2" }}>
-                  <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>{t("professionals.segments")}</div>
+                  <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>Segmentos</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {arr(p.segmentos).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 11 }}>{s}</span>)}
                   </div>
@@ -699,7 +697,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
               )}
               {arr(p.skills).length > 0 && (
                 <div style={{ gridColumn: "span 2" }}>
-                  <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>{t("professionals.skills")}</div>
+                  <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>Habilidades</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {arr(p.skills).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 11 }}>{s}</span>)}
                   </div>
@@ -710,14 +708,14 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
 
           {/* ── Indicadores de Desempenho — seção independente ── */}
           <div style={{ marginTop: 16 }}>
-            <div className="vx-eyebrow" style={{ marginBottom: 12 }}>{t("professionals.performanceIndicators")}</div>
+            <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Indicadores de Desempenho</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
               {[
-                { label: t("professionals.score"), val: p.scoreTriagem != null ? `${Number(p.scoreTriagem).toFixed(0)}%` : "—" },
-                { label: t("professionals.tasks"), val: `${p.tarefasAprovadas || 0}/${p.tarefasRealizadas || 0}` },
-                { label: t("professionals.approval"), val: `${p.taxaAprovacao || 0}%` },
-                { label: t("professionals.sales"), val: p.vendas || 0 },
-                { label: t("professionals.compatibility"), val: `${fit.percentual}%` },
+                { label: "Score", val: p.scoreTriagem != null ? `${Number(p.scoreTriagem).toFixed(0)}%` : "—" },
+                { label: "Tarefas", val: `${p.tarefasAprovadas || 0}/${p.tarefasRealizadas || 0}` },
+                { label: "Aprovação", val: `${p.taxaAprovacao || 0}%` },
+                { label: "Vendas", val: p.vendas || 0 },
+                { label: "Compatibilidade", val: `${fit.percentual}%` },
               ].map(({ label, val }) => (
                 <div key={label} className="vx-card" style={{ padding: "12px 8px", textAlign: "center" }}>
                   <div style={{ fontFamily: "'Michroma','General Sans',sans-serif", fontSize: 22, fontWeight: 700, color: "var(--brand)", fontVariantNumeric: "lining-nums tabular-nums" }}>{val}</div>
@@ -730,7 +728,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           {/* ── Entendendo o Score ── */}
           {Array.isArray(p.scoreDetalhe?.componentes) && (
             <div className="vx-card" style={{ padding: 16, marginTop: 16 }}>
-              <div className="vx-eyebrow" style={{ marginBottom: 6 }}>{t("professionals.declaredProfile")}</div>
+              <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Perfil declarado no cadastro</div>
               {p.scoreExplicacao && <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.6 }}>{p.scoreExplicacao}</p>}
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {p.scoreDetalhe.componentes.filter((c) => c.chave !== "base").map((c) => {
@@ -754,20 +752,20 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           {((p.pontosPositivos?.length || 0) + (p.pontosNegativos?.length || 0)) > 0 && (
             <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
               <section className="vx-card" style={{ padding: 14 }}>
-                <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}><CheckCircle2 size={15} color="#16A34A" style={{ verticalAlign: -2, marginRight: 5 }} />{t("professionals.positivePoints")}</h3>
+                <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}><CheckCircle2 size={15} color="#16A34A" style={{ verticalAlign: -2, marginRight: 5 }} />Pontos positivos</h3>
                 {p.pontosPositivos?.length
                   ? <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
                       {p.pontosPositivos.map((t) => <li key={t} style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 13, lineHeight: 1.45, color: "var(--ink-2)" }}><CheckCircle2 size={14} color="#16A34A" style={{ flexShrink: 0, marginTop: 1 }} />{t}</li>)}
                     </ul>
-                  : <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>{t("professionals.noHighlights")}</p>}
+                  : <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Sem destaques registrados no cadastro.</p>}
               </section>
               <section className="vx-card" style={{ padding: 14 }}>
-                <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}><AlertTriangle size={15} color="#B45309" style={{ verticalAlign: -2, marginRight: 5 }} />{t("professionals.attentionPoints")}</h3>
+                <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}><AlertTriangle size={15} color="#B45309" style={{ verticalAlign: -2, marginRight: 5 }} />Pontos de atenção</h3>
                 {p.pontosNegativos?.length
                   ? <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
                       {p.pontosNegativos.map((t) => <li key={t} style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 13, lineHeight: 1.45, color: "var(--ink-2)" }}><AlertTriangle size={14} color="#B45309" style={{ flexShrink: 0, marginTop: 1 }} />{t}</li>)}
                     </ul>
-                  : <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>{t("professionals.noAttentionPoints")}</p>}
+                  : <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum ponto de atenção.</p>}
               </section>
             </div>
           )}
@@ -777,7 +775,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
             <div className="vx-overlay" onClick={() => setBioExpandida(false)} style={{ zIndex: 1100 }}>
               <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
                 <div className="vx-row" style={{ marginBottom: 16 }}>
-                  <h3 className="vx-disp" style={{ margin: 0 }}>{t("professionals.biography")} — {nomeCompleto}</h3>
+                  <h3 className="vx-disp" style={{ margin: 0 }}>Biografia — {nomeCompleto}</h3>
                   <button className="vx-btn vx-btn-ghost" onClick={() => setBioExpandida(false)}><X size={16} /></button>
                 </div>
                 <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", textAlign: "justify" }}>{p.bio || p.experiencia}</p>
@@ -787,62 +785,62 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
 
           {/* ── Métricas completas ── */}
           <div className="vx-grid vx-g4" style={{ marginTop: 20 }}>
-            <Metric label={t("professionals.score")} value={p.scoreTriagem != null ? `${Number(p.scoreTriagem).toFixed(0)}%` : "—"} />
-            <Metric label={t("professionals.approvedTasks")} value={`${p.tarefasAprovadas || 0}/${p.tarefasRealizadas || 0}`} />
-            <Metric label={t("professionals.approvalRate")} value={`${p.taxaAprovacao || 0}%`} />
-            <Metric label={t("professionals.totalEarnings")} value={money(p.ganhosTotais || 0)} />
-            <Metric label={t("professionals.meetings")} value={p.reunioesGeradas || 0} />
-            <Metric label={t("professionals.visits")} value={p.visitas || 0} />
-            <Metric label={t("professionals.sales")} value={p.vendas || 0} />
-            <Metric label={t("professionals.leads")} value={p.leadsGerados || 0} />
+            <Metric label="Score" value={p.scoreTriagem != null ? `${Number(p.scoreTriagem).toFixed(0)}%` : "—"} />
+            <Metric label="Tarefas aprovadas" value={`${p.tarefasAprovadas || 0}/${p.tarefasRealizadas || 0}`} />
+            <Metric label="Taxa de aprovação" value={`${p.taxaAprovacao || 0}%`} />
+            <Metric label="Ganhos totais" value={money(p.ganhosTotais || 0)} />
+            <Metric label="Reuniões" value={p.reunioesGeradas || 0} />
+            <Metric label="Visitas" value={p.visitas || 0} />
+            <Metric label="Vendas" value={p.vendas || 0} />
+            <Metric label="Leads" value={p.leadsGerados || 0} />
           </div>
 
           <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
             <section className="vx-card" style={{ padding: 14 }}>
-              <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("professionals.aiSummary")}</h3>
+              <h3 className="vx-disp" style={{ fontSize: 15 }}>Resumo com IA</h3>
               <p className="vx-mut" style={{ lineHeight: 1.6 }}>{resumoIA(p)}</p>
-              <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("professionals.culturalFit")}</h3>
-              <div className="vx-row"><b className="vx-mono" style={{ fontSize: 24 }}>{fit.percentual}%</b><span className="vx-chip">{fit.campanha?.titulo || t("professionals.referenceCampaign")}</span></div>
-              <p className="vx-mut">{t("professionals.compatibilityLabel")}: {fit.pontos.join("; ")}.</p>
-              <p className="vx-mut">{t("professionals.attentionPointsLabel")}: {fit.atencao.join("; ")}.</p>
+              <h3 className="vx-disp" style={{ fontSize: 15 }}>Fit cultural</h3>
+              <div className="vx-row"><b className="vx-mono" style={{ fontSize: 24 }}>{fit.percentual}%</b><span className="vx-chip">{fit.campanha?.titulo || "campanha de referência"}</span></div>
+              <p className="vx-mut">Compatibilidade: {fit.pontos.join("; ")}.</p>
+              <p className="vx-mut">Pontos de atenção: {fit.atencao.join("; ")}.</p>
             </section>
 
             <section className="vx-card" style={{ padding: 14 }}>
-              <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("professionals.certifications")}</h3>
-              {p.certificacoes?.length ? p.certificacoes.map((c) => <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}><CheckCircle2 size={12} />{PERFIL[c.funcao] || c.funcao} · {c.percentual}%</span>) : <p className="vx-mut">{t("professionals.noCertifications")}</p>}
-              <p className="vx-mut" style={{ marginTop: 8 }}>{t("professionals.trainingsCompleted")}: {p.certificacoes?.length || 0}</p>
+              <h3 className="vx-disp" style={{ fontSize: 15 }}>Certificações</h3>
+              {p.certificacoes?.length ? p.certificacoes.map((c) => <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}><CheckCircle2 size={12} />{PERFIL[c.funcao] || c.funcao} · {c.percentual}%</span>) : <p className="vx-mut">Nenhuma certificação publicada.</p>}
+              <p className="vx-mut" style={{ marginTop: 8 }}>Treinamentos concluídos: {p.certificacoes?.length || 0}</p>
             </section>
           </div>
 
           <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
             <section className="vx-card" style={{ padding: 14 }}>
-              <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("professionals.historyResults")}</h3>
-              {p.campanhas?.length ? <div className="vx-compact-list">{p.campanhas.slice(0, 8).map((c) => <div key={c.id}><div><b>{c.titulo}</b><span>{PERFIL[c.funcao] || c.funcao || t("professionals.roleNotSet")} · {c.regiao || t("professionals.noRegion")}</span></div><span className="vx-chip">{c.candidaturaStatus || c.status}</span></div>)}</div> : <p className="vx-mut">{t("professionals.noCampaignHistory")}</p>}
-              <p className="vx-mut">{t("professionals.rejectedTasks")}: {p.tarefasRecusadas || 0} · {t("professionals.leads")}: {p.leadsGerados || 0}</p>
+              <h3 className="vx-disp" style={{ fontSize: 15 }}>Histórico e resultados</h3>
+              {p.campanhas?.length ? <div className="vx-compact-list">{p.campanhas.slice(0, 8).map((c) => <div key={c.id}><div><b>{c.titulo}</b><span>{PERFIL[c.funcao] || c.funcao || "Função não informada"} · {c.regiao || "sem região"}</span></div><span className="vx-chip">{c.candidaturaStatus || c.status}</span></div>)}</div> : <p className="vx-mut">Sem histórico de campanhas nesta empresa.</p>}
+              <p className="vx-mut">Tarefas recusadas: {p.tarefasRecusadas || 0} · Leads: {p.leadsGerados || 0}</p>
             </section>
 
             <section className="vx-card" style={{ padding: 14 }}>
-              <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("professionals.trainingFeedback")}</h3>
-              {p.certificacoes?.length ? p.certificacoes.map((c) => <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}><CheckCircle2 size={12} />{PERFIL[c.funcao] || c.funcao} · {c.percentual}%</span>) : <p className="vx-mut">{t("professionals.noCertifications")}</p>}
-              <p className="vx-mut">{t("professionals.trainingsCompleted")}: {p.certificacoes?.length || 0}</p>
-              <p className="vx-mut">{t("professionals.noFeedbacks")}</p>
+              <h3 className="vx-disp" style={{ fontSize: 15 }}>Treinamentos, feedbacks e certificações</h3>
+              {p.certificacoes?.length ? p.certificacoes.map((c) => <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}><CheckCircle2 size={12} />{PERFIL[c.funcao] || c.funcao} · {c.percentual}%</span>) : <p className="vx-mut">Nenhuma certificação publicada.</p>}
+              <p className="vx-mut">Treinamentos concluídos: {p.certificacoes?.length || 0}</p>
+              <p className="vx-mut">Feedbacks: não há feedbacks publicados para esta empresa.</p>
             </section>
           </div>
 
           <section className="vx-card" style={{ padding: 14, marginTop: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("professionals.actions")}</h3>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>Ações</h3>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button className="vx-btn vx-btn-sm" onClick={() => alterarTime(p, "aprovado")}><UserPlus size={13} />{t("professionals.approveProfessional")}</button>
+              <button className="vx-btn vx-btn-sm" onClick={() => alterarTime(p, "aprovado")}><UserPlus size={13} />Aprovar profissional</button>
             </div>
             <div className="vx-row" style={{ marginTop: 10, flexWrap: "wrap" }}>
               <select className="vx-input" style={{ maxWidth: 280 }} value={campanhaDestino} onChange={(e) => setCampanhaDestino(e.target.value)}>
-                <option value="">{t("professionals.selectCampaign")}</option>
+                <option value="">Selecionar campanha para convidar</option>
                 {campanhasEmpresa.filter((c) => c.status === "ativa").map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
               </select>
-              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => convidarParaCampanha(p)}><Send size={13} />{t("professionals.inviteToCampaign")}</button>
+              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => convidarParaCampanha(p)}><Send size={13} />Convidar para campanha</button>
             </div>
-            <textarea className="vx-input" style={{ marginTop: 10, minHeight: 74 }} value={obs[p.id] || ""} onChange={(e) => setObs({ ...obs, [p.id]: e.target.value })} placeholder={t("professionals.internalNote")} />
-            <button className="vx-btn vx-btn-sm" style={{ marginTop: 8 }} onClick={() => salvarObs(p.id, obs[p.id] || "")}><MessageSquare size={13} />{t("professionals.saveInternalNote")}</button>
+            <textarea className="vx-input" style={{ marginTop: 10, minHeight: 74 }} value={obs[p.id] || ""} onChange={(e) => setObs({ ...obs, [p.id]: e.target.value })} placeholder="Observação interna" />
+            <button className="vx-btn vx-btn-sm" style={{ marginTop: 8 }} onClick={() => salvarObs(p.id, obs[p.id] || "")}><MessageSquare size={13} />Salvar observação interna</button>
           </section>
         </div>
       </div>;
@@ -873,10 +871,10 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
             <Lock size={22} color="var(--brand)" strokeWidth={2} />
           </div>
-          <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>{t("professionals.planRequired")}</h3>
-          <p className="vx-mut" style={{ margin: "0 0 20px", fontSize: 13.5, lineHeight: 1.6 }}>{t("professionals.planRequiredDesc")}</p>
-          <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(false); irParaPlano?.(); }}>{t("professionals.viewPlans")}</button>
-          <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(false)}>{t("professionals.notNow")}</button>
+          <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>Assine um plano para conversar</h3>
+          <p className="vx-mut" style={{ margin: "0 0 20px", fontSize: 13.5, lineHeight: 1.6 }}>Para enviar mensagens aos profissionais, ative um plano. Seus dados continuam salvos.</p>
+          <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(false); irParaPlano?.(); }}>Ver planos</button>
+          <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(false)}>Agora não</button>
         </div>
       </div>
     )}

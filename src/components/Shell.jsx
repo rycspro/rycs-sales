@@ -2,31 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { LogOut, ChevronUp, ChevronDown, CircleUserRound, Headphones } from "lucide-react";
 import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
-import LangSwitcher from "./LangSwitcher.jsx";
-import { useI18n } from "../lib/i18n.jsx";
-const NAV_I18N = {
-  inicio: "nav.home", oportunidades: "nav.opportunities",
-  academy: "nav.academy", carteira: "nav.wallet", indicar: "nav.refer",
-  perfil: "nav.profile", campanhas: "nav.campaigns", conversas: "nav.conversations",
-  leads: "nav.leads", conferir: "nav.approvals", profissionais: "nav.professionals",
-  pagamentos: "nav.payments", configuracoes: "nav.settings", dashboard: "nav.dashboard",
-  empresas: "nav.admin.companies", triagem: "nav.admin.triage",
-  onboarding: "nav.admin.onboardingLinks", liberar: "nav.admin.release",
-  cobranca: "nav.admin.billing", depositos: "nav.admin.deposits",
-  saques: "nav.admin.withdrawals", emails: "nav.admin.emails", beta: "nav.admin.betaEnv",
-  conta: "nav.myAccount", tarefas: "nav.panel",
-};
-const NAV_I18N_BY_LABEL = {
-  "Painel": "nav.panel", "Insights": "nav.insights",
-};
-const SECTION_I18N = {
-  "Pessoas": "nav.admin.people", "Financeiro": "nav.admin.financial",
-  "Conteúdo": "nav.admin.content", "Sistema": "nav.admin.system",
-};
-
 export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
-  const { t } = useI18n();
   const [gruposAbertos, setGruposAbertos] = useState({});
+  // Ao navegar para outra página, fecha os submenus abertos manualmente — só o
+  // grupo que contém a página ativa permanece aberto (comportamento sanfona).
   useEffect(() => { setGruposAbertos({}); }, [active]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const configIdx = rawItems.findIndex((item) => item.key === "configuracoes");
@@ -64,7 +43,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
               return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
             }
             if (item.section) {
-              return <div key={`sec-${i}`} className="vx-sidebar-section">{SECTION_I18N[item.section] ? t(SECTION_I18N[item.section]) : item.section}</div>;
+              return <div key={`sec-${i}`} className="vx-sidebar-section">{item.section}</div>;
             }
             const { key, label, Icon, children } = item;
             if (children) {
@@ -97,7 +76,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             return (
               <button key={key} className="vx-sidebtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
                 <Icon size={18} strokeWidth={1.85} />
-                {NAV_I18N[key] ? t(NAV_I18N[key]) : NAV_I18N_BY_LABEL[label] ? t(NAV_I18N_BY_LABEL[label]) : label}
+                {label}
                 {counts?.[key] > 0 && <span className="vx-sidedot">{counts[key]}</span>}
               </button>
             );
@@ -113,11 +92,10 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             style={{ margin: "0 8px 4px", color: "var(--muted)" }}
           >
             <LogOut size={18} strokeWidth={1.85} />
-            {t("app.logout")}
+            Sair
           </button>
         )}
-        <div style={{ padding: "10px 0", display: "flex", justifyContent: "center", gap: 12, borderTop: "1px solid var(--border)" }}>
-          <LangSwitcher />
+        <div style={{ padding: "10px 0", display: "flex", justifyContent: "center", borderTop: "1px solid var(--border)" }}>
           <ThemeSwitcher />
         </div>
       </aside>
@@ -125,14 +103,14 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
       <div className={fullBleed ? "vx-content vx-content-chat" : settingsLayout ? "vx-content vx-content-settings" : "vx-content"}>
         {beta && (
           <div className="vx-beta-ribbon">
-            <b>{t("beta.title")}</b>
-            <span>{t("beta.desc")}</span>
+            <b>AMBIENTE BETA — DADOS FICTÍCIOS</b>
+            <span>Nenhuma movimentação financeira possui valor real. Dados podem ser resetados. Use somente para testes.</span>
           </div>
         )}
         {onLogout && (
           <div className="vx-mobile-actions">
             <button type="button" className="vx-btn vx-btn-sm" onClick={onLogout}>
-              <LogOut size={16} aria-hidden="true" /> {t("app.logout")}
+              <LogOut size={16} aria-hidden="true" /> Sair
             </button>
           </div>
         )}
@@ -145,7 +123,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             {mobileActive === key && <span className="vx-navbar-indicator" />}
             {counts?.[key] > 0 && <span className="vx-navdot">{counts[key]}</span>}
             <Icon size={22} strokeWidth={1.95} />
-            <span>{NAV_I18N[key] ? t(NAV_I18N[key]) : NAV_I18N_BY_LABEL[label] ? t(NAV_I18N_BY_LABEL[label]) : label}</span>
+            <span>{label}</span>
           </button>
         ))}
       </nav>
@@ -154,11 +132,10 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
 }
 
 function AccountMenu({ user, entity, onSelect, onLogout }) {
-  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const root = useRef(null), trigger = useRef(null), menu = useRef(null);
   const company = user?.role === 'empresa';
-  const nome = entity?.nome || user?.email || t("nav.myAccount");
+  const nome = entity?.nome || user?.email || 'Minha Conta';
   const avatar = company ? entity?.logo : entity?.foto;
   useEffect(() => {
     if (!open) return;
@@ -175,13 +152,13 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
       e.preventDefault(); const buttons = [...menu.current.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
       buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length-1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
-      {[[CircleUserRound, t("nav.myAccount"), 'conta']].map(([Icon,label,key]) => <button type="button" role="menuitem" key={key} onClick={() => choose(() => onSelect(key))}><Icon size={18} />{label}</button>)}
-      <button type="button" role="menuitem" onClick={() => choose(() => onSelect('suporte-conta'))}><Headphones size={18} />{t("nav.support")}</button>
-      <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />{t("app.logout")}</button>
+      {[[CircleUserRound, 'Minha Conta', 'conta']].map(([Icon,label,key]) => <button type="button" role="menuitem" key={key} onClick={() => choose(() => onSelect(key))}><Icon size={18} />{label}</button>)}
+      <button type="button" role="menuitem" onClick={() => choose(() => onSelect('suporte-conta'))}><Headphones size={18} />Ajuda e suporte</button>
+      <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>
     </div>}
     <button type="button" className="vx-account-trigger" ref={trigger} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
       {avatar ? <img src={avatar} alt="" /> : <span className="vx-account-initial">{nome.slice(0,1).toUpperCase()}</span>}
-      <span><strong>{nome}</strong><small>{company ? t("account.role.company") : t("account.role.seller")}</small></span><ChevronUp size={17} />
+      <span><strong>{nome}</strong><small>{company ? 'Empresa' : 'Profissional'}</small></span><ChevronUp size={17} />
     </button>
   </div>;
 }
