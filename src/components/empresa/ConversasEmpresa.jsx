@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   MessageSquare, Search, X, ChevronLeft,
   CheckCheck, Check, CheckCircle2,
-  Paperclip, Image, FileText, Mic, MicOff, Download,
+  Paperclip, Image, FileText, Mic, MicOff, Download, Lock,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora, money, dataCurta } from "../../lib/utils.js";
@@ -943,7 +943,8 @@ const FILTROS = [
   { id: "arquivadas", label: "Arquivadas" },
 ];
 
-export default function ConversasEmpresa({ emp, db, up }) {
+export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }) {
+  const [popupPlano, setPopupPlano] = useState(false);
   const [busca, setBusca] = useState("");
   const [buscaAtiva, setBuscaAtiva] = useState("");
   const [filtro, setFiltro] = useState("todas");
@@ -1026,6 +1027,8 @@ export default function ConversasEmpresa({ emp, db, up }) {
   }, [emp.id, up]);
 
   const enviarMensagem = useCallback(async (texto, anexo) => {
+    // Sem plano ativo: abre o popup para assinar, sem enviar nada.
+    if (bloqueado) { setPopupPlano(true); return; }
     if (enviando || !selSellerId) return;
     setEnviando(true);
     const id = uid();
@@ -1038,7 +1041,7 @@ export default function ConversasEmpresa({ emp, db, up }) {
     } finally {
       setEnviando(false);
     }
-  }, [enviando, selSellerId, emp.id, up]);
+  }, [bloqueado, enviando, selSellerId, emp.id, up]);
 
   const enviarAnexo = useCallback((anexo) => {
     enviarMensagem("", anexo);
@@ -1213,6 +1216,33 @@ export default function ConversasEmpresa({ emp, db, up }) {
               <CampoEnvio onEnviar={enviarMensagem} onEnviarAnexo={enviarAnexo} enviando={enviando} />
             </>
           )}
+        </div>
+      )}
+
+      {/* Popup: sem plano, não envia — convida a assinar */}
+      {popupPlano && (
+        <div
+          onClick={() => setPopupPlano(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--surface)", borderRadius: 16, boxShadow: "0 24px 48px rgba(0,0,0,.2)", width: "100%", maxWidth: 400, padding: "28px 26px", textAlign: "center" }}
+          >
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+              <Lock size={22} color="var(--brand)" strokeWidth={2} />
+            </div>
+            <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>Assine um plano para conversar</h3>
+            <p className="vx-mut" style={{ margin: "0 0 20px", fontSize: 13.5, lineHeight: 1.6 }}>
+              Para enviar mensagens aos profissionais, ative um plano. Seus dados continuam salvos.
+            </p>
+            <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(false); irParaPlano?.(); }}>
+              Ver planos
+            </button>
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(false)}>
+              Agora não
+            </button>
+          </div>
         </div>
       )}
     </div>

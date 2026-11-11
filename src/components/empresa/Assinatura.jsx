@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CreditCard, Check, ShieldCheck, ArrowLeft, Loader, QrCode, Gift } from "lucide-react";
+import { CreditCard, Check, ShieldCheck, ArrowLeft, Loader, QrCode, Gift, Sparkles } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
@@ -152,11 +152,11 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
       <div style={{ display: "grid", gap: 12, marginTop: 20, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
         {PLANOS_OFERTADOS.filter((k) => !convite?.plano || k === convite.plano).map((k) => {
           const p = PLANOS[k];
+          const recomendado = Number(p.preco) === 999.9;
           return (
-            <button key={k} className="vx-card"
-              disabled={resgatando}
-              onClick={() => { if (convite) return resgatarConvite(k); setPlano(k); setPasso(1); }}
-              style={{ padding: 18, textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: 8 }}>
+            <div key={k} className={`vx-card vx-plan-card${recomendado ? " vx-plan-recommended" : ""}`}
+              style={{ padding: 18, textAlign: "left", display: "flex", flexDirection: "column", gap: 8 }}>
+              {recomendado && <span className="vx-plan-ribbon"><Sparkles size={12} />RECOMENDADO</span>}
               <div className="vx-disp" style={{ fontSize: 17 }}>{p.nome}</div>
               <div className="vx-disp vx-mono" style={{ fontSize: 26, color: "var(--brand)" }}>
                 {money(p.preco)}<span className="vx-mut" style={{ fontSize: 13 }}>/mês</span>
@@ -168,12 +168,17 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
                   </li>
                 ))}
               </ul>
-              {convite && (
-                <div className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10, pointerEvents: "none" }}>
-                  {resgatando ? "Ativando…" : `Ativar ${convite.dias} dias grátis`}
-                </div>
-              )}
-            </button>
+              <button
+                className="vx-btn vx-btn-primary vx-btn-block"
+                style={{ marginTop: "auto" }}
+                disabled={resgatando}
+                onClick={() => { if (convite) return resgatarConvite(k); setPlano(k); setPasso(1); }}
+              >
+                {convite
+                  ? (resgatando ? "Ativando…" : `Ativar ${convite.dias} dias grátis`)
+                  : "Contratar"}
+              </button>
+            </div>
           );
         })}
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleDollarSign, Download, TrendingUp, User, Wallet } from "lucide-react";
+import { Archive, CircleDollarSign, Download, FileText, Megaphone, TrendingUp, User, Wallet } from "lucide-react";
 import { api, API_URL, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
@@ -7,7 +7,6 @@ import { sugerirValores, impactoNoRoi } from "../../../shared/valorTarefa.js";
 import { metricasEmpresa } from "../../../shared/analytics.js";
 import { money as moneyLib, dataCurta } from "../../lib/utils.js";
 
-const VISOES = [["orcamento", "Orçamento"], ["comissoes", "Comissões"], ["config", "Configurar comissões"]];
 
 function formatarBRL(valor) {
   if (!valor && valor !== 0) return "";
@@ -27,14 +26,17 @@ function OrcamentoCampanhas({ campanhas }) {
     <div>
       <div className="vx-grid vx-g4" style={{ marginBottom: 18 }}>
         {[
-          ["Campanhas ativas", campanhas.filter((c) => c.status === "ativa").length.toLocaleString("pt-BR"), false],
-          ["Total orçado", money(totalOrcado), true],
-          ["Campanhas rascunho", campanhas.filter((c) => c.status === "rascunho").length.toLocaleString("pt-BR"), false],
-          ["Campanhas encerradas", campanhas.filter((c) => c.status === "encerrada" || c.status === "pausada").length.toLocaleString("pt-BR"), false],
-        ].map(([label, val, mon]) => (
-          <div key={label} className="vx-card" style={{ padding: 14 }}>
-            <div className="vx-mut" style={{ fontSize: 12 }}>{label}</div>
-            <b className={`vx-mono ${mon ? "" : ""}`} style={{ fontSize: 19 }}>{val}</b>
+          ["Campanhas ativas", campanhas.filter((c) => c.status === "ativa").length.toLocaleString("pt-BR"), Megaphone],
+          ["Total orçado", money(totalOrcado), Wallet],
+          ["Campanhas rascunho", campanhas.filter((c) => c.status === "rascunho").length.toLocaleString("pt-BR"), FileText],
+          ["Campanhas encerradas", campanhas.filter((c) => c.status === "encerrada" || c.status === "pausada").length.toLocaleString("pt-BR"), Archive],
+        ].map(([label, val, Icon]) => (
+          <div key={label} className="vx-glass-panel vx-tile">
+            <div className="vx-tile-top">
+              <span>{label}</span>
+              <Icon size={17} strokeWidth={1.7} aria-hidden="true" />
+            </div>
+            <div className="vx-tile-val">{val}</div>
           </div>
         ))}
       </div>
@@ -97,18 +99,16 @@ function Comissoes({ emp }) {
   return (
     <div>
       <div className="vx-grid vx-g3" style={{ marginBottom: 18 }}>
-        <div className="vx-card" style={{ padding: 14 }}>
-          <div className="vx-mut" style={{ fontSize: 12 }}>Fechamentos</div>
-          <b className="vx-mono" style={{ fontSize: 20 }}>{total}</b>
-        </div>
-        <div className="vx-card" style={{ padding: 14 }}>
-          <div className="vx-mut" style={{ fontSize: 12 }}>Total em vendas</div>
-          <b className="vx-mono" style={{ fontSize: 20 }}>{money(totalVendas)}</b>
-        </div>
-        <div className="vx-card" style={{ padding: 14 }}>
-          <div className="vx-mut" style={{ fontSize: 12 }}>Comissões a pagar</div>
-          <b className="vx-mono" style={{ fontSize: 20, color: "var(--brand)" }}>{money(totalComissoes)}</b>
-        </div>
+        {[
+          ["Fechamentos", total, TrendingUp],
+          ["Total em vendas", money(totalVendas), CircleDollarSign],
+          ["Comissões a pagar", money(totalComissoes), Wallet],
+        ].map(([label, val, Icon]) => (
+          <div key={label} className="vx-glass-panel vx-tile">
+            <div className="vx-tile-top"><span>{label}</span><Icon size={17} strokeWidth={1.7} aria-hidden="true" /></div>
+            <div className="vx-tile-val">{val}</div>
+          </div>
+        ))}
       </div>
 
       {vendedores.length === 0 ? (
@@ -237,8 +237,15 @@ function ConfigComissoes({ emp, db, up, aviso }) {
   );
 }
 
-export default function ValoresEmpresa({ emp, db, up, aviso }) {
-  const [visao, setVisao] = useState("orcamento");
+const VISOES_POR_ESCOPO = {
+  orcamento: [["orcamento", "Orçamento"]],
+  comissoes: [["comissoes", "Comissões"], ["config", "Configurar comissões"]],
+};
+
+export default function ValoresEmpresa({ emp, db, up, aviso, onAdicionarSaldo, escopo = "orcamento" }) {
+  const visoes = VISOES_POR_ESCOPO[escopo] || VISOES_POR_ESCOPO.orcamento;
+  const [visao, setVisao] = useState(visoes[0][0]);
+  const ehComissoes = escopo === "comissoes";
   const campanhas = useMemo(
     () => (db.campaigns || []).filter((c) => c.companyId === emp.id),
     [db.campaigns, emp.id],
@@ -249,16 +256,25 @@ export default function ValoresEmpresa({ emp, db, up, aviso }) {
       <div className="vx-page-head">
         <div>
           <div className="vx-eyebrow">Financeiro comercial</div>
-          <h1 className="vx-disp">Valores</h1>
-          <p>Orçamentos das campanhas, comissões dos profissionais e configuração das tabelas de pagamento.</p>
+          <h1 className="vx-disp">{ehComissoes ? "Comissões" : "Pagamento dos Profissionais"}</h1>
+          <p>{ehComissoes
+            ? "Comissões dos profissionais e configuração das tabelas de pagamento."
+            : "Orçamentos das campanhas para o pagamento dos profissionais."}</p>
         </div>
+        {!ehComissoes && (
+          <button className="vx-btn vx-btn-primary" style={{ flexShrink: 0, gap: 7 }} onClick={() => onAdicionarSaldo?.()}>
+            <Wallet size={15} /> Adicionar Saldo
+          </button>
+        )}
       </div>
 
-      <div className="vx-seg vx-subnav" style={{ marginBottom: 20 }}>
-        {VISOES.map(([key, label]) => (
-          <button key={key} data-on={visao === key ? "1" : "0"} onClick={() => setVisao(key)}>{label}</button>
-        ))}
-      </div>
+      {visoes.length > 1 && (
+        <div className="vx-seg vx-subnav" style={{ marginBottom: 20 }}>
+          {visoes.map(([key, label]) => (
+            <button key={key} data-on={visao === key ? "1" : "0"} onClick={() => setVisao(key)}>{label}</button>
+          ))}
+        </div>
+      )}
 
       {visao === "orcamento" && <OrcamentoCampanhas campanhas={campanhas} />}
       {visao === "comissoes" && <Comissoes emp={emp} />}

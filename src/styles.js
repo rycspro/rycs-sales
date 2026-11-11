@@ -189,12 +189,19 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
   .vx-sidebar::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
     background:linear-gradient(160deg,rgba(255,255,255,.18) 0%,transparent 35%);opacity:.5;z-index:0}
   html.dark .vx-sidebar::before{background:linear-gradient(160deg,rgba(255,255,255,.04) 0%,transparent 25%)}
-  .vx-sidebar-logo{padding:0 16px;height:60px;border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden;
+  .vx-sidebar-logo{padding:0 16px;height:60px;margin-top:24px;margin-bottom:24px;flex-shrink:0;overflow:hidden;
     display:flex;align-items:center;position:relative;z-index:1}
   .vx-sidebar-logo img{height:52px;width:auto;object-fit:contain;max-width:100%;display:block;margin:0 auto}
   .vx-sidebar>div:first-of-type{padding:12px 10px 0;gap:1px;position:relative;z-index:1}
   .vx-sidebar::-webkit-scrollbar{display:none}
   .vx-bottomnav{display:none}
+  /* Subitens do menu (ex.: Pagamentos → Plano/Campanhas/Movimentações) */
+  .vx-subitem{padding-left:40px!important;min-height:38px!important;font-size:14px!important}
+  /* Subitem selecionado: só o texto azul, sem fundo nem barra. */
+  .vx-subitem[data-on="1"]{background:none!important;color:var(--brand)!important;font-weight:600}
+  .vx-subitem[data-on="1"]::before{display:none!important}
+  /* O submenu em abas da página só aparece no mobile (onde não há barra lateral) */
+  .vx-subnav-mobile{display:none!important}
   .vx-ai-trigger{bottom:22px}
   .vx-ai-panel{bottom:72px}
   .vx-sidebar-section{font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--muted-2);
@@ -364,7 +371,7 @@ html.dark .vx-stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.24);border-color:var(
 
 /* Criação de campanha em três etapas */
 .vx-campaign-wizard{max-width:900px;margin:0 auto}.vx-wizard-steps{display:grid;grid-template-columns:repeat(3,1fr);margin-bottom:25px}.vx-wizard-steps>div{display:flex;align-items:center;min-width:0}.vx-wizard-steps>div>div{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}.vx-wizard-steps>div>div>span{width:25px;height:25px;border:1px solid var(--border);border-radius:50%;display:grid;place-items:center;font-size:10px;flex:none}.vx-wizard-steps>div>i{height:1px;background:var(--border);flex:1;margin:0 10px}.vx-wizard-steps>div[data-active="1"]>div,.vx-wizard-steps>div[data-done="1"]>div{color:var(--brand)}.vx-wizard-steps>div[data-active="1"]>div>span,.vx-wizard-steps>div[data-done="1"]>div>span{background:var(--brand-50);border-color:var(--brand)}
-.vx-objective-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.vx-objective-card{appearance:none;padding:17px;text-align:left;cursor:pointer;color:var(--ink);font:inherit;display:grid;grid-template-columns:38px minmax(0,1fr) 16px;align-items:start;gap:11px;transition:.16s}.vx-objective-card:hover{border-color:var(--brand);transform:translateY(-1px)}.vx-objective-card:last-child:nth-child(odd){grid-column:1/-1}.vx-objective-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--border);color:var(--icon-secondary)}.vx-objective-arrow{color:var(--muted);margin-top:10px}.vx-wizard-checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:13px}.vx-wizard-checks label{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:11.5px}.vx-training-drafts{display:flex;flex-direction:column;gap:8px;margin-top:12px}.vx-training-drafts>div{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(220px,1.3fr) 34px;gap:7px;align-items:start}.vx-training-drafts textarea{min-height:43px;resize:vertical}.vx-evidence-summary{display:flex;flex-direction:column;gap:7px}.vx-evidence-summary>div{padding:9px 10px;border-radius:9px;background:var(--surface-2)}.vx-evidence-summary b,.vx-evidence-summary span{display:block}.vx-evidence-summary b{font-size:11.5px}.vx-evidence-summary span{font-size:10px;color:var(--muted);margin-top:2px}.vx-publish-checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:12px}.vx-publish-checklist>div{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:10.5px}.vx-publish-checklist>div>span{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--red-50);color:var(--red);font-size:10px;font-weight:800}.vx-publish-checklist>div[data-ok="1"]{color:var(--ink-2)}.vx-publish-checklist>div[data-ok="1"]>span{background:rgba(34,160,107,.12);color:#22A06B}
+.vx-objective-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.vx-objective-card{appearance:none;padding:17px;text-align:left;cursor:pointer;color:var(--ink);font:inherit;display:grid;grid-template-columns:38px minmax(0,1fr) 16px;align-items:start;gap:11px;transition:.16s}.vx-objective-card:hover{border-color:var(--brand);transform:translateY(-1px)}.vx-objective-card:last-child:nth-child(odd){grid-column:1/-1}.vx-objective-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--brand-50);border:1px solid var(--brand-100);color:var(--brand)}.vx-objective-arrow{color:var(--muted);margin-top:10px}.vx-wizard-checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:13px}.vx-wizard-checks label{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:11.5px}.vx-training-drafts{display:flex;flex-direction:column;gap:8px;margin-top:12px}.vx-training-drafts>div{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(220px,1.3fr) 34px;gap:7px;align-items:start}.vx-training-drafts textarea{min-height:43px;resize:vertical}.vx-evidence-summary{display:flex;flex-direction:column;gap:7px}.vx-evidence-summary>div{padding:9px 10px;border-radius:9px;background:var(--surface-2)}.vx-evidence-summary b,.vx-evidence-summary span{display:block}.vx-evidence-summary b{font-size:11.5px}.vx-evidence-summary span{font-size:10px;color:var(--muted);margin-top:2px}.vx-publish-checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:12px}.vx-publish-checklist>div{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:10.5px}.vx-publish-checklist>div>span{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--red-50);color:var(--red);font-size:10px;font-weight:800}.vx-publish-checklist>div[data-ok="1"]{color:var(--ink-2)}.vx-publish-checklist>div[data-ok="1"]>span{background:rgba(34,160,107,.12);color:#22A06B}
 @media(max-width:620px){.vx-objective-grid{grid-template-columns:1fr}.vx-objective-card:last-child:nth-child(odd){grid-column:auto}.vx-wizard-steps>div>div{font-size:10px}.vx-wizard-steps>div>i{margin:0 5px}.vx-training-drafts>div{grid-template-columns:1fr 36px}.vx-training-drafts textarea{grid-column:1/-1;grid-row:2}.vx-publish-checklist{grid-template-columns:1fr}}
 
 /* meter */
@@ -824,7 +831,7 @@ html[data-versao="sol"] .vx-sidebtn:hover{background:#F2F8FF;color:#171717}
 html[data-versao="sol"] .vx-sidebtn[data-on="1"]{background:#EAF4FF;color:#318CE7;font-weight:500}
 html[data-versao="sol"] .vx-sidebtn[data-on="1"]::before{display:none}
 html[data-versao="sol"] .vx-sidebtn[data-on="1"]>svg{color:#318CE7}
-html[data-versao="sol"] .vx-sidebar-logo{border-bottom:1px solid #EAEAEA}
+html[data-versao="sol"] .vx-sidebar-logo{border-bottom:none}
 
 /* Cards: branco, borda fina 1px, cantos 10px, sem sombra, sem lift */
 html[data-versao="sol"] .vx-card,
@@ -861,6 +868,9 @@ html[data-versao="sol"] .vx-balance-value{font-family:'Michroma','General Sans',
   -webkit-text-stroke:.35px #171717}
 @media(max-width:1024px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:24px!important}}
 @media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:22px!important}}
+/* Números do card de orçamento (Insights): mesma fonte dos indicadores do sistema, não monoespaçada */
+html[data-versao="sol"] .vx-budget-value strong,
+html[data-versao="sol"] .vx-budget-facts b{font-family:'Michroma','General Sans',sans-serif!important}
 /* Valores de moeda (preços de plano): Michroma é larga; tamanho menor p/ caber */
 html[data-versao="sol"] .vx-plan-price{font-family:'Michroma','General Sans',sans-serif!important;font-weight:700;font-size:19px;letter-spacing:-.03em;color:#171717}
 html[data-versao="sol"] .vx-plan-price small{font-family:'General Sans',sans-serif;font-size:11px}
@@ -908,7 +918,7 @@ html[data-versao="sol"] .vx-team-person i,
 html[data-versao="sol"] .vx-onb-icone,
 html[data-versao="sol"] .vx-onb-passo-n,
 html[data-versao="sol"] .vx-prof-card__img,
-html[data-versao="sol"] .vx-conv-avatar{border-radius:8px!important}
+html[data-versao="sol"] .vx-conv-avatar{border-radius:50%!important}
 @media(min-width:900px){
   .vx-body{grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px}
   .vx-sidebar{top:16px;height:calc(100vh - 32px);border-radius:23px;border:1px solid var(--glass-border);border-right:1px solid var(--glass-border);

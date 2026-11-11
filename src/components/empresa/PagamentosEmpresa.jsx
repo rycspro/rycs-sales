@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowUpCircle, Check, ChevronRight, CreditCard, Download,
+  ArrowUpCircle, Check, ChevronRight, CreditCard,
   Landmark, Lock, Plus, QrCode, TrendingUp, Wallet, X, Zap,
 } from "lucide-react";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
-import { api, API_URL } from "../../lib/api.js";
+import ValoresEmpresa from "./ValoresEmpresa.jsx";
+import AbastecerCaixa from "./AbastecerCaixa.jsx";
+import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
+import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { isPosPago, isPremium } from "../../../shared/empresa.js";
 import { PLANOS } from "../../../shared/planos.js";
@@ -53,7 +56,7 @@ function StatCard({ label, value, sub, tone = "default", icon: Icon }) {
 }
 
 // ── Modal adicionar saldo ─────────────────────────────────────────────────────
-function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
+export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   const [valor, setValor] = useState("");
   const [display, setDisplay] = useState("");
   const [etapa, setEtapa] = useState("form"); // form | pix
@@ -88,9 +91,9 @@ function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(248,250,252,.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={(e) => { if (e.target === e.currentTarget) onFechar(); }}>
-      <div style={{ background: "var(--surface)", borderRadius: "var(--radius)", boxShadow: "0 24px 48px rgba(0,0,0,.18)", width: "100%", maxWidth: 440, padding: "28px 28px 24px" }}>
+      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 50px rgba(0,0,0,.14)", width: "100%", maxWidth: 440, padding: "28px 28px 24px" }}>
         {/* header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
@@ -156,7 +159,7 @@ function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
-export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
+export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, secao = "plano", onTrocarSecao }) {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -182,15 +185,12 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
 
   useEffect(() => { carregar(); }, [query]);
 
-  const exportar = () => {
-    window.open(`${API_URL}/api/company/finance/export?${query}`, "_blank");
-    aviso?.("Extrato exportado em CSV.");
-  };
-
   const planoAtual = emp.assinatura || null;
   const infPlano   = planoAtual ? PLANOS[planoAtual] : null;
   const premium    = isPremium(emp);
   const posPago    = isPosPago(emp);
+  // Tem plano pago ativo? (free/sem assinatura não conta; premium é tratado à parte.)
+  const temAssinatura = !!planoAtual && planoAtual !== "free";
 
   const posicao  = dados?.posicao  || { saldo: 0, reservado: 0, disponivel: 0 };
   const resumo   = dados?.resumo   || { depositado: 0, utilizado: 0, taxas: 0, repassado: 0, movimentos: 0 };
@@ -204,57 +204,38 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
 
   return (
     <div className="vx-fade">
-      {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 10 }}>
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", margin: "0 0 3px", letterSpacing: -0.3 }}>Pagamentos</h1>
-          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Plano, saldo operacional, remunerações e histórico financeiro.</p>
+      {/* ── Tarja: empresa sem plano contratado (não aparece na seção Campanhas) ── */}
+      {!temAssinatura && !premium && secao !== "campanhas" && (
+        <div style={{
+          background: "linear-gradient(90deg,var(--brand) 0%,var(--sky-600,#0ea5e9) 100%)",
+          color: "#fff", padding: "12px 18px", minHeight: 48, borderRadius: 12, marginBottom: 18,
+          display: "flex", alignItems: "center", gap: 10, boxShadow: "0 2px 8px rgba(0,0,0,.14)",
+        }}>
+          <Zap size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 13.5, fontWeight: 500 }}>Assine um plano para começar a usar a RYCS.</span>
         </div>
-        <button className="vx-btn vx-btn-sm" onClick={exportar} disabled={!extrato.length}>
-          <Download size={13} /> Exportar CSV
-        </button>
-      </div>
+      )}
 
+
+      {secao === "plano" && <>
       {/* ── Planos disponíveis ── */}
       <div style={{ marginBottom: 24 }}>
         <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
       </div>
 
-      {/* ── 1. Plano da plataforma ── */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "20px 22px", marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 12 }}>Plano da plataforma</div>
-        {premium ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>
-              <Zap size={16} color="var(--brand)" strokeWidth={2.5} /> Premium
-            </span>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>Concedido pela plataforma · sem mensalidade</span>
-            <span style={{ background: "#DCFCE7", color: "#16A34A", fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>Ativo</span>
-          </div>
-        ) : !temAssinatura ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", marginBottom: 3 }}>Nenhum plano ativo</div>
-              <div style={{ fontSize: 13, color: "var(--muted)" }}>Escolha um plano para desbloquear todos os recursos da RYCS.</div>
-            </div>
-            <span style={{ background: "#FEF9C3", color: "#B45309", fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>Pendente</span>
-          </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{infPlano?.nome || planoAtual}</div>
-                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
-                  {infPlano?.preco > 0 ? `${money(infPlano.preco)}/mês` : "Sem mensalidade"} · Recorrência mensal
-                </div>
-              </div>
-              <span style={{ background: "#DCFCE7", color: "#16A34A", fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>Ativo</span>
-            </div>
-            <button className="vx-btn vx-btn-sm" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Alterar plano</button>
-          </div>
-        )}
-      </div>
+      {/* ── Destaque da empresa (independente do plano) ── */}
+      <DestaqueEmpresa emp={emp} up={up} aviso={aviso} />
 
+      </>}
+
+      {secao === "campanhas" && (
+        <>
+          <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} onAdicionarSaldo={() => setModalSaldo(true)} />
+          <AbastecerCaixa emp={emp} db={db} up={up} aviso={aviso} />
+        </>
+      )}
+
+      {secao === "movimentacoes" && <>
       {/* ── 2. Saldo operacional ── */}
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "20px 22px", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
@@ -410,6 +391,8 @@ export default function PagamentosEmpresa({ emp, db, aviso, recarregar }) {
           </div>
         )}
       </div>
+
+      </>}
 
       {/* ── Modal adicionar saldo ── */}
       {modalSaldo && (

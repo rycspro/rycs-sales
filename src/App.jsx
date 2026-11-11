@@ -341,12 +341,13 @@ export default function App() {
     <div className="vx-app">
       <style>{CSS}</style>
 
-      {bannerOnb && <BannerOnboarding onb={onb} />}
-
       <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "configuracoes"}>
         <ErrorBoundary>
           {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
-          {role === "empresa" && <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
+          {role === "empresa" && <>
+            {bannerOnb && aba === "inicio" && <BannerOnboarding onb={onb} />}
+            <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />
+          </>}
           {role === "admin" && <Admin {...ctx} aba={aba} />}
         </ErrorBoundary>
       </Shell>

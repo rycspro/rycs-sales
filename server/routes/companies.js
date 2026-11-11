@@ -28,7 +28,7 @@ router.patch("/companies/:id", (req, res) => {
   const fields = req.body;
   // saldo/totalAportado/aportes só mudam por pagamento confirmado no gateway
   // ou por liberação de ação — nunca por escrita direta do cliente.
-  const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "vagas", "cor", "documento",
+  const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "destaqueTipo", "visivel", "vagas", "cor", "documento",
     "razaoSocial", "endereco", "segmento", "regiao", "diferenciais", "objecoes", "representanteLegal",
     "contatoFinanceiro", "contatoComercial", "situacaoCadastral", "dataAbertura", "naturezaJuridica", "cnaes", "telefoneEmpresa", "emailEmpresa"];
   const jsonFields = ["comissoes", "curso", "qualificacao", "materiais"];
@@ -38,7 +38,7 @@ router.patch("/companies/:id", (req, res) => {
   for (const [k, v] of Object.entries(fields)) {
     if (allowed.includes(k)) {
       sets.push(`${k} = ?`);
-      vals.push(k === "destaque" ? (v ? 1 : 0) : v);
+      vals.push(["destaque", "visivel"].includes(k) ? (v ? 1 : 0) : v);
     } else if (jsonFields.includes(k)) {
       sets.push(`${k} = ?`);
       vals.push(JSON.stringify(v));
@@ -138,9 +138,11 @@ router.patch("/companies/:id/status", async (req, res) => {
 // Extrato enriquecido: cada linha do razão ganha o nome da tarefa, da
 // campanha e do profissional. Sem isso o financeiro é uma lista de valores
 // sem a pergunta que a empresa realmente faz — "esse débito veio de quê?".
-function extratoDetalhado(companyId, { dias, tipo, campaignId } = {}) {
+function extratoDetalhado(companyId, { dias, de, ate, tipo, campaignId } = {}) {
   const linhas = extratoEmpresa(companyId, 300);
-  const desde = dias ? Date.now() - Number(dias) * 86400000 : 0;
+  // Período personalizado (de/ate) tem prioridade sobre a janela em dias.
+  const desde = de ? new Date(de + "T00:00:00").getTime() : (dias ? Date.now() - Number(dias) * 86400000 : 0);
+  const ateTs = ate ? new Date(ate + "T23:59:59").getTime() : Infinity;
 
   const submissoes = new Map();
   for (const l of linhas) {
@@ -174,7 +176,7 @@ function extratoDetalhado(companyId, { dias, tipo, campaignId } = {}) {
         referencia: l.dados?.referencia || l.dados?.gateway || l.dados?.motivo || "",
       };
     })
-    .filter((l) => (!desde || l.criadoEm >= desde)
+    .filter((l) => l.criadoEm >= desde && l.criadoEm <= ateTs
       && (!tipo || l.tipo === tipo)
       && (!campaignId || l.campaignId === campaignId));
 }
@@ -185,6 +187,8 @@ router.get("/company/finance", (req, res) => {
 
   const extrato = extratoDetalhado(id, {
     dias: req.query.dias,
+    de: req.query.de,
+    ate: req.query.ate,
     tipo: req.query.tipo,
     campaignId: req.query.campaignId,
   });
@@ -223,6 +227,8 @@ router.get("/company/finance/export", (req, res) => {
 
   const extrato = extratoDetalhado(req.user.entityId, {
     dias: req.query.dias,
+    de: req.query.de,
+    ate: req.query.ate,
     tipo: req.query.tipo,
     campaignId: req.query.campaignId,
   });

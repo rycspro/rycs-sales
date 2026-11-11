@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { Check, Copy, CreditCard, Loader, QrCode, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Copy, CreditCard, Loader, QrCode, ShieldCheck, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
+import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
+import PricingPlanos from "./PricingPlanos.jsx";
 
 const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
-  chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui,
+  chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui, trial: PLANOS[k].trial,
 }));
 
 const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
@@ -15,6 +16,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [planos, setPlanos] = useState([]);
   const [atual, setAtual] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
+  const [ciclo, setCiclo] = useState(CICLOS.MENSAL);
   const [voucher, setVoucher] = useState("");
   const [desconto, setDesconto] = useState(null);
   const [processando, setProcessando] = useState(false);
@@ -32,8 +34,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
   useEffect(() => { carregar(); }, [carregar]);
 
-  const abrirModal = (p) => {
+  const abrirModal = (p, cicloEscolhido = CICLOS.MENSAL) => {
     setSelecionado(p);
+    setCiclo(cicloEscolhido);
     setCobranca(null);
     setVoucher("");
     setDesconto(null);
@@ -43,7 +46,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   };
 
   const aplicar = async () => {
-    const r = await api(`/vouchers/validate?codigo=${encodeURIComponent(voucher)}&plano=${selecionado.chave}`);
+    const r = await api(`/vouchers/validate?codigo=${encodeURIComponent(voucher)}&plano=${selecionado.chave}&ciclo=${ciclo}`);
     if (r?.error) { setDesconto(null); return aviso(r.error); }
     setDesconto(r);
     aviso("Voucher aplicado ao checkout.");
@@ -59,6 +62,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     setProcessando(true);
     const r = await api("/subscription", {
       plano: selecionado.chave,
+      ciclo,
       voucher: voucher || undefined,
       formaPagamento: forma,
       cartao: forma === "CREDIT_CARD" ? cartao : undefined,
@@ -91,46 +95,40 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
   if (!planos.length) return <div className="vx-card vx-skeleton" style={{ height: 180 }} />;
 
-  const precoFinal = desconto?.valorFinal ?? selecionado?.preco;
+  // Valor-base do checkout conforme o ciclo escolhido (anual = 12 meses com desconto).
+  const baseCiclo = selecionado ? valorCobradoNoCiclo(selecionado.chave, ciclo) : 0;
+  const ehAnual = ciclo === CICLOS.ANUAL;
+  const precoFinal = desconto?.valorFinal ?? baseCiclo;
 
   return (
     <div className="vx-fade">
-      <div className="vx-page-head">
-        <div>
+      <div>
+        <div style={{ padding: "4px 0 16px" }}>
           <div className="vx-eyebrow">Assinatura empresarial</div>
-          <h1 className="vx-disp">Planos RYCS</h1>
-          <p>Três planos comerciais. O plano é ativado somente após pagamento confirmado.</p>
+          <h1 className="vx-disp" style={{ margin: "2px 0 3px" }}>Planos RYCS</h1>
+          <p style={{ margin: 0 }}>Escolha o plano que acompanha o ritmo da sua operação: quanto mais você escala, menor a taxa por movimentações. Comece com 7 dias grátis, sem compromisso.</p>
         </div>
-        <span className="vx-chip">Atual: {atual?.detalhes?.nome || "Sandbox"}</span>
-      </div>
 
-      <div className="vx-grid vx-g3">
-        {planos.map((p) => {
-          const recomendado = Number(p.preco) === 999.9;
-          const ehAtual = p.chave === atual?.plano;
-          return (
-            <article key={p.chave} className={`vx-card vx-plan-card${recomendado ? " vx-plan-recommended" : ""}`}>
-              {recomendado && <span className="vx-plan-ribbon"><Sparkles size={12} />RECOMENDADO</span>}
-              <h2 className="vx-disp">{p.nome}</h2>
-              <div className="vx-plan-price">{money(p.preco)}<small>/mês</small></div>
-              <span className="vx-chip">Taxa por tarefa: {Math.round(p.takeRate * 100)}%</span>
-              <div className="vx-plan-benefits">{p.inclui.map((i) => <div key={i}><Check size={13} />{i}</div>)}</div>
-              <button className={`vx-btn vx-btn-block ${ehAtual ? "" : "vx-btn-primary"}`} disabled={ehAtual} onClick={() => abrirModal(p)}>
-                {ehAtual ? "Plano atual" : "Contratar"}
-              </button>
-            </article>
-          );
-        })}
-      </div>
+        <div style={{ padding: "4px 0 8px" }}>
+            <PricingPlanos
+              plans={planos}
+              planoAtualChave={atual?.plano}
+              onContratar={(chave, cicloEscolhido) => {
+                const p = planos.find((x) => x.chave === chave);
+                if (p) abrirModal(p, cicloEscolhido);
+              }}
+            />
 
-      {atual?.assinatura?.status === "pendente" && (
-        <div className="vx-notice vx-notice-amber" style={{ marginTop: 14 }}>
-          Existe uma assinatura aguardando pagamento. Atualize a página após pagar; o webhook confirmará o status.
+            {atual?.assinatura?.status === "pendente" && (
+              <div className="vx-notice vx-notice-amber" style={{ marginTop: 14 }}>
+                Existe uma assinatura aguardando pagamento. Atualize a página após pagar; o webhook confirmará o status.
+              </div>
+            )}
+            {["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
+              <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={cancelar}>Cancelar assinatura</button>
+            )}
         </div>
-      )}
-      {["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
-        <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={cancelar}>Cancelar assinatura</button>
-      )}
+      </div>
 
       {/* Modal de checkout */}
       {selecionado && (
@@ -148,7 +146,10 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
               <>
                 {/* Resumo */}
                 <div className="vx-checkout-total">
-                  <span>Valor original</span><b>{money(selecionado.preco)}</b>
+                  <span>Plano {selecionado.nome} · {ehAnual ? "anual" : "mensal"}</span><b>{money(baseCiclo)}</b>
+                  {ehAnual && (
+                    <><span>Cobrança</span><b>{money(baseCiclo)}/ano</b></>
+                  )}
                   {desconto && (
                     <>
                       <span>Voucher {desconto.codigo}</span><b>- {money(desconto.desconto)}</b>

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
 import { saldoDisponivel, isPosPago, isPremium } from "../../../shared/empresa.js";
+import { api } from "../../lib/api.js";
 
 // ── utilidades ────────────────────────────────────────────────────────────────
 
@@ -253,6 +254,8 @@ function PeriodoDropdown({ periodo, setPeriodo, customDe, setCustomDe, customAte
 
 export default function InicioEmpresa({ emp, db, setAba }) {
   const [periodo, setPeriodo] = useState("30");
+  const [cerebro, setCerebro] = useState(null);
+  useEffect(() => { api("/brain/score").then((r) => setCerebro(r && !r.error ? r : null)).catch(() => {}); }, []);
   const [customDe, setCustomDe] = useState("");
   const [customAte, setCustomAte] = useState("");
 
@@ -334,13 +337,13 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
   const pendencias = [
     profsPendentes.length > 0 && {
-      icon: ShieldCheck, texto: `${profsPendentes.length} profissional${profsPendentes.length > 1 ? "is" : ""} aguardando aprovação`, cta: "Revisar", aba: "conferir", cor: "#DC2626",
+      icon: ShieldCheck, texto: `${profsPendentes.length} profissional${profsPendentes.length > 1 ? "is" : ""} aguardando aprovação`, cta: "Revisar", aba: "conferir-fila", cor: "#DC2626",
     },
     subsRevisao.length > 0 && {
-      icon: CheckCircle2, texto: `${subsRevisao.length} tarefa${subsRevisao.length > 1 ? "s" : ""} aguardando revisão`, cta: "Revisar", aba: "conferir", cor: "#D97706",
+      icon: CheckCircle2, texto: `${subsRevisao.length} tarefa${subsRevisao.length > 1 ? "s" : ""} aguardando revisão`, cta: "Revisar", aba: "conferir-fila", cor: "#D97706",
     },
     semSaldo && {
-      icon: Wallet, texto: "Adicione saldo para publicar campanhas", cta: "Ver financeiro", aba: "financeiro", cor: "#DC2626",
+      icon: Wallet, texto: "Adicione saldo para publicar campanhas", cta: "Adicionar saldo", aba: "pagamentos-campanhas", cor: "#DC2626",
     },
     campanhasAtivas.length === 0 && campaigns.length === 0 && {
       icon: Megaphone, texto: "Crie sua primeira campanha para começar", cta: "Criar campanha", aba: "campanhas", cor: "#7C3AED",
@@ -352,7 +355,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       icon: Mail, texto: `${naoLidas.length} mensagem${naoLidas.length > 1 ? "s" : ""} não lida${naoLidas.length > 1 ? "s" : ""}`, cta: "Ver conversas", aba: "conversas", cor: "#2563EB",
     },
     sellersAtivos.length === 0 && profsPendentes.length > 0 && {
-      icon: Users, texto: "Aprove profissionais para operar suas campanhas", cta: "Ver profissionais", aba: "conferir", cor: "#7C3AED",
+      icon: Users, texto: "Aprove profissionais para operar suas campanhas", cta: "Ver profissionais", aba: "conferir-fila", cor: "#7C3AED",
     },
   ].filter(Boolean);
 
@@ -360,6 +363,23 @@ export default function InicioEmpresa({ emp, db, setAba }) {
   const primeiroNome = nomeEmpresa.split(/\s+/)[0];
 
   const ir = (aba) => setAba?.(aba);
+
+  // Lista unificada de pendências — inclui o "Cérebro da Operação" como um item.
+  const cerebroVisivel = cerebro && Number(cerebro.score) < 85 && !cerebro.onboarding?.ativado;
+  const lacunasCerebro = (cerebro?.lacunas || []).slice(0, 3).length;
+  const itensPendencia = [
+    ...(cerebroVisivel ? [{
+      key: "cerebro",
+      emoji: "🧠",
+      title: `Seu Cérebro da Operação está ${cerebro.score}% completo.`,
+      desc: lacunasCerebro > 0
+        ? `Complete mais ${lacunasCerebro} informação(ões) para melhorar campanhas e treinamentos.`
+        : "Continue preenchendo sua base de conhecimento.",
+      cta: `Completar em ${cerebro.tempoEstimadoMin || 5} minuto(s)`,
+      onClick: () => ir("academy"),
+    }] : []),
+    ...pendencias.map((p, i) => ({ key: `p${i}`, Icon: p.icon, title: p.texto, cta: p.cta, onClick: () => ir(p.aba) })),
+  ];
 
   return (
     <div className="vx-fade" style={{ maxWidth: 1200, paddingBottom: 48 }}>
@@ -388,33 +408,34 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       </div>
 
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 6 }}>
         <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} />
         <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} />
         <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} />
-        <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={totalAprovacoesPendentes} onClick={() => ir("conferir")} />
+        <CardIndicador icon={ShieldCheck} label="Aprovações pendentes" valor={totalAprovacoesPendentes} onClick={() => ir("conferir-fila")} />
         {leadsTotal > 0 && <CardIndicador icon={Target} label="Leads gerados" valor={leadsTotal} onClick={() => ir("campanhas")} />}
         {investimento > 0 && <CardIndicador icon={TrendingUp} label="Investimento total" valor={money(investimento)} onClick={() => ir("painel")} />}
       </div>
 
       {/* ── GRID PRINCIPAL ────────────────────────────────────────────────── */}
-      <div className="inicio-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 18, alignItems: "start" }}>
+      <div className="inicio-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, alignItems: "start" }}>
 
         {/* COLUNA ESQUERDA */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
 
           {/* ── DESEMPENHO COMERCIAL ──────────────────────────────────────── */}
-          <div className="vx-card" style={{ padding: 20 }}>
-            <div className="vx-ph">
-              <h3 className="vx-ph-title"><BarChart3 size={16} strokeWidth={1.8} /> Desempenho Comercial</h3>
-              <button className="vx-ph-link" onClick={() => ir("painel")}>
-                Ver análise completa <ArrowRight size={13} />
-              </button>
-            </div>
+          <div>
+          <div className="vx-ph" style={{ marginBottom: 4 }}>
+            <h3 className="vx-ph-title"><BarChart3 size={16} strokeWidth={1.8} /> Desempenho Comercial</h3>
+            <button className="vx-ph-link" onClick={() => ir("painel")}>
+              Ver análise completa <ArrowRight size={13} />
+            </button>
+          </div>
+          <div className="vx-card" style={{ padding: "6px 20px 20px" }}>
 
             {/* Métricas rápidas do período — região unificada com divisores sutis */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 0, marginBottom: 20, borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 0, marginBottom: 20, borderBottom: "1px solid var(--border)" }}>
               {[
                 { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
                 { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2 },
@@ -462,6 +483,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
               </div>
             )}
           </div>
+          </div>
 
           {/* ── PROFISSIONAIS EM DESTAQUE ────────────────────────────────── */}
           {topSellers.length > 0 && (
@@ -507,103 +529,72 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           )}
         </div>
 
-        {/* COLUNA DIREITA */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      </div>
 
-          {/* ── ATIVIDADE RECENTE ─────────────────────────────────────────── */}
-          <div className="vx-card" style={{ padding: 18 }}>
-            <div className="vx-ph" style={{ marginBottom: 14 }}>
-              <h3 className="vx-ph-title"><Activity size={15} strokeWidth={1.8} /> Atividade recente</h3>
-            </div>
-            {eventos.length === 0 ? (
-              <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", padding: "16px 0" }}>Nenhuma atividade registrada.</p>
-            ) : (
-              <div>
-                {eventos.map((ev, i) => {
-                  const Ic = ev.icon;
-                  return (
-                    <div className="vx-lrow" key={i}>
-                      <span className="vx-lrow-icon"><Ic size={15} strokeWidth={1.8} /></span>
-                      <div className="vx-lrow-main">
-                        <b>{ev.texto}</b>
-                        <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={10} /> {dataCurta(ev.ts)}</span>
-                      </div>
+      {/* ── PENDÊNCIAS (lista unificada, no formato do Cérebro) ─────────── */}
+      <div style={{ marginTop: 20 }}>
+        <div className="vx-ph" style={{ marginBottom: 4 }}>
+          <h3 className="vx-ph-title"><AlertTriangle size={16} strokeWidth={1.8} /> Pendências</h3>
+        </div>
+        <div className="vx-card" style={{ padding: "16px 18px" }}>
+          {itensPendencia.length === 0 ? (
+            <p className="vx-mut" style={{ margin: 0, fontSize: 13.5, textAlign: "center", padding: "10px 0" }}>Sem pendências.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {itensPendencia.map((item) => {
+                const Ic = item.Icon;
+                return (
+                  <div key={item.key} style={{
+                    display: "flex", alignItems: "center", gap: 14,
+                    background: "var(--brand-50)", border: "1px solid var(--brand-100)",
+                    borderRadius: 12, padding: "14px 18px",
+                  }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 20 }}>
+                      {item.emoji ? item.emoji : (Ic ? <Ic size={18} color="var(--brand)" strokeWidth={2} /> : null)}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{item.title}</div>
+                      {item.desc && <div style={{ fontSize: 13, color: "var(--brand-600)", marginTop: 2 }}>{item.desc}</div>}
+                    </div>
+                    <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flexShrink: 0, gap: 6, whiteSpace: "nowrap" }} onClick={item.onClick}>
+                      {item.cta} <ArrowRight size={13} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── LEMBRETES PENDENTES ────────────────────────────────────────── */}
-      {pendencias.length > 0 ? (
-        <div style={{
-          background: "var(--surface)", border: "1px solid var(--glass-border)",
-          borderRadius: 16, padding: "16px 20px", marginTop: 20,
-          backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
-          boxShadow: "var(--glass-shadow)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <AlertTriangle size={15} color="#D97706" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>
-              {pendencias.length} {pendencias.length === 1 ? "pendência" : "pendências"}
-            </span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {pendencias.map((p, i) => {
-              const Ic = p.icon;
+      {/* ── ATIVIDADE RECENTE (largura total, no final da página) ───────── */}
+      <div style={{ marginTop: 20 }}>
+        <div className="vx-ph" style={{ marginBottom: 4 }}>
+          <h3 className="vx-ph-title"><Activity size={16} strokeWidth={1.8} /> Atividade recente</h3>
+        </div>
+        <div className="vx-card" style={{ padding: "6px 18px 18px" }}>
+        {eventos.length === 0 ? (
+          <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", padding: "16px 0" }}>Nenhuma atividade registrada.</p>
+        ) : (
+          <div>
+            {eventos.map((ev, i) => {
+              const Ic = ev.icon;
               return (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  padding: "10px 14px", borderRadius: 10,
-                  background: "var(--surface-2)", cursor: "pointer",
-                  backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                  border: "1px solid var(--glass-border)",
-                  transition: "background .12s, transform .12s",
-                }}
-                  onClick={() => ir(p.aba)}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3, #e2e8f0)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
-                >
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex",
-                    alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    color: "var(--icon-primary)",
-                  }}>
-                    <Ic size={15} strokeWidth={2} />
+                <div className="vx-lrow" key={i}>
+                  <span className="vx-lrow-icon"><Ic size={15} strokeWidth={1.8} /></span>
+                  <div className="vx-lrow-main">
+                    <b>{ev.texto}</b>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={10} /> {dataCurta(ev.ts)}</span>
                   </div>
-                  <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>{p.texto}</span>
-                  <span style={{
-                    fontSize: 12, fontWeight: 600, color: p.cor,
-                    display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
-                  }}>
-                    {p.cta} <ArrowRight size={13} />
-                  </span>
                 </div>
               );
             })}
           </div>
+        )}
         </div>
-      ) : (
-        <div style={{
-          background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 14, padding: "16px 24px", marginTop: 20,
-          display: "flex", alignItems: "center", gap: 14,
-          boxShadow: "var(--shadow-card)",
-        }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--green)" }}>
-            <Sparkles size={16} strokeWidth={2} />
-          </div>
-          <p style={{ margin: 0, fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>
-            Tudo em dia — operação ativa com {campanhasAtivas.length} campanha{campanhasAtivas.length !== 1 ? "s" : ""} e {sellersAtivos.length} profissional{sellersAtivos.length !== 1 ? "is" : ""}.
-          </p>
-        </div>
-      )}
+      </div>
 
-      {/* Mobile: coluna direita vira bloco único embaixo */}
+      {/* Mobile: grid de uma coluna já é o padrão agora */}
       <style>{`
         @media (max-width: 860px) {
           .inicio-grid { grid-template-columns: 1fr !important; }

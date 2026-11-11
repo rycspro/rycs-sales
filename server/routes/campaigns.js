@@ -4,6 +4,7 @@ import db, { uid, agora } from "../db.js";
 import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel, isPremium } from "../../shared/empresa.js";
 import { dentroDoLimite } from "../../shared/planos.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
+import { empresaLiberada } from "../services/acessoEmpresa.js";
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
 import { obterOperacaoCampanha, obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
@@ -153,6 +154,10 @@ router.get("/campaigns/:id", (req, res) => {
     return res.status(403).json({ error: "Sem permissão" });
   if (req.user.role === "vendedor" && row.status !== "ativa")
     return res.status(404).json({ error: "Campanha não encontrada" });
+  if (req.user.role === "vendedor") {
+    const empresa = db.prepare("SELECT visivel FROM companies WHERE id = ?").get(row.companyId);
+    if (empresa && empresa.visivel === 0) return res.status(404).json({ error: "Campanha não encontrada" });
+  }
   const campaign = parseCampaign(row);
 
   const apps = db.prepare("SELECT * FROM campaign_applications WHERE campaignId = ?").all(req.params.id);
@@ -165,6 +170,10 @@ router.post("/campaigns", (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa" && role !== "admin")
     return res.status(403).json({ error: "Apenas empresas podem criar campanhas" });
+
+  // Criar campanha (sempre como rascunho) não exige plano: a empresa pode
+  // montar e salvar a campanha sem assinatura. O plano só é exigido para
+  // publicar — a trava fica em POST /campaigns/:id/status quando vira "ativa".
 
   const { titulo, descricao, produto, publico, vagas, comissoes, treinamento, requisitos, objetivo, regiao,
     funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, limitePorProfissional,
@@ -243,6 +252,9 @@ router.post("/campaigns/:id/status", (req, res) => {
   if (!STATUS_CAMPANHA.includes(status)) return res.status(400).json({ error: "Status inválido" });
 
   if (status === "ativa") {
+    // Publicar exige plano ativo. Criar e salvar como rascunho é liberado.
+    if (role === "empresa" && !empresaLiberada(campaign.companyId))
+      return res.status(402).json({ error: "Ative um plano para publicar a campanha.", acao: "escolher-plano" });
     const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(campaign.companyId);
     const parsed = parseCampaign(campaign);
     const check = campanhaPodeSerPublicada(parsed, empresa);

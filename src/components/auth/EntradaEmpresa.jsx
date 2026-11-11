@@ -95,7 +95,8 @@ export default function EntradaEmpresa() {
     e.preventDefault();
     const novos = {};
     if (!nomeEmpresa.trim()) novos.nomeEmpresa = "Nome da empresa é obrigatório.";
-    const errCnpj = validarCnpj(cnpj);
+    // CNPJ é opcional; valida apenas quando preenchido.
+    const errCnpj = cnpj.trim() ? validarCnpj(cnpj) : null;
     if (errCnpj) novos.cnpj = errCnpj;
     if (!EMAIL_RE.test(email.trim())) novos.email = "E-mail inválido.";
     const errSenha = validarSenhaEmpresa(senha);
@@ -121,6 +122,8 @@ export default function EntradaEmpresa() {
       else setErroGeral(r?.error || "Não foi possível criar a conta. Tente de novo.");
       return;
     }
+    // Conta criada: entra direto na plataforma; a confirmação de e-mail fica para depois.
+    if (r.autenticado) { window.location.href = "/"; return; }
     setModo("link-enviado");
   };
 
@@ -191,7 +194,7 @@ export default function EntradaEmpresa() {
           </div>
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-cnpj`}>CNPJ</label>
+            <label className="vx-label" htmlFor={`${id}-cnpj`}>CNPJ <span className="vx-mut" style={{ fontWeight: 400 }}>(opcional)</span></label>
             <input
               id={`${id}-cnpj`} className="vx-input" type="text" inputMode="numeric" autoComplete="off"
               placeholder="00.000.000/0000-00" value={cnpj}

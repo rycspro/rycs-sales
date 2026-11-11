@@ -18,15 +18,21 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
-  const [filtros, setFiltros] = useState({ dias: "30", tipo: "", campaignId: "" });
+  const [filtros, setFiltros] = useState({ dias: "30", de: "", ate: "", tipo: "", campaignId: "" });
+  const [periodo, setPeriodo] = useState("30");
 
   const query = useMemo(() => {
     const p = new URLSearchParams();
-    if (filtros.dias) p.set("dias", filtros.dias);
+    if (periodo === "custom") {
+      if (filtros.de) p.set("de", filtros.de);
+      if (filtros.ate) p.set("ate", filtros.ate);
+    } else if (filtros.dias) {
+      p.set("dias", filtros.dias);
+    }
     if (filtros.tipo) p.set("tipo", filtros.tipo);
     if (filtros.campaignId) p.set("campaignId", filtros.campaignId);
     return p.toString();
-  }, [filtros]);
+  }, [filtros, periodo]);
 
   useEffect(() => {
     let ativo = true;
@@ -68,13 +74,33 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
       <div className="vx-grid vx-g3" style={{ marginTop: 4 }}>
         <label>
           <span className="vx-label">Período</span>
-          <select className="vx-input" value={filtros.dias} onChange={(e) => setFiltros({ ...filtros, dias: e.target.value })}>
+          <select className="vx-input" value={periodo} onChange={(e) => {
+            const v = e.target.value;
+            setPeriodo(v);
+            if (v === "custom") setFiltros((f) => ({ ...f, dias: "" }));
+            else setFiltros((f) => ({ ...f, dias: v, de: "", ate: "" }));
+          }}>
             <option value="7">7 dias</option>
             <option value="30">30 dias</option>
             <option value="90">90 dias</option>
             <option value="">Todo período</option>
+            <option value="custom">Personalizado…</option>
           </select>
         </label>
+        {periodo === "custom" && (
+          <>
+            <label>
+              <span className="vx-label">De</span>
+              <input type="date" className="vx-input" value={filtros.de} max={filtros.ate || undefined}
+                onChange={(e) => setFiltros((f) => ({ ...f, de: e.target.value }))} />
+            </label>
+            <label>
+              <span className="vx-label">Até</span>
+              <input type="date" className="vx-input" value={filtros.ate} min={filtros.de || undefined}
+                onChange={(e) => setFiltros((f) => ({ ...f, ate: e.target.value }))} />
+            </label>
+          </>
+        )}
         <label>
           <span className="vx-label">Movimento</span>
           <select className="vx-input" value={filtros.tipo} onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}>

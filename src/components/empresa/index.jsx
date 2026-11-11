@@ -5,38 +5,35 @@ import PainelEmpresa from "./PainelEmpresa.jsx";
 import ConferirEmpresa from "./ConferirEmpresa.jsx";
 import TimeEmpresa from "./TimeEmpresa.jsx";
 import QualificacaoEmpresa from "./QualificacaoEmpresa.jsx";
-import CampanhasHub from "./CampanhasHub.jsx";
+import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
+import TarefasEmpresa from "./TarefasEmpresa.jsx";
+import ValoresEmpresa from "./ValoresEmpresa.jsx";
 import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
-import PagamentosEmpresa from "./PagamentosEmpresa.jsx";
+import PagamentosEmpresa, { ModalSaldo } from "./PagamentosEmpresa.jsx";
 import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
 import ConversasEmpresa from "./ConversasEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
-import Assinatura from "./Assinatura.jsx";
 import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
-import BannerCerebro from "./BannerCerebro.jsx";
 import InicioEmpresa from "./InicioEmpresa.jsx";
 import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
-import LeadsDashEmpresa from "./LeadsDashEmpresa.jsx";
+import LeadsEmpresa from "./LeadsEmpresa.jsx";
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
-  painel:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
-  campanhas: [{ key: "criadoEm", label: "Data" }, { key: "titulo", label: "Nome" }, { key: "valor", label: "Valor" }],
-  leads:     [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "statusCliente", label: "Status" }],
-  conferir:  [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
+  painel:     [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
+  financeiro: [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
+  campanhas:  [{ key: "criadoEm", label: "Data" }, { key: "titulo", label: "Nome" }, { key: "valor", label: "Valor" }],
+  "campanhas-tarefas": [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
+  leads:      [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "statusCliente", label: "Status" }],
+  "conferir-fila":   [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
+  "conferir-regras": [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
 };
-const ABAS_COM_FILTRO = new Set(["painel", "campanhas", "leads", "conferir"]);
+const ABAS_COM_FILTRO = new Set(["painel", "financeiro", "campanhas", "campanhas-tarefas", "leads", "conferir-fila", "conferir-regras"]);
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
-  const sair = async () => {
-    await api("/auth/logout", {});
-    window.location.reload();
-  };
-
   const [secaoCampanhas, setSecaoCampanhas] = useState("campanhas");
-  const [secaoInsights, setSecaoInsights] = useState("painel");
+  const [modalSaldo, setModalSaldo] = useState(false);
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
-  const [secaoConferir, setSecaoConferir] = useState("fila");
   const [filtros, setFiltros] = useState({});
 
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
@@ -59,18 +56,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     </div>
   );
 
-  if (!acesso.liberado) {
-    return (
-      <div className="vx-fade">
-        <div className="vx-row" style={{ marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
-          <h1 className="vx-disp" style={{ fontSize: 20, margin: 0 }}>{emp.nome}</h1>
-          <button className="vx-btn vx-btn-sm" onClick={sair}>Sair</button>
-        </div>
-        <Assinatura emp={emp} acesso={acesso} aviso={aviso}
-          aoAtivar={async () => { await consultarAcesso(); await recarregar?.(); }} />
-      </div>
-    );
-  }
+  // Sem plano ativo a empresa navega por tudo normalmente; só não pode criar
+  // campanhas nem conversar com profissionais até aderir a um plano.
+  const bloqueado = !acesso.liberado;
+  const irParaPlano = () => setAba?.("pagamentos");
 
   const submenu = (itens, ativo, selecionar) => (
     <div className="vx-seg vx-subnav" style={{ marginBottom: 18 }}>
@@ -92,16 +81,6 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     </div>
   );
 
-  const filtroLeadsBtn = aba === "leads" && (
-    <FiltroData
-      key="leads"
-      campos={CAMPOS_SORT.leads}
-      campoInicial={CAMPOS_SORT.leads[0]?.key || ""}
-      onAplicar={setFiltroAtual}
-      onLimpar={limparFiltroAtual}
-    />
-  );
-
   return (
     <div className="vx-fade">
       {aba === "inicio" && <>
@@ -110,39 +89,61 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       </>}
       {aba === "painel" && <>
         {filtroBar}
-        {submenu([["painel", "Insights"], ["financeiro", "Financeiro"]], secaoInsights, setSecaoInsights)}
-        {secaoInsights === "painel" && <>
-          <BannerCerebro onIr={() => { setSecaoAcademy("empresa"); setAba?.("academy"); }} />
-          <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} filtroData={filtroAtual}
-            irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
-        </>}
-        {secaoInsights === "financeiro" && <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />}
+        <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} filtroData={filtroAtual} vista="desempenho"
+          irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
+      </>}
+      {aba === "painel-campanhas" && <>
+        {filtroBar}
+        <PainelEmpresa emp={emp} db={db} up={up} aviso={aviso} filtroData={filtroAtual} vista="campanhas"
+          irParaCampanhas={() => { setSecaoCampanhas("campanhas"); setAba?.("campanhas"); }} />
+      </>}
+      {aba === "financeiro" && <>
+        {filtroBar}
+        <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       </>}
       {aba === "campanhas" && <>
         {filtroBar}
-        <CampanhasHub emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
-          secao={secaoCampanhas} setSecao={setSecaoCampanhas} filtroData={filtroAtual} />
+        <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
+          filtroData={filtroAtual} bloqueado={bloqueado} irParaPlano={irParaPlano} />
       </>}
-      {aba === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
-      {aba === "conversas" && <ConversasEmpresa emp={emp} db={db} up={up} />}
+      {aba === "campanhas-comissoes" && (
+        <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} escopo="comissoes" />
+      )}
+      {aba === "campanhas-tarefas" && <>
+        {filtroBar}
+        <TarefasEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} filtroData={filtroAtual} />
+      </>}
+      {aba === "profissionais" && <ProfissionaisEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} bloqueado={bloqueado} irParaPlano={irParaPlano} />}
+      {aba === "conversas" && <ConversasEmpresa emp={emp} db={db} up={up} bloqueado={bloqueado} irParaPlano={irParaPlano} />}
       {aba === "academy" && <>
         {submenu([["rycs", "Cursos da RYCS"], ["empresa", "Ensinar a RYCS"], ["qualificacao", "Dados da Operação"]], secaoAcademy, setSecaoAcademy)}
         {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}
         {secaoAcademy === "empresa" && <AcademyEmpresaHub emp={emp} aviso={aviso} />}
         {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("configuracoes"); }} />}
       </>}
-      {aba === "conferir" && <>
+      {aba === "conferir-fila" && <>
         {filtroBar}
-        {submenu([["fila", "Fila de revisão"], ["time", "Time"], ["regras", "Regras automáticas"]], secaoConferir, setSecaoConferir)}
-        {secaoConferir === "fila" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} />}
-        {secaoConferir === "time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
-        {secaoConferir === "regras" && <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} filtroData={filtroAtual} />}
+        <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} />
+      </>}
+      {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
+      {aba === "conferir-regras" && <>
+        {filtroBar}
+        <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} filtroData={filtroAtual} />
       </>}
       {aba === "leads" && (
-        <LeadsDashEmpresa emp={emp} db={db} up={up} recarregar={recarregar} filtroData={filtroAtual} filtroBtn={filtroLeadsBtn} setAba={setAba} />
+        <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       )}
-      {aba === "pagamentos" && <PagamentosEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} />}
+      {["pagamentos", "pagamentos-campanhas"].includes(aba) && (
+        <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
+          secao={aba === "pagamentos-campanhas" ? "campanhas" : "plano"}
+          onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
+        />
+      )}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}
+
+      {modalSaldo && (
+        <ModalSaldo emp={emp} aviso={aviso} aoConfirmar={() => recarregar?.()} onFechar={() => setModalSaldo(false)} />
+      )}
     </div>
   );
 }

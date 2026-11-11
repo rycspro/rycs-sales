@@ -74,7 +74,7 @@ function CampaignCard({ campanha, onAbrir }) {
   </article>;
 }
 
-export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAbrir, recarregarSinal = 0 }) {
+export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAbrir, recarregarSinal = 0, somenteMetricas = false }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
   const [filtro, setFiltro] = useState("todas");
@@ -107,10 +107,12 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
         <h1 className="vx-disp">Campanhas</h1>
         <p><b>Sua operação comercial em um só lugar.</b><br />Acompanhe profissionais, investimento e resultados das suas campanhas em tempo real.</p>
       </div>
-      <div className="vx-campaign-actions">
-        <button className="vx-btn vx-btn-primary vx-btn-ai-hero" onClick={onCriarIA}><Sparkles size={15} /> Criar com IA</button>
-        <button className="vx-btn vx-btn-ghost" onClick={onCriar}><Plus size={15} /> Criar manualmente</button>
-      </div>
+      {!somenteMetricas && (
+        <div className="vx-campaign-actions">
+          <button className="vx-btn vx-btn-primary vx-btn-ai-hero" onClick={onCriarIA}><Sparkles size={15} /> Criar com IA</button>
+          <button className="vx-btn vx-btn-ghost" onClick={onCriar}><Plus size={15} /> Criar manualmente</button>
+        </div>
+      )}
     </div>
 
     {erro && <div className="vx-notice vx-notice-amber" style={{ marginBottom: 14 }}>{erro}</div>}
@@ -144,7 +146,7 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
       </section>
     </>}
 
-    <section style={{ marginTop: 22 }}>
+    {!somenteMetricas && <section style={{ marginTop: 22 }}>
       <div className="vx-row" style={{ alignItems: "end", marginBottom: 11 }}>
         <div><div className="vx-eyebrow">Operações</div><h2 className="vx-disp" style={{ margin: "3px 0 0", fontSize: 19 }}>Suas campanhas</h2></div>
       </div>
@@ -164,6 +166,6 @@ export default function CampaignsDashboard({ campanhas, onCriar, onCriarIA, onAb
       </div> : campanhasFiltradas.length === 0 ? <div className="vx-card vx-campaign-filter-empty">Nenhuma campanha neste status.</div> : <div className="vx-campaign-card-grid">
         {campanhasFiltradas.map((campanha) => <CampaignCard key={campanha.id} campanha={campanha} onAbrir={onAbrir} />)}
       </div>}
-    </section>
+    </section>}
   </div>;
 }

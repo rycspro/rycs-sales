@@ -876,6 +876,8 @@ adicionarColuna("companies", "cnaes", "TEXT DEFAULT ''");
 adicionarColuna("companies", "telefoneEmpresa", "TEXT DEFAULT ''");
 adicionarColuna("companies", "emailEmpresa", "TEXT DEFAULT ''");
 adicionarColuna("companies", "saldoReservado", "REAL DEFAULT 0");
+adicionarColuna("companies", "destaqueTipo", "TEXT DEFAULT ''");
+adicionarColuna("companies", "visivel", "INTEGER DEFAULT 1");
 adicionarColuna("companies", "aprovadoPor", "TEXT");
 // Regras de aprovação automática configuradas pela empresa. Guardadas como
 // JSON: o conjunto muda com o produto e uma coluna por critério viraria uma
@@ -916,6 +918,9 @@ adicionarColuna("sellers", "emailVerificado", "INTEGER DEFAULT 0");
 // configurado, e sem storage o upload seria só aparência.
 adicionarColuna("sellers", "foto", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "fotoScore", "INTEGER");
+// Currículo enviado no cadastro (data URI) + nome original do arquivo, visível à empresa.
+adicionarColuna("sellers", "curriculo", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "curriculoNome", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "titulo", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "bio", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "segmentos", "TEXT DEFAULT '[]'");
@@ -1014,6 +1019,8 @@ adicionarColuna("subscriptions", "falhaMotivo", "TEXT");
 // Pix Automático: autorização no Asaas (a assinatura de lá só nasce quando ela é ativada).
 adicionarColuna("subscriptions", "asaasAutorizacaoId", "TEXT");
 adicionarColuna("subscriptions", "atualizadoEm", "INTEGER");
+// Ciclo de cobrança: MENSAL (padrão) ou ANUAL (12 meses com desconto).
+adicionarColuna("subscriptions", "ciclo", "TEXT DEFAULT 'MENSAL'");
 
 // Lista de contatos por campanha
 db.prepare(`

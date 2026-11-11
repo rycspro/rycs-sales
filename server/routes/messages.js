@@ -1,5 +1,6 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
+import { empresaLiberada } from "../services/acessoEmpresa.js";
 
 const router = Router();
 
@@ -44,6 +45,9 @@ router.post("/messages", (req, res) => {
     return res.status(403).json({ error: "Sem permissão" });
   if (role === "empresa" && entityId !== companyId)
     return res.status(403).json({ error: "Sem permissão" });
+  // Conversar com profissionais exige plano ativo.
+  if (role === "empresa" && !empresaLiberada(entityId))
+    return res.status(402).json({ error: "Ative um plano para conversar com profissionais.", acao: "escolher-plano" });
   if (role === "vendedor") {
     const vinculo = db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(sellerId, companyId);
     if (!vinculo) return res.status(403).json({ error: "Conversa disponível apenas para vínculos aprovados" });

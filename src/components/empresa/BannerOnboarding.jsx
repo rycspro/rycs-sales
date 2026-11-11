@@ -28,14 +28,15 @@ export default function BannerOnboarding({ onb }) {
       role="banner"
       aria-label="Configure sua conta para vender"
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
         background: "linear-gradient(90deg,var(--brand) 0%,var(--sky-600,#0ea5e9) 100%)",
         color: "#fff",
         padding: "0 16px",
         minHeight: 48,
+        borderRadius: 12,
+        marginBottom: 16,
         display: "flex", alignItems: "center", justifyContent: "space-between",
         gap: 12,
-        boxShadow: "0 2px 8px rgba(0,0,0,.18)",
+        boxShadow: "0 2px 8px rgba(0,0,0,.14)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, fontWeight: 500, flexShrink: 1, minWidth: 0 }}>

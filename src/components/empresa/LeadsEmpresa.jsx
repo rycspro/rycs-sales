@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleDollarSign, ContactRound, Download, FileSpreadsheet, Filter, Kanban, List, Sparkles, TrendingUp, Upload } from "lucide-react";
+import { CircleDollarSign, ContactRound, Download, FileSpreadsheet, Filter, Kanban, List, Megaphone, Percent, Sparkles, TrendingUp, Upload } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { ETAPAS, ORDEM_ETAPAS } from "../../../shared/pipeline.js";
@@ -58,7 +58,22 @@ export default function LeadsEmpresa({ emp, db, aviso }) {
       {relatorio && <div className="vx-grid vx-g4" style={{marginTop:14}}>{[["Recebidos",relatorio.totalRecebido],["Importados",relatorio.importados],["Duplicados",relatorio.duplicados],["Inválidos",relatorio.invalidos]].map(([l,v])=><div className="vx-scenario" key={l}><span>{l}</span><strong className="vx-mono">{v}</strong></div>)}</div>}
     </section>}
 
-    <div className="vx-grid vx-g4" style={{marginBottom:16}}><div className="vx-card" style={{padding:14}}><div className="vx-mut" style={{fontSize:12}}>Pipeline estimado</div><b className="vx-mono" style={{fontSize:19}}>{money(total)}</b></div><div className="vx-card" style={{padding:14}}><div className="vx-mut" style={{fontSize:12}}>Ganhos</div><b className="vx-mono" style={{fontSize:19}}>{ganhos}</b></div><div className="vx-card" style={{padding:14}}><div className="vx-mut" style={{fontSize:12}}>Conversão</div><b className="vx-mono" style={{fontSize:19}}>{leads.length?Math.round(ganhos/leads.length*100):0}%</b></div><div className="vx-card" style={{padding:14}}><div className="vx-mut" style={{fontSize:12}}>Campanhas</div><b className="vx-mono" style={{fontSize:19}}>{new Set(leads.map((l)=>l.campaignId).filter(Boolean)).size}</b></div></div>
+    <div className="vx-grid vx-g4" style={{marginBottom:16}}>
+      {[
+        ["Pipeline estimado", money(total), CircleDollarSign],
+        ["Ganhos", ganhos, TrendingUp],
+        ["Conversão", `${leads.length?Math.round(ganhos/leads.length*100):0}%`, Percent],
+        ["Campanhas", new Set(leads.map((l)=>l.campaignId).filter(Boolean)).size, Megaphone],
+      ].map(([label, val, Icon]) => (
+        <div key={label} className="vx-glass-panel vx-tile">
+          <div className="vx-tile-top">
+            <span>{label}</span>
+            <Icon size={17} strokeWidth={1.7} aria-hidden="true" />
+          </div>
+          <div className="vx-tile-val">{val}</div>
+        </div>
+      ))}
+    </div>
     <div className="vx-card" style={{padding:14,marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
         <button className={`vx-btn vx-btn-sm ${modoVisao==="lista"?"vx-btn-primary":"vx-btn-ghost"}`} onClick={()=>setModoVisao("lista")}><List size={13}/> Lista</button>

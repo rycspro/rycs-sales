@@ -4,7 +4,7 @@ import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
 import { acessoDaEmpresa, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../shared/assinatura.js";
-import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../shared/planos.js";
+import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO, CICLOS, valorCobradoNoCiclo } from "../../shared/planos.js";
 import { calcularVoucher, normalizarVoucher, validarVoucher } from "../services/vouchers.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
 import { trialDoOnboarding, concluir as concluirEtapaOnboarding } from "../services/onboarding.js";
@@ -21,9 +21,11 @@ router.get("/vouchers/validate", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error:"Apenas empresas" });
   const plano = String(req.query.plano || ""), base = PLANOS[plano];
   if (!base || !base.preco) return res.status(400).json({ error:"Plano inválido" });
+  const ciclo = String(req.query.ciclo || CICLOS.MENSAL).toUpperCase() === CICLOS.ANUAL ? CICLOS.ANUAL : CICLOS.MENSAL;
+  const valorBase = valorCobradoNoCiclo(plano, ciclo);
   const validacao = validarVoucher(db,{codigo:req.query.codigo,plano,companyId:req.user.entityId});
   if (!validacao.ok) return res.status(422).json({ error:validacao.error });
-  res.json({ ok:true, codigo:validacao.voucher.codigo, tipo:validacao.voucher.tipo, valor:validacao.voucher.valor, ...calcularVoucher(base.preco,validacao.voucher) });
+  res.json({ ok:true, codigo:validacao.voucher.codigo, tipo:validacao.voucher.tipo, valor:validacao.voucher.valor, ...calcularVoucher(valorBase,validacao.voucher) });
 });
 
 router.post("/vouchers", (req, res) => {
@@ -309,6 +311,10 @@ router.post("/subscription", async (req, res) => {
   if (!PLANOS[chave]) return res.status(400).json({ error: "Plano inválido" });
 
   const plano = PLANOS[chave];
+  // Ciclo de cobrança: mensal (padrão) ou anual (12 meses com desconto, cobrados
+  // de uma vez). O valor vem de shared/planos.js, nunca fixado aqui.
+  const ciclo = String(req.body?.ciclo || CICLOS.MENSAL).toUpperCase() === CICLOS.ANUAL ? CICLOS.ANUAL : CICLOS.MENSAL;
+  const valorBase = PLANOS[chave]?.preco ? valorCobradoNoCiclo(chave, ciclo) : 0;
   // Checkout da etapa 5 do onboarding: cartão ou Pix Automático, com o trial
   // do convite (se houver) e o documento do titular servindo de documento da
   // empresa quando ela ainda não tem um.
@@ -403,8 +409,8 @@ router.post("/subscription", async (req, res) => {
 
   const subId = uid();
   try {
-    let voucher=null, calculo={valorOriginal:plano.preco,desconto:0,valorFinal:plano.preco};
-    if(req.body?.voucher){const v=validarVoucher(db,{codigo:req.body.voucher,plano:chave,companyId:entityId});if(!v.ok)return res.status(422).json({error:v.error});voucher=v.voucher;calculo=calcularVoucher(plano.preco,voucher);}
+    let voucher=null, calculo={valorOriginal:valorBase,desconto:0,valorFinal:valorBase};
+    if(req.body?.voucher){const v=validarVoucher(db,{codigo:req.body.voucher,plano:chave,companyId:entityId});if(!v.ok)return res.status(422).json({error:v.error});voucher=v.voucher;calculo=calcularVoucher(valorBase,voucher);}
     if(calculo.valorFinal<5)return res.status(422).json({error:"O total do checkout precisa ser de pelo menos R$ 5,00 para pagamento via Pix."});
     // Cartão é a forma prioritária; Pix continua aceito, e o Pix Automático
     // entra pela etapa 5 do onboarding.
@@ -416,7 +422,10 @@ router.post("/subscription", async (req, res) => {
 
     // Com trial, a primeira cobrança cai no fim dele. Sem trial, em 3 dias —
     // prazo que o Pix precisa para o boleto/QR não vencer antes de ser pago.
-    const trialDias = doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO;
+    // Planos marcados com trial:false (ex.: Start) não têm período gratuito.
+    const trialDias = PLANOS[chave]?.trial === false
+      ? 0
+      : (doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO);
     const vencimento = trialDias
       ? primeiraCobranca({ trialDias })
       : new Date(Date.now() + 3 * 86400000);
@@ -431,8 +440,8 @@ router.post("/subscription", async (req, res) => {
       billingType: forma,
       value: calculo.valorFinal,
       nextDueDate: vencimento.toISOString().split("T")[0],
-      cycle: "MONTHLY",
-      description: `RYCS ${plano.nome} — assinatura mensal`,
+      cycle: ciclo === CICLOS.ANUAL ? "YEARLY" : "MONTHLY",
+      description: `RYCS ${plano.nome} — assinatura ${ciclo === CICLOS.ANUAL ? "anual" : "mensal"}`,
       externalReference: `sub:${entityId}`,
     };
 
@@ -474,10 +483,10 @@ router.post("/subscription", async (req, res) => {
     const trialFim = trialDias > 0 ? vencimento.getTime() : null;
     const cartaoInfo = cobranca.creditCard || {};
 
-    db.transaction(()=>{db.prepare(`INSERT INTO subscriptions (id, companyId, plano, status, asaasId, valor, valorOriginal, desconto, voucherId, paymentId, invoiceUrl, criadoEm, trialFim, trialDias, formaPagamento, cartaoFinal, cartaoBandeira, proximaCobranca, atualizadoEm)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    db.transaction(()=>{db.prepare(`INSERT INTO subscriptions (id, companyId, plano, status, asaasId, valor, valorOriginal, desconto, voucherId, paymentId, invoiceUrl, criadoEm, trialFim, trialDias, formaPagamento, cartaoFinal, cartaoBandeira, proximaCobranca, ciclo, atualizadoEm)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(subId, entityId, chave, statusInicial, cobranca.id, calculo.valorFinal, calculo.valorOriginal, calculo.desconto, voucher?.id||null, pagamento?.id||null, pagamento?.invoiceUrl||cobranca.invoiceUrl||null, agora(),
-           trialFim, trialDias, forma, cartaoInfo.creditCardNumber || "", cartaoInfo.creditCardBrand || "", vencimento.getTime(), agora());
+           trialFim, trialDias, forma, cartaoInfo.creditCardNumber || "", cartaoInfo.creditCardBrand || "", vencimento.getTime(), ciclo, agora());
       // Trial já vale como plano corrente na empresa: é o que libera as telas.
       if (trialDias > 0) db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(chave, entityId);
       if(voucher)db.prepare(`INSERT INTO voucher_redemptions (id,voucherId,companyId,subscriptionId,valorOriginal,desconto,valorFinal,status,criadoEm) VALUES (?,?,?,?,?,?,?,'reservado',?)`).run(uid(),voucher.id,entityId,subId,calculo.valorOriginal,calculo.desconto,calculo.valorFinal,agora());})();
