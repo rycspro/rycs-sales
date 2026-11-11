@@ -1,30 +1,31 @@
 import { useState, useEffect } from "react";
-import { Sun, Moon, Droplet } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { ler, gravar } from "../lib/armazenamento.js";
 
-// Seletor de VERSÃO de layout (não é mais só tema claro/escuro):
-// - sol  → versão clara/clean — o padrão
-// - agua → versão glass azul claro
-// - lua  → versão black (tema escuro)
-// A versão vira classe/atributo no <html>: "dark" para a lua, e data-versao
-// para quando a versão Sol ganhar estilos próprios.
+// Duas versões:
+// - sol → versão clara/clean (padrão)
+// - lua → a MESMA versão do Sol, porém escura (black)
+// Ambas usam o layout do Sol (data-versao="sol"); a lua acende data-dark="1",
+// que aplica a paleta escura por cima do Sol.
 function aplicar(versao) {
   const isDark = versao === "lua";
-  document.documentElement.classList.toggle("dark", isDark);
-  document.documentElement.setAttribute("data-versao", versao);
-  const bg = isDark ? "#08090C" : versao === "sol" ? "#FAFAFA" : "#CFE1F8";
+  document.documentElement.setAttribute("data-versao", "sol");
+  document.documentElement.classList.remove("dark"); // não usar o tema escuro antigo (glass)
+  if (isDark) document.documentElement.setAttribute("data-dark", "1");
+  else document.documentElement.removeAttribute("data-dark");
+  const bg = isDark ? "#0E1014" : "#FAFAFA";
   document.documentElement.style.background = bg;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
 }
 
 const OPCOES = [
   { value: "sol", Icon: Sun, label: "Sol" },
-  { value: "agua", Icon: Droplet, label: "Água" },
   { value: "lua", Icon: Moon, label: "Lua" },
 ];
 
 export default function ThemeSwitcher() {
-  const [versao, setVersao] = useState(() => ler("rycs-versao", "sol"));
+  // Versões antigas podem ter salvo "agua" — passa a valer Sol.
+  const [versao, setVersao] = useState(() => (ler("rycs-versao", "sol") === "lua" ? "lua" : "sol"));
 
   useEffect(() => {
     aplicar(versao);

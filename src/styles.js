@@ -943,5 +943,52 @@ html[data-versao="sol"] .vx-conv-avatar{border-radius:8px!important}
 @media(prefers-reduced-motion:reduce){.vx-content>*{animation:none}}
 
 @media(max-width:899px){.vx-bottomnav{background:var(--surface);min-height:calc(64px + env(safe-area-inset-bottom,0px))}.vx-navbtn{min-height:64px}.vx-navbtn span{font-size:10px}.vx-account-grid{grid-template-columns:1fr;gap:20px}.vx-account-heading h1{font-size:24px}.vx-account-avatar{width:52px;height:52px}.vx-account-identity{gap:12px;flex-wrap:wrap}.vx-account-identity>div{flex-basis:calc(100% - 64px)}.vx-account-identity>.vx-btn{margin-left:64px;min-height:44px}.vx-content-settings .vx-account{padding:20px 16px calc(100px + env(safe-area-inset-bottom,0px))}.vx-account-section .vx-card{max-width:100%}.vx-account-form{width:100%}.vx-account-section>div>nav{max-width:100%}}
+
+/* ───────────────────────── LUA: a versão do Sol, porém escura (black) ─────────────────────────
+   Acende com data-dark="1" por cima do data-versao="sol". Redefine a paleta
+   (variáveis) e sobrescreve as poucas cores fixas que o Sol trava com !important. */
+html[data-dark="1"][data-versao="sol"] .vx-app{
+  --brand:#4D9FFF;--brand-600:#2E86E0;--brand-50:#16263C;--brand-100:#16263C;--brand-200:#22395A;
+  --bg:#0E1014;--surface:#171A21;--surface-solid:#171A21;--surface-1:#171A21;--surface-2:#1B1F27;--surface-3:#232833;
+  --ink:#ECEEF2;--ink-2:#C6CBD3;--muted:#969CA6;--muted-2:#6E747E;--text-2:#C6CBD3;
+  --border:#272B34;--border-strong:#343A45;--glass-border:#272B34;
+  --glass:#171A21;--glass-strong:#171A21;--glass-panel:#171A21;
+  --icon-primary:#C6CBD3;--icon-secondary:#969CA6;--icon-brand:#4D9FFF;
+  --red:#F87171;--red-50:#3A1E1E;--amber:#FBBF24;--indigo:#9AA6FF;
+  --surface-solid:#171A21;
+  background:#0E1014!important;color:#ECEEF2}
+html[data-dark="1"][data-versao="sol"] body{color:#ECEEF2}
+html[data-dark="1"][data-versao="sol"] .vx-sidebar{background:#15181E!important;border-right:1px solid #262A33!important}
+html[data-dark="1"][data-versao="sol"] .vx-content{background:#0E1014!important}
+html[data-dark="1"][data-versao="sol"] .vx-sidebar-logo img{filter:brightness(0) invert(1)}
+html[data-dark="1"][data-versao="sol"] .vx-sidebtn{color:#B8BDC6}
+html[data-dark="1"][data-versao="sol"] .vx-sidebtn:hover{background:#1C2430;color:#ECEEF2}
+html[data-dark="1"][data-versao="sol"] .vx-sidebtn[data-on="1"]{background:#16263C;color:#4D9FFF}
+html[data-dark="1"][data-versao="sol"] .vx-sidebtn[data-on="1"]>svg{color:#4D9FFF}
+html[data-dark="1"][data-versao="sol"] .vx-card,
+html[data-dark="1"][data-versao="sol"] .vx-stat,
+html[data-dark="1"][data-versao="sol"] .vx-glass-panel,
+html[data-dark="1"][data-versao="sol"] .vx-account-group,
+html[data-dark="1"][data-versao="sol"] .vx-account-trigger{background:#171A21!important;border:1px solid #272B34!important}
+html[data-dark="1"][data-versao="sol"] .vx-card:hover,
+html[data-dark="1"][data-versao="sol"] .vx-stat:hover{border-color:#4D9FFF!important}
+html[data-dark="1"][data-versao="sol"] .vx-disp,
+html[data-dark="1"][data-versao="sol"] .vx-page-head h1,
+html[data-dark="1"][data-versao="sol"] .vx-ph-title{color:#ECEEF2!important}
+html[data-dark="1"][data-versao="sol"] .vx-tile-val,
+html[data-dark="1"][data-versao="sol"] .vx-stat-val,
+html[data-dark="1"][data-versao="sol"] .vx-num,
+html[data-dark="1"][data-versao="sol"] .vx-balance-value{color:#ECEEF2!important;-webkit-text-stroke:.35px #ECEEF2}
+html[data-dark="1"][data-versao="sol"] .vx-plan-price{color:#ECEEF2}
+html[data-dark="1"][data-versao="sol"] .vx-input{background:#1B1F27;color:#ECEEF2;border-color:#2B303A}
+html[data-dark="1"][data-versao="sol"] .vx-input::placeholder{color:#6E747E}
+html[data-dark="1"][data-versao="sol"] select.vx-input option{background:#171A21;color:#ECEEF2}
+html[data-dark="1"][data-versao="sol"] .vx-badge-brand{background:#16263C;color:#4D9FFF}
+html[data-dark="1"][data-versao="sol"] .vx-btn-primary{background:#4D9FFF!important;border-color:#4D9FFF!important;color:#0A0C10!important}
+html[data-dark="1"][data-versao="sol"] .vx-btn-primary:hover{background:#2E86E0!important;border-color:#2E86E0!important}
+html[data-dark="1"][data-versao="sol"] .vx-ph-link,
+html[data-dark="1"][data-versao="sol"] .vx-positive,
+html[data-dark="1"][data-versao="sol"] .vx-navbtn[data-on="1"]{color:#4D9FFF}
+html[data-dark="1"][data-versao="sol"] .vx-meter-fill{background:#4D9FFF}
 `;
 
