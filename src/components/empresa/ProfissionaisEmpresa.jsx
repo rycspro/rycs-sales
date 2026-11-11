@@ -502,7 +502,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 36, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(p.nome)}</div>
                 }
                 <span title="Score" style={{ position: "absolute", top: 10, right: 10, background: scoreCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px", letterSpacing: ".01em" }}>
-                  {scoreVal != null ? `${scoreVal.toFixed(0)}%` : "—"}
+                  {scoreVal != null ? `Score ${scoreVal.toFixed(0)}%` : "Score —"}
                 </span>
               </div>
 
@@ -550,7 +550,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                     : conviteStatus === "recusado"
                     ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)} style={{ flex: 1 }}>Reenviar convite</button>
                     : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)}
-                        style={{ flex: 1, background: "transparent", color: "#64748b", border: "1.5px solid #cbd5e1", opacity: conviteStatus === "enviando" ? 0.6 : 1, fontWeight: 400 }}>
+                        style={{ flex: 1, background: "transparent", color: "var(--muted)", border: "1.5px solid var(--border-strong)", opacity: conviteStatus === "enviando" ? 0.6 : 1, fontWeight: 400 }}>
                         {conviteStatus === "enviando" ? "Enviando…" : "Enviar Convite"}
                       </button>
                   }
