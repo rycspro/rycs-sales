@@ -38,6 +38,18 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   // Volta do login da Meta (?meta=...): abre direto em Configurações → Integrações.
   const [voltouDaMeta] = useState(() => new URLSearchParams(window.location.search).has("meta"));
   useEffect(() => { if (voltouDaMeta) setAba?.("configuracoes"); }, []);
+  // Volta do checkout do Stripe (?stripe=ok|cancelado|portal): abre Pagamentos.
+  // Quem libera o plano é o webhook; aqui só avisamos e recarregamos.
+  useEffect(() => {
+    const volta = new URLSearchParams(window.location.search).get("stripe");
+    if (!volta) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    setAba?.("pagamentos");
+    if (volta === "ok") {
+      aviso?.("Pagamento recebido pelo Stripe. Seu plano é liberado em instantes.");
+      setTimeout(() => recarregar?.(), 4000);
+    } else if (volta === "cancelado") aviso?.("Pagamento internacional não concluído.");
+  }, []);
 
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
   const filtroAtual = filtros[aba] || null;

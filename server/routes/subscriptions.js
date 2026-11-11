@@ -3,6 +3,7 @@ import { randomBytes, createHash } from "crypto";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
+import { cancelarAssinaturaStripe, encerrarCheckoutPendente } from "../services/stripe.js";
 import { acessoDaEmpresa, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../shared/assinatura.js";
 import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO, CICLOS, valorCobradoNoCiclo } from "../../shared/planos.js";
 import { calcularVoucher, normalizarVoucher, validarVoucher } from "../services/vouchers.js";
@@ -369,6 +370,8 @@ router.post("/subscription", async (req, res) => {
   // Pendente de OUTRO plano, ou pendente sem link recuperável: cancela antes
   // de abrir a próxima. Deixar as duas vivas no gateway é cobrar duas vezes.
   if (pendente) {
+    // Checkout em dólar aberto antes: o link do Stripe deixa de valer.
+    if (pendente.gateway === "stripe") await encerrarCheckoutPendente(pendente);
     if (pendente.asaasId && asaasAtivo()) {
       try { await asaas(`/subscriptions/${pendente.asaasId}`, { method: "DELETE" }); }
       catch (e) { console.warn("[asaas] cancelamento do checkout anterior:", e.message); }
@@ -660,6 +663,16 @@ router.delete("/subscription", async (req, res) => {
 
   const atual = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? AND status IN ('ativa','pendente','trial') ORDER BY criadoEm DESC LIMIT 1").get(entityId);
   if (!atual) return res.status(404).json({ error: "Nenhuma assinatura ativa" });
+
+  // Assinatura em dólar: cancela no Stripe. Se o Stripe recusar, não marca
+  // como cancelada aqui — senão a empresa seguiria sendo cobrada lá.
+  if (atual.gateway === "stripe") {
+    try { await cancelarAssinaturaStripe(atual); }
+    catch (e) {
+      console.error("[stripe] cancelamento:", e.message);
+      return res.status(502).json({ error: "Não foi possível cancelar agora. Tente de novo em instantes." });
+    }
+  }
 
   if (atual.asaasId && asaasAtivo()) {
     try { await asaas(`/subscriptions/${atual.asaasId}`, { method: "DELETE" }); }

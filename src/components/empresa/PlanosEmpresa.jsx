@@ -24,6 +24,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [forma, setForma] = useState("CREDIT_CARD");
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
+  const [stripe, setStripe] = useState(null); // pagamento internacional (US$)
 
   const carregar = useCallback(async () => {
     const [p, s] = await Promise.all([api("/plans"), api("/subscription")]);
@@ -32,7 +33,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     if (s && !s.error) setAtual(s);
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { carregar(); api("/stripe/status").then((r) => r && !r.error && setStripe(r)); }, [carregar]);
 
   const abrirModal = (p, cicloEscolhido = CICLOS.MENSAL) => {
     setSelecionado(p);
@@ -53,6 +54,14 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   };
 
   const contratar = async () => {
+    // Empresa fora do Brasil: paga em dólar na página do Stripe.
+    if (forma === "STRIPE") {
+      setProcessando(true);
+      const r = await api("/subscription/stripe", { plano: selecionado.chave, ciclo, retorno: window.location.pathname });
+      if (!r || r.error || !r.url) { setProcessando(false); return aviso(r?.error || "Não foi possível abrir o pagamento internacional."); }
+      window.location.href = r.url;
+      return;
+    }
     if (forma === "CREDIT_CARD") {
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
       if (faltando.length) return aviso("Preencha todos os dados do cartão.");
@@ -85,6 +94,12 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     aviso(r.message || "Plano contratado com sucesso.");
   };
 
+  const abrirPortal = async () => {
+    const r = await api("/subscription/stripe/portal", { retorno: window.location.pathname });
+    if (r?.url) window.location.href = r.url;
+    else aviso(r?.error || "Não foi possível abrir o portal de pagamento.");
+  };
+
   const cancelar = async () => {
     const r = await apiDelete("/subscription");
     if (r?.error) return aviso(r.error);
@@ -99,6 +114,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const baseCiclo = selecionado ? valorCobradoNoCiclo(selecionado.chave, ciclo) : 0;
   const ehAnual = ciclo === CICLOS.ANUAL;
   const precoFinal = desconto?.valorFinal ?? baseCiclo;
+  const usdPlano = selecionado && stripe?.planos?.find((x) => x.chave === selecionado.chave);
+  const precoUsd = usdPlano ? (ehAnual ? usdPlano.anual : usdPlano.mensal) : 0;
+  const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
   return (
     <div className="vx-fade">
@@ -126,6 +144,11 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
             )}
             {["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
               <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={cancelar}>Cancelar assinatura</button>
+            )}
+            {atual?.assinatura?.gateway === "stripe" && ["ativa", "trial", "inadimplente"].includes(atual?.assinatura?.status) && (
+              <button className="vx-btn" style={{ marginTop: 14, marginLeft: 8 }} onClick={abrirPortal}>
+                <CreditCard size={14} /> Cartão e faturas (Stripe)
+              </button>
             )}
         </div>
       </div>
@@ -171,7 +194,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 {/* Forma de pagamento */}
                 <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                  {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"], ["PIX", "Pix"]].map(([k, t]) => (
+                  {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"], ["PIX", "Pix"], ...(stripe?.ativo ? [["STRIPE", "Fora do Brasil (US$)"]] : [])].map(([k, t]) => (
                     <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
                       flex: 1, fontSize: 12,
                       borderColor: forma === k ? "var(--brand)" : undefined,
@@ -233,6 +256,14 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   </>
                 )}
 
+                {forma === "STRIPE" && (
+                  <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
+                    <ShieldCheck size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                    Para empresas fora do Brasil: {usd(precoUsd)}{ehAnual ? "/ano" : "/mês"}, pagos na página segura do Stripe com cartão
+                    internacional (ou UPI, na Índia). Cupons são aplicados direto no Stripe. O plano é liberado quando o Stripe confirmar.
+                  </div>
+                )}
+
                 {forma === "PIX" && (
                   <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
                     <QrCode size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
@@ -244,7 +275,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   disabled={processando} onClick={contratar}>
                   {processando
                     ? <><Loader size={15} /> Processando…</>
-                    : <><CreditCard size={15} /> Confirmar {money(precoFinal ?? selecionado.preco)}</>}
+                    : forma === "STRIPE"
+                      ? <><CreditCard size={15} /> Pagar {usd(precoUsd)} no Stripe</>
+                      : <><CreditCard size={15} /> Confirmar {money(precoFinal ?? selecionado.preco)}</>}
                 </button>
                 <p className="vx-chart-source">
                   Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.

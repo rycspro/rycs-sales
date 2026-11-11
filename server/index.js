@@ -41,6 +41,7 @@ import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
 import jarvasRoutes, { aquecerVozJarvas } from "./routes/jarvas.js";
+import stripeRoutes, { stripePublico } from "./routes/stripe.js";
 import metaRoutes, { metaPublico } from "./routes/meta.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
 import { semearCatalogo, sincronizarCursoInterativo } from "./services/academy.js";
@@ -122,8 +123,8 @@ app.use(cors({
   credentials: true,
 }));
 
-// O webhook da Meta é assinado sobre o corpo cru; guardamos só nessa rota.
-app.use(express.json({ limit: "15mb", verify: (req, _res, buf) => { if (req.originalUrl.startsWith("/api/webhooks/meta")) req.rawBody = buf; } }));
+// Os webhooks da Meta e do Stripe são assinados sobre o corpo cru; guardamos só nessas rotas.
+app.use(express.json({ limit: "15mb", verify: (req, _res, buf) => { if (req.originalUrl.startsWith("/api/webhooks/meta") || req.originalUrl.startsWith("/api/webhooks/stripe")) req.rawBody = buf; } }));
 app.use(cookieParser());
 
 const authLimiter = rateLimit({
@@ -160,6 +161,8 @@ app.use("/api", paymentRoutes);
 app.use("/api", onboardingPublico);
 // Webhook e retorno do login da Meta: chegam sem cookie de sessão.
 app.use("/api", metaPublico);
+// Webhook do Stripe (pagamento internacional): também chega sem cookie.
+app.use("/api", stripePublico);
 
 // Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
 app.use("/api", authMiddleware, onboardingGuard);
@@ -193,6 +196,7 @@ app.use("/api", authMiddleware, onboardingRoutes);
 app.use("/api", authMiddleware, onboardingProRoutes);
 app.use("/api", authMiddleware, jarvasRoutes);
 app.use("/api", authMiddleware, metaRoutes);
+app.use("/api", authMiddleware, stripeRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

@@ -15,6 +15,8 @@ import { normalizarDocumento } from "../../../shared/onboarding.js";
 const digitos = (v) => String(v || "").replace(/\D/g, "");
 const mascaraCartao = (v) => digitos(v).slice(0, 19).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 const mascaraValidade = (v) => { const d = digitos(v).slice(0, 4); return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d; };
+const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const voltouDoStripe = () => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("stripe") : null);
 const mascaraCep = (v) => { const d = digitos(v).slice(0, 8); return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d; };
 
 function validarCartao(c) {
@@ -41,7 +43,9 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
   const [erros, setErros] = useState({});
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [forma, setForma] = useState("cartao"); // cartao | pix
+  const [forma, setForma] = useState("cartao"); // cartao | pix | internacional
+  const [stripe, setStripe] = useState(null); // { ativo, planos: [{ chave, mensal }] }
+  const [confirmandoStripe, setConfirmandoStripe] = useState(() => voltouDoStripe() === "ok");
   const [pix, setPix] = useState(null); // QR aberto: { payload, imagem, primeiraCobranca }
   const [copiado, setCopiado] = useState(false);
   const consulta = useRef(null);
@@ -53,7 +57,32 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     setDados(r);
     setPlano((p) => p || r.planos[0]?.chave || "");
   };
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); api("/stripe/status").then((r) => r && !r.error && setStripe(r)); }, []);
+
+  // Volta do checkout do Stripe: o webhook é quem conclui a etapa. A tela
+  // espera a confirmação em vez de liberar sozinha.
+  useEffect(() => {
+    const volta = voltouDoStripe();
+    if (!volta) return undefined;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (volta !== "ok") { setForma("internacional"); setErro("Pagamento internacional não concluído. Você pode tentar de novo."); return undefined; }
+    let vivo = true, tentativas = 0;
+    const t = setInterval(async () => {
+      tentativas += 1;
+      const r = await api("/onboarding");
+      if (!vivo) return;
+      if (r && !r.error && r.etapas?.plano === "concluida") { clearInterval(t); aoAtualizar(r); aoAvancar(r); }
+      else if (tentativas >= 40) { clearInterval(t); setConfirmandoStripe(false); setErro("O pagamento ainda não foi confirmado pelo Stripe. Atualize a página em instantes."); }
+    }, 3000);
+    return () => { vivo = false; clearInterval(t); };
+  }, []);
+
+  const assinarInternacional = async () => {
+    setEnviando(true);
+    const r = await api("/subscription/stripe", { plano, onboarding: true, retorno: window.location.pathname });
+    if (!r || r.error || !r.url) { setEnviando(false); return setErro(r?.error || "Não foi possível abrir o pagamento internacional."); }
+    window.location.href = r.url;
+  };
 
   const terminar = async () => {
     const r = await api("/onboarding");
@@ -114,6 +143,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     e.preventDefault();
     setErro("");
     if (forma === "pix") return assinarPix();
+    if (forma === "internacional") return assinarInternacional();
     const v = validarCartao(cartao);
     setErros(v);
     if (Object.keys(v).length) {
@@ -145,9 +175,11 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     </div>
   );
   if (!dados) return <div className="vx-onb-estado" role="status">Carregando os planos…</div>;
+  if (confirmandoStripe) return <div className="vx-onb-estado" role="status">Confirmando o pagamento com o Stripe… Esta tela avança sozinha.</div>;
 
   const trial = dados.trialDias;
   const escolhido = dados.planos.find((p) => p.chave === plano);
+  const precoUsd = stripe?.planos?.find((p) => p.chave === plano)?.mensal ?? escolhido?.preco;
   // Sem trial, a primeira cobrança do cartão é agendada para 3 dias (regra do
   // checkout em server/routes/subscriptions.js).
   const cobrancaEm = forma === "pix"
@@ -238,7 +270,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
           <fieldset className="vx-onb-campo" style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
             <legend className="vx-label">Forma de pagamento</legend>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {[["cartao", "Cartão de crédito"], ["pix", "Pix Automático"]].map(([v, rotulo]) => (
+              {[["cartao", "Cartão de crédito"], ["pix", "Pix Automático"], ...(stripe?.ativo ? [["internacional", "Empresa fora do Brasil (US$)"]] : [])].map(([v, rotulo]) => (
                 <label key={v} className="vx-btn" data-on={forma === v ? "1" : "0"}
                   style={{ minHeight: 44, flex: 1, justifyContent: "center", ...(forma === v ? { borderColor: "var(--brand)", color: "var(--brand)" } : {}) }}>
                   <input type="radio" name={`${id}-forma`} value={v} checked={forma === v}
@@ -248,7 +280,12 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
               ))}
             </div>
           </fieldset>
-          {forma === "cartao" ? <>
+          {forma === "internacional" ? <>
+            <p className="vx-mut" style={{ fontSize: 14, lineHeight: 1.6, margin: "0 0 12px" }}>
+              Para empresas de fora do Brasil. Você será levado à página segura do Stripe para pagar em dólar com cartão internacional
+              (ou UPI, na Índia). Não pedimos CPF ou CNPJ.
+            </p>
+          </> : forma === "cartao" ? <>
             {campo("nome", "Nome no cartão", { autoComplete: "cc-name" })}
             {campo("numero", "Número do cartão", { autoComplete: "cc-number", inputMode: "numeric" }, mascaraCartao)}
             <div className="vx-onb-dois">
@@ -268,20 +305,24 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
           </>}
 
           <dl className="vx-onb-resumo">
-            <div><dt>Plano</dt><dd>{escolhido ? `${escolhido.nome} · ${money(escolhido.preco)}/mês` : "—"}</dd></div>
-            <div><dt>Cobrado hoje</dt><dd>{forma === "pix" ? `${money(TAXA_ATIVACAO_PIX_AUTOMATICO)} (ativação)` : money(0)}</dd></div>
-            <div><dt>{forma === "pix" ? "Primeiro débito automático" : "Primeira cobrança"}</dt><dd>{escolhido ? `${money(escolhido.preco)} em ${formatarData(cobrancaEm)}` : "—"}{trial && forma === "cartao" ? ` (daqui a ${trial} dias)` : ""}</dd></div>
+            <div><dt>Plano</dt><dd>{escolhido ? `${escolhido.nome} · ${forma === "internacional" ? usd(precoUsd) : money(escolhido.preco)}/mês` : "—"}</dd></div>
+            <div><dt>Cobrado hoje</dt><dd>{forma === "pix" ? `${money(TAXA_ATIVACAO_PIX_AUTOMATICO)} (ativação)` : forma === "internacional" ? (trial ? usd(0) : usd(precoUsd)) : money(0)}</dd></div>
+            <div><dt>{forma === "pix" ? "Primeiro débito automático" : "Primeira cobrança"}</dt><dd>{escolhido ? (forma === "internacional" ? (trial ? `${usd(precoUsd)} daqui a ${trial} dias` : "hoje, no Stripe") : `${money(escolhido.preco)} em ${formatarData(cobrancaEm)}`) : "—"}{trial && forma === "cartao" ? ` (daqui a ${trial} dias)` : ""}</dd></div>
           </dl>
 
           <div aria-live="polite">{erro && <div className="vx-onb-erro" role="alert">{erro}</div>}</div>
           <button type="submit" className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" disabled={enviando || !plano}>
-            {forma === "pix"
+            {forma === "internacional"
+              ? (enviando ? "Abrindo o Stripe…" : "Continuar para o pagamento em dólar")
+              : forma === "pix"
               ? (enviando ? "Gerando o Pix…" : "Gerar Pix de ativação")
               : enviando ? "Cadastrando o cartão…" : trial ? `Começar os ${trial} dias grátis` : "Assinar e continuar"}
           </button>
           <p className="vx-onb-dica" style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
             <ShieldCheck size={15} aria-hidden="true" style={{ flex: "none", marginTop: 2 }} />
-            {forma === "pix"
+            {forma === "internacional"
+              ? "O pagamento em dólar é processado pelo Stripe. A RYCS não vê nem guarda os dados do cartão."
+              : forma === "pix"
               ? "O Pix Automático é processado pelo Asaas e autorizado por você no app do seu banco."
               : "Os dados do cartão vão direto ao Asaas, nosso processador de pagamentos. A RYCS não guarda número nem CVV."}
           </p>
