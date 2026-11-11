@@ -203,63 +203,56 @@ function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
   const diasCor = diasAguardando === null ? "#64748B" : diasAguardando >= 8 ? "#DC2626" : diasAguardando >= 3 ? "#B45309" : "#16A34A";
 
   return (
-    <article className="vx-prof-card" style={{ cursor: "default", height: "auto", minHeight: 380 }}>
-      {/* FOTO */}
-      <div className="vx-prof-card__img" style={{ position: "relative" }}>
+    <div className="vx-card" style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+      {/* AVATAR */}
+      <div style={{ width: 54, height: 54, borderRadius: 10, overflow: "hidden", flexShrink: 0, background: "var(--surface-2)", display: "grid", placeItems: "center" }}>
         {seller?.foto
-          ? <img src={typeof seller.foto === "string" && seller.foto.startsWith("data:") ? seller.foto : `/api/sellers/${seller.id}/foto`} alt={seller?.nome} loading="lazy" decoding="async" />
-          : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 36, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(seller?.nome)}</div>
+          ? <img src={typeof seller.foto === "string" && seller.foto.startsWith("data:") ? seller.foto : `/api/sellers/${seller.id}/foto`} alt={seller?.nome} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <span style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{iniciais(seller?.nome)}</span>
         }
-        {diasAguardando !== null && (
-          <span style={{ position: "absolute", top: 10, right: 10, background: diasCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px" }}>
-            {diasAguardando === 0 ? "hoje" : `${diasAguardando}d`}
-          </span>
-        )}
-        <span style={{ position: "absolute", bottom: 10, left: 10, background: "#fffbeb", color: "#92400e", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px" }}>
-          Aguardando aprovação
-        </span>
       </div>
 
-      {/* CONTEÚDO */}
-      <div className="vx-prof-card__body">
-        <div className="vx-prof-card__info">
-          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {capitalizar(seller?.nome || "Profissional")}
-          </span>
-          {seller?.titulo && <span style={{ fontSize: 12, color: "var(--muted)" }}>{seller.titulo}</span>}
-          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
-            <Clock size={11} style={{ marginRight: 3, verticalAlign: "-1px" }} />
-            {solicitacao.criadoEm ? dataCurta(solicitacao.criadoEm) : "Data não registrada"}
-            {seller?.cidade && ` · ${seller.cidade}${seller?.estado ? `, ${seller.estado}` : ""}`}
-          </span>
-          {solicitacao.mensagem && (
-            <div style={{ padding: "7px 10px", background: "var(--surface-2)", borderRadius: 8, fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>
-              <MessageSquare size={11} style={{ marginRight: 4, verticalAlign: "-1px", color: "var(--muted)" }} />
-              {solicitacao.mensagem}
-            </div>
+      {/* INFO */}
+      <div style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column", gap: 3 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 700, fontSize: 14.5, color: "var(--ink)" }}>{capitalizar(seller?.nome || "Profissional")}</span>
+          {diasAguardando !== null && (
+            <span style={{ background: diasCor, color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "2px 8px" }}>
+              {diasAguardando === 0 ? "hoje" : `${diasAguardando}d`}
+            </span>
           )}
-          <button
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--muted)", marginTop: 2 }}
-            onClick={() => setCampanhasAuto((v) => v === null ? false : v === false ? true : null)}
-          >
-            {campanhasAuto === true ? <ToggleRight size={16} color="var(--brand)" /> : <ToggleLeft size={16} />}
-            {campanhasAuto === true ? "Auto em campanhas" : campanhasAuto === false ? "Manual por campanha" : "Usar padrão da empresa"}
-          </button>
+          <span style={{ background: "#fffbeb", color: "#92400e", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }}>Aguardando aprovação</span>
         </div>
-
-        {/* AÇÕES */}
-        <div className="vx-prof-card__actions">
-          <div style={{ display: "flex", gap: 6 }}>
-            <button className="vx-prof-card__btn" style={{ flex: 1, fontSize: 12, height: 38, minHeight: 38, gap: 5 }} onClick={() => onAprovar(seller.id, campanhasAuto)}>
-              <CheckCircle2 size={13} /> Aprovar
-            </button>
-            <button className="vx-prof-card__btn vx-prof-card__btn--danger" style={{ flex: 1, fontSize: 12, height: 38, minHeight: 38, gap: 5 }} onClick={() => onRecusar(seller.id)}>
-              <X size={13} /> Recusar
-            </button>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>
+          <Clock size={11} style={{ marginRight: 3, verticalAlign: "-1px" }} />
+          {solicitacao.criadoEm ? dataCurta(solicitacao.criadoEm) : "Data não registrada"}
+          {seller?.cidade && ` · ${seller.cidade}${seller?.estado ? `, ${seller.estado}` : ""}`}
+          {seller?.titulo && ` · ${seller.titulo}`}
+        </span>
+        {solicitacao.mensagem && (
+          <div style={{ padding: "6px 10px", background: "var(--surface-2)", borderRadius: 8, fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5, marginTop: 2 }}>
+            <MessageSquare size={11} style={{ marginRight: 4, verticalAlign: "-1px", color: "var(--muted)" }} />{solicitacao.mensagem}
           </div>
-        </div>
+        )}
+        <button
+          style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--muted)", marginTop: 2 }}
+          onClick={() => setCampanhasAuto((v) => v === null ? false : v === false ? true : null)}
+        >
+          {campanhasAuto === true ? <ToggleRight size={16} color="var(--brand)" /> : <ToggleLeft size={16} />}
+          {campanhasAuto === true ? "Auto em campanhas" : campanhasAuto === false ? "Manual por campanha" : "Usar padrão da empresa"}
+        </button>
       </div>
-    </article>
+
+      {/* AÇÕES */}
+      <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+        <button className="vx-prof-card__btn" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => onAprovar(seller.id, campanhasAuto)}>
+          <CheckCircle2 size={14} /> Aprovar
+        </button>
+        <button className="vx-prof-card__btn vx-prof-card__btn--danger" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => onRecusar(seller.id)}>
+          <X size={14} /> Recusar
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -438,7 +431,7 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
               </div>
             )
             : (
-              <div className="vx-prof-grid" style={{ marginBottom: 32 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
                 {solicitacoes.map((sol) => {
                   const seller = db.sellers.find((s) => s.id === sol.sellerId);
                   return (
