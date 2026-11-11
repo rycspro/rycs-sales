@@ -290,6 +290,7 @@ html.dark .vx-card:hover{border-color:var(--border-strong);box-shadow:0 4px 20px
 .vx-prof-card__actions{margin-top:auto;padding-top:12px;width:100%}
 .vx-prof-card__btn{width:100%;height:48px;min-height:48px;border:none;border-radius:12px;background:var(--brand);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;letter-spacing:.01em}
 .vx-prof-card__btn:hover:not(:disabled){background:#1d4ed8}
+.vx-prof-card__btn--success,.vx-prof-card__btn--muted,.vx-prof-card__btn--danger{font-family:inherit}
 .vx-prof-card__btn--success{background:#dcfce7;color:#166534;cursor:default}
 .vx-prof-card__btn--muted{background:var(--surface-2);color:var(--muted);cursor:default;font-size:12px;font-weight:500}
 .vx-prof-card__btn--danger{background:#fee2e2;color:#b91c1c}

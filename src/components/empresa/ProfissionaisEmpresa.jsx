@@ -546,7 +546,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   {conviteStatus === "aprovado"
                     ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled style={{ flex: 1 }}>✓ Parceria ativa</button>
                     : conviteStatus === "pendente"
-                    ? <button className="vx-prof-card__btn vx-prof-card__btn--muted" disabled style={{ flex: 1 }}>Enviado · aguardando</button>
+                    ? <button className="vx-prof-card__btn vx-prof-card__btn--success" disabled style={{ flex: 1 }}>✓ Enviado</button>
                     : conviteStatus === "recusado"
                     ? <button className="vx-prof-card__btn vx-prof-card__btn--danger" onClick={(e) => enviarConvite(e, p.id)} style={{ flex: 1 }}>Reenviar convite</button>
                     : <button className="vx-prof-card__btn" disabled={conviteStatus === "enviando"} onClick={(e) => enviarConvite(e, p.id)}
