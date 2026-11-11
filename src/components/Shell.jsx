@@ -4,6 +4,9 @@ import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
   const [gruposAbertos, setGruposAbertos] = useState({});
+  // Ao navegar para outra página, fecha os submenus abertos manualmente — só o
+  // grupo que contém a página ativa permanece aberto (comportamento sanfona).
+  useEffect(() => { setGruposAbertos({}); }, [active]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const configIdx = rawItems.findIndex((item) => item.key === "configuracoes");
   const allItems = configIdx > -1
