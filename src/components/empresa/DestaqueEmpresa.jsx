@@ -1,9 +1,9 @@
 import { apiPatch } from "../../lib/api.js";
 import { DESTAQUES, ORDEM_DESTAQUES } from "../../../shared/planos.js";
-import { Check } from "lucide-react";
+import { Check, Star } from "lucide-react";
 
-// Preço sem centavos, no mesmo formato dos cards de plano (ex.: "R$ 190").
-const precoCurto = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+// Preço em reais com centavos (ex.: "R$ 39,90").
+const precoBRL = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // Destaque da empresa na vitrine: quatro versões contratadas à parte, sem
 // depender do plano adquirido. Antes vivia como "Posição na vitrine" dentro de
@@ -39,9 +39,9 @@ export default function DestaqueEmpresa({ emp, up, aviso }) {
               className="vx-card"
               style={{
                 position: "relative", padding: "26px 22px", display: "flex", flexDirection: "column",
-                border: on ? "2px solid var(--brand)" : "1px solid var(--border)",
+                border: (on || d.popular) ? "2px solid var(--brand)" : "1px solid var(--border)",
                 background: on ? "var(--brand-50)" : undefined,
-                boxShadow: on ? "var(--shadow-brand)" : "var(--shadow-card)",
+                boxShadow: (on || d.popular) ? "var(--shadow-brand)" : "var(--shadow-card)",
                 overflow: "hidden",
               }}
             >
@@ -50,18 +50,28 @@ export default function DestaqueEmpresa({ emp, up, aviso }) {
                   <Check size={12} strokeWidth={3} /> Ativo
                 </div>
               )}
+              {d.popular && !on && (
+                <div style={{ position: "absolute", top: 0, right: 0, display: "flex", alignItems: "center", gap: 4, background: "var(--brand)", color: "#fff", padding: "4px 10px", borderBottomLeftRadius: 12, fontSize: 11, fontWeight: 700 }}>
+                  <Star size={12} fill="currentColor" /> Mais popular
+                </div>
+              )}
 
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase", marginTop: 6 }}>
                 {d.nome}
               </div>
 
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6, margin: "16px 0 2px" }}>
-                <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{precoCurto(d.preco)}</span>
+                <span style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{precoBRL(d.preco)}</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
               </div>
               <div style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center", marginBottom: 4 }}>
                 cobrado mensalmente · cancela quando quiser
               </div>
+              {d.frase && (
+                <div style={{ fontSize: 12.5, color: "var(--ink-2)", textAlign: "center", margin: "8px 0 0", fontWeight: 500, lineHeight: 1.45 }}>
+                  {d.frase}
+                </div>
+              )}
 
               <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 9 }}>
                 {d.itens.map((it) => (

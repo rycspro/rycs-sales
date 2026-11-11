@@ -152,39 +152,55 @@ export function dentroDoLimite(chave, recurso, quantidadeAtual) {
 // Destaque da empresa na vitrine: contratado à parte, independente do plano
 // adquirido. Quatro versões; a empresa ativa uma e cancela quando quiser. O
 // preço mora aqui para não ficar fixado na tela.
+// Planos de destaque da empresa na vitrine. `prioridade` define a hierarquia de
+// posicionamento (maior = aparece antes) nas campanhas ativas e na busca; sem
+// plano = prioridade 0. As chaves internas (selo/busca/topo/total) são mantidas
+// por compatibilidade com destaqueTipo já gravado — o que muda é a apresentação.
 export const DESTAQUES = {
   selo: {
-    nome: "Selo de empresa em destaque",
-    preco: 49,
+    nome: "Destaque",
+    preco: 39.9,
+    prioridade: 1,
+    frase: "Seja encontrado antes da concorrência.",
     itens: [
-      "Selo visual de destaque no seu perfil",
-      "Diferencia sua empresa em todas as listagens",
+      "Prioridade de exibição na página de campanhas ativas, acima das empresas sem destaque",
+      "Posicionamento preferencial nos resultados de busca de campanhas",
     ],
   },
   busca: {
-    nome: "Prioridade na busca",
-    preco: 90,
+    nome: "Destaque Plus",
+    preco: 59.9,
+    prioridade: 2,
+    frase: "Leve suas oportunidades diretamente aos profissionais certos.",
     itens: [
-      "Sua empresa sobe nos resultados de busca",
-      "Mais visível quando o profissional procura campanhas",
+      "Todos os benefícios do Destaque",
+      "Prioridade superior ao plano Destaque nas campanhas ativas",
+      "Disparo personalizado de e-mails para profissionais compatíveis com sua marca e campanhas",
     ],
   },
   topo: {
-    nome: "Destaque no topo",
-    preco: 140,
+    nome: "Destaque Pro",
+    preco: 99.9,
+    prioridade: 3,
+    popular: true,
+    frase: "Descubra os melhores profissionais antes das outras empresas.",
     itens: [
-      "Sua empresa aparece no topo da lista de campanhas",
-      "Primeira empresa que o profissional vê",
+      "Todos os benefícios do Destaque Plus",
+      "Prioridade superior aos planos Destaque e Plus",
+      "Notificações antecipadas sobre novos profissionais com score elevado",
+      "Alertas de profissionais com alta compatibilidade com suas campanhas",
     ],
   },
   total: {
-    nome: "Destaque total",
-    preco: 190,
+    nome: "Destaque Elite",
+    preco: 150,
+    prioridade: 4,
+    frase: "A RYCS encontra e convida os melhores profissionais por você.",
     itens: [
-      "Selo de destaque no perfil",
-      "Prioridade na busca",
-      "Topo da lista de campanhas",
-      "Tudo em um só pacote",
+      "Todos os benefícios do Destaque Pro",
+      "Prioridade máxima nas campanhas ativas, acima de todos os demais planos",
+      "Convites automáticos e personalizados para profissionais com maior compatibilidade e score alto",
+      "Reengajamento automático de profissionais convidados que demonstraram interesse, mas ainda não se candidataram",
     ],
   },
 };
@@ -192,3 +208,6 @@ export const DESTAQUES = {
 export const ORDEM_DESTAQUES = ["selo", "busca", "topo", "total"];
 
 export const destaqueDe = (chave) => DESTAQUES[chave] || null;
+
+// Prioridade de destaque de uma empresa (0 = sem plano de destaque).
+export const prioridadeDestaque = (chave) => DESTAQUES[chave]?.prioridade || 0;
