@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, Search, Send, ShieldCheck, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
 import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
@@ -786,10 +786,6 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
             <h3 className="vx-disp" style={{ fontSize: 15 }}>Ações</h3>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button className="vx-btn vx-btn-sm" onClick={() => alterarTime(p, "aprovado")}><UserPlus size={13} />Aprovar profissional</button>
-              <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => alterarTime(p, "recusado")}><UserMinus size={13} />Remover</button>
-              {p.aplicacoes?.[emp.id] === "recusado" && (
-                <button className="vx-btn vx-btn-sm" onClick={() => alterarTime(p, "pendente")}><RotateCcw size={13} />Reabrir candidatura</button>
-              )}
               <button className="vx-btn vx-btn-sm" onClick={() => aviso?.("Histórico exibido no modal.")}><ClipboardList size={13} />Visualizar histórico</button>
               <button className="vx-btn vx-btn-sm" onClick={() => aviso?.("Treinamentos exibidos no modal.")}><Award size={13} />Visualizar treinamentos</button>
               <button className="vx-btn vx-btn-sm" onClick={() => aviso?.("Resultados exibidos no modal.")}><BarChart3 size={13} />Visualizar resultados</button>
