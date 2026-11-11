@@ -29,69 +29,31 @@ Ao receber um lote de tarefas:
 6. Rode build uma única vez.
 7. Corrija somente erros relacionados ao lote.
 
-## DEPLOY AUTOMÁTICO DIRETO NA RAILWAY
+## Deploy e publicação
 
-O ambiente de produção deste projeto é a Railway.
+O ambiente de produção deste projeto roda na **AWS**. A migração a partir da Railway foi concluída — a Railway não é mais usada.
 
-O deploy deve ser feito diretamente através da Railway CLI usando o código local atual.
+Regras:
 
-Fluxo padrão obrigatório:
+1. **Não há deploy automático neste repositório.** Não existe GitHub Actions nem pipeline ligado ao GitHub; um `git push` **não publica nada** em produção.
+2. O deploy em produção é feito pela **equipe de infraestrutura, na AWS, fora deste repositório** (build da imagem Docker e execução no servidor). O processo não vive no código e não deve ser presumido a partir daqui.
+3. **Um assistente não deve tentar fazer deploy** — nem na AWS, nem na Railway, nem em qualquer outro lugar. Não rode comandos de deploy, não instale CLIs de infraestrutura, não configure credenciais de nuvem.
+4. O papel do assistente termina em **código versionado**: implementar, validar o que mudou e, quando o usuário pedir, commitar e dar `git push`. Deixe claro que isso salva o código no GitHub, mas **não** o coloca no ar.
+5. "Publicar" / "subir em produção" é decisão e ação humana da equipe da AWS. Ao terminar um lote, avise que o código está no GitHub e pronto para a equipe deployar.
 
-1. Finalizar todas as alterações do lote.
-2. Validar somente o que foi alterado.
-3. Rodar os testes necessários uma única vez.
-4. Rodar build local uma única vez, quando aplicável.
-5. Se testes/build estiverem corretos, fazer o deploy diretamente na Railway.
-6. Usar: railway up
-7. Se o projeto já estiver corretamente vinculado ao projeto e serviço da Railway, reutilizar essa configuração.
-8. Não exigir git push para realizar deploy.
-9. Não bloquear o deploy por problemas de autenticação do GitHub.
-10. GitHub e deploy da Railway são processos independentes neste projeto.
-11. O código pode ser commitado normalmente para histórico, mas git push não é requisito para publicar.
-12. Após railway up, confirmar que o deployment terminou com sucesso.
-13. Não repetir deploy sem necessidade.
-14. Não consultar logs repetidamente após sucesso.
-15. Consultar logs somente se o deployment falhar.
-
-### Autonomia da Railway
-
-Antes de pedir intervenção humana:
-- verificar se Railway CLI está instalada;
-- verificar se já existe autenticação válida;
-- verificar se o projeto está vinculado;
-- verificar projeto, ambiente e serviço atuais;
-- tentar resolver configurações locais seguras automaticamente.
-
-Se o projeto ainda não estiver vinculado:
-- usar railway link para vincular ao projeto correto;
-- não criar um projeto Railway novo sem autorização.
-
-Se a Railway exigir login:
-- iniciar railway login;
-- pedir intervenção humana somente se for necessária autorização no navegador.
-
-### Regra de conclusão
-
-Uma tarefa só deve ser considerada publicada quando:
-
-código concluído → validação concluída → testes/build aprovados → railway up executado → deployment da Railway com status de sucesso.
-
-Não considerar git push como deploy.
-
-Nunca armazenar Railway Token, senha ou secret no CLAUDE.md.
+Nunca armazenar token, senha ou secret (AWS, GitHub ou qualquer outro) no CLAUDE.md.
 
 ## Git
 
 Git é usado para versionamento e histórico de commits.
 
-- Use a branch main para produção.
+- A branch `main` é a linha de produção; prefira abrir uma branch para o lote e deixar o merge/publicação a cargo da equipe.
 - Não faça commits desnecessários.
 - Faça um commit por lote concluído.
 - Não faça push repetido sem necessidade.
 - Nunca exponha tokens, secrets ou chaves.
-- Falha de git push não deve impedir deploy na Railway.
-- Não tentar corrigir autenticação do GitHub durante um deploy Railway.
-- GitHub não faz parte do fluxo obrigatório de publicação.
+- Só commite/pushe quando o usuário pedir.
+- Commitar e dar push salva o código no GitHub — **não** publica em produção (ver "Deploy e publicação").
 
 ## Banco e produção
 - Considere que existem usuários e dados reais.
@@ -117,7 +79,7 @@ Objetivo: resolver sozinho problemas operacionais simples antes de solicitar int
 
 1. Antes de pedir ajuda humana, tente diagnosticar o problema sozinho.
 
-2. Se encontrar erro de Git, remote, branch, commit, push, build, deploy, Railway ou configuração local segura, tente corrigir automaticamente usando as ferramentas e credenciais já disponíveis no ambiente.
+2. Se encontrar erro de Git, remote, branch, commit, push, build ou configuração local segura, tente corrigir automaticamente usando as ferramentas e credenciais já disponíveis no ambiente. (Deploy não entra aqui — ver "Deploy e publicação".)
 
 3. Antes de solicitar intervenção humana:
    - identifique a causa;
@@ -137,24 +99,7 @@ Objetivo: resolver sozinho problemas operacionais simples antes de solicitar int
    - fazer push novamente;
    - usar credenciais já configuradas.
 
-6. Problemas de deploy devem ser tratados autonomamente sempre que possível.
-
-   Neste projeto:
-   - Deploy direto via Railway CLI: railway up
-   - Destino final: Railway
-   - GitHub é usado apenas para histórico — não é requisito de deploy.
-
-   Fluxo:
-   código concluído → testes/build aprovados → railway up → confirmar deployment saudável.
-
-7. Se railway up concluir com sucesso, não criar outro deployment.
-
-8. Se o deploy falhar:
-   - identificar a causa;
-   - consultar apenas os logs necessários;
-   - corrigir se estiver dentro do escopo e for seguro;
-   - fazer nova tentativa;
-   - evitar ciclos repetitivos desnecessários.
+6. Deploy **não** é tratado por aqui. Produção roda na AWS e é publicada pela equipe, fora deste repositório (ver "Deploy e publicação"). O assistente não faz deploy: entrega o código versionado no GitHub.
 
 9. Só solicitar intervenção humana quando houver uma ação que realmente não possa ser concluída autonomamente:
    - autorização de login no navegador;
@@ -171,83 +116,35 @@ Objetivo: resolver sozinho problemas operacionais simples antes de solicitar int
 
 12. Sempre que uma tarefa puder ser concluída com segurança usando as ferramentas já disponíveis, conclua sem interromper o usuário.
 
-13. Ao finalizar, informe de forma curta: tarefa concluída · build · commit · push · status do deploy na Railway.
+13. Ao finalizar, informe de forma curta: tarefa concluída · build · commit · push (lembrando que o deploy em produção é feito pela equipe na AWS).
 
-## DEPLOY AUTOMÁTICO
+## Entrega de um lote (versionamento)
 
-O ambiente de produção deste projeto é a Railway.
+Repositório: https://github.com/rycspro/rycs-sales.git · Branch de produção: `main`.
 
-O GitHub é o repositório de código e o push para a branch main dispara automaticamente o deploy na Railway.
+Lembrete: versionar **não** publica. Produção é publicada pela equipe na AWS, fora deste repositório (ver "Deploy e publicação"). Só commite/pushe quando o usuário pedir.
 
-Repositório:
-https://github.com/rycspro/rycs-sales.git
+Quando o usuário pedir para versionar um lote concluído:
 
-Branch de produção:
-main
+1. Finalize as alterações do lote.
+2. Valide apenas o que mudou (parse/build do que foi tocado).
+3. Rode os testes necessários uma única vez, quando aplicável.
+4. Corrija erros causados pelas alterações antes de continuar.
+5. `git add` apenas dos arquivos do lote.
+6. Um único commit descrevendo o lote.
+7. Confirme o remote: `git remote -v` deve ser `https://github.com/rycspro/rycs-sales.git` (corrija com `git remote set-url origin …` se preciso).
+8. Dê push — de preferência numa branch do lote; `main` só se o usuário pedir.
+9. Encerre informando que o código está no GitHub e pronto para a equipe publicar na AWS. Não tente fazer deploy.
 
-### Regra permanente
+### Se o push pedir autenticação do GitHub
 
-Sempre que uma tarefa ou lote solicitado estiver completamente concluído, faça automaticamente o processo de publicação, sem esperar que eu peça "faça o deploy".
+- Tente a autenticação já configurada; pode usar o GitHub CLI (`gh auth login`) se disponível.
+- Peça intervenção humana só se exigir autorização pelo navegador.
 
-Fluxo obrigatório:
+### Não versione automaticamente se
 
-1. Finalizar todas as alterações do lote.
-2. Validar somente o que foi alterado.
-3. Rodar os testes necessários uma única vez.
-4. Rodar o build uma única vez.
-5. Se houver erro causado pelas alterações, corrigir antes de continuar.
-6. Fazer git add somente dos arquivos necessários.
-7. Fazer um único commit referente ao lote.
-8. Confirmar que o remote origin está correto.
-9. O origin correto é: https://github.com/rycspro/rycs-sales.git
-10. Fazer push para origin/main.
-11. O push para main deve disparar automaticamente o deploy na Railway.
-12. Confirmar que a nova versão foi recebida/publicada pela Railway.
-13. Se o deploy estiver saudável, encerrar a tarefa.
-14. Não repetir build, commit, push ou deploy sem necessidade.
-15. Não ficar consultando logs repetidamente.
-16. Consultar logs somente se houver falha real no deployment.
-
-### Se o Git estiver configurado incorretamente
-
-Verificar:
-
-git remote -v
-
-Se necessário, corrigir com:
-
-git remote set-url origin https://github.com/rycspro/rycs-sales.git
-
-### Se houver erro de autenticação no GitHub
-
-- Verificar autenticação existente.
-- Tentar usar o GitHub CLI.
-- Usar gh auth login se necessário.
-- Solicitar intervenção humana somente se for necessária autorização pelo navegador.
-- Depois continuar automaticamente o push e o deploy.
-
-### Regra importante
-
-Não considerar a tarefa concluída apenas porque o código foi alterado ou commitado.
-
-Uma tarefa só é considerada totalmente concluída quando:
-
-código implementado
-→ validação concluída
-→ build aprovado
-→ commit realizado
-→ push para main realizado
-→ Railway recebeu/publicou a nova versão.
-
-### Exceções
-
-NÃO fazer deploy automático se:
-
-- eu disser explicitamente "não faça deploy";
-- eu disser "somente analise";
-- eu disser "não altere nada";
-- a alteração for destrutiva e exigir minha confirmação;
-- houver risco real de perda de dados;
+- o usuário disser "não faça deploy", "somente analise" ou "não altere nada";
+- a alteração for destrutiva ou houver risco de perda de dados (confirme antes);
 - testes ou build estiverem falhando.
 
 Nunca armazenar tokens, senhas, chaves de API ou secrets no CLAUDE.md.
@@ -257,8 +154,7 @@ Ao finalizar uma tarefa, responda de forma curta com:
 - o que foi concluído;
 - se testes passaram;
 - se build passou;
-- se commit/push foram feitos;
-- se o deploy foi disparado;
+- se commit/push foram feitos (o deploy em produção é feito pela equipe na AWS);
 - qualquer problema real que ainda precise de decisão humana.
 
 ## Onboarding da empresa (RYCS)
