@@ -100,8 +100,11 @@ function buildSellersWithRelations(sellers) {
     apps.filter((a) => a.sellerId === s.id).forEach((a) => {
       aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: JSON.parse(a.criterios || "[]"), quizScore: a.quizScore, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null, campanhasAuto: a.campanhasAuto };
     });
+    const parsed = parseSeller(s);
+    const temFoto = !!(parsed.foto);
+    parsed.foto = temFoto ? `/api/sellers/${s.id}/foto` : null;
     return {
-      ...parseSeller(s), aplicacoes, aplicacoesDetalhe, curso, scoreDimensions,
+      ...parsed, aplicacoes, aplicacoesDetalhe, curso, scoreDimensions,
       certificacoes: [
         ...certifications.filter((c) => c.sellerId === s.id),
         ...courseCertifications.filter((c) => c.sellerId === s.id).map((c) => ({ ...c, nivel: "course" })),
