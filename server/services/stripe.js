@@ -163,7 +163,7 @@ export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ci
       customer_update: { name: "auto", address: "auto" },
       allow_promotion_codes: true,
       ...(embutido
-        ? { ui_mode: "embedded", redirect_on_completion: "if_required", return_url: urlDeRetorno(retorno, "stripe=ok") }
+        ? { ui_mode: "embedded_page", redirect_on_completion: "if_required", return_url: urlDeRetorno(retorno, "stripe=ok") }
         : { success_url: urlDeRetorno(retorno, "stripe=ok"), cancel_url: urlDeRetorno(retorno, "stripe=cancelado") }),
     },
   });

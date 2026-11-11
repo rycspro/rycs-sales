@@ -157,7 +157,7 @@ test("checkout embutido: abre dentro da RYCS e devolve o client_secret", async (
   assert.equal(r.clientSecret, "cs_emb_secret_x");
   assert.equal(r.url, null);
   const c = chamadas.find((x) => x.caminho === "/checkout/sessions").corpo;
-  assert.equal(c.get("ui_mode"), "embedded");
+  assert.equal(c.get("ui_mode"), "embedded_page");
   assert.equal(c.get("redirect_on_completion"), "if_required");
   assert.equal(c.get("return_url"), "https://app.rycs.pro/plataforma?stripe=ok");
   assert.equal(c.get("success_url"), null);

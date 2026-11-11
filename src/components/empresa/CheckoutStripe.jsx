@@ -8,7 +8,9 @@ import { api } from "../../lib/api.js";
 // a autenticação do banco acontecem ali, sem o cliente sair da plataforma e
 // sem a RYCS ver os dados do cartão. O Stripe.js só pode ser carregado de
 // js.stripe.com (exigência do Stripe para conformidade PCI), por isso o
-// script é injetado aqui e não empacotado.
+// script é injetado aqui e não empacotado. A versão do script acompanha a da
+// API da conta (2026-09-30.endive): nela o método é createEmbeddedCheckoutPage
+// e a sessão usa ui_mode "embedded_page".
 //
 // Quem libera o plano continua sendo o webhook. Ao concluir, esta tela só
 // espera a assinatura aparecer como ativa/trial em GET /subscription.
@@ -19,7 +21,7 @@ function carregarStripeJs() {
   if (!carregando) {
     carregando = new Promise((ok, falha) => {
       const s = document.createElement("script");
-      s.src = "https://js.stripe.com/v3/";
+      s.src = "https://js.stripe.com/endive/stripe.js";
       s.async = true;
       s.onload = () => (window.Stripe ? ok(window.Stripe) : falha(new Error("Stripe.js indisponível")));
       s.onerror = () => { carregando = null; falha(new Error("Stripe.js indisponível")); };
@@ -40,7 +42,8 @@ export default function CheckoutStripe({ chavePublica, clientSecret, subscriptio
       .then(async (Stripe) => {
         if (!vivo) return;
         const stripe = Stripe(chavePublica);
-        checkout = await stripe.initEmbeddedCheckout({
+        const criar = (stripe.createEmbeddedCheckoutPage || stripe.initEmbeddedCheckout).bind(stripe);
+        checkout = await criar({
           fetchClientSecret: async () => clientSecret,
           onComplete: () => { if (vivo) setFase("confirmando"); },
         });
