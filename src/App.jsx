@@ -1,22 +1,22 @@
 import { canNavigate } from "./lib/unsavedChanges.js";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { api } from "./lib/api.js";
 import { seed } from "./lib/seed.js";
 import { CSS } from "./styles.js";
 import Shell from "./components/Shell.jsx";
 import Login from "./components/Login.jsx";
 import LoginPlataforma from "./components/LoginPlataforma.jsx";
-import CadastroProfissional from "./components/auth/CadastroProfissional.jsx";
+const CadastroProfissional = lazy(() => import("./components/auth/CadastroProfissional.jsx"));
 import EscolhaCadastro from "./components/auth/EscolhaCadastro.jsx";
 import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding, limparConviteOnboarding } from "./lib/rotas.js";
 import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
 import EntradaEmpresa from "./components/auth/EntradaEmpresa.jsx";
 import ConfirmarEmail from "./components/auth/ConfirmarEmail.jsx";
-import LandingPage from "./components/LandingPage.jsx";
-import Onboarding from "./components/onboarding/index.jsx";
-import Vendedor from "./components/vendedor/index.jsx";
-import Empresa from "./components/empresa/index.jsx";
-import Admin from "./components/admin/index.jsx";
+const LandingPage = lazy(() => import("./components/LandingPage.jsx"));
+const Onboarding = lazy(() => import("./components/onboarding/index.jsx"));
+const Vendedor = lazy(() => import("./components/vendedor/index.jsx"));
+const Empresa = lazy(() => import("./components/empresa/index.jsx"));
+const Admin = lazy(() => import("./components/admin/index.jsx"));
 import Notificacoes from "./components/Notificacoes.jsx";
 import BannerOnboarding from "./components/empresa/BannerOnboarding.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -259,7 +259,7 @@ export default function App() {
   const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
 
   if (!user) {
-    if (rota.tipo === "landing") return <div className="vx-app"><style>{CSS}</style><LandingPage /></div>;
+    if (rota.tipo === "landing") return <div className="vx-app"><style>{CSS}</style><Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><LandingPage /></Suspense></div>;
     return (
       <div className="vx-app">
         <style>{CSS}</style>
@@ -267,7 +267,7 @@ export default function App() {
         {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial beta={environment === "beta"} />
           : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
           : rota.tipo === "escolha" ? <EscolhaCadastro />
-          : rota.tipo === "cadastro" && rota.role === "vendedor" ? <CadastroProfissional onRegister={registrar} />
+          : rota.tipo === "cadastro" && rota.role === "vendedor" ? <Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><CadastroProfissional onRegister={registrar} /></Suspense>
           : rota.tipo === "cadastro" && rota.role === "empresa" ? <EntradaEmpresa />
           : rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
             ? <EtapaAcesso conviteToken={rota.tipo === "convite-onboarding" ? rota.token : null}
@@ -309,6 +309,7 @@ export default function App() {
     if (onb.bloqueia) return (
       <div className="vx-app">
         <style>{CSS}</style>
+        <Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}>
         <Onboarding estado={onb} email={user.email}
           // Saindo do onboarding, o painel precisa dos dados que acabaram de ser preenchidos.
           setEstado={(novo) => {
@@ -320,6 +321,7 @@ export default function App() {
           }}
           emp={db.companies.find((c) => c.id === db.companyId)} aviso={aviso}
           etapaPedida={rota.tipo === "onboarding" ? rota.etapa : null} aoSair={logout} />
+        </Suspense>
         {toastEl}
       </div>
     );
@@ -337,9 +339,11 @@ export default function App() {
 
       <Shell user={user} entity={role === "empresa" ? db.companies.find(c => c.id === db.companyId) : db.sellers.find(s => s.id === db.sellerId)} role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "configuracoes"}>
         <ErrorBoundary>
-          {role === "vendedor" && <Vendedor user={user} onLogout={logout} {...ctx} aba={aba} setAba={setAba} />}
-          {role === "empresa" && <Empresa user={user} onLogout={logout} {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
-          {role === "admin" && <Admin {...ctx} aba={aba} />}
+          <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
+            {role === "vendedor" && <Vendedor user={user} onLogout={logout} {...ctx} aba={aba} setAba={setAba} />}
+            {role === "empresa" && <Empresa user={user} onLogout={logout} {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
+            {role === "admin" && <Admin {...ctx} aba={aba} />}
+          </Suspense>
         </ErrorBoundary>
       </Shell>
 
