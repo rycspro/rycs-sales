@@ -718,7 +718,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                 { label: "Compatibilidade", val: `${fit.percentual}%` },
               ].map(({ label, val }) => (
                 <div key={label} className="vx-card" style={{ padding: "12px 8px", textAlign: "center" }}>
-                  <div className="vx-mono" style={{ fontSize: 22, fontWeight: 700, color: "var(--brand)" }}>{val}</div>
+                  <div style={{ fontFamily: "'Michroma','General Sans',sans-serif", fontSize: 22, fontWeight: 700, color: "var(--brand)", fontVariantNumeric: "lining-nums tabular-nums" }}>{val}</div>
                   <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 4 }}>{label}</div>
                 </div>
               ))}

@@ -878,6 +878,8 @@ html[data-versao="sol"] .vx-budget-facts b{font-family:'Michroma','General Sans'
 /* Valores de moeda (preços de plano): Michroma é larga; tamanho menor p/ caber */
 html[data-versao="sol"] .vx-plan-price{font-family:'Michroma','General Sans',sans-serif!important;font-weight:700;font-size:19px;letter-spacing:-.03em;color:#171717}
 html[data-versao="sol"] .vx-plan-price small{font-family:'General Sans',sans-serif;font-size:11px}
+/* Números dos mini-cards de métricas (ex.: perfil do profissional): fonte do sistema */
+html[data-versao="sol"] .vx-scenario>strong{font-family:'Michroma','General Sans',sans-serif;font-variant-numeric:lining-nums tabular-nums}
 
 /* Azul estratégico: botões, links, ativos */
 html[data-versao="sol"] .vx-btn-primary{background:#318CE7!important;border:1px solid #318CE7!important;border-radius:8px!important;
