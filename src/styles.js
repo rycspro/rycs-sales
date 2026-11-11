@@ -992,5 +992,12 @@ html[data-dark="1"][data-versao="sol"] .vx-ph-link,
 html[data-dark="1"][data-versao="sol"] .vx-positive,
 html[data-dark="1"][data-versao="sol"] .vx-navbtn[data-on="1"]{color:#4D9FFF}
 html[data-dark="1"][data-versao="sol"] .vx-meter-fill{background:#4D9FFF}
+/* Cards de profissional (e outros "glass"): o box-shadow tinha realces brancos
+   internos que, no escuro, pareciam bordas brancas. Troca por borda escura limpa. */
+html[data-dark="1"][data-versao="sol"] .vx-prof-card,
+html[data-dark="1"][data-versao="sol"] .vx-empresa-card,
+html[data-dark="1"][data-versao="sol"] .vx-onb-card,
+html[data-dark="1"][data-versao="sol"] .vx-glass-card{background:#171A21!important;border:1px solid #272B34!important;box-shadow:none!important}
+html[data-dark="1"][data-versao="sol"] .vx-prof-card:hover{border-color:#4D9FFF!important;box-shadow:0 8px 24px -12px rgba(0,0,0,.55)!important}
 `;
 
