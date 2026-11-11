@@ -728,16 +728,15 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           {/* ── Entendendo o Score ── */}
           {Array.isArray(p.scoreDetalhe?.componentes) && (
             <div className="vx-card" style={{ padding: 16, marginTop: 16 }}>
-              <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Por que esse score?</div>
+              <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Perfil declarado no cadastro</div>
               {p.scoreExplicacao && <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.6 }}>{p.scoreExplicacao}</p>}
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {p.scoreDetalhe.componentes.filter((c) => c.chave !== "base").map((c) => {
                   const pct = c.max ? Math.round((c.pontos / c.max) * 100) : 0;
                   return (
                     <div key={c.chave}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, marginBottom: 4 }}>
                         <span style={{ color: "var(--ink)" }}>{c.label} <span className="vx-mut">· {c.valor}</span></span>
-                        <span className="vx-mut vx-mono" style={{ flexShrink: 0 }}>{Math.round(c.pontos)}/{c.max}</span>
                       </div>
                       <div style={{ height: 6, borderRadius: 99, background: "var(--surface-2)", overflow: "hidden" }}>
                         <div style={{ height: "100%", width: `${pct}%`, borderRadius: 99, background: pct >= 70 ? "var(--brand)" : pct >= 40 ? "#F59E0B" : "#EF4444" }} />

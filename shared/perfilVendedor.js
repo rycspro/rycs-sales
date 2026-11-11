@@ -62,13 +62,15 @@ export function pontosVendedor(xp, disc) {
   return { positivos, negativos };
 }
 
-// Resumo em uma frase do porquê do score.
+// Resumo em uma frase dos fatores do cadastro. NÃO afirma um número de score —
+// o score oficial (scoreTriagem) pode vir da triagem de habilidades, que é outro
+// cálculo; aqui descrevemos só o que o profissional declarou no cadastro.
 export function explicacaoScore(xp, disc) {
-  const { componentes, total } = detalharScore(xp, disc);
+  const { componentes } = detalharScore(xp, disc);
   const fortes = componentes.filter((c) => c.max >= 12 && c.pontos / c.max >= 0.7).map((c) => c.label.toLowerCase());
   const fracos = componentes.filter((c) => c.max >= 12 && c.pontos / c.max < 0.4).map((c) => c.label.toLowerCase());
   const partes = [];
-  if (fortes.length) partes.push(`puxado para cima por ${fortes.join(", ")}`);
-  if (fracos.length) partes.push(`reduzido por ${fracos.join(", ")}`);
-  return `Score ${Math.round(total)}% calculado a partir do cadastro: ${partes.length ? partes.join("; ") : "distribuição equilibrada entre os critérios"}.`;
+  if (fortes.length) partes.push(`forte em ${fortes.join(", ")}`);
+  if (fracos.length) partes.push(`frágil em ${fracos.join(", ")}`);
+  return `A partir do que o profissional declarou no cadastro: ${partes.length ? partes.join("; ") : "informações equilibradas entre os critérios"}.`;
 }
