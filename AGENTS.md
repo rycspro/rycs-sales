@@ -37,28 +37,15 @@ Ao finalizar um lote:
 - Para tarefas envolvendo Beta, QA ou homologação, leia `docs/BETA.md`.
 - Não carregue `docs/BETA.md` quando a tarefa não envolver Beta.
 
-## Deploy automático
+## Deploy e publicação
 
-O ambiente de produção é Railway.
+Produção roda na **AWS (EC2)**, em `app.rycs.pro`. A Railway não é mais usada.
 
-O deploy padrão é DIRETO pela Railway CLI.
-
-Ao concluir com sucesso qualquer lote:
-
-1. verificar se o projeto/serviço Railway correto já está vinculado;
-2. executar `railway up`;
-3. aguardar somente o necessário para confirmar o deployment;
-4. considerar concluído somente quando a Railway indicar deployment saudável/Online.
-
-GitHub NÃO é requisito para deploy.
-
-Falha de git push não deve impedir deploy na Railway.
-
-Não criar projeto ou serviço Railway novo sem autorização.
-
-Não repetir deploy sem necessidade.
-
-Consultar logs apenas quando houver falha real.
+- **Deploy automático:** `.github/workflows/deploy.yml` roda a cada **push na `main`** — conecta por SSH ao EC2, faz `git pull`, rebuild do Docker e reinicia o container (health check em `/api/health`).
+- **Push na `main` = publicar em produção.** Só suba código validado. Para trabalho em andamento, use uma branch (não dispara deploy).
+- O assistente **não mexe em infraestrutura** (EC2, Docker, Caddy, SSH): o Actions cuida do deploy sozinho. Credenciais ficam em GitHub Secrets (`EC2_SSH_KEY`), nunca no repo.
+- Só commite/pushe quando o usuário pedir.
+- Repositório: https://github.com/rycspro/rycs-sales.git · Branch de produção: `main`.
 
 ## Autonomia
 

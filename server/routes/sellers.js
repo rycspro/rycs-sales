@@ -30,8 +30,9 @@ let _profCacheTs = 0;
 function getProfissionaisBase() {
   const now = Date.now();
   if (_profCache && now - _profCacheTs < 60000) return _profCache;
-  _profCache = db.prepare(`SELECT id, nome, sobrenome, pais, cidade, estado, perfil, experiencia, nota, nivel, video, perfilComercial,
+  _profCache = db.prepare(`SELECT id, nome, sobrenome, pais, cidade, estado, perfil, experiencia, nota, scoreTriagem, nivel, video, perfilComercial,
     CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
+    CASE WHEN curriculo IS NOT NULL AND curriculo != '' THEN 1 ELSE 0 END AS temCurriculo, curriculoNome,
     titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, genero, criadoEm, status
     FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   _profCacheTs = now;
@@ -74,6 +75,8 @@ router.get("/professionals/active", (req, res) => {
       ...s, perfilComercial,
       foto: s.temFoto ? `/api/sellers/${s.id}/foto` : null,
       temFoto: undefined,
+      curriculo: s.temCurriculo ? `/api/sellers/${s.id}/curriculo` : null,
+      temCurriculo: undefined,
       segmentos: lista(s.segmentos), modalidades: lista(s.modalidades), skills: lista(s.skills),
       certificacoes: certificacoes.filter((c) => c.sellerId === s.id),
       campanhas: cs,
@@ -106,6 +109,30 @@ router.get("/sellers/:id/foto", (req, res) => {
   res.set({
     "Content-Type": mime,
     "Cache-Control": "public, max-age=3600, immutable",
+    "Content-Length": buf.length,
+  });
+  res.end(buf);
+});
+
+// Currículo do profissional — a empresa (e o admin) pode visualizar; o próprio
+// profissional também. Serve o arquivo com o nome original, inline no navegador.
+router.get("/sellers/:id/curriculo", (req, res) => {
+  const papel = req.user?.role;
+  if (!["empresa", "admin"].includes(papel) && req.user?.entityId !== req.params.id)
+    return res.status(403).json({ error: "Sem permissão" });
+  const row = db.prepare("SELECT curriculo, curriculoNome FROM sellers WHERE id = ?").get(req.params.id);
+  if (!row?.curriculo) return res.status(404).end();
+  const match = String(row.curriculo).match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return res.status(404).end();
+  const [, mime, b64] = match;
+  const buf = Buffer.from(b64, "base64");
+  const ext = mime === "application/pdf" ? ".pdf" : (mime.includes("word") || mime.includes("officedocument")) ? ".docx" : "";
+  let nome = String(row.curriculoNome || "curriculo").replace(/[^\w.\- ]+/g, "_");
+  if (ext && !nome.toLowerCase().endsWith(ext)) nome += ext;
+  res.set({
+    "Content-Type": mime,
+    "Content-Disposition": `inline; filename="${nome}"`,
+    "Cache-Control": "private, max-age=600",
     "Content-Length": buf.length,
   });
   res.end(buf);

@@ -1,15 +1,11 @@
 import { useMemo } from "react";
-import { BarChart2, ClipboardList, DollarSign, Megaphone } from "lucide-react";
+import { ClipboardList, Megaphone } from "lucide-react";
 import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
-import LeadsEmpresa from "./LeadsEmpresa.jsx";
 import TarefasEmpresa from "./TarefasEmpresa.jsx";
-import ValoresEmpresa from "./ValoresEmpresa.jsx";
 
 const ABAS = [
   { key: "campanhas", label: "Campanhas", icon: Megaphone },
-  { key: "leads", label: "Leads", icon: BarChart2 },
   { key: "tarefas", label: "Tarefas", icon: ClipboardList },
-  { key: "valores", label: "Valores", icon: DollarSign },
 ];
 
 function Badge({ n }) {
@@ -26,7 +22,7 @@ function Badge({ n }) {
   );
 }
 
-export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, setSecao, filtroData }) {
+export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, setSecao, filtroData, bloqueado, irParaPlano }) {
   const badges = useMemo(() => {
     const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
     const leads = (db.leads || []).filter((l) => l.companyId === emp.id);
@@ -71,10 +67,8 @@ export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, se
       </div>
 
       {/* Content */}
-      {secao === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} filtroData={filtroData} />}
-      {secao === "leads" && <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroData} />}
+      {secao === "campanhas" && <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} filtroData={filtroData} bloqueado={bloqueado} irParaPlano={irParaPlano} />}
       {secao === "tarefas" && <TarefasEmpresa emp={emp} db={db} aviso={aviso} recarregar={recarregar} filtroData={filtroData} />}
-      {secao === "valores" && <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} filtroData={filtroData} />}
     </div>
   );
 }

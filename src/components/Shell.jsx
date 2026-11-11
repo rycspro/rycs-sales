@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { LogOut, ChevronUp, CircleUserRound, Settings, Headphones } from "lucide-react";
+import { LogOut, ChevronUp, ChevronDown, CircleUserRound, Headphones } from "lucide-react";
 import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
+  const [gruposAbertos, setGruposAbertos] = useState({});
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const configIdx = rawItems.findIndex((item) => item.key === "configuracoes");
   const allItems = configIdx > -1
@@ -19,7 +20,9 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     if (role === "vendedor" && ["conta", "configuracoes", "perfil", "indicar", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
       if (["conta", "configuracoes", "perfil", "carteira", "academy", "indicar", "suporte-conta"].includes(active)) return "configuracoes";
-      if (["leads", "conferir", "profissionais"].includes(active)) return "campanhas";
+      if (["leads", "profissionais", "conferir-fila", "conferir-time", "conferir-regras"].includes(active)) return "campanhas";
+      if (["campanhas-comissoes", "campanhas-tarefas"].includes(active)) return "campanhas";
+      if (["pagamentos-campanhas"].includes(active)) return "pagamentos";
     }
     return active;
   })();
@@ -32,14 +35,41 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", scrollbarWidth: "none" }}>
-          {allItems.filter(item => !accountRole || !["configuracoes", "perfil"].includes(item.key)).map((item, i) => {
+          {allItems.filter(item => !accountRole || !["perfil"].includes(item.key)).map((item, i) => {
             if (item.divider) {
               return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
             }
             if (item.section) {
               return <div key={`sec-${i}`} className="vx-sidebar-section">{item.section}</div>;
             }
-            const { key, label, Icon } = item;
+            const { key, label, Icon, children } = item;
+            if (children) {
+              const grupoAtivo = active === key || children.some((c) => c.key === active);
+              const aberto = gruposAbertos[key] !== undefined ? gruposAbertos[key] : grupoAtivo;
+              return (
+                <div key={key} style={{ display: "flex", flexDirection: "column" }}>
+                  <button
+                    className="vx-sidebtn"
+                    data-on={grupoAtivo ? "1" : "0"}
+                    aria-expanded={aberto}
+                    onClick={() => {
+                      const novo = !aberto;
+                      setGruposAbertos((a) => ({ ...a, [key]: novo }));
+                      if (novo && !grupoAtivo) onSelect(key);
+                    }}
+                  >
+                    <Icon size={18} strokeWidth={1.85} />
+                    {label}
+                    <ChevronDown size={16} style={{ marginLeft: "auto", flexShrink: 0, color: "var(--muted)", transition: "transform .2s", transform: aberto ? "rotate(180deg)" : "none" }} />
+                  </button>
+                  {aberto && children.map((sub) => (
+                    <button key={sub.key} className="vx-sidebtn vx-subitem" data-on={active === sub.key ? "1" : "0"} onClick={() => onSelect(sub.key)}>
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              );
+            }
             return (
               <button key={key} className="vx-sidebtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
                 <Icon size={18} strokeWidth={1.85} />
@@ -119,7 +149,7 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
       e.preventDefault(); const buttons = [...menu.current.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
       buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length-1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
-      {[[CircleUserRound, 'Minha Conta', 'conta'], [Settings, 'Configurações', 'configuracoes']].map(([Icon,label,key]) => <button type="button" role="menuitem" key={key} onClick={() => choose(() => onSelect(key))}><Icon size={18} />{label}</button>)}
+      {[[CircleUserRound, 'Minha Conta', 'conta']].map(([Icon,label,key]) => <button type="button" role="menuitem" key={key} onClick={() => choose(() => onSelect(key))}><Icon size={18} />{label}</button>)}
       <button type="button" role="menuitem" onClick={() => choose(() => onSelect('suporte-conta'))}><Headphones size={18} />Ajuda e suporte</button>
       <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>
     </div>}

@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
 import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
 
 const PERFIL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
+
+// Bandeira do país do profissional (emoji). Default Brasil, que é o padrão do cadastro.
+const BANDEIRAS = {
+  "brasil": "🇧🇷", "brazil": "🇧🇷", "portugal": "🇵🇹", "argentina": "🇦🇷",
+  "estados unidos": "🇺🇸", "eua": "🇺🇸", "usa": "🇺🇸", "united states": "🇺🇸",
+  "méxico": "🇲🇽", "mexico": "🇲🇽", "espanha": "🇪🇸", "spain": "🇪🇸",
+  "chile": "🇨🇱", "colômbia": "🇨🇴", "colombia": "🇨🇴", "peru": "🇵🇪",
+  "uruguai": "🇺🇾", "paraguai": "🇵🇾", "bolívia": "🇧🇴", "bolivia": "🇧🇴",
+};
+const bandeiraPais = (p) => BANDEIRAS[String(p || "").trim().toLowerCase()] || "🌎";
 const STATUS = { aprovado: "Ativo/aprovado", parcial: "Ativo parcial", pendente: "Pendente", recusado: "Removido/recusado" };
 const nota = (n) => Number(n || 0);
 const arr = (v) => Array.isArray(v) ? v : [];
@@ -38,13 +48,14 @@ function Tags({ itens }) {
   return arr(itens).length ? <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>{itens.map((x) => <span key={x} className="vx-chip">{x}</span>)}</div> : <span className="vx-mut">Não informado</span>;
 }
 
-export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar }) {
+export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, bloqueado, irParaPlano }) {
+  const [popupPlano, setPopupPlano] = useState(false);
   const [listaApi, setListaApi] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [selecionado, setSelecionado] = useState(null);
   const [campanhaDestino, setCampanhaDestino] = useState("");
   const [obs, setObs] = useState({});
-  const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "" });
+  const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "", pais: "" });
   const [filtroAberto, setFiltroAberto] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const buscaRef = useRef(null);
@@ -140,6 +151,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     return {
       funcoes: [...new Set(profissionais.map((p) => p.perfil).filter(Boolean))],
       regioes: [...estadoMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([key, label]) => ({ key, label })),
+      paises: [...new Set(profissionais.map((p) => p.pais).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR")),
     };
   }, [profissionais]);
 
@@ -175,7 +187,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
       const regiao = p.estado || "";
       const campanhaMatch = !f.campanha || p.campanhas?.some((c) => c.id === f.campanha);
       const performanceOk = !f.performance || (f.performance === "alta" ? p.taxaAprovacao >= 80 : f.performance === "media" ? p.taxaAprovacao >= 50 && p.taxaAprovacao < 80 : p.taxaAprovacao < 50);
-      const scoreOk = !f.score || (f.score === "80" ? nota(p.nota) >= 80 : f.score === "50" ? nota(p.nota) >= 50 && nota(p.nota) < 80 : nota(p.nota) < 50);
+      const st = Number(p.scoreTriagem ?? 0);
+      const scoreOk = !f.score || (f.score === "80" ? st >= 80 : f.score === "50" ? st >= 50 && st < 80 : st < 50);
       return (!f.busca || norm(p.nome).includes(norm(f.busca)))
         && (!f.funcao || p.perfil === f.funcao)
         && campanhaMatch
@@ -183,6 +196,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
         && performanceOk
         && (!f.regiao || norm(regiao) === f.regiao)
         && scoreOk
+        && (!f.pais || p.pais === f.pais)
         && (!f.genero || p.genero === f.genero);
     });
 
@@ -236,7 +250,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
     aviso?.(status === "aprovado" ? "Profissional aprovado." : status === "pendente" ? "Candidatura reaberta." : "Profissional removido do time.");
   };
 
-  const filtrosAtivos = [f.funcao, f.campanha, f.status, f.performance, f.regiao, f.score].filter(Boolean).length;
+  const filtrosAtivos = [f.genero, f.pais, f.funcao, f.campanha, f.status, f.performance, f.regiao, f.score].filter(Boolean).length;
 
   return <div className="vx-fade">
     <div className="vx-page-head">
@@ -286,32 +300,10 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   borderRadius: 0, boxShadow: "none"
                 }}
               />
-              {/* Botão filtrar dentro da barra */}
-              <button
-                type="button"
-                onClick={() => setFiltroAberto((v) => !v)}
-                title="Filtrar"
-                style={{
-                  width: 32, height: 32, borderRadius: "50%", border: "none", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  background: filtrosAtivos ? "var(--brand)" : "transparent",
-                  color: filtrosAtivos ? "#fff" : "var(--muted)",
-                  position: "relative",
-                }}
-              >
-                <Filter size={13} strokeWidth={2.3} />
-                {filtrosAtivos > 0 && (
-                  <span style={{
-                    position: "absolute", top: 0, right: 0, background: "#fff",
-                    color: "var(--brand)", borderRadius: 20, fontSize: 9, padding: "0px 4px", fontWeight: 700,
-                    lineHeight: 1.6, border: "1px solid var(--brand)"
-                  }}>{filtrosAtivos}</span>
-                )}
-              </button>
               {/* X fechar */}
               <button
                 type="button"
-                onClick={() => { setBuscaAberta(false); setFiltroAberto(false); setF({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "" }); }}
+                onClick={() => { setBuscaAberta(false); setFiltroAberto(false); setF({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "", pais: "" }); }}
                 style={{
                   width: 28, height: 28, borderRadius: "50%", border: "none",
                   background: "transparent", cursor: "pointer", display: "flex",
@@ -335,90 +327,99 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
           Salvos
           {mostrarSalvos && <span style={{ background: "rgba(255,255,255,.25)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{Object.values(salvos).filter(Boolean).length}</span>}
         </button>
+        <button
+          type="button"
+          className={`vx-btn${filtroAberto ? " vx-btn-primary" : ""}`}
+          style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+          onClick={() => setFiltroAberto((v) => !v)}
+          title="Filtrar profissionais"
+        >
+          <Filter size={14} strokeWidth={2.3} />
+          Filtrar
+          {filtrosAtivos > 0 && <span style={{ background: filtroAberto ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
+        </button>
         {filtrosAtivos > 0 && (
-          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "" })}>
+          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "", pais: "" })}>
             Limpar filtros
           </button>
         )}
       </div>
     </div>
 
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-      {/* Filtro gênero */}
-      {[
-        { value: "", label: "Todos", Icon: UsersRound },
-        { value: "feminino", label: "Mulher", Icon: UserRound, cor: "#e74694" },
-        { value: "masculino", label: "Homem", Icon: UserRound, cor: "#2563eb" },
-      ].map((opt) => {
-        const ativo = f.genero === opt.value;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => setF({ ...f, genero: opt.value })}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 16px", borderRadius: 10,
-              border: ativo ? "2px solid " + (opt.cor || "var(--brand)") : "1px solid var(--border)",
-              background: ativo ? (opt.cor || "var(--brand)") + "12" : "var(--surface-2)",
-              color: ativo ? (opt.cor || "var(--brand)") : "var(--muted)",
-              fontWeight: ativo ? 600 : 500, fontSize: 13,
-              cursor: "pointer", transition: "all .2s"
-            }}
-          >
-            <opt.Icon size={15} color={ativo ? (opt.cor || "var(--brand)") : "var(--muted)"} />
-            {opt.label}
-          </button>
-        );
-      })}
-
-      {/* Divisor */}
-      <div style={{ width: 1, height: 28, background: "var(--border)", flexShrink: 0, margin: "0 2px" }} />
-
-      {/* Filtro função */}
-      {[
-        { value: "", label: "Todos" },
-        { value: "sdr", label: "SDR" },
-        { value: "closer", label: "Closer" },
-        { value: "bdr", label: "BDR" },
-      ].map((opt) => {
-        const ativo = f.funcao === opt.value;
-        return (
-          <button
-            key={`fn-${opt.value}`}
-            type="button"
-            onClick={() => setF({ ...f, funcao: opt.value === "" ? "" : (ativo ? "" : opt.value) })}
-            style={{
-              padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: ativo ? 600 : 500,
-              border: ativo ? "2px solid var(--brand)" : "1px solid var(--border)",
-              background: ativo ? "var(--brand-50)" : "var(--surface-2)",
-              color: ativo ? "var(--brand)" : "var(--muted)",
-              cursor: "pointer", transition: "all .2s"
-            }}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-
     {filtroAberto && (
-      <div className="vx-card vx-filterbar" style={{ padding: 14, maxWidth: "none", marginBottom: 16 }}>
-        <label><span className="vx-label">Função</span><select className="vx-input" value={f.funcao} onChange={(e) => setF({ ...f, funcao: e.target.value })}><option value="">Todas</option>{opcoes.funcoes.map((x) => <option key={x} value={x}>{PERFIL[x] || x}</option>)}</select></label>
-        <label><span className="vx-label">Campanha</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">Todas</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
-        <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
-        <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
-        <label><span className="vx-label">Estado</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todos</option>{opcoes.regioes.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
-        <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
+      <div className="vx-card" style={{ padding: 16, maxWidth: "none", marginBottom: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Gênero */}
+        <div>
+          <span className="vx-label">Gênero</span>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 7 }}>
+            {[
+              { value: "", label: "Todos", Icon: UsersRound },
+              { value: "feminino", label: "Mulher", Icon: UserRound, cor: "#e74694" },
+              { value: "masculino", label: "Homem", Icon: UserRound, cor: "#2563eb" },
+            ].map((opt) => {
+              const ativo = f.genero === opt.value;
+              return (
+                <button key={opt.value} type="button" onClick={() => setF({ ...f, genero: opt.value })}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 10,
+                    border: ativo ? "2px solid " + (opt.cor || "var(--brand)") : "1px solid var(--border)",
+                    background: ativo ? (opt.cor || "var(--brand)") + "12" : "var(--surface-2)",
+                    color: ativo ? (opt.cor || "var(--brand)") : "var(--muted)",
+                    fontWeight: ativo ? 600 : 500, fontSize: 13, cursor: "pointer", transition: "all .2s",
+                  }}>
+                  <opt.Icon size={15} color={ativo ? (opt.cor || "var(--brand)") : "var(--muted)"} />
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Função */}
+        <div>
+          <span className="vx-label">Função</span>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 7 }}>
+            {[
+              { value: "", label: "Todos" },
+              { value: "sdr", label: "SDR" },
+              { value: "closer", label: "Closer" },
+              { value: "bdr", label: "BDR" },
+            ].map((opt) => {
+              const ativo = f.funcao === opt.value;
+              return (
+                <button key={`fn-${opt.value}`} type="button"
+                  onClick={() => setF({ ...f, funcao: opt.value === "" ? "" : (ativo ? "" : opt.value) })}
+                  style={{
+                    padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: ativo ? 600 : 500,
+                    border: ativo ? "2px solid var(--brand)" : "1px solid var(--border)",
+                    background: ativo ? "var(--brand-50)" : "var(--surface-2)",
+                    color: ativo ? "var(--brand)" : "var(--muted)", cursor: "pointer", transition: "all .2s",
+                  }}>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Demais filtros */}
+        <div className="vx-filterbar" style={{ maxWidth: "none" }}>
+          <label><span className="vx-label">Campanha</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">Todas</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
+          <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
+          <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
+          <label><span className="vx-label">País</span><select className="vx-input" value={f.pais} onChange={(e) => setF({ ...f, pais: e.target.value })}><option value="">Todos</option>{opcoes.paises.map((x) => <option key={x} value={x}>{bandeiraPais(x)} {x}</option>)}</select></label>
+          <label><span className="vx-label">Estado</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todos</option>{opcoes.regioes.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
+          <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
+        </div>
       </div>
     )}
 
     {carregando ? <div className="vx-card vx-skeleton" style={{ height: 280 }} /> : (
       <div className="vx-prof-grid">
         {filtrados.map((p) => {
-          const scoreVal = Number(p.nota ?? 100);
-          const scoreCor = scoreVal >= 80 ? "#0E7490" : scoreVal >= 50 ? "#b45309" : "#dc2626";
-          const scoreBg  = scoreVal >= 80 ? "#ecfeff" : scoreVal >= 50 ? "#fffbeb" : "#fef2f2";
+          const scoreVal = p.scoreTriagem != null ? Number(p.scoreTriagem) : null;
+          const scoreCor = (scoreVal ?? 0) >= 80 ? "#0E7490" : (scoreVal ?? 0) >= 50 ? "#b45309" : "#dc2626";
+          const scoreBg  = (scoreVal ?? 0) >= 80 ? "#ecfeff" : (scoreVal ?? 0) >= 50 ? "#fffbeb" : "#fef2f2";
           const fit = fitCultural(p);
           const conviteStatus = convites[p.id];
           return (
@@ -431,8 +432,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   ? <img src={p.foto} alt={p.nome} loading="lazy" decoding="async" />
                   : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontSize: 36, fontWeight: 700, color: "var(--brand)", fontFamily: "var(--font-disp)" }}>{iniciais(p.nome)}</div>
                 }
-                <span style={{ position: "absolute", top: 10, right: 10, background: "#0E7490", color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px", letterSpacing: ".01em" }}>
-                  {scoreVal}
+                <span title="Score" style={{ position: "absolute", top: 10, right: 10, background: scoreCor, color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 10px", letterSpacing: ".01em" }}>
+                  {scoreVal != null ? `${scoreVal.toFixed(0)}%` : "—"}
                 </span>
               </div>
 
@@ -441,7 +442,10 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                 <div className="vx-prof-card__info">
                   {/* nome + idade */}
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome)}</span>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                      <span title={p.pais || "País não informado"} style={{ marginRight: 5 }}>{bandeiraPais(p.pais)}</span>
+                      {capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome)}
+                    </span>
                     {calcularIdade(p.dataNascimento) !== null && (
                       <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{calcularIdade(p.dataNascimento)} anos</span>
                     )}
@@ -483,7 +487,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   }
                   <button
                     className="vx-prof-card__btn"
-                    onClick={(e) => { e.stopPropagation(); setChatRapido({ sellerId: p.id, nome: p.nome, foto: p.foto }); }}
+                    onClick={(e) => { e.stopPropagation(); if (bloqueado) { setPopupPlano(true); return; } setChatRapido({ sellerId: p.id, nome: p.nome, foto: p.foto }); }}
                     title="Enviar mensagem"
                     style={{ width: 44, minWidth: 44, flex: "none", background: "transparent", color: "var(--muted)", border: "1.5px solid var(--border)" }}
                   >
@@ -583,6 +587,16 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
                   </div>
                 ) : null;
               })()}
+
+              {/* Currículo enviado pelo profissional */}
+              {p.curriculo && (
+                <div>
+                  <div className="vx-eyebrow" style={{ marginBottom: 7 }}>Currículo</div>
+                  <a href={p.curriculo} target="_blank" rel="noopener noreferrer" className="vx-btn vx-btn-sm" style={{ textDecoration: "none", gap: 7 }}>
+                    📄 Ver currículo{p.curriculoNome ? ` · ${p.curriculoNome}` : ""}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 
@@ -628,7 +642,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
             <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Indicadores de Desempenho</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
               {[
-                { label: "Score", val: p.nota ?? 100 },
+                { label: "Score", val: p.scoreTriagem != null ? `${Number(p.scoreTriagem).toFixed(0)}%` : "—" },
                 { label: "Tarefas", val: `${p.tarefasAprovadas || 0}/${p.tarefasRealizadas || 0}` },
                 { label: "Aprovação", val: `${p.taxaAprovacao || 0}%` },
                 { label: "Vendas", val: p.vendas || 0 },
@@ -657,7 +671,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
 
           {/* ── Métricas completas ── */}
           <div className="vx-grid vx-g4" style={{ marginTop: 20 }}>
-            <Metric label="Score geral" value={p.nota ?? 100} />
+            <Metric label="Score" value={p.scoreTriagem != null ? `${Number(p.scoreTriagem).toFixed(0)}%` : "—"} />
             <Metric label="Tarefas aprovadas" value={`${p.tarefasAprovadas || 0}/${p.tarefasRealizadas || 0}`} />
             <Metric label="Taxa de aprovação" value={`${p.taxaAprovacao || 0}%`} />
             <Metric label="Ganhos totais" value={money(p.ganhosTotais || 0)} />
@@ -741,6 +755,20 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar })
           <button className="vx-btn vx-btn-ghost" style={{ padding: "4px 6px" }} onClick={() => setChatRapido(null)}><X size={14} /></button>
         </div>
         <Chat empresa={emp} sellerId={chatRapido.sellerId} db={db} up={up} de="empresa" />
+      </div>
+    )}
+
+    {popupPlano && (
+      <div onClick={() => setPopupPlano(false)} style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 16, boxShadow: "0 24px 48px rgba(0,0,0,.2)", width: "100%", maxWidth: 400, padding: "28px 26px", textAlign: "center" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+            <Lock size={22} color="var(--brand)" strokeWidth={2} />
+          </div>
+          <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>Assine um plano para conversar</h3>
+          <p className="vx-mut" style={{ margin: "0 0 20px", fontSize: 13.5, lineHeight: 1.6 }}>Para enviar mensagens aos profissionais, ative um plano. Seus dados continuam salvos.</p>
+          <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(false); irParaPlano?.(); }}>Ver planos</button>
+          <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(false)}>Agora não</button>
+        </div>
       </div>
     )}
   </div>;

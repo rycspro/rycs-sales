@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Archive, CirclePause, ClipboardCheck, GitBranch, Megaphone, MoreHorizontal, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
+import { Archive, CirclePause, ClipboardCheck, FileText, GitBranch, Megaphone, MoreHorizontal, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
+import { planoTemIA, PLANOS_COM_IA } from "../../../shared/planos.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
@@ -153,8 +154,12 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
               }}>{counts["encerrada"]}</span>
             )}
           </button>
-          <button className="vx-btn vx-btn-sm" onClick={() => onCriar(false)}><Plus size={13} /> Manual</button>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onCriar(true)}><Sparkles size={13} /> Criar com IA</button>
+          {/* No estado inicial (sem campanhas) os cards abaixo já oferecem os dois
+              caminhos; só mostramos os botões do topo depois que existe campanha. */}
+          {campanhas.length > 0 && <>
+            <button className="vx-btn vx-btn-sm" onClick={() => onCriar(false)}><Plus size={13} /> Manual</button>
+            <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onCriar(true)}><Sparkles size={13} /> Criar com IA</button>
+          </>}
         </div>
       </div>
 
@@ -162,13 +167,16 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
       {campanhas.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 20 }}>
           {[
-            { label: "Publicadas", value: ativas, highlight: true },
-            { label: "Rascunhos", value: rascunhos, highlight: false },
-            { label: "Candidaturas pendentes", value: totalPendentes, highlight: totalPendentes > 0 },
-          ].map(({ label, value, highlight }) => (
-            <div key={label} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "12px 16px" }}>
-              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>{label}</div>
-              <div className="vx-num" style={{ fontSize: 22, fontWeight: 700, color: highlight && value > 0 ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{value}</div>
+            { label: "Publicadas", value: ativas, icon: Megaphone },
+            { label: "Rascunhos", value: rascunhos, icon: FileText },
+            { label: "Candidaturas pendentes", value: totalPendentes, icon: Users },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="vx-glass-panel vx-tile">
+              <div className="vx-tile-top">
+                <span>{label}</span>
+                <Icon size={17} strokeWidth={1.7} aria-hidden="true" />
+              </div>
+              <div className="vx-tile-val">{value}</div>
             </div>
           ))}
         </div>
@@ -200,24 +208,36 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
         </div>
       )}
 
-      {/* Empty state */}
-      {visiveis.length === 0 && (
-        <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
-          {campanhas.length === 0 ? (
-            <>
-              <Megaphone size={32} color="var(--muted)" style={{ marginBottom: 12 }} />
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Nenhuma campanha ainda</div>
-              <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 20px" }}>Crie sua primeira campanha para recrutar vendedores.</p>
-              <button className="vx-btn vx-btn-primary" onClick={() => onCriar(true)}><Sparkles size={14} /> Criar com IA</button>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: 14, color: "var(--muted)" }}>Nenhuma campanha com este filtro.</div>
-              <button className="vx-btn vx-btn-sm" style={{ marginTop: 10 }} onClick={() => setFiltro("")}>Ver todas</button>
-            </>
-          )}
+      {/* Empty state — dois caminhos: manual ou IA */}
+      {visiveis.length === 0 && (campanhas.length === 0 ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+          {/* Manual */}
+          <div onClick={() => onCriar(false)}
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10, transition: "border-color .15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand)" }}><Plus size={20} /></div>
+            <h3 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>Criar campanha manual</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.6, flex: 1 }}>Você monta a campanha do zero — objetivo, tarefas, remuneração e critérios. Controle total sobre cada detalhe.</p>
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 4 }}><Plus size={14} /> Criar manual</button>
+          </div>
+          {/* IA */}
+          <div onClick={() => onCriar(true)}
+            style={{ background: "var(--brand-50)", border: "1.5px solid var(--brand-200)", borderRadius: 16, padding: 24, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10, transition: "border-color .15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--brand-200)"; }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand)" }}><Sparkles size={20} /></div>
+            <h3 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>Criar campanha com IA</h3>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.6, flex: 1 }}>A inteligência artificial monta a campanha com base no seu negócio — você só revisa. Disponível nos planos {PLANOS_COM_IA.join(" e ")}.</p>
+            <button className="vx-btn vx-btn-primary vx-btn-block"><Sparkles size={14} /> Criar com IA</button>
+          </div>
         </div>
-      )}
+      ) : (
+        <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
+          <div style={{ fontSize: 14, color: "var(--muted)" }}>Nenhuma campanha com este filtro.</div>
+          <button className="vx-btn vx-btn-sm" style={{ marginTop: 10 }} onClick={() => setFiltro("")}>Ver todas</button>
+        </div>
+      ))}
 
       {/* Campaign cards grid */}
       {visiveis.length > 0 && (
@@ -282,7 +302,9 @@ const novaCampanha = (emp) => ({
   }, criteriosAprovacao: { agendamento: "Lead válido, não duplicado e reunião confirmada.", realizada: "Participantes presentes e reunião concluída conforme a campanha." }, treinamento: [], requisitos: "",
 });
 
-export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtroData }) {
+export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtroData, bloqueado, irParaPlano }) {
+  const [popupPlano, setPopupPlano] = useState(null); // null | "sem-plano" | "sem-ia"
+  const temIA = planoTemIA(emp.assinatura);
   const campanhasBase = (db.campaigns || []).filter((c) => c.companyId === emp.id);
   const campanhas = (() => {
     if (!filtroData) return campanhasBase;
@@ -340,6 +362,8 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     return r.id || existente.id;
   };
   const mudarStatus = async (status) => {
+    // Publicar exige plano ativo; criar/salvar rascunho não.
+    if (status === "ativa" && bloqueado) { setPopupPlano("sem-plano"); return; }
     const id = existente?.id || await salvar();
     if (!id) return;
     if (existente) await apiPatch(`/campaigns/${id}`, campanha);
@@ -356,6 +380,26 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     aviso(status === "aprovado" ? "Profissional aprovado e liberado para trabalhar." : "Candidatura recusada.");
     await recarregar?.();
   };
+
+  const popupPlanoModal = popupPlano && (
+    <div onClick={() => setPopupPlano(null)} style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(248,250,252,.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 50px rgba(0,0,0,.14)", width: "100%", maxWidth: 420, padding: "28px 26px", textAlign: "center" }}>
+        <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+          {popupPlano === "sem-ia" ? <Sparkles size={22} color="var(--brand)" /> : <Wallet size={22} color="var(--brand)" />}
+        </div>
+        <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>
+          {popupPlano === "sem-ia" ? "Criação com IA é dos planos superiores" : "Assine um plano para publicar"}
+        </h3>
+        <p className="vx-mut" style={{ margin: "0 0 20px", fontSize: 13.5, lineHeight: 1.6 }}>
+          {popupPlano === "sem-ia"
+            ? `A criação de campanha com inteligência artificial está disponível nos planos ${PLANOS_COM_IA.join(" e ")}. Faça upgrade para usar.`
+            : "Você pode criar e salvar campanhas como rascunho sem plano. Para publicar e deixá-la visível aos profissionais, é preciso ter um plano ativo."}
+        </p>
+        <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(null); irParaPlano?.(); }}>Ver planos</button>
+        <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(null)}>Agora não</button>
+      </div>
+    </div>
+  );
 
   if (criando) return (
     <NovaCampanha
@@ -392,22 +436,36 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     aviso("Campanha excluída.");
   };
 
-  if (modo === "lista") return <CampanhaLista
-    campanhas={campanhas}
-    onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
-    onEditar={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
-    onCriar={(ia) => { setCriarComIA(ia); setCriando(true); }}
-    onArquivar={arquivarCampanha}
-    onExcluir={excluirCampanha}
-  />;
+  if (modo === "lista") return <>
+    <CampanhaLista
+      campanhas={campanhas}
+      onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
+      onEditar={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
+      onCriar={(ia) => {
+        // Campanha manual pode ser criada e salva como rascunho sem plano.
+        // Só a criação com IA exige plano (e plano com IA).
+        if (ia) {
+          if (bloqueado) { setPopupPlano("sem-plano"); return; }
+          if (!temIA) { setPopupPlano("sem-ia"); return; }
+        }
+        setCriarComIA(ia); setCriando(true);
+      }}
+      onArquivar={arquivarCampanha}
+      onExcluir={excluirCampanha}
+    />
+    {popupPlanoModal}
+  </>;
 
-  if (modo === "detalhe" && existente) return <CampaignDetail
-    campanha={existente}
-    db={db}
-    onVoltar={() => setModo("lista")}
-    onEditar={() => { setEdicao({ ...existente }); setModo("editor"); }}
-    onStatus={mudarStatus}
-  />;
+  if (modo === "detalhe" && existente) return <>
+    <CampaignDetail
+      campanha={existente}
+      db={db}
+      onVoltar={() => setModo("lista")}
+      onEditar={() => { setEdicao({ ...existente }); setModo("editor"); }}
+      onStatus={mudarStatus}
+    />
+    {popupPlanoModal}
+  </>;
 
   return <div className="vx-fade">
     <div className="vx-row" style={{ alignItems: "flex-start", gap: 16, marginBottom: 16 }}><div><button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingLeft: 0, marginBottom: 4 }} onClick={() => setModo(existente ? "detalhe" : "lista")}>← {existente ? "Detalhe da campanha" : "Campanhas"}</button><div className="vx-eyebrow">Configuração da campanha</div><h2 className="vx-disp" style={{ fontSize: 24, margin: "5px 0" }}>{campanha.titulo || "Nova campanha"}</h2><p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Ajuste orçamento, tarefas, evidências e treinamento.</p></div><button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => { setCriarComIA(false); setCriando(true); }}><Plus size={14} /> Nova campanha</button></div>
@@ -474,5 +532,6 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
 
     <section className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: check.ok ? "var(--brand)" : "var(--amber)" }}><div style={{ display: "flex", gap: 9 }}><ClipboardCheck size={18} color={check.ok ? "var(--brand)" : "var(--amber)"} /><div><b>{check.ok ? "Pronta para publicar" : "Pendências de publicação"}</b>{!check.ok && <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3 }}>{check.pendencias.join(" · ")}</div>}</div></div></section>
     <div style={{ display: "flex", gap: 9, marginTop: 16 }}><button className="vx-btn vx-btn-primary" onClick={salvar}><Save size={14} /> Salvar</button>{campanha.status === "ativa" ? <button className="vx-btn" onClick={() => mudarStatus("pausada")}><CirclePause size={14} /> Pausar</button> : <button className="vx-btn" disabled={!check.ok} onClick={() => mudarStatus("ativa")}><Rocket size={14} /> Publicar</button>}</div>
+    {popupPlanoModal}
   </div>;
 }

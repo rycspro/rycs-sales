@@ -70,7 +70,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [gerando, setGerando] = useState(false);
   const [explicacao, setExplicacao] = useState("");
   const [salvando, setSalvando] = useState(false);
-  const [manual, setManual] = useState(!iniciarComIA);
 
   const [sugestaoIA, setSugestaoIA] = useState(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
@@ -222,24 +221,23 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Nova campanha</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            Converse com o Jarvas, seu assessor de vendas: ele pergunta, calcula o retorno e monta a campanha para você revisar.
+            {iniciarComIA
+              ? "Converse com o Jarvas, seu assessor de vendas: ele pergunta, calcula o retorno e monta a campanha para você revisar."
+              : "Escolha o objetivo da campanha e monte cada detalhe do seu jeito."}
           </p>
 
-          {/* Jarvas — conversa assistida por voz */}
-          <div className="vx-card" style={{ padding: 20, marginTop: 4, borderColor: "var(--brand-200, var(--brand-100))", background: "linear-gradient(135deg, var(--brand-50) 0%, var(--indigo-50, var(--brand-50)) 100%)", borderWidth: 1.5 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
-              <b style={{ fontSize: 15 }}>Jarvas</b>
-              <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>IA · Recomendado</span>
+          {/* Jarvas — conversa assistida por voz (somente no fluxo com IA) */}
+          {iniciarComIA && (
+            <div className="vx-card" style={{ padding: 20, marginTop: 4, borderColor: "var(--brand-200, var(--brand-100))", background: "linear-gradient(135deg, var(--brand-50) 0%, var(--indigo-50, var(--brand-50)) 100%)", borderWidth: 1.5 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
+                <b style={{ fontSize: 15 }}>Jarvas</b>
+                <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>IA · Recomendado</span>
+              </div>
+              <ConversaJarvas emp={emp} onCampanha={receberCampanhaDoJarvas} />
             </div>
-            <ConversaJarvas emp={emp} onCampanha={receberCampanhaDoJarvas} />
-          </div>
+          )}
 
-          {!iniciarComIA && manual && <>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0 12px" }}>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-              <span className="vx-mut" style={{ fontSize: 12 }}>escolha o objetivo</span>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-            </div>
+          {!iniciarComIA && <>
             <div className="vx-objective-grid">
               {ORDEM_OBJETIVOS.map((k) => {
                 const o = OBJETIVOS[k];
@@ -250,7 +248,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <b style={{ fontSize: 15 }}>{o.nome}</b>
-                        <span className="vx-badge vx-badge-muted">{o.funcao.toUpperCase()}</span>
+                        <span className="vx-badge vx-badge-brand">{o.funcao.toUpperCase()}</span>
                       </div>
                       <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>{o.resumo}</div>
                       <div className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>{o.paraQuem}</div>
@@ -264,13 +262,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 14 }}>
             <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }} onClick={aoCancelar}>Cancelar</button>
-            {!iniciarComIA && (
-              <button className="vx-btn vx-btn-ghost vx-btn-sm" aria-expanded={manual}
-                style={{ minHeight: 44, color: "var(--muted)", fontWeight: 500, fontSize: 12.5 }}
-                onClick={() => setManual((m) => !m)}>
-                {manual ? "Ocultar objetivos" : "Criar manualmente"}
-              </button>
-            )}
           </div>
         </>
       )}
@@ -420,14 +411,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         <div style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
                           <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>Por visita realizada</div>
                           <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(sugestaoIA.valorVisita.bruto)}</div>
-                          <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(sugestaoIA.valorVisita.percentual * 100).toFixed(0)}% · líq. {money(sugestaoIA.valorVisita.liquido)}</div>
+                          <div className="vx-mut" style={{ fontSize: 11 }}>Taxa por movimentações {(sugestaoIA.valorVisita.percentual * 100).toFixed(0)}% · líq. {money(sugestaoIA.valorVisita.liquido)}</div>
                           <div className="vx-mut" style={{ fontSize: 11 }}>{sugestaoIA.fonte}</div>
                         </div>
                         {sugestaoIA.comissaoVenda.bruto > 0 && (
                           <div style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
                             <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>Comissão por venda fechada</div>
                             <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(sugestaoIA.comissaoVenda.bruto)}</div>
-                            <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(sugestaoIA.comissaoVenda.percentual * 100).toFixed(0)}% · líq. {money(sugestaoIA.comissaoVenda.liquido)}</div>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>Taxa por movimentações {(sugestaoIA.comissaoVenda.percentual * 100).toFixed(0)}% · líq. {money(sugestaoIA.comissaoVenda.liquido)}</div>
                             <div className="vx-mut" style={{ fontSize: 11 }}>8% do ticket</div>
                           </div>
                         )}
@@ -438,7 +429,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           <div key={t.tipo} style={{ background: "#fff", borderRadius: 8, padding: "9px 11px", border: "1px solid var(--border)" }}>
                             <div style={{ fontSize: 11.5, color: "var(--text-2)", marginBottom: 2 }}>{ACOES[t.tipo]?.nome || t.tipo}</div>
                             <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(t.bruto)}</div>
-                            <div className="vx-mut" style={{ fontSize: 11 }}>Take rate {(t.percentual * 100).toFixed(0)}% · líq. {money(t.liquido)}</div>
+                            <div className="vx-mut" style={{ fontSize: 11 }}>Taxa por movimentações {(t.percentual * 100).toFixed(0)}% · líq. {money(t.liquido)}</div>
                             <div className="vx-mut" style={{ fontSize: 11 }}>Faixa: {money(t.minimo)} – {money(t.maximo)}</div>
                           </div>
                         ))}
@@ -450,7 +441,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 10 }}>
                           Custo estimado por reunião agendada: <b className="vx-mono">{money(agendamento.bruto)}</b>
                           {sugestaoIA.premissas?.conversao ? ` · por venda: ~${money(agendamento.bruto / sugestaoIA.premissas.conversao)}` : ""}
-                          {" · "}Take rate do plano: {(takeRateDoPlano(emp.assinatura || "free") * 100).toFixed(0)}%
+                          {" · "}Taxa por movimentações do plano: {(takeRateDoPlano(emp.assinatura || "free") * 100).toFixed(0)}%
                         </div>
                       ) : null;
                     })()}

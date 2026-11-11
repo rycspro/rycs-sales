@@ -93,22 +93,19 @@ export default function TarefasEmpresa({ emp, db, aviso, recarregar }) {
         </div>
       </div>
 
-      <div className="vx-campaign-stats" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 20 }}>
         {[
-          ["Total", stats.total, Activity, "var(--brand)"],
-          ["Pendentes", stats.pendentes, Clock, "var(--amber)"],
-          ["Liberadas", stats.liberados, CheckCircle2, "var(--green, #22A06B)"],
-          ["Recusadas", stats.recusados, XCircle, "var(--red)"],
-        ].map(([label, val, Icon, cor]) => (
-          <article key={label} className="vx-stat vx-campaign-stat">
-            <div className="vx-campaign-stat-top"><span>{label}</span><Icon size={16} color={cor} /></div>
-            <strong className="vx-stat-val vx-mono">{val.toLocaleString("pt-BR")}</strong>
-          </article>
+          ["Total", stats.total.toLocaleString("pt-BR"), Activity],
+          ["Pendentes", stats.pendentes.toLocaleString("pt-BR"), Clock],
+          ["Liberadas", stats.liberados.toLocaleString("pt-BR"), CheckCircle2],
+          ["Recusadas", stats.recusados.toLocaleString("pt-BR"), XCircle],
+          ["Valor liberado", money(stats.valorTotal), AlertTriangle],
+        ].map(([label, val, Icon]) => (
+          <div key={label} className="vx-glass-panel vx-tile">
+            <div className="vx-tile-top"><span>{label}</span><Icon size={17} strokeWidth={1.7} aria-hidden="true" /></div>
+            <div className="vx-tile-val">{val}</div>
+          </div>
         ))}
-        <article className="vx-stat vx-campaign-stat">
-          <div className="vx-campaign-stat-top"><span>Valor liberado</span><AlertTriangle size={16} color="var(--brand)" /></div>
-          <strong className="vx-stat-val vx-mono" style={{ fontSize: 17 }}>{money(stats.valorTotal)}</strong>
-        </article>
       </div>
 
       <div className="vx-card" style={{ padding: "12px 14px", marginBottom: 14 }}>

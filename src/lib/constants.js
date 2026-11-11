@@ -51,16 +51,31 @@ export const NAV = {
   ],
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },
-    { key: "painel", label: "Insights", Icon: BarChart3 },
+    { key: "painel", label: "Insights", Icon: BarChart3, children: [
+      { key: "painel", label: "Desempenho" },
+      { key: "painel-campanhas", label: "Campanhas" },
+      { key: "financeiro", label: "Financeiro" },
+    ] },
     { divider: true },
-    { key: "campanhas", label: "Campanhas", Icon: Megaphone },
-    { key: "conversas", label: "Conversas", Icon: MessageSquare },
+    { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
+      { key: "campanhas", label: "Campanhas" },
+      { key: "campanhas-comissoes", label: "Comissões" },
+      { key: "campanhas-tarefas", label: "Tarefas" },
+    ] },
     { key: "leads", label: "Leads", Icon: Target },
     { divider: true },
-    { key: "conferir", label: "Aprovações", Icon: ShieldCheck },
-    { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch },
+    { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch, children: [
+      { key: "profissionais", label: "Profissionais" },
+      { key: "conferir-fila", label: "Fila de revisão" },
+      { key: "conferir-time", label: "Time" },
+      { key: "conferir-regras", label: "Regras automáticas" },
+    ] },
+    { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { divider: true },
-    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard },
+    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
+      { key: "pagamentos", label: "Planos" },
+      { key: "pagamentos-campanhas", label: "Campanhas" },
+    ] },
     { key: "configuracoes", label: "Configurações", Icon: Settings },
   ],
   admin: [

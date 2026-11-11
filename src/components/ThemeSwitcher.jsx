@@ -3,8 +3,8 @@ import { Sun, Moon, Droplet } from "lucide-react";
 import { ler, gravar } from "../lib/armazenamento.js";
 
 // Seletor de VERSÃO de layout (não é mais só tema claro/escuro):
-// - sol  → versão nova (a ser criada; por ora cai no visual padrão)
-// - agua → versão atual (glass azul claro) — o padrão
+// - sol  → versão clara/clean — o padrão
+// - agua → versão glass azul claro
 // - lua  → versão black (tema escuro)
 // A versão vira classe/atributo no <html>: "dark" para a lua, e data-versao
 // para quando a versão Sol ganhar estilos próprios.
@@ -24,7 +24,7 @@ const OPCOES = [
 ];
 
 export default function ThemeSwitcher() {
-  const [versao, setVersao] = useState(() => ler("rycs-versao", "agua"));
+  const [versao, setVersao] = useState(() => ler("rycs-versao", "sol"));
 
   useEffect(() => {
     aplicar(versao);

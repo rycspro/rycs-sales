@@ -22,6 +22,7 @@ function parseCompany(row, preloadedDims) {
     ...row,
     scoreDimensions: preloadedDims || {},
     destaque: !!row.destaque,
+    visivel: row.visivel == null ? true : !!row.visivel,
     comissoes: JSON.parse(row.comissoes || "{}"),
     curso: JSON.parse(row.curso || "[]"),
     qualificacao: JSON.parse(row.qualificacao || "{}"),
@@ -199,7 +200,7 @@ function getVendedorState(entityId) {
       if (!dimsByCompany[d.companyId]) dimsByCompany[d.companyId] = {};
       dimsByCompany[d.companyId][d.dimension] = d.valor;
     });
-    companies = db.prepare("SELECT * FROM companies").all().map((row) => parseCompany(row, dimsByCompany[row.id])).map((c) => ({
+    companies = db.prepare("SELECT * FROM companies WHERE visivel = 1").all().map((row) => parseCompany(row, dimsByCompany[row.id])).map((c) => ({
       ...c,
       qualificacao: {
         ...c.qualificacao,
@@ -215,7 +216,8 @@ function getVendedorState(entityId) {
 
   let campaigns = [];
   if (oportunidadesLiberadas) {
-    campaigns = db.prepare("SELECT * FROM campaigns WHERE status = 'ativa' ORDER BY criadoEm DESC").all().map(parseCampaign);
+    // Esconde também as campanhas de empresas marcadas como invisíveis.
+    campaigns = db.prepare("SELECT * FROM campaigns WHERE status = 'ativa' AND companyId IN (SELECT id FROM companies WHERE visivel = 1) ORDER BY criadoEm DESC").all().map(parseCampaign);
     const campIds = campaigns.map((c) => c.id);
     const campaignApps = campIds.length
       ? db.prepare(`SELECT * FROM campaign_applications WHERE campaignId IN (${campIds.map(() => "?").join(",")}) AND sellerId = ?`)

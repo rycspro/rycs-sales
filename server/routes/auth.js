@@ -82,7 +82,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto } = req.body;
+  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -143,10 +143,23 @@ router.post("/auth/register", async (req, res) => {
       fotoDataUri = `data:${foto.mimetype};base64,${foto.base64}`;
       fotoScore = avaliacao.score;
     }
+    // Currículo é opcional. Aceita PDF e documentos do Word, até ~8MB.
+    let curriculoDataUri = "";
+    let curriculoNome = "";
+    if (curriculo?.base64 && curriculo?.mimetype) {
+      const tiposOk = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+      if (!tiposOk.includes(curriculo.mimetype))
+        return res.status(422).json({ error: "Envie o currículo em PDF ou Word.", campo: "curriculo" });
+      const bytes = Math.round((String(curriculo.base64).length * 3) / 4);
+      if (bytes > 8 * 1024 * 1024)
+        return res.status(422).json({ error: "O currículo deve ter no máximo 8MB.", campo: "curriculo" });
+      curriculoDataUri = `data:${curriculo.mimetype};base64,${curriculo.base64}`;
+      curriculoNome = String(curriculo.nome || "curriculo").slice(0, 160);
+    }
     db.prepare(`
-      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?)
-    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, agora());
+      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?)
+    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, agora());
     db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
       userId, emailNorm, hash, role, entityId, 1, agora()
     );

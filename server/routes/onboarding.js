@@ -53,15 +53,18 @@ onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
   const errSenha = validarSenhaEmpresa(senha);
   if (errSenha) return res.status(400).json({ error: errSenha, campo: "senha" });
 
+  // CNPJ é opcional; quando informado, precisa ter 14 dígitos.
   const cnpjDigitos = String(cnpj || "").replace(/\D/g, "");
-  if (cnpjDigitos.length !== 14)
+  if (cnpjDigitos && cnpjDigitos.length !== 14)
     return res.status(400).json({ error: "CNPJ inválido.", campo: "cnpj" });
 
   const existe = db.prepare("SELECT id FROM users WHERE email = ?").get(emailNorm);
   if (existe) return res.status(409).json({ error: "E-mail já cadastrado.", campo: "email" });
 
-  const cnpjExiste = db.prepare("SELECT id FROM companies WHERE documento = ?").get(cnpjDigitos);
-  if (cnpjExiste) return res.status(409).json({ error: "CNPJ já cadastrado.", campo: "cnpj" });
+  if (cnpjDigitos) {
+    const cnpjExiste = db.prepare("SELECT id FROM companies WHERE documento = ?").get(cnpjDigitos);
+    if (cnpjExiste) return res.status(409).json({ error: "CNPJ já cadastrado.", campo: "cnpj" });
+  }
 
   const hash = bcrypt.hashSync(senha, 10);
   const userId = uid();
@@ -81,7 +84,13 @@ onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
 
   await emailConfirmacaoConta(nomeFinal, emailNorm, token, FRONTEND);
 
-  res.json({ ok: true });
+  // Deixa a empresa entrar na conta imediatamente; a confirmação de e-mail fica para depois.
+  const jwtToken = signToken({ id: userId, role: "empresa", entityId: companyId });
+  res.cookie("sm_token", jwtToken, {
+    httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, path: "/",
+  });
+  res.json({ ok: true, autenticado: true, id: userId, email: emailNorm, role: "empresa", entityId: companyId });
 });
 
 // POST /api/onboarding/criar-conta/reenviar — reenvia o link se ainda não confirmou.

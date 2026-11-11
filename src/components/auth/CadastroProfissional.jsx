@@ -28,7 +28,22 @@ export default function CadastroProfissional({ onRegister }) {
   const [mostrarGuia, setMostrarGuia] = useState(false);
   const inputFoto = useRef(null);
 
+  const [curriculo, setCurriculo] = useState(null);
+  const [curriculoErro, setCurriculoErro] = useState("");
+  const inputCurriculo = useRef(null);
+
   const [erroSenha, setErroSenha] = useState("");
+
+  const selecionarCurriculo = (arquivo) => {
+    if (!arquivo) return;
+    setCurriculoErro("");
+    const tiposOk = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!tiposOk.includes(arquivo.type)) { setCurriculoErro("Envie o currículo em PDF ou Word."); return; }
+    if (arquivo.size > 8 * 1024 * 1024) { setCurriculoErro("O arquivo deve ter no máximo 8MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => setCurriculo({ base64: reader.result.split(",")[1], mimetype: arquivo.type, nome: arquivo.name });
+    reader.readAsDataURL(arquivo);
+  };
 
   const selecionarFoto = (arquivo) => {
     if (!arquivo) return;
@@ -77,6 +92,7 @@ export default function CadastroProfissional({ onRegister }) {
       role: "vendedor", nome, email, senha, whats, cidade, perfil,
       aceitouTermos: true, indicacao: indicacao || undefined,
       foto,
+      curriculo: curriculo || undefined,
     });
     setLoading(false);
   };
@@ -128,6 +144,23 @@ export default function CadastroProfissional({ onRegister }) {
               onChange={(e) => { selecionarFoto(e.target.files?.[0]); if (inputFoto.current) inputFoto.current.value = ""; }} />
           </div>
           {fotoErro && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 6 }}>{fotoErro}</div>}
+        </div>
+
+        {/* Currículo (opcional) */}
+        <div style={{ marginBottom: 16 }}>
+          <label className="vx-label" style={{ display: "block", marginBottom: 6 }}>
+            Currículo <span className="vx-mut" style={{ fontWeight: 400 }}>(opcional · PDF ou Word · a empresa pode visualizar)</span>
+          </label>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button type="button" className="vx-btn vx-btn-sm" onClick={() => inputCurriculo.current?.click()}>
+              {curriculo ? "Trocar arquivo" : "Enviar currículo"}
+            </button>
+            {curriculo && <span style={{ fontSize: 12.5, color: "var(--muted)" }}>{curriculo.nome}</span>}
+          </div>
+          <input ref={inputCurriculo} type="file" hidden
+            accept="application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(e) => selecionarCurriculo(e.target.files?.[0])} />
+          {curriculoErro && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 6 }}>{curriculoErro}</div>}
         </div>
 
         <Campo label="Seu nome">

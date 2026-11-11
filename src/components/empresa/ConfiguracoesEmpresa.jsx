@@ -6,7 +6,7 @@ import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
-  ImagePlus, Trash2,
+  ImagePlus, Trash2, Eye, EyeOff,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
@@ -49,8 +49,16 @@ const SECOES_NAV = [
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "seguranca", label: "Segurança", icon: Lock },
   { key: "preferencias", label: "Preferências", icon: Settings },
+  { key: "idiomas", label: "Idiomas", icon: Globe },
   { key: "suporte", label: "Suporte", icon: Headphones },
   { key: "indicar", label: "Indicar", icon: Gift },
+];
+
+// Idiomas disponíveis para a interface. A preferência fica salva por navegador.
+const IDIOMAS = [
+  { code: "pt-BR", nome: "Português (Brasil)", flag: "🇧🇷" },
+  { code: "en",    nome: "English",            flag: "🇺🇸" },
+  { code: "es",    nome: "Español",            flag: "🇪🇸" },
 ];
 
 // ── UI atoms ──────────────────────────────────────────────────────────
@@ -240,6 +248,17 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, secao
   const [enviandoLogo, setEnviandoLogo] = useState(false);
   const inputLogoRef = useRef(null);
 
+  const [idioma, setIdioma] = useState(() => {
+    try { return localStorage.getItem("rycs-idioma") || "pt-BR"; } catch { return "pt-BR"; }
+  });
+  const escolherIdioma = (code) => {
+    if (code === idioma) return;
+    setIdioma(code);
+    try { localStorage.setItem("rycs-idioma", code); } catch { /* ignore */ }
+    document.documentElement.lang = code;
+    aviso?.(`Idioma alterado para ${IDIOMAS.find((i) => i.code === code)?.nome || code}.`);
+  };
+
   const enviarLogo = async (e) => {
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
@@ -320,14 +339,45 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, secao
     aviso("Configurações salvas.");
   };
 
+  // Visibilidade na vitrine: quando desligada, a empresa (e suas campanhas) não
+  // aparece para nenhum profissional. Persiste na hora, sem depender do "Salvar".
+  const visivel = form.visivel !== false;
+  const alternarVisivel = async () => {
+    const novo = !visivel;
+    setForm((f) => ({ ...f, visivel: novo }));
+    const r = await apiPatch(`/companies/${emp.id}`, { visivel: novo });
+    if (!r || r.error) { setForm((f) => ({ ...f, visivel: !novo })); return aviso(r?.error || "Não foi possível atualizar a visibilidade."); }
+    up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, visivel: novo } : c) }));
+    aviso(novo ? "Empresa visível para os profissionais." : "Empresa oculta — não aparece para nenhum profissional.");
+  };
+
   // ── Section content ───────────────────────────────────────────────
 
   const secoes = {
     dados: (
       <>
-        <div style={{ marginBottom: 20 }}>
-          <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>Dados da empresa</h2>
-          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>Clique em qualquer campo para editar diretamente.</p>
+        <div style={{ marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>Dados da empresa</h2>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>Clique em qualquer campo para editar diretamente.</p>
+          </div>
+          <button
+            type="button" role="switch" aria-checked={visivel} onClick={alternarVisivel}
+            title={visivel ? "Sua empresa aparece para os profissionais" : "Sua empresa está oculta para todos os profissionais"}
+            style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", borderRadius: 999,
+              cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
+              border: `1.5px solid ${visivel ? "var(--brand)" : "var(--border)"}`,
+              background: visivel ? "var(--brand-50)" : "var(--surface)",
+              color: visivel ? "var(--brand)" : "var(--muted)",
+            }}
+          >
+            {visivel ? <Eye size={15} /> : <EyeOff size={15} />}
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Deixar visível</span>
+            <span style={{ width: 38, height: 22, borderRadius: 999, padding: 2, background: visivel ? "var(--brand)" : "var(--surface-3, #d1d5db)", transition: "background .2s", display: "inline-block" }}>
+              <span style={{ display: "block", width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transform: visivel ? "translateX(16px)" : "translateX(0)", transition: "transform .2s" }} />
+            </span>
+          </button>
         </div>
 
         {/* ── Cartão editável ── */}
@@ -462,6 +512,38 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, secao
       </>
     ),
 
+    idiomas: (
+      <>
+        <PgHead title="Idiomas" description="Escolha o idioma da interface do sistema." />
+        <Block>
+          <div style={{ display: "grid", gap: 8 }}>
+            {IDIOMAS.map((i) => {
+              const ativo = idioma === i.code;
+              return (
+                <button
+                  key={i.code}
+                  type="button"
+                  onClick={() => escolherIdioma(i.code)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10,
+                    border: `1.5px solid ${ativo ? "var(--brand)" : "var(--border)"}`,
+                    background: ativo ? "var(--brand-50)" : "var(--surface)", cursor: "pointer", textAlign: "left", width: "100%",
+                  }}
+                >
+                  <span style={{ fontSize: 22 }}>{i.flag}</span>
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: ativo ? 600 : 500, color: ativo ? "var(--brand)" : "var(--ink)" }}>{i.nome}</span>
+                  {ativo && <Check size={16} color="var(--brand)" strokeWidth={2.5} />}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ fontSize: 12, color: "var(--muted)", margin: "12px 2px 0", lineHeight: 1.6 }}>
+            A escolha fica salva neste navegador e define o idioma da interface.
+          </p>
+        </Block>
+      </>
+    ),
+
     suporte: (
       <>
         <PgHead title="Suporte" description="Entre em contato com a equipe RYCS." />
@@ -499,7 +581,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, secao
     indicar: <Indicacoes aviso={aviso} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "suporte", "indicar"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "idiomas", "suporte", "indicar"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 
