@@ -5,6 +5,7 @@ import { money } from "../../lib/utils.js";
 import { formatarData, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../../shared/assinatura.js";
 import { TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../../shared/planos.js";
 import { normalizarDocumento } from "../../../shared/onboarding.js";
+import CheckoutStripe from "../empresa/CheckoutStripe.jsx";
 
 // Etapa 5: plano e pagamento. Planos e preços vêm de shared/planos.js pelo
 // servidor; nada fixo aqui. O cartão vai ao gateway (Asaas) na requisição do
@@ -46,6 +47,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
   const [forma, setForma] = useState("cartao"); // cartao | pix | internacional
   const [stripe, setStripe] = useState(null); // { ativo, planos: [{ chave, mensal }] }
   const [confirmandoStripe, setConfirmandoStripe] = useState(() => voltouDoStripe() === "ok");
+  const [embutido, setEmbutido] = useState(null); // checkout do Stripe dentro da etapa
   const [pix, setPix] = useState(null); // QR aberto: { payload, imagem, primeiraCobranca }
   const [copiado, setCopiado] = useState(false);
   const consulta = useRef(null);
@@ -79,8 +81,10 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
 
   const assinarInternacional = async () => {
     setEnviando(true);
-    const r = await api("/subscription/stripe", { plano, onboarding: true, retorno: window.location.pathname });
-    if (!r || r.error || !r.url) { setEnviando(false); return setErro(r?.error || "Não foi possível abrir o pagamento internacional."); }
+    const r = await api("/subscription/stripe", { plano, onboarding: true, retorno: window.location.pathname, embutido: !!stripe?.chavePublica });
+    setEnviando(false);
+    if (r?.clientSecret && r?.chavePublica) return setEmbutido(r);
+    if (!r || r.error || !r.url) return setErro(r?.error || "Não foi possível abrir o pagamento internacional.");
     window.location.href = r.url;
   };
 
@@ -203,6 +207,30 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     </div>
   );
 
+  if (embutido) return (
+    <div>
+      <div className="vx-onb-eyebrow">Passo 5 de 6</div>
+      <h1 className="vx-disp vx-onb-titulo">Pagamento em dólar</h1>
+      <div className="vx-onb-card vx-onb-secao" style={{ maxWidth: 680 }}>
+        <CheckoutStripe
+          chavePublica={embutido.chavePublica}
+          clientSecret={embutido.clientSecret}
+          subscriptionId={embutido.subscriptionId}
+          aoErro={(m) => { setEmbutido(null); setErro(m); }}
+          aoConcluir={async (a) => {
+            if (a) return terminar();
+            setEmbutido(null);
+            setErro("O pagamento ainda não foi confirmado pelo Stripe. Atualize a página em instantes.");
+          }}
+        />
+        <div className="vx-onb-acoes">
+          <button type="button" className="vx-btn" onClick={() => setEmbutido(null)}>Voltar às formas de pagamento</button>
+          <span />
+        </div>
+      </div>
+    </div>
+  );
+
   if (pix) return (
     <div>
       <div className="vx-onb-eyebrow">Passo 5 de 6</div>
@@ -282,7 +310,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
           </fieldset>
           {forma === "internacional" ? <>
             <p className="vx-mut" style={{ fontSize: 14, lineHeight: 1.6, margin: "0 0 12px" }}>
-              Para empresas de fora do Brasil. Você será levado à página segura do Stripe para pagar em dólar com cartão internacional
+              Para empresas de fora do Brasil. O pagamento em dólar abre aqui mesmo, no formulário seguro do Stripe, com cartão internacional
               (ou UPI, na Índia). Não pedimos CPF ou CNPJ.
             </p>
           </> : forma === "cartao" ? <>

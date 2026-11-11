@@ -4,6 +4,7 @@ import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
 import PricingPlanos from "./PricingPlanos.jsx";
+import CheckoutStripe from "./CheckoutStripe.jsx";
 
 const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
   chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui, trial: PLANOS[k].trial,
@@ -25,6 +26,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   const [stripe, setStripe] = useState(null); // pagamento internacional (US$)
+  const [embutido, setEmbutido] = useState(null); // checkout do Stripe aberto dentro do modal
 
   const carregar = useCallback(async () => {
     const [p, s] = await Promise.all([api("/plans"), api("/subscription")]);
@@ -42,6 +44,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     setVoucher("");
     setDesconto(null);
     setForma("CREDIT_CARD");
+    setEmbutido(null);
     setCartao({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
     setTitular({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   };
@@ -57,8 +60,10 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     // Empresa fora do Brasil: paga em dólar na página do Stripe.
     if (forma === "STRIPE") {
       setProcessando(true);
-      const r = await api("/subscription/stripe", { plano: selecionado.chave, ciclo, retorno: window.location.pathname });
-      if (!r || r.error || !r.url) { setProcessando(false); return aviso(r?.error || "Não foi possível abrir o pagamento internacional."); }
+      const r = await api("/subscription/stripe", { plano: selecionado.chave, ciclo, retorno: window.location.pathname, embutido: !!stripe?.chavePublica });
+      setProcessando(false);
+      if (r?.clientSecret && r?.chavePublica) { setEmbutido(r); return; }
+      if (!r || r.error || !r.url) return aviso(r?.error || "Não foi possível abrir o pagamento internacional.");
       window.location.href = r.url;
       return;
     }
@@ -156,7 +161,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       {/* Modal de checkout */}
       {selecionado && (
         <div className="vx-overlay" onClick={() => setSelecionado(null)}>
-          <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+          <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: embutido ? 640 : 520 }}>
             <div className="vx-row">
               <div>
                 <div className="vx-eyebrow">Checkout seguro</div>
@@ -165,7 +170,21 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
               <button className="vx-btn vx-btn-ghost" onClick={() => setSelecionado(null)}><X size={16} /></button>
             </div>
 
-            {!cobranca ? (
+            {embutido ? (
+              <CheckoutStripe
+                chavePublica={embutido.chavePublica}
+                clientSecret={embutido.clientSecret}
+                subscriptionId={embutido.subscriptionId}
+                aoErro={(m) => { setEmbutido(null); aviso(m); }}
+                aoConcluir={async (a) => {
+                  setEmbutido(null);
+                  setSelecionado(null);
+                  await carregar();
+                  await recarregar?.();
+                  aviso(a ? `Plano ${selecionado.nome} liberado!` : "Pagamento recebido. O plano aparece em instantes; atualize a página se precisar.");
+                }}
+              />
+            ) : !cobranca ? (
               <>
                 {/* Resumo */}
                 <div className="vx-checkout-total">
@@ -259,7 +278,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 {forma === "STRIPE" && (
                   <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
                     <ShieldCheck size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                    Para empresas fora do Brasil: {usd(precoUsd)}{ehAnual ? "/ano" : "/mês"}, pagos na página segura do Stripe com cartão
+                    Para empresas fora do Brasil: {usd(precoUsd)}{ehAnual ? "/ano" : "/mês"}, pagos no formulário seguro do Stripe, aqui mesmo, com cartão
                     internacional (ou UPI, na Índia). Cupons são aplicados direto no Stripe. O plano é liberado quando o Stripe confirmar.
                   </div>
                 )}
@@ -276,7 +295,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   {processando
                     ? <><Loader size={15} /> Processando…</>
                     : forma === "STRIPE"
-                      ? <><CreditCard size={15} /> Pagar {usd(precoUsd)} no Stripe</>
+                      ? <><CreditCard size={15} /> Continuar para o pagamento ({usd(precoUsd)})</>
                       : <><CreditCard size={15} /> Confirmar {money(precoFinal ?? selecionado.preco)}</>}
                 </button>
                 <p className="vx-chart-source">

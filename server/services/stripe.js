@@ -42,6 +42,7 @@ let fetchImpl = (...a) => fetch(...a);
 export function usarFetch(f) { fetchImpl = f; }
 
 export const stripeAtivo = () => !!process.env.STRIPE_SECRET_KEY;
+export const chavePublicaStripe = () => process.env.STRIPE_PUBLISHABLE_KEY || null;
 export const modoStripe = () => (String(process.env.STRIPE_SECRET_KEY || "").startsWith("sk_live_") ? "producao" : "teste");
 
 export class ErroStripe extends Error {
@@ -123,7 +124,10 @@ export async function encerrarCheckoutPendente(sub) {
   catch (e) { if (e.codigo !== "resource_missing") console.warn("[stripe] encerrar checkout anterior:", e.message); }
 }
 
-export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo = CICLOS.MENSAL, trialDias = 0, retorno }) {
+// embutido = true: o checkout abre dentro da RYCS (Embedded Checkout). A tela
+// recebe o client_secret e monta o formulário do Stripe num iframe; o cliente
+// não sai da plataforma. Sem embutido, devolve a URL da página do Stripe.
+export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo = CICLOS.MENSAL, trialDias = 0, retorno, embutido = false }) {
   const plano = planoDe(chave);
   const valor = valorInternacionalNoCiclo(chave, ciclo);
   if (!valor) throw new ErroStripe("Plano inválido.", { status: 400 });
@@ -158,14 +162,15 @@ export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ci
       tax_id_collection: { enabled: true },
       customer_update: { name: "auto", address: "auto" },
       allow_promotion_codes: true,
-      success_url: urlDeRetorno(retorno, "stripe=ok"),
-      cancel_url: urlDeRetorno(retorno, "stripe=cancelado"),
+      ...(embutido
+        ? { ui_mode: "embedded", redirect_on_completion: "if_required", return_url: urlDeRetorno(retorno, "stripe=ok") }
+        : { success_url: urlDeRetorno(retorno, "stripe=ok"), cancel_url: urlDeRetorno(retorno, "stripe=cancelado") }),
     },
   });
 
   db.prepare("UPDATE subscriptions SET stripeSessionId = ?, invoiceUrl = ?, atualizadoEm = ? WHERE id = ?")
     .run(sessao.id, sessao.url || null, agora(), subId);
-  return { url: sessao.url, sessionId: sessao.id, valor, moeda: MOEDA_INTERNACIONAL };
+  return { url: sessao.url || null, clientSecret: sessao.client_secret || null, sessionId: sessao.id, valor, moeda: MOEDA_INTERNACIONAL };
 }
 
 export async function cancelarAssinaturaStripe(sub) {

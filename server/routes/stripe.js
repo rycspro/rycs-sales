@@ -3,8 +3,9 @@ import db, { uid, agora } from "../db.js";
 import { PLANOS, CICLOS, ORDEM_PLANOS } from "../../shared/planos.js";
 import { MOEDA_INTERNACIONAL, valorInternacionalNoCiclo } from "../../shared/precosInternacionais.js";
 import { trialDoOnboarding } from "../services/onboarding.js";
+import { asaas, asaasAtivo } from "../services/asaas.js";
 import {
-  stripeAtivo, modoStripe, assinaturaValida, processarEvento, criarCheckoutAssinatura,
+  stripeAtivo, modoStripe, chavePublicaStripe, assinaturaValida, processarEvento, criarCheckoutAssinatura,
   encerrarCheckoutPendente, portalDoCliente, ErroStripe,
 } from "../services/stripe.js";
 
@@ -36,6 +37,8 @@ router.get("/stripe/status", soEmpresa, (_req, res) => {
     ativo: stripeAtivo(),
     modo: stripeAtivo() ? modoStripe() : null,
     moeda: MOEDA_INTERNACIONAL,
+    // Chave publicável (pública por natureza): habilita o checkout embutido.
+    chavePublica: stripeAtivo() ? chavePublicaStripe() : null,
     planos: ORDEM_PLANOS.filter((k) => PLANOS[k]?.preco > 0).map((k) => ({
       chave: k, nome: PLANOS[k].nome,
       mensal: valorInternacionalNoCiclo(k, CICLOS.MENSAL), anual: valorInternacionalNoCiclo(k, CICLOS.ANUAL),
@@ -59,12 +62,24 @@ router.post("/subscription/stripe", soEmpresa, async (req, res) => {
   const email = db.prepare("SELECT email FROM users WHERE id = ?").get(userId)?.email || null;
 
   // Checkout aberto antes (de qualquer gateway) deixa de valer: duas
-  // assinaturas vivas seriam cobrança dobrada.
+  // assinaturas vivas seriam cobrança dobrada. O em reais é cancelado no
+  // Asaas; se o Asaas não confirmar, não abrimos o em dólar.
   const pendentes = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? AND status = 'pendente'").all(entityId);
   for (const p of pendentes) {
     if (p.gateway === "stripe") await encerrarCheckoutPendente(p);
-    else if (p.asaasId || p.asaasAutorizacaoId)
-      return res.status(409).json({ error: "Existe um checkout em reais aguardando pagamento. Cancele-o em Plano antes de pagar em dólar." });
+    else if (p.asaasId || p.asaasAutorizacaoId) {
+      if (!asaasAtivo()) return res.status(503).json({ error: "Não foi possível encerrar o checkout em reais aberto. Tente de novo em instantes." });
+      try {
+        if (p.asaasId) await asaas(`/subscriptions/${p.asaasId}`, { method: "DELETE" });
+        else await asaas(`/pix/automatic/authorizations/${p.asaasAutorizacaoId}`, { method: "DELETE" });
+      } catch (e) {
+        if (e.status !== 404) {
+          console.warn("[stripe] cancelar checkout em reais:", e.message);
+          return res.status(502).json({ error: "Não foi possível encerrar o checkout em reais aberto. Tente de novo em instantes." });
+        }
+      }
+      db.prepare("UPDATE voucher_redemptions SET status = 'cancelado' WHERE subscriptionId = ? AND status = 'reservado'").run(p.id);
+    }
     db.prepare("UPDATE subscriptions SET status = 'cancelada', atualizadoEm = ? WHERE id = ?").run(agora(), p.id);
   }
 
@@ -76,8 +91,10 @@ router.post("/subscription/stripe", soEmpresa, async (req, res) => {
     .run(subId, entityId, chave, valor, valor, agora(), trialDias, ciclo, MOEDA_INTERNACIONAL, agora());
 
   try {
-    const r = await criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo, trialDias, retorno: req.body?.retorno });
-    res.json({ ok: true, subscriptionId: subId, url: r.url, valor: r.valor, moeda: r.moeda, trialDias });
+    const embutido = req.body?.embutido === true && !!chavePublicaStripe();
+    const r = await criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo, trialDias, retorno: req.body?.retorno, embutido });
+    res.json({ ok: true, subscriptionId: subId, url: r.url, clientSecret: r.clientSecret, chavePublica: embutido ? chavePublicaStripe() : null,
+               valor: r.valor, moeda: r.moeda, trialDias });
   } catch (e) {
     db.prepare("UPDATE subscriptions SET status = 'cancelada', falhaMotivo = ?, atualizadoEm = ? WHERE id = ?").run(String(e.message).slice(0, 300), agora(), subId);
     console.error("[stripe] checkout:", e.message);

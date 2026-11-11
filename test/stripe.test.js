@@ -148,3 +148,17 @@ test("cancelar pela RYCS cancela no Stripe; checkout aberto é encerrado", async
   await st.cancelarAssinaturaStripe({ gateway: "stripe", stripeSessionId: "cs_x" });
   assert.ok(chamadas.some((x) => x.caminho === "/checkout/sessions/cs_x/expire"));
 });
+
+test("checkout embutido: abre dentro da RYCS e devolve o client_secret", async () => {
+  novaAssinatura("s-emb");
+  chamadas.length = 0;
+  respostas["/checkout/sessions"] = { id: "cs_emb", client_secret: "cs_emb_secret_x" };
+  const r = await st.criarCheckoutAssinatura({ empresa: empresa(), subId: "s-emb", chave: "growth", retorno: "/plataforma", embutido: true });
+  assert.equal(r.clientSecret, "cs_emb_secret_x");
+  assert.equal(r.url, null);
+  const c = chamadas.find((x) => x.caminho === "/checkout/sessions").corpo;
+  assert.equal(c.get("ui_mode"), "embedded");
+  assert.equal(c.get("redirect_on_completion"), "if_required");
+  assert.equal(c.get("return_url"), "https://app.rycs.pro/plataforma?stripe=ok");
+  assert.equal(c.get("success_url"), null);
+});
