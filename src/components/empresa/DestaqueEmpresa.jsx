@@ -31,7 +31,7 @@ export default function DestaqueEmpresa({ emp, up, aviso }) {
           {t("highlight.desc")}
         </p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, alignItems: "stretch" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, alignItems: "start" }}>
         {ORDEM_DESTAQUES.map((key) => {
           const d = DESTAQUES[key];
           const on = ativo === key;
