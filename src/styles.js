@@ -390,8 +390,10 @@ html.dark .vx-stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.24);border-color:var(
 
 /* modal */
 .vx-overlay{position:fixed;inset:0;z-index:40;background:rgba(4,8,16,.45);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);display:flex;align-items:flex-end;justify-content:center}
-@media(min-width:640px){.vx-overlay{align-items:center}}
-.vx-sheet{width:100%;max-width:580px;background:var(--surface);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:22px 22px 0 0;padding:24px;max-height:88vh;overflow-y:auto;box-shadow:0 -8px 40px -8px rgba(11,18,32,.12),inset 0 .5px 0 rgba(255,255,255,.4)}
+@media(min-width:640px){/* overlay rola e o sheet se centra via margin:auto — garante que o fim do modal
+   (ex.: botão Confirmar no checkout) seja sempre alcançável em qualquer tela. */
+.vx-overlay{align-items:flex-start;overflow-y:auto;overscroll-behavior:contain;padding:16px}}
+.vx-sheet{width:100%;max-width:580px;margin:auto;background:var(--surface);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:18px;padding:24px;box-shadow:0 -8px 40px -8px rgba(11,18,32,.12),inset 0 .5px 0 rgba(255,255,255,.4)}
 @media(min-width:640px){.vx-sheet{border-radius:18px}}
 /* --- RYCS Academy: grade de cursos ------------------------------------ */
 .vx-course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
