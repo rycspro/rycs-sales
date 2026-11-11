@@ -405,11 +405,13 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
     <>
       <div className="vx-page-head">
         <div>
-          <div className="vx-eyebrow">Governança de evidências</div>
-          <h1 className="vx-disp">Aprovações</h1>
-          <p>Revisão manual, recusas, contestações e decisões rastreáveis.</p>
+          <div className="vx-eyebrow">{secao === "regras" ? "Configurações" : "Governança de evidências"}</div>
+          <h1 className="vx-disp">{secao === "regras" ? "Regras automáticas" : "Aprovações"}</h1>
+          <p>{secao === "regras"
+            ? "Configure a aprovação de profissionais e a conferência automática de ações."
+            : "Revisão manual, recusas, contestações e decisões rastreáveis."}</p>
         </div>
-        <span className="vx-chip vx-mono">{revisao.length} pendentes</span>
+        {secao !== "regras" && <span className="vx-chip vx-mono">{revisao.length} pendentes</span>}
       </div>
 
       {secao === "regras" && <>
