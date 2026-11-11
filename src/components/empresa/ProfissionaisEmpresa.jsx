@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, RotateCcw, Search, Send, ShieldCheck, UserMinus, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
 import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
@@ -57,6 +57,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
   const [obs, setObs] = useState({});
   const [f, setF] = useState({ busca: "", funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "", pais: "" });
   const [filtroAberto, setFiltroAberto] = useState(false);
+  const [ordenarAberto, setOrdenarAberto] = useState(false);
+  const [ordenar, setOrdenar] = useState({ campo: "", direcao: "desc" }); // campo: "" | score | compatibilidade | idade
   const [buscaAberta, setBuscaAberta] = useState(false);
   const buscaRef = useRef(null);
   const [convites, setConvites] = useState({});
@@ -217,8 +219,20 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
       return pts;
     };
 
+    // Classificação escolhida pelo usuário (score / compatibilidade / idade).
+    if (ordenar.campo) {
+      const valor = (p) => {
+        if (ordenar.campo === "score") return Number(p.scoreTriagem ?? 0);
+        if (ordenar.campo === "compatibilidade") return Number(fitCultural(p).percentual ?? 0);
+        if (ordenar.campo === "idade") return calcularIdade(p.dataNascimento) ?? -1;
+        return 0;
+      };
+      const sinal = ordenar.direcao === "asc" ? 1 : -1;
+      return [...lista].sort((a, b) => (valor(a) - valor(b)) * sinal || completude(b) - completude(a));
+    }
+
     return lista.sort((a, b) => completude(b) - completude(a));
-  }, [profissionais, f, emp.id, mostrarSalvos, salvos]);
+  }, [profissionais, f, emp.id, mostrarSalvos, salvos, ordenar, campanhasEmpresa]);
 
   const salvarObs = async (id, valor) => {
     const r = await api(`/professionals/${id}/note`, { observacao: valor });
@@ -338,6 +352,60 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           Filtrar
           {filtrosAtivos > 0 && <span style={{ background: filtroAberto ? "rgba(255,255,255,.25)" : "var(--brand)", color: "#fff", borderRadius: 20, fontSize: 11, padding: "1px 6px", fontWeight: 700 }}>{filtrosAtivos}</span>}
         </button>
+        <div style={{ position: "relative" }}>
+          <button
+            type="button"
+            className={`vx-btn${ordenar.campo ? " vx-btn-primary" : ""}`}
+            style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+            onClick={() => setOrdenarAberto((v) => !v)}
+            title="Classificar profissionais"
+          >
+            <ArrowUpDown size={14} strokeWidth={2.3} />
+            Classificar
+          </button>
+          {ordenarAberto && (
+            <>
+              <div onClick={() => setOrdenarAberto(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
+              <div className="vx-card" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, width: 232, padding: 12, boxShadow: "0 10px 28px rgba(0,0,0,.14)", display: "flex", flexDirection: "column", gap: 12 }}>
+                <div>
+                  <span className="vx-label">Classificar por</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 7 }}>
+                    {[["score", "Score"], ["compatibilidade", "Compatibilidade"], ["idade", "Idade"]].map(([campo, label]) => {
+                      const on = ordenar.campo === campo;
+                      return (
+                        <button key={campo} type="button"
+                          onClick={() => setOrdenar((o) => ({ ...o, campo: o.campo === campo ? "" : campo }))}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", padding: "8px 10px", borderRadius: 8, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`, background: on ? "var(--brand-50)" : "var(--surface)", color: on ? "var(--brand)" : "var(--ink)", fontSize: 13, fontWeight: on ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }}>
+                          {label}{on && <CheckCircle2 size={14} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+                  <span className="vx-label">Ordem</span>
+                  <div style={{ display: "flex", gap: 6, marginTop: 7 }}>
+                    {[["desc", "Maior → menor", ArrowDown], ["asc", "Menor → maior", ArrowUp]].map(([dir, label, Icone]) => {
+                      const on = ordenar.direcao === dir;
+                      return (
+                        <button key={dir} type="button" disabled={!ordenar.campo}
+                          onClick={() => setOrdenar((o) => ({ ...o, direcao: dir }))}
+                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "7px 6px", borderRadius: 8, border: `1px solid ${on && ordenar.campo ? "var(--brand)" : "var(--border)"}`, background: on && ordenar.campo ? "var(--brand-50)" : "var(--surface)", color: on && ordenar.campo ? "var(--brand)" : "var(--muted)", fontSize: 11.5, fontWeight: 600, cursor: ordenar.campo ? "pointer" : "not-allowed", opacity: ordenar.campo ? 1 : 0.5, fontFamily: "inherit" }}>
+                          <Icone size={13} />{label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {ordenar.campo && (
+                  <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setOrdenar({ campo: "", direcao: "desc" })}>
+                    Limpar classificação
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
         {filtrosAtivos > 0 && (
           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setF({ busca: f.busca, funcao: "", campanha: "", status: "", performance: "", regiao: "", score: "", genero: "", pais: "" })}>
             Limpar filtros
