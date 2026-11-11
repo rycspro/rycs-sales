@@ -44,6 +44,7 @@ function parseCampaign(row) {
     evidencias: JSON.parse(row.evidencias || "{}"),
     criteriosAprovacao: JSON.parse(row.criteriosAprovacao || "{}"),
     quiz: JSON.parse(row.quiz || "[]"),
+    etapasPipeline: (() => { try { return JSON.parse(row.etapasPipeline || "[]"); } catch { return []; } })(),
     aceitaLeadProprio: !!row.aceitaLeadProprio,
     exigeCertificacao: !!row.exigeCertificacao,
   };

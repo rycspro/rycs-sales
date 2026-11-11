@@ -501,7 +501,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
         <GitBranch size={18} color="var(--brand)" />
       </div>
       <EditorEtapas
-        etapas={(campanha.etapasPipeline && campanha.etapasPipeline.length > 0) ? campanha.etapasPipeline : [
+        etapas={(Array.isArray(campanha.etapasPipeline) && campanha.etapasPipeline.length > 0) ? campanha.etapasPipeline : [
           { id: "novo", nome: "Novo", cor: "#8496B4" },
           { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
           { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
