@@ -9,6 +9,17 @@
 
 const soDigitos = (valor) => String(valor || "").replace(/\D/g, "").slice(0, 14);
 
+export function chavePixValida(chave, tipo) {
+  if (!chave || !tipo) return false;
+  const v = chave.trim();
+  if (tipo === "cpf") return /^\d{11}$/.test(soDigitos(v));
+  if (tipo === "cnpj") return /^\d{14}$/.test(soDigitos(v));
+  if (tipo === "email") return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  if (tipo === "telefone") return /^\+?\d{10,13}$/.test(v.replace(/\D/g, ""));
+  if (tipo === "aleatoria") return /^[a-f0-9-]{32,36}$/i.test(v);
+  return v.length > 0;
+}
+
 export function documentoValido(valor) {
   const d = soDigitos(valor);
   return d.length === 11 || d.length === 14;

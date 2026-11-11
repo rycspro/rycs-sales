@@ -2,63 +2,67 @@ import { useState, useEffect, useRef } from "react";
 import { ArrowRight, ChevronDown, MessageCircle, Sparkles } from "lucide-react";
 import { navegar } from "../lib/rotas.js";
 import { PLANOS, ORDEM_PLANOS } from "../../shared/planos.js";
+import { useI18n } from "../lib/i18n.jsx";
+import LangSwitcher from "./LangSwitcher.jsx";
 
 const ABAS = ["empresa", "profissional"];
 
-const conteudo = {
-  empresa: {
-    heroBadge: "Para empresas",
-    heroTitle: "Monte seu time de vendas sem custo fixo",
-    heroSub: "Conecte sua empresa a vendedores autônomos qualificados. Pague só por resultado. Campanha criada com IA em menos de 5 minutos.",
-    ctaPrimario: { label: "Criar conta grátis", rota: "/cadastro/empresa" },
-    ctaSecundario: { label: "Entrar na plataforma", rota: "/entrar" },
-    stats: [
-      { valor: "500+", label: "Empresas ativas" },
-      { valor: "98%", label: "Satisfação" },
-      { valor: "5 min", label: "Para criar campanha" },
-    ],
-    passos: [
-      { n: "1", t: "Crie sua campanha com IA", d: "Descreva seu produto e deixe o Jarvas estruturar objetivo, região, público e remuneração em minutos." },
-      { n: "2", t: "Vendedores se candidatam", d: "Profissionais qualificados da rede RYCS se inscrevem. Você escolhe quem entra na sua campanha." },
-      { n: "3", t: "Acompanhe em tempo real", d: "Veja leads, visitas e fechamentos acontecendo. Score e histórico de cada vendedor na tela." },
-      { n: "4", t: "Pague por resultado", d: "Aprove as comissões no painel. O sistema processa e transfere automaticamente para o vendedor." },
-    ],
-    beneficios: [
-      { icone: "🎯", t: "Campanha com IA", d: "O Jarvas estrutura toda a campanha por voz ou texto. Objetivo, região, público e vagas definidos em minutos." },
-      { icone: "💰", t: "Pague só por resultado", d: "Sem CLT, sem custo fixo. Você define a comissão e paga apenas quando a venda acontece." },
-      { icone: "📊", t: "Gestão completa", d: "Acompanhe candidaturas, pontuação dos vendedores, saldo e histórico de pagamentos em um só lugar." },
-      { icone: "🏆", t: "Vendedores com score", d: "Contrate quem já provou resultado. Cada profissional tem histórico e pontuação verificados." },
-      { icone: "⚡", t: "Pagamento automatizado", d: "O sistema calcula e processa as comissões. Você aprova, o dinheiro vai direto ao vendedor." },
-      { icone: "🔒", t: "Auditoria total", d: "Todo lead, visita e venda fica registrado. Sem achismo, sem briga por comissão." },
-    ],
-  },
-  profissional: {
-    heroBadge: "Para vendedores autônomos",
-    heroTitle: "Trabalhe pelas melhores campanhas e receba por resultado",
-    heroSub: "Acesse campanhas de empresas selecionadas, construa seu histórico e aumente seus ganhos. Sem vínculo, sem burocracia.",
-    ctaPrimario: { label: "Criar conta grátis", rota: "/cadastro/profissional" },
-    ctaSecundario: { label: "Já tenho conta", rota: "/entrar" },
-    stats: [
-      { valor: "2.000+", label: "Profissionais" },
-      { valor: "R$ 4.500", label: "Comissão média/mês" },
-      { valor: "100%", label: "Transparência" },
-    ],
-    passos: [
-      { n: "1", t: "Crie seu perfil", d: "Cadastre suas especialidades, regiões de atuação e experiência. Leva menos de 5 minutos." },
-      { n: "2", t: "Candidate-se a campanhas", d: "Veja as campanhas disponíveis e candidate-se às que combinam com seu perfil." },
-      { n: "3", t: "Realize as atividades", d: "Execute as visitas, ligações ou reuniões definidas na campanha e registre tudo na plataforma." },
-      { n: "4", t: "Receba sua comissão", d: "A empresa aprova e o pagamento cai direto na sua conta. Transparente, rastreável, sem atraso." },
-    ],
-    beneficios: [
-      { icone: "🚀", t: "Acesso imediato a campanhas", d: "Empresas de diferentes segmentos publicando campanhas diariamente. Escolha o que faz sentido para você." },
-      { icone: "💸", t: "Ganhe por resultado", d: "Comissões claras antes de começar. Você sabe exatamente quanto vai receber por cada venda ou reunião." },
-      { icone: "🏆", t: "Construa seu score", d: "Cada entrega aumenta sua pontuação. Com score alto, você tem prioridade nas melhores campanhas." },
-      { icone: "📍", t: "Trabalhe na sua região", d: "Filtre campanhas pela sua cidade ou estado. Atue onde você já conhece o mercado." },
-      { icone: "📱", t: "Tudo no celular", d: "Registre visitas, leads e atividades direto pelo app. Sem papelada, sem planilha." },
-      { icone: "🔓", t: "Sem vínculo empregatício", d: "Você é autônomo. Trabalhe quantas campanhas quiser, no horário que preferir." },
-    ],
-  },
-};
+function buildConteudo(t) {
+  return {
+    empresa: {
+      heroBadge: t("landing.company.badge"),
+      heroTitle: t("landing.company.title"),
+      heroSub: t("landing.company.sub"),
+      ctaPrimario: { label: t("landing.company.ctaPrimary"), rota: "/cadastro/empresa" },
+      ctaSecundario: { label: t("landing.company.ctaSecondary"), rota: "/entrar" },
+      stats: [
+        { valor: t("landing.company.stat1.value"), label: t("landing.company.stat1.label") },
+        { valor: t("landing.company.stat2.value"), label: t("landing.company.stat2.label") },
+        { valor: t("landing.company.stat3.value"), label: t("landing.company.stat3.label") },
+      ],
+      passos: [
+        { n: "1", t: t("landing.company.step1.title"), d: t("landing.company.step1.desc") },
+        { n: "2", t: t("landing.company.step2.title"), d: t("landing.company.step2.desc") },
+        { n: "3", t: t("landing.company.step3.title"), d: t("landing.company.step3.desc") },
+        { n: "4", t: t("landing.company.step4.title"), d: t("landing.company.step4.desc") },
+      ],
+      beneficios: [
+        { icone: "🎯", t: t("landing.company.benefit1.title"), d: t("landing.company.benefit1.desc") },
+        { icone: "💰", t: t("landing.company.benefit2.title"), d: t("landing.company.benefit2.desc") },
+        { icone: "📊", t: t("landing.company.benefit3.title"), d: t("landing.company.benefit3.desc") },
+        { icone: "🏆", t: t("landing.company.benefit4.title"), d: t("landing.company.benefit4.desc") },
+        { icone: "⚡", t: t("landing.company.benefit5.title"), d: t("landing.company.benefit5.desc") },
+        { icone: "🔒", t: t("landing.company.benefit6.title"), d: t("landing.company.benefit6.desc") },
+      ],
+    },
+    profissional: {
+      heroBadge: t("landing.pro.badge"),
+      heroTitle: t("landing.pro.title"),
+      heroSub: t("landing.pro.sub"),
+      ctaPrimario: { label: t("landing.pro.ctaPrimary"), rota: "/cadastro/profissional" },
+      ctaSecundario: { label: t("landing.pro.ctaSecondary"), rota: "/entrar" },
+      stats: [
+        { valor: t("landing.pro.stat1.value"), label: t("landing.pro.stat1.label") },
+        { valor: t("landing.pro.stat2.value"), label: t("landing.pro.stat2.label") },
+        { valor: t("landing.pro.stat3.value"), label: t("landing.pro.stat3.label") },
+      ],
+      passos: [
+        { n: "1", t: t("landing.pro.step1.title"), d: t("landing.pro.step1.desc") },
+        { n: "2", t: t("landing.pro.step2.title"), d: t("landing.pro.step2.desc") },
+        { n: "3", t: t("landing.pro.step3.title"), d: t("landing.pro.step3.desc") },
+        { n: "4", t: t("landing.pro.step4.title"), d: t("landing.pro.step4.desc") },
+      ],
+      beneficios: [
+        { icone: "🚀", t: t("landing.pro.benefit1.title"), d: t("landing.pro.benefit1.desc") },
+        { icone: "💸", t: t("landing.pro.benefit2.title"), d: t("landing.pro.benefit2.desc") },
+        { icone: "🏆", t: t("landing.pro.benefit3.title"), d: t("landing.pro.benefit3.desc") },
+        { icone: "📍", t: t("landing.pro.benefit4.title"), d: t("landing.pro.benefit4.desc") },
+        { icone: "📱", t: t("landing.pro.benefit5.title"), d: t("landing.pro.benefit5.desc") },
+        { icone: "🔓", t: t("landing.pro.benefit6.title"), d: t("landing.pro.benefit6.desc") },
+      ],
+    },
+  };
+}
 
 const avatars = [
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' rx='20' fill='%232563EB'/%3E%3Ctext x='20' y='25' text-anchor='middle' fill='white' font-size='16' font-family='sans-serif'%3EM%3C/text%3E%3C/svg%3E",
@@ -67,19 +71,22 @@ const avatars = [
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' rx='20' fill='%2316A34A'/%3E%3Ctext x='20' y='25' text-anchor='middle' fill='white' font-size='16' font-family='sans-serif'%3EJ%3C/text%3E%3C/svg%3E",
 ];
 
-const NAV_LINKS = [
-  { label: "Início", href: "#" },
-  { label: "Empresas", href: "#empresas" },
-  { label: "Profissionais", href: "#profissionais" },
-  { label: "Como funciona", href: "#como-funciona" },
-  { label: "Benefícios", href: "#beneficios" },
-];
+function buildNavLinks(t) {
+  return [
+    { label: t("landing.nav.home"), href: "#" },
+    { label: t("landing.nav.companies"), href: "#empresas" },
+    { label: t("landing.nav.professionals"), href: "#profissionais" },
+    { label: t("landing.nav.howItWorks"), href: "#como-funciona" },
+    { label: t("landing.nav.benefits"), href: "#beneficios" },
+  ];
+}
 
 function BrandSlider() {
+  const { t } = useI18n();
   const marcas = ["Nexo CRM", "Atlas Consultoria", "Kubo Tech", "Orbita Logística", "Zenith Digital"];
   return (
     <div style={st.brandSection}>
-      <p style={st.brandLabel}>Empresas que já confiam na RYCS</p>
+      <p style={st.brandLabel}>{t("landing.brandSlider")}</p>
       <div style={st.brandTrack}>
         <div style={st.brandSlide}>
           {[...marcas, ...marcas].map((m, i) => (
@@ -94,7 +101,8 @@ function BrandSlider() {
   );
 }
 
-function MobileMenu({ open, onClose, onNav }) {
+function MobileMenu({ open, onClose, onNav, navLinks }) {
+  const { t } = useI18n();
   if (!open) return null;
   return (
     <div style={st.mobileOverlay} onClick={onClose}>
@@ -104,13 +112,13 @@ function MobileMenu({ open, onClose, onNav }) {
           <button style={st.mobileClose} onClick={onClose}>✕</button>
         </div>
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {NAV_LINKS.map((l) => (
+          {navLinks.map((l) => (
             <button key={l.label} style={st.mobileNavLink} onClick={() => { onClose(); }}>{l.label}</button>
           ))}
         </nav>
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
-          <button style={st.btnPrimary} onClick={() => { onClose(); onNav("/cadastro/empresa"); }}>Criar conta grátis</button>
-          <button style={st.btnGhost} onClick={() => { onClose(); onNav("/entrar"); }}>Entrar</button>
+          <button style={st.btnPrimary} onClick={() => { onClose(); onNav("/cadastro/empresa"); }}>{t("landing.nav.mobileSignup")}</button>
+          <button style={st.btnGhost} onClick={() => { onClose(); onNav("/entrar"); }}>{t("landing.nav.mobileLogin")}</button>
         </div>
       </div>
     </div>
@@ -122,37 +130,41 @@ const planosPagos = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0)
   .map((k) => `${PLANOS[k].nome} (${brl(PLANOS[k].preco)}/mês, taxa de ${Math.round(PLANOS[k].takeRate * 100)}%)`)
   .join(", ");
 
-const FAQS = {
-  empresa: [
-    { q: "O que é a RYCS Sales Machine?", a: "Uma plataforma de execução comercial que conecta sua empresa a vendedores autônomos qualificados. Você cria a campanha, escolhe quem entra no time e paga apenas pelas ações verificadas: leads, visitas, reuniões e vendas." },
-    { q: "Quanto custa para a empresa?", a: `A assinatura dá acesso e limites; o caixa de campanha paga as ações. Planos: ${planosPagos}. Quanto maior o plano, menor a taxa sobre cada ação. O ${PLANOS.free.nome} é gratuito para configurar a conta antes de publicar.` },
-    { q: "Como funciona o pagamento por resultado?", a: "Você define a remuneração por ação ao criar a campanha. Cada envio do profissional reserva o valor no seu caixa; quando você aprova, o pagamento vai integralmente ao vendedor e a taxa do plano é registrada à parte. Se recusar, a reserva é estornada." },
-    { q: "Como os vendedores são selecionados?", a: "Profissionais se candidatam, passam pela qualificação da sua campanha (treinamento e quiz) e só entram depois da sua aprovação. Cada um tem score e histórico verificados na plataforma." },
-    { q: "O que é a auditoria de ações?", a: "Todo lead, visita e venda é registrado com evidências: fotos, localização e detalhes. A IA e as regras da plataforma conferem cada ação antes de liberar o pagamento. Sem achismo, sem briga por comissão." },
-    { q: "Preciso contratar CLT?", a: "Não. Os vendedores são autônomos e trabalham por campanha. Sem vínculo empregatício, sem custo fixo e sem burocracia de contratação." },
-  ],
-  profissional: [
-    { q: "Preciso pagar para usar a RYCS?", a: "Não. O cadastro e o acesso às campanhas são gratuitos para profissionais. Você só precisa de um perfil completo e aprovação na qualificação de cada campanha." },
-    { q: "Como e quando recebo?", a: "Ao registrar uma ação na plataforma, o valor fica reservado no caixa da empresa. Quando ela aprova, o valor cai integralmente na sua carteira RYCS e você solicita o saque. A taxa da plataforma é paga pela empresa, não por você." },
-    { q: "Quanto posso ganhar?", a: "Depende das campanhas que você escolhe: cada uma mostra o valor por lead, visita, reunião ou venda antes de você se candidatar. Você sabe exatamente quanto vai receber por cada ação." },
-    { q: "O que é o score?", a: "Sua pontuação verificada, construída a cada entrega aprovada. Score alto dá prioridade nas melhores campanhas e mais chance de aprovação pelas empresas." },
-    { q: "Posso trabalhar em várias campanhas?", a: "Sim. Você é autônomo: candidate-se a quantas campanhas quiser, na sua região e no horário que preferir." },
-    { q: "Como as minhas ações são verificadas?", a: "Você registra tudo pelo celular: fotos, localização e detalhes da ação. A plataforma audita as evidências e a empresa aprova. Tudo fica rastreável no seu histórico." },
-  ],
-};
+function buildFaqs(t) {
+  return {
+    empresa: [
+      { q: t("landing.faq.company.q1"), a: t("landing.faq.company.a1") },
+      { q: t("landing.faq.company.q2"), a: t("landing.faq.company.a2") },
+      { q: t("landing.faq.company.q3"), a: t("landing.faq.company.a3") },
+      { q: t("landing.faq.company.q4"), a: t("landing.faq.company.a4") },
+      { q: t("landing.faq.company.q5"), a: t("landing.faq.company.a5") },
+      { q: t("landing.faq.company.q6"), a: t("landing.faq.company.a6") },
+    ],
+    profissional: [
+      { q: t("landing.faq.pro.q1"), a: t("landing.faq.pro.a1") },
+      { q: t("landing.faq.pro.q2"), a: t("landing.faq.pro.a2") },
+      { q: t("landing.faq.pro.q3"), a: t("landing.faq.pro.a3") },
+      { q: t("landing.faq.pro.q4"), a: t("landing.faq.pro.a4") },
+      { q: t("landing.faq.pro.q5"), a: t("landing.faq.pro.a5") },
+      { q: t("landing.faq.pro.q6"), a: t("landing.faq.pro.a6") },
+    ],
+  };
+}
 
 function FaqSection({ aba }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(0);
-  const itens = FAQS[aba];
+  const faqs = buildFaqs(t);
+  const itens = faqs[aba];
   useEffect(() => setOpen(0), [aba]);
   return (
     <section id="faq" style={st.faqSection}>
       <div style={st.faqInner}>
         <div style={st.faqHead}>
           <span style={st.faqPill}><Sparkles size={12} color="#F59E0B" aria-hidden="true" /> FAQ</span>
-          <h2 style={st.faqTitle}>Perguntas frequentes</h2>
+          <h2 style={st.faqTitle}>{t("landing.faq.title")}</h2>
           <p style={st.faqSub}>
-            Respostas rápidas para as dúvidas mais comuns. Não achou a sua? Escreva para{" "}
+            {t("landing.faq.sub")}{" "}
             <a href="mailto:contato@rycs.com.br" style={st.faqLink}>contato@rycs.com.br</a>.
           </p>
         </div>
@@ -185,12 +197,12 @@ function FaqSection({ aba }) {
           <div style={st.faqBoxLeft}>
             <span style={st.faqBoxIcon}><MessageCircle size={16} aria-hidden="true" /></span>
             <div>
-              <p style={st.faqBoxTitle}>Ainda tem alguma dúvida?</p>
-              <p style={st.faqBoxText}>Respondemos em até um dia útil.</p>
+              <p style={st.faqBoxTitle}>{t("landing.faq.stillQuestion")}</p>
+              <p style={st.faqBoxText}>{t("landing.faq.response")}</p>
             </div>
           </div>
           <a href="mailto:contato@rycs.com.br" className="lp-faq-box-btn" style={st.faqBoxBtn}>
-            Falar com a RYCS <ArrowRight size={15} aria-hidden="true" />
+            {t("landing.faq.contact")} <ArrowRight size={15} aria-hidden="true" />
           </a>
         </div>
       </div>
@@ -199,10 +211,13 @@ function FaqSection({ aba }) {
 }
 
 export default function LandingPage() {
+  const { t } = useI18n();
   const [aba, setAba] = useState("empresa");
   const [email, setEmail] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const conteudo = buildConteudo(t);
+  const NAV_LINKS = buildNavLinks(t);
   const c = conteudo[aba];
 
   useEffect(() => {
@@ -240,8 +255,9 @@ export default function LandingPage() {
           </nav>
 
           <div className="lp-nav-links" style={st.navRight}>
-            <button style={st.btnGhost} onClick={() => navegar("/entrar")}>Entrar</button>
-            <button style={st.btnPrimary} onClick={() => navegar(c.ctaPrimario.rota)}>Criar conta grátis</button>
+            <LangSwitcher />
+            <button style={st.btnGhost} onClick={() => navegar("/entrar")}>{t("landing.nav.login")}</button>
+            <button style={st.btnPrimary} onClick={() => navegar(c.ctaPrimario.rota)}>{t("landing.nav.signup")}</button>
           </div>
 
           <button className="lp-hamburger" style={st.hamburger} onClick={() => setMenuOpen(true)}>
@@ -250,7 +266,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} onNav={navegar} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} onNav={navegar} navLinks={NAV_LINKS} />
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section style={st.hero}>
@@ -265,7 +281,7 @@ export default function LandingPage() {
               style={{ ...st.tabBtn, ...(aba === a ? st.tabBtnActive : {}) }}
               onClick={() => setAba(a)}
             >
-              {a === "empresa" ? "🏢 Empresas" : "🤝 Profissionais"}
+              {a === "empresa" ? `🏢 ${t("landing.tab.company")}` : `🤝 ${t("landing.tab.professional")}`}
             </button>
           ))}
         </div>
@@ -295,9 +311,7 @@ export default function LandingPage() {
               <img key={i} src={src} alt="" style={{ ...st.avatar, marginLeft: i > 0 ? -10 : 0, zIndex: avatars.length - i }} />
             ))}
           </div>
-          <span style={st.socialText}>
-            <b style={{ color: "#0B1220" }}>+2.000</b> profissionais e empresas já usam
-          </span>
+          <span style={st.socialText}>{t("landing.socialProof")}</span>
         </div>
 
         {/* Stats */}
@@ -317,7 +331,7 @@ export default function LandingPage() {
 
       {/* ── BENEFÍCIOS ─────────────────────────────────────────────────── */}
       <section id="beneficios" style={st.section}>
-        <h2 style={st.sectionTitle}>Por que usar a RYCS?</h2>
+        <h2 style={st.sectionTitle}>{t("landing.whyUse")}</h2>
         <div style={st.grid}>
           {c.beneficios.map((b) => (
             <div key={b.t} style={st.card}>
@@ -331,7 +345,7 @@ export default function LandingPage() {
 
       {/* ── COMO FUNCIONA ──────────────────────────────────────────────── */}
       <section id="como-funciona" style={st.sectionAlt}>
-        <h2 style={st.sectionTitle}>Como funciona</h2>
+        <h2 style={st.sectionTitle}>{t("landing.howItWorks")}</h2>
         <div style={st.steps}>
           {c.passos.map((p) => (
             <div key={p.n} style={st.step}>
@@ -348,12 +362,10 @@ export default function LandingPage() {
       {/* ── CTA FINAL ──────────────────────────────────────────────────── */}
       <section style={st.ctaFinal}>
         <h2 style={st.ctaTitle}>
-          {aba === "empresa" ? "Pronto para montar seu time?" : "Pronto para começar a vender?"}
+          {aba === "empresa" ? t("landing.company.ctaFinal.title") : t("landing.pro.ctaFinal.title")}
         </h2>
         <p style={st.ctaSub}>
-          {aba === "empresa"
-            ? "Crie sua conta grátis e lance sua primeira campanha hoje."
-            : "Cadastre-se e candidate-se às melhores campanhas agora."}
+          {aba === "empresa" ? t("landing.company.ctaFinal.sub") : t("landing.pro.ctaFinal.sub")}
         </p>
         <button style={st.ctaBtn} onClick={() => navegar(c.ctaPrimario.rota)}>
           {c.ctaPrimario.label}
@@ -368,30 +380,30 @@ export default function LandingPage() {
         <div style={st.footerInner}>
           <div className="lp-footer-grid" style={st.footerGrid}>
             <div style={st.footerCol}>
-              <h2 style={st.footerColTitle}>Fique por dentro</h2>
-              <p style={st.footerColText}>Receba novidades sobre campanhas, dicas de vendas e atualizações da plataforma.</p>
+              <h2 style={st.footerColTitle}>{t("landing.footer.stayUpdated")}</h2>
+              <p style={st.footerColText}>{t("landing.footer.stayUpdatedSub")}</p>
               <form style={st.newsletterForm} onSubmit={(e) => { e.preventDefault(); if (email.trim()) setEmail(""); }}>
-                <input type="email" placeholder="Seu melhor e-mail" value={email} onChange={(e) => setEmail(e.target.value)} style={st.newsletterInput} />
+                <input type="email" placeholder={t("landing.footer.emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} style={st.newsletterInput} />
                 <button type="submit" style={st.newsletterBtn} aria-label="Inscrever-se">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
               </form>
             </div>
             <div style={st.footerCol}>
-              <h3 style={st.footerColSubtitle}>Links rápidos</h3>
+              <h3 style={st.footerColSubtitle}>{t("landing.footer.quickLinks")}</h3>
               <nav style={st.footerNav}>
-                <button style={st.footerNavLink} onClick={() => navegar("/")}>Início</button>
-                <button style={st.footerNavLink} onClick={() => navegar("/cadastro/empresa")}>Cadastro empresa</button>
-                <button style={st.footerNavLink} onClick={() => navegar("/cadastro/profissional")}>Cadastro profissional</button>
-                <button style={st.footerNavLink} onClick={() => navegar("/entrar")}>Entrar na plataforma</button>
+                <button style={st.footerNavLink} onClick={() => navegar("/")}>{t("landing.footer.home")}</button>
+                <button style={st.footerNavLink} onClick={() => navegar("/cadastro/empresa")}>{t("landing.footer.companySignup")}</button>
+                <button style={st.footerNavLink} onClick={() => navegar("/cadastro/profissional")}>{t("landing.footer.proSignup")}</button>
+                <button style={st.footerNavLink} onClick={() => navegar("/entrar")}>{t("landing.footer.enterPlatform")}</button>
               </nav>
             </div>
             <div style={st.footerCol}>
-              <h3 style={st.footerColSubtitle}>Contato</h3>
-              <div style={st.footerAddress}><p>São Paulo, SP — Brasil</p><p>contato@rycs.com.br</p></div>
+              <h3 style={st.footerColSubtitle}>{t("landing.footer.contact")}</h3>
+              <div style={st.footerAddress}><p>{t("landing.footer.location")}</p><p>contato@rycs.com.br</p></div>
             </div>
             <div style={st.footerCol}>
-              <h3 style={st.footerColSubtitle}>Redes sociais</h3>
+              <h3 style={st.footerColSubtitle}>{t("landing.footer.social")}</h3>
               <div style={st.socialRow}>
                 {[
                   { label: "Instagram", path: "M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zm1.5-4.87h.01M6.5 2h11A4.5 4.5 0 0122 6.5v11a4.5 4.5 0 01-4.5 4.5h-11A4.5 4.5 0 012 17.5v-11A4.5 4.5 0 016.5 2z" },
@@ -406,10 +418,10 @@ export default function LandingPage() {
             </div>
           </div>
           <div style={st.footerBottom}>
-            <p style={st.footerCopy}>© {new Date().getFullYear()} RYCS Sales Solutions. Todos os direitos reservados.</p>
+            <p style={st.footerCopy}>{t("landing.footer.copyright", { year: new Date().getFullYear() })}</p>
             <nav style={st.footerBottomNav}>
-              <button style={st.footerBottomLink}>Política de privacidade</button>
-              <button style={st.footerBottomLink}>Termos de uso</button>
+              <button style={st.footerBottomLink}>{t("landing.footer.privacy")}</button>
+              <button style={st.footerBottomLink}>{t("landing.footer.terms")}</button>
             </nav>
           </div>
         </div>

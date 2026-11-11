@@ -5,6 +5,8 @@ import RecuperarSenha from "./auth/RecuperarSenha.jsx";
 import Termos from "./auth/Termos.jsx";
 import { api } from "../lib/api.js";
 import { ROTAS, navegar, parametro } from "../lib/rotas.js";
+import { useI18n } from "../lib/i18n.jsx";
+import LangSwitcher from "./LangSwitcher.jsx";
 
 // Entrada de quem já tem conta.
 //
@@ -16,6 +18,7 @@ import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 const DEMO_PASSWORD = "Demo@RYCS2026";
 
 export default function Login({ onLogin, conviteTrial = false, beta = false }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
@@ -85,28 +88,29 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
       tarja={conviteTrial ? "Convite de teste gratuito" : undefined}
       subtitulo={conviteTrial
         ? "Entre com a conta da sua empresa para ativar o período gratuito. Se ainda não tem conta, crie uma abaixo — o convite continua valendo."
-        : "Entre na sua conta"}
-      largura={420}>
+        : t("login.title")}
+      largura={420}
+      extra={<LangSwitcher />}>
       <form onSubmit={submit}>
-        <Campo label="E-mail">
-          <input className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
+        <Campo label={t("login.email")}>
+          <input className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder")} required />
         </Campo>
-        <Campo label="Senha">
-          <CampoSenha value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Sua senha" />
+        <Campo label={t("login.password")}>
+          <CampoSenha value={senha} onChange={(e) => setSenha(e.target.value)} placeholder={t("login.passwordPlaceholder")} />
         </Campo>
         <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading} style={{ marginTop: 4 }}>
-          {loading ? "Carregando…" : "Entrar"}
+          {loading ? t("app.loading") : t("login.submit")}
         </button>
         <p className="vx-onb-termos" style={{ marginTop: 8 }}>
-          Ao continuar, você aceita os{" "}
-          <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>Termos de Uso</button> da RYCS.
+          {t("login.termsPrefix")}{" "}
+          <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>{t("login.termsLink")}</button> {t("login.termsSuffix")}
         </p>
       </form>
 
       {beta && !conviteTrial && (
         <div className="vx-beta-login-panel">
-          <div className="vx-eyebrow">AMBIENTE BETA — DADOS FICTÍCIOS</div>
-          <p>Nenhuma movimentação financeira possui valor real. Os dados podem ser resetados e existem apenas para testes.</p>
+          <div className="vx-eyebrow">{t("beta.title")}</div>
+          <p>{t("beta.desc")}</p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button className="vx-btn vx-btn-primary" disabled={loading} onClick={() => entrarDemo("empresa")} style={{ flex: 1 }}>Entrar como Empresa Demo</button>
             <button className="vx-btn" disabled={loading} onClick={() => entrarDemo("profissional")} style={{ flex: 1 }}>Entrar como Profissional Demo</button>
@@ -115,15 +119,15 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
       )}
 
       <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setShowForgot(true)} style={{ width: "100%", marginTop: 4, fontSize: 12.5 }}>
-        Esqueci minha senha
+        {t("login.forgot")}
       </button>
 
       <hr className="vx-sep" style={{ margin: "8px 0" }} />
 
-      <div className="vx-eyebrow" style={{ textAlign: "center", marginBottom: 6 }}>Ainda não tem conta?</div>
+      <div className="vx-eyebrow" style={{ textAlign: "center", marginBottom: 6 }}>{t("login.noAccount")}</div>
       <div style={{ display: "flex", gap: 8 }}>
-        <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroVendedor)}>Sou profissional</button>
-        <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroEmpresa)}>Sou empresa</button>
+        <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroVendedor)}>{t("login.signupPro")}</button>
+        <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroEmpresa)}>{t("login.signupCompany")}</button>
       </div>
     </MolduraAuth>
   );
