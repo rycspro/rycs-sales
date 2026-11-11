@@ -41,6 +41,8 @@ import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
 import jarvasRoutes, { aquecerVozJarvas } from "./routes/jarvas.js";
+import metaRoutes, { metaPublico } from "./routes/meta.js";
+import { iniciarWorkerMeta } from "./services/meta.js";
 import { semearCatalogo, sincronizarCursoInterativo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
@@ -120,7 +122,8 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: "15mb" }));
+// O webhook da Meta é assinado sobre o corpo cru; guardamos só nessa rota.
+app.use(express.json({ limit: "15mb", verify: (req, _res, buf) => { if (req.originalUrl.startsWith("/api/webhooks/meta")) req.rawBody = buf; } }));
 app.use(cookieParser());
 
 const authLimiter = rateLimit({
@@ -155,6 +158,8 @@ app.use("/api", authRoutes);
 app.use("/api", paymentRoutes);
 // Consulta do convite de onboarding: quem abre o link ainda não tem conta.
 app.use("/api", onboardingPublico);
+// Webhook e retorno do login da Meta: chegam sem cookie de sessão.
+app.use("/api", metaPublico);
 
 // Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
 app.use("/api", authMiddleware, onboardingGuard);
@@ -187,6 +192,7 @@ app.use("/api", authMiddleware, billingRoutes);
 app.use("/api", authMiddleware, onboardingRoutes);
 app.use("/api", authMiddleware, onboardingProRoutes);
 app.use("/api", authMiddleware, jarvasRoutes);
+app.use("/api", authMiddleware, metaRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
@@ -283,6 +289,7 @@ app.listen(PORT, () => {
   console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);
   iniciarWorker();
   iniciarWorkerIA();
+  iniciarWorkerMeta();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,
   // que usam um ElevenLabs falso e contam as chamadas).
   if (process.env.NODE_ENV !== "test") aquecerVozJarvas().catch((e) => console.warn("[jarvas] aquecimento:", e.message));

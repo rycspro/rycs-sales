@@ -6,10 +6,11 @@ import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
-  ImagePlus, Trash2, Eye, EyeOff,
+  ImagePlus, Trash2, Plug, Eye, EyeOff,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
+import IntegracaoMeta from "./IntegracaoMeta.jsx";
 
 // ── Data ─────────────────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ const NOTIF_OPCOES = [
 const SECOES_NAV = [
   { key: "dados", label: "Dados da empresa", icon: Building2 },
   { key: "comercial", label: "Comercial", icon: Briefcase },
+  { key: "integracoes", label: "Integrações", icon: Plug },
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "seguranca", label: "Segurança", icon: Lock },
   { key: "preferencias", label: "Preferências", icon: Settings },
@@ -225,8 +227,9 @@ function InlineField({ label, value, onChange, type = "text", placeholder, multi
 
 // ── Main component ────────────────────────────────────────────────────
 
-export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, secaoInicial = "dados", somenteConteudo = false }) {
+export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, secaoInicial = "dados", somenteConteudo = false }) {
   const [secao, setSecao] = useState(secaoInicial);
+  const campanhasEmpresa = (db?.campaigns || []).filter((c) => c.companyId === emp.id);
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
   const [form, setForm] = useState(() => ({
     ...emp,
@@ -579,9 +582,11 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, secao
     ),
 
     indicar: <Indicacoes aviso={aviso} />,
+
+    integracoes: <IntegracaoMeta aviso={aviso} campanhas={campanhasEmpresa} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "idiomas", "suporte", "indicar"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "idiomas", "suporte", "indicar", "integracoes"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 

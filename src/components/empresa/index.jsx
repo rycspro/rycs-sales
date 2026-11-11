@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../lib/api.js";
 import FiltroData from "../FiltroData.jsx";
 import PainelEmpresa from "./PainelEmpresa.jsx";
@@ -35,6 +35,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   const [modalSaldo, setModalSaldo] = useState(false);
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
   const [filtros, setFiltros] = useState({});
+  // Volta do login da Meta (?meta=...): abre direto em Configurações → Integrações.
+  const [voltouDaMeta] = useState(() => new URLSearchParams(window.location.search).has("meta"));
+  useEffect(() => { if (voltouDaMeta) setAba?.("configuracoes"); }, []);
 
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
   const filtroAtual = filtros[aba] || null;
@@ -139,7 +142,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
           onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
         />
       )}
-      {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />}
+      {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial={voltouDaMeta ? "integracoes" : undefined} />}
 
       {modalSaldo && (
         <ModalSaldo emp={emp} aviso={aviso} aoConfirmar={() => recarregar?.()} onFechar={() => setModalSaldo(false)} />
