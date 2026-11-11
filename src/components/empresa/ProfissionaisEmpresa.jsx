@@ -18,7 +18,8 @@ const bandeiraPais = (p) => BANDEIRAS[String(p || "").trim().toLowerCase()] || "
 const STATUS = { aprovado: "Ativo/aprovado", parcial: "Ativo parcial", pendente: "Pendente", recusado: "Removido/recusado" };
 const nota = (n) => Number(n || 0);
 const arr = (v) => Array.isArray(v) ? v : [];
-const norm = (v) => String(v || "").toLocaleLowerCase("pt-BR");
+// Minúsculo e SEM acentos: busca por "monica" encontra "Mônica", "jose" → "José" etc.
+const norm = (v) => String(v || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 const text = (v, empty = "Não informado") => v || empty;
 
