@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, Search, Send, ShieldCheck, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Award, BarChart3, Bookmark, BriefcaseBusiness, CheckCircle2, ClipboardList, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, Search, Send, ShieldCheck, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
 import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
@@ -724,6 +724,52 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
               ))}
             </div>
           </div>
+
+          {/* ── Entendendo o Score ── */}
+          {Array.isArray(p.scoreDetalhe?.componentes) && (
+            <div className="vx-card" style={{ padding: 16, marginTop: 16 }}>
+              <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Por que esse score?</div>
+              {p.scoreExplicacao && <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.6 }}>{p.scoreExplicacao}</p>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {p.scoreDetalhe.componentes.filter((c) => c.chave !== "base").map((c) => {
+                  const pct = c.max ? Math.round((c.pontos / c.max) * 100) : 0;
+                  return (
+                    <div key={c.chave}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, marginBottom: 4 }}>
+                        <span style={{ color: "var(--ink)" }}>{c.label} <span className="vx-mut">· {c.valor}</span></span>
+                        <span className="vx-mut vx-mono" style={{ flexShrink: 0 }}>{Math.round(c.pontos)}/{c.max}</span>
+                      </div>
+                      <div style={{ height: 6, borderRadius: 99, background: "var(--surface-2)", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 99, background: pct >= 70 ? "var(--brand)" : pct >= 40 ? "#F59E0B" : "#EF4444" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Pontos positivos e de atenção (quiz de cadastro) ── */}
+          {((p.pontosPositivos?.length || 0) + (p.pontosNegativos?.length || 0)) > 0 && (
+            <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
+              <section className="vx-card" style={{ padding: 14 }}>
+                <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}><CheckCircle2 size={15} color="#16A34A" style={{ verticalAlign: -2, marginRight: 5 }} />Pontos positivos</h3>
+                {p.pontosPositivos?.length
+                  ? <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                      {p.pontosPositivos.map((t) => <li key={t} style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 13, lineHeight: 1.45, color: "var(--ink-2)" }}><CheckCircle2 size={14} color="#16A34A" style={{ flexShrink: 0, marginTop: 1 }} />{t}</li>)}
+                    </ul>
+                  : <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Sem destaques registrados no cadastro.</p>}
+              </section>
+              <section className="vx-card" style={{ padding: 14 }}>
+                <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}><AlertTriangle size={15} color="#B45309" style={{ verticalAlign: -2, marginRight: 5 }} />Pontos de atenção</h3>
+                {p.pontosNegativos?.length
+                  ? <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                      {p.pontosNegativos.map((t) => <li key={t} style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 13, lineHeight: 1.45, color: "var(--ink-2)" }}><AlertTriangle size={14} color="#B45309" style={{ flexShrink: 0, marginTop: 1 }} />{t}</li>)}
+                    </ul>
+                  : <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum ponto de atenção.</p>}
+              </section>
+            </div>
+          )}
 
           {/* ── Modal secundário: biografia completa ── */}
           {bioExpandida && (

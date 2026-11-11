@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
+import { detalharScore, pontosVendedor, explicacaoScore } from "../../shared/perfilVendedor.js";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { emailCadastroCompletadoAdmin } from "../services/email.js";
@@ -33,7 +34,7 @@ function getProfissionaisBase() {
   _profCache = db.prepare(`SELECT id, nome, sobrenome, pais, cidade, estado, perfil, experiencia, nota, scoreTriagem, nivel, video, perfilComercial,
     CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
     CASE WHEN curriculo IS NOT NULL AND curriculo != '' THEN 1 ELSE 0 END AS temCurriculo, curriculoNome,
-    titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, genero, criadoEm, status
+    titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, genero, criadoEm, status, xpRespostas, disc
     FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   _profCacheTs = now;
   return _profCache;
@@ -68,11 +69,19 @@ router.get("/professionals/active", (req, res) => {
   res.json(rows.map((s) => {
     let perfilComercial = {}; try { perfilComercial = JSON.parse(s.perfilComercial || "{}"); } catch {}
     const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
+    let xp = {}, disc = {};
+    try { xp = JSON.parse(s.xpRespostas || "{}"); } catch {}
+    try { disc = JSON.parse(s.disc || "{}"); } catch {}
+    const { pos: pontosPositivos, neg: pontosNegativos } = (() => { const r = pontosVendedor(xp, disc); return { pos: r.positivos, neg: r.negativos }; })();
     const m = metricas.get(s.id) || {};
     const cs = campanhas.filter((c) => c.sellerId === s.id);
     const ativas = cs.filter((c) => c.candidaturaStatus === "aprovado" && c.status !== "encerrada");
     return {
       ...s, perfilComercial,
+      xpRespostas: undefined, disc: undefined,
+      scoreDetalhe: detalharScore(xp, disc),
+      scoreExplicacao: explicacaoScore(xp, disc),
+      pontosPositivos, pontosNegativos,
       foto: s.temFoto ? `/api/sellers/${s.id}/foto` : null,
       temFoto: undefined,
       curriculo: s.temCurriculo ? `/api/sellers/${s.id}/curriculo` : null,
