@@ -1,32 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
-import { Copy, CreditCard, Loader, QrCode, ShieldCheck, X } from "lucide-react";
+import { Check, Copy, CreditCard, Loader, QrCode, ShieldCheck, Sparkles, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
-import PricingPlanos from "./PricingPlanos.jsx";
-import CheckoutStripe from "./CheckoutStripe.jsx";
+import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
-  chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui, trial: PLANOS[k].trial,
+  chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui,
 }));
 
 const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
 const mascaraCartao = (v) => SO_DIGITOS(v).slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 
 export default function PlanosEmpresa({ aviso, recarregar }) {
+  const { t } = useI18n();
   const [planos, setPlanos] = useState([]);
   const [atual, setAtual] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
-  const [ciclo, setCiclo] = useState(CICLOS.MENSAL);
   const [voucher, setVoucher] = useState("");
   const [desconto, setDesconto] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [cobranca, setCobranca] = useState(null);
-  const [forma, setForma] = useState("CREDIT_CARD");
+  const [forma, setForma] = useState("PIX");
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
-  const [stripe, setStripe] = useState(null); // pagamento internacional (US$)
-  const [embutido, setEmbutido] = useState(null); // checkout do Stripe aberto dentro do modal
 
   const carregar = useCallback(async () => {
     const [p, s] = await Promise.all([api("/plans"), api("/subscription")]);
@@ -35,75 +32,67 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     if (s && !s.error) setAtual(s);
   }, []);
 
-  useEffect(() => { carregar(); api("/stripe/status").then((r) => r && !r.error && setStripe(r)); }, [carregar]);
+  useEffect(() => { carregar(); }, [carregar]);
 
-  const abrirModal = (p, cicloEscolhido = CICLOS.MENSAL) => {
+  const abrirModal = (p) => {
     setSelecionado(p);
-    setCiclo(cicloEscolhido);
     setCobranca(null);
     setVoucher("");
     setDesconto(null);
-    setForma("CREDIT_CARD");
-    setEmbutido(null);
+    setForma("PIX");
     setCartao({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
     setTitular({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   };
 
   const aplicar = async () => {
-    const r = await api(`/vouchers/validate?codigo=${encodeURIComponent(voucher)}&plano=${selecionado.chave}&ciclo=${ciclo}`);
+    const r = await api(`/vouchers/validate?codigo=${encodeURIComponent(voucher)}&plano=${selecionado.chave}`);
     if (r?.error) { setDesconto(null); return aviso(r.error); }
     setDesconto(r);
-    aviso("Voucher aplicado ao checkout.");
+    aviso(t("sub.voucherApplied"));
   };
 
   const contratar = async () => {
-    // Empresa fora do Brasil: paga em dólar na página do Stripe.
-    if (forma === "STRIPE") {
-      setProcessando(true);
-      const r = await api("/subscription/stripe", { plano: selecionado.chave, ciclo, retorno: window.location.pathname, embutido: !!stripe?.chavePublica });
-      setProcessando(false);
-      if (r?.clientSecret && r?.chavePublica) { setEmbutido(r); return; }
-      if (!r || r.error || !r.url) return aviso(r?.error || "Não foi possível abrir o pagamento internacional.");
-      window.location.href = r.url;
-      return;
-    }
     if (forma === "CREDIT_CARD") {
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
-      if (faltando.length) return aviso("Preencha todos os dados do cartão.");
-      if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
+      if (faltando.length) return aviso(t("sub.fillCard"));
+      if (!titular.cep || !titular.numero) return aviso(t("sub.fillBillingAddress"));
     }
 
     setProcessando(true);
     const r = await api("/subscription", {
       plano: selecionado.chave,
-      ciclo,
       voucher: voucher || undefined,
       formaPagamento: forma,
       cartao: forma === "CREDIT_CARD" ? cartao : undefined,
-      titular: forma === "CREDIT_CARD" ? titular : undefined,
+      titular,
     });
     setProcessando(false);
 
-    if (r?.error) return aviso(r.error);
+    if (!r || r.error) return aviso(r?.error || t("sub.paymentError"));
 
-    if (r.jaPago) { aviso("Pagamento confirmado. Liberando seu acesso."); setSelecionado(null); await carregar(); return; }
+    setCartao(c => ({ ...c, numero: "", cvv: "" }));
+    if (r.jaPago) { aviso(t("sub.paymentConfirmed")); setSelecionado(null); await carregar(); return; }
     if (r.pixCopiaECola || r.pixQrCodeBase64) { setCobranca(r); return; }
-    if (r.status === "pendente" && r.invoiceUrl) {
-      window.open(r.invoiceUrl, "_blank", "noopener");
-      aviso(r.message || "Fatura aberta numa nova aba para você pagar.");
-      return;
-    }
 
     setCobranca(r);
     await carregar();
-    aviso(r.message || "Plano contratado com sucesso.");
+    aviso(r.message || t("sub.awaitingPayment"));
   };
 
-  const abrirPortal = async () => {
-    const r = await api("/subscription/stripe/portal", { retorno: window.location.pathname });
-    if (r?.url) window.location.href = r.url;
-    else aviso(r?.error || "Não foi possível abrir o portal de pagamento.");
-  };
+  useEffect(() => {
+    if (!cobranca?.subscriptionId || cobranca.confirmado || !selecionado) return;
+    let ativo = true;
+    const verificar = async () => {
+      const r = await api(`/subscription/payment-status?id=${encodeURIComponent(cobranca.subscriptionId)}`);
+      if (!ativo || !r || r.error) return;
+      if (["ativa", "trial"].includes(r.status)) {
+        setCobranca(c => c ? { ...c, confirmado: true } : c);
+        await carregar(); await recarregar?.();
+      } else if (r.status === "cancelada") { setCobranca(null); aviso(t("sub.checkoutCancelled")); }
+    };
+    verificar(); const timer = setInterval(verificar, 4000);
+    return () => { ativo = false; clearInterval(timer); };
+  }, [cobranca, selecionado, carregar]);
 
   const cancelar = async () => {
     const r = await apiDelete("/subscription");
@@ -115,87 +104,68 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
   if (!planos.length) return <div className="vx-card vx-skeleton" style={{ height: 180 }} />;
 
-  // Valor-base do checkout conforme o ciclo escolhido (anual = 12 meses com desconto).
-  const baseCiclo = selecionado ? valorCobradoNoCiclo(selecionado.chave, ciclo) : 0;
-  const ehAnual = ciclo === CICLOS.ANUAL;
-  const precoFinal = desconto?.valorFinal ?? baseCiclo;
-  const usdPlano = selecionado && stripe?.planos?.find((x) => x.chave === selecionado.chave);
-  const precoUsd = usdPlano ? (ehAnual ? usdPlano.anual : usdPlano.mensal) : 0;
-  const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const precoFinal = desconto?.valorFinal ?? selecionado?.preco;
 
   return (
     <div className="vx-fade">
-      <div>
-        <div style={{ padding: "4px 0 16px" }}>
-          <div className="vx-eyebrow">Assinatura empresarial</div>
-          <h1 className="vx-disp" style={{ margin: "2px 0 3px" }}>Planos RYCS</h1>
-          <p style={{ margin: 0 }}>Escolha o plano que acompanha o ritmo da sua operação: quanto mais você escala, menor a taxa por movimentações. Comece com 7 dias grátis, sem compromisso.</p>
+      <div className="vx-page-head">
+        <div>
+          <div className="vx-eyebrow">{t("sub.businessSubscription")}</div>
+          <h1 className="vx-disp">{t("sub.rycsPlans")}</h1>
+          <p>{t("sub.rycsPlansDesc")}</p>
         </div>
-
-        <div style={{ padding: "4px 0 8px" }}>
-            <PricingPlanos
-              plans={planos}
-              planoAtualChave={atual?.plano}
-              onContratar={(chave, cicloEscolhido) => {
-                const p = planos.find((x) => x.chave === chave);
-                if (p) abrirModal(p, cicloEscolhido);
-              }}
-            />
-
-            {atual?.assinatura?.status === "pendente" && (
-              <div className="vx-notice vx-notice-amber" style={{ marginTop: 14 }}>
-                Existe uma assinatura aguardando pagamento. Atualize a página após pagar; o webhook confirmará o status.
-              </div>
-            )}
-            {["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
-              <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={cancelar}>Cancelar assinatura</button>
-            )}
-            {atual?.assinatura?.gateway === "stripe" && ["ativa", "trial", "inadimplente"].includes(atual?.assinatura?.status) && (
-              <button className="vx-btn" style={{ marginTop: 14, marginLeft: 8 }} onClick={abrirPortal}>
-                <CreditCard size={14} /> Cartão e faturas (Stripe)
-              </button>
-            )}
-        </div>
+        <span className="vx-chip">{t("sub.current")}: {atual?.detalhes?.nome || "Sandbox"}</span>
       </div>
+
+      <div className="vx-grid vx-g3">
+        {planos.map((p) => {
+          const recomendado = Number(p.preco) === 999.9;
+          const ehAtual = p.chave === atual?.plano;
+          return (
+            <article key={p.chave} className={`vx-card vx-plan-card${recomendado ? " vx-plan-recommended" : ""}`}>
+              {recomendado && <span className="vx-plan-ribbon"><Sparkles size={12} />{t("sub.recommended")}</span>}
+              <h2 className="vx-disp">{p.nome}</h2>
+              <div className="vx-plan-price">{money(p.preco)}<small>/mês</small></div>
+              <span className="vx-chip">{t("sub.taskRate")}: {Math.round(p.takeRate * 100)}%</span>
+              <div className="vx-plan-benefits">{p.inclui.map((i) => <div key={i}><Check size={13} />{i}</div>)}</div>
+              <button className={`vx-btn vx-btn-block ${ehAtual ? "" : "vx-btn-primary"}`} disabled={ehAtual} onClick={() => abrirModal(p)}>
+                {ehAtual ? t("sub.currentPlan") : t("sub.subscribe")}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+
+      {atual?.assinatura?.status === "pendente" && (
+        <div className="vx-notice vx-notice-amber" style={{ marginTop: 14 }}>
+          {t("sub.pendingPaymentNotice")}
+        </div>
+      )}
+      {["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
+        <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={cancelar}>{t("sub.cancel")}</button>
+      )}
 
       {/* Modal de checkout */}
       {selecionado && (
         <div className="vx-overlay" onClick={() => setSelecionado(null)}>
-          <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: embutido ? 640 : 520 }}>
+          <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
             <div className="vx-row">
               <div>
-                <div className="vx-eyebrow">Checkout seguro</div>
+                <div className="vx-eyebrow">{t("sub.secureCheckout")}</div>
                 <h2 className="vx-disp" style={{ margin: "3px 0" }}>{selecionado.nome}</h2>
               </div>
               <button className="vx-btn vx-btn-ghost" onClick={() => setSelecionado(null)}><X size={16} /></button>
             </div>
 
-            {embutido ? (
-              <CheckoutStripe
-                chavePublica={embutido.chavePublica}
-                clientSecret={embutido.clientSecret}
-                subscriptionId={embutido.subscriptionId}
-                aoErro={(m) => { setEmbutido(null); aviso(m); }}
-                aoConcluir={async (a) => {
-                  setEmbutido(null);
-                  setSelecionado(null);
-                  await carregar();
-                  await recarregar?.();
-                  aviso(a ? `Plano ${selecionado.nome} liberado!` : "Pagamento recebido. O plano aparece em instantes; atualize a página se precisar.");
-                }}
-              />
-            ) : !cobranca ? (
+            {!cobranca ? (
               <>
                 {/* Resumo */}
                 <div className="vx-checkout-total">
-                  <span>Plano {selecionado.nome} · {ehAnual ? "anual" : "mensal"}</span><b>{money(baseCiclo)}</b>
-                  {ehAnual && (
-                    <><span>Cobrança</span><b>{money(baseCiclo)}/ano</b></>
-                  )}
+                  <span>{t("sub.originalValue")}</span><b>{money(selecionado.preco)}</b>
                   {desconto && (
                     <>
                       <span>Voucher {desconto.codigo}</span><b>- {money(desconto.desconto)}</b>
-                      <span>Total</span><strong>{money(desconto.valorFinal)}</strong>
+                      <span>{t("sub.total")}</span><strong>{money(desconto.valorFinal)}</strong>
                     </>
                   )}
                 </div>
@@ -206,41 +176,41 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   <div style={{ display: "flex", gap: 7 }}>
                     <input className="vx-input" value={voucher}
                       onChange={(e) => { setVoucher(e.target.value.toUpperCase()); setDesconto(null); }} />
-                    <button className="vx-btn" onClick={aplicar} disabled={!voucher}>Aplicar</button>
+                    <button className="vx-btn" onClick={aplicar} disabled={!voucher}>{t("sub.apply")}</button>
                   </div>
                 </label>
 
                 {/* Forma de pagamento */}
-                <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
+                <div className="vx-eyebrow" style={{ marginBottom: 10 }}>{t("sub.paymentMethod")}</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                  {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"], ["PIX", "Pix"], ...(stripe?.ativo ? [["STRIPE", "Fora do Brasil (US$)"]] : [])].map(([k, t]) => (
+                  {[["CREDIT_CARD", t("sub.creditCard")], ["DEBIT_CARD", t("sub.debitCard")], ["PIX", "Pix"]].map(([k, label]) => (
                     <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
                       flex: 1, fontSize: 12,
                       borderColor: forma === k ? "var(--brand)" : undefined,
                       background: forma === k ? "var(--brand-50)" : undefined,
                       color: forma === k ? "var(--brand)" : undefined,
-                    }}>{t}</button>
+                    }}>{label}</button>
                   ))}
                 </div>
 
                 {/* Formulário de cartão */}
-                {(forma === "CREDIT_CARD" || forma === "DEBIT_CARD") && (
+                {forma === "CREDIT_CARD" && (
                   <>
-                    <label><div className="vx-label">Nome impresso no cartão</div>
+                    <label><div className="vx-label">{t("sub.cardName")}</div>
                       <input className="vx-input" value={cartao.nome}
                         onChange={(e) => setCartao({ ...cartao, nome: e.target.value })} autoComplete="cc-name" /></label>
 
-                    <label style={{ display: "block", marginTop: 10 }}><div className="vx-label">Número do cartão</div>
+                    <label style={{ display: "block", marginTop: 10 }}><div className="vx-label">{t("sub.cardNumber")}</div>
                       <input className="vx-input vx-mono" inputMode="numeric" value={mascaraCartao(cartao.numero)}
                         onChange={(e) => setCartao({ ...cartao, numero: SO_DIGITOS(e.target.value) })}
                         placeholder="0000 0000 0000 0000" autoComplete="cc-number" /></label>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
-                      <label><div className="vx-label">Mês</div>
+                      <label><div className="vx-label">{t("sub.cardMonth")}</div>
                         <input className="vx-input vx-mono" inputMode="numeric" maxLength={2} placeholder="12"
                           value={cartao.validadeMes}
                           onChange={(e) => setCartao({ ...cartao, validadeMes: SO_DIGITOS(e.target.value).slice(0, 2) })} /></label>
-                      <label><div className="vx-label">Ano</div>
+                      <label><div className="vx-label">{t("sub.cardYear")}</div>
                         <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="2030"
                           value={cartao.validadeAno}
                           onChange={(e) => setCartao({ ...cartao, validadeAno: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
@@ -250,7 +220,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                           onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
                     </div>
 
-                    <div className="vx-eyebrow" style={{ margin: "16px 0 10px" }}>Endereço de cobrança</div>
+                    <div className="vx-eyebrow" style={{ margin: "16px 0 10px" }}>{t("sub.billingAddress")}</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                       <label><div className="vx-label">CEP</div>
                         <input className="vx-input vx-mono" inputMode="numeric" value={titular.cep}
@@ -270,58 +240,52 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
                     <div className="vx-mut" style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
                       <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                      Os dados do cartão vão direto ao processador de pagamento. A RYCS não guarda o número nem o CVV.
+                      {t("sub.cardSecurityNote")}
                     </div>
                   </>
                 )}
 
-                {forma === "STRIPE" && (
-                  <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
-                    <ShieldCheck size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                    Para empresas fora do Brasil: {usd(precoUsd)}{ehAnual ? "/ano" : "/mês"}, pagos no formulário seguro do Stripe, aqui mesmo, com cartão
-                    internacional (ou UPI, na Índia). Cupons são aplicados direto no Stripe. O plano é liberado quando o Stripe confirmar.
-                  </div>
-                )}
-
+                {forma === "DEBIT_CARD" && <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7 }}>
+                  {t("sub.debitDesc")}
+                </p>}
                 {forma === "PIX" && (
                   <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
                     <QrCode size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                    Geramos um QR Code após a confirmação. O acesso é liberado assim que o pagamento for detectado.
+                    {t("sub.pixCheckoutDesc")}
                   </div>
                 )}
 
                 <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 16 }}
                   disabled={processando} onClick={contratar}>
                   {processando
-                    ? <><Loader size={15} /> Processando…</>
-                    : forma === "STRIPE"
-                      ? <><CreditCard size={15} /> Continuar para o pagamento ({usd(precoUsd)})</>
-                      : <><CreditCard size={15} /> Confirmar {money(precoFinal ?? selecionado.preco)}</>}
+                    ? <><Loader size={15} /> {t("sub.processing")}</>
+                    : <><CreditCard size={15} /> {t("sub.confirm")} {money(precoFinal ?? selecionado.preco)}</>}
                 </button>
                 <p className="vx-chart-source">
-                  Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.
+                  {t("sub.noChargeWithoutConfirm")}
                 </p>
               </>
             ) : (
               <div style={{ textAlign: "center", paddingTop: 8 }}>
-                <h3 className="vx-disp">Pix aguardando pagamento</h3>
-                {cobranca.pixQrCodeBase64 && (
+                <h3 className="vx-disp">{cobranca.confirmado ? (cobranca.status === "trial" ? t("sub.cardRegistered") : t("sub.paymentConfirmedTitle")) : forma === "PIX" ? t("sub.payWithPix") : t("sub.awaitingPaymentTitle")}</h3>
+                {!cobranca.confirmado && cobranca.pixQrCodeBase64 && (
                   <img alt="QR Code Pix" src={`data:image/png;base64,${cobranca.pixQrCodeBase64}`}
                     style={{ width: 210, maxWidth: "100%", background: "#fff", padding: 8, borderRadius: 12 }} />
                 )}
-                {cobranca.pixCopiaECola && (
+                {!cobranca.confirmado && cobranca.pixCopiaECola && (
                   <button className="vx-btn vx-btn-primary vx-btn-block"
-                    onClick={() => { navigator.clipboard?.writeText(cobranca.pixCopiaECola); aviso("Pix copia e cola copiado."); }}>
-                    <Copy size={14} />Copiar Pix
+                    onClick={async () => { try { await navigator.clipboard.writeText(cobranca.pixCopiaECola); aviso(t("pay.pixCopied")); } catch { aviso(t("pay.pixCopyManual")); } }}>
+                    <Copy size={14} />{t("pay.copyPix")}
                   </button>
                 )}
-                {cobranca.invoiceUrl && (
+                {!cobranca.confirmado && cobranca.pixCopiaECola && <textarea aria-label="Pix copia e cola" className="vx-input vx-mono" readOnly rows={3} value={cobranca.pixCopiaECola} onFocus={e => e.target.select()} />}
+                {!cobranca.confirmado && forma !== "PIX" && cobranca.invoiceUrl && (
                   <a className="vx-btn vx-btn-block" href={cobranca.invoiceUrl} target="_blank" rel="noreferrer">
-                    Abrir cobrança
+                    {t("sub.continueDebit")}
                   </a>
                 )}
                 <div className="vx-notice vx-notice-amber" style={{ marginTop: 12 }}>
-                  Status: pendente. O plano ainda não foi ativado.
+                  {cobranca.confirmado ? (cobranca.status === "trial" ? t("sub.cardRegisteredTrial") : t("sub.paymentConfirmedPlan")) : t("sub.awaitingConfirmAuto")}
                 </div>
               </div>
             )}

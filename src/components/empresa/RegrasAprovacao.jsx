@@ -3,11 +3,13 @@ import { AlertTriangle, Gauge, Percent, ShieldCheck, Wallet } from "lucide-react
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // A empresa configura o que pode ser conferido sozinho. A tela é explícita
 // sobre o limite dessa automação: ela dispensa a conferência da empresa, nunca
 // o repasse da plataforma.
 export default function RegrasAprovacao({ aviso }) {
+  const { t } = useI18n();
   const [dados, setDados] = useState(null);
   const [regras, setRegras] = useState(null);
   const [erro, setErro] = useState("");
@@ -44,8 +46,8 @@ export default function RegrasAprovacao({ aviso }) {
     <div className="vx-card" style={{ padding: 18, marginTop: 16 }}>
       <div className="vx-row">
         <div>
-          <div className="vx-eyebrow">Conferência sem intervenção</div>
-          <h3 className="vx-disp" style={{ fontSize: 17, margin: "3px 0" }}>Aprovação automática</h3>
+          <div className="vx-eyebrow">{t("rules.eyebrow")}</div>
+          <h3 className="vx-disp" style={{ fontSize: 17, margin: "3px 0" }}>{t("rules.autoApproval")}</h3>
         </div>
         <label className="vx-chip" style={{ cursor: "pointer" }}>
           <input
@@ -54,7 +56,7 @@ export default function RegrasAprovacao({ aviso }) {
             onChange={(e) => setRegras({ ...regras, ativo: e.target.checked })}
             style={{ marginRight: 6 }}
           />
-          {regras.ativo ? "Ligada" : "Desligada"}
+          {regras.ativo ? t("rules.on") : t("rules.off")}
         </label>
       </div>
 
@@ -65,7 +67,7 @@ export default function RegrasAprovacao({ aviso }) {
       </div>
 
       <div style={{ marginTop: 16, opacity: regras.ativo ? 1 : .55, pointerEvents: regras.ativo ? "auto" : "none" }}>
-        <div className="vx-label">Ações elegíveis</div>
+        <div className="vx-label">{t("rules.eligibleActions")}</div>
         <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 6 }}>
           {elegiveis.map((t) => {
             const a = dados.amostra.porTipo[t] || {};
@@ -129,7 +131,7 @@ export default function RegrasAprovacao({ aviso }) {
       </div>
 
       <button className="vx-btn vx-btn-primary" style={{ marginTop: 16 }} disabled={salvando} onClick={salvar}>
-        {salvando ? "Salvando…" : "Salvar regras"}
+        {salvando ? t("misc.saving") : t("rules.saveRules")}
       </button>
       <div className="vx-chart-source">
         Toda decisão — automática ou humana — entra na trilha de auditoria com regra, confiança, responsável e data.

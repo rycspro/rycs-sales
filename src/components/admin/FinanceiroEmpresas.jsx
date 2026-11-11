@@ -3,8 +3,10 @@ import { Wallet, Banknote } from "lucide-react";
 import { money, agora } from "../../lib/utils.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
 import { Stat, Medidor } from "../ui.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
 
 export default function FinanceiroEmpresas({ db }) {
+  const { t } = useI18n();
   const linhas = useMemo(() => db.companies.map((c) => {
     const libs = db.submissions.filter((s) => s.companyId === c.id && s.status === "liberado");
     const totalLiberado = libs.reduce((a, s) => a + s.valor, 0);
@@ -29,11 +31,11 @@ export default function FinanceiroEmpresas({ db }) {
   return (
     <>
       <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>
-        <Stat label="Saldo somado nas empresas" value={money(totalSaldo)} Icon={Wallet} tone="muted" />
-        <Stat label="Total já aportado na plataforma" value={money(totalAportado)} Icon={Banknote} tone="muted" />
+        <Stat label={t("admin.finance.totalBalance")} value={money(totalSaldo)} Icon={Wallet} tone="muted" />
+        <Stat label={t("admin.finance.totalDeposited")} value={money(totalAportado)} Icon={Banknote} tone="muted" />
       </div>
       <div className="vx-card" style={{ padding: 18, marginBottom: 22 }}>
-        <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Projeção de faturamento (próximos 30 dias, todas as empresas)</div>
+        <div className="vx-eyebrow" style={{ marginBottom: 6 }}>{t("admin.finance.projection")}</div>
         <div className="vx-disp vx-mono" style={{ fontSize: 30, color: "var(--brand)" }}>{money(totalProjecao)}</div>
         <div className="vx-mut" style={{ fontSize: 12 }}>Taxa do plano de cada empresa sobre o ritmo de gasto atual, mais destaques mensais ativos.</div>
       </div>
@@ -53,24 +55,24 @@ export default function FinanceiroEmpresas({ db }) {
             </div>
 
             <div className="vx-grid vx-g4" style={{ marginTop: 14, fontSize: 12.5 }}>
-              <div><span className="vx-mut">Saldo atual</span><div className="vx-mono" style={{ fontWeight: 600 }}>{money(c.saldo)}</div></div>
-              <div><span className="vx-mut">Aportado</span><div className="vx-mono" style={{ fontWeight: 600 }}>{money(c.totalAportado || 0)}</div></div>
-              <div><span className="vx-mut">Pago em comissões</span><div className="vx-mono" style={{ fontWeight: 600 }}>{money(totalLiberado)}</div></div>
-              <div><span className="vx-mut">Receita até agora</span><div className="vx-mono" style={{ fontWeight: 600, color: "var(--brand)" }}>{money(receitaTaxa + (c.destaque ? 490 : 0))}</div></div>
+              <div><span className="vx-mut">{t("admin.finance.currentBalance")}</span><div className="vx-mono" style={{ fontWeight: 600 }}>{money(c.saldo)}</div></div>
+              <div><span className="vx-mut">{t("admin.finance.deposited")}</span><div className="vx-mono" style={{ fontWeight: 600 }}>{money(c.totalAportado || 0)}</div></div>
+              <div><span className="vx-mut">{t("admin.finance.paidCommissions")}</span><div className="vx-mono" style={{ fontWeight: 600 }}>{money(totalLiberado)}</div></div>
+              <div><span className="vx-mut">{t("admin.finance.revenueSoFar")}</span><div className="vx-mono" style={{ fontWeight: 600, color: "var(--brand)" }}>{money(receitaTaxa + (c.destaque ? 490 : 0))}</div></div>
             </div>
 
             <hr className="vx-sep" />
             <div className="vx-row" style={{ fontSize: 12.5, marginBottom: 8 }}>
-              <span className="vx-mut">Caixa dura, no ritmo atual</span>
+              <span className="vx-mut">{t("admin.finance.runway")}</span>
               <b style={{ color: runway === null ? "var(--muted)" : runway < 7 ? "var(--red)" : runway < 20 ? "var(--amber)" : "var(--brand)" }}>
-                {runway === null ? "sem gasto registrado" : `${runway} dia${runway === 1 ? "" : "s"}`}
+                {runway === null ? t("admin.finance.noSpend") : t("admin.finance.days", { count: runway })}
               </b>
             </div>
             {runway !== null && (
               <Medidor value={Math.min(100, (runway / 30) * 100)} tone={runway < 7 ? "red" : runway < 20 ? "amber" : "brand"} />
             )}
             {runway !== null && runway < 10 && (
-              <div style={{ fontSize: 12, color: "var(--amber)", marginTop: 8 }}>Caixa perto de zerar — vale avisar a empresa para abastecer.</div>
+              <div style={{ fontSize: 12, color: "var(--amber)", marginTop: 8 }}>{t("admin.finance.lowBalance")}</div>
             )}
           </div>
         ))}

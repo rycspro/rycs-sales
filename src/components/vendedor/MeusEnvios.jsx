@@ -5,8 +5,7 @@ import { apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { STATUS_CLIENTE } from "../empresa/ConferirEmpresa.jsx";
 import { ACOES, STATUS } from "../../lib/constants.js";
-
-const TIPO_LABEL = { agendamento: "Reunião agendada", realizada: "Visita realizada", venda: "Venda fechada", lead: "Lead gerado" };
+import { useI18n } from "../../lib/i18n.jsx";
 
 function capitalizar(nome = "") {
   return String(nome).toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
@@ -63,8 +62,10 @@ const TD = ({ children, right, muted }) => (
 );
 
 function TabelaMeusEnvios({ lista, db, up, empresa, pedirRevisao }) {
+  const { t } = useI18n();
+
   if (!lista.length)
-    return <Vazio titulo="Nada enviado ainda" texto="Registre uma ação na aba Tarefas. Ela aparece aqui com o andamento da análise." />;
+    return <Vazio titulo={t("seller.submissions.emptyTitle")} texto={t("seller.submissions.emptyDesc")} />;
 
   return (
     <div className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
@@ -72,12 +73,12 @@ function TabelaMeusEnvios({ lista, db, up, empresa, pedirRevisao }) {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
           <thead>
             <tr>
-              <TH>Empresa</TH>
-              <TH>Ação</TH>
-              <TH right>Valor</TH>
-              <TH>Data</TH>
-              <TH>Status do cliente</TH>
-              <TH>Aprovação</TH>
+              <TH>{t("seller.submissions.company")}</TH>
+              <TH>{t("seller.submissions.action")}</TH>
+              <TH right>{t("seller.submissions.value")}</TH>
+              <TH>{t("seller.submissions.date")}</TH>
+              <TH>{t("seller.submissions.clientStatus")}</TH>
+              <TH>{t("seller.submissions.approval")}</TH>
             </tr>
           </thead>
           <tbody>
@@ -92,10 +93,10 @@ function TabelaMeusEnvios({ lista, db, up, empresa, pedirRevisao }) {
                   style={{ transition: "background .1s" }}
                 >
                   <TD>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>{capitalizar(emp?.nome || "Empresa")}</div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{capitalizar(emp?.nome || t("seller.submissions.companyFallback"))}</div>
                     {camp?.titulo && <div style={{ fontSize: 11.5, color: "var(--muted)" }}>{camp.titulo}</div>}
                   </TD>
-                  <TD>{TIPO_LABEL[sub.tipo] || sub.tipo || "—"}</TD>
+                  <TD>{t(`seller.submissions.types.${sub.tipo}`, {}, sub.tipo || "—")}</TD>
                   <TD right><span style={{ fontWeight: 600, color: "var(--brand)" }}>{money(sub.valor)}</span></TD>
                   <TD muted>{dataCurta(sub.criadoEm)}</TD>
                   <TD>
@@ -116,7 +117,7 @@ function TabelaMeusEnvios({ lista, db, up, empresa, pedirRevisao }) {
                       }}>{st.txt}</span>
                       {sub.status === "ia_recusado" && pedirRevisao && (
                         <button className="vx-btn vx-btn-sm" style={{ fontSize: 11, padding: "2px 8px" }} onClick={() => pedirRevisao(sub)}>
-                          Pedir revisão
+                          {t("seller.submissions.requestReview")}
                         </button>
                       )}
                     </div>

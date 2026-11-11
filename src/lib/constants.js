@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, CircleUserRound, ClipboardCheck, MessageCircle } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -98,30 +98,20 @@ export const NAV = {
   ],
 };
 
-// Barra inferior do celular. No mobile a barra lateral some, então estes são
-// os únicos atalhos sempre à mão — por isso cada papel tem uma aba de conta
-// (Shell colapsa as telas de conta nesta aba para o destaque). Perfil, Academy
-// e Indicar do profissional também ficam dentro de "Minha conta".
 export const MOBILE_NAV = {
-  vendedor: [
-    { key: "oportunidades", label: "Oportunidades", Icon: Target },
-    { key: "academy", label: "Academy", Icon: GraduationCap },
-    { key: "carteira", label: "Carteira", Icon: Wallet },
-    { key: "conta", label: "Conta", Icon: UserIcon },
-  ],
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },
+    { key: "painel", label: "Insights", Icon: BarChart3 },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
-    { key: "conversas", label: "Conversas", Icon: MessageSquare },
-    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard },
-    { key: "configuracoes", label: "Conta", Icon: Settings },
+    { key: "conversas", label: "Conversas", Icon: MessageCircle },
+    { key: "conta", label: "Minha Conta", Icon: CircleUserRound },
   ],
-  admin: [
-    { key: "dashboard", label: "Dashboard", Icon: BarChart3 },
-    { key: "profissionais", label: "Profissionais", Icon: UserCheck },
-    { key: "empresas", label: "Empresas", Icon: Building2 },
-    { key: "liberar", label: "Liberar", Icon: Banknote },
-    { key: "saques", label: "Saques", Icon: Wallet },
+  vendedor: [
+    { key: "painel", label: "Início", Icon: Home },
+    { key: "oportunidades", label: "Campanhas", Icon: Megaphone },
+    { key: "tarefas", label: "Minhas Tarefas", Icon: ClipboardCheck },
+    { key: "conversas", label: "Conversas", Icon: MessageCircle },
+    { key: "conta", label: "Minha Conta", Icon: CircleUserRound },
   ],
 };
 

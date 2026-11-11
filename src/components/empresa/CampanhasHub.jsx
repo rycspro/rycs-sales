@@ -2,10 +2,11 @@ import { useMemo } from "react";
 import { ClipboardList, Megaphone } from "lucide-react";
 import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
 import TarefasEmpresa from "./TarefasEmpresa.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
 
 const ABAS = [
-  { key: "campanhas", label: "Campanhas", icon: Megaphone },
-  { key: "tarefas", label: "Tarefas", icon: ClipboardList },
+  { key: "campanhas", i18n: "camp.hub.campaigns", icon: Megaphone },
+  { key: "tarefas", i18n: "camp.hub.tasks", icon: ClipboardList },
 ];
 
 function Badge({ n }) {
@@ -23,6 +24,7 @@ function Badge({ n }) {
 }
 
 export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, setSecao, filtroData, bloqueado, irParaPlano }) {
+  const { t } = useI18n();
   const badges = useMemo(() => {
     const campanhas = (db.campaigns || []).filter((c) => c.companyId === emp.id);
     const leads = (db.leads || []).filter((l) => l.companyId === emp.id);
@@ -41,7 +43,7 @@ export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, se
       {/* Premium tab navigation */}
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 24 }}>
         <div style={{ display: "flex", gap: 0, overflowX: "auto", scrollbarWidth: "none" }}>
-          {ABAS.map(({ key, label, icon: Icon }) => {
+          {ABAS.map(({ key, i18n, icon: Icon }) => {
             const ativa = secao === key;
             return (
               <button
@@ -58,7 +60,7 @@ export default function CampanhasHub({ emp, db, up, aviso, recarregar, secao, se
                 }}
               >
                 <Icon size={15} strokeWidth={ativa ? 2.3 : 2} />
-                {label}
+                {t(i18n)}
                 <Badge n={badges[key]} />
               </button>
             );

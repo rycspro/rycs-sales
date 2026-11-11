@@ -3,6 +3,7 @@ import { Check, Keyboard, Mic, Pause, RotateCcw, Send, Volume2, VolumeX } from "
 import ThinkingOrb from "../ThinkingOrb.jsx";
 import { API_URL } from "../../lib/api.js";
 import { montarCampanha } from "../../../shared/objetivosCampanha.js";
+import { useI18n } from "../../lib/i18n.jsx";
 import {
   interpretarResposta, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo,
   calcularTarefasJarvas, FECHAMENTO, confirmaMontagem, paraFala, pareceEco, segmentosDeFala, fraseIncompleta,
@@ -45,17 +46,18 @@ const ECO_FALANDO = 0.45;          // 45% de pares = eco (menos agressivo para p
 const CARENCIA_POS_FALA = 0;       // sem carência pós-fala: usuário pode falar imediatamente
 
 const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", pausado: "idle", montando: "thinking" };
-const STATUS = {
-  parado: "Toque no orbe para conversar com o Jarvas",
-  conectando: "Conectando…",
-  falando: "Jarvas falando · pode interromper",
-  ouvindo: "Ouvindo…",
-  pensando: "Pensando…",
-  pausado: "Pausado · toque no orbe para continuar",
-  montando: "Montando a campanha…",
+const STATUS_KEYS = {
+  parado: "jarvas.tapToTalk",
+  conectando: "jarvas.connecting",
+  falando: "jarvas.speaking",
+  ouvindo: "jarvas.listening",
+  pensando: "jarvas.thinking",
+  pausado: "jarvas.paused",
+  montando: "jarvas.building",
 };
 
 export default function ConversaJarvas({ emp, onCampanha }) {
+  const { t } = useI18n();
   const id = useId();
   const [fase, setFase] = useState("parado");
   const [legenda, setLegenda] = useState({ palavras: [], ate: 0 });
@@ -364,7 +366,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     };
     r.onerror = (e) => {
       if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error))
-        passarParaTexto("Não consegui acessar o microfone. Libere o microfone no navegador ou continue digitando.");
+        passarParaTexto(t("jarvas.micError"));
     };
     // O navegador encerra a escuta de tempos em tempos: reabre na hora.
     r.onend = () => { rec.current = null; if (escutando.current) setTimeout(iniciarEscuta, 120); };
@@ -416,7 +418,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     const novas = aplicar(anteriores, patch);
     let fala, proximo = atual, novosChips = [];
     if (!Object.keys(patch).length) {
-      fala = atual === "ajuste" ? "Não entendi. O que mudo?" : pedirDeNovo(atual, novas, emp);
+      fala = atual === "ajuste" ? t("jarvas.didNotUnderstand") : pedirDeNovo(atual, novas, emp);
       if (atual !== "ajuste") novosChips = perguntar(atual, novas, emp).chips;
     } else {
       const reacao = reagir(patch, novas, emp, anteriores);
@@ -457,7 +459,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     // Tudo o que foi mudado no resumo (nome, valores, orçamento, prazo) vai
     // para a campanha montada.
     campanha.titulo = tituloPadrao(r);
-    await falar("Montando sua campanha.");
+    await falar(t("jarvas.buildingYourCampaign"));
     if (g !== geracao.current) return;
     mudarFase("montando");
     onCampanha(objetivo, campanha);
@@ -548,16 +550,16 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       `}</style>
 
       <button type="button" className="cj-orb" onClick={tocarOrb} disabled={fase === "montando"}
-        aria-label={fase === "parado" ? "Começar a conversa com o Jarvas" : fase === "pausado" ? "Continuar a conversa" : "Pausar a conversa"}>
+        aria-label={fase === "parado" ? t("jarvas.startConversation") : fase === "pausado" ? t("jarvas.continueConversation") : t("jarvas.pauseConversation")}>
         <ThinkingOrb state={ESTADO_ORB[fase]} size={tamanho} nivel={nivel} decorativo />
       </button>
-      <p className="cj-status" aria-hidden="true">{modoTexto && fase === "ouvindo" ? "Sua vez · escreva abaixo" : STATUS[fase]}</p>
+      <p className="cj-status" aria-hidden="true">{modoTexto && fase === "ouvindo" ? t("jarvas.yourTurnType") : t(STATUS_KEYS[fase])}</p>
 
       {/* Indicador visual de microfone — aparece quando o Jarvas está ouvindo */}
       {fase === "ouvindo" && !modoTexto && (
         <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--brand)" }}>
           <Mic size={12} />
-          <span style={{ fontVariantNumeric: "tabular-nums" }}>Microfone ativo · fale normalmente</span>
+          <span style={{ fontVariantNumeric: "tabular-nums" }}>{t("jarvas.micActive")}</span>
           <span style={{ display: "inline-flex", gap: 2, alignItems: "flex-end", height: 14 }}>
             {[0.4, 0.7, 1, 0.7, 0.4].map((h, i) => (
               <span key={i} style={{
@@ -580,10 +582,10 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         </p>
       )}
       <div className="vx-sr" aria-live="polite">{anuncio}</div>
-      {ouvido && <p className="cj-voce"><span className="vx-sr">Você disse: </span>“{ouvido}”</p>}
+      {ouvido && <p className="cj-voce"><span className="vx-sr">{t("jarvas.youSaid")} </span>{'"'}{ouvido}{'"'}</p>}
 
       {chips.length > 0 && ativo && (
-        <div className="cj-chips" role="group" aria-label="Respostas rápidas">
+        <div className="cj-chips" role="group" aria-label={t("jarvas.quickReplies")}>
           {chips.map((c) => <button key={c.rotulo} type="button" className="vx-btn vx-btn-sm" onClick={() => escolherChip(c)}>{c.rotulo}</button>)}
         </div>
       )}
@@ -593,7 +595,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
           <dl>{linhasResumo.map(([k, v]) => <div key={k} style={{ display: "contents" }}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
           <button type="button" className="vx-btn vx-btn-primary vx-btn-block" style={{ minHeight: 48, marginTop: 14 }}
             onClick={montar} disabled={fase === "montando"}>
-            <Check size={15} /> Montar campanha
+            <Check size={15} /> {t("jarvas.buildCampaign")}
           </button>
         </div>
       )}
@@ -602,10 +604,10 @@ export default function ConversaJarvas({ emp, onCampanha }) {
 
       {modoTexto && ativo && (
         <form className="cj-texto" onSubmit={enviarTexto}>
-          <label htmlFor={`${id}-txt`} className="vx-sr">Responder ao Jarvas por escrito</label>
+          <label htmlFor={`${id}-txt`} className="vx-sr">{t("jarvas.replyByText")}</label>
           <input id={`${id}-txt`} ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} autoComplete="off"
-            placeholder={campo.current === "ajuste" ? "Peça uma mudança ou diga \"pode montar\"" : "Escreva sua resposta…"} />
-          <button type="submit" className="cj-enviar" aria-label="Enviar" disabled={!texto.trim()}><Send size={17} /></button>
+            placeholder={campo.current === "ajuste" ? t("jarvas.adjustPlaceholder") : t("jarvas.typePlaceholder")} />
+          <button type="submit" className="cj-enviar" aria-label={t("app.send")} disabled={!texto.trim()}><Send size={17} /></button>
         </form>
       )}
 
@@ -613,20 +615,20 @@ export default function ConversaJarvas({ emp, onCampanha }) {
         <div className="cj-rodape">
           {SR && (
             <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={alternarTexto}>
-              {modoTexto ? <><Mic size={14} /> Falar</> : <><Keyboard size={14} /> Prefiro digitar</>}
+              {modoTexto ? <><Mic size={14} /> {t("jarvas.speak")}</> : <><Keyboard size={14} /> {t("jarvas.preferTyping")}</>}
             </button>
           )}
           {ativo && (
             <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={tocarOrb}>
-              {fase === "pausado" ? <><Mic size={14} /> Continuar</> : <><Pause size={14} /> Pausar</>}
+              {fase === "pausado" ? <><Mic size={14} /> {t("app.continue")}</> : <><Pause size={14} /> {t("jarvas.pause")}</>}
             </button>
           )}
           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" aria-pressed={mudo}
             onClick={() => { setMudo((m) => !m); if (!mudo) pararFala(); }}>
-            {mudo ? <><VolumeX size={14} /> Som desligado</> : <><Volume2 size={14} /> Som ligado</>}
+            {mudo ? <><VolumeX size={14} /> {t("jarvas.soundOff")}</> : <><Volume2 size={14} /> {t("jarvas.soundOn")}</>}
           </button>
           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={recomecar} disabled={fase === "montando"}>
-            <RotateCcw size={13} /> Recomeçar
+            <RotateCcw size={13} /> {t("jarvas.restart")}
           </button>
         </div>
       )}

@@ -6,38 +6,40 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora, money, dataCurta } from "../../lib/utils.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 const PERFIL_LABEL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
 const arr = (v) => Array.isArray(v) ? v : [];
 const norm = (v) => String(v || "").toLocaleLowerCase("pt-BR");
 
-function fitCultural(p, emp, campanhas) {
+function fitCultural(p, emp, campanhas, t) {
   const campanha = campanhas?.[0] || {};
   const pontos = [];
   const atencao = [];
   let score = 35;
-  if (campanha.funcao && p.perfil === campanha.funcao) { score += 18; pontos.push("função alinhada à campanha"); } else if (campanha.funcao) atencao.push("função principal diferente da campanha");
-  if (campanha.regiao && norm(`${p.cidade} ${p.estado} ${arr(p.regioes).join(" ")}`).includes(norm(campanha.regiao))) { score += 10; pontos.push("região compatível"); } else if (campanha.regiao) atencao.push("região não confirmada");
-  if (campanha.segmento && arr(p.segmentos).some((s) => norm(campanha.segmento).includes(norm(s)) || norm(s).includes(norm(campanha.segmento)))) { score += 14; pontos.push("experiência no segmento"); } else if (campanha.segmento) atencao.push("segmento sem histórico explícito");
-  if (arr(p.modalidades).some((m) => norm(`${emp?.produto || ""} ${emp?.icp || ""} ${campanha.objetivo || ""}`).includes(norm(m)))) { score += 8; pontos.push("preferências próximas da operação"); }
-  if (p.disponibilidade) { score += 7; pontos.push("disponibilidade declarada"); } else atencao.push("disponibilidade não informada");
-  if (Number(p.nota || 0) >= 80) { score += 8; pontos.push("score operacional alto"); } else atencao.push("score requer acompanhamento");
-  return { campanha, percentual: Math.min(100, score), pontos: pontos.length ? pontos : ["dados reais disponíveis, sem compatibilidade forte registrada"], atencao: atencao.length ? atencao : ["sem ponto crítico identificado nos dados disponíveis"] };
+  if (campanha.funcao && p.perfil === campanha.funcao) { score += 18; pontos.push(t("conv.fit.roleAligned")); } else if (campanha.funcao) atencao.push(t("conv.fit.roleDifferent"));
+  if (campanha.regiao && norm(`${p.cidade} ${p.estado} ${arr(p.regioes).join(" ")}`).includes(norm(campanha.regiao))) { score += 10; pontos.push(t("conv.fit.regionMatch")); } else if (campanha.regiao) atencao.push(t("conv.fit.regionNotConfirmed"));
+  if (campanha.segmento && arr(p.segmentos).some((s) => norm(campanha.segmento).includes(norm(s)) || norm(s).includes(norm(campanha.segmento)))) { score += 14; pontos.push(t("conv.fit.segmentExp")); } else if (campanha.segmento) atencao.push(t("conv.fit.segmentNoHistory"));
+  if (arr(p.modalidades).some((m) => norm(`${emp?.produto || ""} ${emp?.icp || ""} ${campanha.objetivo || ""}`).includes(norm(m)))) { score += 8; pontos.push(t("conv.fit.prefsClose")); }
+  if (p.disponibilidade) { score += 7; pontos.push(t("conv.fit.availDeclared")); } else atencao.push(t("conv.fit.availNotInformed"));
+  if (Number(p.nota || 0) >= 80) { score += 8; pontos.push(t("conv.fit.highScore")); } else atencao.push(t("conv.fit.scoreNeedsFollow"));
+  return { campanha, percentual: Math.min(100, score), pontos: pontos.length ? pontos : [t("conv.fit.noStrongMatch")], atencao: atencao.length ? atencao : [t("conv.fit.noCriticalIssue")] };
 }
 
-function resumoIA(p) {
+function resumoIA(p, t) {
   const partes = [];
-  if (p.perfilComercial?.estilo) partes.push(`Perfil comportamental: ${p.perfilComercial.estilo}.`);
-  if (p.experiencia) partes.push(`Experiência: ${p.experiencia}.`);
+  if (p.perfilComercial?.estilo) partes.push(`${t("conv.ai.behavioral")}: ${p.perfilComercial.estilo}.`);
+  if (p.experiencia) partes.push(`${t("conv.ai.experience")}: ${p.experiencia}.`);
   const fortes = [...arr(p.skills), ...arr(p.segmentos)].slice(0, 5);
-  if (fortes.length) partes.push(`Pontos fortes: ${fortes.join(", ")}.`);
-  if (p.perfil || arr(p.modalidades).length) partes.push(`Operação ideal: ${[PERFIL_LABEL[p.perfil] || p.perfil, ...arr(p.modalidades).slice(0, 3)].filter(Boolean).join(", ")}.`);
-  if (p.perfilComercial?.abordagem) partes.push(`Estilo de abordagem: ${p.perfilComercial.abordagem}.`);
-  if (p.tarefasRealizadas || p.resultadosGerados) partes.push(`Resultados históricos: ${p.tarefasAprovadas}/${p.tarefasRealizadas} tarefas aprovadas, ${p.resultadosGerados} resultado(s) gerado(s).`);
-  return partes.length ? partes.join(" ") : "Sem dados reais suficientes para gerar resumo confiável.";
+  if (fortes.length) partes.push(`${t("conv.ai.strengths")}: ${fortes.join(", ")}.`);
+  if (p.perfil || arr(p.modalidades).length) partes.push(`${t("conv.ai.idealOp")}: ${[PERFIL_LABEL[p.perfil] || p.perfil, ...arr(p.modalidades).slice(0, 3)].filter(Boolean).join(", ")}.`);
+  if (p.perfilComercial?.abordagem) partes.push(`${t("conv.ai.approach")}: ${p.perfilComercial.abordagem}.`);
+  if (p.tarefasRealizadas || p.resultadosGerados) partes.push(`${t("conv.ai.historicalResults")}: ${p.tarefasAprovadas}/${p.tarefasRealizadas} ${t("conv.ai.tasksApproved")}, ${p.resultadosGerados} ${t("conv.ai.resultsGenerated")}.`);
+  return partes.length ? partes.join(" ") : t("conv.ai.noData");
 }
 
 function PerfilModal({ seller, db, emp, empId, onFechar }) {
+  const { t } = useI18n();
   const [bioExpandida, setBioExpandida] = useState(false);
   const p = seller;
   const subs = (db.submissions || []).filter((s) => s.companyId === empId && s.sellerId === p.id);
@@ -51,13 +53,13 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
   const taxa = subs.length ? Math.round(aprovadas / subs.length * 100) : 0;
   const nomeCompleto = capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome || "");
   const campanhasEmpresa = (db.campaigns || []).filter((c) => c.companyId === empId);
-  const fit = fitCultural(p, emp, campanhasEmpresa);
+  const fit = fitCultural(p, emp, campanhasEmpresa, t);
 
   const canais = [
     p.whats && { label: "WhatsApp", icon: "📱", href: `https://wa.me/${p.whats.replace(/\D/g, "")}` },
-    p.email && { label: "E-mail", icon: "✉️", href: `mailto:${p.email}` },
-    arr(p.modalidades).some((m) => /video|confer/i.test(m)) && { label: "Videoconferência", icon: "🎥", href: null },
-    p.telefone && { label: "Telefone", icon: "📞", href: `tel:${p.telefone}` },
+    p.email && { label: t("conv.channel.email"), icon: "✉️", href: `mailto:${p.email}` },
+    arr(p.modalidades).some((m) => /video|confer/i.test(m)) && { label: t("conv.channel.video"), icon: "🎥", href: null },
+    p.telefone && { label: t("conv.channel.phone"), icon: "📞", href: `tel:${p.telefone}` },
   ].filter(Boolean);
 
   return (
@@ -66,7 +68,7 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
 
         {/* cabeçalho */}
         <div className="vx-row" style={{ marginBottom: 16 }}>
-          <div className="vx-eyebrow">Perfil completo</div>
+          <div className="vx-eyebrow">{t("conv.profile.full")}</div>
           <button className="vx-btn vx-btn-ghost" onClick={onFechar}><X size={16} /></button>
         </div>
 
@@ -94,19 +96,19 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
                   {(p.bio || p.experiencia).length > 320 && (
                     <button type="button" onClick={() => setBioExpandida(true)}
                       style={{ background: "none", border: "none", padding: 0, marginTop: 4, fontSize: 12.5, color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>
-                      Ler biografia completa →
+                      {t("conv.profile.readBio")}
                     </button>
                   )}
                 </>
               ) : (
-                <p className="vx-mut" style={{ fontSize: 13, margin: 0, fontStyle: "italic" }}>Apresentação em atualização.</p>
+                <p className="vx-mut" style={{ fontSize: 13, margin: 0, fontStyle: "italic" }}>{t("conv.profile.bioUpdating")}</p>
               )}
             </div>
 
             {/* canais */}
             {canais.length > 0 && (
               <div>
-                <div className="vx-eyebrow" style={{ marginBottom: 7 }}>Canais de Atendimento</div>
+                <div className="vx-eyebrow" style={{ marginBottom: 7 }}>{t("conv.profile.channels")}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {canais.map(({ label, icon, href }) =>
                     href
@@ -121,20 +123,20 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
 
         {/* DADOS DO PERFIL */}
         <div className="vx-card" style={{ padding: "14px 18px", marginTop: 20 }}>
-          <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Dados do Perfil</div>
+          <div className="vx-eyebrow" style={{ marginBottom: 12 }}>{t("conv.profile.data")}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px 20px", fontSize: 13 }}>
-            <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Função</div><b>{PERFIL_LABEL[p.perfil] || p.perfil || "Não informada"}</b></div>
-            <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Localização</div><b>{[p.cidade, p.estado].filter(Boolean).join(" / ") || "—"}</b></div>
-            {p.disponibilidade && <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Disponibilidade</div><b>{p.disponibilidade}</b></div>}
+            <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>{t("conv.profile.role")}</div><b>{PERFIL_LABEL[p.perfil] || p.perfil || t("conv.profile.notInformed")}</b></div>
+            <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>{t("conv.profile.location")}</div><b>{[p.cidade, p.estado].filter(Boolean).join(" / ") || "—"}</b></div>
+            {p.disponibilidade && <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>{t("conv.profile.availability")}</div><b>{p.disponibilidade}</b></div>}
             {arr(p.segmentos).length > 0 && (
               <div style={{ gridColumn: "span 2" }}>
-                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>Segmentos</div>
+                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>{t("conv.profile.segments")}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{arr(p.segmentos).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 11 }}>{s}</span>)}</div>
               </div>
             )}
             {arr(p.skills).length > 0 && (
               <div style={{ gridColumn: "span 2" }}>
-                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>Habilidades</div>
+                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 5 }}>{t("conv.profile.skills")}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{arr(p.skills).map((s) => <span key={s} className="vx-chip" style={{ fontSize: 11 }}>{s}</span>)}</div>
               </div>
             )}
@@ -143,14 +145,14 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
 
         {/* INDICADORES — 5 cards igual ao de Profissionais */}
         <div style={{ marginTop: 16 }}>
-          <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Indicadores de Desempenho</div>
+          <div className="vx-eyebrow" style={{ marginBottom: 12 }}>{t("conv.profile.performance")}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
             {[
               { label: "Score", val: p.nota ?? 0 },
-              { label: "Tarefas", val: `${aprovadas}/${subs.length}` },
-              { label: "Aprovação", val: `${taxa}%` },
-              { label: "Vendas", val: vendas },
-              { label: "Compatibilidade", val: `${fit.percentual}%` },
+              { label: t("conv.profile.tasks"), val: `${aprovadas}/${subs.length}` },
+              { label: t("conv.profile.approval"), val: `${taxa}%` },
+              { label: t("conv.profile.sales"), val: vendas },
+              { label: t("conv.profile.compatibility"), val: `${fit.percentual}%` },
             ].map(({ label, val }) => (
               <div key={label} className="vx-card" style={{ padding: "12px 8px", textAlign: "center" }}>
                 <div className="vx-mono" style={{ fontSize: 22, fontWeight: 700, color: "var(--brand)" }}>{val}</div>
@@ -165,7 +167,7 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
           <div className="vx-overlay" onClick={() => setBioExpandida(false)} style={{ zIndex: 1100 }}>
             <div className="vx-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
               <div className="vx-row" style={{ marginBottom: 16 }}>
-                <h3 className="vx-disp" style={{ margin: 0 }}>Biografia — {nomeCompleto}</h3>
+                <h3 className="vx-disp" style={{ margin: 0 }}>{t("conv.profile.biography")} — {nomeCompleto}</h3>
                 <button className="vx-btn vx-btn-ghost" onClick={() => setBioExpandida(false)}><X size={16} /></button>
               </div>
               <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", textAlign: "justify" }}>{p.bio || p.experiencia}</p>
@@ -176,13 +178,13 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
         {/* MÉTRICAS COMPLETAS */}
         <div className="vx-grid vx-g4" style={{ marginTop: 20 }}>
           {[
-            ["Score geral", p.nota ?? 0],
-            ["Tarefas aprovadas", `${aprovadas}/${subs.length}`],
-            ["Taxa de aprovação", `${taxa}%`],
-            ["Ganhos totais", money(ganhos)],
-            ["Reuniões", reunioes],
-            ["Visitas", visitas],
-            ["Vendas", vendas],
+            [t("conv.metrics.overallScore"), p.nota ?? 0],
+            [t("conv.metrics.tasksApproved"), `${aprovadas}/${subs.length}`],
+            [t("conv.metrics.approvalRate"), `${taxa}%`],
+            [t("conv.metrics.totalEarnings"), money(ganhos)],
+            [t("conv.metrics.meetings"), reunioes],
+            [t("conv.metrics.visits"), visitas],
+            [t("conv.metrics.sales"), vendas],
             ["Leads", leads.length],
           ].map(([label, val]) => (
             <div key={label} className="vx-scenario"><span>{label}</span><strong>{val}</strong></div>
@@ -192,51 +194,51 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
         {/* RESUMO COM IA + CERTIFICAÇÕES */}
         <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
           <section className="vx-card" style={{ padding: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 15 }}>Resumo com IA</h3>
-            <p className="vx-mut" style={{ lineHeight: 1.6 }}>{resumoIA(p)}</p>
-            <h3 className="vx-disp" style={{ fontSize: 15 }}>Fit cultural</h3>
-            <div className="vx-row"><b className="vx-mono" style={{ fontSize: 24 }}>{fit.percentual}%</b><span className="vx-chip">{fit.campanha?.titulo || "campanha de referência"}</span></div>
-            <p className="vx-mut">Compatibilidade: {fit.pontos.join("; ")}.</p>
-            <p className="vx-mut">Pontos de atenção: {fit.atencao.join("; ")}.</p>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("conv.profile.aiSummary")}</h3>
+            <p className="vx-mut" style={{ lineHeight: 1.6 }}>{resumoIA(p, t)}</p>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("conv.profile.culturalFit")}</h3>
+            <div className="vx-row"><b className="vx-mono" style={{ fontSize: 24 }}>{fit.percentual}%</b><span className="vx-chip">{fit.campanha?.titulo || t("conv.profile.refCampaign")}</span></div>
+            <p className="vx-mut">{t("conv.profile.compatibilityLabel")}: {fit.pontos.join("; ")}.</p>
+            <p className="vx-mut">{t("conv.profile.attentionPoints")}: {fit.atencao.join("; ")}.</p>
           </section>
           <section className="vx-card" style={{ padding: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 15 }}>Certificações</h3>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("conv.profile.certifications")}</h3>
             {p.certificacoes?.length
               ? p.certificacoes.map((c) => (
                   <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}>
                     <CheckCircle2 size={12} />{PERFIL_LABEL[c.funcao] || c.funcao} · {c.percentual}%
                   </span>
                 ))
-              : <p className="vx-mut">Nenhuma certificação publicada.</p>
+              : <p className="vx-mut">{t("conv.profile.noCertifications")}</p>
             }
-            <p className="vx-mut" style={{ marginTop: 8 }}>Treinamentos concluídos: {p.certificacoes?.length || 0}</p>
+            <p className="vx-mut" style={{ marginTop: 8 }}>{t("conv.profile.trainingsCompleted")}: {p.certificacoes?.length || 0}</p>
           </section>
         </div>
 
         {/* HISTÓRICO + TREINAMENTOS */}
         <div className="vx-grid vx-g2" style={{ marginTop: 14 }}>
           <section className="vx-card" style={{ padding: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 15 }}>Histórico e resultados</h3>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("conv.profile.history")}</h3>
             {p.campanhas?.length
               ? <div className="vx-compact-list">{p.campanhas.slice(0, 8).map((c) => (
-                  <div key={c.id}><div><b>{c.titulo}</b><span>{PERFIL_LABEL[c.funcao] || c.funcao || "Função não informada"} · {c.regiao || "sem região"}</span></div><span className="vx-chip">{c.candidaturaStatus || c.status}</span></div>
+                  <div key={c.id}><div><b>{c.titulo}</b><span>{PERFIL_LABEL[c.funcao] || c.funcao || t("conv.profile.notInformed")} · {c.regiao || t("conv.profile.noRegion")}</span></div><span className="vx-chip">{c.candidaturaStatus || c.status}</span></div>
                 ))}</div>
-              : <p className="vx-mut">Sem histórico de campanhas nesta empresa.</p>
+              : <p className="vx-mut">{t("conv.profile.noHistory")}</p>
             }
-            <p className="vx-mut">Tarefas recusadas: {recusadas} · Leads: {leads.length}</p>
+            <p className="vx-mut">{t("conv.profile.rejectedTasks")}: {recusadas} · Leads: {leads.length}</p>
           </section>
           <section className="vx-card" style={{ padding: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 15 }}>Treinamentos, feedbacks e certificações</h3>
+            <h3 className="vx-disp" style={{ fontSize: 15 }}>{t("conv.profile.trainingFeedback")}</h3>
             {p.certificacoes?.length
               ? p.certificacoes.map((c) => (
                   <span key={`${c.funcao}-${c.percentual}`} className="vx-chip" style={{ marginRight: 6, marginBottom: 6 }}>
                     <CheckCircle2 size={12} />{PERFIL_LABEL[c.funcao] || c.funcao} · {c.percentual}%
                   </span>
                 ))
-              : <p className="vx-mut">Nenhuma certificação publicada.</p>
+              : <p className="vx-mut">{t("conv.profile.noCertifications")}</p>
             }
-            <p className="vx-mut">Treinamentos concluídos: {p.certificacoes?.length || 0}</p>
-            <p className="vx-mut">Feedbacks: não há feedbacks publicados para esta empresa.</p>
+            <p className="vx-mut">{t("conv.profile.trainingsCompleted")}: {p.certificacoes?.length || 0}</p>
+            <p className="vx-mut">{t("conv.profile.noFeedbacks")}</p>
           </section>
         </div>
       </div>
@@ -254,34 +256,36 @@ function capitalizar(nome = "") {
   return String(nome).toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function horaOuData(ts) {
+function horaOuData(ts, t, lang) {
   if (!ts) return "";
   const d = new Date(ts);
   const hoje = new Date();
   const ontem = new Date(hoje);
   ontem.setDate(hoje.getDate() - 1);
+  const loc = lang || "en";
   if (d.toDateString() === hoje.toDateString())
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  if (d.toDateString() === ontem.toDateString()) return "Ontem";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    return d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === ontem.toDateString()) return t("conv.time.yesterday");
+  return d.toLocaleDateString(loc, { day: "2-digit", month: "2-digit" });
 }
 
-function labelData(ts) {
+function labelData(ts, t, lang) {
   const d = new Date(ts);
   const hoje = new Date();
   const ontem = new Date(hoje);
   ontem.setDate(hoje.getDate() - 1);
-  if (d.toDateString() === hoje.toDateString()) return "Hoje";
-  if (d.toDateString() === ontem.toDateString()) return "Ontem";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const loc = lang || "en";
+  if (d.toDateString() === hoje.toDateString()) return t("conv.time.today");
+  if (d.toDateString() === ontem.toDateString()) return t("conv.time.yesterday");
+  return d.toLocaleDateString(loc, { day: "2-digit", month: "long", year: "numeric" });
 }
 
-function agruparPorData(msgs) {
+function agruparPorData(msgs, t, lang) {
   const grupos = [];
   let diaAtual = null;
   for (const m of msgs) {
     const dia = new Date(m.ts).toDateString();
-    if (dia !== diaAtual) { grupos.push({ tipo: "separador", label: labelData(m.ts), ts: m.ts }); diaAtual = dia; }
+    if (dia !== diaAtual) { grupos.push({ tipo: "separador", label: labelData(m.ts, t, lang), ts: m.ts }); diaAtual = dia; }
     grupos.push({ tipo: "msg", ...m });
   }
   return grupos;
@@ -310,7 +314,8 @@ function Avatar({ nome, foto, size = 40, fontSize = 15, className = "" }) {
 // ── Item da lista de conversas ─────────────────────────────────────────────────
 
 function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
-  const nome = capitalizar(c.seller?.nome || "Profissional");
+  const { t, lang } = useI18n();
+  const nome = capitalizar(c.seller?.nome || t("conv.professional"));
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef(null);
 
@@ -322,16 +327,16 @@ function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
   }, [menuAberto]);
 
   const previewTexto = (() => {
-    if (!c.ultima) return "Sem mensagens";
-    const prefixo = c.ultima.de === "empresa" ? "Você: " : "";
+    if (!c.ultima) return t("conv.noMessages");
+    const prefixo = c.ultima.de === "empresa" ? `${t("conv.you")}: ` : "";
     if (c.ultima.anexo) {
       try {
         const a = JSON.parse(c.ultima.anexo);
-        if (a.tipo === "imagem") return prefixo + "📷 Foto";
-        if (a.tipo === "audio") return prefixo + "🎤 Áudio";
+        if (a.tipo === "imagem") return prefixo + `📷 ${t("conv.attach.photo")}`;
+        if (a.tipo === "audio") return prefixo + `🎤 ${t("conv.attach.audio")}`;
         if (a.tipo === "gif") return prefixo + "GIF";
-        if (a.tipo === "documento") return prefixo + `📄 ${a.nome || "Documento"}`;
-        if (a.tipo === "lead_card") return prefixo + "📋 Lead compartilhado";
+        if (a.tipo === "documento") return prefixo + `📄 ${a.nome || t("conv.attach.document")}`;
+        if (a.tipo === "lead_card") return prefixo + `📋 ${t("conv.attach.sharedLead")}`;
       } catch { /* */ }
     }
     return prefixo + (c.ultima.texto || "");
@@ -374,7 +379,7 @@ function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
               fontSize: 15, color: "#0B1220",
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>{nome}</span>
-            <span style={{ fontSize: 11.5, color: "#94A3B8", flexShrink: 0 }}>{horaOuData(c.ultima?.ts)}</span>
+            <span style={{ fontSize: 11.5, color: "#94A3B8", flexShrink: 0 }}>{horaOuData(c.ultima?.ts, t, lang)}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 4 }}>
             <span style={{
@@ -402,7 +407,7 @@ function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             color: "#64748B", fontSize: 15, fontWeight: 700, letterSpacing: 1,
           }}
-          title="Opções"
+          title={t("conv.menu.options")}
         >⋯</button>
         {menuAberto && (
           <div style={{
@@ -411,9 +416,9 @@ function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
             boxShadow: "0 4px 20px rgba(0,0,0,.12)", minWidth: 170, overflow: "hidden",
           }}>
             {[
-              { label: arquivada ? "Desarquivar" : "Arquivar", action: () => { onArquivar(); setMenuAberto(false); } },
-              { label: "Apagar conversa", action: () => { onApagar(); setMenuAberto(false); }, danger: true },
-              { label: "Denunciar", action: () => { alert("Denúncia registrada. Nossa equipe vai analisar."); setMenuAberto(false); }, danger: true },
+              { label: arquivada ? t("conv.menu.unarchive") : t("conv.menu.archive"), action: () => { onArquivar(); setMenuAberto(false); } },
+              { label: t("conv.menu.deleteConv"), action: () => { onApagar(); setMenuAberto(false); }, danger: true },
+              { label: t("conv.menu.report"), action: () => { alert(t("conv.menu.reportConfirm")); setMenuAberto(false); }, danger: true },
             ].map((item) => (
               <button
                 key={item.label}
@@ -438,8 +443,9 @@ function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
 // ── Área de mensagens ─────────────────────────────────────────────────────────
 
 function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
+  const { t, lang } = useI18n();
   const fimRef = useRef(null);
-  const itens = agruparPorData([...msgs].sort((a, b) => a.ts - b.ts));
+  const itens = agruparPorData([...msgs].sort((a, b) => a.ts - b.ts), t, lang);
 
   useEffect(() => {
     fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -449,8 +455,8 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
     return (
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 10, color: "#94A3B8" }}>
         <MessageSquare size={32} strokeWidth={1.5} />
-        <p style={{ margin: 0, fontSize: 13.5, fontWeight: 500 }}>Nenhuma mensagem ainda</p>
-        <p style={{ margin: 0, fontSize: 12, color: "#CBD5E1" }}>Envie a primeira mensagem abaixo</p>
+        <p style={{ margin: 0, fontSize: 13.5, fontWeight: 500 }}>{t("conv.noMessagesYet")}</p>
+        <p style={{ margin: 0, fontSize: 12, color: "#CBD5E1" }}>{t("conv.sendFirst")}</p>
       </div>
     );
 
@@ -506,7 +512,7 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
                   );
                   if (anexo?.tipo === "lead_card") return (
                     <div style={{ padding: "10px 12px", minWidth: 220 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.7, marginBottom: 6, textTransform: "uppercase" }}>📋 Lead compartilhado</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.7, marginBottom: 6, textTransform: "uppercase" }}>📋 {t("conv.attach.sharedLead")}</div>
                       {anexo.tipo_acao && <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{anexo.tipo_acao}</div>}
                       {anexo.campanha && <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 2 }}>📢 {anexo.campanha}</div>}
                       {anexo.data && <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>🗓 {anexo.data}</div>}
@@ -527,7 +533,7 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
                       <FileText size={18} />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{anexo.nome}</div>
-                        <div style={{ fontSize: 11, opacity: 0.7 }}>Toque para baixar</div>
+                        <div style={{ fontSize: 11, opacity: 0.7 }}>{t("conv.attach.tapDownload")}</div>
                       </div>
                       <Download size={14} style={{ marginLeft: 4, opacity: 0.7 }} />
                     </a>
@@ -536,7 +542,7 @@ function AreaMensagens({ msgs, companyId, nomeEmpresa, seller }) {
                 })()}
               </div>
               <div style={{ fontSize: 10.5, color: "#94A3B8", marginTop: 3, display: "flex", alignItems: "center", gap: 3, justifyContent: meu ? "flex-end" : "flex-start", paddingLeft: meu ? 0 : 4, paddingRight: meu ? 4 : 0 }}>
-                <span>{new Date(item.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                <span>{new Date(item.ts).toLocaleTimeString(lang || "en", { hour: "2-digit", minute: "2-digit" })}</span>
                 {meu && (
                   lida
                     ? <CheckCheck size={13} color="#2563EB" strokeWidth={2.5} />
@@ -602,6 +608,7 @@ const btnAnexoStyle = {
 };
 
 function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
+  const { t } = useI18n();
   const [txt, setTxt] = useState("");
   const [gravando, setGravando] = useState(false);
   const [tempoGrav, setTempoGrav] = useState(0);
@@ -677,7 +684,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    if (file.size > 5 * 1024 * 1024) { alert("Documento muito grande. Máximo 5MB."); return; }
+    if (file.size > 5 * 1024 * 1024) { alert(t("conv.docTooLarge")); return; }
     const dados = await lerArquivoBase64(file);
     onEnviarAnexo({ tipo: "documento", nome: file.name, mime: file.type, dados });
   };
@@ -702,7 +709,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
       setTempoGrav(0);
       timerRef.current = setInterval(() => setTempoGrav((t) => t + 1), 1000);
     } catch {
-      alert("Permissão de microfone negada.");
+      alert(t("conv.micDenied"));
     }
   };
 
@@ -754,10 +761,10 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
       {gravando && (
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", background: "#FEF2F2", borderBottom: "1px solid #FECACA" }}>
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#DC2626", animation: "pulse 1s infinite", flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: "#B91C1C", fontWeight: 600 }}>Gravando… {fmtTempo(tempoGrav)}</span>
+          <span style={{ fontSize: 13, color: "#B91C1C", fontWeight: 600 }}>{t("conv.recording")} {fmtTempo(tempoGrav)}</span>
           <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-            <button onClick={cancelarGravacao} style={{ padding: "5px 12px", fontSize: 12, background: "none", border: "1px solid #FECACA", borderRadius: 8, color: "#B91C1C", cursor: "pointer" }}>Cancelar</button>
-            <button onClick={pararGravacao} style={{ padding: "5px 12px", fontSize: 12, background: "#DC2626", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontWeight: 600 }}>Enviar áudio</button>
+            <button onClick={cancelarGravacao} style={{ padding: "5px 12px", fontSize: 12, background: "none", border: "1px solid #FECACA", borderRadius: 8, color: "#B91C1C", cursor: "pointer" }}>{t("app.cancel")}</button>
+            <button onClick={pararGravacao} style={{ padding: "5px 12px", fontSize: 12, background: "#DC2626", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontWeight: 600 }}>{t("conv.sendAudio")}</button>
           </div>
         </div>
       )}
@@ -768,19 +775,19 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
           <input ref={fotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={enviarFoto} />
           <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style={{ display: "none" }} onChange={enviarDoc} />
 
-          <button onClick={() => fotoRef.current?.click()} title="Enviar foto" disabled={gravando || enviando}
+          <button onClick={() => fotoRef.current?.click()} title={t("conv.sendPhoto")} disabled={gravando || enviando}
             style={btnAnexoStyle}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
           ><Image size={15} /></button>
 
-          <button onClick={() => docRef.current?.click()} title="Enviar documento" disabled={gravando || enviando}
+          <button onClick={() => docRef.current?.click()} title={t("conv.sendDoc")} disabled={gravando || enviando}
             style={btnAnexoStyle}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
           ><FileText size={15} /></button>
 
-          <button onClick={gravando ? pararGravacao : iniciarGravacao} title={gravando ? "Parar gravação" : "Gravar áudio"} disabled={enviando}
+          <button onClick={gravando ? pararGravacao : iniciarGravacao} title={gravando ? t("conv.stopRecording") : t("conv.recordAudio")} disabled={enviando}
             style={{ ...btnAnexoStyle, border: `1.5px solid ${gravando ? "#DC2626" : "#E2E8F0"}`, background: gravando ? "#FEF2F2" : "#F8FAFC", color: gravando ? "#DC2626" : "#64748B" }}
           >{gravando ? <MicOff size={15} /> : <Mic size={15} />}</button>
         </div>
@@ -791,7 +798,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
           value={txt}
           onChange={(e) => setTxt(e.target.value)}
           onKeyDown={onKey}
-          placeholder="Escreva uma mensagem… (Enter para enviar, Shift+Enter para nova linha)"
+          placeholder={t("conv.placeholder")}
           rows={1}
           disabled={gravando}
           style={{
@@ -804,7 +811,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
           onFocus={(e) => { if (!gravando) { e.target.style.borderColor = "#2563EB"; e.target.style.background = "#fff"; } }}
           onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; e.target.style.background = "#F8FAFC"; }}
           onInput={(e) => { e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
-          aria-label="Campo de mensagem"
+          aria-label={t("conv.messageField")}
         />
 
         {/* Botões direita: emoji + GIF + enviar */}
@@ -851,7 +858,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
                 <input
                   value={buscaGif}
                   onChange={(e) => setBuscaGif(e.target.value)}
-                  placeholder="Buscar GIFs…"
+                  placeholder={t("conv.searchGifs")}
                   autoFocus
                   style={{
                     width: "100%", border: "1.5px solid #E2E8F0", borderRadius: 8,
@@ -868,7 +875,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
                     <div className="vx-spinner" />
                   </div>
                 ) : gifs.length === 0 ? (
-                  <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 20, color: "#94A3B8", fontSize: 13 }}>Nenhum GIF encontrado</div>
+                  <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 20, color: "#94A3B8", fontSize: 13 }}>{t("conv.noGifFound")}</div>
                 ) : gifs.map((gif) => (
                   <button key={gif.id} onClick={() => enviarGif(gif)} style={{
                     padding: 0, border: "none", borderRadius: 8, overflow: "hidden",
@@ -916,7 +923,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
           <button
             onClick={submeter}
             disabled={!podeSend}
-            aria-label="Enviar mensagem"
+            aria-label={t("conv.sendMessage")}
             style={{
               width: 38, height: 38, borderRadius: 10, border: "none",
               background: "#2563EB", color: "#fff",
@@ -938,12 +945,12 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
-const FILTROS = [
-  { id: "todas", label: "Todas" },
-  { id: "arquivadas", label: "Arquivadas" },
-];
-
 export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }) {
+  const { t, lang } = useI18n();
+  const FILTROS = [
+    { id: "todas", label: t("conv.filter.all") },
+    { id: "arquivadas", label: t("conv.filter.archived") },
+  ];
   const [popupPlano, setPopupPlano] = useState(false);
   const [busca, setBusca] = useState("");
   const [buscaAtiva, setBuscaAtiva] = useState("");
@@ -1000,7 +1007,7 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
   };
 
   const apagarConversa = async (sellerId) => {
-    if (!confirm("Apagar toda a conversa? Essa ação não pode ser desfeita.")) return;
+    if (!confirm(t("conv.deleteConfirm"))) return;
     await api(`/messages/apagar`, { companyId: emp.id, sellerId });
     up((d) => ({ messages: d.messages.filter((m) => !(m.companyId === emp.id && m.sellerId === sellerId)) }));
     if (selSellerId === sellerId) setSelSellerId(null);
@@ -1052,7 +1059,7 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
     ? (db.messages || []).filter((m) => m.companyId === emp.id && m.sellerId === selSellerId)
     : [];
 
-  const nomeSel = capitalizar(selConv?.seller?.nome || "Profissional");
+  const nomeSel = capitalizar(selConv?.seller?.nome || t("conv.professional"));
 
   // Mobile: se tem conversa aberta, mostra só o chat
   const mostraLista = !mobile || !selSellerId;
@@ -1080,7 +1087,7 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0B1220", fontFamily: "'Space Grotesk', sans-serif" }}>
-                  Conversas
+                  {t("nav.conversations")}
                 </h2>
                 {totalNaoLidas > 0 && (
                   <span style={{ background: "#2563EB", color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>
@@ -1088,7 +1095,7 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
                   </span>
                 )}
               </div>
-              <span style={{ fontSize: 12, color: "#94A3B8" }}>{conversas.length} {conversas.length === 1 ? "conversa" : "conversas"}</span>
+              <span style={{ fontSize: 12, color: "#94A3B8" }}>{conversas.length} {conversas.length === 1 ? t("conv.convSingular") : t("conv.convPlural")}</span>
             </div>
 
             {/* busca */}
@@ -1097,8 +1104,8 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
               <input
                 value={busca}
                 onChange={(e) => onBusca(e.target.value)}
-                placeholder="Buscar profissional…"
-                aria-label="Buscar conversa"
+                placeholder={t("conv.searchPro")}
+                aria-label={t("conv.searchConv")}
                 style={{
                   width: "100%", paddingLeft: 30, paddingRight: busca ? 28 : 10,
                   padding: "8px 10px 8px 30px", border: "1.5px solid #E2E8F0",
@@ -1142,16 +1149,16 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
                 {buscaAtiva || filtro !== "todas" ? (
                   <>
                     <Search size={28} style={{ margin: "0 auto 10px", display: "block" }} strokeWidth={1.5} />
-                    <p style={{ margin: "0 0 12px", fontSize: 13.5, fontWeight: 500 }}>Nenhum resultado</p>
+                    <p style={{ margin: "0 0 12px", fontSize: 13.5, fontWeight: 500 }}>{t("app.noResults")}</p>
                     <button onClick={() => { onBusca(""); setFiltro("todas"); }} style={{ background: "none", border: "1.5px solid #E2E8F0", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12.5, color: "#2563EB", fontWeight: 500 }}>
-                      Limpar filtros
+                      {t("conv.clearFilters")}
                     </button>
                   </>
                 ) : (
                   <>
                     <MessageSquare size={32} style={{ margin: "0 auto 10px", display: "block" }} strokeWidth={1.5} />
-                    <p style={{ margin: "0 0 6px", fontSize: 13.5, fontWeight: 500 }}>Nenhuma conversa ainda</p>
-                    <p style={{ margin: 0, fontSize: 12 }}>Clique no ícone de mensagem no perfil de um profissional para iniciar.</p>
+                    <p style={{ margin: "0 0 6px", fontSize: 13.5, fontWeight: 500 }}>{t("conv.noConvYet")}</p>
+                    <p style={{ margin: 0, fontSize: 12 }}>{t("conv.noConvHint")}</p>
                   </>
                 )}
               </div>
@@ -1180,8 +1187,8 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
                 <MessageSquare size={28} strokeWidth={1.5} />
               </div>
               <div style={{ textAlign: "center" }}>
-                <p style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "#334155" }}>Selecione uma conversa</p>
-                <p style={{ margin: 0, fontSize: 13, color: "#94A3B8" }}>Escolha um profissional na lista ao lado</p>
+                <p style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "#334155" }}>{t("conv.selectConv")}</p>
+                <p style={{ margin: 0, fontSize: 13, color: "#94A3B8" }}>{t("conv.selectConvHint")}</p>
               </div>
             </div>
           ) : (
@@ -1200,7 +1207,7 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
                   <Avatar nome={selConv.seller?.nome} foto={selConv.seller?.foto} size={38} fontSize={13} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5, color: "#0B1220", fontFamily: "'Space Grotesk', sans-serif", textDecoration: "underline", textDecorationColor: "#CBD5E1", textUnderlineOffset: 3 }}>{nomeSel}</div>
-                    <div style={{ fontSize: 12, color: "#94A3B8" }}>{msgsSel.length} {msgsSel.length === 1 ? "mensagem" : "mensagens"}</div>
+                    <div style={{ fontSize: 12, color: "#94A3B8" }}>{msgsSel.length} {msgsSel.length === 1 ? t("conv.msgSingular") : t("conv.msgPlural")}</div>
                   </div>
                 </button>
               </div>
@@ -1232,15 +1239,15 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
               <Lock size={22} color="var(--brand)" strokeWidth={2} />
             </div>
-            <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>Assine um plano para conversar</h3>
+            <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>{t("conv.planPopup.title")}</h3>
             <p className="vx-mut" style={{ margin: "0 0 20px", fontSize: 13.5, lineHeight: 1.6 }}>
-              Para enviar mensagens aos profissionais, ative um plano. Seus dados continuam salvos.
+              {t("conv.planPopup.desc")}
             </p>
             <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(false); irParaPlano?.(); }}>
-              Ver planos
+              {t("conv.planPopup.seePlans")}
             </button>
             <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(false)}>
-              Agora não
+              {t("conv.planPopup.notNow")}
             </button>
           </div>
         </div>

@@ -3,8 +3,10 @@ import { Briefcase, MapPin, Users, Target, Wallet, Building2, ChevronRight } fro
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha }) {
+  const { t } = useI18n();
   const [candidatando, setCandidatando] = useState(null);
 
   const campanhas = (db.campaigns || []).filter((c) => c.status === "ativa");
@@ -16,7 +18,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     const r = await api(`/campaigns/${campanha.id}/apply`, {});
     setCandidatando(null);
     if (r?.error) return aviso(r.error);
-    aviso("Candidatura enviada! A empresa vai analisar seu perfil.");
+    aviso(t("seller.opportunities.applicationSent"));
     recarregar?.();
   };
 
@@ -30,9 +32,9 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     <div className="vx-fade">
       <div className="vx-row" style={{ marginBottom: 16 }}>
         <div>
-          <h2 className="vx-disp" style={{ fontSize: 19, margin: 0 }}>Oportunidades disponíveis</h2>
+          <h2 className="vx-disp" style={{ fontSize: 19, margin: 0 }}>{t("seller.opportunities.title")}</h2>
           <p className="vx-mut" style={{ fontSize: 13, marginTop: 4 }}>
-            Campanhas ativas das empresas. Candidate-se às que combinam com seu perfil.
+            {t("seller.opportunities.subtitle")}
           </p>
         </div>
         <span className="vx-chip vx-mono">{campanhas.length}</span>
@@ -41,8 +43,8 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
       {campanhas.length === 0 && (
         <div className="vx-vazio">
           <Target size={36} color="var(--muted)" />
-          <div className="vx-disp" style={{ fontSize: 17, marginTop: 10 }}>Nenhuma oportunidade disponível</div>
-          <p className="vx-mut" style={{ fontSize: 13 }}>Quando as empresas criarem campanhas ativas, elas aparecerão aqui.</p>
+          <div className="vx-disp" style={{ fontSize: 17, marginTop: 10 }}>{t("seller.opportunities.emptyTitle")}</div>
+          <p className="vx-mut" style={{ fontSize: 13 }}>{t("seller.opportunities.emptyDesc")}</p>
         </div>
       )}
 
@@ -55,12 +57,10 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
           return (
             <div key={c.id} className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
-              {/* Topo com logo e nome */}
               <div style={{
                 padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 14,
                 borderBottom: "1px solid var(--border)",
               }}>
-                {/* Logo da empresa */}
                 <div style={{ flex: "none" }}>
                   {empresa.logo ? (
                     <img src={empresa.logo} alt="" style={{
@@ -80,7 +80,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>
-                    {c.titulo || "Campanha sem título"}
+                    {c.titulo || t("seller.opportunities.untitled")}
                   </div>
                   <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 2 }}>
                     {empresa.nome}
@@ -89,17 +89,16 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
                 {st === "aprovado" && (
                   <span className="vx-badge" style={{ background: "var(--green-50)", color: "var(--green)", fontSize: 11, flex: "none" }}>
-                    Aprovado
+                    {t("seller.opportunities.approved")}
                   </span>
                 )}
                 {st === "pendente" && (
                   <span className="vx-badge" style={{ background: "var(--amber-50)", color: "var(--amber)", fontSize: 11, flex: "none" }}>
-                    Em análise
+                    {t("seller.opportunities.underReview")}
                   </span>
                 )}
               </div>
 
-              {/* Descrição */}
               {c.descricao && (
                 <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--border-light)" }}>
                   <p style={{ fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}>
@@ -108,13 +107,12 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                 </div>
               )}
 
-              {/* Info cards: saldo e valor por tarefa */}
               <div style={{
                 padding: "12px 20px", display: "flex", gap: 16, flexWrap: "wrap",
                 borderBottom: "1px solid var(--border-light)",
               }}>
                 <div style={{ flex: 1, minWidth: 100 }}>
-                  <div className="vx-eyebrow" style={{ fontSize: 10.5 }}>Saldo da campanha</div>
+                  <div className="vx-eyebrow" style={{ fontSize: 10.5 }}>{t("seller.opportunities.campaignBalance")}</div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: "var(--brand)", marginTop: 2 }}>
                     <Wallet size={13} style={{ marginRight: 4, verticalAlign: "-1px" }} />
                     {money(c.orcamento || 0)}
@@ -122,7 +120,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                 </div>
                 {comissoesAtivas.length > 0 && (
                   <div style={{ flex: 2, minWidth: 140 }}>
-                    <div className="vx-eyebrow" style={{ fontSize: 10.5 }}>Valor por tarefa</div>
+                    <div className="vx-eyebrow" style={{ fontSize: 10.5 }}>{t("seller.opportunities.valuePerTask")}</div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
                       {comissoesAtivas.map((k) => (
                         <span key={k} className="vx-chip vx-mono" style={{ fontSize: 11.5 }}>
@@ -134,7 +132,6 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                 )}
               </div>
 
-              {/* Meta-info */}
               <div style={{
                 padding: "10px 20px", display: "flex", flexWrap: "wrap", gap: 14,
                 fontSize: 12, color: "var(--muted)",
@@ -151,7 +148,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                 )}
                 {c.vagas > 0 && (
                   <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <Users size={12} /> {c.vagas} vaga{c.vagas > 1 ? "s" : ""}
+                    <Users size={12} /> {c.vagas} {c.vagas > 1 ? t("seller.opportunities.slotsPlural") : t("seller.opportunities.slot")}
                   </span>
                 )}
                 {c.objetivo && (
@@ -161,23 +158,22 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                 )}
               </div>
 
-              {/* Ação */}
               <div style={{ padding: "12px 20px" }}>
                 {st === "aprovado" ? (
                   <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => abrirCampanha?.(c)}>
-                    Acessar campanha <ChevronRight size={14} />
+                    {t("seller.opportunities.accessCampaign")} <ChevronRight size={14} />
                   </button>
                 ) : st === "pendente" ? (
-                  <button className="vx-btn vx-btn-block" disabled>Candidatura em análise</button>
+                  <button className="vx-btn vx-btn-block" disabled>{t("seller.opportunities.applicationPending")}</button>
                 ) : st === "recusado" ? (
                   <button className="vx-btn vx-btn-block" onClick={() => candidatar(c)}
                     disabled={candidatando === c.id}>
-                    {candidatando === c.id ? "Enviando…" : "Tentar novamente"}
+                    {candidatando === c.id ? t("common.sending") : t("seller.opportunities.tryAgain")}
                   </button>
                 ) : (
                   <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => candidatar(c)}
                     disabled={candidatando === c.id}>
-                    {candidatando === c.id ? "Enviando…" : "Candidatar-se a esta campanha"}
+                    {candidatando === c.id ? t("common.sending") : t("seller.opportunities.apply")}
                   </button>
                 )}
               </div>

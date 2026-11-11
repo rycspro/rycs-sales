@@ -1,23 +1,25 @@
 import { Shield } from "lucide-react";
+import { useI18n } from "../lib/i18n.jsx";
 
-const ROTULOS = {
-  pagamento: "Caixa em dia",
-  conferencia: "Confere no prazo",
-  aprovacao: "Aceita as ações",
-  clareza: "Campanha clara",
-  retencao: "Retém profissionais",
+const ROTULOS_KEYS = {
+  pagamento: "score.cashUpToDate",
+  conferencia: "score.reviewsOnTime",
+  aprovacao: "score.acceptsActions",
+  clareza: "score.clearCampaign",
+  retencao: "score.retainsPros",
 };
 
-const EXPLICA = {
-  pagamento: "Mantém saldo suficiente para honrar o que está em aberto.",
-  conferencia: "Decide as ações enviadas em vez de deixá-las paradas.",
-  aprovacao: "Proporção de ações aceitas sobre as decididas.",
-  clareza: "Campanha com treinamento, comissões e cliente ideal definidos.",
-  retencao: "Profissionais aprovados que seguem ativos com ela.",
+const EXPLICA_KEYS = {
+  pagamento: "score.cashUpToDateDesc",
+  conferencia: "score.reviewsOnTimeDesc",
+  aprovacao: "score.acceptsActionsDesc",
+  clareza: "score.clearCampaignDesc",
+  retencao: "score.retainsProsDesc",
 };
 
 const cor = (n) => (n >= 80 ? "var(--brand)" : n >= 60 ? "var(--indigo)" : n >= 40 ? "var(--amber)" : "var(--red)");
-const rotulo = (n) => (n >= 80 ? "Excelente" : n >= 60 ? "Boa" : n >= 40 ? "Regular" : "Atenção");
+const RATING_KEYS = { 80: "score.excellent", 60: "score.good", 40: "score.regular", 0: "score.attention" };
+function ratingKey(n) { return n >= 80 ? RATING_KEYS[80] : n >= 60 ? RATING_KEYS[60] : n >= 40 ? RATING_KEYS[40] : RATING_KEYS[0]; }
 
 // Nota compacta, para a vitrine que o profissional vê antes de se candidatar.
 export function CompanyScoreChip({ nota }) {
@@ -31,6 +33,7 @@ export function CompanyScoreChip({ nota }) {
 
 // Painel completo, com as dimensões abertas.
 export default function CompanyScore({ nota, dimensoes, compacto = false }) {
+  const { t } = useI18n();
   const dims = dimensoes || {};
   const temDados = Object.keys(dims).length > 0;
 
@@ -38,10 +41,10 @@ export default function CompanyScore({ nota, dimensoes, compacto = false }) {
     <div className="vx-card" style={{ padding: compacto ? 16 : 20 }}>
       <div className="vx-row" style={{ marginBottom: temDados ? 14 : 0 }}>
         <div>
-          <div className="vx-eyebrow">Company Score</div>
+          <div className="vx-eyebrow">{t("score.title")}</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 3 }}>
             <span className="vx-disp vx-mono" style={{ fontSize: 30, color: cor(nota) }}>{nota ?? 0}</span>
-            <span className="vx-mut" style={{ fontSize: 13 }}>{rotulo(nota ?? 0)}</span>
+            <span className="vx-mut" style={{ fontSize: 13 }}>{t(ratingKey(nota ?? 0))}</span>
           </div>
         </div>
         <div style={{
@@ -54,12 +57,12 @@ export default function CompanyScore({ nota, dimensoes, compacto = false }) {
 
       {temDados && (
         <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-          {Object.entries(ROTULOS).map(([k, label]) => {
+          {Object.entries(ROTULOS_KEYS).map(([k, labelKey]) => {
             const v = dims[k] ?? 0;
             return (
               <div key={k}>
                 <div className="vx-row" style={{ fontSize: 12.5, marginBottom: 5 }}>
-                  <span className="vx-mut" title={EXPLICA[k]}>{label}</span>
+                  <span className="vx-mut" title={t(EXPLICA_KEYS[k])}>{t(labelKey)}</span>
                   <b className="vx-mono" style={{ color: cor(v) }}>{v}</b>
                 </div>
                 <div className="vx-meter-track">
@@ -73,8 +76,7 @@ export default function CompanyScore({ nota, dimensoes, compacto = false }) {
 
       {!compacto && (
         <p className="vx-mut" style={{ fontSize: 11.5, marginTop: 14 }}>
-          A nota é visível para os profissionais antes de se candidatarem — do mesmo modo
-          que você vê o score deles.
+          {t("score.visibilityNote")}
         </p>
       )}
     </div>

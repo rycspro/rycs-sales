@@ -1,3 +1,4 @@
+import { canNavigate } from "./lib/unsavedChanges.js";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { api } from "./lib/api.js";
 import { seed } from "./lib/seed.js";
@@ -117,9 +118,7 @@ export default function App() {
   }, []);
 
   // Acesso da empresa: prefetch em paralelo com onboarding, evita cascata.
-  // No modo de pré-visualização (DEV, /preview/*) não há API: libera por padrão
-  // para a tela montar com os dados demo.
-  const [acesso, setAcesso] = useState(() => previaQualificacao ? { liberado: true, plano: "premium", motivo: "preview" } : undefined);
+  const [acesso, setAcesso] = useState(undefined);
   const consultarAcesso = useCallback(() =>
     api("/subscription/access").then((r) => {
       if (r) { setAcesso(r); return r; }
@@ -219,6 +218,7 @@ export default function App() {
   };
 
   const logout = async () => {
+    if (!canNavigate()) return;
     await api("/auth/logout", {});
     setUser(null);
     setOnb(null);
@@ -252,7 +252,7 @@ export default function App() {
   }, [db, role]);
 
   const aba = nav[role];
-  const setAba = (k) => setNav((n) => ({ ...n, [role]: k }));
+  const setAba = (k) => { if (canNavigate()) setNav((n) => ({ ...n, [role]: k })); };
 
   if (!loaded) return <div className="vx-app" style={{ minHeight: "100dvh" }}><style>{CSS}</style></div>;
 
@@ -329,25 +329,16 @@ export default function App() {
 
   const bannerOnb = role === "empresa" && onb && !onb.concluido && !onb.bloqueia && !previaQualificacao;
 
-  // Entidade do usuário logado — alimenta o cartão de conta na barra lateral
-  // (nome + logo da empresa ou foto do profissional).
-  const entidadeConta = role === "empresa"
-    ? db.companies.find((c) => c.id === db.companyId)
-    : role === "vendedor"
-      ? db.sellers.find((s) => s.id === db.sellerId)
-      : null;
-
   return (
     <div className="vx-app">
       <style>{CSS}</style>
 
-      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "configuracoes"}>
+      {bannerOnb && <BannerOnboarding onb={onb} />}
+
+      <Shell user={user} entity={role === "empresa" ? db.companies.find(c => c.id === db.companyId) : db.sellers.find(s => s.id === db.sellerId)} role={role} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "configuracoes"}>
         <ErrorBoundary>
-          {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
-          {role === "empresa" && <>
-            {bannerOnb && aba === "inicio" && <BannerOnboarding onb={onb} />}
-            <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />
-          </>}
+          {role === "vendedor" && <Vendedor user={user} onLogout={logout} {...ctx} aba={aba} setAba={setAba} />}
+          {role === "empresa" && <Empresa user={user} onLogout={logout} {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />}
           {role === "admin" && <Admin {...ctx} aba={aba} />}
         </ErrorBoundary>
       </Shell>

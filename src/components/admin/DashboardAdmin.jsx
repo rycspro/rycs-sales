@@ -3,6 +3,7 @@ import { Users, Building2, Banknote, TrendingUp, Activity, Wallet, Target, BarCh
 import { money, agora, dataCurta } from "../../lib/utils.js";
 import { TAXA, ACOES } from "../../lib/constants.js";
 import { Stat } from "../ui.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
 
 const CORES = {
   brand: "var(--brand)",
@@ -116,6 +117,7 @@ function BlocosIsometricos({ itens }) {
 }
 
 export default function DashboardAdmin({ db }) {
+  const { t } = useI18n();
   const stats = useMemo(() => {
     const now = agora();
     const dia30 = now - 86400000 * 30;
@@ -160,16 +162,16 @@ export default function DashboardAdmin({ db }) {
     }));
 
     const statusBreakdown = [
-      { label: "Liberadas", valor: liberados.length, tone: "brand" },
-      { label: "Em revisão", valor: db.submissions.filter((s) => ["revisao", "ia_aprovado", "conferido"].includes(s.status)).length, tone: "amber" },
-      { label: "Recusadas", valor: db.submissions.filter((s) => ["recusado", "ia_recusado"].includes(s.status)).length, tone: "red" },
-      { label: "Analisando", valor: db.submissions.filter((s) => s.status === "analisando").length, tone: "indigo" },
+      { label: t("admin.dashboard.released"), valor: liberados.length, tone: "brand" },
+      { label: t("admin.dashboard.inReview"), valor: db.submissions.filter((s) => ["revisao", "ia_aprovado", "conferido"].includes(s.status)).length, tone: "amber" },
+      { label: t("admin.dashboard.rejected"), valor: db.submissions.filter((s) => ["recusado", "ia_recusado"].includes(s.status)).length, tone: "red" },
+      { label: t("admin.dashboard.analyzing"), valor: db.submissions.filter((s) => s.status === "analisando").length, tone: "indigo" },
     ];
 
     const profissionaisBreakdown = [
-      { label: "Ativos", valor: profAtivos, tone: "brand" },
-      { label: "Em análise", valor: profTriagem, tone: "amber" },
-      { label: "Recusados", valor: profRecusados, tone: "red" },
+      { label: t("admin.dashboard.active"), valor: profAtivos, tone: "brand" },
+      { label: t("admin.dashboard.underReview"), valor: profTriagem, tone: "amber" },
+      { label: t("admin.dashboard.rejectedPros"), valor: profRecusados, tone: "red" },
     ];
 
     const recentActivity = [...db.submissions].sort((a, b) => b.criadoEm - a.criadoEm).slice(0, 10);
@@ -185,8 +187,8 @@ export default function DashboardAdmin({ db }) {
 
   const fluxoFinanceiro = [
     { label: "GMV", valor: stats.gmv, valorFormatado: money(stats.gmv), tone: "indigo" },
-    { label: "Taxa RYCS", valor: stats.receita, valorFormatado: money(stats.receita), tone: "brand" },
-    { label: "Repasses", valor: stats.repasses, valorFormatado: money(stats.repasses), tone: "amber" },
+    { label: t("admin.dashboard.rycsFee"), valor: stats.receita, valorFormatado: money(stats.receita), tone: "brand" },
+    { label: t("admin.dashboard.payouts"), valor: stats.repasses, valorFormatado: money(stats.repasses), tone: "amber" },
   ];
 
   return (
@@ -216,58 +218,58 @@ export default function DashboardAdmin({ db }) {
 
       <div className="rycs-dashboard-head">
         <div>
-          <div className="vx-disp" style={{ fontSize: 22 }}>Visão da Plataforma</div>
-          <div className="vx-mut" style={{ fontSize: 13 }}>Receita, liquidez e operação em uma leitura só.</div>
+          <div className="vx-disp" style={{ fontSize: 22 }}>{t("admin.dashboard.title")}</div>
+          <div className="vx-mut" style={{ fontSize: 13 }}>{t("admin.dashboard.subtitle")}</div>
         </div>
-        <span className="vx-chip"><Activity size={14} /> {stats.subs7d} atividade(s) nos últimos 7 dias</span>
+        <span className="vx-chip"><Activity size={14} /> {t("admin.dashboard.last7d", { count: stats.subs7d })}</span>
       </div>
 
       <div className="vx-grid vx-g4" style={{ marginBottom: 22 }}>
-        <Stat label="Receita realizada" value={money(stats.receita)} Icon={TrendingUp} tone="brand" />
-        <Stat label="GMV liberado" value={money(stats.gmv)} Icon={Banknote} tone="amber" />
-        <Stat label="Profissionais ativos" value={`${stats.profAtivos}/${stats.totalProfissionais}`} Icon={Users} tone="indigo" mono={false} />
-        <Stat label="Empresas com saldo" value={`${stats.empComSaldo}/${stats.totalEmpresas}`} Icon={Building2} tone="muted" mono={false} />
+        <Stat label={t("admin.dashboard.realizedRevenue")} value={money(stats.receita)} Icon={TrendingUp} tone="brand" />
+        <Stat label={t("admin.dashboard.releasedGmv")} value={money(stats.gmv)} Icon={Banknote} tone="amber" />
+        <Stat label={t("admin.dashboard.activePros")} value={`${stats.profAtivos}/${stats.totalProfissionais}`} Icon={Users} tone="indigo" mono={false} />
+        <Stat label={t("admin.dashboard.companiesWithBalance")} value={`${stats.empComSaldo}/${stats.totalEmpresas}`} Icon={Building2} tone="muted" mono={false} />
       </div>
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>
         <div className="vx-card rycs-iso-card" style={{ padding: 18 }}>
           <div className="vx-row" style={{ alignItems: "flex-start", marginBottom: 2 }}>
             <div>
-              <div className="vx-eyebrow" style={{ marginBottom: 4 }}>Fluxo financeiro</div>
-              <div className="vx-mut" style={{ fontSize: 12.5 }}>Volume que entrou, margem realizada e valor destinado aos profissionais.</div>
+              <div className="vx-eyebrow" style={{ marginBottom: 4 }}>{t("admin.dashboard.financialFlow")}</div>
+              <div className="vx-mut" style={{ fontSize: 12.5 }}>{t("admin.dashboard.financialFlowDesc")}</div>
             </div>
             <span className="vx-badge vx-badge-brand"><TrendingUp size={12} /> 30d {money(stats.receita30d)}</span>
           </div>
           <BlocosIsometricos itens={fluxoFinanceiro} />
           <div className="rycs-iso-notes">
-            <div className="rycs-iso-note"><span>Caixa das empresas</span><b className="vx-mono">{money(stats.totalSaldo)}</b></div>
-            <div className="rycs-iso-note"><span>Aportes acumulados</span><b className="vx-mono">{money(stats.totalAportado)}</b></div>
-            <div className="rycs-iso-note"><span>Saques concluídos</span><b className="vx-mono">{money(stats.totalSacado)}</b></div>
+            <div className="rycs-iso-note"><span>{t("admin.dashboard.companyBalance")}</span><b className="vx-mono">{money(stats.totalSaldo)}</b></div>
+            <div className="rycs-iso-note"><span>{t("admin.dashboard.totalDeposits")}</span><b className="vx-mono">{money(stats.totalAportado)}</b></div>
+            <div className="rycs-iso-note"><span>{t("admin.dashboard.completedWithdrawals")}</span><b className="vx-mono">{money(stats.totalSacado)}</b></div>
           </div>
         </div>
 
         <div className="vx-card" style={{ padding: 18 }}>
-          <div className="vx-eyebrow" style={{ marginBottom: 4 }}>Sinais de operação</div>
-          <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 14 }}>O que exige atenção antes de afetar os próximos repasses.</div>
+          <div className="vx-eyebrow" style={{ marginBottom: 4 }}>{t("admin.dashboard.operationSignals")}</div>
+          <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 14 }}>{t("admin.dashboard.operationSignalsDesc")}</div>
           <div style={{ display: "grid", gap: 10 }}>
             <div className="vx-row" style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-              <span className="vx-mut"><Target size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Ações em revisão</span>
-              <b className="vx-mono">{stats.statusBreakdown.find((item) => item.label === "Em revisão")?.valor || 0}</b>
+              <span className="vx-mut"><Target size={14} style={{ verticalAlign: -2, marginRight: 6 }} />{t("admin.dashboard.actionsInReview")}</span>
+              <b className="vx-mono">{stats.statusBreakdown.find((item) => item.label === t("admin.dashboard.inReview"))?.valor || 0}</b>
             </div>
             <div className="vx-row" style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-              <span className="vx-mut"><Wallet size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Saques pendentes</span>
+              <span className="vx-mut"><Wallet size={14} style={{ verticalAlign: -2, marginRight: 6 }} />{t("admin.dashboard.pendingWithdrawals")}</span>
               <span className="vx-badge vx-badge-red">{stats.saquesAtivos}</span>
             </div>
             <div className="vx-row" style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-              <span className="vx-mut"><Users size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Profissionais em análise</span>
+              <span className="vx-mut"><Users size={14} style={{ verticalAlign: -2, marginRight: 6 }} />{t("admin.dashboard.prosUnderReview")}</span>
               <span className="vx-badge vx-badge-amber">{stats.profTriagem}</span>
             </div>
             <div className="vx-row" style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-              <span className="vx-mut"><BarChart3 size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Ações nos últimos 30 dias</span>
+              <span className="vx-mut"><BarChart3 size={14} style={{ verticalAlign: -2, marginRight: 6 }} />{t("admin.dashboard.actionsLast30d")}</span>
               <b className="vx-mono">{stats.subs30d}</b>
             </div>
             <div className="vx-row" style={{ padding: "9px 0", fontSize: 13 }}>
-              <span className="vx-mut"><Building2 size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Empresas em destaque</span>
+              <span className="vx-mut"><Building2 size={14} style={{ verticalAlign: -2, marginRight: 6 }} />{t("admin.dashboard.featuredCompanies")}</span>
               <b className="vx-mono">{stats.destaques}</b>
             </div>
           </div>
@@ -276,43 +278,43 @@ export default function DashboardAdmin({ db }) {
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>
         <GraficoPizza
-          titulo="Status das ações"
-          descricao="Distribuição de todas as ações enviadas à plataforma."
+          titulo={t("admin.dashboard.actionStatus")}
+          descricao={t("admin.dashboard.actionStatusDesc")}
           segmentos={stats.statusBreakdown}
           centro={stats.totalSubs}
-          centroLabel="ações"
+          centroLabel={t("admin.dashboard.actions")}
         />
         <GraficoPizza
-          titulo="Volume por tipo de ação"
-          descricao="Ações liberadas que já viraram volume de campanha."
+          titulo={t("admin.dashboard.volumeByType")}
+          descricao={t("admin.dashboard.volumeByTypeDesc")}
           segmentos={stats.tipoBreakdown}
-          centro={stats.statusBreakdown.find((item) => item.label === "Liberadas")?.valor || 0}
-          centroLabel="liberadas"
+          centro={stats.statusBreakdown.find((item) => item.label === t("admin.dashboard.released"))?.valor || 0}
+          centroLabel={t("admin.dashboard.released")}
         />
       </div>
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>
         <GraficoPizza
-          titulo="Base de profissionais"
-          descricao="Leitura rápida da capacidade disponível e da fila de entrada."
+          titulo={t("admin.dashboard.proBase")}
+          descricao={t("admin.dashboard.proBaseDesc")}
           segmentos={stats.profissionaisBreakdown}
           centro={stats.totalProfissionais}
-          centroLabel="pessoas"
+          centroLabel={t("admin.dashboard.people")}
         />
         <div className="vx-card" style={{ padding: 18 }}>
-          <div className="vx-eyebrow" style={{ marginBottom: 4 }}>Ritmo de receita</div>
-          <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 16 }}>Comparativo do volume mais recente com o acumulado da operação.</div>
+          <div className="vx-eyebrow" style={{ marginBottom: 4 }}>{t("admin.dashboard.revenuePace")}</div>
+          <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 16 }}>{t("admin.dashboard.revenuePaceDesc")}</div>
           <div style={{ display: "grid", gap: 13 }}>
             <div>
-              <div className="vx-row" style={{ fontSize: 13, marginBottom: 6 }}><span className="vx-mut">Receita últimos 30 dias</span><b className="vx-mono" style={{ color: "var(--brand)" }}>{money(stats.receita30d)}</b></div>
+              <div className="vx-row" style={{ fontSize: 13, marginBottom: 6 }}><span className="vx-mut">{t("admin.dashboard.revenue30d")}</span><b className="vx-mono" style={{ color: "var(--brand)" }}>{money(stats.receita30d)}</b></div>
               <div className="vx-meter-track"><div className="vx-meter-fill" style={{ width: `${Math.max(3, percentual(stats.receita30d, stats.receita))}%`, background: "var(--brand)" }} /></div>
             </div>
             <div>
-              <div className="vx-row" style={{ fontSize: 13, marginBottom: 6 }}><span className="vx-mut">GMV últimos 30 dias</span><b className="vx-mono" style={{ color: "var(--amber)" }}>{money(stats.gmv30d)}</b></div>
+              <div className="vx-row" style={{ fontSize: 13, marginBottom: 6 }}><span className="vx-mut">{t("admin.dashboard.gmv30d")}</span><b className="vx-mono" style={{ color: "var(--amber)" }}>{money(stats.gmv30d)}</b></div>
               <div className="vx-meter-track"><div className="vx-meter-fill" style={{ width: `${Math.max(3, percentual(stats.gmv30d, stats.gmv))}%`, background: "var(--amber)" }} /></div>
             </div>
             <div className="vx-row" style={{ fontSize: 13, paddingTop: 4 }}>
-              <span className="vx-mut">Taxa efetiva realizada</span>
+              <span className="vx-mut">{t("admin.dashboard.effectiveRate")}</span>
               <b className="vx-mono">{stats.gmv > 0 ? `${((stats.receita / stats.gmv) * 100).toFixed(1)}%` : "—"}</b>
             </div>
           </div>
@@ -321,9 +323,9 @@ export default function DashboardAdmin({ db }) {
 
       <div className="vx-card" style={{ padding: 18 }}>
         <div className="vx-eyebrow" style={{ marginBottom: 10 }}>
-          <Activity size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Atividade recente
+          <Activity size={13} style={{ verticalAlign: -2, marginRight: 4 }} />{t("admin.dashboard.recentActivity")}
         </div>
-        {stats.recentActivity.length === 0 && <div className="vx-mut" style={{ fontSize: 13 }}>Nenhuma atividade.</div>}
+        {stats.recentActivity.length === 0 && <div className="vx-mut" style={{ fontSize: 13 }}>{t("admin.dashboard.noActivity")}</div>}
         {stats.recentActivity.map((s) => {
           const seller = db.sellers.find((sl) => sl.id === s.sellerId);
           const company = db.companies.find((c) => c.id === s.companyId);

@@ -11,23 +11,42 @@ import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { isPosPago, isPremium } from "../../../shared/empresa.js";
 import { PLANOS } from "../../../shared/planos.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const MOVIMENTOS = {
-  deposito:        { nome: "Depósito",          cor: "var(--brand)" },
-  reserva:         { nome: "Reserva",           cor: "var(--amber,#b45309)" },
-  estorno_reserva: { nome: "Estorno de reserva",cor: "var(--muted)" },
-  liquidacao:      { nome: "Pagamento",         cor: "#DC2626" },
+const MOVIMENTOS_CORES = {
+  deposito:        "var(--brand)",
+  reserva:         "var(--amber,#b45309)",
+  estorno_reserva: "var(--muted)",
+  liquidacao:      "#DC2626",
 };
+function buildMovimentos(t) {
+  return {
+    deposito:        { nome: t("pay.mov.deposit"),       cor: MOVIMENTOS_CORES.deposito },
+    reserva:         { nome: t("pay.mov.reserve"),       cor: MOVIMENTOS_CORES.reserva },
+    estorno_reserva: { nome: t("pay.mov.reversal"),      cor: MOVIMENTOS_CORES.estorno_reserva },
+    liquidacao:      { nome: t("pay.mov.payment"),       cor: MOVIMENTOS_CORES.liquidacao },
+  };
+}
 
-const STATUS_MOV = {
-  confirmado:   { label: "Confirmado",  bg: "#DCFCE7", color: "#16A34A" },
-  pendente:     { label: "Pendente",    bg: "#FEF9C3", color: "#B45309" },
-  processando:  { label: "Processando", bg: "#EFF6FF", color: "#1D4ED8" },
-  recusado:     { label: "Recusado",    bg: "#FEE2E2", color: "#DC2626" },
+const STATUS_MOV_STYLES = {
+  confirmado:   { bg: "#DCFCE7", color: "#16A34A" },
+  pendente:     { bg: "#FEF9C3", color: "#B45309" },
+  processando:  { bg: "#EFF6FF", color: "#1D4ED8" },
+  recusado:     { bg: "#FEE2E2", color: "#DC2626" },
 };
+function buildStatusMov(t) {
+  return {
+    confirmado:   { label: t("pay.status.confirmed"),  ...STATUS_MOV_STYLES.confirmado },
+    pendente:     { label: t("pay.status.pending"),    ...STATUS_MOV_STYLES.pendente },
+    processando:  { label: t("pay.status.processing"), ...STATUS_MOV_STYLES.processando },
+    recusado:     { label: t("pay.status.rejected"),   ...STATUS_MOV_STYLES.recusado },
+  };
+}
 
 function StatusPill({ status = "confirmado" }) {
+  const { t } = useI18n();
+  const STATUS_MOV = buildStatusMov(t);
   const cfg = STATUS_MOV[status] || STATUS_MOV.confirmado;
   return (
     <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: cfg.bg, color: cfg.color }}>
@@ -57,6 +76,7 @@ function StatCard({ label, value, sub, tone = "default", icon: Icon }) {
 
 // ── Modal adicionar saldo ─────────────────────────────────────────────────────
 export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
+  const { t } = useI18n();
   const [valor, setValor] = useState("");
   const [display, setDisplay] = useState("");
   const [etapa, setEtapa] = useState("form"); // form | pix
@@ -78,14 +98,14 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   };
 
   const confirmar = async () => {
-    if (!valor || valor < 50) return aviso("Valor mínimo de R$ 50,00.");
+    if (!valor || valor < 50) return aviso(t("pay.modal.minError"));
     setEnviando(true);
     const r = await api("/deposits", { valor });
     setEnviando(false);
-    if (!r || r.error) return aviso(r?.error || "Não foi possível criar o depósito.");
+    if (!r || r.error) return aviso(r?.error || t("pay.modal.createError"));
     if (r.pixCopiaECola || r.pixQrCodeBase64) { setPix(r); setEtapa("pix"); return; }
-    if (r.invoiceUrl) { window.open(r.invoiceUrl, "_blank", "noopener"); aviso("Fatura aberta em nova aba."); onFechar(); return; }
-    aviso("Depósito registrado. Aguarde a confirmação.");
+    if (r.invoiceUrl) { window.open(r.invoiceUrl, "_blank", "noopener"); aviso(t("pay.modal.invoiceOpened")); onFechar(); return; }
+    aviso(t("pay.modal.depositRegistered"));
     aoConfirmar?.();
     onFechar();
   };
@@ -97,15 +117,15 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
         {/* header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Adicionar saldo</div>
-            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>O valor entra na sua conta após a confirmação do Pix.</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>{t("pay.modal.title")}</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>{t("pay.modal.subtitle")}</div>
           </div>
           <button onClick={onFechar} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}><X size={18} /></button>
         </div>
 
         {etapa === "form" && <>
           <label style={{ display: "block", marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Valor do depósito</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>{t("pay.modal.depositAmount")}</div>
             <div style={{ position: "relative" }}>
               <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 13.5, pointerEvents: "none" }}>R$</span>
               <input
@@ -115,15 +135,15 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
                 value={display} onChange={handleValor} onBlur={handleBlur}
               />
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>Mínimo: R$ 50,00 · Via Pix · Confirmação em até 1 minuto</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>{t("pay.modal.minHint")}</div>
           </label>
 
           {valor >= 50 && (
             <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "var(--muted)" }}>Valor depositado</span><b>{money(valor)}</b></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--muted)" }}>Taxa de gateway</span><b>R$ 0,00</b></div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "var(--muted)" }}>{t("pay.modal.amountDeposited")}</span><b>{money(valor)}</b></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--muted)" }}>{t("pay.modal.gatewayFee")}</span><b>R$ 0,00</b></div>
               <div style={{ borderTop: "1px solid var(--border)", margin: "8px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontWeight: 700 }}>Saldo creditado</span><b style={{ color: "var(--brand)" }}>{money(valor)}</b></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontWeight: 700 }}>{t("pay.modal.creditedBalance")}</span><b style={{ color: "var(--brand)" }}>{money(valor)}</b></div>
             </div>
           )}
 
@@ -132,7 +152,7 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
             style={{ width: "100%", justifyContent: "center", padding: "11px 0", fontSize: 14 }}
             onClick={confirmar} disabled={enviando || !valor || valor < 50}
           >
-            {enviando ? "Gerando Pix…" : <><QrCode size={15} /> Gerar Pix</>}
+            {enviando ? t("pay.modal.generatingPix") : <><QrCode size={15} /> {t("pay.modal.generatePix")}</>}
           </button>
         </>}
 
@@ -142,15 +162,15 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
               <img src={`data:image/png;base64,${pix.pixQrCodeBase64}`} alt="QR Code Pix"
                 style={{ width: 180, height: 180, margin: "0 auto 14px", display: "block", borderRadius: 10 }} />
             )}
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Pague {money(valor)} via Pix</div>
-            <div style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 14 }}>O saldo é creditado automaticamente após a confirmação.</div>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{t("pay.modal.payViaPix", { valor: money(valor) })}</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 14 }}>{t("pay.modal.autoCredit")}</div>
             {pix.pixCopiaECola && (
               <button className="vx-btn vx-btn-primary" style={{ width: "100%", justifyContent: "center", marginBottom: 8 }}
-                onClick={() => { navigator.clipboard?.writeText(pix.pixCopiaECola); aviso("Código copiado."); }}>
-                Copiar código Pix
+                onClick={() => { navigator.clipboard?.writeText(pix.pixCopiaECola); aviso(t("pay.modal.codeCopied")); }}>
+                {t("pay.modal.copyPixCode")}
               </button>
             )}
-            <button className="vx-btn" style={{ width: "100%", justifyContent: "center" }} onClick={onFechar}>Fechar</button>
+            <button className="vx-btn" style={{ width: "100%", justifyContent: "center" }} onClick={onFechar}>{t("app.close")}</button>
           </div>
         )}
       </div>
@@ -160,6 +180,7 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, secao = "plano", onTrocarSecao }) {
+  const { t } = useI18n();
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -178,7 +199,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
     setErro("");
     api(`/company/finance?${query}`).then((r) => {
       setCarregando(false);
-      if (!r || r.error) return setErro(r?.error || "Não foi possível carregar os dados.");
+      if (!r || r.error) return setErro(r?.error || t("pay.loadError"));
       setDados(r);
     });
   };
@@ -212,7 +233,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
           display: "flex", alignItems: "center", gap: 10, boxShadow: "0 2px 8px rgba(0,0,0,.14)",
         }}>
           <Zap size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 13.5, fontWeight: 500 }}>Assine um plano para começar a usar a RYCS.</span>
+          <span style={{ fontSize: 13.5, fontWeight: 500 }}>{t("pay.subscribePlan")}</span>
         </div>
       )}
 
@@ -240,34 +261,34 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "20px 22px", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 4 }}>Saldo operacional</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 4 }}>{t("pay.operationalBalance")}</div>
             <div style={{ fontSize: 28, fontWeight: 800, color: "var(--brand)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.8 }}>
               {carregando ? "—" : money(posPago ? Infinity : posicao.disponivel)}
             </div>
-            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Disponível para remunerar profissionais</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("pay.availableForPros")}</div>
           </div>
           {!posPago && !premium && (
             <button className="vx-btn vx-btn-primary" onClick={() => setModalSaldo(true)}>
-              <Plus size={14} /> Adicionar saldo
+              <Plus size={14} /> {t("pay.addBalance")}
             </button>
           )}
           {(posPago || premium) && (
             <span style={{ background: "#EFF6FF", color: "var(--brand)", fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 20 }}>
-              {posPago ? "Pós-pago" : "Sem limite"}
+              {posPago ? t("pay.postPaid") : t("pay.noLimit")}
             </span>
           )}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
           <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>Reservado em ações</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>{t("pay.reservedInActions")}</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#B45309", fontVariantNumeric: "tabular-nums" }}>{carregando ? "—" : money(posicao.reservado)}</div>
           </div>
           <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>Total depositado</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>{t("pay.totalDeposited")}</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{carregando ? "—" : money(resumo.depositado)}</div>
           </div>
           <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>Pago a profissionais</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>{t("pay.paidToPros")}</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#DC2626", fontVariantNumeric: "tabular-nums" }}>{carregando ? "—" : money(resumo.repassado)}</div>
           </div>
         </div>
@@ -275,25 +296,25 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
 
       {/* ── 3. Resultados financeiros ── */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 10 }}>Resultados financeiros</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 10 }}>{t("pay.financialResults")}</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>
-          <StatCard label="Resultado gerado" value={money(resultadoGerado)} icon={TrendingUp} tone="brand"
-            sub={`${submissoes.length} ação${submissoes.length !== 1 ? "ões" : ""} liberada${submissoes.length !== 1 ? "s" : ""}`} />
-          <StatCard label="Total pago" value={money(resumo.repassado)} icon={Wallet} tone="red"
-            sub="Repassado a profissionais" />
-          <StatCard label="Pagamentos pendentes" value={money(posicao.reservado)} icon={Lock} tone="amber"
-            sub="Ações aguardando liberação" />
-          <StatCard label="Retorno" value={retorno ? `${retorno}×` : "—"} icon={TrendingUp} tone={retorno && retorno >= 1 ? "brand" : "muted"}
-            sub={retorno ? "Resultado ÷ remuneração" : "Sem dados suficientes"} />
+          <StatCard label={t("pay.generatedResult")} value={money(resultadoGerado)} icon={TrendingUp} tone="brand"
+            sub={t("pay.actionsReleased", { count: submissoes.length })} />
+          <StatCard label={t("payments.total")} value={money(resumo.repassado)} icon={Wallet} tone="red"
+            sub={t("pay.forwardedToPros")} />
+          <StatCard label={t("pay.pendingPayments")} value={money(posicao.reservado)} icon={Lock} tone="amber"
+            sub={t("pay.actionsAwaitingRelease")} />
+          <StatCard label={t("pay.returnLabel")} value={retorno ? `${retorno}×` : "—"} icon={TrendingUp} tone={retorno && retorno >= 1 ? "brand" : "muted"}
+            sub={retorno ? t("pay.resultDivRemuneration") : t("pay.insufficientData")} />
         </div>
 
         {/* Barra comparativa */}
         {(resultadoGerado > 0 || resumo.repassado > 0) && (
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "16px 18px", marginTop: 10 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", marginBottom: 12 }}>Resultado gerado × Remuneração paga</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", marginBottom: 12 }}>{t("pay.resultVsRemuneration")}</div>
             {[
-              { label: "Resultado gerado", value: resultadoGerado, cor: "var(--brand)" },
-              { label: "Pago a profissionais", value: resumo.repassado, cor: "#DC2626" },
+              { label: t("pay.generatedResult"), value: resultadoGerado, cor: "var(--brand)" },
+              { label: t("pay.paidToPros"), value: resumo.repassado, cor: "#DC2626" },
             ].map(({ label, value, cor }) => {
               const max = Math.max(resultadoGerado, resumo.repassado, 1);
               const pct = Math.round((value / max) * 100);
@@ -315,19 +336,19 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       {/* ── 4. Histórico / movimentações ── */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase" }}>Movimentações financeiras</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase" }}>{t("pay.transactions")}</div>
           <div style={{ display: "flex", gap: 8 }}>
             <select className="vx-input" style={{ fontSize: 12, padding: "5px 10px", height: "auto" }}
               value={filtros.dias} onChange={(e) => setFiltros({ ...filtros, dias: e.target.value })}>
-              <option value="7">7 dias</option>
-              <option value="30">30 dias</option>
-              <option value="90">90 dias</option>
-              <option value="">Todo período</option>
+              <option value="7">{t("pay.filter.7days")}</option>
+              <option value="30">{t("pay.filter.30days")}</option>
+              <option value="90">{t("pay.filter.90days")}</option>
+              <option value="">{t("pay.filter.allPeriod")}</option>
             </select>
             <select className="vx-input" style={{ fontSize: 12, padding: "5px 10px", height: "auto" }}
               value={filtros.tipo} onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}>
-              <option value="">Todas categorias</option>
-              {Object.entries(MOVIMENTOS).map(([k, m]) => <option key={k} value={k}>{m.nome}</option>)}
+              <option value="">{t("pay.filter.allCategories")}</option>
+              {Object.entries(buildMovimentos(t)).map(([k, m]) => <option key={k} value={k}>{m.nome}</option>)}
             </select>
           </div>
         </div>
@@ -345,8 +366,8 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
         {!carregando && !erro && !extrato.length && (
           <div style={{ textAlign: "center", padding: "36px 20px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
             <Landmark size={28} color="var(--muted)" style={{ marginBottom: 10 }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Nenhuma movimentação</div>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Depósitos e pagamentos a profissionais aparecerão aqui.</p>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>{t("pay.noTransactions")}</div>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>{t("pay.noTransactionsDesc")}</p>
           </div>
         )}
 
@@ -356,13 +377,20 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Data", "Categoria", "Descrição", "Valor", "Status"].map((h) => (
-                      <th key={h} style={{ padding: "10px 14px", textAlign: h === "Valor" ? "right" : "left", fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{h}</th>
+                    {[
+                      { key: "date", label: t("pay.table.date") },
+                      { key: "category", label: t("pay.table.category") },
+                      { key: "description", label: t("pay.table.description") },
+                      { key: "amount", label: t("pay.table.amount") },
+                      { key: "status", label: t("pay.table.status") },
+                    ].map((h) => (
+                      <th key={h.key} style={{ padding: "10px 14px", textAlign: h.key === "amount" ? "right" : "left", fontSize: 11, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{h.label}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {extrato.map((l, i) => {
+                    const MOVIMENTOS = buildMovimentos(t);
                     const m = MOVIMENTOS[l.tipo] || { nome: l.tipo, cor: "var(--muted)" };
                     return (
                       <tr key={l.id || i} style={{ borderBottom: "1px solid var(--border)" }}

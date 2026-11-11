@@ -1,10 +1,7 @@
-// Termos de uso e política de privacidade.
-//
-// Ficavam embutidos na tela de login. Com o cadastro dividido em dois
-// ambientes, o mesmo texto seria copiado em dois lugares — e texto jurídico
-// duplicado envelhece em versões diferentes.
+import { useI18n } from "../../lib/i18n.jsx";
 
-export default function Termos({ onAceitar, onVoltar }) {
+export default function Termos({ onAceitar, onVoltar, somenteLeitura }) {
+  const { t } = useI18n();
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 640 }}>
@@ -32,10 +29,10 @@ export default function Termos({ onAceitar, onVoltar }) {
               <p><b>Segurança:</b> utilizamos criptografia, tokens seguros e cookies HttpOnly para proteger seus dados.</p>
             </div>
           </div>
-          <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 20 }} onClick={onAceitar}>
-            Li e aceito os termos
-          </button>
-          <button className="vx-btn vx-btn-ghost vx-btn-block vx-btn-sm" style={{ marginTop: 6 }} onClick={onVoltar}>Voltar</button>
+          {!somenteLeitura && <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 20 }} onClick={onAceitar}>
+            {t("auth.terms.accept")}
+          </button>}
+          <button className="vx-btn vx-btn-ghost vx-btn-block vx-btn-sm" style={{ marginTop: 6 }} onClick={onVoltar}>{t("app.back")}</button>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import MolduraAuth from "./MolduraAuth.jsx";
 import { api } from "../../lib/api.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
 import { SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboarding.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 function formatarCnpj(valor) {
   const d = valor.replace(/\D/g, "").slice(0, 14);
@@ -18,15 +19,15 @@ function formatarCnpj(valor) {
 
 function validarCnpj(valor) {
   const d = valor.replace(/\D/g, "");
-  if (d.length !== 14) return "CNPJ inválido.";
-  if (/^(\d)\1+$/.test(d)) return "CNPJ inválido.";
+  if (d.length !== 14) return "Invalid CNPJ.";
+  if (/^(\d)\1+$/.test(d)) return "Invalid CNPJ.";
   const calc = (n) => {
     let s = 0, p = n - 7;
     for (let i = 0; i < n; i++) { s += parseInt(d[i]) * p--; if (p < 2) p = 9; }
     const r = s % 11;
     return r < 2 ? 0 : 11 - r;
   };
-  if (calc(12) !== parseInt(d[12]) || calc(13) !== parseInt(d[13])) return "CNPJ inválido.";
+  if (calc(12) !== parseInt(d[12]) || calc(13) !== parseInt(d[13])) return "Invalid CNPJ.";
   return null;
 }
 
@@ -72,6 +73,7 @@ function Opt({ titulo, descricao, cta, onClick, icone: Icone, destaque = false }
 }
 
 export default function EntradaEmpresa() {
+  const { t } = useI18n();
   const id = useId();
   const [modo, setModo] = useState("inicio"); // inicio | criar | link-enviado | recuperar
   const [email, setEmail] = useState("");
@@ -94,16 +96,15 @@ export default function EntradaEmpresa() {
   const enviarCriarConta = async (e) => {
     e.preventDefault();
     const novos = {};
-    if (!nomeEmpresa.trim()) novos.nomeEmpresa = "Nome da empresa é obrigatório.";
-    // CNPJ é opcional; valida apenas quando preenchido.
+    if (!nomeEmpresa.trim()) novos.nomeEmpresa = t("auth.entry.companyNameRequired");
     const errCnpj = cnpj.trim() ? validarCnpj(cnpj) : null;
     if (errCnpj) novos.cnpj = errCnpj;
-    if (!EMAIL_RE.test(email.trim())) novos.email = "E-mail inválido.";
+    if (!EMAIL_RE.test(email.trim())) novos.email = t("auth.entry.invalidEmail");
     const errSenha = validarSenhaEmpresa(senha);
     if (errSenha) novos.senha = errSenha;
-    if (senha !== confirmaSenha) novos.confirmaSenha = "As senhas não coincidem.";
-    if (!aceitouTermos) novos.termos = "Aceite os Termos de Uso para continuar.";
-    if (!aceitouPrivacidade) novos.privacidade = "Aceite a Política de Privacidade para continuar.";
+    if (senha !== confirmaSenha) novos.confirmaSenha = t("auth.register.passwordMismatch");
+    if (!aceitouTermos) novos.termos = t("auth.entry.acceptTermsRequired");
+    if (!aceitouPrivacidade) novos.privacidade = t("auth.entry.acceptPrivacyRequired");
     setErros(novos);
     if (Object.keys(novos).length) return;
 
@@ -119,7 +120,7 @@ export default function EntradaEmpresa() {
 
     if (!r || r.error) {
       if (r?.campo) setErros({ [r.campo]: r.error });
-      else setErroGeral(r?.error || "Não foi possível criar a conta. Tente de novo.");
+      else setErroGeral(r?.error || t("auth.entry.createFailed"));
       return;
     }
     // Conta criada: entra direto na plataforma; a confirmação de e-mail fica para depois.
@@ -134,9 +135,9 @@ export default function EntradaEmpresa() {
   if (modo === "link-enviado") {
     return (
       <MolduraAuth
-        tarja="Confirme seu e-mail"
-        titulo="Link enviado!"
-        subtitulo={`Enviamos um link de confirmação para ${email}. Clique nele para ativar sua conta.`}
+        tarja={t("auth.entry.confirmEmail")}
+        titulo={t("auth.entry.linkSent")}
+        subtitulo={t("auth.entry.linkSentDesc", { email })}
       >
         <div style={{ textAlign: "center", padding: "8px 0 4px" }}>
           <div style={{
@@ -146,7 +147,7 @@ export default function EntradaEmpresa() {
             <MailCheck size={28} strokeWidth={1.8} color="var(--brand)" aria-hidden="true" />
           </div>
           <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "0 0 20px", lineHeight: 1.6 }}>
-            Verifique também a pasta de spam. O link expira em 24 horas.
+            {t("auth.entry.checkSpam")}
           </p>
           <button
             className="vx-btn vx-btn-ghost vx-btn-sm"
@@ -156,7 +157,7 @@ export default function EntradaEmpresa() {
               if (r?.error) setErroGeral(r.error);
             }}
           >
-            Reenviar link
+            {t("auth.entry.resendLink")}
           </button>
           {erroGeral && <div className="vx-onb-erro" role="alert" style={{ marginTop: 10 }}>{erroGeral}</div>}
         </div>
@@ -167,15 +168,15 @@ export default function EntradaEmpresa() {
   if (modo === "criar") {
     return (
       <MolduraAuth
-        tarja="Empresa"
-        titulo="Criar sua conta"
-        subtitulo="Acesso rápido à plataforma. Você vai preencher os dados da empresa depois."
+        tarja={t("auth.company")}
+        titulo={t("auth.entry.createAccount")}
+        subtitulo={t("auth.entry.createAccountDesc")}
         logoWidth={130}
         compact
         rodape={
           <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }}
             onClick={() => setModo("inicio")}>
-            ← Voltar
+            {t("auth.entry.back")}
           </button>
         }
       >
@@ -183,7 +184,7 @@ export default function EntradaEmpresa() {
           {erroGeral && <div className="vx-onb-erro" role="alert" style={{ marginBottom: 14 }}>{erroGeral}</div>}
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-nome`}>Nome da empresa</label>
+            <label className="vx-label" htmlFor={`${id}-nome`}>{t("auth.entry.companyName")}</label>
             <input
               id={`${id}-nome`} className="vx-input" type="text" autoComplete="organization"
               placeholder="Empresa Ltda" value={nomeEmpresa} onChange={(e) => setNomeEmpresa(e.target.value)}
@@ -194,7 +195,7 @@ export default function EntradaEmpresa() {
           </div>
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-cnpj`}>CNPJ <span className="vx-mut" style={{ fontWeight: 400 }}>(opcional)</span></label>
+            <label className="vx-label" htmlFor={`${id}-cnpj`}>CNPJ <span className="vx-mut" style={{ fontWeight: 400 }}>({t("misc.optional")})</span></label>
             <input
               id={`${id}-cnpj`} className="vx-input" type="text" inputMode="numeric" autoComplete="off"
               placeholder="00.000.000/0000-00" value={cnpj}
@@ -206,7 +207,7 @@ export default function EntradaEmpresa() {
           </div>
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-email`}>E-mail</label>
+            <label className="vx-label" htmlFor={`${id}-email`}>{t("login.email")}</label>
             <input
               id={`${id}-email`} className="vx-input" type="email" autoComplete="email"
               placeholder="voce@empresa.com.br" value={email} onChange={(e) => setEmail(e.target.value)}
@@ -217,18 +218,18 @@ export default function EntradaEmpresa() {
           </div>
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-senha`}>Senha</label>
+            <label className="vx-label" htmlFor={`${id}-senha`}>{t("login.password")}</label>
             <CampoSenha
               id={`${id}-senha`} value={senha} onChange={(e) => setSenha(e.target.value)}
               autoComplete="new-password" minLength={SENHA_MIN_EMPRESA}
               invalido={!!erros.senha} descricao={erros.senha ? `${id}-senha-erro` : `${id}-senha-dica`}
             />
-            <div id={`${id}-senha-dica`} className="vx-onb-dica">Mínimo de {SENHA_MIN_EMPRESA} caracteres.</div>
+            <div id={`${id}-senha-dica`} className="vx-onb-dica">{t("auth.entry.minChars", { n: SENHA_MIN_EMPRESA })}</div>
             {erros.senha && <div id={`${id}-senha-erro`} className="vx-onb-erro" role="alert">{erros.senha}</div>}
           </div>
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-confirma-senha`}>Confirmar senha</label>
+            <label className="vx-label" htmlFor={`${id}-confirma-senha`}>{t("auth.register.confirmPassword")}</label>
             <CampoSenha
               id={`${id}-confirma-senha`} value={confirmaSenha} onChange={(e) => setConfirmaSenha(e.target.value)}
               autoComplete="new-password"
@@ -252,9 +253,9 @@ export default function EntradaEmpresa() {
                 aria-describedby={erros.termos ? `${id}-termos-erro` : undefined}
               />
               <span style={{ fontSize: 13.5, lineHeight: 1.5 }}>
-                Li e aceito os{" "}
+                {t("auth.register.acceptTermsPrefix")}{" "}
                 <a href="https://rycs.pro/termos" target="_blank" rel="noreferrer" className="vx-onb-link" style={{ fontSize: "inherit" }}>
-                  Termos de Uso
+                  {t("auth.entry.termsOfUse")}
                 </a>
               </span>
             </label>
@@ -274,9 +275,9 @@ export default function EntradaEmpresa() {
                 aria-describedby={erros.privacidade ? `${id}-privacidade-erro` : undefined}
               />
               <span style={{ fontSize: 13.5, lineHeight: 1.5 }}>
-                Li e aceito a{" "}
+                {t("auth.entry.acceptPrivacyPrefix")}{" "}
                 <a href="https://rycs.pro/privacidade" target="_blank" rel="noreferrer" className="vx-onb-link" style={{ fontSize: "inherit" }}>
-                  Política de Privacidade
+                  {t("auth.entry.privacyPolicy")}
                 </a>
               </span>
             </label>
@@ -289,17 +290,17 @@ export default function EntradaEmpresa() {
             style={{ minHeight: 48, marginTop: 6 }}
             disabled={salvando}
           >
-            {salvando ? "Criando conta…" : "Criar conta e confirmar e-mail"}
+            {salvando ? t("auth.entry.creatingAccount") : t("auth.entry.createAndConfirm")}
           </button>
 
           <p style={{ fontSize: 12.5, color: "var(--muted)", textAlign: "center", marginTop: 12 }}>
-            Já tem conta?{" "}
+            {t("auth.entry.alreadyHaveAccount")}{" "}
             <button type="button" className="vx-onb-link" onClick={() => navegar(ROTAS.login)}>
-              Entrar
+              {t("login.enter")}
             </button>
             {" · "}
             <button type="button" className="vx-onb-link" onClick={() => setModo("recuperar")}>
-              Esqueci minha senha
+              {t("auth.entry.forgotPassword")}
             </button>
           </p>
         </form>
@@ -310,32 +311,32 @@ export default function EntradaEmpresa() {
   // modo === "inicio"
   return (
     <MolduraAuth
-      tarja="Empresa"
-      titulo="Como você quer começar?"
-      subtitulo="Escolha o caminho que faz mais sentido para você agora."
+      tarja={t("auth.company")}
+      titulo={t("auth.entry.howToStart")}
+      subtitulo={t("auth.entry.howToStartDesc")}
       logoWidth={140}
       compact
       largura={560}
       rodape={
         <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }}
           onClick={() => navegar(ROTAS.login)}>
-          Já tenho conta — entrar
+          {t("auth.register.hasAccount")}
         </button>
       }
     >
       <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
         <Opt
           icone={Users}
-          titulo="Criar conta"
-          descricao="Crie seu acesso e explore a plataforma. Você preenche os dados da empresa quando quiser."
-          cta="Criar conta"
+          titulo={t("auth.entry.createAccount")}
+          descricao={t("auth.entry.createAccountOpt")}
+          cta={t("auth.entry.createAccount")}
           onClick={() => setModo("criar")}
         />
         <Opt
           icone={Zap}
-          titulo="Iniciar vendas"
-          descricao="Configure tudo de uma vez: empresa, materiais, IA e plano. Pronto para sua primeira campanha."
-          cta="Iniciar vendas agora"
+          titulo={t("auth.entry.startSelling")}
+          descricao={t("auth.entry.startSellingDesc")}
+          cta={t("auth.entry.startSellingCta")}
           destaque
           onClick={iniciarVendas}
         />

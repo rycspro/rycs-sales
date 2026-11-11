@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight, TrendingUp } from "lucide-react";
+import { useI18n } from "../../lib/i18n.jsx";
 
 export const STATUS_CLIENTE = {
   aguardando:       { label: "Aguardando",       cor: "#64748B", bg: "#F1F5F9" },
@@ -19,7 +20,7 @@ import { ACOES, STATUS, MOTIVO_COR } from "../../lib/constants.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 
-const TIPO_LABEL = { agendamento: "Reunião agendada", realizada: "Visita realizada", venda: "Venda fechada", lead: "Lead gerado" };
+const TIPO_LABEL_KEYS = { agendamento: "approvals.type.meeting", realizada: "approvals.type.visit", venda: "approvals.type.sale", lead: "approvals.type.lead" };
 
 function iniciais(nome = "") {
   return nome.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0].toUpperCase()).join("") || "PR";
@@ -29,6 +30,7 @@ function capitalizar(nome = "") {
 }
 
 function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContestar, modo }) {
+  const { t } = useI18n();
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState("");
   const campanha = db.campaigns?.find((x) => x.id === sub.campaignId);
@@ -65,15 +67,15 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
         <div className="vx-prof-card__info">
           {/* nome */}
           <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {capitalizar(seller?.nome || "Profissional")}
+            {capitalizar(seller?.nome || t("approvals.professional"))}
           </span>
 
           {/* tarefa + campanha */}
           <span style={{ fontSize: 12, color: "var(--muted)" }}>
-            <b style={{ color: "var(--ink-2)" }}>{TIPO_LABEL[sub.tipo] || acao.nome}</b>
+            <b style={{ color: "var(--ink-2)" }}>{TIPO_LABEL_KEYS[sub.tipo] ? t(TIPO_LABEL_KEYS[sub.tipo]) : acao.nome}</b>
           </span>
           <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
-            {campanha?.titulo || "Sem campanha"} · {dataCurta(sub.criadoEm)}
+            {campanha?.titulo || t("approvals.noCampaign")} · {dataCurta(sub.criadoEm)}
           </span>
 
           {/* valor */}
@@ -85,7 +87,7 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
           {typeof sub.confianca === "number" && (
             <div style={{ marginTop: 4 }}>
               <Medidor value={sub.confianca} tone={st.tone === "red" ? "red" : st.tone === "amber" ? "amber" : "brand"} />
-              <span style={{ fontSize: 10.5, color: "var(--muted)" }}>{sub.confianca}% confiança · {sub.fonte === "ia" ? "IA" : "manual"}</span>
+              <span style={{ fontSize: 10.5, color: "var(--muted)" }}>{sub.confianca}% {t("approvals.confidence")} · {sub.fonte === "ia" ? t("approvals.ai") : t("approvals.manual")}</span>
             </div>
           )}
 
@@ -100,7 +102,7 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
             onClick={() => setAberto((v) => !v)}
           >
             <Eye size={12} />
-            {aberto ? "Ocultar detalhes" : "Ver evidências"}
+            {aberto ? t("approvals.hideDetails") : t("approvals.viewEvidence")}
             <ChevronDown size={11} style={{ transform: aberto ? "rotate(180deg)" : "none", transition: ".15s" }} />
           </button>
 
@@ -117,7 +119,7 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
             <>
               <input
                 style={{ width: "100%", padding: "7px 10px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontFamily: "inherit", outline: "none", marginBottom: 8, boxSizing: "border-box", background: "var(--surface-2)", color: "var(--ink)" }}
-                placeholder="Motivo (se for recusar)"
+                placeholder={t("approvals.reasonPlaceholder")}
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
               />
@@ -127,14 +129,14 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
                   style={{ flex: 1, fontSize: 12, height: 38, minHeight: 38, gap: 5 }}
                   onClick={() => onConfirmar(sub)}
                 >
-                  <CheckCircle2 size={13} /> Confirmar
+                  <CheckCircle2 size={13} /> {t("approvals.confirm")}
                 </button>
                 <button
                   className="vx-prof-card__btn vx-prof-card__btn--danger"
                   style={{ flex: 1, fontSize: 12, height: 38, minHeight: 38, gap: 5 }}
                   onClick={() => onRecusar(sub, motivo)}
                 >
-                  <X size={13} /> Recusar
+                  <X size={13} /> {t("approvals.reject")}
                 </button>
               </div>
             </>
@@ -145,7 +147,7 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
               style={{ fontSize: 12, height: 38, minHeight: 38, gap: 5 }}
               onClick={() => onContestar(sub)}
             >
-              <AlertTriangle size={13} /> Algo errado — revisar
+              <AlertTriangle size={13} /> {t("approvals.dispute")}
             </button>
           )}
         </div>
@@ -155,6 +157,7 @@ function CardProfAprovacao({ sub, seller, db, onConfirmar, onRecusar, onContesta
 }
 
 function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
+  const { t } = useI18n();
   const [auto, setAuto] = useState(!!campanhasAutoDefault);
   const [salvando, setSalvando] = useState(false);
 
@@ -165,17 +168,17 @@ function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
     setSalvando(false);
     if (r?.error) return aviso(r.error);
     setAuto(novoValor);
-    aviso(novoValor ? "Padrão alterado: profissionais aprovados entram em todas as campanhas automaticamente." : "Padrão alterado: cada campanha exigirá aprovação manual.");
+    aviso(novoValor ? t("approvals.configAutoOn") : t("approvals.configAutoOff"));
   };
 
   return (
     <div className="vx-card" style={{ padding: 20, marginBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
         <UserPlus size={20} color="var(--brand)" />
-        <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Aprovação de profissionais</h3>
+        <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>{t("approvals.profApproval")}</h3>
       </div>
       <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 14px" }}>
-        Quando um profissional é aprovado para trabalhar com sua empresa, ele pode ser incluído em todas as campanhas automaticamente ou precisar de aprovação manual para cada campanha.
+        {t("approvals.profApprovalDesc")}
       </p>
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <button
@@ -185,10 +188,10 @@ function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
           disabled={salvando}
         >
           {auto ? <ToggleRight size={18} color="var(--brand)" /> : <ToggleLeft size={18} />}
-          {auto ? "Campanhas automáticas (ativo)" : "Aprovação manual por campanha (ativo)"}
+          {auto ? t("approvals.autoCampaigns") : t("approvals.manualPerCampaign")}
         </button>
         <span className="vx-mut" style={{ fontSize: 12 }}>
-          Este é o padrão — pode ser ajustado por profissional na aprovação.
+          {t("approvals.defaultNote")}
         </span>
       </div>
     </div>
@@ -196,6 +199,7 @@ function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
 }
 
 function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
+  const { t } = useI18n();
   const [campanhasAuto, setCampanhasAuto] = useState(null);
   const diasAguardando = solicitacao.criadoEm
     ? Math.max(0, Math.floor((Date.now() - solicitacao.criadoEm) / (1000 * 60 * 60 * 24)))
@@ -215,17 +219,17 @@ function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
       {/* INFO */}
       <div style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column", gap: 3 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontWeight: 700, fontSize: 14.5, color: "var(--ink)" }}>{capitalizar(seller?.nome || "Profissional")}</span>
+          <span style={{ fontWeight: 700, fontSize: 14.5, color: "var(--ink)" }}>{capitalizar(seller?.nome || t("approvals.professional"))}</span>
           {diasAguardando !== null && (
             <span style={{ background: diasCor, color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "2px 8px" }}>
-              {diasAguardando === 0 ? "hoje" : `${diasAguardando}d`}
+              {diasAguardando === 0 ? t("approvals.today") : `${diasAguardando}d`}
             </span>
           )}
-          <span style={{ background: "#fffbeb", color: "#92400e", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }}>Aguardando aprovação</span>
+          <span style={{ background: "#fffbeb", color: "#92400e", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }}>{t("approvals.awaitingApproval")}</span>
         </div>
         <span style={{ fontSize: 12, color: "var(--muted)" }}>
           <Clock size={11} style={{ marginRight: 3, verticalAlign: "-1px" }} />
-          {solicitacao.criadoEm ? dataCurta(solicitacao.criadoEm) : "Data não registrada"}
+          {solicitacao.criadoEm ? dataCurta(solicitacao.criadoEm) : t("approvals.dateNotRegistered")}
           {seller?.cidade && ` · ${seller.cidade}${seller?.estado ? `, ${seller.estado}` : ""}`}
           {seller?.titulo && ` · ${seller.titulo}`}
         </span>
@@ -239,17 +243,17 @@ function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
           onClick={() => setCampanhasAuto((v) => v === null ? false : v === false ? true : null)}
         >
           {campanhasAuto === true ? <ToggleRight size={16} color="var(--brand)" /> : <ToggleLeft size={16} />}
-          {campanhasAuto === true ? "Auto em campanhas" : campanhasAuto === false ? "Manual por campanha" : "Usar padrão da empresa"}
+          {campanhasAuto === true ? t("approvals.autoInCampaigns") : campanhasAuto === false ? t("approvals.manualPerCampaignShort") : t("approvals.useCompanyDefault")}
         </button>
       </div>
 
       {/* AÇÕES */}
       <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
         <button className="vx-prof-card__btn" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => onAprovar(seller.id, campanhasAuto)}>
-          <CheckCircle2 size={14} /> Aprovar
+          <CheckCircle2 size={14} /> {t("approvals.approve")}
         </button>
         <button className="vx-prof-card__btn vx-prof-card__btn--danger" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => onRecusar(seller.id)}>
-          <X size={14} /> Recusar
+          <X size={14} /> {t("approvals.reject")}
         </button>
       </div>
     </div>
@@ -268,29 +272,40 @@ const TD = ({ children, right, muted }) => (
   </td>
 );
 
+const STATUS_CLIENTE_KEYS = {
+  aguardando: "approvals.status.waiting", em_contato: "approvals.status.inContact",
+  negociando: "approvals.status.negotiating", proposta_enviada: "approvals.status.proposalSent",
+  ganho: "approvals.status.won", perdido: "approvals.status.lost",
+  sem_resposta: "approvals.status.noResponse", reagendado: "approvals.status.rescheduled",
+  liberar_saldo: "approvals.status.releaseBalance",
+};
+
 function BadgeStatus({ val }) {
+  const { t } = useI18n();
   const st = STATUS_CLIENTE[val] || STATUS_CLIENTE.aguardando;
+  const key = STATUS_CLIENTE_KEYS[val] || STATUS_CLIENTE_KEYS.aguardando;
   return (
     <span style={{ background: st.bg, color: st.cor, fontSize: 11.5, fontWeight: 600, borderRadius: 20, padding: "3px 10px", whiteSpace: "nowrap" }}>
-      {st.label}
+      {t(key)}
     </span>
   );
 }
 
 function TabelaHistorico({ subs, db }) {
+  const { t } = useI18n();
   return (
     <div className="vx-card" style={{ padding: 0, overflow: "hidden", marginBottom: 32 }}>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
           <thead>
             <tr>
-              <TH>Profissional</TH>
-              <TH>Ação</TH>
-              <TH>Campanha</TH>
-              <TH right>Valor</TH>
-              <TH>Data</TH>
-              <TH>Status do cliente</TH>
-              <TH>Aprovação</TH>
+              <TH>{t("approvals.th.professional")}</TH>
+              <TH>{t("approvals.th.action")}</TH>
+              <TH>{t("approvals.th.campaign")}</TH>
+              <TH right>{t("approvals.th.value")}</TH>
+              <TH>{t("approvals.th.date")}</TH>
+              <TH>{t("approvals.th.clientStatus")}</TH>
+              <TH>{t("approvals.th.approval")}</TH>
             </tr>
           </thead>
           <tbody>
@@ -298,7 +313,7 @@ function TabelaHistorico({ subs, db }) {
               const seller = db.sellers.find((s) => s.id === sub.sellerId);
               const campanha = db.campaigns?.find((c) => c.id === sub.campaignId);
               const st = STATUS[sub.status] || STATUS.analisando;
-              const nome = capitalizar(seller?.nome || "Profissional");
+              const nome = capitalizar(seller?.nome || t("approvals.professional"));
               return (
                 <tr key={sub.id} style={{ transition: "background .1s" }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
@@ -313,7 +328,7 @@ function TabelaHistorico({ subs, db }) {
                       <span style={{ fontWeight: 600, fontSize: 13 }}>{nome}</span>
                     </div>
                   </TD>
-                  <TD>{TIPO_LABEL[sub.tipo] || sub.tipo || "—"}</TD>
+                  <TD>{TIPO_LABEL_KEYS[sub.tipo] ? t(TIPO_LABEL_KEYS[sub.tipo]) : sub.tipo || "—"}</TD>
                   <TD muted>{campanha?.titulo || "—"}</TD>
                   <TD right><span style={{ fontWeight: 600, color: "var(--brand)" }}>{money(sub.valor)}</span></TD>
                   <TD muted>{dataCurta(sub.criadoEm)}</TD>
@@ -336,6 +351,7 @@ function TabelaHistorico({ subs, db }) {
 }
 
 export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar, filtroData }) {
+  const { t } = useI18n();
   const solicitacoes = db.solicitacoesPendentes || [];
   const revisaoBase = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
   const iaAprovadosBase = db.submissions.filter((s) => s.companyId === emp.id && ["ia_aprovado", "conferido"].includes(s.status));
@@ -360,14 +376,14 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
   const aprovarProfissional = async (sellerId, campanhasAuto) => {
     const r = await apiPatch("/applications", { sellerId, companyId: emp.id, status: "aprovado", campanhasAuto });
     if (r?.error) return aviso(r.error);
-    aviso("Profissional aprovado!");
+    aviso(t("approvals.toast.approved"));
     recarregar?.();
   };
 
   const recusarProfissional = async (sellerId) => {
     const r = await apiPatch("/applications", { sellerId, companyId: emp.id, status: "recusado" });
     if (r?.error) return aviso(r.error);
-    aviso("Solicitação recusada.");
+    aviso(t("approvals.toast.rejected"));
     recarregar?.();
   };
 
@@ -375,36 +391,36 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
     const r = await apiPatch(`/submissions/${sub.id}`, { status: "conferido", motivo: "Confirmado manualmente pela empresa." });
     if (!r || r.error) return aviso(r?.error || "Não foi possível confirmar.");
     setDb((d) => ({ ...d, submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "conferido", motivo: "Confirmado manualmente pela empresa." } : s) }));
-    aviso("Confirmado. A plataforma libera o pagamento.");
+    aviso(t("approvals.toast.confirmed"));
   };
 
   const recusar = async (sub, motivo) => {
     const m = (motivo || "").trim();
-    if (!m) return aviso("Escreva o motivo da recusa. O vendedor precisa saber o que corrigir.");
+    if (!m) return aviso(t("approvals.toast.needReason"));
     const r = await apiPatch(`/submissions/${sub.id}`, { status: "recusado", motivo: m });
     if (!r || r.error) return aviso(r?.error || "Não foi possível recusar.");
     setDb((d) => ({ ...d, submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "recusado", motivo: m } : s) }));
-    aviso("Ação recusada.");
+    aviso(t("approvals.toast.actionRejected"));
   };
 
   const contestar = async (sub) => {
     const r = await apiPatch(`/submissions/${sub.id}`, { status: "revisao", motivo: "Empresa sinalizou dúvida sobre a aprovação automática." });
     if (!r || r.error) return aviso(r?.error || "Não foi possível enviar para revisão.");
     setDb((d) => ({ ...d, submissions: d.submissions.map((s) => s.id === sub.id ? { ...s, status: "revisao", motivo: "Empresa sinalizou dúvida sobre a aprovação automática." } : s) }));
-    aviso("Enviado para revisão manual.");
+    aviso(t("approvals.toast.sentToReview"));
   };
 
   return (
     <>
       <div className="vx-page-head">
         <div>
-          <div className="vx-eyebrow">{secao === "regras" ? "Configurações" : "Governança de evidências"}</div>
-          <h1 className="vx-disp">{secao === "regras" ? "Regras automáticas" : "Aprovações"}</h1>
+          <div className="vx-eyebrow">{secao === "regras" ? t("approvals.eyebrow.settings") : t("approvals.eyebrow.governance")}</div>
+          <h1 className="vx-disp">{secao === "regras" ? t("approvals.title.rules") : t("approvals.title.approvals")}</h1>
           <p>{secao === "regras"
-            ? "Configure a aprovação de profissionais e a conferência automática de ações."
-            : "Revisão manual, recusas, contestações e decisões rastreáveis."}</p>
+            ? t("approvals.desc.rules")
+            : t("approvals.desc.approvals")}</p>
         </div>
-        {secao !== "regras" && <span className="vx-chip vx-mono">{revisao.length} pendentes</span>}
+        {secao !== "regras" && <span className="vx-chip vx-mono">{revisao.length} {t("approvals.pending")}</span>}
       </div>
 
       {secao === "regras" && <>
@@ -418,7 +434,7 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>
               <UserPlus size={18} style={{ marginRight: 6, verticalAlign: "-3px" }} />
-              Profissionais aguardando aprovação
+              {t("approvals.profsAwaitingApproval")}
             </h3>
             {solicitacoes.length > 0 && <span className="vx-chip vx-mono">{solicitacoes.length}</span>}
           </div>
@@ -427,7 +443,7 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
             ? (
               <div className="vx-card" style={{ padding: 24, textAlign: "center", marginBottom: 28 }}>
                 <Shield size={28} color="var(--muted)" style={{ display: "block", margin: "0 auto 10px" }} />
-                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum profissional aguardando aprovação no momento.</p>
+                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>{t("approvals.noProfsPending")}</p>
               </div>
             )
             : (

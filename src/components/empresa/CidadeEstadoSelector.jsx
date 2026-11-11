@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import { UFS, buscarMunicipios } from "../../lib/ibge.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 export default function CidadeEstadoSelector({ estado, cidade, onEstado, onCidade }) {
+  const { t } = useI18n();
   const [municipios, setMunicipios] = useState([]);
   const [carregando, setCarregando] = useState(false);
 
@@ -20,16 +22,16 @@ export default function CidadeEstadoSelector({ estado, cidade, onEstado, onCidad
   return (
     <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
       <label>
-        <div className="vx-label"><MapPin size={12} style={{ verticalAlign: -1 }} /> Estado <span style={{ color: "var(--danger)" }}>*</span></div>
+        <div className="vx-label"><MapPin size={12} style={{ verticalAlign: -1 }} /> {t("location.state")} <span style={{ color: "var(--danger)" }}>*</span></div>
         <select className="vx-input" value={estado} onChange={(e) => onEstado?.(e.target.value)}>
-          <option value="">Selecione o estado</option>
+          <option value="">{t("location.selectState")}</option>
           {UFS.map((uf) => <option key={uf.sigla} value={uf.sigla}>{uf.nome} ({uf.sigla})</option>)}
         </select>
       </label>
       <label>
-        <div className="vx-label">Cidade <span style={{ color: "var(--danger)" }}>*</span></div>
+        <div className="vx-label">{t("location.city")} <span style={{ color: "var(--danger)" }}>*</span></div>
         <select className="vx-input" value={cidade} onChange={(e) => onCidade?.(e.target.value)} disabled={!estado || carregando}>
-          <option value="">{carregando ? "Carregando…" : !estado ? "Selecione o estado primeiro" : "Selecione a cidade"}</option>
+          <option value="">{carregando ? t("misc.loading") : !estado ? t("location.selectStateFirst") : t("location.selectCity")}</option>
           {municipios.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
       </label>

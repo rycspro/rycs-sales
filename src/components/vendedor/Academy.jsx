@@ -3,6 +3,7 @@ import { Award, BookOpen, GraduationCap } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { Vazio } from "../ui.jsx";
 import CursoPlayer from "./CursoPlayer.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
 
 const FUNCAO_LABEL = {
   sdr: "SDR",
@@ -13,6 +14,7 @@ const FUNCAO_LABEL = {
 };
 
 export default function Academy({ eu, aviso, funcaoInicial, recarregar, navegar, tour, limparTour }) {
+  const { t } = useI18n();
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
   const [cursoAberto, setCursoAberto] = useState(null);
@@ -20,7 +22,7 @@ export default function Academy({ eu, aviso, funcaoInicial, recarregar, navegar,
 
   const carregar = async () => {
     const r = await api("/courses");
-    if (!r || r.error) return setErro(r?.error || "Não foi possível carregar a Academy.");
+    if (!r || r.error) return setErro(r?.error || t("seller.academy.loadError"));
     setDados(r);
   };
 
@@ -59,8 +61,8 @@ export default function Academy({ eu, aviso, funcaoInicial, recarregar, navegar,
       <div className="vx-page-head">
         <div>
           <div className="vx-eyebrow">RYCS Academy</div>
-          <h1 className="vx-disp">Certificação {FUNCAO_LABEL[funcao] || funcao}</h1>
-          <p>Não há curso publicado para esta função ainda.</p>
+          <h1 className="vx-disp">{t("seller.academy.certification", { role: FUNCAO_LABEL[funcao] || funcao })}</h1>
+          <p>{t("seller.academy.noCourseForRole")}</p>
         </div>
         <span className="vx-chip"><GraduationCap size={13} /> {FUNCAO_LABEL[funcao] || funcao}</span>
       </div>
@@ -73,14 +75,14 @@ export default function Academy({ eu, aviso, funcaoInicial, recarregar, navegar,
               <BookOpen size={16} color="var(--brand)" />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <b>{curso.titulo}</b>
-                <div className="vx-mut" style={{ fontSize: 12 }}>{curso.totalAulas} aulas · {curso.progresso || 0}% concluído</div>
+                <div className="vx-mut" style={{ fontSize: 12 }}>{t("seller.academy.lessonsProgress", { lessons: curso.totalAulas, pct: curso.progresso || 0 })}</div>
               </div>
               {curso.certificado && <Award size={15} color="var(--brand)" />}
             </button>
           ))}
         </div>
       ) : (
-        <Vazio titulo="Nenhum curso publicado" texto="A plataforma ainda não publicou cursos para profissionais." />
+        <Vazio titulo={t("seller.academy.noCourses")} texto={t("seller.academy.noCoursesDesc")} />
       )}
     </div>
   );

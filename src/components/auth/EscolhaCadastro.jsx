@@ -1,5 +1,6 @@
 import MolduraAuth from "./MolduraAuth.jsx";
 import { ROTAS, navegar } from "../../lib/rotas.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Bifurcação para quem chega sem endereço específico.
 //
@@ -7,31 +8,35 @@ import { ROTAS, navegar } from "../../lib/rotas.js";
 // ambiente certo. Esta tela existe para quem digitou /cadastro ou guardou um
 // link antigo: melhor perguntar uma vez do que abrir o formulário errado.
 
-const OPCOES = [
-  {
-    role: "vendedor", destino: ROTAS.cadastroVendedor,
-    titulo: "Sou profissional de vendas",
-    texto: "Quero atender campanhas de empresas e ser remunerado por ação verificada.",
-    itens: ["Sem custo para participar", "Campanhas de várias empresas", "Saque via Pix a partir de R$ 10"],
-    cta: "Criar conta de profissional",
-  },
-  {
-    role: "empresa", destino: ROTAS.cadastroEmpresa,
-    titulo: "Sou empresa",
-    texto: "Quero uma força de vendas sob demanda, pagando só pelo que for entregue.",
-    itens: ["Profissionais já triados", "Pagamento por ação aprovada", "Sem contratação nem custo fixo"],
-    cta: "Criar conta da empresa",
-  },
-];
+function buildOpcoes(t) {
+  return [
+    {
+      role: "vendedor", destino: ROTAS.cadastroVendedor,
+      titulo: t("auth.choose.proTitle"),
+      texto: t("auth.choose.proDesc"),
+      itens: [t("auth.choose.proItem1"), t("auth.choose.proItem2"), t("auth.choose.proItem3")],
+      cta: t("auth.register.createProAccount"),
+    },
+    {
+      role: "empresa", destino: ROTAS.cadastroEmpresa,
+      titulo: t("auth.choose.companyTitle"),
+      texto: t("auth.choose.companyDesc"),
+      itens: [t("auth.choose.companyItem1"), t("auth.choose.companyItem2"), t("auth.choose.companyItem3")],
+      cta: t("auth.choose.createCompanyAccount"),
+    },
+  ];
+}
 
 export default function EscolhaCadastro() {
+  const { t } = useI18n();
+  const OPCOES = buildOpcoes(t);
   return (
     <MolduraAuth
       largura={760}
-      tarja="Criar conta"
-      titulo="Qual é o seu lado da operação?"
-      subtitulo="Cada perfil tem um ambiente próprio. Escolha para abrir o cadastro certo."
-      rodape={<button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => navegar(ROTAS.login)}>Já tenho conta — entrar</button>}
+      tarja={t("auth.choose.createAccount")}
+      titulo={t("auth.choose.whichSide")}
+      subtitulo={t("auth.choose.whichSideDesc")}
+      rodape={<button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => navegar(ROTAS.login)}>{t("auth.register.hasAccount")}</button>}
     >
       <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
         {OPCOES.map((o) => (

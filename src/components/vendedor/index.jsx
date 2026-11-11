@@ -2,6 +2,7 @@ import MinhaConta from "../conta/MinhaConta.jsx";
 import AtividadeProfissional from "../conta/AtividadeProfissional.jsx";
 import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useI18n } from "../../lib/i18n.jsx";
 import Cadastro from "./Cadastro.jsx";
 import PainelVendedor from "./PainelVendedor.jsx";
 import Oportunidades from "./Oportunidades.jsx";
@@ -18,6 +19,7 @@ import Triagem from "./Triagem.jsx";
 import OnboardingProfissional from "./OnboardingProfissional.jsx";
 
 export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, setAba, recarregar }) {
+  const { t } = useI18n();
   const [abertaId, setAbertaId] = useState(null);
   const [campanhaAbertaId, setCampanhaAbertaId] = useState(null);
   const [academyFuncao, setAcademyFuncao] = useState(null);
@@ -123,7 +125,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
           sempre visível o traz de volta à aula de onde saiu. */}
       {tour && aba !== "academy" && (
         <button type="button" onClick={() => setAba("academy")}
-          aria-label="Voltar ao curso"
+          aria-label={t("seller.backToCourse")}
           style={{
             position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 76, zIndex: 60,
             display: "flex", alignItems: "center", gap: 8, minHeight: 44, padding: "10px 18px",
@@ -131,7 +133,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
             background: "var(--brand)", color: "#fff", font: "inherit", fontSize: 13.5, fontWeight: 600,
             boxShadow: "0 8px 24px rgba(0,0,0,.28)",
           }}>
-          <ArrowLeft size={15} /> Voltar ao curso
+          <ArrowLeft size={15} /> {t("seller.backToCourse")}
         </button>
       )}
     </>

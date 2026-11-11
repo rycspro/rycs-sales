@@ -3,6 +3,7 @@ import { money, dataCurta } from "../../lib/utils.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
 import { Vazio } from "../ui.jsx";
 import CardEnvio from "../CardEnvio.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
 import DashboardAdmin from "./DashboardAdmin.jsx";
 import ProfissionaisAdmin from "./ProfissionaisAdmin.jsx";
 import EmpresasAdmin from "./EmpresasAdmin.jsx";
@@ -14,6 +15,7 @@ import CentralEmails from "./CentralEmails.jsx";
 import ConvitesOnboarding from "./ConvitesOnboarding.jsx";
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
+  const { t } = useI18n();
   const triagem = db.sellers.filter((s) => s.status === "triagem");
   const paraLiberar = db.submissions.filter((s) => s.status === "ia_aprovado" || s.status === "conferido");
   const saques = db.withdrawals.filter((w) => w.status === "solicitado");
@@ -28,7 +30,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const decidirTriagem = (s, st) => {
     apiPatch(`/sellers/${s.id}`, { status: st });
     up((d) => ({ sellers: d.sellers.map((x) => x.id === s.id ? { ...x, status: st } : x) }));
-    aviso(st === "aprovado" ? `${s.nome} aprovado.` : "Cadastro recusado.");
+    aviso(st === "aprovado" ? t("admin.triage.approved", { name: s.nome }) : t("admin.triage.rejected"));
   };
 
   // O servidor faz a conta e move o dinheiro numa transação; aqui só
@@ -37,7 +39,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
     const r = await api(`/submissions/${sub.id}/liberar`, {});
     if (r?.error) return aviso(r.error);
     await recarregar();
-    aviso(`${money(r.liquido)} liberados para saque.`);
+    aviso(t("admin.release.released", { amount: money(r.liquido) }));
   };
 
   // O servidor credita o "sacado" e guarda a transição de estado; tentar
@@ -47,11 +49,11 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
     // Este botão não move dinheiro: só registra que alguém já transferiu por
     // fora. Dizer isso aqui é o que evita marcar como pago um Pix que não
     // existiu — o profissional fica sem o saldo e sem o dinheiro.
-    if (!window.confirm(`Isto NÃO envia Pix. Só registra que você já transferiu ${money(w.valor)} por fora da plataforma.\n\nPara o sistema enviar o Pix, use "Enviar Pix agora".\n\nConfirma que o Pix já foi feito?`)) return;
+    if (!window.confirm(t("admin.withdrawals.confirmRegister", { amount: money(w.valor) }))) return;
     const r = await apiPatch(`/withdrawals/${w.id}`, { status: "pago" });
     if (r?.error) return aviso(r.error);
     await recarregar();
-    aviso("Saque marcado como pago.");
+    aviso(t("admin.withdrawals.markedPaid"));
   };
 
   // "Solicitado" não prova que o Pix ficou parado — só que a confirmação não
@@ -67,7 +69,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   // antes de enviar, para não pagar a mesma pessoa duas vezes.
   const enviarPix = async (w) => {
     const s = db.sellers.find((x) => x.id === w.sellerId);
-    if (!window.confirm(`Enviar Pix de ${money(w.valor)} para ${s?.nome || "o profissional"} agora?`)) return;
+    if (!window.confirm(t("admin.withdrawals.confirmPix", { amount: money(w.valor), name: s?.nome || t("admin.withdrawals.theProfessional") }))) return;
     const r = await api(`/admin/withdrawals/${w.id}/pagar-pix`, {});
     if (r?.error) return aviso(r.error);
     await recarregar();
@@ -79,7 +81,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   // duas vezes.
   const estornar = async (w) => {
     const s = db.sellers.find((x) => x.id === w.sellerId);
-    if (!window.confirm(`Devolver ${money(w.valor)} ao saldo de ${s?.nome || "o profissional"}?\n\nUse isto apenas quando o Pix NÃO saiu. O sistema confere no banco antes de devolver.`)) return;
+    if (!window.confirm(t("admin.withdrawals.confirmRefund", { amount: money(w.valor), name: s?.nome || t("admin.withdrawals.theProfessional") }))) return;
     const r = await api(`/admin/withdrawals/${w.id}/estornar`, {});
     if (r?.error) return aviso(r.error);
     await recarregar();
@@ -99,19 +101,19 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   return (
     <div className="vx-fade">
       {aba === "triagem" && (!triagem.length
-        ? <Vazio titulo="Fila vazia" texto="Novos cadastros de vendedores aparecem aqui com nota automática e vídeo de pitch." />
+        ? <Vazio titulo={t("admin.triage.emptyTitle")} texto={t("admin.triage.emptyText")} />
         : <div className="vx-grid">{triagem.map((s) => (
           <div key={s.id} className="vx-card" style={{ padding: 18 }}>
             <div className="vx-row">
               <div>
                 <b>{s.nome}</b>
                 <div className="vx-mut" style={{ fontSize: 12 }}>
-                  {s.perfil === "sdr" ? "SDR" : s.perfil === "closer" ? "Closer" : "Iniciante"} · {s.cidade || "—"} · {dataCurta(s.criadoEm)}
+                  {s.perfil === "sdr" ? "SDR" : s.perfil === "closer" ? "Closer" : t("admin.triage.beginner")} · {s.cidade || "—"} · {dataCurta(s.criadoEm)}
                 </div>
               </div>
               <div className="vx-disp vx-mono" style={{ fontSize: 26, color: s.nota >= 80 ? "var(--brand)" : s.nota >= 50 ? "var(--amber)" : s.nota >= 30 ? "#c2410c" : "var(--red)" }}>{s.nota ?? 100}</div>
             </div>
-            <div className="vx-mut" style={{ fontSize: 13, margin: "8px 0" }}>{s.experiencia || "Sem experiência declarada"}</div>
+            <div className="vx-mut" style={{ fontSize: 13, margin: "8px 0" }}>{s.experiencia || t("admin.triage.noExperience")}</div>
             {s.respostas?.length > 0 && (
               <ul className="vx-mut" style={{ fontSize: 12, paddingLeft: 18, margin: "0 0 10px" }}>
                 {s.respostas.map((r, i) => <li key={i}>{r}</li>)}
@@ -119,27 +121,27 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
             )}
             {s.video && <div className="vx-mono" style={{ fontSize: 11.5, wordBreak: "break-all", marginBottom: 10 }}>Pitch: {s.video}</div>}
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flex: 1 }} onClick={() => decidirTriagem(s, "aprovado")}>Aprovar</button>
-              <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => decidirTriagem(s, "recusado")}>Recusar</button>
+              <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flex: 1 }} onClick={() => decidirTriagem(s, "aprovado")}>{t("admin.triage.approve")}</button>
+              <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => decidirTriagem(s, "recusado")}>{t("admin.triage.reject")}</button>
             </div>
           </div>
         ))}</div>)}
 
       {aba === "liberar" && (!paraLiberar.length
-        ? <Vazio titulo="Nada para liberar" texto="Ações aprovadas pela IA ou conferidas pela empresa chegam aqui para o repasse final." />
+        ? <Vazio titulo={t("admin.release.emptyTitle")} texto={t("admin.release.emptyText")} />
         : <div className="vx-grid">{paraLiberar.map((sub) => (
           <CardEnvio key={sub.id} sub={sub} db={db} extra={
             <div style={{ marginTop: 12 }}>
               <div className="vx-mut vx-mono" style={{ fontSize: 11.5, marginBottom: 8 }}>
                 profissional {money(sub.valor)} · taxa da empresa {money(sub.valor * takeRateDoPlano(db.companies.find((c) => c.id === sub.companyId)?.assinatura))}
               </div>
-              <button className="vx-btn vx-btn-primary vx-btn-sm vx-btn-block" onClick={() => liberar(sub)}>Liberar para saque</button>
+              <button className="vx-btn vx-btn-primary vx-btn-sm vx-btn-block" onClick={() => liberar(sub)}>{t("admin.release.releaseBtn")}</button>
             </div>
           } />
         ))}</div>)}
 
       {aba === "saques" && (!saques.length
-        ? <Vazio titulo="Sem saques na fila" texto="Solicitações de PIX dos vendedores aparecem aqui para pagamento." />
+        ? <Vazio titulo={t("admin.withdrawals.emptyTitle")} texto={t("admin.withdrawals.emptyText")} />
         : <div className="vx-grid">{saques.map((w) => {
           const s = db.sellers.find((x) => x.id === w.sellerId);
           return (
@@ -149,10 +151,10 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
                 <div className="vx-mut" style={{ fontSize: 12 }}>{s?.nome} · {w.pix} · {dataCurta(w.criadoEm)}</div>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>Conferir no banco</button>
-                <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>Enviar Pix agora</button>
-                <button className="vx-btn vx-btn-sm" onClick={() => estornar(w)}>Devolver ao saldo</button>
-                <button className="vx-btn vx-btn-sm" onClick={() => pagar(w)}>Só registrar</button>
+                <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>{t("admin.withdrawals.checkBank")}</button>
+                <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>{t("admin.withdrawals.sendPix")}</button>
+                <button className="vx-btn vx-btn-sm" onClick={() => estornar(w)}>{t("admin.withdrawals.refund")}</button>
+                <button className="vx-btn vx-btn-sm" onClick={() => pagar(w)}>{t("admin.withdrawals.justRegister")}</button>
               </div>
             </div>
           );
@@ -160,10 +162,10 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
 
       {aba === "saques" && saquesResolvidos.length > 0 && (
         <>
-          <h3 className="vx-disp" style={{ fontSize: 15, margin: "22px 0 10px" }}>Saques resolvidos</h3>
+          <h3 className="vx-disp" style={{ fontSize: 15, margin: "22px 0 10px" }}>{t("admin.withdrawals.resolved")}</h3>
           <div className="vx-grid">{saquesResolvidos.map((w) => {
             const s = db.sellers.find((x) => x.id === w.sellerId);
-            const rotulo = { pago: "Pago", falhou: "Não concluído", cancelado: "Cancelado" }[w.status] || w.status;
+            const rotulo = { pago: t("admin.withdrawals.statusPaid"), falhou: t("admin.withdrawals.statusFailed"), cancelado: t("admin.withdrawals.statusCanceled") }[w.status] || w.status;
             return (
               <div key={w.id} className="vx-card vx-row" style={{ padding: 16 }}>
                 <div>
@@ -171,15 +173,15 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
                   <span className={"vx-badge " + (w.status === "pago" ? "vx-badge-brand" : "vx-badge-muted")} style={{ marginLeft: 8 }}>{rotulo}</span>
                   <div className="vx-mut" style={{ fontSize: 12 }}>{s?.nome} · {w.pix} · {dataCurta(w.criadoEm)}</div>
                   {!w.asaasId && w.status === "pago" && (
-                    <div style={{ fontSize: 12, color: "var(--amber)", marginTop: 3 }}>Marcado pago sem transferência no gateway — nenhum Pix saiu pela plataforma.</div>
+                    <div style={{ fontSize: 12, color: "var(--amber)", marginTop: 3 }}>{t("admin.withdrawals.noGateway")}</div>
                   )}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>Conferir no banco</button>
+                  <button className="vx-btn vx-btn-sm" onClick={() => conferir(w)}>{t("admin.withdrawals.checkBank")}</button>
                   {w.status !== "cancelado" && (
                     <>
-                      <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>Enviar Pix agora</button>
-                      <button className="vx-btn vx-btn-sm" onClick={() => estornar(w)}>Devolver ao saldo</button>
+                      <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => enviarPix(w)}>{t("admin.withdrawals.sendPix")}</button>
+                      <button className="vx-btn vx-btn-sm" onClick={() => estornar(w)}>{t("admin.withdrawals.refund")}</button>
                     </>
                   )}
                 </div>

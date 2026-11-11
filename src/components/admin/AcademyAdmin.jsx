@@ -5,12 +5,7 @@ import {
 import { api, apiPatch } from "../../lib/api.js";
 import { Stat, Vazio, Medidor } from "../ui.jsx";
 import { CATEGORIAS, NIVEIS_CURSO } from "../../../shared/academy/catalogo.js";
-
-const STATUS = {
-  rascunho: { nome: "Rascunho", tom: "amber" },
-  publicado: { nome: "Publicado", tom: "brand" },
-  arquivado: { nome: "Arquivado", tom: "muted" },
-};
+import { useI18n } from "../../lib/i18n.jsx";
 
 // O editor trabalha o curso inteiro em JSON. É o formato em que o conteúdo já
 // vive no banco, e evita construir um editor de árvore que ninguém pediu antes
@@ -23,6 +18,12 @@ const MODELO = {
 };
 
 export default function AcademyAdmin({ aviso }) {
+  const { t } = useI18n();
+  const STATUS = {
+    rascunho: { nome: t("admin.academy.draft"), tom: "amber" },
+    publicado: { nome: t("admin.academy.published"), tom: "brand" },
+    arquivado: { nome: t("admin.academy.archived"), tom: "muted" },
+  };
   const [stats, setStats] = useState(null);
   const [cursos, setCursos] = useState([]);
   const [erro, setErro] = useState("");
@@ -50,14 +51,14 @@ export default function AcademyAdmin({ aviso }) {
     const r = await api(`/admin/courses/${curso.id}/duplicate`, {});
     if (r?.error) return aviso(r.error);
     await carregar();
-    aviso("Cópia criada como rascunho. Edite e publique quando estiver pronta.");
+    aviso(t("admin.academy.duplicateSuccess"));
   };
 
   const criar = async () => {
     let corpo;
     try { corpo = JSON.parse(rascunho); }
     catch (e) { return aviso(`JSON inválido: ${e.message}`); }
-    if (!String(corpo.titulo || "").trim()) return aviso("O curso precisa de um título.");
+    if (!String(corpo.titulo || "").trim()) return aviso(t("admin.academy.needsTitle"));
 
     setSalvando(true);
     const r = await api("/admin/courses", corpo);
@@ -66,7 +67,7 @@ export default function AcademyAdmin({ aviso }) {
     setCriando(false);
     setRascunho(JSON.stringify(MODELO, null, 2));
     await carregar();
-    aviso("Curso criado como rascunho. Revise e publique.");
+    aviso(t("admin.academy.createSuccess"));
   };
 
   const porStatus = useMemo(() => {
@@ -81,28 +82,28 @@ export default function AcademyAdmin({ aviso }) {
     <div className="vx-fade">
       <div className="vx-page-head">
         <div>
-          <div className="vx-eyebrow">Conteúdo da plataforma</div>
+          <div className="vx-eyebrow">{t("admin.academy.platformContent")}</div>
           <h1 className="vx-disp">RYCS Academy</h1>
-          <p>Cursos, alunos e certificados emitidos. O que você publica aqui aparece para todos os profissionais.</p>
+          <p>{t("admin.academy.subtitle")}</p>
         </div>
         <button className="vx-btn vx-btn-primary" onClick={() => setCriando(!criando)}>
-          <Plus size={14} /> {criando ? "Cancelar" : "Novo curso"}
+          <Plus size={14} /> {criando ? t("common.cancel") : t("admin.academy.newCourse")}
         </button>
       </div>
 
       {stats && (
         <div className="vx-grid vx-g4">
-          <Stat label="Cursos publicados" value={stats.publicados} Icon={BookOpen} tone="brand" mono />
-          <Stat label="Matrículas" value={stats.matriculas} Icon={Users} tone="indigo" mono />
-          <Stat label="Certificados emitidos" value={stats.certificados} Icon={Award} tone="amber" mono />
-          <Stat label="Taxa de conclusão" value={`${stats.taxaConclusao}%`} Icon={GraduationCap} tone="muted" />
+          <Stat label={t("admin.academy.publishedCourses")} value={stats.publicados} Icon={BookOpen} tone="brand" mono />
+          <Stat label={t("admin.academy.enrollments")} value={stats.matriculas} Icon={Users} tone="indigo" mono />
+          <Stat label={t("admin.academy.certificates")} value={stats.certificados} Icon={Award} tone="amber" mono />
+          <Stat label={t("admin.academy.completionRate")} value={`${stats.taxaConclusao}%`} Icon={GraduationCap} tone="muted" />
         </div>
       )}
 
       {criando && (
         <div className="vx-card" style={{ padding: 18, marginTop: 16 }}>
-          <div className="vx-eyebrow">Novo curso</div>
-          <h3 className="vx-disp" style={{ fontSize: 16, margin: "3px 0 10px" }}>Estrutura do curso</h3>
+          <div className="vx-eyebrow">{t("admin.academy.newCourse")}</div>
+          <h3 className="vx-disp" style={{ fontSize: 16, margin: "3px 0 10px" }}>{t("admin.academy.courseStructure")}</h3>
           <p className="vx-mut" style={{ fontSize: 12.5, marginTop: 0 }}>
             Módulos, aulas e prova no formato abaixo. A capa é gerada a partir do título e da categoria.
             O curso nasce como rascunho — ninguém vê até você publicar.
@@ -112,9 +113,9 @@ export default function AcademyAdmin({ aviso }) {
             onChange={(e) => setRascunho(e.target.value)} />
           <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
             <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={criar}>
-              {salvando ? "Criando…" : "Criar curso"}
+              {salvando ? t("admin.academy.creating") : t("admin.academy.createCourse")}
             </button>
-            <button className="vx-btn" onClick={() => setRascunho(JSON.stringify(MODELO, null, 2))}>Restaurar modelo</button>
+            <button className="vx-btn" onClick={() => setRascunho(JSON.stringify(MODELO, null, 2))}>{t("admin.academy.restoreTemplate")}</button>
           </div>
           <div className="vx-chart-source">
             Categorias disponíveis: {CATEGORIAS.join(", ")}. Níveis: {Object.keys(NIVEIS_CURSO).join(", ")}.
@@ -141,26 +142,26 @@ export default function AcademyAdmin({ aviso }) {
                         <span className={`vx-badge vx-badge-${STATUS[st].tom}`} style={{ flexShrink: 0 }}>{STATUS[st].nome}</span>
                       </div>
                       <div className="vx-mut" style={{ fontSize: 12 }}>
-                        {c.categoria} · {c.totalAulas} aulas · {c.duracaoMin} min · {c.gratuito ? "Gratuito" : `R$ ${Number(c.preco).toFixed(2)}`}
+                        {c.categoria} · {c.totalAulas} {t("admin.academy.lessons")} · {c.duracaoMin} min · {c.gratuito ? t("admin.academy.free") : `R$ ${Number(c.preco).toFixed(2)}`}
                       </div>
                       <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 3 }}>
-                        {desempenho.alunos} aluno(s) · {desempenho.certificados} certificado(s)
+                        {desempenho.alunos} {t("admin.academy.students")} · {desempenho.certificados} {t("admin.academy.certs")}
                       </div>
                       <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                         {c.status !== "publicado" && (
                           <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => mudarStatus(c, "publicado")}>
-                            <Eye size={12} /> Publicar
+                            <Eye size={12} /> {t("admin.academy.publish")}
                           </button>
                         )}
                         {c.status === "publicado" && (
                           <button className="vx-btn vx-btn-sm" onClick={() => mudarStatus(c, "rascunho")}>
-                            <EyeOff size={12} /> Despublicar
+                            <EyeOff size={12} /> {t("admin.academy.unpublish")}
                           </button>
                         )}
-                        <button className="vx-btn vx-btn-sm" onClick={() => duplicar(c)}><Copy size={12} /> Duplicar</button>
+                        <button className="vx-btn vx-btn-sm" onClick={() => duplicar(c)}><Copy size={12} /> {t("admin.academy.duplicate")}</button>
                         {c.status !== "arquivado" && (
                           <button className="vx-btn vx-btn-sm" onClick={() => mudarStatus(c, "arquivado")}>
-                            <Archive size={12} /> Arquivar
+                            <Archive size={12} /> {t("admin.academy.archive")}
                           </button>
                         )}
                       </div>
@@ -175,14 +176,14 @@ export default function AcademyAdmin({ aviso }) {
 
       {!cursos.length && (
         <div style={{ marginTop: 20 }}>
-          <Vazio titulo="Nenhum curso no catálogo"
-            texto="Crie o primeiro curso em Novo curso. Ele nasce como rascunho e só aparece para os profissionais quando você publicar." />
+          <Vazio titulo={t("admin.academy.emptyTitle")}
+            texto={t("admin.academy.emptyText")} />
         </div>
       )}
 
       {!!stats?.porCurso.length && (
         <div className="vx-card" style={{ padding: 18, marginTop: 22 }}>
-          <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Desempenho por curso</div>
+          <div className="vx-eyebrow" style={{ marginBottom: 10 }}>{t("admin.academy.performance")}</div>
           {stats.porCurso.map((c) => (
             <div key={c.id} style={{ marginBottom: 12 }}>
               <div className="vx-row" style={{ fontSize: 12.5, marginBottom: 4 }}>

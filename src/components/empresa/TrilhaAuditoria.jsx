@@ -2,19 +2,25 @@ import { useEffect, useState } from "react";
 import { FileCheck2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
-const EVENTOS = {
-  envio: "Ação enviada",
-  triagem: "Triagem automática",
-  decisao_automatica: "Aprovada pela regra da empresa",
-  decisao_manual: "Decisão humana",
-  contestacao: "Contestação do profissional",
-  liberacao: "Repasse liberado pela plataforma",
-};
+function buildEventos(t) {
+  return {
+    envio: t("audit.actionSent"),
+    triagem: t("audit.autoTriage"),
+    decisao_automatica: t("audit.approvedByRule"),
+    decisao_manual: t("audit.humanDecision"),
+    contestacao: t("audit.contestation"),
+    liberacao: t("audit.transferReleased"),
+  };
+}
 
-const ATORES = { empresa: "Empresa", vendedor: "Profissional", admin: "Plataforma", sistema: "Sistema" };
+function buildAtores(t) {
+  return { empresa: t("audit.actorCompany"), vendedor: t("audit.actorSeller"), admin: t("audit.actorPlatform"), sistema: t("audit.actorSystem") };
+}
 
 export default function TrilhaAuditoria({ submissionId }) {
+  const { t } = useI18n();
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
 
@@ -25,6 +31,9 @@ export default function TrilhaAuditoria({ submissionId }) {
     });
   }, [submissionId]);
 
+  const EVENTOS = buildEventos(t);
+  const ATORES = buildAtores(t);
+
   if (erro) return <div className="vx-notice vx-notice-amber" style={{ marginTop: 10 }}>{erro}</div>;
   if (!dados) return <div className="vx-skeleton" style={{ height: 60, marginTop: 10 }} />;
 
@@ -33,17 +42,17 @@ export default function TrilhaAuditoria({ submissionId }) {
   return (
     <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
       <div className="vx-row" style={{ marginBottom: 8 }}>
-        <span className="vx-eyebrow">Trilha de auditoria</span>
+        <span className="vx-eyebrow">{t("audit.title")}</span>
         <span className={"vx-badge " + (integra ? "vx-badge-brand" : "vx-badge-red")}>
           {integra
-            ? <><ShieldCheck size={11} style={{ verticalAlign: -1, marginRight: 3 }} />Cadeia íntegra</>
-            : <><ShieldAlert size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{dados.integridade?.erro || "Cadeia rompida"}</>}
+            ? <><ShieldCheck size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{t("audit.chainIntact")}</>
+            : <><ShieldAlert size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{dados.integridade?.erro || t("audit.chainBroken")}</>}
         </span>
       </div>
 
       {!dados.eventos.length && (
         <p className="vx-mut" style={{ fontSize: 12 }}>
-          Esta ação é anterior à trilha encadeada. Ações enviadas a partir de agora registram cada decisão.
+          {t("audit.legacyNote")}
         </p>
       )}
 
@@ -69,7 +78,7 @@ export default function TrilhaAuditoria({ submissionId }) {
         <div style={{ marginTop: 9 }}>
           <div className="vx-eyebrow" style={{ marginBottom: 4 }}>
             <FileCheck2 size={11} style={{ verticalAlign: -1, marginRight: 4 }} />
-            Evidências registradas
+            {t("audit.registeredEvidence")}
           </div>
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
             {dados.evidencias.map((ev) => (

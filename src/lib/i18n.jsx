@@ -15,6 +15,19 @@ function detectLang() {
   return DEFAULT_LANG;
 }
 
+function resolve(obj, key) {
+  if (typeof obj[key] === "string") return obj[key];
+  const parts = key.split(".");
+  let cur = obj;
+  for (const p of parts) {
+    if (cur == null || typeof cur !== "object") return undefined;
+    cur = cur[p];
+  }
+  if (typeof cur === "string") return cur;
+  if (cur && typeof cur === "object" && typeof cur._ === "string") return cur._;
+  return undefined;
+}
+
 const I18nCtx = createContext(null);
 
 let _dictionaries = {};
@@ -35,13 +48,13 @@ export function I18nProvider({ children }) {
   const t = useCallback((key, params) => {
     const dict = _dictionaries[lang] || _dictionaries[DEFAULT_LANG] || {};
     const fallback = _dictionaries[DEFAULT_LANG] || {};
-    let text = dict[key] ?? fallback[key] ?? key;
-    if (params) {
+    let text = resolve(dict, key) ?? resolve(fallback, key) ?? key;
+    if (params && typeof text === "string") {
       Object.entries(params).forEach(([k, v]) => {
         text = text.replace(new RegExp(`\\{${k}\\}`, "g"), v);
       });
     }
-    return text;
+    return typeof text === "string" ? text : key;
   }, [lang]);
 
   const value = useMemo(() => ({ lang, setLang, t, SUPPORTED }), [lang, setLang, t]);

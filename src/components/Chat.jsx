@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
 import { api } from "../lib/api.js";
 import { uid, agora, dataCurta } from "../lib/utils.js";
+import { useI18n } from "../lib/i18n.jsx";
 
 export default function Chat({ empresa, sellerId, db, up, de }) {
+  const { t } = useI18n();
   const [txt, setTxt] = useState("");
   const fim = useRef(null);
   const msgs = db.messages.filter((m) => m.companyId === empresa.id && m.sellerId === sellerId);
@@ -32,8 +34,8 @@ export default function Chat({ empresa, sellerId, db, up, de }) {
       <div style={{ minHeight: 200, maxHeight: 340, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
         {!msgs.length && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: "24px 0" }}>
-            <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", margin: 0 }}>Sem mensagens ainda.</p>
-            <p className="vx-mut" style={{ fontSize: 12, textAlign: "center", margin: 0 }}>Combine aqui script, horário e dúvidas de produto.</p>
+            <p className="vx-mut" style={{ fontSize: 13, textAlign: "center", margin: 0 }}>{t("chat.noMessages")}</p>
+            <p className="vx-mut" style={{ fontSize: 12, textAlign: "center", margin: 0 }}>{t("chat.noMessagesHint")}</p>
           </div>
         )}
         {msgs.map((m) => {
@@ -48,7 +50,7 @@ export default function Chat({ empresa, sellerId, db, up, de }) {
                   borderRadius: 12, overflow: "hidden", fontSize: 13,
                 }}>
                   <div style={{ padding: "10px 13px" }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.65, marginBottom: 5, textTransform: "uppercase" }}>📋 Lead compartilhado</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.65, marginBottom: 5, textTransform: "uppercase" }}>📋 {t("chat.sharedLead")}</div>
                     {card.tipo_acao && <div style={{ fontWeight: 600, marginBottom: 2 }}>{card.tipo_acao}</div>}
                     {card.campanha  && <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 2 }}>📢 {card.campanha}</div>}
                     {card.data      && <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>🗓 {card.data}</div>}
@@ -71,7 +73,7 @@ export default function Chat({ empresa, sellerId, db, up, de }) {
                         color: meu ? "#fff" : "var(--brand)", fontSize: 12.5, fontWeight: 600,
                         cursor: "pointer", textAlign: "center", fontFamily: "inherit",
                       }}
-                    >Ver tarefa →</button>
+                    >{t("chat.viewTask")} →</button>
                   )}
                 </div>
               ) : (
@@ -90,7 +92,7 @@ export default function Chat({ empresa, sellerId, db, up, de }) {
       </div>
       <div style={{ display: "flex", gap: 8 }}>
         <input className="vx-input" value={txt} onChange={(e) => setTxt(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") enviar(); }} placeholder="Escreva uma mensagem" />
+          onKeyDown={(e) => { if (e.key === "Enter") enviar(); }} placeholder={t("chat.placeholder")} />
         <button className="vx-btn vx-btn-primary" onClick={enviar}><Send size={15} /></button>
       </div>
     </div>

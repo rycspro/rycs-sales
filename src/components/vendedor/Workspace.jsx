@@ -3,12 +3,13 @@ import { ArrowLeft, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
 import { money } from "../../lib/utils.js";
 import { ACOES, TAXA } from "../../lib/constants.js";
 import { apiPatch } from "../../lib/api.js";
+import { useI18n } from "../../lib/i18n.jsx";
 import Curso from "./Curso.jsx";
 import Tarefas from "./Tarefas.jsx";
 import MeusEnvios from "./MeusEnvios.jsx";
 import Chat from "../Chat.jsx";
 
-function pedirRevisaoHumana(setDb, aviso, sub) {
+function pedirRevisaoHumana(setDb, aviso, t, sub) {
   const liquido = +(sub.valor * (1 - TAXA)).toFixed(2);
   const motivo = "Vendedor contestou e pediu revisão humana. Motivo original da IA: " + (sub.motivo || "—");
   apiPatch(`/submissions/${sub.id}`, { status: "revisao", motivo });
@@ -21,10 +22,10 @@ function pedirRevisaoHumana(setDb, aviso, sub) {
       sellers: d.sellers.map((s) => s.id === sub.sellerId ? { ...s, pendente: +(s.pendente + liquido).toFixed(2) } : s),
     };
   });
-  aviso("Enviado para conferência humana da empresa.");
+  aviso(t("seller.submissions.sentForReview"));
 }
 
-function TreinamentoCampanha({ campanha }) {
+function TreinamentoCampanha({ campanha, t }) {
   const [aberto, setAberto] = useState(false);
   const modulos = campanha?.treinamento || [];
   if (!modulos.length) return null;
@@ -35,8 +36,8 @@ function TreinamentoCampanha({ campanha }) {
         onClick={() => setAberto((v) => !v)}
       >
         <span style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 600, fontSize: 13.5 }}>
-          <BookOpen size={14} color="var(--brand)" /> Treinamento da campanha
-          <span className="vx-chip" style={{ fontSize: 11 }}>{modulos.length} módulos</span>
+          <BookOpen size={14} color="var(--brand)" /> {t("seller.workspace.campaignTraining")}
+          <span className="vx-chip" style={{ fontSize: 11 }}>{t("seller.workspace.modulesCount", { count: modulos.length })}</span>
         </span>
         {aberto ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
@@ -54,7 +55,7 @@ function TreinamentoCampanha({ campanha }) {
   );
 }
 
-function CampanhaHeader({ campanha, empresa }) {
+function CampanhaHeader({ campanha, empresa, t }) {
   const tarefas = campanha?.tarefas || {};
   const tiposAtivos = Object.entries(tarefas).filter(([, v]) => v > 0);
   return (
@@ -69,7 +70,7 @@ function CampanhaHeader({ campanha, empresa }) {
       {campanha.descricao && <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 10px" }}>{campanha.descricao}</p>}
       {campanha.requisitos && (
         <div className="vx-notice" style={{ marginBottom: 10, fontSize: 12 }}>
-          <b>Requisitos:</b> {campanha.requisitos}
+          <b>{t("seller.workspace.requirements")}:</b> {campanha.requisitos}
         </div>
       )}
       {tiposAtivos.length > 0 && (
@@ -86,31 +87,33 @@ function CampanhaHeader({ campanha, empresa }) {
 }
 
 export default function Workspace({ campanha, empresa, eu, db, setDb, up, aviso, voltar, recarregar }) {
+  const { t } = useI18n();
   const [aba, setAba] = useState("tarefas");
   const feitos = eu.curso?.[empresa.id];
   const todosFeitos = feitos === "todos" || (Array.isArray(feitos) && feitos.length === empresa.curso.length);
 
-  // Sem campanha: bloquear tarefas, pedir que o profissional entre por uma campanha
   const semCampanha = !campanha;
+
+  const TABS = [["tarefas", t("seller.workspace.tabs.tasks")], ["curso", t("seller.workspace.tabs.companyCourse")], ["envios", t("seller.workspace.tabs.mySubmissions")], ["chat", t("seller.workspace.tabs.chat")]];
 
   return (
     <div className="vx-fade">
       <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ marginBottom: 12, marginLeft: -8 }} onClick={voltar}>
-        <ArrowLeft size={14} /> Campanhas
+        <ArrowLeft size={14} /> {t("seller.workspace.campaigns")}
       </button>
 
       {campanha
-        ? <CampanhaHeader campanha={campanha} empresa={empresa} />
+        ? <CampanhaHeader campanha={campanha} empresa={empresa} t={t} />
         : <div className="vx-row" style={{ marginBottom: 12 }}>
             <h2 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>{empresa.nome}</h2>
-            <span className="vx-chip vx-mono">caixa {money(empresa.saldo)}</span>
+            <span className="vx-chip vx-mono">{t("seller.workspace.balance")} {money(empresa.saldo)}</span>
           </div>}
 
-      {campanha && <TreinamentoCampanha campanha={campanha} />}
+      {campanha && <TreinamentoCampanha campanha={campanha} t={t} />}
 
       <div className="vx-tabs" style={{ margin: "4px 0 18px" }}>
-        {[["tarefas", "Tarefas"], ["curso", "Curso da empresa"], ["envios", "Meus envios"], ["chat", "Chat"]].map(([k, t]) => (
-          <button key={k} className="vx-tab" data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>{t}</button>
+        {TABS.map(([k, label]) => (
+          <button key={k} className="vx-tab" data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>{label}</button>
         ))}
       </div>
 
@@ -119,12 +122,12 @@ export default function Workspace({ campanha, empresa, eu, db, setDb, up, aviso,
         semCampanha
           ? <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
               <BookOpen size={24} color="var(--muted)" />
-              <p className="vx-mut" style={{ marginTop: 10 }}>Para registrar tarefas, entre na operação por uma campanha aprovada.</p>
-              <button className="vx-btn vx-btn-sm" style={{ marginTop: 8 }} onClick={voltar}>Ver campanhas</button>
+              <p className="vx-mut" style={{ marginTop: 10 }}>{t("seller.workspace.noCampaignMsg")}</p>
+              <button className="vx-btn vx-btn-sm" style={{ marginTop: 8 }} onClick={voltar}>{t("seller.workspace.viewCampaigns")}</button>
             </div>
           : <Tarefas campanha={campanha} empresa={empresa} eu={eu} db={db} setDb={setDb} aviso={aviso} liberado={true} irCurso={() => setAba("curso")} recarregar={recarregar} />
       )}
-      {aba === "envios" && <MeusEnvios empresa={empresa} eu={eu} db={db} pedirRevisao={(sub) => pedirRevisaoHumana(setDb, aviso, sub)} />}
+      {aba === "envios" && <MeusEnvios empresa={empresa} eu={eu} db={db} pedirRevisao={(sub) => pedirRevisaoHumana(setDb, aviso, t, sub)} />}
       {aba === "chat" && <Chat empresa={empresa} sellerId={eu.id} db={db} up={up} de="vendedor" />}
     </div>
   );

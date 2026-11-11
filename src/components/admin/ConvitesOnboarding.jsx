@@ -3,19 +3,20 @@ import { Copy, Link2 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { TRIAL_ONBOARDING_DIAS, CONVITE_VALIDADE_PADRAO_DIAS, CONVITE_VALIDADE_MAX_DIAS } from "../../../shared/onboarding.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Links de onboarding gerados pela operação, um por empresa: preso ao e-mail,
 // uso único, com ou sem trial, e validade escolhida aqui. O link aparece uma
 // vez só — o servidor guarda apenas o hash.
 
-const ROTULO_ESTADO = {
-  disponivel: ["Disponível", "brand"],
-  usado: ["Usado", "muted"],
-  expirado: ["Expirado", "amber"],
-  revogado: ["Cancelado", "red"],
-};
-
 export default function ConvitesOnboarding({ aviso }) {
+  const { t } = useI18n();
+  const ROTULO_ESTADO = {
+    disponivel: [t("admin.invites.stateAvailable"), "brand"],
+    usado: [t("admin.invites.stateUsed"), "muted"],
+    expirado: [t("admin.invites.stateExpired"), "amber"],
+    revogado: [t("admin.invites.stateCanceled"), "red"],
+  };
   const id = useId();
   const [email, setEmail] = useState("");
   const [comTrial, setComTrial] = useState(true);
@@ -35,14 +36,14 @@ export default function ConvitesOnboarding({ aviso }) {
     setGerando(true);
     const r = await api("/admin/onboarding-convites", { email, comTrial, validadeDias: validade, observacao });
     setGerando(false);
-    if (!r || r.error) { setErro(r?.error || "Não foi possível gerar o link."); return; }
+    if (!r || r.error) { setErro(r?.error || t("admin.invites.generateError")); return; }
     setGerado(r);
     setEmail(""); setObservacao("");
     carregar();
   };
 
   const revogar = async (c) => {
-    if (!window.confirm(`Cancelar o link de ${c.email}? Quem tiver o link não conseguirá mais usá-lo.`)) return;
+    if (!window.confirm(t("admin.invites.confirmRevoke", { email: c.email }))) return;
     const r = await api(`/admin/onboarding-convites/${c.id}/revogar`, {});
     if (r?.error) return aviso?.(r.error);
     carregar();
@@ -50,42 +51,41 @@ export default function ConvitesOnboarding({ aviso }) {
 
   return (
     <div className="vx-fade">
-      <div className="vx-disp" style={{ fontSize: 22, marginBottom: 6 }}>Links de onboarding</div>
+      <div className="vx-disp" style={{ fontSize: 22, marginBottom: 6 }}>{t("admin.invites.title")}</div>
       <p className="vx-mut" style={{ fontSize: 13, marginTop: 0, marginBottom: 16, lineHeight: 1.6 }}>
-        Gere um link para uma empresa específica. Ele vale só para o e-mail informado e só uma vez. Com trial,
-        a empresa cadastra o cartão e a primeira cobrança acontece {TRIAL_ONBOARDING_DIAS} dias depois.
+        {t("admin.invites.description", { days: TRIAL_ONBOARDING_DIAS })}
       </p>
 
       <form className="vx-card" style={{ padding: 18, marginBottom: 16 }} onSubmit={gerar}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 12 }}>
           <div>
-            <label className="vx-label" htmlFor={`${id}-email`}>E-mail da empresa</label>
+            <label className="vx-label" htmlFor={`${id}-email`}>{t("admin.invites.companyEmail")}</label>
             <input id={`${id}-email`} className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div>
-            <label className="vx-label" htmlFor={`${id}-validade`}>Validade (dias)</label>
+            <label className="vx-label" htmlFor={`${id}-validade`}>{t("admin.invites.validity")}</label>
             <input id={`${id}-validade`} className="vx-input" type="number" min={1} max={CONVITE_VALIDADE_MAX_DIAS}
               value={validade} onChange={(e) => setValidade(e.target.value)} required />
           </div>
           <div>
-            <label className="vx-label" htmlFor={`${id}-obs`}>Observação (opcional)</label>
+            <label className="vx-label" htmlFor={`${id}-obs`}>{t("admin.invites.note")}</label>
             <input id={`${id}-obs`} className="vx-input" value={observacao} maxLength={200} onChange={(e) => setObservacao(e.target.value)} />
           </div>
         </div>
         <fieldset style={{ border: 0, padding: 0, margin: "14px 0 0", display: "flex", gap: 18, flexWrap: "wrap" }}>
-          <legend className="vx-label">Tipo de link</legend>
+          <legend className="vx-label">{t("admin.invites.linkType")}</legend>
           <label style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, cursor: "pointer" }}>
             <input type="radio" name={`${id}-tipo`} checked={comTrial} onChange={() => setComTrial(true)} />
-            Com trial de {TRIAL_ONBOARDING_DIAS} dias
+            {t("admin.invites.withTrial", { days: TRIAL_ONBOARDING_DIAS })}
           </label>
           <label style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, cursor: "pointer" }}>
             <input type="radio" name={`${id}-tipo`} checked={!comTrial} onChange={() => setComTrial(false)} />
-            Sem trial
+            {t("admin.invites.noTrial")}
           </label>
         </fieldset>
         {erro && <div className="vx-onb-erro" role="alert">{erro}</div>}
         <button className="vx-btn vx-btn-primary" type="submit" disabled={gerando} style={{ marginTop: 10, minHeight: 44 }}>
-          <Link2 size={14} /> {gerando ? "Gerando…" : "Gerar link"}
+          <Link2 size={14} /> {gerando ? t("admin.invites.generating") : t("admin.invites.generateLink")}
         </button>
       </form>
 
@@ -99,10 +99,10 @@ export default function ConvitesOnboarding({ aviso }) {
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" style={{ minHeight: 44 }}
-              onClick={() => { navigator.clipboard?.writeText(gerado.url); aviso?.("Link copiado."); }}>
-              <Copy size={13} /> Copiar link
+              onClick={() => { navigator.clipboard?.writeText(gerado.url); aviso?.(t("admin.invites.linkCopied")); }}>
+              <Copy size={13} /> {t("admin.invites.copyLink")}
             </button>
-            <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={() => setGerado(null)}>Fechar</button>
+            <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={() => setGerado(null)}>{t("common.close")}</button>
           </div>
           <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10, lineHeight: 1.6 }}>
             {gerado.aviso} Expira em {new Date(gerado.expiraEm).toLocaleDateString("pt-BR")}.
@@ -111,8 +111,8 @@ export default function ConvitesOnboarding({ aviso }) {
       )}
 
       <div className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
-        {lista === null && <div className="vx-onb-estado">Carregando…</div>}
-        {lista?.length === 0 && <div className="vx-onb-estado">Nenhum link gerado ainda.</div>}
+        {lista === null && <div className="vx-onb-estado">{t("common.loading")}</div>}
+        {lista?.length === 0 && <div className="vx-onb-estado">{t("admin.invites.noLinks")}</div>}
         {lista?.map((c) => {
           const [rotulo, tom] = ROTULO_ESTADO[c.estado] || ROTULO_ESTADO.expirado;
           return (
@@ -127,7 +127,7 @@ export default function ConvitesOnboarding({ aviso }) {
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <span className={`vx-badge vx-badge-${tom}`}>{rotulo}</span>
                 {c.estado === "disponivel" && (
-                  <button type="button" className="vx-btn vx-btn-sm vx-btn-danger" style={{ minHeight: 44 }} onClick={() => revogar(c)}>Cancelar</button>
+                  <button type="button" className="vx-btn vx-btn-sm vx-btn-danger" style={{ minHeight: 44 }} onClick={() => revogar(c)}>{t("admin.invites.cancel")}</button>
                 )}
               </div>
             </div>

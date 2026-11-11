@@ -2,15 +2,16 @@ import { useState, useEffect } from "react";
 import { Mail, Plus, Send, Eye, Users, Building2, UserCheck, X, CheckCircle, AlertTriangle, Sparkles, FileText, GitBranch } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
-
-const STATUS_LABEL = {
-  rascunho: { txt: "Rascunho", color: "var(--muted)" },
-  enviado: { txt: "Enviado", color: "#22A06B" },
-  falhou: { txt: "Falhou", color: "var(--red)" },
-  parcial: { txt: "Parcial", color: "var(--amber)" },
-};
+import { useI18n } from "../../lib/i18n.jsx";
 
 export default function CentralEmails({ aviso }) {
+  const { t } = useI18n();
+  const STATUS_LABEL = {
+    rascunho: { txt: t("admin.emails.draft"), color: "var(--muted)" },
+    enviado: { txt: t("admin.emails.sent"), color: "#22A06B" },
+    falhou: { txt: t("admin.emails.failed"), color: "var(--red)" },
+    parcial: { txt: t("admin.emails.partial"), color: "var(--amber)" },
+  };
   const [tela, setTela] = useState("lista"); // lista | novo | ai | templates | sequencias
   const [historico, setHistorico] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,37 +49,37 @@ export default function CentralEmails({ aviso }) {
       <div className="vx-page-head">
         <div>
           <div className="vx-eyebrow">Admin</div>
-          <h1 className="vx-disp">Central de E-mails</h1>
-          <p>Gerencie disparos, templates e sequências automáticas.</p>
+          <h1 className="vx-disp">{t("admin.emails.title")}</h1>
+          <p>{t("admin.emails.subtitle")}</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="vx-btn vx-btn-sm" onClick={() => setTela("sequencias")}>
-            <GitBranch size={14} /> Sequências
+            <GitBranch size={14} /> {t("admin.emails.sequences")}
           </button>
           <button className="vx-btn vx-btn-sm" onClick={() => setTela("templates")}>
-            <FileText size={14} /> Templates
+            <FileText size={14} /> {t("admin.emails.templates")}
           </button>
           <button className="vx-btn vx-btn-sm" style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", border: "none" }} onClick={() => setTela("ai")}>
-            <Sparkles size={14} /> Criar com IA
+            <Sparkles size={14} /> {t("admin.emails.createWithAI")}
           </button>
           <button className="vx-btn vx-btn-primary" onClick={() => setTela("novo")}>
-            <Plus size={15} /> Criar e-mail
+            <Plus size={15} /> {t("admin.emails.createEmail")}
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Carregando...</div>
+        <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>{t("common.loading")}</div>
       ) : historico.length === 0 ? (
         <div className="vx-card" style={{ padding: 40, textAlign: "center" }}>
           <Mail size={40} style={{ color: "var(--muted-2)", marginBottom: 12 }} />
-          <div className="vx-disp" style={{ fontSize: 17, marginBottom: 6 }}>Nenhum disparo ainda</div>
-          <div style={{ color: "var(--muted)", fontSize: 13 }}>Use "Criar e-mail" ou "Criar com IA" para o primeiro disparo.</div>
+          <div className="vx-disp" style={{ fontSize: 17, marginBottom: 6 }}>{t("admin.emails.noSendsYet")}</div>
+          <div style={{ color: "var(--muted)", fontSize: 13 }}>{t("admin.emails.noSendsHint")}</div>
         </div>
       ) : (
         <div className="vx-card" style={{ overflow: "hidden" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto 80px 100px 90px", gap: 10, padding: "10px 16px", background: "var(--surface-2)", borderBottom: "1px solid var(--border)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--muted)" }}>
-            <span>Assunto</span><span>Público</span><span>Qtd.</span><span>Data</span><span>Status</span>
+            <span>{t("admin.emails.subject")}</span><span>{t("admin.emails.audience")}</span><span>{t("admin.emails.qty")}</span><span>{t("admin.emails.date")}</span><span>{t("admin.emails.status")}</span>
           </div>
           {historico.map((item) => {
             const st = STATUS_LABEL[item.status] || STATUS_LABEL.enviado;
@@ -100,13 +101,14 @@ export default function CentralEmails({ aviso }) {
 
 // ---------- Criar com IA ----------
 function CriarComIA({ aviso, onConcluir, onVoltar }) {
+  const { t } = useI18n();
   const [prompt, setPrompt] = useState("");
   const [gerando, setGerando] = useState(false);
   const [rascunho, setRascunho] = useState(null);
   const [melhorando, setMelhorando] = useState(null);
 
   const gerar = async () => {
-    if (!prompt.trim()) return aviso("Descreva o e-mail que deseja criar.");
+    if (!prompt.trim()) return aviso(t("admin.emails.describeEmail"));
     setGerando(true);
     const r = await api("/admin/emails/ai-generate", { prompt });
     setGerando(false);
@@ -128,33 +130,33 @@ function CriarComIA({ aviso, onConcluir, onVoltar }) {
   };
 
   const ACOES = [
-    { key: "curto", label: "Mais curto" },
-    { key: "persuasivo", label: "Mais persuasivo" },
-    { key: "profissional", label: "Mais profissional" },
-    { key: "amigavel", label: "Mais amigável" },
-    { key: "assunto", label: "Melhorar assunto" },
-    { key: "cta", label: "Criar CTA" },
-    { key: "corrigir", label: "Corrigir texto" },
+    { key: "curto", label: t("admin.emails.aiShorter") },
+    { key: "persuasivo", label: t("admin.emails.aiPersuasive") },
+    { key: "profissional", label: t("admin.emails.aiProfessional") },
+    { key: "amigavel", label: t("admin.emails.aiFriendly") },
+    { key: "assunto", label: t("admin.emails.aiSubject") },
+    { key: "cta", label: t("admin.emails.aiCTA") },
+    { key: "corrigir", label: t("admin.emails.aiFix") },
   ];
 
   return (
     <div className="vx-fade" style={{ maxWidth: 680 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        <button className="vx-btn vx-btn-sm" onClick={onVoltar}>← Voltar</button>
-        <h2 style={{ margin: 0, fontSize: 19 }}>✨ Criar e-mail com IA</h2>
+        <button className="vx-btn vx-btn-sm" onClick={onVoltar}>← {t("common.back")}</button>
+        <h2 style={{ margin: 0, fontSize: 19 }}>✨ {t("admin.emails.createWithAI")}</h2>
       </div>
 
       <div className="vx-card" style={{ padding: 22, marginBottom: 16 }}>
-        <label className="vx-label">Descreva o e-mail que você quer criar</label>
+        <label className="vx-label">{t("admin.emails.describePrompt")}</label>
         <textarea
           className="vx-input"
           rows={4}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder='Ex: "Crie um e-mail para recuperar empresas que estão há 7 dias sem acessar a plataforma."'
+          placeholder={t("admin.emails.describeExample")}
         />
         <button className="vx-btn vx-btn-primary" style={{ marginTop: 12 }} disabled={gerando} onClick={gerar}>
-          <Sparkles size={14} /> {gerando ? "Gerando..." : "Gerar e-mail"}
+          <Sparkles size={14} /> {gerando ? t("admin.emails.generating") : t("admin.emails.generateEmail")}
         </button>
       </div>
 
@@ -162,23 +164,23 @@ function CriarComIA({ aviso, onConcluir, onVoltar }) {
         <div className="vx-card" style={{ padding: 22 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
             <CheckCircle size={16} color="#22A06B" />
-            <b style={{ fontSize: 15 }}>E-mail gerado — revise e edite antes de enviar</b>
+            <b style={{ fontSize: 15 }}>{t("admin.emails.aiGenerated")}</b>
           </div>
 
-          <label className="vx-label">Assunto</label>
+          <label className="vx-label">{t("admin.emails.subject")}</label>
           <input className="vx-input" value={rascunho.assunto || ""} onChange={(e) => setRascunho({ ...rascunho, assunto: e.target.value })} />
 
           <label className="vx-label" style={{ marginTop: 12 }}>Preheader</label>
           <input className="vx-input" value={rascunho.preheader || ""} onChange={(e) => setRascunho({ ...rascunho, preheader: e.target.value })} />
 
-          <label className="vx-label" style={{ marginTop: 12 }}>Conteúdo</label>
+          <label className="vx-label" style={{ marginTop: 12 }}>{t("admin.emails.content")}</label>
           <textarea className="vx-input" rows={8} value={rascunho.conteudo || ""} onChange={(e) => setRascunho({ ...rascunho, conteudo: e.target.value })} />
 
-          <label className="vx-label" style={{ marginTop: 12 }}>CTA (link)</label>
+          <label className="vx-label" style={{ marginTop: 12 }}>{t("admin.emails.ctaLink")}</label>
           <input className="vx-input" value={rascunho.cta || ""} onChange={(e) => setRascunho({ ...rascunho, cta: e.target.value })} />
 
           <div style={{ marginTop: 14, marginBottom: 4 }}>
-            <div className="vx-label" style={{ marginBottom: 6 }}>✨ Melhorar com IA</div>
+            <div className="vx-label" style={{ marginBottom: 6 }}>✨ {t("admin.emails.improveWithAI")}</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {ACOES.map(({ key, label }) => (
                 <button key={key} className="vx-btn vx-btn-sm" disabled={!!melhorando} onClick={() => melhorar(key)}>
@@ -195,10 +197,10 @@ function CriarComIA({ aviso, onConcluir, onVoltar }) {
                 // Passar para NovoDisparo com os dados preenchidos
                 // Para simplicidade: abrimos o disparo com o conteúdo gerado
                 onConcluir(null); // fecha IA e vai para lista
-                aviso("E-mail gerado copiado para rascunho. Use 'Criar e-mail' para enviar.");
+                aviso(t("admin.emails.copiedToDraft"));
               }}
             >
-              Usar este e-mail →
+              {t("admin.emails.useThisEmail")} →
             </button>
           </div>
         </div>
@@ -209,6 +211,7 @@ function CriarComIA({ aviso, onConcluir, onVoltar }) {
 
 // ---------- Templates ----------
 function Templates({ aviso, onVoltar, onUsar }) {
+  const { t } = useI18n();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -222,25 +225,25 @@ function Templates({ aviso, onVoltar, onUsar }) {
   return (
     <div className="vx-fade">
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        <button className="vx-btn vx-btn-sm" onClick={onVoltar}>← Voltar</button>
-        <h2 style={{ margin: 0, fontSize: 19 }}>Templates de e-mail</h2>
+        <button className="vx-btn vx-btn-sm" onClick={onVoltar}>← {t("common.back")}</button>
+        <h2 style={{ margin: 0, fontSize: 19 }}>{t("admin.emails.emailTemplates")}</h2>
       </div>
 
       {loading ? (
-        <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Carregando...</div>
+        <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>{t("common.loading")}</div>
       ) : (
         <div className="vx-grid">
-          {templates.map((t) => (
-            <div key={t.id} className="vx-card" style={{ padding: 18 }}>
+          {templates.map((tpl) => (
+            <div key={tpl.id} className="vx-card" style={{ padding: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
-                  <b style={{ fontSize: 14 }}>{t.nome}</b>
-                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>{t.assunto}</div>
+                  <b style={{ fontSize: 14 }}>{tpl.nome}</b>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>{tpl.assunto}</div>
                 </div>
-                <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => onUsar(t)}>Usar</button>
+                <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => onUsar(tpl)}>{t("admin.emails.use")}</button>
               </div>
-              {t.preheader && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8, fontStyle: "italic" }}>{t.preheader}</div>}
-              <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 10, whiteSpace: "pre-wrap", maxHeight: 80, overflow: "hidden" }}>{t.conteudo}</div>
+              {tpl.preheader && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8, fontStyle: "italic" }}>{tpl.preheader}</div>}
+              <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 10, whiteSpace: "pre-wrap", maxHeight: 80, overflow: "hidden" }}>{tpl.conteudo}</div>
             </div>
           ))}
         </div>
@@ -251,6 +254,7 @@ function Templates({ aviso, onVoltar, onUsar }) {
 
 // ---------- Sequências ----------
 function Sequencias({ aviso, onVoltar }) {
+  const { t } = useI18n();
   const [sequencias, setSequencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
@@ -268,12 +272,12 @@ function Sequencias({ aviso, onVoltar }) {
   useEffect(() => { carregar(); }, []);
 
   const iniciar = async () => {
-    if (!form.email) return aviso("Informe o e-mail.");
+    if (!form.email) return aviso(t("admin.emails.enterEmail"));
     setSalvando(true);
     const r = await api("/admin/email-sequences", form);
     setSalvando(false);
     if (r?.error) return aviso(r.error);
-    aviso("Sequência iniciada.");
+    aviso(t("admin.emails.seqStarted"));
     setModal(false);
     setForm({ tipo: "recuperacao", email: "" });
     carregar();
@@ -282,38 +286,38 @@ function Sequencias({ aviso, onVoltar }) {
   const parar = async (id) => {
     const r = await apiPatch(`/admin/email-sequences/${id}/stop`, { motivo: "admin" });
     if (r?.error) return aviso(r.error);
-    aviso("Sequência parada.");
+    aviso(t("admin.emails.seqStopped"));
     carregar();
   };
 
   const TIPOS = [
-    { key: "recuperacao", label: "Recuperação de acesso" },
-    { key: "reativacao", label: "Reativação de conta" },
-    { key: "bloqueio", label: "Conta bloqueada" },
+    { key: "recuperacao", label: t("admin.emails.seqRecovery") },
+    { key: "reativacao", label: t("admin.emails.seqReactivation") },
+    { key: "bloqueio", label: t("admin.emails.seqBlocked") },
   ];
 
   return (
     <div className="vx-fade">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button className="vx-btn vx-btn-sm" onClick={onVoltar}>← Voltar</button>
-          <h2 style={{ margin: 0, fontSize: 19 }}>Sequências de e-mail</h2>
+          <button className="vx-btn vx-btn-sm" onClick={onVoltar}>← {t("common.back")}</button>
+          <h2 style={{ margin: 0, fontSize: 19 }}>{t("admin.emails.emailSequences")}</h2>
         </div>
-        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModal(true)}>+ Nova sequência</button>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModal(true)}>+ {t("admin.emails.newSequence")}</button>
       </div>
 
       <div className="vx-card" style={{ padding: 18, marginBottom: 20, background: "var(--surface-2)" }}>
-        <b style={{ fontSize: 13 }}>Stop conditions ativas</b>
+        <b style={{ fontSize: 13 }}>{t("admin.emails.stopConditions")}</b>
         <div style={{ color: "var(--muted)", fontSize: 12, marginTop: 4 }}>
-          A sequência para automaticamente quando: acesso recuperado · conta reativada · pagamento realizado · opt-out.
+          {t("admin.emails.stopConditionsDesc")}
         </div>
       </div>
 
       {loading ? (
-        <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Carregando...</div>
+        <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>{t("common.loading")}</div>
       ) : sequencias.length === 0 ? (
         <div className="vx-card" style={{ padding: 32, textAlign: "center", color: "var(--muted)" }}>
-          Nenhuma sequência ativa. Use "+ Nova sequência" para iniciar.
+          {t("admin.emails.noSequences")}
         </div>
       ) : (
         <div className="vx-grid">
@@ -322,14 +326,14 @@ function Sequencias({ aviso, onVoltar }) {
               <div>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{s.email}</div>
                 <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>
-                  {TIPOS.find((t) => t.key === s.tipo)?.label || s.tipo} · Passo {s.passo}
+                  {TIPOS.find((tp) => tp.key === s.tipo)?.label || s.tipo} · {t("admin.emails.step")} {s.passo}
                 </div>
                 <div style={{ fontSize: 11, color: s.status === "ativa" ? "#22A06B" : "var(--muted)", marginTop: 2 }}>
-                  {s.status === "ativa" ? "Ativa" : "Parada"}
+                  {s.status === "ativa" ? t("admin.emails.seqActive") : t("admin.emails.seqStoppedLabel")}
                 </div>
               </div>
               {s.status === "ativa" && (
-                <button className="vx-btn vx-btn-sm vx-btn-danger" onClick={() => parar(s.id)}>Parar</button>
+                <button className="vx-btn vx-btn-sm vx-btn-danger" onClick={() => parar(s.id)}>{t("admin.emails.stop")}</button>
               )}
             </div>
           ))}
@@ -339,16 +343,16 @@ function Sequencias({ aviso, onVoltar }) {
       {modal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 900, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div className="vx-card" style={{ width: "100%", maxWidth: 420, padding: 28, margin: 16 }}>
-            <div className="vx-disp" style={{ fontSize: 17, marginBottom: 16 }}>Iniciar sequência</div>
-            <label className="vx-label">Tipo</label>
+            <div className="vx-disp" style={{ fontSize: 17, marginBottom: 16 }}>{t("admin.emails.startSequence")}</div>
+            <label className="vx-label">{t("admin.emails.type")}</label>
             <select className="vx-input" value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>
-              {TIPOS.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+              {TIPOS.map((tp) => <option key={tp.key} value={tp.key}>{tp.label}</option>)}
             </select>
-            <label className="vx-label" style={{ marginTop: 12 }}>E-mail do destinatário</label>
+            <label className="vx-label" style={{ marginTop: 12 }}>{t("admin.emails.recipientEmail")}</label>
             <input className="vx-input" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@empresa.com" />
             <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-              <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={iniciar}>Iniciar</button>
-              <button className="vx-btn" onClick={() => setModal(false)}>Cancelar</button>
+              <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={iniciar}>{t("admin.emails.start")}</button>
+              <button className="vx-btn" onClick={() => setModal(false)}>{t("common.cancel")}</button>
             </div>
           </div>
         </div>
@@ -359,6 +363,7 @@ function Sequencias({ aviso, onVoltar }) {
 
 // ---------- Novo Disparo manual ----------
 function NovoDisparo({ aviso, onConcluir, onVoltar }) {
+  const { t } = useI18n();
   const [passo, setPasso] = useState(1);
   const [publico, setPublico] = useState("todos");
   const [emailsCustom, setEmailsCustom] = useState("");
@@ -374,10 +379,10 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
   const [previewModo, setPreviewModo] = useState("desktop");
 
   const PUBLICOS = [
-    { key: "todos", label: "Todos os usuários", Icon: Users },
-    { key: "empresas", label: "Somente empresas", Icon: Building2 },
-    { key: "profissionais", label: "Somente profissionais", Icon: UserCheck },
-    { key: "custom", label: "E-mails específicos", Icon: Mail },
+    { key: "todos", label: t("admin.emails.allUsers"), Icon: Users },
+    { key: "empresas", label: t("admin.emails.companiesOnly"), Icon: Building2 },
+    { key: "profissionais", label: t("admin.emails.professionalsOnly"), Icon: UserCheck },
+    { key: "custom", label: t("admin.emails.specificEmails"), Icon: Mail },
   ];
 
   const carregarPreview = async () => {
@@ -388,16 +393,16 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
   };
 
   const enviarTeste = async () => {
-    if (!emailTeste) { aviso("Informe um e-mail de teste."); return; }
+    if (!emailTeste) { aviso(t("admin.emails.enterTestEmail")); return; }
     setEnviandoTeste(true);
     const r = await api("/admin/emails/teste", { para: emailTeste, assunto, preheader, conteudo, cta });
     setEnviandoTeste(false);
     if (r?.error) aviso(r.error);
-    else aviso("E-mail de teste enviado. Não iniciou sequência.");
+    else aviso(t("admin.emails.testSent"));
   };
 
   const enviar = async () => {
-    if (!confirmado) { aviso("Confirme o envio."); return; }
+    if (!confirmado) { aviso(t("admin.emails.confirmFirst")); return; }
     setEnviando(true);
     const r = await api("/admin/emails/disparar", { publico, emailsCustom, assunto, preheader, conteudo, cta });
     setEnviando(false);

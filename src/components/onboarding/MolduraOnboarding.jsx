@@ -1,4 +1,5 @@
 import BarraProgresso from "./BarraProgresso.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Moldura comum das etapas: logo + botão "Sair" no topo claro, e a nova
 // BarraProgresso animada (Trilha Neon) em fundo navy logo abaixo.
@@ -7,13 +8,14 @@ import BarraProgresso from "./BarraProgresso.jsx";
 // EtapaAcesso (passo 1), que tem seu próprio layout de quiz.
 
 export default function MolduraOnboarding({ etapas, ativa, subfase = null, aoAbrir, aoSair, semCabecalho = false, children }) {
+  const { t } = useI18n();
   return (
     <div className="vx-onb">
       {!semCabecalho && (
         <header className="vx-onb-topo">
           <div className="vx-onb-topo-inner">
             <img className="vx-logo" src="/logo-rycs.png" alt="RYCS" style={{ width: 72 }} />
-            {aoSair && <button type="button" className="vx-btn vx-btn-sm vx-btn-ghost" style={{ minHeight: 44 }} onClick={aoSair}>Sair</button>}
+            {aoSair && <button type="button" className="vx-btn vx-btn-sm vx-btn-ghost" style={{ minHeight: 44 }} onClick={aoSair}>{t("onb.exit")}</button>}
           </div>
           <BarraProgresso etapas={etapas} ativa={ativa} subfase={subfase} aoAbrir={aoAbrir} />
         </header>

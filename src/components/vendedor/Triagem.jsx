@@ -2,30 +2,18 @@ import { useState, useEffect, useMemo } from "react";
 import { GraduationCap, CheckCircle2, ArrowRight, ArrowLeft, Award, RotateCcw, TrendingUp } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { Campo } from "../ui.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
 
 const CORES = {
   aprovado: "var(--brand)", condicional: "var(--amber)",
   reavaliacao: "var(--indigo)", reprovado: "var(--red)",
 };
 
-const TITULOS = {
-  aprovado: "Você foi aprovado!",
-  condicional: "Quase lá",
-  reavaliacao: "Desenvolva seu perfil comercial",
-  reprovado: "Sua avaliação foi concluída",
-};
-
-const RECADOS = {
-  aprovado: "Seu perfil comercial está completo e sua conta foi aprovada integralmente. As oportunidades compatíveis já estão liberadas.",
-  condicional: "Perfil aprovado. A trilha da Academy eleva sua nota e sua posição na fila das empresas.",
-  reavaliacao: "Perfil aprovado. Os cursos da Academy são o caminho mais rápido para melhorar sua nota.",
-  reprovado: "Isso não significa que você não saiba vender. Sua conta está liberada e os cursos da Academy ficam disponíveis para desenvolver as competências avaliadas.",
-};
-
 export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
+  const { t } = useI18n();
   const [dados, setDados] = useState(null);
   const [historico, setHistorico] = useState(null);
-  const [fase, setFase] = useState("intro"); // intro | prova | resultado
+  const [fase, setFase] = useState("intro");
   const [bloco, setBloco] = useState(0);
   const [respostas, setRespostas] = useState({});
   const [resultado, setResultado] = useState(null);
@@ -36,13 +24,11 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
       if (p && !p.error) setDados(p);
       if (h && !h.error) {
         setHistorico(h);
-        // Quem já tem resultado vê o resultado, não o convite para começar.
         if (h.atual) { setResultado(h.atual); setFase("resultado"); }
       }
     });
   }, []);
 
-  // As perguntas chegam em ordem; agrupar por categoria dá os blocos da tela.
   const blocos = useMemo(() => {
     if (!dados) return [];
     const mapa = new Map();
@@ -56,7 +42,7 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
     }));
   }, [dados]);
 
-  if (!dados) return <div className="vx-mut" style={{ padding: 20 }}>Carregando avaliação…</div>;
+  if (!dados) return <div className="vx-mut" style={{ padding: 20 }}>{t("seller.triage.loading")}</div>;
 
   const respondidas = Object.keys(respostas).filter((k) => {
     const v = respostas[k];
@@ -80,23 +66,17 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
     setEnviando(true);
     const r = await api("/triagem", { respostas });
     setEnviando(false);
-    if (!r || r.error) return aviso(r?.error || "Não foi possível enviar a avaliação.");
+    if (!r || r.error) return aviso(r?.error || t("seller.triage.submitError"));
     setResultado(r);
     setFase("resultado");
-    // O recarregar não vem aqui de propósito: ele muda o status da conta para
-    // "parcial" e desmontaria esta tela antes de o profissional ler o
-    // resultado. Ele acontece quando o usuário escolhe seguir.
   };
 
-  // ---------- Resultado ----------
   if (fase === "resultado" && resultado) {
     const cor = CORES[resultado.status];
     const cats = resultado.categorias || {};
     const perfil = resultado.perfil || {};
     const aprovadoPleno = resultado.status === "aprovado";
 
-    // Sair daqui é o que efetivamente aplica o novo status na sessão: ou o
-    // marketplace, para quem passou dos 90%, ou a Academy para os demais.
     const seguir = async () => {
       if (!aprovadoPleno) irAcademy?.();
       await recarregar?.();
@@ -116,17 +96,17 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
               : <TrendingUp size={28} color={cor} strokeWidth={2.1} />}
           </div>
 
-          <div className="vx-disp" style={{ fontSize: 22 }}>{TITULOS[resultado.status]}</div>
+          <div className="vx-disp" style={{ fontSize: 22 }}>{t(`seller.triage.titles.${resultado.status}`)}</div>
           <div className="vx-disp vx-mono" style={{ fontSize: 46, color: cor, margin: "10px 0 4px" }}>
             {resultado.score}%
           </div>
           <p className="vx-mut" style={{ fontSize: 13.5, maxWidth: 420, margin: "8px auto 0" }}>
-            {RECADOS[resultado.status]}
+            {t(`seller.triage.messages.${resultado.status}`)}
           </p>
 
           {perfil.predominante && (
             <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-              <div className="vx-eyebrow">Perfil predominante</div>
+              <div className="vx-eyebrow">{t("seller.triage.predominantProfile")}</div>
               <div className="vx-disp" style={{ fontSize: 20, color: "var(--brand)", marginTop: 3 }}>
                 {perfil.predominante}
               </div>
@@ -136,14 +116,14 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
 
         {Object.keys(cats).length > 0 && (
           <>
-            <h3 className="vx-disp" style={{ fontSize: 16, margin: "22px 0 10px" }}>Seu perfil comercial</h3>
+            <h3 className="vx-disp" style={{ fontSize: 16, margin: "22px 0 10px" }}>{t("seller.triage.commercialProfile")}</h3>
             <div className="vx-card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
               {blocos.map((b) => {
                 const v = cats[b.chave] ?? 0;
                 return (
                   <div key={b.chave}>
                     <div className="vx-row" style={{ fontSize: 12.5, marginBottom: 5 }}>
-                      <span className="vx-mut">{b.nome} <span style={{ opacity: .6 }}>· peso {b.peso}%</span></span>
+                      <span className="vx-mut">{b.nome} <span style={{ opacity: .6 }}>· {t("seller.triage.weight")} {b.peso}%</span></span>
                       <b className="vx-mono" style={{ color: v >= 80 ? "var(--brand)" : v >= 60 ? "var(--amber)" : "var(--red)" }}>
                         {v}%
                       </b>
@@ -163,13 +143,13 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
 
         {historico?.tentativas?.length > 1 && (
           <>
-            <h3 className="vx-disp" style={{ fontSize: 16, margin: "22px 0 10px" }}>Histórico</h3>
+            <h3 className="vx-disp" style={{ fontSize: 16, margin: "22px 0 10px" }}>{t("seller.triage.history")}</h3>
             <div className="vx-grid">
-              {historico.tentativas.map((t) => (
-                <div key={t.id} className="vx-card vx-row" style={{ padding: 13, fontSize: 13 }}>
-                  <span className="vx-mut">Tentativa {t.tentativa}</span>
-                  <span className="vx-badge" style={{ background: "var(--surface-2)", color: CORES[t.status] }}>
-                    {t.score}%
+              {historico.tentativas.map((tent) => (
+                <div key={tent.id} className="vx-card vx-row" style={{ padding: 13, fontSize: 13 }}>
+                  <span className="vx-mut">{t("seller.triage.attempt")} {tent.tentativa}</span>
+                  <span className="vx-badge" style={{ background: "var(--surface-2)", color: CORES[tent.status] }}>
+                    {tent.score}%
                   </span>
                 </div>
               ))}
@@ -179,18 +159,16 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 9, marginTop: 18 }}>
           <button className="vx-btn vx-btn-primary vx-btn-block" onClick={seguir}>
-            {aprovadoPleno ? <>Acessar as oportunidades <ArrowRight size={14} /></>
-                           : <><GraduationCap size={14} /> Continuar na Academy</>}
+            {aprovadoPleno ? <>{t("seller.triage.accessOpportunities")} <ArrowRight size={14} /></>
+                           : <><GraduationCap size={14} /> {t("seller.triage.continueAcademy")}</>}
           </button>
-          {/* Refazer deixa de ser consolo de quem não passou: quem já foi
-              aprovado também melhora a nota, e é a nota que a empresa lê. */}
           <button className="vx-btn vx-btn-block"
             onClick={() => { setRespostas({}); setBloco(0); setFase("prova"); }}>
-            <RotateCcw size={14} /> Refazer a avaliação
+            <RotateCcw size={14} /> {t("seller.triage.retakeAssessment")}
           </button>
           {voltar && (
             <button className="vx-btn vx-btn-ghost vx-btn-block vx-btn-sm" onClick={voltar}>
-              Voltar ao perfil
+              {t("seller.triage.backToProfile")}
             </button>
           )}
         </div>
@@ -198,7 +176,6 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
     );
   }
 
-  // ---------- Intro ----------
   if (fase === "intro") {
     return (
       <div className="vx-fade" style={{ maxWidth: 560 }}>
@@ -212,14 +189,13 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
           </div>
 
           <div className="vx-eyebrow">RYCS Academy</div>
-          <div className="vx-disp" style={{ fontSize: 22, marginTop: 3 }}>Avaliação inicial</div>
+          <div className="vx-disp" style={{ fontSize: 22, marginTop: 3 }}>{t("seller.triage.initialAssessment")}</div>
           <p className="vx-mut" style={{ fontSize: 14, marginTop: 8, lineHeight: 1.7 }}>
-            Antes de começar a vender, queremos conhecer seu perfil comercial.
-            São {dados.total} perguntas em {blocos.length} blocos, e leva cerca de 10 minutos.
+            {t("seller.triage.introDesc", { total: dados.total, blocks: blocos.length })}
           </p>
 
           <hr className="vx-sep" />
-          <div className="vx-eyebrow" style={{ marginBottom: 10 }}>O que será avaliado</div>
+          <div className="vx-eyebrow" style={{ marginBottom: 10 }}>{t("seller.triage.whatIsAssessed")}</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
             {blocos.map((b) => (
               <span key={b.chave} className="vx-chip" style={{ fontSize: 11.5 }}>
@@ -232,21 +208,16 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
             marginTop: 18, padding: "12px 14px", borderRadius: 10, fontSize: 12.5,
             background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink-2)",
           }}>
-            Sua conta é liberada ao concluir a avaliação. Acima de <b>90%</b> a aprovação é
-            plena; abaixo disso você segue para a Academy, onde eleva sua nota e pode refazer a
-            avaliação quantas vezes precisar.
+            {t("seller.triage.introNote")}
           </div>
 
           <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 18 }}
             onClick={() => setFase("prova")}>
-            Começar avaliação <ArrowRight size={15} />
+            {t("seller.triage.startAssessment")} <ArrowRight size={15} />
           </button>
-          {/* Quem abriu a avaliação por escolha própria precisa poder desistir.
-              Sem esta saída, quem já está aprovado e só foi olhar fica preso
-              numa tela de 17 perguntas sem caminho de volta. */}
           {voltar && (
             <button className="vx-btn vx-btn-ghost vx-btn-block vx-btn-sm" style={{ marginTop: 8 }} onClick={voltar}>
-              Agora não, voltar ao perfil
+              {t("seller.triage.notNow")}
             </button>
           )}
         </div>
@@ -254,7 +225,6 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
     );
   }
 
-  // ---------- Prova ----------
   const b = blocos[bloco];
   const ultimo = bloco === blocos.length - 1;
 
@@ -262,7 +232,7 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
     <div className="vx-fade" style={{ maxWidth: 620 }}>
       <div style={{ marginBottom: 16 }}>
         <div className="vx-row" style={{ fontSize: 12.5, marginBottom: 6 }}>
-          <span className="vx-mut">Bloco {bloco + 1} de {blocos.length} · {b.nome}</span>
+          <span className="vx-mut">{t("seller.triage.block", { n: bloco + 1, total: blocos.length })} · {b.nome}</span>
           <b className="vx-mono">{respondidas}/{dados.total}</b>
         </div>
         <div className="vx-meter-track">
@@ -282,10 +252,10 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
               <>
                 <textarea className="vx-input" rows={4} value={respostas[p.id] || ""}
                   onChange={(e) => marcar(p.id, e.target.value)}
-                  placeholder="Responda com suas palavras, explicando seu raciocínio…"
+                  placeholder={t("seller.triage.openAnswerPlaceholder")}
                   style={{ resize: "vertical", fontFamily: "inherit" }} />
                 <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 5 }}>
-                  Quanto mais específico, melhor a avaliação.
+                  {t("seller.triage.moreSpecificBetter")}
                 </div>
               </>
             ) : (
@@ -313,7 +283,7 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
                   );
                 })}
                 {p.tipo === "multipla" && (
-                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Pode marcar mais de uma.</div>
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>{t("seller.triage.canSelectMultiple")}</div>
                 )}
               </div>
             )}
@@ -324,22 +294,22 @@ export default function Triagem({ aviso, recarregar, irAcademy, voltar }) {
       <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
         {bloco > 0 && (
           <button className="vx-btn" onClick={() => { setBloco(bloco - 1); window.scrollTo(0, 0); }}>
-            <ArrowLeft size={14} /> Voltar
+            <ArrowLeft size={14} /> {t("common.back")}
           </button>
         )}
         {ultimo ? (
           <button className="vx-btn vx-btn-primary" style={{ flex: 1 }}
             disabled={enviando || respondidas < dados.total}
             onClick={enviar}>
-            {enviando ? "Calculando…" : respondidas < dados.total
-              ? (dados.total - respondidas === 1 ? "Falta 1 resposta" : `Faltam ${dados.total - respondidas} respostas`)
-              : "Ver meu resultado"}
+            {enviando ? t("seller.triage.calculating") : respondidas < dados.total
+              ? t("seller.triage.answersRemaining", { count: dados.total - respondidas })
+              : t("seller.triage.seeResult")}
           </button>
         ) : (
           <button className="vx-btn vx-btn-primary" style={{ flex: 1 }}
             disabled={!blocoCompleto(b)}
             onClick={() => { setBloco(bloco + 1); window.scrollTo(0, 0); }}>
-            {blocoCompleto(b) ? "Próximo bloco" : "Responda todas deste bloco"} <ArrowRight size={15} />
+            {blocoCompleto(b) ? t("seller.triage.nextBlock") : t("seller.triage.answerAll")} <ArrowRight size={15} />
           </button>
         )}
       </div>

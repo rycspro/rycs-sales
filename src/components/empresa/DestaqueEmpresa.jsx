@@ -1,6 +1,7 @@
 import { apiPatch } from "../../lib/api.js";
 import { DESTAQUES, ORDEM_DESTAQUES } from "../../../shared/planos.js";
 import { Check, Star } from "lucide-react";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Preço em reais com centavos (ex.: "R$ 39,90").
 const precoBRL = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -9,6 +10,7 @@ const precoBRL = (n) => n.toLocaleString("pt-BR", { style: "currency", currency:
 // depender do plano adquirido. Antes vivia como "Posição na vitrine" dentro de
 // Insights › Desempenho; movido para Pagamentos › Planos.
 export default function DestaqueEmpresa({ emp, up, aviso }) {
+  const { t } = useI18n();
   // Compatível com o campo booleano antigo: se havia destaque sem tipo, assume o topo.
   const ativo = emp.destaqueTipo || (emp.destaque ? "topo" : "");
 
@@ -23,10 +25,10 @@ export default function DestaqueEmpresa({ emp, up, aviso }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ padding: "4px 0 16px" }}>
-        <div className="vx-eyebrow">Visibilidade na vitrine</div>
-        <h1 className="vx-disp" style={{ margin: "2px 0 3px" }}>Destaque da empresa</h1>
+        <div className="vx-eyebrow">{t("highlight.eyebrow")}</div>
+        <h1 className="vx-disp" style={{ margin: "2px 0 3px" }}>{t("highlight.title")}</h1>
         <p style={{ margin: 0 }}>
-          Aumente a visibilidade da sua empresa na vitrine. Disponível para qualquer empresa, independente do plano contratado — cancela quando quiser.
+          {t("highlight.desc")}
         </p>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, alignItems: "stretch" }}>
@@ -47,12 +49,12 @@ export default function DestaqueEmpresa({ emp, up, aviso }) {
             >
               {on && (
                 <div style={{ position: "absolute", top: 0, left: 0, display: "flex", alignItems: "center", gap: 4, background: "var(--brand)", color: "#fff", padding: "4px 10px", borderBottomRightRadius: 12, fontSize: 11, fontWeight: 700 }}>
-                  <Check size={12} strokeWidth={3} /> Ativo
+                  <Check size={12} strokeWidth={3} /> {t("highlight.active")}
                 </div>
               )}
               {d.popular && !on && (
                 <div style={{ position: "absolute", top: 0, right: 0, display: "flex", alignItems: "center", gap: 4, background: "var(--brand)", color: "#fff", padding: "4px 10px", borderBottomLeftRadius: 12, fontSize: 11, fontWeight: 700 }}>
-                  <Star size={12} fill="currentColor" /> Mais popular
+                  <Star size={12} fill="currentColor" /> {t("highlight.popular")}
                 </div>
               )}
 
@@ -65,7 +67,7 @@ export default function DestaqueEmpresa({ emp, up, aviso }) {
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
               </div>
               <div style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center", marginBottom: 4 }}>
-                cobrado mensalmente · cancela quando quiser
+                {t("highlight.billingNote")}
               </div>
               {d.frase && (
                 <div style={{ fontSize: 12.5, color: "var(--ink-2)", textAlign: "center", margin: "8px 0 0", fontWeight: 500, lineHeight: 1.45 }}>
@@ -89,7 +91,7 @@ export default function DestaqueEmpresa({ emp, up, aviso }) {
                 onClick={() => selecionar(key)}
                 style={{ marginTop: "auto", fontWeight: 700 }}
               >
-                {on ? "Cancelar destaque" : "Ativar destaque"}
+                {on ? t("highlight.cancel") : t("highlight.activate")}
               </button>
             </article>
           );

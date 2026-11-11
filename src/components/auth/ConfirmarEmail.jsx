@@ -3,16 +3,18 @@ import { CheckCircle, XCircle, Loader } from "lucide-react";
 import MolduraAuth from "./MolduraAuth.jsx";
 import { api } from "../../lib/api.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Tela intermediária para /confirmar-email/:token.
 // Chama o servidor, obtém o usuário logado e repassa via onLogin para App.jsx.
 
 export default function ConfirmarEmail({ token, onLogin }) {
-  const [estado, setEstado] = useState("verificando"); // verificando | ok | erro | expirado
+  const { t } = useI18n();
+  const [estado, setEstado] = useState("verificando");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    if (!token) { setEstado("erro"); setMsg("Link inválido."); return; }
+    if (!token) { setEstado("erro"); setMsg(t("auth.confirm.invalidLink")); return; }
     api(`/auth/confirmar-email/${encodeURIComponent(token)}`)
       .then((r) => {
         if (r?.ok && r.id) {
@@ -31,10 +33,10 @@ export default function ConfirmarEmail({ token, onLogin }) {
           }
         } else {
           setEstado("erro");
-          setMsg("Não foi possível confirmar. Tente de novo.");
+          setMsg(t("auth.confirm.failedRetry"));
         }
       })
-      .catch(() => { setEstado("erro"); setMsg("Erro de conexão."); });
+      .catch(() => { setEstado("erro"); setMsg(t("auth.confirm.connectionError")); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
@@ -45,21 +47,21 @@ export default function ConfirmarEmail({ token, onLogin }) {
   };
 
   const titulos = {
-    verificando: "Confirmando seu e-mail…",
-    ok: "E-mail confirmado!",
-    erro: "Link inválido",
-    expirado: "Link expirado",
+    verificando: t("auth.confirm.verifying"),
+    ok: t("auth.confirm.confirmed"),
+    erro: t("auth.confirm.invalidLink"),
+    expirado: t("auth.confirm.expired"),
   };
 
   const subtitulos = {
-    verificando: "Aguarde um momento.",
-    ok: "Entrando na plataforma…",
-    erro: msg || "Este link não é válido.",
-    expirado: "O link expirou. Faça login e solicite um novo.",
+    verificando: t("auth.confirm.pleaseWait"),
+    ok: t("auth.confirm.entering"),
+    erro: msg || t("auth.confirm.linkNotValid"),
+    expirado: t("auth.confirm.expiredDesc"),
   };
 
   return (
-    <MolduraAuth tarja="Empresa" titulo={titulos[estado]} subtitulo={subtitulos[estado]}>
+    <MolduraAuth tarja={t("auth.company")} titulo={titulos[estado]} subtitulo={subtitulos[estado]}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, padding: "16px 0" }}>
         <div style={{
           width: 64, height: 64, borderRadius: "50%",
@@ -77,7 +79,7 @@ export default function ConfirmarEmail({ token, onLogin }) {
             style={{ minHeight: 48 }}
             onClick={() => navegar(ROTAS.login)}
           >
-            Ir para o login
+            {t("auth.confirm.goToLogin")}
           </button>
         )}
       </div>

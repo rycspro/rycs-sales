@@ -4,11 +4,13 @@ import { Check, Star, Gift } from "lucide-react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
 import { CICLOS, DESCONTO_ANUAL, mensalidadeNoCiclo } from "../../../shared/planos.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Vitrine de planos da empresa. Recriação, no design system do projeto (sem
 // Tailwind/shadcn), do bloco de pricing com alternância mensal/anual, card
 // "Popular" em destaque, preço animado e confete ao escolher o anual.
 export default function PricingPlanos({ plans = [], onContratar, planoAtualChave }) {
+  const { t } = useI18n();
   const [anual, setAnual] = useState(false);
   const switchRef = useRef(null);
 
@@ -39,7 +41,7 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
     <div>
       {/* Alternância mensal / anual */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", marginBottom: 26 }}>
-        <span style={{ fontSize: 13.5, fontWeight: 600, color: !anual ? "var(--ink)" : "var(--muted)" }}>Mensal</span>
+        <span style={{ fontSize: 13.5, fontWeight: 600, color: !anual ? "var(--ink)" : "var(--muted)" }}>{t("sub.monthly")}</span>
         <button
           ref={switchRef}
           type="button"
@@ -59,7 +61,7 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
           }} />
         </button>
         <span style={{ fontSize: 13.5, fontWeight: 600, color: anual ? "var(--ink)" : "var(--muted)" }}>
-          Anual <span style={{ color: "var(--brand)" }}>(economize {descontoPct}%)</span>
+          {t("sub.annual")} <span style={{ color: "var(--brand)" }}>({t("sub.save")} {descontoPct}%)</span>
         </span>
       </div>
 
@@ -90,7 +92,7 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
                   background: "var(--brand)", color: "#fff", padding: "4px 10px",
                   borderBottomRightRadius: 12, fontSize: 11, fontWeight: 700,
                 }}>
-                  <Check size={12} strokeWidth={3} /> Seu plano
+                  <Check size={12} strokeWidth={3} /> {t("sub.yourPlan")}
                 </div>
               ) : temTrial ? (
                 <div style={{
@@ -98,7 +100,7 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
                   background: "var(--brand)", color: "#fff", padding: "4px 10px",
                   borderBottomRightRadius: 12, fontSize: 11, fontWeight: 700,
                 }}>
-                  <Gift size={12} /> 7 dias grátis
+                  <Gift size={12} /> {t("sub.sevenDaysFree")}
                 </div>
               ) : null}
               {popular && (
@@ -107,7 +109,7 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
                   background: "var(--brand)", color: "#fff", padding: "4px 10px",
                   borderBottomLeftRadius: 12, fontSize: 11, fontWeight: 700,
                 }}>
-                  <Star size={12} fill="currentColor" /> Popular
+                  <Star size={12} fill="currentColor" /> {t("sub.popular")}
                 </div>
               )}
 
@@ -128,7 +130,7 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
               </div>
               <div style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center", marginBottom: 4 }}>
-                {anual ? `cobrado anualmente · economize ${descontoPct}%` : "cobrado mensalmente"}
+                {anual ? t("sub.billedAnnually", { pct: descontoPct }) : t("sub.billedMonthly")}
               </div>
 
               <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 9 }}>
@@ -148,7 +150,7 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
                 onClick={() => onContratar?.(p.chave, ciclo)}
                 style={{ marginTop: "auto", fontWeight: 700 }}
               >
-                {ehAtual ? "Plano atual" : temPlanoAtivo ? "Trocar para este plano" : temTrial ? "Iniciar período grátis" : "Contratar"}
+                {ehAtual ? t("sub.currentPlan") : temPlanoAtivo ? t("sub.switchPlan") : temTrial ? t("sub.startTrial") : t("sub.subscribe")}
               </button>
             </motion.article>
           );

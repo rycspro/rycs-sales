@@ -5,24 +5,27 @@ import { money, dataCurta } from "../../lib/utils.js";
 import { api, apiPatch } from "../../lib/api.js";
 import { STATUS_CLIENTE } from "./ConferirEmpresa.jsx";
 import { STATUS, ACOES, CAMPOS, MOTIVO_COR } from "../../lib/constants.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
-const TIPO_LABEL = {
-  agendamento: "Reunião agendada", realizada: "Visita realizada",
-  venda: "Venda fechada", lead: "Lead gerado",
-  contato: "Contato", follow: "Follow-up", ligacao: "Ligação", visita: "Visita",
+const TIPO_LABEL_KEYS = {
+  agendamento: "leads.type.meeting", realizada: "leads.type.visit",
+  venda: "leads.type.sale", lead: "leads.type.lead",
+  contato: "leads.type.contact", follow: "leads.type.followup", ligacao: "leads.type.call", visita: "leads.type.siteVisit",
 };
 
-function tempoRelativo(ts) {
-  if (!ts) return "—";
-  const diff = Date.now() - Number(ts);
-  const seg = Math.floor(diff / 1000);
-  if (seg < 60) return "agora";
-  const min = Math.floor(seg / 60);
-  if (min < 60) return `há ${min} min`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `há ${h}h`;
-  const d = Math.floor(h / 24);
-  return `há ${d}d`;
+function buildTempoRelativo(t) {
+  return (ts) => {
+    if (!ts) return "—";
+    const diff = Date.now() - Number(ts);
+    const seg = Math.floor(diff / 1000);
+    if (seg < 60) return t("time.now");
+    const min = Math.floor(seg / 60);
+    if (min < 60) return t("time.minAgo", { n: min });
+    const h = Math.floor(min / 60);
+    if (h < 24) return t("time.hoursAgo", { n: h });
+    const d = Math.floor(h / 24);
+    return t("time.daysAgo", { n: d });
+  };
 }
 
 function capitalizar(nome = "") {
@@ -83,23 +86,26 @@ function BadgeCliente({ statusCliente }) {
 
 // ── Modal de detalhes ──────────────────────────────────────────────────────
 function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
+  const { t } = useI18n();
+  const tipoLabel = (k) => TIPO_LABEL_KEYS[k] ? t(TIPO_LABEL_KEYS[k]) : k;
+  const tempoRelativo = buildTempoRelativo(t);
   const overlayRef = useRef(null);
-  const acao = ACOES[sub.tipo] || { nome: sub.tipo || "Tarefa", prova: Object.keys(sub.prova || {}).filter((k) => k !== "evidencias") };
+  const acao = ACOES[sub.tipo] || { nome: sub.tipo || t("leads.task"), prova: Object.keys(sub.prova || {}).filter((k) => k !== "evidencias") };
   const prova = sub.prova || {};
   const evidencias = Array.isArray(prova.evidencias) ? prova.evidencias : [];
   const camposProva = (acao.prova || []).filter((k) => k !== "evidencias");
   const extraProva = Object.entries(prova).filter(([k]) => k !== "evidencias" && !camposProva.includes(k));
   const st = STATUS[sub.status] || STATUS.analisando;
 
-  const tipoLabel = TIPO_LABEL[sub.tipo] || sub.tipo || "tarefa";
+  const tipoLabelVal = tipoLabel(sub.tipo) || sub.tipo || t("leads.task");
   const _linhasLead = [
-    prova.cliente    && `• Contato: ${prova.cliente}`,
-    prova.empresa    && `• Empresa: ${prova.empresa}`,
-    prova.telefone   && `• Telefone: ${prova.telefone}`,
-    prova.endereco   && `• Endereço: ${prova.endereco}`,
-    prova.resultado  && `• Resultado: ${prova.resultado}`,
+    prova.cliente    && `• ${t("leads.detail.contact")}: ${prova.cliente}`,
+    prova.empresa    && `• ${t("leads.detail.company")}: ${prova.empresa}`,
+    prova.telefone   && `• ${t("leads.detail.phone")}: ${prova.telefone}`,
+    prova.endereco   && `• ${t("leads.detail.address")}: ${prova.endereco}`,
+    prova.resultado  && `• ${t("leads.detail.result")}: ${prova.resultado}`,
   ].filter(Boolean);
-  const textoInicial = `Olá! Preciso de mais informações sobre o seu lead de ${tipoLabel}${camp?.titulo ? ` na campanha "${camp.titulo}"` : ""} registrado em ${dataCurta(sub.criadoEm)}.${_linhasLead.length ? "\n\n" + _linhasLead.join("\n") : ""}\n\n`;
+  const textoInicial = `${t("leads.msgIntro", { type: tipoLabelVal, campaign: camp?.titulo ? ` ${t("leads.inCampaign", { name: camp.titulo })}` : "", date: dataCurta(sub.criadoEm) })}${_linhasLead.length ? "\n\n" + _linhasLead.join("\n") : ""}\n\n`;
 
   const [compondo, setCompondo] = useState(false);
   const [texto, setTexto] = useState(textoInicial);
@@ -118,7 +124,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
     if (!seller?.id || !emp?.id) return;
     const card = {
       tipo: "lead_card",
-      tipo_acao: tipoLabel,
+      tipo_acao: tipoLabelVal,
       campanha: camp?.titulo || null,
       data: dataCurta(sub.criadoEm),
       contato: prova.cliente || null,
@@ -158,7 +164,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "18px 20px 14px", borderBottom: "1px solid var(--border)", flexShrink: 0,
         }}>
-          <span className="vx-disp" style={{ fontSize: 16 }}>Detalhes da tarefa</span>
+          <span className="vx-disp" style={{ fontSize: 16 }}>{t("leads.taskDetails")}</span>
           <button onClick={onFechar} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}>
             <X size={18} />
           </button>
@@ -169,7 +175,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
             <MiniAvatar seller={seller} size={48} />
             <div>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>{capitalizar(seller?.nome || "Profissional")}</div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{capitalizar(seller?.nome || t("misc.professional"))}</div>
               {seller?.titulo && <div style={{ fontSize: 12, color: "var(--muted)" }}>{seller.titulo}</div>}
               {seller?.cidade && <div style={{ fontSize: 11.5, color: "var(--muted)" }}>{seller.cidade}{seller.estado ? `, ${seller.estado}` : ""}</div>}
             </div>
@@ -178,10 +184,10 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
           {/* Resumo */}
           <div className="vx-card" style={{ padding: "14px 16px", marginBottom: 16 }}>
             {[
-              ["Tipo de ação", TIPO_LABEL[sub.tipo] || sub.tipo || "—"],
-              ["Campanha", camp?.titulo || "Sem campanha"],
-              ["Valor", money(sub.valor)],
-              ["Data", dataCurta(sub.criadoEm)],
+              [t("leads.actionType"), tipoLabel(sub.tipo) || sub.tipo || "—"],
+              [t("leads.campaign"), camp?.titulo || t("leads.noCampaign")],
+              [t("leads.value"), money(sub.valor)],
+              [t("leads.date"), dataCurta(sub.criadoEm)],
             ].map(([label, val]) => (
               <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13 }}>
                 <span style={{ color: "var(--muted)" }}>{label}</span>
@@ -200,7 +206,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
           {typeof sub.confianca === "number" && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>
-                Confiança IA: <b>{sub.confianca}%</b>{sub.fonte === "ia" ? " · análise por IA" : " · checagem local"}
+                {t("leads.aiConfidence")}: <b>{sub.confianca}%</b>{sub.fonte === "ia" ? ` · ${t("leads.aiAnalysis")}` : ` · ${t("leads.localCheck")}`}
               </div>
               <Medidor value={sub.confianca} tone={st.tone === "red" ? "red" : st.tone === "amber" ? "amber" : st.tone === "indigo" ? "indigo" : "brand"} />
             </div>
@@ -217,7 +223,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
           {/* Campos da prova */}
           {(camposProva.length > 0 || extraProva.length > 0) && (
             <div className="vx-card" style={{ padding: "14px 16px", marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", marginBottom: 10 }}>Dados da tarefa</div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", marginBottom: 10 }}>{t("leads.taskData")}</div>
               {camposProva.map((k) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13, gap: 10 }}>
                   <span style={{ color: "var(--muted)", flexShrink: 0 }}>{CAMPOS[k]?.label || k}</span>
@@ -238,7 +244,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
           {/* Evidências / fotos */}
           {evidencias.length > 0 && (
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", marginBottom: 10 }}>Evidências</div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", marginBottom: 10 }}>{t("leads.evidence")}</div>
               {evidencias.map((ev, i) => {
                 const val = String(ev.valor || "");
                 const isImg = val.startsWith("data:image");
@@ -252,7 +258,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                     ) : isVid ? (
                       <video src={val} controls style={{ width: "100%", maxHeight: 180, borderRadius: 8 }} />
                     ) : isLink ? (
-                      <a href={val} target="_blank" rel="noreferrer" style={{ color: "var(--brand)", fontSize: 13, wordBreak: "break-all" }}>Abrir link ↗</a>
+                      <a href={val} target="_blank" rel="noreferrer" style={{ color: "var(--brand)", fontSize: 13, wordBreak: "break-all" }}>{t("leads.openLink")} ↗</a>
                     ) : val ? (
                       <div style={{ fontSize: 13, padding: "10px 12px", background: "var(--surface-2)", borderRadius: 8, wordBreak: "break-word" }}>{val}</div>
                     ) : null}
@@ -277,7 +283,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
               >
                 <MessageSquare size={16} />
-                Perguntar sobre este lead
+                {t("leads.askAboutLead")}
               </button>
             )}
 
@@ -285,7 +291,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
               <div>
                 <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                   <MessageSquare size={12} />
-                  Mensagem para <b style={{ color: "var(--ink)" }}>{capitalizar(seller?.nome || "o vendedor")}</b>
+                  {t("leads.messageTo")} <b style={{ color: "var(--ink)" }}>{capitalizar(seller?.nome || t("misc.professional"))}</b>
                 </div>
                 <textarea
                   ref={textareaRef}
@@ -309,7 +315,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                       border: "1.5px solid var(--border)", background: "var(--surface-2)",
                       color: "var(--muted)", cursor: "pointer", fontFamily: "inherit",
                     }}
-                  >Cancelar</button>
+                  >{t("app.cancel")}</button>
                   <button
                     onClick={enviarMensagem}
                     disabled={!texto.trim()}
@@ -322,7 +328,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                     }}
                   >
                     <Send size={13} />
-                    Enviar
+                    {t("app.send")}
                   </button>
                 </div>
               </div>
@@ -334,9 +340,9 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                 padding: "16px", background: "var(--surface-2)", borderRadius: 10, textAlign: "center",
               }}>
                 <CheckCircle2 size={28} color="#16a34a" />
-                <div style={{ fontSize: 13, fontWeight: 600 }}>Mensagem enviada!</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{t("leads.messageSent")}</div>
                 <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                  {capitalizar(seller?.nome || "O vendedor")} vai receber sua mensagem nas Conversas.
+                  {t("leads.willReceive", { name: capitalizar(seller?.nome || t("misc.professional")) })}
                 </div>
                 {setAba && (
                   <button
@@ -346,7 +352,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
                       border: "1.5px solid var(--brand)", background: "transparent",
                       color: "var(--brand)", cursor: "pointer", fontFamily: "inherit",
                     }}
-                  >Ver conversa</button>
+                  >{t("leads.viewConversation")}</button>
                 )}
               </div>
             )}
@@ -359,6 +365,7 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
 
 // ── Barra de ação em massa ─────────────────────────────────────────────────
 function BarraAcao({ qtd, onLimpar, onMudarStatus, onLiberarSaldo, salvando }) {
+  const { t } = useI18n();
   const [statusSel, setStatusSel] = useState("");
   return (
     <div style={{
@@ -368,7 +375,7 @@ function BarraAcao({ qtd, onLimpar, onMudarStatus, onLiberarSaldo, salvando }) {
       display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
       marginBottom: 12,
     }}>
-      <span style={{ fontWeight: 700, fontSize: 13, flex: "0 0 auto" }}>{qtd} selecionado{qtd > 1 ? "s" : ""}</span>
+      <span style={{ fontWeight: 700, fontSize: 13, flex: "0 0 auto" }}>{t("leads.selected", { count: qtd })}</span>
       <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
         <select
           value={statusSel}
@@ -381,7 +388,7 @@ function BarraAcao({ qtd, onLimpar, onMudarStatus, onLiberarSaldo, salvando }) {
             minWidth: 160,
           }}
         >
-          <option value="">Mudar status do cliente…</option>
+          <option value="">{t("leads.changeClientStatus")}</option>
           {Object.entries(STATUS_CLIENTE)
             .filter(([k]) => k !== "liberar_saldo")
             .map(([k, v]) => (
@@ -395,7 +402,7 @@ function BarraAcao({ qtd, onLimpar, onMudarStatus, onLiberarSaldo, salvando }) {
             onClick={() => { onMudarStatus(statusSel); setStatusSel(""); }}
             style={{ background: "rgba(255,255,255,.2)", color: "#fff", border: "1.5px solid rgba(255,255,255,.4)" }}
           >
-            Aplicar
+            {t("app.apply")}
           </button>
         )}
         <button
@@ -407,7 +414,7 @@ function BarraAcao({ qtd, onLimpar, onMudarStatus, onLiberarSaldo, salvando }) {
             fontWeight: 700, opacity: salvando ? 0.6 : 1,
           }}
         >
-          {salvando ? "Aguarde…" : "Liberar saldo ↑"}
+          {salvando ? t("app.wait") : t("leads.releaseFunds")}
         </button>
       </div>
       <button
@@ -442,6 +449,9 @@ const TD = ({ children, right, muted, check }) => (
 );
 
 export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, filtroBtn, setAba }) {
+  const { t } = useI18n();
+  const tipoLabel = (k) => TIPO_LABEL_KEYS[k] ? t(TIPO_LABEL_KEYS[k]) : k;
+  const tempoRelativo = buildTempoRelativo(t);
   const [atualizadoEm, setAtualizadoEm] = useState(Date.now());
   const [refrescando, setRefrescando] = useState(false);
   const [filtroVendedor, setFiltroVendedor] = useState("");
@@ -534,12 +544,12 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
     <div className="vx-fade">
       {/* Cabeçalho */}
       <div className="vx-row" style={{ marginBottom: 16, alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <h2 className="vx-disp" style={{ fontSize: 18, margin: 0, flex: 1 }}>Leads</h2>
+        <h2 className="vx-disp" style={{ fontSize: 18, margin: 0, flex: 1 }}>{t("nav.leads")}</h2>
         {filtroBtn}
         <button className="vx-btn vx-btn-sm" onClick={refrescar} disabled={refrescando}
           style={{ display: "flex", alignItems: "center", gap: 5 }}>
           <RefreshCw size={13} />
-          Atualizar
+          {t("leads.refresh")}
         </button>
         <span style={{ fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 5 }}>
           <span style={{
@@ -547,31 +557,31 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
             background: refrescando ? "var(--amber)" : "var(--brand)",
             display: "inline-block",
           }} />
-          {refrescando ? "Atualizando…" : `Atualizado ${tempoRelativo(atualizadoEm)}`}
+          {refrescando ? t("leads.refreshing") : `${t("leads.updated")} ${tempoRelativo(atualizadoEm)}`}
         </span>
       </div>
 
       {/* Filtros */}
       <div className="vx-row" style={{ marginBottom: 16, gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <Filter size={14} color="var(--muted)" />
-        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--muted)" }}>Filtros</span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--muted)" }}>{t("leads.filters")}</span>
         <select className="vx-input" value={filtroVendedor} onChange={(e) => setFiltroVendedor(e.target.value)}
           style={{ fontSize: 13, padding: "5px 10px", minWidth: 160 }}>
-          <option value="">Todos os vendedores</option>
+          <option value="">{t("leads.allSellers")}</option>
           {vendedoresPresentes.map((v) => (
             <option key={v.id} value={v.id}>{v.nome}</option>
           ))}
         </select>
         <select className="vx-input" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}
           style={{ fontSize: 13, padding: "5px 10px", minWidth: 160 }}>
-          <option value="">Todos os tipos</option>
-          {tiposPresentes.map((t) => (
-            <option key={t} value={t}>{TIPO_LABEL[t] || t}</option>
+          <option value="">{t("leads.allTypes")}</option>
+          {tiposPresentes.map((tp) => (
+            <option key={tp} value={tp}>{tipoLabel(tp) || tp}</option>
           ))}
         </select>
         <select className="vx-input" value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}
           style={{ fontSize: 13, padding: "5px 10px", minWidth: 160 }}>
-          <option value="">Todos os status</option>
+          <option value="">{t("leads.allStatuses")}</option>
           {Object.entries(STATUS_CLIENTE).map(([k, v]) => (
             <option key={k} value={k}>{v.label}</option>
           ))}
@@ -579,7 +589,7 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
         {temFiltro && (
           <button className="vx-btn vx-btn-sm"
             onClick={() => { setFiltroVendedor(""); setFiltroTipo(""); setFiltroStatus(""); }}>
-            Limpar filtros
+            {t("leads.clearFilters")}
           </button>
         )}
       </div>
@@ -597,8 +607,8 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
 
       {!lista.length ? (
         <Vazio
-          titulo={temFiltro ? "Nenhum resultado" : "Nenhuma ação registrada ainda"}
-          texto={temFiltro ? "Ajuste os filtros para ver outros registros." : "Quando os vendedores aprovados registrarem ações, elas aparecerão aqui em tempo real."}
+          titulo={temFiltro ? t("leads.noResults") : t("leads.noActions")}
+          texto={temFiltro ? t("leads.adjustFilters") : t("leads.actionsWillAppear")}
         />
       ) : (
         <div className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
@@ -610,7 +620,7 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                     <button
                       onClick={toggleTodos}
                       style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0, display: "flex" }}
-                      title={todosSelecionados ? "Desmarcar todos" : "Selecionar todos"}
+                      title={todosSelecionados ? t("leads.deselectAll") : t("leads.selectAll")}
                     >
                       {todosSelecionados
                         ? <CheckSquare size={16} color="var(--brand)" />
@@ -619,12 +629,12 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                           : <Square size={16} />}
                     </button>
                   </TH>
-                  <TH>Lead / Contato</TH>
-                  <TH>Status do cliente</TH>
-                  <TH>Aprovação</TH>
-                  <TH right>Valor</TH>
-                  <TH>Quando</TH>
-                  <TH>Vendedor</TH>
+                  <TH>{t("leads.th.leadContact")}</TH>
+                  <TH>{t("leads.th.clientStatus")}</TH>
+                  <TH>{t("leads.th.approval")}</TH>
+                  <TH right>{t("leads.value")}</TH>
+                  <TH>{t("leads.th.when")}</TH>
+                  <TH>{t("leads.th.seller")}</TH>
                   <TH></TH>
                 </tr>
               </thead>
@@ -653,7 +663,7 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                           {capitalizar(sub.prova?.empresa || sub.prova?.cliente || camp?.titulo || "Lead")}
                         </div>
                         <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
-                          {TIPO_LABEL[sub.tipo] || sub.tipo || "—"}
+                          {tipoLabel(sub.tipo) || sub.tipo || "—"}
                           {camp?.titulo && <span> · {camp.titulo}</span>}
                         </div>
                       </TD>
@@ -669,7 +679,7 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                           <MiniAvatar seller={seller} />
                           <span style={{ fontWeight: 500, fontSize: 12.5 }}>
-                            {capitalizar(seller?.nome || "Profissional")}
+                            {capitalizar(seller?.nome || t("misc.professional"))}
                           </span>
                         </div>
                       </TD>
@@ -683,7 +693,7 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "var(--brand)"; e.currentTarget.style.background = "var(--surface-2)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = ""; }}
-                          title="Ver detalhes"
+                          title={t("leads.viewDetails")}
                         >
                           <Eye size={16} />
                         </button>
@@ -695,9 +705,9 @@ export default function LeadsDashEmpresa({ emp, db, up, recarregar, filtroData, 
             </table>
           </div>
           <div style={{ padding: "10px 14px", fontSize: 12, color: "var(--muted)", borderTop: "1px solid var(--border)" }}>
-            {lista.length} {lista.length === 1 ? "registro" : "registros"}
-            {temFiltro ? " (filtrado)" : ""}
-            {selecionados.size > 0 && ` · ${selecionados.size} selecionado${selecionados.size > 1 ? "s" : ""}`}
+            {t("leads.recordCount", { count: lista.length })}
+            {temFiltro ? ` (${t("leads.filtered")})` : ""}
+            {selecionados.size > 0 && ` · ${t("leads.selected", { count: selecionados.size })}`}
           </div>
         </div>
       )}

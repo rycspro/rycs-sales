@@ -3,22 +3,23 @@ import { ArrowRight, CircleDollarSign, Clock, GripVertical, Info, List, Kanban, 
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { ETAPAS, ORDEM_ETAPAS } from "../../../shared/pipeline.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Etapas padrão quando a campanha não tem etapas customizadas
-const ETAPAS_PADRAO = [
-  { id: "novo",      nome: "Primeiro contato", cor: "#8496B4" },
-  { id: "contatado", nome: "Contatado", cor: "#5B8CFF" },
-  { id: "respondeu", nome: "Respondeu", cor: "#9AA6FF" },
-  { id: "reuniao",   nome: "Reunião",   cor: "#9AA6FF" },
-  { id: "proposta",  nome: "Proposta",  cor: "#F0B45E" },
-  { id: "fechado",   nome: "Fechado",   cor: "#5FD3A0" },
-  { id: "perdido",   nome: "Perdido",   cor: "#FF8A7A" },
+const ETAPAS_PADRAO_KEYS = [
+  { id: "novo",      key: "pipeline.stage.firstContact", cor: "#8496B4" },
+  { id: "contatado", key: "pipeline.stage.contacted", cor: "#5B8CFF" },
+  { id: "respondeu", key: "pipeline.stage.replied", cor: "#9AA6FF" },
+  { id: "reuniao",   key: "pipeline.stage.meeting", cor: "#9AA6FF" },
+  { id: "proposta",  key: "pipeline.stage.proposal", cor: "#F0B45E" },
+  { id: "fechado",   key: "pipeline.stage.closed", cor: "#5FD3A0" },
+  { id: "perdido",   key: "pipeline.stage.lost", cor: "#FF8A7A" },
 ];
 
-function etapasDaCampanha(campanha) {
+function etapasDaCampanha(campanha, t) {
   const eps = campanha?.etapasPipeline;
   if (Array.isArray(eps) && eps.length > 0) return eps;
-  return ETAPAS_PADRAO;
+  return ETAPAS_PADRAO_KEYS.map((e) => ({ id: e.id, nome: t(e.key), cor: e.cor }));
 }
 
 function corEtapa(etapaId, etapas) {
@@ -33,17 +34,18 @@ function nomeEtapa(etapaId, etapas) {
 
 // --- Editor de etapas ---
 export function EditorEtapas({ etapas, onChange, onClose }) {
+  const { t } = useI18n();
   const [lista, setLista] = useState(etapas.map((e) => ({ ...e })));
 
   const atualizar = (i, campo, valor) => setLista((prev) => prev.map((e, idx) => idx === i ? { ...e, [campo]: valor } : e));
-  const adicionar = () => setLista((prev) => [...prev, { id: `etapa_${Date.now()}`, nome: "Nova etapa", cor: "#8496B4" }]);
+  const adicionar = () => setLista((prev) => [...prev, { id: `etapa_${Date.now()}`, nome: t("pipeline.editor.newStage"), cor: "#8496B4" }]);
   const remover = (i) => setLista((prev) => prev.filter((_, idx) => idx !== i));
 
   return (
     <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
       <div className="vx-row" style={{ marginBottom: 12 }}>
-        <div><b>Etapas do pipeline</b><div className="vx-mut" style={{ fontSize: 12 }}>Arraste para reordenar. "Fechado" e "Perdido" são especiais e não devem ser removidos.</div></div>
-        {onClose && <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose}>Fechar</button>}
+        <div><b>{t("pipeline.editor.title")}</b><div className="vx-mut" style={{ fontSize: 12 }}>{t("pipeline.editor.hint")}</div></div>
+        {onClose && <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose}>{t("misc.close")}</button>}
       </div>
       {lista.map((e, i) => (
         <div key={e.id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
@@ -51,7 +53,7 @@ export function EditorEtapas({ etapas, onChange, onClose }) {
           <input
             className="vx-input" style={{ flex: 1 }} value={e.nome}
             onChange={(ev) => atualizar(i, "nome", ev.target.value)}
-            placeholder="Nome da etapa"
+            placeholder={t("pipeline.editor.stageName")}
           />
           <input type="color" value={e.cor} style={{ width: 36, height: 36, border: "none", padding: 2, background: "transparent", cursor: "pointer" }}
             onChange={(ev) => atualizar(i, "cor", ev.target.value)} />
@@ -61,8 +63,8 @@ export function EditorEtapas({ etapas, onChange, onClose }) {
         </div>
       ))}
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <button className="vx-btn vx-btn-sm" onClick={adicionar}><Plus size={13} /> Adicionar etapa</button>
-        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onChange(lista)}>Salvar etapas</button>
+        <button className="vx-btn vx-btn-sm" onClick={adicionar}><Plus size={13} /> {t("pipeline.editor.addStage")}</button>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onChange(lista)}>{t("pipeline.editor.saveStages")}</button>
       </div>
     </div>
   );
@@ -70,6 +72,7 @@ export function EditorEtapas({ etapas, onChange, onClose }) {
 
 // --- Modal de fechamento (ganho) ---
 function ModalFechamento({ lead, onConfirm, onClose }) {
+  const { t } = useI18n();
   const [valorVenda, setValorVenda] = useState("");
 
   const parseBRL = (s) => Number(String(s).replace(/\./g, "").replace(",", ".")) || 0;
@@ -78,10 +81,10 @@ function ModalFechamento({ lead, onConfirm, onClose }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div className="vx-card" style={{ padding: 24, minWidth: 320, maxWidth: 440 }}>
-        <div className="vx-disp" style={{ fontSize: 17, marginBottom: 4 }}>Registrar fechamento</div>
-        <div className="vx-mut" style={{ fontSize: 13, marginBottom: 16 }}>Informe o valor da venda para calcular a comissão automaticamente.</div>
+        <div className="vx-disp" style={{ fontSize: 17, marginBottom: 4 }}>{t("pipeline.closing.title")}</div>
+        <div className="vx-mut" style={{ fontSize: 13, marginBottom: 16 }}>{t("pipeline.closing.desc")}</div>
         <label>
-          <span className="vx-label">Valor da venda *</span>
+          <span className="vx-label">{t("pipeline.closing.saleValue")}</span>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--text-2)", fontSize: 13.5, pointerEvents: "none" }}>R$</span>
             <input className="vx-input vx-mono" style={{ paddingLeft: 30 }} inputMode="decimal"
@@ -90,9 +93,9 @@ function ModalFechamento({ lead, onConfirm, onClose }) {
           </div>
         </label>
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <button className="vx-btn vx-btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="vx-btn vx-btn-ghost" onClick={onClose}>{t("misc.cancel")}</button>
           <button className="vx-btn vx-btn-primary" onClick={() => onConfirm(parseBRL(valorVenda))} disabled={parseBRL(valorVenda) <= 0}>
-            <CircleDollarSign size={14} /> Confirmar fechamento
+            <CircleDollarSign size={14} /> {t("pipeline.closing.confirm")}
           </button>
         </div>
       </div>
@@ -128,13 +131,14 @@ function LeadCard({ lead, etapas, onMover, sellers = [] }) {
 }
 
 export default function PipelineKanban({ campanha, leads = [], sellers = [], aviso, onLeadsAtualizado }) {
+  const { t } = useI18n();
   const [modo, setModo] = useState("kanban");
   const [editandoEtapas, setEditandoEtapas] = useState(false);
   const [filtroSeller, setFiltroSeller] = useState("");
   const [filtroEtapa, setFiltroEtapa] = useState("");
   const [modalFechamento, setModalFechamento] = useState(null);
 
-  const etapas = useMemo(() => etapasDaCampanha(campanha), [campanha]);
+  const etapas = useMemo(() => etapasDaCampanha(campanha, t), [campanha, t]);
 
   const leadsFiltrados = useMemo(() => leads.filter((l) => {
     if (filtroSeller && l.sellerId !== filtroSeller) return false;
@@ -167,7 +171,7 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
     setModalFechamento(null);
     const r = await apiPatch(`/leads/${lead.id}`, { etapa: novaEtapa, valorVenda }).catch(() => null);
     if (r?.error) { aviso(r.error); return; }
-    aviso(`Fechamento registrado · R$ ${money(valorVenda)}`);
+    aviso(t("pipeline.closing.done", { value: money(valorVenda) }));
     onLeadsAtualizado?.();
   };
 
@@ -175,7 +179,7 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
     const r = await apiPatch(`/campaigns/${campanha.id}`, { etapasPipeline: novasEtapas }).catch(() => null);
     if (r?.error) { aviso(r.error); return; }
     setEditandoEtapas(false);
-    aviso("Etapas salvas");
+    aviso(t("pipeline.editor.saved"));
     onLeadsAtualizado?.();
   };
 
@@ -183,14 +187,14 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
     <div className="vx-fade">
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
         <button className={`vx-btn vx-btn-sm ${modo === "kanban" ? "vx-btn-primary" : "vx-btn-ghost"}`} onClick={() => setModo("kanban")}><Kanban size={13} /> Kanban</button>
-        <button className={`vx-btn vx-btn-sm ${modo === "lista" ? "vx-btn-primary" : "vx-btn-ghost"}`} onClick={() => setModo("lista")}><List size={13} /> Lista</button>
-        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditandoEtapas(!editandoEtapas)}><Settings size={13} /> Etapas</button>
+        <button className={`vx-btn vx-btn-sm ${modo === "lista" ? "vx-btn-primary" : "vx-btn-ghost"}`} onClick={() => setModo("lista")}><List size={13} /> {t("pipeline.list")}</button>
+        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditandoEtapas(!editandoEtapas)}><Settings size={13} /> {t("pipeline.stages")}</button>
         <select className="vx-input" style={{ maxWidth: 180, fontSize: 12 }} value={filtroSeller} onChange={(e) => setFiltroSeller(e.target.value)}>
-          <option value="">Todos os vendedores</option>
+          <option value="">{t("pipeline.allSellers")}</option>
           {sellers.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
         </select>
         <select className="vx-input" style={{ maxWidth: 160, fontSize: 12 }} value={filtroEtapa} onChange={(e) => setFiltroEtapa(e.target.value)}>
-          <option value="">Todas as etapas</option>
+          <option value="">{t("pipeline.allStages")}</option>
           {etapas.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
         </select>
       </div>
@@ -209,7 +213,7 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
                 <LeadCard key={lead.id} lead={lead} etapas={etapas} sellers={sellers} onMover={moverLead} />
               ))}
               {!(porEtapa[etapa.id] || []).length && (
-                <div style={{ padding: 16, textAlign: "center", color: "var(--muted)", fontSize: 12, border: "1px dashed var(--border)", borderRadius: 8 }}>Vazio</div>
+                <div style={{ padding: 16, textAlign: "center", color: "var(--muted)", fontSize: 12, border: "1px dashed var(--border)", borderRadius: 8 }}>{t("pipeline.empty")}</div>
               )}
             </div>
           ))}
@@ -217,7 +221,7 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
       ) : (
         <div className="vx-table-wrap">
           <table className="vx-table">
-            <thead><tr><th>Lead</th><th>Etapa</th><th>Responsável</th><th>Valor est.</th><th>Atualizado</th><th>Ação</th></tr></thead>
+            <thead><tr><th>Lead</th><th>{t("pipeline.th.stage")}</th><th>{t("pipeline.th.owner")}</th><th>{t("pipeline.th.estValue")}</th><th>{t("pipeline.th.updated")}</th><th>{t("pipeline.th.action")}</th></tr></thead>
             <tbody>
               {leadsFiltrados.map((l) => {
                 const seller = sellers.find((s) => s.id === l.sellerId);
@@ -238,7 +242,7 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
                   </tr>
                 );
               })}
-              {!leadsFiltrados.length && <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: 20 }}>Nenhum lead</td></tr>}
+              {!leadsFiltrados.length && <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: 20 }}>{t("pipeline.noLeads")}</td></tr>}
             </tbody>
           </table>
         </div>

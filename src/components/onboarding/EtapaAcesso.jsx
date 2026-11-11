@@ -7,6 +7,7 @@ import MolduraOnboarding from "./MolduraOnboarding.jsx";
 import { api } from "../../lib/api.js";
 import { parametro, limparConviteOnboarding, ROTAS, navegar } from "../../lib/rotas.js";
 import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, normalizarWhatsapp, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
+import { useI18n } from "../../lib/i18n.jsx";
 
 // Etapa 1 do onboarding para quem ainda não tem conta: criar o acesso
 // (nome e logo da empresa, e-mail, senha e WhatsApp), entrar com uma conta existente ou recuperar a
@@ -43,6 +44,7 @@ function Campo({ id, label, erro, dica, children }) {
 }
 
 export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }) {
+  const { t } = useI18n();
   const id = useId();
   const [modo, setModo] = useState("cadastro"); // cadastro | login | recuperar | termos
   const [fase, setFase] = useState("intro"); // intro | form — só relevante quando modo=cadastro
@@ -80,14 +82,14 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
 
   const validar = () => {
     const e = {};
-    if (!EMAIL_RE.test(email.trim())) e.email = "Informe um e-mail válido.";
+    if (!EMAIL_RE.test(email.trim())) e.email = t("onb.access.errEmail");
     if (modo === "cadastro") {
       const s = validarSenhaEmpresa(senha);
       if (s) e.senha = s;
-      if (!normalizarWhatsapp(whatsapp)) e.whatsapp = "Informe um WhatsApp válido, com DDD.";
-      if (nome.trim().length < 2) e.nome = "Informe o nome da empresa.";
-      if (!logo) e.logo = "Envie o logo da empresa.";
-    } else if (!senha) e.senha = "Informe sua senha.";
+      if (!normalizarWhatsapp(whatsapp)) e.whatsapp = t("onb.access.errWhatsapp");
+      if (nome.trim().length < 2) e.nome = t("onb.access.errName");
+      if (!logo) e.logo = t("onb.access.errLogo");
+    } else if (!senha) e.senha = t("onb.access.errPassword");
     setErros(e);
     return !Object.keys(e).length;
   };
@@ -121,12 +123,12 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
       setSalvando(false);
       if (r?.ok) { limparConviteOnboarding(); return; }
       if (r?.campo) setErros({ [r.campo]: r.error });
-      else setErroGeral(r?.error || "Não foi possível criar o acesso. Tente de novo.");
+      else setErroGeral(r?.error || t("onb.access.errCreateAccess"));
       return;
     }
     const r = await onLogin(email.trim(), senha);
     setSalvando(false);
-    if (!r?.ok) setErroGeral(r?.error || "Não foi possível entrar. Tente de novo.");
+    if (!r?.ok) setErroGeral(r?.error || t("onb.access.errLogin"));
   };
 
   if (modo === "termos") return <Termos onAceitar={() => setModo(voltarPara)} onVoltar={() => setModo(voltarPara)} />;
@@ -135,11 +137,11 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const proximos = ETAPAS.slice(1).map((e) => ({
     ...e,
     texto: {
-      empresa: "Perfil da empresa",
-      academy: "Marketing Academy: seus materiais",
-      ia: "A IA monta tudo sozinha",
-      plano: trial ? `Plano com ${trial} dias grátis` : "Plano e pagamento",
-      campanha: "Sua primeira campanha no ar",
+      empresa: t("onb.access.nextCompany"),
+      academy: t("onb.access.nextAcademy"),
+      ia: t("onb.access.nextAI"),
+      plano: trial ? t("onb.access.nextPlanTrial", { days: trial }) : t("onb.access.nextPlan"),
+      campanha: t("onb.access.nextCampaign"),
     }[e.chave],
   }));
 
@@ -168,16 +170,16 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
               aria-label="Voltar para escolha de acesso"
             >
               <ArrowLeft size={15} strokeWidth={2.3} aria-hidden="true" />
-              Voltar
+              {t("onb.back")}
             </button>
-            <div className="vx-onb-eyebrow" style={{ marginBottom: 16 }}>Passo 1 de 6</div>
+            <div className="vx-onb-eyebrow" style={{ marginBottom: 16 }}>{t("onb.stepOf", { n: 1, total: 6 })}</div>
             <h1 style={{ fontSize: "clamp(26px, 5vw, 38px)", lineHeight: 1.15, fontFamily: "var(--font-disp)", fontWeight: 800, color: "var(--ink)", margin: "0 0 16px" }}>
-              Crie seu acesso e conecte sua empresa a profissionais de vendas.
+              {t("onb.access.heroTitle")}
             </h1>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--muted)", margin: "0 0 28px" }}>
-              Em poucos passos a IA conhece o seu negócio, cria o script e o funil de WhatsApp e leva você até a sua primeira campanha.
+              {t("onb.access.heroDesc")}
             </p>
-            <ul className="vx-onb-proximos" aria-label="Próximos passos" style={{ marginBottom: 36 }}>
+            <ul className="vx-onb-proximos" aria-label={t("onb.access.nextSteps")} style={{ marginBottom: 36 }}>
               {proximos.map((e) => <li key={e.chave}><span aria-hidden="true">{e.n}</span>{e.texto}</li>)}
             </ul>
             <button
@@ -185,12 +187,12 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
               style={{ minHeight: 54, fontSize: 16, fontWeight: 700 }}
               onClick={() => setFase("form")}
             >
-              Começar agora →
+              {t("onb.access.startNow")}
             </button>
             <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--muted)" }}>
-              Já tem conta?{" "}
+              {t("onb.access.hasAccount")}{" "}
               <button type="button" className="vx-onb-link" onClick={() => { trocarModo("login"); setFase("form"); }}>
-                Entrar
+                {t("onb.access.login")}
               </button>
             </p>
           </div>
@@ -213,7 +215,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
               style={{ fontSize: 13, marginBottom: 20, display: "inline-flex", alignItems: "center", gap: 4, minHeight: 44 }}
               onClick={() => { trocarModo("cadastro"); setFase("intro"); }}
             >
-              ← Voltar
+              ← {t("onb.back")}
             </button>
           )}
 
@@ -222,70 +224,70 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
               <RecuperarSenha emailInicial={email} onVoltar={() => trocarModo("login")} />
             ) : (
               <form onSubmit={enviar} noValidate>
-                <h2 className="vx-disp vx-onb-card-titulo">{modo === "cadastro" ? "Crie seu acesso" : "Acesse sua conta"}</h2>
+                <h2 className="vx-disp vx-onb-card-titulo">{modo === "cadastro" ? t("onb.access.createAccess") : t("onb.access.accessAccount")}</h2>
                 <p className="vx-mut vx-onb-card-apoio">
-                  {modo === "cadastro" ? "Informe a sua empresa, seu e-mail, uma senha e o WhatsApp para começar." : "Use seu e-mail e sua senha para continuar o cadastro."}
+                  {modo === "cadastro" ? t("onb.access.createDesc") : t("onb.access.loginDesc")}
                 </p>
 
-                {convite?.carregando && <div className="vx-onb-aviso">Conferindo o convite…</div>}
+                {convite?.carregando && <div className="vx-onb-aviso">{t("onb.access.checkingInvite")}</div>}
                 {conviteValido && (
                   <div className="vx-onb-aviso">
-                    Convite da RYCS para <b>{convite.email}</b>.{trial ? ` Inclui ${trial} dias grátis no plano escolhido.` : ""}
+                    {t("onb.access.inviteFor")} <b>{convite.email}</b>.{trial ? ` ${t("onb.access.trialIncluded", { days: trial })}` : ""}
                   </div>
                 )}
                 {convite?.ok === false && <div className="vx-onb-erro" role="alert">{convite.erro}</div>}
 
                 {modo === "cadastro" && <>
                   <div className="vx-onb-campo">
-                    <span className="vx-label" id={`${id}-logo-rotulo`}>Logo da empresa</span>
+                    <span className="vx-label" id={`${id}-logo-rotulo`}>{t("onb.access.companyLogo")}</span>
                     <div className="vx-onb-logo">
                       <div className="vx-onb-logo-previa" aria-hidden={!logo}>
-                        {logo ? <img src={logo.dataUri} alt="Logo escolhido" /> : <ImagePlus size={22} aria-hidden="true" />}
+                        {logo ? <img src={logo.dataUri} alt={t("onb.access.logoChosen")} /> : <ImagePlus size={22} aria-hidden="true" />}
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button type="button" className="vx-btn" style={{ minHeight: 44 }}
                           aria-describedby={[`${id}-logo-rotulo`, `${id}-logo-dica`, erros.logo && `${id}-logo-erro`].filter(Boolean).join(" ")}
                           onClick={() => inputLogo.current?.click()}>
-                          {logo ? "Trocar logo" : "Enviar logo"}
+                          {logo ? t("onb.access.changeLogo") : t("onb.access.uploadLogo")}
                         </button>
                         {logo && (
                           <button type="button" className="vx-btn vx-btn-ghost" style={{ minHeight: 44 }} onClick={() => setLogo(null)}>
-                            <Trash2 size={15} aria-hidden="true" /> Remover
+                            <Trash2 size={15} aria-hidden="true" /> {t("onb.access.remove")}
                           </button>
                         )}
                       </div>
                       <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
                         onChange={(e) => escolherLogo(e.target.files?.[0])} />
                     </div>
-                    <div id={`${id}-logo-dica`} className="vx-onb-dica">PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
+                    <div id={`${id}-logo-dica`} className="vx-onb-dica">{t("onb.access.logoHint", { mb: Math.round(LOGO_MAX_BYTES / 1024 / 1024) })}</div>
                     {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
                   </div>
 
-                  <Campo id={`${id}-nome`} label="Nome da empresa" erro={erros.nome}>
+                  <Campo id={`${id}-nome`} label={t("onb.access.companyName")} erro={erros.nome}>
                     <input id={`${id}-nome`} className="vx-input" autoComplete="organization" maxLength={100}
                       value={nome} onChange={(e) => { setNome(e.target.value); limparErro("nome"); }} {...props("nome")} />
                   </Campo>
                 </>}
 
-                <Campo id={`${id}-email`} label="E-mail" erro={erros.email}>
+                <Campo id={`${id}-email`} label={t("onb.access.email")} erro={erros.email}>
                   <input id={`${id}-email`} className="vx-input" type="email" autoComplete="email" inputMode="email"
                     value={email} onChange={(e) => { setEmail(e.target.value); limparErro("email"); }} readOnly={conviteValido && modo === "cadastro"} {...props("email")} />
                 </Campo>
 
-                <Campo id={`${id}-senha`} label="Senha" erro={erros.senha}
-                  dica={modo === "cadastro" ? `Mínimo de ${SENHA_MIN_EMPRESA} caracteres. Toque no olho para ver a senha.` : "Toque no olho para ver a senha."}>
+                <Campo id={`${id}-senha`} label={t("onb.access.password")} erro={erros.senha}
+                  dica={modo === "cadastro" ? t("onb.access.passwordHintCreate", { min: SENHA_MIN_EMPRESA }) : t("onb.access.passwordHint")}>
                   <CampoSenha id={`${id}-senha`} value={senha} onChange={(e) => { setSenha(e.target.value); limparErro("senha"); }}
                     autoComplete={modo === "cadastro" ? "new-password" : "current-password"} required={false}
                     invalido={!!erros.senha} descricao={props("senha")["aria-describedby"]} />
                 </Campo>
 
                 {modo === "cadastro" && <>
-                  <Campo id={`${id}-whatsapp`} label="WhatsApp" erro={erros.whatsapp} dica="Com DDD. É por onde a RYCS fala com você sobre a operação.">
+                  <Campo id={`${id}-whatsapp`} label="WhatsApp" erro={erros.whatsapp} dica={t("onb.access.whatsappDica")}>
                     <input id={`${id}-whatsapp`} className="vx-input" type="tel" inputMode="numeric" autoComplete="tel-national"
                       placeholder="(11) 91234-5678" value={whatsapp} onChange={(e) => { setWhatsapp(mascaraWhatsapp(e.target.value)); limparErro("whatsapp"); }} {...props("whatsapp")} />
                   </Campo>
                   {indicacao && (
-                    <Campo id={`${id}-indicacao`} label="Código de indicação">
+                    <Campo id={`${id}-indicacao`} label={t("onb.access.referralCode")}>
                       <input id={`${id}-indicacao`} className="vx-input vx-mono" value={indicacao}
                         onChange={(e) => setIndicacao(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))} />
                     </Campo>
@@ -294,25 +296,25 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
 
                 {modo === "login" && (
                   <button type="button" className="vx-onb-link" style={{ minHeight: 44 }} onClick={() => trocarModo("recuperar")}>
-                    Esqueci minha senha
+                    {t("onb.access.forgotPassword")}
                   </button>
                 )}
 
                 {erroGeral && <div className="vx-onb-erro" role="alert">{erroGeral}</div>}
 
                 <button className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" type="submit" disabled={salvando || convite?.carregando}>
-                  {salvando ? (modo === "cadastro" ? "Criando acesso…" : "Entrando…") : "Continuar"}
+                  {salvando ? (modo === "cadastro" ? t("onb.access.creating") : t("onb.access.loggingIn")) : t("onb.continue")}
                 </button>
 
                 <p className="vx-onb-termos">
-                  Ao continuar, você aceita os{" "}
-                  <button type="button" className="vx-onb-link" onClick={() => { setVoltarPara(modo); setModo("termos"); }}>Termos de Uso</button> da RYCS.
+                  {t("onb.access.termsPrefix")}{" "}
+                  <button type="button" className="vx-onb-link" onClick={() => { setVoltarPara(modo); setModo("termos"); }}>{t("onb.access.termsLink")}</button> {t("onb.access.termsSuffix")}
                 </p>
 
                 <hr className="vx-sep" />
                 {modo === "cadastro"
-                  ? <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("login")}>Já tenho conta — entrar</button>
-                  : <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("cadastro")}>Ainda não tenho conta — criar acesso</button>}
+                  ? <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("login")}>{t("onb.access.switchToLogin")}</button>
+                  : <button type="button" className="vx-btn vx-btn-ghost vx-btn-block vx-onb-btn" onClick={() => trocarModo("cadastro")}>{t("onb.access.switchToRegister")}</button>}
               </form>
             )}
           </div>
