@@ -271,7 +271,9 @@ html.dark .vx-card:hover{border-color:var(--border-strong);box-shadow:0 4px 20px
 .vx-btn-ai-hero:hover{background:linear-gradient(135deg,var(--indigo-600,var(--indigo)),var(--brand-600));border-color:transparent;color:#fff}
 .vx-sep{height:1px;background:var(--border);border:0;margin:14px 0;opacity:.7}
 .vx-fade{animation:vxin .2s cubic-bezier(.22,.9,.32,1)}
-@keyframes vxin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* Só opacidade: um transform aqui vira containing-block e quebra o position:fixed
+   dos modais em páginas longas (modal ia parar fora da tela). */
+@keyframes vxin{from{opacity:0}to{opacity:1}}
 @keyframes vxSearchExpand{from{width:40px;opacity:.5}to{width:280px;opacity:1}}
 @media (prefers-reduced-motion:reduce){.vx-fade{animation:none}}
 .vx-spinner{width:28px;height:28px;border:3px solid var(--vx-border,#e5e5e5);border-top-color:var(--vx-accent,#2563EB);border-radius:50%;animation:vxspin .7s linear infinite;margin:0 auto}
