@@ -918,7 +918,7 @@ html[data-versao="sol"] .vx-team-person i,
 html[data-versao="sol"] .vx-onb-icone,
 html[data-versao="sol"] .vx-onb-passo-n,
 html[data-versao="sol"] .vx-prof-card__img,
-html[data-versao="sol"] .vx-conv-avatar{border-radius:50%!important}
+html[data-versao="sol"] .vx-conv-avatar{border-radius:8px!important}
 @media(min-width:900px){
   .vx-body{grid-template-columns:228px minmax(0,1fr);gap:16px;padding:16px}
   .vx-sidebar{top:16px;height:calc(100vh - 32px);border-radius:23px;border:1px solid var(--glass-border);border-right:1px solid var(--glass-border);
