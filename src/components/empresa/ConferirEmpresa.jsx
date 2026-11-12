@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight, TrendingUp } from "lucide-react";
+import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight, TrendingUp, Megaphone } from "lucide-react";
 
 export const STATUS_CLIENTE = {
   aguardando:       { label: "Aguardando",       cor: "#64748B", bg: "#F1F5F9" },
@@ -336,7 +336,22 @@ function TabelaHistorico({ subs, db }) {
 }
 
 export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar, filtroData }) {
+  const [abaFila, setAbaFila] = useState("empresa"); // "empresa" | "campanhas"
   const solicitacoes = db.solicitacoesPendentes || [];
+  // Candidaturas pendentes das campanhas da empresa (aprovar para participar
+  // daquela campanha específica — diferente de aprovar para a empresa inteira).
+  const candidaturasCampanha = (db.campaigns || [])
+    .filter((c) => c.companyId === emp.id)
+    .flatMap((c) => (c.candidaturas || [])
+      .filter((a) => a.status === "pendente")
+      .map((a) => ({ campanha: c, app: a, seller: db.sellers.find((s) => s.id === a.sellerId) })));
+
+  const decidirCandidatura = async (campanhaId, appId, status) => {
+    const r = await apiPatch(`/campaigns/${campanhaId}/applications/${appId}`, { status });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível decidir a candidatura.");
+    aviso(status === "aprovado" ? "Candidatura aprovada para a campanha." : "Candidatura recusada.");
+    await recarregar?.();
+  };
   const revisaoBase = db.submissions.filter((s) => s.companyId === emp.id && s.status === "revisao");
   const iaAprovadosBase = db.submissions.filter((s) => s.companyId === emp.id && ["ia_aprovado", "conferido"].includes(s.status));
 
@@ -414,38 +429,102 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
 
       {secao === "fila" && (
         <>
-          {/* ── Profissionais aguardando aprovação ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>
-              <UserPlus size={18} style={{ marginRight: 6, verticalAlign: "-3px" }} />
-              Profissionais aguardando aprovação
-            </h3>
-            {solicitacoes.length > 0 && <span className="vx-chip vx-mono">{solicitacoes.length}</span>}
+          {/* ── Abas: aprovação na empresa vs. candidatura em campanha ── */}
+          <div className="vx-seg vx-subnav" style={{ marginBottom: 18 }}>
+            <button data-on={abaFila === "empresa" ? "1" : "0"} onClick={() => setAbaFila("empresa")}>
+              Empresa{solicitacoes.length > 0 ? ` (${solicitacoes.length})` : ""}
+            </button>
+            <button data-on={abaFila === "campanhas" ? "1" : "0"} onClick={() => setAbaFila("campanhas")}>
+              Campanhas{candidaturasCampanha.length > 0 ? ` (${candidaturasCampanha.length})` : ""}
+            </button>
           </div>
 
-          {!solicitacoes.length
-            ? (
-              <div className="vx-card" style={{ padding: 24, textAlign: "center", marginBottom: 28 }}>
-                <Shield size={28} color="var(--muted)" style={{ display: "block", margin: "0 auto 10px" }} />
-                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum profissional aguardando aprovação no momento.</p>
-              </div>
-            )
-            : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
-                {solicitacoes.map((sol) => {
-                  const seller = db.sellers.find((s) => s.id === sol.sellerId);
-                  return (
-                    <CardSolicitacao
-                      key={sol.sellerId}
-                      seller={seller}
-                      solicitacao={sol}
-                      onAprovar={aprovarProfissional}
-                      onRecusar={recusarProfissional}
-                    />
-                  );
-                })}
-              </div>
-            )}
+          {/* ── Aba Empresa: aprovar o profissional para trabalhar com a empresa ── */}
+          {abaFila === "empresa" && <>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>
+                <UserPlus size={18} style={{ marginRight: 6, verticalAlign: "-3px" }} />
+                Profissionais aguardando aprovação
+              </h3>
+              {solicitacoes.length > 0 && <span className="vx-chip vx-mono">{solicitacoes.length}</span>}
+            </div>
+            <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 14px" }}>Aprovar libera o profissional para trabalhar com a sua empresa (todas as campanhas, conforme a regra).</p>
+
+            {!solicitacoes.length
+              ? (
+                <div className="vx-card" style={{ padding: 24, textAlign: "center", marginBottom: 28 }}>
+                  <Shield size={28} color="var(--muted)" style={{ display: "block", margin: "0 auto 10px" }} />
+                  <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhum profissional aguardando aprovação no momento.</p>
+                </div>
+              )
+              : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+                  {solicitacoes.map((sol) => {
+                    const seller = db.sellers.find((s) => s.id === sol.sellerId);
+                    return (
+                      <CardSolicitacao
+                        key={sol.sellerId}
+                        seller={seller}
+                        solicitacao={sol}
+                        onAprovar={aprovarProfissional}
+                        onRecusar={recusarProfissional}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+          </>}
+
+          {/* ── Aba Campanhas: aprovar a candidatura numa campanha específica ── */}
+          {abaFila === "campanhas" && <>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>
+                <Megaphone size={18} style={{ marginRight: 6, verticalAlign: "-3px" }} />
+                Candidaturas às campanhas
+              </h3>
+              {candidaturasCampanha.length > 0 && <span className="vx-chip vx-mono">{candidaturasCampanha.length}</span>}
+            </div>
+            <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 14px" }}>Aprovar libera o profissional apenas para aquela campanha específica.</p>
+
+            {!candidaturasCampanha.length
+              ? (
+                <div className="vx-card" style={{ padding: 24, textAlign: "center", marginBottom: 28 }}>
+                  <Shield size={28} color="var(--muted)" style={{ display: "block", margin: "0 auto 10px" }} />
+                  <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Nenhuma candidatura pendente nas suas campanhas.</p>
+                </div>
+              )
+              : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+                  {candidaturasCampanha.map(({ campanha, app, seller }) => (
+                    <div key={`${campanha.id}-${app.id || app.sellerId}`} className="vx-card" style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                      <div style={{ width: 54, height: 54, borderRadius: 10, overflow: "hidden", flexShrink: 0, background: "var(--surface-2)", display: "grid", placeItems: "center" }}>
+                        {seller?.foto
+                          ? <img src={typeof seller.foto === "string" && seller.foto.startsWith("data:") ? seller.foto : `/api/sellers/${seller.id}/foto`} alt={seller?.nome} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <span style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{iniciais(seller?.nome)}</span>}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column", gap: 3 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span style={{ fontWeight: 700, fontSize: 14.5, color: "var(--ink)" }}>{capitalizar(seller?.nome || "Profissional")}</span>
+                          <span style={{ background: "#fffbeb", color: "#92400e", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }}>Aguardando aprovação</span>
+                        </div>
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                          <Megaphone size={11} style={{ marginRight: 4, verticalAlign: "-1px" }} />
+                          {campanha.titulo || "Campanha"}{app.criadoEm ? ` · ${dataCurta(app.criadoEm)}` : ""}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                        <button className="vx-prof-card__btn" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => decidirCandidatura(campanha.id, app.id, "aprovado")}>
+                          <CheckCircle2 size={14} /> Aprovar
+                        </button>
+                        <button className="vx-prof-card__btn vx-prof-card__btn--danger" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => decidirCandidatura(campanha.id, app.id, "recusado")}>
+                          <X size={14} /> Recusar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+          </>}
 
         </>
       )}
