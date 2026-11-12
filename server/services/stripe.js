@@ -25,6 +25,8 @@ import { planoDe, CICLOS, mesesDoCiclo } from "../../shared/planos.js";
 // Rótulo em inglês do ciclo, para a descrição da assinatura no Stripe.
 const CICLO_LABEL_EN = { MENSAL: "monthly", SEMESTRAL: "semiannual", ANUAL: "annual" };
 import { MOEDA_INTERNACIONAL, valorInternacionalNoCiclo } from "../../shared/precosInternacionais.js";
+import { normalizarMoeda, paraMenorUnidade, semCentavos, formatarMoeda } from "../../shared/moedas.js";
+import { registrarMovimento } from "./financeiro.js";
 import { qualificarIndicacao } from "./indicacoes.js";
 import { concluir as concluirEtapaOnboarding } from "./onboarding.js";
 
@@ -181,6 +183,74 @@ export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ci
   return { url: sessao.url || null, clientSecret: sessao.client_secret || null, sessionId: sessao.id, valor, moeda: MOEDA_INTERNACIONAL };
 }
 
+// Depósito de caixa via Stripe (cartão internacional), cobrança ONE-TIME na
+// moeda escolhida. Usa o mesmo cliente do Stripe (mostra o cartão salvo do
+// plano e deixa adicionar outro) e salva o cartão para próximos aportes. O
+// crédito do saldo acontece no webhook (checkout.session.completed, mode=payment).
+export async function criarCheckoutDeposito({ empresa, email, depositId, valor, moeda, retorno }) {
+  const cur = normalizarMoeda(moeda);
+  const bruto = Number(valor) || 0;
+  if (bruto <= 0) throw new ErroStripe("Valor inválido.", { status: 400 });
+  const customer = await garantirClienteStripe(empresa, email);
+  const metadados = { type: "deposit", depositId, companyId: empresa.id, moeda: cur };
+
+  const sessao = await stripe("/checkout/sessions", {
+    method: "POST",
+    idempotencia: `deposit-${depositId}`,
+    body: {
+      mode: "payment",
+      customer,
+      client_reference_id: depositId,
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: cur.toLowerCase(),
+          unit_amount: paraMenorUnidade(bruto, cur),
+          product_data: { name: "RYCS — depósito de caixa" },
+        },
+      }],
+      payment_intent_data: { setup_future_usage: "off_session", metadata: metadados },
+      metadata: metadados,
+      billing_address_collection: "required",
+      success_url: urlDeRetorno(retorno, "stripe=deposito_ok"),
+      cancel_url: urlDeRetorno(retorno, "stripe=cancelado"),
+    },
+  });
+
+  db.prepare("UPDATE deposit_requests SET stripeSessionId = ? WHERE id = ?").run(sessao.id, depositId);
+  return { url: sessao.url || null, sessionId: sessao.id, valor: bruto, moeda: cur };
+}
+
+// Crédito do depósito pago pelo Stripe. Idempotente de fato pelo dedupe de
+// eventos (gateway_events) em processarEvento; o saldo entra na moeda da empresa.
+function creditarDepositoStripe(session) {
+  const companyId = session.metadata?.companyId;
+  const depositId = session.metadata?.depositId || session.client_reference_id;
+  const moeda = normalizarMoeda(session.metadata?.moeda);
+  if (!companyId) return console.warn("[stripe] depósito sem empresa:", session.id);
+  if (session.payment_status && session.payment_status !== "paid") return;
+
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(companyId);
+  if (!empresa) return console.warn("[stripe] depósito de empresa inexistente:", companyId);
+
+  const total = Number(session.amount_total);
+  const valor = Number.isFinite(total) ? (semCentavos(moeda) ? total : total / 100) : 0;
+  if (valor <= 0) return;
+
+  db.transaction(() => {
+    db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ?, moeda = ?, stripeCustomerId = COALESCE(stripeCustomerId, ?) WHERE id = ?")
+      .run(valor, valor, moeda, session.customer || null, companyId);
+    const aportes = JSON.parse(empresa.aportes || "[]");
+    aportes.push({ valor, moeda, ts: agora(), stripeSessionId: session.id });
+    db.prepare("UPDATE companies SET aportes = ? WHERE id = ?").run(JSON.stringify(aportes), companyId);
+    if (depositId) db.prepare("UPDATE deposit_requests SET status = 'confirmado', confirmadoEm = ? WHERE id = ?").run(agora(), depositId);
+    registrarMovimento({ companyId, tipo: "deposito", valor, idempotencyKey: `stripe-deposit:${session.id}`, dados: { gateway: "stripe", moeda, stripeSessionId: session.id } });
+  })();
+
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
+  if (user) notificar(user.id, "pagamento", `Depósito de ${formatarMoeda(valor, moeda)} confirmado!`);
+}
+
 export async function cancelarAssinaturaStripe(sub) {
   if (sub?.stripeSubscriptionId) {
     try { await stripe(`/subscriptions/${sub.stripeSubscriptionId}`, { method: "DELETE" }); }
@@ -275,6 +345,8 @@ async function tratarEvento(evento) {
   const o = evento?.data?.object || {};
   switch (evento.type) {
     case "checkout.session.completed": {
+      // Depósito de caixa (cobrança one-time), não assinatura.
+      if (o.mode === "payment" && o.metadata?.type === "deposit") return creditarDepositoStripe(o);
       if (o.mode !== "subscription") return;
       const sub = subPorStripe(null, { subId: o.metadata?.subId || o.client_reference_id });
       if (!sub) return console.warn("[stripe] checkout sem assinatura conhecida:", o.id);

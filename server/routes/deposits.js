@@ -3,6 +3,8 @@ import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
 import { registrarMovimento } from "../services/financeiro.js";
+import { criarCheckoutDeposito, stripeAtivo } from "../services/stripe.js";
+import { normalizarMoeda } from "../../shared/moedas.js";
 
 const router = Router();
 
@@ -72,6 +74,28 @@ const MINIMO = 1;
 // entender o motivo.
 const MINIMO_GATEWAY = 5;
 
+// Depósito em moeda estrangeira (ou cartão internacional): cobrança one-time no
+// Stripe. O saldo entra pelo webhook, não aqui. Pix só existe em BRL (Asaas).
+async function cobrancaPeloStripe(req, res, companyId, valor, moeda) {
+  if (!stripeAtivo())
+    return res.status(503).json({ error: "Pagamento internacional indisponível no momento." });
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(companyId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  const depositId = uid();
+  db.prepare(`INSERT INTO deposit_requests (id, companyId, valor, status, moeda, gateway, criadoEm)
+              VALUES (?, ?, ?, 'pendente', ?, 'stripe', ?)`).run(depositId, companyId, valor, moeda, agora());
+
+  const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
+  try {
+    const sess = await criarCheckoutDeposito({ empresa, email: usuario?.email, depositId, valor, moeda, retorno: req.body?.retorno });
+    return res.json({ id: depositId, valor, moeda, modo: "stripe", checkoutUrl: sess.url });
+  } catch (err) {
+    console.error("[stripe] depósito:", err.message);
+    return res.status(502).json({ error: err?.message || "Erro ao abrir o checkout internacional" });
+  }
+}
+
 // Chave Pix da plataforma, mostrada à empresa na hora de depositar.
 const PIX_RYCS = process.env.PIX_RECEBIMENTO || "";
 const TITULAR_RYCS = process.env.PIX_TITULAR || "RYCS Sales Machine";
@@ -85,9 +109,22 @@ router.post("/deposits", async (req, res) => {
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem depositar" });
 
   const valor = Number(req.body?.valor);
-  const piso = asaasAtivo() ? MINIMO_GATEWAY : MINIMO;
+  const moeda = normalizarMoeda(req.body?.moeda);
+  // Pix só existe em Real; qualquer outra moeda (ou cartão pedido) vai por Stripe.
+  const metodo = (req.body?.metodo === "card" || moeda !== "BRL") ? "card" : "pix";
+
+  // Trava de moeda: depois do primeiro aporte, a empresa opera sempre na mesma
+  // moeda — caixa, repasse e take rate rodam nela.
+  const emp = db.prepare("SELECT moeda, saldo, totalAportado FROM companies WHERE id = ?").get(entityId);
+  const travada = (Number(emp?.saldo) > 0 || Number(emp?.totalAportado) > 0) ? normalizarMoeda(emp?.moeda) : null;
+  if (travada && travada !== moeda)
+    return res.status(409).json({ error: `Sua conta opera em ${travada}. Faça o depósito nessa moeda.` });
+
+  const piso = moeda === "BRL" ? (asaasAtivo() ? MINIMO_GATEWAY : MINIMO) : 1;
   if (!Number.isFinite(valor) || valor < piso)
-    return res.status(400).json({ error: `Valor mínimo: R$ ${piso},00` });
+    return res.status(400).json({ error: `Valor mínimo: ${piso} ${moeda}` });
+
+  if (metodo === "card") return cobrancaPeloStripe(req, res, entityId, valor, moeda);
 
   // Com o gateway ativo, a cobrança é gerada e confirmada sozinha pelo
   // webhook. O caminho manual abaixo só existe para quando ele está desligado,

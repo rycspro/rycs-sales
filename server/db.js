@@ -933,6 +933,13 @@ adicionarColuna("companies", "diaFechamento", "INTEGER");
 adicionarColuna("companies", "diaPagamento", "INTEGER");
 adicionarColuna("companies", "modalidadePagamento", "TEXT DEFAULT 'pre'");
 adicionarColuna("companies", "limiteCredito", "REAL DEFAULT 0");
+// Moeda de operação da empresa (ISO 4217). Travada no primeiro depósito: todo o
+// caixa, reserva, liquidação, repasse e take rate rodam nesta moeda.
+adicionarColuna("companies", "moeda", "TEXT DEFAULT 'BRL'");
+// Depósito multi-moeda: moeda do aporte, gateway usado e sessão do Stripe.
+adicionarColuna("deposit_requests", "moeda", "TEXT DEFAULT 'BRL'");
+adicionarColuna("deposit_requests", "gateway", "TEXT DEFAULT 'manual'");
+adicionarColuna("deposit_requests", "stripeSessionId", "TEXT");
 adicionarColuna("submissions", "dataLiberacao", "INTEGER");
 adicionarColuna("submissions", "leadId", "TEXT");
 adicionarColuna("submissions", "idempotencyKey", "TEXT");
@@ -957,6 +964,8 @@ adicionarColuna("applications", "respondidoEm", "INTEGER");
 adicionarColuna("applications", "campanhasAuto", "INTEGER");
 adicionarColuna("partnership_requests", "mensagem", "TEXT DEFAULT ''");
 adicionarColuna("partnership_requests", "origem", "TEXT DEFAULT 'empresa'");
+// Mensagem que o profissional envia ao se candidatar a uma campanha específica.
+adicionarColuna("campaign_applications", "mensagem", "TEXT DEFAULT ''");
 // Default da empresa: 0 = cada campanha precisa aprovação manual, 1 = auto
 adicionarColuna("companies", "campanhasAutoDefault", "INTEGER DEFAULT 0");
 

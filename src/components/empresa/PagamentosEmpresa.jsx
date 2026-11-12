@@ -10,6 +10,7 @@ import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { isPremium } from "../../../shared/empresa.js";
 import { PLANOS } from "../../../shared/planos.js";
+import { MOEDAS, moedaDe, formatarMoeda, normalizarMoeda } from "../../../shared/moedas.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const MOVIMENTOS = {
@@ -56,32 +57,57 @@ function StatCard({ label, value, sub, tone = "default", icon: Icon }) {
 
 // ── Modal adicionar saldo ─────────────────────────────────────────────────────
 export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
-  const [valor, setValor] = useState("");
+  // Moeda travada: depois do 1º aporte a empresa opera sempre na mesma moeda.
+  const moedaTravada = (Number(emp?.saldo) > 0 || Number(emp?.totalAportado) > 0)
+    ? normalizarMoeda(emp?.moeda) : null;
+
+  const [moeda, setMoeda] = useState(moedaTravada || normalizarMoeda(emp?.moeda) || "BRL");
+  const [metodo, setMetodo] = useState(moeda === "BRL" ? "pix" : "card");
+  const [valor, setValor] = useState(0);
   const [display, setDisplay] = useState("");
   const [etapa, setEtapa] = useState("form"); // form | pix
   const [pix, setPix] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
-  const parseBRL = (s) => Number(String(s).replace(/\./g, "").replace(",", ".")) || 0;
-  const fmtBRL  = (n) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const info = moedaDe(moeda);
+  const digitos = info.digitos;
+  const piso = moeda === "BRL" ? 50 : (digitos === 0 ? 100 : 10);
+  const atalhos = moeda === "BRL" ? [50, 100, 500] : (digitos === 0 ? [500, 1000, 5000] : [50, 100, 500]);
+  const fmt = (n) => formatarMoeda(n, moeda);
 
+  const parseValor = (s) => {
+    // Aceita dígitos e um separador decimal (vírgula ou ponto). Moedas sem
+    // centavos ignoram a parte decimal.
+    const limpo = String(s).replace(/[^\d.,]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".");
+    const n = Number(limpo) || 0;
+    return digitos === 0 ? Math.round(n) : n;
+  };
   const handleValor = (e) => {
-    const raw = e.target.value.replace(/[^\d,]/g, "");
+    const raw = e.target.value.replace(digitos === 0 ? /[^\d]/g : /[^\d.,]/g, "");
     setDisplay(raw);
-    setValor(parseBRL(raw));
+    setValor(parseValor(raw));
   };
   const handleBlur = () => {
-    const n = parseBRL(display);
-    setDisplay(n > 0 ? fmtBRL(n) : "");
+    const n = parseValor(display);
+    setDisplay(n > 0 ? n.toLocaleString("pt-BR", { minimumFractionDigits: digitos, maximumFractionDigits: digitos }) : "");
     setValor(n);
+  };
+  // Ao trocar de moeda, ajusta o método (Pix só existe em BRL) e zera o valor.
+  const trocarMoeda = (m) => {
+    const nova = normalizarMoeda(m);
+    setMoeda(nova);
+    setMetodo(nova === "BRL" ? "pix" : "card");
+    setValor(0); setDisplay("");
   };
 
   const confirmar = async () => {
-    if (!valor || valor < 50) return aviso("Valor mínimo de R$ 50,00.");
+    if (!valor || valor < piso) return aviso(`Valor mínimo de ${fmt(piso)}.`);
     setEnviando(true);
-    const r = await api("/deposits", { valor });
+    const r = await api("/deposits", { valor, moeda, metodo, retorno: window.location.pathname });
     setEnviando(false);
     if (!r || r.error) return aviso(r?.error || "Não foi possível criar o depósito.");
+    // Cartão internacional: redireciona para o Checkout hospedado do Stripe.
+    if (r.checkoutUrl) { window.location.href = r.checkoutUrl; return; }
     if (r.pixCopiaECola || r.pixQrCodeBase64) { setPix(r); setEtapa("pix"); return; }
     if (r.invoiceUrl) { window.open(r.invoiceUrl, "_blank", "noopener"); aviso("Fatura aberta em nova aba."); onFechar(); return; }
     aviso("Depósito registrado. Aguarde a confirmação.");
@@ -89,59 +115,117 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
     onFechar();
   };
 
+  const metodos = moeda === "BRL"
+    ? [["pix", "Pix", QrCode], ["card", "Internacional (cartão)", CreditCard]]
+    : [["card", "Internacional (cartão)", CreditCard]];
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(248,250,252,.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={(e) => { if (e.target === e.currentTarget) onFechar(); }}>
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 50px rgba(0,0,0,.14)", width: "100%", maxWidth: 440, padding: "28px 28px 24px" }}>
+      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 50px rgba(0,0,0,.14)", width: "100%", maxWidth: 440, padding: "28px 28px 24px", maxHeight: "90vh", overflowY: "auto" }}>
         {/* header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Adicionar saldo</div>
-            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>O valor entra na sua conta após a confirmação do Pix.</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
+              {metodo === "pix" ? "O valor entra na sua conta após a confirmação do Pix." : "O valor entra na sua conta após a confirmação do pagamento."}
+            </div>
           </div>
           <button onClick={onFechar} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}><X size={18} /></button>
         </div>
 
         {etapa === "form" && <>
+          {/* Seletor de moeda */}
+          <label style={{ display: "block", marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Moeda</div>
+            <select
+              className="vx-input"
+              style={{ fontSize: 14, fontWeight: 600 }}
+              value={moeda}
+              disabled={!!moedaTravada}
+              onChange={(e) => trocarMoeda(e.target.value)}
+            >
+              {MOEDAS.map((m) => (
+                <option key={m.code} value={m.code}>{m.simbolo} · {m.code} — {m.nome}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>
+              {moedaTravada
+                ? `Sua conta opera em ${moedaTravada}. Depósitos, repasses e saques acontecem nesta moeda.`
+                : "Esta será a moeda da sua conta — fica fixa após o primeiro depósito."}
+            </div>
+          </label>
+
           <label style={{ display: "block", marginBottom: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Valor do depósito</div>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 13.5, pointerEvents: "none" }}>R$</span>
+              <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 13.5, pointerEvents: "none" }}>{info.simbolo}</span>
               <input
                 className="vx-input vx-mono"
-                style={{ paddingLeft: 32, fontSize: 18, fontWeight: 700 }}
-                inputMode="decimal" placeholder="0,00"
+                style={{ paddingLeft: 12 + info.simbolo.length * 9, fontSize: 18, fontWeight: 700 }}
+                inputMode="decimal" placeholder={digitos === 0 ? "0" : "0,00"}
                 value={display} onChange={handleValor} onBlur={handleBlur}
               />
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>Mínimo: R$ 50,00 · Via Pix · Confirmação em até 1 minuto</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>
+              Mínimo: {fmt(piso)}{metodo === "pix" ? " · Via Pix · Confirmação em até 1 minuto" : " · Via cartão (Stripe)"}
+            </div>
           </label>
 
           <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-            {[50, 100, 500].map((v) => (
+            {atalhos.map((v) => (
               <button key={v} type="button" className="vx-btn vx-btn-sm" style={{ flex: 1, justifyContent: "center" }}
                 data-on={valor === v ? "1" : "0"}
-                onClick={() => { setValor(v); setDisplay(fmtBRL(v)); }}>
-                {money(v)}
+                onClick={() => { setValor(v); setDisplay(v.toLocaleString("pt-BR", { minimumFractionDigits: digitos, maximumFractionDigits: digitos })); }}>
+                {fmt(v)}
               </button>
             ))}
           </div>
 
-          {valor >= 50 && (
+          {/* Tipo de pagamento */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 7 }}>Tipo de pagamento</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {metodos.map(([id, label, Icon]) => {
+                const on = metodo === id;
+                return (
+                  <button key={id} type="button" onClick={() => setMetodo(id)} style={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                    padding: "10px 12px", borderRadius: 10, cursor: "pointer", fontSize: 12.5, fontWeight: 600, fontFamily: "inherit",
+                    border: `1.5px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                    background: on ? "var(--brand-50)" : "var(--surface)", color: on ? "var(--brand)" : "var(--ink)",
+                  }}>
+                    <Icon size={15} /> {label}
+                  </button>
+                );
+              })}
+            </div>
+            {metodo === "card" && (
+              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, lineHeight: 1.45 }}>
+                Você vai para o checkout seguro do Stripe, onde pode usar o cartão já salvo no seu plano ou adicionar outro. O cartão nunca passa pela RYCS.
+              </div>
+            )}
+          </div>
+
+          {valor >= piso && (
             <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "var(--muted)" }}>Valor depositado</span><b>{money(valor)}</b></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--muted)" }}>Taxa de gateway</span><b>R$ 0,00</b></div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "var(--muted)" }}>Valor depositado</span><b>{fmt(valor)}</b></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--muted)" }}>Taxa de gateway</span><b>{fmt(0)}</b></div>
               <div style={{ borderTop: "1px solid var(--border)", margin: "8px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontWeight: 700 }}>Saldo creditado</span><b style={{ color: "var(--brand)" }}>{money(valor)}</b></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontWeight: 700 }}>Saldo creditado</span><b style={{ color: "var(--brand)" }}>{fmt(valor)}</b></div>
             </div>
           )}
 
           <button
             className="vx-btn vx-btn-primary"
             style={{ width: "100%", justifyContent: "center", padding: "11px 0", fontSize: 14 }}
-            onClick={confirmar} disabled={enviando || !valor || valor < 50}
+            onClick={confirmar} disabled={enviando || !valor || valor < piso}
           >
-            {enviando ? "Gerando Pix…" : <><QrCode size={15} /> Continuar com Pix</>}
+            {enviando
+              ? (metodo === "pix" ? "Gerando Pix…" : "Abrindo checkout…")
+              : metodo === "pix"
+                ? <><QrCode size={15} /> Continuar com Pix</>
+                : <><CreditCard size={15} /> Continuar com cartão</>}
           </button>
         </>}
 
