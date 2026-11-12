@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Check, Star, Gift } from "lucide-react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
-import { CICLOS, mensalidadeNoCiclo, descontoDoCiclo } from "../../../shared/planos.js";
+import { CICLOS, mensalidadeNoCiclo, descontoDoCiclo, PLANOS } from "../../../shared/planos.js";
 
 // Ciclos oferecidos na vitrine, em ordem de compromisso crescente. O desconto
 // de cada um mora em shared/planos.js — aqui só exibimos.
@@ -19,13 +19,18 @@ const pct = (d) => Math.round(d * 100);
 // Tailwind/shadcn), do bloco de pricing com alternância mensal/semestral/anual,
 // card "Popular" em destaque, preço animado e confete ao escolher um ciclo com
 // desconto.
-export default function PricingPlanos({ plans = [], onContratar, planoAtualChave }) {
+export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, planoAtualChave }) {
   const [ciclo, setCiclo] = useState(CICLOS.MENSAL);
   const segRef = useRef(null);
 
   const descontoAtual = descontoDoCiclo(ciclo);
   // Já existe um plano pago ativo? Então os outros cards viram "Trocar para este plano".
   const temPlanoAtivo = plans.some((p) => p.chave === planoAtualChave);
+
+  // Plano gratuito: sem mensalidade, exibido como faixa larga acima dos ciclos.
+  // Sem assinatura paga, a empresa está no Free por padrão.
+  const free = PLANOS.free;
+  const noFree = !planoAtualChave || planoAtualChave === "free";
 
   const alternar = (novoCiclo) => {
     setCiclo(novoCiclo);
@@ -47,6 +52,49 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
 
   return (
     <div>
+      {/* Plano gratuito — faixa larga acima dos ciclos, em 3 camadas:
+          esquerda (nome + preço), meio (tópicos), direita (ação). */}
+      <div
+        className="vx-card vx-free-banner"
+        style={{
+          display: "grid", gridTemplateColumns: "minmax(140px, 190px) 1fr auto",
+          alignItems: "center", gap: 24, padding: "20px 24px", marginBottom: 20,
+          border: noFree ? "2px solid var(--brand)" : "1px solid var(--border)",
+          background: noFree ? "var(--brand-50)" : "var(--surface)",
+        }}
+      >
+        {/* Camada 1 — identidade do plano */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, borderRight: "1px solid var(--border)", paddingRight: 20 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase" }}>
+            {free.nome}
+          </span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+            <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>R$ 0</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
+          </div>
+        </div>
+
+        {/* Camada 2 — tópicos */}
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "8px 20px" }}>
+          {free.inclui.map((i) => (
+            <li key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: "var(--text-2, var(--ink))" }}>
+              <Check size={15} color="var(--brand)" strokeWidth={2.4} style={{ flexShrink: 0 }} /> {i}
+            </li>
+          ))}
+        </ul>
+
+        {/* Camada 3 — ação */}
+        <button
+          type="button"
+          className={`vx-btn ${noFree ? "" : "vx-btn-primary"}`}
+          disabled={noFree}
+          onClick={() => onUsarGratis?.()}
+          style={{ fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0, minWidth: 150 }}
+        >
+          {noFree ? "Plano atual" : "Usar plano grátis"}
+        </button>
+      </div>
+
       {/* Alternância mensal / semestral / anual */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 26 }}>
         <div

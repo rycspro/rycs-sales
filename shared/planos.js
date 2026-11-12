@@ -6,15 +6,15 @@
 
 export const PLANOS = {
   free: {
-    nome: "Sandbox",
+    nome: "Grátis",
     preco: 0,
-    takeRate: 0.12,
-    limites: { campanhasAtivas: 0, vendedores: 0, destaque: false },
+    takeRate: 0.50,
+    limites: { campanhasAtivas: 1, vendedores: 3, destaque: false },
     inclui: [
-      "Configuração da conta",
-      "Campanhas em rascunho",
-      "Sem publicação de campanha",
-      "Taxa por movimentações de 12%",
+      "1 campanha ativa",
+      "Até 3 profissionais ativos",
+      "Taxa por movimentações de 50%",
+      "Painel operacional completo",
     ],
   },
   starter: {
@@ -22,9 +22,9 @@ export const PLANOS = {
     preco: 399,
     takeRate: 0.20,
     trial: false,
-    limites: { campanhasAtivas: 1, vendedores: 5, destaque: false },
+    limites: { campanhasAtivas: 3, vendedores: 5, destaque: false },
     inclui: [
-      "1 campanha ativa",
+      "3 campanhas ativas",
       "Até 5 profissionais ativos",
       "Taxa por movimentações de 20%",
       "Painel operacional completo",

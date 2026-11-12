@@ -6,6 +6,7 @@ import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 
 export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha }) {
   const [candidatando, setCandidatando] = useState(null);
+  const [mensagens, setMensagens] = useState({});
 
   const campanhas = (db.campaigns || []).filter((c) => c.status === "ativa");
   const empresasMap = {};
@@ -13,10 +14,11 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
   const candidatar = async (campanha) => {
     setCandidatando(campanha.id);
-    const r = await api(`/campaigns/${campanha.id}/apply`, {});
+    const r = await api(`/campaigns/${campanha.id}/apply`, { mensagem: (mensagens[campanha.id] || "").trim() });
     setCandidatando(null);
     if (r?.error) return aviso(r.error);
     aviso("Candidatura enviada! A empresa vai analisar seu perfil.");
+    setMensagens((m) => ({ ...m, [campanha.id]: "" }));
     recarregar?.();
   };
 
@@ -172,10 +174,19 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                     {candidatando === c.id ? "Enviando…" : "Tentar novamente"}
                   </button>
                 ) : (
-                  <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => candidatar(c)}
-                    disabled={candidatando === c.id}>
-                    {candidatando === c.id ? "Enviando…" : "Candidatar-se a esta campanha"}
-                  </button>
+                  <>
+                    <textarea
+                      className="vx-input" rows={2} maxLength={1000}
+                      value={mensagens[c.id] || ""}
+                      onChange={(e) => setMensagens((m) => ({ ...m, [c.id]: e.target.value }))}
+                      placeholder="Mensagem para a empresa (opcional): conte por que você é ideal para esta campanha."
+                      style={{ resize: "vertical", marginBottom: 8, fontSize: 13 }}
+                    />
+                    <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => candidatar(c)}
+                      disabled={candidatando === c.id}>
+                      {candidatando === c.id ? "Enviando…" : "Candidatar-se a esta campanha"}
+                    </button>
+                  </>
                 )}
               </div>
             </div>

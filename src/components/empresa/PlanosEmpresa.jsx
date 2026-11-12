@@ -113,6 +113,18 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     aviso(r.message);
   };
 
+  // Voltar ao plano gratuito. Com assinatura paga ativa/pendente/trial, o caminho
+  // correto é cancelar (encerra a recorrência no gateway); sem ela, troca direta.
+  const usarGratis = async () => {
+    const status = atual?.assinatura?.status;
+    if (["ativa", "pendente", "trial", "inadimplente"].includes(status)) return cancelar();
+    const r = await api("/subscription", { plano: "free", ciclo: CICLOS.MENSAL });
+    if (r?.error) return aviso(r.error);
+    await carregar();
+    await recarregar?.();
+    aviso(r.message || "Plano alterado para Grátis.");
+  };
+
   if (!planos.length) return <div className="vx-card vx-skeleton" style={{ height: 180 }} />;
 
   // Valor-base do checkout conforme o ciclo escolhido (semestral/anual = 6/12
@@ -139,6 +151,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
             <PricingPlanos
               plans={planos}
               planoAtualChave={atual?.plano}
+              onUsarGratis={usarGratis}
               onContratar={(chave, cicloEscolhido) => {
                 const p = planos.find((x) => x.chave === chave);
                 if (p) abrirModal(p, cicloEscolhido);

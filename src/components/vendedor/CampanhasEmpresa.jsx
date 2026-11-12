@@ -33,6 +33,7 @@ function StatusChip({ status }) {
 
 function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy, aviso }) {
   const [candidatando, setCandidatando] = useState(false);
+  const [mensagem, setMensagem] = useState("");
   const candidatura = campanha.candidaturas?.[0];
   const certificada = atendeCertificacaoDaCampanha(campanha, eu.certificacoes);
   const quizCampanhaOk = campanha.quizAprovado || !campanha.exigeCertificacao || !(campanha.quiz?.length);
@@ -43,7 +44,7 @@ function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy, avis
 
   async function candidatar() {
     setCandidatando(true);
-    const r = await api(`/campaigns/${campanha.id}/apply`, {});
+    const r = await api(`/campaigns/${campanha.id}/apply`, { mensagem: mensagem.trim() });
     setCandidatando(false);
     if (r?.error) return aviso?.(r.error);
     onCandidatar?.();
@@ -119,9 +120,17 @@ function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy, avis
           Candidaturas encerradas
         </button>
       ) : (
-        <button className="vx-btn vx-btn-primary vx-btn-block" disabled={candidatando} style={{ marginTop: 4 }} onClick={candidatar}>
-          {candidatando ? "Enviando..." : "Candidatar-se a esta campanha"}
-        </button>
+        <div style={{ marginTop: 4 }}>
+          <textarea
+            className="vx-input" rows={2} value={mensagem} maxLength={1000}
+            onChange={(e) => setMensagem(e.target.value)}
+            placeholder="Mensagem para a empresa (opcional): conte por que você é ideal para esta campanha."
+            style={{ resize: "vertical", marginBottom: 8, fontSize: 13 }}
+          />
+          <button className="vx-btn vx-btn-primary vx-btn-block" disabled={candidatando} onClick={candidatar}>
+            {candidatando ? "Enviando..." : "Candidatar-se a esta campanha"}
+          </button>
+        </div>
       )}
     </div>
   );

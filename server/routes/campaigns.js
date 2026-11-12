@@ -291,6 +291,7 @@ router.post("/campaigns/:id/apply", (req, res) => {
 
   const id = uid();
   const criadoEm = agora();
+  const mensagem = String(req.body?.mensagem || "").slice(0, 1000).trim();
   const app = db.prepare("SELECT campanhasAuto FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(entityId, campaign.companyId);
   let autoAprovado = false;
   if (app) {
@@ -300,7 +301,7 @@ router.post("/campaigns/:id/apply", (req, res) => {
   }
   const statusCand = autoAprovado ? "aprovado" : "pendente";
   db.transaction(() => {
-    db.prepare("INSERT INTO campaign_applications (id, campaignId, sellerId, status, criadoEm) VALUES (?, ?, ?, ?, ?)").run(id, req.params.id, entityId, statusCand, criadoEm);
+    db.prepare("INSERT INTO campaign_applications (id, campaignId, sellerId, status, mensagem, criadoEm) VALUES (?, ?, ?, ?, ?, ?)").run(id, req.params.id, entityId, statusCand, mensagem, criadoEm);
     registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "PROFESSIONAL_APPLIED", actorId: req.user.id, actorRole: role, sellerId: entityId, source: "USER", criadoEm });
     if (autoAprovado) {
       registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "PROFESSIONAL_APPROVED", actorId: "sistema", actorRole: "sistema", sellerId: entityId, source: "SYSTEM" });
