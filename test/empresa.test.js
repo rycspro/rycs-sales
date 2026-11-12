@@ -47,18 +47,18 @@ test("planos seguem preços e taxas aprovados no plano de produto", () => {
 // Campanha completa: o que falta nos testes abaixo é sempre da empresa.
 const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", cidade: "São Paulo", estado: "SP", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [{ titulo: "Produto" }], etapasPipeline: [{ id: "novo", nome: "Novo" }] };
 
-test("premium não vê plano nem caixa no checklist de publicação", () => {
-  // O wizard mostrava "Plano ativo" em vermelho para empresa premium enquanto
-  // o servidor já a tinha liberado: o checklist era uma segunda cópia da
-  // regra, escrita na tela. Requisito que não se aplica some da lista — ficar
-  // verde sugeriria que ela pagou algo.
+test("premium não vê plano no checklist, mas precisa de caixa como todos", () => {
+  // Premium não paga mensalidade, então "Plano ativo" não se aplica a ela.
+  // Mas o pós-pago foi removido da plataforma: premium também só roda campanha
+  // com saldo em caixa — os itens de caixa aparecem no checklist, e sem saldo
+  // ela não publica.
   const premium = { statusCadastro: "aprovada", tipoEmpresa: "premium", saldo: 0 };
   const rotulos = requisitosPublicacao(campanha, premium).map((r) => r.label);
   assert.equal(rotulos.includes("Plano ativo"), false);
-  assert.equal(rotulos.includes("Caixa com saldo"), false);
-  assert.equal(rotulos.includes("Orçamento"), false);
+  assert.equal(rotulos.includes("Caixa com saldo"), true);
+  assert.equal(rotulos.includes("Orçamento"), true);
   assert.equal(rotulos.includes("Empresa aprovada"), true);
-  assert.deepEqual(campanhaPodeSerPublicada(campanha, premium), { ok: true, pendencias: [] });
+  assert.equal(campanhaPodeSerPublicada(campanha, premium).ok, false);
 });
 
 test("checklist e regra de publicação nunca discordam", () => {
@@ -67,8 +67,13 @@ test("checklist e regra de publicação nunca discordam", () => {
   assert.deepEqual(reprovados, campanhaPodeSerPublicada(campanha, empresa).pendencias);
 });
 
-test("premium sem plano e sem caixa publica; padrão igual não publica", () => {
-  const base = { statusCadastro: "aprovada", saldo: 0, assinatura: "free" };
-  assert.equal(campanhaPodeSerPublicada(campanha, { ...base, tipoEmpresa: "premium" }).ok, true);
-  assert.equal(campanhaPodeSerPublicada(campanha, { ...base, tipoEmpresa: "padrao" }).ok, false);
+test("sem caixa ninguém publica; com caixa premium publica sem precisar de plano", () => {
+  const base = { statusCadastro: "aprovada", assinatura: "free" };
+  // Pós-pago removido: sem saldo, nem premium nem padrão publicam.
+  assert.equal(campanhaPodeSerPublicada(campanha, { ...base, tipoEmpresa: "premium", saldo: 0 }).ok, false);
+  assert.equal(campanhaPodeSerPublicada(campanha, { ...base, tipoEmpresa: "padrao", saldo: 0 }).ok, false);
+  // Com caixa suficiente, premium publica sem plano pago (não paga mensalidade);
+  // padrão continua barrado pelo plano free.
+  assert.equal(campanhaPodeSerPublicada(campanha, { ...base, tipoEmpresa: "premium", saldo: 5000 }).ok, true);
+  assert.equal(campanhaPodeSerPublicada(campanha, { ...base, tipoEmpresa: "padrao", saldo: 5000 }).ok, false);
 });

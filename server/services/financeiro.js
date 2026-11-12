@@ -29,19 +29,10 @@ export function reservarParaSubmissao({ companyId, sellerId, submissionId, valor
   if (!posicao) throw new Error("Empresa não encontrada");
   if (bruto <= 0) throw new Error("Valor da ação inválido");
 
-  // Pré-pago é a regra: a ação só é reservada se houver caixa disponível. O
-  // saldo negativo (pós-pago) é privilégio exclusivo de Premium, que ainda
-  // pode ter um limiteCredito definido. Empresa não-premium sem caixa faz esta
-  // reserva falhar — e o chamador (POST /submissions) pausa a campanha.
-  const config = db.prepare("SELECT tipoEmpresa, modalidadePagamento, limiteCredito FROM companies WHERE id = ?").get(companyId);
-  const premium = config?.tipoEmpresa === "premium";
-  if (!premium && posicao.disponivel < bruto) throw new Error("Caixa disponível insuficiente para reservar esta ação");
-  if (premium && config?.modalidadePagamento === "pos") {
-    const limite = dinheiro(config.limiteCredito || 0);
-    const exposicao = dinheiro(posicao.reservado - Math.max(0, posicao.saldo));
-    if (limite > 0 && exposicao + bruto > limite)
-      throw new Error(`Limite de crédito da empresa (R$ ${limite.toFixed(2)}) seria excedido`);
-  }
+  // Pré-pago para todos, sem exceção de plano: a ação só é reservada se houver
+  // caixa disponível. Empresa sem caixa faz esta reserva falhar — e o chamador
+  // (POST /submissions) pausa a campanha automaticamente.
+  if (posicao.disponivel < bruto) throw new Error("Caixa disponível insuficiente para reservar esta ação");
 
   db.prepare("UPDATE companies SET saldoReservado = saldoReservado + ? WHERE id = ?").run(bruto, companyId);
   const ciclo = db.prepare("SELECT COUNT(*) n FROM financial_ledger WHERE submissionId = ? AND tipo = 'reserva'").get(submissionId).n + 1;

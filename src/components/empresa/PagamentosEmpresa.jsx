@@ -8,7 +8,7 @@ import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
 import CentralPagamentosCampanhas from "./CentralPagamentosCampanhas.jsx";
 import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
-import { isPosPago, isPremium } from "../../../shared/empresa.js";
+import { isPremium } from "../../../shared/empresa.js";
 import { PLANOS } from "../../../shared/planos.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -197,7 +197,6 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
   const planoAtual = emp.assinatura || null;
   const infPlano   = planoAtual ? PLANOS[planoAtual] : null;
   const premium    = isPremium(emp);
-  const posPago    = isPosPago(emp);
   // Tem plano pago ativo? (free/sem assinatura não conta; premium é tratado à parte.)
   const temAssinatura = !!planoAtual && planoAtual !== "free";
 
@@ -252,20 +251,13 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 4 }}>Saldo operacional</div>
             <div style={{ fontSize: 28, fontWeight: 800, color: "var(--brand)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.8 }}>
-              {carregando ? "—" : money(posPago ? Infinity : posicao.disponivel)}
+              {carregando ? "—" : money(posicao.disponivel)}
             </div>
             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Disponível para remunerar profissionais</div>
           </div>
-          {!posPago && !premium && (
-            <button className="vx-btn vx-btn-primary" onClick={() => setModalSaldo(true)}>
-              <Plus size={14} /> Adicionar saldo
-            </button>
-          )}
-          {(posPago || premium) && (
-            <span style={{ background: "#EFF6FF", color: "var(--brand)", fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 20 }}>
-              {posPago ? "Pós-pago" : "Sem limite"}
-            </span>
-          )}
+          <button className="vx-btn vx-btn-primary" onClick={() => setModalSaldo(true)}>
+            <Plus size={14} /> Adicionar saldo
+          </button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
           <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px" }}>

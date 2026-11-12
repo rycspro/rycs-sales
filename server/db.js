@@ -1112,14 +1112,14 @@ const martinPremium = db.prepare(
 ).run();
 if (martinPremium.changes > 0) console.log(`[migracao] Martin Business School marcada como premium`);
 
-// Pós-pago passou a ser privilégio exclusivo de Premium: toda empresa não-premium
-// que estava em "pos" volta a pré-pago (precisa de saldo em caixa para rodar
-// campanhas). Roda DEPOIS de marcar as empresas premium acima. Aditiva e
-// idempotente — a cada boot só altera as linhas que ainda estiverem fora da regra.
+// Pós-pago foi REMOVIDO da plataforma: toda empresa, de qualquer plano (inclusive
+// Premium), volta a pré-pago e passa a precisar de saldo em caixa para rodar
+// campanhas. Aditiva e idempotente — a cada boot só altera as linhas que ainda
+// estiverem em "pos". Nenhum dado financeiro (saldo, depósitos, histórico) é tocado.
 const posPagoResetEmpresas = db.prepare(
-  "UPDATE companies SET modalidadePagamento = 'pre' WHERE modalidadePagamento = 'pos' AND (tipoEmpresa IS NULL OR tipoEmpresa != 'premium')"
+  "UPDATE companies SET modalidadePagamento = 'pre' WHERE modalidadePagamento = 'pos'"
 ).run();
-if (posPagoResetEmpresas.changes > 0) console.log(`[migracao] ${posPagoResetEmpresas.changes} empresa(s) não-premium em pós-pago voltaram a pré-pago`);
+if (posPagoResetEmpresas.changes > 0) console.log(`[migracao] ${posPagoResetEmpresas.changes} empresa(s) em pós-pago voltaram a pré-pago`);
 
 // Habilitação operacional é um portão à parte do plano: premium tira a
 // mensalidade, não aprova o cadastro. A Martin Business School é aprovada aqui
@@ -1471,6 +1471,9 @@ adicionarColuna("campaigns", "fluxoDirecionamento", "TEXT DEFAULT '[]'");
 adicionarColuna("campaigns", "modoJarvas", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "camposPersonalizados", "TEXT DEFAULT '{}'");
 adicionarColuna("campaigns", "modelosCampos", "TEXT DEFAULT '[]'");
+// Candidaturas abertas (1) ou encerradas (0). Não há limite de profissionais —
+// a empresa apenas liga/desliga a entrada de novas candidaturas na campanha.
+adicionarColuna("campaigns", "candidaturasAbertas", "INTEGER DEFAULT 1");
 adicionarColuna("sellers", "cidadeBase", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "estadoBase", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "raioKm", "REAL DEFAULT 50");

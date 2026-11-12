@@ -7,7 +7,7 @@ import {
   Activity, Target, Award, Wallet, SlidersHorizontal, ChevronDown,
 } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
-import { saldoDisponivel, isPosPago, isPremium } from "../../../shared/empresa.js";
+import { saldoDisponivel } from "../../../shared/empresa.js";
 import { api } from "../../lib/api.js";
 
 // ── utilidades ────────────────────────────────────────────────────────────────
@@ -332,7 +332,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
 
   // Pendências da empresa
   const saldo = saldoDisponivel(emp);
-  const semSaldo = !isPosPago(emp) && !isPremium(emp) && saldo <= 0;
+  const semSaldo = saldo <= 0;
   const campsSemCandidatos = campanhasAtivas.filter((c) => !c.candidaturas?.length).length;
 
   const pendencias = [
