@@ -297,9 +297,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
               <label><div className="vx-label">Região</div>
                 <input className="vx-input" value={campanha.regiao} onChange={(e) => set("regiao", e.target.value)} placeholder="Ex.: interior de SP" /></label>
-              <label><div className="vx-label">Quantos profissionais</div>
-                <input className="vx-input vx-mono" type="number" min="1" value={campanha.vagas}
-                  onChange={(e) => set("vagas", Number(e.target.value))} /></label>
+              <label><div className="vx-label">Candidaturas</div>
+                <select className="vx-input" value={campanha.candidaturasAbertas === false ? "0" : "1"}
+                  onChange={(e) => set("candidaturasAbertas", e.target.value === "1")}>
+                  <option value="1">Abertas — profissionais podem se candidatar</option>
+                  <option value="0">Encerradas — não recebe novas candidaturas</option>
+                </select></label>
             </div>
             <CidadeEstadoSelector estado={campanha.estado||""} cidade={campanha.cidade||""} onEstado={(v)=>set("estado",v)} onCidade={(v)=>set("cidade",v)} />
             <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
@@ -551,7 +554,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Objetivo</span><div style={{ fontWeight: 600 }}>{obj?.nome}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>ICP</span><div style={{ fontWeight: 600 }}>{campanha.publico || "—"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Profissional</span><div style={{ fontWeight: 600 }}>{campanha.funcao.toUpperCase()}</div></div>
-              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Vagas</span><div style={{ fontWeight: 600 }}>{campanha.vagas}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Candidaturas</span><div style={{ fontWeight: 600 }}>{campanha.candidaturasAbertas === false ? "Encerradas" : "Abertas"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Região</span><div style={{ fontWeight: 600 }}>{campanha.regiao || "—"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Prazo por ação</span><div style={{ fontWeight: 600 }}>{campanha.prazoHoras}h</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Orçamento</span><div style={{ fontWeight: 600 }} className="vx-mono">{money(campanha.orcamento)}</div></div>

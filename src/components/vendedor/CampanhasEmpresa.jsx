@@ -85,12 +85,6 @@ function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy, avis
             <div style={{ fontWeight: 600, fontSize: 12.5 }}>{campanha.regiao}</div>
           </div>
         )}
-        {campanha.vagas > 0 && (
-          <div style={{ background: "var(--surface-2)", borderRadius: 8, padding: "8px 10px" }}>
-            <div style={{ fontSize: 10.5, color: "var(--ink-2)", marginBottom: 2 }}>Vagas</div>
-            <div style={{ fontWeight: 600, fontSize: 12.5 }}>{campanha.vagas}</div>
-          </div>
-        )}
       </div>
 
       {/* Remuneração por ação */}
@@ -119,6 +113,10 @@ function CampanhaCard({ campanha, eu, db, onAbrir, onCandidatar, irAcademy, avis
       ) : candidatura?.status === "pendente" ? (
         <button className="vx-btn vx-btn-block" disabled style={{ marginTop: 4 }}>
           <Clock size={14} /> Candidatura em análise
+        </button>
+      ) : campanha.candidaturasAbertas === false ? (
+        <button className="vx-btn vx-btn-block" disabled style={{ marginTop: 4 }}>
+          Candidaturas encerradas
         </button>
       ) : (
         <button className="vx-btn vx-btn-primary vx-btn-block" disabled={candidatando} style={{ marginTop: 4 }} onClick={candidatar}>

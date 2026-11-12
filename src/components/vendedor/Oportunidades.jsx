@@ -149,11 +149,6 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                     <MapPin size={12} /> {c.regiao}
                   </span>
                 )}
-                {c.vagas > 0 && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <Users size={12} /> {c.vagas} vaga{c.vagas > 1 ? "s" : ""}
-                  </span>
-                )}
                 {c.objetivo && (
                   <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <Target size={12} /> {c.objetivo}
@@ -169,6 +164,8 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
                   </button>
                 ) : st === "pendente" ? (
                   <button className="vx-btn vx-btn-block" disabled>Candidatura em análise</button>
+                ) : c.candidaturasAbertas === false ? (
+                  <button className="vx-btn vx-btn-block" disabled>Candidaturas encerradas</button>
                 ) : st === "recusado" ? (
                   <button className="vx-btn vx-btn-block" onClick={() => candidatar(c)}
                     disabled={candidatando === c.id}>

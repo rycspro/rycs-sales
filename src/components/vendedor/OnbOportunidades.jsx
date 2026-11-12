@@ -101,9 +101,9 @@ function CardCampanha({ c, empresaNome, empresaLogo, empresaCor }) {
             {money(tarefa.valor)} / {tarefa.label.toLowerCase()}
           </span>
         )}
-        {c.vagas > 0 && (
+        {c.candidaturasAbertas === false && (
           <span className="vx-mut" style={{ fontSize: 12, marginLeft: "auto" }}>
-            {c.vagas} vaga{c.vagas > 1 ? "s" : ""}
+            Candidaturas encerradas
           </span>
         )}
       </div>

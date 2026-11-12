@@ -177,7 +177,8 @@ router.post("/campaigns", (req, res) => {
 
   const { titulo, descricao, produto, publico, vagas, comissoes, treinamento, requisitos, objetivo, regiao,
     funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, limitePorProfissional,
-    aceitaLeadProprio, exigeCertificacao, duracaoDias, visitasPorDia, cidade, estado, percentualComissao, modoJarvas } = req.body;
+    aceitaLeadProprio, exigeCertificacao, duracaoDias, visitasPorDia, cidade, estado, percentualComissao, modoJarvas,
+    candidaturasAbertas } = req.body;
   if (!titulo) return res.status(400).json({ error: "Título é obrigatório" });
 
   const companyId = role === "empresa" ? entityId : req.body.companyId;
@@ -200,15 +201,15 @@ router.post("/campaigns", (req, res) => {
     db.prepare(`
       INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento,
         requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, duracaoDias,
-        limitePorProfissional, aceitaLeadProprio, exigeCertificacao, visitasPorDia, cidade, estado, percentualComissao, modoJarvas, etapasPipeline, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        limitePorProfissional, aceitaLeadProprio, exigeCertificacao, visitasPorDia, cidade, estado, percentualComissao, modoJarvas, candidaturasAbertas, etapasPipeline, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, companyId, titulo, descricao || "", produto || "", publico || "",
       vagas || 0, JSON.stringify(comissoes || {}), JSON.stringify(treinamento || []),
       requisitos || "", objetivo || "", regiao || "", funcao || "", Number(orcamento) || 0,
       JSON.stringify(tarefas || {}), JSON.stringify(evidencias || {}), JSON.stringify(criteriosAprovacao || {}),
       Math.max(1, Number(prazoHoras) || 48), Math.max(1, Number(duracaoDias) || 30), Math.max(0, Number(limitePorProfissional) || 0),
       aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, Math.max(0, Number(visitasPorDia) || 0),
-      cidade || "", estado || "", Number(percentualComissao) || 0, modoJarvas || "", PIPELINE_PADRAO, criadoEm);
+      cidade || "", estado || "", Number(percentualComissao) || 0, modoJarvas || "", candidaturasAbertas === false ? 0 : 1, PIPELINE_PADRAO, criadoEm);
     registrarEventoCampanha({ companyId, campaignId: id, tipo: "CAMPAIGN_CREATED", actorId: req.user.id, actorRole: role, source: "USER", criadoEm });
   })();
 
@@ -224,7 +225,7 @@ router.patch("/campaigns/:id", (req, res) => {
 
   const allowed = ["titulo", "descricao", "produto", "publico", "vagas", "requisitos", "objetivo", "regiao", "funcao",
     "orcamento", "prazoHoras", "duracaoDias", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao", "visitasPorDia",
-    "cidade", "estado", "lat", "lng", "percentualComissao", "modoJarvas"];
+    "cidade", "estado", "lat", "lng", "percentualComissao", "modoJarvas", "candidaturasAbertas"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
     "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos"];
   const sets = [];
@@ -232,7 +233,7 @@ router.patch("/campaigns/:id", (req, res) => {
   for (const [k, v] of Object.entries(req.body)) {
     if (allowed.includes(k)) {
       sets.push(`${k} = ?`);
-      vals.push(["aceitaLeadProprio", "exigeCertificacao"].includes(k) ? (v ? 1 : 0) : v);
+      vals.push(["aceitaLeadProprio", "exigeCertificacao", "candidaturasAbertas"].includes(k) ? (v ? 1 : 0) : v);
     }
     else if (jsonFields.includes(k)) { sets.push(`${k} = ?`); vals.push(JSON.stringify(v)); }
   }
@@ -283,6 +284,7 @@ router.post("/campaigns/:id/apply", (req, res) => {
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
   if (campaign.status !== "ativa") return res.status(400).json({ error: "Campanha não está ativa" });
+  if (campaign.candidaturasAbertas === 0) return res.status(400).json({ error: "As candidaturas desta campanha estão encerradas" });
 
   const existing = db.prepare("SELECT id FROM campaign_applications WHERE campaignId = ? AND sellerId = ?").get(req.params.id, entityId);
   if (existing) return res.status(409).json({ error: "Já se candidatou a esta campanha" });
@@ -391,6 +393,7 @@ function parseCampaign(row) {
     quiz: JSON.parse(row.quiz || "[]").map(({ correta, ...q }) => q),
     aceitaLeadProprio: !!row.aceitaLeadProprio,
     exigeCertificacao: !!row.exigeCertificacao,
+    candidaturasAbertas: row.candidaturasAbertas == null ? true : !!row.candidaturasAbertas,
     etapasPipeline: JSON.parse(row.etapasPipeline || "[]"),
     fluxoDirecionamento: JSON.parse(row.fluxoDirecionamento || "[]"),
     camposPersonalizados: JSON.parse(row.camposPersonalizados || "{}"),

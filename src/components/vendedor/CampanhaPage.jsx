@@ -338,7 +338,7 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
             <InfoRow label="Modelo de operação" value={campanha.modeloOperacao || campanha.funcao} />
             <InfoRow label="Prazo da campanha" value={campanha.duracaoDias ? `${campanha.duracaoDias} dias` : null} />
             <InfoRow label="Prazo de envio de evidência" value={campanha.prazoHoras ? `${campanha.prazoHoras}h após a ação` : null} />
-            <InfoRow label="Vagas" value={campanha.vagas ? `${campanha.vagas} profissional(is)` : null} />
+            <InfoRow label="Candidaturas" value={campanha.candidaturasAbertas === false ? "Encerradas" : "Abertas"} />
             {campanha.requisitos && (
               <div className="vx-notice" style={{ marginTop: 10, fontSize: 12.5 }}>
                 <b>Requisitos:</b> {campanha.requisitos}

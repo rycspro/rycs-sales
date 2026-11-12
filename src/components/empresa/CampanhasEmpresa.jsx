@@ -49,7 +49,7 @@ function MetricChip({ icon: Icon, label }) {
   );
 }
 
-function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir }) {
+function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir, onToggleCandidaturas }) {
   const [aberto, setAberto] = useState(false);
   const ref = useRef(null);
 
@@ -60,8 +60,10 @@ function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir }) {
     return () => document.removeEventListener("mousedown", fechar);
   }, [aberto]);
 
+  const encerradas = campanha.candidaturasAbertas === false;
   const opcoes = [
     { label: "Editar", acao: () => { setAberto(false); onEditar(campanha); } },
+    { label: encerradas ? "Reabrir candidaturas" : "Encerrar candidaturas", acao: () => { setAberto(false); onToggleCandidaturas?.(campanha); } },
     { label: "Arquivar", acao: () => { setAberto(false); onArquivar(campanha); }, cor: "var(--muted)" },
     { label: "Excluir", acao: () => { setAberto(false); onExcluir(campanha); }, cor: "#DC2626" },
   ];
@@ -108,7 +110,7 @@ function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir }) {
   );
 }
 
-function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onExcluir }) {
+function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onExcluir, onToggleCandidaturas, filtroBar }) {
   const [filtro, setFiltro] = useState("");
 
   const counts = useMemo(() => Object.fromEntries(
@@ -131,20 +133,16 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
           <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", margin: "0 0 3px", letterSpacing: -0.3 }}>Campanhas</h1>
           <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Gerencie oportunidades para seus profissionais de vendas.</p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          {filtroBar}
           <button
+            type="button"
+            className={`vx-btn${filtro === "encerrada" ? " vx-btn-primary" : ""}`}
+            style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
             onClick={() => setFiltro(filtro === "encerrada" ? "" : "encerrada")}
             title="Arquivadas"
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 500,
-              border: `1.5px solid ${filtro === "encerrada" ? "var(--brand)" : "var(--border)"}`,
-              background: filtro === "encerrada" ? "var(--brand)" : "var(--surface-2)",
-              color: filtro === "encerrada" ? "#fff" : "var(--muted)",
-              cursor: "pointer", transition: "all .15s", fontFamily: "inherit",
-            }}
           >
-            <Archive size={13} />
+            <Archive size={14} />
             {filtro === "encerrada" ? "Ver todas" : "Arquivadas"}
             {counts["encerrada"] > 0 && (
               <span style={{
@@ -157,8 +155,8 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
           {/* No estado inicial (sem campanhas) os cards abaixo já oferecem os dois
               caminhos; só mostramos os botões do topo depois que existe campanha. */}
           {campanhas.length > 0 && <>
-            <button className="vx-btn vx-btn-sm" onClick={() => onCriar(false)}><Plus size={13} /> Manual</button>
-            <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onCriar(true)}><Sparkles size={13} /> Criar com IA</button>
+            <button type="button" className="vx-btn" style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }} onClick={() => onCriar(false)}><Plus size={14} /> Manual</button>
+            <button type="button" className="vx-btn vx-btn-primary" style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }} onClick={() => onCriar(true)}><Sparkles size={14} /> Criar com IA</button>
           </>}
         </div>
       </div>
@@ -258,6 +256,7 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
                     onEditar={onEditar}
                     onArquivar={onArquivar}
                     onExcluir={onExcluir}
+                    onToggleCandidaturas={onToggleCandidaturas}
                   />
                 </div>
 
@@ -272,7 +271,7 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
                   {c.funcao && <MetricChip icon={Users} label={c.funcao.toUpperCase()} />}
                   {c.regiao && <MetricChip icon={MapPin} label={c.regiao} />}
                   {c.duracaoDias && <MetricChip icon={Clock} label={`${c.duracaoDias} dias`} />}
-                  {c.vagas > 0 && <MetricChip icon={Users} label={`${c.vagas} vaga${c.vagas !== 1 ? "s" : ""}`} />}
+                  <MetricChip icon={Users} label={c.candidaturasAbertas === false ? "Candidaturas encerradas" : "Candidaturas abertas"} />
                 </div>
 
                 {/* Candidaturas pendentes alert */}
@@ -302,7 +301,7 @@ const novaCampanha = (emp) => ({
   }, criteriosAprovacao: { agendamento: "Lead válido, não duplicado e reunião confirmada.", realizada: "Participantes presentes e reunião concluída conforme a campanha." }, treinamento: [], requisitos: "",
 });
 
-export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtroData, bloqueado, irParaPlano }) {
+export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtroData, filtroBar, bloqueado, irParaPlano }) {
   const [popupPlano, setPopupPlano] = useState(null); // null | "sem-plano" | "sem-ia"
   const temIA = planoTemIA(emp.assinatura);
   const campanhasBase = (db.campaigns || []).filter((c) => c.companyId === emp.id);
@@ -428,6 +427,14 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     aviso("Campanha arquivada.");
   };
 
+  const alternarCandidaturas = async (c) => {
+    const abrir = c.candidaturasAbertas === false; // estava encerrada → reabrir
+    const r = await apiPatch(`/campaigns/${c.id}`, { candidaturasAbertas: abrir });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível atualizar as candidaturas.");
+    up((d) => ({ campaigns: d.campaigns.map((x) => x.id === c.id ? { ...x, candidaturasAbertas: abrir } : x) }));
+    aviso(abrir ? "Candidaturas reabertas. Os profissionais já podem se candidatar." : "Candidaturas encerradas. A campanha aparece como encerrada para novos profissionais.");
+  };
+
   const excluirCampanha = async (c) => {
     if (!window.confirm(`Excluir "${c.titulo || "esta campanha"}"? Esta ação não pode ser desfeita.`)) return;
     const r = await api(`/campaigns/${c.id}/status`, { status: "cancelada" });
@@ -439,6 +446,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
   if (modo === "lista") return <>
     <CampanhaLista
       campanhas={campanhas}
+      filtroBar={filtroBar}
       onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
       onEditar={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
       onCriar={(ia) => {
@@ -452,6 +460,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       }}
       onArquivar={arquivarCampanha}
       onExcluir={excluirCampanha}
+      onToggleCandidaturas={alternarCandidaturas}
     />
     {popupPlanoModal}
   </>;
