@@ -84,15 +84,22 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     </div>
   );
 
-  const filtroBar = ABAS_COM_FILTRO.has(aba) && aba !== "leads" && (
+  // Controle de período, usado tanto solto (própria linha) quanto embutido no
+  // header de outras telas (ex.: Campanhas, que o alinha junto aos botões).
+  const filtroDataEl = ABAS_COM_FILTRO.has(aba) && aba !== "leads" && (
+    <FiltroData
+      key={aba}
+      campos={CAMPOS_SORT[aba] || []}
+      campoInicial={CAMPOS_SORT[aba]?.[0]?.key || ""}
+      onAplicar={setFiltroAtual}
+      onLimpar={limparFiltroAtual}
+      variant={aba === "campanhas" ? "btn" : "default"}
+    />
+  );
+
+  const filtroBar = filtroDataEl && (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-      <FiltroData
-        key={aba}
-        campos={CAMPOS_SORT[aba] || []}
-        campoInicial={CAMPOS_SORT[aba]?.[0]?.key || ""}
-        onAplicar={setFiltroAtual}
-        onLimpar={limparFiltroAtual}
-      />
+      {filtroDataEl}
     </div>
   );
 
@@ -116,11 +123,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {filtroBar}
         <FinanceiroEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       </>}
-      {aba === "campanhas" && <>
-        {filtroBar}
+      {aba === "campanhas" && (
         <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
-          filtroData={filtroAtual} bloqueado={bloqueado} irParaPlano={irParaPlano} />
-      </>}
+          filtroData={filtroAtual} filtroBar={filtroDataEl} bloqueado={bloqueado} irParaPlano={irParaPlano} />
+      )}
       {aba === "campanhas-comissoes" && (
         <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} escopo="comissoes" />
       )}

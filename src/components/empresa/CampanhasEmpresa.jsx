@@ -307,7 +307,12 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
 
   // Indicadores do topo (dados reais)
   const ativas = campanhas.filter((c) => c.status === "ativa").length;
-  const pendentesTotais = campanhas.reduce((acc, c) => acc + ((c.candidaturas || []).filter((a) => a.status === "pendente").length), 0);
+  // Profissionais trabalhando: distintos aprovados nas campanhas publicadas.
+  const profissionaisTrabalhando = useMemo(() => {
+    const set = new Set();
+    for (const c of campanhas) if (c.status === "ativa") for (const a of (c.candidaturas || [])) if (a.status === "aprovado") set.add(a.sellerId);
+    return set.size;
+  }, [campanhas]);
   const tarefasExecucao = submissions.filter((sub) => EM_EXECUCAO.includes(sub.status)).length;
 
   // Arquivadas (encerrada/cancelada) só aparecem quando o usuário pede.
@@ -346,7 +351,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
       {campanhas.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12, marginBottom: 16 }}>
           <IndicadorTopo label="Campanhas ativas" valor={ativas} descricao="Operações em andamento" Icon={Megaphone} />
-          <IndicadorTopo label="Candidaturas pendentes" valor={pendentesTotais} descricao="Aguardando avaliação" Icon={Users} destaque={pendentesTotais > 0} />
+          <IndicadorTopo label="Profissionais trabalhando" valor={profissionaisTrabalhando} descricao="Ativos nas campanhas publicadas" Icon={UserCheck} />
           <IndicadorTopo label="Tarefas em execução" valor={tarefasExecucao} descricao="Atividades em andamento" Icon={Activity} />
         </div>
       )}

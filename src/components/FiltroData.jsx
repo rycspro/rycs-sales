@@ -17,6 +17,7 @@ export default function FiltroData({
   dirInicial = "desc",
   onAplicar,
   onLimpar,
+  variant = "default", // "default" | "btn" (usa o mesmo padrão dos botões vx-btn)
 }) {
   const campoDefault = campoInicial || campos[0]?.key || "";
   const [dataInicio, setDataInicio] = useState("");
@@ -75,25 +76,41 @@ export default function FiltroData({
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       {/* Botão compacto */}
-      <button
-        onClick={() => setAberto((v) => !v)}
-        style={{
-          display: "flex", alignItems: "center", gap: 7,
-          padding: "7px 12px", borderRadius: 10,
-          border: `1.5px solid ${temFiltro ? "var(--brand)" : "var(--border)"}`,
-          background: temFiltro ? "var(--brand)0d" : "var(--surface)",
-          cursor: "pointer", fontSize: 13, color: temFiltro ? "var(--brand)" : "var(--ink)",
-          fontWeight: temFiltro ? 600 : 500, transition: "border-color .15s",
-          boxShadow: aberto ? "0 0 0 2px var(--brand)33" : "none",
-          borderColor: aberto ? "var(--brand)" : temFiltro ? "var(--brand)" : "var(--border)",
-        }}
-        onMouseEnter={(e) => { if (!aberto) e.currentTarget.style.borderColor = "var(--brand)"; }}
-        onMouseLeave={(e) => { if (!aberto && !temFiltro) e.currentTarget.style.borderColor = "var(--border)"; }}
-      >
-        <SlidersHorizontal size={14} color={temFiltro ? "var(--brand)" : "var(--muted)"} />
-        <span>Período{temFiltro ? " · ativo" : ""}</span>
-        <ChevronDown size={13} color="var(--muted)" style={{ transform: aberto ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
-      </button>
+      {variant === "btn" ? (
+        <button
+          type="button"
+          className="vx-btn"
+          onClick={() => setAberto((v) => !v)}
+          aria-expanded={aberto}
+          style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+            borderColor: temFiltro || aberto ? "var(--brand)" : undefined,
+            color: temFiltro ? "var(--brand)" : undefined }}
+        >
+          <SlidersHorizontal size={14} />
+          Período{temFiltro ? " · ativo" : ""}
+          <ChevronDown size={13} style={{ transform: aberto ? "rotate(180deg)" : "none", transition: "transform .15s", color: "var(--muted)" }} />
+        </button>
+      ) : (
+        <button
+          onClick={() => setAberto((v) => !v)}
+          style={{
+            display: "flex", alignItems: "center", gap: 7,
+            padding: "7px 12px", borderRadius: 10,
+            border: `1.5px solid ${temFiltro ? "var(--brand)" : "var(--border)"}`,
+            background: temFiltro ? "var(--brand)0d" : "var(--surface)",
+            cursor: "pointer", fontSize: 13, color: temFiltro ? "var(--brand)" : "var(--ink)",
+            fontWeight: temFiltro ? 600 : 500, transition: "border-color .15s",
+            boxShadow: aberto ? "0 0 0 2px var(--brand)33" : "none",
+            borderColor: aberto ? "var(--brand)" : temFiltro ? "var(--brand)" : "var(--border)",
+          }}
+          onMouseEnter={(e) => { if (!aberto) e.currentTarget.style.borderColor = "var(--brand)"; }}
+          onMouseLeave={(e) => { if (!aberto && !temFiltro) e.currentTarget.style.borderColor = "var(--border)"; }}
+        >
+          <SlidersHorizontal size={14} color={temFiltro ? "var(--brand)" : "var(--muted)"} />
+          <span>Período{temFiltro ? " · ativo" : ""}</span>
+          <ChevronDown size={13} color="var(--muted)" style={{ transform: aberto ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+        </button>
+      )}
 
       {/* Dropdown */}
       {aberto && (
