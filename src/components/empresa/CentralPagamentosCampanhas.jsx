@@ -7,7 +7,6 @@ import {
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
-import { isPosPago, isPremium } from "../../../shared/empresa.js";
 
 // ── Catálogo de movimentos / status (mesma linguagem do restante da página) ────
 const MOV = {
@@ -289,7 +288,9 @@ function CampanhaCard({ campanha, submissions, onPagamentos, onSaldo }) {
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", letterSpacing: -0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{campanha.titulo}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4, flexWrap: "wrap" }}>
             {campanha.regiao && <span style={{ fontSize: 11.5, color: "var(--muted)", display: "inline-flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {campanha.regiao}</span>}
-            {campanha.vagas ? <span style={{ fontSize: 11.5, color: "var(--muted)", display: "inline-flex", alignItems: "center", gap: 4 }}><Users size={12} /> {campanha.vagas} vaga{campanha.vagas > 1 ? "s" : ""}</span> : null}
+            <span style={{ fontSize: 11.5, color: campanha.candidaturasAbertas === false ? "var(--muted)" : "var(--brand)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Users size={12} /> {campanha.candidaturasAbertas === false ? "Candidaturas encerradas" : "Candidaturas abertas"}
+            </span>
           </div>
         </div>
         <span className={`vx-campaign-status is-${campanha.status}`} style={{ fontSize: 11, flexShrink: 0 }}>{campanha.status}</span>
@@ -317,8 +318,6 @@ function CampanhaCard({ campanha, submissions, onPagamentos, onSaldo }) {
 export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarregar, dados, carregando, onAdicionarSaldo }) {
   const posicao = dados?.posicao || { saldo: 0, reservado: 0, disponivel: 0 };
   const extrato = dados?.extrato || [];
-  const posPago = isPosPago(emp);
-  const premium = isPremium(emp);
 
   const campanhas = useMemo(() => (db.campaigns || []).filter((c) => c.companyId === emp.id), [db.campaigns, emp.id]);
   const submissions = useMemo(() => (db.submissions || []).filter((s) => s.companyId === emp.id), [db.submissions, emp.id]);
@@ -358,9 +357,8 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
   const [drawerPag, setDrawerPag] = useState(null);
   const [drawerSaldo, setDrawerSaldo] = useState(null);
 
-  const semLimite = posPago || premium;
   const movimentos = verTudo ? extrato : extrato.slice(0, 5);
-  const saldoBaixo = !semLimite && aguardando > 0 && posicao.disponivel < aguardando;
+  const saldoBaixo = aguardando > 0 && posicao.disponivel < aguardando;
 
   return (
     <div className="vx-fade">
@@ -391,14 +389,12 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
             <Wallet size={18} color="var(--muted)" strokeWidth={1.8} />
           </div>
           <div style={{ fontSize: 30, fontWeight: 800, color: "var(--brand)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.8, marginTop: 10 }}>
-            {carregando ? "—" : (semLimite ? (posPago ? "Pós-pago" : "Sem limite") : money(posicao.disponivel))}
+            {carregando ? "—" : money(posicao.disponivel)}
           </div>
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3, flex: 1 }}>Disponível para novas liberações</div>
-          {!semLimite && (
-            <button className="vx-btn vx-btn-primary" style={{ marginTop: 16, justifyContent: "center" }} onClick={() => onAdicionarSaldo?.()}>
-              <Wallet size={15} /> Adicionar saldo
-            </button>
-          )}
+          <button className="vx-btn vx-btn-primary" style={{ marginTop: 16, justifyContent: "center" }} onClick={() => onAdicionarSaldo?.()}>
+            <Wallet size={15} /> Adicionar saldo
+          </button>
         </div>
 
         {/* Card liberação de pagamentos */}

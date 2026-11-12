@@ -15,7 +15,7 @@ import { armazenamentoDisponivel, salvar, remover, ArquivoGrandeDemais } from ".
 import { motorAtual, geracaoAtual, serializarGeracao, criarGeracao, tentarDeNovo } from "../services/iaOnboarding.js";
 import { acessoDaEmpresa } from "../../shared/assinatura.js";
 import { PLANOS, ORDEM_PLANOS } from "../../shared/planos.js";
-import { requisitosPublicacao, saldoDisponivel, isPosPago, isPremium } from "../../shared/empresa.js";
+import { requisitosPublicacao, saldoDisponivel } from "../../shared/empresa.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const conviteDoToken = (token) =>
@@ -468,7 +468,8 @@ function estrategiasAprovadas(companyId) {
   return g ? lerJson(g.conteudo, null) : null;
 }
 
-const caixaOk = (empresa) => isPosPago(empresa) || isPremium(empresa) || saldoDisponivel(empresa) > 0;
+// Pós-pago removido: caixa só está ok com saldo disponível, para qualquer plano.
+const caixaOk = (empresa) => saldoDisponivel(empresa) > 0;
 
 router.get("/onboarding/campanha", (req, res) => {
   if (!soEmpresa(req, res)) return;

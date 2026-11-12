@@ -22,9 +22,12 @@ export function camposPendentesEmpresa(empresa = {}) {
   return obrigatorios.filter(([chave]) => !String(empresa[chave] || "").trim()).map(([, label]) => label);
 }
 
-export const isPosPago = (empresa = {}) => empresa.modalidadePagamento === "pos";
-
 export const isPremium = (empresa = {}) => empresa.tipoEmpresa === "premium";
+
+// Pós-pago foi REMOVIDO da plataforma: toda empresa, de qualquer plano (inclusive
+// Premium), opera exclusivamente com saldo pré-pago — só roda campanha com caixa
+// depositado. A função é mantida (sempre false) para não quebrar imports.
+export const isPosPago = () => false;
 
 // Os requisitos de publicação, um a um, com o rótulo que a tela mostra e a
 // pendência que o servidor devolve.
@@ -46,9 +49,9 @@ function temPipeline(campanha = {}) {
 }
 
 export function requisitosPublicacao(campanha = {}, empresa = {}) {
-  const posPago = isPosPago(empresa);
   const premium = isPremium(empresa);
-  const precisaDeCaixa = !posPago && !premium;
+  // Pós-pago removido: toda empresa precisa de caixa para publicar e rodar.
+  const precisaDeCaixa = true;
   const tarefas = campanha.tarefas || {};
   const disponivel = saldoDisponivel(empresa);
 
@@ -78,7 +81,7 @@ export function campanhaPodeSerPublicada(campanha = {}, empresa = {}) {
   return { ok: pendencias.length === 0, pendencias };
 }
 
+// Saldo que a empresa pode comprometer. Toda empresa opera pré-pago, sem
+// exceção de plano: saldo − reservado (nunca ilimitado).
 export const saldoDisponivel = (empresa = {}) =>
-  isPosPago(empresa) || isPremium(empresa)
-    ? Infinity
-    : Math.max(0, Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0));
+  Math.max(0, Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0));

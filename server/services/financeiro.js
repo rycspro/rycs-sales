@@ -29,16 +29,10 @@ export function reservarParaSubmissao({ companyId, sellerId, submissionId, valor
   if (!posicao) throw new Error("Empresa não encontrada");
   if (bruto <= 0) throw new Error("Valor da ação inválido");
 
-  // Pós-pago: permite saldo negativo até o limiteCredito definido.
-  const config = db.prepare("SELECT modalidadePagamento, limiteCredito FROM companies WHERE id = ?").get(companyId);
-  const posP = config?.modalidadePagamento === "pos";
-  if (!posP && posicao.disponivel < bruto) throw new Error("Caixa disponível insuficiente para reservar esta ação");
-  if (posP) {
-    const limite = dinheiro(config.limiteCredito || 0);
-    const exposicao = dinheiro(posicao.reservado - Math.max(0, posicao.saldo));
-    if (limite > 0 && exposicao + bruto > limite)
-      throw new Error(`Limite de crédito da empresa (R$ ${limite.toFixed(2)}) seria excedido`);
-  }
+  // Pré-pago para todos, sem exceção de plano: a ação só é reservada se houver
+  // caixa disponível. Empresa sem caixa faz esta reserva falhar — e o chamador
+  // (POST /submissions) pausa a campanha automaticamente.
+  if (posicao.disponivel < bruto) throw new Error("Caixa disponível insuficiente para reservar esta ação");
 
   db.prepare("UPDATE companies SET saldoReservado = saldoReservado + ? WHERE id = ?").run(bruto, companyId);
   const ciclo = db.prepare("SELECT COUNT(*) n FROM financial_ledger WHERE submissionId = ? AND tipo = 'reserva'").get(submissionId).n + 1;
