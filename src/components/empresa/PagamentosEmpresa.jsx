@@ -4,9 +4,8 @@ import {
   Landmark, Lock, Plus, QrCode, TrendingUp, Wallet, X, Zap,
 } from "lucide-react";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
-import ValoresEmpresa from "./ValoresEmpresa.jsx";
-import AbastecerCaixa from "./AbastecerCaixa.jsx";
 import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
+import CentralPagamentosCampanhas from "./CentralPagamentosCampanhas.jsx";
 import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { isPosPago, isPremium } from "../../../shared/empresa.js";
@@ -118,6 +117,16 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
             <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>Mínimo: R$ 50,00 · Via Pix · Confirmação em até 1 minuto</div>
           </label>
 
+          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            {[50, 100, 500].map((v) => (
+              <button key={v} type="button" className="vx-btn vx-btn-sm" style={{ flex: 1, justifyContent: "center" }}
+                data-on={valor === v ? "1" : "0"}
+                onClick={() => { setValor(v); setDisplay(fmtBRL(v)); }}>
+                {money(v)}
+              </button>
+            ))}
+          </div>
+
           {valor >= 50 && (
             <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px", marginBottom: 16, fontSize: 13 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "var(--muted)" }}>Valor depositado</span><b>{money(valor)}</b></div>
@@ -132,7 +141,7 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
             style={{ width: "100%", justifyContent: "center", padding: "11px 0", fontSize: 14 }}
             onClick={confirmar} disabled={enviando || !valor || valor < 50}
           >
-            {enviando ? "Gerando Pix…" : <><QrCode size={15} /> Gerar Pix</>}
+            {enviando ? "Gerando Pix…" : <><QrCode size={15} /> Continuar com Pix</>}
           </button>
         </>}
 
@@ -229,10 +238,11 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       </>}
 
       {secao === "campanhas" && (
-        <>
-          <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} onAdicionarSaldo={() => setModalSaldo(true)} />
-          <AbastecerCaixa emp={emp} db={db} up={up} aviso={aviso} />
-        </>
+        <CentralPagamentosCampanhas
+          emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
+          dados={dados} carregando={carregando}
+          onAdicionarSaldo={() => setModalSaldo(true)}
+        />
       )}
 
       {secao === "movimentacoes" && <>
