@@ -66,7 +66,7 @@ export const NAV = {
     { divider: true },
     { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch, children: [
       { key: "profissionais", label: "Profissionais" },
-      { key: "conferir-fila", label: "Fila de revisão" },
+      { key: "conferir-fila", label: "Aprovações" },
       { key: "conferir-time", label: "Time" },
       { key: "conferir-regras", label: "Regras automáticas" },
     ] },
