@@ -409,9 +409,9 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
-                { key: "auto", ativo: true, titulo: "Automática", Icon: Zap, desc: "Pagamentos liberados automaticamente após a validação das tarefas." },
+                { key: "auto", ativo: true, titulo: "Automática", Icon: Zap, desc: "Pagamentos liberados automaticamente após a validação das tarefas.", recomendado: true },
                 { key: "manual", ativo: false, titulo: "Aprovação manual", Icon: ShieldCheck, desc: "Você analisa e aprova os pagamentos antes da liberação." },
-              ].map(({ key, ativo, titulo, Icon, desc }) => {
+              ].map(({ key, ativo, titulo, Icon, desc, recomendado }) => {
                 const on = modo === key;
                 return (
                   <button
@@ -421,11 +421,20 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
                     disabled={salvandoModo}
                     aria-pressed={on}
                     style={{
+                      position: "relative",
                       display: "flex", gap: 11, textAlign: "left", cursor: salvandoModo ? "default" : "pointer",
                       padding: "11px 13px", borderRadius: 11, background: on ? "var(--brand-50)" : "var(--surface)",
                       border: `1.5px solid ${on ? "var(--brand)" : "var(--border)"}`, transition: "border-color .15s, background .15s",
                     }}
                   >
+                    {recomendado && (
+                      <span style={{
+                        position: "absolute", top: 10, right: 10,
+                        fontSize: 9.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase",
+                        padding: "2px 7px", borderRadius: 20,
+                        background: "var(--brand)", color: "#fff",
+                      }}>Recomendado</span>
+                    )}
                     <span style={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${on ? "var(--brand)" : "var(--border-strong)"}`, background: on ? "var(--brand)" : "transparent", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 1 }}>
                       {on && <Check size={11} color="#fff" strokeWidth={3} />}
                     </span>
