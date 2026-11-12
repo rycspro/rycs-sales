@@ -73,8 +73,8 @@ export const NAV = {
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { divider: true },
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
-      { key: "pagamentos", label: "Planos" },
       { key: "pagamentos-campanhas", label: "Campanhas" },
+      { key: "pagamentos", label: "Planos" },
     ] },
     { key: "configuracoes", label: "Configurações", Icon: Settings },
   ],
