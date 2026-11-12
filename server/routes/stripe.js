@@ -1,6 +1,6 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
-import { PLANOS, CICLOS, ORDEM_PLANOS } from "../../shared/planos.js";
+import { PLANOS, CICLOS, ORDEM_PLANOS, normalizarCiclo } from "../../shared/planos.js";
 import { MOEDA_INTERNACIONAL, valorInternacionalNoCiclo } from "../../shared/precosInternacionais.js";
 import { trialDoOnboarding } from "../services/onboarding.js";
 import { asaas, asaasAtivo } from "../services/asaas.js";
@@ -41,7 +41,7 @@ router.get("/stripe/status", soEmpresa, (_req, res) => {
     chavePublica: stripeAtivo() ? chavePublicaStripe() : null,
     planos: ORDEM_PLANOS.filter((k) => PLANOS[k]?.preco > 0).map((k) => ({
       chave: k, nome: PLANOS[k].nome,
-      mensal: valorInternacionalNoCiclo(k, CICLOS.MENSAL), anual: valorInternacionalNoCiclo(k, CICLOS.ANUAL),
+      mensal: valorInternacionalNoCiclo(k, CICLOS.MENSAL), semestral: valorInternacionalNoCiclo(k, CICLOS.SEMESTRAL), anual: valorInternacionalNoCiclo(k, CICLOS.ANUAL),
     })),
   });
 });
@@ -54,7 +54,7 @@ router.post("/subscription/stripe", soEmpresa, async (req, res) => {
 
   const chave = String(req.body?.plano || "").trim();
   if (!PLANOS[chave]?.preco) return res.status(400).json({ error: "Escolha um dos planos pagos." });
-  const ciclo = String(req.body?.ciclo || "").toUpperCase() === CICLOS.ANUAL ? CICLOS.ANUAL : CICLOS.MENSAL;
+  const ciclo = normalizarCiclo(req.body?.ciclo);
   const doOnboarding = req.body?.onboarding === true;
 
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);

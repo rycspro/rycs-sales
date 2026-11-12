@@ -4,7 +4,7 @@
 // só que em USD — Start US$ 399, Growth US$ 799… Para uma tabela própria de
 // um plano, basta preencher PRECOS_USD abaixo; o anual segue o mesmo
 // DESCONTO_ANUAL do Brasil.
-import { PLANOS, CICLOS, DESCONTO_ANUAL } from "./planos.js";
+import { PLANOS, CICLOS, descontoDoCiclo, mesesDoCiclo } from "./planos.js";
 
 export const MOEDA_INTERNACIONAL = "USD";
 
@@ -21,5 +21,5 @@ export function precoInternacional(chave) {
 
 export function valorInternacionalNoCiclo(chave, ciclo = CICLOS.MENSAL) {
   const base = precoInternacional(chave);
-  return ciclo === CICLOS.ANUAL ? arred2(base * (1 - DESCONTO_ANUAL) * 12) : base;
+  return arred2(base * (1 - descontoDoCiclo(ciclo)) * mesesDoCiclo(ciclo));
 }

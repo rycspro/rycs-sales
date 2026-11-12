@@ -3,24 +3,34 @@ import { motion } from "framer-motion";
 import { Check, Star, Gift } from "lucide-react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
-import { CICLOS, DESCONTO_ANUAL, mensalidadeNoCiclo } from "../../../shared/planos.js";
+import { CICLOS, mensalidadeNoCiclo, descontoDoCiclo } from "../../../shared/planos.js";
+
+// Ciclos oferecidos na vitrine, em ordem de compromisso crescente. O desconto
+// de cada um mora em shared/planos.js — aqui só exibimos.
+const OPCOES_CICLO = [
+  { id: CICLOS.MENSAL, label: "Mensal" },
+  { id: CICLOS.SEMESTRAL, label: "Semestral" },
+  { id: CICLOS.ANUAL, label: "Anual" },
+];
+
+const pct = (d) => Math.round(d * 100);
 
 // Vitrine de planos da empresa. Recriação, no design system do projeto (sem
-// Tailwind/shadcn), do bloco de pricing com alternância mensal/anual, card
-// "Popular" em destaque, preço animado e confete ao escolher o anual.
+// Tailwind/shadcn), do bloco de pricing com alternância mensal/semestral/anual,
+// card "Popular" em destaque, preço animado e confete ao escolher um ciclo com
+// desconto.
 export default function PricingPlanos({ plans = [], onContratar, planoAtualChave }) {
-  const [anual, setAnual] = useState(false);
-  const switchRef = useRef(null);
+  const [ciclo, setCiclo] = useState(CICLOS.MENSAL);
+  const segRef = useRef(null);
 
-  const ciclo = anual ? CICLOS.ANUAL : CICLOS.MENSAL;
-  const descontoPct = Math.round(DESCONTO_ANUAL * 100);
+  const descontoAtual = descontoDoCiclo(ciclo);
   // Já existe um plano pago ativo? Então os outros cards viram "Trocar para este plano".
   const temPlanoAtivo = plans.some((p) => p.chave === planoAtualChave);
 
-  const alternar = (ativarAnual) => {
-    setAnual(ativarAnual);
-    if (ativarAnual && switchRef.current) {
-      const r = switchRef.current.getBoundingClientRect();
+  const alternar = (novoCiclo) => {
+    setCiclo(novoCiclo);
+    if (descontoDoCiclo(novoCiclo) > 0 && segRef.current) {
+      const r = segRef.current.getBoundingClientRect();
       confetti({
         particleCount: 50,
         spread: 60,
@@ -37,30 +47,51 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
 
   return (
     <div>
-      {/* Alternância mensal / anual */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", marginBottom: 26 }}>
-        <span style={{ fontSize: 13.5, fontWeight: 600, color: !anual ? "var(--ink)" : "var(--muted)" }}>Mensal</span>
-        <button
-          ref={switchRef}
-          type="button"
-          role="switch"
-          aria-checked={anual}
-          aria-label="Alternar entre cobrança mensal e anual"
-          onClick={() => alternar(!anual)}
+      {/* Alternância mensal / semestral / anual */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 26 }}>
+        <div
+          ref={segRef}
+          role="radiogroup"
+          aria-label="Ciclo de cobrança"
           style={{
-            width: 46, height: 26, borderRadius: 999, border: "none", cursor: "pointer", padding: 3,
-            background: anual ? "var(--brand)" : "var(--surface-3, #d1d5db)", transition: "background .2s", flexShrink: 0,
+            display: "inline-flex", gap: 4, padding: 4, borderRadius: 999,
+            background: "var(--surface-2, #F1F5F9)", border: "1px solid var(--border)",
+            flexWrap: "wrap", justifyContent: "center",
           }}
         >
-          <span style={{
-            display: "block", width: 20, height: 20, borderRadius: "50%", background: "#fff",
-            boxShadow: "0 1px 3px rgba(0,0,0,.2)", transform: anual ? "translateX(20px)" : "translateX(0)",
-            transition: "transform .2s",
-          }} />
-        </button>
-        <span style={{ fontSize: 13.5, fontWeight: 600, color: anual ? "var(--ink)" : "var(--muted)" }}>
-          Anual <span style={{ color: "var(--brand)" }}>(economize {descontoPct}%)</span>
-        </span>
+          {OPCOES_CICLO.map((o) => {
+            const ativo = ciclo === o.id;
+            const desc = descontoDoCiclo(o.id);
+            return (
+              <button
+                key={o.id}
+                type="button"
+                role="radio"
+                aria-checked={ativo}
+                onClick={() => alternar(o.id)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                  fontSize: 13.5, fontWeight: 600, fontFamily: "inherit",
+                  color: ativo ? "#fff" : "var(--muted)",
+                  background: ativo ? "var(--brand)" : "transparent",
+                  boxShadow: ativo ? "var(--shadow-brand, 0 1px 3px rgba(37,99,235,.35))" : "none",
+                  transition: "background .2s, color .2s",
+                }}
+              >
+                {o.label}
+                {desc > 0 && (
+                  <span style={{
+                    fontSize: 10.5, fontWeight: 700, lineHeight: 1,
+                    padding: "2px 6px", borderRadius: 999,
+                    background: ativo ? "rgba(255,255,255,.22)" : "var(--brand-50)",
+                    color: ativo ? "#fff" : "var(--brand)",
+                  }}>-{pct(desc)}%</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, alignItems: "start" }}>
@@ -128,7 +159,9 @@ export default function PricingPlanos({ plans = [], onContratar, planoAtualChave
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
               </div>
               <div style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center", marginBottom: 4 }}>
-                {anual ? `cobrado anualmente · economize ${descontoPct}%` : "cobrado mensalmente"}
+                {ciclo === CICLOS.ANUAL ? `cobrado anualmente · economize ${pct(descontoAtual)}%`
+                  : ciclo === CICLOS.SEMESTRAL ? `cobrado a cada 6 meses · economize ${pct(descontoAtual)}%`
+                  : "cobrado mensalmente"}
               </div>
 
               <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 9 }}>

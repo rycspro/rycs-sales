@@ -109,25 +109,39 @@ export const PLANOS = {
 // em 2026-10-15).
 export const TAXA_ATIVACAO_PIX_AUTOMATICO = 1;
 
-// Cobrança anual: mesma mensalidade com desconto, cobrada de uma vez por 12
-// meses. O percentual mora aqui — nunca fixado na tela — para que mudar a
+// Cobrança por período: mesma mensalidade com desconto, cobrada de uma vez por
+// N meses. Os percentuais moram aqui — nunca fixados na tela — para que mudar a
 // oferta não exija tocar em componente.
 export const DESCONTO_ANUAL = 0.30;
+export const DESCONTO_SEMESTRAL = 0.10;
 
-export const CICLOS = { MENSAL: "MENSAL", ANUAL: "ANUAL" };
+export const CICLOS = { MENSAL: "MENSAL", SEMESTRAL: "SEMESTRAL", ANUAL: "ANUAL" };
+
+// Meses cobrados de uma vez e desconto aplicado em cada ciclo. Mensal é a base
+// (1 mês, sem desconto); semestral e anual cobram adiantado com desconto.
+export const MESES_CICLO = { MENSAL: 1, SEMESTRAL: 6, ANUAL: 12 };
+export const DESCONTO_CICLO = { MENSAL: 0, SEMESTRAL: DESCONTO_SEMESTRAL, ANUAL: DESCONTO_ANUAL };
+
+export const mesesDoCiclo = (ciclo) => MESES_CICLO[ciclo] ?? 1;
+export const descontoDoCiclo = (ciclo) => DESCONTO_CICLO[ciclo] ?? 0;
+
+// Normaliza qualquer entrada de ciclo para uma chave válida (default: mensal).
+export const normalizarCiclo = (v) => {
+  const c = String(v || "").toUpperCase();
+  return CICLOS[c] ? c : CICLOS.MENSAL;
+};
 
 const arred2 = (n) => Math.round(n * 100) / 100;
 
-// Mensalidade exibida em cada ciclo (no anual, já com o desconto aplicado).
+// Mensalidade exibida em cada ciclo (nos ciclos com desconto, já aplicado).
 export function mensalidadeNoCiclo(chave, ciclo = CICLOS.MENSAL) {
   const preco = planoDe(chave).preco;
-  return ciclo === CICLOS.ANUAL ? arred2(preco * (1 - DESCONTO_ANUAL)) : preco;
+  return arred2(preco * (1 - descontoDoCiclo(ciclo)));
 }
 
-// Valor efetivamente cobrado: no anual, 12 mensalidades com desconto, de uma vez.
+// Valor efetivamente cobrado: as N mensalidades do ciclo, com desconto, de uma vez.
 export function valorCobradoNoCiclo(chave, ciclo = CICLOS.MENSAL) {
-  const preco = planoDe(chave).preco;
-  return ciclo === CICLOS.ANUAL ? arred2(mensalidadeNoCiclo(chave, ciclo) * 12) : preco;
+  return arred2(mensalidadeNoCiclo(chave, ciclo) * mesesDoCiclo(ciclo));
 }
 
 export const ORDEM_PLANOS = ["free", "starter", "growth", "scale", "enterprise"];

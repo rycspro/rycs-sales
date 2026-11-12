@@ -115,12 +115,15 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
   if (!planos.length) return <div className="vx-card vx-skeleton" style={{ height: 180 }} />;
 
-  // Valor-base do checkout conforme o ciclo escolhido (anual = 12 meses com desconto).
+  // Valor-base do checkout conforme o ciclo escolhido (semestral/anual = 6/12
+  // meses com desconto, cobrados de uma vez).
   const baseCiclo = selecionado ? valorCobradoNoCiclo(selecionado.chave, ciclo) : 0;
-  const ehAnual = ciclo === CICLOS.ANUAL;
+  const cicloLabel = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" }[ciclo] || "mensal";
+  const cicloSufixo = { MENSAL: "/mês", SEMESTRAL: "/semestre", ANUAL: "/ano" }[ciclo] || "/mês";
+  const ehRecorrenteLongo = ciclo !== CICLOS.MENSAL;
   const precoFinal = desconto?.valorFinal ?? baseCiclo;
   const usdPlano = selecionado && stripe?.planos?.find((x) => x.chave === selecionado.chave);
-  const precoUsd = usdPlano ? (ehAnual ? usdPlano.anual : usdPlano.mensal) : 0;
+  const precoUsd = usdPlano ? ({ MENSAL: usdPlano.mensal, SEMESTRAL: usdPlano.semestral, ANUAL: usdPlano.anual }[ciclo] ?? usdPlano.mensal) : 0;
   const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
   return (
@@ -188,9 +191,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
               <>
                 {/* Resumo */}
                 <div className="vx-checkout-total">
-                  <span>Plano {selecionado.nome} · {ehAnual ? "anual" : "mensal"}</span><b>{money(baseCiclo)}</b>
-                  {ehAnual && (
-                    <><span>Cobrança</span><b>{money(baseCiclo)}/ano</b></>
+                  <span>Plano {selecionado.nome} · {cicloLabel}</span><b>{money(baseCiclo)}</b>
+                  {ehRecorrenteLongo && (
+                    <><span>Cobrança</span><b>{money(baseCiclo)}{cicloSufixo}</b></>
                   )}
                   {desconto && (
                     <>
@@ -278,7 +281,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 {forma === "STRIPE" && (
                   <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
                     <ShieldCheck size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                    Para empresas fora do Brasil: {usd(precoUsd)}{ehAnual ? "/ano" : "/mês"}, pagos no formulário seguro do Stripe, aqui mesmo, com cartão
+                    Para empresas fora do Brasil: {usd(precoUsd)}{cicloSufixo}, pagos no formulário seguro do Stripe, aqui mesmo, com cartão
                     internacional (ou UPI, na Índia). Cupons são aplicados direto no Stripe. O plano é liberado quando o Stripe confirmar.
                   </div>
                 )}

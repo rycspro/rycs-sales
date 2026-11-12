@@ -20,7 +20,10 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import db, { agora } from "../db.js";
 import { notificar } from "../routes/notifications.js";
-import { planoDe, CICLOS } from "../../shared/planos.js";
+import { planoDe, CICLOS, mesesDoCiclo } from "../../shared/planos.js";
+
+// Rótulo em inglês do ciclo, para a descrição da assinatura no Stripe.
+const CICLO_LABEL_EN = { MENSAL: "monthly", SEMESTRAL: "semiannual", ANUAL: "annual" };
 import { MOEDA_INTERNACIONAL, valorInternacionalNoCiclo } from "../../shared/precosInternacionais.js";
 import { qualificarIndicacao } from "./indicacoes.js";
 import { concluir as concluirEtapaOnboarding } from "./onboarding.js";
@@ -132,7 +135,12 @@ export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ci
   const valor = valorInternacionalNoCiclo(chave, ciclo);
   if (!valor) throw new ErroStripe("Plano inválido.", { status: 400 });
   const customer = await garantirClienteStripe(empresa, email);
-  const anual = ciclo === CICLOS.ANUAL;
+  // valor já é o total do período (N meses com desconto); a recorrência cobra
+  // esse total a cada N meses — ano a ano no anual, semestre a semestre, etc.
+  const meses = mesesDoCiclo(ciclo);
+  const recorrencia = meses % 12 === 0
+    ? { interval: "year", interval_count: meses / 12 }
+    : { interval: "month", interval_count: meses };
   const metadados = { subId, companyId: empresa.id, plano: chave, ciclo };
 
   const sessao = await stripe("/checkout/sessions", {
@@ -147,13 +155,13 @@ export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ci
         price_data: {
           currency: MOEDA_INTERNACIONAL.toLowerCase(),
           unit_amount: centavos(valor),
-          recurring: { interval: anual ? "year" : "month" },
+          recurring: recorrencia,
           product_data: { name: `RYCS ${plano.nome}`, metadata: { plano: chave } },
         },
       }],
       subscription_data: {
         metadata: metadados,
-        description: `RYCS ${plano.nome} — ${anual ? "annual" : "monthly"} subscription`,
+        description: `RYCS ${plano.nome} — ${CICLO_LABEL_EN[ciclo] || "monthly"} subscription`,
         ...(trialDias > 0 ? { trial_period_days: trialDias } : {}),
       },
       metadata: metadados,

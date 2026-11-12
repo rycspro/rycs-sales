@@ -343,6 +343,7 @@ function ItemConversa({ c, ativo, onClick, arquivada, onArquivar, onApagar }) {
         position: "relative",
         background: ativo ? "#EFF6FF" : "transparent",
         borderLeft: `3px solid ${ativo ? "#2563EB" : "transparent"}`,
+        borderBottom: "1px solid #F1F5F9",
         transition: "background .12s",
       }}
       onMouseEnter={(e) => { if (!ativo) e.currentTarget.style.background = "#F8FAFC"; }}

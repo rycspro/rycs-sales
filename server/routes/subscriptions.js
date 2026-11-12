@@ -5,7 +5,11 @@ import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
 import { cancelarAssinaturaStripe, encerrarCheckoutPendente } from "../services/stripe.js";
 import { acessoDaEmpresa, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../shared/assinatura.js";
-import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO, CICLOS, valorCobradoNoCiclo } from "../../shared/planos.js";
+import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO, CICLOS, valorCobradoNoCiclo, normalizarCiclo } from "../../shared/planos.js";
+
+// Mapa do ciclo RYCS para o ciclo cobrado pelo Asaas, e rótulo em português.
+const CICLO_ASAAS = { MENSAL: "MONTHLY", SEMESTRAL: "SEMIANNUALLY", ANUAL: "YEARLY" };
+const CICLO_LABEL = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" };
 import { calcularVoucher, normalizarVoucher, validarVoucher } from "../services/vouchers.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
 import { trialDoOnboarding, concluir as concluirEtapaOnboarding } from "../services/onboarding.js";
@@ -22,7 +26,7 @@ router.get("/vouchers/validate", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error:"Apenas empresas" });
   const plano = String(req.query.plano || ""), base = PLANOS[plano];
   if (!base || !base.preco) return res.status(400).json({ error:"Plano inválido" });
-  const ciclo = String(req.query.ciclo || CICLOS.MENSAL).toUpperCase() === CICLOS.ANUAL ? CICLOS.ANUAL : CICLOS.MENSAL;
+  const ciclo = normalizarCiclo(req.query.ciclo);
   const valorBase = valorCobradoNoCiclo(plano, ciclo);
   const validacao = validarVoucher(db,{codigo:req.query.codigo,plano,companyId:req.user.entityId});
   if (!validacao.ok) return res.status(422).json({ error:validacao.error });
@@ -312,9 +316,9 @@ router.post("/subscription", async (req, res) => {
   if (!PLANOS[chave]) return res.status(400).json({ error: "Plano inválido" });
 
   const plano = PLANOS[chave];
-  // Ciclo de cobrança: mensal (padrão) ou anual (12 meses com desconto, cobrados
-  // de uma vez). O valor vem de shared/planos.js, nunca fixado aqui.
-  const ciclo = String(req.body?.ciclo || CICLOS.MENSAL).toUpperCase() === CICLOS.ANUAL ? CICLOS.ANUAL : CICLOS.MENSAL;
+  // Ciclo de cobrança: mensal (padrão), semestral ou anual (6/12 meses com
+  // desconto, cobrados de uma vez). O valor vem de shared/planos.js, nunca aqui.
+  const ciclo = normalizarCiclo(req.body?.ciclo);
   const valorBase = PLANOS[chave]?.preco ? valorCobradoNoCiclo(chave, ciclo) : 0;
   // Checkout da etapa 5 do onboarding: cartão ou Pix Automático, com o trial
   // do convite (se houver) e o documento do titular servindo de documento da
@@ -443,8 +447,8 @@ router.post("/subscription", async (req, res) => {
       billingType: forma,
       value: calculo.valorFinal,
       nextDueDate: vencimento.toISOString().split("T")[0],
-      cycle: ciclo === CICLOS.ANUAL ? "YEARLY" : "MONTHLY",
-      description: `RYCS ${plano.nome} — assinatura ${ciclo === CICLOS.ANUAL ? "anual" : "mensal"}`,
+      cycle: CICLO_ASAAS[ciclo] || "MONTHLY",
+      description: `RYCS ${plano.nome} — assinatura ${CICLO_LABEL[ciclo] || "mensal"}`,
       externalReference: `sub:${entityId}`,
     };
 
