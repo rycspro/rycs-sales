@@ -113,7 +113,7 @@ export const TAXA_ATIVACAO_PIX_AUTOMATICO = 1;
 // N meses. Os percentuais moram aqui — nunca fixados na tela — para que mudar a
 // oferta não exija tocar em componente.
 export const DESCONTO_ANUAL = 0.30;
-export const DESCONTO_SEMESTRAL = 0.10;
+export const DESCONTO_SEMESTRAL = 0.15;
 
 export const CICLOS = { MENSAL: "MENSAL", SEMESTRAL: "SEMESTRAL", ANUAL: "ANUAL" };
 
