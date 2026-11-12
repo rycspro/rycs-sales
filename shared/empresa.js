@@ -22,9 +22,12 @@ export function camposPendentesEmpresa(empresa = {}) {
   return obrigatorios.filter(([chave]) => !String(empresa[chave] || "").trim()).map(([, label]) => label);
 }
 
-export const isPosPago = (empresa = {}) => empresa.modalidadePagamento === "pos";
-
 export const isPremium = (empresa = {}) => empresa.tipoEmpresa === "premium";
+
+// Pós-pago (rodar campanha sem precisar de saldo em caixa) é privilégio
+// EXCLUSIVO de empresa Premium. Para qualquer outra, a modalidade "pos" é
+// ignorada e a empresa opera pré-pago: só roda campanha com saldo depositado.
+export const isPosPago = (empresa = {}) => isPremium(empresa) && empresa.modalidadePagamento === "pos";
 
 // Os requisitos de publicação, um a um, com o rótulo que a tela mostra e a
 // pendência que o servidor devolve.
@@ -46,9 +49,9 @@ function temPipeline(campanha = {}) {
 }
 
 export function requisitosPublicacao(campanha = {}, empresa = {}) {
-  const posPago = isPosPago(empresa);
   const premium = isPremium(empresa);
-  const precisaDeCaixa = !posPago && !premium;
+  // Só Premium publica sem caixa; todas as demais precisam de saldo.
+  const precisaDeCaixa = !premium;
   const tarefas = campanha.tarefas || {};
   const disponivel = saldoDisponivel(empresa);
 
@@ -78,7 +81,9 @@ export function campanhaPodeSerPublicada(campanha = {}, empresa = {}) {
   return { ok: pendencias.length === 0, pendencias };
 }
 
+// Saldo que a empresa pode comprometer. Sem limite apenas para Premium
+// (que inclui o pós-pago); todas as demais operam pré-pago: saldo − reservado.
 export const saldoDisponivel = (empresa = {}) =>
-  isPosPago(empresa) || isPremium(empresa)
+  isPremium(empresa)
     ? Infinity
     : Math.max(0, Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0));

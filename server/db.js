@@ -1112,6 +1112,15 @@ const martinPremium = db.prepare(
 ).run();
 if (martinPremium.changes > 0) console.log(`[migracao] Martin Business School marcada como premium`);
 
+// Pós-pago passou a ser privilégio exclusivo de Premium: toda empresa não-premium
+// que estava em "pos" volta a pré-pago (precisa de saldo em caixa para rodar
+// campanhas). Roda DEPOIS de marcar as empresas premium acima. Aditiva e
+// idempotente — a cada boot só altera as linhas que ainda estiverem fora da regra.
+const posPagoResetEmpresas = db.prepare(
+  "UPDATE companies SET modalidadePagamento = 'pre' WHERE modalidadePagamento = 'pos' AND (tipoEmpresa IS NULL OR tipoEmpresa != 'premium')"
+).run();
+if (posPagoResetEmpresas.changes > 0) console.log(`[migracao] ${posPagoResetEmpresas.changes} empresa(s) não-premium em pós-pago voltaram a pré-pago`);
+
 // Habilitação operacional é um portão à parte do plano: premium tira a
 // mensalidade, não aprova o cadastro. A Martin Business School é aprovada aqui
 // porque a decisão já está tomada — e o botão "Aprovar empresa" do admin exige
