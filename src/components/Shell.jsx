@@ -58,7 +58,8 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
                     onClick={() => {
                       const novo = !aberto;
                       setGruposAbertos((a) => ({ ...a, [key]: novo }));
-                      if (novo && !grupoAtivo) onSelect(key);
+                      // Ao abrir um grupo, vai sempre para a PRIMEIRA página do submenu.
+                      if (novo && !grupoAtivo) onSelect(children[0]?.key ?? key);
                     }}
                   >
                     <Icon size={18} strokeWidth={1.85} />
