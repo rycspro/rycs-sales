@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Archive, CirclePause, ClipboardCheck, FileText, GitBranch, Megaphone, MoreHorizontal, Plus, Rocket, Save, Sparkles, Users, Wallet, MapPin, Clock } from "lucide-react";
+import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -49,7 +49,7 @@ function MetricChip({ icon: Icon, label }) {
   );
 }
 
-function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir, onToggleCandidaturas }) {
+function MenuCampanha({ campanha, onVisualizar, onEditar, onArquivar, onExcluir, onToggleCandidaturas, onStatus }) {
   const [aberto, setAberto] = useState(false);
   const ref = useRef(null);
 
@@ -61,12 +61,16 @@ function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir, onToggleCandi
   }, [aberto]);
 
   const encerradas = campanha.candidaturasAbertas === false;
+  const arquivavel = campanha.status !== "encerrada" && campanha.status !== "cancelada";
   const opcoes = [
+    { label: "Visualizar", acao: () => { setAberto(false); onVisualizar?.(campanha); } },
     { label: "Editar", acao: () => { setAberto(false); onEditar(campanha); } },
+    campanha.status === "ativa" && { label: "Pausar", acao: () => { setAberto(false); onStatus?.(campanha, "pausada"); } },
+    campanha.status === "pausada" && { label: "Retomar", acao: () => { setAberto(false); onStatus?.(campanha, "ativa"); } },
     { label: encerradas ? "Reabrir candidaturas" : "Encerrar candidaturas", acao: () => { setAberto(false); onToggleCandidaturas?.(campanha); } },
-    { label: "Arquivar", acao: () => { setAberto(false); onArquivar(campanha); }, cor: "var(--muted)" },
-    { label: "Excluir", acao: () => { setAberto(false); onExcluir(campanha); }, cor: "#DC2626" },
-  ];
+    arquivavel && { label: "Arquivar", acao: () => { setAberto(false); onArquivar(campanha); }, cor: "var(--muted)" },
+    { label: "Excluir", acao: () => { setAberto(false); onExcluir(campanha); }, cor: "var(--red)" },
+  ].filter(Boolean);
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
@@ -110,116 +114,301 @@ function MenuCampanha({ campanha, onEditar, onArquivar, onExcluir, onToggleCandi
   );
 }
 
-function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onExcluir, onToggleCandidaturas, filtroBar }) {
+// Submissões "em execução": enviadas e ainda no fluxo, antes da decisão final.
+const EM_EXECUCAO = ["analisando", "ia_aprovado", "revisao", "conferido"];
+const FUNCAO_LABEL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "PAP" };
+
+// Menu "+ Nova campanha": um botão só, com IA e manual no dropdown.
+function NovaCampanhaMenu({ onCriar }) {
+  const [aberto, setAberto] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!aberto) return;
+    const fechar = (e) => { if (ref.current && !ref.current.contains(e.target)) setAberto(false); };
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, [aberto]);
+
+  const opcoes = [
+    { Icon: Sparkles, titulo: "Criar com IA", desc: "Estruture sua campanha com inteligência artificial.", ia: true },
+    { Icon: SlidersHorizontal, titulo: "Criar manualmente", desc: "Configure sua campanha do zero.", ia: false },
+  ];
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button type="button" className="vx-btn vx-btn-primary" aria-expanded={aberto}
+        style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+        onClick={() => setAberto((v) => !v)}>
+        <Plus size={15} /> Nova campanha <ChevronDown size={14} style={{ transition: "transform .15s", transform: aberto ? "rotate(180deg)" : "none" }} />
+      </button>
+      {aberto && (
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 60, width: 288,
+          background: "var(--surface-solid)", border: "1px solid var(--border)", borderRadius: 12,
+          boxShadow: "0 12px 32px rgba(17,24,39,.14)", overflow: "hidden", padding: 6 }}>
+          {opcoes.map(({ Icon, titulo, desc, ia }) => (
+            <button key={titulo} type="button" onClick={() => { setAberto(false); onCriar(ia); }}
+              style={{ display: "flex", gap: 11, width: "100%", textAlign: "left", padding: "10px 11px",
+                border: "none", background: "transparent", borderRadius: 9, cursor: "pointer", transition: "background .15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+              <span style={{ width: 32, height: 32, borderRadius: 8, background: "var(--brand-50)", color: "var(--brand)", display: "grid", placeItems: "center", flexShrink: 0 }}><Icon size={16} /></span>
+              <span>
+                <span style={{ display: "block", fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{titulo}</span>
+                <span style={{ display: "block", fontSize: 11.5, color: "var(--muted)", marginTop: 2, lineHeight: 1.35 }}>{desc}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Card indicador do topo (Campanhas ativas, Candidaturas pendentes, Tarefas em execução).
+function IndicadorTopo({ label, valor, descricao, Icon, destaque }) {
+  return (
+    <div style={{ background: "var(--surface)", border: `1px solid ${destaque ? "var(--brand-200)" : "var(--border)"}`, borderRadius: 12, padding: "15px 16px" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)" }}>{label}</span>
+        <Icon size={16} strokeWidth={2} color={destaque ? "var(--brand)" : "var(--muted)"} aria-hidden="true" />
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: destaque ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.4, marginTop: 8 }}>{valor}</div>
+      {descricao && <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>{descricao}</div>}
+    </div>
+  );
+}
+
+// Mini-indicadores reais de uma campanha.
+function statsDe(c, porCampanha) {
+  const cands = c.candidaturas || [];
+  const ex = porCampanha.get(c.id) || { concluidas: 0, emExecucao: 0 };
+  return {
+    recebidas: cands.length,
+    ativos: cands.filter((a) => a.status === "aprovado").length,
+    pendentes: cands.filter((a) => a.status === "pendente").length,
+    concluidas: ex.concluidas,
+  };
+}
+
+function MiniIndicadores({ s }) {
+  const itens = [
+    ["Candidaturas", s.recebidas],
+    ["Profiss. ativos", s.ativos],
+    ["Tarefas concl.", s.concluidas],
+  ];
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+      {itens.map(([label, val]) => (
+        <div key={label} style={{ background: "var(--surface-2)", borderRadius: 9, padding: "9px 10px", textAlign: "center" }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{val}</div>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 1, textTransform: "uppercase", letterSpacing: ".03em" }}>{label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InfoCampanha({ c }) {
+  const chips = [
+    c.funcao && [Users, FUNCAO_LABEL[c.funcao] || c.funcao.toUpperCase()],
+    c.regiao && [MapPin, c.regiao],
+    c.duracaoDias && [Clock, `${c.duracaoDias} dias`],
+    [UserCheck, c.candidaturasAbertas === false ? "Candidaturas encerradas" : "Candidaturas abertas"],
+  ].filter(Boolean);
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
+      {chips.map(([Icon, label], i) => <MetricChip key={i} icon={Icon} label={label} />)}
+    </div>
+  );
+}
+
+function CampanhaCard({ c, s, onAbrir, onCandidaturas, menu }) {
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 16, display: "flex", flexDirection: "column", gap: 12, transition: "border-color .15s, box-shadow .15s" }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand-200)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(17,24,39,.05)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <StatusBadge status={c.status} />
+        {menu}
+      </div>
+      <div onClick={() => onAbrir(c)} style={{ cursor: "pointer", flex: 1 }}>
+        <div style={{ fontSize: 15.5, fontWeight: 700, color: "var(--ink)", lineHeight: 1.3, letterSpacing: -0.2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.titulo || "Sem título"}</div>
+        <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, lineHeight: 1.45, minHeight: 34, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.descricao || c.objetivo || "Sem descrição."}</div>
+        <div style={{ marginTop: 10 }}><InfoCampanha c={c} /></div>
+      </div>
+      <MiniIndicadores s={s} />
+      <div style={{ display: "flex", gap: 8 }}>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flex: 1, justifyContent: "center" }} onClick={() => onAbrir(c)}>Gerenciar campanha</button>
+        <button className="vx-btn vx-btn-sm" style={{ justifyContent: "center", whiteSpace: "nowrap" }} onClick={() => onCandidaturas(c)}>
+          Candidaturas{s.pendentes > 0 && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: "var(--brand-50)", color: "var(--brand)" }}>{s.pendentes}</span>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CampanhaRow({ c, s, onAbrir, onCandidaturas, menu }) {
+  const col = (val, label) => (
+    <div style={{ textAlign: "center", minWidth: 70 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{val}</div>
+      <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em" }}>{label}</div>
+    </div>
+  );
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+      <div onClick={() => onAbrir(c)} style={{ flex: 1, minWidth: 180, cursor: "pointer" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <StatusBadge status={c.status} />
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", marginTop: 5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo || "Sem título"}</div>
+      </div>
+      <div style={{ display: "flex", gap: 18 }}>
+        {col(s.recebidas, "Candidat.")}
+        {col(s.ativos, "Ativos")}
+        {col(s.concluidas, "Concl.")}
+      </div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <button className="vx-btn vx-btn-sm" onClick={() => onCandidaturas(c)} style={{ whiteSpace: "nowrap" }}>
+          Candidaturas{s.pendentes > 0 && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: "var(--brand-50)", color: "var(--brand)" }}>{s.pendentes}</span>}
+        </button>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onAbrir(c)} style={{ whiteSpace: "nowrap" }}>Gerenciar</button>
+        {menu}
+      </div>
+    </div>
+  );
+}
+
+const VISTA_KEY = "rycs-campanhas-vista";
+
+function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onArquivar, onExcluir, onToggleCandidaturas, onStatus, onCandidaturas, filtroBar }) {
   const [filtro, setFiltro] = useState("");
+  const [arquivadas, setArquivadas] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [buscaDeb, setBuscaDeb] = useState("");
+  const [vista, setVista] = useState(() => (lerJson(VISTA_KEY, "grade") === "lista" ? "lista" : "grade"));
+
+  useEffect(() => { const t = setTimeout(() => setBuscaDeb(busca.trim().toLowerCase()), 200); return () => clearTimeout(t); }, [busca]);
+  const trocarVista = (v) => { setVista(v); gravarJson(VISTA_KEY, v); };
+
+  const porCampanha = useMemo(() => {
+    const m = new Map();
+    for (const sub of submissions) {
+      const e = m.get(sub.campaignId) || { concluidas: 0, emExecucao: 0 };
+      if (sub.status === "liberado") e.concluidas++;
+      else if (EM_EXECUCAO.includes(sub.status)) e.emExecucao++;
+      m.set(sub.campaignId, e);
+    }
+    return m;
+  }, [submissions]);
 
   const counts = useMemo(() => Object.fromEntries(
     FILTROS_STATUS.slice(1).map(([k]) => [k, campanhas.filter((c) => c.status === k).length])
   ), [campanhas]);
 
-  const visiveis = useMemo(() =>
-    filtro ? campanhas.filter((c) => c.status === filtro) : campanhas
-  , [campanhas, filtro]);
-
+  // Indicadores do topo (dados reais)
   const ativas = campanhas.filter((c) => c.status === "ativa").length;
-  const rascunhos = campanhas.filter((c) => c.status === "rascunho").length;
-  const totalPendentes = campanhas.reduce((acc, c) => acc + ((c.candidaturas || []).filter((a) => a.status === "pendente").length), 0);
+  const pendentesTotais = campanhas.reduce((acc, c) => acc + ((c.candidaturas || []).filter((a) => a.status === "pendente").length), 0);
+  const tarefasExecucao = submissions.filter((sub) => EM_EXECUCAO.includes(sub.status)).length;
+
+  // Arquivadas (encerrada/cancelada) só aparecem quando o usuário pede.
+  const ARQUIVADAS = ["encerrada", "cancelada"];
+  const visiveis = useMemo(() => {
+    let r = campanhas;
+    if (arquivadas) r = r.filter((c) => ARQUIVADAS.includes(c.status));
+    else r = r.filter((c) => !ARQUIVADAS.includes(c.status));
+    if (filtro) r = r.filter((c) => c.status === filtro);
+    if (buscaDeb) r = r.filter((c) => [c.titulo, c.objetivo, c.descricao, c.regiao, c.funcao]
+      .some((v) => String(v || "").toLowerCase().includes(buscaDeb)));
+    return r;
+  }, [campanhas, arquivadas, filtro, buscaDeb]);
+
+  const pills = arquivadas
+    ? FILTROS_STATUS.filter(([k]) => k === "" || ARQUIVADAS.includes(k))
+    : FILTROS_STATUS.filter(([k]) => !ARQUIVADAS.includes(k));
+
+  const menuDe = (c) => (
+    <MenuCampanha campanha={c} onVisualizar={onAbrir} onEditar={onEditar} onArquivar={onArquivar}
+      onExcluir={onExcluir} onToggleCandidaturas={onToggleCandidaturas} onStatus={onStatus} />
+  );
 
   return (
     <div className="vx-fade">
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
+      {/* Cabeçalho */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18, gap: 12, flexWrap: "wrap" }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", margin: "0 0 3px", letterSpacing: -0.3 }}>Campanhas</h1>
-          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Gerencie oportunidades para seus profissionais de vendas.</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.4 }}>Campanhas</h1>
+          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Crie, acompanhe e gerencie suas operações comerciais.</p>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          {filtroBar}
-          <button
-            type="button"
-            className={`vx-btn${filtro === "encerrada" ? " vx-btn-primary" : ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
-            onClick={() => setFiltro(filtro === "encerrada" ? "" : "encerrada")}
-            title="Arquivadas"
-          >
-            <Archive size={14} />
-            {filtro === "encerrada" ? "Ver todas" : "Arquivadas"}
-            {counts["encerrada"] > 0 && (
-              <span style={{
-                fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20,
-                background: filtro === "encerrada" ? "rgba(255,255,255,.25)" : "var(--border)",
-                color: filtro === "encerrada" ? "#fff" : "var(--muted)",
-              }}>{counts["encerrada"]}</span>
-            )}
-          </button>
-          {/* No estado inicial (sem campanhas) os cards abaixo já oferecem os dois
-              caminhos; só mostramos os botões do topo depois que existe campanha. */}
-          {campanhas.length > 0 && <>
-            <button type="button" className="vx-btn" style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }} onClick={() => onCriar(false)}><Plus size={14} /> Manual</button>
-            <button type="button" className="vx-btn vx-btn-primary" style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }} onClick={() => onCriar(true)}><Sparkles size={14} /> Criar com IA</button>
-          </>}
-        </div>
+        {campanhas.length > 0 && <NovaCampanhaMenu onCriar={onCriar} />}
       </div>
 
-      {/* Stats strip — só mostra quando há campanhas */}
+      {/* Linha 1 — indicadores */}
       {campanhas.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 20 }}>
-          {[
-            { label: "Publicadas", value: ativas, icon: Megaphone },
-            { label: "Rascunhos", value: rascunhos, icon: FileText },
-            { label: "Candidaturas pendentes", value: totalPendentes, icon: Users },
-          ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="vx-glass-panel vx-tile">
-              <div className="vx-tile-top">
-                <span>{label}</span>
-                <Icon size={17} strokeWidth={1.7} aria-hidden="true" />
-              </div>
-              <div className="vx-tile-val">{value}</div>
-            </div>
-          ))}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12, marginBottom: 16 }}>
+          <IndicadorTopo label="Campanhas ativas" valor={ativas} descricao="Operações em andamento" Icon={Megaphone} />
+          <IndicadorTopo label="Candidaturas pendentes" valor={pendentesTotais} descricao="Aguardando avaliação" Icon={Users} destaque={pendentesTotais > 0} />
+          <IndicadorTopo label="Tarefas em execução" valor={tarefasExecucao} descricao="Atividades em andamento" Icon={Activity} />
         </div>
       )}
 
-      {/* Filter pills */}
+      {/* Linha 2 — busca, período, arquivadas, vista */}
+      {campanhas.length > 0 && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
+            <Search size={15} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
+            <input className="vx-input" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar campanhas..."
+              style={{ paddingLeft: 34, width: "100%", height: "auto", padding: "9px 12px 9px 34px" }} />
+          </div>
+          {filtroBar}
+          <button type="button" className="vx-btn" aria-pressed={arquivadas}
+            style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", borderColor: arquivadas ? "var(--brand)" : undefined, color: arquivadas ? "var(--brand)" : undefined }}
+            onClick={() => { setArquivadas((v) => !v); setFiltro(""); }}>
+            <Archive size={14} /> Arquivadas
+            {(counts["encerrada"] + counts["cancelada"]) > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: "var(--surface-2)", color: "var(--muted)" }}>{counts["encerrada"] + counts["cancelada"]}</span>}
+          </button>
+          <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: 9, overflow: "hidden" }}>
+            {[["grade", LayoutGrid], ["lista", List]].map(([v, Icon]) => (
+              <button key={v} type="button" onClick={() => trocarVista(v)} aria-label={v === "grade" ? "Grade" : "Lista"} title={v === "grade" ? "Grade" : "Lista"}
+                style={{ display: "grid", placeItems: "center", width: 34, height: 34, border: "none", cursor: "pointer",
+                  background: vista === v ? "var(--brand-50)" : "transparent", color: vista === v ? "var(--brand)" : "var(--muted)" }}>
+                <Icon size={15} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pills de status */}
       {campanhas.length > 0 && (
         <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 2, marginBottom: 16 }}>
-          {FILTROS_STATUS.map(([key, label]) => {
-            const ativa = filtro === key;
-            const count = key ? counts[key] : campanhas.length;
+          {pills.map(([key, label]) => {
+            const on = filtro === key;
+            const total = key ? counts[key] : (arquivadas ? counts["encerrada"] + counts["cancelada"] : campanhas.length - counts["encerrada"] - counts["cancelada"]);
             return (
-              <button
-                key={key}
-                onClick={() => setFiltro(key)}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
-                  padding: "5px 12px", borderRadius: 20, border: `1px solid ${ativa ? "var(--brand)" : "var(--border)"}`,
-                  background: ativa ? "var(--brand)" : "var(--surface)", cursor: "pointer",
-                  fontSize: 12.5, fontWeight: ativa ? 600 : 400,
-                  color: ativa ? "#fff" : "var(--ink)", transition: "all .15s",
-                }}
-              >
-                {label}
-                {count > 0 && <span style={{ fontSize: 11, opacity: ativa ? 0.85 : 0.6 }}>{count}</span>}
+              <button key={key || "todas"} onClick={() => setFiltro(key)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
+                  padding: "5px 12px", borderRadius: 20, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand)" : "var(--surface)", cursor: "pointer",
+                  fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? "#fff" : "var(--ink)", transition: "all .15s" }}>
+                {label}{total > 0 && <span style={{ fontSize: 11, opacity: on ? 0.85 : 0.6 }}>{total}</span>}
               </button>
             );
           })}
         </div>
       )}
 
-      {/* Empty state — dois caminhos: manual ou IA */}
-      {visiveis.length === 0 && (campanhas.length === 0 ? (
+      {/* Estado vazio — nenhuma campanha criada */}
+      {campanhas.length === 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
-          {/* Manual */}
           <div onClick={() => onCriar(false)}
             style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10, transition: "border-color .15s" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand)" }}><Plus size={20} /></div>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand)" }}><SlidersHorizontal size={20} /></div>
             <h3 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>Criar campanha manual</h3>
             <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.6, flex: 1 }}>Você monta a campanha do zero — objetivo, tarefas, remuneração e critérios. Controle total sobre cada detalhe.</p>
-            <button className="vx-btn vx-btn-block" style={{ marginTop: 4 }}><Plus size={14} /> Criar manual</button>
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 4 }}><SlidersHorizontal size={14} /> Criar manual</button>
           </div>
-          {/* IA */}
           <div onClick={() => onCriar(true)}
             style={{ background: "var(--brand-50)", border: "1.5px solid var(--brand-200)", borderRadius: 16, padding: 24, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10, transition: "border-color .15s" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; }}
@@ -230,62 +419,32 @@ function CampanhaLista({ campanhas, onAbrir, onEditar, onCriar, onArquivar, onEx
             <button className="vx-btn vx-btn-primary vx-btn-block"><Sparkles size={14} /> Criar com IA</button>
           </div>
         </div>
-      ) : (
-        <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)" }}>
-          <div style={{ fontSize: 14, color: "var(--muted)" }}>Nenhuma campanha com este filtro.</div>
-          <button className="vx-btn vx-btn-sm" style={{ marginTop: 10 }} onClick={() => setFiltro("")}>Ver todas</button>
-        </div>
-      ))}
+      )}
 
-      {/* Campaign cards grid */}
-      {visiveis.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12 }}>
-          {visiveis.map((c) => {
-            const pendentes = (c.candidaturas || []).filter((a) => a.status === "pendente").length;
-            return (
-              <div
-                key={c.id}
-                onClick={() => onAbrir(c)}
-                style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "16px 18px", cursor: "pointer", transition: "border-color .15s, box-shadow .15s", display: "flex", flexDirection: "column", gap: 10 }}
-              >
-                {/* Top row: status + menu */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <StatusBadge status={c.status} />
-                  <MenuCampanha
-                    campanha={c}
-                    onEditar={onEditar}
-                    onArquivar={onArquivar}
-                    onExcluir={onExcluir}
-                    onToggleCandidaturas={onToggleCandidaturas}
-                  />
-                </div>
-
-                {/* Title */}
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3 }}>{c.titulo || "Sem título"}</div>
-                  {c.objetivo && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.objetivo}</div>}
-                </div>
-
-                {/* Metrics */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", paddingTop: 8, borderTop: "1px solid var(--border)" }}>
-                  {c.funcao && <MetricChip icon={Users} label={c.funcao.toUpperCase()} />}
-                  {c.regiao && <MetricChip icon={MapPin} label={c.regiao} />}
-                  {c.duracaoDias && <MetricChip icon={Clock} label={`${c.duracaoDias} dias`} />}
-                  <MetricChip icon={Users} label={c.candidaturasAbertas === false ? "Candidaturas encerradas" : "Candidaturas abertas"} />
-                </div>
-
-                {/* Candidaturas pendentes alert */}
-                {pendentes > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "#EFF6FF", borderRadius: "var(--radius-sm)", fontSize: 12, color: "#1D4ED8", fontWeight: 500 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#1D4ED8", flexShrink: 0 }} />
-                    {pendentes} candidatura{pendentes !== 1 ? "s" : ""} pendente{pendentes !== 1 ? "s" : ""}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* Nenhum resultado para busca/filtro */}
+      {campanhas.length > 0 && visiveis.length === 0 && (
+        <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
+          <SearchX size={28} color="var(--muted)" style={{ marginBottom: 10 }} />
+          <div style={{ fontSize: 14.5, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Nenhuma campanha encontrada</div>
+          <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 12px" }}>Tente ajustar os filtros ou o termo pesquisado.</p>
+          <button className="vx-btn vx-btn-sm" onClick={() => { setBusca(""); setFiltro(""); setArquivadas(false); }}>Limpar filtros</button>
         </div>
       )}
+
+      {/* Lista de campanhas */}
+      {visiveis.length > 0 && (vista === "grade" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+          {visiveis.map((c) => (
+            <CampanhaCard key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} menu={menuDe(c)} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {visiveis.map((c) => (
+            <CampanhaRow key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} menu={menuDe(c)} />
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -443,12 +602,25 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     aviso("Campanha excluída.");
   };
 
+  // Pausar/Retomar a partir do card — reutiliza o mesmo endpoint de status do editor.
+  const mudarStatusCampanha = async (c, status) => {
+    const r = await api(`/campaigns/${c.id}/status`, { status });
+    if (!r || r.error) return aviso(r?.pendencias?.join(" · ") || r?.error || "Não foi possível alterar a campanha.");
+    up((d) => ({ campaigns: d.campaigns.map((x) => x.id === c.id ? { ...x, status } : x) }));
+    aviso(status === "ativa" ? "Campanha retomada." : status === "pausada" ? "Campanha pausada." : "Campanha atualizada.");
+  };
+
+  const abrirEditor = (c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); };
+
   if (modo === "lista") return <>
     <CampanhaLista
       campanhas={campanhas}
+      submissions={(db.submissions || []).filter((s) => s.companyId === emp.id)}
       filtroBar={filtroBar}
       onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
-      onEditar={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); }}
+      onEditar={abrirEditor}
+      onCandidaturas={abrirEditor}
+      onStatus={mudarStatusCampanha}
       onCriar={(ia) => {
         // Campanha manual pode ser criada e salva como rascunho sem plano.
         // Só a criação com IA exige plano (e plano com IA).
