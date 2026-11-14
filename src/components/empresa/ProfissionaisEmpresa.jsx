@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Bookmark, BriefcaseBusiness, CheckCircle2, Clock, Eye, Filter, Lock, MapPin, MessageCircle, MessageSquare, Search, Send, ShieldCheck, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Bookmark, BriefcaseBusiness, CheckCircle2, Clock, Copy, Eye, Filter, Link2, Lock, MapPin, MessageCircle, MessageSquare, Search, Send, Share2, ShieldCheck, UserPlus, UserRound, UserRoundSearch, UsersRound, X } from "lucide-react";
 import Chat from "../Chat.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta, money } from "../../lib/utils.js";
@@ -69,6 +69,8 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
   const [chatRapido, setChatRapido] = useState(null);
   const [mostrarSalvos, setMostrarSalvos] = useState(false);
   const [bioExpandida, setBioExpandida] = useState(false);
+  const [convidarAberto, setConvidarAberto] = useState(false);
+  const [linkCopiado, setLinkCopiado] = useState(false);
 
   const carregar = async () => {
     setCarregando(true);
@@ -396,6 +398,54 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                     Limpar classificação
                   </button>
                 )}
+              </div>
+            </>
+          )}
+        </div>
+        <div style={{ position: "relative" }}>
+          <button
+            type="button"
+            className="vx-btn"
+            style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+            onClick={() => { setConvidarAberto((v) => !v); setLinkCopiado(false); }}
+            title="Convidar profissional"
+          >
+            <Share2 size={14} strokeWidth={2.3} />
+          </button>
+          {convidarAberto && (
+            <>
+              <div onClick={() => setConvidarAberto(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
+              <div className="vx-card" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, width: 340, padding: 20, boxShadow: "0 10px 28px rgba(0,0,0,.14)", display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <UserPlus size={20} color="var(--brand)" />
+                  <h3 className="vx-disp" style={{ fontSize: 15, margin: 0 }}>Convide um profissional</h3>
+                </div>
+                <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55, margin: 0 }}>
+                  Compartilhe o link de cadastro para que novos profissionais entrem na RYCS e possam trabalhar com a sua empresa.
+                </p>
+                <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}><CheckCircle2 size={12} color="var(--brand)" /> Cadastro rápido e gratuito</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}><CheckCircle2 size={12} color="var(--brand)" /> Acesso a campanhas de vendas reais</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}><CheckCircle2 size={12} color="var(--brand)" /> Comissões por resultado comprovado</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}><CheckCircle2 size={12} color="var(--brand)" /> Treinamentos e suporte da plataforma</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ flex: 1, padding: "9px 12px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12.5, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {`${window.location.origin}/cadastro/profissional`}
+                  </div>
+                  <button
+                    type="button"
+                    className={`vx-btn${linkCopiado ? " vx-btn-primary" : ""}`}
+                    style={{ display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", flexShrink: 0 }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/cadastro/profissional`);
+                      setLinkCopiado(true);
+                      setTimeout(() => setLinkCopiado(false), 3000);
+                    }}
+                  >
+                    {linkCopiado ? <><CheckCircle2 size={13} /> Copiado!</> : <><Copy size={13} /> Copiar</>}
+                  </button>
+                </div>
               </div>
             </>
           )}

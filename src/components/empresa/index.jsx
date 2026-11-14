@@ -28,9 +28,8 @@ const CAMPOS_SORT = {
   "campanhas-tarefas": [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
   leads:      [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "statusCliente", label: "Status" }],
   "conferir-fila":   [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
-  "conferir-regras": [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
 };
-const ABAS_COM_FILTRO = new Set(["painel", "financeiro", "campanhas", "campanhas-tarefas", "leads", "conferir-fila", "conferir-regras"]);
+const ABAS_COM_FILTRO = new Set(["painel", "financeiro", "campanhas", "campanhas-tarefas", "leads", "conferir-fila"]);
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const [secaoCampanhas, setSecaoCampanhas] = useState("campanhas");
@@ -149,10 +148,6 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} />
       </>}
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
-      {aba === "conferir-regras" && <>
-        {filtroBar}
-        <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="regras" recarregar={recarregar} filtroData={filtroAtual} />
-      </>}
       {aba === "leads" && (
         <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       )}

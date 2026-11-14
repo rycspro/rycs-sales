@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight, TrendingUp, Megaphone, CheckCheck, Sparkles, MapPin } from "lucide-react";
+import { CheckCircle2, X, AlertTriangle, Clock, ChevronDown, Eye, UserPlus, MessageSquare, Shield, ToggleLeft, ToggleRight, TrendingUp, Megaphone, CheckCheck, Sparkles, MapPin, Settings2 } from "lucide-react";
 
 export const STATUS_CLIENTE = {
   aguardando:       { label: "Aguardando",       cor: "#64748B", bg: "#F1F5F9" },
@@ -373,8 +373,8 @@ function TabelaHistorico({ subs, db }) {
   );
 }
 
-export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar, filtroData }) {
-  const [abaFila, setAbaFila] = useState("empresa"); // "empresa" | "campanhas"
+export default function ConferirEmpresa({ emp, db, setDb, aviso, secao: _secao, recarregar, filtroData }) {
+  const [abaFila, setAbaFila] = useState("empresa"); // "empresa" | "campanhas" | "regras"
   const [selecionadas, setSelecionadas] = useState(() => new Set()); // chaves `${campanhaId}::${appId}`
   const [selEmpresa, setSelEmpresa] = useState(() => new Set()); // sellerIds (aba Empresa)
   const [perfilAberto, setPerfilAberto] = useState(null); // { campanha?, app?, solicitacao?, seller }
@@ -537,23 +537,14 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
     <>
       <div className="vx-page-head">
         <div>
-          <div className="vx-eyebrow">{secao === "regras" ? "Configurações" : "Governança de evidências"}</div>
-          <h1 className="vx-disp">{secao === "regras" ? "Regras automáticas" : "Aprovações"}</h1>
-          <p>{secao === "regras"
-            ? "Configure a aprovação de profissionais e a conferência automática de ações."
-            : "Revisão manual, recusas, contestações e decisões rastreáveis."}</p>
+          <div className="vx-eyebrow">Governança de evidências</div>
+          <h1 className="vx-disp">Aprovações</h1>
+          <p>Revisão manual, recusas, contestações e decisões rastreáveis.</p>
         </div>
-        {secao !== "regras" && <span className="vx-chip vx-mono">{revisao.length} pendentes</span>}
+        <span className="vx-chip vx-mono">{revisao.length} pendentes</span>
       </div>
 
-      {secao === "regras" && <>
-        <ConfigAprovacaoProfissionais aviso={aviso} campanhasAutoDefault={db.campanhasAutoDefault} />
-        <RegrasAprovacao aviso={aviso} />
-      </>}
-
-      {secao === "fila" && (
-        <>
-          {/* ── Abas: aprovação na empresa vs. candidatura em campanha ── */}
+          {/* ── Abas: empresa · campanhas · regras automáticas ── */}
           <div className="vx-seg vx-subnav" style={{ marginBottom: 18 }}>
             <button data-on={abaFila === "empresa" ? "1" : "0"} onClick={() => setAbaFila("empresa")}>
               Empresa{solicitacoes.length > 0 ? ` (${solicitacoes.length})` : ""}
@@ -561,7 +552,18 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
             <button data-on={abaFila === "campanhas" ? "1" : "0"} onClick={() => setAbaFila("campanhas")}>
               Campanhas{candidaturasCampanha.length > 0 ? ` (${candidaturasCampanha.length})` : ""}
             </button>
+            <button data-on={abaFila === "regras" ? "1" : "0"} onClick={() => setAbaFila("regras")}>
+              Regras automáticas
+            </button>
           </div>
+
+      {abaFila === "regras" && <>
+        <ConfigAprovacaoProfissionais aviso={aviso} campanhasAutoDefault={db.campanhasAutoDefault} />
+        <RegrasAprovacao aviso={aviso} />
+      </>}
+
+      {abaFila !== "regras" && (
+        <>
 
           {/* ── Aba Empresa: aprovar o profissional para trabalhar com a empresa ── */}
           {abaFila === "empresa" && <>
