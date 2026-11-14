@@ -113,21 +113,41 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
     </MolduraAuth>
   );
 
-  if (etapa === "conta") return (
-    <MolduraAuth titulo="Qual conta você quer acessar?" subtitulo="Escolha o tipo de acesso" largura={420}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setContaTipo("profissional"); setEtapa("login"); }}>
-          Profissional
-        </button>
-        <button className="vx-btn vx-btn-block" onClick={() => { setContaTipo("empresa"); setEtapa("login"); }}>
-          Empresa
-        </button>
-      </div>
-      <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEtapa("idioma")} style={{ width: "100%", marginTop: 8, fontSize: 12.5 }}>
-        Voltar
+  if (etapa === "conta") {
+    const cardBase = {
+      display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 8,
+      padding: "20px 14px", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)",
+      background: "var(--surface)", cursor: "pointer", transition: "border-color .15s, background .15s, transform .15s", minHeight: 150,
+    };
+    const realce = (e, on) => {
+      e.currentTarget.style.borderColor = on ? "var(--brand)" : "var(--border)";
+      e.currentTarget.style.background = on ? "var(--brand-50)" : "var(--surface)";
+    };
+    const escolherConta = (tipo) => { setContaTipo(tipo); setEtapa("login"); };
+    const Card = ({ tipo, icone, titulo, texto }) => (
+      <button type="button" style={cardBase}
+        onClick={() => escolherConta(tipo)}
+        onMouseEnter={(e) => realce(e, true)} onMouseLeave={(e) => realce(e, false)}
+        onFocus={(e) => realce(e, true)} onBlur={(e) => realce(e, false)}>
+        <span style={{ fontSize: 34, lineHeight: 1 }} aria-hidden="true">{icone}</span>
+        <span style={{ fontWeight: 700, fontSize: 15.5, color: "var(--ink)" }}>{titulo}</span>
+        <span className="vx-mut" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{texto}</span>
       </button>
-    </MolduraAuth>
-  );
+    );
+    return (
+      <MolduraAuth titulo="Qual conta você quer acessar?" subtitulo="Escolha o tipo de acesso" largura={480}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Card tipo="profissional" icone="🤝" titulo="Profissional"
+            texto="Você é vendedor autônomo e quer vender para empresas ganhando por resultado." />
+          <Card tipo="empresa" icone="🏢" titulo="Empresa"
+            texto="Você tem uma empresa e quer montar um time de vendas sem custo fixo." />
+        </div>
+        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEtapa("idioma")} style={{ width: "100%", marginTop: 10, fontSize: 12.5 }}>
+          Voltar
+        </button>
+      </MolduraAuth>
+    );
+  }
 
   return (
     <MolduraAuth
