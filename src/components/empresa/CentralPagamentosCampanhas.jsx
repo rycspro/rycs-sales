@@ -51,14 +51,13 @@ function StatusPill({ status = "confirmado" }) {
 
 // ── Indicador financeiro compacto ─────────────────────────────────────────────
 function Indicador({ label, valor, sub, Icon, tone = "ink" }) {
-  const cor = { ink: "var(--ink)", amber: "var(--amber)", brand: "var(--brand)" }[tone];
   return (
     <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "15px 16px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
         <Icon size={15} strokeWidth={2} color="var(--muted)" aria-hidden="true" />
         <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)" }}>{label}</span>
       </div>
-      <div className="vx-num" style={{ fontSize: 20, fontWeight: 700, color: cor, fontVariantNumeric: "tabular-nums", letterSpacing: -0.4 }}>{valor}</div>
+      <div className="vx-num" style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.3 }}>{valor}</div>
       {sub && <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>{sub}</div>}
     </div>
   );
@@ -148,11 +147,11 @@ function PagamentosDrawer({ campanha, submissions, db, up, aviso, recarregar, on
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
         <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "11px 13px" }}>
           <div style={{ fontSize: 10.5, color: "var(--muted)", marginBottom: 3 }}>Em aberto</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--amber)", fontVariantNumeric: "tabular-nums" }}>{money(emAberto)}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{money(emAberto)}</div>
         </div>
         <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "11px 13px" }}>
           <div style={{ fontSize: 10.5, color: "var(--muted)", marginBottom: 3 }}>Pago</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--brand)", fontVariantNumeric: "tabular-nums" }}>{money(pago)}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{money(pago)}</div>
         </div>
       </div>
 
@@ -298,8 +297,8 @@ function CampanhaCard({ campanha, submissions, onPagamentos, onSaldo }) {
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", paddingTop: 12, borderTop: "1px solid var(--border)" }}>
         {fin("Orçamento", orcamento > 0 ? money(orcamento) : "Sem limite")}
-        {fin("Reservado", money(reservado), "var(--amber)")}
-        {fin("Pago", money(pago), "var(--brand)")}
+        {fin("Reservado", money(reservado))}
+        {fin("Pago", money(pago))}
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -388,7 +387,7 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
             <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--muted)" }}>Saldo disponível</span>
             <Wallet size={18} color="var(--muted)" strokeWidth={1.8} />
           </div>
-          <div className="vx-num" style={{ fontSize: 30, fontWeight: 800, color: "var(--brand)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.8, marginTop: 10 }}>
+          <div className="vx-num" style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.3, marginTop: 10 }}>
             {carregando ? "—" : money(posicao.disponivel)}
           </div>
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3, flex: 1 }}>Disponível para novas liberações</div>
