@@ -74,11 +74,11 @@ const temConteudo = (e) => {
 /* ============================================================
    DITADO POR VOZ (fala → texto) — Web Speech API (pt-BR)
    ============================================================ */
-function useDitado(onTexto) {
+function useDitado({ onFinal, onInterim }) {
   const [gravando, setGravando] = useState(false);
   const recRef = useRef(null);
-  const onTextoRef = useRef(onTexto);
-  useEffect(() => { onTextoRef.current = onTexto; });
+  const cbRef = useRef({ onFinal, onInterim });
+  useEffect(() => { cbRef.current = { onFinal, onInterim }; });
   const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
   const suportado = !!SR;
 
@@ -86,14 +86,18 @@ function useDitado(onTexto) {
     if (!suportado) return;
     if (gravando) { try { recRef.current?.stop(); } catch { /* ignora */ } setGravando(false); return; }
     const rec = new SR();
-    rec.lang = "pt-BR"; rec.continuous = true; rec.interimResults = false;
+    rec.lang = "pt-BR"; rec.continuous = true; rec.interimResults = true;
     rec.onresult = (e) => {
-      let txt = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) txt += e.results[i][0].transcript;
-      if (txt.trim()) onTextoRef.current?.(txt.trim());
+      let interim = "", final = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t; else interim += t;
+      }
+      if (final.trim()) cbRef.current.onFinal?.(final.trim());
+      cbRef.current.onInterim?.(interim);
     };
-    rec.onend = () => setGravando(false);
-    rec.onerror = () => setGravando(false);
+    rec.onend = () => { setGravando(false); cbRef.current.onInterim?.(""); };
+    rec.onerror = () => { setGravando(false); cbRef.current.onInterim?.(""); };
     recRef.current = rec;
     try { rec.start(); setGravando(true); } catch { setGravando(false); }
   }, [suportado, gravando, SR]);
@@ -102,20 +106,30 @@ function useDitado(onTexto) {
   return { suportado, gravando, alternar };
 }
 
-// Campo de texto (input ou textarea) com botão de ditado por voz. O texto
-// reconhecido é anexado ao conteúdo atual. onChange recebe a string já final.
+// Campo de texto (input ou textarea) com ditado por voz em tempo real: o texto
+// reconhecido vai aparecendo enquanto a pessoa fala (resultado interino) e é
+// consolidado no conteúdo quando a frase é finalizada.
 function CampoVoz({ value, onChange, multiline, rows = 3, placeholder, className = "vx-input", style, inputStyle }) {
-  const { suportado, gravando, alternar } = useDitado((texto) => {
-    const base = value || "";
-    const sep = base && !/\s$/.test(base) ? " " : "";
-    onChange(base + sep + texto);
+  const [interim, setInterim] = useState("");
+  const valueRef = useRef(value);
+  useEffect(() => { valueRef.current = value; }, [value]);
+  const { suportado, gravando, alternar } = useDitado({
+    onFinal: (texto) => {
+      const base = valueRef.current || "";
+      const sep = base && !/\s$/.test(base) ? " " : "";
+      onChange(base + sep + texto);
+      setInterim("");
+    },
+    onInterim: (t) => setInterim(t),
   });
   const Campo = multiline ? "textarea" : "input";
+  const sepI = value && !/\s$/.test(value) ? " " : "";
+  const exibicao = gravando && interim ? (value || "") + sepI + interim : (value || "");
   return (
     <div style={{ position: "relative", ...style }}>
-      <Campo className={className} value={value || ""} placeholder={placeholder}
+      <Campo className={className} value={exibicao} placeholder={placeholder}
         rows={multiline ? rows : undefined}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => { if (!(gravando && interim)) onChange(e.target.value); }}
         style={{ width: "100%", paddingRight: 40, ...(multiline ? { resize: "vertical", lineHeight: 1.5 } : {}), ...inputStyle }} />
       {suportado && (
         <button type="button" onClick={alternar} title={gravando ? "Parar ditado" : "Ditar por voz"}
@@ -134,12 +148,37 @@ function CampoVoz({ value, onChange, multiline, rows = 3, placeholder, className
 /* ============================================================
    CARDS DAS 4 SEÇÕES (grade 2 colunas) — para a landing de Materiais
    ============================================================ */
+const PESO_ESTADO = { preenchido: 1, parcial: 0.5, vazio: 0 };
+
 export function CardsInformacoes({ resumo, onAbrir }) {
+  const soma = INFO_SECOES.reduce((acc, s) => acc + (PESO_ESTADO[resumo?.[s.chave]?.estado] ?? 0), 0);
+  const pct = Math.round((soma / INFO_SECOES.length) * 100);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
-      {INFO_SECOES.map((s) => (
-        <CardSecao key={s.chave} secao={s} estado={resumo?.[s.chave]?.estado || "vazio"} onClick={() => onAbrir(s.chave)} />
-      ))}
+    <>
+      <BarraProgresso pct={pct} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+        {INFO_SECOES.map((s) => (
+          <CardSecao key={s.chave} secao={s} estado={resumo?.[s.chave]?.estado || "vazio"} onClick={() => onAbrir(s.chave)} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function BarraProgresso({ pct }) {
+  const completo = pct >= 100;
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 500, color: completo ? "#1E7F4F" : "#737373" }}>
+          {completo ? "Tudo preenchido" : `Falta ${100 - pct}% para preencher tudo`}
+        </span>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: completo ? "#1E7F4F" : AZUL }}>{pct}%</span>
+      </div>
+      <div style={{ height: 8, borderRadius: 999, background: "#EEF0F3", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, transition: "width .4s ease",
+          background: completo ? "linear-gradient(90deg, #1E7F4F, #2FB36B)" : `linear-gradient(90deg, ${AZUL}, #5EA9EE)` }} />
+      </div>
     </div>
   );
 }
@@ -153,6 +192,28 @@ const ESTADOS = {
 function CardSecao({ secao, estado, onClick }) {
   const { Icon, label, descricao } = secao;
   const est = ESTADOS[estado] || ESTADOS.vazio;
+  const completo = estado === "preenchido";
+
+  // Quando a seção está preenchida, o card inteiro fica em gradiente azul.
+  if (completo) {
+    return (
+      <button onClick={onClick}
+        style={{ position: "relative", textAlign: "left", color: "#fff", background: "linear-gradient(135deg, #318CE7, #1E6FD0)", border: "1px solid #1E6FD0", borderRadius: 12, padding: 19, cursor: "pointer", transition: "box-shadow .15s, transform .15s", boxShadow: "0 4px 14px rgba(49,140,231,.25)" }}
+        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 6px 18px rgba(49,140,231,.35)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 4px 14px rgba(49,140,231,.25)"; e.currentTarget.style.transform = "none"; }}>
+        <ArrowUpRight size={18} style={{ position: "absolute", top: 16, right: 16, color: "rgba(255,255,255,.75)" }} />
+        <span style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+          <Icon size={22} style={{ color: "#fff" }} />
+        </span>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#fff" }}>{label}</div>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,.8)", margin: "2px 0 12px", minHeight: 18 }}>{descricao}</div>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 600, color: "#fff", background: "rgba(255,255,255,.2)", padding: "3px 9px", borderRadius: 20 }}>
+          <Check size={13} /> Completo
+        </span>
+      </button>
+    );
+  }
+
   return (
     <button onClick={onClick}
       style={{ position: "relative", textAlign: "left", background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 19, cursor: "pointer", transition: "border-color .15s, box-shadow .15s" }}
