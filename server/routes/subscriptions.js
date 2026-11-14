@@ -350,6 +350,13 @@ router.get("/subscription", (req, res) => {
 // Contratar um plano. O Free é imediato; os pagos geram cobrança recorrente e
 // só passam a valer quando o gateway confirmar o pagamento.
 router.post("/subscription", async (req, res) => {
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error("[assinatura] timeout de 50 s — resposta forçada");
+      res.status(504).json({ error: "O servidor demorou demais para responder. Tente novamente." });
+    }
+  }, 50000);
+  try {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem assinar" });
 
@@ -599,7 +606,13 @@ router.post("/subscription", async (req, res) => {
     console.error("[asaas] assinatura:", err.message);
     let msg = err instanceof AsaasError ? err.message : "Erro ao criar assinatura";
     if (forma === "DEBIT_CARD") msg = msg.replace(/cartão de crédito/gi, "cartão");
-    res.status(502).json({ error: msg });
+    if (!res.headersSent) res.status(502).json({ error: msg });
+  }
+  } catch (fatalErr) {
+    console.error("[assinatura] erro inesperado:", fatalErr);
+    if (!res.headersSent) res.status(500).json({ error: "Erro interno ao processar a assinatura. Tente novamente." });
+  } finally {
+    clearTimeout(timeout);
   }
 });
 

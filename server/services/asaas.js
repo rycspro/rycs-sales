@@ -54,7 +54,7 @@ export async function asaas(caminho, { method = "GET", body } = {}) {
   if (!ambiente.ok) throw new AsaasError(ambiente.motivo, 0, null);
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 30000);
+  const timer = setTimeout(() => ctrl.abort(), 15000);
   let res;
   try {
     res = await fetch(`${ambiente.base}${caminho}`, {
