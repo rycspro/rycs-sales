@@ -116,9 +116,9 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
         <style>{`.vx-idioma-card .vx-input:focus,.vx-idioma-card .vx-input:focus-visible{border-color:${AZUL};box-shadow:0 0 0 3px rgba(49,140,231,.15);outline:none}`}</style>
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
           <div className="vx-fade" style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
-            <img src="/logo-rycs.png" alt="RYCS Sales Machine"
+            <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
               onError={(e) => { e.currentTarget.style.display = "none"; const t2 = e.currentTarget.nextSibling; if (t2) t2.style.display = "block"; }}
-              style={{ width: 148, margin: "0 auto 22px" }} />
+              style={{ height: 44, width: "auto", margin: "0 auto 22px", display: "block" }} />
             <span className="vx-disp" style={{ display: "none", fontSize: 26, fontWeight: 800, letterSpacing: "-.02em", color: "var(--brand)", margin: "0 auto 22px" }}>RYCS</span>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: AZUL, marginBottom: 12 }}>{t("idioma.eyebrow")}</div>
             <h1 className="vx-disp" style={{ fontSize: 25, lineHeight: 1.22, color: "var(--ink)", margin: "0 0 10px" }}>{t("idioma.titulo")}</h1>
