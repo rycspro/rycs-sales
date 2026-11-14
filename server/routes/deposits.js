@@ -5,6 +5,7 @@ import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaa
 import { registrarMovimento } from "../services/financeiro.js";
 import { criarCheckoutDeposito, stripeAtivo } from "../services/stripe.js";
 import { normalizarMoeda } from "../../shared/moedas.js";
+import { DESTAQUES } from "../../shared/planos.js";
 
 const router = Router();
 
@@ -172,6 +173,51 @@ router.get("/deposits/:id", (req, res) => {
   if (!row) return res.status(404).json({ error: "Depósito não encontrado" });
   if (role === "empresa" && row.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
   res.json({ id: row.id, valor: row.valor, status: row.status, confirmadoEm: row.confirmadoEm || null });
+});
+
+// Contratar um destaque (visibilidade): gera uma cobrança Pix real. O destaque
+// só é ativado quando o webhook confirmar o pagamento — nunca aqui.
+router.post("/destaque/checkout", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem contratar destaque" });
+  const tipo = String(req.body?.tipo || "");
+  const d = DESTAQUES[tipo];
+  if (!d) return res.status(400).json({ error: "Tipo de destaque inválido" });
+  if (!asaasAtivo()) return res.status(503).json({ error: "Pagamento indisponível no momento." });
+
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  if (!empresa.documento) return res.status(400).json({ error: "Cadastre o CNPJ ou CPF da empresa antes de contratar." });
+
+  try {
+    const customer = await garantirCliente(db, empresa);
+    const cobranca = await asaas("/payments", {
+      method: "POST",
+      body: {
+        customer, billingType: "PIX", value: d.preco,
+        dueDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        description: `Destaque ${d.nome} — RYCS`,
+        externalReference: `destaque:${entityId}:${tipo}`,
+      },
+    });
+    let pix = null;
+    try { pix = await asaas(`/payments/${cobranca.id}/pixQrCode`); }
+    catch (e) { console.warn("[asaas] QR destaque:", e.message); }
+
+    const depositoId = uid();
+    db.prepare(`INSERT INTO deposit_requests (id, companyId, valor, status, referencia, gateway, observacao, criadoEm)
+                VALUES (?, ?, ?, 'pendente', ?, 'asaas', 'destaque', ?)`).run(depositoId, entityId, d.preco, cobranca.id, agora());
+
+    res.json({
+      depositoId, valor: d.preco, tipo,
+      pixCopiaECola: pix?.payload || null,
+      pixQrCodeBase64: pix?.encodedImage || null,
+      pixExpiracao: pix?.expirationDate || null,
+    });
+  } catch (err) {
+    console.error("[asaas] destaque:", err.message);
+    res.status(502).json({ error: err instanceof AsaasError ? err.message : "Erro ao gerar a cobrança" });
+  }
 });
 
 // A empresa vê os próprios pedidos; o admin vê todos os pendentes.

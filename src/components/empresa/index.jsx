@@ -162,7 +162,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         />
       )}
       {aba === "pagamentos-visibilidade" && (
-        <DestaqueEmpresa emp={emp} up={up} aviso={aviso} />
+        <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />
       )}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial={voltouDaMeta ? "integracoes" : undefined} />}
 

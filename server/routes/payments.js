@@ -6,6 +6,7 @@ import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente } 
 import { ativarAssinatura, marcarInadimplencia, ativarPixAutomatico, encerrarPixAutomatico, ehAtivacaoPixAutomatico } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { emailComprovantePagamento } from "../services/email.js";
+import { DESTAQUES } from "../../shared/planos.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
 
@@ -478,6 +479,26 @@ function creditarDeposito(payment) {
   // Cobrança de assinatura não é aporte de caixa: ativa o plano e para aqui.
   if (payment.subscription) {
     ativarAssinatura(payment.subscription);
+    return;
+  }
+
+  // Destaque/visibilidade: ativa o destaque na empresa (não credita caixa).
+  if (payment.externalReference && String(payment.externalReference).startsWith("destaque:")) {
+    const [, companyId, tipo] = String(payment.externalReference).split(":");
+    const d = DESTAQUES[tipo];
+    const empresaD = db.prepare("SELECT id, nome FROM companies WHERE id = ?").get(companyId);
+    if (empresaD && d) {
+      db.prepare("UPDATE companies SET destaque = 1, destaqueTipo = ? WHERE id = ?").run(tipo, companyId);
+      const upd = db.prepare("UPDATE deposit_requests SET status = 'confirmado', confirmadoEm = ? WHERE referencia = ? AND status = 'pendente'").run(agora(), payment.id);
+      if (upd.changes > 0) { // primeira confirmação — evita notificar/enviar e-mail em duplicidade
+        const userD = db.prepare("SELECT id, email FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
+        if (userD) {
+          notificar(userD.id, "pagamento", `Destaque ${d.nome} ativado!`);
+          try { emailComprovantePagamento({ nome: empresaD.nome, email: userD.email, tipo: "visibilidade", valor: Number(payment.value) || d.preco }); }
+          catch (e) { console.warn("[webhook] comprovante destaque:", e.message); }
+        }
+      }
+    }
     return;
   }
   // externalReference guarda o id interno; asaasCustomerId cobre cobranças
