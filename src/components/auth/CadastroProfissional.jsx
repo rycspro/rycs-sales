@@ -3,11 +3,13 @@ import { Eye, EyeOff, Camera, X, CheckCircle, XCircle } from "lucide-react";
 import { Campo } from "../ui.jsx";
 import Termos from "./Termos.jsx";
 import MolduraAuth from "./MolduraAuth.jsx";
+import OnboardingProfissional from "./OnboardingProfissional.jsx";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
 import { ROTAS, navegar, parametro } from "../../lib/rotas.js";
 import { LIMITES, avaliarFoto, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 
 export default function CadastroProfissional({ onRegister }) {
+  const [onboardingVisto, setOnboardingVisto] = useState(false);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -96,6 +98,8 @@ export default function CadastroProfissional({ onRegister }) {
     });
     setLoading(false);
   };
+
+  if (!onboardingVisto) return <OnboardingProfissional onConcluir={() => setOnboardingVisto(true)} />;
 
   if (showTermos) return (
     <Termos onAceitar={() => { setAceitouTermos(true); setShowTermos(false); }} onVoltar={() => setShowTermos(false)} />
