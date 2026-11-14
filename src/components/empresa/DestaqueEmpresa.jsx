@@ -1,69 +1,25 @@
 import { useEffect, useState } from "react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { DESTAQUES, ORDEM_DESTAQUES, TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../../shared/planos.js";
-import { Check, Clock, Copy, CreditCard, Globe, Loader, QrCode, ShieldCheck, Star, X } from "lucide-react";
+import { DESTAQUES, ORDEM_DESTAQUES } from "../../../shared/planos.js";
+import { Check, CreditCard, Globe, Loader, ShieldCheck, Star, X } from "lucide-react";
 import HoloCard from "../HoloCard.jsx";
 
 const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
 const mascaraCartao = (v) => SO_DIGITOS(v).slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 
-// Cronômetro do Pix: limita a 30 min e formata HH:MM:SS ou MM:SS.
-function CronometroPix({ expiraEm }) {
-  const teto = Math.min(expiraEm, Date.now() + 30 * 60000);
-  const [restante, setRestante] = useState(() => Math.max(0, teto - Date.now()));
-
-  useEffect(() => {
-    const t = setInterval(() => setRestante(Math.max(0, teto - Date.now())), 1000);
-    return () => clearInterval(t);
-  }, [teto]);
-
-  const expirado = restante <= 0;
-  const totalSeg = Math.floor(restante / 1000);
-  const hh = Math.floor(totalSeg / 3600);
-  const mm = String(Math.floor((totalSeg % 3600) / 60)).padStart(2, "0");
-  const ss = String(totalSeg % 60).padStart(2, "0");
-  const tempo = hh > 0 ? `${String(hh).padStart(2, "0")}:${mm}:${ss}` : `${mm}:${ss}`;
-
-  return (
-    <div style={{
-      display: "inline-flex", alignItems: "center", gap: 7, margin: "0 auto 14px", padding: "6px 14px", borderRadius: 999, fontSize: 13, fontWeight: 600,
-      background: expirado ? "#FEE2E2" : "var(--brand-50, #EFF6FF)", color: expirado ? "#DC2626" : "var(--brand)",
-    }}>
-      <Clock size={14} />
-      {expirado ? "Pix expirado — gere um novo" : <>Expira em <span className="vx-mono">{tempo}</span></>}
-    </div>
-  );
-}
-
-// Modal de checkout do destaque — mesmo formato dos planos: escolhe
-// nacional (cartão/Pix automático) ou internacional (Stripe).
+// Modal de checkout do destaque — cartão de crédito ou débito (nacional)
+// ou internacional (Stripe).
 function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
   const d = DESTAQUES[tipo];
   const [forma, setForma] = useState("");
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   const [processando, setProcessando] = useState(false);
-  const [cobranca, setCobranca] = useState(null);
-  const [etapa, setEtapa] = useState("escolha"); // escolha | pix | processando | confirmado
+  const [etapa, setEtapa] = useState("escolha"); // escolha | processando | confirmado
   const [stripe, setStripe] = useState(null);
 
   useEffect(() => { api("/stripe/status").then((r) => r && !r.error && setStripe(r)); }, []);
-
-  // Polling de confirmação do Pix.
-  useEffect(() => {
-    if (etapa !== "pix" || !cobranca?.depositoId) return;
-    let vivo = true;
-    const t = setInterval(async () => {
-      const r = await api(`/deposits/${cobranca.depositoId}`).catch(() => null);
-      if (!vivo || !r) return;
-      if (r.status === "confirmado") {
-        setEtapa("processando");
-        setTimeout(() => { if (vivo) { setEtapa("confirmado"); onConfirmado?.(); } }, 1600);
-      }
-    }, 4000);
-    return () => { vivo = false; clearInterval(t); };
-  }, [etapa, cobranca?.depositoId]);
 
   const origem = forma ? (forma === "STRIPE" ? "internacional" : "nacional") : null;
 
@@ -77,7 +33,8 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
       return;
     }
 
-    if (forma === "CREDIT_CARD") {
+    const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
+    if (ehCartao) {
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
       if (faltando.length) return aviso("Preencha todos os dados do cartão.");
       if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
@@ -87,8 +44,8 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
     const r = await api("/destaque/checkout", {
       tipo,
       formaPagamento: forma,
-      cartao: forma === "CREDIT_CARD" ? cartao : undefined,
-      titular: forma === "CREDIT_CARD" ? titular : undefined,
+      cartao: ehCartao ? cartao : undefined,
+      titular: ehCartao ? titular : undefined,
     });
     setProcessando(false);
 
@@ -98,12 +55,6 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
       aviso("Pagamento confirmado. Ativando seu destaque.");
       onConfirmado?.();
       onFechar();
-      return;
-    }
-
-    if (r.pixCopiaECola || r.pixQrCodeBase64) {
-      setCobranca(r);
-      setEtapa("pix");
       return;
     }
 
@@ -127,7 +78,7 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
           <div style={{ textAlign: "center", padding: "24px 0" }}>
             <div className="vx-spinner" style={{ margin: "0 auto 18px" }} />
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Processando seu pagamento…</div>
-            <div style={{ fontSize: 13, color: "var(--muted)" }}>Confirmamos o Pix. Ativando seu destaque.</div>
+            <div style={{ fontSize: 13, color: "var(--muted)" }}>Ativando seu destaque.</div>
           </div>
         )}
 
@@ -144,28 +95,6 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
           </div>
         )}
 
-        {etapa === "pix" && cobranca && (
-          <div style={{ textAlign: "center", paddingTop: 8 }}>
-            <h3 className="vx-disp">Pix Automático — ativação</h3>
-            <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12, lineHeight: 1.6 }}>
-              Pague {money(TAXA_ATIVACAO_PIX_AUTOMATICO)} para autorizar o débito automático.
-              A mensalidade de {money(d.preco)}/mês será debitada automaticamente.
-            </div>
-            {cobranca.pixQrCodeBase64 && (
-              <img alt="QR Code Pix" src={`data:image/png;base64,${cobranca.pixQrCodeBase64}`}
-                style={{ width: 180, height: 180, margin: "0 auto 14px", display: "block", borderRadius: 10 }} />
-            )}
-            <CronometroPix expiraEm={cobranca.expiraEm ? new Date(cobranca.expiraEm).getTime() : Date.now() + 30 * 60000} />
-            {cobranca.pixCopiaECola && (
-              <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginBottom: 8 }}
-                onClick={() => { navigator.clipboard?.writeText(cobranca.pixCopiaECola); aviso("Pix copia e cola copiado."); }}>
-                <Copy size={14} /> Copiar código Pix
-              </button>
-            )}
-            <button className="vx-btn vx-btn-block" onClick={onFechar}>Fechar</button>
-          </div>
-        )}
-
         {etapa === "escolha" && (
           <>
             {/* Resumo */}
@@ -177,7 +106,7 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
             <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
             <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
               {[
-                { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão ou Pix · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
+                { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão de crédito ou débito · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
                 ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
               ].map(({ id, titulo, sub, icone }) => {
                 const on = origem === id;
@@ -202,7 +131,7 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
             {/* Formas específicas do pagamento nacional */}
             {origem === "nacional" && (
               <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                {[["CREDIT_CARD", "Cartão de crédito"], ["PIX_AUTOMATICO", "Pix Automático"]].map(([k, t]) => (
+                {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"]].map(([k, t]) => (
                   <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
                     flex: 1, fontSize: 12,
                     borderColor: forma === k ? "var(--brand)" : undefined,
@@ -214,7 +143,7 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
             )}
 
             {/* Formulário de cartão */}
-            {forma === "CREDIT_CARD" && (
+            {(forma === "CREDIT_CARD" || forma === "DEBIT_CARD") && (
               <>
                 <div style={{ margin: "4px auto 16px", maxWidth: 320 }}>
                   <HoloCard
@@ -222,7 +151,7 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
                     number={cartao.numero || "0000000000000000"}
                     expires={cartao.validadeMes && cartao.validadeAno ? `${String(cartao.validadeMes).padStart(2, "0")}/${String(cartao.validadeAno).slice(-2)}` : "••/••"}
                     cvv={cartao.cvv || "•••"}
-                    tier="Crédito"
+                    tier={forma === "DEBIT_CARD" ? "Débito" : "Crédito"}
                   />
                 </div>
                 <label><div className="vx-label">Nome impresso no cartão</div>

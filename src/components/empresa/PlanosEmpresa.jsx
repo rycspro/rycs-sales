@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Copy, CreditCard, Globe, Loader, QrCode, ShieldCheck, X } from "lucide-react";
+import { CreditCard, Globe, Loader, ShieldCheck, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
@@ -22,8 +22,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [voucher, setVoucher] = useState("");
   const [desconto, setDesconto] = useState(null);
   const [processando, setProcessando] = useState(false);
-  const [cobranca, setCobranca] = useState(null);
-  const [forma, setForma] = useState(""); // "" = nenhuma origem escolhida ainda
+  const [forma, setForma] = useState("");
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   const [salvarCartao, setSalvarCartao] = useState(false);
@@ -48,7 +47,6 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const abrirModal = (p, cicloEscolhido = CICLOS.MENSAL) => {
     setSelecionado(p);
     setCiclo(cicloEscolhido);
-    setCobranca(null);
     setVoucher("");
     setDesconto(null);
     setForma("");
@@ -104,14 +102,6 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));
 
     if (r.jaPago) { aviso("Pagamento confirmado. Liberando seu acesso."); setSelecionado(null); await carregar(); return; }
-    if (r.pixCopiaECola || r.pixQrCodeBase64) { setCobranca(r); return; }
-    if (r.status === "pendente" && r.invoiceUrl) {
-      window.open(r.invoiceUrl, "_blank", "noopener");
-      aviso(r.message || "Fatura aberta numa nova aba para você pagar.");
-      return;
-    }
-
-    setCobranca(r);
     await carregar();
     aviso(r.message || "Plano contratado com sucesso.");
   };
@@ -220,7 +210,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   aviso(a ? `Plano ${selecionado.nome} liberado!` : "Pagamento recebido. O plano aparece em instantes; atualize a página se precisar.");
                 }}
               />
-            ) : !cobranca ? (
+            ) : (
               <>
                 {/* Resumo */}
                 <div className="vx-checkout-total">
@@ -253,7 +243,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                   {[
-                    { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão ou Pix · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
+                    { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão de crédito ou débito · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
                     ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
                   ].map(({ id, titulo, sub, icone }) => {
                     const on = origem === id;
@@ -278,7 +268,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 {/* Formas específicas do pagamento nacional (Asaas) */}
                 {origem === "nacional" && (
                   <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                    {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"], ["PIX", "Pix"]].map(([k, t]) => (
+                    {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"]].map(([k, t]) => (
                       <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
                         flex: 1, fontSize: 12,
                         borderColor: forma === k ? "var(--brand)" : undefined,
@@ -395,13 +385,6 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   </div>
                 )}
 
-                {forma === "PIX" && (
-                  <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
-                    <QrCode size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                    Geramos um QR Code após a confirmação. O acesso é liberado assim que o pagamento for detectado.
-                  </div>
-                )}
-
                 <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 16 }}
                   disabled={processando || !forma} onClick={contratar}>
                   {processando
@@ -414,28 +397,6 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.
                 </p>
               </>
-            ) : (
-              <div style={{ textAlign: "center", paddingTop: 8 }}>
-                <h3 className="vx-disp">Pix aguardando pagamento</h3>
-                {cobranca.pixQrCodeBase64 && (
-                  <img alt="QR Code Pix" src={`data:image/png;base64,${cobranca.pixQrCodeBase64}`}
-                    style={{ width: 210, maxWidth: "100%", background: "#fff", padding: 8, borderRadius: 12 }} />
-                )}
-                {cobranca.pixCopiaECola && (
-                  <button className="vx-btn vx-btn-primary vx-btn-block"
-                    onClick={() => { navigator.clipboard?.writeText(cobranca.pixCopiaECola); aviso("Pix copia e cola copiado."); }}>
-                    <Copy size={14} />Copiar Pix
-                  </button>
-                )}
-                {cobranca.invoiceUrl && (
-                  <a className="vx-btn vx-btn-block" href={cobranca.invoiceUrl} target="_blank" rel="noreferrer">
-                    Abrir cobrança
-                  </a>
-                )}
-                <div className="vx-notice vx-notice-amber" style={{ marginTop: 12 }}>
-                  Status: pendente. O plano ainda não foi ativado.
-                </div>
-              </div>
             )}
           </div>
         </div>

@@ -188,14 +188,14 @@ router.post("/destaque/checkout", async (req, res) => {
   if (!asaasAtivo()) return res.status(503).json({ error: "Pagamento indisponível no momento." });
 
   const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
-  if (!["CREDIT_CARD", "PIX_AUTOMATICO"].includes(forma))
+  if (!["CREDIT_CARD", "DEBIT_CARD"].includes(forma))
     return res.status(400).json({ error: "Forma de pagamento inválida." });
 
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
   if (!empresa.documento) return res.status(400).json({ error: "Cadastre o CNPJ ou CPF da empresa antes de contratar." });
 
-  if (forma === "CREDIT_CARD") {
+  {
     const cartao = req.body?.cartao || {};
     const faltando = ["numero", "validadeMes", "validadeAno", "cvv", "nome"].filter((k) => !String(cartao[k] || "").trim());
     if (faltando.length) return res.status(400).json({ error: "Preencha todos os dados do cartão." });
@@ -207,47 +207,13 @@ router.post("/destaque/checkout", async (req, res) => {
     const customer = await garantirCliente(db, empresa);
     const depositoId = uid();
 
-    if (forma === "PIX_AUTOMATICO") {
-      const startDate = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
-      const autorizacao = await asaas("/pix/automatic/authorizations", {
-        method: "POST",
-        body: {
-          customerId: customer,
-          frequency: "MONTHLY",
-          contractId: `RYCS-DST-${depositoId}`.slice(0, 35),
-          description: `Destaque ${d.nome} RYCS`.slice(0, 35),
-          startDate,
-          value: d.preco,
-          paymentCreationMode: "SUBSCRIPTION",
-          retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
-          immediateQrCode: {
-            originalValue: TAXA_ATIVACAO_PIX_AUTOMATICO,
-            expirationSeconds: 24 * 3600,
-            description: "Ativação Pix Automático — Destaque RYCS",
-          },
-        },
-      });
-
-      db.prepare(`INSERT INTO deposit_requests (id, companyId, valor, status, referencia, gateway, observacao, criadoEm)
-                  VALUES (?, ?, ?, 'pendente', ?, 'asaas', 'destaque', ?)`).run(depositoId, entityId, d.preco, autorizacao.id, agora());
-
-      return res.json({
-        depositoId, valor: d.preco, tipo, formaPagamento: "PIX_AUTOMATICO",
-        taxaAtivacao: TAXA_ATIVACAO_PIX_AUTOMATICO,
-        pixCopiaECola: autorizacao.payload || null,
-        pixQrCodeBase64: autorizacao.encodedImage || null,
-        expiraEm: autorizacao.immediateQrCode?.expirationDate || null,
-      });
-    }
-
-    // CREDIT_CARD: cria assinatura mensal no Asaas com cartão.
     const vencimento = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
     const cartao = req.body.cartao;
     const titular = req.body.titular || {};
 
     const corpo = {
       customer,
-      billingType: "CREDIT_CARD",
+      billingType: forma,
       value: d.preco,
       nextDueDate: vencimento,
       cycle: "MONTHLY",
@@ -277,7 +243,7 @@ router.post("/destaque/checkout", async (req, res) => {
 
     const cartaoInfo = cobranca.creditCard || {};
     res.json({
-      depositoId, valor: d.preco, tipo, formaPagamento: "CREDIT_CARD",
+      depositoId, valor: d.preco, tipo, formaPagamento: forma,
       jaPago: cobranca.status === "ACTIVE",
       cartaoFinal: cartaoInfo.creditCardNumber || "",
       cartaoBandeira: cartaoInfo.creditCardBrand || "",
