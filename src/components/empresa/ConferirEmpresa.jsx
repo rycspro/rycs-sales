@@ -219,7 +219,7 @@ function ConfigAprovacaoProfissionais({ aviso, campanhasAutoDefault }) {
   );
 }
 
-function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
+function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar, marcada, onToggle, score, compat, onVerPerfil }) {
   const [campanhasAuto, setCampanhasAuto] = useState(null);
   const diasAguardando = solicitacao.criadoEm
     ? Math.max(0, Math.floor((Date.now() - solicitacao.criadoEm) / (1000 * 60 * 60 * 24)))
@@ -227,7 +227,10 @@ function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
   const diasCor = diasAguardando === null ? "#64748B" : diasAguardando >= 8 ? "#DC2626" : diasAguardando >= 3 ? "#B45309" : "#16A34A";
 
   return (
-    <div className="vx-card" style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+    <div className="vx-card" style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", borderColor: marcada ? "var(--brand)" : undefined, background: marcada ? "var(--brand-50)" : undefined }}>
+      {onToggle && (
+        <input type="checkbox" checked={!!marcada} onChange={onToggle} style={{ width: 17, height: 17, accentColor: "var(--brand)", cursor: "pointer", flexShrink: 0 }} />
+      )}
       {/* AVATAR */}
       <div style={{ width: 54, height: 54, borderRadius: 10, overflow: "hidden", flexShrink: 0, background: "var(--surface-2)", display: "grid", placeItems: "center" }}>
         {seller?.foto
@@ -267,11 +270,22 @@ function CardSolicitacao({ seller, solicitacao, onAprovar, onRecusar }) {
         </button>
       </div>
 
+      {/* Score + compatibilidade */}
+      <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+        <BadgeNumerico label="Score" valor={score} />
+        {compat != null && <BadgeNumerico label="Compat." valor={compat} sufixo="%" Icon={Sparkles} />}
+      </div>
+
       {/* AÇÕES */}
       <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
         <button className="vx-prof-card__btn" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => onAprovar(seller.id, campanhasAuto)}>
           <CheckCircle2 size={14} /> Aprovar
         </button>
+        {onVerPerfil && (
+          <button className="vx-prof-card__btn" title="Ver perfil e mensagem" aria-label="Ver perfil e mensagem" style={{ width: 40, padding: 0, height: 40, minHeight: 40 }} onClick={onVerPerfil}>
+            <Eye size={16} />
+          </button>
+        )}
         <button className="vx-prof-card__btn vx-prof-card__btn--danger" style={{ width: "auto", padding: "0 16px", fontSize: 13, height: 40, minHeight: 40, gap: 6 }} onClick={() => onRecusar(seller.id)}>
           <X size={14} /> Recusar
         </button>
@@ -362,7 +376,8 @@ function TabelaHistorico({ subs, db }) {
 export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila", recarregar, filtroData }) {
   const [abaFila, setAbaFila] = useState("empresa"); // "empresa" | "campanhas"
   const [selecionadas, setSelecionadas] = useState(() => new Set()); // chaves `${campanhaId}::${appId}`
-  const [perfilAberto, setPerfilAberto] = useState(null); // { campanha, app, seller }
+  const [selEmpresa, setSelEmpresa] = useState(() => new Set()); // sellerIds (aba Empresa)
+  const [perfilAberto, setPerfilAberto] = useState(null); // { campanha?, app?, solicitacao?, seller }
   const [listaProf, setListaProf] = useState([]); // enriquecido (/professionals/active) p/ a mesma ficha de Profissionais
   const solicitacoes = db.solicitacoesPendentes || [];
 
@@ -468,6 +483,33 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
     recarregar?.();
   };
 
+  // ── Aba Empresa: seleção em massa + compatibilidade ──
+  const alternarSelEmpresa = (id) => setSelEmpresa((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const todasEmpresaSel = solicitacoes.length > 0 && solicitacoes.every((sol) => selEmpresa.has(sol.sellerId));
+  const alternarTodasEmpresa = () => setSelEmpresa(() => todasEmpresaSel ? new Set() : new Set(solicitacoes.map((s) => s.sellerId)));
+
+  const decidirEmpresaEmMassa = async (status) => {
+    const alvos = solicitacoes.filter((sol) => selEmpresa.has(sol.sellerId));
+    if (!alvos.length) return;
+    let ok = 0;
+    for (const sol of alvos) {
+      const r = await apiPatch("/applications", { sellerId: sol.sellerId, companyId: emp.id, status });
+      if (r && !r.error) ok++;
+    }
+    aviso(`${ok} profissional(is) ${status === "aprovado" ? "aprovados" : "recusados"}.`);
+    setSelEmpresa(new Set());
+    recarregar?.();
+  };
+
+  // Compatibilidade no contexto da empresa: melhor encaixe entre as campanhas
+  // ativas (ou nível empresa quando não há campanha ativa).
+  const campanhasAtivasEmp = (db.campaigns || []).filter((c) => c.companyId === emp.id && c.status === "ativa");
+  const compatEmpresaDe = (seller) => {
+    if (!seller) return null;
+    if (campanhasAtivasEmp.length) return Math.max(...campanhasAtivasEmp.map((c) => compatibilidadeSellerCampanha(seller, c, emp).percentual));
+    return compatibilidadeSellerCampanha(seller, {}, emp).percentual;
+  };
+
   const confirmar = async (sub) => {
     const r = await apiPatch(`/submissions/${sub.id}`, { status: "conferido", motivo: "Confirmado manualmente pela empresa." });
     if (!r || r.error) return aviso(r?.error || "Não foi possível confirmar.");
@@ -541,6 +583,23 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
               )
               : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+                  {/* Barra de ações em massa */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 12 }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                      <input type="checkbox" checked={todasEmpresaSel} onChange={alternarTodasEmpresa} style={{ width: 16, height: 16, accentColor: "var(--brand)", cursor: "pointer" }} />
+                      Selecionar todas
+                    </label>
+                    <span className="vx-mut" style={{ fontSize: 12.5 }}>{selEmpresa.size} selecionada(s)</span>
+                    <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+                      <button className="vx-btn vx-btn-sm vx-btn-danger" disabled={!selEmpresa.size} style={{ display: "flex", alignItems: "center", gap: 6 }} onClick={() => decidirEmpresaEmMassa("recusado")}>
+                        <X size={14} /> Recusar em massa
+                      </button>
+                      <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={!selEmpresa.size} style={{ display: "flex", alignItems: "center", gap: 6 }} onClick={() => decidirEmpresaEmMassa("aprovado")}>
+                        <CheckCheck size={14} /> Aprovar em massa
+                      </button>
+                    </div>
+                  </div>
+
                   {solicitacoes.map((sol) => {
                     const seller = db.sellers.find((s) => s.id === sol.sellerId);
                     return (
@@ -550,6 +609,11 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
                         solicitacao={sol}
                         onAprovar={aprovarProfissional}
                         onRecusar={recusarProfissional}
+                        marcada={selEmpresa.has(sol.sellerId)}
+                        onToggle={() => alternarSelEmpresa(sol.sellerId)}
+                        score={scoreDoSeller(seller)}
+                        compat={compatEmpresaDe(seller)}
+                        onVerPerfil={() => setPerfilAberto({ solicitacao: sol, seller })}
                       />
                     );
                   })}
@@ -649,31 +713,50 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao = "fila",
           </>}
 
           {perfilAberto && (() => {
-            const { campanha, app, seller } = perfilAberto;
+            const { campanha, app, solicitacao, seller } = perfilAberto;
+            const ehEmpresa = !campanha;
             const p = montarProfissional(seller?.id);
-            const fit = { campanha, ...compatibilidadeSellerCampanha(p, campanha, emp) };
+            const melhorCampanha = ehEmpresa && campanhasAtivasEmp.length
+              ? campanhasAtivasEmp.reduce((best, c) => compatibilidadeSellerCampanha(p, c, emp).percentual > compatibilidadeSellerCampanha(p, best, emp).percentual ? c : best, campanhasAtivasEmp[0])
+              : null;
+            const fit = ehEmpresa
+              ? compatibilidadeSellerCampanha(p, melhorCampanha || {}, emp)
+              : { campanha, ...compatibilidadeSellerCampanha(p, campanha, emp) };
+            const mensagem = ehEmpresa ? solicitacao?.mensagem : app?.mensagem;
             return (
               <FichaProfissional
                 p={p} fit={fit}
                 onFechar={() => setPerfilAberto(null)}
                 topo={
                   <div style={{ marginBottom: 16 }}>
-                    <div className="vx-label" style={{ marginBottom: 6 }}>Mensagem enviada na candidatura · {campanha?.titulo || "campanha"}</div>
-                    {app?.mensagem
+                    <div className="vx-label" style={{ marginBottom: 6 }}>
+                      {ehEmpresa ? "Mensagem enviada na solicitação à empresa" : `Mensagem enviada na candidatura · ${campanha?.titulo || "campanha"}`}
+                    </div>
+                    {mensagem
                       ? <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", fontSize: 13.5, lineHeight: 1.55, color: "var(--ink)" }}>
-                          <MessageSquare size={13} style={{ marginRight: 6, verticalAlign: "-1px", color: "var(--muted)" }} />{app.mensagem}
+                          <MessageSquare size={13} style={{ marginRight: 6, verticalAlign: "-1px", color: "var(--muted)" }} />{mensagem}
                         </div>
                       : <div className="vx-mut" style={{ fontSize: 12.5, fontStyle: "italic" }}>O profissional não deixou mensagem.</div>}
                   </div>
                 }
                 acoes={
-                  <section className="vx-card" style={{ padding: 14, marginTop: 14 }}>
-                    <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}>Candidatura nesta campanha</h3>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      <button className="vx-btn vx-btn-danger" onClick={() => { decidirCandidatura(campanha.id, app.id, "recusado"); setPerfilAberto(null); }}><X size={15} /> Recusar</button>
-                      <button className="vx-btn vx-btn-primary" onClick={() => { decidirCandidatura(campanha.id, app.id, "aprovado"); setPerfilAberto(null); }}><CheckCircle2 size={15} /> Aprovar</button>
-                    </div>
-                  </section>
+                  ehEmpresa ? (
+                    <section className="vx-card" style={{ padding: 14, marginTop: 14 }}>
+                      <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}>Aprovação para a empresa</h3>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <button className="vx-btn vx-btn-danger" onClick={() => { recusarProfissional(seller.id); setPerfilAberto(null); }}><X size={15} /> Recusar</button>
+                        <button className="vx-btn vx-btn-primary" onClick={() => { aprovarProfissional(seller.id, null); setPerfilAberto(null); }}><CheckCircle2 size={15} /> Aprovar</button>
+                      </div>
+                    </section>
+                  ) : (
+                    <section className="vx-card" style={{ padding: 14, marginTop: 14 }}>
+                      <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 10 }}>Candidatura nesta campanha</h3>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <button className="vx-btn vx-btn-danger" onClick={() => { decidirCandidatura(campanha.id, app.id, "recusado"); setPerfilAberto(null); }}><X size={15} /> Recusar</button>
+                        <button className="vx-btn vx-btn-primary" onClick={() => { decidirCandidatura(campanha.id, app.id, "aprovado"); setPerfilAberto(null); }}><CheckCircle2 size={15} /> Aprovar</button>
+                      </div>
+                    </section>
+                  )
                 }
               />
             );
