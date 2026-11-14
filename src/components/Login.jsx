@@ -3,6 +3,7 @@ import { Campo, CampoSenha } from "./ui.jsx";
 import MolduraAuth from "./auth/MolduraAuth.jsx";
 import RecuperarSenha from "./auth/RecuperarSenha.jsx";
 import Termos from "./auth/Termos.jsx";
+import ComboSelect from "./ui/ComboSelect.jsx";
 import { api } from "../lib/api.js";
 import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 
@@ -16,9 +17,9 @@ import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 const DEMO_PASSWORD = "Demo@RYCS2026";
 
 const IDIOMAS = [
-  { valor: "pt-BR", rotulo: "Português (Brasil)" },
-  { valor: "en", rotulo: "English" },
-  { valor: "es", rotulo: "Español" },
+  { value: "pt-BR", label: "🇧🇷 Português (Brasil)" },
+  { value: "en", label: "🇺🇸 English" },
+  { value: "es", label: "🇪🇸 Español" },
 ];
 
 export default function Login({ onLogin, conviteTrial = false, beta = false }) {
@@ -99,12 +100,12 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
   };
 
   if (etapa === "idioma") return (
-    <MolduraAuth titulo="Idioma" subtitulo="Escolha uma opção" largura={420}>
-      <Campo label="Idioma">
-        <select className="vx-input" value={idioma} onChange={(e) => escolherIdioma(e.target.value)} aria-label="Idioma">
-          <option value="">Escolha uma opção</option>
-          {IDIOMAS.map((i) => <option key={i.valor} value={i.valor}>{i.rotulo}</option>)}
-        </select>
+    <MolduraAuth
+      titulo="Bem-vindo à RYCS"
+      subtitulo={<>Que bom ter você aqui — escolha um idioma para começar.<br />Glad to have you here — choose a language to start.</>}
+      largura={420}>
+      <Campo label="Escolha um idioma">
+        <ComboSelect opcoes={IDIOMAS} valor={idioma} onChange={escolherIdioma} placeholder="Escolha um idioma" name="idioma" />
       </Campo>
       <button className="vx-btn vx-btn-primary vx-btn-block" disabled={!idioma} onClick={() => setEtapa("conta")} style={{ marginTop: 4 }}>
         Continuar
