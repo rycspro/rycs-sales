@@ -1829,5 +1829,22 @@ db.exec(`
 // para a importação ser idempotente e não reimportar o mesmo arquivo.
 adicionarColuna("materiais", "origemAcademyId", "TEXT DEFAULT ''");
 
+// Academy da empresa: dono do treinamento. Vazio = curso da plataforma RYCS
+// (como sempre foi); preenchido = treinamento criado por uma empresa.
+adicionarColuna("courses", "companyId", "TEXT DEFAULT ''");
+// Disponibilidade de um treinamento por campanha + se a conclusão é exigida
+// para executar tarefas. Aditivo, não altera nada existente.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS course_campaigns (
+    courseId TEXT NOT NULL,
+    campaignId TEXT NOT NULL,
+    obrigatorio INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    PRIMARY KEY (courseId, campaignId)
+  );
+  CREATE INDEX IF NOT EXISTS idx_course_campaigns_course ON course_campaigns(courseId);
+  CREATE INDEX IF NOT EXISTS idx_course_campaigns_campaign ON course_campaigns(campaignId);
+`);
+
 export default db;
 export { uid, agora };

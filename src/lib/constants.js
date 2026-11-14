@@ -71,6 +71,7 @@ export const NAV = {
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { section: "Sua Empresa" },
     { key: "materiais", label: "Materiais", Icon: FolderOpen },
+    { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
     { key: "leads", label: "Leads", Icon: Target, children: [
       { key: "leads", label: "Leads" },
       { key: "integracoes", label: "Integrações" },

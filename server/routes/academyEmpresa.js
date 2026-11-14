@@ -1,0 +1,312 @@
+// Academy da empresa: a empresa cria treinamentos para os profissionais das
+// suas campanhas. Reaproveita toda a estrutura de cursos (courses, modules,
+// lessons, questions, enrollments, certificates) — aqui só o recorte por
+// companyId e a distribuição por campanha (course_campaigns).
+
+import { Router } from "express";
+import db, { uid, agora } from "../db.js";
+import { criarCurso, carregarCurso, atualizarCurso, duplicarCurso } from "../services/academy.js";
+
+const router = Router();
+
+const empresa = (req, res) => {
+  if (req.user.role !== "empresa") { res.status(403).json({ error: "Apenas empresas" }); return null; }
+  return req.user.entityId;
+};
+
+const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
+
+// Resolve o curso garantindo que é da empresa logada.
+function cursoDaEmpresa(id, companyId) {
+  const c = db.prepare("SELECT * FROM courses WHERE id = ? AND companyId = ?").get(id, companyId);
+  return c || null;
+}
+function cursoDoModulo(moduleId, companyId) {
+  return db.prepare(`SELECT c.* FROM course_modules m JOIN courses c ON c.id = m.courseId
+                     WHERE m.id = ? AND c.companyId = ?`).get(moduleId, companyId) || null;
+}
+function cursoDaAula(lessonId, companyId) {
+  return db.prepare(`SELECT c.* FROM course_lessons l JOIN courses c ON c.id = l.courseId
+                     WHERE l.id = ? AND c.companyId = ?`).get(lessonId, companyId) || null;
+}
+
+function campanhasDoCurso(courseId) {
+  return db.prepare(`SELECT cc.campaignId, cc.obrigatorio, c.titulo
+                     FROM course_campaigns cc JOIN campaigns c ON c.id = cc.campaignId
+                     WHERE cc.courseId = ?`).all(courseId)
+    .map((r) => ({ id: r.campaignId, titulo: r.titulo, obrigatorio: !!r.obrigatorio }));
+}
+
+// Resumo de um curso para os cards da biblioteca.
+function resumoCurso(c) {
+  const t = db.prepare("SELECT COUNT(*) aulas, COALESCE(SUM(duracaoMin),0) minutos FROM course_lessons WHERE courseId = ?").get(c.id);
+  const modulos = db.prepare("SELECT COUNT(*) n FROM course_modules WHERE courseId = ?").get(c.id).n;
+  const matriculas = db.prepare("SELECT COUNT(*) n FROM course_enrollments WHERE courseId = ?").get(c.id).n;
+  return {
+    id: c.id, titulo: c.titulo, descricao: c.descricao || "", capa: c.capa || "",
+    status: c.status, notaMinima: c.notaMinima, criadoEm: c.criadoEm, atualizadoEm: c.atualizadoEm,
+    modulos, aulas: t.aulas, duracaoMin: t.minutos, profissionais: matriculas,
+    campanhas: campanhasDoCurso(c.id),
+  };
+}
+
+// --------------------------------------------------- listagem + indicadores ----
+router.get("/academy/empresa", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const cursos = db.prepare("SELECT * FROM courses WHERE companyId = ? ORDER BY atualizadoEm DESC").all(companyId);
+  const ids = cursos.map((c) => c.id);
+
+  let emAprendizado = 0, conclusoes = 0;
+  if (ids.length) {
+    const ph = ids.map(() => "?").join(",");
+    emAprendizado = db.prepare(`SELECT COUNT(DISTINCT sellerId) n FROM course_enrollments WHERE courseId IN (${ph}) AND concluidoEm IS NULL`).get(...ids).n;
+    conclusoes = db.prepare(`SELECT COUNT(*) n FROM course_enrollments WHERE courseId IN (${ph}) AND concluidoEm IS NOT NULL`).get(...ids).n;
+  }
+
+  res.json({
+    indicadores: { treinamentos: cursos.length, emAprendizado, conclusoes },
+    cursos: cursos.map(resumoCurso),
+  });
+});
+
+// --------------------------------------------------------------- criar ----
+router.post("/academy/empresa/cursos", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const titulo = String(req.body?.titulo || "").trim();
+  if (!titulo) return res.status(400).json({ error: "O treinamento precisa de um nome." });
+  const emp = db.prepare("SELECT nome FROM companies WHERE id = ?").get(companyId);
+  const id = criarCurso({
+    titulo,
+    descricao: String(req.body?.descricao || "").slice(0, 2000),
+    capa: req.body?.capa || "",
+    companyId,
+    professor: emp?.nome || "",
+    status: "rascunho",
+    criadoPor: req.user.id,
+    // Já nasce com o primeiro módulo, para a empresa adicionar aulas direto.
+    modulos: [{ titulo: "Módulo 01", aulas: [] }],
+  });
+  res.status(201).json({ curso: carregarCurso(id, { comProva: true }) });
+});
+
+// ------------------------------------------------------------- abrir (builder) ----
+router.get("/academy/empresa/cursos/:id", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDaEmpresa(req.params.id, companyId)) return res.status(404).json({ error: "Treinamento não encontrado." });
+  const curso = carregarCurso(req.params.id, { comProva: true });
+  curso.campanhas = campanhasDoCurso(curso.id);
+  res.json({ curso });
+});
+
+// ------------------------------------------------------------- editar meta ----
+router.patch("/academy/empresa/cursos/:id", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDaEmpresa(req.params.id, companyId)) return res.status(404).json({ error: "Treinamento não encontrado." });
+  const permitido = {};
+  for (const k of ["titulo", "descricao", "capa", "notaMinima"]) if (k in (req.body || {})) permitido[k] = req.body[k];
+  atualizarCurso(req.params.id, permitido);
+  res.json({ curso: carregarCurso(req.params.id, { comProva: true }) });
+});
+
+// ------------------------------------------------------------- duplicar ----
+router.post("/academy/empresa/cursos/:id/duplicar", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDaEmpresa(req.params.id, companyId)) return res.status(404).json({ error: "Treinamento não encontrado." });
+  const r = duplicarCurso(req.params.id, req.user.id);
+  if (r.erro) return res.status(404).json({ error: r.erro });
+  res.status(201).json({ id: r.id });
+});
+
+// ------------------------------------------------------------- excluir ----
+router.delete("/academy/empresa/cursos/:id", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const c = cursoDaEmpresa(req.params.id, companyId);
+  if (!c) return res.status(404).json({ error: "Treinamento não encontrado." });
+  db.transaction(() => {
+    db.prepare("DELETE FROM course_campaigns WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM course_lessons WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM course_modules WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM course_questions WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM course_lesson_progress WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM course_enrollments WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM course_attempts WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM course_certificates WHERE courseId = ?").run(c.id);
+    db.prepare("DELETE FROM courses WHERE id = ?").run(c.id);
+  })();
+  res.json({ ok: true });
+});
+
+// =================================================================== módulos ====
+router.post("/academy/empresa/cursos/:id/modulos", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDaEmpresa(req.params.id, companyId)) return res.status(404).json({ error: "Treinamento não encontrado." });
+  const ordem = db.prepare("SELECT COALESCE(MAX(ordem),-1)+1 o FROM course_modules WHERE courseId = ?").get(req.params.id).o;
+  const id = uid();
+  const titulo = String(req.body?.titulo || "").trim() || `Módulo ${String(ordem + 1).padStart(2, "0")}`;
+  db.prepare("INSERT INTO course_modules (id, courseId, titulo, resumo, ordem) VALUES (?, ?, ?, '', ?)").run(id, req.params.id, titulo, ordem);
+  res.status(201).json({ modulo: { id, titulo, ordem, aulas: [] } });
+});
+
+router.patch("/academy/empresa/modulos/:moduleId", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDoModulo(req.params.moduleId, companyId)) return res.status(404).json({ error: "Módulo não encontrado." });
+  const titulo = String(req.body?.titulo || "").trim();
+  if (!titulo) return res.status(400).json({ error: "Informe o nome do módulo." });
+  db.prepare("UPDATE course_modules SET titulo = ? WHERE id = ?").run(titulo.slice(0, 200), req.params.moduleId);
+  res.json({ ok: true });
+});
+
+router.delete("/academy/empresa/modulos/:moduleId", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDoModulo(req.params.moduleId, companyId)) return res.status(404).json({ error: "Módulo não encontrado." });
+  db.transaction(() => {
+    db.prepare("DELETE FROM course_lessons WHERE moduleId = ?").run(req.params.moduleId);
+    db.prepare("DELETE FROM course_modules WHERE id = ?").run(req.params.moduleId);
+  })();
+  res.json({ ok: true });
+});
+
+router.put("/academy/empresa/cursos/:id/modulos/ordem", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDaEmpresa(req.params.id, companyId)) return res.status(404).json({ error: "Treinamento não encontrado." });
+  const ids = (req.body?.ids || []).filter(Boolean);
+  const upd = db.prepare("UPDATE course_modules SET ordem = ? WHERE id = ? AND courseId = ?");
+  db.transaction(() => ids.forEach((mid, i) => upd.run(i, mid, req.params.id)))();
+  res.json({ ok: true });
+});
+
+// ===================================================================== aulas ====
+function dadosAula(body) {
+  return {
+    titulo: String(body?.titulo || "").trim().slice(0, 200) || "Nova aula",
+    tipo: ["video", "documento", "audio", "link", "texto"].includes(body?.tipo) ? body.tipo : "texto",
+    conteudo: String(body?.conteudo || "").slice(0, 20000),
+    videoUrl: String(body?.videoUrl || "").slice(0, 2000),
+    materiais: Array.isArray(body?.materiais) ? body.materiais.slice(0, 50) : [],
+    duracaoMin: Math.max(0, Math.min(600, Number(body?.duracaoMin) || 0)),
+  };
+}
+
+router.post("/academy/empresa/modulos/:moduleId/aulas", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const curso = cursoDoModulo(req.params.moduleId, companyId);
+  if (!curso) return res.status(404).json({ error: "Módulo não encontrado." });
+  const ordem = db.prepare("SELECT COALESCE(MAX(ordem),-1)+1 o FROM course_lessons WHERE moduleId = ?").get(req.params.moduleId).o;
+  const d = dadosAula(req.body);
+  const id = uid();
+  db.prepare(`INSERT INTO course_lessons (id, courseId, moduleId, titulo, tipo, conteudo, videoUrl, materiais, duracaoMin, ordem)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(id, curso.id, req.params.moduleId, d.titulo, d.tipo, d.conteudo, d.videoUrl, JSON.stringify(d.materiais), d.duracaoMin, ordem);
+  db.prepare("UPDATE courses SET atualizadoEm = ? WHERE id = ?").run(agora(), curso.id);
+  res.status(201).json({ aula: { id, moduleId: req.params.moduleId, ordem, ...d } });
+});
+
+router.patch("/academy/empresa/aulas/:lessonId", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const curso = cursoDaAula(req.params.lessonId, companyId);
+  if (!curso) return res.status(404).json({ error: "Aula não encontrada." });
+  const d = dadosAula({ ...db.prepare("SELECT titulo, tipo, conteudo, videoUrl, materiais, duracaoMin FROM course_lessons WHERE id = ?").get(req.params.lessonId), ...req.body, materiais: req.body?.materiais });
+  db.prepare("UPDATE course_lessons SET titulo = ?, tipo = ?, conteudo = ?, videoUrl = ?, materiais = ?, duracaoMin = ? WHERE id = ?")
+    .run(d.titulo, d.tipo, d.conteudo, d.videoUrl, JSON.stringify(d.materiais), d.duracaoMin, req.params.lessonId);
+  db.prepare("UPDATE courses SET atualizadoEm = ? WHERE id = ?").run(agora(), curso.id);
+  res.json({ aula: { id: req.params.lessonId, ...d } });
+});
+
+router.delete("/academy/empresa/aulas/:lessonId", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const curso = cursoDaAula(req.params.lessonId, companyId);
+  if (!curso) return res.status(404).json({ error: "Aula não encontrada." });
+  db.prepare("DELETE FROM course_lesson_progress WHERE lessonId = ?").run(req.params.lessonId);
+  db.prepare("DELETE FROM course_lessons WHERE id = ?").run(req.params.lessonId);
+  res.json({ ok: true });
+});
+
+router.put("/academy/empresa/modulos/:moduleId/aulas/ordem", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDoModulo(req.params.moduleId, companyId)) return res.status(404).json({ error: "Módulo não encontrado." });
+  const ids = (req.body?.ids || []).filter(Boolean);
+  const upd = db.prepare("UPDATE course_lessons SET ordem = ? WHERE id = ? AND moduleId = ?");
+  db.transaction(() => ids.forEach((lid, i) => upd.run(i, lid, req.params.moduleId)))();
+  res.json({ ok: true });
+});
+
+// ================================================================= publicação ====
+router.post("/academy/empresa/cursos/:id/publicar", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const c = cursoDaEmpresa(req.params.id, companyId);
+  if (!c) return res.status(404).json({ error: "Treinamento não encontrado." });
+  if (!String(c.titulo || "").trim()) return res.status(400).json({ error: "O treinamento precisa de um nome." });
+  const aulas = db.prepare("SELECT COUNT(*) n FROM course_lessons WHERE courseId = ?").get(c.id).n;
+  if (aulas < 1) return res.status(400).json({ error: "Adicione pelo menos uma aula antes de publicar." });
+
+  const obrigatorio = req.body?.obrigatorio ? 1 : 0;
+  const ids = (req.body?.campanhaIds || []).filter(Boolean).slice(0, 200);
+  const validas = ids.length
+    ? db.prepare(`SELECT id FROM campaigns WHERE companyId = ? AND id IN (${ids.map(() => "?").join(",")})`).all(companyId, ...ids).map((r) => r.id)
+    : [];
+  db.transaction(() => {
+    db.prepare("DELETE FROM course_campaigns WHERE courseId = ?").run(c.id);
+    const ins = db.prepare("INSERT INTO course_campaigns (courseId, campaignId, obrigatorio, criadoEm) VALUES (?, ?, ?, ?)");
+    const ts = agora();
+    for (const cid of validas) ins.run(c.id, cid, obrigatorio, ts);
+    db.prepare("UPDATE courses SET status = 'publicado', atualizadoEm = ? WHERE id = ?").run(ts, c.id);
+  })();
+  res.json({ curso: carregarCurso(c.id, { comProva: true }), campanhas: campanhasDoCurso(c.id) });
+});
+
+router.post("/academy/empresa/cursos/:id/rascunho", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const c = cursoDaEmpresa(req.params.id, companyId);
+  if (!c) return res.status(404).json({ error: "Treinamento não encontrado." });
+  atualizarCurso(c.id, { status: "rascunho" });
+  res.json({ ok: true });
+});
+
+router.post("/academy/empresa/cursos/:id/arquivar", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const c = cursoDaEmpresa(req.params.id, companyId);
+  if (!c) return res.status(404).json({ error: "Treinamento não encontrado." });
+  atualizarCurso(c.id, { status: "arquivado" });
+  res.json({ ok: true });
+});
+
+// -------------------------------- avaliação (questões) — base para a Fase 2 ----
+router.put("/academy/empresa/cursos/:id/avaliacao", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const c = cursoDaEmpresa(req.params.id, companyId);
+  if (!c) return res.status(404).json({ error: "Treinamento não encontrado." });
+  const questoes = Array.isArray(req.body?.questoes) ? req.body.questoes.slice(0, 100) : [];
+  const notaMinima = Math.max(0, Math.min(100, Number(req.body?.notaMinima) || 80));
+  db.transaction(() => {
+    db.prepare("DELETE FROM course_questions WHERE courseId = ?").run(c.id);
+    const ins = db.prepare("INSERT INTO course_questions (id, courseId, pergunta, alternativas, correta, explicacao, ordem) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    questoes.forEach((q, i) => {
+      const pergunta = String(q?.pergunta || "").trim();
+      const alternativas = (Array.isArray(q?.alternativas) ? q.alternativas : []).map((a) => String(a || "").slice(0, 500)).filter(Boolean);
+      if (!pergunta || alternativas.length < 2) return;
+      ins.run(uid(), c.id, pergunta.slice(0, 1000), JSON.stringify(alternativas), Math.max(0, Math.min(alternativas.length - 1, Number(q?.correta) || 0)), String(q?.explicacao || "").slice(0, 1000), i);
+    });
+    db.prepare("UPDATE courses SET notaMinima = ?, atualizadoEm = ? WHERE id = ?").run(notaMinima, agora(), c.id);
+  })();
+  res.json({ curso: carregarCurso(c.id, { comProva: true }) });
+});
+
+export default router;

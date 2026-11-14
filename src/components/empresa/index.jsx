@@ -21,6 +21,7 @@ import SuporteEmpresa from "./SuporteEmpresa.jsx";
 import LeadsEmpresa from "./LeadsEmpresa.jsx";
 import IntegracaoMeta from "./IntegracaoMeta.jsx";
 import MateriaisEmpresa from "./MateriaisEmpresa.jsx";
+import AcademyEmpresa from "./AcademyEmpresa.jsx";
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
@@ -150,6 +151,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       </>}
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
+      {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} />}
       {aba === "leads" && (
         <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       )}

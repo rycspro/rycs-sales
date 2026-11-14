@@ -79,14 +79,14 @@ export function criarCurso(dados) {
   db.transaction(() => {
     db.prepare(`INSERT INTO courses
       (id, slug, titulo, subtitulo, descricao, categoria, nivel, professor, capa, requisitos,
-       funcao, gratuito, preco, notaMinima, status, ordem, criadoPor, criadoEm, atualizadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+       funcao, gratuito, preco, notaMinima, status, ordem, criadoPor, companyId, criadoEm, atualizadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(id, dados.slug || `curso-${id.slice(0, 8)}`, dados.titulo, dados.subtitulo || "",
         dados.descricao || "", dados.categoria || "Vendas", dados.nivel || "fundamentos",
         dados.professor || "RYCS", capa, dados.requisitos || "", dados.funcao || "",
         dados.gratuito === false ? 0 : 1, Number(dados.preco) || 0,
         Number(dados.notaMinima) || 70, dados.status || "rascunho",
-        Number(dados.ordem) || 0, dados.criadoPor || null, ts, ts);
+        Number(dados.ordem) || 0, dados.criadoPor || null, dados.companyId || "", ts, ts);
 
     (dados.modulos || []).forEach((m, mi) => {
       const moduleId = uid();
@@ -178,7 +178,10 @@ export function carregarCurso(id, { comProva = false } = {}) {
 // Catálogo com o progresso do profissional embutido. Sem isso a tela teria de
 // cruzar duas listas no cliente, e "continuar assistindo" ficaria impreciso.
 export function catalogo({ sellerId = null, incluirRascunhos = false } = {}) {
-  const where = incluirRascunhos ? "" : "WHERE status = 'publicado'";
+  // O catálogo da RYCS mostra só os cursos da plataforma. Treinamentos criados
+  // por empresas (companyId preenchido) têm distribuição própria por campanha.
+  const soPlataforma = "(companyId IS NULL OR companyId = '')";
+  const where = incluirRascunhos ? `WHERE ${soPlataforma}` : `WHERE status = 'publicado' AND ${soPlataforma}`;
   const cursos = db.prepare(`SELECT * FROM courses ${where} ORDER BY ordem, criadoEm`).all();
 
   const totais = db.prepare(`
@@ -380,7 +383,8 @@ export function tentativasDoProfissional({ courseId, sellerId }) {
 
 // Painel da plataforma.
 export function estatisticas() {
-  const cursos = db.prepare("SELECT COUNT(*) n, SUM(status = 'publicado') publicados FROM courses").get();
+  const soPlataforma = "(companyId IS NULL OR companyId = '')";
+  const cursos = db.prepare(`SELECT COUNT(*) n, SUM(status = 'publicado') publicados FROM courses WHERE ${soPlataforma}`).get();
   const matriculas = db.prepare("SELECT COUNT(*) n FROM course_enrollments").get().n;
   const certificados = db.prepare("SELECT COUNT(*) n FROM course_certificates").get().n;
   const conclusao = db.prepare("SELECT COUNT(*) n FROM course_enrollments WHERE concluidoEm IS NOT NULL").get().n;
@@ -388,7 +392,7 @@ export function estatisticas() {
     SELECT c.id, c.titulo, c.status,
       (SELECT COUNT(*) FROM course_enrollments e WHERE e.courseId = c.id) alunos,
       (SELECT COUNT(*) FROM course_certificates ce WHERE ce.courseId = c.id) certificados
-    FROM courses c ORDER BY alunos DESC
+    FROM courses c WHERE ${soPlataforma} ORDER BY alunos DESC
   `).all();
   return {
     cursos: cursos.n, publicados: cursos.publicados || 0,
