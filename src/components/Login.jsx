@@ -18,14 +18,14 @@ import { useI18n } from "../lib/i18n.jsx";
 const DEMO_PASSWORD = "Demo@RYCS2026";
 
 const IDIOMAS = [
+  { value: "pt-BR", label: "🇧🇷 Português", keywords: "portugues portuguese brasil" },
   { value: "en", label: "🇺🇸 English", keywords: "ingles english" },
+  { value: "es", label: "🇪🇸 Español", keywords: "espanhol spanish" },
   { value: "zh", label: "🇨🇳 中文", keywords: "mandarim chines chinese zhongwen" },
   { value: "hi", label: "🇮🇳 हिन्दी", keywords: "hindi" },
-  { value: "es", label: "🇪🇸 Español", keywords: "espanhol spanish" },
   { value: "ar", label: "🇸🇦 العربية", keywords: "arabe arabic" },
   { value: "fr", label: "🇫🇷 Français", keywords: "frances french" },
   { value: "bn", label: "🇧🇩 বাংলা", keywords: "bengali bangla" },
-  { value: "pt-BR", label: "🇧🇷 Português", keywords: "portugues portuguese brasil" },
   { value: "ru", label: "🇷🇺 Русский", keywords: "russo russian" },
   { value: "id", label: "🇮🇩 Bahasa Indonesia", keywords: "indonesio indonesian" },
 ];
