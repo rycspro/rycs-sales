@@ -65,10 +65,17 @@ function Visual({ step }) {
   if (step === 0) {
     return (
       <div style={moldura}>
-        <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
-          onError={(e) => { e.currentTarget.style.display = "none"; }}
-          style={{ height: 34, width: "auto", margin: "0 auto 4px", display: "block" }} />
-        {/* Prévia de um card de oportunidade (sem dados reais) */}
+        {/* Prévia de cards de oportunidade (sem dados reais) */}
+        <div style={{ background: "var(--surface-solid)", border: "1px solid var(--border)", borderRadius: 12, padding: 14, boxShadow: "0 1px 2px rgba(16,24,40,.04)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: AZUL }} />
+            <Barra w={90} />
+            <span style={{ marginInlineStart: "auto", fontSize: 11, fontWeight: 700, color: VERDE, background: "rgba(15,157,106,.10)", borderRadius: 999, padding: "3px 8px" }}>R$</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <Barra w="80%" /><Barra w="55%" op={0.6} />
+          </div>
+        </div>
         <div style={{ background: "var(--surface-solid)", border: "1px solid var(--border)", borderRadius: 12, padding: 14, boxShadow: "0 1px 2px rgba(16,24,40,.04)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: AZUL }} />
