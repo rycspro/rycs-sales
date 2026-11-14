@@ -4,7 +4,6 @@ import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
-import { planoTemIA, PLANOS_COM_IA } from "../../../shared/planos.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
@@ -420,7 +419,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--brand-200)"; }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand)" }}><Sparkles size={20} /></div>
             <h3 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>Criar campanha com IA</h3>
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.6, flex: 1 }}>A inteligência artificial monta a campanha com base no seu negócio — você só revisa. Disponível nos planos {PLANOS_COM_IA.join(" e ")}.</p>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.6, flex: 1 }}>A inteligência artificial monta a campanha com base no seu negócio — você só revisa. Disponível em todos os planos, inclusive o gratuito.</p>
             <button className="vx-btn vx-btn-primary vx-btn-block"><Sparkles size={14} /> Criar com IA</button>
           </div>
         </div>
@@ -466,8 +465,7 @@ const novaCampanha = (emp) => ({
 });
 
 export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtroData, filtroBar, bloqueado, irParaPlano }) {
-  const [popupPlano, setPopupPlano] = useState(null); // null | "sem-plano" | "sem-ia"
-  const temIA = planoTemIA(emp.assinatura);
+  const [popupPlano, setPopupPlano] = useState(null); // null | "sem-plano" (só publicação exige plano)
   const campanhasBase = (db.campaigns || []).filter((c) => c.companyId === emp.id);
   const campanhas = (() => {
     if (!filtroData) return campanhasBase;
@@ -548,15 +546,11 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     <div onClick={() => setPopupPlano(null)} style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(248,250,252,.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 50px rgba(0,0,0,.14)", width: "100%", maxWidth: 420, padding: "28px 26px", textAlign: "center" }}>
         <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
-          {popupPlano === "sem-ia" ? <Sparkles size={22} color="var(--brand)" /> : <Wallet size={22} color="var(--brand)" />}
+          <Wallet size={22} color="var(--brand)" />
         </div>
-        <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>
-          {popupPlano === "sem-ia" ? "Criação com IA é dos planos superiores" : "Assine um plano para publicar"}
-        </h3>
+        <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18 }}>Assine um plano para publicar</h3>
         <p className="vx-mut" style={{ margin: "0 0 20px", fontSize: 13.5, lineHeight: 1.6 }}>
-          {popupPlano === "sem-ia"
-            ? `A criação de campanha com inteligência artificial está disponível nos planos ${PLANOS_COM_IA.join(" e ")}. Faça upgrade para usar.`
-            : "Você pode criar e salvar campanhas como rascunho sem plano. Para publicar e deixá-la visível aos profissionais, é preciso ter um plano ativo."}
+          Você pode criar campanhas (inclusive com IA) e salvar como rascunho sem plano. Para publicar e deixá-la visível aos profissionais, é preciso ter um plano ativo.
         </p>
         <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(null); irParaPlano?.(); }}>Ver planos</button>
         <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(null)}>Agora não</button>
@@ -627,12 +621,9 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       onCandidaturas={abrirEditor}
       onStatus={mudarStatusCampanha}
       onCriar={(ia) => {
-        // Campanha manual pode ser criada e salva como rascunho sem plano.
-        // Só a criação com IA exige plano (e plano com IA).
-        if (ia) {
-          if (bloqueado) { setPopupPlano("sem-plano"); return; }
-          if (!temIA) { setPopupPlano("sem-ia"); return; }
-        }
+        // Criar campanha (manual ou com IA) é liberado em todos os planos,
+        // inclusive o gratuito: todo mundo tem direito à campanha criada por IA.
+        // O plano e o caixa só pesam na hora de PUBLICAR, não de criar.
         setCriarComIA(ia); setCriando(true);
       }}
       onArquivar={arquivarCampanha}

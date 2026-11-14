@@ -58,7 +58,9 @@ export async function sugerirCampanha({ empresa = {}, brief = "" }) {
 
   try {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    // Sem novas tentativas e com timeout: se o provedor falhar ou pendurar, o
+    // catch abaixo devolve o rascunho do motor interno — a tela nunca fica presa.
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 45000 });
 
     const resposta = await client.messages.create({
       model: "claude-sonnet-5",

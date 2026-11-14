@@ -27,8 +27,12 @@ import { lerMaterial, LEITURA_VERSAO } from "./leituraMateriais.js";
 import { montarEstrategias } from "./motorEstrategias.js";
 import { FASES_GERACAO, proximaFase, normalizarParte, PERMISSOES_MARCA, normalizarPermissoes, formatarWhatsapp } from "../../shared/onboarding.js";
 
-const MODELO = process.env.IA_ONBOARDING_MODELO || "claude-opus-5-5";
+const MODELO = process.env.IA_ONBOARDING_MODELO || "claude-opus-5";
 const INTERVALO_MS = 3000;
+// Teto de espera por chamada à IA. Sem isso, um provedor que pendura deixa a
+// geração presa em "processando" para sempre — e a tela do onboarding fica
+// rodando sem fim. Esgotou o tempo: cai no motor interno da RYCS.
+const IA_TIMEOUT_MS = 60000;
 const MAX_TEXTO_MATERIAIS = 80000;
 const MAX_FOTOS_LIDAS = 20;
 
@@ -83,16 +87,23 @@ const LEITOR = `Você lê materiais enviados por uma empresa e escreve, em portu
 Registre só o que está no material. Não invente números, preços, clientes nem resultados.`;
 
 async function descrever(blocos, pedido) {
-  const resposta = await claude().beta.messages.create({
-    model: MODELO,
-    max_tokens: 4000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "low" },
-    system: LEITOR,
-    messages: [{ role: "user", content: [...blocos, { type: "text", text: pedido }] }],
-  });
-  return resposta.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+  // Blindado: se a IA falhar ou estourar o timeout, devolve vazio em vez de
+  // derrubar a fase de análise. O material entra só pelo nome, e a geração segue.
+  try {
+    const resposta = await claude().beta.messages.create({
+      model: MODELO,
+      max_tokens: 4000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { effort: "low" },
+      system: LEITOR,
+      messages: [{ role: "user", content: [...blocos, { type: "text", text: pedido }] }],
+    });
+    return resposta.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+  } catch (e) {
+    console.warn(`[ia-onboarding] leitura de material falhou (${e.message}); seguindo sem a descrição.`);
+    return "";
+  }
 }
 
 function estrategiasRycs(base) {
@@ -197,8 +208,9 @@ Regras:
 - Quando faltar informação, escreva de forma que funcione sem ela, sem preencher a lacuna com suposição.`;
 
 let cliente = null;
-// Sem novas tentativas: se a integração falhar, o motor interno assume.
-const claude = () => (cliente ||= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 }));
+// Sem novas tentativas e com timeout: se a integração falhar OU pendurar, o
+// motor interno assume — a geração nunca fica presa esperando o provedor.
+const claude = () => (cliente ||= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: IA_TIMEOUT_MS }));
 
 async function gerarParte(parte, contexto, pedidoAjuste, anteriores) {
   if (!iaDisponivel()) throw new Error("A IA não está configurada neste ambiente da RYCS.");
