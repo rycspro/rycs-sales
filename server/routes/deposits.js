@@ -250,7 +250,9 @@ router.post("/destaque/checkout", async (req, res) => {
     });
   } catch (err) {
     console.error("[asaas] destaque:", err.message);
-    res.status(502).json({ error: err instanceof AsaasError ? err.message : "Erro ao gerar a cobrança" });
+    let msg = err instanceof AsaasError ? err.message : "Erro ao gerar a cobrança";
+    if (forma === "DEBIT_CARD") msg = msg.replace(/cartão de crédito/gi, "cartão");
+    res.status(502).json({ error: msg });
   }
 });
 

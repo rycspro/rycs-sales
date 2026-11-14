@@ -581,7 +581,9 @@ router.post("/subscription", async (req, res) => {
     });
   } catch (err) {
     console.error("[asaas] assinatura:", err.message);
-    res.status(502).json({ error: err instanceof AsaasError ? err.message : "Erro ao criar assinatura" });
+    let msg = err instanceof AsaasError ? err.message : "Erro ao criar assinatura";
+    if (forma === "DEBIT_CARD") msg = msg.replace(/cartão de crédito/gi, "cartão");
+    res.status(502).json({ error: msg });
   }
 });
 
