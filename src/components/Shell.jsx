@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { LogOut, ChevronUp, ChevronDown, CircleUserRound, Headphones } from "lucide-react";
+import { LogOut, ChevronUp, ChevronDown, CircleUserRound, Headphones, Gem } from "lucide-react";
 import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
@@ -154,6 +154,7 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
       buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length-1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
       {[[CircleUserRound, 'Minha Conta', company ? 'configuracoes' : 'conta']].map(([Icon,label,key]) => <button type="button" role="menuitem" key={key} onClick={() => choose(() => onSelect(key))}><Icon size={18} />{label}</button>)}
+      {company && <button type="button" role="menuitem" onClick={() => choose(() => onSelect('pagamentos'))}><Gem size={18} />Planos RYCS</button>}
       <button type="button" role="menuitem" onClick={() => choose(() => onSelect('suporte-conta'))}><Headphones size={18} />Ajuda e suporte</button>
       <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>
     </div>}
