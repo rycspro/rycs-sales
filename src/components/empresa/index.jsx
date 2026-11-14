@@ -19,7 +19,7 @@ import InicioEmpresa from "./InicioEmpresa.jsx";
 import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
 import SuporteEmpresa from "./SuporteEmpresa.jsx";
 import LeadsEmpresa from "./LeadsEmpresa.jsx";
-import IntegracaoMeta from "./IntegracaoMeta.jsx";
+import Integracoes from "./integracoes/Integracoes.jsx";
 import MateriaisEmpresa from "./MateriaisEmpresa.jsx";
 import AcademyEmpresa from "./AcademyEmpresa.jsx";
 
@@ -156,7 +156,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       )}
       {aba === "integracoes" && (
-        <IntegracaoMeta aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)} />
+        <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)} />
       )}
       {aba === "pagamentos-campanhas" && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}

@@ -42,7 +42,7 @@ function Indicador({ rotulo, valor }) {
   );
 }
 
-export default function IntegracaoMeta({ aviso, campanhas = [] }) {
+export default function IntegracaoMeta({ aviso, campanhas = [], semCabecalho = false }) {
   const [conexao, setConexao] = useState(null);
   const [opcoes, setOpcoes] = useState(null);
   const [escolha, setEscolha] = useState({ pageId: "", adAccountId: "", campaignId: "" });
@@ -121,7 +121,7 @@ export default function IntegracaoMeta({ aviso, campanhas = [] }) {
 
   if (!conexao) return <div style={{ padding: 30, textAlign: "center" }}><div className="vx-spinner" /></div>;
 
-  const cabecalho = (
+  const cabecalho = semCabecalho ? null : (
     <div style={{ marginBottom: 24 }}>
       <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", margin: "0 0 4px", letterSpacing: -0.3 }}>Integrações</h2>
       <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
