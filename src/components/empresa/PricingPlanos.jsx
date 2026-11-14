@@ -55,11 +55,11 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
       {/* Plano gratuito — faixa larga acima dos ciclos, em 3 camadas:
           esquerda (nome + preço), meio (tópicos), direita (ação). */}
       <div
-        className="vx-card vx-free-banner"
+        className="vx-free-banner"
         style={{
           display: "grid", gridTemplateColumns: "minmax(140px, 190px) 1fr auto",
           alignItems: "center", gap: 24, padding: "20px 24px", marginBottom: 20,
-          border: "none",
+          border: "none", borderRadius: "var(--radius-lg, 16px)",
           background: "linear-gradient(120deg, #2563EB 0%, #4338CA 52%, #0EA5E9 100%)",
           boxShadow: "0 10px 26px rgba(37,99,235,.28)",
           color: "#fff",
