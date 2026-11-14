@@ -56,8 +56,7 @@ export const NAV = {
       { key: "painel-campanhas", label: "Campanhas" },
       { key: "financeiro", label: "Financeiro" },
     ] },
-    { section: "Sua Empresa" },
-    { key: "leads", label: "Leads", Icon: Target },
+    { section: "Com a RYCS" },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
       { key: "campanhas", label: "Campanhas" },
       { key: "pagamentos-campanhas", label: "Pagamentos" },
@@ -70,6 +69,8 @@ export const NAV = {
       { key: "conferir-time", label: "Time" },
     ] },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
+    { section: "Sua Empresa" },
+    { key: "leads", label: "Leads", Icon: Target },
     { divider: true },
     { key: "configuracoes", label: "Configurações", Icon: Settings },
   ],
