@@ -158,19 +158,21 @@ router.post("/onboarding/acesso", (req, res) => {
 // Etapa 2: perfil da empresa.
 
 function perfilDaEmpresa(companyId, emailUsuario) {
-  const c = db.prepare(`SELECT nome, produto, ticket, icp, segmento, nicho, diferenciais, regrasMarca, permissoesMarca, logo
+  const c = db.prepare(`SELECT nome, produto, ticket, icp, segmento, nicho, diferenciais, regrasMarca, permissoesMarca, logo, servicos
                         FROM companies WHERE id = ?`).get(companyId);
   if (!c) return null;
   let permissoes = {};
   try { permissoes = JSON.parse(c.permissoesMarca || "{}"); } catch { /* fica o padrão */ }
-  // O cadastro da etapa 1 usa o começo do e-mail como nome provisório.
-  // Mostrar isso como se fosse o nome da empresa seria inventar um dado.
+  let servicos = [];
+  try { servicos = JSON.parse(c.servicos || "[]"); } catch { /* fica o padrão */ }
   const provisorio = emailUsuario && c.nome === String(emailUsuario).split("@")[0];
   return {
     nome: provisorio ? "" : c.nome,
+    segmento: c.segmento || "",
+    nicho: c.nicho || "",
     produto: c.produto || "",
     ticket: ticketParaNumero(c.ticket),
-    nicho: c.nicho || c.segmento || "",
+    servicos,
     diferencial: c.diferenciais || "",
     publico: c.icp || "",
     regrasMarca: c.regrasMarca || "",
@@ -203,8 +205,10 @@ router.post("/onboarding/empresa", (req, res) => {
 
   const sets = {
     produto: perfil.produto, ticket: perfil.ticket == null ? "" : formatarTicket(perfil.ticket),
-    nicho: perfil.nicho, diferenciais: perfil.diferencial, icp: perfil.publico,
+    segmento: perfil.segmento, nicho: perfil.nicho,
+    diferenciais: perfil.diferencial, icp: perfil.publico,
     regrasMarca: perfil.regrasMarca, permissoesMarca: JSON.stringify(perfil.permissoesMarca),
+    servicos: JSON.stringify(perfil.servicos),
   };
   // Nome vazio num rascunho não apaga o nome provisório: a coluna é obrigatória.
   if (perfil.nome) sets.nome = perfil.nome;
@@ -216,6 +220,16 @@ router.post("/onboarding/empresa", (req, res) => {
   const linha = concluir(req.user.entityId, "empresa");
   if (!linha) return res.status(409).json({ error: "Conclua a etapa anterior primeiro." });
   res.json({ ok: true, ...serializar(linha) });
+});
+
+router.post("/onboarding/empresa/sugestao-produto", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  const segmento = String(req.body?.segmento || "").trim();
+  const nicho = String(req.body?.nicho || "").trim();
+  if (!segmento && !nicho) return res.status(400).json({ error: "Informe ao menos o segmento." });
+  const contexto = [segmento, nicho].filter(Boolean).join(" — ");
+  const texto = `Empresa do segmento ${contexto}. Descreva aqui o que você vende: os principais produtos ou serviços, para que servem e como funcionam.`;
+  res.json({ texto });
 });
 
 router.post("/onboarding/empresa/logo", (req, res) => {

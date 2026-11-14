@@ -189,13 +189,25 @@ export const formatarTicket = (n) =>
 
 // Valida e limpa o que a tela mandou. Devolve { perfil, erros }; erros por
 // campo, com a mensagem que a tela mostra.
+export const MAX_SERVICOS = 20;
+
+export function normalizarServicos(valor) {
+  const lista = Array.isArray(valor) ? valor : [];
+  return lista.slice(0, MAX_SERVICOS).map((s) => ({
+    nome: String(s?.nome || "").trim().slice(0, 200),
+    valor: s?.valor == null ? "" : String(s.valor).trim().slice(0, 30),
+  })).filter((s) => s.nome);
+}
+
 export function validarPerfilEmpresa(dados = {}) {
   const txt = (v, max) => String(v ?? "").trim().slice(0, max);
   const perfil = {
     nome: txt(dados.nome, TEXTO_CURTO_MAX),
+    segmento: txt(dados.segmento, TEXTO_CURTO_MAX),
+    nicho: txt(dados.nicho, TEXTO_LONGO_MAX),
     produto: txt(dados.produto, TEXTO_LONGO_MAX),
     ticket: null,
-    nicho: txt(dados.nicho, TEXTO_LONGO_MAX),
+    servicos: normalizarServicos(dados.servicos),
     diferencial: txt(dados.diferencial, TEXTO_LONGO_MAX),
     publico: txt(dados.publico, TEXTO_LONGO_MAX),
     regrasMarca: txt(dados.regrasMarca, TEXTO_LONGO_MAX),

@@ -1327,6 +1327,7 @@ adicionarColuna("companies", "whatsapp", "TEXT DEFAULT ''");
 adicionarColuna("companies", "nicho", "TEXT DEFAULT ''");
 adicionarColuna("companies", "regrasMarca", "TEXT DEFAULT ''");
 adicionarColuna("companies", "permissoesMarca", "TEXT DEFAULT '{}'");
+adicionarColuna("companies", "servicos", "TEXT DEFAULT '[]'");
 
 // Etapa 3: materiais da Marketing Academy. O arquivo fica no storage; aqui só
 // a chave, os metadados e o texto extraído para a IA.
