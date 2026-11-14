@@ -10,9 +10,17 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import ptBR from "../i18n/pt-BR.js";
 import hi from "../i18n/hi.js";
+import en from "../i18n/en.js";
+import es from "../i18n/es.js";
+import fr from "../i18n/fr.js";
+import ru from "../i18n/ru.js";
+import id from "../i18n/id.js";
+import zh from "../i18n/zh.js";
+import bn from "../i18n/bn.js";
+import ar from "../i18n/ar.js";
 
 // Dicionários carregados. Idioma sem entrada aqui usa o português como base.
-const DICIONARIOS = { "pt-BR": ptBR, hi };
+const DICIONARIOS = { "pt-BR": ptBR, hi, en, es, fr, ru, id, zh, bn, ar };
 
 // Idiomas escritos da direita para a esquerda: o layout inteiro inverte.
 const RTL = new Set(["ar", "he", "fa", "ur"]);
