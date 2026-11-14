@@ -31,6 +31,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [stripe, setStripe] = useState(null);
   const [embutido, setEmbutido] = useState(null);
   const [statusPagamento, setStatusPagamento] = useState(null);
+  const [pixQr, setPixQr] = useState(null);
   const [vouchersUsados, setVouchersUsados] = useState([]);
 
   const carregar = useCallback(async () => {
@@ -89,6 +90,11 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
     if (!r) return aviso("Sem resposta do servidor. Verifique a conexão e tente de novo.");
     if (r.error) return aviso(r.error);
+
+    if (r.pixCopiaECola || r.pixQrCodeBase64) {
+      setPixQr(r);
+      return;
+    }
 
     setStatusPagamento(r.jaPago ? "confirmado" : "registrada");
     await Promise.all([carregar(), recarregar?.()]);
@@ -294,6 +300,30 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 </p>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {pixQr && (
+        <div className="vx-overlay" style={{ zIndex: 1100 }}>
+          <div className="vx-sheet" style={{ maxWidth: 420, textAlign: "center", padding: "32px 28px" }}>
+            <QrCode size={30} color="var(--brand)" />
+            <h2 style={{ margin: "12px 0 4px", fontSize: 20 }}>Pague com Pix para ativar</h2>
+            <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 16px" }}>
+              Seu acesso é liberado automaticamente assim que o pagamento for confirmado.
+            </p>
+            {pixQr.pixQrCodeBase64 && (
+              <img src={`data:image/png;base64,${pixQr.pixQrCodeBase64}`} alt="QR Code Pix"
+                style={{ width: 200, height: 200, margin: "0 auto 16px", display: "block", borderRadius: 10 }} />
+            )}
+            {pixQr.pixCopiaECola && (
+              <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { navigator.clipboard?.writeText(pixQr.pixCopiaECola); aviso("Código Pix copiado!"); }}>
+                Copiar código Pix
+              </button>
+            )}
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => { setPixQr(null); setSelecionado(null); carregar(); recarregar?.(); }}>
+              Fechar
+            </button>
           </div>
         </div>
       )}
