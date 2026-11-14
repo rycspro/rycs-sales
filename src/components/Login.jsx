@@ -17,9 +17,16 @@ import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 const DEMO_PASSWORD = "Demo@RYCS2026";
 
 const IDIOMAS = [
-  { value: "pt-BR", label: "🇧🇷 Português (Brasil)" },
-  { value: "en", label: "🇺🇸 English" },
-  { value: "es", label: "🇪🇸 Español" },
+  { value: "en", label: "🇺🇸 Inglês" },
+  { value: "zh", label: "🇨🇳 Mandarim (Chinês)" },
+  { value: "hi", label: "🇮🇳 Hindi" },
+  { value: "es", label: "🇪🇸 Espanhol" },
+  { value: "ar", label: "🇸🇦 Árabe" },
+  { value: "fr", label: "🇫🇷 Francês" },
+  { value: "bn", label: "🇧🇩 Bengali" },
+  { value: "pt-BR", label: "🇧🇷 Português" },
+  { value: "ru", label: "🇷🇺 Russo" },
+  { value: "id", label: "🇮🇩 Indonésio" },
 ];
 
 export default function Login({ onLogin, conviteTrial = false, beta = false }) {
