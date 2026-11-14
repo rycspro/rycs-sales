@@ -206,7 +206,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
       </div>
 
       {/* Busca */}
-      <div style={{ position: "relative", marginBottom: 14, maxWidth: 420 }}>
+      <div style={{ position: "relative", marginBottom: 14 }}>
         <Search size={16} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--muted-2)", pointerEvents: "none" }} />
         <input
           className="vx-input"
