@@ -476,7 +476,7 @@ router.post("/subscription", async (req, res) => {
 
     const corpo = {
       customer: customerId,
-      billingType: forma,
+      billingType: forma === "DEBIT_CARD" ? "CREDIT_CARD" : forma,
       value: calculo.valorFinal,
       nextDueDate: vencimento.toISOString().split("T")[0],
       cycle: CICLO_ASAAS[ciclo] || "MONTHLY",

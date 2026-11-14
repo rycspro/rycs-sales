@@ -213,7 +213,7 @@ router.post("/destaque/checkout", async (req, res) => {
 
     const corpo = {
       customer,
-      billingType: forma,
+      billingType: forma === "DEBIT_CARD" ? "CREDIT_CARD" : forma,
       value: d.preco,
       nextDueDate: vencimento,
       cycle: "MONTHLY",
