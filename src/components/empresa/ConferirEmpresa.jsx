@@ -373,7 +373,7 @@ function TabelaHistorico({ subs, db }) {
   );
 }
 
-export default function ConferirEmpresa({ emp, db, setDb, aviso, secao: _secao, recarregar, filtroData }) {
+export default function ConferirEmpresa({ emp, db, setDb, aviso, secao: _secao, recarregar, filtroData, filtroBar }) {
   const [abaFila, setAbaFila] = useState("empresa"); // "empresa" | "campanhas" | "regras"
   const [selecionadas, setSelecionadas] = useState(() => new Set()); // chaves `${campanhaId}::${appId}`
   const [selEmpresa, setSelEmpresa] = useState(() => new Set()); // sellerIds (aba Empresa)
@@ -537,11 +537,13 @@ export default function ConferirEmpresa({ emp, db, setDb, aviso, secao: _secao, 
     <>
       <div className="vx-page-head">
         <div>
-          <div className="vx-eyebrow">Governança de evidências</div>
           <h1 className="vx-disp">Aprovações</h1>
           <p>Revisão manual, recusas, contestações e decisões rastreáveis.</p>
         </div>
-        <span className="vx-chip vx-mono">{revisao.length} pendentes</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {filtroBar}
+          <span className="vx-chip vx-mono">{revisao.length} pendentes</span>
+        </div>
       </div>
 
           {/* ── Abas: empresa · campanhas · regras automáticas ── */}
