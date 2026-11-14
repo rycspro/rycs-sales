@@ -5,7 +5,7 @@ import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaa
 import { registrarMovimento } from "../services/financeiro.js";
 import { criarCheckoutDeposito, stripeAtivo } from "../services/stripe.js";
 import { normalizarMoeda } from "../../shared/moedas.js";
-import { DESTAQUES, TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../shared/planos.js";
+import { DESTAQUES } from "../../shared/planos.js";
 
 const router = Router();
 
@@ -187,72 +187,49 @@ router.post("/destaque/checkout", async (req, res) => {
   if (!d) return res.status(400).json({ error: "Tipo de destaque inválido" });
   if (!asaasAtivo()) return res.status(503).json({ error: "Pagamento indisponível no momento." });
 
-  const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
-  if (!["CREDIT_CARD", "DEBIT_CARD"].includes(forma))
-    return res.status(400).json({ error: "Forma de pagamento inválida." });
-
+  // Pagamento nacional do destaque é só Pix (pagamento único que ativa o
+  // destaque). O cartão nacional foi removido; empresas fora do Brasil usam
+  // /destaque/stripe.
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
   if (!empresa.documento) return res.status(400).json({ error: "Cadastre o CNPJ ou CPF da empresa antes de contratar." });
-
-  {
-    const cartao = req.body?.cartao || {};
-    const faltando = ["numero", "validadeMes", "validadeAno", "cvv", "nome"].filter((k) => !String(cartao[k] || "").trim());
-    if (faltando.length) return res.status(400).json({ error: "Preencha todos os dados do cartão." });
-    const titular = req.body?.titular || {};
-    if (!titular.cep || !titular.numero) return res.status(400).json({ error: "Informe CEP e número do endereço de cobrança." });
-  }
 
   try {
     const customer = await garantirCliente(db, empresa);
     const depositoId = uid();
 
-    const vencimento = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
-    const cartao = req.body.cartao;
-    const titular = req.body.titular || {};
-
-    const corpo = {
-      customer,
-      billingType: forma === "DEBIT_CARD" ? "CREDIT_CARD" : forma,
-      value: d.preco,
-      nextDueDate: vencimento,
-      cycle: "MONTHLY",
-      description: `Destaque ${d.nome} — RYCS`,
-      externalReference: `destaque:${entityId}:${tipo}`,
-      creditCard: {
-        holderName: cartao.nome,
-        number: String(cartao.numero).replace(/\D/g, ""),
-        expiryMonth: String(cartao.validadeMes).padStart(2, "0"),
-        expiryYear: String(cartao.validadeAno).length === 2 ? `20${cartao.validadeAno}` : String(cartao.validadeAno),
-        ccv: String(cartao.cvv),
+    // Cobrança Pix avulsa. O destaque é ativado pelo webhook quando o pagamento
+    // é confirmado, pela externalReference "destaque:<empresa>:<tipo>".
+    const cobranca = await asaas("/payments", {
+      method: "POST",
+      body: {
+        customer,
+        billingType: "PIX",
+        value: d.preco,
+        dueDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        description: `Destaque ${d.nome} — RYCS`,
+        externalReference: `destaque:${entityId}:${tipo}`,
       },
-      creditCardHolderInfo: {
-        name: titular.nome || cartao.nome,
-        email: titular.email || undefined,
-        cpfCnpj: String(titular.documento || empresa.documento).replace(/\D/g, ""),
-        postalCode: String(titular.cep || "").replace(/\D/g, ""),
-        addressNumber: String(titular.numero || "") || "0",
-        phone: String(titular.telefone || empresa.telefoneEmpresa || "").replace(/\D/g, "") || undefined,
-      },
-    };
+    });
 
-    const cobranca = await asaas("/subscriptions", { method: "POST", body: corpo });
+    let pix = null;
+    try { pix = await asaas(`/payments/${cobranca.id}/pixQrCode`); }
+    catch (e) { console.warn("[asaas] QR Pix destaque indisponível:", e.message); }
 
     db.prepare(`INSERT INTO deposit_requests (id, companyId, valor, status, referencia, gateway, observacao, criadoEm)
                 VALUES (?, ?, ?, 'pendente', ?, 'asaas', 'destaque', ?)`).run(depositoId, entityId, d.preco, cobranca.id, agora());
 
-    const cartaoInfo = cobranca.creditCard || {};
     res.json({
-      depositoId, valor: d.preco, tipo, formaPagamento: forma,
-      jaPago: cobranca.status === "ACTIVE",
-      cartaoFinal: cartaoInfo.creditCardNumber || "",
-      cartaoBandeira: cartaoInfo.creditCardBrand || "",
+      depositoId, valor: d.preco, tipo, formaPagamento: "PIX",
+      jaPago: ["RECEIVED", "CONFIRMED"].includes(cobranca.status),
+      pixCopiaECola: pix?.payload || null,
+      pixQrCodeBase64: pix?.encodedImage || null,
+      pixExpiracao: pix?.expirationDate || null,
+      invoiceUrl: cobranca.invoiceUrl || null,
     });
   } catch (err) {
     console.error("[asaas] destaque:", err.message);
-    let msg = err instanceof AsaasError ? err.message : "Erro ao gerar a cobrança";
-    if (forma === "DEBIT_CARD") msg = msg.replace(/cartão de crédito/gi, "cartão");
-    res.status(502).json({ error: msg });
+    res.status(502).json({ error: err instanceof AsaasError ? err.message : "Erro ao gerar a cobrança" });
   }
 });
 

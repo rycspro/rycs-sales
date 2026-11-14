@@ -1,27 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { DESTAQUES, ORDEM_DESTAQUES } from "../../../shared/planos.js";
-import { Check, CreditCard, Globe, Loader, ShieldCheck, Star, X } from "lucide-react";
-import HoloCard from "../HoloCard.jsx";
+import { Check, Copy, Globe, Loader, QrCode, ShieldCheck, Star, X } from "lucide-react";
 
-const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
-const mascaraCartao = (v) => SO_DIGITOS(v).slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-
-// Modal de checkout do destaque — cartão de crédito ou débito (nacional)
-// ou internacional (Stripe).
+// Modal de checkout do destaque — pagamento nacional por Pix (QR único que
+// ativa o destaque) ou internacional (Stripe, em US$).
 function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
   const d = DESTAQUES[tipo];
   const [forma, setForma] = useState("");
-  const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
-  const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   const [processando, setProcessando] = useState(false);
-  const [etapa, setEtapa] = useState("escolha"); // escolha | processando | confirmado
+  const [etapa, setEtapa] = useState("escolha"); // escolha | pix | confirmado
+  const [pixQr, setPixQr] = useState(null); // { pixCopiaECola, pixQrCodeBase64, depositoId }
   const [stripe, setStripe] = useState(null);
+  const pollRef = useRef(null);
 
   useEffect(() => { api("/stripe/status").then((r) => r && !r.error && setStripe(r)); }, []);
 
+  // Enquanto o QR está aberto, pergunta ao servidor se o pagamento já foi
+  // confirmado (o webhook marca o pedido como 'confirmado' e ativa o destaque).
+  useEffect(() => {
+    if (etapa !== "pix" || !pixQr?.depositoId) { clearInterval(pollRef.current); return undefined; }
+    pollRef.current = setInterval(async () => {
+      const r = await api("/deposits");
+      const pedido = Array.isArray(r) ? r.find((x) => x.id === pixQr.depositoId) : null;
+      if (pedido?.status === "confirmado") {
+        clearInterval(pollRef.current);
+        setEtapa("confirmado");
+        onConfirmado?.();
+      }
+    }, 5000);
+    return () => clearInterval(pollRef.current);
+  }, [etapa, pixQr?.depositoId]);
+
   const origem = forma ? (forma === "STRIPE" ? "internacional" : "nacional") : null;
+
+  const copiarPix = async () => {
+    try { await navigator.clipboard.writeText(pixQr.pixCopiaECola); aviso("Código Pix copiado!"); }
+    catch { /* o campo continua selecionável */ }
+  };
 
   const contratar = async () => {
     if (forma === "STRIPE") {
@@ -33,34 +50,25 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
       return;
     }
 
-    const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
-    if (ehCartao) {
-      const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
-      if (faltando.length) return aviso("Preencha todos os dados do cartão.");
-      if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
-    }
-
     setProcessando(true);
-    const r = await api("/destaque/checkout", {
-      tipo,
-      formaPagamento: forma,
-      cartao: ehCartao ? cartao : undefined,
-      titular: ehCartao ? titular : undefined,
-    });
+    const r = await api("/destaque/checkout", { tipo, formaPagamento: "PIX" });
     setProcessando(false);
 
     if (r?.error) return aviso(r.error);
 
     if (r.jaPago) {
-      aviso("Pagamento confirmado. Ativando seu destaque.");
+      setEtapa("confirmado");
       onConfirmado?.();
-      onFechar();
       return;
     }
 
-    aviso(r.message || "Destaque contratado com sucesso.");
-    onConfirmado?.();
-    onFechar();
+    if (r.pixCopiaECola || r.pixQrCodeBase64) {
+      setPixQr({ pixCopiaECola: r.pixCopiaECola, pixQrCodeBase64: r.pixQrCodeBase64, depositoId: r.depositoId });
+      setEtapa("pix");
+      return;
+    }
+
+    aviso("Não foi possível gerar o Pix. Tente de novo.");
   };
 
   return (
@@ -74,11 +82,25 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
           <button className="vx-btn vx-btn-ghost" onClick={onFechar}><X size={16} /></button>
         </div>
 
-        {etapa === "processando" && (
-          <div style={{ textAlign: "center", padding: "24px 0" }}>
-            <div className="vx-spinner" style={{ margin: "0 auto 18px" }} />
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Processando seu pagamento…</div>
-            <div style={{ fontSize: 13, color: "var(--muted)" }}>Ativando seu destaque.</div>
+        {etapa === "pix" && (
+          <div style={{ textAlign: "center", padding: "8px 0" }}>
+            <QrCode size={28} color="var(--brand)" />
+            <div style={{ fontSize: 17, fontWeight: 800, margin: "8px 0 4px" }}>Pague o Pix para ativar</div>
+            <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>
+              O destaque é ativado automaticamente assim que o pagamento for confirmado. Esta tela avança sozinha.
+            </div>
+            {pixQr?.pixQrCodeBase64 && (
+              <img src={`data:image/png;base64,${pixQr.pixQrCodeBase64}`} alt="QR Code Pix"
+                style={{ width: 200, height: 200, margin: "0 auto 16px", display: "block", borderRadius: 10 }} />
+            )}
+            {pixQr?.pixCopiaECola && (
+              <button className="vx-btn vx-btn-primary vx-btn-block" onClick={copiarPix}>
+                <Copy size={15} /> Copiar código Pix
+              </button>
+            )}
+            <div className="vx-mut" style={{ fontSize: 12, marginTop: 12, display: "flex", gap: 6, alignItems: "center", justifyContent: "center" }}>
+              <Loader size={13} /> Aguardando a confirmação do pagamento…
+            </div>
           </div>
         )}
 
@@ -106,13 +128,13 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
             <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
             <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
               {[
-                { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão de crédito ou débito · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
-                ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
-              ].map(({ id, titulo, sub, icone }) => {
+                { id: "nacional", forma: "PIX", titulo: "Pagamento nacional", sub: "Pix · R$", icone: <QrCode size={26} strokeWidth={1.8} aria-hidden="true" /> },
+                ...(stripe?.ativo ? [{ id: "internacional", forma: "STRIPE", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
+              ].map(({ id, forma: f, titulo, sub, icone }) => {
                 const on = origem === id;
                 return (
                   <button key={id} type="button"
-                    onClick={() => setForma(id === "nacional" ? "DEBIT_CARD" : "STRIPE")}
+                    onClick={() => setForma(f)}
                     style={{
                       flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                       padding: "16px 12px", borderRadius: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
@@ -128,79 +150,11 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
               })}
             </div>
 
-            {/* Formas específicas do pagamento nacional */}
-            {origem === "nacional" && (
-              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                {[["DEBIT_CARD", "Cartão de débito"], ["CREDIT_CARD", "Cartão de crédito"]].map(([k, t]) => (
-                  <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
-                    flex: 1, fontSize: 12,
-                    borderColor: forma === k ? "var(--brand)" : undefined,
-                    background: forma === k ? "var(--brand-50)" : undefined,
-                    color: forma === k ? "var(--brand)" : undefined,
-                  }}>{t}</button>
-                ))}
+            {forma === "PIX" && (
+              <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
+                <QrCode size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                Geramos um QR Code Pix após a confirmação. O destaque é ativado assim que o pagamento for confirmado.
               </div>
-            )}
-
-            {/* Formulário de cartão */}
-            {(forma === "CREDIT_CARD" || forma === "DEBIT_CARD") && (
-              <>
-                <div style={{ margin: "4px auto 16px", maxWidth: 320 }}>
-                  <HoloCard
-                    holder={cartao.nome || "RYCS"}
-                    number={cartao.numero || "0000000000000000"}
-                    expires={cartao.validadeMes && cartao.validadeAno ? `${String(cartao.validadeMes).padStart(2, "0")}/${String(cartao.validadeAno).slice(-2)}` : "••/••"}
-                    cvv={cartao.cvv || "•••"}
-                    tier={forma === "DEBIT_CARD" ? "Débito" : "Crédito"}
-                  />
-                </div>
-                <label><div className="vx-label">Nome impresso no cartão</div>
-                  <input className="vx-input" value={cartao.nome}
-                    onChange={(e) => setCartao({ ...cartao, nome: e.target.value })} autoComplete="cc-name" /></label>
-
-                <label style={{ display: "block", marginTop: 10 }}><div className="vx-label">Número do cartão</div>
-                  <input className="vx-input vx-mono" inputMode="numeric" value={mascaraCartao(cartao.numero)}
-                    onChange={(e) => setCartao({ ...cartao, numero: SO_DIGITOS(e.target.value) })}
-                    placeholder="0000 0000 0000 0000" autoComplete="cc-number" /></label>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
-                  <label><div className="vx-label">Mês</div>
-                    <input className="vx-input vx-mono" inputMode="numeric" maxLength={2} placeholder="12"
-                      value={cartao.validadeMes}
-                      onChange={(e) => setCartao({ ...cartao, validadeMes: SO_DIGITOS(e.target.value).slice(0, 2) })} /></label>
-                  <label><div className="vx-label">Ano</div>
-                    <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="2030"
-                      value={cartao.validadeAno}
-                      onChange={(e) => setCartao({ ...cartao, validadeAno: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-                  <label><div className="vx-label">CVV</div>
-                    <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="123"
-                      value={cartao.cvv}
-                      onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-                </div>
-
-                <div className="vx-eyebrow" style={{ margin: "16px 0 10px" }}>Endereço de cobrança</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <label><div className="vx-label">CEP</div>
-                    <input className="vx-input vx-mono" inputMode="numeric" value={titular.cep}
-                      onChange={(e) => setTitular({ ...titular, cep: SO_DIGITOS(e.target.value).slice(0, 8) })} /></label>
-                  <label><div className="vx-label">Número</div>
-                    <input className="vx-input" value={titular.numero}
-                      onChange={(e) => setTitular({ ...titular, numero: e.target.value })} /></label>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-                  <label><div className="vx-label">E-mail do titular</div>
-                    <input className="vx-input" type="email" value={titular.email}
-                      onChange={(e) => setTitular({ ...titular, email: e.target.value })} /></label>
-                  <label><div className="vx-label">Telefone</div>
-                    <input className="vx-input vx-mono" inputMode="tel" value={titular.telefone}
-                      onChange={(e) => setTitular({ ...titular, telefone: e.target.value })} /></label>
-                </div>
-
-                <div className="vx-mut" style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
-                  <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                  Os dados do cartão vão direto ao processador de pagamento. A RYCS não guarda o número nem o CVV.
-                </div>
-              </>
             )}
 
             {forma === "STRIPE" && (
@@ -211,21 +165,13 @@ function ModalCheckoutDestaque({ tipo, onFechar, onConfirmado, aviso }) {
               </div>
             )}
 
-            {forma === "PIX_AUTOMATICO" && (
-              <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
-                <QrCode size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                Geramos um QR Code de {money(TAXA_ATIVACAO_PIX_AUTOMATICO)} para autorizar o débito automático mensal de {money(d.preco)}.
-                O destaque é ativado quando o pagamento for detectado.
-              </div>
-            )}
-
             <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 16 }}
               disabled={processando || !forma} onClick={contratar}>
               {processando
                 ? <><Loader size={15} /> Processando…</>
                 : forma === "STRIPE"
-                  ? <><CreditCard size={15} /> Continuar para o pagamento</>
-                  : <><CreditCard size={15} /> Confirmar {money(d.preco)}/mês</>}
+                  ? <><Globe size={15} /> Continuar para o pagamento</>
+                  : <><QrCode size={15} /> Pagar {money(d.preco)} com Pix</>}
             </button>
             <p className="vx-chart-source">
               Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.
@@ -293,7 +239,7 @@ export default function DestaqueEmpresa({ emp, up, aviso, recarregar }) {
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
               </div>
               <div style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center", marginBottom: 4 }}>
-                cartão ou Pix automático · cancele quando quiser
+Pix · cancele quando quiser
               </div>
               {d.frase && (
                 <div style={{ fontSize: 12.5, color: "var(--ink-2)", textAlign: "center", margin: "8px 0 0", fontWeight: 500, lineHeight: 1.45 }}>
