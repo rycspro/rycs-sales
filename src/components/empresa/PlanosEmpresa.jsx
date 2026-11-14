@@ -79,8 +79,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     }
     const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
     if (ehCartao && !cardSalvoId) {
+      const LABELS = { nome: "nome no cartão", numero: "número do cartão", validadeMes: "mês de validade", validadeAno: "ano de validade", cvv: "CVV" };
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
-      if (faltando.length) return aviso("Preencha todos os dados do cartão.");
+      if (faltando.length) return aviso(`Preencha: ${faltando.map(([k]) => LABELS[k] || k).join(", ")}.`);
       if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
     }
 

@@ -501,8 +501,9 @@ router.post("/subscription", async (req, res) => {
       } else {
         const cartao = req.body?.cartao || {};
         const titular = req.body?.titular || {};
+        const LABELS = { numero: "número", validadeMes: "mês", validadeAno: "ano", cvv: "CVV", nome: "nome" };
         const faltando = ["numero", "validadeMes", "validadeAno", "cvv", "nome"].filter((k) => !String(cartao[k] || "").trim());
-        if (faltando.length) return res.status(400).json({ error: "Preencha todos os dados do cartão." });
+        if (faltando.length) return res.status(400).json({ error: `Preencha: ${faltando.map((k) => LABELS[k]).join(", ")}.` });
 
         corpo.creditCard = {
           holderName: cartao.nome,
