@@ -4,7 +4,7 @@ import SegurancaConta from "../conta/SegurancaConta.jsx";
 import { useState, useEffect, useRef } from "react";
 import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
-  Briefcase, AlertCircle, ChevronRight, Globe,
+  AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
   ImagePlus, Trash2, Eye, EyeOff, Sparkles,
 } from "lucide-react";
@@ -47,7 +47,6 @@ const NOTIF_OPCOES = [
 
 const SECOES_NAV = [
   { key: "dados", label: "Dados da empresa", icon: Building2 },
-  { key: "comercial", label: "Comercial", icon: Briefcase },
   { key: "plano", label: "Plano e pagamentos", icon: CreditCard },
   { key: "visibilidade", label: "Visibilidade", icon: Sparkles },
   { key: "notificacoes", label: "Notificações", icon: Bell },
@@ -378,8 +377,9 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     setSalvando(true);
     const payload = {};
     [...CAMPOS_EMPRESA, ...CAMPOS_CONTATO, ...CAMPOS_COMERCIAL].forEach(([k]) => { payload[k] = form[k] || ""; });
-    payload.diferenciais = form.diferenciais || "";
-    payload.objecoes = form.objecoes || "";
+    // Argumentação de vendas (diferenciais/objeções) agora é gerida em Materiais;
+    // esta página não grava mais esses campos para não sobrescrever o que é
+    // editado lá.
     payload.cor = form.cor || "";
     payload.notifEmail = form.notifEmail;
     payload.notifSubmissoes = form.notifSubmissoes;
@@ -516,24 +516,6 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
           <FGrid>
             <FInput label="E-mail comercial" value={form.contatoComercial} onChange={set("contatoComercial")} type="email" placeholder="comercial@empresa.com.br" />
             <FInput label="E-mail financeiro" value={form.contatoFinanceiro} onChange={set("contatoFinanceiro")} type="email" placeholder="financeiro@empresa.com.br" />
-          </FGrid>
-        </Block>
-      </>
-    ),
-
-    comercial: (
-      <>
-        <PgHead title="Informações comerciais" description="Configure seu perfil de cliente ideal e argumentação de vendas." />
-        <Block title="Dados comerciais">
-          <FGrid>
-            <FInput label="Ticket médio" value={form.ticket} onChange={set("ticket")} placeholder="Ex: R$ 2.000" />
-            <FInput label="Perfil de cliente ideal (ICP)" value={form.icp} onChange={set("icp")} placeholder="Ex: PMEs do setor de saúde" />
-          </FGrid>
-        </Block>
-        <Block title="Argumentação de vendas" description="Ajuda os profissionais a apresentar e defender sua solução.">
-          <FGrid cols={1}>
-            <FTextarea label="Diferenciais" value={form.diferenciais} onChange={set("diferenciais")} placeholder="O que torna sua solução única?" />
-            <FTextarea label="Objeções mais comuns" value={form.objecoes} onChange={set("objecoes")} placeholder="Quais dúvidas ou resistências o cliente costuma ter?" />
           </FGrid>
         </Block>
       </>
