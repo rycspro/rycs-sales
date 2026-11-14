@@ -19,6 +19,7 @@ import { normalizarDocumento } from "../../shared/onboarding.js";
 import { TRIAL_SECRETO_DIAS, TRIAL_LINK_VALIDADE_DIAS, podeConcederTrialSecreto, podeResgatarConvite, estadoDoConvite, MOTIVOS_CONVITE } from "../../shared/trialSecreto.js";
 
 const router = Router();
+const creditosEmCurso = new Set();
 
 router.get("/plans", (_req, res) => {
   res.json(ORDEM_PLANOS.map((k) => ({ chave: k, ...PLANOS[k] })));
@@ -351,7 +352,11 @@ router.get("/subscription", (req, res) => {
 // Contratar um plano. O Free é imediato; os pagos geram cobrança recorrente e
 // só passam a valer quando o gateway confirmar o pagamento.
 router.post("/subscription", async (req, res) => {
-  const credito = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase() === "CREDIT_CARD";
+  const formaSolicitada = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
+  if (formaSolicitada === "DEBIT_CARD")
+    return res.status(400).json({ error: "Assinaturas no Asaas aceitam cartão de crédito." });
+  const credito = formaSolicitada === "CREDIT_CARD";
+  let empresaEmCurso;
   const timeout = credito ? null : setTimeout(() => {
     if (!res.headersSent) {
       console.error("[assinatura] timeout de 50 s — resposta forçada");
@@ -383,6 +388,31 @@ router.post("/subscription", async (req, res) => {
   }
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  let tentativaCredito;
+  if (credito && chave !== "free") {
+    if (creditosEmCurso.has(entityId))
+      return res.status(409).json({ error: "Já existe uma solicitação de assinatura em processamento." });
+    creditosEmCurso.add(entityId);
+    empresaEmCurso = entityId;
+    tentativaCredito = db.prepare("SELECT * FROM credit_subscription_attempts WHERE companyId = ?").get(entityId);
+    if (tentativaCredito && (tentativaCredito.plano !== chave || tentativaCredito.ciclo !== ciclo))
+      return res.status(409).json({ error: "Uma contratação anterior está em conciliação. Aguarde a confirmação antes de escolher outro plano." });
+  }
+
+  if (credito && !tentativaCredito && chave !== "free") {
+    const existente = db.prepare(`SELECT * FROM subscriptions WHERE companyId = ? AND plano = ? AND ciclo = ?
+      AND formaPagamento = 'CREDIT_CARD' AND asaasId IS NOT NULL AND status IN ('pendente', 'trial', 'ativa')
+      ORDER BY criadoEm DESC LIMIT 1`).get(entityId, chave, ciclo);
+    if (existente) {
+      const onboarding = doOnboarding ? concluirEtapaOnboarding(entityId, "plano") : null;
+      return res.json({
+        ok: true, reaproveitado: true, onboardingConcluido: !!onboarding, subscriptionId: existente.id,
+        status: existente.status, jaPago: existente.status === "ativa", trialDias: existente.trialDias,
+        primeiraCobranca: existente.proximaCobranca, formaPagamento: "CREDIT_CARD",
+      });
+    }
+  }
 
   // Checkout pendente não pode mais ser um beco sem saída. Antes isto recusava
   // com 409 e a empresa ficava presa: sem link válido e sem como gerar outro.
@@ -423,12 +453,16 @@ router.post("/subscription", async (req, res) => {
 
   // Pendente de OUTRO plano, ou pendente sem link recuperável: cancela antes
   // de abrir a próxima. Deixar as duas vivas no gateway é cobrar duas vezes.
-  if (pendente) {
+  if (pendente && !tentativaCredito) {
     // Checkout em dólar aberto antes: o link do Stripe deixa de valer.
     if (pendente.gateway === "stripe") await encerrarCheckoutPendente(pendente);
     if (pendente.asaasId && asaasAtivo()) {
       try { await asaas(`/subscriptions/${pendente.asaasId}`, { method: "DELETE" }); }
-      catch (e) { console.warn("[asaas] cancelamento do checkout anterior:", e.message); }
+      catch (e) {
+        console.warn("[asaas] cancelamento do checkout anterior:", e.status ?? 0);
+        if (credito && e.status !== 404)
+          return res.status(502).json({ error: "Não foi possível confirmar o cancelamento da assinatura anterior." });
+      }
     }
     // Pix Automático ainda não autorizado: o QR antigo não pode continuar valendo.
     if (pendente.asaasAutorizacaoId && !pendente.asaasId && asaasAtivo()) {
@@ -459,19 +493,19 @@ router.post("/subscription", async (req, res) => {
   // deposita caixa de campanha só para poder assinar: o cliente nasce aqui.
   let customerId;
   try {
-    customerId = await garantirCliente(db, empresa);
+    customerId = tentativaCredito?.customerId || await garantirCliente(db, empresa);
   } catch (err) {
     return res.status(err.faltaDocumento ? 400 : 502).json({ error: err.message });
   }
 
-  const subId = uid();
+  const subId = tentativaCredito?.id || uid();
   const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
   try {
     let voucher=null, calculo={valorOriginal:valorBase,desconto:0,valorFinal:valorBase};
-    if(req.body?.voucher){const v=validarVoucher(db,{codigo:req.body.voucher,plano:chave,companyId:entityId});if(!v.ok)return res.status(422).json({error:v.error});voucher=v.voucher;calculo=calcularVoucher(valorBase,voucher);}
+    if(!tentativaCredito && req.body?.voucher){const v=validarVoucher(db,{codigo:req.body.voucher,plano:chave,companyId:entityId});if(!v.ok)return res.status(422).json({error:v.error});voucher=v.voucher;calculo=calcularVoucher(valorBase,voucher);}
     // Cartão é a forma prioritária; Pix continua aceito, e o Pix Automático
     // entra pela etapa 5 do onboarding.
-    if (!["CREDIT_CARD", "DEBIT_CARD", "PIX", "PIX_AUTOMATICO"].includes(forma))
+    if (!["CREDIT_CARD", "PIX", "PIX_AUTOMATICO"].includes(forma))
       return res.status(400).json({ error: "Forma de pagamento inválida." });
     if (forma === "PIX_AUTOMATICO" && !doOnboarding)
       return res.status(400).json({ error: "O Pix Automático é contratado na etapa de plano do cadastro." });
@@ -479,10 +513,12 @@ router.post("/subscription", async (req, res) => {
     // Com trial, a primeira cobrança cai no fim dele. Sem trial, em 3 dias —
     // prazo que o Pix precisa para o boleto/QR não vencer antes de ser pago.
     // Planos marcados com trial:false (ex.: Start) não têm período gratuito.
-    const trialDias = PLANOS[chave]?.trial === false
+    const dadosTentativa = tentativaCredito ? JSON.parse(tentativaCredito.dados) : null;
+    if (dadosTentativa) ({ voucher, calculo } = dadosTentativa);
+    const trialDias = dadosTentativa?.trialDias ?? (PLANOS[chave]?.trial === false
       ? 0
-      : (doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO);
-    const vencimento = trialDias
+      : (doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO));
+    const vencimento = dadosTentativa ? new Date(dadosTentativa.vencimento) : trialDias
       ? primeiraCobranca({ trialDias })
       : new Date(Date.now() + 3 * 86400000);
 
@@ -506,33 +542,25 @@ router.post("/subscription", async (req, res) => {
 
     const corpo = {
       customer: customerId,
-      billingType: forma === "DEBIT_CARD" ? "CREDIT_CARD" : forma,
+      billingType: forma,
       value: valorAsaas,
       nextDueDate: vencimento.toISOString().split("T")[0],
       cycle: CICLO_ASAAS[ciclo] || "MONTHLY",
       description: `RYCS ${plano.nome} — assinatura ${CICLO_LABEL[ciclo] || "mensal"}`,
-      externalReference: `sub:${entityId}`,
+      externalReference: credito ? `sub:${subId}` : `sub:${entityId}`,
     };
 
     // Dados do cartão vão ao gateway e não ficam aqui. O que voltamos a
     // guardar é o que o Asaas devolve tokenizado: bandeira e quatro dígitos.
-    if (forma === "CREDIT_CARD" || forma === "DEBIT_CARD") {
-      if (forma === "CREDIT_CARD") {
-        if (!isIP(req.ip))
-          return res.status(400).json({ error: "Não foi possível identificar o IP do pagador." });
-        corpo.remoteIp = req.ip;
-      }
+    if (credito && !tentativaCredito) {
+      if (!isIP(req.ip))
+        return res.status(400).json({ error: "Não foi possível identificar o IP do pagador." });
+      corpo.remoteIp = req.ip;
       const savedCardId = req.body?.savedCardId;
       if (savedCardId) {
         const saved = db.prepare("SELECT * FROM saved_cards WHERE id = ? AND companyId = ?").get(savedCardId, entityId);
         if (!saved) return res.status(400).json({ error: "Cartão salvo não encontrado." });
         corpo.creditCardToken = saved.token;
-        corpo.creditCardHolderInfo = {
-          name: saved.holderName || empresa.nome,
-          cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
-          postalCode: String(empresa.cep || "").replace(/\D/g, "") || undefined,
-          addressNumber: String(empresa.numero || "") || "0",
-        };
       } else {
         const cartao = req.body?.cartao || {};
         const titular = req.body?.titular || {};
@@ -547,40 +575,81 @@ router.post("/subscription", async (req, res) => {
           expiryYear: String(cartao.validadeAno).length === 2 ? `20${cartao.validadeAno}` : String(cartao.validadeAno),
           ccv: String(cartao.cvv),
         };
-        let email = titular.email;
-        if (forma === "CREDIT_CARD") {
-          email = String(email || "").trim() ||
-            db.prepare("SELECT email FROM users WHERE id = ?").get(req.user.id)?.email;
-          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-            return res.status(400).json({ error: "Informe um e-mail válido do titular.", campo: "email" });
-        }
+        const email = String(titular.email || "").trim() ||
+          db.prepare("SELECT email FROM users WHERE id = ?").get(req.user.id)?.email;
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+          return res.status(400).json({ error: "Informe um e-mail válido do titular.", campo: "email" });
+
+        const documento = normalizarDocumento(titular.documento || empresa.documento);
+        const cep = String(titular.cep || "").replace(/\D/g, "");
+        const endereco = String(titular.numero || "").trim();
+        const { number, expiryMonth, expiryYear, ccv } = corpo.creditCard;
+        const mes = Number(expiryMonth);
+        const ano = Number(expiryYear);
+        const hoje = new Date();
+        if (!/^\d{13,19}$/.test(number) || !/^\d{3,4}$/.test(ccv) ||
+            !/^\d{2}$/.test(expiryMonth) || mes < 1 || mes > 12 ||
+            !/^\d{4}$/.test(expiryYear) || new Date(ano, mes, 1) <= hoje)
+          return res.status(400).json({ error: "Confira o número, a validade e o CVV do cartão." });
+        if (!documento || cep.length !== 8 || !endereco)
+          return res.status(400).json({ error: "Informe CPF ou CNPJ, CEP e número do endereço do titular." });
         corpo.creditCardHolderInfo = {
           name: titular.nome || cartao.nome,
           email: email || undefined,
-          cpfCnpj: String(titular.documento || empresa.documento).replace(/\D/g, ""),
-          postalCode: String(titular.cep || "").replace(/\D/g, ""),
-          addressNumber: String(titular.numero || "") || "0",
+          cpfCnpj: documento,
+          postalCode: cep,
+          addressNumber: endereco,
           phone: String(titular.telefone || empresa.telefoneEmpresa || "").replace(/\D/g, "") || undefined,
         };
-        if (forma === "DEBIT_CARD" && req.body?.remoteIp) corpo.remoteIp = String(req.body.remoteIp);
       }
     }
 
     let cobranca;
     try {
-      cobranca = await asaas("/subscriptions", {
-        method: "POST", body: corpo, timeoutMs: forma === "CREDIT_CARD" ? 60_000 : undefined,
-      });
+      if (tentativaCredito) {
+        const filtros = new URLSearchParams({ customer: customerId, externalReference: corpo.externalReference });
+        const lista = await asaas(`/subscriptions?${filtros}`);
+        const resultados = lista?.data || [];
+        if (resultados.length !== 1 || !resultados[0].id)
+          return res.status(409).json({ error: "A contratação anterior ainda não pôde ser conciliada. Consulte o suporte antes de tentar outro pagamento." });
+        cobranca = resultados[0];
+      } else {
+        if (credito) db.prepare("INSERT INTO credit_subscription_attempts (companyId, id, customerId, plano, ciclo, dados, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)")
+          .run(entityId, subId, customerId, chave, ciclo,
+            JSON.stringify({ voucher: voucher ? { id: voucher.id } : null, calculo, trialDias, vencimento: vencimento.getTime() }), agora());
+        cobranca = await asaas("/subscriptions", {
+          method: "POST", body: corpo, timeoutMs: credito ? 60_000 : undefined,
+        });
+        if (!cobranca?.id) throw new Error("Asaas retornou uma assinatura sem identificador");
+      }
     } catch (err) {
-      if (forma === "CREDIT_CARD" && err instanceof AsaasError && err.status === 400)
-        return res.status(400).json({ error: err.message });
-      if (forma === "CREDIT_CARD" && err.cause?.name === "AbortError")
-        return res.status(504).json({ error: "O Asaas demorou a responder. Verifique se a assinatura foi criada antes de tentar novamente." });
+      if (credito) {
+        const codigos = Array.isArray(err.corpo?.errors) ? err.corpo.errors.map((erro) => erro.code).filter(Boolean) : [];
+        console.warn("[asaas] checkout de crédito", {
+          tentativa: subId, etapa: tentativaCredito ? "conciliar" : "criar", status: err.status ?? 0,
+          codigos, causa: err.cause?.cause?.code || err.cause?.name,
+        });
+        if (!tentativaCredito && [400, 401, 403, 404, 422, 429].includes(err.status)) {
+          db.prepare("DELETE FROM credit_subscription_attempts WHERE id = ?").run(subId);
+          if (err.status === 400) return res.status(400).json({ error: err.message });
+          return res.status(502).json({ error: "O serviço de pagamento não aceitou a solicitação. Tente mais tarde." });
+        }
+        return res.status(err.cause?.name === "AbortError" ? 504 : 502)
+          .json({ error: "Não foi possível confirmar a contratação. Uma nova tentativa consultará a solicitação anterior." });
+      }
       throw err;
     }
 
-    let pagamento=null,pix=null;
-    try{const lista=await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=1`);pagamento=lista?.data?.[0]||null;if(pagamento?.id)pix=await asaas(`/payments/${pagamento.id}/pixQrCode`);}catch(e){console.warn("[asaas] QR da assinatura:",e.message);}
+    let pagamento = null, pix = null;
+    if (!credito) {
+      try {
+        const lista = await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=1`);
+        pagamento = lista?.data?.[0] || null;
+        if (pagamento?.id) pix = await asaas(`/payments/${pagamento.id}/pixQrCode`);
+      } catch (e) {
+        console.warn("[asaas] QR da assinatura:", e.message);
+      }
+    }
 
     // Com trial, a assinatura já nasce liberando acesso: o cartão foi
     // cadastrado e a cobrança está agendada. Sem trial, fica pendente até o
@@ -595,10 +664,12 @@ router.post("/subscription", async (req, res) => {
            trialFim, trialDias, forma, cartaoInfo.creditCardNumber || "", cartaoInfo.creditCardBrand || "", vencimento.getTime(), ciclo, agora());
       // Trial já vale como plano corrente na empresa: é o que libera as telas.
       if (trialDias > 0) db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(chave, entityId);
-      if(voucher)db.prepare(`INSERT INTO voucher_redemptions (id,voucherId,companyId,subscriptionId,valorOriginal,desconto,valorFinal,status,criadoEm) VALUES (?,?,?,?,?,?,?,'reservado',?)`).run(uid(),voucher.id,entityId,subId,calculo.valorOriginal,calculo.desconto,calculo.valorFinal,agora());})();
+      if(voucher)db.prepare(`INSERT INTO voucher_redemptions (id,voucherId,companyId,subscriptionId,valorOriginal,desconto,valorFinal,status,criadoEm) VALUES (?,?,?,?,?,?,?,'reservado',?)`).run(uid(),voucher.id,entityId,subId,calculo.valorOriginal,calculo.desconto,calculo.valorFinal,agora());
+      if (credito) db.prepare("DELETE FROM credit_subscription_attempts WHERE id = ?").run(subId);
+    })();
 
     // Salvar cartão para uso futuro, se pedido
-    if (req.body?.salvarCartao && cartaoInfo.creditCardToken) {
+    if (!tentativaCredito && req.body?.salvarCartao && cartaoInfo.creditCardToken) {
       const jaExiste = db.prepare("SELECT id FROM saved_cards WHERE companyId = ? AND token = ?").get(entityId, cartaoInfo.creditCardToken);
       if (!jaExiste) {
         db.prepare(`INSERT INTO saved_cards (id, companyId, apelido, bandeira, final4, token, holderName, tipo, criadoEm)
@@ -630,7 +701,6 @@ router.post("/subscription", async (req, res) => {
   } catch (err) {
     console.error("[asaas] assinatura:", err.message);
     let msg = err instanceof AsaasError ? err.message : "Erro ao criar assinatura";
-    if (forma === "DEBIT_CARD") msg = msg.replace(/cartão de crédito/gi, "cartão");
     if (!res.headersSent) res.status(502).json({ error: msg });
   }
   } catch (fatalErr) {
@@ -638,6 +708,7 @@ router.post("/subscription", async (req, res) => {
     if (!res.headersSent) res.status(500).json({ error: "Erro interno ao processar a assinatura. Tente novamente." });
   } finally {
     clearTimeout(timeout);
+    if (empresaEmCurso) creditosEmCurso.delete(empresaEmCurso);
   }
 });
 
@@ -895,7 +966,7 @@ export function marcarInadimplencia(asaasSubscriptionId, motivo = "") {
 
 export function ativarAssinatura(asaasSubscriptionId) {
   const sub = db.prepare("SELECT * FROM subscriptions WHERE asaasId = ?").get(asaasSubscriptionId);
-  if (!sub || sub.status === "ativa") return;
+  if (!sub || sub.status === "ativa" || sub.status === "cancelada") return;
 
   db.transaction(() => {
     // A próxima cobrança é um mês à frente. Guardada aqui para o painel do

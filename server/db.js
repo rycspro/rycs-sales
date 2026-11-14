@@ -337,6 +337,16 @@ db.exec(`
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
 
+  CREATE TABLE IF NOT EXISTS credit_subscription_attempts (
+    companyId TEXT PRIMARY KEY,
+    id TEXT NOT NULL,
+    customerId TEXT NOT NULL,
+    plano TEXT NOT NULL,
+    ciclo TEXT NOT NULL,
+    dados TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+
   -- Convites de trial. O token NÃO é guardado: fica só o hash dele.
   -- Um vazamento do banco entregaria acessos gratuitos de graça, e link de
   -- convite é credencial como qualquer outra.

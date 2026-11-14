@@ -49,12 +49,19 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
 
   // Gateway falso: o cartão terminado em 0002 é recusado.
   const assinaturasAsaas = [];
+  let assinaturaCriada;
   const baseAsaas = servidorFalso(t, (req, corpo) => {
     if (req.url.startsWith("/customers")) return [200, { id: "cus_teste" }];
     if (req.url.startsWith("/subscriptions") && req.method === "POST") {
       assinaturasAsaas.push(corpo);
       if (corpo.creditCard?.number?.endsWith("0002")) return [400, { errors: [{ description: "Transação não autorizada." }] }];
-      return [200, { id: "sub_teste", creditCard: { creditCardNumber: "4242", creditCardBrand: "VISA" } }];
+      assinaturaCriada = { id: "sub_teste", externalReference: corpo.externalReference,
+        creditCard: { creditCardNumber: "4242", creditCardBrand: "VISA" } };
+      return [503, { errors: [{ code: "gateway_unavailable" }] }];
+    }
+    if (req.url.startsWith("/subscriptions?")) {
+      const filtros = new URL(req.url, "http://localhost").searchParams;
+      return [200, { data: assinaturaCriada?.externalReference === filtros.get("externalReference") ? [assinaturaCriada] : [] }];
     }
     if (req.url.startsWith("/payments")) return [200, { data: [] }];
     return [404, { errors: [{ description: "rota falsa inexistente" }] }];
@@ -152,12 +159,21 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
     cartao: { nome: "Ana Silva", numero, validadeMes: "12", validadeAno: "40", cvv: "123" },
     titular: { email: "titular@exemplo.invalid", documento: "12345678909", cep: "01001000", numero: "10" },
   } });
+  const debito = await req("/subscription", { cookie: ck, body: { plano: "scale", formaPagamento: "DEBIT_CARD" } });
+  assert.equal(debito.status, 400);
+  assert.equal(assinaturasAsaas.length, 0);
   let c = await checkout("4000000000000002");
   assert.equal(c.status, 400); assert.match(c.corpo.error, /não autorizada/);
   assert.equal((await req("/onboarding", { cookie: ck })).corpo.atual, "plano");
   c = await checkout("4242424242424242");
+  assert.equal(c.status, 502);
+  assert.equal((await req("/onboarding", { cookie: ck })).corpo.atual, "plano");
+  c = await checkout("4242424242424242");
   assert.equal(c.status, 200); assert.equal(c.corpo.status, "trial"); assert.equal(c.corpo.trialDias, 3);
   assert.equal(c.corpo.onboardingConcluido, true);
+  const repetido = await checkout("4242424242424242");
+  assert.equal(repetido.status, 200);
+  assert.equal(repetido.corpo.subscriptionId, c.corpo.subscriptionId);
   assert.equal(assinaturasAsaas.length, 2);
   assert.equal(assinaturasAsaas[1].remoteIp, "203.0.113.10");
   assert.equal(assinaturasAsaas[1].creditCardHolderInfo.email, "titular@exemplo.invalid");

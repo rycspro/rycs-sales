@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -6,54 +6,6 @@ import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shar
 import PricingPlanos from "./PricingPlanos.jsx";
 import CheckoutStripe from "./CheckoutStripe.jsx";
 import HoloCard from "../HoloCard.jsx";
-
-const FRASES_PROCESSANDO = [
-  "Consultando o gateway de pagamento…",
-  "Verificando os dados do cartão…",
-  "Autenticando a transação…",
-  "Registrando a assinatura…",
-  "Confirmando com o processador…",
-  "Ativando o seu plano…",
-  "Finalizando a configuração…",
-];
-
-function ProcessandoPagamento() {
-  const [indice, setIndice] = useState(0);
-  const [progresso, setProgresso] = useState(0);
-  const timer = useRef(null);
-
-  useEffect(() => {
-    timer.current = setInterval(() => {
-      setIndice((i) => (i + 1) % FRASES_PROCESSANDO.length);
-    }, 2400);
-    return () => clearInterval(timer.current);
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setProgresso((p) => Math.min(p + (p < 60 ? 4 : p < 85 ? 1.5 : 0.3), 95));
-    }, 300);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <>
-      <div style={{ width: "100%", height: 6, borderRadius: 999, background: "var(--surface-2, #E2E8F0)", overflow: "hidden", marginBottom: 24 }}>
-        <div style={{
-          height: "100%", borderRadius: 999,
-          background: "linear-gradient(90deg, var(--brand) 0%, #0EA5E9 100%)",
-          width: `${progresso}%`,
-          transition: "width .3s ease-out",
-        }} />
-      </div>
-      <Loader size={36} color="var(--brand)" style={{ animation: "spin 1s linear infinite", marginBottom: 16 }} />
-      <h2 style={{ margin: "0 0 12px", fontSize: 20, fontWeight: 700 }}>Processando pagamento…</h2>
-      <p className="vx-mut" style={{ margin: 0, minHeight: 40, transition: "opacity .3s" }} key={indice}>
-        {FRASES_PROCESSANDO[indice]}
-      </p>
-    </>
-  );
-}
 
 const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
   chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui, trial: PLANOS[k].trial,
@@ -78,7 +30,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [cardSalvoId, setCardSalvoId] = useState(null); // cartão salvo selecionado
   const [stripe, setStripe] = useState(null);
   const [embutido, setEmbutido] = useState(null);
-  const [statusPagamento, setStatusPagamento] = useState(null); // null | "processando" | "confirmado"
+  const [statusPagamento, setStatusPagamento] = useState(null);
   const [vouchersUsados, setVouchersUsados] = useState([]);
 
   const carregar = useCallback(async () => {
@@ -126,7 +78,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       window.location.href = r.url;
       return;
     }
-    const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
+    const ehCartao = forma === "CREDIT_CARD";
     if (ehCartao && !cardSalvoId) {
       const LABELS = { nome: "nome no cartão", numero: "número do cartão", validadeMes: "mês de validade", validadeAno: "ano de validade", cvv: "CVV" };
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
@@ -153,14 +105,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     // Atualizar cartões salvos caso tenha salvo um novo
     if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));
 
-    // Fluxo visual: processando → confirmado (com timeout de segurança)
-    setStatusPagamento("processando");
-    const timeout = setTimeout(() => setStatusPagamento("confirmado"), 15000);
-    try {
-      await Promise.all([carregar(), recarregar?.()]);
-    } catch { /* falha de reload não deve travar a UI */ }
-    clearTimeout(timeout);
-    setTimeout(() => setStatusPagamento("confirmado"), r?.jaPago ? 500 : 2500);
+    setStatusPagamento(r.jaPago ? "confirmado" : "registrada");
+    await Promise.all([carregar(), recarregar?.()]);
   };
 
   const abrirPortal = async () => {
@@ -311,13 +257,13 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                   {[
-                    { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão de crédito ou débito · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
+                    { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão de crédito · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
                     ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
                   ].map(({ id, titulo, sub, icone }) => {
                     const on = origem === id;
                     return (
                       <button key={id} type="button"
-                        onClick={() => setForma(id === "nacional" ? "DEBIT_CARD" : "STRIPE")}
+                        onClick={() => setForma(id === "nacional" ? "CREDIT_CARD" : "STRIPE")}
                         style={{
                           flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                           padding: "16px 12px", borderRadius: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
@@ -333,22 +279,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   })}
                 </div>
 
-                {/* Formas específicas do pagamento nacional (Asaas) */}
-                {origem === "nacional" && (
-                  <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                    {[["DEBIT_CARD", "Cartão de débito"], ["CREDIT_CARD", "Cartão de crédito"]].map(([k, t]) => (
-                      <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
-                        flex: 1, fontSize: 12,
-                        borderColor: forma === k ? "var(--brand)" : undefined,
-                        background: forma === k ? "var(--brand-50)" : undefined,
-                        color: forma === k ? "var(--brand)" : undefined,
-                      }}>{t}</button>
-                    ))}
-                  </div>
-                )}
-
                 {/* Cartões salvos + Formulário de cartão */}
-                {(forma === "CREDIT_CARD" || forma === "DEBIT_CARD") && (
+                {(forma === "CREDIT_CARD") && (
                   <>
                     {cartoesSalvos.length > 0 && (
                       <div style={{ marginBottom: 14 }}>
@@ -387,7 +319,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                         number={cartao.numero || "0000000000000000"}
                         expires={cartao.validadeMes && cartao.validadeAno ? `${String(cartao.validadeMes).padStart(2, "0")}/${String(cartao.validadeAno).slice(-2)}` : "••/••"}
                         cvv={cartao.cvv || "•••"}
-                        tier={forma === "DEBIT_CARD" ? "Débito" : "Crédito"}
+                        tier="Crédito"
                       />
                     </div>
                     <label><div className="vx-label">Nome impresso no cartão</div>
@@ -470,22 +402,19 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
         </div>
       )}
 
-      {/* Overlay de status: processando → confirmado */}
       {statusPagamento && (
         <div className="vx-overlay" style={{ zIndex: 1100 }}>
           <div className="vx-sheet" style={{ maxWidth: 420, textAlign: "center", padding: "40px 32px" }}>
-            {statusPagamento === "processando" ? (
-              <ProcessandoPagamento />
-            ) : (
-              <>
-                <CheckCircle size={56} color="#22c55e" style={{ marginBottom: 16 }} />
-                <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: "#22c55e" }}>Pagamento confirmado!</h2>
-                <p className="vx-mut" style={{ margin: "0 0 24px" }}>Seu plano já está ativo. Comece a usar agora!</p>
-                <button className="vx-btn vx-btn-primary" onClick={() => { setStatusPagamento(null); setSelecionado(null); }}>
-                  Comece a usar
-                </button>
-              </>
-            )}
+            <CheckCircle size={56} color="var(--brand)" style={{ marginBottom: 16 }} />
+            <h2 style={{ margin: "0 0 8px", fontSize: 20 }}>
+              {statusPagamento === "confirmado" ? "Pagamento confirmado" : "Assinatura registrada"}
+            </h2>
+            <p className="vx-mut" style={{ margin: "0 0 24px" }}>
+              {statusPagamento === "confirmado" ? "Seu plano está ativo." : "A primeira cobrança será processada no vencimento."}
+            </p>
+            <button className="vx-btn vx-btn-primary" onClick={() => { setStatusPagamento(null); setSelecionado(null); }}>
+              Fechar
+            </button>
           </div>
         </div>
       )}
