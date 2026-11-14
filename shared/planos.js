@@ -35,7 +35,7 @@ export const PLANOS = {
     nome: "Growth",
     preco: 799,
     takeRate: 0.15,
-    trial: true,
+    trial: false,
     limites: { campanhasAtivas: 10, vendedores: 50, destaque: false },
     inclui: [
       "10 campanhas ativas",

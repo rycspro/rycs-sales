@@ -129,7 +129,7 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 .vx-beta-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
 @media (max-width:640px){
   .vx-free-banner{grid-template-columns:1fr!important;gap:14px!important}
-  .vx-free-banner>div:first-child{border-right:none!important;padding-right:0!important;border-bottom:1px solid var(--border);padding-bottom:12px!important}
+  .vx-free-banner>div:first-child{border-right:none!important;padding-right:0!important;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:12px!important}
   .vx-free-banner>button{width:100%}
   .vx-word{font-size:14px;gap:6px}
   .vx-mark{width:23px;height:23px;border-radius:7px}

@@ -59,18 +59,20 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
         style={{
           display: "grid", gridTemplateColumns: "minmax(140px, 190px) 1fr auto",
           alignItems: "center", gap: 24, padding: "20px 24px", marginBottom: 20,
-          border: noFree ? "2px solid var(--brand)" : "1px solid var(--border)",
-          background: noFree ? "var(--brand-50)" : "var(--surface)",
+          border: "none",
+          background: "linear-gradient(120deg, #2563EB 0%, #4338CA 52%, #0EA5E9 100%)",
+          boxShadow: "0 10px 26px rgba(37,99,235,.28)",
+          color: "#fff",
         }}
       >
         {/* Camada 1 — identidade do plano */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, borderRight: "1px solid var(--border)", paddingRight: 20 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, borderRight: "1px solid rgba(255,255,255,.25)", paddingRight: 20 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,.85)", letterSpacing: ".04em", textTransform: "uppercase" }}>
             {free.nome}
           </span>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>R$ 0</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
+            <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: "#fff", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>R$ 0</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.85)" }}>/mês</span>
           </div>
         </div>
 
@@ -79,10 +81,10 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
           {free.inclui.map((i) => {
             const ehIA = /\bIA\b/.test(i);
             return (
-              <li key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: ehIA ? 600 : 400, color: ehIA ? "var(--brand)" : "var(--text-2, var(--ink))" }}>
+              <li key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: ehIA ? 700 : 500, color: "#fff" }}>
                 {ehIA
-                  ? <Sparkles size={15} color="var(--brand)" strokeWidth={2.2} style={{ flexShrink: 0 }} />
-                  : <Check size={15} color="var(--brand)" strokeWidth={2.4} style={{ flexShrink: 0 }} />} {i}
+                  ? <Sparkles size={15} color="#fff" strokeWidth={2.4} style={{ flexShrink: 0 }} />
+                  : <Check size={15} color="#fff" strokeWidth={2.6} style={{ flexShrink: 0 }} />} {i}
               </li>
             );
           })}
@@ -91,10 +93,16 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
         {/* Camada 3 — ação */}
         <button
           type="button"
-          className={`vx-btn ${noFree ? "" : "vx-btn-primary"}`}
           disabled={noFree}
           onClick={() => onUsarGratis?.()}
-          style={{ fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0, minWidth: 150 }}
+          style={{
+            fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0, minWidth: 150,
+            padding: "10px 18px", borderRadius: 10, fontFamily: "inherit", fontSize: 13.5,
+            cursor: noFree ? "default" : "pointer",
+            border: noFree ? "1px solid rgba(255,255,255,.45)" : "none",
+            background: noFree ? "rgba(255,255,255,.18)" : "#fff",
+            color: noFree ? "#fff" : "var(--brand)",
+          }}
         >
           {noFree ? "Plano atual" : "Usar plano grátis"}
         </button>
@@ -182,7 +190,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
                   background: "var(--brand)", color: "#fff", padding: "4px 10px",
                   borderBottomRightRadius: 12, fontSize: 11, fontWeight: 700,
                 }}>
-                  <Gift size={12} /> 7 dias grátis
+                  <Gift size={12} /> 5 dias grátis
                 </div>
               ) : null}
               {popular && (

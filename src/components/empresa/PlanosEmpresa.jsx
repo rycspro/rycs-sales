@@ -144,7 +144,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
         <div style={{ padding: "4px 0 16px" }}>
           <div className="vx-eyebrow">Assinatura empresarial</div>
           <h1 className="vx-disp" style={{ margin: "2px 0 3px" }}>Planos RYCS</h1>
-          <p style={{ margin: 0 }}>Escolha o plano que acompanha o ritmo da sua operação: quanto mais você escala, menor a taxa por movimentações. Comece com 7 dias grátis, sem compromisso.</p>
+          <p style={{ margin: 0 }}>Escolha o plano que acompanha o ritmo da sua operação: quanto mais você escala, menor a taxa por movimentações. Comece com 5 dias grátis nos planos Scale e Premium, sem compromisso.</p>
         </div>
 
         <div style={{ padding: "4px 0 8px" }}>
