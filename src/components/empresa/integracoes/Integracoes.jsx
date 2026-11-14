@@ -1,8 +1,74 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, X, Clock3, ArrowRight, Webhook, Code2, Copy, Check, RefreshCw, Power } from "lucide-react";
+import { Search, X, Clock3, ArrowRight, Webhook, Code2, Copy, Check, RefreshCw, Power, ChevronDown } from "lucide-react";
 import { api } from "../../../lib/api.js";
 import IntegracaoMeta from "../IntegracaoMeta.jsx";
-import { PAISES, FILTROS, STATUS, statusMeta, rotuloCategoria, integracoesDoPais, paisDoIdioma } from "./catalogo.js";
+import { PAISES, FILTROS, STATUS, ORDEM_STATUS, statusMeta, rotuloCategoria, integracoesDoPais, paisDoIdioma } from "./catalogo.js";
+
+// ── Seletor de país (menu suspenso) ─────────────────────────────────────────
+function SeletorPais({ pais, onEscolher }) {
+  const [aberto, setAberto] = useState(false);
+  const atual = PAISES.find((p) => p.chave === pais) || PAISES[0];
+
+  useEffect(() => {
+    if (!aberto) return;
+    const fechar = () => setAberto(false);
+    window.addEventListener("click", fechar);
+    const onKey = (e) => { if (e.key === "Escape") setAberto(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("click", fechar); window.removeEventListener("keydown", onKey); };
+  }, [aberto]);
+
+  return (
+    <div style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={aberto}
+        className="vx-btn vx-btn-sm"
+        style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 190, justifyContent: "space-between" }}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16, lineHeight: 1 }}>{atual.bandeira}</span>{atual.pais}
+        </span>
+        <ChevronDown size={15} style={{ color: "var(--muted)", transition: "transform .15s", transform: aberto ? "rotate(180deg)" : "none" }} />
+      </button>
+
+      {aberto && (
+        <div role="listbox" className="vx-fade" style={{
+          position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 40, minWidth: 220,
+          maxHeight: 340, overflowY: "auto", background: "var(--surface-solid)",
+          border: "1px solid var(--border-strong)", borderRadius: 12, boxShadow: "var(--shadow-pop)", padding: 6,
+        }}>
+          {PAISES.map((p) => {
+            const on = p.chave === pais;
+            return (
+              <button
+                key={p.chave}
+                type="button"
+                role="option"
+                aria-selected={on}
+                onClick={() => { onEscolher(p.chave); setAberto(false); }}
+                style={{
+                  width: "100%", textAlign: "left", font: "inherit", fontSize: 13, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", borderRadius: 8, border: 0,
+                  background: on ? "var(--brand-50)" : "transparent", color: on ? "var(--brand)" : "var(--ink-2)",
+                  fontWeight: on ? 600 : 450,
+                }}
+                onMouseEnter={(e) => { if (!on) e.currentTarget.style.background = "var(--surface-2)"; }}
+                onMouseLeave={(e) => { if (!on) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{ fontSize: 17, lineHeight: 1 }}>{p.bandeira}</span>
+                <span style={{ flex: 1 }}>{p.pais}</span>
+                {on && <Check size={15} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Logotipo oficial da marca ───────────────────────────────────────────────
 // Carrega o ícone oficial (SVG, na cor da marca) sobre um ladrilho branco.
@@ -320,7 +386,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
 
   const lista = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    return catalogo.filter((item) => {
+    const filtrada = catalogo.filter((item) => {
       if (termo && !item.nome.toLowerCase().includes(termo)) return false;
       const st = statusDe(item);
       if (filtro === "conectadas") return st === "conectado";
@@ -328,6 +394,12 @@ export default function Integracoes({ aviso, campanhas = [] }) {
       if (["anuncios", "crm", "formularios", "automacoes"].includes(filtro)) return item.categoria === filtro;
       return true; // "todas"
     });
+    // Ativas/conectáveis primeiro, "Em breve" por último (sort estável mantém a
+    // ordem base do país como critério de desempate).
+    return filtrada
+      .map((item, i) => ({ item, i, rank: ORDEM_STATUS[statusDe(item)] ?? 9 }))
+      .sort((a, b) => a.rank - b.rank || a.i - b.i)
+      .map((x) => x.item);
   }, [busca, filtro, conexao, webhook, catalogo]);
 
   const itemAberto = aberto ? catalogo.find((i) => i.id === aberto) : null;
@@ -342,29 +414,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
             Conecte suas ferramentas e centralize automaticamente os leads para seus profissionais.
           </p>
         </div>
-        <div role="group" aria-label="País das integrações" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {PAISES.map((p) => {
-            const on = pais === p.chave;
-            return (
-              <button
-                key={p.chave}
-                type="button"
-                onClick={() => { setPais(p.chave); setFiltro("todas"); }}
-                aria-pressed={on}
-                title={p.pais}
-                style={{
-                  font: "inherit", fontSize: 12.5, fontWeight: 500, padding: "6px 11px", borderRadius: 999, cursor: "pointer",
-                  display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
-                  border: `1px solid ${on ? "#318CE7" : "var(--border-strong)"}`,
-                  background: on ? "#318CE7" : "var(--surface-solid)",
-                  color: on ? "#fff" : "var(--ink-2)", transition: ".15s",
-                }}
-              >
-                <span style={{ fontSize: 15, lineHeight: 1 }}>{p.bandeira}</span>{p.pais}
-              </button>
-            );
-          })}
-        </div>
+        <SeletorPais pais={pais} onEscolher={(c) => { setPais(c); setFiltro("todas"); }} />
       </div>
 
       {/* Busca */}

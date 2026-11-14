@@ -87,6 +87,29 @@ export const FERRAMENTAS = {
   "razorpay":      { nome: "Razorpay", categoria: "automacoes", dominio: "razorpay.com", cor: "#0C2451", sigla: "Rz", descricao: "Receba leads de pagamentos e cobranças." },
   "justdial":      { nome: "Justdial", categoria: "formularios", dominio: "justdial.com", cor: "#008C44", sigla: "JD", descricao: "Receba contatos gerados no Justdial." },
   "exotel":        { nome: "Exotel", categoria: "automacoes", dominio: "exotel.com", cor: "#5B2EE0", sigla: "Ex", descricao: "Transforme chamadas em leads (Exotel)." },
+
+  // ── França ────────────────────────────────────────────────────────────
+  "sellsy":        { nome: "Sellsy", categoria: "crm", dominio: "sellsy.com", cor: "#6C5CE7", sigla: "Se", descricao: "Integre contatos e vendas do Sellsy." },
+  "axonaut":       { nome: "Axonaut", categoria: "crm", dominio: "axonaut.com", cor: "#2D9CDB", sigla: "Ax", descricao: "Centralize clientes e orçamentos (Axonaut)." },
+
+  // ── Arábia Saudita ────────────────────────────────────────────────────
+  "snapchat-ads":  { nome: "Snapchat Ads", categoria: "anuncios", dominio: "snapchat.com", cor: "#111111", sigla: "Sc", descricao: "Receba leads dos anúncios do Snapchat." },
+  "daftra":        { nome: "Daftra", categoria: "crm", dominio: "daftra.com", cor: "#2E7D32", sigla: "Da", descricao: "Integre contatos e faturamento (Daftra)." },
+  "qoyod":         { nome: "Qoyod", categoria: "crm", dominio: "qoyod.com", cor: "#1565C0", sigla: "Qo", descricao: "Sincronize clientes e vendas (Qoyod)." },
+
+  // ── Rússia ────────────────────────────────────────────────────────────
+  "vk-ads":        { nome: "VK Ads", categoria: "anuncios", dominio: "vk.com", cor: "#0077FF", sigla: "VK", descricao: "Receba leads das campanhas do VK." },
+  "yandex-direct": { nome: "Yandex Direct", categoria: "anuncios", dominio: "yandex.com", cor: "#FF0000", sigla: "Ya", descricao: "Receba leads dos anúncios do Yandex." },
+  "bitrix24":      { nome: "Bitrix24", categoria: "crm", dominio: "bitrix24.com", cor: "#2FC7F7", sigla: "B24", descricao: "Centralize contatos e funil do Bitrix24." },
+  "amocrm":        { nome: "amoCRM", categoria: "crm", dominio: "amocrm.com", cor: "#339DC7", sigla: "am", descricao: "Sincronize leads e negócios do amoCRM." },
+  "megaplan":      { nome: "Megaplan", categoria: "crm", dominio: "megaplan.ru", cor: "#00A1E0", sigla: "Mp", descricao: "Conecte contatos e tarefas do Megaplan." },
+
+  // ── Bangladesh ────────────────────────────────────────────────────────
+  "bkash":         { nome: "bKash", categoria: "automacoes", dominio: "bkash.com", cor: "#E2136E", sigla: "bK", descricao: "Receba leads de cobranças e pagamentos (bKash)." },
+
+  // ── Indonésia ─────────────────────────────────────────────────────────
+  "qontak":        { nome: "Mekari Qontak", categoria: "crm", dominio: "qontak.com", cor: "#FF6B35", sigla: "Qt", descricao: "Centralize contatos e WhatsApp (Qontak)." },
+  "barantum":      { nome: "Barantum", categoria: "crm", dominio: "barantum.com", cor: "#1EA7FD", sigla: "Ba", descricao: "Sincronize contatos e oportunidades (Barantum)." },
 };
 
 // Países (seguem os 5 primeiros idiomas do seletor de login). `ids` define a
@@ -102,6 +125,16 @@ export const PAISES = [
     ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "baidu-ads", "douyin-ads", "weibo-ads", "xiaohongshu", "wecom", "dingtalk", "feishu", "google-forms", "jotform", "google-sheets", "webhooks", "api-rycs", "make", "n8n"] },
   { chave: "in", pais: "Índia", bandeira: "🇮🇳", locales: ["hi"],
     ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "zoho-crm", "freshsales", "leadsquared", "kylas", "hubspot", "salesforce", "razorpay", "justdial", "exotel", "google-forms", "typeform", "jotform", "wordpress", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
+  { chave: "fr", pais: "França", bandeira: "🇫🇷", locales: ["fr"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "salesforce", "hubspot", "pipedrive", "sellsy", "axonaut", "brevo", "google-forms", "typeform", "jotform", "wordpress", "webflow", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
+  { chave: "sa", pais: "Arábia Saudita", bandeira: "🇸🇦", locales: ["ar"],
+    ids: ["meta", "google-ads", "tiktok-ads", "snapchat-ads", "linkedin-ads", "salesforce", "hubspot", "zoho-crm", "daftra", "qoyod", "google-forms", "jotform", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
+  { chave: "ru", pais: "Rússia", bandeira: "🇷🇺", locales: ["ru"],
+    ids: ["meta", "google-ads", "tiktok-ads", "vk-ads", "yandex-direct", "linkedin-ads", "bitrix24", "amocrm", "megaplan", "google-forms", "jotform", "google-sheets", "webhooks", "api-rycs", "make", "n8n"] },
+  { chave: "bd", pais: "Bangladesh", bandeira: "🇧🇩", locales: ["bn"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "zoho-crm", "hubspot", "salesforce", "bkash", "google-forms", "typeform", "jotform", "wordpress", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
+  { chave: "id", pais: "Indonésia", bandeira: "🇮🇩", locales: ["id"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "hubspot", "salesforce", "zoho-crm", "qontak", "barantum", "google-forms", "typeform", "jotform", "wordpress", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
 ];
 
 // Monta a lista de integrações de um país (id → objeto, com o id embutido).
@@ -136,3 +169,7 @@ export const STATUS = {
   nao_conectado: { rotulo: "Não conectado", acao: "Conectar", cor: "#98A2B3" },
   em_breve:      { rotulo: "Em breve", acao: null, cor: "#98A2B3" },
 };
+
+// Ordem de exibição: ativas primeiro, depois as conectáveis, "Em breve" por
+// último. Ao configurar uma ferramenta, ela sobe para o topo.
+export const ORDEM_STATUS = { conectado: 0, atencao: 1, nao_conectado: 2, em_breve: 3 };
