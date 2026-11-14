@@ -610,7 +610,7 @@ router.post("/subscription", async (req, res) => {
   }
   } catch (fatalErr) {
     console.error("[assinatura] erro inesperado:", fatalErr);
-    if (!res.headersSent) res.status(500).json({ error: "Erro interno ao processar a assinatura. Tente novamente." });
+    if (!res.headersSent) res.status(500).json({ error: `Erro interno: ${fatalErr?.message || fatalErr}`.slice(0, 300) });
   } finally {
     clearTimeout(timeout);
   }
