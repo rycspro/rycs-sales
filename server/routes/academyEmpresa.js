@@ -55,7 +55,7 @@ function resumoCurso(c) {
 router.get("/academy/empresa", (req, res) => {
   const companyId = empresa(req, res);
   if (!companyId) return;
-  const cursos = db.prepare("SELECT * FROM courses WHERE companyId = ? ORDER BY atualizadoEm DESC").all(companyId);
+  const cursos = db.prepare("SELECT * FROM courses WHERE companyId = ? ORDER BY ordem ASC, atualizadoEm DESC").all(companyId);
   const ids = cursos.map((c) => c.id);
 
   let emAprendizado = 0, conclusoes = 0;
@@ -308,6 +308,82 @@ router.put("/academy/empresa/cursos/:id/avaliacao", (req, res) => {
     db.prepare("UPDATE courses SET notaMinima = ?, atualizadoEm = ? WHERE id = ?").run(notaMinima, agora(), c.id);
   })();
   res.json({ curso: carregarCurso(c.id, { comProva: true }) });
+});
+
+// Reordena os módulos (treinamentos) da empresa. [{id, ordem}] ou [ids].
+router.put("/academy/empresa/cursos/ordem", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const itens = Array.isArray(req.body?.ordem) ? req.body.ordem : [];
+  const stmt = db.prepare("UPDATE courses SET ordem = ? WHERE id = ? AND companyId = ?");
+  db.transaction(() => {
+    itens.forEach((it, i) => {
+      const id = typeof it === "string" ? it : it?.id;
+      const ordem = typeof it === "object" && Number.isFinite(it?.ordem) ? it.ordem : i;
+      if (id) stmt.run(ordem, id, companyId);
+    });
+  })();
+  res.json({ ok: true });
+});
+
+// ------------------------------------------- Aprendizado (dados reais) ----
+// Indicadores gerais + desempenho por módulo (treinamento). Tudo derivado das
+// tabelas existentes de matrícula/progresso/campanhas — sem dados simulados.
+router.get("/academy/empresa/aprendizado", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const cursos = db.prepare("SELECT id, titulo, descricao, status, ordem FROM courses WHERE companyId = ? AND status <> 'arquivado' ORDER BY ordem ASC, atualizadoEm DESC").all(companyId);
+
+  // Profissionais aprovados na empresa (via campanhas).
+  const aprovados = db.prepare(`
+    SELECT DISTINCT ca.sellerId FROM campaign_applications ca
+    JOIN campaigns c ON c.id = ca.campaignId
+    WHERE c.companyId = ? AND ca.status = 'aprovado'
+  `).all(companyId).map((r) => r.sellerId);
+  const setAprovados = new Set(aprovados);
+
+  const idsCursos = cursos.map((c) => c.id);
+  const ph = idsCursos.map(() => "?").join(",");
+
+  // Elegíveis por curso = aprovados nas campanhas vinculadas ao curso.
+  const elegiveisPorCurso = {};
+  if (idsCursos.length) {
+    const rows = db.prepare(`
+      SELECT cc.courseId, ca.sellerId FROM course_campaigns cc
+      JOIN campaign_applications ca ON ca.campaignId = cc.campaignId AND ca.status = 'aprovado'
+      WHERE cc.courseId IN (${ph})
+    `).all(...idsCursos);
+    for (const r of rows) (elegiveisPorCurso[r.courseId] = elegiveisPorCurso[r.courseId] || new Set()).add(r.sellerId);
+  }
+
+  const modulos = cursos.map((c) => {
+    const elegiveis = elegiveisPorCurso[c.id]?.size || 0;
+    const iniciaram = db.prepare("SELECT COUNT(DISTINCT sellerId) n FROM course_enrollments WHERE courseId = ?").get(c.id).n;
+    const concluiram = db.prepare("SELECT COUNT(*) n FROM course_enrollments WHERE courseId = ? AND concluidoEm IS NOT NULL").get(c.id).n;
+    const denom = elegiveis || iniciaram || 0;
+    const pct = denom ? Math.round((concluiram / denom) * 100) : 0;
+    return { id: c.id, titulo: c.titulo, descricao: c.descricao || "", status: c.status, elegiveis, iniciaram, concluiram, pct };
+  });
+
+  // Indicadores gerais.
+  let iniciaramAcademy = 0, concluiramJornada = 0, progressoMedio = 0;
+  if (idsCursos.length) {
+    iniciaramAcademy = db.prepare(`SELECT COUNT(DISTINCT sellerId) n FROM course_enrollments WHERE courseId IN (${ph})`).get(...idsCursos).n;
+    // Conclusão da jornada: matriculado em ≥1 curso publicado e com todas as matrículas concluídas.
+    const porSeller = db.prepare(`SELECT sellerId, COUNT(*) total, SUM(CASE WHEN concluidoEm IS NOT NULL THEN 1 ELSE 0 END) feitos FROM course_enrollments WHERE courseId IN (${ph}) GROUP BY sellerId`).all(...idsCursos);
+    concluiramJornada = porSeller.filter((s) => s.total > 0 && s.feitos === s.total).length;
+    if (porSeller.length) progressoMedio = Math.round(porSeller.reduce((a, s) => a + (s.feitos / s.total), 0) / porSeller.length * 100);
+  }
+
+  res.json({
+    indicadores: {
+      aprovados: setAprovados.size,
+      iniciaram: iniciaramAcademy,
+      concluiram: concluiramJornada,
+      progressoMedio,
+    },
+    modulos,
+  });
 });
 
 // ----------------------------------------------- Inteligência da Academy ----

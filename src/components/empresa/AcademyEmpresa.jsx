@@ -3,7 +3,8 @@ import {
   Plus, Search, BookOpen, Users, GraduationCap, X, ChevronRight, ArrowLeft,
   MoreVertical, Pencil, Copy, Archive, Trash2, Eye, GripVertical, ChevronDown,
   Video, FileText, Headphones, Link2, Type, Clock, Layers, FolderOpen, Check,
-  Sparkles, Loader2, ArrowRight, RefreshCw, Send,
+  Sparkles, Loader2, ArrowRight, RefreshCw, Send, Settings2, Building2, Package, ClipboardCheck,
+  ChevronUp, Wand2,
 } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 
@@ -74,13 +75,9 @@ export default function AcademyEmpresa({ emp, db, aviso, onIrParaMateriais }) {
 function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
   const [dados, setDados] = useState(null);
   const [intel, setIntel] = useState(null);
-  const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState("todos");
-  const [origem, setOrigem] = useState("todos");
-  const [ordem, setOrdem] = useState("recentes");
+  const [aba, setAba] = useState("minha"); // minha | configurar | aprendizado
   const [criar, setCriar] = useState(false);
   const [gerar, setGerar] = useState(false);
-  const [menu, setMenu] = useState(null);
 
   const carregar = useCallback(async () => {
     const r = await api("/academy/empresa");
@@ -92,23 +89,9 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
   }, []);
   useEffect(() => { carregar(); carregarIntel(); }, [carregar, carregarIntel]);
 
-  const cursos = useMemo(() => {
-    let r = dados?.cursos || [];
-    if (filtro !== "todos") r = r.filter((c) => c.status === filtro);
-    if (origem !== "todos") r = r.filter((c) => (c.origem || "manual") === origem);
-    if (busca.trim()) {
-      const t = busca.toLowerCase().trim();
-      r = r.filter((c) => c.titulo.toLowerCase().includes(t) || (c.descricao || "").toLowerCase().includes(t));
-    }
-    r = [...r];
-    if (ordem === "az") r.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
-    else if (ordem === "atualizacao") r.sort((a, b) => b.atualizadoEm - a.atualizadoEm);
-    else r.sort((a, b) => b.criadoEm - a.criadoEm);
-    return r;
-  }, [dados, filtro, origem, busca, ordem]);
+  const cursos = dados?.cursos || [];
 
   const acaoCurso = async (c, acao) => {
-    setMenu(null);
     if (acao === "editar" || acao === "abrir" || acao === "revisar") return onAbrir(c.id);
     if (acao === "duplicar") {
       const r = await api(`/academy/empresa/cursos/${c.id}/duplicar`, {});
@@ -131,24 +114,31 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
   const aposGerar = (ids) => {
     setGerar(false);
     carregar(); carregarIntel();
-    setFiltro("revisao");
+    setAba("minha");
     aviso?.(`${ids.length} treinamento(s) gerado(s) e aguardando sua revisão.`);
   };
 
+  const aceitarSugestao = async (sug) => {
+    const r = await api("/academy/empresa/cursos", { titulo: sug.titulo, descricao: sug.descricao });
+    if (r?.error) return aviso?.(r.error);
+    aviso?.("Módulo criado como rascunho."); carregar(); carregarIntel();
+  };
+
   if (!dados) return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
-  const temCursos = (dados.cursos || []).length > 0;
+
+  const ABAS = [["minha", "Minha Academy"], ["configurar", "Configurar"], ["aprendizado", "Aprendizado"]];
 
   return (
     <div className="vx-fade">
       {/* Cabeçalho */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <div>
           <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Academy</h1>
-          <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>Prepare seus profissionais com treinamentos personalizados para sua empresa.</p>
+          <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>Organize os treinamentos da sua empresa e acompanhe a capacitação dos profissionais.</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="vx-btn vx-btn-sm" onClick={() => setCriar(true)} style={{ gap: 6, whiteSpace: "nowrap" }}>
-            <Plus size={16} /> Criar manualmente
+          <button className="vx-btn vx-btn-sm" onClick={() => setAba("configurar")} style={{ gap: 6, whiteSpace: "nowrap" }}>
+            <Settings2 size={16} /> Configurar Academy
           </button>
           <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setGerar(true)} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
             <Sparkles size={16} /> Gerar com IA
@@ -156,54 +146,39 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
         </div>
       </div>
 
-      {/* Inteligência da Academy */}
-      <PainelInteligencia intel={intel} onGerar={() => setGerar(true)} onRevisar={() => setFiltro("revisao")}
-        onAtualizacoes={() => setFiltro("todos")} onIrMateriais={onIrMateriais} />
-
-      {/* Biblioteca */}
-      <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Treinamentos da empresa</h2>
-        <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Gerencie os conteúdos que seus profissionais poderão acessar.</p>
+      {/* Abas */}
+      <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${BORDA}`, marginBottom: 24 }}>
+        {ABAS.map(([k, label]) => (
+          <button key={k} onClick={() => setAba(k)} style={{ padding: "10px 16px", fontSize: 14, fontWeight: aba === k ? 600 : 400, color: aba === k ? AZUL : "#737373", background: "none", border: "none", borderBottom: aba === k ? `2px solid ${AZUL}` : "2px solid transparent", cursor: "pointer", marginBottom: -1 }}>{label}</button>
+        ))}
       </div>
 
-      {temCursos && (
-        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 300 }}>
-            <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#737373" }} />
-            <input className="vx-input" placeholder="Buscar treinamentos..." value={busca} onChange={(e) => setBusca(e.target.value)} style={{ paddingLeft: 32, width: "100%", height: 36 }} />
+      {aba === "minha" && (
+        <>
+          <PainelInteligencia intel={intel} onGerar={() => setGerar(true)} onRevisar={() => setAba("minha")}
+            onAtualizacoes={() => setAba("aprendizado")} onIrMateriais={onIrMateriais} />
+          <div style={{ marginBottom: 16 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Estrutura da sua Academy</h2>
+            <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Defina o que seus profissionais precisam aprender e organize os conteúdos na ordem desejada.</p>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {FILTROS.map((f) => (
-              <button key={f.key} onClick={() => setFiltro(f.key)} style={{ fontSize: 13, padding: "6px 12px", borderRadius: 999, border: `1px solid ${BORDA}`, cursor: "pointer", background: filtro === f.key ? AZUL : "#fff", color: filtro === f.key ? "#fff" : "#737373", fontWeight: filtro === f.key ? 600 : 400, whiteSpace: "nowrap" }}>{f.label}</button>
+          {cursos.length === 0 && <SugestoesEstrutura onAceitar={aceitarSugestao} onGerar={() => setGerar(true)} />}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {cursos.map((c, i) => (
+              <ModuloCard key={c.id} c={c} numero={i + 1} onGerenciar={() => onAbrir(c.id)} />
             ))}
           </div>
-          <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-            <select className="vx-input" value={origem} onChange={(e) => setOrigem(e.target.value)} style={{ height: 36, width: "auto", minWidth: 140 }}>
-              {ORIGENS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
-            <select className="vx-input" value={ordem} onChange={(e) => setOrdem(e.target.value)} style={{ height: 36, width: "auto", minWidth: 150 }}>
-              {ORDENS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
-          </div>
-        </div>
+          <button className="vx-btn vx-btn-sm" onClick={() => setCriar(true)} style={{ gap: 6, marginTop: 14 }}>
+            <Plus size={16} /> Adicionar módulo
+          </button>
+        </>
       )}
 
-      {/* Conteúdo */}
-      {!temCursos ? (
-        <EstadoVazio onCriar={() => setCriar(true)} onGerar={() => setGerar(true)} />
-      ) : cursos.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
-          <Search size={32} strokeWidth={1.3} style={{ color: "#737373", marginBottom: 10 }} />
-          <p style={{ fontSize: 14, color: "#737373", margin: "0 0 12px" }}>Nenhum treinamento encontrado.</p>
-          <button className="vx-btn vx-btn-sm" onClick={() => { setBusca(""); setFiltro("todos"); setOrigem("todos"); }}>Limpar filtros</button>
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 16 }}>
-          {cursos.map((c) => (
-            <CardCurso key={c.id} c={c} onAbrir={onAbrir} menu={menu === c.id} setMenu={(v) => setMenu(v ? c.id : null)} onAcao={(a) => acaoCurso(c, a)} />
-          ))}
-        </div>
+      {aba === "configurar" && (
+        <ConfigurarAba cursos={cursos} aviso={aviso} onAbrir={onAbrir} onCriar={() => setCriar(true)}
+          onAcao={acaoCurso} recarregar={() => { carregar(); carregarIntel(); }} />
       )}
+
+      {aba === "aprendizado" && <AprendizadoAba aviso={aviso} />}
 
       {criar && <ModalCriar emp={emp} aviso={aviso} onClose={() => setCriar(false)} onCriado={(id) => { setCriar(false); onAbrir(id); }} />}
       {gerar && <PainelGerarIA aviso={aviso} onClose={() => setGerar(false)} onGerado={aposGerar} />}
@@ -247,6 +222,242 @@ function PainelInteligencia({ intel, onGerar, onRevisar, onAtualizacoes, onIrMat
         )}
       </div>
       <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={acao} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>{btn}</button>
+    </div>
+  );
+}
+
+/* ---- Sugestões de estrutura (quando a Academy ainda está vazia, §4) ---- */
+const SUGESTOES_MODULOS = [
+  { Icon: Building2, titulo: "Conhecendo a empresa", descricao: "Apresente sua empresa, história, posicionamento e cultura." },
+  { Icon: Package, titulo: "Produtos e serviços", descricao: "Prepare seus profissionais para compreender o que sua empresa oferece." },
+  { Icon: ClipboardCheck, titulo: "Processos e orientações", descricao: "Ensine os procedimentos e boas práticas necessários para executar as atividades." },
+];
+function SugestoesEstrutura({ onAceitar, onGerar }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 11.5, fontWeight: 600, color: "#B4690E", background: "#FDF3E7", padding: "3px 9px", borderRadius: 20 }}>Sugestão de estrutura</span>
+        <span style={{ fontSize: 12.5, color: "#737373" }}>Modelos editáveis — nada é publicado automaticamente.</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {SUGESTOES_MODULOS.map((s, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, background: "#F8F9FB", border: `1px dashed ${BORDA}`, borderRadius: 12, padding: 14 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#b8bcc4", width: 24, textAlign: "center" }}>{String(i + 1).padStart(2, "0")}</span>
+            <span style={{ width: 38, height: 38, borderRadius: 9, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><s.Icon size={19} style={{ color: AZUL }} /></span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#171717" }}>{s.titulo}</div>
+              <div style={{ fontSize: 12.5, color: "#737373" }}>{s.descricao}</div>
+            </div>
+            <button className="vx-btn vx-btn-sm" onClick={() => onAceitar(s)} style={{ gap: 6, whiteSpace: "nowrap" }}><Plus size={14} /> Usar módulo</button>
+          </div>
+        ))}
+      </div>
+      <button className="vx-btn vx-btn-sm" onClick={onGerar} style={{ gap: 6, marginTop: 10, borderStyle: "dashed" }}>
+        <Sparkles size={14} /> Gerar estrutura personalizada com IA
+      </button>
+    </div>
+  );
+}
+
+/* ---- Card horizontal de módulo (treinamento) na aba Minha Academy, §5 ---- */
+function statusModulo(c) {
+  if ((c.aulas || 0) === 0 && c.status === "rascunho") return { txt: "Não configurado", bg: "#F3F4F6", cor: "#6B7280" };
+  return STATUS_BADGE[c.status] || STATUS_BADGE.rascunho;
+}
+function ModuloCard({ c, numero, onGerenciar }) {
+  const [aberto, setAberto] = useState(false);
+  const [aulas, setAulas] = useState(null);
+  const st = statusModulo(c);
+  const expandir = async () => {
+    const novo = !aberto; setAberto(novo);
+    if (novo && aulas === null) {
+      const r = await api(`/academy/empresa/cursos/${c.id}`);
+      const lista = (r?.curso?.modulos || []).flatMap((m) => m.aulas || []);
+      setAulas(lista);
+    }
+  };
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: 16 }}>
+        <span style={{ fontSize: 18, fontWeight: 700, color: "#b8bcc4", width: 28, textAlign: "center", flexShrink: 0 }}>{String(numero).padStart(2, "0")}</span>
+        <span style={{ width: 42, height: 42, borderRadius: 10, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {c.origem === "ia" ? <Sparkles size={20} style={{ color: AZUL }} /> : <BookOpen size={20} style={{ color: AZUL }} />}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#171717", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo}</div>
+          <div style={{ fontSize: 12.5, color: "#737373", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.descricao || "Sem descrição."}</div>
+          <div style={{ display: "flex", gap: 12, marginTop: 5, fontSize: 12, color: "#9aa0a6", flexWrap: "wrap" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><BookOpen size={12} /> {c.aulas} aula{c.aulas !== 1 ? "s" : ""}</span>
+            {c.duracaoMin > 0 && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={12} /> {duracaoTxt(c.duracaoMin)}</span>}
+            {c.profissionais > 0 && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {c.profissionais}</span>}
+          </div>
+        </div>
+        <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999, background: st.bg, color: st.cor, flexShrink: 0, whiteSpace: "nowrap" }}>{st.txt}</span>
+        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={expandir} style={{ padding: 6 }} title={aberto ? "Recolher" : "Ver aulas"}>
+          {aberto ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </button>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onGerenciar} style={{ gap: 4, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
+          Gerenciar módulo <ChevronRight size={15} />
+        </button>
+      </div>
+      {aberto && (
+        <div style={{ borderTop: `1px solid ${BORDA}`, padding: "12px 16px 14px 70px", background: "#F8F9FB" }}>
+          {aulas === null ? (
+            <div style={{ fontSize: 13, color: "#9aa0a6" }}>Carregando...</div>
+          ) : aulas.length === 0 ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 13, color: "#737373" }}>Este módulo ainda não possui conteúdo.</span>
+              <button className="vx-btn vx-btn-sm" onClick={onGerenciar} style={{ gap: 6 }}><Plus size={14} /> Adicionar conteúdo</button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {aulas.map((a, i) => (
+                <div key={a.id || i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#171717" }}>
+                  <span style={{ fontSize: 11, color: "#9aa0a6", width: 28 }}>{String(i + 1).padStart(2, "0")}</span>
+                  {(TIPO_DE(a.tipo).Icon) && (() => { const Ic = TIPO_DE(a.tipo).Icon; return <Ic size={13} style={{ color: "#737373" }} />; })()}
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.titulo}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---- Aba Configurar: organizador de módulos (§7) ---- */
+function ConfigurarAba({ cursos, aviso, onAbrir, onCriar, onAcao, recarregar }) {
+  const [ordem, setOrdem] = useState(cursos.map((c) => c.id));
+  const [menu, setMenu] = useState(null);
+  useEffect(() => { setOrdem(cursos.map((c) => c.id)); }, [cursos]);
+  const mapa = Object.fromEntries(cursos.map((c) => [c.id, c]));
+  const lista = ordem.map((id) => mapa[id]).filter(Boolean);
+
+  const mover = async (i, dir) => {
+    const j = i + dir; if (j < 0 || j >= ordem.length) return;
+    const nova = [...ordem]; [nova[i], nova[j]] = [nova[j], nova[i]]; setOrdem(nova);
+    await apiPut("/academy/empresa/cursos/ordem", { ordem: nova });
+  };
+  const renomear = async (c) => {
+    const nome = prompt("Nome do módulo:", c.titulo); if (nome === null) return;
+    const t = nome.trim(); if (!t || t === c.titulo) return;
+    const r = await apiPatch(`/academy/empresa/cursos/${c.id}`, { titulo: t });
+    if (r?.error) return aviso?.(r.error);
+    recarregar();
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Configurar Academy</h2>
+        <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Personalize a estrutura de aprendizagem e defina como seus profissionais serão capacitados.</p>
+      </div>
+
+      {lista.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "36px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
+          <p style={{ fontSize: 14, color: "#737373", margin: "0 0 14px" }}>Nenhum módulo ainda. Comece criando o primeiro.</p>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onCriar} style={{ gap: 6, background: AZUL, borderColor: AZUL }}><Plus size={16} /> Adicionar módulo</button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {lista.map((c, i) => {
+            const st = statusModulo(c);
+            return (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: "10px 12px" }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => mover(i, -1)} disabled={i === 0} style={{ padding: 1 }} title="Subir"><ChevronUp size={14} /></button>
+                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => mover(i, 1)} disabled={i === lista.length - 1} style={{ padding: 1 }} title="Descer"><ChevronDown size={14} /></button>
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#b8bcc4", width: 24, textAlign: "center" }}>{String(i + 1).padStart(2, "0")}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#171717", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo}</div>
+                  <div style={{ fontSize: 12, color: "#9aa0a6" }}>{c.aulas} aula{c.aulas !== 1 ? "s" : ""}</div>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 999, background: st.bg, color: st.cor, whiteSpace: "nowrap" }}>{st.txt}</span>
+                <button className="vx-btn vx-btn-sm" onClick={() => onAbrir(c.id)} style={{ gap: 4, whiteSpace: "nowrap" }}>Gerenciar conteúdo</button>
+                <div style={{ position: "relative" }}>
+                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setMenu(menu === c.id ? null : c.id)} style={{ padding: 6 }}><MoreVertical size={16} /></button>
+                  {menu === c.id && (
+                    <div style={{ position: "absolute", right: 0, top: 32, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 150, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
+                      <MenuBtn icon={Pencil} label="Renomear" onClick={() => { setMenu(null); renomear(c); }} />
+                      <MenuBtn icon={Copy} label="Duplicar" onClick={() => { setMenu(null); onAcao(c, "duplicar"); }} />
+                      {c.status !== "arquivado" && <MenuBtn icon={Archive} label="Arquivar" onClick={() => { setMenu(null); onAcao(c, "arquivar"); }} />}
+                      <MenuBtn icon={Trash2} label="Excluir" danger onClick={() => { setMenu(null); onAcao(c, "excluir"); }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <button className="vx-btn vx-btn-sm" onClick={onCriar} style={{ gap: 6, marginTop: 14 }}><Plus size={16} /> Adicionar módulo</button>
+
+      {/* Regras de aprendizagem (§10) */}
+      <div style={{ marginTop: 28, background: AZUL_SUAVE, borderRadius: 12, padding: "16px 18px" }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#171717", marginBottom: 4 }}>Regras de aprendizagem</div>
+        <p style={{ fontSize: 13, color: "#3d5a73", margin: 0 }}>
+          A obrigatoriedade, a nota mínima da avaliação e a vinculação com campanhas são definidas ao publicar cada módulo
+          (botão <b>Gerenciar conteúdo → Publicação</b>). A liberação respeita a aprovação do profissional na campanha.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Aba Aprendizado: indicadores reais + desempenho por módulo (§11, §12) ---- */
+function AprendizadoAba({ aviso }) {
+  const [dados, setDados] = useState(null);
+  useEffect(() => { api("/academy/empresa/aprendizado").then((r) => { if (r && !r.error) setDados(r); else { aviso?.(r?.error); setDados({ indicadores: {}, modulos: [] }); } }); }, []);
+  if (!dados) return <div style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" style={{ margin: "0 auto" }} /></div>;
+  const ind = dados.indicadores || {};
+  const cards = [
+    { label: "Profissionais aprovados", valor: ind.aprovados || 0 },
+    { label: "Iniciaram a Academy", valor: ind.iniciaram || 0 },
+    { label: "Concluíram a jornada", valor: ind.concluiram || 0 },
+    { label: "Progresso médio", valor: `${ind.progressoMedio || 0}%` },
+  ];
+  return (
+    <div>
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Aprendizado dos profissionais</h2>
+        <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Acompanhe como os profissionais estão consumindo os treinamentos da sua empresa.</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
+        {cards.map((c) => (
+          <div key={c.label} style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: "14px 16px" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".5px" }}>{c.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#171717", marginTop: 6 }}>{c.valor}</div>
+          </div>
+        ))}
+      </div>
+
+      <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 12px" }}>Desempenho por módulo</h3>
+      {(!dados.modulos || dados.modulos.length === 0) ? (
+        <div style={{ textAlign: "center", padding: "32px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12, fontSize: 13.5, color: "#737373" }}>
+          Ainda não há módulos com dados de participação. Publique um módulo e vincule-o a uma campanha para acompanhar o desempenho.
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {dados.modulos.map((m) => (
+            <div key={m.id} style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#171717" }}>{m.titulo}</div>
+                <div style={{ fontSize: 12.5, color: "#737373" }}>{m.elegiveis} elegíve{m.elegiveis !== 1 ? "is" : "l"} · {m.iniciaram} iniciaram · {m.concluiram} concluíram</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ flex: 1, height: 8, borderRadius: 999, background: "#EEF0F3", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${m.pct}%`, borderRadius: 999, background: AZUL, transition: "width .4s" }} />
+                </div>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: AZUL, width: 42, textAlign: "right" }}>{m.pct}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
