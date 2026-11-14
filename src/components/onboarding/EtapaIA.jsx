@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, AlertTriangle, Sparkles, Pencil } from "lucide-react";
+import { Check, AlertTriangle, Sparkles, Pencil, Mic } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { FASES_IA, PARTES_IA, VARIAVEIS_IA, parteCompleta } from "../../../shared/onboarding.js";
+import ThinkingOrb from "../ThinkingOrb.jsx";
 
 // Etapa 4: a IA monta script, funil de WhatsApp e follow-ups (4a) e o dono
 // revisa e aprova (4b). O servidor processa em segundo plano; a tela só
@@ -19,55 +20,69 @@ function estadoDaFase(geracao, chave) {
   return "pendente";
 }
 
-// 4a. IA trabalhando.
+// 4a. IA trabalhando — fases animadas acima do "tudo pronto" com barra de progresso.
 function Trabalhando({ geracao, aoTentar, tentando, aoRevisar }) {
   const atual = FASES_IA.find((f) => estadoDaFase(geracao, f.chave) === "atual" || estadoDaFase(geracao, f.chave) === "falhou") || FASES_IA[0];
   const falhou = geracao.status === "falhou";
   const pronta = geracao.status === "pronta";
+  const concluidas = FASES_IA.filter((f) => estadoDaFase(geracao, f.chave) === "concluida").length;
+  const progresso = pronta ? 100 : Math.round((concluidas / FASES_IA.length) * 100);
+
   return (
-    <div className="vx-onb-ia">
-      <section className="vx-onb-card vx-onb-palco" aria-live="polite">
-        <div className={`vx-onb-anim vx-onb-anim-${pronta ? "pronta" : falhou ? "falhou" : atual.chave}`} aria-hidden="true">
-          <span /><span /><span />
-        </div>
+    <section className="vx-onb-card vx-onb-palco-v2" aria-live="polite" style={{ maxWidth: 640, margin: "0 auto" }}>
+      {/* Fases — lista vertical acima do status central */}
+      <ol className="vx-onb-fases-v2">
+        {FASES_IA.map((f) => {
+          const estado = estadoDaFase(geracao, f.chave);
+          return (
+            <li key={f.chave} data-estado={estado} aria-current={estado === "atual" ? "step" : undefined}>
+              <span className="vx-onb-fase-marca" aria-hidden="true">
+                {estado === "concluida" ? <Check size={14} strokeWidth={3} /> : estado === "falhou" ? <AlertTriangle size={13} /> : null}
+              </span>
+              <span className="vx-onb-fase-texto">
+                <b>{f.titulo}</b>
+                <span className="vx-sr">{{ concluida: " (concluída)", atual: " (em andamento)", falhou: " (falhou)", pendente: " (pendente)" }[estado]}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      {/* Barra de progresso */}
+      <div className="vx-onb-ia-progresso" role="progressbar" aria-valuenow={progresso} aria-valuemin={0} aria-valuemax={100}>
+        <div className="vx-onb-ia-progresso-fill" style={{ width: `${progresso}%` }} />
+      </div>
+      <div className="vx-onb-ia-progresso-label">{concluidas} de {FASES_IA.length} fases concluídas</div>
+
+      {/* Status central */}
+      <div style={{ textAlign: "center", padding: "16px 0" }}>
         {pronta ? <>
+          <div className={`vx-onb-anim vx-onb-anim-pronta`} aria-hidden="true" style={{ margin: "0 auto 18px" }}>
+            <span /><span /><span />
+          </div>
           <h2 className="vx-disp vx-onb-card-titulo">Tudo pronto para revisar</h2>
-          <p className="vx-mut vx-onb-card-apoio">O script, o funil de WhatsApp e os follow-ups estão prontos. Nada é usado antes da sua aprovação.</p>
+          <p className="vx-mut vx-onb-card-apoio" style={{ maxWidth: 440, margin: "0 auto 16px" }}>O script, o funil de WhatsApp e os follow-ups estão prontos. Nada é usado antes da sua aprovação.</p>
           <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 52 }} onClick={aoRevisar}>Revisar estratégias</button>
         </> : falhou ? <>
-          <h2 className="vx-disp vx-onb-card-titulo">Não deu certo em “{atual.titulo.toLowerCase()}”</h2>
+          <div className={`vx-onb-anim vx-onb-anim-falhou`} aria-hidden="true" style={{ margin: "0 auto 18px" }}>
+            <span /><span /><span />
+          </div>
+          <h2 className="vx-disp vx-onb-card-titulo">Não deu certo em "{atual.titulo.toLowerCase()}"</h2>
           <p className="vx-onb-erro" role="alert">{geracao.erro || "A geração falhou."}</p>
           <p className="vx-mut" style={{ fontSize: 14 }}>As fases que já terminaram estão guardadas. Tentar de novo continua daqui.</p>
           <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 52 }} onClick={aoTentar} disabled={tentando}>
             {tentando ? "Retomando…" : "Tentar novamente"}
           </button>
         </> : <>
+          <div className={`vx-onb-anim vx-onb-anim-${atual.chave}`} aria-hidden="true" style={{ margin: "0 auto 18px" }}>
+            <span /><span /><span />
+          </div>
           <h2 className="vx-disp vx-onb-card-titulo">{atual.titulo}</h2>
-          <p className="vx-mut vx-onb-card-apoio">{atual.frase}</p>
+          <p className="vx-mut vx-onb-card-apoio" style={{ maxWidth: 440, margin: "0 auto" }}>{atual.frase}</p>
           <p className="vx-onb-dica">Pode levar alguns minutos. Se sair desta tela, o trabalho continua e você volta para o mesmo ponto.</p>
         </>}
-      </section>
-      <aside className="vx-onb-card">
-        <h2 className="vx-disp" style={{ fontSize: 18, margin: "0 0 12px" }}>Fases</h2>
-        <ol className="vx-onb-fases">
-          {FASES_IA.map((f) => {
-            const estado = estadoDaFase(geracao, f.chave);
-            return (
-              <li key={f.chave} data-estado={estado} aria-current={estado === "atual" ? "step" : undefined}>
-                <span className="vx-onb-fase-marca" aria-hidden="true">
-                  {estado === "concluida" ? <Check size={14} strokeWidth={3} /> : estado === "falhou" ? <AlertTriangle size={13} /> : null}
-                </span>
-                <span>
-                  <b>{f.titulo}</b>
-                  <span className="vx-sr">{{ concluida: " (concluída)", atual: " (em andamento)", falhou: " (falhou)", pendente: " (pendente)" }[estado]}</span>
-                  <small>{f.frase}</small>
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </aside>
-    </div>
+      </div>
+    </section>
   );
 }
 
@@ -291,12 +306,22 @@ export default function EtapaIA({ estado, aoAtualizar, aoAvancar, aoVoltar }) {
   if (!g) return (
     <div>
       {cabecalho}
-      <div className="vx-onb-card vx-onb-estado">
-        <Sparkles size={22} aria-hidden="true" />
-        <p>A IA ainda não começou para esta empresa.</p>
+      <div className="vx-onb-card vx-onb-jarvis" style={{ maxWidth: 640, margin: "0 auto", textAlign: "center", padding: "36px 24px" }}>
+        <div className="vx-jarvis-ring" style={{ width: 120, height: 120, margin: "0 auto 18px" }}>
+          <ThinkingOrb state="idle" size={100} decorativo />
+        </div>
+        <h2 className="vx-disp vx-onb-card-titulo">Jarvas, sua IA de vendas</h2>
+        <p className="vx-mut vx-onb-card-apoio" style={{ maxWidth: 420, margin: "0 auto 20px" }}>
+          O Jarvas vai criar o script de vendas, funil de WhatsApp e follow-ups com base no perfil da sua empresa.
+        </p>
         {msgErro}
-        <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 52 }}
-          onClick={async () => { const r = await acao("/onboarding/ia/gerar"); if (r) setGeracao(r.geracao); }}>Gerar estratégias</button>
+        <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 52, gap: 8 }}
+          onClick={async () => { const r = await acao("/onboarding/ia/gerar"); if (r) setGeracao(r.geracao); }}>
+          <Sparkles size={16} /> Gerar estratégias com o Jarvas
+        </button>
+        <p className="vx-onb-dica" style={{ marginTop: 14 }}>
+          <Mic size={13} style={{ verticalAlign: -2 }} /> O Jarvas usa inteligência artificial com voz — depois de gerar, você pode conversar com ele nas campanhas.
+        </p>
       </div>
     </div>
   );

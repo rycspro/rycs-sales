@@ -249,7 +249,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                     const on = origem === id;
                     return (
                       <button key={id} type="button"
-                        onClick={() => setForma(id === "nacional" ? "CREDIT_CARD" : "STRIPE")}
+                        onClick={() => setForma(id === "nacional" ? "DEBIT_CARD" : "STRIPE")}
                         style={{
                           flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                           padding: "16px 12px", borderRadius: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
@@ -268,7 +268,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 {/* Formas específicas do pagamento nacional (Asaas) */}
                 {origem === "nacional" && (
                   <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                    {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"]].map(([k, t]) => (
+                    {[["DEBIT_CARD", "Cartão de débito"], ["CREDIT_CARD", "Cartão de crédito"]].map(([k, t]) => (
                       <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
                         flex: 1, fontSize: 12,
                         borderColor: forma === k ? "var(--brand)" : undefined,
