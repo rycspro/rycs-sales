@@ -463,12 +463,12 @@ router.post("/subscription", async (req, res) => {
   }
 
   const subId = uid();
+  const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
   try {
     let voucher=null, calculo={valorOriginal:valorBase,desconto:0,valorFinal:valorBase};
     if(req.body?.voucher){const v=validarVoucher(db,{codigo:req.body.voucher,plano:chave,companyId:entityId});if(!v.ok)return res.status(422).json({error:v.error});voucher=v.voucher;calculo=calcularVoucher(valorBase,voucher);}
     // Cartão é a forma prioritária; Pix continua aceito, e o Pix Automático
     // entra pela etapa 5 do onboarding.
-    const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
     if (!["CREDIT_CARD", "DEBIT_CARD", "PIX", "PIX_AUTOMATICO"].includes(forma))
       return res.status(400).json({ error: "Forma de pagamento inválida." });
     if (forma === "PIX_AUTOMATICO" && !doOnboarding)
@@ -610,7 +610,7 @@ router.post("/subscription", async (req, res) => {
   }
   } catch (fatalErr) {
     console.error("[assinatura] erro inesperado:", fatalErr);
-    if (!res.headersSent) res.status(500).json({ error: `Erro interno: ${fatalErr?.message || fatalErr}`.slice(0, 300) });
+    if (!res.headersSent) res.status(500).json({ error: "Erro interno ao processar a assinatura. Tente novamente." });
   } finally {
     clearTimeout(timeout);
   }
