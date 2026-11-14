@@ -71,6 +71,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
   const [bioExpandida, setBioExpandida] = useState(false);
   const [convidarAberto, setConvidarAberto] = useState(false);
   const [linkCopiado, setLinkCopiado] = useState(false);
+  const [utm, setUtm] = useState({ source: "", medium: "", campaign: "" });
 
   const carregar = async () => {
     setCarregando(true);
@@ -415,7 +416,19 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           {convidarAberto && (
             <>
               <div onClick={() => setConvidarAberto(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
-              <div className="vx-card" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, width: 340, padding: 20, boxShadow: "0 10px 28px rgba(0,0,0,.14)", display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="vx-card" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, width: 370, padding: 20, boxShadow: "0 10px 28px rgba(0,0,0,.14)", display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* X fechar */}
+                <button
+                  type="button"
+                  onClick={() => setConvidarAberto(false)}
+                  style={{ position: "absolute", top: 10, right: 10, width: 26, height: 26, borderRadius: "50%", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.45 }}
+                  title="Fechar"
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.8"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.45"; }}
+                >
+                  <X size={14} color="var(--ink)" />
+                </button>
+
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <UserPlus size={20} color="var(--brand)" />
                   <h3 className="vx-disp" style={{ fontSize: 15, margin: 0 }}>Convide um profissional</h3>
@@ -429,23 +442,58 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}><CheckCircle2 size={12} color="var(--brand)" /> Comissões por resultado comprovado</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}><CheckCircle2 size={12} color="var(--brand)" /> Treinamentos e suporte da plataforma</div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ flex: 1, padding: "9px 12px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12.5, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {`${window.location.origin}/cadastro/profissional`}
+
+                {/* Campos UTM */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <span className="vx-label" style={{ fontSize: 11.5 }}>Personalizar rastreamento</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input
+                      type="text" placeholder="Origem (ex: linkedin)"
+                      value={utm.source} onChange={(e) => setUtm((u) => ({ ...u, source: e.target.value }))}
+                      style={{ flex: 1, padding: "7px 10px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontFamily: "inherit", background: "var(--surface)", color: "var(--ink)", outline: "none", minWidth: 0 }}
+                    />
+                    <input
+                      type="text" placeholder="Meio (ex: post)"
+                      value={utm.medium} onChange={(e) => setUtm((u) => ({ ...u, medium: e.target.value }))}
+                      style={{ flex: 1, padding: "7px 10px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontFamily: "inherit", background: "var(--surface)", color: "var(--ink)", outline: "none", minWidth: 0 }}
+                    />
                   </div>
-                  <button
-                    type="button"
-                    className={`vx-btn${linkCopiado ? " vx-btn-primary" : ""}`}
-                    style={{ display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", flexShrink: 0 }}
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/cadastro/profissional`);
-                      setLinkCopiado(true);
-                      setTimeout(() => setLinkCopiado(false), 3000);
-                    }}
-                  >
-                    {linkCopiado ? <><CheckCircle2 size={13} /> Copiado!</> : <><Copy size={13} /> Copiar</>}
-                  </button>
+                  <input
+                    type="text" placeholder="Campanha (ex: recrutamento-nov)"
+                    value={utm.campaign} onChange={(e) => setUtm((u) => ({ ...u, campaign: e.target.value }))}
+                    style={{ width: "100%", padding: "7px 10px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontFamily: "inherit", background: "var(--surface)", color: "var(--ink)", outline: "none", boxSizing: "border-box" }}
+                  />
                 </div>
+
+                {/* Link gerado */}
+                {(() => {
+                  const params = new URLSearchParams();
+                  if (utm.source.trim()) params.set("utm_source", utm.source.trim());
+                  if (utm.medium.trim()) params.set("utm_medium", utm.medium.trim());
+                  if (utm.campaign.trim()) params.set("utm_campaign", utm.campaign.trim());
+                  if (emp?.id) params.set("ref", emp.id);
+                  const qs = params.toString();
+                  const link = `${window.location.origin}/cadastro/profissional${qs ? `?${qs}` : ""}`;
+                  return (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ flex: 1, padding: "9px 12px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 11.5, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {link}
+                      </div>
+                      <button
+                        type="button"
+                        className={`vx-btn${linkCopiado ? " vx-btn-primary" : ""}`}
+                        style={{ display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", flexShrink: 0 }}
+                        onClick={() => {
+                          navigator.clipboard.writeText(link);
+                          setLinkCopiado(true);
+                          setTimeout(() => setLinkCopiado(false), 3000);
+                        }}
+                      >
+                        {linkCopiado ? <><CheckCircle2 size={13} /> Copiado!</> : <><Copy size={13} /> Copiar</>}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </>
           )}
