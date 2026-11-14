@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X, Clock3, ArrowRight, Webhook, Code2, Copy, Check, RefreshCw, Power } from "lucide-react";
 import { api } from "../../../lib/api.js";
 import IntegracaoMeta from "../IntegracaoMeta.jsx";
-import { INTEGRACOES, FILTROS, STATUS, statusMeta, rotuloCategoria } from "./catalogo.js";
+import { PAISES, FILTROS, STATUS, statusMeta, rotuloCategoria, integracoesDoPais, paisDoIdioma } from "./catalogo.js";
 
 // ── Logotipo oficial da marca ───────────────────────────────────────────────
 // Carrega o ícone oficial (SVG, na cor da marca) sobre um ladrilho branco.
@@ -296,6 +296,9 @@ export default function Integracoes({ aviso, campanhas = [] }) {
   const [webhook, setWebhook] = useState(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
+  // País do catálogo: começa no idioma logado; os botões no topo alternam.
+  const [pais, setPais] = useState(paisDoIdioma);
+  const catalogo = useMemo(() => integracoesDoPais(pais), [pais]);
   // Ao voltar do login da Meta (?meta=...) abre direto o fluxo da Meta, que
   // processa o aviso e limpa a URL — preservando a experiência original.
   const [aberto, setAberto] = useState(
@@ -317,7 +320,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
 
   const lista = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    return INTEGRACOES.filter((item) => {
+    return catalogo.filter((item) => {
       if (termo && !item.nome.toLowerCase().includes(termo)) return false;
       const st = statusDe(item);
       if (filtro === "conectadas") return st === "conectado";
@@ -325,18 +328,43 @@ export default function Integracoes({ aviso, campanhas = [] }) {
       if (["anuncios", "crm", "formularios", "automacoes"].includes(filtro)) return item.categoria === filtro;
       return true; // "todas"
     });
-  }, [busca, filtro, conexao, webhook]);
+  }, [busca, filtro, conexao, webhook, catalogo]);
 
-  const itemAberto = aberto ? INTEGRACOES.find((i) => i.id === aberto) : null;
+  const itemAberto = aberto ? catalogo.find((i) => i.id === aberto) : null;
 
   return (
     <>
-      {/* Cabeçalho */}
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", margin: "0 0 5px", letterSpacing: "-.02em" }}>Integrações</h2>
-        <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-          Conecte suas ferramentas e centralize automaticamente os leads para seus profissionais.
-        </p>
+      {/* Cabeçalho + seletor de país (segue o idioma; alterna o catálogo) */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", margin: "0 0 5px", letterSpacing: "-.02em" }}>Integrações</h2>
+          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+            Conecte suas ferramentas e centralize automaticamente os leads para seus profissionais.
+          </p>
+        </div>
+        <div role="group" aria-label="País das integrações" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {PAISES.map((p) => {
+            const on = pais === p.chave;
+            return (
+              <button
+                key={p.chave}
+                type="button"
+                onClick={() => { setPais(p.chave); setFiltro("todas"); }}
+                aria-pressed={on}
+                title={p.pais}
+                style={{
+                  font: "inherit", fontSize: 12.5, fontWeight: 500, padding: "6px 11px", borderRadius: 999, cursor: "pointer",
+                  display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+                  border: `1px solid ${on ? "#318CE7" : "var(--border-strong)"}`,
+                  background: on ? "#318CE7" : "var(--surface-solid)",
+                  color: on ? "#fff" : "var(--ink-2)", transition: ".15s",
+                }}
+              >
+                <span style={{ fontSize: 15, lineHeight: 1 }}>{p.bandeira}</span>{p.pais}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Busca */}

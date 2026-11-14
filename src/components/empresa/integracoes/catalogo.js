@@ -1,11 +1,14 @@
 // Catálogo de integrações da Central de Integrações (Leads > Integrações).
 // Apenas metadados — a apresentação fica nos componentes.
 //
-// IMPORTANTE: somente a Meta Ads é real e funcional. Seu status vem SEMPRE da
-// conexão verdadeira (/meta/conexao), reutilizando o componente IntegracaoMeta.
-// Todas as demais são "Em breve": não possuem backend e nunca aparecem como
-// conectadas. Para ligar uma no futuro, basta trocar `disponivel` e apontar um
-// componente de configuração.
+// IMPORTANTE: somente a Meta Ads e o Webhook são reais. A Meta usa SEMPRE o
+// estado da conexão verdadeira (/meta/conexao) e o Webhook o de /webhooks/config.
+// As demais são "Em breve": catálogo preparado, sem conexão fictícia.
+//
+// O catálogo é organizado POR PAÍS (segue o idioma do login): ferramentas
+// globais aparecem em todos; cada país acrescenta as suas ferramentas locais.
+// Interface sempre em português do Brasil (regra do projeto), inclusive as
+// descrições das ferramentas estrangeiras.
 
 export const CATEGORIAS = [
   { chave: "anuncios", rotulo: "Anúncios" },
@@ -14,7 +17,6 @@ export const CATEGORIAS = [
   { chave: "automacoes", rotulo: "Automações" },
 ];
 
-// Filtros horizontais da página.
 export const FILTROS = [
   { chave: "todas", rotulo: "Todas" },
   { chave: "conectadas", rotulo: "Conectadas" },
@@ -25,72 +27,106 @@ export const FILTROS = [
   { chave: "automacoes", rotulo: "Automações" },
 ];
 
-// `tipo`: "meta" → fluxo real existente; "em_breve" → catálogo preparado.
-// Logotipo: `slug` aponta o ícone oficial da marca (Simple Icons, carregado em
-// SVG na cor da marca). `cor`/`sigla` são o fallback (bloco com a inicial)
-// quando a marca não tem ícone na base ou o carregamento falha.
-export const INTEGRACOES = [
-  // ── ANÚNCIOS ──────────────────────────────────────────────────────────
-  { id: "meta", nome: "Meta Ads", tipo: "meta", categoria: "anuncios", slug: "meta", cor: "#0866FF", sigla: "M",
-    descricao: "Receba automaticamente leads dos anúncios do Facebook e Instagram." },
-  { id: "google-ads", nome: "Google Ads", tipo: "em_breve", categoria: "anuncios", slug: "googleads", cor: "#4285F4", sigla: "G",
-    descricao: "Receba leads gerados pelos formulários dos seus anúncios." },
-  { id: "tiktok-ads", nome: "TikTok Ads", tipo: "em_breve", categoria: "anuncios", slug: "tiktok", cor: "#111111", sigla: "T",
-    descricao: "Centralize contatos captados pelas campanhas do TikTok." },
-  { id: "linkedin-ads", nome: "LinkedIn Ads", tipo: "em_breve", categoria: "anuncios", slug: null, dominio: "linkedin.com", cor: "#0A66C2", sigla: "in",
-    descricao: "Receba leads dos formulários de campanhas profissionais." },
+// Logotipo: `slug` = ícone oficial (Simple Icons, na cor da marca); senão
+// `dominio` = logo real do site (favicon); senão `cor`+`sigla` (bloco com a
+// inicial). `tipo`: "meta" e "webhook" são reais; o resto "em_breve".
+export const FERRAMENTAS = {
+  // ── Globais (todos os países) ─────────────────────────────────────────
+  "meta":          { nome: "Meta Ads", tipo: "meta", categoria: "anuncios", slug: "meta", cor: "#0866FF", sigla: "M", descricao: "Receba automaticamente leads dos anúncios do Facebook e Instagram." },
+  "google-ads":    { nome: "Google Ads", categoria: "anuncios", slug: "googleads", cor: "#4285F4", sigla: "G", descricao: "Receba leads gerados pelos formulários dos seus anúncios." },
+  "tiktok-ads":    { nome: "TikTok Ads", categoria: "anuncios", slug: "tiktok", cor: "#111111", sigla: "T", descricao: "Centralize contatos captados pelas campanhas do TikTok." },
+  "linkedin-ads":  { nome: "LinkedIn Ads", categoria: "anuncios", dominio: "linkedin.com", cor: "#0A66C2", sigla: "in", descricao: "Receba leads dos formulários de campanhas profissionais." },
+  "google-forms":  { nome: "Google Forms", categoria: "formularios", slug: "googleforms", cor: "#7248B9", sigla: "GF", descricao: "Receba respostas de formulários como novos leads." },
+  "typeform":      { nome: "Typeform", categoria: "formularios", slug: "typeform", cor: "#262627", sigla: "Tf", descricao: "Transforme respostas de formulários em oportunidades." },
+  "jotform":       { nome: "Jotform", categoria: "formularios", dominio: "jotform.com", cor: "#FF6100", sigla: "J", descricao: "Centralize os contatos enviados pelos seus formulários." },
+  "google-sheets": { nome: "Google Sheets", categoria: "formularios", slug: "googlesheets", cor: "#0F9D58", sigla: "GS", descricao: "Importe contatos e leads de planilhas." },
+  "wordpress":     { nome: "WordPress", categoria: "formularios", slug: "wordpress", cor: "#21759B", sigla: "W", descricao: "Receba leads captados pelo seu site." },
+  "webflow":       { nome: "Webflow", categoria: "formularios", slug: "webflow", cor: "#146EF5", sigla: "Wf", descricao: "Integre formulários e contatos do seu site." },
+  "webhooks":      { nome: "Webhooks", tipo: "webhook", categoria: "automacoes", slug: null, cor: "#6366F1", sigla: "{}", descricao: "Receba leads de sistemas externos automaticamente." },
+  "api-rycs":      { nome: "API RYCS", categoria: "automacoes", slug: null, cor: "#318CE7", sigla: "</>", descricao: "Conecte sistemas personalizados à plataforma." },
+  "zapier":        { nome: "Zapier", categoria: "automacoes", slug: "zapier", cor: "#FF4F00", sigla: "Z", descricao: "Automatize o envio de leads entre aplicativos." },
+  "make":          { nome: "Make", categoria: "automacoes", slug: "make", cor: "#6D00CC", sigla: "Mk", descricao: "Crie fluxos de integração entre diferentes ferramentas." },
+  "n8n":           { nome: "n8n", categoria: "automacoes", slug: "n8n", cor: "#EA4B71", sigla: "n8", descricao: "Conecte automações personalizadas à RYCS." },
 
-  // ── CRM ───────────────────────────────────────────────────────────────
-  { id: "hubspot", nome: "HubSpot", tipo: "em_breve", categoria: "crm", slug: "hubspot", cor: "#FF7A59", sigla: "H",
-    descricao: "Integre contatos e oportunidades do seu CRM." },
-  { id: "rd-station", nome: "RD Station", tipo: "em_breve", categoria: "crm", slug: null, dominio: "rdstation.com", cor: "#19B9A7", sigla: "RD",
-    descricao: "Sincronize leads e informações comerciais." },
-  { id: "pipedrive", nome: "Pipedrive", tipo: "em_breve", categoria: "crm", slug: null, dominio: "pipedrive.com", cor: "#1A1A1A", sigla: "P",
-    descricao: "Conecte contatos e oportunidades do funil de vendas." },
-  { id: "salesforce", nome: "Salesforce", tipo: "em_breve", categoria: "crm", slug: null, dominio: "salesforce.com", cor: "#00A1E0", sigla: "S",
-    descricao: "Integre dados comerciais e registros de clientes." },
-  { id: "agendor", nome: "Agendor", tipo: "em_breve", categoria: "crm", slug: null, dominio: "agendor.com.br", cor: "#2F80ED", sigla: "A",
-    descricao: "Centralize contatos e oportunidades comerciais." },
-  { id: "zoho-crm", nome: "Zoho CRM", tipo: "em_breve", categoria: "crm", slug: "zoho", cor: "#E42527", sigla: "Z",
-    descricao: "Sincronize contatos e informações de vendas." },
+  // ── CRMs multinacionais (reaproveitados em vários países) ──────────────
+  "hubspot":       { nome: "HubSpot", categoria: "crm", slug: "hubspot", cor: "#FF7A59", sigla: "H", descricao: "Integre contatos e oportunidades do seu CRM." },
+  "salesforce":    { nome: "Salesforce", categoria: "crm", dominio: "salesforce.com", cor: "#00A1E0", sigla: "S", descricao: "Integre dados comerciais e registros de clientes." },
+  "zoho-crm":      { nome: "Zoho CRM", categoria: "crm", slug: "zoho", cor: "#E42527", sigla: "Z", descricao: "Sincronize contatos e informações de vendas." },
+  "pipedrive":     { nome: "Pipedrive", categoria: "crm", dominio: "pipedrive.com", cor: "#1A1A1A", sigla: "P", descricao: "Conecte contatos e oportunidades do funil de vendas." },
 
-  // ── FORMULÁRIOS E SITES ───────────────────────────────────────────────
-  { id: "google-forms", nome: "Google Forms", tipo: "em_breve", categoria: "formularios", slug: "googleforms", cor: "#7248B9", sigla: "GF",
-    descricao: "Receba respostas de formulários como novos leads." },
-  { id: "typeform", nome: "Typeform", tipo: "em_breve", categoria: "formularios", slug: "typeform", cor: "#262627", sigla: "Tf",
-    descricao: "Transforme respostas de formulários em oportunidades." },
-  { id: "jotform", nome: "Jotform", tipo: "em_breve", categoria: "formularios", slug: "jotform", cor: "#FF6100", sigla: "J",
-    descricao: "Centralize os contatos enviados pelos seus formulários." },
-  { id: "wordpress", nome: "WordPress", tipo: "em_breve", categoria: "formularios", slug: "wordpress", cor: "#21759B", sigla: "W",
-    descricao: "Receba leads captados pelo seu site." },
-  { id: "webflow", nome: "Webflow", tipo: "em_breve", categoria: "formularios", slug: "webflow", cor: "#146EF5", sigla: "Wf",
-    descricao: "Integre formulários e contatos do seu site." },
+  // ── Brasil ────────────────────────────────────────────────────────────
+  "rd-station":    { nome: "RD Station", categoria: "crm", dominio: "rdstation.com", cor: "#19B9A7", sigla: "RD", descricao: "Sincronize leads e informações comerciais." },
+  "agendor":       { nome: "Agendor", categoria: "crm", dominio: "agendor.com.br", cor: "#2F80ED", sigla: "A", descricao: "Centralize contatos e oportunidades comerciais." },
 
-  // ── AUTOMAÇÕES E DESENVOLVEDORES ──────────────────────────────────────
-  { id: "webhooks", nome: "Webhooks", tipo: "webhook", categoria: "automacoes", slug: null, cor: "#6366F1", sigla: "{}",
-    descricao: "Receba leads de sistemas externos automaticamente." },
-  { id: "api-rycs", nome: "API RYCS", tipo: "em_breve", categoria: "automacoes", slug: null, cor: "#318CE7", sigla: "</>",
-    descricao: "Conecte sistemas personalizados à plataforma." },
-  { id: "zapier", nome: "Zapier", tipo: "em_breve", categoria: "automacoes", slug: "zapier", cor: "#FF4F00", sigla: "Z",
-    descricao: "Automatize o envio de leads entre aplicativos." },
-  { id: "make", nome: "Make", tipo: "em_breve", categoria: "automacoes", slug: "make", cor: "#6D00CC", sigla: "M",
-    descricao: "Crie fluxos de integração entre diferentes ferramentas." },
-  { id: "n8n", nome: "n8n", tipo: "em_breve", categoria: "automacoes", slug: "n8n", cor: "#EA4B71", sigla: "n8",
-    descricao: "Conecte automações personalizadas à RYCS." },
-  { id: "google-sheets", nome: "Google Sheets", tipo: "em_breve", categoria: "formularios", slug: "googlesheets", cor: "#0F9D58", sigla: "GS",
-    descricao: "Importe contatos e leads de planilhas." },
+  // ── Estados Unidos ────────────────────────────────────────────────────
+  "keap":          { nome: "Keap", categoria: "crm", dominio: "keap.com", cor: "#FF6B2C", sigla: "K", descricao: "Automatize vendas e marketing do seu negócio." },
+  "activecampaign":{ nome: "ActiveCampaign", categoria: "crm", dominio: "activecampaign.com", cor: "#356AE6", sigla: "AC", descricao: "Sincronize contatos e automações de marketing." },
+  "gohighlevel":   { nome: "GoHighLevel", categoria: "crm", dominio: "gohighlevel.com", cor: "#2A3B4D", sigla: "HL", descricao: "Centralize leads e funis da sua agência." },
+  "mailchimp":     { nome: "Mailchimp", categoria: "automacoes", dominio: "mailchimp.com", cor: "#2A2A2A", sigla: "Mc", descricao: "Receba contatos das suas campanhas de e-mail." },
+  "calendly":      { nome: "Calendly", categoria: "automacoes", dominio: "calendly.com", cor: "#006BFF", sigla: "C", descricao: "Transforme agendamentos em novos leads." },
+
+  // ── Espanha ───────────────────────────────────────────────────────────
+  "holded":        { nome: "Holded", categoria: "crm", dominio: "holded.com", cor: "#0066FF", sigla: "Ho", descricao: "Integre contatos e vendas do seu ERP/CRM." },
+  "efficy":        { nome: "Efficy CRM", categoria: "crm", dominio: "efficy.com", cor: "#E6007E", sigla: "Ef", descricao: "Conecte contatos e oportunidades do CRM." },
+  "teamleader":    { nome: "Teamleader", categoria: "crm", dominio: "teamleader.eu", cor: "#27C1C6", sigla: "TL", descricao: "Centralize clientes e orçamentos." },
+  "brevo":         { nome: "Brevo", categoria: "automacoes", dominio: "brevo.com", cor: "#0B996E", sigla: "Br", descricao: "Sincronize contatos das suas campanhas (Brevo)." },
+
+  // ── China ─────────────────────────────────────────────────────────────
+  "baidu-ads":     { nome: "Baidu Ads", categoria: "anuncios", dominio: "baidu.com", cor: "#2932E1", sigla: "百", descricao: "Receba leads dos anúncios do Baidu." },
+  "douyin-ads":    { nome: "Douyin Ads", categoria: "anuncios", dominio: "douyin.com", cor: "#111111", sigla: "抖", descricao: "Centralize contatos das campanhas do Douyin." },
+  "weibo-ads":     { nome: "Weibo Ads", categoria: "anuncios", dominio: "weibo.com", cor: "#E6162D", sigla: "微", descricao: "Receba leads das campanhas do Weibo." },
+  "xiaohongshu":   { nome: "Xiaohongshu", categoria: "anuncios", dominio: "xiaohongshu.com", cor: "#FF2442", sigla: "小", descricao: "Centralize contatos captados no Xiaohongshu." },
+  "wecom":         { nome: "WeChat Work", categoria: "crm", dominio: "work.weixin.qq.com", cor: "#2E7CF6", sigla: "企", descricao: "Centralize contatos do WeChat corporativo." },
+  "dingtalk":      { nome: "DingTalk", categoria: "crm", dominio: "dingtalk.com", cor: "#3296FA", sigla: "钉", descricao: "Receba leads e contatos do DingTalk." },
+  "feishu":        { nome: "Feishu (Lark)", categoria: "crm", dominio: "feishu.cn", cor: "#3370FF", sigla: "飞", descricao: "Integre contatos e formulários do Feishu/Lark." },
+
+  // ── Índia ─────────────────────────────────────────────────────────────
+  "freshsales":    { nome: "Freshsales", categoria: "crm", dominio: "freshworks.com", cor: "#FF5A36", sigla: "Fr", descricao: "Sincronize contatos e negócios do Freshworks." },
+  "leadsquared":   { nome: "LeadSquared", categoria: "crm", dominio: "leadsquared.com", cor: "#0A7CFF", sigla: "LS", descricao: "Centralize e distribua leads do LeadSquared." },
+  "kylas":         { nome: "Kylas", categoria: "crm", dominio: "kylas.io", cor: "#1E3A8A", sigla: "Ky", descricao: "Conecte contatos e oportunidades do Kylas." },
+  "razorpay":      { nome: "Razorpay", categoria: "automacoes", dominio: "razorpay.com", cor: "#0C2451", sigla: "Rz", descricao: "Receba leads de pagamentos e cobranças." },
+  "justdial":      { nome: "Justdial", categoria: "formularios", dominio: "justdial.com", cor: "#008C44", sigla: "JD", descricao: "Receba contatos gerados no Justdial." },
+  "exotel":        { nome: "Exotel", categoria: "automacoes", dominio: "exotel.com", cor: "#5B2EE0", sigla: "Ex", descricao: "Transforme chamadas em leads (Exotel)." },
+};
+
+// Países (seguem os 5 primeiros idiomas do seletor de login). `ids` define a
+// ordem das ferramentas no catálogo daquele país.
+export const PAISES = [
+  { chave: "br", pais: "Brasil", bandeira: "🇧🇷", locales: ["pt-BR", "pt"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "rd-station", "pipedrive", "agendor", "hubspot", "salesforce", "zoho-crm", "google-forms", "typeform", "jotform", "wordpress", "webflow", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
+  { chave: "us", pais: "Estados Unidos", bandeira: "🇺🇸", locales: ["en"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "hubspot", "salesforce", "zoho-crm", "keap", "activecampaign", "gohighlevel", "mailchimp", "calendly", "google-forms", "typeform", "jotform", "wordpress", "webflow", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
+  { chave: "es", pais: "Espanha", bandeira: "🇪🇸", locales: ["es"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "salesforce", "hubspot", "pipedrive", "holded", "efficy", "teamleader", "brevo", "google-forms", "typeform", "jotform", "wordpress", "webflow", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
+  { chave: "cn", pais: "China", bandeira: "🇨🇳", locales: ["zh"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "baidu-ads", "douyin-ads", "weibo-ads", "xiaohongshu", "wecom", "dingtalk", "feishu", "google-forms", "jotform", "google-sheets", "webhooks", "api-rycs", "make", "n8n"] },
+  { chave: "in", pais: "Índia", bandeira: "🇮🇳", locales: ["hi"],
+    ids: ["meta", "google-ads", "tiktok-ads", "linkedin-ads", "zoho-crm", "freshsales", "leadsquared", "kylas", "hubspot", "salesforce", "razorpay", "justdial", "exotel", "google-forms", "typeform", "jotform", "wordpress", "google-sheets", "webhooks", "api-rycs", "zapier", "make", "n8n"] },
 ];
+
+// Monta a lista de integrações de um país (id → objeto, com o id embutido).
+export function integracoesDoPais(chave) {
+  const pais = PAISES.find((p) => p.chave === chave) || PAISES[0];
+  return pais.ids.map((id) => ({ id, ...FERRAMENTAS[id] })).filter((x) => x.nome);
+}
+
+// País inicial a partir do idioma logado (localStorage do i18n); cai no Brasil.
+export function paisDoIdioma() {
+  let loc = "pt-BR";
+  try { loc = window.localStorage?.getItem("rycs-idioma") || "pt-BR"; } catch { /* ignore */ }
+  return PAISES.find((p) => p.locales.includes(loc))?.chave
+      || PAISES.find((p) => p.locales.some((l) => loc.startsWith(l)))?.chave
+      || "br";
+}
 
 export const rotuloCategoria = (chave) =>
   CATEGORIAS.find((c) => c.chave === chave)?.rotulo || chave;
 
 // Deriva o status visual a partir da conexão REAL da Meta. Nunca inventa estado.
-// Retorna: "conectado" | "atencao" | "nao_conectado" | "em_breve".
 export function statusMeta(conexao) {
   if (!conexao) return "nao_conectado";
   if (!conexao.conectado) return "nao_conectado";
   if (conexao.status === "ativa") return "conectado";
-  // conectado mas sem Página escolhida, expirado ou precisa reconfirmar
   return "atencao";
 }
 
