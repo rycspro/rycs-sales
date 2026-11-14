@@ -186,7 +186,6 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
               </button>
             )}
           </div>
-          {cursos.length === 0 && <SugestoesEstrutura onAceitar={aceitarSugestao} onGerar={() => setGerar(true)} />}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {cursos.map((c, i) => (
               <ModuloCard key={c.id} c={c} numero={i + 1} stats={aprend?.[c.id]} onGerenciar={() => onAbrir(c.id)}

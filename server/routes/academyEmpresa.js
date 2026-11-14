@@ -17,6 +17,29 @@ const empresa = (req, res) => {
 
 const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
 
+// Estrutura inicial sugerida: três módulos criados uma única vez quando a
+// empresa ainda não tem nenhum. Nascem como rascunho SEM aulas (status "Não
+// configurado" na interface). Não são recriados se a empresa apagá-los — a flag
+// seedInicial em academyConfig garante isso.
+const MODULOS_INICIAIS = [
+  { titulo: "Conhecendo a empresa", descricao: "Apresente sua empresa, história, posicionamento e cultura." },
+  { titulo: "Produtos e serviços", descricao: "Prepare seus profissionais para compreender o que sua empresa oferece." },
+  { titulo: "Processos e orientações", descricao: "Ensine os procedimentos e boas práticas necessários para executar as atividades." },
+];
+function semearModulosIniciais(companyId, criadoPor) {
+  const temAlgum = db.prepare("SELECT COUNT(*) n FROM courses WHERE companyId = ?").get(companyId).n;
+  if (temAlgum) return;
+  const row = db.prepare("SELECT nome, academyConfig FROM companies WHERE id = ?").get(companyId);
+  let cfg = {}; try { cfg = JSON.parse(row?.academyConfig || "{}"); } catch { cfg = {}; }
+  if (cfg.seedInicial) return; // já foi semeado uma vez; não recriar
+  MODULOS_INICIAIS.forEach((m, i) => criarCurso({
+    titulo: m.titulo, descricao: m.descricao, companyId, professor: row?.nome || "",
+    status: "rascunho", criadoPor, ordem: i,
+  }));
+  cfg.seedInicial = true;
+  db.prepare("UPDATE companies SET academyConfig = ? WHERE id = ?").run(JSON.stringify(cfg), companyId);
+}
+
 // Resolve o curso garantindo que é da empresa logada.
 function cursoDaEmpresa(id, companyId) {
   const c = db.prepare("SELECT * FROM courses WHERE id = ? AND companyId = ?").get(id, companyId);
@@ -55,6 +78,7 @@ function resumoCurso(c) {
 router.get("/academy/empresa", (req, res) => {
   const companyId = empresa(req, res);
   if (!companyId) return;
+  semearModulosIniciais(companyId, req.user.id);
   const cursos = db.prepare("SELECT * FROM courses WHERE companyId = ? ORDER BY ordem ASC, atualizadoEm DESC").all(companyId);
   const ids = cursos.map((c) => c.id);
 
