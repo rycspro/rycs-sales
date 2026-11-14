@@ -59,6 +59,7 @@ export const NAV = {
     { divider: true },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
       { key: "campanhas", label: "Campanhas" },
+      { key: "pagamentos-campanhas", label: "Pagamentos" },
       { key: "campanhas-comissoes", label: "Comissões" },
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
@@ -73,7 +74,6 @@ export const NAV = {
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { divider: true },
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
-      { key: "pagamentos-campanhas", label: "Campanhas" },
       { key: "pagamentos", label: "Planos" },
       { key: "pagamentos-visibilidade", label: "Visibilidade" },
     ] },
