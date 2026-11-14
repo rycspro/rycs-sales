@@ -2,8 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ArrowLeft, Check, Copy, ShieldCheck } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { formatarData, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../../shared/assinatura.js";
-import { TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../../shared/planos.js";
+import { formatarData, primeiraCobranca } from "../../../shared/assinatura.js";
 import { normalizarDocumento } from "../../../shared/onboarding.js";
 import CheckoutStripe from "../empresa/CheckoutStripe.jsx";
 import PricingPlanos from "../empresa/PricingPlanos.jsx";
@@ -87,21 +86,17 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     aoAvancar(r);
   };
 
-  // Enquanto o QR está aberto, pergunta ao servidor se o banco já autorizou.
+  // Enquanto o QR está aberto, pergunta ao servidor se o pagamento já foi
+  // confirmado. O webhook ativa a assinatura; aqui a tela só acompanha.
   useEffect(() => {
     if (!pix) return undefined;
     let vivo = true;
     const verificar = async () => {
-      const r = await api("/subscription/pix-automatico");
+      const r = await api("/subscription");
       if (!vivo || !r || r.error) return;
-      if (r.status === "autorizada") { clearInterval(consulta.current); await terminar(); }
-      else if (r.status === "cancelada") {
-        clearInterval(consulta.current);
-        setPix(null);
-        setErro(`O Pix Automático não foi autorizado${r.motivo ? ` (${r.motivo})` : ""}. Tente de novo ou use o cartão.`);
-      }
+      if (r.assinatura?.status === "ativa") { clearInterval(consulta.current); await terminar(); }
     };
-    consulta.current = setInterval(verificar, 4000);
+    consulta.current = setInterval(verificar, 5000);
     return () => { vivo = false; clearInterval(consulta.current); };
   }, [pix]);
 
@@ -114,11 +109,11 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     }
     setErros({});
     setEnviando(true);
-    const r = await api("/subscription", { plano, onboarding: true, formaPagamento: "PIX_AUTOMATICO", titular: { documento: doc } });
+    const r = await api("/subscription", { plano, onboarding: true, formaPagamento: "PIX", titular: { documento: doc } });
     setEnviando(false);
     if (!r || r.error) {
       if (r?.campo) setErros({ [r.campo]: r.error });
-      return setErro(r?.error ? `O Pix Automático não está disponível agora: ${r.error}. Você pode usar o cartão de crédito.` : "Não foi possível gerar o Pix Automático. Tente de novo ou use o cartão.");
+      return setErro(r?.error ? `Não foi possível gerar o Pix: ${r.error}` : "Não foi possível gerar o Pix. Tente de novo.");
     }
     setPix({ payload: r.pixCopiaECola, imagem: r.pixQrCodeBase64, primeiraCobranca: r.primeiraCobranca });
   };
@@ -156,11 +151,9 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
   const trial = dados.trialDias;
   const escolhido = dados.planos.find((p) => p.chave === plano);
   const precoUsd = stripe?.planos?.find((p) => p.chave === plano)?.mensal ?? escolhido?.preco;
-  // Pix nacional: o primeiro débito automático cai no fim do trial (ou já no
-  // próximo ciclo quando não há trial). Regra em server/routes/subscriptions.js.
-  const cobrancaEm = forma === "pix"
-    ? primeiroDebitoPixAutomatico({ trialDias: trial })
-    : trial ? primeiraCobranca({ trialDias: trial }) : primeiraCobranca({ trialDias: 3 });
+  // Com trial, a primeira cobrança cai no fim dele; sem trial, à vista hoje.
+  // Regra em server/routes/subscriptions.js.
+  const cobrancaEm = trial ? primeiraCobranca({ trialDias: trial }) : primeiraCobranca({ trialDias: 0 });
 
   if (dados.atual) return (
     <div>
@@ -215,14 +208,14 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
         <ArrowLeft size={15} /> Voltar
       </button>
       <div className="vx-onb-eyebrow">Passo 5 de 6</div>
-      <h1 className="vx-disp vx-onb-titulo">Autorize o Pix Automático</h1>
+      <h1 className="vx-disp vx-onb-titulo">Pague o Pix para ativar</h1>
       <div className="vx-onb-card vx-onb-secao" style={{ maxWidth: 640 }}>
         <ol className="vx-mut" style={{ fontSize: 14, lineHeight: 1.7, paddingLeft: 18, margin: "0 0 14px" }}>
           <li>Abra o app do banco da empresa e leia o QR Code (ou use o Pix copia e cola).</li>
-          <li>Confira e pague a ativação de <b>{money(TAXA_ATIVACAO_PIX_AUTOMATICO)}</b>. No mesmo passo o banco pede para autorizar o débito mensal da RYCS.</li>
-          <li>A mensalidade de <b>{escolhido ? money(escolhido.preco) : "—"}</b> é debitada automaticamente a partir de <b>{formatarData(pix.primeiraCobranca)}</b>. Você pode cancelar a autorização no app do banco quando quiser.</li>
+          <li>Pague o Pix de <b>{escolhido ? money(escolhido.preco) : "—"}</b>. O acesso é liberado assim que o pagamento for confirmado.</li>
+          <li>A cobrança é à vista, mês a mês. Você pode cancelar quando quiser em Minha Conta › Plano.</li>
         </ol>
-        {pix.imagem && <img src={`data:image/png;base64,${pix.imagem}`} alt="QR Code do Pix Automático" width={220} height={220} style={{ display: "block", margin: "0 auto 14px" }} />}
+        {pix.imagem && <img src={`data:image/png;base64,${pix.imagem}`} alt="QR Code Pix" width={220} height={220} style={{ display: "block", margin: "0 auto 14px" }} />}
         {pix.payload && (
           <div className="vx-onb-campo">
             <label className="vx-label" htmlFor={`${id}-pix`}>Pix copia e cola</label>
@@ -232,7 +225,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
             </button>
           </div>
         )}
-        <p className="vx-onb-dica" role="status">Aguardando a confirmação do banco… Esta tela avança sozinha quando a autorização for confirmada.</p>
+        <p className="vx-onb-dica" role="status">Aguardando a confirmação do pagamento… Esta tela avança sozinha quando o Pix for confirmado.</p>
         <div className="vx-onb-acoes">
           <button type="button" className="vx-btn" onClick={() => setPix(null)}>Voltar</button>
           <span />
@@ -299,28 +292,28 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
             </p>
           </> : <>
             <p className="vx-mut" style={{ fontSize: 14, lineHeight: 1.6, margin: "0 0 12px" }}>
-              Você paga {money(TAXA_ATIVACAO_PIX_AUTOMATICO)} agora para ativar e autoriza, no app do banco, o débito automático da mensalidade. Dá para cancelar no próprio banco quando quiser.
+              Geramos um QR Code Pix após a confirmação. O acesso é liberado assim que o pagamento for confirmado. A cobrança é à vista, mês a mês.
             </p>
             {campo("documento", "CPF ou CNPJ da empresa", { inputMode: "numeric" }, (v) => digitos(v).slice(0, 14))}
           </>}
 
           <dl className="vx-onb-resumo">
             <div><dt>Plano</dt><dd>{escolhido ? `${escolhido.nome} · ${forma === "internacional" ? usd(precoUsd) : money(escolhido.preco)}/mês` : "—"}</dd></div>
-            <div><dt>Cobrado hoje</dt><dd>{forma === "internacional" ? (trial ? usd(0) : usd(precoUsd)) : `${money(TAXA_ATIVACAO_PIX_AUTOMATICO)} (ativação)`}</dd></div>
-            <div><dt>{forma === "internacional" ? "Primeira cobrança" : "Primeiro débito automático"}</dt><dd>{escolhido ? (forma === "internacional" ? (trial ? `${usd(precoUsd)} daqui a ${trial} dias` : "hoje, no Stripe") : `${money(escolhido.preco)} em ${formatarData(cobrancaEm)}`) : "—"}</dd></div>
+            <div><dt>Cobrado hoje</dt><dd>{forma === "internacional" ? (trial ? usd(0) : usd(precoUsd)) : (trial ? money(0) : money(escolhido?.preco ?? 0))}</dd></div>
+            <div><dt>Primeira cobrança</dt><dd>{escolhido ? (forma === "internacional" ? (trial ? `${usd(precoUsd)} daqui a ${trial} dias` : "hoje, no Stripe") : `${money(escolhido.preco)} em ${formatarData(cobrancaEm)}`) : "—"}</dd></div>
           </dl>
 
           <div aria-live="polite">{erro && <div className="vx-onb-erro" role="alert">{erro}</div>}</div>
           <button type="submit" className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" disabled={enviando || !plano}>
             {forma === "internacional"
               ? (enviando ? "Abrindo o Stripe…" : "Continuar para o pagamento em dólar")
-              : (enviando ? "Gerando o Pix…" : "Gerar Pix de ativação")}
+              : (enviando ? "Gerando o Pix…" : "Pagar com Pix")}
           </button>
           <p className="vx-onb-dica" style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
             <ShieldCheck size={15} aria-hidden="true" style={{ flex: "none", marginTop: 2 }} />
             {forma === "internacional"
               ? "O pagamento em dólar é processado pelo Stripe. A RYCS não vê nem guarda os dados do cartão."
-              : "O Pix é processado pelo Asaas e autorizado por você no app do seu banco."}
+              : "O Pix é processado pelo Asaas. O acesso é liberado após a confirmação do pagamento."}
           </p>
         </section>
       )}

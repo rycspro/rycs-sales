@@ -375,15 +375,16 @@ router.post("/subscription", async (req, res) => {
   // desconto, cobrados de uma vez). O valor vem de shared/planos.js, nunca aqui.
   const ciclo = normalizarCiclo(req.body?.ciclo);
   const valorBase = PLANOS[chave]?.preco ? valorCobradoNoCiclo(chave, ciclo) : 0;
-  // Checkout da etapa 5 do onboarding: cartão ou Pix Automático, com o trial
-  // do convite (se houver) e o documento do titular servindo de documento da
-  // empresa quando ela ainda não tem um.
+  // Checkout da etapa 5 do onboarding: Pix (avulso), cartão ou Pix Automático,
+  // com o trial do convite (se houver) e o documento do titular servindo de
+  // documento da empresa quando ela ainda não tem um.
   const doOnboarding = req.body?.onboarding === true;
   if (doOnboarding) {
     if (!PLANOS[chave]?.preco) return res.status(400).json({ error: "Escolha um dos planos." });
-    if (req.body.formaPagamento !== "PIX_AUTOMATICO") req.body.formaPagamento = "CREDIT_CARD";
+    if (!["PIX", "PIX_AUTOMATICO"].includes(req.body.formaPagamento)) req.body.formaPagamento = "CREDIT_CARD";
+    const ehPix = ["PIX", "PIX_AUTOMATICO"].includes(req.body.formaPagamento);
     const doc = normalizarDocumento(req.body?.titular?.documento);
-    if (!doc) return res.status(400).json({ error: req.body.formaPagamento === "PIX_AUTOMATICO" ? "Informe o CPF ou CNPJ da empresa." : "Informe o CPF ou CNPJ do titular do cartão.", campo: "documento" });
+    if (!doc) return res.status(400).json({ error: ehPix ? "Informe o CPF ou CNPJ da empresa." : "Informe o CPF ou CNPJ do titular do cartão.", campo: "documento" });
     db.prepare("UPDATE companies SET documento = ? WHERE id = ? AND (documento IS NULL OR documento = '')").run(doc, entityId);
   }
   const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
