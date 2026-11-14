@@ -4,17 +4,40 @@ import { api } from "../../../lib/api.js";
 import IntegracaoMeta from "../IntegracaoMeta.jsx";
 import { INTEGRACOES, FILTROS, STATUS, statusMeta, rotuloCategoria } from "./catalogo.js";
 
-// ── Logotipo: bloco colorido com a inicial da marca ─────────────────────────
-// Consistente, sem dependência de rede e sem distorção de imagem.
-function Logo({ cor, sigla, tam = 44 }) {
+// ── Logotipo oficial da marca ───────────────────────────────────────────────
+// Carrega o ícone oficial (SVG, na cor da marca) sobre um ladrilho branco.
+// Se a marca não tiver ícone na base ou o carregamento falhar, cai no bloco
+// colorido com a inicial — sem distorção e sem quebrar o layout.
+function Logo({ item, tam = 44 }) {
+  const [falhou, setFalhou] = useState(false);
+  const usarIcone = item.slug && !falhou;
+
+  if (usarIcone) {
+    const cor = item.cor.replace("#", "");
+    return (
+      <div style={{
+        width: tam, height: tam, borderRadius: 11, background: "#fff", flexShrink: 0,
+        border: "1px solid rgba(17,24,39,.08)", display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <img
+          src={`https://cdn.simpleicons.org/${item.slug}/${cor}`}
+          alt={item.nome}
+          width={Math.round(tam * 0.52)} height={Math.round(tam * 0.52)}
+          loading="lazy" onError={() => setFalhou(true)}
+          style={{ display: "block" }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div style={{
-      width: tam, height: tam, borderRadius: 11, background: cor, flexShrink: 0,
+      width: tam, height: tam, borderRadius: 11, background: item.cor, flexShrink: 0,
       display: "flex", alignItems: "center", justifyContent: "center",
-      color: "#fff", fontWeight: 700, fontSize: sigla.length > 2 ? 13 : sigla.length > 1 ? 15 : 19,
+      color: "#fff", fontWeight: 700, fontSize: item.sigla.length > 2 ? 13 : item.sigla.length > 1 ? 15 : 19,
       letterSpacing: "-.02em", fontFamily: "'Geist','Inter',sans-serif",
       boxShadow: "inset 0 1px 0 rgba(255,255,255,.18)",
-    }}>{sigla}</div>
+    }}>{item.sigla}</div>
   );
 }
 
@@ -32,19 +55,25 @@ function Status({ chave }) {
 // ── Card de integração ──────────────────────────────────────────────────────
 function Card({ item, statusChave, onAbrir }) {
   const s = STATUS[statusChave] || STATUS.em_breve;
+  const emBreve = statusChave === "em_breve";
+  const abrir = () => onAbrir(item);
+
   return (
-    <button
-      type="button"
-      onClick={() => onAbrir(item)}
-      className="vx-integra-card"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={abrir}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); } }}
+      className={`vx-integra-card${emBreve ? " vx-integra-card--soon" : ""}`}
+      aria-label={`${item.nome} — ${s.rotulo}`}
       style={{
         textAlign: "left", background: "var(--surface-solid)", border: "1px solid var(--border)",
-        borderRadius: 12, padding: 18, cursor: "pointer", font: "inherit", color: "inherit",
+        borderRadius: 12, padding: 18, cursor: "pointer",
         display: "flex", flexDirection: "column", gap: 12, minHeight: 168, transition: "border-color .18s, box-shadow .18s",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Logo cor={item.cor} sigla={item.sigla} />
+        <Logo item={item} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 14.5, fontWeight: 600, color: "var(--ink)", letterSpacing: "-.01em" }}>{item.nome}</div>
           <div style={{ marginTop: 3 }}><Status chave={statusChave} /></div>
@@ -55,14 +84,21 @@ function Card({ item, statusChave, onAbrir }) {
         <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-2)", textTransform: "uppercase", letterSpacing: ".06em" }}>
           {rotuloCategoria(item.categoria)}
         </span>
-        <span style={{
-          display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 600,
-          color: s.acao ? "#318CE7" : "var(--muted-2)",
-        }}>
-          {s.acao || "Em breve"}{s.acao && <ArrowRight size={13} />}
-        </span>
+        {s.acao ? (
+          // Disponível/conectado: ação em forma de botão, para dar destaque.
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); abrir(); }}
+            className={`vx-btn vx-btn-sm${statusChave === "atencao" ? "" : " vx-btn-primary"}`}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+          >
+            {s.acao}{statusChave !== "atencao" && <ArrowRight size={13} />}
+          </button>
+        ) : (
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted-2)" }}>Em breve</span>
+        )}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -89,7 +125,7 @@ function Drawer({ item, statusChave, aviso, campanhas, onFechar }) {
       }}>
         {/* Cabeçalho do drawer */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "20px 22px", borderBottom: "1px solid var(--border)" }}>
-          <Logo cor={item.cor} sigla={item.sigla} tam={46} />
+          <Logo item={item} tam={46} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)" }}>{item.nome}</div>
             <div style={{ fontSize: 12, color: "var(--muted-2)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600, marginTop: 2 }}>

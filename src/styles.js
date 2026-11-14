@@ -289,6 +289,9 @@ html.dark .vx-card:hover{border-color:var(--border-strong);box-shadow:0 4px 20px
 @media (min-width:1040px){.vx-integra-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .vx-integra-card:hover{border-color:#318CE7!important;box-shadow:0 4px 18px rgba(49,140,231,.10)}
 .vx-integra-card:focus-visible{outline:none;border-color:#318CE7!important;box-shadow:var(--ring)}
+/* "Em breve": cartão ofuscado/apagado, ainda clicável para abrir o aviso */
+.vx-integra-card--soon{opacity:.6;background:var(--surface-2)}
+.vx-integra-card--soon:hover{opacity:.78;border-color:var(--border-strong)!important;box-shadow:none}
 .vx-prof-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;align-items:stretch}
 .vx-prof-grid>.vx-prof-card{min-width:0;height:420px;display:flex;flex-direction:column;overflow:hidden;border-radius:16px;background:var(--surface);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);cursor:pointer;transition:box-shadow .25s,border-color .25s,transform .25s}
 .vx-prof-grid>.vx-prof-card:hover{box-shadow:0 12px 32px -10px rgba(11,18,32,.1);border-color:var(--border-strong);transform:translateY(-2px)}
