@@ -171,12 +171,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
               }}
             />
 
-            {atual?.assinatura?.status === "pendente" && (
-              <div className="vx-notice vx-notice-amber" style={{ marginTop: 14 }}>
-                Existe uma assinatura aguardando pagamento. Atualize a página após pagar; o webhook confirmará o status.
-              </div>
-            )}
-            {["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
+{["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
               <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={cancelar}>Cancelar assinatura</button>
             )}
             {atual?.assinatura?.gateway === "stripe" && ["ativa", "trial", "inadimplente"].includes(atual?.assinatura?.status) && (
