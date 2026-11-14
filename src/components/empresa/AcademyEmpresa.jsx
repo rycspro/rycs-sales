@@ -75,9 +75,11 @@ export default function AcademyEmpresa({ emp, db, aviso, onIrParaMateriais }) {
 function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
   const [dados, setDados] = useState(null);
   const [intel, setIntel] = useState(null);
-  const [aba, setAba] = useState("minha"); // minha | configurar | aprendizado
+  const [aba, setAba] = useState("minha"); // minha | configuracoes | aprendizado
   const [criar, setCriar] = useState(false);
   const [gerar, setGerar] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [aprend, setAprend] = useState(null); // mapa courseId -> stats
 
   const carregar = useCallback(async () => {
     const r = await api("/academy/empresa");
@@ -87,9 +89,30 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
     const r = await api("/academy/empresa/inteligencia");
     if (r && !r.error) setIntel(r);
   }, []);
-  useEffect(() => { carregar(); carregarIntel(); }, [carregar, carregarIntel]);
+  const carregarAprend = useCallback(async () => {
+    const r = await api("/academy/empresa/aprendizado");
+    if (r?.modulos) setAprend(Object.fromEntries(r.modulos.map((m) => [m.id, m])));
+  }, []);
+  useEffect(() => { carregar(); carregarIntel(); carregarAprend(); }, [carregar, carregarIntel, carregarAprend]);
 
   const cursos = dados?.cursos || [];
+
+  // Reordenação dos módulos na própria jornada (persistida).
+  const mover = async (i, dir) => {
+    const j = i + dir; if (j < 0 || j >= cursos.length) return;
+    const ids = cursos.map((c) => c.id);
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    setDados((d) => ({ ...d, cursos: ids.map((id) => cursos.find((c) => c.id === id)) }));
+    await apiPut("/academy/empresa/cursos/ordem", { ordem: ids });
+  };
+
+  const gerarAulasModulo = async (c) => {
+    aviso?.("Gerando aulas com IA...");
+    const r = await api(`/academy/empresa/cursos/${c.id}/ia/aulas`, {});
+    if (r?.error || !r?.ok) return aviso?.(r?.error || "Falha ao gerar aulas.");
+    aviso?.(`${r.aulas} aula(s) geradas e aguardando sua revisão.`);
+    carregar(); carregarIntel();
+  };
 
   const acaoCurso = async (c, acao) => {
     if (acao === "editar" || acao === "abrir" || acao === "revisar") return onAbrir(c.id);
@@ -126,7 +149,7 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
 
   if (!dados) return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
 
-  const ABAS = [["minha", "Minha Academy"], ["configurar", "Configurar"], ["aprendizado", "Aprendizado"]];
+  const ABAS = [["minha", "Minha Academy"], ["configuracoes", "Configurações"], ["aprendizado", "Aprendizado"]];
 
   return (
     <div className="vx-fade">
@@ -136,14 +159,9 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
           <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Academy</h1>
           <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>Organize os treinamentos da sua empresa e acompanhe a capacitação dos profissionais.</p>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="vx-btn vx-btn-sm" onClick={() => setAba("configurar")} style={{ gap: 6, whiteSpace: "nowrap" }}>
-            <Settings2 size={16} /> Configurar Academy
-          </button>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setGerar(true)} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
-            <Sparkles size={16} /> Gerar com IA
-          </button>
-        </div>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setGerar(true)} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
+          <Sparkles size={16} /> Gerar com IA
+        </button>
       </div>
 
       {/* Abas */}
@@ -155,16 +173,25 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
 
       {aba === "minha" && (
         <>
-          <PainelInteligencia intel={intel} onGerar={() => setGerar(true)} onRevisar={() => setAba("minha")}
+          <PainelInteligencia intel={intel} temModulos={cursos.length > 0} onGerar={() => setGerar(true)} onRevisar={() => setAba("minha")}
             onAtualizacoes={() => setAba("aprendizado")} onIrMateriais={onIrMateriais} />
-          <div style={{ marginBottom: 16 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Estrutura da sua Academy</h2>
-            <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Defina o que seus profissionais precisam aprender e organize os conteúdos na ordem desejada.</p>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Jornada de aprendizagem</h2>
+              <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Organize o que seus profissionais precisam aprender e defina a sequência dos treinamentos.</p>
+            </div>
+            {cursos.length > 0 && (
+              <button className="vx-btn vx-btn-sm" onClick={() => setPreview(true)} style={{ gap: 6, whiteSpace: "nowrap" }}>
+                <Eye size={15} /> Visualizar como profissional
+              </button>
+            )}
           </div>
           {cursos.length === 0 && <SugestoesEstrutura onAceitar={aceitarSugestao} onGerar={() => setGerar(true)} />}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {cursos.map((c, i) => (
-              <ModuloCard key={c.id} c={c} numero={i + 1} onGerenciar={() => onAbrir(c.id)} />
+              <ModuloCard key={c.id} c={c} numero={i + 1} stats={aprend?.[c.id]} onGerenciar={() => onAbrir(c.id)}
+                onEditar={() => onAbrir(c.id)} onGerarAulas={() => gerarAulasModulo(c)} onVerDesempenho={() => setAba("aprendizado")}
+                podeSubir={i > 0} podeDescer={i < cursos.length - 1} onSubir={() => mover(i, -1)} onDescer={() => mover(i, 1)} />
             ))}
           </div>
           <button className="vx-btn vx-btn-sm" onClick={() => setCriar(true)} style={{ gap: 6, marginTop: 14 }}>
@@ -173,38 +200,32 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
         </>
       )}
 
-      {aba === "configurar" && (
-        <ConfigurarAba cursos={cursos} aviso={aviso} onAbrir={onAbrir} onCriar={() => setCriar(true)}
-          onAcao={acaoCurso} recarregar={() => { carregar(); carregarIntel(); }} />
-      )}
+      {aba === "configuracoes" && <ConfiguracoesAba cursos={cursos} onAbrir={onAbrir} />}
 
       {aba === "aprendizado" && <AprendizadoAba aviso={aviso} />}
 
-      {criar && <ModalCriar emp={emp} aviso={aviso} onClose={() => setCriar(false)} onCriado={(id) => { setCriar(false); onAbrir(id); }} />}
+      {criar && <PainelNovoModulo emp={emp} aviso={aviso} onClose={() => setCriar(false)}
+        onCriado={(id, comIA) => { setCriar(false); carregar(); carregarIntel(); if (comIA) gerarAulasModulo({ id }); }}
+        onAbrir={(id) => { setCriar(false); onAbrir(id); }} />}
       {gerar && <PainelGerarIA aviso={aviso} onClose={() => setGerar(false)} onGerado={aposGerar} />}
+      {preview && <VisualizarProfissional emp={emp} cursos={cursos} onClose={() => setPreview(false)} />}
     </div>
   );
 }
 
 /* ---- Card horizontal "Inteligência da Academy" (compacto, §3) ---- */
-function PainelInteligencia({ intel, onGerar, onRevisar, onAtualizacoes, onIrMateriais }) {
+function PainelInteligencia({ intel, onGerar, onRevisar, onAtualizacoes, onIrMateriais, temModulos }) {
   if (!intel) return null;
-  const { fontes = 0, revisao = 0, atualizacoes = 0 } = intel;
-  // Prioridade de estado: atualizações > revisão > materiais disponíveis > vazio.
-  let msg, btn, acao;
-  if (atualizacoes > 0) {
-    msg = "Algumas informações foram atualizadas. Seus treinamentos podem precisar de revisão.";
-    btn = "Ver atualizações"; acao = onAtualizacoes;
-  } else if (revisao > 0) {
-    msg = "Existem treinamentos preparados pela IA aguardando sua aprovação.";
-    btn = "Revisar conteúdos"; acao = onRevisar;
-  } else if (fontes > 0) {
-    msg = "Seus materiais podem ser utilizados para criar treinamentos personalizados.";
-    btn = "Gerar treinamentos"; acao = onGerar;
-  } else {
-    msg = "Adicione informações ou arquivos em Materiais para começar.";
-    btn = "Ir para Materiais"; acao = () => onIrMateriais?.();
-  }
+  const { fontes = 0, revisao = 0, atualizacoes = 0, modulosSemConteudo = 0 } = intel;
+  // Ação contextual conforme o estado da Academy (§2).
+  let btn, acao;
+  if (fontes === 0) { btn = "Ir para Materiais"; acao = () => onIrMateriais?.(); }
+  else if (atualizacoes > 0) { btn = "Revisar atualizações"; acao = onAtualizacoes; }
+  else if (revisao > 0) { btn = "Revisar sugestões"; acao = onRevisar; }
+  else if (!temModulos) { btn = "Criar estrutura com IA"; acao = onGerar; }
+  else if (modulosSemConteudo > 0) { btn = "Gerar conteúdos"; acao = onGerar; }
+  else { btn = "Gerar com IA"; acao = onGerar; }
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, background: AZUL_SUAVE, borderRadius: 12, padding: "14px 18px", marginBottom: 26, flexWrap: "wrap" }}>
       <span style={{ width: 40, height: 40, borderRadius: 10, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -212,14 +233,13 @@ function PainelInteligencia({ intel, onGerar, onRevisar, onAtualizacoes, onIrMat
       </span>
       <div style={{ flex: 1, minWidth: 220 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: "#171717" }}>Inteligência da Academy</div>
-        <div style={{ fontSize: 13, color: "#3d5a73", marginTop: 1 }}>{msg}</div>
-        {fontes > 0 && (
-          <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 12, color: "#3d5a73", flexWrap: "wrap" }}>
-            <span><b>{fontes}</b> fonte{fontes !== 1 ? "s" : ""} disponíve{fontes !== 1 ? "is" : "l"}</span>
-            {revisao > 0 && <span><b>{revisao}</b> aguardando revisão</span>}
-            {atualizacoes > 0 && <span><b>{atualizacoes}</b> com atualização sugerida</span>}
-          </div>
-        )}
+        <div style={{ fontSize: 13, color: "#3d5a73", marginTop: 1 }}>Transforme o conhecimento da sua empresa em treinamentos personalizados para seus profissionais.</div>
+        <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 12, color: "#3d5a73", flexWrap: "wrap" }}>
+          <span><b>{fontes}</b> fonte{fontes !== 1 ? "s" : ""} em Materiais</span>
+          {modulosSemConteudo > 0 && <span><b>{modulosSemConteudo}</b> módulo(s) sem conteúdo</span>}
+          {revisao > 0 && <span><b>{revisao}</b> aguardando revisão</span>}
+          {atualizacoes > 0 && <span><b>{atualizacoes}</b> atualização(ões) sugerida(s)</span>}
+        </div>
       </div>
       <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={acao} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>{btn}</button>
     </div>
@@ -264,22 +284,33 @@ function statusModulo(c) {
   if ((c.aulas || 0) === 0 && c.status === "rascunho") return { txt: "Não configurado", bg: "#F3F4F6", cor: "#6B7280" };
   return STATUS_BADGE[c.status] || STATUS_BADGE.rascunho;
 }
-function ModuloCard({ c, numero, onGerenciar }) {
+const AULAS_DEMO = [
+  { Icon: Type, titulo: "Conteúdo em texto", desc: "Espaço para explicações, informações e orientações." },
+  { Icon: Video, titulo: "Vídeo ou apresentação", desc: "Espaço para conteúdos audiovisuais." },
+  { Icon: Check, titulo: "Avaliação", desc: "Espaço para verificar o conhecimento adquirido." },
+];
+function ModuloCard({ c, numero, stats, onGerenciar, onEditar, onGerarAulas, onVerDesempenho, podeSubir, podeDescer, onSubir, onDescer }) {
   const [aberto, setAberto] = useState(false);
   const [aulas, setAulas] = useState(null);
   const st = statusModulo(c);
+  const publicadoComDados = c.status === "publicado" && stats && stats.elegiveis > 0;
   const expandir = async () => {
     const novo = !aberto; setAberto(novo);
     if (novo && aulas === null) {
       const r = await api(`/academy/empresa/cursos/${c.id}`);
-      const lista = (r?.curso?.modulos || []).flatMap((m) => m.aulas || []);
-      setAulas(lista);
+      setAulas((r?.curso?.modulos || []).flatMap((m) => m.aulas || []));
     }
   };
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: 16 }}>
-        <span style={{ fontSize: 18, fontWeight: 700, color: "#b8bcc4", width: 28, textAlign: "center", flexShrink: 0 }}>{String(numero).padStart(2, "0")}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 16 }}>
+        {/* Reordenar */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", color: "#c5c9d0" }}>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onSubir} disabled={!podeSubir} style={{ padding: 0, height: 16 }} title="Subir"><ChevronUp size={14} /></button>
+          <GripVertical size={14} />
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onDescer} disabled={!podeDescer} style={{ padding: 0, height: 16 }} title="Descer"><ChevronDown size={14} /></button>
+        </div>
+        <span style={{ fontSize: 18, fontWeight: 700, color: "#b8bcc4", width: 26, textAlign: "center", flexShrink: 0 }}>{String(numero).padStart(2, "0")}</span>
         <span style={{ width: 42, height: 42, borderRadius: 10, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {c.origem === "ia" ? <Sparkles size={20} style={{ color: AZUL }} /> : <BookOpen size={20} style={{ color: AZUL }} />}
         </span>
@@ -289,35 +320,74 @@ function ModuloCard({ c, numero, onGerenciar }) {
           <div style={{ display: "flex", gap: 12, marginTop: 5, fontSize: 12, color: "#9aa0a6", flexWrap: "wrap" }}>
             <span style={{ display: "flex", alignItems: "center", gap: 4 }}><BookOpen size={12} /> {c.aulas} aula{c.aulas !== 1 ? "s" : ""}</span>
             {c.duracaoMin > 0 && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={12} /> {duracaoTxt(c.duracaoMin)}</span>}
-            {c.profissionais > 0 && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {c.profissionais}</span>}
           </div>
         </div>
         <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999, background: st.bg, color: st.cor, flexShrink: 0, whiteSpace: "nowrap" }}>{st.txt}</span>
-        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={expandir} style={{ padding: 6 }} title={aberto ? "Recolher" : "Ver aulas"}>
+        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={expandir} style={{ padding: 6 }} title={aberto ? "Recolher" : "Expandir"}>
           {aberto ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
         <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onGerenciar} style={{ gap: 4, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
-          Gerenciar módulo <ChevronRight size={15} />
+          Gerenciar <ChevronRight size={15} />
         </button>
       </div>
+
+      {/* Indicadores compactos quando publicado com elegíveis (§10) */}
+      {publicadoComDados && (
+        <div style={{ padding: "0 16px 14px 16px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, color: "#737373" }}>{stats.elegiveis} elegíveis · {stats.iniciaram} iniciaram · {stats.concluiram} concluíram</div>
+          <div style={{ flex: 1, minWidth: 120, height: 6, borderRadius: 999, background: "#EEF0F3", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${stats.pct}%`, background: AZUL, borderRadius: 999 }} />
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: AZUL }}>{stats.pct}%</span>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onVerDesempenho} style={{ fontSize: 12 }}>Ver desempenho</button>
+        </div>
+      )}
+
       {aberto && (
-        <div style={{ borderTop: `1px solid ${BORDA}`, padding: "12px 16px 14px 70px", background: "#F8F9FB" }}>
+        <div style={{ borderTop: `1px solid ${BORDA}`, padding: "14px 16px", background: "#F8F9FB" }}>
+          {/* Cabeçalho interno + ações */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 12.5, color: "#737373" }}>{c.descricao || "Sem descrição."}</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onEditar} style={{ gap: 5 }}><Pencil size={14} /> Editar módulo</button>
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onGerarAulas} style={{ gap: 5, color: AZUL }}><Sparkles size={14} /> Gerar aulas com IA</button>
+              <button className="vx-btn vx-btn-sm" onClick={onGerenciar} style={{ gap: 5 }}><Plus size={14} /> Adicionar aula</button>
+            </div>
+          </div>
+
           {aulas === null ? (
             <div style={{ fontSize: 13, color: "#9aa0a6" }}>Carregando...</div>
           ) : aulas.length === 0 ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 13, color: "#737373" }}>Este módulo ainda não possui conteúdo.</span>
-              <button className="vx-btn vx-btn-sm" onClick={onGerenciar} style={{ gap: 6 }}><Plus size={14} /> Adicionar conteúdo</button>
-            </div>
+            <>
+              <div style={{ fontSize: 12, color: "#9aa0a6", marginBottom: 8 }}>Prévia de como você poderá organizar o conteúdo — nada é criado automaticamente.</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {AULAS_DEMO.map((a, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, border: `1px dashed ${BORDA}`, borderRadius: 10, background: "#fff", opacity: 0.85 }}>
+                    <span style={{ fontSize: 12, color: "#c5c9d0", width: 24 }}>{String(i + 1).padStart(2, "0")}</span>
+                    <span style={{ width: 32, height: 32, borderRadius: 8, background: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center" }}><a.Icon size={15} style={{ color: "#9aa0a6" }} /></span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#737373" }}>Aula {String(i + 1).padStart(2, "0")} — {a.titulo}</div>
+                      <div style={{ fontSize: 12, color: "#9aa0a6" }}>{a.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {aulas.map((a, i) => (
-                <div key={a.id || i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#171717" }}>
-                  <span style={{ fontSize: 11, color: "#9aa0a6", width: 28 }}>{String(i + 1).padStart(2, "0")}</span>
-                  {(TIPO_DE(a.tipo).Icon) && (() => { const Ic = TIPO_DE(a.tipo).Icon; return <Ic size={13} style={{ color: "#737373" }} />; })()}
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.titulo}</span>
-                </div>
-              ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {aulas.map((a, i) => {
+                const T = TIPO_DE(a.tipo); const Ic = T.Icon;
+                return (
+                  <div key={a.id || i} style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, border: `1px solid ${BORDA}`, borderRadius: 10, background: "#fff" }}>
+                    <span style={{ fontSize: 12, color: "#9aa0a6", width: 24 }}>{String(i + 1).padStart(2, "0")}</span>
+                    <span style={{ width: 32, height: 32, borderRadius: 8, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center" }}><Ic size={15} style={{ color: AZUL }} /></span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#171717", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.titulo}</div>
+                      <div style={{ fontSize: 11.5, color: "#9aa0a6" }}>{T.label}{a.duracaoMin ? ` · ${a.duracaoMin} min` : ""}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -326,82 +396,142 @@ function ModuloCard({ c, numero, onGerenciar }) {
   );
 }
 
-/* ---- Aba Configurar: organizador de módulos (§7) ---- */
-function ConfigurarAba({ cursos, aviso, onAbrir, onCriar, onAcao, recarregar }) {
-  const [ordem, setOrdem] = useState(cursos.map((c) => c.id));
-  const [menu, setMenu] = useState(null);
-  useEffect(() => { setOrdem(cursos.map((c) => c.id)); }, [cursos]);
-  const mapa = Object.fromEntries(cursos.map((c) => [c.id, c]));
-  const lista = ordem.map((id) => mapa[id]).filter(Boolean);
-
-  const mover = async (i, dir) => {
-    const j = i + dir; if (j < 0 || j >= ordem.length) return;
-    const nova = [...ordem]; [nova[i], nova[j]] = [nova[j], nova[i]]; setOrdem(nova);
-    await apiPut("/academy/empresa/cursos/ordem", { ordem: nova });
+/* ---- Aba Configurações: regras gerais da Academy (§13) ---- */
+function ConfiguracoesAba({ cursos, onAbrir }) {
+  const [cfg, setCfg] = useState(null);
+  useEffect(() => { api("/academy/empresa/config").then((r) => setCfg(r?.config || {})); }, []);
+  const toggle = async (campo) => {
+    const novo = { ...cfg, [campo]: !cfg[campo] };
+    setCfg(novo);
+    await apiPut("/academy/empresa/config", { [campo]: novo[campo] });
   };
-  const renomear = async (c) => {
-    const nome = prompt("Nome do módulo:", c.titulo); if (nome === null) return;
-    const t = nome.trim(); if (!t || t === c.titulo) return;
-    const r = await apiPatch(`/academy/empresa/cursos/${c.id}`, { titulo: t });
-    if (r?.error) return aviso?.(r.error);
-    recarregar();
-  };
+  const publicados = cursos.filter((c) => c.status === "publicado").length;
 
   return (
-    <div>
-      <div style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Configurar Academy</h2>
-        <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Personalize a estrutura de aprendizagem e defina como seus profissionais serão capacitados.</p>
+    <div style={{ maxWidth: 720 }}>
+      <div style={{ marginBottom: 18 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Configurações da Academy</h2>
+        <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Defina as regras gerais de aprendizagem, obrigatoriedade, avaliações e acesso.</p>
       </div>
 
-      {lista.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "36px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
-          <p style={{ fontSize: 14, color: "#737373", margin: "0 0 14px" }}>Nenhum módulo ainda. Comece criando o primeiro.</p>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onCriar} style={{ gap: 6, background: AZUL, borderColor: AZUL }}><Plus size={16} /> Adicionar módulo</button>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Sequência de aprendizagem — regra real persistida */}
+        <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 16, display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#171717" }}>Sequência de aprendizagem</div>
+            <div style={{ fontSize: 13, color: "#737373", marginTop: 2 }}>Exigir que os profissionais concluam os módulos na ordem definida na jornada.</div>
+          </div>
+          {cfg === null ? <div className="vx-spinner" style={{ width: 20, height: 20 }} /> : (
+            <button onClick={() => toggle("sequenciaObrigatoria")} aria-pressed={cfg.sequenciaObrigatoria}
+              style={{ width: 44, height: 26, borderRadius: 999, border: "none", cursor: "pointer", background: cfg.sequenciaObrigatoria ? AZUL : "#D5D8DD", position: "relative", flexShrink: 0, transition: "background .15s" }}>
+              <span style={{ position: "absolute", top: 3, left: cfg.sequenciaObrigatoria ? 21 : 3, width: 20, height: 20, borderRadius: 999, background: "#fff", transition: "left .15s" }} />
+            </button>
+          )}
         </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {lista.map((c, i) => {
-            const st = statusModulo(c);
-            return (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: "10px 12px" }}>
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => mover(i, -1)} disabled={i === 0} style={{ padding: 1 }} title="Subir"><ChevronUp size={14} /></button>
-                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => mover(i, 1)} disabled={i === lista.length - 1} style={{ padding: 1 }} title="Descer"><ChevronDown size={14} /></button>
-                </div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#b8bcc4", width: 24, textAlign: "center" }}>{String(i + 1).padStart(2, "0")}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#171717", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo}</div>
-                  <div style={{ fontSize: 12, color: "#9aa0a6" }}>{c.aulas} aula{c.aulas !== 1 ? "s" : ""}</div>
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 999, background: st.bg, color: st.cor, whiteSpace: "nowrap" }}>{st.txt}</span>
-                <button className="vx-btn vx-btn-sm" onClick={() => onAbrir(c.id)} style={{ gap: 4, whiteSpace: "nowrap" }}>Gerenciar conteúdo</button>
-                <div style={{ position: "relative" }}>
-                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setMenu(menu === c.id ? null : c.id)} style={{ padding: 6 }}><MoreVertical size={16} /></button>
-                  {menu === c.id && (
-                    <div style={{ position: "absolute", right: 0, top: 32, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 150, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
-                      <MenuBtn icon={Pencil} label="Renomear" onClick={() => { setMenu(null); renomear(c); }} />
-                      <MenuBtn icon={Copy} label="Duplicar" onClick={() => { setMenu(null); onAcao(c, "duplicar"); }} />
-                      {c.status !== "arquivado" && <MenuBtn icon={Archive} label="Arquivar" onClick={() => { setMenu(null); onAcao(c, "arquivar"); }} />}
-                      <MenuBtn icon={Trash2} label="Excluir" danger onClick={() => { setMenu(null); onAcao(c, "excluir"); }} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
-      <button className="vx-btn vx-btn-sm" onClick={onCriar} style={{ gap: 6, marginTop: 14 }}><Plus size={16} /> Adicionar módulo</button>
+        {/* Regras aplicadas na publicação de cada módulo */}
+        <CardRegra titulo="Módulos obrigatórios e avaliações"
+          desc="A obrigatoriedade, a ativação de avaliação e a nota mínima são definidas ao publicar cada módulo." />
+        <CardRegra titulo="Acesso por campanha"
+          desc="Cada módulo é disponibilizado às campanhas escolhidas na publicação; só profissionais aprovados na campanha têm acesso." />
+        <CardRegra titulo="Disponibilização e publicação"
+          desc={`${publicados} módulo(s) publicado(s). Conteúdos gerados por IA passam por revisão antes de publicar — nada vai ao ar automaticamente.`} />
+      </div>
 
-      {/* Regras de aprendizagem (§10) */}
-      <div style={{ marginTop: 28, background: AZUL_SUAVE, borderRadius: 12, padding: "16px 18px" }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#171717", marginBottom: 4 }}>Regras de aprendizagem</div>
-        <p style={{ fontSize: 13, color: "#3d5a73", margin: 0 }}>
-          A obrigatoriedade, a nota mínima da avaliação e a vinculação com campanhas são definidas ao publicar cada módulo
-          (botão <b>Gerenciar conteúdo → Publicação</b>). A liberação respeita a aprovação do profissional na campanha.
+      {cursos.length > 0 && (
+        <p style={{ fontSize: 12.5, color: "#9aa0a6", marginTop: 16 }}>
+          Para ajustar a publicação de um módulo, abra-o em <b>Minha Academy → Gerenciar → Publicação</b>.
         </p>
+      )}
+    </div>
+  );
+}
+function CardRegra({ titulo, desc }) {
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 16 }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#171717" }}>{titulo}</div>
+      <div style={{ fontSize: 13, color: "#737373", marginTop: 2 }}>{desc}</div>
+    </div>
+  );
+}
+
+/* ---- Painel lateral: novo módulo (§7) ---- */
+function PainelNovoModulo({ aviso, onClose, onCriado, onAbrir }) {
+  const [titulo, setTitulo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const criar = async (comIA) => {
+    if (!titulo.trim()) return aviso?.("Dê um nome ao módulo.");
+    setSalvando(true);
+    const r = await api("/academy/empresa/cursos", { titulo: titulo.trim(), descricao: descricao.trim() });
+    setSalvando(false);
+    if (r?.error) return aviso?.(r.error);
+    const id = r.curso?.id;
+    if (comIA) onCriado(id, true); else onAbrir(id);
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 1000, display: "flex", justifyContent: "flex-end" }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="vx-fade" style={{ background: "#fff", width: "100%", maxWidth: 440, height: "100%", display: "flex", flexDirection: "column", boxShadow: "-8px 0 24px rgba(0,0,0,.12)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${BORDA}` }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Novo módulo</div>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose} style={{ padding: 4 }}><X size={18} /></button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+          <label className="vx-label">Nome do módulo</label>
+          <input className="vx-input" autoFocus placeholder="Ex.: Conhecendo a empresa" value={titulo} onChange={(e) => setTitulo(e.target.value)} style={{ marginBottom: 14 }} />
+          <label className="vx-label">Objetivo ou descrição <span style={{ color: "#9aa0a6", fontWeight: 400 }}>(opcional)</span></label>
+          <textarea className="vx-input" placeholder="O que os profissionais vão aprender neste módulo." value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} style={{ resize: "vertical" }} />
+        </div>
+        <div style={{ borderTop: `1px solid ${BORDA}`, padding: "14px 20px", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button className="vx-btn vx-btn-sm" onClick={() => criar(true)} disabled={salvando} style={{ gap: 6 }}><Sparkles size={15} /> Criar com IA</button>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => criar(false)} disabled={salvando} style={{ gap: 6, background: AZUL, borderColor: AZUL }}>{salvando ? "Criando..." : "Criar módulo"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Prévia "Visualizar como profissional" (§9) — somente leitura ---- */
+function VisualizarProfissional({ emp, cursos, onClose }) {
+  const visiveis = cursos.filter((c) => c.status !== "arquivado");
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "#F8F9FB", borderRadius: 14, width: "100%", maxWidth: 680, maxHeight: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "14px 20px", borderBottom: `1px solid ${BORDA}`, background: "#fff" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#737373" }}><Eye size={15} /> Prévia da experiência do profissional</div>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose} style={{ padding: 4 }}><X size={18} /></button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 12, color: "#9aa0a6" }}>{emp?.nome || "Sua empresa"}</div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: "2px 0 0" }}>Seus treinamentos</h2>
+            <p style={{ fontSize: 13, color: "#737373", margin: "4px 0 0" }}>Continue aprendendo para evoluir na sua jornada.</p>
+          </div>
+          {visiveis.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 40, color: "#9aa0a6", fontSize: 13 }}>Nenhum treinamento disponível ainda.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {visiveis.map((c, i) => {
+                const publicado = c.status === "publicado";
+                return (
+                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 14, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 16, opacity: publicado ? 1 : 0.6 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: "#b8bcc4", width: 26, textAlign: "center" }}>{String(i + 1).padStart(2, "0")}</span>
+                    <span style={{ width: 42, height: 42, borderRadius: 10, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center" }}><GraduationCap size={20} style={{ color: AZUL }} /></span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: "#171717" }}>{c.titulo}</div>
+                      <div style={{ fontSize: 12.5, color: "#737373" }}>
+                        {c.aulas === 0 ? "Conteúdo em breve" : `${c.aulas} aula${c.aulas !== 1 ? "s" : ""}`}
+                        {!publicado && " · ainda não publicado"}
+                      </div>
+                    </div>
+                    <button className="vx-btn vx-btn-primary vx-btn-sm" disabled style={{ background: AZUL, borderColor: AZUL, opacity: 0.7, cursor: "default" }}>Começar</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <p style={{ fontSize: 11.5, color: "#9aa0a6", textAlign: "center", marginTop: 20 }}>Prévia somente leitura — nenhuma ação aqui gera progresso real.</p>
+        </div>
       </div>
     </div>
   );

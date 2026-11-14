@@ -6,7 +6,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { criarCurso, carregarCurso, atualizarCurso, duplicarCurso } from "../services/academy.js";
-import { coletarFontes, sugerirTreinamentos, gerarCurso, iaDisponivel } from "../services/academyIA.js";
+import { coletarFontes, sugerirTreinamentos, gerarCurso, gerarAulasParaCurso, iaDisponivel } from "../services/academyIA.js";
 
 const router = Router();
 
@@ -386,6 +386,25 @@ router.get("/academy/empresa/aprendizado", (req, res) => {
   });
 });
 
+// ----------------------------------------- Regras gerais da Academy (§13) ----
+router.get("/academy/empresa/config", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const row = db.prepare("SELECT academyConfig FROM companies WHERE id = ?").get(companyId);
+  let cfg = {}; try { cfg = JSON.parse(row?.academyConfig || "{}"); } catch { cfg = {}; }
+  res.json({ config: { sequenciaObrigatoria: !!cfg.sequenciaObrigatoria, ...cfg } });
+});
+
+router.put("/academy/empresa/config", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const row = db.prepare("SELECT academyConfig FROM companies WHERE id = ?").get(companyId);
+  let cfg = {}; try { cfg = JSON.parse(row?.academyConfig || "{}"); } catch { cfg = {}; }
+  if ("sequenciaObrigatoria" in (req.body || {})) cfg.sequenciaObrigatoria = !!req.body.sequenciaObrigatoria;
+  db.prepare("UPDATE companies SET academyConfig = ? WHERE id = ?").run(JSON.stringify(cfg), companyId);
+  res.json({ config: cfg });
+});
+
 // ----------------------------------------------- Inteligência da Academy ----
 // Contadores compactos para o card de inteligência da página.
 router.get("/academy/empresa/inteligencia", (req, res) => {
@@ -393,6 +412,12 @@ router.get("/academy/empresa/inteligencia", (req, res) => {
   if (!companyId) return;
   const fontes = coletarFontes(companyId).length;
   const revisao = db.prepare("SELECT COUNT(*) n FROM courses WHERE companyId = ? AND status = 'revisao'").get(companyId).n;
+  // Módulos (treinamentos não arquivados) ainda sem nenhuma aula.
+  const modulosSemConteudo = db.prepare(`
+    SELECT COUNT(*) n FROM courses c
+    WHERE c.companyId = ? AND c.status <> 'arquivado'
+      AND NOT EXISTS (SELECT 1 FROM course_lessons l WHERE l.courseId = c.id)
+  `).get(companyId).n;
   // Atualizações sugeridas: treinos cuja fonte de informação foi alterada em
   // Materiais depois que o treino foi atualizado pela última vez.
   const atualizacoes = db.prepare(`
@@ -401,7 +426,7 @@ router.get("/academy/empresa/inteligencia", (req, res) => {
     JOIN company_info_entries e ON ('info-' || e.id) = cs.fonteId
     WHERE cs.companyId = ? AND e.atualizadoEm > c.atualizadoEm
   `).get(companyId).n;
-  res.json({ iaDisponivel: iaDisponivel(), fontes, revisao, atualizacoes });
+  res.json({ iaDisponivel: iaDisponivel(), fontes, revisao, atualizacoes, modulosSemConteudo });
 });
 
 // Fontes elegíveis (Informações da empresa + base + arquivos indexados).
@@ -422,6 +447,19 @@ router.post("/academy/empresa/ia/sugestoes", async (req, res) => {
     res.json(await sugerirTreinamentos(companyId, req.body?.fonteIds));
   } catch {
     res.status(500).json({ error: "Não foi possível analisar os materiais agora." });
+  }
+});
+
+// Gera aulas para um módulo específico (mantém em revisão; não publica).
+router.post("/academy/empresa/cursos/:id/ia/aulas", async (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  if (!cursoDaEmpresa(req.params.id, companyId)) return res.status(404).json({ error: "Módulo não encontrado." });
+  try {
+    const r = await gerarAulasParaCurso(companyId, req.params.id);
+    res.json({ ok: true, ...r, curso: carregarCurso(req.params.id, { comProva: true }) });
+  } catch (e) {
+    res.status(500).json({ error: e.message || "Falha ao gerar aulas." });
   }
 });
 

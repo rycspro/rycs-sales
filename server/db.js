@@ -1879,6 +1879,8 @@ adicionarColuna("materiais", "origemAcademyId", "TEXT DEFAULT ''");
 adicionarColuna("courses", "companyId", "TEXT DEFAULT ''");
 // Origem do treinamento: criado manualmente pela empresa ou gerado pela IA.
 adicionarColuna("courses", "origem", "TEXT DEFAULT 'manual'");
+// Regras gerais da Academy da empresa (JSON): sequência obrigatória etc.
+adicionarColuna("companies", "academyConfig", "TEXT DEFAULT '{}'");
 // Disponibilidade de um treinamento por campanha + se a conclusão é exigida
 // para executar tarefas. Aditivo, não altera nada existente.
 db.exec(`

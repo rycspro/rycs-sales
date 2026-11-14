@@ -152,9 +152,55 @@ export async function gerarCurso(companyId, sugestao, criadoPor) {
   db.prepare("UPDATE courses SET origem = 'ia' WHERE id = ?").run(courseId);
 
   // Rastreabilidade das fontes utilizadas.
+  registrarFontes(courseId, companyId, base);
+  return courseId;
+}
+
+function registrarFontes(courseId, companyId, fontes) {
   const ins = db.prepare("INSERT INTO course_sources (id, courseId, companyId, fonteTipo, fonteId, rotulo, versao, criadoEm) VALUES (?, ?, ?, ?, ?, ?, 1, ?)");
   const ts = agora();
-  db.transaction(() => { for (const f of base) ins.run(uid(), courseId, companyId, f.tipo, f.id, `${f.grupo} — ${f.titulo}`.slice(0, 200), ts); })();
+  db.transaction(() => {
+    db.prepare("DELETE FROM course_sources WHERE courseId = ? AND companyId = ?").run(courseId, companyId);
+    for (const f of fontes) ins.run(uid(), courseId, companyId, f.tipo, f.id, `${f.grupo} — ${f.titulo}`.slice(0, 200), ts);
+  })();
+}
 
-  return courseId;
+// Gera aulas para um módulo (curso) existente, respeitando seu tema. Insere as
+// aulas num módulo interno e mantém o curso em revisão (nunca publica).
+export async function gerarAulasParaCurso(companyId, courseId) {
+  const curso = db.prepare("SELECT * FROM courses WHERE id = ? AND companyId = ?").get(courseId, companyId);
+  if (!curso) throw new Error("Módulo não encontrado.");
+  const base = coletarFontes(companyId);
+  if (!base.length) throw new Error("Sem fontes em Materiais para gerar aulas.");
+
+  let aulas = null;
+  if (client) {
+    try {
+      const contexto = base.map((f) => `### ${f.titulo}\n${f.texto.slice(0, 1500)}`).join("\n\n");
+      const resp = await client.messages.create({
+        model: MODELO, max_tokens: 3000,
+        system: "Você cria aulas para um módulo de treinamento usando APENAS as fontes fornecidas. Não invente fatos, preços, benefícios ou procedimentos. Português do Brasil. Responda SOMENTE com JSON.",
+        messages: [{ role: "user", content: `Módulo: "${txt(curso.titulo)}"\n${txt(curso.descricao)}\n\nFontes da empresa:\n\n${contexto}\n\nProduza as aulas em JSON: {"aulas":[{"titulo":"","conteudo":"texto explicativo"}]}. De 2 a 6 aulas conforme o conteúdo. Não crie aulas vazias.` }],
+      });
+      const json = extrairJson(resp?.content?.map((c) => c.text || "").join("") || "");
+      aulas = (json.aulas || []).filter((a) => txt(a.titulo) && txt(a.conteudo)).slice(0, 10)
+        .map((a) => ({ titulo: txt(a.titulo).slice(0, 160), tipo: "texto", conteudo: txt(a.conteudo).slice(0, 8000), duracaoMin: 5 }));
+      if (!aulas.length) aulas = null;
+    } catch { aulas = null; }
+  }
+  if (!aulas) aulas = base.slice(0, 8).map((f) => ({ titulo: f.titulo.slice(0, 160), tipo: "texto", conteudo: f.texto.slice(0, 8000), duracaoMin: 5 }));
+
+  // Insere as aulas num módulo do curso (cria um se não houver).
+  let moduleRow = db.prepare("SELECT * FROM course_modules WHERE courseId = ? ORDER BY ordem ASC LIMIT 1").get(courseId);
+  const ts = agora();
+  db.transaction(() => {
+    let moduleId = moduleRow?.id;
+    if (!moduleId) { moduleId = uid(); db.prepare("INSERT INTO course_modules (id, courseId, titulo, resumo, ordem) VALUES (?, ?, ?, '', 0)").run(moduleId, courseId, curso.titulo || "Módulo 01"); }
+    const base2 = db.prepare("SELECT COALESCE(MAX(ordem), -1) + 1 m FROM course_lessons WHERE moduleId = ?").get(moduleId).m;
+    const ins = db.prepare(`INSERT INTO course_lessons (id, courseId, moduleId, titulo, tipo, conteudo, videoUrl, materiais, duracaoMin, ordem) VALUES (?, ?, ?, ?, ?, ?, '', '[]', ?, ?)`);
+    aulas.forEach((a, i) => ins.run(uid(), courseId, moduleId, a.titulo, a.tipo, a.conteudo, a.duracaoMin, base2 + i));
+    db.prepare("UPDATE courses SET origem = 'ia', status = CASE WHEN status = 'publicado' THEN status ELSE 'revisao' END, atualizadoEm = ? WHERE id = ?").run(ts, courseId);
+  })();
+  registrarFontes(courseId, companyId, base);
+  return { aulas: aulas.length };
 }
