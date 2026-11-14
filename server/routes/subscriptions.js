@@ -41,6 +41,38 @@ router.post("/vouchers", (req, res) => {
   try{const id=uid();db.prepare(`INSERT INTO vouchers (id,codigo,tipo,valor,validadeEm,limiteTotal,limitePorEmpresa,planos,status,criadoEm) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(id,codigo,tipo,valor,req.body.validadeEm||null,Number(req.body.limiteTotal)||0,Number(req.body.limitePorEmpresa)||1,JSON.stringify(req.body.planos||[]),req.body.status||"ativo",agora());res.json({id,codigo});}catch{return res.status(409).json({error:"Código já existe"});}
 });
 
+// Lista de vouchers (admin), com contagem de usos efetivos.
+router.get("/admin/vouchers", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+  const vouchers = db.prepare("SELECT * FROM vouchers ORDER BY criadoEm DESC").all();
+  const linhas = vouchers.map((v) => {
+    const usos = db.prepare("SELECT COUNT(*) n FROM voucher_redemptions WHERE voucherId = ? AND status IN ('reservado','confirmado')").get(v.id).n;
+    let planos = []; try { planos = JSON.parse(v.planos || "[]"); } catch {}
+    return { ...v, planos, usos };
+  });
+  res.json({ vouchers: linhas });
+});
+
+// Ativar/inativar um voucher (sem apagar histórico de usos).
+router.patch("/vouchers/:id", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+  const voucher = db.prepare("SELECT id FROM vouchers WHERE id = ?").get(req.params.id);
+  if (!voucher) return res.status(404).json({ error: "Voucher não encontrado" });
+  const status = req.body?.status === "ativo" ? "ativo" : req.body?.status === "inativo" ? "inativo" : null;
+  if (!status) return res.status(400).json({ error: "Status inválido" });
+  db.prepare("UPDATE vouchers SET status = ? WHERE id = ?").run(status, req.params.id);
+  res.json({ ok: true, status });
+});
+
+// Excluir um voucher — só quando nunca foi resgatado (preserva auditoria).
+router.delete("/vouchers/:id", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+  const usos = db.prepare("SELECT COUNT(*) n FROM voucher_redemptions WHERE voucherId = ?").get(req.params.id).n;
+  if (usos > 0) return res.status(409).json({ error: "Voucher já utilizado — inative em vez de excluir." });
+  db.prepare("DELETE FROM vouchers WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
+});
+
 const TRIAL_DIAS_PUBLICO = 5;
 
 // O estado de acesso da empresa. A tela pergunta aqui em vez de decidir

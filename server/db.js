@@ -1751,5 +1751,12 @@ db.exec(`
   console.log(`[migração] ${total.n} profissionais, ${total.n - restam.n} com estado, ${restam.n} sem`);
 })();
 
+// Voucher de cortesia: 99% de desconto, código "Ricardo Martin" (normalizado
+// para RICARDOMARTIN). Idempotente — o código é UNIQUE, então só entra uma vez.
+try {
+  db.prepare(`INSERT OR IGNORE INTO vouchers (id, codigo, tipo, valor, validadeEm, limiteTotal, limitePorEmpresa, planos, status, criadoEm)
+    VALUES (?, 'RICARDOMARTIN', 'percentual', 99, NULL, 0, 1, '[]', 'ativo', ?)`).run(uid(), agora());
+} catch (e) { console.warn("[seed] voucher cortesia:", e.message); }
+
 export default db;
 export { uid, agora };
