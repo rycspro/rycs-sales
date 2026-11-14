@@ -83,8 +83,13 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
 
   const carregar = useCallback(async () => {
     const r = await api("/academy/empresa");
-    if (r?.cursos) setDados(r);
-  }, []);
+    if (r?.cursos) { setDados(r); return; }
+    // Falha ou resposta inesperada: não deixar a tela presa no spinner.
+    // Renderiza o estado vazio e avisa, para a pessoa poder tentar de novo.
+    setDados({ indicadores: { treinamentos: 0, emAprendizado: 0, conclusoes: 0 }, cursos: [] });
+    if (r?.error) aviso?.(r.error);
+    else if (!r) aviso?.("Não foi possível carregar a Academy. Tente novamente.");
+  }, [aviso]);
   const carregarIntel = useCallback(async () => {
     const r = await api("/academy/empresa/inteligencia");
     if (r && !r.error) setIntel(r);

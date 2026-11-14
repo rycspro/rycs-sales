@@ -12,6 +12,9 @@ const router = Router();
 
 const empresa = (req, res) => {
   if (req.user.role !== "empresa") { res.status(403).json({ error: "Apenas empresas" }); return null; }
+  // Sem empresa na sessão: responder em vez de deixar a requisição pendurada
+  // (um `return` sem resposta travaria a tela no spinner).
+  if (!req.user.entityId) { res.status(400).json({ error: "Nenhuma empresa associada à sua conta." }); return null; }
   return req.user.entityId;
 };
 
