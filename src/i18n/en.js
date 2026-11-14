@@ -23,6 +23,11 @@ export default {
   },
   login: {
     subtitulo: "Sign in to your account",
+    titulo: "Sign in to your account",
+    descProfissional: "Access your opportunities and track your activities.",
+    descEmpresa: "Manage your campaigns, professionals and results.",
+    esqueceuSenha: "Forgot your password?",
+    senhaPlaceholder: "Enter your password",
     email: "Email",
     senha: "Password",
     entrar: "Sign in",

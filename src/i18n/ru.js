@@ -23,6 +23,11 @@ export default {
   },
   login: {
     subtitulo: "Войдите в свой аккаунт",
+    titulo: "Войдите в свой аккаунт",
+    descProfissional: "Открывайте возможности и отслеживайте свою активность.",
+    descEmpresa: "Управляйте кампаниями, специалистами и результатами.",
+    esqueceuSenha: "Забыли пароль?",
+    senhaPlaceholder: "Введите пароль",
     email: "Эл. почта",
     senha: "Пароль",
     entrar: "Войти",

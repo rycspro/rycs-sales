@@ -23,6 +23,11 @@ export default {
   },
   login: {
     subtitulo: "Masuk ke akun Anda",
+    titulo: "Masuk ke akun Anda",
+    descProfissional: "Akses peluang Anda dan pantau aktivitas Anda.",
+    descEmpresa: "Kelola kampanye, profesional, dan hasil Anda.",
+    esqueceuSenha: "Lupa kata sandi?",
+    senhaPlaceholder: "Masukkan kata sandi Anda",
     email: "Email",
     senha: "Kata sandi",
     entrar: "Masuk",

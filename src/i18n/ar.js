@@ -24,6 +24,11 @@ export default {
   },
   login: {
     subtitulo: "سجّل الدخول إلى حسابك",
+    titulo: "سجّل الدخول إلى حسابك",
+    descProfissional: "اطّلع على فرصك وتابع أنشطتك.",
+    descEmpresa: "أدِر حملاتك ومحترفيك ونتائجك.",
+    esqueceuSenha: "هل نسيت كلمة المرور؟",
+    senhaPlaceholder: "أدخل كلمة المرور",
     email: "البريد الإلكتروني",
     senha: "كلمة المرور",
     entrar: "تسجيل الدخول",

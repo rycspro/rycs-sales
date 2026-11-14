@@ -222,63 +222,100 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
     );
   }
 
+  const AZUL = "#318CE7";
+  const ehEmpresa = contaTipo === "empresa";
+  const identificador = conviteTrial ? null : ehEmpresa ? t("login.tarjaEmpresa") : t("login.tarjaProfissional");
+  const descricaoLogin = conviteTrial
+    ? "Entre com a conta da sua empresa para ativar o período gratuito. Se ainda não tem conta, crie uma abaixo — o convite continua valendo."
+    : ehEmpresa ? t("login.descEmpresa") : t("login.descProfissional");
+  const btnCadastro = (extra = {}) => ({
+    display: "flex", alignItems: "center", justifyContent: "center", width: "100%",
+    background: "var(--surface-solid)", color: "var(--ink)", border: "1px solid var(--border-strong)",
+    borderRadius: 10, padding: "11px 16px", fontWeight: 600, fontSize: 13.5, cursor: "pointer",
+    minHeight: 44, transition: "border-color .15s, background .15s", ...extra,
+  });
+  const realceCad = (e, on) => {
+    e.currentTarget.style.borderColor = on ? "rgba(49,140,231,.45)" : "var(--border-strong)";
+    e.currentTarget.style.background = on ? "rgba(49,140,231,.03)" : "var(--surface-solid)";
+  };
   return (
-    <MolduraAuth
-      tarja={conviteTrial ? "Convite de teste gratuito" : contaTipo === "empresa" ? t("login.tarjaEmpresa") : contaTipo === "profissional" ? t("login.tarjaProfissional") : undefined}
-      subtitulo={conviteTrial
-        ? "Entre com a conta da sua empresa para ativar o período gratuito. Se ainda não tem conta, crie uma abaixo — o convite continua valendo."
-        : t("login.subtitulo")}
-      largura={420}>
-      <form onSubmit={submit}>
-        <Campo label={t("login.email")}>
-          <input className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
-        </Campo>
-        <Campo label={t("login.senha")}>
-          <CampoSenha value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Sua senha" />
-        </Campo>
-        <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading} style={{ marginTop: 4 }}>
-          {loading ? t("login.carregando") : t("login.entrar")}
-        </button>
-        <p className="vx-onb-termos" style={{ marginTop: 8 }}>
-          {t("login.aceiteTermos").split("{termos}")[0]}
-          <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>{t("login.termosLink")}</button>
-          {t("login.aceiteTermos").split("{termos}")[1]}
-        </p>
-      </form>
-
-      {beta && !conviteTrial && (
-        <div className="vx-beta-login-panel">
-          <div className="vx-eyebrow">AMBIENTE BETA — DADOS FICTÍCIOS</div>
-          <p>Nenhuma movimentação financeira possui valor real. Os dados podem ser resetados e existem apenas para testes.</p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="vx-btn vx-btn-primary" disabled={loading} onClick={() => entrarDemo("empresa")} style={{ flex: 1 }}>Entrar como Empresa Demo</button>
-            <button className="vx-btn" disabled={loading} onClick={() => entrarDemo("profissional")} style={{ flex: 1 }}>Entrar como Profissional Demo</button>
+    <div style={{ position: "fixed", inset: 0, background: "var(--bg)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+      <style>{`.vx-login-card .vx-input:focus,.vx-login-card .vx-input:focus-visible{border-color:${AZUL};box-shadow:0 0 0 3px rgba(49,140,231,.15);outline:none}`}</style>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
+        <div className="vx-fade vx-login-card" style={{ width: "100%", maxWidth: 420 }}>
+          <div style={{ textAlign: "center", marginBottom: 22 }}>
+            <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+              style={{ height: 40, width: "auto", margin: "0 auto 18px", display: "block" }} />
+            {identificador && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: AZUL, marginBottom: 10 }}>{identificador}</div>}
+            <h1 className="vx-disp" style={{ fontSize: 27, fontWeight: 600, lineHeight: 1.2, color: "var(--ink)", margin: "0 0 8px" }}>{t("login.titulo")}</h1>
+            <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>{descricaoLogin}</p>
           </div>
+
+          <form onSubmit={submit}>
+            <div style={{ marginBottom: 14 }}>
+              <label htmlFor="login-email" className="vx-label" style={{ display: "block", marginBottom: 6 }}>{t("login.email")}</label>
+              <input id="login-email" className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" autoComplete="email" required />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                <label htmlFor="login-senha" className="vx-label" style={{ margin: 0 }}>{t("login.senha")}</label>
+                <button type="button" onClick={() => setShowForgot(true)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: AZUL, fontSize: 12.5, fontWeight: 500 }}>{t("login.esqueceuSenha")}</button>
+              </div>
+              <CampoSenha id="login-senha" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder={t("login.senhaPlaceholder")} />
+            </div>
+
+            <button type="submit" disabled={loading}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#2b7cd0"; }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = AZUL; }}
+              style={{
+                marginTop: 18, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                background: AZUL, color: "#fff", border: "none", borderRadius: 10, padding: "13px 16px",
+                fontWeight: 600, fontSize: 14.5, cursor: loading ? "default" : "pointer", opacity: loading ? 0.75 : 1,
+                minHeight: 48, transition: "background .15s",
+              }}>
+              {loading ? t("login.carregando") : <>{t("login.entrar")} <ArrowRight size={16} aria-hidden="true" /></>}
+            </button>
+          </form>
+
+          {beta && !conviteTrial && (
+            <div className="vx-beta-login-panel">
+              <div className="vx-eyebrow">AMBIENTE BETA — DADOS FICTÍCIOS</div>
+              <p>Nenhuma movimentação financeira possui valor real. Os dados podem ser resetados e existem apenas para testes.</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button className="vx-btn vx-btn-primary" disabled={loading} onClick={() => entrarDemo("empresa")} style={{ flex: 1 }}>Entrar como Empresa Demo</button>
+                <button className="vx-btn" disabled={loading} onClick={() => entrarDemo("profissional")} style={{ flex: 1 }}>Entrar como Profissional Demo</button>
+              </div>
+            </div>
+          )}
+
+          <hr className="vx-sep" style={{ margin: "18px 0 14px" }} />
+
+          <div style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>{t("login.semConta")}</div>
+          {ehEmpresa ? (
+            <button type="button" onClick={() => navegar(ROTAS.cadastroEmpresa)} style={btnCadastro()} onMouseEnter={(e) => realceCad(e, true)} onMouseLeave={(e) => realceCad(e, false)}>{t("login.criarEmpresa")}</button>
+          ) : contaTipo === "profissional" ? (
+            <button type="button" onClick={() => navegar(ROTAS.cadastroVendedor)} style={btnCadastro()} onMouseEnter={(e) => realceCad(e, true)} onMouseLeave={(e) => realceCad(e, false)}>{t("login.criarProfissional")}</button>
+          ) : (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" onClick={() => navegar(ROTAS.cadastroVendedor)} style={btnCadastro({ flex: 1 })} onMouseEnter={(e) => realceCad(e, true)} onMouseLeave={(e) => realceCad(e, false)}>{t("login.souProfissional")}</button>
+              <button type="button" onClick={() => navegar(ROTAS.cadastroEmpresa)} style={btnCadastro({ flex: 1 })} onMouseEnter={(e) => realceCad(e, true)} onMouseLeave={(e) => realceCad(e, false)}>{t("login.souEmpresa")}</button>
+            </div>
+          )}
+          {!conviteTrial && (
+            <button type="button" onClick={() => setEtapa("conta")} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 13, fontWeight: 500 }}>
+              {t("login.trocarConta")}
+            </button>
+          )}
+
+          <p className="vx-onb-termos" style={{ marginTop: 16, textAlign: "center", fontSize: 12, color: "var(--muted-2)" }}>
+            {t("login.aceiteTermos").split("{termos}")[0]}
+            <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>{t("login.termosLink")}</button>
+            {t("login.aceiteTermos").split("{termos}")[1]}
+          </p>
         </div>
-      )}
-
-      <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setShowForgot(true)} style={{ width: "100%", marginTop: 4, fontSize: 12.5 }}>
-        {t("login.esqueciSenha")}
-      </button>
-
-      <hr className="vx-sep" style={{ margin: "8px 0" }} />
-
-      <div className="vx-eyebrow" style={{ textAlign: "center", marginBottom: 6 }}>{t("login.semConta")}</div>
-      {contaTipo === "empresa" ? (
-        <button className="vx-btn vx-btn-block" onClick={() => navegar(ROTAS.cadastroEmpresa)}>{t("login.criarEmpresa")}</button>
-      ) : contaTipo === "profissional" ? (
-        <button className="vx-btn vx-btn-block" onClick={() => navegar(ROTAS.cadastroVendedor)}>{t("login.criarProfissional")}</button>
-      ) : (
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroVendedor)}>{t("login.souProfissional")}</button>
-          <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroEmpresa)}>{t("login.souEmpresa")}</button>
-        </div>
-      )}
-      {!conviteTrial && (
-        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEtapa("conta")} style={{ width: "100%", marginTop: 8, fontSize: 12.5 }}>
-          {t("login.trocarConta")}
-        </button>
-      )}
-    </MolduraAuth>
+      </div>
+      <footer style={{ textAlign: "center", padding: 16, fontSize: 12, color: "var(--muted-2)" }}>© 2026 RYCS</footer>
+    </div>
   );
 }

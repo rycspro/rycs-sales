@@ -26,6 +26,11 @@ export default {
   },
   login: {
     subtitulo: "Entre na sua conta",
+    titulo: "Entre na sua conta",
+    descProfissional: "Acesse suas oportunidades e acompanhe suas atividades.",
+    descEmpresa: "Gerencie suas campanhas, profissionais e resultados.",
+    esqueceuSenha: "Esqueceu sua senha?",
+    senhaPlaceholder: "Digite sua senha",
     email: "E-mail",
     senha: "Senha",
     entrar: "Entrar",
@@ -40,6 +45,6 @@ export default {
     souEmpresa: "Sou empresa",
     trocarConta: "Trocar tipo de conta",
     tarjaProfissional: "Conta profissional",
-    tarjaEmpresa: "Conta empresa",
+    tarjaEmpresa: "Conta empresarial",
   },
 };

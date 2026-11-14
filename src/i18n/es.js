@@ -23,6 +23,11 @@ export default {
   },
   login: {
     subtitulo: "Entra en tu cuenta",
+    titulo: "Entra en tu cuenta",
+    descProfissional: "Accede a tus oportunidades y haz seguimiento de tus actividades.",
+    descEmpresa: "Gestiona tus campañas, profesionales y resultados.",
+    esqueceuSenha: "¿Olvidaste tu contraseña?",
+    senhaPlaceholder: "Ingresa tu contraseña",
     email: "Correo electrónico",
     senha: "Contraseña",
     entrar: "Entrar",

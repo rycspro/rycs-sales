@@ -23,6 +23,11 @@ export default {
   },
   login: {
     subtitulo: "Connectez-vous à votre compte",
+    titulo: "Connectez-vous à votre compte",
+    descProfissional: "Accédez à vos opportunités et suivez vos activités.",
+    descEmpresa: "Gérez vos campagnes, vos professionnels et vos résultats.",
+    esqueceuSenha: "Mot de passe oublié ?",
+    senhaPlaceholder: "Saisissez votre mot de passe",
     email: "E-mail",
     senha: "Mot de passe",
     entrar: "Se connecter",

@@ -23,6 +23,11 @@ export default {
   },
   login: {
     subtitulo: "登录您的账户",
+    titulo: "登录您的账户",
+    descProfissional: "访问您的机会并跟踪您的活动。",
+    descEmpresa: "管理您的活动、专业人员和成果。",
+    esqueceuSenha: "忘记密码？",
+    senhaPlaceholder: "请输入密码",
     email: "电子邮箱",
     senha: "密码",
     entrar: "登录",
