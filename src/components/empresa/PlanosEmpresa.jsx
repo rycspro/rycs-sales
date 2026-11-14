@@ -79,6 +79,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [stripe, setStripe] = useState(null);
   const [embutido, setEmbutido] = useState(null);
   const [statusPagamento, setStatusPagamento] = useState(null); // null | "processando" | "confirmado"
+  const [vouchersUsados, setVouchersUsados] = useState([]);
 
   const carregar = useCallback(async () => {
     const [p, s] = await Promise.all([api("/plans"), api("/subscription")]);
@@ -91,6 +92,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     carregar();
     api("/stripe/status").then((r) => r && !r.error && setStripe(r));
     api("/saved-cards").then((r) => Array.isArray(r) && setCartoesSalvos(r));
+    api("/vouchers/history").then((r) => Array.isArray(r) && setVouchersUsados(r));
   }, [carregar]);
 
   const abrirModal = (p, cicloEscolhido = CICLOS.MENSAL) => {
@@ -276,7 +278,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 </div>
 
                 {/* Voucher */}
-                <label style={{ display: "block", marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: vouchersUsados.length && !desconto ? 6 : 16 }}>
                   <span className="vx-label">Voucher</span>
                   <div style={{ display: "flex", gap: 7 }}>
                     <input className="vx-input" value={voucher}
@@ -285,6 +287,19 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                     <button className="vx-btn" onClick={aplicar} disabled={!voucher}>Aplicar</button>
                   </div>
                 </label>
+                {vouchersUsados.length > 0 && !desconto && (
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Vouchers usados anteriormente:</span>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                      {vouchersUsados.map((v) => (
+                        <button key={v.codigo} className="vx-btn" style={{ fontSize: 11, padding: "3px 10px" }}
+                          onClick={() => { setVoucher(v.codigo); }}>
+                          {v.codigo}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Forma de pagamento — 1º escolhe a origem (nacional/internacional),
                     depois a forma específica. Nacional = Asaas (cartão/Pix, R$);

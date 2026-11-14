@@ -23,6 +23,14 @@ router.get("/plans", (_req, res) => {
   res.json(ORDEM_PLANOS.map((k) => ({ chave: k, ...PLANOS[k] })));
 });
 
+router.get("/vouchers/history", (req, res) => {
+  if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
+  const rows = db.prepare(
+    "SELECT v.codigo, v.tipo, v.valor, r.criadoEm FROM voucher_redemptions r JOIN vouchers v ON v.id = r.voucherId WHERE r.companyId = ? ORDER BY r.criadoEm DESC"
+  ).all(req.user.entityId);
+  res.json(rows);
+});
+
 router.get("/vouchers/validate", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error:"Apenas empresas" });
   const plano = String(req.query.plano || ""), base = PLANOS[plano];
