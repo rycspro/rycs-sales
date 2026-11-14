@@ -1280,6 +1280,20 @@ if (templateCount.n === 0) {
   for (const t of tpls) ins.run(t.id, t.nome, t.assunto, t.preheader, t.conteudo, t.cta, t.tipo, now);
 }
 
+// Templates TRANSACIONAIS editáveis no admin: os comprovantes de pagamento.
+// Semeados com INSERT OR IGNORE (idempotente) para existirem mesmo depois da
+// tabela já ter sido criada. Variáveis disponíveis: {{nome}}, {{valor}}, {{plano}}.
+{
+  const txTemplates = [
+    { id: "tx_comprovante_campanha", nome: "Comprovante — Depósito de campanha", tipo: "transacional", assunto: "Pagamento confirmado — seu caixa está pronto! 🚀", preheader: "Seu saldo já está disponível.", conteudo: "Olá, {{nome}}!\n\nRecebemos seu depósito de {{valor}} e ele já está no caixa das suas campanhas. Agora é com você: ative campanhas, libere pagamentos aos profissionais e acelere seus resultados. Bora vender! 💪", cta: "Ir para Campanhas" },
+    { id: "tx_comprovante_plano", nome: "Comprovante — Plano ativado", tipo: "transacional", assunto: "Plano ativado com sucesso! 🎉", preheader: "Seu plano já está ativo.", conteudo: "Olá, {{nome}}!\n\nSeu plano {{plano}} está ativo! O pagamento de {{valor}} foi confirmado e você já tem acesso a todos os recursos. Conte com a RYCS para escalar sua operação comercial.", cta: "Ver meu plano" },
+    { id: "tx_comprovante_visibilidade", nome: "Comprovante — Destaque / Visibilidade", tipo: "transacional", assunto: "Destaque ativado — sua empresa em evidência! ✨", preheader: "Sua empresa agora aparece em destaque.", conteudo: "Olá, {{nome}}!\n\nRecebemos o pagamento de {{valor}} do seu destaque na vitrine. Sua empresa agora aparece com prioridade para os melhores profissionais. Aproveite a visibilidade extra!", cta: "Ver visibilidade" },
+  ];
+  const insTx = db.prepare("INSERT OR IGNORE INTO email_templates (id,nome,assunto,preheader,conteudo,cta,tipo,criadoEm) VALUES (?,?,?,?,?,?,?,?)");
+  const tnow = Date.now();
+  for (const t of txTemplates) insTx.run(t.id, t.nome, t.assunto, t.preheader, t.conteudo, t.cta, t.tipo, tnow);
+}
+
 // Onboarding da empresa (docs/onboarding/SPEC.md). Progresso salvo no
 // servidor, uma linha por empresa; convites gerados no admin, presos a um
 // e-mail, com o token guardado só como hash.

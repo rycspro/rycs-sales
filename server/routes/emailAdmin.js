@@ -196,6 +196,19 @@ router.get("/admin/email-templates", requireAdmin, (req, res) => {
   res.json(rows);
 });
 
+// PATCH /api/admin/email-templates/:id — edita o conteúdo de um template.
+router.patch("/admin/email-templates/:id", requireAdmin, (req, res) => {
+  const tpl = db.prepare("SELECT id FROM email_templates WHERE id = ?").get(req.params.id);
+  if (!tpl) return res.status(404).json({ error: "Template não encontrado" });
+  const campos = ["nome", "assunto", "preheader", "conteudo", "cta"];
+  const sets = [], vals = [];
+  for (const c of campos) if (typeof req.body?.[c] === "string") { sets.push(`${c} = ?`); vals.push(req.body[c].slice(0, 8000)); }
+  if (!sets.length) return res.status(400).json({ error: "Nada para atualizar" });
+  vals.push(req.params.id);
+  db.prepare(`UPDATE email_templates SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+  res.json({ ok: true });
+});
+
 // POST /api/admin/emails/ai-generate — gera e-mail via IA
 router.post("/admin/emails/ai-generate", requireAdmin, async (req, res) => {
   const { prompt, action, assunto, conteudo } = req.body;

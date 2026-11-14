@@ -1,3 +1,5 @@
+import db from "../db.js";
+
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.EMAIL_FROM || "RYCS <noreply@rycs.com.br>";
 const APP_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -56,31 +58,56 @@ const CONTEXTO_COMPROVANTE = {
   },
 };
 
-function comprovanteHtml({ assunto, nome, mensagem, valor, botao }) {
+// Substitui {{variavel}} pelo valor correspondente (strings já seguras).
+function aplicarVars(texto, vars) {
+  return String(texto || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => (vars[k] != null ? vars[k] : ""));
+}
+// Texto plano → parágrafos HTML (escapado), preservando quebras de linha.
+function paragrafosHtml(texto) {
+  return String(texto || "").split(/\n{2,}/).map(
+    (p) => `<p style="color:#4b5563;line-height:1.6">${seguro(p).replace(/\n/g, "<br>")}</p>`
+  ).join("");
+}
+
+function comprovanteHtml({ assunto, corpoHtml, valor, botao }) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1f2937">
       ${CABECALHO}
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:19px">${seguro(assunto)}</h2>
-        <p style="color:#4b5563;line-height:1.6">Olá, ${seguro(nome)}.</p>
-        <p style="color:#4b5563;line-height:1.6">${mensagem}</p>
+        ${corpoHtml}
         <div style="background:#eef4ff;border:1px solid #c7dbff;border-radius:12px;padding:16px;text-align:center;margin:18px 0">
           <div style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.5px">Valor confirmado</div>
           <div style="color:#1d4ed8;font-size:26px;font-weight:800;margin-top:4px">${moedaBR(valor)}</div>
         </div>
-        <div style="text-align:center;margin:18px 0">
+        ${botao ? `<div style="text-align:center;margin:18px 0">
           <a href="${seguro(APP_URL)}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">${seguro(botao)}</a>
-        </div>
+        </div>` : ""}
         <p style="color:#6b7280;font-size:13px;margin:0">Comprovante gerado automaticamente · Equipe RYCS Sales Machine</p>
       </div>
     </div>`;
 }
 
+// Id do template editável (admin) por tipo de comprovante.
+const TPL_COMPROVANTE = { campanha: "tx_comprovante_campanha", plano: "tx_comprovante_plano", visibilidade: "tx_comprovante_visibilidade" };
+
 export function emailComprovantePagamento({ nome, email, tipo = "campanha", valor, nomePlano }) {
   if (!email) return { ok: false, motivo: "sem e-mail" };
-  const ctx = CONTEXTO_COMPROVANTE[tipo] || CONTEXTO_COMPROVANTE.campanha;
-  const html = comprovanteHtml({ assunto: ctx.assunto, nome: nome || "", mensagem: ctx.mensagem(valor, nomePlano), valor, botao: ctx.botao });
-  return sendEmail(email, ctx.assunto, html);
+  const fallback = CONTEXTO_COMPROVANTE[tipo] || CONTEXTO_COMPROVANTE.campanha;
+  const vars = { nome: nome || "", valor: moedaBR(valor), plano: nomePlano || "RYCS" };
+
+  // Usa o template editável no admin quando existir; senão, o padrão do código.
+  let tpl = null;
+  try { tpl = db.prepare("SELECT assunto, conteudo, cta FROM email_templates WHERE id = ?").get(TPL_COMPROVANTE[tipo] || TPL_COMPROVANTE.campanha); }
+  catch (e) { console.warn("[email] template comprovante:", e.message); }
+
+  const assunto = tpl?.assunto ? aplicarVars(tpl.assunto, vars) : fallback.assunto;
+  const corpoHtml = tpl?.conteudo
+    ? paragrafosHtml(aplicarVars(tpl.conteudo, vars))
+    : `<p style="color:#4b5563;line-height:1.6">Olá, ${seguro(nome || "")}.</p><p style="color:#4b5563;line-height:1.6">${fallback.mensagem(valor, nomePlano)}</p>`;
+  const botao = tpl?.cta != null ? tpl.cta : fallback.botao;
+
+  return sendEmail(email, assunto, comprovanteHtml({ assunto, corpoHtml, valor, botao }));
 }
 
 export async function sendEmail(to, subject, html) {

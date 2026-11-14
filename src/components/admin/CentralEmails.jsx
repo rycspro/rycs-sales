@@ -208,41 +208,107 @@ function CriarComIA({ aviso, onConcluir, onVoltar }) {
 }
 
 // ---------- Templates ----------
+// Variáveis que cada tipo de template entende (mostradas ao editar).
+const VARS_TEMPLATE = {
+  transacional: ["{{nome}}", "{{valor}}", "{{plano}}"],
+};
+
+function CardTemplate({ t, onSalvar, onUsar }) {
+  const [editando, setEditando] = useState(false);
+  const [f, setF] = useState({ nome: t.nome, assunto: t.assunto, preheader: t.preheader || "", conteudo: t.conteudo, cta: t.cta || "" });
+  const [salvando, setSalvando] = useState(false);
+  const vars = VARS_TEMPLATE[t.tipo] || [];
+
+  const salvar = async () => {
+    setSalvando(true);
+    const ok = await onSalvar(t.id, f);
+    setSalvando(false);
+    if (ok) setEditando(false);
+  };
+
+  if (editando) {
+    return (
+      <div className="vx-card" style={{ padding: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <label><div className="vx-label">Nome</div>
+            <input className="vx-input" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} /></label>
+          <label><div className="vx-label">Assunto</div>
+            <input className="vx-input" value={f.assunto} onChange={(e) => setF({ ...f, assunto: e.target.value })} /></label>
+          <label><div className="vx-label">Prévia (preheader)</div>
+            <input className="vx-input" value={f.preheader} onChange={(e) => setF({ ...f, preheader: e.target.value })} /></label>
+          <label><div className="vx-label">Conteúdo</div>
+            <textarea className="vx-input" style={{ minHeight: 130, resize: "vertical" }} value={f.conteudo} onChange={(e) => setF({ ...f, conteudo: e.target.value })} /></label>
+          <label><div className="vx-label">Texto do botão (CTA)</div>
+            <input className="vx-input" value={f.cta} onChange={(e) => setF({ ...f, cta: e.target.value })} /></label>
+          {vars.length > 0 && (
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>
+              Variáveis disponíveis: {vars.map((v) => <code key={v} style={{ background: "var(--surface-2)", padding: "1px 5px", borderRadius: 4, marginRight: 5 }}>{v}</code>)}
+            </div>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+          <button className="vx-btn vx-btn-sm" onClick={() => { setF({ nome: t.nome, assunto: t.assunto, preheader: t.preheader || "", conteudo: t.conteudo, cta: t.cta || "" }); setEditando(false); }}>Cancelar</button>
+          <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={salvar} disabled={salvando}>{salvando ? "Salvando…" : "Salvar"}</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="vx-card" style={{ padding: 18 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+        <div style={{ minWidth: 0 }}>
+          <b style={{ fontSize: 14 }}>{t.nome}</b>
+          {t.tipo === "transacional" && <span className="vx-chip" style={{ marginLeft: 8, fontSize: 10.5 }}>Automático</span>}
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>{t.assunto}</div>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {onUsar && t.tipo !== "transacional" && <button className="vx-btn vx-btn-sm" onClick={() => onUsar(t)}>Usar</button>}
+          <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => setEditando(true)}>Editar</button>
+        </div>
+      </div>
+      {t.preheader && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8, fontStyle: "italic" }}>{t.preheader}</div>}
+      <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 10, whiteSpace: "pre-wrap", maxHeight: 80, overflow: "hidden" }}>{t.conteudo}</div>
+    </div>
+  );
+}
+
 function Templates({ aviso, onVoltar, onUsar }) {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api("/admin/email-templates").then((r) => {
-      if (Array.isArray(r)) setTemplates(r);
-      setLoading(false);
-    });
-  }, []);
+  const carregar = () => api("/admin/email-templates").then((r) => {
+    if (Array.isArray(r)) setTemplates(r);
+    setLoading(false);
+  });
+  useEffect(() => { carregar(); }, []);
+
+  const salvar = async (id, dados) => {
+    const r = await apiPatch(`/admin/email-templates/${id}`, dados);
+    if (!r || r.error) { aviso?.(r?.error || "Não foi possível salvar o template."); return false; }
+    aviso?.("Template salvo.");
+    setTemplates((ts) => ts.map((t) => t.id === id ? { ...t, ...dados } : t));
+    return true;
+  };
+
+  // Transacionais (comprovantes automáticos) primeiro — são os que o cliente recebe.
+  const ordenados = [...templates].sort((a, b) => (a.tipo === "transacional" ? -1 : 0) - (b.tipo === "transacional" ? -1 : 0));
 
   return (
     <div className="vx-fade">
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
         <button className="vx-btn vx-btn-sm" onClick={onVoltar}>← Voltar</button>
         <h2 style={{ margin: 0, fontSize: 19 }}>Templates de e-mail</h2>
       </div>
+      <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 20px" }}>
+        Os templates marcados como <b>Automático</b> são os comprovantes enviados ao cliente após o pagamento. Edite o texto e salve — vale para os próximos envios.
+      </p>
 
       {loading ? (
         <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Carregando...</div>
       ) : (
         <div className="vx-grid">
-          {templates.map((t) => (
-            <div key={t.id} className="vx-card" style={{ padding: 18 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <b style={{ fontSize: 14 }}>{t.nome}</b>
-                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }}>{t.assunto}</div>
-                </div>
-                <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => onUsar(t)}>Usar</button>
-              </div>
-              {t.preheader && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8, fontStyle: "italic" }}>{t.preheader}</div>}
-              <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 10, whiteSpace: "pre-wrap", maxHeight: 80, overflow: "hidden" }}>{t.conteudo}</div>
-            </div>
-          ))}
+          {ordenados.map((t) => <CardTemplate key={t.id} t={t} onSalvar={salvar} onUsar={onUsar} />)}
         </div>
       )}
     </div>
