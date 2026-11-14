@@ -360,7 +360,7 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
   const saldoBaixo = aguardando > 0 && posicao.disponivel < aguardando;
 
   return (
-    <div className="vx-fade">
+    <div className="vx-fade vx-centralpag">
       {/* ── Cabeçalho ── */}
       <div className="vx-page-head">
         <div>
@@ -381,8 +381,8 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
 
       {/* ── Linha 1: saldo disponível + liberação ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginBottom: 14 }}>
-        {/* Card saldo disponível */}
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px 22px", display: "flex", flexDirection: "column" }}>
+        {/* Card saldo disponível — fundo azul sutil para destaque */}
+        <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-200)", borderRadius: 14, padding: "20px 22px", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--muted)" }}>Saldo disponível</span>
             <Wallet size={18} color="var(--muted)" strokeWidth={1.8} />

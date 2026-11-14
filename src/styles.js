@@ -929,6 +929,9 @@ html[data-versao="sol"] .vx-balance-value{font-family:'Michroma','General Sans',
   -webkit-text-stroke:.35px #171717}
 @media(max-width:1024px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:24px!important}}
 @media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:22px!important}}
+/* Pagamentos das Campanhas: números um pouco menores que o padrão. */
+html[data-versao="sol"] .vx-centralpag .vx-num{font-size:21px!important}
+@media(max-width:640px){html[data-versao="sol"] .vx-centralpag .vx-num{font-size:19px!important}}
 /* Números do card de orçamento (Insights): mesma fonte dos indicadores do sistema, não monoespaçada */
 html[data-versao="sol"] .vx-budget-value strong,
 html[data-versao="sol"] .vx-budget-facts b{font-family:'Michroma','General Sans',sans-serif!important}
