@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -57,19 +57,20 @@ export const NAV = {
       { key: "financeiro", label: "Financeiro" },
     ] },
     { section: "Escale com a RYCS" },
+    { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch, children: [
+      { key: "profissionais", label: "Profissionais" },
+      { key: "conferir-fila", label: "Aprovações" },
+      { key: "conferir-time", label: "Time" },
+    ] },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
       { key: "campanhas", label: "Campanhas" },
       { key: "pagamentos-campanhas", label: "Pagamentos" },
       { key: "campanhas-comissoes", label: "Comissões" },
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
-    { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch, children: [
-      { key: "profissionais", label: "Profissionais" },
-      { key: "conferir-fila", label: "Aprovações" },
-      { key: "conferir-time", label: "Time" },
-    ] },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { section: "Sua Empresa" },
+    { key: "materiais", label: "Materiais", Icon: FolderOpen },
     { key: "leads", label: "Leads", Icon: Target, children: [
       { key: "leads", label: "Leads" },
       { key: "integracoes", label: "Integrações" },
