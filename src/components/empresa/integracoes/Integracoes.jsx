@@ -9,27 +9,46 @@ import { INTEGRACOES, FILTROS, STATUS, statusMeta, rotuloCategoria } from "./cat
 // Se a marca não tiver ícone na base ou o carregamento falhar, cai no bloco
 // colorido com a inicial — sem distorção e sem quebrar o layout.
 function Logo({ item, tam = 44 }) {
-  const [falhou, setFalhou] = useState(false);
-  const usarIcone = item.slug && !falhou;
+  const [erroIcone, setErroIcone] = useState(false);
+  const [erroFavicon, setErroFavicon] = useState(false);
+  const ladrilho = {
+    width: tam, height: tam, borderRadius: 11, background: "#fff", flexShrink: 0,
+    border: "1px solid rgba(17,24,39,.08)", display: "flex", alignItems: "center", justifyContent: "center",
+    overflow: "hidden",
+  };
 
-  if (usarIcone) {
+  // 1ª fonte: ícone oficial da marca (Simple Icons, na cor da marca).
+  if (item.slug && !erroIcone) {
     const cor = item.cor.replace("#", "");
     return (
-      <div style={{
-        width: tam, height: tam, borderRadius: 11, background: "#fff", flexShrink: 0,
-        border: "1px solid rgba(17,24,39,.08)", display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
+      <div style={ladrilho}>
         <img
           src={`https://cdn.simpleicons.org/${item.slug}/${cor}`}
           alt={item.nome}
           width={Math.round(tam * 0.52)} height={Math.round(tam * 0.52)}
-          loading="lazy" onError={() => setFalhou(true)}
+          loading="lazy" onError={() => setErroIcone(true)}
           style={{ display: "block" }}
         />
       </div>
     );
   }
 
+  // 2ª fonte: logo real do site (favicon), para marcas sem ícone na base.
+  if (item.dominio && !erroFavicon) {
+    return (
+      <div style={ladrilho}>
+        <img
+          src={`https://www.google.com/s2/favicons?domain=${item.dominio}&sz=64`}
+          alt={item.nome}
+          width={Math.round(tam * 0.58)} height={Math.round(tam * 0.58)}
+          loading="lazy" onError={() => setErroFavicon(true)}
+          style={{ display: "block", objectFit: "contain" }}
+        />
+      </div>
+    );
+  }
+
+  // Último recurso: bloco colorido com a inicial da marca.
   return (
     <div style={{
       width: tam, height: tam, borderRadius: 11, background: item.cor, flexShrink: 0,

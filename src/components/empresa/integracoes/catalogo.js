@@ -37,19 +37,19 @@ export const INTEGRACOES = [
     descricao: "Receba leads gerados pelos formulários dos seus anúncios." },
   { id: "tiktok-ads", nome: "TikTok Ads", tipo: "em_breve", categoria: "anuncios", slug: "tiktok", cor: "#111111", sigla: "T",
     descricao: "Centralize contatos captados pelas campanhas do TikTok." },
-  { id: "linkedin-ads", nome: "LinkedIn Ads", tipo: "em_breve", categoria: "anuncios", slug: "linkedin", cor: "#0A66C2", sigla: "in",
+  { id: "linkedin-ads", nome: "LinkedIn Ads", tipo: "em_breve", categoria: "anuncios", slug: null, dominio: "linkedin.com", cor: "#0A66C2", sigla: "in",
     descricao: "Receba leads dos formulários de campanhas profissionais." },
 
   // ── CRM ───────────────────────────────────────────────────────────────
   { id: "hubspot", nome: "HubSpot", tipo: "em_breve", categoria: "crm", slug: "hubspot", cor: "#FF7A59", sigla: "H",
     descricao: "Integre contatos e oportunidades do seu CRM." },
-  { id: "rd-station", nome: "RD Station", tipo: "em_breve", categoria: "crm", slug: null, cor: "#19B9A7", sigla: "RD",
+  { id: "rd-station", nome: "RD Station", tipo: "em_breve", categoria: "crm", slug: null, dominio: "rdstation.com", cor: "#19B9A7", sigla: "RD",
     descricao: "Sincronize leads e informações comerciais." },
-  { id: "pipedrive", nome: "Pipedrive", tipo: "em_breve", categoria: "crm", slug: "pipedrive", cor: "#1A1A1A", sigla: "P",
+  { id: "pipedrive", nome: "Pipedrive", tipo: "em_breve", categoria: "crm", slug: null, dominio: "pipedrive.com", cor: "#1A1A1A", sigla: "P",
     descricao: "Conecte contatos e oportunidades do funil de vendas." },
-  { id: "salesforce", nome: "Salesforce", tipo: "em_breve", categoria: "crm", slug: "salesforce", cor: "#00A1E0", sigla: "S",
+  { id: "salesforce", nome: "Salesforce", tipo: "em_breve", categoria: "crm", slug: null, dominio: "salesforce.com", cor: "#00A1E0", sigla: "S",
     descricao: "Integre dados comerciais e registros de clientes." },
-  { id: "agendor", nome: "Agendor", tipo: "em_breve", categoria: "crm", slug: null, cor: "#2F80ED", sigla: "A",
+  { id: "agendor", nome: "Agendor", tipo: "em_breve", categoria: "crm", slug: null, dominio: "agendor.com.br", cor: "#2F80ED", sigla: "A",
     descricao: "Centralize contatos e oportunidades comerciais." },
   { id: "zoho-crm", nome: "Zoho CRM", tipo: "em_breve", categoria: "crm", slug: "zoho", cor: "#E42527", sigla: "Z",
     descricao: "Sincronize contatos e informações de vendas." },
@@ -67,7 +67,7 @@ export const INTEGRACOES = [
     descricao: "Integre formulários e contatos do seu site." },
 
   // ── AUTOMAÇÕES E DESENVOLVEDORES ──────────────────────────────────────
-  { id: "webhooks", nome: "Webhooks", tipo: "em_breve", categoria: "automacoes", slug: "webhooks", cor: "#6366F1", sigla: "{}",
+  { id: "webhooks", nome: "Webhooks", tipo: "em_breve", categoria: "automacoes", slug: null, cor: "#6366F1", sigla: "{}",
     descricao: "Receba leads de sistemas externos automaticamente." },
   { id: "api-rycs", nome: "API RYCS", tipo: "em_breve", categoria: "automacoes", slug: null, cor: "#318CE7", sigla: "</>",
     descricao: "Conecte sistemas personalizados à plataforma." },
