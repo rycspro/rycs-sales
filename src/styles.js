@@ -756,6 +756,7 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 @media(prefers-reduced-motion:reduce){.vx-prog *{transition:none!important;animation:none!important}}
 
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 
 /* ── Icon container monocromático (substitui fundos coloridos) ──────── */
 .vx-icon-box{display:flex;align-items:center;justify-content:center;

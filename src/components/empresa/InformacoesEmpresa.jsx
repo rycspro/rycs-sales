@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Building2, Package, MessagesSquare, ClipboardCheck, Plus, Trash2, ChevronRight,
   ArrowUpRight, Check, Paperclip, X, ChevronUp, ChevronDown, FileText, Loader2,
-  AlertCircle,
+  AlertCircle, Mic, MicOff,
 } from "lucide-react";
 import { api, apiPatch, apiDelete } from "../../lib/api.js";
 
@@ -72,11 +72,71 @@ const temConteudo = (e) => {
 };
 
 /* ============================================================
+   DITADO POR VOZ (fala → texto) — Web Speech API (pt-BR)
+   ============================================================ */
+function useDitado(onTexto) {
+  const [gravando, setGravando] = useState(false);
+  const recRef = useRef(null);
+  const onTextoRef = useRef(onTexto);
+  useEffect(() => { onTextoRef.current = onTexto; });
+  const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  const suportado = !!SR;
+
+  const alternar = useCallback(() => {
+    if (!suportado) return;
+    if (gravando) { try { recRef.current?.stop(); } catch { /* ignora */ } setGravando(false); return; }
+    const rec = new SR();
+    rec.lang = "pt-BR"; rec.continuous = true; rec.interimResults = false;
+    rec.onresult = (e) => {
+      let txt = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) txt += e.results[i][0].transcript;
+      if (txt.trim()) onTextoRef.current?.(txt.trim());
+    };
+    rec.onend = () => setGravando(false);
+    rec.onerror = () => setGravando(false);
+    recRef.current = rec;
+    try { rec.start(); setGravando(true); } catch { setGravando(false); }
+  }, [suportado, gravando, SR]);
+
+  useEffect(() => () => { try { recRef.current?.stop(); } catch { /* ignora */ } }, []);
+  return { suportado, gravando, alternar };
+}
+
+// Campo de texto (input ou textarea) com botão de ditado por voz. O texto
+// reconhecido é anexado ao conteúdo atual. onChange recebe a string já final.
+function CampoVoz({ value, onChange, multiline, rows = 3, placeholder, className = "vx-input", style, inputStyle }) {
+  const { suportado, gravando, alternar } = useDitado((texto) => {
+    const base = value || "";
+    const sep = base && !/\s$/.test(base) ? " " : "";
+    onChange(base + sep + texto);
+  });
+  const Campo = multiline ? "textarea" : "input";
+  return (
+    <div style={{ position: "relative", ...style }}>
+      <Campo className={className} value={value || ""} placeholder={placeholder}
+        rows={multiline ? rows : undefined}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ width: "100%", paddingRight: 40, ...(multiline ? { resize: "vertical", lineHeight: 1.5 } : {}), ...inputStyle }} />
+      {suportado && (
+        <button type="button" onClick={alternar} title={gravando ? "Parar ditado" : "Ditar por voz"}
+          aria-label={gravando ? "Parar ditado" : "Ditar por voz"} aria-pressed={gravando}
+          style={{ position: "absolute", top: multiline ? 8 : "50%", right: 8, transform: multiline ? "none" : "translateY(-50%)",
+            width: 30, height: 30, borderRadius: 8, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            background: gravando ? "#FDECEC" : "#F3F4F6", color: gravando ? "var(--red)" : "#737373",
+            animation: gravando ? "pulse 1.2s ease-in-out infinite" : "none" }}>
+          {gravando ? <MicOff size={15} /> : <Mic size={15} />}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
    CARDS DAS 4 SEÇÕES (grade 2 colunas) — para a landing de Materiais
    ============================================================ */
 export function CardsInformacoes({ resumo, onAbrir }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
       {INFO_SECOES.map((s) => (
         <CardSecao key={s.chave} secao={s} estado={resumo?.[s.chave]?.estado || "vazio"} onClick={() => onAbrir(s.chave)} />
       ))}
@@ -256,9 +316,8 @@ function BlocoSobre({ entrada, onEditar, onRemover }) {
           <Trash2 size={15} />
         </button>
       </div>
-      <textarea value={entrada.conteudo || ""} onChange={(e) => onEditar(entrada.id, { conteudo: e.target.value })}
-        placeholder="Escreva aqui..." className="vx-input" rows={4}
-        style={{ resize: "vertical", width: "100%", lineHeight: 1.5 }} />
+      <CampoVoz multiline rows={4} value={entrada.conteudo || ""} placeholder="Escreva ou dite aqui..."
+        onChange={(v) => onEditar(entrada.id, { conteudo: v })} />
     </div>
   );
 }
@@ -348,19 +407,18 @@ function RegistroEditor({ secao, schema, entrada, materiaisLib, onEditar, onVolt
       <div style={{ display: "flex", flexDirection: "column", gap: 16, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 20 }}>
         <div>
           <label className="vx-label">{schema.nomeLabel}</label>
-          <input className="vx-input" value={entrada.titulo || ""} placeholder={schema.nomePlaceholder}
-            onChange={(e) => onEditar(entrada.id, { titulo: e.target.value })} />
+          <CampoVoz value={entrada.titulo || ""} placeholder={schema.nomePlaceholder}
+            onChange={(v) => onEditar(entrada.id, { titulo: v })} />
         </div>
 
         {schema.campos.map((c) => (
           <div key={c.k}>
             <label className="vx-label">{c.label}</label>
             {c.tipo === "input" && (
-              <input className="vx-input" value={val(c)} onChange={(e) => setCampo(c, e.target.value)} />
+              <CampoVoz value={val(c)} onChange={(v) => setCampo(c, v)} />
             )}
             {c.tipo === "textarea" && (
-              <textarea className="vx-input" value={val(c)} rows={c.grande ? 6 : 3} style={{ resize: "vertical", lineHeight: 1.5 }}
-                onChange={(e) => setCampo(c, e.target.value)} />
+              <CampoVoz multiline rows={c.grande ? 6 : 3} value={val(c)} onChange={(v) => setCampo(c, v)} />
             )}
             {c.tipo === "etapas" && (
               <EditorEtapas etapas={Array.isArray(entrada.dados?.etapas) ? entrada.dados.etapas : []}
@@ -403,7 +461,7 @@ function EditorEtapas({ etapas, onChange }) {
       {etapas.map((e, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ width: 22, height: 22, borderRadius: 6, background: AZUL_SUAVE, color: AZUL, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
-          <input className="vx-input" value={e} placeholder={`Etapa ${i + 1}`} onChange={(ev) => set(i, ev.target.value)} style={{ flex: 1 }} />
+          <CampoVoz value={e} placeholder={`Etapa ${i + 1}`} onChange={(v) => set(i, v)} style={{ flex: 1 }} />
           <div style={{ display: "flex", gap: 2 }}>
             <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => mover(i, -1)} disabled={i === 0} style={{ padding: 3 }} title="Subir"><ChevronUp size={14} /></button>
             <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => mover(i, 1)} disabled={i === etapas.length - 1} style={{ padding: 3 }} title="Descer"><ChevronDown size={14} /></button>
