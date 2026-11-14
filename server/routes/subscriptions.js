@@ -465,7 +465,7 @@ router.post("/subscription", async (req, res) => {
     const trialDias = PLANOS[chave]?.trial === false
       ? 0
       : (doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO);
-    const vencimento = trialDias
+    let vencimento = trialDias
       ? primeiraCobranca({ trialDias })
       : new Date(Date.now() + 3 * 86400000);
 
@@ -474,10 +474,21 @@ router.post("/subscription", async (req, res) => {
       return res.json({ ok: true, subscriptionId: subId, ...calculo, ...r });
     }
 
+    // Asaas exige mínimo de R$ 5 para cartão. Quando voucher deixa abaixo,
+    // criamos a assinatura com valor cheio e concedemos trial de 1 ciclo
+    // (o voucher cobre integralmente esse período).
+    const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
+    const valorMuitoBaixo = ehCartao && calculo.valorFinal > 0 && calculo.valorFinal < 5;
+    const valorAsaas = valorMuitoBaixo ? calculo.valorOriginal : calculo.valorFinal;
+    if (valorMuitoBaixo) {
+      const diasCiclo = ciclo === "ANUAL" ? 365 : ciclo === "SEMESTRAL" ? 180 : 30;
+      vencimento.setTime(Date.now() + diasCiclo * 86400000);
+    }
+
     const corpo = {
       customer: customerId,
       billingType: forma === "DEBIT_CARD" ? "CREDIT_CARD" : forma,
-      value: calculo.valorFinal,
+      value: valorAsaas,
       nextDueDate: vencimento.toISOString().split("T")[0],
       cycle: CICLO_ASAAS[ciclo] || "MONTHLY",
       description: `RYCS ${plano.nome} — assinatura ${CICLO_LABEL[ciclo] || "mensal"}`,
