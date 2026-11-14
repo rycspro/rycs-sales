@@ -258,7 +258,11 @@ export default function App() {
 
   const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
 
-  if (!user) {
+  // As telas públicas de cadastro (profissional/empresa e a escolha) devem
+  // respeitar a URL mesmo com uma sessão ativa: abrir /cadastro/profissional
+  // logado deixava de mostrar a página e jogava direto no dashboard.
+  const rotaCadastro = rota.tipo === "cadastro" || rota.tipo === "escolha";
+  if (!user || rotaCadastro) {
     if (rota.tipo === "landing") return <div className="vx-app"><style>{CSS}</style><Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><LandingPage /></Suspense></div>;
     return (
       <div className="vx-app">
