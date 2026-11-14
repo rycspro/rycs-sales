@@ -49,6 +49,7 @@ const SECOES_NAV = [
   { key: "comercial", label: "Comercial", icon: Briefcase },
   { key: "integracoes", label: "Integrações", icon: Plug },
   { key: "notificacoes", label: "Notificações", icon: Bell },
+  { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
   { key: "seguranca", label: "Segurança", icon: Lock },
   { key: "preferencias", label: "Preferências", icon: Settings },
   { key: "idiomas", label: "Idiomas", icon: Globe },
@@ -221,6 +222,59 @@ function InlineField({ label, value, onChange, type = "text", placeholder, multi
         <div style={baseText}>{value || (placeholder ? `${placeholder}` : "Clique para editar")}</div>
       )}
     </div>
+  );
+}
+
+// ── Cartões salvos ───────────────────────────────────────────────────
+
+function CartoesSalvos({ aviso }) {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const carregar = async () => {
+    const r = await api("/saved-cards");
+    if (Array.isArray(r)) setCards(r);
+    setLoading(false);
+  };
+  useEffect(() => { carregar(); }, []);
+
+  const remover = async (id) => {
+    const r = await api(`/saved-cards/${id}`, { method: "DELETE" });
+    if (r?.ok) { setCards((prev) => prev.filter((c) => c.id !== id)); aviso("Cartão removido."); }
+    else aviso(r?.error || "Erro ao remover.");
+  };
+
+  return (
+    <>
+      <PgHead title="Cartões salvos" description="Gerencie os cartões salvos para pagamentos futuros." />
+      {loading ? (
+        <div className="vx-mut" style={{ padding: 20, textAlign: "center" }}>Carregando...</div>
+      ) : cards.length === 0 ? (
+        <div className="vx-card" style={{ padding: 24, textAlign: "center" }}>
+          <CreditCard size={28} style={{ color: "var(--muted)", margin: "0 auto 8px" }} />
+          <div className="vx-mut" style={{ fontSize: 13 }}>Nenhum cartão salvo.</div>
+          <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>Ao assinar um plano, marque "Salvar este cartão" para ele aparecer aqui.</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {cards.map((c) => (
+            <div key={c.id} className="vx-card" style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+              <CreditCard size={20} style={{ color: "var(--brand)", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{c.bandeira} •••• {c.final4}</div>
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>
+                  {c.holderName}{c.apelido ? ` · ${c.apelido}` : ""} · {c.tipo === "DEBIT_CARD" ? "Débito" : "Crédito"}
+                </div>
+              </div>
+              <button className="vx-btn" onClick={() => remover(c.id)} title="Remover cartão"
+                style={{ padding: "6px 10px", fontSize: 11.5, color: "var(--red)" }}>
+                <Trash2 size={14} /> Remover
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -499,6 +553,8 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
         )}
       </>
     ),
+
+    cartoes: <CartoesSalvos aviso={aviso} />,
 
     seguranca: <SegurancaConta aviso={aviso} />,
 

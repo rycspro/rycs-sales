@@ -26,8 +26,11 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [forma, setForma] = useState(""); // "" = nenhuma origem escolhida ainda
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
-  const [stripe, setStripe] = useState(null); // pagamento internacional (US$)
-  const [embutido, setEmbutido] = useState(null); // checkout do Stripe aberto dentro do modal
+  const [salvarCartao, setSalvarCartao] = useState(false);
+  const [cartoesSalvos, setCartoesSalvos] = useState([]);
+  const [cardSalvoId, setCardSalvoId] = useState(null); // cartão salvo selecionado
+  const [stripe, setStripe] = useState(null);
+  const [embutido, setEmbutido] = useState(null);
 
   const carregar = useCallback(async () => {
     const [p, s] = await Promise.all([api("/plans"), api("/subscription")]);
@@ -36,7 +39,11 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     if (s && !s.error) setAtual(s);
   }, []);
 
-  useEffect(() => { carregar(); api("/stripe/status").then((r) => r && !r.error && setStripe(r)); }, [carregar]);
+  useEffect(() => {
+    carregar();
+    api("/stripe/status").then((r) => r && !r.error && setStripe(r));
+    api("/saved-cards").then((r) => Array.isArray(r) && setCartoesSalvos(r));
+  }, [carregar]);
 
   const abrirModal = (p, cicloEscolhido = CICLOS.MENSAL) => {
     setSelecionado(p);
@@ -46,6 +53,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     setDesconto(null);
     setForma("");
     setEmbutido(null);
+    setCardSalvoId(null);
+    setSalvarCartao(false);
     setCartao({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
     setTitular({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   };
@@ -69,7 +78,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       return;
     }
     const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
-    if (ehCartao) {
+    if (ehCartao && !cardSalvoId) {
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
       if (faltando.length) return aviso("Preencha todos os dados do cartão.");
       if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
@@ -81,12 +90,17 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       ciclo,
       voucher: voucher || undefined,
       formaPagamento: forma,
-      cartao: ehCartao ? cartao : undefined,
-      titular: ehCartao ? titular : undefined,
+      savedCardId: cardSalvoId || undefined,
+      cartao: ehCartao && !cardSalvoId ? cartao : undefined,
+      titular: ehCartao && !cardSalvoId ? titular : undefined,
+      salvarCartao: ehCartao && !cardSalvoId && salvarCartao ? true : undefined,
     });
     setProcessando(false);
 
     if (r?.error) return aviso(r.error);
+
+    // Atualizar cartões salvos caso tenha salvo um novo
+    if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));
 
     if (r.jaPago) { aviso("Pagamento confirmado. Liberando seu acesso."); setSelecionado(null); await carregar(); return; }
     if (r.pixCopiaECola || r.pixQrCodeBase64) { setCobranca(r); return; }
@@ -274,9 +288,40 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   </div>
                 )}
 
-                {/* Formulário de cartão */}
+                {/* Cartões salvos + Formulário de cartão */}
                 {(forma === "CREDIT_CARD" || forma === "DEBIT_CARD") && (
                   <>
+                    {cartoesSalvos.length > 0 && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div className="vx-label" style={{ marginBottom: 6 }}>Cartões salvos</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {cartoesSalvos.map((c) => (
+                            <button key={c.id} className="vx-btn" onClick={() => { setCardSalvoId(cardSalvoId === c.id ? null : c.id); }}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, justifyContent: "flex-start",
+                                borderColor: cardSalvoId === c.id ? "var(--brand)" : undefined,
+                                background: cardSalvoId === c.id ? "var(--brand-50)" : undefined,
+                                color: cardSalvoId === c.id ? "var(--brand)" : undefined,
+                              }}>
+                              <CreditCard size={15} />
+                              <span>{c.bandeira} •••• {c.final4}</span>
+                              {c.apelido && <span className="vx-mut" style={{ fontSize: 11 }}>({c.apelido})</span>}
+                            </button>
+                          ))}
+                          <button className="vx-btn" onClick={() => setCardSalvoId(null)}
+                            style={{
+                              fontSize: 12, justifyContent: "flex-start",
+                              borderColor: !cardSalvoId ? "var(--brand)" : undefined,
+                              background: !cardSalvoId ? "var(--brand-50)" : undefined,
+                              color: !cardSalvoId ? "var(--brand)" : undefined,
+                            }}>
+                            + Usar novo cartão
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!cardSalvoId && (<>
                     <div style={{ margin: "4px auto 16px", maxWidth: 320 }}>
                       <HoloCard
                         holder={cartao.nome || "RYCS"}
@@ -332,6 +377,12 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                       <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 1 }} />
                       Os dados do cartão vão direto ao processador de pagamento. A RYCS não guarda o número nem o CVV.
                     </div>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, cursor: "pointer", fontSize: 12.5 }}>
+                      <input type="checkbox" checked={salvarCartao} onChange={(e) => setSalvarCartao(e.target.checked)} />
+                      Salvar este cartão para pagamentos futuros
+                    </label>
+                    </>)}
                   </>
                 )}
 

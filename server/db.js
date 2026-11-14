@@ -1772,5 +1772,17 @@ try {
     VALUES (?, 'RICARDOMARTIN', 'percentual', 99, NULL, 0, 1, '[]', 'ativo', ?)`).run(uid(), agora());
 } catch (e) { console.warn("[seed] voucher cortesia:", e.message); }
 
+db.exec(`CREATE TABLE IF NOT EXISTS saved_cards (
+  id TEXT PRIMARY KEY,
+  companyId TEXT NOT NULL,
+  apelido TEXT DEFAULT '',
+  bandeira TEXT DEFAULT '',
+  final4 TEXT DEFAULT '',
+  token TEXT NOT NULL,
+  holderName TEXT DEFAULT '',
+  tipo TEXT DEFAULT 'CREDIT_CARD',
+  criadoEm INTEGER NOT NULL
+)`);
+
 export default db;
 export { uid, agora };

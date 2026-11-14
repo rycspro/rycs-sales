@@ -487,27 +487,40 @@ router.post("/subscription", async (req, res) => {
     // Dados do cartão vão ao gateway e não ficam aqui. O que voltamos a
     // guardar é o que o Asaas devolve tokenizado: bandeira e quatro dígitos.
     if (forma === "CREDIT_CARD" || forma === "DEBIT_CARD") {
-      const cartao = req.body?.cartao || {};
-      const titular = req.body?.titular || {};
-      const faltando = ["numero", "validadeMes", "validadeAno", "cvv", "nome"].filter((k) => !String(cartao[k] || "").trim());
-      if (faltando.length) return res.status(400).json({ error: "Preencha todos os dados do cartão." });
+      const savedCardId = req.body?.savedCardId;
+      if (savedCardId) {
+        const saved = db.prepare("SELECT * FROM saved_cards WHERE id = ? AND companyId = ?").get(savedCardId, entityId);
+        if (!saved) return res.status(400).json({ error: "Cartão salvo não encontrado." });
+        corpo.creditCardToken = saved.token;
+        corpo.creditCardHolderInfo = {
+          name: saved.holderName || empresa.nome,
+          cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
+          postalCode: String(empresa.cep || "").replace(/\D/g, "") || undefined,
+          addressNumber: String(empresa.numero || "") || "0",
+        };
+      } else {
+        const cartao = req.body?.cartao || {};
+        const titular = req.body?.titular || {};
+        const faltando = ["numero", "validadeMes", "validadeAno", "cvv", "nome"].filter((k) => !String(cartao[k] || "").trim());
+        if (faltando.length) return res.status(400).json({ error: "Preencha todos os dados do cartão." });
 
-      corpo.creditCard = {
-        holderName: cartao.nome,
-        number: String(cartao.numero).replace(/\D/g, ""),
-        expiryMonth: String(cartao.validadeMes).padStart(2, "0"),
-        expiryYear: String(cartao.validadeAno).length === 2 ? `20${cartao.validadeAno}` : String(cartao.validadeAno),
-        ccv: String(cartao.cvv),
-      };
-      corpo.creditCardHolderInfo = {
-        name: titular.nome || cartao.nome,
-        email: titular.email || undefined,
-        cpfCnpj: String(titular.documento || empresa.documento).replace(/\D/g, ""),
-        postalCode: String(titular.cep || "").replace(/\D/g, ""),
-        addressNumber: String(titular.numero || "") || "0",
-        phone: String(titular.telefone || empresa.telefoneEmpresa || "").replace(/\D/g, "") || undefined,
-      };
-      if (req.body?.remoteIp) corpo.remoteIp = String(req.body.remoteIp);
+        corpo.creditCard = {
+          holderName: cartao.nome,
+          number: String(cartao.numero).replace(/\D/g, ""),
+          expiryMonth: String(cartao.validadeMes).padStart(2, "0"),
+          expiryYear: String(cartao.validadeAno).length === 2 ? `20${cartao.validadeAno}` : String(cartao.validadeAno),
+          ccv: String(cartao.cvv),
+        };
+        corpo.creditCardHolderInfo = {
+          name: titular.nome || cartao.nome,
+          email: titular.email || undefined,
+          cpfCnpj: String(titular.documento || empresa.documento).replace(/\D/g, ""),
+          postalCode: String(titular.cep || "").replace(/\D/g, ""),
+          addressNumber: String(titular.numero || "") || "0",
+          phone: String(titular.telefone || empresa.telefoneEmpresa || "").replace(/\D/g, "") || undefined,
+        };
+        if (req.body?.remoteIp) corpo.remoteIp = String(req.body.remoteIp);
+      }
     }
 
     const cobranca = await asaas("/subscriptions", { method: "POST", body: corpo });
@@ -530,8 +543,15 @@ router.post("/subscription", async (req, res) => {
       if (trialDias > 0) db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(chave, entityId);
       if(voucher)db.prepare(`INSERT INTO voucher_redemptions (id,voucherId,companyId,subscriptionId,valorOriginal,desconto,valorFinal,status,criadoEm) VALUES (?,?,?,?,?,?,?,'reservado',?)`).run(uid(),voucher.id,entityId,subId,calculo.valorOriginal,calculo.desconto,calculo.valorFinal,agora());})();
 
-    // Cartão cadastrado e cobrança agendada: a etapa 5 está cumprida. Se o
-    // cartão for recusado depois, o portão de assinatura cuida disso.
+    // Salvar cartão para uso futuro, se pedido
+    if (req.body?.salvarCartao && cartaoInfo.creditCardToken) {
+      const jaExiste = db.prepare("SELECT id FROM saved_cards WHERE companyId = ? AND token = ?").get(entityId, cartaoInfo.creditCardToken);
+      if (!jaExiste) {
+        db.prepare(`INSERT INTO saved_cards (id, companyId, apelido, bandeira, final4, token, holderName, tipo, criadoEm)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(uid(), entityId, "", cartaoInfo.creditCardBrand || "", cartaoInfo.creditCardNumber || "", cartaoInfo.creditCardToken, req.body?.cartao?.nome || "", forma, agora());
+      }
+    }
+
     const onboarding = doOnboarding ? concluirEtapaOnboarding(entityId, "plano") : null;
 
     // O plano só passa a valer no primeiro pagamento confirmado — o webhook
@@ -831,5 +851,27 @@ export function ativarAssinatura(asaasSubscriptionId) {
     catch (e) { console.warn("[assinatura] comprovante e-mail:", e.message); }
   }
 }
+
+// --- Cartões salvos ---
+
+router.get("/saved-cards", (req, res) => {
+  const cards = db.prepare("SELECT id, apelido, bandeira, final4, holderName, tipo, criadoEm FROM saved_cards WHERE companyId = ? ORDER BY criadoEm DESC").all(req.user.entityId);
+  res.json(cards);
+});
+
+router.delete("/saved-cards/:id", (req, res) => {
+  const card = db.prepare("SELECT * FROM saved_cards WHERE id = ? AND companyId = ?").get(req.params.id, req.user.entityId);
+  if (!card) return res.status(404).json({ error: "Cartão não encontrado." });
+  db.prepare("DELETE FROM saved_cards WHERE id = ?").run(card.id);
+  res.json({ ok: true });
+});
+
+router.put("/saved-cards/:id", (req, res) => {
+  const card = db.prepare("SELECT * FROM saved_cards WHERE id = ? AND companyId = ?").get(req.params.id, req.user.entityId);
+  if (!card) return res.status(404).json({ error: "Cartão não encontrado." });
+  const apelido = String(req.body?.apelido || "").slice(0, 60);
+  db.prepare("UPDATE saved_cards SET apelido = ? WHERE id = ?").run(apelido, card.id);
+  res.json({ ok: true });
+});
 
 export default router;
