@@ -161,17 +161,11 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
     <div className="vx-fade" style={{ position: "relative" }}>
       {/* Cabeçalho principal — só na biblioteca, não dentro de uma pasta */}
       {!pasta && (
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Materiais</h1>
-            <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>
-              Todos os recursos comerciais da sua empresa, organizados em um só lugar.
-            </p>
-          </div>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModalUpload({ categoria: null })}
-            style={{ whiteSpace: "nowrap", gap: 6, background: AZUL, borderColor: AZUL }}>
-            <Plus size={16} /> Adicionar material
-          </button>
+        <div style={{ marginBottom: 20 }}>
+          <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Materiais</h1>
+          <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>
+            Todos os recursos comerciais da sua empresa, organizados em um só lugar.
+          </p>
         </div>
       )}
 
@@ -304,7 +298,7 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
                   <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 12 }}>
                     Adicionados recentemente
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 640 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {recentes.map((m) => {
                       const Icon = ICONE_DE(m.categoria);
                       return (
