@@ -71,8 +71,8 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
 
   const info = moedaDe(moeda);
   const digitos = info.digitos;
-  const piso = moeda === "BRL" ? 50 : (digitos === 0 ? 100 : 10);
-  const atalhos = moeda === "BRL" ? [50, 100, 500] : (digitos === 0 ? [500, 1000, 5000] : [50, 100, 500]);
+  const piso = moeda === "BRL" ? 10 : (digitos === 0 ? 100 : 10);
+  const atalhos = moeda === "BRL" ? [10, 50, 100] : (digitos === 0 ? [500, 1000, 5000] : [50, 100, 500]);
   const fmt = (n) => formatarMoeda(n, moeda);
 
   const parseValor = (s) => {
