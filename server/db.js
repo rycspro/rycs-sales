@@ -878,6 +878,21 @@ db.exec(`
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
   CREATE INDEX IF NOT EXISTS idx_company_info ON company_info_entries (companyId, secao, ordem);
+
+  -- Fontes usadas para gerar/compor um treinamento da Academy. Guarda a versão
+  -- da fonte no momento do uso, para a "atualização inteligente" detectar quando
+  -- uma informação de Materiais mudou depois que o treino foi criado.
+  CREATE TABLE IF NOT EXISTS course_sources (
+    id TEXT PRIMARY KEY,
+    courseId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    fonteTipo TEXT NOT NULL,       -- informacao | documento | arquivo
+    fonteId TEXT NOT NULL,         -- id lógico da fonte (ex.: info-<id>, doc-<id>)
+    rotulo TEXT DEFAULT '',
+    versao INTEGER DEFAULT 1,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_course_sources ON course_sources (companyId, courseId);
 `);
 
 const uid = () => randomUUID();
@@ -1862,6 +1877,8 @@ adicionarColuna("materiais", "origemAcademyId", "TEXT DEFAULT ''");
 // Academy da empresa: dono do treinamento. Vazio = curso da plataforma RYCS
 // (como sempre foi); preenchido = treinamento criado por uma empresa.
 adicionarColuna("courses", "companyId", "TEXT DEFAULT ''");
+// Origem do treinamento: criado manualmente pela empresa ou gerado pela IA.
+adicionarColuna("courses", "origem", "TEXT DEFAULT 'manual'");
 // Disponibilidade de um treinamento por campanha + se a conclusão é exigida
 // para executar tarefas. Aditivo, não altera nada existente.
 db.exec(`

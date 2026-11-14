@@ -6,6 +6,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { criarCurso, carregarCurso, atualizarCurso, duplicarCurso } from "../services/academy.js";
+import { coletarFontes, sugerirTreinamentos, gerarCurso, iaDisponivel } from "../services/academyIA.js";
 
 const router = Router();
 
@@ -44,7 +45,7 @@ function resumoCurso(c) {
   const matriculas = db.prepare("SELECT COUNT(*) n FROM course_enrollments WHERE courseId = ?").get(c.id).n;
   return {
     id: c.id, titulo: c.titulo, descricao: c.descricao || "", capa: c.capa || "",
-    status: c.status, notaMinima: c.notaMinima, criadoEm: c.criadoEm, atualizadoEm: c.atualizadoEm,
+    status: c.status, origem: c.origem || "manual", notaMinima: c.notaMinima, criadoEm: c.criadoEm, atualizadoEm: c.atualizadoEm,
     modulos, aulas: t.aulas, duracaoMin: t.minutos, profissionais: matriculas,
     campanhas: campanhasDoCurso(c.id),
   };
@@ -307,6 +308,60 @@ router.put("/academy/empresa/cursos/:id/avaliacao", (req, res) => {
     db.prepare("UPDATE courses SET notaMinima = ?, atualizadoEm = ? WHERE id = ?").run(notaMinima, agora(), c.id);
   })();
   res.json({ curso: carregarCurso(c.id, { comProva: true }) });
+});
+
+// ----------------------------------------------- Inteligência da Academy ----
+// Contadores compactos para o card de inteligência da página.
+router.get("/academy/empresa/inteligencia", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const fontes = coletarFontes(companyId).length;
+  const revisao = db.prepare("SELECT COUNT(*) n FROM courses WHERE companyId = ? AND status = 'revisao'").get(companyId).n;
+  // Atualizações sugeridas: treinos cuja fonte de informação foi alterada em
+  // Materiais depois que o treino foi atualizado pela última vez.
+  const atualizacoes = db.prepare(`
+    SELECT COUNT(DISTINCT cs.courseId) n FROM course_sources cs
+    JOIN courses c ON c.id = cs.courseId
+    JOIN company_info_entries e ON ('info-' || e.id) = cs.fonteId
+    WHERE cs.companyId = ? AND e.atualizadoEm > c.atualizadoEm
+  `).get(companyId).n;
+  res.json({ iaDisponivel: iaDisponivel(), fontes, revisao, atualizacoes });
+});
+
+// Fontes elegíveis (Informações da empresa + base + arquivos indexados).
+router.get("/academy/empresa/fontes", (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const fontes = coletarFontes(companyId).map((f) => ({ id: f.id, grupo: f.grupo, titulo: f.titulo, tipo: f.tipo }));
+  const grupos = {};
+  for (const f of fontes) grupos[f.grupo] = (grupos[f.grupo] || 0) + 1;
+  res.json({ fontes, grupos, total: fontes.length });
+});
+
+// Sugestões de treinamentos analisando as fontes selecionadas.
+router.post("/academy/empresa/ia/sugestoes", async (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  try {
+    res.json(await sugerirTreinamentos(companyId, req.body?.fonteIds));
+  } catch {
+    res.status(500).json({ error: "Não foi possível analisar os materiais agora." });
+  }
+});
+
+// Gera os treinamentos escolhidos e salva como "aguardando revisão".
+router.post("/academy/empresa/ia/gerar", async (req, res) => {
+  const companyId = empresa(req, res);
+  if (!companyId) return;
+  const sugestoes = Array.isArray(req.body?.sugestoes) ? req.body.sugestoes : (req.body?.sugestao ? [req.body.sugestao] : []);
+  if (!sugestoes.length) return res.status(400).json({ error: "Selecione ao menos uma sugestão." });
+  try {
+    const cursoIds = [];
+    for (const s of sugestoes.slice(0, 5)) cursoIds.push(await gerarCurso(companyId, s, req.user.id));
+    res.json({ ok: true, criados: cursoIds.length, cursoIds });
+  } catch (e) {
+    res.status(500).json({ error: e.message || "Falha ao gerar treinamentos." });
+  }
 });
 
 export default router;

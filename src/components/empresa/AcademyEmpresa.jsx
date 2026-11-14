@@ -3,6 +3,7 @@ import {
   Plus, Search, BookOpen, Users, GraduationCap, X, ChevronRight, ArrowLeft,
   MoreVertical, Pencil, Copy, Archive, Trash2, Eye, GripVertical, ChevronDown,
   Video, FileText, Headphones, Link2, Type, Clock, Layers, FolderOpen, Check,
+  Sparkles, Loader2, ArrowRight, RefreshCw, Send,
 } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 
@@ -24,6 +25,7 @@ const TIPOS_AULA = [
 const TIPO_DE = (c) => TIPOS_AULA.find((t) => t.chave === c) || TIPOS_AULA[4];
 
 const STATUS_BADGE = {
+  revisao: { txt: "Aguardando revisão", bg: "#FDF3E7", cor: "#B4690E" },
   publicado: { txt: "Publicado", bg: "#E8F6EE", cor: "#1A7F43" },
   rascunho: { txt: "Rascunho", bg: "#F3F4F6", cor: "#6B7280" },
   arquivado: { txt: "Arquivado", bg: "#FDECEC", cor: "#B4232A" },
@@ -38,17 +40,24 @@ const duracaoTxt = (min) => {
 
 const FILTROS = [
   { key: "todos", label: "Todos" },
+  { key: "revisao", label: "Aguardando revisão" },
   { key: "publicado", label: "Publicados" },
   { key: "rascunho", label: "Rascunhos" },
   { key: "arquivado", label: "Arquivados" },
 ];
+const ORIGENS = [
+  { key: "todos", label: "Todas as origens" },
+  { key: "ia", label: "Gerados por IA" },
+  { key: "manual", label: "Criados manualmente" },
+];
 const ORDENS = [
   { key: "recentes", label: "Mais recentes" },
-  { key: "antigos", label: "Mais antigos" },
-  { key: "az", label: "Nome A–Z" },
+  { key: "atualizacao", label: "Última atualização" },
+  { key: "az", label: "Nome" },
 ];
+const ORIGEM_LABEL = { ia: "Gerado por IA", manual: "Criado pela empresa" };
 
-export default function AcademyEmpresa({ emp, db, aviso }) {
+export default function AcademyEmpresa({ emp, db, aviso, onIrParaMateriais }) {
   const [vista, setVista] = useState("lista");   // lista | builder
   const [cursoId, setCursoId] = useState(null);
 
@@ -58,41 +67,49 @@ export default function AcademyEmpresa({ emp, db, aviso }) {
   if (vista === "builder" && cursoId) {
     return <Builder cursoId={cursoId} emp={emp} db={db} aviso={aviso} onVoltar={voltarLista} />;
   }
-  return <Lista emp={emp} aviso={aviso} onAbrir={abrirBuilder} />;
+  return <Lista emp={emp} aviso={aviso} onAbrir={abrirBuilder} onIrMateriais={onIrParaMateriais} />;
 }
 
 /* ============================ LISTA / PÁGINA PRINCIPAL ============================ */
-function Lista({ emp, aviso, onAbrir }) {
+function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
   const [dados, setDados] = useState(null);
+  const [intel, setIntel] = useState(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
+  const [origem, setOrigem] = useState("todos");
   const [ordem, setOrdem] = useState("recentes");
   const [criar, setCriar] = useState(false);
+  const [gerar, setGerar] = useState(false);
   const [menu, setMenu] = useState(null);
 
   const carregar = useCallback(async () => {
     const r = await api("/academy/empresa");
     if (r?.cursos) setDados(r);
   }, []);
-  useEffect(() => { carregar(); }, [carregar]);
+  const carregarIntel = useCallback(async () => {
+    const r = await api("/academy/empresa/inteligencia");
+    if (r && !r.error) setIntel(r);
+  }, []);
+  useEffect(() => { carregar(); carregarIntel(); }, [carregar, carregarIntel]);
 
   const cursos = useMemo(() => {
     let r = dados?.cursos || [];
     if (filtro !== "todos") r = r.filter((c) => c.status === filtro);
+    if (origem !== "todos") r = r.filter((c) => (c.origem || "manual") === origem);
     if (busca.trim()) {
       const t = busca.toLowerCase().trim();
       r = r.filter((c) => c.titulo.toLowerCase().includes(t) || (c.descricao || "").toLowerCase().includes(t));
     }
     r = [...r];
-    if (ordem === "antigos") r.sort((a, b) => a.criadoEm - b.criadoEm);
-    else if (ordem === "az") r.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
-    else r.sort((a, b) => b.atualizadoEm - a.atualizadoEm);
+    if (ordem === "az") r.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
+    else if (ordem === "atualizacao") r.sort((a, b) => b.atualizadoEm - a.atualizadoEm);
+    else r.sort((a, b) => b.criadoEm - a.criadoEm);
     return r;
-  }, [dados, filtro, busca, ordem]);
+  }, [dados, filtro, origem, busca, ordem]);
 
   const acaoCurso = async (c, acao) => {
     setMenu(null);
-    if (acao === "editar") return onAbrir(c.id);
+    if (acao === "editar" || acao === "abrir" || acao === "revisar") return onAbrir(c.id);
     if (acao === "duplicar") {
       const r = await api(`/academy/empresa/cursos/${c.id}/duplicar`, {});
       if (r?.error) return aviso?.(r.error);
@@ -101,76 +118,87 @@ function Lista({ emp, aviso, onAbrir }) {
     if (acao === "arquivar") {
       const r = await api(`/academy/empresa/cursos/${c.id}/arquivar`, {});
       if (r?.error) return aviso?.(r.error);
-      aviso?.("Treinamento arquivado."); carregar();
+      aviso?.("Treinamento arquivado."); carregar(); carregarIntel();
     }
     if (acao === "excluir") {
       if (!confirm(`Excluir "${c.titulo}"? Esta ação não pode ser desfeita.`)) return;
       const r = await apiDelete(`/academy/empresa/cursos/${c.id}`);
       if (r?.error) return aviso?.(r.error);
-      aviso?.("Treinamento excluído."); carregar();
+      aviso?.("Treinamento excluído."); carregar(); carregarIntel();
     }
+  };
+
+  const aposGerar = (ids) => {
+    setGerar(false);
+    carregar(); carregarIntel();
+    setFiltro("revisao");
+    aviso?.(`${ids.length} treinamento(s) gerado(s) e aguardando sua revisão.`);
   };
 
   if (!dados) return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
   const temCursos = (dados.cursos || []).length > 0;
-  const ind = dados.indicadores;
 
   return (
     <div className="vx-fade">
       {/* Cabeçalho */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
         <div>
           <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Academy</h1>
-          <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>Capacite seus profissionais e acompanhe a evolução dos treinamentos.</p>
+          <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>Prepare seus profissionais com treinamentos personalizados para sua empresa.</p>
         </div>
-        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setCriar(true)} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
-          <Plus size={16} /> Criar treinamento
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="vx-btn vx-btn-sm" onClick={() => setCriar(true)} style={{ gap: 6, whiteSpace: "nowrap" }}>
+            <Plus size={16} /> Criar manualmente
+          </button>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setGerar(true)} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
+            <Sparkles size={16} /> Gerar com IA
+          </button>
+        </div>
       </div>
 
-      {/* Indicadores */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 28 }}>
-        <Indicador titulo="Treinamentos" valor={ind.treinamentos} Icon={BookOpen} />
-        <Indicador titulo="Em aprendizado" valor={ind.emAprendizado} Icon={Users}
-          vazio={!temCursos ? "Crie um treinamento" : ind.emAprendizado === 0 ? "Nenhum profissional ainda" : null} />
-        <Indicador titulo="Conclusões" valor={ind.conclusoes} Icon={GraduationCap}
-          vazio={!temCursos ? "Sem dados ainda" : ind.conclusoes === 0 ? "Nenhuma conclusão ainda" : null} />
-      </div>
+      {/* Inteligência da Academy */}
+      <PainelInteligencia intel={intel} onGerar={() => setGerar(true)} onRevisar={() => setFiltro("revisao")}
+        onAtualizacoes={() => setFiltro("todos")} onIrMateriais={onIrMateriais} />
 
       {/* Biblioteca */}
       <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Seus treinamentos</h2>
-        <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Organize os conteúdos que seus profissionais precisam aprender.</p>
+        <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Treinamentos da empresa</h2>
+        <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Gerencie os conteúdos que seus profissionais poderão acessar.</p>
       </div>
 
       {temCursos && (
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: "1 1 220px", maxWidth: 320 }}>
+          <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 300 }}>
             <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#737373" }} />
             <input className="vx-input" placeholder="Buscar treinamentos..." value={busca} onChange={(e) => setBusca(e.target.value)} style={{ paddingLeft: 32, width: "100%", height: 36 }} />
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {FILTROS.map((f) => (
               <button key={f.key} onClick={() => setFiltro(f.key)} style={{ fontSize: 13, padding: "6px 12px", borderRadius: 999, border: `1px solid ${BORDA}`, cursor: "pointer", background: filtro === f.key ? AZUL : "#fff", color: filtro === f.key ? "#fff" : "#737373", fontWeight: filtro === f.key ? 600 : 400, whiteSpace: "nowrap" }}>{f.label}</button>
             ))}
           </div>
-          <select className="vx-input" value={ordem} onChange={(e) => setOrdem(e.target.value)} style={{ height: 36, width: "auto", minWidth: 150, marginLeft: "auto" }}>
-            {ORDENS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-          </select>
+          <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+            <select className="vx-input" value={origem} onChange={(e) => setOrigem(e.target.value)} style={{ height: 36, width: "auto", minWidth: 140 }}>
+              {ORIGENS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+            <select className="vx-input" value={ordem} onChange={(e) => setOrdem(e.target.value)} style={{ height: 36, width: "auto", minWidth: 150 }}>
+              {ORDENS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </div>
         </div>
       )}
 
       {/* Conteúdo */}
       {!temCursos ? (
-        <EstadoVazio onCriar={() => setCriar(true)} />
+        <EstadoVazio onCriar={() => setCriar(true)} onGerar={() => setGerar(true)} />
       ) : cursos.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "48px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
-          <Search size={36} strokeWidth={1.3} style={{ color: "#737373", marginBottom: 10 }} />
+        <div style={{ textAlign: "center", padding: "40px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
+          <Search size={32} strokeWidth={1.3} style={{ color: "#737373", marginBottom: 10 }} />
           <p style={{ fontSize: 14, color: "#737373", margin: "0 0 12px" }}>Nenhum treinamento encontrado.</p>
-          <button className="vx-btn vx-btn-sm" onClick={() => { setBusca(""); setFiltro("todos"); }}>Limpar filtros</button>
+          <button className="vx-btn vx-btn-sm" onClick={() => { setBusca(""); setFiltro("todos"); setOrigem("todos"); }}>Limpar filtros</button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 16 }}>
           {cursos.map((c) => (
             <CardCurso key={c.id} c={c} onAbrir={onAbrir} menu={menu === c.id} setMenu={(v) => setMenu(v ? c.id : null)} onAcao={(a) => acaoCurso(c, a)} />
           ))}
@@ -178,17 +206,47 @@ function Lista({ emp, aviso, onAbrir }) {
       )}
 
       {criar && <ModalCriar emp={emp} aviso={aviso} onClose={() => setCriar(false)} onCriado={(id) => { setCriar(false); onAbrir(id); }} />}
+      {gerar && <PainelGerarIA aviso={aviso} onClose={() => setGerar(false)} onGerado={aposGerar} />}
     </div>
   );
 }
 
-function Indicador({ titulo, valor, Icon, vazio }) {
+/* ---- Card horizontal "Inteligência da Academy" (compacto, §3) ---- */
+function PainelInteligencia({ intel, onGerar, onRevisar, onAtualizacoes, onIrMateriais }) {
+  if (!intel) return null;
+  const { fontes = 0, revisao = 0, atualizacoes = 0 } = intel;
+  // Prioridade de estado: atualizações > revisão > materiais disponíveis > vazio.
+  let msg, btn, acao;
+  if (atualizacoes > 0) {
+    msg = "Algumas informações foram atualizadas. Seus treinamentos podem precisar de revisão.";
+    btn = "Ver atualizações"; acao = onAtualizacoes;
+  } else if (revisao > 0) {
+    msg = "Existem treinamentos preparados pela IA aguardando sua aprovação.";
+    btn = "Revisar conteúdos"; acao = onRevisar;
+  } else if (fontes > 0) {
+    msg = "Seus materiais podem ser utilizados para criar treinamentos personalizados.";
+    btn = "Gerar treinamentos"; acao = onGerar;
+  } else {
+    msg = "Adicione informações ou arquivos em Materiais para começar.";
+    btn = "Ir para Materiais"; acao = () => onIrMateriais?.();
+  }
   return (
-    <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: "16px 18px", position: "relative", minHeight: 92 }}>
-      <Icon size={18} style={{ position: "absolute", top: 16, right: 16, color: AZUL }} />
-      <div style={{ fontSize: 11, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".5px" }}>{titulo}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: "#171717", marginTop: 6 }}>{valor}</div>
-      {vazio && <div style={{ fontSize: 12, color: "#9aa0a6", marginTop: 2 }}>{vazio}</div>}
+    <div style={{ display: "flex", alignItems: "center", gap: 14, background: AZUL_SUAVE, borderRadius: 12, padding: "14px 18px", marginBottom: 26, flexWrap: "wrap" }}>
+      <span style={{ width: 40, height: 40, borderRadius: 10, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Sparkles size={20} style={{ color: AZUL }} />
+      </span>
+      <div style={{ flex: 1, minWidth: 220 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#171717" }}>Inteligência da Academy</div>
+        <div style={{ fontSize: 13, color: "#3d5a73", marginTop: 1 }}>{msg}</div>
+        {fontes > 0 && (
+          <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 12, color: "#3d5a73", flexWrap: "wrap" }}>
+            <span><b>{fontes}</b> fonte{fontes !== 1 ? "s" : ""} disponíve{fontes !== 1 ? "is" : "l"}</span>
+            {revisao > 0 && <span><b>{revisao}</b> aguardando revisão</span>}
+            {atualizacoes > 0 && <span><b>{atualizacoes}</b> com atualização sugerida</span>}
+          </div>
+        )}
+      </div>
+      <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={acao} style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>{btn}</button>
     </div>
   );
 }
@@ -203,6 +261,8 @@ function CardCurso({ c, onAbrir, menu, setMenu, onAcao }) {
     return () => document.removeEventListener("pointerdown", h);
   }, [menu]);
   const capaImg = /^https?:|^data:/.test(c.capa || "") ? c.capa : null;
+  const origem = c.origem || "manual";
+  const revisao = c.status === "revisao";
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {/* Capa 16:9 */}
@@ -212,6 +272,9 @@ function CardCurso({ c, onAbrir, menu, setMenu, onAcao }) {
       </div>
       {/* Corpo */}
       <div style={{ padding: 16, display: "flex", flexDirection: "column", flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: origem === "ia" ? AZUL : "#9aa0a6", marginBottom: 6 }}>
+          {origem === "ia" ? <Sparkles size={12} /> : <Pencil size={11} />} {ORIGEM_LABEL[origem]}
+        </div>
         <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: "#171717" }}>{c.titulo}</h3>
         <p style={{ fontSize: 13, color: "#737373", margin: "4px 0 10px", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", minHeight: 36 }}>{c.descricao || "Sem descrição."}</p>
         <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#737373", marginBottom: 14, flexWrap: "wrap" }}>
@@ -221,12 +284,14 @@ function CardCurso({ c, onAbrir, menu, setMenu, onAcao }) {
           {c.profissionais > 0 && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Users size={13} /> {c.profissionais}</span>}
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: "auto", alignItems: "center" }}>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onAbrir(c.id)} style={{ flex: 1, gap: 6, background: AZUL, borderColor: AZUL }}>Gerenciar treinamento</button>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onAbrir(c.id)} style={{ flex: 1, gap: 6, background: AZUL, borderColor: AZUL }}>
+            {revisao ? "Revisar e publicar" : c.status === "publicado" ? "Gerenciar" : "Abrir"}
+          </button>
           <div style={{ position: "relative" }} ref={ref}>
             <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setMenu(!menu)} style={{ padding: 6 }}><MoreVertical size={16} /></button>
             {menu && (
               <div style={{ position: "absolute", right: 0, bottom: 34, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 150, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
-                <MenuBtn icon={Pencil} label="Editar" onClick={() => onAcao("editar")} />
+                <MenuBtn icon={Pencil} label={revisao ? "Revisar" : "Editar"} onClick={() => onAcao("editar")} />
                 <MenuBtn icon={Copy} label="Duplicar" onClick={() => onAcao("duplicar")} />
                 {c.status !== "arquivado" && <MenuBtn icon={Archive} label="Arquivar" onClick={() => onAcao("arquivar")} />}
                 <MenuBtn icon={Trash2} label="Excluir" danger onClick={() => onAcao("excluir")} />
@@ -248,15 +313,161 @@ function MenuBtn({ icon: Icon, label, onClick, danger }) {
   );
 }
 
-function EstadoVazio({ onCriar }) {
+function EstadoVazio({ onCriar, onGerar }) {
   return (
-    <div style={{ textAlign: "center", padding: "56px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
-      <span style={{ width: 52, height: 52, borderRadius: 14, background: AZUL_SUAVE, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-        <GraduationCap size={26} style={{ color: AZUL }} />
+    <div style={{ textAlign: "center", padding: "40px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
+      <span style={{ width: 48, height: 48, borderRadius: 12, background: AZUL_SUAVE, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+        <GraduationCap size={24} style={{ color: AZUL }} />
       </span>
-      <h3 style={{ fontSize: 17, fontWeight: 600, margin: "0 0 6px" }}>Sua Academy começa aqui</h3>
-      <p style={{ fontSize: 14, color: "#737373", margin: "0 0 18px", maxWidth: 420, marginInline: "auto" }}>Crie treinamentos para preparar seus profissionais e melhorar os resultados das campanhas.</p>
-      <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onCriar} style={{ gap: 6, background: AZUL, borderColor: AZUL }}><Plus size={16} /> Criar primeiro treinamento</button>
+      <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px" }}>Comece a capacitar seus profissionais</h3>
+      <p style={{ fontSize: 13.5, color: "#737373", margin: "0 0 16px", maxWidth: 440, marginInline: "auto" }}>Utilize os materiais da sua empresa para gerar treinamentos ou crie seu próprio conteúdo.</p>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onGerar} style={{ gap: 6, background: AZUL, borderColor: AZUL }}><Sparkles size={16} /> Gerar com IA</button>
+        <button className="vx-btn vx-btn-sm" onClick={onCriar} style={{ gap: 6 }}><Plus size={16} /> Criar manualmente</button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================ PAINEL GERAR COM IA ============================ */
+function PainelGerarIA({ aviso, onClose, onGerado }) {
+  const [etapa, setEtapa] = useState("fontes"); // fontes | analisando | sugestoes | gerando
+  const [fontes, setFontes] = useState(null);
+  const [sel, setSel] = useState(() => new Set());        // ids de fontes marcadas
+  const [sugestoes, setSugestoes] = useState([]);
+  const [motor, setMotor] = useState("");
+  const [selSug, setSelSug] = useState(() => new Set());  // índices de sugestões marcadas
+
+  useEffect(() => {
+    api("/academy/empresa/fontes").then((r) => {
+      if (r?.fontes) { setFontes(r); setSel(new Set(r.fontes.map((f) => f.id))); }
+      else setFontes({ fontes: [], grupos: {}, total: 0 });
+    });
+  }, []);
+
+  const toggleFonte = (id) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const analisar = async () => {
+    setEtapa("analisando");
+    const r = await api("/academy/empresa/ia/sugestoes", { fonteIds: [...sel] });
+    if (r?.error || !r) { aviso?.(r?.error || "Não foi possível analisar agora."); setEtapa("fontes"); return; }
+    setSugestoes(r.sugestoes || []); setMotor(r.motor || "");
+    setSelSug(new Set((r.sugestoes || []).map((_, i) => i)));
+    setEtapa("sugestoes");
+  };
+
+  const gerar = async () => {
+    const escolhidas = sugestoes.filter((_, i) => selSug.has(i));
+    if (!escolhidas.length) return aviso?.("Selecione ao menos uma sugestão.");
+    setEtapa("gerando");
+    const r = await api("/academy/empresa/ia/gerar", { sugestoes: escolhidas });
+    if (r?.error || !r?.ok) { aviso?.(r?.error || "Falha ao gerar treinamentos."); setEtapa("sugestoes"); return; }
+    onGerado(r.cursoIds || []);
+  };
+
+  const toggleSug = (i) => setSelSug((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
+  const grupos = fontes ? Object.entries(fontes.grupos || {}) : [];
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 1000, display: "flex", justifyContent: "flex-end" }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="vx-fade" style={{ background: "#fff", width: "100%", maxWidth: 520, height: "100%", display: "flex", flexDirection: "column", boxShadow: "-8px 0 24px rgba(0,0,0,.12)" }}>
+        {/* Cabeçalho */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 20px", borderBottom: `1px solid ${BORDA}` }}>
+          <span style={{ width: 34, height: 34, borderRadius: 9, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center" }}><Sparkles size={18} style={{ color: AZUL }} /></span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>Gerar com IA</div>
+            <div style={{ fontSize: 12.5, color: "#737373" }}>Transforme as informações da empresa em treinamentos.</div>
+          </div>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose} style={{ padding: 4 }}><X size={18} /></button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+          {/* ETAPA 1 — FONTES */}
+          {(etapa === "fontes" || etapa === "analisando") && (
+            !fontes ? <div style={{ textAlign: "center", padding: 30 }}><div className="vx-spinner" style={{ margin: "0 auto" }} /></div>
+            : fontes.total === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 16px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
+                <FolderOpen size={32} strokeWidth={1.3} style={{ color: "#737373", marginBottom: 10 }} />
+                <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 6px" }}>Nenhuma fonte disponível ainda</h3>
+                <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>Adicione informações ou arquivos em <b>Materiais</b> para a IA analisar.</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, color: "#737373", marginBottom: 14 }}>
+                  <b style={{ color: "#171717" }}>{fontes.total}</b> fonte(s) disponível(is). Escolha o que a IA pode usar — por padrão, tudo está selecionado.
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {grupos.map(([grupo]) => {
+                    const doGrupo = fontes.fontes.filter((f) => f.grupo === grupo);
+                    return (
+                      <div key={grupo}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".4px", marginBottom: 6 }}>{grupo}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          {doGrupo.map((f) => (
+                            <label key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer", padding: "5px 8px", border: `1px solid ${BORDA}`, borderRadius: 8 }}>
+                              <input type="checkbox" checked={sel.has(f.id)} onChange={() => toggleFonte(f.id)} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.titulo}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )
+          )}
+
+          {/* ETAPA 2 — SUGESTÕES */}
+          {(etapa === "sugestoes" || etapa === "gerando") && (
+            <>
+              <div style={{ fontSize: 13, color: "#737373", marginBottom: 14 }}>
+                A IA propôs <b style={{ color: "#171717" }}>{sugestoes.length}</b> treinamento(s) com base nas suas fontes. Selecione quais deseja gerar.
+                {motor === "deterministico" && <div style={{ marginTop: 4, fontSize: 12, color: "#9aa0a6" }}>Montados a partir das informações cadastradas.</div>}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {sugestoes.map((s, i) => (
+                  <label key={i} style={{ display: "flex", gap: 10, padding: 14, border: `1.5px solid ${selSug.has(i) ? AZUL : BORDA}`, borderRadius: 12, cursor: "pointer", background: selSug.has(i) ? AZUL_SUAVE : "#fff" }}>
+                    <input type="checkbox" checked={selSug.has(i)} onChange={() => toggleSug(i)} style={{ marginTop: 3 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#171717" }}>{s.titulo}</div>
+                      {s.objetivo && <div style={{ fontSize: 12.5, color: "#3d5a73", marginTop: 2 }}>{s.objetivo}</div>}
+                      {s.resumo && <div style={{ fontSize: 12.5, color: "#737373", marginTop: 4 }}>{s.resumo}</div>}
+                      {s.estrutura?.length > 0 && (
+                        <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12.5, color: "#737373" }}>
+                          {s.estrutura.slice(0, 5).map((m, k) => <li key={k}>{m}</li>)}
+                        </ul>
+                      )}
+                      <div style={{ display: "flex", gap: 12, marginTop: 8, fontSize: 11.5, color: "#9aa0a6", flexWrap: "wrap" }}>
+                        {s.fontes?.length > 0 && <span>{s.fontes.length} fonte(s)</span>}
+                        {s.ausencias?.length > 0 && <span style={{ color: "#B4690E" }}>{s.ausencias.length} informação(ões) ausente(s)</span>}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+                {sugestoes.length === 0 && <div style={{ fontSize: 13, color: "#737373", textAlign: "center", padding: 20 }}>Não foi possível propor treinamentos com as fontes selecionadas.</div>}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Rodapé de ação */}
+        <div style={{ borderTop: `1px solid ${BORDA}`, padding: "14px 20px", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          {(etapa === "fontes" || etapa === "analisando") && fontes?.total > 0 && (
+            <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={analisar} disabled={etapa === "analisando" || sel.size === 0} style={{ gap: 6, background: AZUL, borderColor: AZUL }}>
+              {etapa === "analisando" ? <><Loader2 size={15} style={{ animation: "spin .7s linear infinite" }} /> Analisando materiais...</> : <><Sparkles size={15} /> Analisar materiais</>}
+            </button>
+          )}
+          {(etapa === "sugestoes" || etapa === "gerando") && (
+            <>
+              <button className="vx-btn vx-btn-sm" onClick={() => setEtapa("fontes")} disabled={etapa === "gerando"}>Voltar</button>
+              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={gerar} disabled={etapa === "gerando" || selSug.size === 0} style={{ gap: 6, background: AZUL, borderColor: AZUL }}>
+                {etapa === "gerando" ? <><Loader2 size={15} style={{ animation: "spin .7s linear infinite" }} /> Gerando...</> : <>Gerar {selSug.size > 0 ? selSug.size : ""} treinamento(s)</>}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
