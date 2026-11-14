@@ -65,7 +65,9 @@ export function resolver(caminho = typeof window !== "undefined" ? window.locati
     if (token) return { tipo: "confirmar-email", token };
   }
   if (p === ROTAS.login || p === "/login") return { tipo: "login" };
-  if (p === ROTAS.landing) return { tipo: "landing" };
+  // O app não tem landing: a raiz já abre o fluxo de entrada (idioma → conta →
+  // login). A LP institucional vive só em rycs.pro.
+  if (p === ROTAS.landing) return { tipo: "login" };
   return { tipo: "login" };
 }
 
