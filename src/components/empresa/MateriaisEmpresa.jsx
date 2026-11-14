@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import {
   Plus, Search, X, Presentation, FileText, Images, Video, Headphones, Link2,
-  ExternalLink, Download, Trash2, Pencil, MoreVertical, SearchX, ArrowLeft,
-  ChevronRight, ArrowUpRight, Replace, Share2, Upload, File,
+  ExternalLink, Download, Trash2, Pencil, MoreVertical, SearchX,
+  ChevronRight, ArrowUpRight, Replace, Share2, Upload, File, FileUp,
+  LayoutGrid, List,
 } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 
@@ -46,6 +47,27 @@ function filtrarTexto(materiais, busca) {
   );
 }
 
+const ORDENS = [
+  { key: "recentes", label: "Mais recentes" },
+  { key: "antigos", label: "Mais antigos" },
+  { key: "az", label: "Nome A–Z" },
+  { key: "za", label: "Nome Z–A" },
+];
+
+function ordenar(materiais, ordem) {
+  const arr = [...materiais];
+  if (ordem === "antigos") return arr.sort((a, b) => a.criadoEm - b.criadoEm);
+  if (ordem === "az") return arr.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  if (ordem === "za") return arr.sort((a, b) => b.nome.localeCompare(a.nome, "pt-BR"));
+  return arr.sort((a, b) => b.criadoEm - a.criadoEm);
+}
+
+const formatoDe = (m) => {
+  if (m.categoria === "link") return "LINK";
+  const ext = (String(m.nome || "").toLowerCase().match(/\.([a-z0-9]{1,5})$/) || [])[1];
+  return ext ? ext.toUpperCase() : "—";
+};
+
 export default function MateriaisEmpresa({ emp, db, aviso }) {
   const [materiais, setMateriais] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,9 +75,11 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
   const [buscaGlobal, setBuscaGlobal] = useState("");
   const [buscaPasta, setBuscaPasta] = useState("");
   const [pasta, setPasta] = useState(null);             // chave da categoria aberta ou null
-  const [modalUpload, setModalUpload] = useState(null); // null ou { categoria }
+  const [modalUpload, setModalUpload] = useState(null); // null ou { categoria, iniciais }
   const [detalhe, setDetalhe] = useState(null);
   const [menuAberto, setMenuAberto] = useState(null);
+  const [ordem, setOrdem] = useState("recentes");
+  const [vista, setVista] = useState("grid");
 
   const carregar = useCallback(async () => {
     const r = await api("/materiais");
@@ -92,7 +116,7 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
     aviso?.("Material excluído.");
   };
 
-  const abrirPasta = (chave) => { setPasta(chave); setBuscaPasta(""); setDetalhe(null); setBuscaGlobal(""); };
+  const abrirPasta = (chave) => { setPasta(chave); setBuscaPasta(""); setDetalhe(null); setBuscaGlobal(""); setOrdem("recentes"); };
   const voltar = () => { setPasta(null); setBuscaPasta(""); setDetalhe(null); };
 
   if (loading) return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
@@ -101,25 +125,39 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
   const resultadosGlobais = buscandoGlobal ? filtrarTexto(materiais, buscaGlobal) : [];
 
   const pastaInfo = pasta ? PASTA_DE(pasta) : null;
-  const arquivosPasta = pasta
-    ? filtrarTexto(materiais.filter((m) => m.categoria === pasta), buscaPasta).sort((a, b) => b.criadoEm - a.criadoEm)
-    : [];
+  const arquivosDaPasta = pasta ? materiais.filter((m) => m.categoria === pasta) : [];
+  const pastaVazia = pasta && arquivosDaPasta.length === 0;
+  const arquivosPasta = pasta ? ordenar(filtrarTexto(arquivosDaPasta, buscaPasta), ordem) : [];
+  const ehLinks = pasta === "link";
+  const painelDetalhe = detalhe && (
+    <PainelDetalhe material={detalhe} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
+      onClose={() => setDetalhe(null)} onUpdate={(m) => { setMateriais((prev) => prev.map((x) => x.id === m.id ? m : x)); setDetalhe(m); }}
+      onExcluir={excluir} aviso={aviso} />
+  );
+  const dropNaPasta = (e) => {
+    e.preventDefault();
+    if (ehLinks) return;
+    const files = e.dataTransfer?.files;
+    if (files?.length) setModalUpload({ categoria: pasta, iniciais: files });
+  };
 
   return (
     <div className="vx-fade" style={{ position: "relative" }}>
-      {/* Cabeçalho */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
-        <div>
-          <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Materiais</h1>
-          <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>
-            Todos os recursos comerciais da sua empresa, organizados em um só lugar.
-          </p>
+      {/* Cabeçalho principal — só na biblioteca, não dentro de uma pasta */}
+      {!pasta && (
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Materiais</h1>
+            <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>
+              Todos os recursos comerciais da sua empresa, organizados em um só lugar.
+            </p>
+          </div>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModalUpload({ categoria: null })}
+            style={{ whiteSpace: "nowrap", gap: 6, background: AZUL, borderColor: AZUL }}>
+            <Plus size={16} /> Adicionar material
+          </button>
         </div>
-        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModalUpload({ categoria: pasta || null })}
-          style={{ whiteSpace: "nowrap", gap: 6, background: AZUL, borderColor: AZUL }}>
-          <Plus size={16} /> Adicionar material
-        </button>
-      </div>
+      )}
 
       {/* ===== DENTRO DE UMA PASTA ===== */}
       {pasta ? (
@@ -132,47 +170,68 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
               <span style={{ color: "#171717", fontWeight: 500 }}>{pastaInfo.label}</span>
             </div>
 
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <button onClick={voltar} className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 6 }} title="Voltar à biblioteca">
-                  <ArrowLeft size={18} />
-                </button>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ width: 40, height: 40, borderRadius: 10, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <pastaInfo.Icon size={20} style={{ color: AZUL }} />
-                  </span>
-                  <div>
-                    <h2 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>{pastaInfo.label}</h2>
-                    <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>{pastaInfo.descricao}</p>
-                  </div>
+            {/* Cabeçalho da categoria em uma linha */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                <span style={{ width: 42, height: 42, borderRadius: 10, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <pastaInfo.Icon size={21} style={{ color: AZUL }} />
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <h2 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>{pastaInfo.label}</h2>
+                  <p style={{ fontSize: 13, color: "#737373", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pastaInfo.descricao}</p>
                 </div>
               </div>
               <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModalUpload({ categoria: pasta })}
-                style={{ gap: 6, background: AZUL, borderColor: AZUL }}>
-                <Plus size={16} /> {pasta === "link" ? "Adicionar link" : "Adicionar arquivos"}
+                style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
+                <Plus size={16} /> {ehLinks ? "Adicionar link" : "Adicionar"}
               </button>
             </div>
 
-            {/* Busca contextual */}
-            <div style={{ position: "relative", maxWidth: 360, marginBottom: 18 }}>
-              <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#737373" }} />
-              <input className="vx-input" placeholder={`Buscar em ${pastaInfo.label.toLowerCase()}...`} value={buscaPasta}
-                onChange={(e) => setBuscaPasta(e.target.value)} style={{ paddingLeft: 32, width: "100%", height: 36 }} />
-            </div>
+            {/* Toolbar — oculta quando a pasta está vazia */}
+            {!pastaVazia && (
+              <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 18, flexWrap: "wrap" }}>
+                <div style={{ position: "relative", flex: "1 1 220px", maxWidth: 320 }}>
+                  <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#737373" }} />
+                  <input className="vx-input" placeholder={`Buscar em ${pastaInfo.label.toLowerCase()}...`} value={buscaPasta}
+                    onChange={(e) => setBuscaPasta(e.target.value)} style={{ paddingLeft: 32, width: "100%", height: 36 }} />
+                </div>
+                <select className="vx-input" value={ordem} onChange={(e) => setOrdem(e.target.value)} style={{ height: 36, width: "auto", minWidth: 150 }}>
+                  {ORDENS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+                </select>
+                {!ehLinks && (
+                  <div style={{ display: "flex", gap: 2, background: "#F8F9FB", borderRadius: 10, padding: 2 }}>
+                    <button onClick={() => setVista("grid")} title="Grade" style={{ padding: "6px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: vista === "grid" ? AZUL : "transparent", color: vista === "grid" ? "#fff" : "#737373" }}>
+                      <LayoutGrid size={16} />
+                    </button>
+                    <button onClick={() => setVista("list")} title="Lista" style={{ padding: "6px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: vista === "list" ? AZUL : "transparent", color: vista === "list" ? "#fff" : "#737373" }}>
+                      <List size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {arquivosPasta.length === 0 ? (
-              <PastaVazia pastaInfo={pastaInfo} temBusca={!!buscaPasta.trim()} onAdd={() => setModalUpload({ categoria: pasta })} onLimpar={() => setBuscaPasta("")} />
+            {/* Conteúdo */}
+            {pastaVazia ? (
+              <PastaVazia pastaInfo={pastaInfo} onAdd={() => setModalUpload({ categoria: pasta })} onDropFiles={dropNaPasta} />
+            ) : arquivosPasta.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
+                <SearchX size={36} strokeWidth={1.3} style={{ color: "#737373", marginBottom: 10 }} />
+                <p style={{ fontSize: 14, color: "#737373", margin: "0 0 12px" }}>Nenhum material encontrado nesta pasta.</p>
+                <button className="vx-btn vx-btn-sm" onClick={() => setBuscaPasta("")}>Limpar busca</button>
+              </div>
+            ) : vista === "list" && !ehLinks ? (
+              <ListaArquivos materiais={arquivosPasta} onSelect={setDetalhe} selecionado={detalhe?.id}
+                menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} onDropFiles={dropNaPasta} />
             ) : (
-              <GridArquivos materiais={arquivosPasta} onSelect={setDetalhe} selecionado={detalhe?.id}
-                menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} />
+              <div onDragOver={(e) => e.preventDefault()} onDrop={dropNaPasta}>
+                <GridArquivos materiais={arquivosPasta} onSelect={setDetalhe} selecionado={detalhe?.id}
+                  menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} />
+              </div>
             )}
           </div>
 
-          {detalhe && (
-            <PainelDetalhe material={detalhe} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
-              onClose={() => setDetalhe(null)} onUpdate={(m) => { setMateriais((prev) => prev.map((x) => x.id === m.id ? m : x)); setDetalhe(m); }}
-              onExcluir={excluir} aviso={aviso} />
-          )}
+          {painelDetalhe}
         </div>
       ) : (
         <>
@@ -258,7 +317,7 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
       )}
 
       {modalUpload !== null && (
-        <ModalUpload categoria={modalUpload.categoria} onClose={() => setModalUpload(null)} aviso={aviso} armazenamento={armazenamento}
+        <ModalUpload categoria={modalUpload.categoria} iniciais={modalUpload.iniciais} onClose={() => setModalUpload(null)} aviso={aviso} armazenamento={armazenamento}
           onSucesso={() => { setModalUpload(null); carregar(); }} />
       )}
     </div>
@@ -369,26 +428,84 @@ function MenuBtn({ icon: Icon, label, onClick, danger }) {
   );
 }
 
-/* ====================== PASTA VAZIA (discreto) ====================== */
-function PastaVazia({ pastaInfo, temBusca, onAdd, onLimpar }) {
-  if (temBusca) {
+/* ====================== LISTA DE ARQUIVOS ====================== */
+function ListaArquivos({ materiais, onSelect, selecionado, menuAberto, setMenuAberto, onExcluir, onDropFiles }) {
+  return (
+    <div className="vx-table-wrap" onDragOver={(e) => e.preventDefault()} onDrop={onDropFiles}>
+      <table className="vx-table" style={{ fontSize: 13 }}>
+        <thead>
+          <tr>
+            <th style={{ width: 30 }}></th>
+            <th>Nome</th>
+            <th>Formato</th>
+            <th>Campanhas</th>
+            <th style={{ textAlign: "right" }}>Tamanho</th>
+            <th style={{ width: 40 }}></th>
+          </tr>
+        </thead>
+        <tbody>
+          {materiais.map((m) => {
+            const Icon = ICONE_DE(m.categoria);
+            return (
+              <tr key={m.id} onClick={() => onSelect(m)} style={{ cursor: "pointer", background: selecionado === m.id ? "#F8F9FB" : undefined }}>
+                <td><Icon size={16} style={{ color: "#737373" }} /></td>
+                <td style={{ fontWeight: 500, maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.nome}</td>
+                <td style={{ color: "#737373" }}>{formatoDe(m)}</td>
+                <td style={{ color: m.campanhas?.length ? AZUL : "#737373" }}>
+                  {m.campanhas?.length ? `${m.campanhas.length} campanha${m.campanhas.length > 1 ? "s" : ""}` : "—"}
+                </td>
+                <td style={{ textAlign: "right", color: "#737373" }}>{m.tamanho ? formatarTamanho(m.tamanho) : "—"}</td>
+                <td>
+                  <div style={{ position: "relative" }}>
+                    <button onClick={(e) => { e.stopPropagation(); setMenuAberto(menuAberto === m.id ? null : m.id); }} className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 3 }}>
+                      <MoreVertical size={15} />
+                    </button>
+                    {menuAberto === m.id && (
+                      <div style={{ position: "absolute", right: 0, top: 28, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 140, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
+                        <MenuBtn icon={Download} label="Baixar" onClick={(e) => { e.stopPropagation(); window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank"); setMenuAberto(null); }} />
+                        <MenuBtn icon={Trash2} label="Excluir" danger onClick={(e) => { e.stopPropagation(); onExcluir(m); setMenuAberto(null); }} />
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ====================== PASTA VAZIA (compacto, drag-drop) ====================== */
+function PastaVazia({ pastaInfo, onAdd, onDropFiles }) {
+  const ehLink = pastaInfo.chave === "link";
+  const [sobre, setSobre] = useState(false);
+  if (ehLink) {
     return (
-      <div style={{ textAlign: "center", padding: "40px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
-        <SearchX size={36} strokeWidth={1.3} style={{ color: "#737373", marginBottom: 10 }} />
-        <p style={{ fontSize: 14, color: "#737373", margin: "0 0 12px" }}>Nenhum material encontrado nesta pasta.</p>
-        <button className="vx-btn vx-btn-sm" onClick={onLimpar}>Limpar busca</button>
+      <div style={{ textAlign: "center", padding: "36px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
+        <span style={{ width: 44, height: 44, borderRadius: 12, background: AZUL_SUAVE, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+          <Link2 size={22} style={{ color: AZUL }} />
+        </span>
+        <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 4px" }}>Nenhum link nesta pasta</h3>
+        <p style={{ fontSize: 13, color: "#737373", margin: "0 0 14px" }}>Adicione URLs de catálogos, páginas de vendas e outros.</p>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onAdd} style={{ gap: 6, background: AZUL, borderColor: AZUL }}>
+          <Plus size={16} /> Adicionar link
+        </button>
       </div>
     );
   }
-  const Icon = pastaInfo.Icon;
   return (
-    <div style={{ textAlign: "center", padding: "44px 20px", border: `1px dashed ${BORDA}`, borderRadius: 12 }}>
+    <div onDragOver={(e) => { e.preventDefault(); setSobre(true); }} onDragLeave={() => setSobre(false)}
+      onDrop={(e) => { setSobre(false); onDropFiles(e); }}
+      style={{ textAlign: "center", padding: "40px 20px", border: `1.5px dashed ${sobre ? AZUL : BORDA}`, borderRadius: 12, background: sobre ? AZUL_SUAVE : "transparent", transition: "border-color .15s, background .15s" }}>
       <span style={{ width: 48, height: 48, borderRadius: 12, background: AZUL_SUAVE, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-        <Icon size={24} style={{ color: AZUL }} />
+        <FileUp size={24} style={{ color: AZUL }} />
       </span>
-      <p style={{ fontSize: 14, color: "#737373", margin: "0 0 14px" }}>Nenhum item em {pastaInfo.label.toLowerCase()} ainda.</p>
+      <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 4px" }}>Nenhum material nesta pasta</h3>
+      <p style={{ fontSize: 13, color: "#737373", margin: "0 0 14px" }}>Arraste arquivos para esta área ou selecione do seu dispositivo.</p>
       <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={onAdd} style={{ gap: 6, background: AZUL, borderColor: AZUL }}>
-        <Plus size={16} /> {pastaInfo.chave === "link" ? "Adicionar link" : "Adicionar arquivos"}
+        <Plus size={16} /> Enviar arquivos
       </button>
     </div>
   );
@@ -542,7 +659,7 @@ function PainelDetalhe({ material: m, campanhas, onClose, onUpdate, onExcluir, a
 }
 
 /* ====================== MODAL UPLOAD ====================== */
-function ModalUpload({ categoria, onClose, aviso, armazenamento, onSucesso }) {
+function ModalUpload({ categoria, iniciais, onClose, aviso, armazenamento, onSucesso }) {
   const ehLink = categoria === "link";
   const [arquivos, setArquivos] = useState([]);
   const [linkUrl, setLinkUrl] = useState("");
@@ -553,6 +670,15 @@ function ModalUpload({ categoria, onClose, aviso, armazenamento, onSucesso }) {
   const pastaInfo = categoria ? PASTA_DE(categoria) : null;
   const accept = pastaInfo && pastaInfo.formatos.length ? pastaInfo.formatos.map((f) => "." + f).join(",") : undefined;
   const mostrarTabs = !categoria; // sem categoria fixa, deixa escolher arquivo/link
+  const titulo = pastaInfo ? `Adicionar ${pastaInfo.label.toLowerCase()}` : "Adicionar material";
+
+  // Arquivos arrastados para a área de conteúdo já entram na fila.
+  useEffect(() => {
+    if (iniciais?.length) {
+      const novos = [...iniciais].map((f) => ({ file: f, id: Math.random().toString(36).slice(2), nome: f.name, tamanho: f.size, status: "pendente" }));
+      setArquivos(novos);
+    }
+  }, []);
 
   const addFiles = (files) => {
     const novos = [...files].map((f) => ({ file: f, id: Math.random().toString(36).slice(2), nome: f.name, tamanho: f.size, status: "pendente" }));
@@ -609,7 +735,7 @@ function ModalUpload({ categoria, onClose, aviso, armazenamento, onSucesso }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{pastaInfo ? `Adicionar — ${pastaInfo.label}` : "Adicionar material"}</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{titulo}</h2>
           <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose} style={{ padding: 3 }}><X size={18} /></button>
         </div>
         <p style={{ fontSize: 13, color: "#737373", margin: "0 0 18px" }}>
