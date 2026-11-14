@@ -10,6 +10,7 @@ import TarefasEmpresa from "./TarefasEmpresa.jsx";
 import ValoresEmpresa from "./ValoresEmpresa.jsx";
 import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
 import PagamentosEmpresa, { ModalSaldo } from "./PagamentosEmpresa.jsx";
+import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
 import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
 import ConversasEmpresa from "./ConversasEmpresa.jsx";
 import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
@@ -159,6 +160,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
           secao={aba === "pagamentos-campanhas" ? "campanhas" : "plano"}
           onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
         />
+      )}
+      {aba === "pagamentos-visibilidade" && (
+        <DestaqueEmpresa emp={emp} up={up} aviso={aviso} />
       )}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial={voltouDaMeta ? "integracoes" : undefined} />}
 

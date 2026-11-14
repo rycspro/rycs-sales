@@ -4,7 +4,6 @@ import {
   Landmark, Lock, Plus, QrCode, Search, TrendingUp, Wallet, X, Zap,
 } from "lucide-react";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
-import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
 import CentralPagamentosCampanhas from "./CentralPagamentosCampanhas.jsx";
 import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
@@ -371,10 +370,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       <div style={{ marginBottom: 24 }}>
         <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
       </div>
-
-      {/* ── Destaque da empresa (independente do plano) ── */}
-      <DestaqueEmpresa emp={emp} up={up} aviso={aviso} />
-
+      {/* Destaque da empresa agora fica em Pagamentos › Visibilidade (página própria). */}
       </>}
 
       {secao === "campanhas" && (

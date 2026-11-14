@@ -75,6 +75,7 @@ export const NAV = {
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
       { key: "pagamentos-campanhas", label: "Campanhas" },
       { key: "pagamentos", label: "Planos" },
+      { key: "pagamentos-visibilidade", label: "Visibilidade" },
     ] },
     { key: "configuracoes", label: "Configurações", Icon: Settings },
   ],
