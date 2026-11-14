@@ -172,7 +172,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar}
           secaoInicial={aba === "pagamentos" ? "plano" : aba === "pagamentos-visibilidade" ? "visibilidade" : undefined} />
       )}
-      {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa />}
+      {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa emp={emp} aviso={aviso} />}
 
       {modalSaldo && (
         <ModalSaldo emp={emp} aviso={aviso} aoConfirmar={() => recarregar?.()} onFechar={() => setModalSaldo(false)} />
