@@ -68,13 +68,15 @@ const formatoDe = (m) => {
   return ext ? ext.toUpperCase() : "—";
 };
 
-// Tipo de pré-visualização possível no navegador, sem baixar.
+const OFFICE_EXTS = ["ppt", "pptx", "doc", "docx", "xls", "xlsx"];
+// Tipo de pré-visualização. "office" usa o visualizador do Microsoft Office.
 function tipoPreview(m) {
   if (m.categoria === "foto") return "imagem";
   if (m.categoria === "video") return "video";
   if (m.categoria === "audio") return "audio";
   const ext = (String(m.nome || "").toLowerCase().match(/\.([a-z0-9]{1,5})$/) || [])[1];
   if (ext === "pdf" || (m.mimetype || "") === "application/pdf") return "pdf";
+  if (OFFICE_EXTS.includes(ext)) return "office";
   return "indisponivel";
 }
 const urlInline = (m) => `${API_URL}/api/materiais/${m.id}/download?inline=1`;
@@ -691,10 +693,24 @@ function PainelDetalhe({ material: m, campanhas, onClose, onUpdate, onExcluir, a
 function PreviewModal({ material: m, onClose }) {
   const tipo = tipoPreview(m);
   const src = urlInline(m);
+  const [officeUrl, setOfficeUrl] = useState(null); // null carregando, "" erro, string ok
   useEffect(() => {
     const esc = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", esc);
     return () => document.removeEventListener("keydown", esc);
+  }, []);
+  useEffect(() => {
+    if (tipo !== "office") return;
+    let vivo = true;
+    api(`/materiais/${m.id}/preview-link`).then((r) => {
+      if (!vivo) return;
+      if (r?.url && !/\/\/(localhost|127\.0\.0\.1)/.test(r.url)) {
+        setOfficeUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(r.url)}`);
+      } else {
+        setOfficeUrl(""); // local/sem url pública: o visualizador do Office não alcança
+      }
+    }).catch(() => vivo && setOfficeUrl(""));
+    return () => { vivo = false; };
   }, []);
 
   return (
@@ -715,11 +731,17 @@ function PreviewModal({ material: m, onClose }) {
           {tipo === "pdf" && <iframe src={src} title={m.nome} style={{ width: "100%", height: "80vh", border: "none" }} />}
           {tipo === "video" && <video src={src} controls autoPlay style={{ maxWidth: "100%", maxHeight: "80vh" }} crossOrigin="use-credentials" />}
           {tipo === "audio" && <div style={{ padding: 40, width: "100%" }}><audio src={src} controls autoPlay style={{ width: "100%" }} crossOrigin="use-credentials" /></div>}
-          {tipo === "indisponivel" && (
+          {tipo === "office" && officeUrl === null && (
+            <div style={{ padding: "80px 24px", textAlign: "center" }}><div className="vx-spinner" style={{ margin: "0 auto" }} /><p style={{ fontSize: 13, color: "#737373", marginTop: 12 }}>Carregando pré-visualização...</p></div>
+          )}
+          {tipo === "office" && officeUrl && (
+            <iframe src={officeUrl} title={m.nome} style={{ width: "100%", height: "80vh", border: "none" }} />
+          )}
+          {(tipo === "indisponivel" || (tipo === "office" && officeUrl === "")) && (
             <div style={{ textAlign: "center", padding: "60px 24px" }}>
               <FileText size={44} strokeWidth={1.2} style={{ color: "#737373", marginBottom: 12 }} />
               <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 6px" }}>Pré-visualização indisponível para {formatoDe(m)}</h3>
-              <p style={{ fontSize: 13, color: "#737373", margin: "0 0 16px" }}>Este formato não abre direto no navegador. Baixe para visualizar.</p>
+              <p style={{ fontSize: 13, color: "#737373", margin: "0 0 16px" }}>Baixe o arquivo para visualizar.</p>
               <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank")} style={{ gap: 6, background: AZUL, borderColor: AZUL }}>
                 <Download size={15} /> Baixar arquivo
               </button>

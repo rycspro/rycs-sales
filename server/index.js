@@ -37,7 +37,7 @@ import courseRoutes2 from "./routes/courses.js";
 import brainRoutes from "./routes/brain.js";
 import emailAdminRoutes from "./routes/emailAdmin.js";
 import billingRoutes from "./routes/billing.js";
-import materiaisRoutes from "./routes/materiais.js";
+import materiaisRoutes, { materiaisPublico } from "./routes/materiais.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
@@ -164,6 +164,8 @@ app.use("/api", onboardingPublico);
 app.use("/api", metaPublico);
 // Webhook do Stripe (pagamento internacional): também chega sem cookie.
 app.use("/api", stripePublico);
+// Pré-visualização assinada de materiais: o visualizador do Office busca sem cookie.
+app.use("/api", materiaisPublico);
 
 // Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
 app.use("/api", authMiddleware, onboardingGuard);
