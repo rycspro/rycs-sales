@@ -56,7 +56,7 @@ export const NAV = {
       { key: "painel-campanhas", label: "Campanhas" },
       { key: "financeiro", label: "Financeiro" },
     ] },
-    { section: "Com a RYCS" },
+    { section: "Escale com a RYCS" },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
       { key: "campanhas", label: "Campanhas" },
       { key: "pagamentos-campanhas", label: "Pagamentos" },
