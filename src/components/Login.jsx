@@ -17,16 +17,16 @@ import { ROTAS, navegar, parametro } from "../lib/rotas.js";
 const DEMO_PASSWORD = "Demo@RYCS2026";
 
 const IDIOMAS = [
-  { value: "en", label: "🇺🇸 Inglês" },
-  { value: "zh", label: "🇨🇳 Mandarim (Chinês)" },
-  { value: "hi", label: "🇮🇳 Hindi" },
-  { value: "es", label: "🇪🇸 Espanhol" },
-  { value: "ar", label: "🇸🇦 Árabe" },
-  { value: "fr", label: "🇫🇷 Francês" },
-  { value: "bn", label: "🇧🇩 Bengali" },
-  { value: "pt-BR", label: "🇧🇷 Português" },
-  { value: "ru", label: "🇷🇺 Russo" },
-  { value: "id", label: "🇮🇩 Indonésio" },
+  { value: "en", label: "🇺🇸 English", keywords: "ingles english" },
+  { value: "zh", label: "🇨🇳 中文", keywords: "mandarim chines chinese zhongwen" },
+  { value: "hi", label: "🇮🇳 हिन्दी", keywords: "hindi" },
+  { value: "es", label: "🇪🇸 Español", keywords: "espanhol spanish" },
+  { value: "ar", label: "🇸🇦 العربية", keywords: "arabe arabic" },
+  { value: "fr", label: "🇫🇷 Français", keywords: "frances french" },
+  { value: "bn", label: "🇧🇩 বাংলা", keywords: "bengali bangla" },
+  { value: "pt-BR", label: "🇧🇷 Português", keywords: "portugues portuguese brasil" },
+  { value: "ru", label: "🇷🇺 Русский", keywords: "russo russian" },
+  { value: "id", label: "🇮🇩 Bahasa Indonesia", keywords: "indonesio indonesian" },
 ];
 
 export default function Login({ onLogin, conviteTrial = false, beta = false }) {

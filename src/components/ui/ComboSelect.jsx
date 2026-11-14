@@ -10,7 +10,8 @@ export default function ComboSelect({ opcoes = [], valor, onChange, placeholder 
   const filtradas = busca
     ? opcoes.filter((o) => {
         const label = typeof o === "string" ? o : o.label || o.nome || "";
-        return label.toLowerCase().includes(busca.toLowerCase());
+        const extra = typeof o === "string" ? "" : o.keywords || "";
+        return `${label} ${extra}`.toLowerCase().includes(busca.toLowerCase());
       })
     : opcoes;
 
