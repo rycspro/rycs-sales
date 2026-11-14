@@ -3,7 +3,7 @@ import {
   Plus, Search, X, Presentation, FileText, Images, Video, Headphones, Link2,
   ExternalLink, Download, Trash2, Pencil, MoreVertical, SearchX,
   ChevronRight, ArrowUpRight, Replace, Share2, Upload, File, FileUp,
-  LayoutGrid, List,
+  LayoutGrid, List, Eye,
 } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 
@@ -68,6 +68,17 @@ const formatoDe = (m) => {
   return ext ? ext.toUpperCase() : "—";
 };
 
+// Tipo de pré-visualização possível no navegador, sem baixar.
+function tipoPreview(m) {
+  if (m.categoria === "foto") return "imagem";
+  if (m.categoria === "video") return "video";
+  if (m.categoria === "audio") return "audio";
+  const ext = (String(m.nome || "").toLowerCase().match(/\.([a-z0-9]{1,5})$/) || [])[1];
+  if (ext === "pdf" || (m.mimetype || "") === "application/pdf") return "pdf";
+  return "indisponivel";
+}
+const urlInline = (m) => `${API_URL}/api/materiais/${m.id}/download?inline=1`;
+
 export default function MateriaisEmpresa({ emp, db, aviso }) {
   const [materiais, setMateriais] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,9 +88,14 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
   const [pasta, setPasta] = useState(null);             // chave da categoria aberta ou null
   const [modalUpload, setModalUpload] = useState(null); // null ou { categoria, iniciais }
   const [detalhe, setDetalhe] = useState(null);
+  const [editarDetalhe, setEditarDetalhe] = useState(false);
+  const [preview, setPreview] = useState(null);
   const [menuAberto, setMenuAberto] = useState(null);
   const [ordem, setOrdem] = useState("recentes");
   const [vista, setVista] = useState("grid");
+
+  const abrirDetalhe = (m) => { setDetalhe(m); setEditarDetalhe(false); };
+  const renomear = (m) => { setDetalhe(m); setEditarDetalhe(true); };
 
   const carregar = useCallback(async () => {
     const r = await api("/materiais");
@@ -132,7 +148,7 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
   const painelDetalhe = detalhe && (
     <PainelDetalhe material={detalhe} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
       onClose={() => setDetalhe(null)} onUpdate={(m) => { setMateriais((prev) => prev.map((x) => x.id === m.id ? m : x)); setDetalhe(m); }}
-      onExcluir={excluir} aviso={aviso} />
+      onExcluir={excluir} aviso={aviso} iniciarEditando={editarDetalhe} onPreview={setPreview} />
   );
   const dropNaPasta = (e) => {
     e.preventDefault();
@@ -221,12 +237,14 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
                 <button className="vx-btn vx-btn-sm" onClick={() => setBuscaPasta("")}>Limpar busca</button>
               </div>
             ) : vista === "list" && !ehLinks ? (
-              <ListaArquivos materiais={arquivosPasta} onSelect={setDetalhe} selecionado={detalhe?.id}
-                menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} onDropFiles={dropNaPasta} />
+              <ListaArquivos materiais={arquivosPasta} onSelect={abrirDetalhe} selecionado={detalhe?.id}
+                menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} onDropFiles={dropNaPasta}
+                onPreview={setPreview} onRenomear={renomear} />
             ) : (
               <div onDragOver={(e) => e.preventDefault()} onDrop={dropNaPasta}>
-                <GridArquivos materiais={arquivosPasta} onSelect={setDetalhe} selecionado={detalhe?.id}
-                  menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} />
+                <GridArquivos materiais={arquivosPasta} onSelect={abrirDetalhe} selecionado={detalhe?.id}
+                  menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir}
+                  onPreview={setPreview} onRenomear={renomear} />
               </div>
             )}
           </div>
@@ -261,15 +279,12 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
                     <button className="vx-btn vx-btn-sm" onClick={() => setBuscaGlobal("")}>Voltar à biblioteca</button>
                   </div>
                 ) : (
-                  <GridArquivos materiais={resultadosGlobais} onSelect={setDetalhe} selecionado={detalhe?.id}
-                    menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} mostrarCategoria />
+                  <GridArquivos materiais={resultadosGlobais} onSelect={abrirDetalhe} selecionado={detalhe?.id}
+                    menuAberto={menuAberto} setMenuAberto={setMenuAberto} onExcluir={excluir} mostrarCategoria
+                    onPreview={setPreview} onRenomear={renomear} />
                 )}
               </div>
-              {detalhe && (
-                <PainelDetalhe material={detalhe} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
-                  onClose={() => setDetalhe(null)} onUpdate={(m) => { setMateriais((prev) => prev.map((x) => x.id === m.id ? m : x)); setDetalhe(m); }}
-                  onExcluir={excluir} aviso={aviso} />
-              )}
+              {painelDetalhe}
             </div>
           ) : (
             <>
@@ -320,6 +335,8 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
         <ModalUpload categoria={modalUpload.categoria} iniciais={modalUpload.iniciais} onClose={() => setModalUpload(null)} aviso={aviso} armazenamento={armazenamento}
           onSucesso={() => { setModalUpload(null); carregar(); }} />
       )}
+
+      {preview && <PreviewModal material={preview} onClose={() => setPreview(null)} />}
     </div>
   );
 }
@@ -346,18 +363,19 @@ function CardPasta({ pasta, quantidade, onClick }) {
 }
 
 /* ====================== GRID DE ARQUIVOS ====================== */
-function GridArquivos({ materiais, onSelect, selecionado, menuAberto, setMenuAberto, onExcluir, mostrarCategoria }) {
+function GridArquivos({ materiais, onSelect, selecionado, menuAberto, setMenuAberto, onExcluir, onPreview, onRenomear, mostrarCategoria }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 14 }}>
       {materiais.map((m) => (
         <CardArquivo key={m.id} m={m} ativo={selecionado === m.id} onClick={() => onSelect(m)}
-          menuAberto={menuAberto === m.id} setMenuAberto={setMenuAberto} onExcluir={onExcluir} mostrarCategoria={mostrarCategoria} />
+          menuAberto={menuAberto === m.id} setMenuAberto={setMenuAberto} onExcluir={onExcluir}
+          onPreview={onPreview} onRenomear={onRenomear} mostrarCategoria={mostrarCategoria} />
       ))}
     </div>
   );
 }
 
-function CardArquivo({ m, ativo, onClick, menuAberto, setMenuAberto, onExcluir, mostrarCategoria }) {
+function CardArquivo({ m, ativo, onClick, menuAberto, setMenuAberto, onExcluir, onPreview, onRenomear, mostrarCategoria }) {
   const Icon = ICONE_DE(m.categoria);
   const ref = useRef(null);
   useEffect(() => {
@@ -385,17 +403,27 @@ function CardArquivo({ m, ativo, onClick, menuAberto, setMenuAberto, onExcluir, 
         ) : (
           <Icon size={34} strokeWidth={1.4} style={{ color: "#737373" }} />
         )}
-        <div style={{ position: "absolute", top: 6, right: 6 }}>
-          <button onClick={(e) => { e.stopPropagation(); setMenuAberto(menuAberto ? null : m.id); }}
-            className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 3, borderRadius: 6, background: "rgba(255,255,255,.85)" }}>
-            <MoreVertical size={16} />
-          </button>
-          {menuAberto && (
-            <div style={{ position: "absolute", right: 0, top: 28, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 140, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
-              <MenuBtn icon={Download} label="Baixar" onClick={(e) => { e.stopPropagation(); window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank"); setMenuAberto(null); }} />
-              <MenuBtn icon={Trash2} label="Excluir" danger onClick={(e) => { e.stopPropagation(); onExcluir(m); setMenuAberto(null); }} />
-            </div>
+        <div style={{ position: "absolute", top: 6, right: 6, display: "flex", gap: 4 }}>
+          {m.categoria !== "link" && onPreview && (
+            <button onClick={(e) => { e.stopPropagation(); onPreview(m); }} title="Visualizar"
+              className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 3, borderRadius: 6, background: "rgba(255,255,255,.85)" }}>
+              <Eye size={16} />
+            </button>
           )}
+          <div style={{ position: "relative" }}>
+            <button onClick={(e) => { e.stopPropagation(); setMenuAberto(menuAberto ? null : m.id); }}
+              className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 3, borderRadius: 6, background: "rgba(255,255,255,.85)" }}>
+              <MoreVertical size={16} />
+            </button>
+            {menuAberto && (
+              <div style={{ position: "absolute", right: 0, top: 28, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 150, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
+                {m.categoria !== "link" && onPreview && <MenuBtn icon={Eye} label="Visualizar" onClick={(e) => { e.stopPropagation(); onPreview(m); setMenuAberto(null); }} />}
+                {onRenomear && <MenuBtn icon={Pencil} label="Renomear" onClick={(e) => { e.stopPropagation(); onRenomear(m); setMenuAberto(null); }} />}
+                {m.categoria !== "link" && <MenuBtn icon={Download} label="Baixar" onClick={(e) => { e.stopPropagation(); window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank"); setMenuAberto(null); }} />}
+                <MenuBtn icon={Trash2} label="Excluir" danger onClick={(e) => { e.stopPropagation(); onExcluir(m); setMenuAberto(null); }} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div style={{ padding: "10px 12px" }}>
@@ -429,7 +457,7 @@ function MenuBtn({ icon: Icon, label, onClick, danger }) {
 }
 
 /* ====================== LISTA DE ARQUIVOS ====================== */
-function ListaArquivos({ materiais, onSelect, selecionado, menuAberto, setMenuAberto, onExcluir, onDropFiles }) {
+function ListaArquivos({ materiais, onSelect, selecionado, menuAberto, setMenuAberto, onExcluir, onPreview, onRenomear, onDropFiles }) {
   return (
     <div className="vx-table-wrap" onDragOver={(e) => e.preventDefault()} onDrop={onDropFiles}>
       <table className="vx-table" style={{ fontSize: 13 }}>
@@ -461,8 +489,10 @@ function ListaArquivos({ materiais, onSelect, selecionado, menuAberto, setMenuAb
                       <MoreVertical size={15} />
                     </button>
                     {menuAberto === m.id && (
-                      <div style={{ position: "absolute", right: 0, top: 28, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 140, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
-                        <MenuBtn icon={Download} label="Baixar" onClick={(e) => { e.stopPropagation(); window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank"); setMenuAberto(null); }} />
+                      <div style={{ position: "absolute", right: 0, top: 28, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, padding: 4, minWidth: 150, zIndex: 20, boxShadow: "var(--shadow-pop)" }}>
+                        {m.categoria !== "link" && onPreview && <MenuBtn icon={Eye} label="Visualizar" onClick={(e) => { e.stopPropagation(); onPreview(m); setMenuAberto(null); }} />}
+                        {onRenomear && <MenuBtn icon={Pencil} label="Renomear" onClick={(e) => { e.stopPropagation(); onRenomear(m); setMenuAberto(null); }} />}
+                        {m.categoria !== "link" && <MenuBtn icon={Download} label="Baixar" onClick={(e) => { e.stopPropagation(); window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank"); setMenuAberto(null); }} />}
                         <MenuBtn icon={Trash2} label="Excluir" danger onClick={(e) => { e.stopPropagation(); onExcluir(m); setMenuAberto(null); }} />
                       </div>
                     )}
@@ -512,8 +542,8 @@ function PastaVazia({ pastaInfo, onAdd, onDropFiles }) {
 }
 
 /* ====================== PAINEL DETALHE ====================== */
-function PainelDetalhe({ material: m, campanhas, onClose, onUpdate, onExcluir, aviso }) {
-  const [editando, setEditando] = useState(false);
+function PainelDetalhe({ material: m, campanhas, onClose, onUpdate, onExcluir, aviso, iniciarEditando, onPreview }) {
+  const [editando, setEditando] = useState(!!iniciarEditando);
   const [nome, setNome] = useState(m.nome);
   const [descricao, setDescricao] = useState(m.descricao || "");
   const [campSel, setCampSel] = useState((m.campanhas || []).map((c) => c.id));
@@ -522,8 +552,8 @@ function PainelDetalhe({ material: m, campanhas, onClose, onUpdate, onExcluir, a
 
   useEffect(() => {
     setNome(m.nome); setDescricao(m.descricao || "");
-    setCampSel((m.campanhas || []).map((c) => c.id)); setEditando(false);
-  }, [m.id]);
+    setCampSel((m.campanhas || []).map((c) => c.id)); setEditando(!!iniciarEditando);
+  }, [m.id, iniciarEditando]);
 
   const salvarEdicao = async () => {
     setSalvando(true);
@@ -629,6 +659,11 @@ function PainelDetalhe({ material: m, campanhas, onClose, onUpdate, onExcluir, a
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {m.categoria !== "link" && onPreview && (
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => onPreview(m)} style={{ justifyContent: "flex-start", gap: 8 }}>
+            <Eye size={14} /> Visualizar
+          </button>
+        )}
         <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditando(true)} style={{ justifyContent: "flex-start", gap: 8 }}>
           <Pencil size={14} /> Renomear / Descrever
         </button>
@@ -653,6 +688,50 @@ function PainelDetalhe({ material: m, campanhas, onClose, onUpdate, onExcluir, a
         <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => onExcluir(m)} style={{ justifyContent: "flex-start", gap: 8, color: "var(--red)" }}>
           <Trash2 size={14} /> Excluir
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* ====================== MODAL DE PRÉ-VISUALIZAÇÃO ====================== */
+function PreviewModal({ material: m, onClose }) {
+  const tipo = tipoPreview(m);
+  const src = urlInline(m);
+  useEffect(() => {
+    const esc = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, []);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 900, maxHeight: "92vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 18px", borderBottom: `1px solid ${BORDA}` }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#171717", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.nome}</div>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank")} style={{ gap: 6 }}>
+              <Download size={15} /> Baixar
+            </button>
+            <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose} style={{ padding: 4 }}><X size={18} /></button>
+          </div>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, background: "#F8F9FB", display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto" }}>
+          {tipo === "imagem" && <img src={src} alt={m.nome} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain" }} crossOrigin="use-credentials" />}
+          {tipo === "pdf" && <iframe src={src} title={m.nome} style={{ width: "100%", height: "80vh", border: "none" }} />}
+          {tipo === "video" && <video src={src} controls autoPlay style={{ maxWidth: "100%", maxHeight: "80vh" }} crossOrigin="use-credentials" />}
+          {tipo === "audio" && <div style={{ padding: 40, width: "100%" }}><audio src={src} controls autoPlay style={{ width: "100%" }} crossOrigin="use-credentials" /></div>}
+          {tipo === "indisponivel" && (
+            <div style={{ textAlign: "center", padding: "60px 24px" }}>
+              <FileText size={44} strokeWidth={1.2} style={{ color: "#737373", marginBottom: 12 }} />
+              <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 6px" }}>Pré-visualização indisponível para {formatoDe(m)}</h3>
+              <p style={{ fontSize: 13, color: "#737373", margin: "0 0 16px" }}>Este formato não abre direto no navegador. Baixe para visualizar.</p>
+              <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => window.open(`${API_URL}/api/materiais/${m.id}/download`, "_blank")} style={{ gap: 6, background: AZUL, borderColor: AZUL }}>
+                <Download size={15} /> Baixar arquivo
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
