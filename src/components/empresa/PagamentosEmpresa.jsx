@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
 import CentralPagamentosCampanhas from "./CentralPagamentosCampanhas.jsx";
+import HoloCard from "../HoloCard.jsx";
 import { api } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { isPremium } from "../../../shared/empresa.js";
@@ -311,9 +312,14 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
               })}
             </div>
             {metodo === "card" && (
-              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, lineHeight: 1.45 }}>
-                Você vai para o checkout seguro do Stripe, onde pode usar o cartão já salvo no seu plano ou adicionar outro. O cartão nunca passa pela RYCS.
-              </div>
+              <>
+                <div style={{ margin: "14px auto 10px", maxWidth: 320 }}>
+                  <HoloCard holder={emp?.nome || "RYCS"} tier="Internacional" />
+                </div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, lineHeight: 1.45 }}>
+                  Você vai para o checkout seguro do Stripe, onde pode usar o cartão já salvo no seu plano ou adicionar outro. O cartão nunca passa pela RYCS.
+                </div>
+              </>
             )}
           </div>
 

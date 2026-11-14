@@ -5,6 +5,7 @@ import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
 import PricingPlanos from "./PricingPlanos.jsx";
 import CheckoutStripe from "./CheckoutStripe.jsx";
+import HoloCard from "../HoloCard.jsx";
 
 const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
   chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui, trial: PLANOS[k].trial,
@@ -274,6 +275,15 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 {/* Formulário de cartão */}
                 {(forma === "CREDIT_CARD" || forma === "DEBIT_CARD") && (
                   <>
+                    <div style={{ margin: "4px auto 16px", maxWidth: 320 }}>
+                      <HoloCard
+                        holder={cartao.nome || "RYCS"}
+                        number={cartao.numero || "0000000000000000"}
+                        expires={cartao.validadeMes && cartao.validadeAno ? `${String(cartao.validadeMes).padStart(2, "0")}/${String(cartao.validadeAno).slice(-2)}` : "••/••"}
+                        cvv={cartao.cvv || "•••"}
+                        tier={forma === "DEBIT_CARD" ? "Débito" : "Crédito"}
+                      />
+                    </div>
                     <label><div className="vx-label">Nome impresso no cartão</div>
                       <input className="vx-input" value={cartao.nome}
                         onChange={(e) => setCartao({ ...cartao, nome: e.target.value })} autoComplete="cc-name" /></label>
