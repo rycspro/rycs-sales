@@ -273,7 +273,10 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   {desconto && (
                     <>
                       <span>Voucher {desconto.codigo}</span><b>- {money(desconto.desconto)}</b>
-                      <span>Total</span><strong>{money(desconto.valorFinal)}</strong>
+                      {desconto.valorFinal > 0 && desconto.valorFinal < 5 && (
+                        <><span>Taxa complementar (mín. gateway)</span><b>+ {money(5 - desconto.valorFinal)}</b></>
+                      )}
+                      <span>Total</span><strong>{money(Math.max(desconto.valorFinal, desconto.valorFinal > 0 ? 5 : 0))}</strong>
                     </>
                   )}
                 </div>

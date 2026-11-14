@@ -482,11 +482,18 @@ router.post("/subscription", async (req, res) => {
       return res.json({ ok: true, subscriptionId: subId, ...calculo, ...r });
     }
 
-    // Asaas exige mínimo de R$ 5 para cartão — arredonda para 5 quando voucher deixa abaixo
-    const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
-    const valorAsaas = (ehCartao && calculo.valorFinal > 0 && calculo.valorFinal < 5)
-      ? 5
-      : calculo.valorFinal;
+    // Asaas exige mínimo de R$ 5 — quando voucher deixa abaixo, cobra o mínimo
+    // e registra a taxa complementar para o cliente saber.
+    const MINIMO_ASAAS = 5;
+    let valorAsaas = calculo.valorFinal;
+    let taxaComplementar = 0;
+    if (valorAsaas > 0 && valorAsaas < MINIMO_ASAAS) {
+      taxaComplementar = +(MINIMO_ASAAS - valorAsaas).toFixed(2);
+      valorAsaas = MINIMO_ASAAS;
+    } else if (valorAsaas === 0) {
+      valorAsaas = MINIMO_ASAAS;
+      taxaComplementar = MINIMO_ASAAS;
+    }
 
     const corpo = {
       customer: customerId,
@@ -574,6 +581,7 @@ router.post("/subscription", async (req, res) => {
     res.json({
       onboardingConcluido: !!onboarding,
       ok: true, subscriptionId: subId, asaasId: cobranca.id, ...calculo,
+      taxaComplementar, valorCobrado: valorAsaas,
       pixCopiaECola:pix?.payload||null, pixQrCodeBase64:pix?.encodedImage||null,
       invoiceUrl: pagamento?.invoiceUrl||cobranca.invoiceUrl||null,
       status: statusInicial,
@@ -616,6 +624,10 @@ const fimDoDia = (d) => new Date(`${iso(d)}T23:59:59-03:00`).getTime();
 
 async function criarPixAutomatico({ subId, entityId, chave, plano, customerId, calculo, voucher, trialDias }) {
   const vencimento = primeiroDebitoPixAutomatico({ trialDias });
+  const MINIMO_ASAAS = 5;
+  let valorPix = calculo.valorFinal;
+  if (valorPix > 0 && valorPix < MINIMO_ASAAS) valorPix = MINIMO_ASAAS;
+  else if (valorPix === 0) valorPix = MINIMO_ASAAS;
   const autorizacao = await asaas("/pix/automatic/authorizations", {
     method: "POST",
     body: {
@@ -624,7 +636,7 @@ async function criarPixAutomatico({ subId, entityId, chave, plano, customerId, c
       contractId: `RYCS-${subId}`.slice(0, 35),
       description: `RYCS ${plano.nome}`.slice(0, 35),
       startDate: iso(vencimento),
-      value: calculo.valorFinal,
+      value: valorPix,
       paymentCreationMode: "SUBSCRIPTION",
       retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
       immediateQrCode: {
@@ -802,7 +814,7 @@ async function renovarLinkDePagamento(sub) {
       body: {
         customer: (await asaas(`/subscriptions/${sub.asaasId}`))?.customer,
         billingType: sub.formaPagamento || "PIX",
-        value: sub.valor,
+        value: Math.max(sub.valor, 5),
         dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0],
         description: `RYCS ${planoDe(sub.plano).nome} — nova tentativa de pagamento`,
         externalReference: `sub:${sub.companyId}`,
