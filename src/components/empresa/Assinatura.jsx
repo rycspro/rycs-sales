@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CreditCard, Check, ShieldCheck, ArrowLeft, Loader, QrCode, Gift, Sparkles } from "lucide-react";
+import { Check, ArrowLeft, Loader, QrCode, Gift, Sparkles } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
@@ -17,22 +17,16 @@ import { lerConvite, limparConvite } from "../../lib/rotas.js";
 // requisição do checkout; o que volta e é guardado são a bandeira e os quatro
 // últimos dígitos, só para a empresa reconhecer o cartão na tela.
 
-const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
-const mascaraCartao = (v) => SO_DIGITOS(v).slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-
 // Planos pagos, na ordem do catálogo. O "free" saiu da oferta.
 const PLANOS_OFERTADOS = ORDEM_PLANOS.filter((k) => PLANOS[k]?.preco > 0);
 
 export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
   const [passo, setPasso] = useState(0);
   const [plano, setPlano] = useState(null);
-  const [forma, setForma] = useState("CREDIT_CARD");
+  const [forma, setForma] = useState("PIX");
   const [trialDias, setTrialDias] = useState(0);
   const [enviando, setEnviando] = useState(false);
   const [pix, setPix] = useState(null);
-
-  const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
-  const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
 
   // Convite de trial, quando a empresa chegou por um link privado. Validado no
   // servidor: um token inventado não vira oferta na tela.
@@ -69,26 +63,16 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
   };
 
   const detalhes = plano ? PLANOS[plano] : null;
-  const cobrancaEm = primeiraCobranca({ trialDias: forma === "CREDIT_CARD" ? trialDias : 0 });
-  const temTrial = forma === "CREDIT_CARD" && trialDias > 0;
+  const cobrancaEm = primeiraCobranca({ trialDias: 0 });
+  const temTrial = false;
 
   const ativar = async () => {
-    if (forma === "CREDIT_CARD") {
-      const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
-      if (faltando.length) return aviso("Preencha todos os dados do cartão.");
-      if (![11, 14].includes(SO_DIGITOS(titular.documento).length)) return aviso("Informe o CPF ou CNPJ do titular do cartão.");
-      if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
-    }
-
     setEnviando(true);
     const r = await api("/subscription", {
       plano,
-      formaPagamento: forma,
-      cartao: forma === "CREDIT_CARD" ? cartao : undefined,
-      titular: forma === "CREDIT_CARD" ? titular : undefined,
+      formaPagamento: "PIX",
     });
     setEnviando(false);
-    if (forma === "CREDIT_CARD") setCartao((dados) => ({ ...dados, cvv: "" }));
 
     if (!r || r.error) return aviso(r?.error || "Não foi possível ativar a assinatura.");
 
@@ -224,75 +208,18 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
 
       <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
         <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          {[["CREDIT_CARD", "Cartão de crédito"], ["PIX", "Pix"]].map(([k, t]) => (
-            <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
-              flex: 1,
-              borderColor: forma === k ? "var(--brand)" : undefined,
-              background: forma === k ? "var(--brand-50)" : undefined,
-              color: forma === k ? "var(--brand)" : undefined,
-            }}>{t}</button>
-          ))}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+          <QrCode size={18} color="var(--brand)" />
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Pix</span>
         </div>
-
-        {forma === "CREDIT_CARD" ? (
-          <>
-            <label><div className="vx-label">Nome impresso no cartão</div>
-              <input className="vx-input" value={cartao.nome} onChange={(e) => setCartao({ ...cartao, nome: e.target.value })} autoComplete="cc-name" /></label>
-
-            <label style={{ display: "block", marginTop: 10 }}><div className="vx-label">Número do cartão</div>
-              <input className="vx-input vx-mono" inputMode="numeric" value={mascaraCartao(cartao.numero)}
-                onChange={(e) => setCartao({ ...cartao, numero: SO_DIGITOS(e.target.value) })}
-                placeholder="0000 0000 0000 0000" autoComplete="cc-number" /></label>
-
-            <div className="vx-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
-              <label><div className="vx-label">Mês</div>
-                <input className="vx-input vx-mono" inputMode="numeric" maxLength={2} placeholder="12"
-                  value={cartao.validadeMes} onChange={(e) => setCartao({ ...cartao, validadeMes: SO_DIGITOS(e.target.value).slice(0, 2) })} /></label>
-              <label><div className="vx-label">Ano</div>
-                <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="2030"
-                  value={cartao.validadeAno} onChange={(e) => setCartao({ ...cartao, validadeAno: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-              <label><div className="vx-label">CVV</div>
-                <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="123"
-                  type="password" value={cartao.cvv} onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-            </div>
-
-            <div className="vx-eyebrow" style={{ margin: "18px 0 10px" }}>Endereço de cobrança</div>
-            <div className="vx-grid vx-g2" style={{ gap: 10 }}>
-              <label><div className="vx-label">CEP</div>
-                <input className="vx-input vx-mono" inputMode="numeric" value={titular.cep}
-                  onChange={(e) => setTitular({ ...titular, cep: SO_DIGITOS(e.target.value).slice(0, 8) })} /></label>
-              <label><div className="vx-label">Número</div>
-                <input className="vx-input" value={titular.numero}
-                  onChange={(e) => setTitular({ ...titular, numero: e.target.value })} /></label>
-            </div>
-            <div className="vx-grid vx-g2" style={{ gap: 10, marginTop: 10 }}>
-              <label><div className="vx-label">CPF ou CNPJ do titular</div>
-                <input className="vx-input vx-mono" inputMode="numeric" value={titular.documento}
-                  onChange={(e) => setTitular({ ...titular, documento: SO_DIGITOS(e.target.value).slice(0, 14) })} /></label>
-              <label><div className="vx-label">E-mail do titular</div>
-                <input className="vx-input" type="email" value={titular.email}
-                  onChange={(e) => setTitular({ ...titular, email: e.target.value })} /></label>
-              <label><div className="vx-label">Telefone</div>
-                <input className="vx-input vx-mono" inputMode="tel" value={titular.telefone}
-                  onChange={(e) => setTitular({ ...titular, telefone: e.target.value })} /></label>
-            </div>
-
-            <div className="vx-mut" style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
-              <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-              Os dados do cartão vão direto ao processador de pagamento. A RYCS não guarda o número nem o CVV.
-            </div>
-          </>
-        ) : (
-          <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7 }}>
-            Geramos um QR Code na próxima tela. O acesso é liberado assim que o pagamento for confirmado.
-            <div style={{ marginTop: 8 }}>No Pix não há período gratuito — a cobrança é à vista, mês a mês.</div>
-          </div>
-        )}
+        <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7 }}>
+          Geramos um QR Code na próxima tela. O acesso é liberado assim que o pagamento for confirmado.
+          <div style={{ marginTop: 8 }}>A cobrança é à vista, mês a mês.</div>
+        </div>
       </div>
 
       <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 16 }} disabled={enviando} onClick={ativar}>
-        {enviando ? <><Loader size={15} /> Ativando…</> : <><CreditCard size={15} /> ATIVAR MINHA CONTA</>}
+        {enviando ? <><Loader size={15} /> Ativando…</> : <><QrCode size={15} /> ATIVAR MINHA CONTA</>}
       </button>
     </div>
   );
