@@ -92,6 +92,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
   const terminar = async () => {
     const r = await api("/onboarding");
     if (r && !r.error) { aoAtualizar(r); aoAvancar(r); }
+    else setErro("Pagamento registrado, mas houve um erro ao avançar. Atualize a página.");
   };
 
   const manter = async () => {

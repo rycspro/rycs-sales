@@ -53,11 +53,21 @@ export class AsaasError extends Error {
 export async function asaas(caminho, { method = "GET", body } = {}) {
   if (!ambiente.ok) throw new AsaasError(ambiente.motivo, 0, null);
 
-  const res = await fetch(`${ambiente.base}${caminho}`, {
-    method,
-    headers: { "Content-Type": "application/json", access_token: process.env.ASAAS_API_KEY },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);
+  let res;
+  try {
+    res = await fetch(`${ambiente.base}${caminho}`, {
+      method,
+      headers: { "Content-Type": "application/json", access_token: process.env.ASAAS_API_KEY },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    throw new AsaasError(err.name === "AbortError" ? "Gateway de pagamento não respondeu a tempo. Tente novamente." : (err.message || "Falha de conexão com o gateway."), 0, null);
+  }
+  clearTimeout(timer);
 
   const texto = await res.text();
   let dados = null;

@@ -147,7 +147,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     });
     setProcessando(false);
 
-    if (r?.error) return aviso(r.error);
+    if (!r || r.error) return aviso(r?.error || "Não foi possível processar o pagamento. Verifique a conexão e tente de novo.");
 
     // Atualizar cartões salvos caso tenha salvo um novo
     if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));
@@ -159,7 +159,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       await Promise.all([carregar(), recarregar?.()]);
     } catch { /* falha de reload não deve travar a UI */ }
     clearTimeout(timeout);
-    setTimeout(() => setStatusPagamento("confirmado"), r.jaPago ? 500 : 2500);
+    setTimeout(() => setStatusPagamento("confirmado"), r?.jaPago ? 500 : 2500);
   };
 
   const abrirPortal = async () => {
