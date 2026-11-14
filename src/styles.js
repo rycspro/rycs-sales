@@ -192,7 +192,7 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
   .vx-sidebar::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
     background:linear-gradient(160deg,rgba(255,255,255,.18) 0%,transparent 35%);opacity:.5;z-index:0}
   html.dark .vx-sidebar::before{background:linear-gradient(160deg,rgba(255,255,255,.04) 0%,transparent 25%)}
-  .vx-sidebar-logo{padding:0 16px;height:60px;margin-top:24px;margin-bottom:24px;flex-shrink:0;overflow:hidden;
+  .vx-sidebar-logo{padding:0 16px;height:60px;margin-top:12px;margin-bottom:12px;flex-shrink:0;overflow:hidden;
     display:flex;align-items:center;position:relative;z-index:1}
   .vx-sidebar-logo img{height:52px;width:auto;object-fit:contain;max-width:100%;display:block;margin:0 auto}
   .vx-sidebar>div:first-of-type{padding:12px 10px 0;gap:1px;position:relative;z-index:1}
