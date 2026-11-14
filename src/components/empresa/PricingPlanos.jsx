@@ -170,9 +170,10 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
               className="vx-card"
               style={{
                 position: "relative", padding: "26px 22px", display: "flex", flexDirection: "column",
-                border: ehAtual || popular ? "2px solid var(--brand)" : "1px solid var(--border)",
-                background: ehAtual ? "var(--brand-50)" : undefined,
-                boxShadow: ehAtual || popular ? "var(--shadow-brand)" : "var(--shadow-card)",
+                border: ehAtual ? "none" : popular ? "2px solid var(--brand)" : "1px solid var(--border)",
+                background: ehAtual ? "linear-gradient(120deg, #2563EB 0%, #4338CA 52%, #0EA5E9 100%)" : undefined,
+                color: ehAtual ? "#fff" : undefined,
+                boxShadow: ehAtual ? "0 10px 26px rgba(37,99,235,.28)" : popular ? "var(--shadow-brand)" : "var(--shadow-card)",
                 overflow: "hidden",
               }}
             >
@@ -203,12 +204,12 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
                 </div>
               )}
 
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase", marginTop: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: ehAtual ? "rgba(255,255,255,.85)" : "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase", marginTop: 6 }}>
                 {p.nome}
               </div>
 
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6, margin: "16px 0 2px" }}>
-                <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>
+                <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: ehAtual ? "#fff" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>
                   <NumberFlow
                     value={mensalidade}
                     format={{ style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }}
@@ -217,9 +218,9 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
                     willChange
                   />
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: ehAtual ? "rgba(255,255,255,.85)" : "var(--muted)" }}>/mês</span>
               </div>
-              <div style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center", marginBottom: 4 }}>
+              <div style={{ fontSize: 11.5, color: ehAtual ? "rgba(255,255,255,.7)" : "var(--muted)", textAlign: "center", marginBottom: 4 }}>
                 {ciclo === CICLOS.ANUAL ? `cobrado anualmente · economize ${pct(descontoAtual)}%`
                   : ciclo === CICLOS.SEMESTRAL ? `cobrado a cada 6 meses · economize ${pct(descontoAtual)}%`
                   : "cobrado mensalmente"}
@@ -227,20 +228,20 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
 
               <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 9 }}>
                 {p.inclui.map((i) => (
-                  <li key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "var(--text-2, var(--ink))", textAlign: "left" }}>
-                    <Check size={15} color="var(--brand)" strokeWidth={2.4} style={{ flexShrink: 0, marginTop: 1 }} /> {i}
+                  <li key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: ehAtual ? "#fff" : "var(--text-2, var(--ink))", textAlign: "left" }}>
+                    <Check size={15} color={ehAtual ? "#fff" : "var(--brand)"} strokeWidth={2.4} style={{ flexShrink: 0, marginTop: 1 }} /> {i}
                   </li>
                 ))}
               </ul>
 
-              <div style={{ borderTop: "1px solid var(--border)", margin: "18px 0 14px" }} />
+              <div style={{ borderTop: ehAtual ? "1px solid rgba(255,255,255,.25)" : "1px solid var(--border)", margin: "18px 0 14px" }} />
 
               <button
                 type="button"
                 className={`vx-btn vx-btn-block ${ehAtual ? "" : "vx-btn-primary"}`}
                 disabled={ehAtual}
                 onClick={() => onContratar?.(p.chave, ciclo)}
-                style={{ marginTop: "auto", fontWeight: 700 }}
+                style={{ marginTop: "auto", fontWeight: 700, ...(ehAtual ? { background: "rgba(255,255,255,.2)", color: "#fff", border: "1px solid rgba(255,255,255,.3)" } : {}) }}
               >
                 {ehAtual ? "Plano atual" : temPlanoAtivo ? "Trocar para este plano" : temTrial ? "Iniciar período grátis" : "Contratar"}
               </button>

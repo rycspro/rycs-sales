@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CreditCard, Globe, Loader, ShieldCheck, X } from "lucide-react";
+import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
@@ -30,6 +30,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [cardSalvoId, setCardSalvoId] = useState(null); // cartão salvo selecionado
   const [stripe, setStripe] = useState(null);
   const [embutido, setEmbutido] = useState(null);
+  const [statusPagamento, setStatusPagamento] = useState(null); // null | "processando" | "confirmado"
 
   const carregar = useCallback(async () => {
     const [p, s] = await Promise.all([api("/plans"), api("/subscription")]);
@@ -101,9 +102,11 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     // Atualizar cartões salvos caso tenha salvo um novo
     if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));
 
-    if (r.jaPago) { aviso("Pagamento confirmado. Liberando seu acesso."); setSelecionado(null); await carregar(); return; }
+    // Fluxo visual: processando → confirmado
+    setStatusPagamento("processando");
     await carregar();
-    aviso(r.message || "Plano contratado com sucesso.");
+    await recarregar?.();
+    setTimeout(() => setStatusPagamento("confirmado"), r.jaPago ? 500 : 2500);
   };
 
   const abrirPortal = async () => {
@@ -396,6 +399,30 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 <p className="vx-chart-source">
                   Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.
                 </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Overlay de status: processando → confirmado */}
+      {statusPagamento && (
+        <div className="vx-overlay" style={{ zIndex: 1100 }}>
+          <div className="vx-sheet" style={{ maxWidth: 400, textAlign: "center", padding: "40px 32px" }}>
+            {statusPagamento === "processando" ? (
+              <>
+                <Loader size={48} color="var(--brand)" style={{ animation: "spin 1s linear infinite", marginBottom: 16 }} />
+                <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700 }}>Pagamento processando…</h2>
+                <p className="vx-mut" style={{ margin: 0 }}>Estamos confirmando seu pagamento com o gateway.</p>
+              </>
+            ) : (
+              <>
+                <CheckCircle size={56} color="#22c55e" style={{ marginBottom: 16 }} />
+                <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: "#22c55e" }}>Pagamento confirmado!</h2>
+                <p className="vx-mut" style={{ margin: "0 0 24px" }}>Seu plano já está ativo. Comece a usar agora!</p>
+                <button className="vx-btn vx-btn-primary" onClick={() => { setStatusPagamento(null); setSelecionado(null); }}>
+                  Comece a usar
+                </button>
               </>
             )}
           </div>
