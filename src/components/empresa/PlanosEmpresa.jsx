@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X } from "lucide-react";
+import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X, QrCode } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
@@ -78,34 +78,17 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       window.location.href = r.url;
       return;
     }
-    const ehCartao = forma === "CREDIT_CARD";
-    if (ehCartao && !cardSalvoId) {
-      const LABELS = { nome: "nome no cartão", numero: "número do cartão", validadeMes: "mês de validade", validadeAno: "ano de validade", cvv: "CVV" };
-      const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
-      if (faltando.length) return aviso(`Preencha: ${faltando.map(([k]) => LABELS[k] || k).join(", ")}.`);
-      if (![11, 14].includes(SO_DIGITOS(titular.documento).length)) return aviso("Informe o CPF ou CNPJ do titular do cartão.");
-      if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
-    }
-
     setProcessando(true);
     const r = await api("/subscription", {
       plano: selecionado.chave,
       ciclo,
       voucher: voucher || undefined,
       formaPagamento: forma,
-      savedCardId: cardSalvoId || undefined,
-      cartao: ehCartao && !cardSalvoId ? cartao : undefined,
-      titular: ehCartao && !cardSalvoId ? titular : undefined,
-      salvarCartao: ehCartao && !cardSalvoId && salvarCartao ? true : undefined,
     });
     setProcessando(false);
-    if (forma === "CREDIT_CARD") setCartao((dados) => ({ ...dados, cvv: "" }));
 
     if (!r) return aviso("Sem resposta do servidor. Verifique a conexão e tente de novo.");
     if (r.error) return aviso(r.error);
-
-    // Atualizar cartões salvos caso tenha salvo um novo
-    if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));
 
     setStatusPagamento(r.jaPago ? "confirmado" : "registrada");
     await Promise.all([carregar(), recarregar?.()]);
@@ -259,13 +242,13 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                   {[
-                    { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão de crédito · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
+                    { id: "nacional", titulo: "Pagamento nacional", sub: "Pix · R$", icone: <QrCode size={26} strokeWidth={1.8} aria-hidden="true" /> },
                     ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
                   ].map(({ id, titulo, sub, icone }) => {
                     const on = origem === id;
                     return (
                       <button key={id} type="button"
-                        onClick={() => setForma(id === "nacional" ? "CREDIT_CARD" : "STRIPE")}
+                        onClick={() => setForma(id === "nacional" ? "PIX" : "STRIPE")}
                         style={{
                           flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                           padding: "16px 12px", borderRadius: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
@@ -281,105 +264,13 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   })}
                 </div>
 
-                {/* Cartões salvos + Formulário de cartão */}
-                {(forma === "CREDIT_CARD") && (
-                  <>
-                    {cartoesSalvos.length > 0 && (
-                      <div style={{ marginBottom: 14 }}>
-                        <div className="vx-label" style={{ marginBottom: 6 }}>Cartões salvos</div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                          {cartoesSalvos.map((c) => (
-                            <button key={c.id} className="vx-btn" onClick={() => { setCardSalvoId(cardSalvoId === c.id ? null : c.id); }}
-                              style={{
-                                display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, justifyContent: "flex-start",
-                                borderColor: cardSalvoId === c.id ? "var(--brand)" : undefined,
-                                background: cardSalvoId === c.id ? "var(--brand-50)" : undefined,
-                                color: cardSalvoId === c.id ? "var(--brand)" : undefined,
-                              }}>
-                              <CreditCard size={15} />
-                              <span>{c.bandeira} •••• {c.final4}</span>
-                              {c.apelido && <span className="vx-mut" style={{ fontSize: 11 }}>({c.apelido})</span>}
-                            </button>
-                          ))}
-                          <button className="vx-btn" onClick={() => setCardSalvoId(null)}
-                            style={{
-                              fontSize: 12, justifyContent: "flex-start",
-                              borderColor: !cardSalvoId ? "var(--brand)" : undefined,
-                              background: !cardSalvoId ? "var(--brand-50)" : undefined,
-                              color: !cardSalvoId ? "var(--brand)" : undefined,
-                            }}>
-                            + Usar novo cartão
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {!cardSalvoId && (<>
-                    <div style={{ margin: "4px auto 16px", maxWidth: 320 }}>
-                      <HoloCard
-                        holder={cartao.nome || "RYCS"}
-                        number={cartao.numero || "0000000000000000"}
-                        expires={cartao.validadeMes && cartao.validadeAno ? `${String(cartao.validadeMes).padStart(2, "0")}/${String(cartao.validadeAno).slice(-2)}` : "••/••"}
-                        cvv="•••"
-                        tier="Crédito"
-                      />
-                    </div>
-                    <label><div className="vx-label">Nome impresso no cartão</div>
-                      <input className="vx-input" value={cartao.nome}
-                        onChange={(e) => setCartao({ ...cartao, nome: e.target.value })} autoComplete="cc-name" /></label>
-
-                    <label style={{ display: "block", marginTop: 10 }}><div className="vx-label">Número do cartão</div>
-                      <input className="vx-input vx-mono" inputMode="numeric" value={mascaraCartao(cartao.numero)}
-                        onChange={(e) => setCartao({ ...cartao, numero: SO_DIGITOS(e.target.value) })}
-                        placeholder="0000 0000 0000 0000" autoComplete="cc-number" /></label>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
-                      <label><div className="vx-label">Mês</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" maxLength={2} placeholder="12"
-                          value={cartao.validadeMes}
-                          onChange={(e) => setCartao({ ...cartao, validadeMes: SO_DIGITOS(e.target.value).slice(0, 2) })} /></label>
-                      <label><div className="vx-label">Ano</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="2030"
-                          value={cartao.validadeAno}
-                          onChange={(e) => setCartao({ ...cartao, validadeAno: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-                      <label><div className="vx-label">CVV</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="123"
-                          type="password" value={cartao.cvv}
-                          onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-                    </div>
-
-                    <div className="vx-eyebrow" style={{ margin: "16px 0 10px" }}>Endereço de cobrança</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      <label><div className="vx-label">CEP</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" value={titular.cep}
-                          onChange={(e) => setTitular({ ...titular, cep: SO_DIGITOS(e.target.value).slice(0, 8) })} /></label>
-                      <label><div className="vx-label">Número</div>
-                        <input className="vx-input" value={titular.numero}
-                          onChange={(e) => setTitular({ ...titular, numero: e.target.value })} /></label>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-                      <label><div className="vx-label">CPF ou CNPJ do titular</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" value={titular.documento}
-                          onChange={(e) => setTitular({ ...titular, documento: SO_DIGITOS(e.target.value).slice(0, 14) })} /></label>
-                      <label><div className="vx-label">E-mail do titular</div>
-                        <input className="vx-input" type="email" value={titular.email}
-                          onChange={(e) => setTitular({ ...titular, email: e.target.value })} /></label>
-                      <label><div className="vx-label">Telefone</div>
-                        <input className="vx-input vx-mono" inputMode="tel" value={titular.telefone}
-                          onChange={(e) => setTitular({ ...titular, telefone: e.target.value })} /></label>
-                    </div>
-
-                    <div className="vx-mut" style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
-                      <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                      Os dados do cartão vão direto ao processador de pagamento. A RYCS não guarda o número nem o CVV.
-                    </div>
-
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, cursor: "pointer", fontSize: 12.5 }}>
-                      <input type="checkbox" checked={salvarCartao} onChange={(e) => setSalvarCartao(e.target.checked)} />
-                      Salvar este cartão para pagamentos futuros
-                    </label>
-                    </>)}
-                  </>
+                {/* Pix nacional */}
+                {forma === "PIX" && (
+                  <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
+                    <QrCode size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                    Geramos um QR Code Pix após a confirmação. O acesso é liberado assim que o pagamento for confirmado.
+                    <div style={{ marginTop: 6 }}>A cobrança é à vista, mês a mês.</div>
+                  </div>
                 )}
 
                 {forma === "STRIPE" && (
@@ -396,7 +287,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                     ? <><Loader size={15} /> Processando…</>
                     : forma === "STRIPE"
                       ? <><CreditCard size={15} /> Continuar para o pagamento ({usd(precoUsd)})</>
-                      : <><CreditCard size={15} /> Confirmar {money(precoFinal ?? selecionado.preco)}</>}
+                      : <><QrCode size={15} /> Pagar com Pix {money(precoFinal ?? selecionado.preco)}</>}
                 </button>
                 <p className="vx-chart-source">
                   Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.
