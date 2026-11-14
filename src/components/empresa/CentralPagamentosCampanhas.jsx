@@ -58,7 +58,7 @@ function Indicador({ label, valor, sub, Icon, tone = "ink" }) {
         <Icon size={15} strokeWidth={2} color="var(--muted)" aria-hidden="true" />
         <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)" }}>{label}</span>
       </div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: cor, fontVariantNumeric: "tabular-nums", letterSpacing: -0.4 }}>{valor}</div>
+      <div className="vx-num" style={{ fontSize: 20, fontWeight: 700, color: cor, fontVariantNumeric: "tabular-nums", letterSpacing: -0.4 }}>{valor}</div>
       {sub && <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>{sub}</div>}
     </div>
   );
@@ -388,7 +388,7 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
             <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--muted)" }}>Saldo disponível</span>
             <Wallet size={18} color="var(--muted)" strokeWidth={1.8} />
           </div>
-          <div style={{ fontSize: 30, fontWeight: 800, color: "var(--brand)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.8, marginTop: 10 }}>
+          <div className="vx-num" style={{ fontSize: 30, fontWeight: 800, color: "var(--brand)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.8, marginTop: 10 }}>
             {carregando ? "—" : money(posicao.disponivel)}
           </div>
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3, flex: 1 }}>Disponível para novas liberações</div>
