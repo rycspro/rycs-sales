@@ -40,7 +40,7 @@ export default {
     esqueciSenha: "Esqueci minha senha",
     semConta: "Ainda não tem conta?",
     criarProfissional: "Criar conta profissional",
-    criarEmpresa: "Criar conta empresa",
+    criarEmpresa: "Criar conta empresarial",
     souProfissional: "Sou profissional",
     souEmpresa: "Sou empresa",
     trocarConta: "Trocar tipo de conta",
