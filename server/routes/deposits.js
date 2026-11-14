@@ -59,6 +59,7 @@ async function cobrancaPeloGateway(req, res, companyId, valor) {
       modo: "gateway",
       pixCopiaECola: pix?.payload || null,
       pixQrCodeBase64: pix?.encodedImage || null,
+      pixExpiracao: pix?.expirationDate || null,
       invoiceUrl: cobranca.invoiceUrl || null,
       instrucoes: "Pague o Pix abaixo. O caixa é creditado automaticamente após a confirmação.",
     });

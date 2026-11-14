@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowUpCircle, Check, ChevronDown, ChevronRight, CreditCard,
+  ArrowUpCircle, Check, ChevronDown, ChevronRight, Clock, CreditCard,
   Landmark, Lock, Plus, QrCode, Search, TrendingUp, Wallet, X, Zap,
 } from "lucide-react";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
@@ -122,6 +122,33 @@ function SeletorMoeda({ moeda, onSelecionar, disabled }) {
   );
 }
 
+// Cronômetro regressivo de expiração do Pix (mm:ss). Ao zerar, sinaliza expirado.
+function CronometroPix({ expiraEm }) {
+  const [restante, setRestante] = useState(() => Math.max(0, expiraEm - Date.now()));
+  useEffect(() => {
+    setRestante(Math.max(0, expiraEm - Date.now()));
+    const t = setInterval(() => setRestante(Math.max(0, expiraEm - Date.now())), 1000);
+    return () => clearInterval(t);
+  }, [expiraEm]);
+
+  const expirado = restante <= 0;
+  const totalSeg = Math.floor(restante / 1000);
+  const mm = String(Math.floor(totalSeg / 60)).padStart(2, "0");
+  const ss = String(totalSeg % 60).padStart(2, "0");
+
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 7, margin: "0 auto 14px",
+      padding: "6px 14px", borderRadius: 999, fontSize: 13, fontWeight: 600,
+      background: expirado ? "#FEE2E2" : "var(--brand-50, #EFF6FF)",
+      color: expirado ? "#DC2626" : "var(--brand)",
+    }}>
+      <Clock size={14} />
+      {expirado ? "Pix expirado — gere um novo código" : <>Expira em <span className="vx-mono">{mm}:{ss}</span></>}
+    </div>
+  );
+}
+
 export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   // Moeda travada: depois do 1º aporte a empresa opera sempre na mesma moeda.
   const moedaTravada = (Number(emp?.saldo) > 0 || Number(emp?.totalAportado) > 0)
@@ -133,6 +160,7 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   const [display, setDisplay] = useState("");
   const [etapa, setEtapa] = useState("form"); // form | pix
   const [pix, setPix] = useState(null);
+  const [pixExpiraEm, setPixExpiraEm] = useState(0); // timestamp (ms) de expiração do Pix
   const [enviando, setEnviando] = useState(false);
 
   const info = moedaDe(moeda);
@@ -174,7 +202,14 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
     if (!r || r.error) return aviso(r?.error || "Não foi possível criar o depósito.");
     // Cartão internacional: redireciona para o Checkout hospedado do Stripe.
     if (r.checkoutUrl) { window.location.href = r.checkoutUrl; return; }
-    if (r.pixCopiaECola || r.pixQrCodeBase64) { setPix(r); setEtapa("pix"); return; }
+    if (r.pixCopiaECola || r.pixQrCodeBase64) {
+      setPix(r);
+      // Expiração: usa a do gateway quando vier; senão, 30 min a partir de agora.
+      const exp = r.pixExpiracao ? new Date(r.pixExpiracao).getTime() : Date.now() + 30 * 60000;
+      setPixExpiraEm(Number.isFinite(exp) ? exp : Date.now() + 30 * 60000);
+      setEtapa("pix");
+      return;
+    }
     if (r.invoiceUrl) { window.open(r.invoiceUrl, "_blank", "noopener"); aviso("Fatura aberta em nova aba."); onFechar(); return; }
     aviso("Depósito registrado. Aguarde a confirmação.");
     aoConfirmar?.();
@@ -291,7 +326,8 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
               <img src={`data:image/png;base64,${pix.pixQrCodeBase64}`} alt="QR Code Pix"
                 style={{ width: 180, height: 180, margin: "0 auto 14px", display: "block", borderRadius: 10 }} />
             )}
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Pague {money(valor)} via Pix</div>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Pague {money(valor)} via Pix</div>
+            {pixExpiraEm > 0 && <div><CronometroPix expiraEm={pixExpiraEm} /></div>}
             <div style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 14 }}>O saldo é creditado automaticamente após a confirmação.</div>
             {pix.pixCopiaECola && (
               <button className="vx-btn vx-btn-primary" style={{ width: "100%", justifyContent: "center", marginBottom: 8 }}
