@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowUpCircle, Check, ChevronRight, CreditCard,
-  Landmark, Lock, Plus, QrCode, TrendingUp, Wallet, X, Zap,
+  ArrowUpCircle, Check, ChevronDown, ChevronRight, CreditCard,
+  Landmark, Lock, Plus, QrCode, Search, TrendingUp, Wallet, X, Zap,
 } from "lucide-react";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
 import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
@@ -56,6 +56,73 @@ function StatCard({ label, value, sub, tone = "default", icon: Icon }) {
 }
 
 // ── Modal adicionar saldo ─────────────────────────────────────────────────────
+// Seletor de moeda pesquisável: combina busca por texto com a seleção.
+function SeletorMoeda({ moeda, onSelecionar, disabled }) {
+  const [aberto, setAberto] = useState(false);
+  const [busca, setBusca] = useState("");
+  const ref = useRef(null);
+  const info = moedaDe(moeda);
+
+  useEffect(() => {
+    if (!aberto) return;
+    const fora = (e) => { if (ref.current && !ref.current.contains(e.target)) { setAberto(false); setBusca(""); } };
+    const esc = (e) => { if (e.key === "Escape") { setAberto(false); setBusca(""); } };
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", fora); document.removeEventListener("keydown", esc); };
+  }, [aberto]);
+
+  const q = busca.trim().toLowerCase();
+  const lista = q ? MOEDAS.filter((m) => `${m.simbolo} ${m.code} ${m.nome}`.toLowerCase().includes(q)) : MOEDAS;
+  const escolher = (code) => { onSelecionar(code); setAberto(false); setBusca(""); };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button" className="vx-input" disabled={disabled}
+        aria-haspopup="listbox" aria-expanded={aberto}
+        onClick={() => !disabled && setAberto((v) => !v)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%", textAlign: "left", fontSize: 14, fontWeight: 600, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.7 : 1 }}
+      >
+        <span>{info.simbolo} · {moeda} — {info.nome}</span>
+        {!disabled && <ChevronDown size={15} color="var(--muted)" style={{ transform: aberto ? "rotate(180deg)" : "none", transition: ".15s", flexShrink: 0 }} />}
+      </button>
+
+      {aberto && !disabled && (
+        <div role="listbox" style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 120, background: "var(--surface-solid)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 12px 32px rgba(17,24,39,.16)", overflow: "hidden" }}>
+          <div style={{ padding: 8, borderBottom: "1px solid var(--border)", position: "relative" }}>
+            <Search size={14} style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
+            <input
+              autoFocus className="vx-input" value={busca} onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar moeda..."
+              onKeyDown={(e) => { if (e.key === "Enter" && lista[0]) { e.preventDefault(); escolher(lista[0].code); } }}
+              style={{ paddingLeft: 32, fontSize: 13, height: "auto", padding: "8px 10px 8px 32px" }}
+            />
+          </div>
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {!lista.length && <div style={{ padding: "14px 12px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>Nenhuma moeda encontrada.</div>}
+            {lista.map((m) => {
+              const sel = m.code === moeda;
+              return (
+                <button
+                  key={m.code} type="button" role="option" aria-selected={sel}
+                  onClick={() => escolher(m.code)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "9px 12px", border: "none", background: sel ? "var(--brand-50)" : "transparent", color: sel ? "var(--brand)" : "var(--ink)", cursor: "pointer", fontSize: 13.5, fontWeight: sel ? 600 : 400 }}
+                  onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "var(--surface-2)"; }}
+                  onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}
+                >
+                  <span style={{ width: 16, flexShrink: 0, display: "inline-flex" }}>{sel && <Check size={14} />}</span>
+                  <span>{m.simbolo} · {m.code} — {m.nome}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   // Moeda travada: depois do 1º aporte a empresa opera sempre na mesma moeda.
   const moedaTravada = (Number(emp?.saldo) > 0 || Number(emp?.totalAportado) > 0)
@@ -138,17 +205,7 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
           {/* Seletor de moeda */}
           <label style={{ display: "block", marginBottom: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Moeda</div>
-            <select
-              className="vx-input"
-              style={{ fontSize: 14, fontWeight: 600 }}
-              value={moeda}
-              disabled={!!moedaTravada}
-              onChange={(e) => trocarMoeda(e.target.value)}
-            >
-              {MOEDAS.map((m) => (
-                <option key={m.code} value={m.code}>{m.simbolo} · {m.code} — {m.nome}</option>
-              ))}
-            </select>
+            <SeletorMoeda moeda={moeda} onSelecionar={trocarMoeda} disabled={!!moedaTravada} />
             <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>
               {moedaTravada
                 ? `Sua conta opera em ${moedaTravada}. Depósitos, repasses e saques acontecem nesta moeda.`
