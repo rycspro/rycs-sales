@@ -8,19 +8,14 @@ const STEPS = [
     icone: Rocket,
     ilustracao: (
       <div style={{
-        background: "linear-gradient(135deg, #2563EB 0%, #4338CA 100%)",
+        background: "var(--surface-2)", border: "1px solid var(--border-strong)",
         borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
         height: 180, width: "100%",
       }}>
-        <div style={{
-          background: "#fff", borderRadius: 16, padding: "18px 28px",
-          boxShadow: "0 4px 24px rgba(0,0,0,.12)",
-        }}>
-          <img src="/logo-rycs.png" alt="RYCS Sales Machine"
-            onError={(e) => { e.currentTarget.style.display = "none"; const t = e.currentTarget.parentElement.nextSibling; if (t) t.style.display = "block"; }}
-            style={{ width: 160, display: "block", objectFit: "contain" }} />
-        </div>
-        <span style={{ display: "none", fontSize: 32, fontWeight: 800, letterSpacing: "-.02em", color: "#fff" }}>RYCS</span>
+        <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
+          onError={(e) => { e.currentTarget.style.display = "none"; const t = e.currentTarget.nextSibling; if (t) t.style.display = "block"; }}
+          style={{ height: 48, width: "auto", display: "block", objectFit: "contain" }} />
+        <span style={{ display: "none", fontSize: 32, fontWeight: 800, letterSpacing: "-.02em", color: "var(--brand)" }}>RYCS</span>
       </div>
     ),
     titulo: "Bem-vindo à RYCS Sales Machine",
