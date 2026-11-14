@@ -196,11 +196,12 @@ router.post("/onboarding/empresa", (req, res) => {
   if (!soEmpresa(req, res)) return;
   const { perfil, erros } = validarPerfilEmpresa(req.body || {});
   const concluirEtapa = req.body?.concluir === true;
-  if (concluirEtapa) {
+  const pular = req.body?.pular === true;
+  if (concluirEtapa && !pular) {
     const empresa = db.prepare("SELECT logo FROM companies WHERE id = ?").get(req.user.entityId);
     if (!empresa?.logo) erros.logo = "Envie o logo da empresa.";
   }
-  if (erros.ticket || (concluirEtapa && Object.keys(erros).length))
+  if (!pular && (erros.ticket || (concluirEtapa && Object.keys(erros).length)))
     return res.status(400).json({ error: "Revise os campos destacados.", erros });
 
   const sets = {
@@ -454,7 +455,7 @@ router.get("/onboarding/plano", (req, res) => {
   if (!soEmpresa(req, res)) return;
   const acesso = acessoAtual(req.user.entityId);
   res.json({
-    planos: ORDEM_PLANOS.filter((k) => PLANOS[k]?.preco > 0).map((k) => ({ chave: k, ...PLANOS[k] })),
+    planos: ORDEM_PLANOS.filter((k) => PLANOS[k]).map((k) => ({ chave: k, ...PLANOS[k] })),
     trialDias: trialDoOnboarding(req.user.entityId),
     atual: acesso.liberado ? { plano: acesso.plano, estado: acesso.estado, nome: acesso.plano ? PLANOS[acesso.plano]?.nome || acesso.plano : null } : null,
     temDocumento: !!acesso.empresa?.documento,
@@ -466,6 +467,14 @@ router.get("/onboarding/plano", (req, res) => {
 router.post("/onboarding/plano/manter", (req, res) => {
   if (!soEmpresa(req, res)) return;
   if (!acessoAtual(req.user.entityId).liberado) return res.status(409).json({ error: "Escolha um plano para continuar." });
+  const linha = concluir(req.user.entityId, "plano");
+  if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
+  res.json({ ok: true, ...serializar(linha) });
+});
+
+router.post("/onboarding/plano/gratis", (req, res) => {
+  if (!soEmpresa(req, res)) return;
+  db.prepare("UPDATE companies SET plano = 'free' WHERE id = ?").run(req.user.entityId);
   const linha = concluir(req.user.entityId, "plano");
   if (!linha) return res.status(409).json({ error: "Conclua as etapas anteriores primeiro." });
   res.json({ ok: true, ...serializar(linha) });

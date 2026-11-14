@@ -1,8 +1,38 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, Mic, Sparkles, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Mic, Sparkles, Plus, Trash2, SkipForward } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { PERMISSOES_MARCA, validarPerfilEmpresa, formatarTicket } from "../../../shared/onboarding.js";
 import { SEGMENTOS_FLAT, nichosPorSegmento } from "../../../shared/segmentos.js";
+
+function mascaraMoeda(v) {
+  const soDigitos = String(v).replace(/\D/g, "");
+  if (!soDigitos) return "";
+  const n = parseInt(soDigitos, 10);
+  const formatado = (n / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatado;
+}
+
+const PUBLICOS_POR_SEGMENTO = {
+  "Tecnologia": ["CTOs e diretores de TI", "Startups em estágio inicial", "Desenvolvedores e engenheiros", "Empresas SaaS B2B", "PMEs em transformação digital"],
+  "Saúde e Bem-Estar": ["Clínicas e consultórios", "Pacientes particulares", "Profissionais de saúde", "Academias e estúdios", "Idosos e cuidadores"],
+  "Educação": ["Escolas e universidades", "Estudantes de concurso", "Pais de alunos", "Professores e tutores", "Empresas que treinam equipes"],
+  "Alimentação e Gastronomia": ["Restaurantes e bares", "Consumidores delivery", "Eventos corporativos", "Casais e famílias", "Nutricionistas e dietistas"],
+  "Moda e Vestuário": ["Mulheres 25-45 anos", "Jovens 18-30 anos", "Noivas e madrinhas", "Lojistas multimarca", "Profissionais corporativos"],
+  "Beleza e Estética": ["Mulheres classe A/B", "Noivas e debutantes", "Profissionais de beleza", "Clínicas de estética", "Homens que cuidam da aparência"],
+  "Construção e Reforma": ["Construtoras e incorporadoras", "Arquitetos e designers", "Proprietários reformando", "Síndicos e administradoras", "Engenheiros civis"],
+  "Automotivo": ["Donos de veículos", "Frotas empresariais", "Concessionárias", "Entusiastas de carros", "Motoristas de app"],
+  "Imobiliário": ["Compradores de primeiro imóvel", "Investidores imobiliários", "Locatários", "Construtoras", "Corretores parceiros"],
+  "Finanças e Seguros": ["PMEs sem contabilidade", "Investidores pessoa física", "Famílias planejando", "Profissionais liberais", "Empresas em crescimento"],
+  "Marketing e Publicidade": ["PMEs sem marketing interno", "E-commerces", "Influenciadores", "Startups B2B", "Franquias"],
+  "Jurídico": ["Empresas sem jurídico interno", "Pessoas físicas", "Startups e fintechs", "Profissionais autônomos", "Condomínios"],
+  "Agronegócio": ["Produtores rurais", "Cooperativas agrícolas", "Pecuaristas", "Distribuidores de insumos", "Agroindústrias"],
+  "Indústria e Manufatura": ["Fábricas de pequeno porte", "Distribuidores", "Empresas B2B", "Importadores", "Varejistas"],
+  "Logística e Transporte": ["E-commerces", "Indústrias", "Transportadoras", "Operadores logísticos", "Importadores/exportadores"],
+  "Turismo e Hotelaria": ["Viajantes de lazer", "Viajantes corporativos", "Agências de turismo", "Casais e lua de mel", "Grupos e excursões"],
+  "Energia e Sustentabilidade": ["Empresas com alto consumo", "Residências", "Condomínios", "Indústrias", "Agronegócio"],
+  "Entretenimento e Cultura": ["Jovens 18-35 anos", "Famílias com crianças", "Produtores de eventos", "Empresas de RH", "Turistas"],
+  "Serviços Profissionais": ["PMEs sem equipe interna", "Startups", "Profissionais liberais", "Empresas em reestruturação", "Escritórios de contabilidade"],
+};
 
 const VAZIO = {
   nome: "", segmento: "", nicho: "", produto: "", ticket: "",
@@ -84,6 +114,26 @@ function SearchableSelect({ id, label, obrigatorio, erro, placeholder, opcoes, v
         )}
       </div>
     </Campo>
+  );
+}
+
+function ChipsPublico({ segmento, opcoes, selecionados, onToggle }) {
+  if (!opcoes.length) return null;
+  return (
+    <div className="vx-onb-chips-publico">
+      <span className="vx-onb-chips-titulo"><Sparkles size={13} /> Sugestões com base no seu segmento</span>
+      <div className="vx-onb-chips-lista">
+        {opcoes.map((op) => {
+          const ativo = selecionados.includes(op);
+          return (
+            <button key={op} type="button" className="vx-onb-chip" data-on={ativo ? "1" : "0"}
+              onClick={() => onToggle(op)} aria-pressed={ativo}>
+              {op}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -189,6 +239,13 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
     aoVoltar();
   };
 
+  const pular = async () => {
+    if (dados) await salvar(false);
+    const r = await api("/onboarding/empresa", { ...dados, concluir: true, pular: true });
+    if (r && !r.error) { aoAtualizar(r); aoAvancar(r); }
+    else { setErroGeral(r?.error || "Não foi possível pular. Tente de novo."); }
+  };
+
   // Serviços
   const addServico = () => {
     mudarDireto("servicos", [...(dados.servicos || []), { nome: "", valor: "" }]);
@@ -262,7 +319,13 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
   return (
     <div className="vx-onb-duas">
       <section className="vx-onb-hero">
-        <div className="vx-onb-eyebrow">Passo 2 de 6</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="vx-onb-eyebrow">Passo 2 de 6</div>
+          <button type="button" className="vx-btn vx-btn-sm vx-btn-ghost" onClick={pular} disabled={salvando}
+            style={{ fontSize: 12, gap: 4 }}>
+            <SkipForward size={13} /> Pular
+          </button>
+        </div>
         <h1 className="vx-disp">Conte sobre a sua empresa</h1>
         <p>A IA usa essas informações para montar scripts e funis que falam como a sua marca. Pode ir sem medo — você revisa tudo antes de ativar.</p>
         <ul className="vx-onb-proximos">
@@ -329,7 +392,14 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
           <Campo id={`${id}-ticket`} label="Ticket médio" erro={erros.ticket} dica="Valor médio de uma venda.">
             <div className="vx-onb-moeda">
               <span aria-hidden="true">R$</span>
-              <input {...props("ticket", { dica: true })} inputMode="decimal" placeholder="1.490,00" />
+              <input id={`${id}-ticket`} className="vx-input" inputMode="numeric" placeholder="1.490,00"
+                value={dados.ticket}
+                onChange={(e) => {
+                  const formatado = mascaraMoeda(e.target.value);
+                  mudarDireto("ticket", formatado);
+                }}
+                aria-invalid={erros.ticket ? true : undefined}
+                aria-describedby={`${id}-ticket-dica`} />
             </div>
           </Campo>
 
@@ -342,8 +412,8 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
                   onChange={(e) => mudarServico(i, "nome", e.target.value)} />
                 <div className="vx-onb-moeda">
                   <span aria-hidden="true">R$</span>
-                  <input className="vx-input" inputMode="decimal" placeholder="Valor"
-                    value={s.valor} onChange={(e) => mudarServico(i, "valor", e.target.value)}
+                  <input className="vx-input" inputMode="numeric" placeholder="0,00"
+                    value={s.valor} onChange={(e) => mudarServico(i, "valor", mascaraMoeda(e.target.value))}
                     style={{ paddingLeft: 42 }} />
                 </div>
                 <button type="button" className="vx-onb-servico-rm" onClick={() => removerServico(i)} title="Remover serviço">
@@ -362,6 +432,16 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
           </Campo>
 
           <Campo id={`${id}-publico`} label="Público" obrigatorio erro={erros.publico}>
+            <ChipsPublico
+              segmento={dados.segmento}
+              opcoes={PUBLICOS_POR_SEGMENTO[dados.segmento] || []}
+              selecionados={(dados.publico || "").split(", ").filter(Boolean)}
+              onToggle={(op) => {
+                const atual = (dados.publico || "").split(", ").filter(Boolean);
+                const novo = atual.includes(op) ? atual.filter((x) => x !== op) : [...atual, op];
+                mudarDireto("publico", novo.join(", "));
+              }}
+            />
             <textarea {...props("publico")} rows={3} placeholder="Quem compra: cargo, tipo de empresa ou perfil de pessoa." maxLength={4000} />
           </Campo>
 

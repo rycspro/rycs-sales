@@ -143,9 +143,19 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     try { await navigator.clipboard.writeText(pix.payload); setCopiado(true); setTimeout(() => setCopiado(false), 3000); } catch { /* o campo continua selecionável */ }
   };
 
+  const ativarGratis = async () => {
+    setEnviando(true);
+    const r = await api("/onboarding/plano/gratis", {});
+    setEnviando(false);
+    if (!r || r.error) return setErro(r?.error || "Não foi possível ativar o plano grátis.");
+    aoAtualizar(r);
+    aoAvancar(r);
+  };
+
   const assinar = async (e) => {
     e.preventDefault();
     setErro("");
+    if (escolhido?.preco === 0) return ativarGratis();
     if (forma === "pix") return assinarPix();
     if (forma === "internacional") return assinarInternacional();
     const v = validarCartao(cartao);
@@ -286,13 +296,29 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
               <input type="radio" name={`${id}-plano`} value={p.chave} checked={plano === p.chave} onChange={() => setPlano(p.chave)} />
               <span>
                 <b className="vx-disp">{p.nome}</b>
-                <span className="vx-onb-preco">{money(p.preco)}<small>/mês</small></span>
+                <span className="vx-onb-preco">{p.preco === 0 ? "Grátis" : <>{money(p.preco)}<small>/mês</small></>}</span>
                 <ul>{(p.inclui || []).map((i) => <li key={i}>{i}</li>)}</ul>
               </span>
             </label>
           ))}
         </fieldset>
 
+        {escolhido?.preco === 0 ? (
+          <section className="vx-onb-card" aria-labelledby={`${id}-pag`}>
+            <h2 id={`${id}-pag`} className="vx-disp" style={{ fontSize: 18, margin: "0 0 14px" }}>Plano Grátis</h2>
+            <p className="vx-mut" style={{ fontSize: 14, lineHeight: 1.6, margin: "0 0 16px" }}>
+              Comece agora sem pagar nada. Você pode fazer upgrade a qualquer momento em Minha Conta › Plano.
+            </p>
+            <dl className="vx-onb-resumo">
+              <div><dt>Plano</dt><dd>{escolhido.nome}</dd></div>
+              <div><dt>Cobrado hoje</dt><dd>{money(0)}</dd></div>
+            </dl>
+            <div aria-live="polite">{erro && <div className="vx-onb-erro" role="alert">{erro}</div>}</div>
+            <button type="submit" className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" disabled={enviando}>
+              {enviando ? "Ativando…" : "Começar com o plano grátis"}
+            </button>
+          </section>
+        ) : (
         <section className="vx-onb-card" aria-labelledby={`${id}-pag`}>
           <h2 id={`${id}-pag`} className="vx-disp" style={{ fontSize: 18, margin: "0 0 14px" }}>Pagamento</h2>
           <fieldset className="vx-onb-campo" style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
@@ -355,6 +381,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
               : "Os dados do cartão vão direto ao Asaas, nosso processador de pagamentos. A RYCS não guarda número nem CVV."}
           </p>
         </section>
+        )}
       </div>
 
       <div className="vx-onb-acoes">
