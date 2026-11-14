@@ -1,5 +1,11 @@
 // Dicionário Mandarim (中文). Espelha pt-BR.js.
 export default {
+  idioma: {
+    eyebrow: "欢迎来到 RYCS",
+    titulo: "您的下一步从这里开始。",
+    descricao: "选择您的语言以继续并探索平台。",
+    label: "平台语言",
+  },
   comum: {
     voltar: "返回",
     continuar: "继续",

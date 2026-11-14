@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ArrowRight } from "lucide-react";
 import { Campo, CampoSenha } from "./ui.jsx";
 import MolduraAuth from "./auth/MolduraAuth.jsx";
 import RecuperarSenha from "./auth/RecuperarSenha.jsx";
@@ -108,19 +109,41 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
     setLocale(valor || "pt-BR");
   };
 
-  if (etapa === "idioma") return (
-    <MolduraAuth
-      titulo="Bem-vindo à RYCS"
-      subtitulo={<>Que bom ter você aqui — escolha um idioma para começar.<br />Glad to have you here — choose a language to start.</>}
-      largura={420}>
-      <Campo label="Escolha um idioma">
-        <ComboSelect opcoes={IDIOMAS} valor={idioma} onChange={escolherIdioma} placeholder="Escolha um idioma" name="idioma" />
-      </Campo>
-      <button className="vx-btn vx-btn-primary vx-btn-block" disabled={!idioma} onClick={() => setEtapa("conta")} style={{ marginTop: 4 }}>
-        Continuar
-      </button>
-    </MolduraAuth>
-  );
+  if (etapa === "idioma") {
+    const AZUL = "#318CE7";
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "var(--bg)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        <style>{`.vx-idioma-card .vx-input:focus,.vx-idioma-card .vx-input:focus-visible{border-color:${AZUL};box-shadow:0 0 0 3px rgba(49,140,231,.15);outline:none}`}</style>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
+          <div className="vx-fade" style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
+            <img src="/logo-rycs.png" alt="RYCS Sales Machine"
+              onError={(e) => { e.currentTarget.style.display = "none"; const t2 = e.currentTarget.nextSibling; if (t2) t2.style.display = "block"; }}
+              style={{ width: 148, margin: "0 auto 22px" }} />
+            <span className="vx-disp" style={{ display: "none", fontSize: 26, fontWeight: 800, letterSpacing: "-.02em", color: "var(--brand)", margin: "0 auto 22px" }}>RYCS</span>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: AZUL, marginBottom: 12 }}>{t("idioma.eyebrow")}</div>
+            <h1 className="vx-disp" style={{ fontSize: 25, lineHeight: 1.22, color: "var(--ink)", margin: "0 0 10px" }}>{t("idioma.titulo")}</h1>
+            <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5, margin: "0 0 24px" }}>{t("idioma.descricao")}</p>
+            <div className="vx-idioma-card" style={{ background: "var(--surface-solid)", border: "1px solid var(--border-strong)", borderRadius: 12, padding: 20, textAlign: "left" }}>
+              <label className="vx-label" style={{ display: "block", marginBottom: 8 }}>{t("idioma.label")}</label>
+              <ComboSelect opcoes={IDIOMAS} valor={idioma} onChange={escolherIdioma} placeholder={t("idioma.label")} name="idioma" />
+              <button type="button" disabled={!idioma} onClick={() => setEtapa("conta")}
+                onMouseEnter={(e) => { if (idioma) e.currentTarget.style.background = "#2b7cd0"; }}
+                onMouseLeave={(e) => { if (idioma) e.currentTarget.style.background = AZUL; }}
+                style={{
+                  marginTop: 14, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  background: idioma ? AZUL : "var(--surface-3)", color: idioma ? "#fff" : "var(--muted-2)",
+                  border: "none", borderRadius: 10, padding: "12px 16px", fontWeight: 600, fontSize: 14.5,
+                  cursor: idioma ? "pointer" : "not-allowed", minHeight: 46, transition: "background .15s",
+                }}>
+                {t("comum.continuar")} <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+        <footer style={{ textAlign: "center", padding: 16, fontSize: 12, color: "var(--muted-2)" }}>© 2026 RYCS</footer>
+      </div>
+    );
+  }
 
   if (etapa === "conta") {
     const cardBase = {

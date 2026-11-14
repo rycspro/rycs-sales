@@ -3,6 +3,12 @@
 // foi traduzido cai neste arquivo automaticamente.
 
 export default {
+  idioma: {
+    eyebrow: "BEM-VINDO À RYCS",
+    titulo: "O seu próximo passo começa aqui.",
+    descricao: "Selecione seu idioma para continuar e explorar a plataforma.",
+    label: "Idioma da plataforma",
+  },
   comum: {
     voltar: "Voltar",
     continuar: "Continuar",

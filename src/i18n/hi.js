@@ -2,6 +2,12 @@
 // tradução aqui cai no português automaticamente.
 
 export default {
+  idioma: {
+    eyebrow: "RYCS में आपका स्वागत है",
+    titulo: "आपका अगला कदम यहीं से शुरू होता है।",
+    descricao: "जारी रखने और प्लेटफ़ॉर्म को एक्सप्लोर करने के लिए अपनी भाषा चुनें।",
+    label: "प्लेटफ़ॉर्म की भाषा",
+  },
   comum: {
     voltar: "वापस",
     continuar: "जारी रखें",

@@ -1,5 +1,11 @@
 // Dicionário Inglês (English). Espelha pt-BR.js.
 export default {
+  idioma: {
+    eyebrow: "WELCOME TO RYCS",
+    titulo: "Your next step starts here.",
+    descricao: "Select your language to continue and explore the platform.",
+    label: "Platform language",
+  },
   comum: {
     voltar: "Back",
     continuar: "Continue",

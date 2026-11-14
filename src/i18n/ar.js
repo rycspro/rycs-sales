@@ -1,6 +1,12 @@
 // Dicionário Árabe (العربية). Espelha pt-BR.js. Idioma RTL: a engine inverte
 // o layout (dir=rtl) automaticamente.
 export default {
+  idioma: {
+    eyebrow: "مرحبًا بك في RYCS",
+    titulo: "خطوتك التالية تبدأ من هنا.",
+    descricao: "اختر لغتك للمتابعة واستكشاف المنصة.",
+    label: "لغة المنصة",
+  },
   comum: {
     voltar: "رجوع",
     continuar: "متابعة",

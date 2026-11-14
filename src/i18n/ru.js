@@ -1,5 +1,11 @@
 // Dicionário Russo (Русский). Espelha pt-BR.js.
 export default {
+  idioma: {
+    eyebrow: "ДОБРО ПОЖАЛОВАТЬ В RYCS",
+    titulo: "Ваш следующий шаг начинается здесь.",
+    descricao: "Выберите язык, чтобы продолжить и изучить платформу.",
+    label: "Язык платформы",
+  },
   comum: {
     voltar: "Назад",
     continuar: "Продолжить",

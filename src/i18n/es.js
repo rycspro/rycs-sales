@@ -1,5 +1,11 @@
 // Dicionário Espanhol (Español). Espelha pt-BR.js.
 export default {
+  idioma: {
+    eyebrow: "BIENVENIDO A RYCS",
+    titulo: "Tu próximo paso comienza aquí.",
+    descricao: "Selecciona tu idioma para continuar y explorar la plataforma.",
+    label: "Idioma de la plataforma",
+  },
   comum: {
     voltar: "Volver",
     continuar: "Continuar",

@@ -1,5 +1,11 @@
 // Dicionário Indonésio (Bahasa Indonesia). Espelha pt-BR.js.
 export default {
+  idioma: {
+    eyebrow: "SELAMAT DATANG DI RYCS",
+    titulo: "Langkah Anda berikutnya dimulai di sini.",
+    descricao: "Pilih bahasa Anda untuk melanjutkan dan menjelajahi platform.",
+    label: "Bahasa platform",
+  },
   comum: {
     voltar: "Kembali",
     continuar: "Lanjutkan",

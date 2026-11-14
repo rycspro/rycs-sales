@@ -1,5 +1,11 @@
 // Dicionário Bengali (বাংলা). Espelha pt-BR.js.
 export default {
+  idioma: {
+    eyebrow: "RYCS-এ স্বাগতম",
+    titulo: "আপনার পরবর্তী পদক্ষেপ এখান থেকেই শুরু।",
+    descricao: "চালিয়ে যেতে এবং প্ল্যাটফর্মটি অন্বেষণ করতে আপনার ভাষা নির্বাচন করুন।",
+    label: "প্ল্যাটফর্মের ভাষা",
+  },
   comum: {
     voltar: "ফিরে যান",
     continuar: "চালিয়ে যান",

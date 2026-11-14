@@ -1,5 +1,11 @@
 // Dicionário Francês (Français). Espelha pt-BR.js.
 export default {
+  idioma: {
+    eyebrow: "BIENVENUE CHEZ RYCS",
+    titulo: "Votre prochaine étape commence ici.",
+    descricao: "Sélectionnez votre langue pour continuer et explorer la plateforme.",
+    label: "Langue de la plateforme",
+  },
   comum: {
     voltar: "Retour",
     continuar: "Continuer",
