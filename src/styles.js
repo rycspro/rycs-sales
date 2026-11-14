@@ -891,6 +891,7 @@ html[data-versao="sol"] .vx-account-group,
 html[data-versao="sol"] .vx-account-trigger{
   background:#FFFFFF!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   border:1px solid #EAEAEA!important;border-radius:10px!important;box-shadow:none!important}
+html[data-versao="sol"] .vx-card.vx-card--active{background:linear-gradient(120deg,#2563EB 0%,#4338CA 52%,#0EA5E9 100%)!important;color:#fff!important;border:0!important;box-shadow:0 10px 26px rgba(37,99,235,.28)!important}
 html[data-versao="sol"] .vx-card:hover,
 html[data-versao="sol"] .vx-stat:hover{transform:none!important;border-color:#318CE7!important;box-shadow:none!important}
 html[data-versao="sol"] .vx-tile{padding:18px 20px}

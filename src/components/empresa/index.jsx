@@ -160,7 +160,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
           onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
         />
       )}
-      {(aba === "configuracoes" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
+      {(aba === "configuracoes" || aba === "conta" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
         <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar}
           secaoInicial={aba === "pagamentos" ? "plano" : aba === "pagamentos-visibilidade" ? "visibilidade" : undefined} />
       )}
