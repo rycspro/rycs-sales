@@ -121,6 +121,18 @@ router.post("/assistant/training-draft", (req, res) => {
   const campanhas = db.prepare("SELECT * FROM campaigns WHERE companyId = ? ORDER BY criadoEm DESC LIMIT 8").all(companyId);
   const docs = db.prepare("SELECT id, titulo, conteudo, versao FROM knowledge_documents WHERE companyId = ? AND status = 'disponível' ORDER BY atualizadoEm DESC").all(companyId);
   const json = (valor, padrao = []) => { try { return JSON.parse(valor || ""); } catch { return padrao; } };
+  // Informações estruturadas de Materiais ("Informações da empresa"). A Academy
+  // consome estas entradas como fonte autorizada para gerar capacitação.
+  const SECAO_ROTULO = { sobre: "Sobre a empresa", produtos: "Produtos e serviços", abordagens: "Abordagens e orientações", processos: "Processos e procedimentos" };
+  const infos = db.prepare("SELECT id, secao, titulo, descricao, conteudo, dados FROM company_info_entries WHERE companyId = ? AND status = 'salvo' ORDER BY secao, ordem").all(companyId)
+    .map((e) => {
+      const d = json(e.dados, {});
+      const partes = [e.descricao, e.conteudo, d.caracteristicas, d.beneficios, d.diferenciais, d.publico, d.objetivo, d.observacoes,
+        Array.isArray(d.etapas) ? d.etapas.filter(Boolean).map((p, i) => `${i + 1}. ${p}`).join("\n") : ""]
+        .map((x) => String(x || "").trim()).filter(Boolean);
+      return { id: e.id, secao: e.secao, rotulo: SECAO_ROTULO[e.secao] || e.secao, titulo: e.titulo || SECAO_ROTULO[e.secao] || "Informação", conteudo: partes.join("\n") };
+    })
+    .filter((e) => e.conteudo);
   const materiais = json(companhia?.materiais);
   const conteudosExistentes = [
     ...json(companhia?.curso),
@@ -151,6 +163,7 @@ router.post("/assistant/training-draft", (req, res) => {
     ...(tem(companhia.produto) || tem(companhia.icp) || tem(companhia.diferenciais) || tem(companhia.objecoes) ? ["cadastro-empresa"] : []),
     ...campanhas.map((c) => `campanha-${c.id}`), ...docs.map((d) => d.id),
     ...materiais.map((m) => `material-${m.id || m.nome}`), ...conteudosExistentes.map((m) => `treinamento-${m.id || m.titulo}`),
+    ...infos.map((e) => `info-${e.id}`),
   ];
   const modulos = [
     { id: `base-${Date.now()}-1`, titulo: `Produto e proposta de valor para ${perfilNome}`, conteudo: `Produto/serviço: ${produto}\nPúblico-alvo: ${icp}\nDiferenciais: ${diferenciais}\n\nExplique o benefício em linguagem adequada à operação ${canal}.`, fonte: { tipo: "dados da empresa" } },
@@ -158,6 +171,7 @@ router.post("/assistant/training-draft", (req, res) => {
     { id: `base-${Date.now()}-3`, titulo: "Objeções e encaminhamento", conteudo: `Objeções e orientações existentes: ${objecoes}\n\nNão invente condições. Confirme a dúvida, retome o diferencial aplicável e combine um próximo passo concreto.`, fonte: { tipo: "dados comerciais" } },
     ...conteudosExistentes.slice(0, 2).map((m, i) => ({ id: `operacao-${m.id || i}`, titulo: m.titulo || "Material operacional", conteudo: String(m.conteudo || "").slice(0, 1600), fonte: { tipo: "campanha ou onboarding existente" } })),
     ...docs.slice(0, 3).map((d) => ({ id: `rag-${d.id}`, titulo: d.titulo, conteudo: String(d.conteudo || "").slice(0, 1600), fonte: { documentId: d.id, documento: d.titulo, versao: d.versao } })),
+    ...infos.slice(0, 4).map((e) => ({ id: `info-${e.id}`, titulo: `${e.rotulo}: ${e.titulo}`, conteudo: e.conteudo.slice(0, 1600), fonte: { tipo: "Informações da empresa (Materiais)", secao: e.rotulo } })),
   ];
   const basesQuiz = trechos.length >= 3 ? trechos.slice(0, 5) : [
     { texto: produto, documento: "Produto ou serviço" }, { texto: icp, documento: "ICP" }, { texto: diferenciais, documento: "Diferenciais" }, { texto: objecoes, documento: "Objeções" },

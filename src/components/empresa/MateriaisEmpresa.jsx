@@ -6,6 +6,7 @@ import {
   LayoutGrid, List, Eye,
 } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
+import { CardsInformacoes, SecaoInformacoes } from "./InformacoesEmpresa.jsx";
 
 // As seis pastas da biblioteca. Os formatos espelham o que o backend aceita
 // (server/routes/materiais.js). "link" não tem upload de arquivo.
@@ -95,6 +96,8 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
   const [menuAberto, setMenuAberto] = useState(null);
   const [ordem, setOrdem] = useState("recentes");
   const [vista, setVista] = useState("grid");
+  const [infoSecao, setInfoSecao] = useState(null);   // seção de "Informações da empresa" aberta
+  const [resumoInfo, setResumoInfo] = useState(null); // estado de preenchimento dos 4 cards
 
   const abrirDetalhe = (m) => { setDetalhe(m); setEditarDetalhe(false); };
   const renomear = (m) => { setDetalhe(m); setEditarDetalhe(true); };
@@ -109,6 +112,14 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
   }, []);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  // Resumo de preenchimento das "Informações da empresa" — recarrega ao voltar
+  // de uma seção para refletir o que foi salvo.
+  const carregarResumo = useCallback(async () => {
+    const r = await api("/company-info/resumo");
+    if (r?.resumo) setResumoInfo(r.resumo);
+  }, []);
+  useEffect(() => { if (infoSecao === null) carregarResumo(); }, [infoSecao, carregarResumo]);
 
   const contagem = useMemo(() => {
     const c = {};
@@ -139,6 +150,15 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
 
   if (loading) return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
 
+  // Vista interna de uma das quatro "Informações da empresa".
+  if (infoSecao) {
+    return (
+      <div className="vx-fade">
+        <SecaoInformacoes secao={infoSecao} materiaisLib={materiais} aviso={aviso} onVoltar={() => setInfoSecao(null)} />
+      </div>
+    );
+  }
+
   const buscandoGlobal = buscaGlobal.trim().length > 0 && !pasta;
   const resultadosGlobais = buscandoGlobal ? filtrarTexto(materiais, buscaGlobal) : [];
 
@@ -163,11 +183,17 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
     <div className="vx-fade" style={{ position: "relative" }}>
       {/* Cabeçalho principal — só na biblioteca, não dentro de uma pasta */}
       {!pasta && (
-        <div style={{ marginBottom: 20 }}>
-          <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Materiais</h1>
-          <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>
-            Todos os recursos comerciais da sua empresa, organizados em um só lugar.
-          </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+          <div>
+            <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Materiais</h1>
+            <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>
+              Centralize as informações e os arquivos da sua empresa em um só lugar.
+            </p>
+          </div>
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModalUpload({ categoria: null })}
+            style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
+            <Plus size={16} /> Adicionar material
+          </button>
         </div>
       )}
 
@@ -284,9 +310,27 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
             </div>
           ) : (
             <>
-              {/* Biblioteca da empresa — 6 pastas */}
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 12 }}>
-                Biblioteca da empresa
+              {/* SEÇÃO 01 — Informações da empresa (base de conhecimento estruturada) */}
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
+                  Informações da empresa
+                </div>
+                <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
+                  Organize o conhecimento que será utilizado para orientar e capacitar seus profissionais.
+                </p>
+              </div>
+              <div style={{ marginBottom: 32 }}>
+                <CardsInformacoes resumo={resumoInfo} onAbrir={(s) => setInfoSecao(s)} />
+              </div>
+
+              {/* SEÇÃO 02 — Biblioteca de arquivos (6 pastas existentes) */}
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
+                  Biblioteca de arquivos
+                </div>
+                <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
+                  Armazene apresentações, documentos e outros recursos da sua empresa.
+                </p>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14, marginBottom: 32 }}>
                 {PASTAS.map((p) => (

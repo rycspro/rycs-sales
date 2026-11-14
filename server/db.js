@@ -850,6 +850,36 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_enroll_seller ON course_enrollments (sellerId);
 `);
 
+// =====================================================================
+// INFORMAÇÕES DA EMPRESA (base de conhecimento estruturada em Materiais)
+//
+// Uma única tabela flexível serve as quatro seções (sobre, produtos,
+// abordagens, processos). Campos próprios de cada seção vivem em `dados`
+// (JSON): características/benefícios/preço de um produto, etapas[] de um
+// procedimento, etc. Isso evita quatro esquemas paralelos e permite blocos
+// personalizados. Privacidade por empresa via companyId + authMiddleware.
+// A Academy consome estas entradas para gerar capacitação.
+// =====================================================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS company_info_entries (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    secao TEXT NOT NULL,            -- sobre | produtos | abordagens | processos
+    tipo TEXT DEFAULT 'bloco',      -- bloco | produto | orientacao | procedimento | custom
+    titulo TEXT DEFAULT '',
+    descricao TEXT DEFAULT '',
+    conteudo TEXT DEFAULT '',
+    dados TEXT DEFAULT '{}',        -- JSON: campos flexíveis por seção
+    anexos TEXT DEFAULT '[]',       -- JSON: ids de materiais vinculados da biblioteca
+    ordem INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'rascunho', -- rascunho | salvo
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_company_info ON company_info_entries (companyId, secao, ordem);
+`);
+
 const uid = () => randomUUID();
 const agora = () => Date.now();
 

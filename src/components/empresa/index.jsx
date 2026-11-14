@@ -143,7 +143,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "academy" && <>
         {submenu([["rycs", "Cursos da RYCS"], ["empresa", "Ensinar a RYCS"], ["qualificacao", "Dados da Operação"]], secaoAcademy, setSecaoAcademy)}
         {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}
-        {secaoAcademy === "empresa" && <AcademyEmpresaHub emp={emp} aviso={aviso} />}
+        {secaoAcademy === "empresa" && <AcademyEmpresaHub emp={emp} aviso={aviso} onIrParaMateriais={() => setAba?.("materiais")} />}
         {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("configuracoes"); }} />}
       </>}
       {aba === "conferir-fila" && <>

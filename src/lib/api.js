@@ -32,6 +32,14 @@ export const apiPatch = (path, body) =>
     credentials: "include",
   }).then((r) => r.json()).catch(() => null);
 
+export const apiPut = (path, body) =>
+  fetch(`${API_URL}/api${path}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    credentials: "include",
+  }).then((r) => r.json()).catch(() => null);
+
 export const apiDelete = (path) =>
   fetch(`${API_URL}/api${path}`, {
     method: "DELETE",

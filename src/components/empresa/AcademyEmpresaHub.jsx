@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Brain, BookOpen, Sparkles } from "lucide-react";
+import { Brain, BookOpen, Sparkles, FolderOpen, ArrowRight } from "lucide-react";
 import CerebroOnboarding from "./CerebroOnboarding.jsx";
 import CerebroScore from "./CerebroScore.jsx";
 
-export default function AcademyEmpresaHub({ emp, aviso }) {
+export default function AcademyEmpresaHub({ emp, aviso, onIrParaMateriais }) {
   const [modo, setModo] = useState("hub"); // hub | onboarding | score
 
   if (modo === "onboarding") {
@@ -36,8 +36,27 @@ export default function AcademyEmpresaHub({ emp, aviso }) {
         <div>
           <div className="vx-eyebrow">Ambiente Academy</div>
           <h1 className="vx-disp">Academy {emp?.nome}</h1>
-          <p>Ensine a RYCS sobre sua empresa e prepare sua equipe para vender melhor.</p>
+          <p>Transforme o conhecimento da sua empresa em capacitação para a equipe.</p>
         </div>
+      </div>
+
+      {/* As informações da empresa (Sobre, Produtos, Abordagens, Processos) agora
+          vivem em Materiais. A Academy as consome para gerar a capacitação. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#fff", border: "1px solid var(--border)", borderRadius: 14, padding: "16px 18px", marginBottom: 20 }}>
+        <span style={{ width: 44, height: 44, borderRadius: 10, background: "#EAF4FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <FolderOpen size={22} style={{ color: "#318CE7" }} />
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>As informações da sua empresa agora ficam em Materiais</div>
+          <p className="vx-mut" style={{ margin: "2px 0 0", fontSize: 13 }}>
+            Sobre a empresa, produtos e serviços, abordagens e processos. A Academy usa esse conhecimento para criar a capacitação.
+          </p>
+        </div>
+        {onIrParaMateriais && (
+          <button className="vx-btn vx-btn-sm" onClick={onIrParaMateriais} style={{ gap: 6, whiteSpace: "nowrap" }}>
+            Abrir Materiais <ArrowRight size={14} />
+          </button>
+        )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
