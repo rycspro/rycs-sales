@@ -123,7 +123,12 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
             <span className="vx-disp" style={{ display: "none", fontSize: 26, fontWeight: 800, letterSpacing: "-.02em", color: "var(--brand)", margin: "0 auto 22px" }}>RYCS</span>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: AZUL, marginBottom: 12 }}>{t("idioma.eyebrow")}</div>
             <h1 className="vx-disp" style={{ fontSize: 25, lineHeight: 1.22, color: "var(--ink)", margin: "0 0 10px" }}>{t("idioma.titulo")}</h1>
-            <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5, margin: "0 0 24px" }}>{t("idioma.descricao")}</p>
+            <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5, margin: locale === "en" ? "0 0 24px" : "0 0 4px" }}>{t("idioma.descricao")}</p>
+            {locale !== "en" && (
+              <p style={{ fontSize: 13, color: "var(--muted-2)", lineHeight: 1.5, margin: "0 0 24px" }}>
+                Select your language to continue and explore the platform.
+              </p>
+            )}
             <div className="vx-idioma-card" style={{ background: "var(--surface-solid)", border: "1px solid var(--border-strong)", borderRadius: 12, padding: 20, textAlign: "left" }}>
               <label className="vx-label" style={{ display: "block", marginBottom: 8 }}>{t("idioma.label")}</label>
               <ComboSelect opcoes={IDIOMAS} valor={idioma} onChange={escolherIdioma} placeholder={t("idioma.label")} name="idioma" />
