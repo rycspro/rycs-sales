@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -6,6 +6,54 @@ import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shar
 import PricingPlanos from "./PricingPlanos.jsx";
 import CheckoutStripe from "./CheckoutStripe.jsx";
 import HoloCard from "../HoloCard.jsx";
+
+const FRASES_PROCESSANDO = [
+  "Consultando o gateway de pagamento…",
+  "Verificando os dados do cartão…",
+  "Autenticando a transação…",
+  "Registrando a assinatura…",
+  "Confirmando com o processador…",
+  "Ativando o seu plano…",
+  "Finalizando a configuração…",
+];
+
+function ProcessandoPagamento() {
+  const [indice, setIndice] = useState(0);
+  const [progresso, setProgresso] = useState(0);
+  const timer = useRef(null);
+
+  useEffect(() => {
+    timer.current = setInterval(() => {
+      setIndice((i) => (i + 1) % FRASES_PROCESSANDO.length);
+    }, 2400);
+    return () => clearInterval(timer.current);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setProgresso((p) => Math.min(p + (p < 60 ? 4 : p < 85 ? 1.5 : 0.3), 95));
+    }, 300);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <>
+      <div style={{ width: "100%", height: 6, borderRadius: 999, background: "var(--surface-2, #E2E8F0)", overflow: "hidden", marginBottom: 24 }}>
+        <div style={{
+          height: "100%", borderRadius: 999,
+          background: "linear-gradient(90deg, var(--brand) 0%, #0EA5E9 100%)",
+          width: `${progresso}%`,
+          transition: "width .3s ease-out",
+        }} />
+      </div>
+      <Loader size={36} color="var(--brand)" style={{ animation: "spin 1s linear infinite", marginBottom: 16 }} />
+      <h2 style={{ margin: "0 0 12px", fontSize: 20, fontWeight: 700 }}>Processando pagamento…</h2>
+      <p className="vx-mut" style={{ margin: 0, minHeight: 40, transition: "opacity .3s" }} key={indice}>
+        {FRASES_PROCESSANDO[indice]}
+      </p>
+    </>
+  );
+}
 
 const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
   chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui, trial: PLANOS[k].trial,
@@ -102,10 +150,13 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     // Atualizar cartões salvos caso tenha salvo um novo
     if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));
 
-    // Fluxo visual: processando → confirmado
+    // Fluxo visual: processando → confirmado (com timeout de segurança)
     setStatusPagamento("processando");
-    await carregar();
-    await recarregar?.();
+    const timeout = setTimeout(() => setStatusPagamento("confirmado"), 15000);
+    try {
+      await Promise.all([carregar(), recarregar?.()]);
+    } catch { /* falha de reload não deve travar a UI */ }
+    clearTimeout(timeout);
     setTimeout(() => setStatusPagamento("confirmado"), r.jaPago ? 500 : 2500);
   };
 
@@ -403,13 +454,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       {/* Overlay de status: processando → confirmado */}
       {statusPagamento && (
         <div className="vx-overlay" style={{ zIndex: 1100 }}>
-          <div className="vx-sheet" style={{ maxWidth: 400, textAlign: "center", padding: "40px 32px" }}>
+          <div className="vx-sheet" style={{ maxWidth: 420, textAlign: "center", padding: "40px 32px" }}>
             {statusPagamento === "processando" ? (
-              <>
-                <Loader size={48} color="var(--brand)" style={{ animation: "spin 1s linear infinite", marginBottom: 16 }} />
-                <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700 }}>Pagamento processando…</h2>
-                <p className="vx-mut" style={{ margin: 0 }}>Estamos confirmando seu pagamento com o gateway.</p>
-              </>
+              <ProcessandoPagamento />
             ) : (
               <>
                 <CheckCircle size={56} color="#22c55e" style={{ marginBottom: 16 }} />
