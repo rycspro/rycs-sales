@@ -48,7 +48,7 @@ function MetricChip({ icon: Icon, label }) {
   );
 }
 
-function MenuCampanha({ campanha, onVisualizar, onEditar, onArquivar, onExcluir, onToggleCandidaturas, onStatus }) {
+function MenuCampanha({ campanha, onVisualizar, onEditar, onArquivar, onExcluir, onStatus }) {
   const [aberto, setAberto] = useState(false);
   const ref = useRef(null);
 
@@ -59,14 +59,12 @@ function MenuCampanha({ campanha, onVisualizar, onEditar, onArquivar, onExcluir,
     return () => document.removeEventListener("mousedown", fechar);
   }, [aberto]);
 
-  const encerradas = campanha.candidaturasAbertas === false;
   const arquivavel = campanha.status !== "encerrada" && campanha.status !== "cancelada";
   const opcoes = [
     { label: "Visualizar", acao: () => { setAberto(false); onVisualizar?.(campanha); } },
     { label: "Editar", acao: () => { setAberto(false); onEditar(campanha); } },
     campanha.status === "ativa" && { label: "Pausar", acao: () => { setAberto(false); onStatus?.(campanha, "pausada"); } },
     campanha.status === "pausada" && { label: "Retomar", acao: () => { setAberto(false); onStatus?.(campanha, "ativa"); } },
-    { label: encerradas ? "Reabrir candidaturas" : "Encerrar candidaturas", acao: () => { setAberto(false); onToggleCandidaturas?.(campanha); } },
     arquivavel && { label: "Arquivar", acao: () => { setAberto(false); onArquivar(campanha); }, cor: "var(--muted)" },
     { label: "Excluir", acao: () => { setAberto(false); onExcluir(campanha); }, cor: "var(--red)" },
   ].filter(Boolean);
@@ -212,7 +210,6 @@ function InfoCampanha({ c }) {
     c.funcao && [Users, FUNCAO_LABEL[c.funcao] || c.funcao.toUpperCase()],
     c.regiao && [MapPin, c.regiao],
     c.duracaoDias && [Clock, `${c.duracaoDias} dias`],
-    [UserCheck, c.candidaturasAbertas === false ? "Candidaturas encerradas" : "Candidaturas abertas"],
   ].filter(Boolean);
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
@@ -221,14 +218,39 @@ function InfoCampanha({ c }) {
   );
 }
 
-function CampanhaCard({ c, s, onAbrir, onCandidaturas, menu }) {
+// Liga/desliga de candidaturas, no topo do card ao lado do menu. On = abertas
+// (recebendo profissionais); off = encerradas.
+function ToggleCandidaturas({ c, onToggle }) {
+  const aberta = c.candidaturasAbertas !== false;
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={aberta}
+      title={aberta ? "Candidaturas abertas — clique para encerrar" : "Candidaturas encerradas — clique para reabrir"}
+      aria-label={aberta ? "Encerrar candidaturas" : "Reabrir candidaturas"}
+      onClick={(e) => { e.stopPropagation(); onToggle?.(c); }}
+      style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", background: "transparent", cursor: "pointer", padding: "2px 4px" }}
+    >
+      <UserCheck size={14} color={aberta ? "var(--brand)" : "var(--muted)"} strokeWidth={2.2} />
+      <span style={{ position: "relative", width: 32, height: 18, borderRadius: 999, flexShrink: 0, background: aberta ? "var(--brand)" : "var(--surface-3, #cbd5e1)", transition: "background .18s" }}>
+        <span style={{ position: "absolute", top: 2, left: aberta ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,.25)", transition: "left .18s" }} />
+      </span>
+    </button>
+  );
+}
+
+function CampanhaCard({ c, s, onAbrir, onCandidaturas, onToggleCandidaturas, menu }) {
   return (
     <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 16, display: "flex", flexDirection: "column", gap: 12, transition: "border-color .15s, box-shadow .15s" }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand-200)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(17,24,39,.05)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <StatusBadge status={c.status} />
-        {menu}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <ToggleCandidaturas c={c} onToggle={onToggleCandidaturas} />
+          {menu}
+        </div>
       </div>
       <div onClick={() => onAbrir(c)} style={{ cursor: "pointer", flex: 1 }}>
         <div style={{ fontSize: 15.5, fontWeight: 700, color: "var(--ink)", lineHeight: 1.3, letterSpacing: -0.2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.titulo || "Sem título"}</div>
@@ -246,7 +268,7 @@ function CampanhaCard({ c, s, onAbrir, onCandidaturas, menu }) {
   );
 }
 
-function CampanhaRow({ c, s, onAbrir, onCandidaturas, menu }) {
+function CampanhaRow({ c, s, onAbrir, onCandidaturas, onToggleCandidaturas, menu }) {
   const col = (val, label) => (
     <div style={{ textAlign: "center", minWidth: 70 }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{val}</div>
@@ -271,6 +293,7 @@ function CampanhaRow({ c, s, onAbrir, onCandidaturas, menu }) {
           Candidaturas{s.pendentes > 0 && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: "var(--brand-50)", color: "var(--brand)" }}>{s.pendentes}</span>}
         </button>
         <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => onAbrir(c)} style={{ whiteSpace: "nowrap" }}>Gerenciar</button>
+        <ToggleCandidaturas c={c} onToggle={onToggleCandidaturas} />
         {menu}
       </div>
     </div>
@@ -332,7 +355,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
 
   const menuDe = (c) => (
     <MenuCampanha campanha={c} onVisualizar={onAbrir} onEditar={onEditar} onArquivar={onArquivar}
-      onExcluir={onExcluir} onToggleCandidaturas={onToggleCandidaturas} onStatus={onStatus} />
+      onExcluir={onExcluir} onStatus={onStatus} />
   );
 
   return (
@@ -439,13 +462,13 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
       {visiveis.length > 0 && (vista === "grade" ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
           {visiveis.map((c) => (
-            <CampanhaCard key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} menu={menuDe(c)} />
+            <CampanhaCard key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} onToggleCandidaturas={onToggleCandidaturas} menu={menuDe(c)} />
           ))}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {visiveis.map((c) => (
-            <CampanhaRow key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} menu={menuDe(c)} />
+            <CampanhaRow key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} onToggleCandidaturas={onToggleCandidaturas} menu={menuDe(c)} />
           ))}
         </div>
       ))}
