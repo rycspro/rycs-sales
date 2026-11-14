@@ -42,20 +42,20 @@ export const asaasAtivo = () => ambiente.ok;
 export const asaasMotivoDesligado = () => ambiente.motivo;
 
 export class AsaasError extends Error {
-  constructor(mensagem, status, corpo) {
-    super(mensagem);
+  constructor(mensagem, status, corpo, cause) {
+    super(mensagem, { cause });
     this.name = "AsaasError";
     this.status = status;
     this.corpo = corpo;
   }
 }
 
-export async function asaas(caminho, { method = "GET", body } = {}) {
+export async function asaas(caminho, { method = "GET", body, timeoutMs = 15_000 } = {}) {
   if (!ambiente.ok) throw new AsaasError(ambiente.motivo, 0, null);
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
-  let res;
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let res, texto;
   try {
     res = await fetch(`${ambiente.base}${caminho}`, {
       method,
@@ -63,13 +63,12 @@ export async function asaas(caminho, { method = "GET", body } = {}) {
       body: body ? JSON.stringify(body) : undefined,
       signal: ctrl.signal,
     });
+    texto = await res.text();
   } catch (err) {
+    throw new AsaasError(err.name === "AbortError" ? "Gateway de pagamento não respondeu a tempo. Tente novamente." : (err.message || "Falha de conexão com o gateway."), 0, null, err);
+  } finally {
     clearTimeout(timer);
-    throw new AsaasError(err.name === "AbortError" ? "Gateway de pagamento não respondeu a tempo. Tente novamente." : (err.message || "Falha de conexão com o gateway."), 0, null);
   }
-  clearTimeout(timer);
-
-  const texto = await res.text();
   let dados = null;
   try { dados = texto ? JSON.parse(texto) : null; } catch { /* resposta não-JSON */ }
 

@@ -31,6 +31,7 @@ function validarCartao(c) {
   if (!(mes >= 1 && mes <= 12) || !ano || fimValidade <= agora) e.validade = "Validade inválida (MM/AA).";
   if (!/^\d{3,4}$/.test(c.cvv)) e.cvv = "CVV com 3 ou 4 dígitos.";
   if (!normalizarDocumento(c.documento)) e.documento = "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim())) e.email = "Informe um e-mail válido do titular.";
   if (digitos(c.cep).length !== 8) e.cep = "CEP com 8 dígitos.";
   if (!c.numeroEndereco.trim()) e.numeroEndereco = "Informe o número do endereço.";
   return e;
@@ -41,7 +42,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
   const [dados, setDados] = useState(null);
   const [erroCarga, setErroCarga] = useState("");
   const [plano, setPlano] = useState("");
-  const [cartao, setCartao] = useState({ nome: "", numero: "", validade: "", cvv: "", documento: "", cep: "", numeroEndereco: "", telefone: "" });
+  const [cartao, setCartao] = useState({ nome: "", numero: "", validade: "", cvv: "", documento: "", email: "", cep: "", numeroEndereco: "", telefone: "" });
   const [erros, setErros] = useState({});
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -171,7 +172,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
     const r = await api("/subscription", {
       plano, onboarding: true, formaPagamento: "CREDIT_CARD",
       cartao: { nome: cartao.nome, numero: digitos(cartao.numero), validadeMes: mes, validadeAno: ano, cvv: cartao.cvv },
-      titular: { nome: cartao.nome, documento: digitos(cartao.documento), cep: digitos(cartao.cep), numero: cartao.numeroEndereco, telefone: digitos(cartao.telefone) },
+      titular: { nome: cartao.nome, email: cartao.email.trim(), documento: digitos(cartao.documento), cep: digitos(cartao.cep), numero: cartao.numeroEndereco, telefone: digitos(cartao.telefone) },
     });
     setEnviando(false);
     if (!r || r.error) {
@@ -345,6 +346,7 @@ export default function EtapaPlano({ aoAtualizar, aoAvancar, aoVoltar }) {
               {campo("cvv", "CVV", { autoComplete: "cc-csc", inputMode: "numeric", maxLength: 4 }, (v) => digitos(v).slice(0, 4))}
             </div>
             {campo("documento", "CPF ou CNPJ do titular", { inputMode: "numeric" }, (v) => digitos(v).slice(0, 14))}
+            {campo("email", "E-mail do titular", { type: "email", autoComplete: "email" })}
             <div className="vx-onb-dois">
               {campo("cep", "CEP de cobrança", { autoComplete: "postal-code", inputMode: "numeric" }, mascaraCep)}
               {campo("numeroEndereco", "Número", { autoComplete: "address-line2" })}

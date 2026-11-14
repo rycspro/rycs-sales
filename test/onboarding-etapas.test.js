@@ -48,9 +48,11 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
   });
 
   // Gateway falso: o cartão terminado em 0002 é recusado.
+  const assinaturasAsaas = [];
   const baseAsaas = servidorFalso(t, (req, corpo) => {
     if (req.url.startsWith("/customers")) return [200, { id: "cus_teste" }];
     if (req.url.startsWith("/subscriptions") && req.method === "POST") {
+      assinaturasAsaas.push(corpo);
       if (corpo.creditCard?.number?.endsWith("0002")) return [400, { errors: [{ description: "Transação não autorizada." }] }];
       return [200, { id: "sub_teste", creditCard: { creditCardNumber: "4242", creditCardBrand: "VISA" } }];
     }
@@ -59,7 +61,7 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
   });
 
   const { base, dbPath } = await subirServidor(t, {
-    ANTHROPIC_API_KEY: "chave-falsa", ANTHROPIC_BASE_URL: baseIA,
+    ANTHROPIC_API_KEY: "chave-falsa", ANTHROPIC_BASE_URL: baseIA, IA_ONBOARDING_MODELO: "claude-opus-5-5",
     ASAAS_API_KEY: "chave-falsa", ASAAS_BASE_URL_TESTE: baseAsaas,
   });
   const req = cliente(base);
@@ -144,17 +146,22 @@ test("etapas 3 a 6: materiais, IA externa com falha (motor interno assume), apro
   // Etapa 5: cartão recusado volta com o motivo e não conclui a etapa.
   r = await req("/onboarding/plano", { cookie: ck });
   assert.equal(r.corpo.trialDias, 3);
-  const checkout = (numero) => req("/subscription", { cookie: ck, body: {
-    plano: r.corpo.planos[0].chave, onboarding: true,
+  const checkout = (numero) => req("/subscription", { cookie: ck, headers: { "X-Forwarded-For": "203.0.113.10" }, body: {
+    plano: "scale", onboarding: true,
+    remoteIp: "203.0.113.99",
     cartao: { nome: "Ana Silva", numero, validadeMes: "12", validadeAno: "40", cvv: "123" },
-    titular: { documento: "12345678909", cep: "01001000", numero: "10" },
+    titular: { email: "titular@exemplo.invalid", documento: "12345678909", cep: "01001000", numero: "10" },
   } });
   let c = await checkout("4000000000000002");
-  assert.equal(c.status, 502); assert.match(c.corpo.error, /não autorizada/);
+  assert.equal(c.status, 400); assert.match(c.corpo.error, /não autorizada/);
   assert.equal((await req("/onboarding", { cookie: ck })).corpo.atual, "plano");
   c = await checkout("4242424242424242");
   assert.equal(c.status, 200); assert.equal(c.corpo.status, "trial"); assert.equal(c.corpo.trialDias, 3);
   assert.equal(c.corpo.onboardingConcluido, true);
+  assert.equal(assinaturasAsaas.length, 2);
+  assert.equal(assinaturasAsaas[1].remoteIp, "203.0.113.10");
+  assert.equal(assinaturasAsaas[1].creditCardHolderInfo.email, "titular@exemplo.invalid");
+  assert.equal(assinaturasAsaas[1].cycle, "MONTHLY");
   const sub = db.prepare("SELECT * FROM subscriptions WHERE companyId = (SELECT entityId FROM users WHERE email = 'dono@exemplo.invalid')").get();
   assert.equal(sub.cartaoFinal, "4242");
   assert.ok(!JSON.stringify(sub).includes("4242424242424242"), "número do cartão não fica no banco");

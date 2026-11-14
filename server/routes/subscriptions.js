@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import { Router } from "express";
 import { randomBytes, createHash } from "crypto";
 import db, { uid, agora } from "../db.js";
@@ -350,7 +351,8 @@ router.get("/subscription", (req, res) => {
 // Contratar um plano. O Free é imediato; os pagos geram cobrança recorrente e
 // só passam a valer quando o gateway confirmar o pagamento.
 router.post("/subscription", async (req, res) => {
-  const timeout = setTimeout(() => {
+  const credito = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase() === "CREDIT_CARD";
+  const timeout = credito ? null : setTimeout(() => {
     if (!res.headersSent) {
       console.error("[assinatura] timeout de 50 s — resposta forçada");
       res.status(504).json({ error: "O servidor demorou demais para responder. Tente novamente." });
@@ -515,6 +517,11 @@ router.post("/subscription", async (req, res) => {
     // Dados do cartão vão ao gateway e não ficam aqui. O que voltamos a
     // guardar é o que o Asaas devolve tokenizado: bandeira e quatro dígitos.
     if (forma === "CREDIT_CARD" || forma === "DEBIT_CARD") {
+      if (forma === "CREDIT_CARD") {
+        if (!isIP(req.ip))
+          return res.status(400).json({ error: "Não foi possível identificar o IP do pagador." });
+        corpo.remoteIp = req.ip;
+      }
       const savedCardId = req.body?.savedCardId;
       if (savedCardId) {
         const saved = db.prepare("SELECT * FROM saved_cards WHERE id = ? AND companyId = ?").get(savedCardId, entityId);
@@ -540,19 +547,37 @@ router.post("/subscription", async (req, res) => {
           expiryYear: String(cartao.validadeAno).length === 2 ? `20${cartao.validadeAno}` : String(cartao.validadeAno),
           ccv: String(cartao.cvv),
         };
+        let email = titular.email;
+        if (forma === "CREDIT_CARD") {
+          email = String(email || "").trim() ||
+            db.prepare("SELECT email FROM users WHERE id = ?").get(req.user.id)?.email;
+          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+            return res.status(400).json({ error: "Informe um e-mail válido do titular.", campo: "email" });
+        }
         corpo.creditCardHolderInfo = {
           name: titular.nome || cartao.nome,
-          email: titular.email || undefined,
+          email: email || undefined,
           cpfCnpj: String(titular.documento || empresa.documento).replace(/\D/g, ""),
           postalCode: String(titular.cep || "").replace(/\D/g, ""),
           addressNumber: String(titular.numero || "") || "0",
           phone: String(titular.telefone || empresa.telefoneEmpresa || "").replace(/\D/g, "") || undefined,
         };
-        if (req.body?.remoteIp) corpo.remoteIp = String(req.body.remoteIp);
+        if (forma === "DEBIT_CARD" && req.body?.remoteIp) corpo.remoteIp = String(req.body.remoteIp);
       }
     }
 
-    const cobranca = await asaas("/subscriptions", { method: "POST", body: corpo });
+    let cobranca;
+    try {
+      cobranca = await asaas("/subscriptions", {
+        method: "POST", body: corpo, timeoutMs: forma === "CREDIT_CARD" ? 60_000 : undefined,
+      });
+    } catch (err) {
+      if (forma === "CREDIT_CARD" && err instanceof AsaasError && err.status === 400)
+        return res.status(400).json({ error: err.message });
+      if (forma === "CREDIT_CARD" && err.cause?.name === "AbortError")
+        return res.status(504).json({ error: "O Asaas demorou a responder. Verifique se a assinatura foi criada antes de tentar novamente." });
+      throw err;
+    }
 
     let pagamento=null,pix=null;
     try{const lista=await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=1`);pagamento=lista?.data?.[0]||null;if(pagamento?.id)pix=await asaas(`/payments/${pagamento.id}/pixQrCode`);}catch(e){console.warn("[asaas] QR da assinatura:",e.message);}
