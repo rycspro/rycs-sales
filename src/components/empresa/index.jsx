@@ -158,7 +158,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "integracoes" && (
         <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)} />
       )}
-      {aba === "planos" && (
+      {(aba === "planos" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
           secao="plano" onTrocarSecao={() => {}} />
       )}
@@ -168,9 +168,8 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
           onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
         />
       )}
-      {(aba === "configuracoes" || aba === "conta" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
-        <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar}
-          secaoInicial={aba === "pagamentos" ? "plano" : aba === "pagamentos-visibilidade" ? "visibilidade" : undefined} />
+      {(aba === "configuracoes" || aba === "conta") && (
+        <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />
       )}
       {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa emp={emp} aviso={aviso} />}
 
