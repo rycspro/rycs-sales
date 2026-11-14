@@ -67,10 +67,10 @@ export const NAV = {
     { divider: true },
     { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch, children: [
       { key: "profissionais", label: "Profissionais" },
+      { key: "conversas", label: "Conversas" },
       { key: "conferir-fila", label: "Aprovações" },
       { key: "conferir-time", label: "Time" },
     ] },
-    { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { divider: true },
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
       { key: "pagamentos", label: "Planos" },
