@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, X, Clock3, ArrowRight } from "lucide-react";
+import { Search, X, Clock3, ArrowRight, Webhook, Code2 } from "lucide-react";
 import { api } from "../../../lib/api.js";
 import IntegracaoMeta from "../IntegracaoMeta.jsx";
 import { INTEGRACOES, FILTROS, STATUS, statusMeta, rotuloCategoria } from "./catalogo.js";
@@ -29,6 +29,17 @@ function Logo({ item, tam = 44 }) {
           loading="lazy" onError={() => setErroIcone(true)}
           style={{ display: "block" }}
         />
+      </div>
+    );
+  }
+
+  // Ferramentas genéricas (não são marcas de empresa): ícone de traço.
+  const ICONE_LUCIDE = { webhooks: Webhook, "api-rycs": Code2 };
+  const IconeGen = ICONE_LUCIDE[item.id];
+  if (IconeGen) {
+    return (
+      <div style={{ ...ladrilho, background: item.cor, border: 0 }}>
+        <IconeGen size={Math.round(tam * 0.5)} color="#fff" strokeWidth={2} />
       </div>
     );
   }
