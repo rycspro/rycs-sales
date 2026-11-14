@@ -76,6 +76,7 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
     if (forma === "CREDIT_CARD") {
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
       if (faltando.length) return aviso("Preencha todos os dados do cartão.");
+      if (![11, 14].includes(SO_DIGITOS(titular.documento).length)) return aviso("Informe o CPF ou CNPJ do titular do cartão.");
       if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
     }
 
@@ -84,9 +85,10 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
       plano,
       formaPagamento: forma,
       cartao: forma === "CREDIT_CARD" ? cartao : undefined,
-      titular: forma === "CREDIT_CARD" ? { ...titular, documento: titular.documento || emp.documento } : undefined,
+      titular: forma === "CREDIT_CARD" ? titular : undefined,
     });
     setEnviando(false);
+    if (forma === "CREDIT_CARD") setCartao((dados) => ({ ...dados, cvv: "" }));
 
     if (!r || r.error) return aviso(r?.error || "Não foi possível ativar a assinatura.");
 
@@ -252,7 +254,7 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
                   value={cartao.validadeAno} onChange={(e) => setCartao({ ...cartao, validadeAno: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
               <label><div className="vx-label">CVV</div>
                 <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="123"
-                  value={cartao.cvv} onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
+                  type="password" value={cartao.cvv} onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
             </div>
 
             <div className="vx-eyebrow" style={{ margin: "18px 0 10px" }}>Endereço de cobrança</div>
@@ -265,6 +267,9 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
                   onChange={(e) => setTitular({ ...titular, numero: e.target.value })} /></label>
             </div>
             <div className="vx-grid vx-g2" style={{ gap: 10, marginTop: 10 }}>
+              <label><div className="vx-label">CPF ou CNPJ do titular</div>
+                <input className="vx-input vx-mono" inputMode="numeric" value={titular.documento}
+                  onChange={(e) => setTitular({ ...titular, documento: SO_DIGITOS(e.target.value).slice(0, 14) })} /></label>
               <label><div className="vx-label">E-mail do titular</div>
                 <input className="vx-input" type="email" value={titular.email}
                   onChange={(e) => setTitular({ ...titular, email: e.target.value })} /></label>

@@ -83,6 +83,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       const LABELS = { nome: "nome no cartão", numero: "número do cartão", validadeMes: "mês de validade", validadeAno: "ano de validade", cvv: "CVV" };
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
       if (faltando.length) return aviso(`Preencha: ${faltando.map(([k]) => LABELS[k] || k).join(", ")}.`);
+      if (![11, 14].includes(SO_DIGITOS(titular.documento).length)) return aviso("Informe o CPF ou CNPJ do titular do cartão.");
       if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
     }
 
@@ -98,6 +99,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       salvarCartao: ehCartao && !cardSalvoId && salvarCartao ? true : undefined,
     });
     setProcessando(false);
+    if (forma === "CREDIT_CARD") setCartao((dados) => ({ ...dados, cvv: "" }));
 
     if (!r) return aviso("Sem resposta do servidor. Verifique a conexão e tente de novo.");
     if (r.error) return aviso(r.error);
@@ -318,7 +320,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                         holder={cartao.nome || "RYCS"}
                         number={cartao.numero || "0000000000000000"}
                         expires={cartao.validadeMes && cartao.validadeAno ? `${String(cartao.validadeMes).padStart(2, "0")}/${String(cartao.validadeAno).slice(-2)}` : "••/••"}
-                        cvv={cartao.cvv || "•••"}
+                        cvv="•••"
                         tier="Crédito"
                       />
                     </div>
@@ -342,7 +344,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                           onChange={(e) => setCartao({ ...cartao, validadeAno: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
                       <label><div className="vx-label">CVV</div>
                         <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="123"
-                          value={cartao.cvv}
+                          type="password" value={cartao.cvv}
                           onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
                     </div>
 
@@ -356,6 +358,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                           onChange={(e) => setTitular({ ...titular, numero: e.target.value })} /></label>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+                      <label><div className="vx-label">CPF ou CNPJ do titular</div>
+                        <input className="vx-input vx-mono" inputMode="numeric" value={titular.documento}
+                          onChange={(e) => setTitular({ ...titular, documento: SO_DIGITOS(e.target.value).slice(0, 14) })} /></label>
                       <label><div className="vx-label">E-mail do titular</div>
                         <input className="vx-input" type="email" value={titular.email}
                           onChange={(e) => setTitular({ ...titular, email: e.target.value })} /></label>

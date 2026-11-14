@@ -580,7 +580,7 @@ router.post("/subscription", async (req, res) => {
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
           return res.status(400).json({ error: "Informe um e-mail válido do titular.", campo: "email" });
 
-        const documento = normalizarDocumento(titular.documento || empresa.documento);
+        const documento = normalizarDocumento(titular.documento);
         const cep = String(titular.cep || "").replace(/\D/g, "");
         const endereco = String(titular.numero || "").trim();
         const { number, expiryMonth, expiryYear, ccv } = corpo.creditCard;
