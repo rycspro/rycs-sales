@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
-import { asaas, asaasAtivo, AsaasError } from "../services/asaas.js";
+import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { criarCheckoutDeposito, stripeAtivo } from "../services/stripe.js";
 import { normalizarMoeda } from "../../shared/moedas.js";
@@ -16,21 +16,9 @@ async function cobrancaPeloGateway(req, res, companyId, valor) {
     return res.status(400).json({ error: "Cadastre o CNPJ ou CPF da empresa antes de depositar." });
 
   try {
-    let customer = empresa.asaasCustomerId;
-    if (!customer) {
-      const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
-      const cliente = await asaas("/customers", {
-        method: "POST",
-        body: {
-          name: empresa.nome,
-          cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
-          email: usuario?.email || undefined,
-          externalReference: companyId,
-        },
-      });
-      customer = cliente.id;
-      db.prepare("UPDATE companies SET asaasCustomerId = ? WHERE id = ?").run(customer, companyId);
-    }
+    // garantirCliente cria/reaproveita o cliente no Asaas e, nos dois casos,
+    // desliga as notificações próprias do Asaas (só a RYCS avisa o cliente).
+    const customer = await garantirCliente(db, empresa);
 
     const cobranca = await asaas("/payments", {
       method: "POST",
@@ -48,10 +36,18 @@ async function cobrancaPeloGateway(req, res, companyId, valor) {
     try { pix = await asaas(`/payments/${cobranca.id}/pixQrCode`); }
     catch (e) { console.warn("[asaas] QR Pix indisponível:", e.message); }
 
+    // Registra o pedido para a tela poder acompanhar o status (processando →
+    // confirmado). O crédito do saldo continua acontecendo só no webhook;
+    // aqui a linha nasce 'pendente' e o webhook a marca 'confirmado'.
+    const depositoId = uid();
+    db.prepare(`INSERT INTO deposit_requests (id, companyId, valor, status, referencia, gateway, criadoEm)
+                VALUES (?, ?, ?, 'pendente', ?, 'asaas', ?)`).run(depositoId, companyId, valor, cobranca.id, agora());
+
     // A taxa de gateway é cobrada da conta RYCS, não descontada do depositante.
     // O caixa da empresa recebe o valor bruto integral.
     return res.json({
       id: cobranca.id,
+      depositoId,
       valor,
       valorBruto: valor,
       taxaGateway: 0,
@@ -168,6 +164,16 @@ router.get("/deposits/config", (req, res) => {
   res.json({ minimo: asaasAtivo() ? MINIMO_GATEWAY : MINIMO, gateway: asaasAtivo() });
 });
 
+// Status de um depósito específico — usado pela tela para acompanhar o Pix
+// (pendente → confirmado) sem recarregar. Só o dono (ou admin) consulta.
+router.get("/deposits/:id", (req, res) => {
+  const { role, entityId } = req.user;
+  const row = db.prepare("SELECT id, companyId, valor, status, confirmadoEm FROM deposit_requests WHERE id = ?").get(req.params.id);
+  if (!row) return res.status(404).json({ error: "Depósito não encontrado" });
+  if (role === "empresa" && row.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  res.json({ id: row.id, valor: row.valor, status: row.status, confirmadoEm: row.confirmadoEm || null });
+});
+
 // A empresa vê os próprios pedidos; o admin vê todos os pendentes.
 router.get("/deposits", (req, res) => {
   const { role, entityId } = req.user;
@@ -199,6 +205,12 @@ router.patch("/deposits/:id", (req, res) => {
 
   const pedido = db.prepare("SELECT * FROM deposit_requests WHERE id = ?").get(req.params.id);
   if (!pedido) return res.status(404).json({ error: "Depósito não encontrado" });
+
+  // Depósito via gateway (asaas/stripe) é creditado/confirmado pelo webhook.
+  // Confirmá-lo aqui à mão creditaria o valor duas vezes. 'manual' é o único
+  // que o admin confirma.
+  if (pedido.gateway && pedido.gateway !== "manual")
+    return res.status(409).json({ error: "Depósito via gateway é confirmado automaticamente." });
 
   // Sem esta guarda, confirmar duas vezes creditaria o valor duas vezes —
   // um duplo-clique viraria dinheiro inventado.
