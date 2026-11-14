@@ -71,7 +71,6 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
   const [bioExpandida, setBioExpandida] = useState(false);
   const [convidarAberto, setConvidarAberto] = useState(false);
   const [linkCopiado, setLinkCopiado] = useState(false);
-  const [utm, setUtm] = useState({ source: "", medium: "", campaign: "" });
 
   const carregar = async () => {
     setCarregando(true);
@@ -443,37 +442,14 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}><CheckCircle2 size={12} color="var(--brand)" /> Treinamentos e suporte da plataforma</div>
                 </div>
 
-                {/* Campos UTM */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span className="vx-label" style={{ fontSize: 11.5 }}>Personalizar rastreamento</span>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <input
-                      type="text" placeholder="Origem (ex: linkedin)"
-                      value={utm.source} onChange={(e) => setUtm((u) => ({ ...u, source: e.target.value }))}
-                      style={{ flex: 1, padding: "7px 10px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontFamily: "inherit", background: "var(--surface)", color: "var(--ink)", outline: "none", minWidth: 0 }}
-                    />
-                    <input
-                      type="text" placeholder="Meio (ex: post)"
-                      value={utm.medium} onChange={(e) => setUtm((u) => ({ ...u, medium: e.target.value }))}
-                      style={{ flex: 1, padding: "7px 10px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontFamily: "inherit", background: "var(--surface)", color: "var(--ink)", outline: "none", minWidth: 0 }}
-                    />
-                  </div>
-                  <input
-                    type="text" placeholder="Campanha (ex: recrutamento-nov)"
-                    value={utm.campaign} onChange={(e) => setUtm((u) => ({ ...u, campaign: e.target.value }))}
-                    style={{ width: "100%", padding: "7px 10px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 12, fontFamily: "inherit", background: "var(--surface)", color: "var(--ink)", outline: "none", boxSizing: "border-box" }}
-                  />
-                </div>
-
-                {/* Link gerado */}
+                {/* Link com rastreamento automático */}
                 {(() => {
                   const params = new URLSearchParams();
-                  if (utm.source.trim()) params.set("utm_source", utm.source.trim());
-                  if (utm.medium.trim()) params.set("utm_medium", utm.medium.trim());
-                  if (utm.campaign.trim()) params.set("utm_campaign", utm.campaign.trim());
-                  if (emp?.id) params.set("ref", emp.id);
-                  const qs = params.toString();
-                  const link = `${window.location.origin}/cadastro/profissional${qs ? `?${qs}` : ""}`;
+                  params.set("ref", emp?.id || "");
+                  params.set("utm_source", "plataforma");
+                  params.set("utm_medium", "convite-profissional");
+                  params.set("utm_campaign", (emp?.nome || "empresa").toLowerCase().replace(/\s+/g, "-"));
+                  const link = `${window.location.origin}/cadastro/profissional?${params.toString()}`;
                   return (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ flex: 1, padding: "9px 12px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 11.5, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
