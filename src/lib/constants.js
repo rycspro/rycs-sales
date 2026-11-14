@@ -56,15 +56,14 @@ export const NAV = {
       { key: "painel-campanhas", label: "Campanhas" },
       { key: "financeiro", label: "Financeiro" },
     ] },
-    { divider: true },
+    { section: "Sua Empresa" },
+    { key: "leads", label: "Leads", Icon: Target },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
       { key: "campanhas", label: "Campanhas" },
       { key: "pagamentos-campanhas", label: "Pagamentos" },
       { key: "campanhas-comissoes", label: "Comissões" },
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
-    { key: "leads", label: "Leads", Icon: Target },
-    { divider: true },
     { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch, children: [
       { key: "profissionais", label: "Profissionais" },
       { key: "conferir-fila", label: "Aprovações" },
