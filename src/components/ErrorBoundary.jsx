@@ -14,8 +14,17 @@ function codigoDoErro(erro) {
   return `E-${h.toString(36).toUpperCase().slice(0, 6)}`;
 }
 
+function isChunkError(e) {
+  const m = e?.message || "";
+  return /Failed to fetch dynamically imported module|Loading chunk|ChunkLoadError/.test(m);
+}
+
 export default class ErrorBoundary extends Component {
   state = { erro: null, info: null };
+
+  componentDidMount() {
+    sessionStorage.removeItem("_chunk_reload");
+  }
 
   static getDerivedStateFromError(erro) {
     return { erro };
@@ -24,6 +33,11 @@ export default class ErrorBoundary extends Component {
   componentDidCatch(erro, info) {
     this.setState({ info });
     console.error("Erro de render:", erro, info?.componentStack);
+
+    if (isChunkError(erro) && !sessionStorage.getItem("_chunk_reload")) {
+      sessionStorage.setItem("_chunk_reload", "1");
+      window.location.reload();
+    }
   }
 
   render() {
