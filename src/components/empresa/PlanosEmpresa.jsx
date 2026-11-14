@@ -147,7 +147,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     });
     setProcessando(false);
 
-    if (!r || r.error) return aviso(r?.error || "Não foi possível processar o pagamento. Verifique a conexão e tente de novo.");
+    if (!r) return aviso("Sem resposta do servidor. Verifique a conexão e tente de novo.");
+    if (r.error) return aviso(r.error);
 
     // Atualizar cartões salvos caso tenha salvo um novo
     if (salvarCartao) api("/saved-cards").then((c) => Array.isArray(c) && setCartoesSalvos(c));

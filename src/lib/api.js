@@ -17,7 +17,9 @@ export const api = (path, body) =>
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
   }).then(async (r) => {
-    const corpo = await r.json();
+    const texto = await r.text();
+    let corpo;
+    try { corpo = JSON.parse(texto); } catch { return { error: texto?.slice(0, 200) || `Erro ${r.status}` }; }
     if (r.status === 409) tratarOnbPendente(corpo);
     return corpo;
   }).catch(() => null);
