@@ -37,6 +37,7 @@ import courseRoutes2 from "./routes/courses.js";
 import brainRoutes from "./routes/brain.js";
 import emailAdminRoutes from "./routes/emailAdmin.js";
 import billingRoutes from "./routes/billing.js";
+import materiaisRoutes from "./routes/materiais.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
@@ -197,6 +198,7 @@ app.use("/api", authMiddleware, onboardingProRoutes);
 app.use("/api", authMiddleware, jarvasRoutes);
 app.use("/api", authMiddleware, metaRoutes);
 app.use("/api", authMiddleware, stripeRoutes);
+app.use("/api", authMiddleware, materiaisRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

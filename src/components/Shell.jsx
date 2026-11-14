@@ -24,7 +24,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     if (role === "vendedor" && ["conta", "configuracoes", "perfil", "indicar", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
       if (["conta", "configuracoes", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "configuracoes";
-      if (["leads", "profissionais", "conferir-fila", "conferir-time", "conversas"].includes(active)) return "campanhas";
+      if (["leads", "materiais", "profissionais", "conferir-fila", "conferir-time", "conversas"].includes(active)) return "campanhas";
       if (["campanhas-comissoes", "campanhas-tarefas", "pagamentos-campanhas"].includes(active)) return "campanhas";
     }
     return active;

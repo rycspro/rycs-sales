@@ -20,6 +20,7 @@ import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
 import SuporteEmpresa from "./SuporteEmpresa.jsx";
 import LeadsEmpresa from "./LeadsEmpresa.jsx";
 import IntegracaoMeta from "./IntegracaoMeta.jsx";
+import MateriaisEmpresa from "./MateriaisEmpresa.jsx";
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
@@ -148,6 +149,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} filtroBar={filtroDataEl} />
       </>}
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
+      {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
       {aba === "leads" && (
         <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       )}

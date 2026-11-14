@@ -1795,5 +1795,36 @@ db.exec(`CREATE TABLE IF NOT EXISTS saved_cards (
   criadoEm INTEGER NOT NULL
 )`);
 
+// Biblioteca de Materiais da empresa (Central de Conhecimento).
+db.exec(`
+  CREATE TABLE IF NOT EXISTS materiais (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    categoria TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    chave TEXT,
+    url TEXT,
+    mimetype TEXT DEFAULT '',
+    tamanho INTEGER DEFAULT 0,
+    ativo INTEGER DEFAULT 1,
+    atualizadoEm INTEGER NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_materiais_empresa ON materiais(companyId);
+
+  CREATE TABLE IF NOT EXISTS materiais_campanhas (
+    materialId TEXT NOT NULL,
+    campaignId TEXT NOT NULL,
+    vinculadoEm INTEGER NOT NULL,
+    PRIMARY KEY (materialId, campaignId),
+    FOREIGN KEY (materialId) REFERENCES materiais(id),
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_matcamp_material ON materiais_campanhas(materialId);
+  CREATE INDEX IF NOT EXISTS idx_matcamp_campanha ON materiais_campanhas(campaignId);
+`);
+
 export default db;
 export { uid, agora };
