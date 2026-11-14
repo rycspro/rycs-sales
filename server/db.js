@@ -1825,6 +1825,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_matcamp_material ON materiais_campanhas(materialId);
   CREATE INDEX IF NOT EXISTS idx_matcamp_campanha ON materiais_campanhas(campaignId);
 `);
+// Materiais importados do onboarding (academy_materiais) guardam aqui a origem,
+// para a importação ser idempotente e não reimportar o mesmo arquivo.
+adicionarColuna("materiais", "origemAcademyId", "TEXT DEFAULT ''");
 
 export default db;
 export { uid, agora };
