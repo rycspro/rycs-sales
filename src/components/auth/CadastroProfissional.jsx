@@ -160,6 +160,7 @@ export default function CadastroProfissional({ onRegister }) {
 
   return (
     <MolduraAuth
+      semLogo
       tarja="Profissional de vendas"
       titulo="Crie sua conta de profissional"
       subtitulo="Preencha seus dados para começar a receber campanhas e ser remunerado por resultado."

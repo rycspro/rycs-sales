@@ -7,31 +7,21 @@ const STEPS = [
     grad: "linear-gradient(135deg, #2563EB 0%, #4338CA 100%)",
     icone: Rocket,
     ilustracao: (
-      <svg viewBox="0 0 382 180" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", display: "block" }}>
-        <rect width="382" height="180" rx="12" fill="url(#g1)" />
-        <defs><linearGradient id="g1" x1="0" y1="0" x2="382" y2="180"><stop stopColor="#2563EB" /><stop offset="1" stopColor="#4338CA" /></linearGradient></defs>
-        <circle cx="191" cy="90" r="44" fill="rgba(255,255,255,.12)" />
-        <circle cx="191" cy="90" r="28" fill="rgba(255,255,255,.18)" />
-        {/* Rocket */}
-        <path d="M191 72 l-8 20 h6 v10 h4 v-10 h6z" fill="#fff" opacity=".9" />
-        {/* Floating cards */}
-        <rect x="52" y="50" width="72" height="48" rx="8" fill="rgba(255,255,255,.13)" />
-        <rect x="58" y="58" width="36" height="4" rx="2" fill="rgba(255,255,255,.35)" />
-        <rect x="58" y="66" width="52" height="3" rx="1.5" fill="rgba(255,255,255,.2)" />
-        <rect x="58" y="73" width="44" height="3" rx="1.5" fill="rgba(255,255,255,.15)" />
-        <rect x="58" y="82" width="24" height="8" rx="4" fill="rgba(255,255,255,.25)" />
-        <rect x="258" y="56" width="72" height="48" rx="8" fill="rgba(255,255,255,.13)" />
-        <rect x="264" y="64" width="28" height="4" rx="2" fill="rgba(255,255,255,.35)" />
-        <rect x="264" y="72" width="52" height="3" rx="1.5" fill="rgba(255,255,255,.2)" />
-        <rect x="264" y="79" width="40" height="3" rx="1.5" fill="rgba(255,255,255,.15)" />
-        <circle cx="310" y="88" r="6" fill="rgba(255,255,255,.25)" />
-        {/* Sparkles */}
-        <circle cx="120" cy="42" r="3" fill="rgba(255,255,255,.4)" />
-        <circle cx="270" cy="38" r="2.5" fill="rgba(255,255,255,.35)" />
-        <circle cx="85" cy="130" r="2" fill="rgba(255,255,255,.3)" />
-        <circle cx="300" cy="140" r="3" fill="rgba(255,255,255,.25)" />
-        <circle cx="155" cy="145" r="2.5" fill="rgba(255,255,255,.2)" />
-      </svg>
+      <div style={{
+        background: "linear-gradient(135deg, #2563EB 0%, #4338CA 100%)",
+        borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
+        height: 180, width: "100%",
+      }}>
+        <div style={{
+          background: "#fff", borderRadius: 16, padding: "18px 28px",
+          boxShadow: "0 4px 24px rgba(0,0,0,.12)",
+        }}>
+          <img src="/logo-rycs.png" alt="RYCS Sales Machine"
+            onError={(e) => { e.currentTarget.style.display = "none"; const t = e.currentTarget.parentElement.nextSibling; if (t) t.style.display = "block"; }}
+            style={{ width: 160, display: "block", objectFit: "contain" }} />
+        </div>
+        <span style={{ display: "none", fontSize: 32, fontWeight: 800, letterSpacing: "-.02em", color: "#fff" }}>RYCS</span>
+      </div>
     ),
     titulo: "Bem-vindo à RYCS Sales Machine",
     descricao: "A plataforma que conecta profissionais de vendas a empresas reais. Escolha campanhas, execute e seja remunerado por resultado.",
@@ -239,13 +229,6 @@ export default function OnboardingProfissional({ onConcluir }) {
   return (
     <div className="vx-app" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="vx-fade" style={{ width: "100%", maxWidth: 420 }}>
-        {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: 18 }}>
-          <img className="vx-logo" src="/logo-rycs.png" alt="RYCS"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-            style={{ width: 90, margin: "0 auto" }} />
-        </div>
-
         {/* Card principal */}
         <div style={{
           background: "var(--surface)", backdropFilter: "var(--glass-blur)",
