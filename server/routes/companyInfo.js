@@ -30,21 +30,35 @@ router.get("/company-info", (req, res) => {
   res.json({ entradas: rows.map(serializar) });
 });
 
+// Uma entrada só conta como "cheia" quando tem conteúdo real — o título, que em
+// blocos sugeridos já nasce preenchido, não basta. Em registros exige nome + ao
+// menos um campo com conteúdo.
+const entradaCheia = (e) => {
+  const d = parse(e.dados, {});
+  const txt = (v) => String(v || "").trim().length > 0;
+  if (e.secao === "sobre") return txt(e.conteudo);
+  if (!txt(e.titulo)) return false;
+  return txt(e.descricao) || txt(e.conteudo) || txt(d.caracteristicas) || txt(d.beneficios) ||
+    txt(d.diferenciais) || txt(d.publico) || txt(d.preco) || txt(d.complementos) ||
+    txt(d.objetivo) || txt(d.observacoes) || (Array.isArray(d.etapas) && d.etapas.some((x) => txt(x)));
+};
+
 // Resumo: estado de preenchimento por seção (contagem real, sem percentuais).
+// 'vazio' = sem entradas; 'preenchido' = todas cheias; 'parcial' = começou mas
+// ainda há entradas sem conteúdo.
 router.get("/company-info/resumo", (req, res) => {
   const companyId = empresa(req, res); if (!companyId) return;
-  const rows = db.prepare("SELECT secao, status, COUNT(*) n FROM company_info_entries WHERE companyId = ? GROUP BY secao, status").all(companyId);
+  const rows = db.prepare("SELECT secao, titulo, descricao, conteudo, dados FROM company_info_entries WHERE companyId = ?").all(companyId);
   const resumo = {};
-  for (const s of SECOES) resumo[s] = { total: 0, salvos: 0 };
+  for (const s of SECOES) resumo[s] = { total: 0, cheias: 0 };
   for (const r of rows) {
-    if (!resumo[r.secao]) resumo[r.secao] = { total: 0, salvos: 0 };
-    resumo[r.secao].total += r.n;
-    if (r.status === "salvo") resumo[r.secao].salvos += r.n;
+    if (!resumo[r.secao]) resumo[r.secao] = { total: 0, cheias: 0 };
+    resumo[r.secao].total += 1;
+    if (entradaCheia(r)) resumo[r.secao].cheias += 1;
   }
-  // estado: 'vazio' | 'parcial' | 'preenchido' — reflete existência de dados reais.
   for (const s of Object.keys(resumo)) {
-    const { total, salvos } = resumo[s];
-    resumo[s].estado = total === 0 ? "vazio" : salvos > 0 ? "preenchido" : "parcial";
+    const { total, cheias } = resumo[s];
+    resumo[s].estado = total === 0 ? "vazio" : cheias === total ? "preenchido" : "parcial";
   }
   res.json({ resumo });
 });
