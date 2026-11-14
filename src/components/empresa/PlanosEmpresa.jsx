@@ -68,7 +68,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       window.location.href = r.url;
       return;
     }
-    if (forma === "CREDIT_CARD") {
+    const ehCartao = forma === "CREDIT_CARD" || forma === "DEBIT_CARD";
+    if (ehCartao) {
       const faltando = Object.entries(cartao).filter(([, v]) => !String(v).trim());
       if (faltando.length) return aviso("Preencha todos os dados do cartão.");
       if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
@@ -80,8 +81,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
       ciclo,
       voucher: voucher || undefined,
       formaPagamento: forma,
-      cartao: forma === "CREDIT_CARD" ? cartao : undefined,
-      titular: forma === "CREDIT_CARD" ? titular : undefined,
+      cartao: ehCartao ? cartao : undefined,
+      titular: ehCartao ? titular : undefined,
     });
     setProcessando(false);
 

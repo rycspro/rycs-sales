@@ -454,7 +454,7 @@ router.post("/subscription", async (req, res) => {
     // Cartão é a forma prioritária; Pix continua aceito, e o Pix Automático
     // entra pela etapa 5 do onboarding.
     const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();
-    if (!["CREDIT_CARD", "PIX", "PIX_AUTOMATICO"].includes(forma))
+    if (!["CREDIT_CARD", "DEBIT_CARD", "PIX", "PIX_AUTOMATICO"].includes(forma))
       return res.status(400).json({ error: "Forma de pagamento inválida." });
     if (forma === "PIX_AUTOMATICO" && !doOnboarding)
       return res.status(400).json({ error: "O Pix Automático é contratado na etapa de plano do cadastro." });
@@ -486,7 +486,7 @@ router.post("/subscription", async (req, res) => {
 
     // Dados do cartão vão ao gateway e não ficam aqui. O que voltamos a
     // guardar é o que o Asaas devolve tokenizado: bandeira e quatro dígitos.
-    if (forma === "CREDIT_CARD") {
+    if (forma === "CREDIT_CARD" || forma === "DEBIT_CARD") {
       const cartao = req.body?.cartao || {};
       const titular = req.body?.titular || {};
       const faltando = ["numero", "validadeMes", "validadeAno", "cvv", "nome"].filter((k) => !String(cartao[k] || "").trim());
