@@ -6,6 +6,7 @@ import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaa
 import { cancelarAssinaturaStripe, encerrarCheckoutPendente } from "../services/stripe.js";
 import { acessoDaEmpresa, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../shared/assinatura.js";
 import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO, CICLOS, valorCobradoNoCiclo, normalizarCiclo } from "../../shared/planos.js";
+import { emailComprovantePagamento } from "../services/email.js";
 
 // Mapa do ciclo RYCS para o ciclo cobrado pelo Asaas, e rótulo em português.
 const CICLO_ASAAS = { MENSAL: "MONTHLY", SEMESTRAL: "SEMIANNUALLY", ANUAL: "YEARLY" };
@@ -821,8 +822,15 @@ export function ativarAssinatura(asaasSubscriptionId) {
     db.prepare("UPDATE voucher_redemptions SET status = 'confirmado', confirmadoEm = ? WHERE subscriptionId = ? AND status = 'reservado'").run(agora(),sub.id);
   })();
 
-  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(sub.companyId);
-  if (user) { notificar(user.id, "assinatura", `Plano ${planoDe(sub.plano).nome} ativado!`); qualificarIndicacao(user.id); }
+  const user = db.prepare("SELECT id, email FROM users WHERE entityId = ? AND role = 'empresa'").get(sub.companyId);
+  if (user) {
+    notificar(user.id, "assinatura", `Plano ${planoDe(sub.plano).nome} ativado!`);
+    qualificarIndicacao(user.id);
+    const empresa = db.prepare("SELECT nome FROM companies WHERE id = ?").get(sub.companyId);
+    const valor = Number(sub.valor) || valorCobradoNoCiclo(sub.plano, sub.ciclo);
+    try { emailComprovantePagamento({ nome: empresa?.nome, email: user.email, tipo: "plano", valor, nomePlano: planoDe(sub.plano).nome }); }
+    catch (e) { console.warn("[assinatura] comprovante e-mail:", e.message); }
+  }
 }
 
 export default router;

@@ -158,9 +158,10 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
   const [metodo, setMetodo] = useState(moeda === "BRL" ? "pix" : "card");
   const [valor, setValor] = useState(0);
   const [display, setDisplay] = useState("");
-  const [etapa, setEtapa] = useState("form"); // form | pix
+  const [etapa, setEtapa] = useState("form"); // form | pix | processando | confirmado
   const [pix, setPix] = useState(null);
   const [pixExpiraEm, setPixExpiraEm] = useState(0); // timestamp (ms) de expiração do Pix
+  const [depositoId, setDepositoId] = useState(null); // id do pedido para acompanhar o status
   const [enviando, setEnviando] = useState(false);
 
   const info = moedaDe(moeda);
@@ -204,6 +205,7 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
     if (r.checkoutUrl) { window.location.href = r.checkoutUrl; return; }
     if (r.pixCopiaECola || r.pixQrCodeBase64) {
       setPix(r);
+      setDepositoId(r.depositoId || null);
       // Expiração: usa a do gateway quando vier; senão, 30 min a partir de agora.
       const exp = r.pixExpiracao ? new Date(r.pixExpiracao).getTime() : Date.now() + 30 * 60000;
       setPixExpiraEm(Number.isFinite(exp) ? exp : Date.now() + 30 * 60000);
@@ -215,6 +217,23 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
     aoConfirmar?.();
     onFechar();
   };
+
+  // Acompanha o status do Pix enquanto o QR está na tela. Quando o webhook
+  // confirmar, mostra "processando" por um instante e então "confirmado".
+  useEffect(() => {
+    if (etapa !== "pix" || !depositoId) return;
+    let vivo = true;
+    const checar = async () => {
+      const r = await api(`/deposits/${depositoId}`).catch(() => null);
+      if (!vivo || !r) return;
+      if (r.status === "confirmado") {
+        setEtapa("processando");
+        setTimeout(() => { if (vivo) { setEtapa("confirmado"); aoConfirmar?.(); } }, 1600);
+      }
+    };
+    const t = setInterval(checar, 4000);
+    return () => { vivo = false; clearInterval(t); };
+  }, [etapa, depositoId]);
 
   const metodos = moeda === "BRL"
     ? [["pix", "Pix", QrCode], ["card", "Internacional (cartão)", CreditCard]]
@@ -336,6 +355,27 @@ export function ModalSaldo({ emp, aviso, aoConfirmar, onFechar }) {
               </button>
             )}
             <button className="vx-btn" style={{ width: "100%", justifyContent: "center" }} onClick={onFechar}>Fechar</button>
+          </div>
+        )}
+
+        {etapa === "processando" && (
+          <div style={{ textAlign: "center", padding: "24px 0" }}>
+            <div className="vx-spinner" style={{ margin: "0 auto 18px" }} />
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Processando seu pagamento…</div>
+            <div style={{ fontSize: 13, color: "var(--muted)" }}>Confirmamos o Pix. Estamos creditando o seu saldo.</div>
+          </div>
+        )}
+
+        {etapa === "confirmado" && (
+          <div style={{ textAlign: "center", padding: "12px 0" }}>
+            <div style={{ width: 66, height: 66, borderRadius: "50%", background: "#DCFCE7", display: "grid", placeItems: "center", margin: "0 auto 16px" }}>
+              <Check size={36} color="#16A34A" strokeWidth={3} />
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Pagamento confirmado!</div>
+            <div style={{ fontSize: 13.5, color: "var(--muted)", marginBottom: 18 }}>
+              {money(valor)} já está no seu caixa. Enviamos o comprovante para o seu e-mail.
+            </div>
+            <button className="vx-btn vx-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={onFechar}>Concluir</button>
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente } from "../services/asaas.js";
 import { ativarAssinatura, marcarInadimplencia, ativarPixAutomatico, encerrarPixAutomatico, ehAtivacaoPixAutomatico } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
+import { emailComprovantePagamento } from "../services/email.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
 
@@ -505,11 +506,17 @@ function creditarDeposito(payment) {
     aportes.push({ valor, ts: agora(), asaasId: payment.id });
     db.prepare("UPDATE companies SET aportes = ? WHERE id = ?").run(JSON.stringify(aportes), empresa.id);
     registrarMovimento({ companyId: empresa.id, tipo: "deposito", valor, idempotencyKey: payment.id, dados: { gateway: "asaas" } });
+    // Marca o pedido rastreável como confirmado (status only — o crédito acima
+    // é a única fonte de saldo). A referência é o id da cobrança no Asaas.
+    db.prepare("UPDATE deposit_requests SET status = 'confirmado', confirmadoEm = ? WHERE referencia = ? AND status = 'pendente'")
+      .run(agora(), payment.id);
   })();
 
-  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
+  const user = db.prepare("SELECT id, email FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
   if (user) {
     notificar(user.id, "pagamento", `Depósito de R$ ${valor.toFixed(2)} confirmado!`);
+    try { emailComprovantePagamento({ nome: empresa.nome, email: user.email, tipo: "campanha", valor }); }
+    catch (e) { console.warn("[webhook] comprovante e-mail:", e.message); }
   }
 }
 
