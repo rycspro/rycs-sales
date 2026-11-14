@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Star, Gift } from "lucide-react";
+import { Check, Star, Gift, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
 import { CICLOS, mensalidadeNoCiclo, descontoDoCiclo, PLANOS } from "../../../shared/planos.js";
@@ -76,11 +76,16 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
 
         {/* Camada 2 — tópicos */}
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "8px 20px" }}>
-          {free.inclui.map((i) => (
-            <li key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: "var(--text-2, var(--ink))" }}>
-              <Check size={15} color="var(--brand)" strokeWidth={2.4} style={{ flexShrink: 0 }} /> {i}
-            </li>
-          ))}
+          {free.inclui.map((i) => {
+            const ehIA = /\bIA\b/.test(i);
+            return (
+              <li key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: ehIA ? 600 : 400, color: ehIA ? "var(--brand)" : "var(--text-2, var(--ink))" }}>
+                {ehIA
+                  ? <Sparkles size={15} color="var(--brand)" strokeWidth={2.2} style={{ flexShrink: 0 }} />
+                  : <Check size={15} color="var(--brand)" strokeWidth={2.4} style={{ flexShrink: 0 }} />} {i}
+              </li>
+            );
+          })}
         </ul>
 
         {/* Camada 3 — ação */}

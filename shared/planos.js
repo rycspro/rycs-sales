@@ -15,6 +15,7 @@ export const PLANOS = {
       "Até 3 profissionais ativos",
       "Taxa por movimentações de 50%",
       "Painel operacional completo",
+      "1 teste de campanha com IA",
     ],
   },
   starter: {
