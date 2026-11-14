@@ -52,7 +52,6 @@ const SECOES_NAV = [
   { key: "seguranca", label: "Segurança", icon: Lock },
   { key: "preferencias", label: "Preferências", icon: Settings },
   { key: "idiomas", label: "Idiomas", icon: Globe },
-  { key: "suporte", label: "Suporte", icon: Headphones },
   { key: "indicar", label: "Indicar", icon: Gift },
 ];
 
@@ -547,46 +546,12 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
       </>
     ),
 
-    suporte: (
-      <>
-        <PgHead title="Suporte" description="Entre em contato com a equipe RYCS." />
-        <Block title="Canais de atendimento">
-          {[
-            { icon: Mail, label: "E-mail", valor: "suporte@rycs.pro", href: "mailto:suporte@rycs.pro", desc: "Resposta em até 1 dia útil" },
-            { icon: MessageCircle, label: "WhatsApp", valor: "(11) 99999-9999", href: "https://wa.me/5511999999999", desc: "Atendimento em horário comercial" },
-          ].map(({ icon: Icon, label, valor, href, desc }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Icon size={16} strokeWidth={1.8} style={{ color: "var(--brand)" }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>{label}</div>
-                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{desc}</div>
-                </div>
-              </div>
-              <a href={href} target="_blank" rel="noreferrer" className="vx-btn vx-btn-sm" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <ExternalLink size={12} />
-                {valor}
-              </a>
-            </div>
-          ))}
-        </Block>
-        <Block title="Central de ajuda">
-          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", color: "var(--muted)" }}>
-            <Globe size={18} strokeWidth={1.5} />
-            <span style={{ fontSize: 13.5 }}>Documentação e tutoriais em breve em <b>docs.rycs.pro</b>.</span>
-          </div>
-        </Block>
-      </>
-    ),
-
     indicar: <Indicacoes aviso={aviso} />,
 
     integracoes: <IntegracaoMeta aviso={aviso} campanhas={campanhasEmpresa} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "idiomas", "suporte", "indicar", "integracoes"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "idiomas", "indicar", "integracoes"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 

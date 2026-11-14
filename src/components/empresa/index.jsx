@@ -17,6 +17,7 @@ import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
 import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
 import InicioEmpresa from "./InicioEmpresa.jsx";
 import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
+import SuporteEmpresa from "./SuporteEmpresa.jsx";
 import LeadsEmpresa from "./LeadsEmpresa.jsx";
 
 const CAMPOS_SORT = {
@@ -165,6 +166,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />
       )}
       {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial={voltouDaMeta ? "integracoes" : undefined} />}
+      {aba === "suporte" && <SuporteEmpresa />}
 
       {modalSaldo && (
         <ModalSaldo emp={emp} aviso={aviso} aoConfirmar={() => recarregar?.()} onFechar={() => setModalSaldo(false)} />

@@ -8,9 +8,10 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   // grupo que contém a página ativa permanece aberto (comportamento sanfona).
   useEffect(() => { setGruposAbertos({}); }, [active]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
-  const configIdx = rawItems.findIndex((item) => item.key === "configuracoes");
-  const allItems = configIdx > -1
-    ? [...rawItems.filter((_, i) => i !== configIdx), rawItems[configIdx]]
+  const fimKeys = new Set(["configuracoes", "suporte"]);
+  const fimItems = rawItems.filter((item) => fimKeys.has(item.key));
+  const allItems = fimItems.length
+    ? [...rawItems.filter((item) => !fimKeys.has(item.key)), ...fimItems]
     : rawItems;
   const navItems = allItems.filter((item) => item.key);
   const bottomItems = MOBILE_NAV[role] || navItems.slice(0, 5);
