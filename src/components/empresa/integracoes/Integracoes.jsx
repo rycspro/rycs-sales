@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, X, Clock3, ArrowRight, Webhook, Code2 } from "lucide-react";
+import { Search, X, Clock3, ArrowRight, Webhook, Code2, Copy, Check, RefreshCw, Power } from "lucide-react";
 import { api } from "../../../lib/api.js";
 import IntegracaoMeta from "../IntegracaoMeta.jsx";
 import { INTEGRACOES, FILTROS, STATUS, statusMeta, rotuloCategoria } from "./catalogo.js";
@@ -132,6 +132,101 @@ function Card({ item, statusChave, onAbrir }) {
   );
 }
 
+// ── Painel de configuração do Webhook ───────────────────────────────────────
+function PainelWebhook({ aviso }) {
+  const [cfg, setCfg] = useState(null);
+  const [ocupado, setOcupado] = useState(false);
+  const [copiado, setCopiado] = useState("");
+
+  const carregar = () => api("/webhooks/config").then((w) => setCfg(w || { ativado: false })).catch(() => setCfg({ ativado: false }));
+  useEffect(() => { carregar(); }, []);
+
+  const copiar = async (texto, qual) => {
+    try { await navigator.clipboard.writeText(texto); setCopiado(qual); setTimeout(() => setCopiado(""), 1600); }
+    catch { aviso?.("Não foi possível copiar. Selecione e copie manualmente."); }
+  };
+
+  const ativar = async () => { setOcupado(true); await api("/webhooks/ativar", {}); await carregar(); setOcupado(false); aviso?.("Webhook ativado. Já pode receber leads."); };
+  const rotacionar = async () => {
+    if (!window.confirm("Gerar um novo endereço? O endereço atual para de funcionar na hora.")) return;
+    setOcupado(true); await api("/webhooks/rotacionar", {}); await carregar(); setOcupado(false); aviso?.("Novo endereço gerado.");
+  };
+  const alternar = async () => { setOcupado(true); await api("/webhooks/ativo", { ativo: !cfg.ativo }); await carregar(); setOcupado(false); };
+
+  if (!cfg) return <div style={{ padding: 24, textAlign: "center" }}><div className="vx-spinner" /></div>;
+
+  const Rotulo = ({ children }) => <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>{children}</div>;
+  const CampoCopia = ({ valor, qual, mono = true }) => (
+    <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+      <input readOnly value={valor} className="vx-input" style={{ fontFamily: mono ? "'Geist Mono',monospace" : "inherit", fontSize: 12, flex: 1, minWidth: 0 }} onFocus={(e) => e.target.select()} />
+      <button type="button" className="vx-btn vx-btn-sm" disabled={ocupado} onClick={() => copiar(valor, qual)} style={{ flexShrink: 0 }}>
+        {copiado === qual ? <Check size={14} style={{ color: "var(--green)" }} /> : <Copy size={14} />}
+      </button>
+    </div>
+  );
+
+  if (!cfg.ativado) return (
+    <div>
+      <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
+        Gere um endereço exclusivo da sua empresa. Qualquer sistema (site, formulário, automação) que enviar um contato
+        para esse endereço vira um lead, entregue automaticamente a um profissional aprovado — igual aos leads da Meta.
+      </p>
+      <button type="button" className="vx-btn vx-btn-primary" disabled={ocupado} onClick={ativar} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        <Webhook size={15} /> {ocupado ? "Ativando..." : "Ativar webhook"}
+      </button>
+    </div>
+  );
+
+  const exemplo = `curl -X POST ${cfg.url} \\
+  -H "Content-Type: application/json" \\
+  -d '{"nome":"Maria Silva","email":"maria@email.com","telefone":"11999999999"}'`;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <Rotulo>Endereço do webhook (URL)</Rotulo>
+        <CampoCopia valor={cfg.url} qual="url" />
+        <p style={{ margin: "7px 0 0", fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
+          Envie um <b>POST</b> com JSON para este endereço. Mantenha-o em segredo — quem tiver o endereço pode enviar leads.
+        </p>
+      </div>
+
+      <div>
+        <Rotulo>Campos aceitos</Rotulo>
+        <p style={{ margin: 0, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6 }}>
+          <code>nome</code>, <code>email</code>, <code>telefone</code>, <code>empresa</code>, <code>cargo</code>.
+          Também entende variações comuns (<code>name</code>, <code>phone</code>, <code>company</code>…) e campos dentro de <code>data</code> ou <code>fields</code>.
+        </p>
+      </div>
+
+      <div>
+        <Rotulo>Exemplo</Rotulo>
+        <div style={{ position: "relative" }}>
+          <pre style={{ margin: 0, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", fontSize: 11.5, lineHeight: 1.6, overflowX: "auto", fontFamily: "'Geist Mono',monospace", color: "var(--ink-2)" }}>{exemplo}</pre>
+          <button type="button" className="vx-btn vx-btn-sm" onClick={() => copiar(exemplo, "curl")} style={{ position: "absolute", top: 8, right: 8 }}>
+            {copiado === "curl" ? <Check size={14} style={{ color: "var(--green)" }} /> : <Copy size={14} />}
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 16, fontSize: 12.5, color: "var(--muted)" }}>
+        <span>Recebidos: <b style={{ color: "var(--ink)" }}>{cfg.total || 0}</b></span>
+        {cfg.ultimoRecebidoEm && <span>Último: {new Date(cfg.ultimoRecebidoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</span>}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingTop: 4, borderTop: "1px solid var(--border)" }}>
+        <button type="button" className="vx-btn vx-btn-sm" disabled={ocupado} onClick={rotacionar} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <RefreshCw size={13} /> Gerar novo endereço
+        </button>
+        <button type="button" className={`vx-btn vx-btn-sm${cfg.ativo ? " vx-btn-danger" : " vx-btn-primary"}`} disabled={ocupado} onClick={alternar} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Power size={13} /> {cfg.ativo ? "Pausar recebimento" : "Reativar"}
+        </button>
+      </div>
+      {!cfg.ativo && <p style={{ margin: 0, fontSize: 12.5, color: "var(--amber)" }}>Recebimento pausado — o endereço não aceita leads até reativar.</p>}
+    </div>
+  );
+}
+
 // ── Drawer lateral direito ──────────────────────────────────────────────────
 function Drawer({ item, statusChave, aviso, campanhas, onFechar }) {
   useEffect(() => {
@@ -173,6 +268,8 @@ function Drawer({ item, statusChave, aviso, campanhas, onFechar }) {
           {item.tipo === "meta" ? (
             // Reutiliza INTEGRALMENTE o fluxo real da Meta já existente.
             <IntegracaoMeta aviso={aviso} campanhas={campanhas} semCabecalho />
+          ) : item.tipo === "webhook" ? (
+            <PainelWebhook aviso={aviso} />
           ) : (
             <div style={{ textAlign: "center", padding: "32px 8px" }}>
               <div style={{
@@ -196,6 +293,7 @@ function Drawer({ item, statusChave, aviso, campanhas, onFechar }) {
 // ── Página: Central de Integrações ──────────────────────────────────────────
 export default function Integracoes({ aviso, campanhas = [] }) {
   const [conexao, setConexao] = useState(null);
+  const [webhook, setWebhook] = useState(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   // Ao voltar do login da Meta (?meta=...) abre direto o fluxo da Meta, que
@@ -204,12 +302,18 @@ export default function Integracoes({ aviso, campanhas = [] }) {
     typeof window !== "undefined" && new URLSearchParams(window.location.search).has("meta") ? "meta" : null
   );
 
-  // Status REAL da Meta (read-only, mesmo endpoint já usado pela integração).
+  // Status REAL das integrações ligadas (read-only). Reconsulta ao fechar o
+  // drawer, refletindo mudanças feitas lá dentro.
   useEffect(() => {
     api("/meta/conexao").then((c) => setConexao(c || { conectado: false })).catch(() => setConexao({ conectado: false }));
-  }, [aberto]); // reconsulta ao fechar o drawer, refletindo mudanças feitas no fluxo da Meta
+    api("/webhooks/config").then((w) => setWebhook(w || { ativado: false })).catch(() => setWebhook({ ativado: false }));
+  }, [aberto]);
 
-  const statusDe = (item) => (item.tipo === "meta" ? statusMeta(conexao) : "em_breve");
+  const statusDe = (item) => {
+    if (item.tipo === "meta") return statusMeta(conexao);
+    if (item.tipo === "webhook") return webhook?.ativado && webhook?.ativo ? "conectado" : "nao_conectado";
+    return "em_breve";
+  };
 
   const lista = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -221,7 +325,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
       if (["anuncios", "crm", "formularios", "automacoes"].includes(filtro)) return item.categoria === filtro;
       return true; // "todas"
     });
-  }, [busca, filtro, conexao]);
+  }, [busca, filtro, conexao, webhook]);
 
   const itemAberto = aberto ? INTEGRACOES.find((i) => i.id === aberto) : null;
 

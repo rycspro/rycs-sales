@@ -67,7 +67,7 @@ export const INTEGRACOES = [
     descricao: "Integre formulários e contatos do seu site." },
 
   // ── AUTOMAÇÕES E DESENVOLVEDORES ──────────────────────────────────────
-  { id: "webhooks", nome: "Webhooks", tipo: "em_breve", categoria: "automacoes", slug: null, cor: "#6366F1", sigla: "{}",
+  { id: "webhooks", nome: "Webhooks", tipo: "webhook", categoria: "automacoes", slug: null, cor: "#6366F1", sigla: "{}",
     descricao: "Receba leads de sistemas externos automaticamente." },
   { id: "api-rycs", nome: "API RYCS", tipo: "em_breve", categoria: "automacoes", slug: null, cor: "#318CE7", sigla: "</>",
     descricao: "Conecte sistemas personalizados à plataforma." },

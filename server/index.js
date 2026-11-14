@@ -46,6 +46,7 @@ import onboardingProRoutes from "./routes/onboardingProfissional.js";
 import jarvasRoutes, { aquecerVozJarvas } from "./routes/jarvas.js";
 import stripeRoutes, { stripePublico } from "./routes/stripe.js";
 import metaRoutes, { metaPublico } from "./routes/meta.js";
+import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
 import { semearCatalogo, sincronizarCursoInterativo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
@@ -168,6 +169,8 @@ app.use("/api", metaPublico);
 app.use("/api", stripePublico);
 // Pré-visualização assinada de materiais: o visualizador do Office busca sem cookie.
 app.use("/api", materiaisPublico);
+// Entrada de leads por webhook: sistemas externos chamam sem cookie (auth = token na URL).
+app.use("/api", webhooksPublico);
 
 // Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
 app.use("/api", authMiddleware, onboardingGuard);
@@ -202,6 +205,7 @@ app.use("/api", authMiddleware, onboardingRoutes);
 app.use("/api", authMiddleware, onboardingProRoutes);
 app.use("/api", authMiddleware, jarvasRoutes);
 app.use("/api", authMiddleware, metaRoutes);
+app.use("/api", authMiddleware, webhooksRoutes);
 app.use("/api", authMiddleware, stripeRoutes);
 app.use("/api", authMiddleware, materiaisRoutes);
 app.use("/api", authMiddleware, academyEmpresaRoutes);
