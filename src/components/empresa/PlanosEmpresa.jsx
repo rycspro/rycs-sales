@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Copy, CreditCard, Loader, QrCode, ShieldCheck, X } from "lucide-react";
+import { Copy, CreditCard, Globe, Loader, QrCode, ShieldCheck, X } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
@@ -22,7 +22,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [desconto, setDesconto] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [cobranca, setCobranca] = useState(null);
-  const [forma, setForma] = useState("CREDIT_CARD");
+  const [forma, setForma] = useState(""); // "" = nenhuma origem escolhida ainda
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
   const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   const [stripe, setStripe] = useState(null); // pagamento internacional (US$)
@@ -43,7 +43,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     setCobranca(null);
     setVoucher("");
     setDesconto(null);
-    setForma("CREDIT_CARD");
+    setForma("");
     setEmbutido(null);
     setCartao({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
     setTitular({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
@@ -129,6 +129,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
   // Valor-base do checkout conforme o ciclo escolhido (semestral/anual = 6/12
   // meses com desconto, cobrados de uma vez).
+  // Origem do pagamento derivada da forma: vazio = nada escolhido; STRIPE =
+  // internacional; qualquer outra (cartão/Pix) = nacional.
+  const origem = forma ? (forma === "STRIPE" ? "internacional" : "nacional") : null;
   const baseCiclo = selecionado ? valorCobradoNoCiclo(selecionado.chave, ciclo) : 0;
   const cicloLabel = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" }[ciclo] || "mensal";
   const cicloSufixo = { MENSAL: "/mês", SEMESTRAL: "/semestre", ANUAL: "/ano" }[ciclo] || "/mês";
@@ -226,18 +229,47 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   </div>
                 </label>
 
-                {/* Forma de pagamento */}
+                {/* Forma de pagamento — 1º escolhe a origem (nacional/internacional),
+                    depois a forma específica. Nacional = Asaas (cartão/Pix, R$);
+                    internacional = Stripe (cartão em US$). */}
                 <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                  {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"], ["PIX", "Pix"], ...(stripe?.ativo ? [["STRIPE", "Fora do Brasil (US$)"]] : [])].map(([k, t]) => (
-                    <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
-                      flex: 1, fontSize: 12,
-                      borderColor: forma === k ? "var(--brand)" : undefined,
-                      background: forma === k ? "var(--brand-50)" : undefined,
-                      color: forma === k ? "var(--brand)" : undefined,
-                    }}>{t}</button>
-                  ))}
+                <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                  {[
+                    { id: "nacional", titulo: "Pagamento nacional", sub: "Cartão ou Pix · R$", icone: <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden="true">🇧🇷</span> },
+                    ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
+                  ].map(({ id, titulo, sub, icone }) => {
+                    const on = origem === id;
+                    return (
+                      <button key={id} type="button"
+                        onClick={() => setForma(id === "nacional" ? "CREDIT_CARD" : "STRIPE")}
+                        style={{
+                          flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                          padding: "16px 12px", borderRadius: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
+                          border: `1.5px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                          background: on ? "var(--brand-50)" : "var(--surface)",
+                          color: on ? "var(--brand)" : "var(--ink)", transition: "border-color .15s, background .15s",
+                        }}>
+                        {icone}
+                        <span style={{ fontSize: 13.5, fontWeight: 700 }}>{titulo}</span>
+                        <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{sub}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {/* Formas específicas do pagamento nacional (Asaas) */}
+                {origem === "nacional" && (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                    {[["CREDIT_CARD", "Cartão de crédito"], ["DEBIT_CARD", "Cartão de débito"], ["PIX", "Pix"]].map(([k, t]) => (
+                      <button key={k} className="vx-btn" onClick={() => setForma(k)} style={{
+                        flex: 1, fontSize: 12,
+                        borderColor: forma === k ? "var(--brand)" : undefined,
+                        background: forma === k ? "var(--brand-50)" : undefined,
+                        color: forma === k ? "var(--brand)" : undefined,
+                      }}>{t}</button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Formulário de cartão */}
                 {(forma === "CREDIT_CARD" || forma === "DEBIT_CARD") && (
@@ -307,7 +339,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 )}
 
                 <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 16 }}
-                  disabled={processando} onClick={contratar}>
+                  disabled={processando || !forma} onClick={contratar}>
                   {processando
                     ? <><Loader size={15} /> Processando…</>
                     : forma === "STRIPE"
