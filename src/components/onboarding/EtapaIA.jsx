@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, AlertTriangle, Sparkles, Pencil, Mic } from "lucide-react";
+import { ArrowLeft, Check, AlertTriangle, Sparkles, Pencil, Mic } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { FASES_IA, PARTES_IA, VARIAVEIS_IA, parteCompleta } from "../../../shared/onboarding.js";
 import ThinkingOrb from "../ThinkingOrb.jsx";
@@ -292,11 +292,14 @@ export default function EtapaIA({ estado, aoAtualizar, aoAvancar, aoVoltar }) {
   // Já aprovado (voltando a esta etapa): mostra e segue.
   if (estado.etapas.ia === "concluida") return (
     <div>
+      <button type="button" className="vx-onb-voltar-topo" onClick={aoVoltar}>
+        <ArrowLeft size={15} /> Voltar
+      </button>
       {cabecalho}
       <div className="vx-onb-card vx-onb-estado">
         <p>{g?.status === "aprovada" ? "As estratégias desta empresa já foram aprovadas." : "Esta etapa foi concluída sem estratégias geradas."}</p>
         <div className="vx-onb-acoes" style={{ justifyContent: "center" }}>
-          <button type="button" className="vx-btn" onClick={aoVoltar}>Voltar</button>
+          <span />
           <button type="button" className="vx-btn vx-btn-primary" onClick={() => aoAvancar(estado)}>Continuar</button>
         </div>
       </div>
@@ -305,6 +308,9 @@ export default function EtapaIA({ estado, aoAtualizar, aoAvancar, aoVoltar }) {
 
   if (!g) return (
     <div>
+      <button type="button" className="vx-onb-voltar-topo" onClick={aoVoltar}>
+        <ArrowLeft size={15} /> Voltar
+      </button>
       {cabecalho}
       <div className="vx-onb-card vx-onb-jarvis" style={{ maxWidth: 640, margin: "0 auto", textAlign: "center", padding: "36px 24px" }}>
         <div className="vx-jarvis-ring" style={{ width: 120, height: 120, margin: "0 auto 18px" }}>
@@ -327,21 +333,24 @@ export default function EtapaIA({ estado, aoAtualizar, aoAvancar, aoVoltar }) {
   );
 
   if (revisando && g.status === "pronta") return (
-    <div>{cabecalho}
+    <div>
+      <button type="button" className="vx-onb-voltar-topo" onClick={aoVoltar}>
+        <ArrowLeft size={15} /> Voltar
+      </button>
+      {cabecalho}
       <Aprovacao geracao={g} setGeracao={setGeracao} aoAtualizar={aoAtualizar} aoAvancar={aoAvancar} aoVoltar={() => setRevisando(false)} />
     </div>
   );
 
   return (
     <div>
+      <button type="button" className="vx-onb-voltar-topo" onClick={aoVoltar}>
+        <ArrowLeft size={15} /> Voltar
+      </button>
       {cabecalho}
       <Trabalhando geracao={g} tentando={tentando} aoRevisar={() => setRevisando(true)}
         aoTentar={async () => { setTentando(true); const r = await acao("/onboarding/ia/tentar"); setTentando(false); if (r) setGeracao(r.geracao); }} />
       {msgErro}
-      <div className="vx-onb-acoes">
-        <button type="button" className="vx-btn" onClick={aoVoltar}>Voltar</button>
-        <span />
-      </div>
     </div>
   );
 }

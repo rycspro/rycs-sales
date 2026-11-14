@@ -522,6 +522,8 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 .vx-onb-link{appearance:none;background:none;border:0;padding:0;font:inherit;color:var(--brand-600);text-decoration:underline;cursor:pointer}
 .vx-onb-link:focus-visible{outline:none;box-shadow:var(--ring);border-radius:4px}
 .vx-onb-icone{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--brand-50);color:var(--brand);margin-bottom:14px}
+.vx-onb-voltar-topo{display:inline-flex;align-items:center;gap:4px;padding:6px 0;margin-bottom:8px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;transition:color .15s}
+.vx-onb-voltar-topo:hover{color:var(--brand)}
 .vx-onb-acoes{display:flex;gap:10px;justify-content:space-between;margin-top:22px;flex-wrap:wrap}
 .vx-onb-acoes .vx-btn{min-height:48px;min-width:140px}
 .vx-onb-acoes .vx-btn-primary{min-height:52px}

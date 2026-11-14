@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { UploadCloud, Trash2, Link2, FileText, Image, Video, Music, Presentation } from "lucide-react";
+import { ArrowLeft, UploadCloud, Trash2, Link2, FileText, Image, Video, Music, Presentation } from "lucide-react";
 import { api, apiDelete, API_URL } from "../../lib/api.js";
 import { CATEGORIAS_ACADEMY, FORMATOS_SEM_LEITURA, extensaoDe, validarArquivoAcademy, formatarTamanho, formatarWhatsapp, validarSuporte, normalizarLink } from "../../../shared/onboarding.js";
 
@@ -152,7 +152,7 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
       return setErroGeral(r?.error || "Não foi possível continuar. Tente de novo.");
     }
     aoAtualizar(r);
-    aoAvancar(r);
+    aoAvancar({ ...r, atual: "ia" });
   };
 
   if (erroCarga) return (
@@ -171,6 +171,9 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
 
   return (
     <div>
+      <button type="button" className="vx-onb-voltar-topo" onClick={aoVoltar} disabled={salvando}>
+        <ArrowLeft size={15} /> Voltar
+      </button>
       <div className="vx-onb-eyebrow">Passo 3 de 6</div>
       <h1 className="vx-disp vx-onb-titulo">Marketing Academy: seus materiais</h1>
       <p className="vx-mut vx-onb-card-apoio">Tudo o que a sua empresa usa para vender e divulgar: apresentações, materiais, fotos, vídeos, áudios e links. A IA lê esses materiais para conhecer o seu negócio.</p>
@@ -231,7 +234,7 @@ export default function EtapaAcademy({ aoAtualizar, aoAvancar, aoVoltar }) {
       {dados.materiais.length === 0 && <div className="vx-onb-aviso">Recomendado: envie ao menos um material ou link. A IA trabalha melhor com eles, mas dá para seguir sem.</div>}
       <div aria-live="polite">{erroGeral && <div className="vx-onb-erro" role="alert">{erroGeral}</div>}</div>
       <div className="vx-onb-acoes">
-        <button type="button" className="vx-btn" onClick={aoVoltar} disabled={salvando}>Voltar</button>
+        <span />
         <button type="button" className="vx-btn vx-btn-primary" onClick={concluir} disabled={salvando}>
           {salvando ? "Enviando…" : "Enviar para a IA analisar"}
         </button>

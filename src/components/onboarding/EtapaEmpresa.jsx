@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, Mic, Sparkles, Plus, Trash2, SkipForward } from "lucide-react";
+import { ArrowLeft, ChevronDown, Mic, Sparkles, Plus, Trash2, SkipForward } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { PERMISSOES_MARCA, validarPerfilEmpresa, formatarTicket } from "../../../shared/onboarding.js";
 import { SEGMENTOS_FLAT, nichosPorSegmento } from "../../../shared/segmentos.js";
@@ -319,6 +319,9 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
   return (
     <div className="vx-onb-duas">
       <section className="vx-onb-hero">
+        <button type="button" className="vx-onb-voltar-topo" onClick={voltar} disabled={salvando}>
+          <ArrowLeft size={15} /> Voltar
+        </button>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div className="vx-onb-eyebrow">Passo 2 de 6</div>
           <button type="button" className="vx-btn vx-btn-sm vx-btn-ghost" onClick={pular} disabled={salvando}
@@ -465,7 +468,7 @@ export default function EtapaEmpresa({ aoAtualizar, aoAvancar, aoVoltar }) {
 
           <div aria-live="polite">{erroGeral && <div className="vx-onb-erro" role="alert">{erroGeral}</div>}</div>
           <div className="vx-onb-acoes">
-            <button type="button" className="vx-btn" onClick={voltar} disabled={salvando}>Voltar</button>
+            <span />
             <button type="submit" className="vx-btn vx-btn-primary" disabled={salvando}>{salvando ? "Salvando…" : "Salvar e continuar"}</button>
           </div>
         </form>
