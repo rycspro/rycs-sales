@@ -59,7 +59,7 @@ const Barra = ({ w = "100%", h = 8, op = 1 }) => (
 function Visual({ step }) {
   const moldura = {
     background: "var(--surface-2)", border: "1px solid var(--border-strong)",
-    borderRadius: 14, padding: 20, height: "100%", minHeight: 210,
+    borderRadius: 14, padding: 20, height: "100%", minHeight: 210, width: "100%",
     display: "flex", flexDirection: "column", justifyContent: "center", gap: 14,
   };
   if (step === 0) {
@@ -198,15 +198,17 @@ export default function OnboardingProfissional({ onConcluir }) {
       `}</style>
       <div style={{ width: "100%", maxWidth: 860 }}>
         <div className="vx-onbp-grid" style={{ background: "var(--surface-solid)", border: "1px solid var(--border-strong)", borderRadius: 16, overflow: "hidden" }}>
-          {/* Coluna visual */}
-          <div style={{ padding: 16, background: "var(--bg)" }}>
-            <Visual step={step} key={`v${step}`} />
+          {/* Coluna visual: logo da RYCS no topo + prévia editorial da etapa */}
+          <div style={{ padding: 16, background: "var(--bg)", display: "flex", flexDirection: "column", gap: 14 }}>
+            <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+              style={{ height: 30, width: "auto", maxWidth: "70%", objectFit: "contain", display: "block", margin: "6px auto 0" }} />
+            <div style={{ flex: 1, display: "flex" }}>
+              <Visual step={step} key={`v${step}`} />
+            </div>
           </div>
           {/* Coluna de conteúdo */}
           <div style={{ padding: "24px 26px 22px", display: "flex", flexDirection: "column" }}>
-            <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
-              onError={(e) => { e.currentTarget.style.display = "none"; }}
-              style={{ height: 26, width: "auto", display: "block", marginBottom: 16 }} />
             <div className="vx-onbp-fade" key={`c${step}`} style={{ flex: 1 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: AZUL, marginBottom: 8 }}>{t(EYEBROW[step])}</div>
               <h2 className="vx-disp" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.22, color: "var(--ink)", margin: "0 0 8px" }}>{t(TITULO[step])}</h2>
