@@ -6,6 +6,7 @@ import Termos from "./auth/Termos.jsx";
 import ComboSelect from "./ui/ComboSelect.jsx";
 import { api } from "../lib/api.js";
 import { ROTAS, navegar, parametro } from "../lib/rotas.js";
+import { useI18n } from "../lib/i18n.jsx";
 
 // Entrada de quem já tem conta.
 //
@@ -30,12 +31,11 @@ const IDIOMAS = [
 ];
 
 export default function Login({ onLogin, conviteTrial = false, beta = false }) {
+  const { t, locale, setLocale } = useI18n();
   // Fluxo de entrada: idioma → qual conta → login. O convite de trial pula o
   // portão e vai direto ao login, que é um fluxo focado por si só.
   const [etapa, setEtapa] = useState(conviteTrial ? "login" : "idioma");
-  const [idioma, setIdioma] = useState(() => {
-    try { return window.localStorage?.getItem("rycs-idioma") || ""; } catch { return ""; }
-  });
+  const [idioma, setIdioma] = useState(locale || "");
   const [contaTipo, setContaTipo] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -103,7 +103,9 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
 
   const escolherIdioma = (valor) => {
     setIdioma(valor);
-    try { if (valor) window.localStorage?.setItem("rycs-idioma", valor); } catch { /* storage bloqueado */ }
+    // Ativa o idioma na hora: as próximas telas (conta, login) já renderizam
+    // traduzidas. O provider persiste a escolha.
+    setLocale(valor || "pt-BR");
   };
 
   if (etapa === "idioma") return (
@@ -142,15 +144,15 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
       </button>
     );
     return (
-      <MolduraAuth titulo="Qual conta você quer acessar?" subtitulo="Escolha o tipo de acesso" largura={480}>
+      <MolduraAuth titulo={t("conta.titulo")} subtitulo={t("conta.subtitulo")} largura={480}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <Card tipo="profissional" icone="🤝" titulo="Profissional"
-            texto="Você é vendedor autônomo e quer vender para empresas ganhando por resultado." />
-          <Card tipo="empresa" icone="🏢" titulo="Empresa"
-            texto="Você tem uma empresa e quer montar um time de vendas sem custo fixo." />
+          <Card tipo="profissional" icone="🤝" titulo={t("conta.profissional")}
+            texto={t("conta.profissionalDesc")} />
+          <Card tipo="empresa" icone="🏢" titulo={t("conta.empresa")}
+            texto={t("conta.empresaDesc")} />
         </div>
         <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEtapa("idioma")} style={{ width: "100%", marginTop: 10, fontSize: 12.5 }}>
-          Voltar
+          {t("comum.voltar")}
         </button>
       </MolduraAuth>
     );
@@ -158,24 +160,25 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
 
   return (
     <MolduraAuth
-      tarja={conviteTrial ? "Convite de teste gratuito" : contaTipo === "empresa" ? "Conta empresa" : contaTipo === "profissional" ? "Conta profissional" : undefined}
+      tarja={conviteTrial ? "Convite de teste gratuito" : contaTipo === "empresa" ? t("login.tarjaEmpresa") : contaTipo === "profissional" ? t("login.tarjaProfissional") : undefined}
       subtitulo={conviteTrial
         ? "Entre com a conta da sua empresa para ativar o período gratuito. Se ainda não tem conta, crie uma abaixo — o convite continua valendo."
-        : "Entre na sua conta"}
+        : t("login.subtitulo")}
       largura={420}>
       <form onSubmit={submit}>
-        <Campo label="E-mail">
+        <Campo label={t("login.email")}>
           <input className="vx-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
         </Campo>
-        <Campo label="Senha">
+        <Campo label={t("login.senha")}>
           <CampoSenha value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Sua senha" />
         </Campo>
         <button className="vx-btn vx-btn-primary vx-btn-block" type="submit" disabled={loading} style={{ marginTop: 4 }}>
-          {loading ? "Carregando…" : "Entrar"}
+          {loading ? t("login.carregando") : t("login.entrar")}
         </button>
         <p className="vx-onb-termos" style={{ marginTop: 8 }}>
-          Ao continuar, você aceita os{" "}
-          <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>Termos de Uso</button> da RYCS.
+          {t("login.aceiteTermos").split("{termos}")[0]}
+          <button type="button" className="vx-onb-link" onClick={() => setShowTermos(true)}>{t("login.termosLink")}</button>
+          {t("login.aceiteTermos").split("{termos}")[1]}
         </p>
       </form>
 
@@ -191,25 +194,25 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
       )}
 
       <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setShowForgot(true)} style={{ width: "100%", marginTop: 4, fontSize: 12.5 }}>
-        Esqueci minha senha
+        {t("login.esqueciSenha")}
       </button>
 
       <hr className="vx-sep" style={{ margin: "8px 0" }} />
 
-      <div className="vx-eyebrow" style={{ textAlign: "center", marginBottom: 6 }}>Ainda não tem conta?</div>
+      <div className="vx-eyebrow" style={{ textAlign: "center", marginBottom: 6 }}>{t("login.semConta")}</div>
       {contaTipo === "empresa" ? (
-        <button className="vx-btn vx-btn-block" onClick={() => navegar(ROTAS.cadastroEmpresa)}>Criar conta empresa</button>
+        <button className="vx-btn vx-btn-block" onClick={() => navegar(ROTAS.cadastroEmpresa)}>{t("login.criarEmpresa")}</button>
       ) : contaTipo === "profissional" ? (
-        <button className="vx-btn vx-btn-block" onClick={() => navegar(ROTAS.cadastroVendedor)}>Criar conta profissional</button>
+        <button className="vx-btn vx-btn-block" onClick={() => navegar(ROTAS.cadastroVendedor)}>{t("login.criarProfissional")}</button>
       ) : (
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroVendedor)}>Sou profissional</button>
-          <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroEmpresa)}>Sou empresa</button>
+          <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroVendedor)}>{t("login.souProfissional")}</button>
+          <button className="vx-btn" style={{ flex: 1 }} onClick={() => navegar(ROTAS.cadastroEmpresa)}>{t("login.souEmpresa")}</button>
         </div>
       )}
       {!conviteTrial && (
         <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEtapa("conta")} style={{ width: "100%", marginTop: 8, fontSize: 12.5 }}>
-          Trocar tipo de conta
+          {t("login.trocarConta")}
         </button>
       )}
     </MolduraAuth>
