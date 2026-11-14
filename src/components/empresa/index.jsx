@@ -150,16 +150,16 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "leads" && (
         <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       )}
-      {["pagamentos", "pagamentos-campanhas"].includes(aba) && (
+      {aba === "pagamentos-campanhas" && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
-          secao={aba === "pagamentos-campanhas" ? "campanhas" : "plano"}
+          secao="campanhas"
           onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
         />
       )}
-      {aba === "pagamentos-visibilidade" && (
-        <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />
+      {(aba === "configuracoes" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
+        <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar}
+          secaoInicial={aba === "pagamentos" ? "plano" : aba === "pagamentos-visibilidade" ? "visibilidade" : voltouDaMeta ? "integracoes" : undefined} />
       )}
-      {aba === "configuracoes" && <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial={voltouDaMeta ? "integracoes" : undefined} />}
       {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa />}
 
       {modalSaldo && (

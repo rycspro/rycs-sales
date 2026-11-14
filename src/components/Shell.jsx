@@ -8,7 +8,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   // grupo que contém a página ativa permanece aberto (comportamento sanfona).
   useEffect(() => { setGruposAbertos({}); }, [active]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
-  const fimKeys = new Set(["configuracoes", "suporte"]);
+  const fimKeys = new Set(["configuracoes"]);
   const fimItems = rawItems.filter((item) => fimKeys.has(item.key));
   const allItems = fimItems.length
     ? [...rawItems.filter((item) => !fimKeys.has(item.key)), ...fimItems]
@@ -23,10 +23,9 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   const mobileActive = (() => {
     if (role === "vendedor" && ["conta", "configuracoes", "perfil", "indicar", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
-      if (["conta", "configuracoes", "perfil", "carteira", "academy", "indicar", "suporte-conta"].includes(active)) return "configuracoes";
+      if (["conta", "configuracoes", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "configuracoes";
       if (["leads", "profissionais", "conferir-fila", "conferir-time", "conversas"].includes(active)) return "campanhas";
-      if (["campanhas-comissoes", "campanhas-tarefas"].includes(active)) return "campanhas";
-      if (["pagamentos-campanhas"].includes(active)) return "pagamentos";
+      if (["campanhas-comissoes", "campanhas-tarefas", "pagamentos-campanhas"].includes(active)) return "campanhas";
     }
     return active;
   })();

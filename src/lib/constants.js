@@ -72,12 +72,7 @@ export const NAV = {
     ] },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { divider: true },
-    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
-      { key: "pagamentos", label: "Planos" },
-      { key: "pagamentos-visibilidade", label: "Visibilidade" },
-    ] },
     { key: "configuracoes", label: "Configurações", Icon: Settings },
-    { key: "suporte", label: "Suporte", Icon: Headphones },
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },
@@ -115,7 +110,6 @@ export const MOBILE_NAV = {
     { key: "inicio", label: "Início", Icon: Home },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
-    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard },
     { key: "configuracoes", label: "Conta", Icon: Settings },
   ],
   admin: [

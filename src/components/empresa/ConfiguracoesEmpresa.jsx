@@ -6,11 +6,13 @@ import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
-  ImagePlus, Trash2, Plug, Eye, EyeOff,
+  ImagePlus, Trash2, Plug, Eye, EyeOff, Sparkles,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
 import IntegracaoMeta from "./IntegracaoMeta.jsx";
+import PagamentosEmpresa from "./PagamentosEmpresa.jsx";
+import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
 
 // ── Data ─────────────────────────────────────────────────────────────
 
@@ -47,6 +49,8 @@ const NOTIF_OPCOES = [
 const SECOES_NAV = [
   { key: "dados", label: "Dados da empresa", icon: Building2 },
   { key: "comercial", label: "Comercial", icon: Briefcase },
+  { key: "plano", label: "Plano e pagamentos", icon: CreditCard },
+  { key: "visibilidade", label: "Visibilidade", icon: Sparkles },
   { key: "integracoes", label: "Integrações", icon: Plug },
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
@@ -605,9 +609,13 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     indicar: <Indicacoes aviso={aviso} />,
 
     integracoes: <IntegracaoMeta aviso={aviso} campanhas={campanhasEmpresa} />,
+
+    plano: <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} secao="plano" onTrocarSecao={() => {}} />,
+
+    visibilidade: <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "idiomas", "indicar", "integracoes"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "idiomas", "indicar", "integracoes", "plano", "visibilidade"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 
