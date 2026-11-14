@@ -9,10 +9,10 @@ export const PLANOS = {
     nome: "Grátis",
     preco: 0,
     takeRate: 0.50,
-    limites: { campanhasAtivas: 1, vendedores: 3, destaque: false },
+    limites: { campanhasAtivas: 1, vendedores: 2, destaque: false },
     inclui: [
       "1 campanha ativa",
-      "Até 3 profissionais ativos",
+      "Até 2 profissionais ativos",
       "Taxa por movimentações de 50%",
       "Painel operacional completo",
       "1 teste de campanha com IA",
