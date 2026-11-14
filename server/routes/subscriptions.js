@@ -451,7 +451,6 @@ router.post("/subscription", async (req, res) => {
   try {
     let voucher=null, calculo={valorOriginal:valorBase,desconto:0,valorFinal:valorBase};
     if(req.body?.voucher){const v=validarVoucher(db,{codigo:req.body.voucher,plano:chave,companyId:entityId});if(!v.ok)return res.status(422).json({error:v.error});voucher=v.voucher;calculo=calcularVoucher(valorBase,voucher);}
-    if(calculo.valorFinal<5)return res.status(422).json({error:"O total do checkout precisa ser de pelo menos R$ 5,00 para pagamento via Pix."});
     // Cartão é a forma prioritária; Pix continua aceito, e o Pix Automático
     // entra pela etapa 5 do onboarding.
     const forma = String(req.body?.formaPagamento || "CREDIT_CARD").toUpperCase();

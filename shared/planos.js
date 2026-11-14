@@ -208,7 +208,7 @@ export const DESTAQUES = {
   },
   total: {
     nome: "Destaque Elite",
-    preco: 150,
+    preco: 149.90,
     prioridade: 4,
     frase: "A RYCS encontra e convida os melhores profissionais por você.",
     itens: [
