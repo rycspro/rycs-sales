@@ -169,7 +169,7 @@ function IndicadorTopo({ label, valor, descricao, Icon, destaque }) {
         <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)" }}>{label}</span>
         <Icon size={16} strokeWidth={2} color={destaque ? "var(--brand)" : "var(--muted)"} aria-hidden="true" />
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: destaque ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: -0.4, marginTop: 8 }}>{valor}</div>
+      <div style={{ fontSize: 27, fontWeight: 500, color: destaque ? "var(--brand)" : "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: "-.04em", lineHeight: 1, marginTop: 8 }}>{valor}</div>
       {descricao && <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>{descricao}</div>}
     </div>
   );
@@ -197,7 +197,7 @@ function MiniIndicadores({ s }) {
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
       {itens.map(([label, val]) => (
         <div key={label} style={{ background: "var(--surface-2)", borderRadius: 9, padding: "9px 10px", textAlign: "center" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{val}</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: "-.04em" }}>{val}</div>
           <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 1, textTransform: "uppercase", letterSpacing: ".03em" }}>{label}</div>
         </div>
       ))}
@@ -271,7 +271,7 @@ function CampanhaCard({ c, s, onAbrir, onCandidaturas, onToggleCandidaturas, men
 function CampanhaRow({ c, s, onAbrir, onCandidaturas, onToggleCandidaturas, menu }) {
   const col = (val, label) => (
     <div style={{ textAlign: "center", minWidth: 70 }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{val}</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", fontVariantNumeric: "tabular-nums", letterSpacing: "-.04em" }}>{val}</div>
       <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em" }}>{label}</div>
     </div>
   );
