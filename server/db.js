@@ -1163,18 +1163,11 @@ if (notaReset.changes > 0) console.log(`[migracao] ${notaReset.changes} vendedor
 const notaResetEmpresas = db.prepare("UPDATE companies SET nota = 100 WHERE nota = 0 OR nota IS NULL").run();
 if (notaResetEmpresas.changes > 0) console.log(`[migracao] ${notaResetEmpresas.changes} empresa(s) com nota zerada → 100`);
 
-// INNER Energia é empresa premium — sem limite de campanhas ativas.
-db.prepare("UPDATE companies SET tipoEmpresa = 'premium', assinatura = 'premium', plano = 'premium' WHERE nome LIKE '%INNER%' AND (tipoEmpresa IS NULL OR tipoEmpresa != 'premium')").run();
-
-// Martin Business School é empresa premium: opera sem precisar pagar plano.
-// Só `tipoEmpresa` e `assinatura` mudam — saldo, depósitos e histórico ficam
-// intactos, e pagar segue sendo possível. Daqui para frente quem concede
-// premium é o admin, na tela de Cobrança e Acesso; esta linha existe para a
-// empresa já nascer premium no deploy, e não repete o trabalho se já estiver.
-const martinPremium = db.prepare(
-  "UPDATE companies SET tipoEmpresa = 'premium', assinatura = 'premium' WHERE nome LIKE '%Martin%Business%' AND (tipoEmpresa IS NULL OR tipoEmpresa != 'premium')"
-).run();
-if (martinPremium.changes > 0) console.log(`[migracao] Martin Business School marcada como premium`);
+// Removidos os hardcodes que marcavam empresas específicas (INNER Energia,
+// Martin Business) como premium no boot, sem pagamento. Agora só é plano pago
+// quem tem assinatura real (subscriptions) ou premium/isenção do admin. A
+// normalização dos falsos premium/pagos roda mais abaixo, depois que as
+// tabelas company_billing/company_billing_history são criadas.
 
 // Pós-pago foi REMOVIDO da plataforma: toda empresa, de qualquer plano (inclusive
 // Premium), volta a pré-pago e passa a precisar de saldo em caixa para rodar
@@ -1300,6 +1293,23 @@ db.exec(`
     resolvidoEm INTEGER DEFAULT NULL
   );
 `);
+
+// Normaliza os FALSOS premium/pagos de QUALQUER conta: empresa marcada premium
+// ou com plano pago em companies.assinatura, mas SEM assinatura real
+// (subscriptions) e SEM ação do admin (company_billing_history / isenção).
+// Essas voltam ao gratuito e passam a seguir os limites do plano Free.
+// Pagantes reais e empresas premium/isentas pelo admin ficam intactos.
+// Aditiva e idempotente. Roda aqui porque depende de company_billing*.
+{
+  const normaliza = db.prepare(`
+    UPDATE companies SET tipoEmpresa = 'padrao', assinatura = 'free'
+    WHERE (tipoEmpresa = 'premium' OR (assinatura IS NOT NULL AND assinatura NOT IN ('free','')))
+      AND id NOT IN (SELECT companyId FROM subscriptions WHERE status != 'cancelada')
+      AND id NOT IN (SELECT DISTINCT companyId FROM company_billing_history WHERE campo IN ('tipoEmpresa','plano'))
+      AND id NOT IN (SELECT companyId FROM company_billing WHERE billing_status = 'isenta')
+  `).run();
+  if (normaliza.changes > 0) console.log(`[migracao] ${normaliza.changes} empresa(s) sem pagamento/isenção voltaram ao plano gratuito`);
+}
 
 // Templates de e-mail predefinidos
 db.exec(`

@@ -87,20 +87,10 @@ export function acessoDaEmpresa({ empresa = {}, assinatura = null } = {}, agora 
 
   const estado = estadoDaAssinatura(assinatura, agora);
 
-  // Empresa que assinou antes deste sistema pode ter `assinatura` preenchida na
-  // própria tabela companies sem linha em subscriptions. Isso conta como ativa:
-  // ela pagou de alguma forma, e derrubar o acesso dela agora seria punir o
-  // cliente por uma mudança nossa.
-  if (estado === ESTADOS.sem && !semPlanoPago(empresa.assinatura)) {
-    return {
-      estado: ESTADOS.ativa,
-      liberado: true,
-      plano: empresa.assinatura,
-      titulo: "",
-      mensagem: "",
-      acao: null,
-    };
-  }
+  // Regra: plano pago só vale com assinatura real (linha em subscriptions) ou
+  // premium/isenção do admin (tratados acima). `companies.assinatura` sozinho,
+  // sem assinatura, NÃO libera: sem pagamento, a empresa fica no gratuito e
+  // segue os limites do plano Free até escolher e pagar um plano.
 
   // Sem assinatura não tem plano a exibir. O "free" é resquício do modelo
   // antigo e apareceria no painel como plano "Sandbox" ao lado de "Sem
