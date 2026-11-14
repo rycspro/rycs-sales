@@ -79,8 +79,27 @@ export async function asaas(caminho, { method = "GET", body } = {}) {
 // depósito antes — ninguém deposita caixa de campanha para poder assinar.
 // Mora aqui para os dois caminhos usarem um só.
 
+// O Asaas envia notificações próprias ao pagador (e-mail/SMS de cobrança gerada,
+// recebida, etc.). Quem fala com o cliente é a RYCS, com a nossa identidade — o
+// Asaas não deve mandar nada. `notificationDisabled: true` no cliente desliga
+// todas essas notificações do Asaas. Best-effort: uma falha aqui não derruba o
+// fluxo de cobrança.
+export async function desativarNotificacoesAsaas(customerId) {
+  if (!customerId) return;
+  try {
+    await asaas(`/customers/${customerId}`, { method: "POST", body: { notificationDisabled: true } });
+  } catch (e) {
+    console.warn("[asaas] não foi possível desativar notificações do cliente:", e.message);
+  }
+}
+
 export async function garantirCliente(db, empresa) {
-  if (empresa.asaasCustomerId) return empresa.asaasCustomerId;
+  if (empresa.asaasCustomerId) {
+    // Cliente já existe (criado antes desta regra): garante que o Asaas esteja
+    // em silêncio também para ele.
+    await desativarNotificacoesAsaas(empresa.asaasCustomerId);
+    return empresa.asaasCustomerId;
+  }
 
   if (!empresa.documento) {
     const e = new Error("Cadastre o CNPJ ou CPF da empresa antes de continuar.");
@@ -96,6 +115,7 @@ export async function garantirCliente(db, empresa) {
       cpfCnpj: String(empresa.documento).replace(/\D/g, ""),
       email: usuario?.email || undefined,
       externalReference: empresa.id,
+      notificationDisabled: true,
     },
   });
 

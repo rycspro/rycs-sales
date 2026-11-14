@@ -2,6 +2,15 @@ const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.EMAIL_FROM || "RYCS <noreply@rycs.com.br>";
 const APP_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
+// Cabeçalho único de todos os e-mails: o logo real da RYCS sobre fundo claro
+// com um filete da cor da marca, seguindo a identidade visual do sistema.
+// O logo é servido pela própria plataforma (public/logo-rycs.png). `alt` cobre
+// os clientes de e-mail que bloqueiam imagens.
+const LOGO_URL = `${APP_URL}/logo-rycs.png`;
+const CABECALHO = `<div style="background:#ffffff;padding:22px 24px 18px;border-bottom:3px solid #2563eb;border-radius:12px 12px 0 0;text-align:center">
+        <img src="${LOGO_URL}" alt="RYCS Sales Machine" width="150" style="width:150px;max-width:70%;height:auto;display:inline-block" />
+      </div>`;
+
 const seguro = (valor) => String(valor || "")
   .replace(/&/g, "&amp;")
   .replace(/</g, "&lt;")
@@ -12,10 +21,7 @@ const seguro = (valor) => String(valor || "")
 function emailCadastro({ titulo, nome, mensagem, botao = "Acessar a RYCS" }) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1f2937">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#60a5fa;font-size:28px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:20px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:19px">${seguro(titulo)}</h2>
         <p style="color:#4b5563;line-height:1.6">Olá, ${seguro(nome)}.</p>
@@ -26,6 +32,55 @@ function emailCadastro({ titulo, nome, mensagem, botao = "Acessar a RYCS" }) {
         <p style="color:#6b7280;font-size:13px;margin:0">Equipe RYCS Sales Machine</p>
       </div>
     </div>`;
+}
+
+const moedaBR = (v) => `R$ ${(Number(v) || 0).toFixed(2).replace(".", ",")}`;
+
+// Comprovante de pagamento com a cara da RYCS, com destaque do valor e uma
+// mensagem animada conforme o que foi pago (campanha / plano / visibilidade).
+const CONTEXTO_COMPROVANTE = {
+  campanha: {
+    assunto: "Pagamento confirmado — seu caixa está pronto! 🚀",
+    mensagem: (v) => `Recebemos seu depósito de <b>${moedaBR(v)}</b> e ele já está no caixa das suas campanhas. Agora é com você: ative campanhas, libere pagamentos aos profissionais e acelere seus resultados. Bora vender! 💪`,
+    botao: "Ir para Campanhas",
+  },
+  plano: {
+    assunto: "Plano ativado com sucesso! 🎉",
+    mensagem: (v, nomePlano) => `Seu plano <b>${seguro(nomePlano || "RYCS")}</b> está ativo! O pagamento de <b>${moedaBR(v)}</b> foi confirmado e você já tem acesso a todos os recursos. Conte com a RYCS para escalar sua operação comercial.`,
+    botao: "Ver meu plano",
+  },
+  visibilidade: {
+    assunto: "Destaque ativado — sua empresa em evidência! ✨",
+    mensagem: (v) => `Recebemos o pagamento de <b>${moedaBR(v)}</b> do seu destaque na vitrine. Sua empresa agora aparece com prioridade para os melhores profissionais. Aproveite a visibilidade extra!`,
+    botao: "Ver visibilidade",
+  },
+};
+
+function comprovanteHtml({ assunto, nome, mensagem, valor, botao }) {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1f2937">
+      ${CABECALHO}
+      <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
+        <h2 style="margin:0 0 12px;font-size:19px">${seguro(assunto)}</h2>
+        <p style="color:#4b5563;line-height:1.6">Olá, ${seguro(nome)}.</p>
+        <p style="color:#4b5563;line-height:1.6">${mensagem}</p>
+        <div style="background:#eef4ff;border:1px solid #c7dbff;border-radius:12px;padding:16px;text-align:center;margin:18px 0">
+          <div style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.5px">Valor confirmado</div>
+          <div style="color:#1d4ed8;font-size:26px;font-weight:800;margin-top:4px">${moedaBR(valor)}</div>
+        </div>
+        <div style="text-align:center;margin:18px 0">
+          <a href="${seguro(APP_URL)}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">${seguro(botao)}</a>
+        </div>
+        <p style="color:#6b7280;font-size:13px;margin:0">Comprovante gerado automaticamente · Equipe RYCS Sales Machine</p>
+      </div>
+    </div>`;
+}
+
+export function emailComprovantePagamento({ nome, email, tipo = "campanha", valor, nomePlano }) {
+  if (!email) return { ok: false, motivo: "sem e-mail" };
+  const ctx = CONTEXTO_COMPROVANTE[tipo] || CONTEXTO_COMPROVANTE.campanha;
+  const html = comprovanteHtml({ assunto: ctx.assunto, nome: nome || "", mensagem: ctx.mensagem(valor, nomePlano), valor, botao: ctx.botao });
+  return sendEmail(email, ctx.assunto, html);
 }
 
 export async function sendEmail(to, subject, html) {
@@ -56,10 +111,7 @@ export function emailBoasVindas(nome, email, role) {
   const roleLabel = role === "vendedor" ? "Profissional" : "Empresa";
   return sendEmail(email, `Bem-vindo à RYCS, ${nome}!`, `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#2563EB;font-size:28px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:20px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:18px">Olá, ${seguro(nome)}!</h2>
         <p style="color:#4b5563;line-height:1.6">
@@ -141,10 +193,7 @@ export function emailResetSenha(nome, email, token, frontendUrl) {
   const link = `${frontendUrl}/reset?token=${token}`;
   return sendEmail(email, "Redefinir senha — RYCS", `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#2563EB;font-size:28px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:20px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:18px">Olá, ${nome}!</h2>
         <p style="color:#4b5563;line-height:1.6">
@@ -165,10 +214,7 @@ export function emailConfirmacaoConta(nome, email, token, frontendUrl) {
   const link = `${frontendUrl}/confirmar-email/${token}`;
   return sendEmail(email, "Confirme seu e-mail — RYCS", `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#2563EB;font-size:28px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:20px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:18px">Olá, ${nome}!</h2>
         <p style="color:#4b5563;line-height:1.6">
@@ -189,10 +235,7 @@ export function emailStatusAcao(nome, email, acao, status) {
   const labels = { liberado: "aprovada", recusado: "recusada", revisao: "em revisão" };
   return sendEmail(email, `Ação ${labels[status] || status} — RYCS`, `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#2563EB;font-size:28px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:20px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:18px">${nome}, sua ação foi ${labels[status] || status}</h2>
         <p style="color:#4b5563;line-height:1.6">
@@ -208,10 +251,7 @@ export function emailStatusAcao(nome, email, acao, status) {
 export function emailSaquePago(nome, email, valor) {
   return sendEmail(email, `Saque de R$ ${valor.toFixed(2)} pago — RYCS`, `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#2563EB;font-size:28px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:20px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 12px;font-size:18px">${nome}, seu saque foi pago!</h2>
         <p style="color:#4b5563;line-height:1.6">
@@ -253,10 +293,7 @@ export function emailFotoPendente({ nome, email, camposPendentes }) {
   const listaPendentes = camposPendentes.map((c) => `<li style="margin-bottom:6px">• ${seguro(c)}</li>`).join("");
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;color:#1f2937">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#60a5fa;font-size:26px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:18px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:28px 24px;border-radius:0 0 12px 12px">
         <h2 style="margin:0 0 16px;font-size:19px;color:#0b1220">Seu cadastro está incompleto</h2>
         <p style="color:#4b5563;line-height:1.7;font-size:14px">Olá, ${seguro(nome)}!</p>
@@ -284,10 +321,7 @@ export function emailFotoPendente({ nome, email, camposPendentes }) {
 export function emailCadastroCompletadoAdmin({ nomeProfissional, emailProfissional, adminEmail }) {
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;color:#1f2937">
-      <div style="background:#1a2744;padding:16px 24px;border-radius:12px 12px 0 0;text-align:center">
-        <span style="color:#60a5fa;font-size:26px;font-weight:800">R</span>
-        <span style="color:#fff;font-size:18px;font-weight:700;margin-left:4px">RYCS</span>
-      </div>
+      ${CABECALHO}
       <div style="background:#f9fafb;padding:28px 24px;border-radius:0 0 12px 12px">
         <div style="background:#d1fae5;border-left:4px solid #10b981;padding:14px 16px;border-radius:4px;margin-bottom:18px">
           <p style="margin:0;font-weight:600;color:#065f46;font-size:15px">✅ Cadastro 100% concluído</p>
