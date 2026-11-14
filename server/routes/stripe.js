@@ -1,12 +1,12 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
-import { PLANOS, CICLOS, ORDEM_PLANOS, normalizarCiclo } from "../../shared/planos.js";
+import { PLANOS, CICLOS, ORDEM_PLANOS, normalizarCiclo, DESTAQUES } from "../../shared/planos.js";
 import { MOEDA_INTERNACIONAL, valorInternacionalNoCiclo } from "../../shared/precosInternacionais.js";
 import { trialDoOnboarding } from "../services/onboarding.js";
 import { asaas, asaasAtivo } from "../services/asaas.js";
 import {
   stripeAtivo, modoStripe, chavePublicaStripe, assinaturaValida, processarEvento, criarCheckoutAssinatura,
-  encerrarCheckoutPendente, portalDoCliente, ErroStripe,
+  encerrarCheckoutPendente, portalDoCliente, criarCheckoutDestaque, ErroStripe,
 } from "../services/stripe.js";
 
 // Mesmo prazo de teste do checkout em reais (server/routes/subscriptions.js).
@@ -99,6 +99,31 @@ router.post("/subscription/stripe", soEmpresa, async (req, res) => {
     db.prepare("UPDATE subscriptions SET status = 'cancelada', falhaMotivo = ?, atualizadoEm = ? WHERE id = ?").run(String(e.message).slice(0, 300), agora(), subId);
     console.error("[stripe] checkout:", e.message);
     res.status(e instanceof ErroStripe && e.status === 400 ? 400 : 502).json({ error: "Não foi possível abrir o pagamento internacional. Tente de novo." });
+  }
+});
+
+// Destaque via Stripe (pagamento internacional, US$).
+router.post("/destaque/stripe", soEmpresa, async (req, res) => {
+  if (!stripeAtivo()) return res.status(503).json({ error: "Pagamento internacional indisponível no momento." });
+  const tipo = String(req.body?.tipo || "");
+  const d = DESTAQUES[tipo];
+  if (!d) return res.status(400).json({ error: "Tipo de destaque inválido." });
+
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(req.user.entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  const email = db.prepare("SELECT email FROM users WHERE id = ?").get(req.user.id)?.email || null;
+
+  const depositId = uid();
+  db.prepare(`INSERT INTO deposit_requests (id, companyId, valor, status, referencia, gateway, observacao, criadoEm)
+              VALUES (?, ?, ?, 'pendente', ?, 'stripe', 'destaque', ?)`).run(depositId, req.user.entityId, d.preco, "", agora());
+
+  try {
+    const r = await criarCheckoutDestaque({ empresa, email, depositId, tipo, valor: d.preco, retorno: req.body?.retorno });
+    res.json({ ok: true, depositId, url: r.url, valor: r.valor, moeda: r.moeda });
+  } catch (e) {
+    db.prepare("UPDATE deposit_requests SET status = 'cancelado' WHERE id = ?").run(depositId);
+    console.error("[stripe] destaque:", e.message);
+    res.status(e instanceof ErroStripe && e.status === 400 ? 400 : 502).json({ error: "Não foi possível abrir o pagamento internacional." });
   }
 });
 

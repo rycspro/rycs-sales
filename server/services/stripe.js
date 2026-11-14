@@ -183,6 +183,42 @@ export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ci
   return { url: sessao.url || null, clientSecret: sessao.client_secret || null, sessionId: sessao.id, valor, moeda: MOEDA_INTERNACIONAL };
 }
 
+// Destaque via Stripe (cartão internacional): assinatura mensal no Stripe.
+// O destaque é ativado pelo webhook quando o pagamento é confirmado.
+export async function criarCheckoutDestaque({ empresa, email, depositId, tipo, valor, retorno }) {
+  const customer = await garantirClienteStripe(empresa, email);
+  const metadados = { type: "destaque", depositId, companyId: empresa.id, destaqueTipo: tipo };
+
+  const sessao = await stripe("/checkout/sessions", {
+    method: "POST",
+    idempotencia: `destaque-${depositId}`,
+    body: {
+      mode: "subscription",
+      customer,
+      client_reference_id: depositId,
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: MOEDA_INTERNACIONAL.toLowerCase(),
+          unit_amount: centavos(valor),
+          recurring: { interval: "month", interval_count: 1 },
+          product_data: { name: `RYCS Destaque — ${tipo}`, metadata: { destaqueTipo: tipo } },
+        },
+      }],
+      subscription_data: { metadata: metadados, description: `RYCS Destaque — monthly subscription` },
+      metadata: metadados,
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
+      customer_update: { name: "auto", address: "auto" },
+      success_url: urlDeRetorno(retorno, "stripe=destaque_ok"),
+      cancel_url: urlDeRetorno(retorno, "stripe=cancelado"),
+    },
+  });
+
+  db.prepare("UPDATE deposit_requests SET stripeSessionId = ? WHERE id = ?").run(sessao.id, depositId);
+  return { url: sessao.url || null, sessionId: sessao.id, valor, moeda: MOEDA_INTERNACIONAL };
+}
+
 // Depósito de caixa via Stripe (cartão internacional), cobrança ONE-TIME na
 // moeda escolhida. Usa o mesmo cliente do Stripe (mostra o cartão salvo do
 // plano e deixa adicionar outro) e salva o cartão para próximos aportes. O

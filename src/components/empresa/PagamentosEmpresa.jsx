@@ -125,17 +125,20 @@ function SeletorMoeda({ moeda, onSelecionar, disabled }) {
 
 // Cronômetro regressivo de expiração do Pix (mm:ss). Ao zerar, sinaliza expirado.
 function CronometroPix({ expiraEm }) {
-  const [restante, setRestante] = useState(() => Math.max(0, expiraEm - Date.now()));
+  const teto = Math.min(expiraEm, Date.now() + 30 * 60000);
+  const [restante, setRestante] = useState(() => Math.max(0, teto - Date.now()));
   useEffect(() => {
-    setRestante(Math.max(0, expiraEm - Date.now()));
-    const t = setInterval(() => setRestante(Math.max(0, expiraEm - Date.now())), 1000);
+    setRestante(Math.max(0, teto - Date.now()));
+    const t = setInterval(() => setRestante(Math.max(0, teto - Date.now())), 1000);
     return () => clearInterval(t);
-  }, [expiraEm]);
+  }, [teto]);
 
   const expirado = restante <= 0;
   const totalSeg = Math.floor(restante / 1000);
-  const mm = String(Math.floor(totalSeg / 60)).padStart(2, "0");
+  const hh = Math.floor(totalSeg / 3600);
+  const mm = String(Math.floor((totalSeg % 3600) / 60)).padStart(2, "0");
   const ss = String(totalSeg % 60).padStart(2, "0");
+  const tempo = hh > 0 ? `${String(hh).padStart(2, "0")}:${mm}:${ss}` : `${mm}:${ss}`;
 
   return (
     <div style={{
@@ -145,7 +148,7 @@ function CronometroPix({ expiraEm }) {
       color: expirado ? "#DC2626" : "var(--brand)",
     }}>
       <Clock size={14} />
-      {expirado ? "Pix expirado — gere um novo código" : <>Expira em <span className="vx-mono">{mm}:{ss}</span></>}
+      {expirado ? "Pix expirado — gere um novo código" : <>Expira em <span className="vx-mono">{tempo}</span></>}
     </div>
   );
 }
