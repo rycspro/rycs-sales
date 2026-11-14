@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X, QrCode } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -33,6 +33,22 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [statusPagamento, setStatusPagamento] = useState(null);
   const [pixQr, setPixQr] = useState(null);
   const [vouchersUsados, setVouchersUsados] = useState([]);
+  const pixPollRef = useRef(null);
+
+  useEffect(() => {
+    if (!pixQr?.subscriptionId) { clearInterval(pixPollRef.current); return; }
+    pixPollRef.current = setInterval(async () => {
+      const r = await api("/subscription");
+      if (r?.assinatura?.status === "ativa") {
+        clearInterval(pixPollRef.current);
+        setPixQr(null);
+        setSelecionado(null);
+        setStatusPagamento("confirmado");
+        await Promise.all([carregar(), recarregar?.()]);
+      }
+    }, 5000);
+    return () => clearInterval(pixPollRef.current);
+  }, [pixQr?.subscriptionId]);
 
   const carregar = useCallback(async () => {
     const [p, s] = await Promise.all([api("/plans"), api("/subscription")]);

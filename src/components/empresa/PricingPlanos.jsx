@@ -167,13 +167,10 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
               initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1.1, type: "spring", stiffness: 100, damping: 26, delay: 0.1 + index * 0.08 }}
-              className="vx-card"
+              className={`vx-card${ehAtual ? " vx-card--active" : ""}`}
               style={{
                 position: "relative", padding: "26px 22px", display: "flex", flexDirection: "column",
-                border: ehAtual ? "none" : popular ? "2px solid var(--brand)" : "1px solid var(--border)",
-                background: ehAtual ? "linear-gradient(120deg, #2563EB 0%, #4338CA 52%, #0EA5E9 100%)" : undefined,
-                color: ehAtual ? "#fff" : undefined,
-                boxShadow: ehAtual ? "0 10px 26px rgba(37,99,235,.28)" : popular ? "var(--shadow-brand)" : "var(--shadow-card)",
+                border: popular ? "2px solid var(--brand)" : undefined,
                 overflow: "hidden",
               }}
             >

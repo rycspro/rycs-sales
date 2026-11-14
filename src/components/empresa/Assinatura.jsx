@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Check, ArrowLeft, Loader, QrCode, Gift, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, ArrowLeft, Loader, QrCode, Gift, Sparkles, CheckCircle } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS } from "../../../shared/planos.js";
@@ -27,6 +27,21 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
   const [trialDias, setTrialDias] = useState(0);
   const [enviando, setEnviando] = useState(false);
   const [pix, setPix] = useState(null);
+  const [pixConfirmado, setPixConfirmado] = useState(false);
+  const pixPollRef = useRef(null);
+
+  useEffect(() => {
+    if (!pix?.subscriptionId) { clearInterval(pixPollRef.current); return; }
+    pixPollRef.current = setInterval(async () => {
+      const r = await api("/subscription");
+      if (r?.assinatura?.status === "ativa") {
+        clearInterval(pixPollRef.current);
+        setPix(null);
+        setPixConfirmado(true);
+      }
+    }, 5000);
+    return () => clearInterval(pixPollRef.current);
+  }, [pix?.subscriptionId]);
 
   // Convite de trial, quando a empresa chegou por um link privado. Validado no
   // servidor: um token inventado não vira oferta na tela.
@@ -88,6 +103,22 @@ export default function Assinatura({ emp, acesso, aviso, aoAtivar }) {
     aviso(r.message || "Conta ativada.");
     aoAtivar?.(r);
   };
+
+  // -------------------------------------------------------- Pagamento confirmado
+  if (pixConfirmado) return (
+    <div className="vx-fade" style={{ maxWidth: 520 }}>
+      <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
+        <CheckCircle size={56} color="var(--brand)" style={{ marginBottom: 16 }} />
+        <div className="vx-disp" style={{ fontSize: 20, margin: "0 0 8px" }}>Pagamento confirmado</div>
+        <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 24px" }}>
+          Seu plano está ativo. Boas vendas!
+        </p>
+        <button className="vx-btn vx-btn-primary" onClick={() => { setPixConfirmado(false); aoAtivar?.(); }}>
+          Continuar
+        </button>
+      </div>
+    </div>
+  );
 
   // ------------------------------------------------------------ Pix pendente
   if (pix) return (
