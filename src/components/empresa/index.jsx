@@ -158,6 +158,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "integracoes" && (
         <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)} />
       )}
+      {aba === "planos" && (
+        <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
+          secao="plano" onTrocarSecao={() => {}} />
+      )}
       {aba === "pagamentos-campanhas" && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
           secao="campanhas"
