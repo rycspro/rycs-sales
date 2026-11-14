@@ -70,7 +70,10 @@ export const NAV = {
     ] },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
     { section: "Sua Empresa" },
-    { key: "leads", label: "Leads", Icon: Target },
+    { key: "leads", label: "Leads", Icon: Target, children: [
+      { key: "leads", label: "Leads" },
+      { key: "integracoes", label: "Integrações" },
+    ] },
     { divider: true },
     { key: "configuracoes", label: "Configurações", Icon: Settings },
   ],

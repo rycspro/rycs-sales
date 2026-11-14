@@ -6,11 +6,10 @@ import {
   Building2, Users, Bell, Lock, Save, Check, Settings,
   Briefcase, AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
-  ImagePlus, Trash2, Plug, Eye, EyeOff, Sparkles,
+  ImagePlus, Trash2, Eye, EyeOff, Sparkles,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
-import IntegracaoMeta from "./IntegracaoMeta.jsx";
 import PagamentosEmpresa from "./PagamentosEmpresa.jsx";
 import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
 
@@ -51,7 +50,6 @@ const SECOES_NAV = [
   { key: "comercial", label: "Comercial", icon: Briefcase },
   { key: "plano", label: "Plano e pagamentos", icon: CreditCard },
   { key: "visibilidade", label: "Visibilidade", icon: Sparkles },
-  { key: "integracoes", label: "Integrações", icon: Plug },
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
   { key: "seguranca", label: "Segurança", icon: Lock },
@@ -286,7 +284,6 @@ function CartoesSalvos({ aviso }) {
 
 export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, secaoInicial = "dados", somenteConteudo = false }) {
   const [secao, setSecao] = useState(secaoInicial);
-  const campanhasEmpresa = (db?.campaigns || []).filter((c) => c.companyId === emp.id);
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
   const [form, setForm] = useState(() => ({
     ...emp,
@@ -608,14 +605,12 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     indicar: <Indicacoes aviso={aviso} />,
 
-    integracoes: <IntegracaoMeta aviso={aviso} campanhas={campanhasEmpresa} />,
-
     plano: <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar} secao="plano" onTrocarSecao={() => {}} />,
 
     visibilidade: <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "idiomas", "indicar", "integracoes", "plano", "visibilidade"].includes(secao);
+  const showSalvar = !["seguranca", "preferencias", "idiomas", "indicar", "plano", "visibilidade"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 

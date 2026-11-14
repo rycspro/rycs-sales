@@ -19,6 +19,7 @@ import InicioEmpresa from "./InicioEmpresa.jsx";
 import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
 import SuporteEmpresa from "./SuporteEmpresa.jsx";
 import LeadsEmpresa from "./LeadsEmpresa.jsx";
+import IntegracaoMeta from "./IntegracaoMeta.jsx";
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
@@ -36,9 +37,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   const [modalSaldo, setModalSaldo] = useState(false);
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
   const [filtros, setFiltros] = useState({});
-  // Volta do login da Meta (?meta=...): abre direto em Configurações → Integrações.
+  // Volta do login da Meta (?meta=...): abre direto em Integrações.
   const [voltouDaMeta] = useState(() => new URLSearchParams(window.location.search).has("meta"));
-  useEffect(() => { if (voltouDaMeta) setAba?.("configuracoes"); }, []);
+  useEffect(() => { if (voltouDaMeta) setAba?.("integracoes"); }, []);
   // Volta do checkout do Stripe (?stripe=ok|cancelado|portal): abre Pagamentos.
   // Quem libera o plano é o webhook; aqui só avisamos e recarregamos.
   useEffect(() => {
@@ -150,6 +151,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "leads" && (
         <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
       )}
+      {aba === "integracoes" && (
+        <IntegracaoMeta aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)} />
+      )}
       {aba === "pagamentos-campanhas" && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
           secao="campanhas"
@@ -158,7 +162,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       )}
       {(aba === "configuracoes" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
         <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar}
-          secaoInicial={aba === "pagamentos" ? "plano" : aba === "pagamentos-visibilidade" ? "visibilidade" : voltouDaMeta ? "integracoes" : undefined} />
+          secaoInicial={aba === "pagamentos" ? "plano" : aba === "pagamentos-visibilidade" ? "visibilidade" : undefined} />
       )}
       {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa />}
 
