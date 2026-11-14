@@ -185,7 +185,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(""), 2600);
+    const t = setTimeout(() => setToast(""), 8000);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -290,9 +290,12 @@ export default function App() {
   const toastEl = toast && (
     <div className="vx-fade" role="status" style={{
       position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",
-      background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)", padding: "12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
-      boxShadow: "var(--shadow-pop)",
-    }}>{toast}</div>
+      background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)", padding: "12px 15px 12px 15px", borderRadius: 12, fontWeight: 500, fontSize: 13.5,
+      boxShadow: "var(--shadow-pop)", display: "flex", alignItems: "center", gap: 10,
+    }}>
+      <span style={{ flex: 1 }}>{toast}</span>
+      <button onClick={() => setToast("")} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--muted)", flexShrink: 0 }} aria-label="Fechar">✕</button>
+    </div>
   );
 
   // Empresa com onboarding em aberto não entra na plataforma: vê as etapas.
