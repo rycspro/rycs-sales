@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowLeft, UserRound, Building2, Check } from "lucide-react";
 import { Campo, CampoSenha } from "./ui.jsx";
 import MolduraAuth from "./auth/MolduraAuth.jsx";
 import RecuperarSenha from "./auth/RecuperarSenha.jsx";
@@ -38,6 +38,7 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
   const [etapa, setEtapa] = useState(conviteTrial ? "login" : "idioma");
   const [idioma, setIdioma] = useState(locale || "");
   const [contaTipo, setContaTipo] = useState("");
+  const [selecionado, setSelecionado] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
@@ -146,38 +147,73 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
   }
 
   if (etapa === "conta") {
-    const cardBase = {
-      display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 8,
-      padding: "20px 14px", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)",
-      background: "var(--surface)", cursor: "pointer", transition: "border-color .15s, background .15s, transform .15s", minHeight: 150,
-    };
-    const realce = (e, on) => {
-      e.currentTarget.style.borderColor = on ? "var(--brand)" : "var(--border)";
-      e.currentTarget.style.background = on ? "var(--brand-50)" : "var(--surface)";
-    };
-    const escolherConta = (tipo) => { setContaTipo(tipo); setEtapa("login"); };
-    const Card = ({ tipo, icone, titulo, texto }) => (
-      <button type="button" style={cardBase}
-        onClick={() => escolherConta(tipo)}
-        onMouseEnter={(e) => realce(e, true)} onMouseLeave={(e) => realce(e, false)}
-        onFocus={(e) => realce(e, true)} onBlur={(e) => realce(e, false)}>
-        <span style={{ fontSize: 34, lineHeight: 1 }} aria-hidden="true">{icone}</span>
-        <span style={{ fontWeight: 700, fontSize: 15.5, color: "var(--ink)" }}>{titulo}</span>
-        <span className="vx-mut" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{texto}</span>
-      </button>
-    );
-    return (
-      <MolduraAuth titulo={t("conta.titulo")} subtitulo={t("conta.subtitulo")} largura={480}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <Card tipo="profissional" icone="🤝" titulo={t("conta.profissional")}
-            texto={t("conta.profissionalDesc")} />
-          <Card tipo="empresa" icone="🏢" titulo={t("conta.empresa")}
-            texto={t("conta.empresaDesc")} />
-        </div>
-        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEtapa("idioma")} style={{ width: "100%", marginTop: 10, fontSize: 12.5 }}>
-          {t("comum.voltar")}
+    const AZUL = "#318CE7";
+    const continuar = () => { if (selecionado) { setContaTipo(selecionado); setEtapa("login"); } };
+    const Card = ({ tipo, Icone, titulo, desc, acao }) => {
+      const sel = selecionado === tipo;
+      return (
+        <button type="button" aria-pressed={sel} onClick={() => setSelecionado(tipo)}
+          onMouseEnter={(e) => { if (!sel) { e.currentTarget.style.borderColor = "rgba(49,140,231,.45)"; e.currentTarget.style.background = "rgba(49,140,231,.03)"; } }}
+          onMouseLeave={(e) => { if (!sel) { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.background = "var(--surface-solid)"; } }}
+          style={{
+            position: "relative", flex: "1 1 300px", minWidth: 0, textAlign: "start",
+            display: "flex", flexDirection: "column", gap: 10, padding: "22px 20px",
+            border: `1.5px solid ${sel ? AZUL : "var(--border-strong)"}`, borderRadius: 14,
+            background: sel ? "rgba(49,140,231,.06)" : "var(--surface-solid)",
+            cursor: "pointer", transition: "border-color .15s, background .15s",
+          }}>
+          {sel && (
+            <span style={{ position: "absolute", top: 14, insetInlineEnd: 14, width: 20, height: 20, borderRadius: "50%", background: AZUL, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Check size={13} aria-hidden="true" />
+            </span>
+          )}
+          <span style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(49,140,231,.10)", color: AZUL, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icone size={22} aria-hidden="true" />
+          </span>
+          <span style={{ fontWeight: 600, fontSize: 16.5, color: "var(--ink)" }}>{titulo}</span>
+          <span style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5 }}>{desc}</span>
+          <span style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 6, color: AZUL, fontWeight: 600, fontSize: 13 }}>
+            {acao} <ArrowRight size={15} aria-hidden="true" />
+          </span>
         </button>
-      </MolduraAuth>
+      );
+    };
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "var(--bg)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        <style>{`.vx-perfil-cards button:focus-visible{outline:2px solid ${AZUL};outline-offset:2px}`}</style>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
+          <div className="vx-fade" style={{ width: "100%", maxWidth: 720 }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+                style={{ height: 40, width: "auto", margin: "0 auto 20px", display: "block" }} />
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: AZUL, marginBottom: 10 }}>{t("conta.eyebrow")}</div>
+              <h1 className="vx-disp" style={{ fontSize: 23, fontWeight: 600, lineHeight: 1.25, color: "var(--ink)", margin: "0 0 8px" }}>{t("conta.titulo")}</h1>
+              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>{t("conta.subtitulo")}</p>
+            </div>
+            <div className="vx-perfil-cards" style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
+              <Card tipo="profissional" Icone={UserRound} titulo={t("conta.profissional")} desc={t("conta.profissionalDesc")} acao={t("conta.profissionalAcao")} />
+              <Card tipo="empresa" Icone={Building2} titulo={t("conta.empresa")} desc={t("conta.empresaDesc")} acao={t("conta.empresaAcao")} />
+            </div>
+            <button type="button" disabled={!selecionado} onClick={continuar}
+              onMouseEnter={(e) => { if (selecionado) e.currentTarget.style.background = "#2b7cd0"; }}
+              onMouseLeave={(e) => { if (selecionado) e.currentTarget.style.background = AZUL; }}
+              style={{
+                marginTop: 16, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                background: selecionado ? AZUL : "var(--surface-3)", color: selecionado ? "#fff" : "var(--muted-2)",
+                border: "none", borderRadius: 10, padding: "13px 16px", fontWeight: 600, fontSize: 14.5,
+                cursor: selecionado ? "pointer" : "not-allowed", minHeight: 48, transition: "background .15s",
+              }}>
+              {t("comum.continuar")} <ArrowRight size={16} aria-hidden="true" />
+            </button>
+            <button type="button" onClick={() => setEtapa("idioma")}
+              style={{ margin: "12px auto 0", display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 13, fontWeight: 500 }}>
+              <ArrowLeft size={14} aria-hidden="true" /> {t("comum.voltar")}
+            </button>
+          </div>
+        </div>
+        <footer style={{ textAlign: "center", padding: 16, fontSize: 12, color: "var(--muted-2)" }}>© 2026 RYCS</footer>
+      </div>
     );
   }
 
