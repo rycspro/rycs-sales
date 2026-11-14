@@ -225,7 +225,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   <span className="vx-label">Voucher</span>
                   <div style={{ display: "flex", gap: 7 }}>
                     <input className="vx-input" value={voucher}
-                      onChange={(e) => { setVoucher(e.target.value.toUpperCase()); setDesconto(null); }} />
+                      onChange={(e) => { setVoucher(e.target.value.toUpperCase()); setDesconto(null); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" && voucher) aplicar(); }} />
                     <button className="vx-btn" onClick={aplicar} disabled={!voucher}>Aplicar</button>
                   </div>
                 </label>
