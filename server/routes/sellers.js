@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { randomBytes } from "crypto";
+import bcrypt from "bcryptjs";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { detalharScore, pontosVendedor, explicacaoScore } from "../../shared/perfilVendedor.js";
 import db, { uid, agora } from "../db.js";
@@ -209,6 +211,16 @@ router.post("/sellers", (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, 'triagem', ?, ?, 0, 0, 0, ?, ?, ?)
   `).run(id, nome, email, whats, cidade || "", perfil || "sdr", experiencia || "", nota || 100, pix || "", JSON.stringify(respostas || []), video || "", agora());
   res.json({ id });
+});
+
+// ─── ADMIN: Redefinir senha de um profissional ────────────────────────────────
+router.post("/admin/sellers/:id/reset-senha", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(req.params.id);
+  if (!user) return res.status(404).json({ error: "Usuário do profissional não encontrado" });
+  const novaSenha = randomBytes(8).toString("base64url");
+  db.prepare("UPDATE users SET senha = ? WHERE id = ?").run(bcrypt.hashSync(novaSenha, 10), user.id);
+  res.json({ ok: true, novaSenha });
 });
 
 router.patch("/sellers/:id", (req, res) => {

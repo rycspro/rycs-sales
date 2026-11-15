@@ -3,6 +3,7 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
 import { DossieProfissional } from "./Dossie.jsx";
+import { api } from "../../lib/api.js";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", "sem-exp": "Iniciante", bdr: "BDR", pap: "PAP" };
 const STATUS_LABEL = { aprovado: "Ativo", parcial: "Ativo", analise: "Em análise", triagem: "Triagem", recusado: "Recusado" };
@@ -12,6 +13,16 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [expandido, setExpandido] = useState(null);
+  const [resetando, setResetando] = useState(null);
+
+  const resetarSenha = async (s) => {
+    if (!window.confirm(`Redefinir a senha de acesso de "${s.nome}"?`)) return;
+    setResetando(s.id);
+    const r = await api(`/admin/sellers/${s.id}/reset-senha`, {});
+    setResetando(null);
+    if (!r || r.error) return aviso(r?.error || "Erro ao redefinir senha.");
+    window.alert(`Nova senha de "${s.nome}":\n\n${r.novaSenha}\n\nGuarde antes de fechar.`);
+  };
 
   const profissionais = useMemo(() => {
     let list = db.sellers.map((s) => {
@@ -123,6 +134,9 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
                   <DossieProfissional sellerId={s.id} />
 
                   <hr className="vx-sep" />
+                  <button className="vx-btn vx-btn-sm" onClick={() => resetarSenha(s)} disabled={resetando === s.id} style={{ marginBottom: 10 }}>
+                    {resetando === s.id ? "Aguarde…" : "Redefinir senha"}
+                  </button>
                   <Excluir
                     key={s.id}
                     rota={`/sellers/${s.id}`}
