@@ -216,9 +216,7 @@ export default function App() {
     const r = await api("/auth/register", dados);
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error, campo: r.campo }; }
     if (r?.id) {
-      // A conta existe: o endereço de cadastro não deve sobreviver a um F5,
-      // senão a pessoa recarrega e volta a ver um formulário já cumprido.
-      // Antes de trocar o usuário: o onboarding troca o endereço logo depois.
+      // Limpa a URL de cadastro/onboarding para não sobreviver a um F5.
       window.history.replaceState({}, "", "/");
       setUser(r); userRef.current = r; await carregarState(r);
       return { ok: true };
