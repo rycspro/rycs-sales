@@ -192,14 +192,14 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
   .vx-sidebar::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
     background:linear-gradient(160deg,rgba(255,255,255,.18) 0%,transparent 35%);opacity:.5;z-index:0}
   html.dark .vx-sidebar::before{background:linear-gradient(160deg,rgba(255,255,255,.04) 0%,transparent 25%)}
-  .vx-sidebar-logo{padding:0 16px;height:60px;margin-top:12px;margin-bottom:12px;flex-shrink:0;overflow:hidden;
+  .vx-sidebar-logo{padding:0 14px;height:52px;margin-top:8px;margin-bottom:8px;flex-shrink:0;overflow:hidden;
     display:flex;align-items:center;position:relative;z-index:1}
-  .vx-sidebar-logo img{height:52px;width:auto;object-fit:contain;max-width:100%;display:block;margin:0 auto}
-  .vx-sidebar>div:first-of-type{padding:12px 10px 0;gap:1px;position:relative;z-index:1}
+  .vx-sidebar-logo img{height:44px;width:auto;object-fit:contain;max-width:100%;display:block;margin:0 auto}
+  .vx-sidebar>div:first-of-type{padding:8px 10px 0;gap:0;position:relative;z-index:1}
   .vx-sidebar::-webkit-scrollbar{display:none}
   .vx-bottomnav{display:none}
   /* Subitens do menu (ex.: Pagamentos → Plano/Campanhas/Movimentações) */
-  .vx-subitem{padding-left:40px!important;min-height:38px!important;font-size:14px!important}
+  .vx-subitem{padding-left:36px!important;min-height:32px!important;font-size:12.5px!important}
   /* Subitem selecionado: só o texto azul, sem fundo nem barra. */
   .vx-subitem[data-on="1"]{background:none!important;color:var(--brand)!important;font-weight:600}
   .vx-subitem[data-on="1"]::before{display:none!important}
@@ -207,12 +207,12 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
   .vx-subnav-mobile{display:none!important}
   .vx-ai-trigger{bottom:22px}
   .vx-ai-panel{bottom:72px}
-  .vx-sidebar-section{font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--muted-2);
-    padding:18px 14px 4px;pointer-events:none;user-select:none;position:relative;z-index:1}
-  .vx-sidebtn{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;border:0;
-    background:none;font:inherit;font-size:13px;font-weight:450;color:var(--icon-secondary);cursor:pointer;text-align:left;
+  .vx-sidebar-section{font-size:8.5px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--muted-2);
+    padding:12px 14px 3px;pointer-events:none;user-select:none;position:relative;z-index:1}
+  .vx-sidebtn{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:8px;border:0;
+    background:none;font:inherit;font-size:12.5px;font-weight:450;color:var(--icon-secondary);cursor:pointer;text-align:left;
     position:relative;z-index:1;transition:all .18s;letter-spacing:-.01em}
-  .vx-sidebtn>svg{flex-shrink:0}
+  .vx-sidebtn>svg{flex-shrink:0;width:17px;height:17px}
   .vx-sidebtn:hover{background:rgba(17,24,39,.05);color:var(--ink)}
   html.dark .vx-sidebtn:hover{background:rgba(255,255,255,.06);color:var(--ink)}
   .vx-sidebtn[data-on="1"]{background:var(--brand-50);color:var(--brand);font-weight:600}
