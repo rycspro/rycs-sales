@@ -479,7 +479,6 @@ export default function CadastroProfissional({ onRegister }) {
           <div className="cp-header">
             <img className="cp-logo" src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
-            <div className="cp-badge">{t("cadProf.badge")}</div>
             <div className="cp-eyebrow">{t(`cadProf.${etapaInfo}.eyebrow`)}</div>
             <h1 className="cp-titulo">{t(`cadProf.${etapaInfo}.titulo`)}</h1>
             <p className="cp-desc">{t(`cadProf.${etapaInfo}.descricao`)}</p>
