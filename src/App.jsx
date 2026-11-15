@@ -12,7 +12,6 @@ import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
 import EntradaEmpresa from "./components/auth/EntradaEmpresa.jsx";
 import ConfirmarEmail from "./components/auth/ConfirmarEmail.jsx";
 const LandingPage = lazy(() => import("./components/LandingPage.jsx"));
-const Onboarding = lazy(() => import("./components/onboarding/index.jsx"));
 const Vendedor = lazy(() => import("./components/vendedor/index.jsx"));
 const Empresa = lazy(() => import("./components/empresa/index.jsx"));
 const Admin = lazy(() => import("./components/admin/index.jsx"));
@@ -134,13 +133,12 @@ export default function App() {
       consultarAcesso();
     }
   }, [user, carregarOnboarding, consultarAcesso]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Onboarding fora da frente do painel: o endereço de etapa não tem o que mostrar.
-  // Vendedores e admins nunca devem ficar em /onboarding — redireciona para /.
+  // Sem onboarding guiado: quem está logado nunca fica numa URL /onboarding.
   useEffect(() => {
     if (!user || !window.location.pathname.startsWith("/onboarding")) return;
-    if (user.role !== "empresa") { window.history.replaceState({}, "", "/"); return; }
-    if (onb && !onb.erro && !onb.bloqueia) window.history.replaceState({}, "", "/");
-  }, [user, onb]);
+    window.history.replaceState({}, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, [user]);
 
   const carregarState = useCallback(async (usr) => {
     const u = usr || userRef.current;
@@ -345,40 +343,8 @@ export default function App() {
     </div>
   );
 
-  // Empresa com onboarding em aberto não entra na plataforma: vê as etapas.
-  if (role === "empresa" && !previaQualificacao) {
-    if (!onb) return <div className="vx-app"><style>{CSS}</style><div className="vx-onb-estado" role="status">Carregando seu cadastro…</div></div>;
-    if (onb.erro) return (
-      <div className="vx-app"><style>{CSS}</style>
-        <div className="vx-onb-estado" role="alert">
-          <p>{onb.erro}</p>
-          <button className="vx-btn vx-btn-primary" style={{ minHeight: 48 }} onClick={carregarOnboarding}>Tentar novamente</button>
-        </div>
-      </div>
-    );
-    if (onb.bloqueia) return (
-      <div className="vx-app">
-        <style>{CSS}</style>
-        <Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}>
-        <Onboarding estado={onb} email={user.email}
-          // Saindo do onboarding, o painel precisa dos dados que acabaram de ser preenchidos.
-          setEstado={(novo) => {
-            setOnb(novo);
-            if (novo.bloqueia) return;
-            carregarState();
-            // Concluído: a empresa vai para a listagem de campanhas.
-            if (novo.concluido) setNav((n) => ({ ...n, empresa: "campanhas" }));
-          }}
-          emp={db.companies.find((c) => c.id === db.companyId)} aviso={aviso}
-          etapaPedida={rota.tipo === "onboarding" ? rota.etapa : null} aoSair={logout} />
-        </Suspense>
-        {toastEl}
-      </div>
-    );
-    // caminho=livre: onboarding incompleto mas a plataforma não bloqueia.
-    // Deixa cair no return principal com o banner.
-  }
-
+  // A empresa entra direto na plataforma — sem onboarding guiado bloqueando.
+  // O plano e os dados da empresa são preenchidos dentro do sistema quando quiser.
   const bannerOnb = role === "empresa" && onb && !onb.concluido && !onb.bloqueia && !previaQualificacao;
 
   // Entidade do usuário logado — alimenta o cartão de conta na barra lateral
