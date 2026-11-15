@@ -220,15 +220,18 @@ router.post("/auth/forgot-password", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "E-mail é obrigatório" });
 
+  // A resposta é a mesma em todos os casos: dizer que o e-mail não existe, ou
+  // que o reenvio foi barrado, entregaria quem tem conta na RYCS.
   const resposta = { ok: true, message: "Se o e-mail existir, enviaremos um link." };
-  const emailNorm = String(email).toLowerCase().trim();
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(emailNorm);
-  if (!user) { console.log(`[RESET] e-mail não encontrado: ${emailNorm}`); return res.json(resposta); }
-  if (!podeReenviarReset(user.resetEnviadoEm)) { console.log(`[RESET] cooldown ativo para ${emailNorm}`); return res.json(resposta); }
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(String(email).toLowerCase().trim());
+  if (!user) return res.json(resposta);
+  if (!podeReenviarReset(user.resetEnviadoEm)) return res.json(resposta);
 
   const resetToken = randomBytes(32).toString("hex");
-  const resetExpira = agora() + 3600000;
+  const resetExpira = agora() + 3600000; // 1 hora
 
+  // O banco guarda o hash: link de redefinição é credencial. Um novo envio
+  // substitui o anterior, que deixa de valer.
   db.prepare("UPDATE users SET resetToken = ?, resetExpira = ?, resetEnviadoEm = ? WHERE id = ?")
     .run(hashToken(resetToken), resetExpira, agora(), user.id);
 
@@ -238,24 +241,10 @@ router.post("/auth/forgot-password", async (req, res) => {
     ? db.prepare("SELECT nome FROM companies WHERE id = ?").get(user.entityId)?.nome
     : "Admin";
 
-  console.log(`[RESET] enviando e-mail para ${user.email} (role=${user.role}, nome=${nome || "?"}), FRONTEND=${FRONTEND}`);
   const resultado = await emailResetSenha(nome || "Usuário", user.email, resetToken, FRONTEND);
-  console.log(`[RESET] resultado do envio:`, JSON.stringify(resultado));
+  if (!resultado?.ok) console.error(`[auth] falha ao enviar reset para ${user.email}:`, resultado?.error);
 
   res.json(resposta);
-});
-
-// Diagnóstico temporário — testar envio de e-mail de reset
-router.post("/auth/debug-reset", async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: "E-mail obrigatório" });
-  const emailNorm = String(email).toLowerCase().trim();
-  const user = db.prepare("SELECT id, email, role, entityId, resetEnviadoEm FROM users WHERE email = ?").get(emailNorm);
-  if (!user) return res.json({ etapa: "usuario_nao_encontrado", email: emailNorm });
-  const cooldown = !podeReenviarReset(user.resetEnviadoEm);
-  if (cooldown) return res.json({ etapa: "cooldown_ativo", resetEnviadoEm: user.resetEnviadoEm, agora: agora() });
-  const resultado = await emailResetSenha("Teste", user.email, "debug-token-invalido", FRONTEND);
-  res.json({ etapa: "email_enviado", resultado, frontend: FRONTEND, resendKey: process.env.RESEND_API_KEY ? "configurada" : "AUSENTE" });
 });
 
 router.post("/auth/reset-password", (req, res) => {
