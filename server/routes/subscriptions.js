@@ -641,11 +641,10 @@ router.post("/subscription", async (req, res) => {
         });
         if (!tentativaCredito && [400, 401, 403, 404, 422, 429].includes(err.status)) {
           db.prepare("DELETE FROM credit_subscription_attempts WHERE id = ?").run(subId);
-          if (err.status === 400) return res.status(400).json({ error: err.message });
-          return res.status(502).json({ error: "O serviço de pagamento não aceitou a solicitação. Tente mais tarde." });
+          return res.status(400).json({ error: err.message || "O serviço de pagamento recusou a solicitação." });
         }
         return res.status(err.cause?.name === "AbortError" ? 504 : 502)
-          .json({ error: "Não foi possível confirmar a contratação. Uma nova tentativa consultará a solicitação anterior." });
+          .json({ error: err.message || "Não foi possível confirmar a contratação. Uma nova tentativa consultará a solicitação anterior." });
       }
       throw err;
     }
@@ -709,8 +708,10 @@ router.post("/subscription", async (req, res) => {
         : "Assinatura criada. O plano é liberado assim que o primeiro pagamento for confirmado.",
     });
   } catch (err) {
-    console.error("[asaas] assinatura:", err.message);
-    let msg = err instanceof AsaasError ? err.message : "Erro ao criar assinatura";
+    console.error("[asaas] assinatura:", err.message, err.corpo || "");
+    const msg = err instanceof AsaasError
+      ? err.message
+      : (err.message || "Erro ao criar assinatura. Tente novamente.");
     if (!res.headersSent) res.status(502).json({ error: msg });
   }
   } catch (fatalErr) {
