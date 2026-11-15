@@ -169,7 +169,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const cicloLabel = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" }[ciclo] || "mensal";
   const cicloSufixo = { MENSAL: "/mês", SEMESTRAL: "/semestre", ANUAL: "/ano" }[ciclo] || "/mês";
   const ehRecorrenteLongo = ciclo !== CICLOS.MENSAL;
-  const precoFinal = desconto?.valorFinal ?? baseCiclo;
+  const precoFinalBruto = desconto?.valorFinal ?? baseCiclo;
+  const precoFinal = precoFinalBruto > 0 ? Math.max(precoFinalBruto, 5) : precoFinalBruto;
   const usdPlano = selecionado && stripe?.planos?.find((x) => x.chave === selecionado.chave);
   const precoUsd = usdPlano ? ({ MENSAL: usdPlano.mensal, SEMESTRAL: usdPlano.semestral, ANUAL: usdPlano.anual }[ciclo] ?? usdPlano.mensal) : 0;
   const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
