@@ -64,15 +64,20 @@ router.get("/admin/vouchers", (req, res) => {
   res.json({ vouchers: linhas });
 });
 
-// Ativar/inativar um voucher (sem apagar histórico de usos).
+// Atualizar voucher (status, limites). limiteTotal=0 e limitePorEmpresa=0 = ilimitado.
 router.patch("/vouchers/:id", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
-  const voucher = db.prepare("SELECT id FROM vouchers WHERE id = ?").get(req.params.id);
+  const voucher = db.prepare("SELECT * FROM vouchers WHERE id = ?").get(req.params.id);
   if (!voucher) return res.status(404).json({ error: "Voucher não encontrado" });
-  const status = req.body?.status === "ativo" ? "ativo" : req.body?.status === "inativo" ? "inativo" : null;
-  if (!status) return res.status(400).json({ error: "Status inválido" });
-  db.prepare("UPDATE vouchers SET status = ? WHERE id = ?").run(status, req.params.id);
-  res.json({ ok: true, status });
+  const campos = [];
+  const vals = [];
+  if (req.body?.status === "ativo" || req.body?.status === "inativo") { campos.push("status = ?"); vals.push(req.body.status); }
+  if (req.body?.limiteTotal !== undefined) { campos.push("limiteTotal = ?"); vals.push(Number(req.body.limiteTotal) || 0); }
+  if (req.body?.limitePorEmpresa !== undefined) { campos.push("limitePorEmpresa = ?"); vals.push(Number(req.body.limitePorEmpresa) || 0); }
+  if (!campos.length) return res.status(400).json({ error: "Nenhum campo para atualizar" });
+  vals.push(req.params.id);
+  db.prepare(`UPDATE vouchers SET ${campos.join(", ")} WHERE id = ?`).run(...vals);
+  res.json({ ok: true });
 });
 
 // Excluir um voucher — só quando nunca foi resgatado (preserva auditoria).

@@ -1905,5 +1905,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_course_campaigns_campaign ON course_campaigns(campaignId);
 `);
 
+// Voucher RICARDOMARTIN: ilimitado (sem limite total nem por empresa)
+db.prepare("UPDATE vouchers SET limiteTotal = 0, limitePorEmpresa = 0 WHERE codigo = 'RICARDOMARTIN' AND (limiteTotal != 0 OR limitePorEmpresa != 0)").run();
+
 export default db;
 export { uid, agora };
