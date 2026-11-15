@@ -19,24 +19,21 @@ const ETAPAS_KEYS = ["pessoal", "profissional", "experiencia"];
 
 /* ─── Opções padronizadas dos novos campos ─── */
 const AREAS_ATUACAO = [
-  { value: "vendas-internas", label: "Vendas internas (Inside Sales)" },
-  { value: "vendas-externas", label: "Vendas externas (Field Sales)" },
-  { value: "telemarketing", label: "Telemarketing" },
-  { value: "e-commerce", label: "E-commerce / Vendas online" },
-  { value: "varejo", label: "Varejo" },
-  { value: "atacado", label: "Atacado / Distribuição" },
-  { value: "b2b", label: "B2B (Empresas)" },
-  { value: "b2c", label: "B2C (Consumidor final)" },
-  { value: "saas", label: "SaaS / Tecnologia" },
-  { value: "imoveis", label: "Imóveis" },
-  { value: "seguros", label: "Seguros" },
-  { value: "financeiro", label: "Serviços financeiros" },
-  { value: "saude", label: "Saúde / Bem-estar" },
-  { value: "educacao", label: "Educação" },
-  { value: "automotivo", label: "Automotivo" },
-  { value: "energia-solar", label: "Energia solar" },
-  { value: "marketing-digital", label: "Marketing digital" },
-  { value: "consultoria", label: "Consultoria" },
+  { value: "b2b", label: "B2B (Venda para empresas)" },
+  { value: "b2c", label: "B2C (Venda para consumidor final)" },
+  { value: "inside-sales", label: "Inside Sales (Vendas remotas)" },
+  { value: "field-sales", label: "Field Sales (Vendas presenciais)" },
+  { value: "e-commerce", label: "E-commerce / Marketplace" },
+  { value: "varejo", label: "Varejo / Loja física" },
+  { value: "atacado-distribuicao", label: "Atacado / Distribuição" },
+  { value: "porta-a-porta", label: "Porta a porta / PAP" },
+  { value: "vendas-consultivas", label: "Vendas consultivas / Solução" },
+  { value: "vendas-recorrentes", label: "Vendas recorrentes / Assinatura" },
+  { value: "vendas-tecnicas", label: "Vendas técnicas / Pré-vendas" },
+  { value: "canais-parceiros", label: "Canais / Parceiros / Revenda" },
+  { value: "franquias", label: "Franquias" },
+  { value: "licitacoes", label: "Licitações / Governo" },
+  { value: "exportacao", label: "Exportação / Comércio exterior" },
 ];
 
 const HABILIDADES = [
@@ -116,18 +113,26 @@ const FERRAMENTAS = [
   { value: "chatgpt-ia", label: "ChatGPT / Ferramentas de IA" },
 ];
 
-const FORMACOES = [
+const NIVEIS_FORMACAO = [
   { value: "ensino-medio", label: "Ensino médio completo" },
+  { value: "tecnico", label: "Curso técnico" },
+  { value: "tecnologo", label: "Tecnólogo" },
   { value: "superior-cursando", label: "Superior cursando" },
   { value: "superior-completo", label: "Superior completo" },
   { value: "pos-graduacao", label: "Pós-graduação / MBA" },
-  { value: "tecnologo", label: "Tecnólogo" },
-  { value: "curso-tecnico", label: "Curso técnico" },
+  { value: "mestrado", label: "Mestrado" },
+  { value: "doutorado", label: "Doutorado" },
+];
+
+const CERTIFICACOES = [
   { value: "cert-vendas", label: "Certificação em vendas" },
   { value: "cert-marketing", label: "Certificação em marketing digital" },
   { value: "cert-lideranca", label: "Certificação em liderança / gestão" },
   { value: "cert-negociacao", label: "Curso de negociação" },
   { value: "cert-coaching", label: "Coaching / Mentoria" },
+  { value: "cert-crm", label: "Certificação em CRM (HubSpot, Salesforce, etc.)" },
+  { value: "cert-analytics", label: "Certificação em analytics / dados" },
+  { value: "cert-idioma", label: "Certificação de idioma (TOEFL, IELTS, etc.)" },
 ];
 
 const EQUIPAMENTOS = [
@@ -320,7 +325,9 @@ export default function CadastroProfissional({ onRegister }) {
   const [disponibilidade, setDisponibilidade] = useState("");
   const [segmentos, setSegmentos] = useState([]);
   const [ferramentas, setFerramentas] = useState([]);
-  const [formacoes, setFormacoes] = useState([]);
+  const [formacaoNivel, setFormacaoNivel] = useState("");
+  const [formacaoDetalhe, setFormacaoDetalhe] = useState("");
+  const [certificacoes, setCertificacoes] = useState([]);
   const [equipamentos, setEquipamentos] = useState([]);
 
   /* ── estado: experiência em vendas (cargos) ── */
@@ -373,7 +380,9 @@ export default function CadastroProfissional({ onRegister }) {
       if (s.disponibilidade) setDisponibilidade(s.disponibilidade);
       if (s.segmentos?.length) setSegmentos(s.segmentos);
       if (s.ferramentas?.length) setFerramentas(s.ferramentas);
-      if (s.formacoes?.length) setFormacoes(s.formacoes);
+      if (s.formacaoNivel) setFormacaoNivel(s.formacaoNivel);
+      if (s.formacaoDetalhe) setFormacaoDetalhe(s.formacaoDetalhe);
+      if (s.certificacoes?.length) setCertificacoes(s.certificacoes);
       if (s.equipamentos?.length) setEquipamentos(s.equipamentos);
       if (s.cargosExp?.length) setCargosExp(s.cargosExp);
       if (s.cargoPrincipal) setCargoPrincipal(s.cargoPrincipal);
@@ -392,7 +401,7 @@ export default function CadastroProfissional({ onRegister }) {
           nome, dataNasc, genero, pais, estado, cidade,
           email, whats, idiomas,
           areasAtuacao, habilidades, anosExperiencia, disponibilidade,
-          segmentos, ferramentas, formacoes, equipamentos,
+          segmentos, ferramentas, formacaoNivel, formacaoDetalhe, certificacoes, equipamentos,
           cargosExp, cargoPrincipal, indicacao, etapa,
           foto, fotoPrevia,
         }));
@@ -402,7 +411,7 @@ export default function CadastroProfissional({ onRegister }) {
     nome, dataNasc, genero, pais, estado, cidade,
     email, whats, idiomas,
     areasAtuacao, habilidades, anosExperiencia, disponibilidade,
-    segmentos, ferramentas, formacoes, equipamentos,
+    segmentos, ferramentas, formacaoNivel, formacaoDetalhe, certificacoes, equipamentos,
     cargosExp, cargoPrincipal, indicacao, etapa,
     foto, fotoPrevia,
   ]);
@@ -483,15 +492,15 @@ export default function CadastroProfissional({ onRegister }) {
       if (senha !== senhaConfirm) { setErroEtapa(t("cadProf.erros.senhaDif")); return false; }
       if (!whats.trim()) { setErroEtapa(t("cadProf.erros.whatsapp")); return false; }
       if (!telefoneValido(pais, whats)) { setErroEtapa(t("cadProf.erros.whatsInvalido")); return false; }
-      if (areasAtuacao.length === 0) { setErroEtapa("Selecione pelo menos uma área de atuação."); return false; }
-      if (habilidades.length === 0) { setErroEtapa("Selecione pelo menos uma habilidade."); return false; }
-      if (!anosExperiencia) { setErroEtapa("Selecione seus anos de experiência."); return false; }
-      if (!disponibilidade) { setErroEtapa("Selecione sua disponibilidade semanal."); return false; }
       if (idiomas.some((i) => !i.idioma)) { setErroEtapa(t("cadProf.erros.idiomas")); return false; }
     }
     if (etapa === 2) {
       if (cargosExp.length === 0) { setErroEtapa("Selecione pelo menos um cargo com experiência em vendas."); return false; }
       if (!cargoPrincipal) { setErroEtapa("Selecione qual é sua experiência principal."); return false; }
+      if (areasAtuacao.length === 0) { setErroEtapa("Selecione pelo menos uma área de atuação."); return false; }
+      if (habilidades.length === 0) { setErroEtapa("Selecione pelo menos uma habilidade."); return false; }
+      if (!anosExperiencia) { setErroEtapa("Selecione seus anos de experiência."); return false; }
+      if (!disponibilidade) { setErroEtapa("Selecione sua disponibilidade semanal."); return false; }
     }
     return true;
   };
@@ -520,7 +529,7 @@ export default function CadastroProfissional({ onRegister }) {
       cargosExp,
       perfilComercial: {
         areasAtuacao, habilidades, anosExperiencia, disponibilidade,
-        segmentos, ferramentas, formacoes, equipamentos,
+        segmentos, ferramentas, formacaoNivel, formacaoDetalhe, certificacoes, equipamentos,
       },
       idiomas: idiomas.filter((i) => i.idioma),
       aceitouTermos: true, indicacao: indicacao || undefined,
@@ -707,45 +716,31 @@ export default function CadastroProfissional({ onRegister }) {
                       <CampoTelefone pais={pais} value={whats} onChange={(e) => setWhats(e.target.value)} required />
                     </div>
 
-                    {/* Seção: Perfil profissional */}
+                    {/* Seção: Formação */}
                     <div className="cp-secao">
-                      <div className="cp-secao-titulo">Perfil profissional</div>
-                    </div>
-
-                    <div className="cp-campo">
-                      <label className="cp-campo-label">Áreas de atuação <span className="cp-req">*</span></label>
-                      <MultiSelect opcoes={AREAS_ATUACAO} valor={areasAtuacao} onChange={setAreasAtuacao} placeholder="Selecione suas áreas" />
-                    </div>
-
-                    <div className="cp-campo">
-                      <label className="cp-campo-label">Habilidades específicas <span className="cp-req">*</span></label>
-                      <MultiSelect opcoes={HABILIDADES} valor={habilidades} onChange={setHabilidades} placeholder="Selecione suas habilidades" />
+                      <div className="cp-secao-titulo">Formação e certificações</div>
                     </div>
 
                     <div className="cp-row">
                       <div className="cp-campo">
-                        <label className="cp-campo-label">Anos de experiência <span className="cp-req">*</span></label>
-                        <ComboSelect opcoes={ANOS_EXPERIENCIA} valor={anosExperiencia} onChange={setAnosExperiencia} placeholder="Selecione" />
+                        <label className="cp-campo-label">Nível de formação <span className="cp-opt">(opcional)</span></label>
+                        <ComboSelect opcoes={NIVEIS_FORMACAO} valor={formacaoNivel} onChange={setFormacaoNivel} placeholder="Selecione" />
                       </div>
                       <div className="cp-campo">
-                        <label className="cp-campo-label">Disponibilidade semanal <span className="cp-req">*</span></label>
-                        <ComboSelect opcoes={DISPONIBILIDADE} valor={disponibilidade} onChange={setDisponibilidade} placeholder="Selecione" />
+                        <label className="cp-campo-label">Formação em quê? <span className="cp-opt">(opcional)</span></label>
+                        <input className="vx-input" value={formacaoDetalhe} onChange={(e) => setFormacaoDetalhe(e.target.value)}
+                          placeholder="Ex.: Administração, Marketing, Engenharia…" disabled={!formacaoNivel} style={{ minHeight: 42 }} />
                       </div>
                     </div>
 
                     <div className="cp-campo">
-                      <label className="cp-campo-label">Experiência por segmento <span className="cp-opt">(opcional)</span></label>
-                      <MultiSelect opcoes={SEGMENTOS} valor={segmentos} onChange={setSegmentos} placeholder="Selecione os segmentos" />
+                      <label className="cp-campo-label">Certificações <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={CERTIFICACOES} valor={certificacoes} onChange={setCertificacoes} placeholder="Selecione suas certificações" />
                     </div>
 
-                    <div className="cp-campo">
-                      <label className="cp-campo-label">Ferramentas que domina <span className="cp-opt">(opcional)</span></label>
-                      <MultiSelect opcoes={FERRAMENTAS} valor={ferramentas} onChange={setFerramentas} placeholder="Selecione as ferramentas" />
-                    </div>
-
-                    <div className="cp-campo">
-                      <label className="cp-campo-label">Formação e certificações <span className="cp-opt">(opcional)</span></label>
-                      <MultiSelect opcoes={FORMACOES} valor={formacoes} onChange={setFormacoes} placeholder="Selecione" />
+                    {/* Seção: Equipamentos */}
+                    <div className="cp-secao">
+                      <div className="cp-secao-titulo">Equipamentos disponíveis</div>
                     </div>
 
                     <div className="cp-campo">
@@ -830,6 +825,42 @@ export default function CadastroProfissional({ onRegister }) {
                     {cargoPrincipal && FUNCOES[cargoPrincipal] && (
                       <p className="cp-perfil-desc" style={{ marginTop: 4 }}>{FUNCOES[cargoPrincipal].descricao}</p>
                     )}
+
+                    {/* Seção: Detalhes da experiência */}
+                    <div className="cp-secao">
+                      <div className="cp-secao-titulo">Detalhes da experiência</div>
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Áreas de atuação <span className="cp-req">*</span></label>
+                      <MultiSelect opcoes={AREAS_ATUACAO} valor={areasAtuacao} onChange={setAreasAtuacao} placeholder="Selecione suas áreas" />
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Habilidades específicas <span className="cp-req">*</span></label>
+                      <MultiSelect opcoes={HABILIDADES} valor={habilidades} onChange={setHabilidades} placeholder="Selecione suas habilidades" />
+                    </div>
+
+                    <div className="cp-row">
+                      <div className="cp-campo">
+                        <label className="cp-campo-label">Anos de experiência <span className="cp-req">*</span></label>
+                        <ComboSelect opcoes={ANOS_EXPERIENCIA} valor={anosExperiencia} onChange={setAnosExperiencia} placeholder="Selecione" />
+                      </div>
+                      <div className="cp-campo">
+                        <label className="cp-campo-label">Disponibilidade semanal <span className="cp-req">*</span></label>
+                        <ComboSelect opcoes={DISPONIBILIDADE} valor={disponibilidade} onChange={setDisponibilidade} placeholder="Selecione" />
+                      </div>
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Experiência por segmento <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={SEGMENTOS} valor={segmentos} onChange={setSegmentos} placeholder="Selecione os segmentos" />
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Ferramentas que domina <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={FERRAMENTAS} valor={ferramentas} onChange={setFerramentas} placeholder="Selecione as ferramentas" />
+                    </div>
 
                     {/* Currículo */}
                     <div className="cp-curriculo-area">
