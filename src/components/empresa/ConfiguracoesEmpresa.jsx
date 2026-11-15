@@ -591,57 +591,24 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
   return (
     <div className="vx-fade" style={{ display: "flex", flexDirection: mobile ? "column" : "row", minHeight: "100%", minWidth: 0 }}>
 
-      {/* Secondary navigation — estilo idêntico ao sidebar principal */}
+      {/* Secondary navigation — usa classe vx-sidebtn idêntica ao sidebar */}
       {!somenteConteudo && (mobile ? (
-        <div style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid var(--border)", scrollbarWidth: "none", padding: "0 4px" }}>
-          {SECOES_NAV.map(({ key, label, icon: Icon }) => {
-            const on = secao === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setSecao(key)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", whiteSpace: "nowrap",
-                  background: on ? "var(--brand-50)" : "none", border: "none",
-                  borderRadius: 8, cursor: "pointer",
-                  color: on ? "var(--brand)" : "var(--muted)", fontSize: 12.5,
-                  fontWeight: on ? 600 : 450, flexShrink: 0, transition: "all .18s",
-                }}
-              >
-                <Icon size={16} strokeWidth={2} />
-                {label}
-              </button>
-            );
-          })}
+        <div style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid var(--border)", scrollbarWidth: "none", padding: "4px 6px", gap: 2 }}>
+          {SECOES_NAV.map(({ key, label, icon: Icon }) => (
+            <button key={key} className="vx-sidebtn" data-on={secao === key ? "1" : "0"} onClick={() => setSecao(key)} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+              <Icon size={18} strokeWidth={1.85} />
+              {label}
+            </button>
+          ))}
         </div>
       ) : (
-        <nav style={{ width: 210, flexShrink: 0, borderRight: "1px solid var(--border)", padding: "20px 10px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {SECOES_NAV.map(({ key, label, icon: Icon }) => {
-              const on = secao === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSecao(key)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 9, width: "100%",
-                    padding: "8px 11px", borderRadius: 8, border: "none",
-                    background: on ? "var(--brand-50)" : "transparent",
-                    cursor: "pointer", textAlign: "left", position: "relative",
-                    color: on ? "var(--brand)" : "var(--icon-secondary, var(--muted))",
-                    fontSize: 12.5, fontWeight: on ? 600 : 450,
-                    letterSpacing: "-.01em", transition: "all .18s",
-                  }}
-                  onMouseEnter={(e) => { if (!on) { e.currentTarget.style.background = "rgba(17,24,39,.05)"; e.currentTarget.style.color = "var(--ink)"; } }}
-                  onMouseLeave={(e) => { if (!on) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--icon-secondary, var(--muted))"; } }}
-                >
-                  {on && <span style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: 3, height: "60%", borderRadius: "0 3px 3px 0", background: "var(--brand)" }} />}
-                  <Icon size={17} strokeWidth={2} style={{ flexShrink: 0, opacity: on ? 1 : 0.6 }} />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+        <nav style={{ width: 220, flexShrink: 0, borderRight: "1px solid var(--border)", padding: "8px 10px 0" }}>
+          {SECOES_NAV.map(({ key, label, icon: Icon }) => (
+            <button key={key} className="vx-sidebtn" data-on={secao === key ? "1" : "0"} onClick={() => setSecao(key)} style={{ width: "100%" }}>
+              <Icon size={18} strokeWidth={1.85} />
+              {label}
+            </button>
+          ))}
         </nav>
       ))}
 
