@@ -2,7 +2,7 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { notificar } from "./notifications.js";
-import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente } from "../services/asaas.js";
+import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente, consultarPagamento } from "../services/asaas.js";
 import { ativarAssinatura, marcarInadimplencia, ativarPixAutomatico, encerrarPixAutomatico, ehAtivacaoPixAutomatico } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { emailComprovantePagamento } from "../services/email.js";
@@ -25,6 +25,26 @@ function tokenAsaasValido(req) {
   const b = Buffer.from(esperado);
   if (a.length !== b.length) { try { timingSafeEqual(b, b); } catch { /* noop */ } return false; }
   return timingSafeEqual(a, b);
+}
+
+// A confirmação pela API é exigida sempre que o gateway está ativo. Em produção
+// com webhook configurado mas gateway desligado, também é exigida — e, como não
+// há como confirmar, o crédito é recusado (fail-closed): a validação não pode
+// ser contornada desligando a integração.
+function exigeConfirmacaoAsaas() {
+  if (asaasAtivo()) return true;
+  if (process.env.NODE_ENV === "production" && process.env.ASAAS_WEBHOOK_TOKEN) return true;
+  return false;
+}
+
+// Compara o que o webhook recebeu com o que a API oficial retorna. Null = ok.
+function divergenciaConfirmacao(real, payment) {
+  if (!real || real.id !== payment.id) return "pagamento não encontrado na API";
+  const STATUS_OK = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"]);
+  if (!STATUS_OK.has(String(real.status))) return `status não liberado (${real.status})`;
+  if (Math.abs(Number(real.value) - (Number(payment.value) || 0)) > 0.01) return "valor divergente da API";
+  if (payment.customer && real.customer && real.customer !== payment.customer) return "customer divergente";
+  return null;
 }
 
 // V4 — valida o vínculo do pagamento antes de creditar caixa. Retorna o motivo
@@ -461,7 +481,7 @@ router.post("/payments/validar-saque", (req, res) => {
 // ---------------------------------------------------------------------------
 // Webhook do gateway
 // ---------------------------------------------------------------------------
-router.post("/payments/webhook", (req, res) => {
+router.post("/payments/webhook", async (req, res) => {
   if (!tokenAsaasValido(req)) return res.status(401).json({ error: "Token inválido" });
 
   const { event, payment, transfer, authorization } = req.body || {};
@@ -474,12 +494,44 @@ router.post("/payments/webhook", (req, res) => {
   const novo = db.prepare("INSERT OR IGNORE INTO gateway_events (id, evento, criadoEm) VALUES (?, ?, ?)")
     .run(chave, event, agora());
   if (novo.changes === 0) return res.json({ ok: true, duplicado: true });
+  const liberarDedupe = () => db.prepare("DELETE FROM gateway_events WHERE id = ?").run(chave);
 
   if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
+    // V4 — confirmação pela API oficial antes de creditar (fail-closed).
+    if (exigeConfirmacaoAsaas()) {
+      if (!asaasAtivo()) {
+        liberarDedupe();
+        console.error("[webhook] confirmação exigida mas Asaas indisponível — crédito recusado:", payment?.id);
+        return res.status(503).json({ ok: false, erro: "Confirmação indisponível. Reenvie o evento." });
+      }
+      let real;
+      try { real = await consultarPagamento(payment.id); }
+      catch (e) {
+        liberarDedupe();
+        const st = e?.status || 0;
+        if (st >= 400 && st < 500) {
+          // Resposta definitiva da API (ex.: 404 não encontrado): recusa, não é
+          // falha temporária — não credita.
+          auditarSeguranca({ acao: "deposito_recusado", alvo: payment.externalReference || payment.id, contexto: { paymentId: payment.id, motivo: `confirmacao_${st}` }, resultado: "recusado" });
+          return res.json({ ok: true, recusado: st === 404 ? "pagamento não encontrado na API" : `confirmação recusada (${st})` });
+        }
+        // Temporária/indisponibilidade (0 ou 5xx): não credita e libera o
+        // marcador para a reentrega legítima do Asaas (reprocessamento seguro).
+        console.warn("[webhook] falha ao confirmar no Asaas:", e.message, payment?.id);
+        return res.status(503).json({ ok: false, erro: "Falha ao confirmar o pagamento. Reenvie o evento." });
+      }
+      const divergencia = divergenciaConfirmacao(real, payment);
+      if (divergencia) {
+        liberarDedupe();
+        auditarSeguranca({ acao: "deposito_recusado", alvo: payment.externalReference || payment.id, contexto: { paymentId: payment.id, motivo: divergencia }, resultado: "recusado" });
+        console.warn("[webhook] confirmação divergente (", divergencia, "):", payment?.id);
+        return res.json({ ok: true, recusado: divergencia });
+      }
+    }
     const r = creditarDeposito(payment);
     // Recusa por vínculo divergente: libera o marcador de dedupe para que um
     // reenvio legítimo do mesmo id possa ser reprocessado (não "envenena").
-    if (r === "recusado") db.prepare("DELETE FROM gateway_events WHERE id = ?").run(chave);
+    if (r === "recusado") liberarDedupe();
   } else if (
     // Cobrança que não entrou. O Asaas usa nomes diferentes para recusa de
     // cartão, vencimento e estorno; os três deixam a empresa sem plano em dia.

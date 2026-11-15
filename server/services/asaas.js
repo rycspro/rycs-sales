@@ -80,6 +80,13 @@ export async function asaas(caminho, { method = "GET", body, timeoutMs = 15_000 
   return dados;
 }
 
+// Consulta o pagamento na API oficial. Lança AsaasError quando o gateway está
+// desligado, indisponível ou o pagamento não existe — quem credita trata isso
+// como fail-closed (não credita).
+export async function consultarPagamento(id) {
+  return asaas(`/payments/${encodeURIComponent(String(id))}`);
+}
+
 // ---------------------------------------------------------------------------
 // Cliente da empresa no gateway
 //
