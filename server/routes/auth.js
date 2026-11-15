@@ -220,18 +220,15 @@ router.post("/auth/forgot-password", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "E-mail é obrigatório" });
 
-  // A resposta é a mesma em todos os casos: dizer que o e-mail não existe, ou
-  // que o reenvio foi barrado, entregaria quem tem conta na RYCS.
   const resposta = { ok: true, message: "Se o e-mail existir, enviaremos um link." };
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(String(email).toLowerCase().trim());
-  if (!user) return res.json(resposta);
-  if (!podeReenviarReset(user.resetEnviadoEm)) return res.json(resposta);
+  const emailNorm = String(email).toLowerCase().trim();
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(emailNorm);
+  if (!user) { console.log(`[RESET] e-mail não encontrado: ${emailNorm}`); return res.json(resposta); }
+  if (!podeReenviarReset(user.resetEnviadoEm)) { console.log(`[RESET] cooldown ativo para ${emailNorm}`); return res.json(resposta); }
 
   const resetToken = randomBytes(32).toString("hex");
-  const resetExpira = agora() + 3600000; // 1 hour
+  const resetExpira = agora() + 3600000;
 
-  // O banco guarda o hash: link de redefinição é credencial. Um novo envio
-  // substitui o anterior, que deixa de valer.
   db.prepare("UPDATE users SET resetToken = ?, resetExpira = ?, resetEnviadoEm = ? WHERE id = ?")
     .run(hashToken(resetToken), resetExpira, agora(), user.id);
 
@@ -241,7 +238,9 @@ router.post("/auth/forgot-password", async (req, res) => {
     ? db.prepare("SELECT nome FROM companies WHERE id = ?").get(user.entityId)?.nome
     : "Admin";
 
-  await emailResetSenha(nome || "Usuário", user.email, resetToken, FRONTEND);
+  console.log(`[RESET] enviando e-mail para ${user.email} (role=${user.role}, nome=${nome || "?"}), FRONTEND=${FRONTEND}`);
+  const resultado = await emailResetSenha(nome || "Usuário", user.email, resetToken, FRONTEND);
+  console.log(`[RESET] resultado do envio:`, JSON.stringify(resultado));
 
   res.json(resposta);
 });
