@@ -120,8 +120,16 @@ router.get("/campaigns", (req, res) => {
   let rows;
   if (role === "empresa") {
     rows = db.prepare("SELECT * FROM campaigns WHERE companyId = ? ORDER BY criadoEm DESC").all(entityId);
-  } else {
+  } else if (role === "admin") {
     rows = db.prepare("SELECT * FROM campaigns ORDER BY criadoEm DESC").all();
+  } else {
+    // Vendedor: só campanhas ativas de empresas visíveis (mesmo filtro do /state).
+    rows = db.prepare(
+      `SELECT c.* FROM campaigns c
+       JOIN companies co ON co.id = c.companyId
+       WHERE c.status = 'ativa' AND co.visivel = 1
+       ORDER BY c.criadoEm DESC`
+    ).all();
   }
   res.json(rows.map(parseCampaign));
 });
@@ -218,6 +226,7 @@ router.post("/campaigns", (req, res) => {
 
 router.patch("/campaigns/:id", (req, res) => {
   const { role, entityId } = req.user;
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
   if (role === "empresa" && entityId !== campaign.companyId)
@@ -343,8 +352,9 @@ router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {
   res.json({ ok: true });
 });
 
-// Quiz de certificação da campanha
+// Quiz de certificação da campanha (só vendedor)
 router.get("/campaigns/:id/quiz", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
   const { role, entityId } = req.user;
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
@@ -361,6 +371,7 @@ router.get("/campaigns/:id/quiz", (req, res) => {
 });
 
 router.post("/campaigns/:id/quiz", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
   const { entityId } = req.user;
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });

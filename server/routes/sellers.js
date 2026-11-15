@@ -215,6 +215,7 @@ router.patch("/sellers/:id", (req, res) => {
   const { id } = req.params;
   const { role, entityId } = req.user;
 
+  if (role === "empresa") return res.status(403).json({ error: "Empresas não podem editar perfis de profissionais" });
   if (role === "vendedor" && entityId !== id)
     return res.status(403).json({ error: "Sem permissão para editar outro vendedor" });
 
