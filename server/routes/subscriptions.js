@@ -28,7 +28,7 @@ router.get("/plans", (_req, res) => {
 router.get("/vouchers/history", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
   const rows = db.prepare(
-    "SELECT v.codigo, v.tipo, v.valor, r.criadoEm FROM voucher_redemptions r JOIN vouchers v ON v.id = r.voucherId WHERE r.companyId = ? ORDER BY r.criadoEm DESC"
+    "SELECT v.codigo, v.tipo, v.valor, MAX(r.criadoEm) AS criadoEm FROM voucher_redemptions r JOIN vouchers v ON v.id = r.voucherId WHERE r.companyId = ? GROUP BY v.id ORDER BY criadoEm DESC"
   ).all(req.user.entityId);
   res.json(rows);
 });
