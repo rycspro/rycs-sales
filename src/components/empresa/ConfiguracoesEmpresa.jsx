@@ -591,32 +591,57 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
   return (
     <div className="vx-fade" style={{ display: "flex", flexDirection: mobile ? "column" : "row", minHeight: "100%", minWidth: 0 }}>
 
-      {/* Secondary navigation */}
+      {/* Secondary navigation — estilo idêntico ao sidebar principal */}
       {!somenteConteudo && (mobile ? (
-        <div style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid var(--border)", scrollbarWidth: "none" }}>
-          {SECOES_NAV.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setSecao(key)}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", whiteSpace: "nowrap", background: "none", border: "none", borderBottom: `2px solid ${secao === key ? "var(--brand)" : "transparent"}`, cursor: "pointer", color: secao === key ? "var(--brand)" : "var(--muted)", fontSize: 13, fontWeight: secao === key ? 500 : 400, flexShrink: 0, marginBottom: -1 }}
-            >
-              <Icon size={14} strokeWidth={2} />
-              {label}
-            </button>
-          ))}
+        <div style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid var(--border)", scrollbarWidth: "none", padding: "0 4px" }}>
+          {SECOES_NAV.map(({ key, label, icon: Icon }) => {
+            const on = secao === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setSecao(key)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", whiteSpace: "nowrap",
+                  background: on ? "var(--brand-50)" : "none", border: "none",
+                  borderRadius: 8, cursor: "pointer",
+                  color: on ? "var(--brand)" : "var(--muted)", fontSize: 12.5,
+                  fontWeight: on ? 600 : 450, flexShrink: 0, transition: "all .18s",
+                }}
+              >
+                <Icon size={16} strokeWidth={2} />
+                {label}
+              </button>
+            );
+          })}
         </div>
       ) : (
-        <nav style={{ width: 200, flexShrink: 0, borderRight: "1px solid var(--border)", paddingTop: 24, paddingBottom: 24 }}>
-          {SECOES_NAV.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setSecao(key)}
-              style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "7px 12px 7px 18px", background: secao === key ? "var(--surface-2)" : "transparent", border: "none", borderLeft: `2px solid ${secao === key ? "var(--brand)" : "transparent"}`, cursor: "pointer", textAlign: "left", color: secao === key ? "var(--brand)" : "var(--ink)", fontSize: 13.5, fontWeight: secao === key ? 500 : 400, transition: "all .15s" }}
-            >
-              <Icon size={15} strokeWidth={2} style={{ opacity: secao === key ? 1 : 0.55 }} />
-              {label}
-            </button>
-          ))}
+        <nav style={{ width: 210, flexShrink: 0, borderRight: "1px solid var(--border)", padding: "20px 10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {SECOES_NAV.map(({ key, label, icon: Icon }) => {
+              const on = secao === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setSecao(key)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 9, width: "100%",
+                    padding: "8px 11px", borderRadius: 8, border: "none",
+                    background: on ? "var(--brand-50)" : "transparent",
+                    cursor: "pointer", textAlign: "left", position: "relative",
+                    color: on ? "var(--brand)" : "var(--icon-secondary, var(--muted))",
+                    fontSize: 12.5, fontWeight: on ? 600 : 450,
+                    letterSpacing: "-.01em", transition: "all .18s",
+                  }}
+                  onMouseEnter={(e) => { if (!on) { e.currentTarget.style.background = "rgba(17,24,39,.05)"; e.currentTarget.style.color = "var(--ink)"; } }}
+                  onMouseLeave={(e) => { if (!on) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--icon-secondary, var(--muted))"; } }}
+                >
+                  {on && <span style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: 3, height: "60%", borderRadius: "0 3px 3px 0", background: "var(--brand)" }} />}
+                  <Icon size={17} strokeWidth={2} style={{ flexShrink: 0, opacity: on ? 1 : 0.6 }} />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </nav>
       ))}
 

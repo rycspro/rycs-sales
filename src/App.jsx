@@ -135,9 +135,12 @@ export default function App() {
     }
   }, [user, carregarOnboarding, consultarAcesso]); // eslint-disable-line react-hooks/exhaustive-deps
   // Onboarding fora da frente do painel: o endereço de etapa não tem o que mostrar.
+  // Vendedores e admins nunca devem ficar em /onboarding — redireciona para /.
   useEffect(() => {
-    if (onb && !onb.erro && !onb.bloqueia && window.location.pathname.startsWith("/onboarding")) window.history.replaceState({}, "", "/");
-  }, [onb]);
+    if (!user || !window.location.pathname.startsWith("/onboarding")) return;
+    if (user.role !== "empresa") { window.history.replaceState({}, "", "/"); return; }
+    if (onb && !onb.erro && !onb.bloqueia) window.history.replaceState({}, "", "/");
+  }, [user, onb]);
 
   const carregarState = useCallback(async (usr) => {
     const u = usr || userRef.current;
@@ -198,7 +201,13 @@ export default function App() {
   const login = async (email, senha, { silencioso = false } = {}) => {
     const r = await api("/auth/login", { email, senha });
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error }; }
-    if (r?.id) { setUser(r); userRef.current = r; await carregarState(r); return { ok: true }; }
+    if (r?.id) {
+      // Vendedor ou admin logando numa URL de onboarding de empresa: redireciona.
+      if (r.role !== "empresa" && window.location.pathname.startsWith("/onboarding")) {
+        window.history.replaceState({}, "", "/");
+      }
+      setUser(r); userRef.current = r; await carregarState(r); return { ok: true };
+    }
     if (!silencioso) setToast("Erro ao fazer login.");
     return { ok: false, error: "Erro ao fazer login." };
   };
