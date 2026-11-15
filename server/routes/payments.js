@@ -9,6 +9,8 @@ import { emailComprovantePagamento } from "../services/email.js";
 import { DESTAQUES } from "../../shared/planos.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
+import { exigirReauth } from "../services/reautenticacao.js";
+import { auditarSeguranca, auditarCritico } from "../services/securityAudit.js";
 
 const router = Router();
 
@@ -128,6 +130,13 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais podem sacar" });
 
+  // Reautenticação (atrás de flag): confirmar a senha antes de mover dinheiro.
+  const reauth = exigirReauth(req, { userId: req.user.id, senha: req.body?.senha, acao: "saque" });
+  if (!reauth.ok) {
+    if (reauth.status !== 401 || req.body?.senha) auditarSeguranca({ req, ator: req.user.id, papel: role, acao: "saque_reauth_falha", alvo: entityId, resultado: String(reauth.status) });
+    return res.status(reauth.status).json({ error: reauth.error });
+  }
+
   const valor = Number(req.body?.valor);
   const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(entityId);
   if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
@@ -147,6 +156,8 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
       db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm) VALUES (?, ?, ?, ?, 'solicitado', ?)")
         .run(wId, entityId, valor, vendedor.pix, agora());
       registrarMovimento({ sellerId: entityId, tipo: "saque_reservado", valor: -valor, idempotencyKey: wId });
+      // Auditoria crítica na MESMA transação: sem trilha, o saque não existe.
+      auditarCritico({ req, ator: req.user.id, papel: role, acao: "saque_solicitado", alvo: entityId, contexto: { saqueId: wId, valor }, resultado: "ok" });
     })();
   } catch (e) {
     if (e.message === "SALDO_INSUFICIENTE") return res.status(400).json({ error: "Saldo insuficiente" });

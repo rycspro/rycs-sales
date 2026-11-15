@@ -1494,7 +1494,8 @@ adicionarColuna("users", "emailConfirmExpira", "INTEGER");
 // Versão da sessão: todo JWT carrega a versão vigente; redefinir a senha (ou
 // "sair de todos os dispositivos") incrementa, invalidando os tokens antigos.
 adicionarColuna("users", "tokenVersion", "INTEGER NOT NULL DEFAULT 0");
-adicionarColuna("users", "pixAlteradoEm", "INTEGER");
+// Carimbo da última troca de chave Pix (base para cooldown de saque).
+adicionarColuna("sellers", "pixAlteradoEm", "INTEGER");
 
 // Trilha de auditoria de segurança (append-only). Nunca guarda senha, token
 // ou dado bancário completo — só o nome da ação, identificadores, contexto

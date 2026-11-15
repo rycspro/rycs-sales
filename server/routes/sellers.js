@@ -7,6 +7,8 @@ import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { emailCadastroCompletadoAdmin } from "../services/email.js";
 import { podeEditarVendedor } from "../services/escopo.js";
+import { exigirReauth } from "../services/reautenticacao.js";
+import { auditarSeguranca } from "../services/securityAudit.js";
 
 const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusiness.com.br";
 
@@ -260,8 +262,24 @@ router.patch("/sellers/:id", (req, res) => {
     }
   }
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
+
+  // Troca de chave Pix é operação sensível: reautenticação (atrás de flag),
+  // auditoria e carimbo de data (base para cooldown de saque).
+  const mudaPix = Object.prototype.hasOwnProperty.call(fields, "pix") || Object.prototype.hasOwnProperty.call(fields, "pixTipo");
+  if (mudaPix) {
+    const reauth = exigirReauth(req, { userId: req.user.id, senha: fields.senha, acao: "trocar_pix" });
+    if (!reauth.ok) {
+      if (reauth.status !== 401 || fields.senha) auditarSeguranca({ req, ator: req.user.id, papel: role, acao: "trocar_pix_reauth_falha", alvo: id, resultado: String(reauth.status) });
+      return res.status(reauth.status).json({ error: reauth.error });
+    }
+  }
+
   vals.push(id);
   db.prepare(`UPDATE sellers SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+  if (mudaPix) {
+    db.prepare("UPDATE sellers SET pixAlteradoEm = ? WHERE id = ?").run(agora(), id);
+    auditarSeguranca({ req, ator: req.user.id, papel: role, acao: "pix_alterado", alvo: id, contexto: { pix: fields.pix, pixTipo: fields.pixTipo }, resultado: "ok" });
+  }
   notificarCadastroCompleto(id);
   res.json({ ok: true });
 });
