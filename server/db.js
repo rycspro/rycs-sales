@@ -3,12 +3,29 @@ import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { accessSync, constants } from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Em produção aponte DB_PATH para um volume persistente (ex.: /data/data.db).
-// Sem volume, o banco vive no container e é apagado a cada deploy.
-const DB_PATH = process.env.DB_PATH || join(__dirname, "data.db");
+// Em produção o banco PRECISA viver no volume persistente (/data). Se ficar no
+// container, é apagado a cada deploy — e cada cadastro novo some no deploy
+// seguinte. Prioridade: DB_PATH do ambiente > /data/data.db (se gravável, em
+// produção) > arquivo local (dev). O fallback evita derrubar o app se /data
+// não estiver montado/gravável, mas avisa alto para a config ser corrigida.
+function resolverDbPath() {
+  if (process.env.DB_PATH) return process.env.DB_PATH;
+  if (process.env.NODE_ENV === "production") {
+    try {
+      accessSync("/data", constants.W_OK);
+      return "/data/data.db";
+    } catch {
+      console.warn("[db] ALERTA: /data não está gravável e DB_PATH não foi definido — o banco vive no container e SERÁ APAGADO no próximo deploy. Configure DB_PATH=/data/data.db.");
+    }
+  }
+  return join(__dirname, "data.db");
+}
+
+const DB_PATH = resolverDbPath();
 const db = new Database(DB_PATH);
 console.log(`[db] ${DB_PATH}`);
 
