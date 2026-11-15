@@ -350,7 +350,7 @@ export default function App() {
     <div className="vx-app">
       <style>{CSS}</style>
 
-      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && ["configuracoes", "outros"].includes(aba)}>
+      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "outros"}>
         <ErrorBoundary>
           <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
             {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}

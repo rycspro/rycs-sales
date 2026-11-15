@@ -168,7 +168,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
           onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
         />
       )}
-      {(aba === "configuracoes" || aba === "conta" || aba === "outros") && (
+      {(aba === "configuracoes" || aba === "conta") && (
+        <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial="dados" somenteConteudo />
+      )}
+      {aba === "outros" && (
         <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />
       )}
       {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa emp={emp} aviso={aviso} />}
