@@ -40,6 +40,7 @@ import emailAdminRoutes from "./routes/emailAdmin.js";
 import billingRoutes from "./routes/billing.js";
 import materiaisRoutes, { materiaisPublico } from "./routes/materiais.js";
 import academyEmpresaRoutes from "./routes/academyEmpresa.js";
+import reconciliacaoRoutes from "./routes/reconciliacao.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
@@ -209,6 +210,7 @@ app.use("/api", authMiddleware, webhooksRoutes);
 app.use("/api", authMiddleware, stripeRoutes);
 app.use("/api", authMiddleware, materiaisRoutes);
 app.use("/api", authMiddleware, academyEmpresaRoutes);
+app.use("/api", authMiddleware, reconciliacaoRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
