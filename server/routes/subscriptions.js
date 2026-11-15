@@ -535,7 +535,7 @@ router.post("/subscription", async (req, res) => {
 
     // Asaas exige mínimo de R$ 5 — quando voucher deixa abaixo, cobra o mínimo
     // e registra a taxa complementar para o cliente saber.
-    const MINIMO_ASAAS = 5;
+    const MINIMO_ASAAS = 6;
     let valorAsaas = calculo.valorFinal;
     let taxaComplementar = 0;
     if (valorAsaas > 0 && valorAsaas < MINIMO_ASAAS) {
@@ -743,7 +743,7 @@ const fimDoDia = (d) => new Date(`${iso(d)}T23:59:59-03:00`).getTime();
 
 async function criarPixAutomatico({ subId, entityId, chave, plano, customerId, calculo, voucher, trialDias }) {
   const vencimento = primeiroDebitoPixAutomatico({ trialDias });
-  const MINIMO_ASAAS = 5;
+  const MINIMO_ASAAS = 6;
   let valorPix = calculo.valorFinal;
   if (valorPix > 0 && valorPix < MINIMO_ASAAS) valorPix = MINIMO_ASAAS;
   else if (valorPix === 0) valorPix = MINIMO_ASAAS;
@@ -933,7 +933,7 @@ async function renovarLinkDePagamento(sub) {
       body: {
         customer: (await asaas(`/subscriptions/${sub.asaasId}`))?.customer,
         billingType: sub.formaPagamento || "PIX",
-        value: Math.max(sub.valor, 5),
+        value: Math.max(sub.valor, 6),
         dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0],
         description: `RYCS ${planoDe(sub.plano).nome} — nova tentativa de pagamento`,
         externalReference: `sub:${sub.companyId}`,

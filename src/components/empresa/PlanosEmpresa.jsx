@@ -170,7 +170,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const cicloSufixo = { MENSAL: "/mês", SEMESTRAL: "/semestre", ANUAL: "/ano" }[ciclo] || "/mês";
   const ehRecorrenteLongo = ciclo !== CICLOS.MENSAL;
   const precoFinalBruto = desconto?.valorFinal ?? baseCiclo;
-  const precoFinal = precoFinalBruto > 0 ? Math.max(precoFinalBruto, 5) : precoFinalBruto;
+  const precoFinal = precoFinalBruto > 0 ? Math.max(precoFinalBruto, 6) : precoFinalBruto;
   const usdPlano = selecionado && stripe?.planos?.find((x) => x.chave === selecionado.chave);
   const precoUsd = usdPlano ? ({ MENSAL: usdPlano.mensal, SEMESTRAL: usdPlano.semestral, ANUAL: usdPlano.anual }[ciclo] ?? usdPlano.mensal) : 0;
   const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -243,10 +243,10 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   {desconto && (
                     <>
                       <span>Voucher {desconto.codigo}</span><b>- {money(desconto.desconto)}</b>
-                      {desconto.valorFinal > 0 && desconto.valorFinal < 5 && (
-                        <><span>Taxa complementar (mín. gateway)</span><b>+ {money(5 - desconto.valorFinal)}</b></>
+                      {desconto.valorFinal > 0 && desconto.valorFinal < 6 && (
+                        <><span>Taxa complementar (mín. gateway)</span><b>+ {money(6 - desconto.valorFinal)}</b></>
                       )}
-                      <span>Total</span><strong>{money(Math.max(desconto.valorFinal, desconto.valorFinal > 0 ? 5 : 0))}</strong>
+                      <span>Total</span><strong>{money(Math.max(desconto.valorFinal, desconto.valorFinal > 0 ? 6 : 0))}</strong>
                     </>
                   )}
                 </div>
