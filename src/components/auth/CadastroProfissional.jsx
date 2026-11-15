@@ -214,6 +214,7 @@ html.dark .cp-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
 
 /* grid 2 cols */
 .cp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cp-cargos-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 /* seção */
 .cp-secao{margin-bottom:4px}
@@ -287,6 +288,7 @@ html.dark .cp-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
   .cp-seg-label{font-size:9.5px}
   .cp-card{padding:18px 14px;border-radius:12px}
   .cp-row{grid-template-columns:1fr;gap:0}
+  .cp-cargos-grid{grid-template-columns:1fr}
   .cp-foto-area{flex-direction:column;text-align:center;gap:12px;padding:16px 14px}
   .cp-foto-circle{width:72px;height:72px}
   .cp-foto-info{text-align:center}
@@ -825,47 +827,100 @@ export default function CadastroProfissional({ onRegister }) {
                     {/* Cargo com experiência em vendas */}
                     <div className="cp-campo">
                       <label className="cp-campo-label">Qual cargo você tem experiência em vendas? <span className="cp-req">*</span></label>
-                      <MultiSelect
-                        opcoes={ORDEM_FUNCOES.map((k) => ({ value: k, label: `${FUNCOES[k].nome} — ${FUNCOES[k].completo}` }))}
-                        valor={cargosExp}
-                        onChange={(v) => {
-                          setCargosExp(v);
-                          if (v.length === 1) setCargoPrincipal(v[0]);
-                          else if (!v.includes(cargoPrincipal)) setCargoPrincipal(v[0] || "");
-                        }}
-                        placeholder="Selecione um ou mais cargos"
-                      />
-                    </div>
+                      <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px", lineHeight: 1.5 }}>
+                        Selecione todos que se aplicam. {cargosExp.length > 1 ? "Clique na ★ para marcar o principal — é o que aparece no seu perfil." : ""}
+                      </p>
 
-                    {cargosExp.length > 1 && (
-                      <div className="cp-campo">
-                        <label className="cp-campo-label">Qual é sua experiência principal? <span className="cp-req">*</span></label>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                          {cargosExp.map((k) => (
-                            <button key={k} type="button" onClick={() => setCargoPrincipal(k)}
+                      <div className="cp-cargos-grid">
+                        {["sdr", "bdr", "closer", "pap"].map((k) => {
+                          const sel = cargosExp.includes(k);
+                          const princ = cargoPrincipal === k;
+                          return (
+                            <button key={k} type="button"
+                              onClick={() => {
+                                let next;
+                                if (sel) {
+                                  next = cargosExp.filter((v) => v !== k && v !== "sem-exp");
+                                } else {
+                                  next = [...cargosExp.filter((v) => v !== "sem-exp"), k];
+                                }
+                                setCargosExp(next);
+                                if (next.length === 1) setCargoPrincipal(next[0]);
+                                else if (!next.includes(cargoPrincipal)) setCargoPrincipal(next[0] || "");
+                              }}
                               style={{
-                                display: "inline-flex", alignItems: "center", gap: 6,
-                                padding: "8px 14px", borderRadius: 10, cursor: "pointer",
-                                fontSize: 13, fontWeight: cargoPrincipal === k ? 600 : 500,
-                                border: cargoPrincipal === k ? `2px solid ${AZUL}` : "1px solid var(--border-strong)",
-                                background: cargoPrincipal === k ? "rgba(49,140,231,.08)" : "var(--surface-solid)",
-                                color: cargoPrincipal === k ? AZUL : "var(--ink)",
+                                position: "relative", textAlign: "left",
+                                padding: "14px 16px", borderRadius: 12, cursor: "pointer",
+                                border: sel ? `2px solid ${AZUL}` : "1.5px solid var(--border-strong)",
+                                background: sel ? "rgba(49,140,231,.05)" : "var(--surface-solid)",
                                 transition: "all .15s",
                               }}>
-                              {cargoPrincipal === k && <Star size={14} fill={AZUL} />}
-                              {FUNCOES[k]?.nome}
+                              {/* Estrela do principal */}
+                              {sel && cargosExp.filter((v) => v !== "sem-exp").length > 1 && (
+                                <button type="button" title="Marcar como principal"
+                                  onClick={(e) => { e.stopPropagation(); setCargoPrincipal(k); }}
+                                  style={{
+                                    position: "absolute", top: 8, right: 8,
+                                    background: "none", border: "none", cursor: "pointer", padding: 2,
+                                    color: princ ? AZUL : "var(--muted-2)",
+                                    transition: "color .15s",
+                                  }}>
+                                  <Star size={16} fill={princ ? AZUL : "none"} />
+                                </button>
+                              )}
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                <span style={{
+                                  width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                                  border: sel ? `2px solid ${AZUL}` : "2px solid var(--border-strong)",
+                                  background: sel ? AZUL : "transparent",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  color: "#fff", fontSize: 11, fontWeight: 700,
+                                }}>{sel ? "✓" : ""}</span>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: sel ? AZUL : "var(--ink)" }}>
+                                  {FUNCOES[k].nome}
+                                </span>
+                                {princ && cargosExp.filter((v) => v !== "sem-exp").length > 1 && (
+                                  <span style={{
+                                    fontSize: 10, fontWeight: 700, color: AZUL,
+                                    background: "rgba(49,140,231,.1)", borderRadius: 4,
+                                    padding: "1px 6px", letterSpacing: ".03em",
+                                  }}>PRINCIPAL</span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.45, paddingLeft: 26 }}>
+                                {FUNCOES[k].descricao}
+                              </div>
                             </button>
-                          ))}
-                        </div>
-                        <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
-                          Selecione o cargo onde você tem mais experiência.
-                        </p>
+                          );
+                        })}
                       </div>
-                    )}
 
-                    {cargoPrincipal && FUNCOES[cargoPrincipal] && (
-                      <p className="cp-perfil-desc" style={{ marginTop: 4 }}>{FUNCOES[cargoPrincipal].descricao}</p>
-                    )}
+                      {/* Iniciante — opção compacta */}
+                      <label style={{
+                        display: "flex", alignItems: "center", gap: 8, marginTop: 12,
+                        padding: "8px 12px", borderRadius: 8, cursor: "pointer",
+                        border: cargosExp.includes("sem-exp") ? `1.5px solid ${AZUL}` : "1px solid var(--border)",
+                        background: cargosExp.includes("sem-exp") ? "rgba(49,140,231,.04)" : "transparent",
+                        transition: "all .15s",
+                      }}>
+                        <input type="checkbox" checked={cargosExp.includes("sem-exp")}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const next = cargosExp.length === 0 ? ["sem-exp"] : [...cargosExp, "sem-exp"];
+                              setCargosExp(next);
+                              if (!cargoPrincipal) setCargoPrincipal("sem-exp");
+                            } else {
+                              const next = cargosExp.filter((v) => v !== "sem-exp");
+                              setCargosExp(next);
+                              if (cargoPrincipal === "sem-exp") setCargoPrincipal(next[0] || "");
+                            }
+                          }}
+                          style={{ accentColor: AZUL, margin: 0 }} />
+                        <span style={{ fontSize: 12.5, color: "var(--muted)", fontWeight: 500 }}>
+                          Iniciante — primeira experiência em vendas
+                        </span>
+                      </label>
+                    </div>
 
                     {/* Seção: Detalhes da experiência */}
                     <div className="cp-secao">
