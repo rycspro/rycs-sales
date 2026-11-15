@@ -146,8 +146,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
 
   // Valor-base do checkout conforme o ciclo escolhido (semestral/anual = 6/12
   // meses com desconto, cobrados de uma vez).
-  // Origem do pagamento derivada da forma: vazio = nada escolhido; STRIPE =
-  // internacional; qualquer outra (cartão/Pix) = nacional.
+  // Origem: "nacional" (Asaas — cartão ou Pix em R$), "internacional" (Stripe —
+  // cartão em US$), ou null (nada escolhido ainda).
   const origem = forma ? (forma === "STRIPE" ? "internacional" : "nacional") : null;
   const baseCiclo = selecionado ? valorCobradoNoCiclo(selecionado.chave, ciclo) : 0;
   const cicloLabel = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" }[ciclo] || "mensal";
@@ -264,13 +264,13 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                   {[
-                    { id: "nacional", titulo: "Pagamento nacional", sub: "Pix · R$", icone: <QrCode size={26} strokeWidth={1.8} aria-hidden="true" /> },
-                    ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Cartão · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
+                    { id: "nacional", titulo: "Pagamento nacional", sub: "Asaas · R$", icone: <span style={{ fontSize: 24 }} aria-label="Brasil">🇧🇷</span> },
+                    ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Stripe · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
                   ].map(({ id, titulo, sub, icone }) => {
                     const on = origem === id;
                     return (
                       <button key={id} type="button"
-                        onClick={() => setForma(id === "nacional" ? "PIX" : "STRIPE")}
+                        onClick={() => setForma(id === "nacional" ? "CREDIT_CARD" : "STRIPE")}
                         style={{
                           flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                           padding: "16px 12px", borderRadius: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
@@ -286,12 +286,45 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                   })}
                 </div>
 
-                {/* Pix nacional */}
+                {/* Sub-opções nacional: cartão ou Pix */}
+                {origem === "nacional" && (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                    {[
+                      { id: "CREDIT_CARD", label: "Cartão de crédito ou débito", icone: <CreditCard size={15} /> },
+                      { id: "PIX", label: "Pix", icone: <QrCode size={15} /> },
+                    ].map(({ id, label, icone }) => {
+                      const on = forma === id;
+                      return (
+                        <button key={id} type="button" onClick={() => setForma(id)}
+                          style={{
+                            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                            padding: "10px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+                            fontSize: 13, fontWeight: on ? 600 : 400,
+                            border: `1.5px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                            background: on ? "var(--brand-50)" : "var(--surface)",
+                            color: on ? "var(--brand)" : "var(--ink)", transition: "all .15s",
+                          }}>
+                          {icone} {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Descrição Pix */}
                 {forma === "PIX" && (
                   <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
                     <QrCode size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
                     Geramos um QR Code Pix após a confirmação. O acesso é liberado assim que o pagamento for confirmado.
                     <div style={{ marginTop: 6 }}>A cobrança é à vista, mês a mês.</div>
+                  </div>
+                )}
+
+                {/* Descrição cartão nacional */}
+                {forma === "CREDIT_CARD" && (
+                  <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
+                    <CreditCard size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                    Pagamento processado pelo Asaas com cartão de crédito ou débito em R$. O plano é liberado quando o pagamento for confirmado.
                   </div>
                 )}
 
@@ -309,7 +342,9 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                     ? <><Loader size={15} /> Processando…</>
                     : forma === "STRIPE"
                       ? <><CreditCard size={15} /> Continuar para o pagamento ({usd(precoUsd)})</>
-                      : <><QrCode size={15} /> Pagar com Pix {money(precoFinal ?? selecionado.preco)}</>}
+                      : forma === "PIX"
+                        ? <><QrCode size={15} /> Pagar com Pix {money(precoFinal ?? selecionado.preco)}</>
+                        : <><CreditCard size={15} /> Pagar com Cartão {money(precoFinal ?? selecionado.preco)}</>}
                 </button>
                 <p className="vx-chart-source">
                   Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.
