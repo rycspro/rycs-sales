@@ -144,7 +144,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {submenu([["rycs", "Cursos da RYCS"], ["empresa", "Ensinar a RYCS"], ["qualificacao", "Dados da Operação"]], secaoAcademy, setSecaoAcademy)}
         {secaoAcademy === "rycs" && <RycsAcademyEmpresa />}
         {secaoAcademy === "empresa" && <AcademyEmpresaHub emp={emp} aviso={aviso} onIrParaMateriais={() => setAba?.("materiais")} />}
-        {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("configuracoes"); }} />}
+        {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("outros"); }} />}
       </>}
       {aba === "conferir-fila" && <>
         <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} filtroBar={filtroDataEl} />
@@ -168,7 +168,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
           onTrocarSecao={(s) => setAba?.(s === "campanhas" ? "pagamentos-campanhas" : "pagamentos")}
         />
       )}
-      {(aba === "configuracoes" || aba === "conta") && (
+      {(aba === "configuracoes" || aba === "conta" || aba === "outros") && (
         <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />
       )}
       {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa emp={emp} aviso={aviso} />}

@@ -76,6 +76,7 @@ export const NAV = {
     { section: "Sua Empresa" },
     { key: "materiais", label: "Materiais", Icon: FolderOpen },
     { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
+    { key: "outros", label: "Outros", Icon: Settings },
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },
@@ -113,7 +114,7 @@ export const MOBILE_NAV = {
     { key: "inicio", label: "Início", Icon: Home },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
-    { key: "configuracoes", label: "Conta", Icon: Settings },
+    { key: "outros", label: "Outros", Icon: Settings },
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },

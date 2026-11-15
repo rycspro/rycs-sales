@@ -8,7 +8,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   // grupo que contém a página ativa permanece aberto (comportamento sanfona).
   useEffect(() => { setGruposAbertos({}); }, [active]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
-  const fimKeys = new Set(["configuracoes"]);
+  const fimKeys = new Set(["configuracoes", "outros"]);
   const fimItems = rawItems.filter((item) => fimKeys.has(item.key));
   const allItems = fimItems.length
     ? [...rawItems.filter((item) => !fimKeys.has(item.key)), ...fimItems]
@@ -23,7 +23,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   const mobileActive = (() => {
     if (role === "vendedor" && ["conta", "configuracoes", "perfil", "indicar", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
-      if (["conta", "configuracoes", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "configuracoes";
+      if (["conta", "configuracoes", "outros", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "outros";
       if (["leads", "materiais", "academy-empresa", "profissionais", "conferir-fila", "conferir-time", "conversas"].includes(active)) return "campanhas";
       if (["campanhas-comissoes", "campanhas-tarefas", "pagamentos-campanhas"].includes(active)) return "campanhas";
     }
@@ -153,7 +153,7 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
       e.preventDefault(); const buttons = [...menu.current.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
       buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length-1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
-      {[[CircleUserRound, 'Minha Conta', company ? 'configuracoes' : 'conta']].map(([Icon,label,key]) => <button type="button" role="menuitem" key={key} onClick={() => choose(() => onSelect(key))}><Icon size={18} />{label}</button>)}
+      {[[CircleUserRound, 'Minha Conta', company ? 'outros' : 'conta']].map(([Icon,label,key]) => <button type="button" role="menuitem" key={key} onClick={() => choose(() => onSelect(key))}><Icon size={18} />{label}</button>)}
       {company && <button type="button" role="menuitem" onClick={() => choose(() => onSelect('planos'))}><Gem size={18} />Planos RYCS</button>}
       <button type="button" role="menuitem" onClick={() => choose(() => onSelect('suporte-conta'))}><Headphones size={18} />Ajuda e suporte</button>
       <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>

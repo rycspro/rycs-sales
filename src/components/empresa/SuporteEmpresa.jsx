@@ -26,7 +26,7 @@ const CATEGORIAS = [
   { chave: "pagamentos", icon: Wallet, titulo: "Pagamentos", desc: "Saldos, comissões, aprovações e pagamentos.", busca: "pagamento saldo comissão adicionar saldo liberação cobrança plano" },
   { chave: "academy", icon: GraduationCap, titulo: "Academy", desc: "Treinamentos, módulos, conteúdos e aprendizado.", busca: "academy módulo treinamento aprendizado curso" },
   { chave: "materiais", icon: FolderOpen, titulo: "Materiais", desc: "Informações empresariais, arquivos e biblioteca de conteúdos.", busca: "materiais arquivo biblioteca conteúdo ia informações empresa" },
-  { chave: "configuracoes", icon: Settings2, titulo: "Configurações", desc: "Dados da empresa, preferências, acessos e permissões.", busca: "configuração dados empresa preferência acesso permissão conta" },
+  { chave: "outros", icon: Settings2, titulo: "Outros", desc: "Dados da empresa, preferências, acessos e permissões.", busca: "configuração dados empresa preferência acesso permissão conta outros" },
 ];
 
 const CATEGORIAS_CHAMADO = [...CATEGORIAS.map((c) => ({ chave: c.chave, titulo: c.titulo })), { chave: "outros", titulo: "Outros" }];
