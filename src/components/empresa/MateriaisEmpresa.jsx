@@ -312,7 +312,7 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
             <>
               {/* SEÇÃO 01 — Informações da empresa (base de conhecimento estruturada) */}
               <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
                   Informações da empresa
                 </div>
                 <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
@@ -325,7 +325,7 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
 
               {/* SEÇÃO 02 — Biblioteca de arquivos (6 pastas existentes) */}
               <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
                   Biblioteca de arquivos
                 </div>
                 <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
