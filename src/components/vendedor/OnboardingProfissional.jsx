@@ -6,7 +6,7 @@ import OnbQuizDisc from "./OnbQuizDisc.jsx";
 import OnbOportunidades from "./OnbOportunidades.jsx";
 
 const ETAPAS = [
-  { chave: "perfil", n: 1, label: "Perfil" },
+  { chave: "perfil", n: 1, label: "Apresentação" },
   { chave: "quiz", n: 2, label: "Quiz" },
   { chave: "oportunidades", n: 3, label: "Oportunidades" },
 ];

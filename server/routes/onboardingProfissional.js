@@ -42,45 +42,144 @@ function etapaIndex(etapa) {
   return ETAPAS_ONBOARDING.indexOf(etapa);
 }
 
+function sanitizarTexto(txt, maxLen = 1500) {
+  if (!txt || typeof txt !== "string") return "";
+  return txt
+    .replace(/<script[\s>][\s\S]*?<\/script>/gi, "")
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
+    .replace(/javascript:/gi, "")
+    .slice(0, maxLen)
+    .trim();
+}
+
+function validarUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  const u = url.trim();
+  if (!u) return "";
+  if (/^javascript:/i.test(u) || /^data:/i.test(u) || /^vbscript:/i.test(u)) return "";
+  try {
+    const parsed = new URL(u.startsWith("http") ? u : `https://${u}`);
+    if (!["http:", "https:"].includes(parsed.protocol)) return "";
+    return parsed.href;
+  } catch {
+    return "";
+  }
+}
+
+const MAX_VIDEO_SIZE = 30 * 1024 * 1024; // 30MB
+const VIDEO_TYPES = ["video/mp4", "video/webm"];
+
 router.get("/onboarding-pro", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
-  const seller = db.prepare("SELECT onboardingEtapa, nome, foto, bio, whats, linkedin, disc, email FROM sellers WHERE id = ?").get(req.user.entityId);
+  const seller = db.prepare(`
+    SELECT onboardingEtapa, nome, sobrenome, foto, bio, whats, linkedin, disc, email,
+           cidadeBase, estadoBase, pais, perfilComercial, apresentacaoData, videoApresentacao
+    FROM sellers WHERE id = ?
+  `).get(req.user.entityId);
   if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
+
+  let perfilComercial = {};
+  try { perfilComercial = JSON.parse(seller.perfilComercial || "{}"); } catch {}
+
+  let apresentacao = {};
+  try { apresentacao = JSON.parse(seller.apresentacaoData || "{}"); } catch {}
 
   res.json({
     etapa: seller.onboardingEtapa || "perfil",
     concluido: seller.onboardingEtapa === "concluido",
     perfil: {
       nome: seller.nome,
-      foto: !!seller.foto,
+      sobrenome: seller.sobrenome || "",
+      foto: seller.foto || "",
       bio: seller.bio || "",
       whats: seller.whats || "",
       linkedin: seller.linkedin || "",
       email: seller.email || "",
+      cidade: seller.cidadeBase || "",
+      estado: seller.estadoBase || "",
+      pais: seller.pais || "",
+      areaAtuacao: perfilComercial?.experiencia?.xp3 || "",
     },
+    apresentacao,
+    videoApresentacao: seller.videoApresentacao || "",
     disc: JSON.parse(seller.disc || "{}"),
   });
 });
 
-// Step 1: Salvar perfil (nome, bio, linkedin). Foto já vem do cadastro.
 router.post("/onboarding-pro/perfil", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
-  const { nome, bio, linkedin } = req.body;
   const sellerId = req.user.entityId;
 
-  const seller = db.prepare("SELECT onboardingEtapa FROM sellers WHERE id = ?").get(sellerId);
+  const seller = db.prepare("SELECT onboardingEtapa, nome, bio FROM sellers WHERE id = ?").get(sellerId);
   if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
 
-  if (!nome?.trim()) return res.status(400).json({ error: "Nome é obrigatório", campo: "nome" });
-  if (!bio?.trim()) return res.status(400).json({ error: "Biografia é obrigatória", campo: "bio" });
+  const { bio, linkedin, redesSociais, interesses, jeitoTrabalhar, portfolio, privacidade } = req.body;
 
-  db.prepare("UPDATE sellers SET nome = ?, bio = ?, linkedin = ?, onboardingEtapa = 'quiz' WHERE id = ?")
-    .run(nome.trim(), bio.trim(), (linkedin || "").trim(), sellerId);
+  const bioLimpa = sanitizarTexto(bio, 1500);
+
+  let redesLimpas = {};
+  if (redesSociais && typeof redesSociais === "object") {
+    for (const [rede, url] of Object.entries(redesSociais)) {
+      const urlLimpa = validarUrl(url);
+      if (urlLimpa) redesLimpas[rede] = urlLimpa;
+    }
+  }
+
+  let interessesLimpos = [];
+  if (Array.isArray(interesses)) {
+    interessesLimpos = interesses.filter(i => typeof i === "string").slice(0, 20);
+  }
+
+  let jeitoLimpo = {};
+  if (jeitoTrabalhar && typeof jeitoTrabalhar === "object") {
+    if (typeof jeitoTrabalhar.formaTrabalho === "string") jeitoLimpo.formaTrabalho = jeitoTrabalhar.formaTrabalho;
+    if (Array.isArray(jeitoTrabalhar.atividades)) jeitoLimpo.atividades = jeitoTrabalhar.atividades.filter(a => typeof a === "string").slice(0, 10);
+    if (typeof jeitoTrabalhar.motivacao === "string") jeitoLimpo.motivacao = jeitoTrabalhar.motivacao;
+    if (typeof jeitoTrabalhar.orientacao === "string") jeitoLimpo.orientacao = jeitoTrabalhar.orientacao;
+  }
+
+  let portfolioLimpo = [];
+  if (Array.isArray(portfolio)) {
+    portfolioLimpo = portfolio.slice(0, 10).map(item => ({
+      titulo: sanitizarTexto(item.titulo || "", 100),
+      descricao: sanitizarTexto(item.descricao || "", 300),
+      link: validarUrl(item.link || ""),
+    })).filter(p => p.titulo);
+  }
+
+  let privacidadeLimpa = {};
+  if (privacidade && typeof privacidade === "object") {
+    for (const [campo, visivel] of Object.entries(privacidade)) {
+      if (typeof visivel === "boolean") privacidadeLimpa[campo] = visivel;
+    }
+  }
+
+  const apresentacaoData = JSON.stringify({
+    redesSociais: redesLimpas,
+    interesses: interessesLimpos,
+    jeitoTrabalhar: jeitoLimpo,
+    portfolio: portfolioLimpo,
+    privacidade: privacidadeLimpa,
+  });
+
+  const linkedinLimpo = validarUrl(linkedin || "");
+
+  db.prepare(`UPDATE sellers SET
+    bio = CASE WHEN ? != '' THEN ? ELSE bio END,
+    linkedin = CASE WHEN ? != '' THEN ? ELSE linkedin END,
+    apresentacaoData = ?,
+    onboardingEtapa = 'quiz'
+    WHERE id = ?`)
+    .run(
+      bioLimpa, bioLimpa,
+      linkedinLimpo, linkedinLimpo,
+      apresentacaoData,
+      sellerId
+    );
 
   res.json({ ok: true, etapa: "quiz" });
 });
 
-// Step 1: Upload de foto (reutiliza a lógica existente)
 router.post("/onboarding-pro/foto", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
   const sellerId = req.user.entityId;
@@ -100,6 +199,29 @@ router.post("/onboarding-pro/foto", (req, res) => {
     .run(dataUri, avaliacao.score, sellerId);
 
   res.json({ ok: true, avaliacao, foto: dataUri });
+});
+
+router.post("/onboarding-pro/video", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const sellerId = req.user.entityId;
+
+  const { base64, mimetype } = req.body || {};
+  if (!base64) return res.status(400).json({ error: "Envie o vídeo" });
+  if (!VIDEO_TYPES.includes(mimetype)) return res.status(400).json({ error: "Formato não suportado. Use MP4 ou WebM." });
+
+  const tamanhoBytes = Math.round((String(base64).length * 3) / 4);
+  if (tamanhoBytes > MAX_VIDEO_SIZE) return res.status(400).json({ error: "Vídeo muito grande. Máximo de 30MB." });
+
+  const dataUri = `data:${mimetype};base64,${base64}`;
+  db.prepare("UPDATE sellers SET videoApresentacao = ? WHERE id = ?").run(dataUri, sellerId);
+
+  res.json({ ok: true });
+});
+
+router.delete("/onboarding-pro/video", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  db.prepare("UPDATE sellers SET videoApresentacao = '' WHERE id = ?").run(req.user.entityId);
+  res.json({ ok: true });
 });
 
 // Step 2: Quiz DISC + experiência
