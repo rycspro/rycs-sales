@@ -9,7 +9,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import db from "./db.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { onboardingGuard } from "./middleware/onboardingGuard.js";
-import { ACOES, CAMPOS, SISTEMA_AUDITOR } from "../shared/acoes.js";
+import { ACOES, CAMPOS, SISTEMA_AUDITOR, montarMensagemAuditoria } from "../shared/acoes.js";
 import authRoutes from "./routes/auth.js";
 import stateRoutes from "./routes/state.js";
 import sellersRoutes from "./routes/sellers.js";
@@ -75,6 +75,28 @@ app.use(compression());
 // --- Security ---
 app.use(helmet({ contentSecurityPolicy: false }));
 app.set("trust proxy", 1);
+
+// CSP em modo REPORT-ONLY: observa violações sem bloquear nada, para calibrar
+// uma política antes de ativá-la de verdade (ligar a CSP enforçada sem testar
+// quebraria a interface e integrações legítimas). Permite o que o app usa hoje
+// (fontes do Google, imagens data:/https, Stripe/Asaas em https).
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy-Report-Only",
+    [
+      "default-src 'self'",
+      "img-src 'self' data: blob: https:",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "script-src 'self'",
+      "connect-src 'self' https:",
+      "frame-src 'self' https:",
+      "object-src 'none'",
+      "base-uri 'self'",
+    ].join("; ")
+  );
+  next();
+});
 
 const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
 
@@ -222,10 +244,8 @@ app.post("/api/analisar", authMiddleware, async (req, res) => {
   if (!client) return res.status(503).json({ error: "Auditoria por IA não configurada neste ambiente" });
 
   const acao = ACOES[tipo];
-  const linhas = acao.prova
-    .map((c) => `${CAMPOS[c]?.label || c}: ${prova[c] || "(vazio)"}`)
-    .join("\n");
-  const mensagem = `Ação: ${acao.nome}\nRegra: ${acao.regra}\n\nDados enviados pelo vendedor:\n${linhas}`;
+  // Dados do vendedor entram isolados em bloco delimitado (anti prompt injection).
+  const mensagem = montarMensagemAuditoria(acao, prova, CAMPOS);
 
   try {
     const resposta = await client.messages.create({
