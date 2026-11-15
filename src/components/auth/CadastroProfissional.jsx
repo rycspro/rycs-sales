@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Camera, X, CheckCircle, XCircle, Plus, Trash2, Upload, FileText, Star } from "lucide-react";
 import ComboSelect from "../ui/ComboSelect.jsx";
 import MultiSelect from "../ui/MultiSelect.jsx";
@@ -347,6 +347,72 @@ export default function CadastroProfissional({ onRegister }) {
   const [erroSenha, setErroSenha] = useState("");
   const [erroEtapa, setErroEtapa] = useState("");
 
+  /* ── persistência localStorage ── */
+  const STORAGE_KEY = "rycs_cadastro_prof";
+  const carregou = useRef(false);
+
+  useEffect(() => {
+    if (carregou.current) return;
+    carregou.current = true;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.nome) setNome(s.nome);
+      if (s.dataNasc) setDataNasc(s.dataNasc);
+      if (s.genero) setGenero(s.genero);
+      if (s.pais) setPais(s.pais);
+      if (s.estado) setEstado(s.estado);
+      if (s.cidade) setCidade(s.cidade);
+      if (s.email) setEmail(s.email);
+      if (s.whats) setWhats(s.whats);
+      if (s.idiomas?.length) setIdiomas(s.idiomas);
+      if (s.areasAtuacao?.length) setAreasAtuacao(s.areasAtuacao);
+      if (s.habilidades?.length) setHabilidades(s.habilidades);
+      if (s.anosExperiencia) setAnosExperiencia(s.anosExperiencia);
+      if (s.disponibilidade) setDisponibilidade(s.disponibilidade);
+      if (s.segmentos?.length) setSegmentos(s.segmentos);
+      if (s.ferramentas?.length) setFerramentas(s.ferramentas);
+      if (s.formacoes?.length) setFormacoes(s.formacoes);
+      if (s.equipamentos?.length) setEquipamentos(s.equipamentos);
+      if (s.cargosExp?.length) setCargosExp(s.cargosExp);
+      if (s.cargoPrincipal) setCargoPrincipal(s.cargoPrincipal);
+      if (s.indicacao) setIndicacao(s.indicacao);
+      if (s.etapa != null) setEtapa(s.etapa);
+      if (s.fotoPrevia) { setFotoPrevia(s.fotoPrevia); setFoto(s.foto || null); }
+    } catch {}
+  }, []);
+
+  const salvarTimer = useRef(null);
+  const salvarRascunho = useCallback(() => {
+    clearTimeout(salvarTimer.current);
+    salvarTimer.current = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          nome, dataNasc, genero, pais, estado, cidade,
+          email, whats, idiomas,
+          areasAtuacao, habilidades, anosExperiencia, disponibilidade,
+          segmentos, ferramentas, formacoes, equipamentos,
+          cargosExp, cargoPrincipal, indicacao, etapa,
+          foto, fotoPrevia,
+        }));
+      } catch {}
+    }, 400);
+  }, [
+    nome, dataNasc, genero, pais, estado, cidade,
+    email, whats, idiomas,
+    areasAtuacao, habilidades, anosExperiencia, disponibilidade,
+    segmentos, ferramentas, formacoes, equipamentos,
+    cargosExp, cargoPrincipal, indicacao, etapa,
+    foto, fotoPrevia,
+  ]);
+
+  useEffect(() => { if (carregou.current) salvarRascunho(); }, [salvarRascunho]);
+
+  const limparRascunho = () => {
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  };
+
   /* ── handlers de arquivo ── */
   const selecionarCurriculo = (arquivo) => {
     if (!arquivo) return;
@@ -460,6 +526,7 @@ export default function CadastroProfissional({ onRegister }) {
       aceitouTermos: true, indicacao: indicacao || undefined,
       foto, curriculo: curriculo || undefined,
     });
+    limparRascunho();
     setLoading(false);
   };
 
