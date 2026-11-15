@@ -128,7 +128,7 @@ const FERRAMENTAS = [
   { value: "agendor", label: "Agendor" },
   { value: "moskit", label: "Moskit CRM" },
   { value: "nectar-crm", label: "Nectar CRM" },
-  { value: "funildevendas", label: "Funil de Vendas" },
+  { value: "funildevendas", label: "Funil de Vendas CRM" },
   { value: "freshsales", label: "Freshsales" },
   { value: "close-crm", label: "Close CRM" },
   { value: "monday-crm", label: "Monday Sales CRM" },
