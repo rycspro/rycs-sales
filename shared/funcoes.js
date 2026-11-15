@@ -16,7 +16,7 @@ export const FUNCOES = {
     acoes: ["ligacao", "follow", "agendamento"],
   },
   closer: {
-    nome: "Closer",
+    nome: "CLOSER",
     completo: "Executivo de vendas",
     descricao: "Conduz a reunião, negocia e fecha o contrato.",
     acoes: ["realizada", "venda", "follow"],

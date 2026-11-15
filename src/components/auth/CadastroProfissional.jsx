@@ -1020,30 +1020,40 @@ export default function CadastroProfissional({ onRegister }) {
                         })}
                       </div>
 
-                      {/* Iniciante — opção compacta */}
+                      {/* Iniciante — desmarca todos os outros ao selecionar */}
                       <label style={{
-                        display: "flex", alignItems: "center", gap: 8, marginTop: 12,
-                        padding: "8px 12px", borderRadius: 8, cursor: "pointer",
-                        border: cargosExp.includes("sem-exp") ? `1.5px solid ${AZUL}` : "1px solid var(--border)",
-                        background: cargosExp.includes("sem-exp") ? "rgba(49,140,231,.04)" : "transparent",
+                        display: "flex", alignItems: "center", gap: 10, marginTop: 16,
+                        padding: "14px 16px", borderRadius: 12, cursor: "pointer",
+                        border: cargosExp.includes("sem-exp") ? `2px solid ${AZUL}` : "1.5px solid var(--border-strong)",
+                        background: cargosExp.includes("sem-exp") ? "rgba(49,140,231,.06)" : "var(--surface-solid)",
                         transition: "all .15s",
                       }}>
+                        <span style={{
+                          width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                          border: cargosExp.includes("sem-exp") ? `2px solid ${AZUL}` : "2px solid var(--border-strong)",
+                          background: cargosExp.includes("sem-exp") ? AZUL : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          color: "#fff", fontSize: 11, fontWeight: 700,
+                        }}>{cargosExp.includes("sem-exp") ? "✓" : ""}</span>
                         <input type="checkbox" checked={cargosExp.includes("sem-exp")}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              const next = cargosExp.length === 0 ? ["sem-exp"] : [...cargosExp, "sem-exp"];
-                              setCargosExp(next);
-                              if (!cargoPrincipal) setCargoPrincipal("sem-exp");
+                              setCargosExp(["sem-exp"]);
+                              setCargoPrincipal("sem-exp");
                             } else {
-                              const next = cargosExp.filter((v) => v !== "sem-exp");
-                              setCargosExp(next);
-                              if (cargoPrincipal === "sem-exp") setCargoPrincipal(next[0] || "");
+                              setCargosExp([]);
+                              setCargoPrincipal("");
                             }
                           }}
-                          style={{ accentColor: AZUL, margin: 0 }} />
-                        <span style={{ fontSize: 12.5, color: "var(--muted)", fontWeight: 500 }}>
-                          Iniciante — primeira experiência em vendas
-                        </span>
+                          style={{ display: "none" }} />
+                        <div>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: cargosExp.includes("sem-exp") ? AZUL : "var(--ink)" }}>
+                            Iniciante — primeira experiência em vendas
+                          </span>
+                          <div style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.45, marginTop: 2 }}>
+                            Ainda não tenho experiência formal com vendas
+                          </div>
+                        </div>
                       </label>
                     </div>
 
