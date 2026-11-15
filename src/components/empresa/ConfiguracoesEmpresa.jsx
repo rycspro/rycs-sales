@@ -58,6 +58,13 @@ const IDIOMAS = [
   { code: "pt-BR", nome: "Português (Brasil)", flag: "🇧🇷" },
   { code: "en",    nome: "English",            flag: "🇺🇸" },
   { code: "es",    nome: "Español",            flag: "🇪🇸" },
+  { code: "fr",    nome: "Français",           flag: "🇫🇷" },
+  { code: "hi",    nome: "हिन्दी",               flag: "🇮🇳" },
+  { code: "ar",    nome: "العربية",              flag: "🇸🇦" },
+  { code: "zh",    nome: "中文",                 flag: "🇨🇳" },
+  { code: "ru",    nome: "Русский",             flag: "🇷🇺" },
+  { code: "bn",    nome: "বাংলা",                flag: "🇧🇩" },
+  { code: "id",    nome: "Bahasa Indonesia",    flag: "🇮🇩" },
 ];
 
 // ── UI atoms ──────────────────────────────────────────────────────────
