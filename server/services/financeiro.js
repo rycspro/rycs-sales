@@ -10,15 +10,20 @@ export function posicaoEmpresa(companyId) {
   return { saldo, reservado, disponivel: dinheiro(Math.max(0, saldo - reservado)) };
 }
 
+// Retorna { inserido } — false quando o UNIQUE (tipo, idempotencyKey) já
+// registrou este movimento. Quem credita saldo deve amarrar a escrita a este
+// resultado, para que um evento repetido (ou de outro tipo) do mesmo pagamento
+// não gere crédito em dobro.
 function registrar({ companyId, sellerId = null, submissionId = null, tipo, valor, idempotencyKey, dados = {} }) {
   const empresa = companyId ? db.prepare("SELECT saldo, saldoReservado FROM companies WHERE id = ?").get(companyId) : null;
   const vendedor = sellerId ? db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(sellerId) : null;
-  db.prepare(`INSERT OR IGNORE INTO financial_ledger
+  const r = db.prepare(`INSERT OR IGNORE INTO financial_ledger
     (id, companyId, sellerId, submissionId, tipo, valor, saldoEmpresa, reservadoEmpresa, saldoProfissional, idempotencyKey, dados, criadoEm)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(uid(), companyId, sellerId, submissionId, tipo, dinheiro(valor),
       empresa?.saldo ?? null, empresa?.saldoReservado ?? null, vendedor?.disponivel ?? null,
       idempotencyKey || null, JSON.stringify(dados), agora());
+  return { inserido: r.changes > 0 };
 }
 
 export function reservarParaSubmissao({ companyId, sellerId, submissionId, valor }) {
@@ -108,7 +113,7 @@ export function liberarCicloEmpresa(companyId) {
 }
 
 export function registrarMovimento({ companyId = null, sellerId = null, submissionId = null, tipo, valor, idempotencyKey, dados }) {
-  registrar({ companyId, sellerId, submissionId, tipo, valor, idempotencyKey, dados });
+  return registrar({ companyId, sellerId, submissionId, tipo, valor, idempotencyKey, dados });
 }
 
 export function extratoEmpresa(companyId, limite = 100) {

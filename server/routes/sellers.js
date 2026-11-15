@@ -6,6 +6,7 @@ import { detalharScore, pontosVendedor, explicacaoScore } from "../../shared/per
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { emailCadastroCompletadoAdmin } from "../services/email.js";
+import { podeEditarVendedor } from "../services/escopo.js";
 
 const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusiness.com.br";
 
@@ -225,11 +226,14 @@ router.post("/admin/sellers/:id/reset-senha", (req, res) => {
 
 router.patch("/sellers/:id", (req, res) => {
   const { id } = req.params;
-  const { role, entityId } = req.user;
+  const { role } = req.user;
 
-  if (role === "empresa") return res.status(403).json({ error: "Empresas não podem editar perfis de profissionais" });
-  if (role === "vendedor" && entityId !== id)
-    return res.status(403).json({ error: "Sem permissão para editar outro vendedor" });
+  // Só o próprio profissional ou o admin editam o cadastro. Empresas NÃO
+  // podem alterar dados de profissionais (Pix, e-mail, financeiros valem
+  // dinheiro e permitiriam desvio de saque ou tomada de conta).
+  // podeEditarVendedor() já cobre o bloqueio da empresa que c330f6e introduziu.
+  if (!podeEditarVendedor(req, id))
+    return res.status(403).json({ error: "Sem permissão para editar este profissional" });
 
   const fields = req.body;
   // Campos financeiros (disponivel/pendente/sacado) NUNCA podem ser escritos

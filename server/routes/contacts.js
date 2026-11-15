@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
 import db from "../db.js";
+import { campanhaGerenciavel, contatoGerenciavel } from "../services/escopo.js";
 
 const router = Router();
+
+const SEM_PERMISSAO = { error: "Sem permissão para acessar estes contatos." };
 
 // Parse CSV simples (sem dependência externa)
 function parseCSV(text) {
@@ -43,10 +46,15 @@ function normalizar(row) {
 
 // POST /contacts/upload — recebe base64 do CSV/XLSX e insere
 router.post("/contacts/upload", (req, res) => {
-  const { campaignId, companyId, dados } = req.body;
-  if (!campaignId || !companyId || !Array.isArray(dados) || !dados.length) {
-    return res.status(400).json({ error: "campaignId, companyId e dados[] são obrigatórios." });
+  const { campaignId, dados } = req.body;
+  if (!campaignId || !Array.isArray(dados) || !dados.length) {
+    return res.status(400).json({ error: "campaignId e dados[] são obrigatórios." });
   }
+  // A campanha precisa ser da própria empresa; o companyId vem da campanha,
+  // nunca do corpo (que o cliente controla).
+  const campanha = campanhaGerenciavel(req, campaignId);
+  if (!campanha) return res.status(403).json(SEM_PERMISSAO);
+  const companyId = campanha.companyId;
 
   const agora = Date.now();
   let inseridos = 0, duplicados = 0;
@@ -81,6 +89,7 @@ router.post("/contacts/upload", (req, res) => {
 // GET /contacts/:campaignId — lista contatos da campanha
 router.get("/contacts/:campaignId", (req, res) => {
   const { campaignId } = req.params;
+  if (!campanhaGerenciavel(req, campaignId)) return res.status(403).json(SEM_PERMISSAO);
   const { status, limit = 200, offset = 0 } = req.query;
   let query = "SELECT * FROM campaign_contacts WHERE campaignId=?";
   const params = [campaignId];
@@ -94,6 +103,8 @@ router.get("/contacts/:campaignId", (req, res) => {
 
 // PATCH /contacts/:id — atualizar status ou distribuição
 router.patch("/contacts/:id", (req, res) => {
+  const contato = contatoGerenciavel(req, req.params.id);
+  if (!contato) return res.status(403).json(SEM_PERMISSAO);
   const { status, sellerId } = req.body;
   const campos = [];
   const vals = [];
@@ -115,6 +126,7 @@ router.post("/contacts/distribuir", (req, res) => {
   if (!campaignId || !Array.isArray(sellers) || !sellers.length) {
     return res.status(400).json({ error: "campaignId e sellers[] são obrigatórios." });
   }
+  if (!campanhaGerenciavel(req, campaignId)) return res.status(403).json(SEM_PERMISSAO);
   const disponiveis = db.prepare(
     "SELECT id FROM campaign_contacts WHERE campaignId=? AND status='disponivel' ORDER BY RANDOM()"
   ).all(campaignId);
@@ -139,6 +151,7 @@ router.post("/contacts/distribuir", (req, res) => {
 
 // DELETE /contacts/:campaignId — limpa lista inteira (só disponíveis)
 router.delete("/contacts/:campaignId", (req, res) => {
+  if (!campanhaGerenciavel(req, req.params.campaignId)) return res.status(403).json(SEM_PERMISSAO);
   const r = db.prepare("DELETE FROM campaign_contacts WHERE campaignId=? AND status='disponivel'").run(req.params.campaignId);
   res.json({ removidos: r.changes });
 });

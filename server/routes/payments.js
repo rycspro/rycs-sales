@@ -520,18 +520,28 @@ function creditarDeposito(payment) {
   const valor = Number(payment.value) || 0;
   if (valor <= 0) return;
 
+  // Idempotência por pagamento: o Asaas dispara eventos diferentes para a mesma
+  // cobrança (PAYMENT_CONFIRMED e PAYMENT_RECEIVED no cartão). O crédito do
+  // caixa fica amarrado ao INSERT único do ledger (UNIQUE tipo+idempotencyKey),
+  // então o mesmo payment.id credita uma única vez, qualquer que seja o evento.
+  let creditou = false;
   db.transaction(() => {
+    const mov = registrarMovimento({ companyId: empresa.id, tipo: "deposito", valor, idempotencyKey: payment.id, dados: { gateway: "asaas" } });
+    if (!mov.inserido) return; // já creditado para este pagamento
+    creditou = true;
     db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ? WHERE id = ?")
       .run(valor, valor, empresa.id);
     const aportes = JSON.parse(empresa.aportes || "[]");
     aportes.push({ valor, ts: agora(), asaasId: payment.id });
     db.prepare("UPDATE companies SET aportes = ? WHERE id = ?").run(JSON.stringify(aportes), empresa.id);
-    registrarMovimento({ companyId: empresa.id, tipo: "deposito", valor, idempotencyKey: payment.id, dados: { gateway: "asaas" } });
     // Marca o pedido rastreável como confirmado (status only — o crédito acima
     // é a única fonte de saldo). A referência é o id da cobrança no Asaas.
     db.prepare("UPDATE deposit_requests SET status = 'confirmado', confirmadoEm = ? WHERE referencia = ? AND status = 'pendente'")
       .run(agora(), payment.id);
   })();
+
+  // Evento repetido do mesmo pagamento: não credita de novo nem notifica.
+  if (!creditou) return;
 
   const user = db.prepare("SELECT id, email FROM users WHERE entityId = ? AND role = 'empresa'").get(empresa.id);
   if (user) {
