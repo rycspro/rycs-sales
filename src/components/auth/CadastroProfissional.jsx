@@ -113,26 +113,45 @@ const FERRAMENTAS = [
   { value: "chatgpt-ia", label: "ChatGPT / Ferramentas de IA" },
 ];
 
-const NIVEIS_FORMACAO = [
-  { value: "ensino-medio", label: "Ensino médio completo" },
-  { value: "tecnico", label: "Curso técnico" },
+const TIPOS_FORMACAO = [
+  { value: "ensino-medio", label: "Ensino médio" },
+  { value: "curso-tecnico", label: "Curso técnico" },
   { value: "tecnologo", label: "Tecnólogo" },
-  { value: "superior-cursando", label: "Superior cursando" },
-  { value: "superior-completo", label: "Superior completo" },
+  { value: "graduacao", label: "Graduação" },
   { value: "pos-graduacao", label: "Pós-graduação / MBA" },
   { value: "mestrado", label: "Mestrado" },
   { value: "doutorado", label: "Doutorado" },
+  { value: "curso-livre", label: "Curso livre / Extensão" },
+  { value: "certificacao", label: "Certificação profissional" },
+  { value: "bootcamp", label: "Bootcamp / Imersão" },
+  { value: "treinamento", label: "Treinamento corporativo" },
 ];
 
-const CERTIFICACOES = [
-  { value: "cert-vendas", label: "Certificação em vendas" },
-  { value: "cert-marketing", label: "Certificação em marketing digital" },
-  { value: "cert-lideranca", label: "Certificação em liderança / gestão" },
-  { value: "cert-negociacao", label: "Curso de negociação" },
-  { value: "cert-coaching", label: "Coaching / Mentoria" },
-  { value: "cert-crm", label: "Certificação em CRM (HubSpot, Salesforce, etc.)" },
-  { value: "cert-analytics", label: "Certificação em analytics / dados" },
-  { value: "cert-idioma", label: "Certificação de idioma (TOEFL, IELTS, etc.)" },
+const CONHECIMENTOS = [
+  { value: "vendas-consultivas", label: "Vendas consultivas" },
+  { value: "spin-selling", label: "SPIN Selling" },
+  { value: "bant", label: "BANT / Qualificação" },
+  { value: "challenger-sale", label: "Challenger Sale" },
+  { value: "gestao-comercial", label: "Gestão comercial" },
+  { value: "lideranca-equipes", label: "Liderança de equipes" },
+  { value: "marketing-digital", label: "Marketing digital" },
+  { value: "copywriting", label: "Copywriting / Redação persuasiva" },
+  { value: "funil-vendas", label: "Funil de vendas / CRM" },
+  { value: "negociacao-avancada", label: "Negociação avançada" },
+  { value: "oratoria", label: "Oratória / Apresentação" },
+  { value: "pnl", label: "PNL / Persuasão" },
+  { value: "analytics-dados", label: "Analytics / Análise de dados" },
+  { value: "excel-avancado", label: "Excel / Planilhas avançado" },
+  { value: "automacao-comercial", label: "Automação comercial" },
+  { value: "atendimento-cliente", label: "Atendimento ao cliente" },
+  { value: "customer-success", label: "Customer Success" },
+  { value: "gestao-projetos", label: "Gestão de projetos" },
+  { value: "financas-basicas", label: "Finanças / Contabilidade básica" },
+  { value: "ingles-negocios", label: "Inglês para negócios" },
+  { value: "espanhol-negocios", label: "Espanhol para negócios" },
+  { value: "design-thinking", label: "Design Thinking" },
+  { value: "inteligencia-artificial", label: "Inteligência artificial / IA" },
+  { value: "ecommerce-marketplace", label: "E-commerce / Marketplace" },
 ];
 
 const EQUIPAMENTOS = [
@@ -325,9 +344,8 @@ export default function CadastroProfissional({ onRegister }) {
   const [disponibilidade, setDisponibilidade] = useState("");
   const [segmentos, setSegmentos] = useState([]);
   const [ferramentas, setFerramentas] = useState([]);
-  const [formacaoNivel, setFormacaoNivel] = useState("");
-  const [formacaoDetalhe, setFormacaoDetalhe] = useState("");
-  const [certificacoes, setCertificacoes] = useState([]);
+  const [formacoes, setFormacoes] = useState([{ tipo: "", descricao: "" }]);
+  const [conhecimentos, setConhecimentos] = useState([]);
   const [equipamentos, setEquipamentos] = useState([]);
 
   /* ── estado: experiência em vendas (cargos) ── */
@@ -380,9 +398,8 @@ export default function CadastroProfissional({ onRegister }) {
       if (s.disponibilidade) setDisponibilidade(s.disponibilidade);
       if (s.segmentos?.length) setSegmentos(s.segmentos);
       if (s.ferramentas?.length) setFerramentas(s.ferramentas);
-      if (s.formacaoNivel) setFormacaoNivel(s.formacaoNivel);
-      if (s.formacaoDetalhe) setFormacaoDetalhe(s.formacaoDetalhe);
-      if (s.certificacoes?.length) setCertificacoes(s.certificacoes);
+      if (s.formacoes?.length) setFormacoes(s.formacoes);
+      if (s.conhecimentos?.length) setConhecimentos(s.conhecimentos);
       if (s.equipamentos?.length) setEquipamentos(s.equipamentos);
       if (s.cargosExp?.length) setCargosExp(s.cargosExp);
       if (s.cargoPrincipal) setCargoPrincipal(s.cargoPrincipal);
@@ -401,7 +418,7 @@ export default function CadastroProfissional({ onRegister }) {
           nome, dataNasc, genero, pais, estado, cidade,
           email, whats, idiomas,
           areasAtuacao, habilidades, anosExperiencia, disponibilidade,
-          segmentos, ferramentas, formacaoNivel, formacaoDetalhe, certificacoes, equipamentos,
+          segmentos, ferramentas, formacoes, conhecimentos, equipamentos,
           cargosExp, cargoPrincipal, indicacao, etapa,
           foto, fotoPrevia,
         }));
@@ -411,7 +428,7 @@ export default function CadastroProfissional({ onRegister }) {
     nome, dataNasc, genero, pais, estado, cidade,
     email, whats, idiomas,
     areasAtuacao, habilidades, anosExperiencia, disponibilidade,
-    segmentos, ferramentas, formacaoNivel, formacaoDetalhe, certificacoes, equipamentos,
+    segmentos, ferramentas, formacoes, conhecimentos, equipamentos,
     cargosExp, cargoPrincipal, indicacao, etapa,
     foto, fotoPrevia,
   ]);
@@ -464,6 +481,11 @@ export default function CadastroProfissional({ onRegister }) {
   const addIdioma = () => setIdiomas((l) => [...l, { idioma: "", nivel: "basico" }]);
   const remIdioma = (i) => setIdiomas((l) => l.filter((_, j) => j !== i));
   const setIdiomaVal = (i, campo, val) => setIdiomas((l) => l.map((x, j) => j === i ? { ...x, [campo]: val } : x));
+
+  /* ── formações ── */
+  const addFormacao = () => setFormacoes((l) => [...l, { tipo: "", descricao: "" }]);
+  const remFormacao = (i) => setFormacoes((l) => l.filter((_, j) => j !== i));
+  const setFormacaoVal = (i, campo, val) => setFormacoes((l) => l.map((x, j) => j === i ? { ...x, [campo]: val } : x));
 
   /* ── dados derivados ── */
   const cidadeLabel = pais === "BR" && estado ? (CIDADES_BR[estado] || []).map((c) => ({ value: c, label: c })) : [];
@@ -529,7 +551,7 @@ export default function CadastroProfissional({ onRegister }) {
       cargosExp,
       perfilComercial: {
         areasAtuacao, habilidades, anosExperiencia, disponibilidade,
-        segmentos, ferramentas, formacaoNivel, formacaoDetalhe, certificacoes, equipamentos,
+        segmentos, ferramentas, formacoes, conhecimentos, equipamentos,
       },
       idiomas: idiomas.filter((i) => i.idioma),
       aceitouTermos: true, indicacao: indicacao || undefined,
@@ -716,26 +738,45 @@ export default function CadastroProfissional({ onRegister }) {
                       <CampoTelefone pais={pais} value={whats} onChange={(e) => setWhats(e.target.value)} required />
                     </div>
 
-                    {/* Seção: Formação */}
+                    {/* Seção: Formações */}
                     <div className="cp-secao">
-                      <div className="cp-secao-titulo">Formação e certificações</div>
+                      <div className="cp-secao-titulo">Formações</div>
                     </div>
 
-                    <div className="cp-row">
-                      <div className="cp-campo">
-                        <label className="cp-campo-label">Nível de formação <span className="cp-opt">(opcional)</span></label>
-                        <ComboSelect opcoes={NIVEIS_FORMACAO} valor={formacaoNivel} onChange={setFormacaoNivel} placeholder="Selecione" />
-                      </div>
-                      <div className="cp-campo">
-                        <label className="cp-campo-label">Formação em quê? <span className="cp-opt">(opcional)</span></label>
-                        <input className="vx-input" value={formacaoDetalhe} onChange={(e) => setFormacaoDetalhe(e.target.value)}
-                          placeholder="Ex.: Administração, Marketing, Engenharia…" disabled={!formacaoNivel} style={{ minHeight: 42 }} />
-                      </div>
+                    <div style={{ marginBottom: 16 }}>
+                      {formacoes.map((f, i) => (
+                        <div className="cp-idioma-row" key={i} style={{ alignItems: "flex-start" }}>
+                          <div style={{ flex: "0 0 45%" }}>
+                            <ComboSelect opcoes={TIPOS_FORMACAO} valor={f.tipo}
+                              onChange={(v) => setFormacaoVal(i, "tipo", v)} placeholder="Tipo de formação" />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <input className="vx-input" value={f.descricao}
+                              onChange={(e) => setFormacaoVal(i, "descricao", e.target.value)}
+                              placeholder={f.tipo ? "Descreva (ex.: Administração de Empresas)" : "Selecione o tipo primeiro"}
+                              disabled={!f.tipo} style={{ minHeight: 42 }} />
+                          </div>
+                          {formacoes.length > 1 && (
+                            <button type="button" className="cp-idioma-rem" onClick={() => remFormacao(i)} title="Remover"
+                              style={{ marginTop: 10 }}>
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button type="button" className="cp-foto-btn" onClick={addFormacao} style={{ marginTop: 4 }}>
+                        <Plus size={14} /> Adicionar formação
+                      </button>
+                    </div>
+
+                    {/* Seção: Conhecimentos */}
+                    <div className="cp-secao">
+                      <div className="cp-secao-titulo">Conhecimentos</div>
                     </div>
 
                     <div className="cp-campo">
-                      <label className="cp-campo-label">Certificações <span className="cp-opt">(opcional)</span></label>
-                      <MultiSelect opcoes={CERTIFICACOES} valor={certificacoes} onChange={setCertificacoes} placeholder="Selecione suas certificações" />
+                      <label className="cp-campo-label">Conhecimentos profissionais <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={CONHECIMENTOS} valor={conhecimentos} onChange={setConhecimentos} placeholder="Selecione seus conhecimentos" />
                     </div>
 
                     {/* Seção: Equipamentos */}
