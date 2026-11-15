@@ -7,6 +7,25 @@ const router = Router();
 const MAX_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm", "audio/mpeg", "audio/webm", "application/pdf"];
 
+// Nome de arquivo do cliente nunca entra cru na chave S3: remove barras,
+// "..", e qualquer caractere fora de um conjunto seguro.
+export function sanitizarNome(nome) {
+  const base = String(nome || "arquivo").replace(/[\\/]/g, "_").replace(/\.\.+/g, "_");
+  return (base.replace(/[^\w.\- ]+/g, "_").trim() || "arquivo").slice(-120);
+}
+
+// Quem pode ver/baixar um upload: o próprio dono, o admin, ou — quando ligado a
+// uma submissão — o vendedor/empresa participantes.
+function podeVerUpload(req, up) {
+  const { role, id, entityId } = req.user;
+  if (role === "admin" || up.userId === id) return true;
+  if (up.submissionId) {
+    const sub = db.prepare("SELECT sellerId, companyId FROM submissions WHERE id = ?").get(up.submissionId);
+    if (sub && ((role === "vendedor" && entityId === sub.sellerId) || (role === "empresa" && entityId === sub.companyId))) return true;
+  }
+  return false;
+}
+
 let s3Client = null;
 
 async function getS3() {
@@ -42,8 +61,8 @@ router.post("/uploads/presign", async (req, res) => {
   const s3 = await getS3();
   if (!s3) {
     const id = uid();
-    db.prepare("INSERT INTO uploads (id, userId, submissionId, filename, mimetype, size, url, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(
-      id, req.user.id, submissionId || null, filename, mimetype, tamanho, `local://${id}`, agora()
+    db.prepare("INSERT INTO uploads (id, userId, submissionId, filename, mimetype, size, url, s3key, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+      id, req.user.id, submissionId || null, sanitizarNome(filename), mimetype, tamanho, `local://${id}`, null, agora()
     );
     return res.json({ id, method: "local", message: "S3 não configurado. Em produção, configure S3_BUCKET." });
   }
@@ -52,7 +71,9 @@ router.post("/uploads/presign", async (req, res) => {
     const { PutObjectCommand } = await import("@aws-sdk/client-s3");
     const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
 
-    const key = `uploads/${req.user.id}/${Date.now()}-${randomBytes(4).toString("hex")}-${filename}`;
+    // Identificador gerado pelo servidor + nome sanitizado: o cliente não
+    // controla a chave (sem traversal/injeção).
+    const key = `uploads/${req.user.id}/${Date.now()}-${randomBytes(6).toString("hex")}-${sanitizarNome(filename)}`;
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET,
       Key: key,
@@ -63,8 +84,8 @@ router.post("/uploads/presign", async (req, res) => {
     const publicUrl = `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}/${key}`;
 
     const id = uid();
-    db.prepare("INSERT INTO uploads (id, userId, submissionId, filename, mimetype, size, url, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(
-      id, req.user.id, submissionId || null, filename, mimetype, tamanho, publicUrl, agora()
+    db.prepare("INSERT INTO uploads (id, userId, submissionId, filename, mimetype, size, url, s3key, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+      id, req.user.id, submissionId || null, sanitizarNome(filename), mimetype, tamanho, publicUrl, key, agora()
     );
 
     res.json({ id, presignedUrl, publicUrl, method: "s3" });
@@ -95,6 +116,29 @@ router.get("/uploads", (req, res) => {
   }
   const rows = db.prepare("SELECT * FROM uploads WHERE userId = ? ORDER BY criadoEm DESC LIMIT 50").all(req.user.id);
   res.json(rows);
+});
+
+// Download por URL assinada e curta — apenas para quem tem permissão sobre o
+// arquivo. Prepara a transição para bucket privado: o cliente deixa de usar a
+// URL pública e passa a pedir uma URL assinada aqui.
+router.get("/uploads/:id/url", async (req, res) => {
+  const up = db.prepare("SELECT * FROM uploads WHERE id = ?").get(req.params.id);
+  if (!up) return res.status(404).json({ error: "Arquivo não encontrado" });
+  if (!podeVerUpload(req, up)) return res.status(403).json({ error: "Sem permissão" });
+
+  const s3 = await getS3();
+  // Sem S3 (ou sem chave): devolve a referência atual (compatibilidade).
+  if (!s3 || !up.s3key) return res.json({ url: up.url, assinado: false });
+
+  try {
+    const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+    const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
+    const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: up.s3key }), { expiresIn: 300 });
+    res.json({ url, assinado: true, expiraEm: 300 });
+  } catch (err) {
+    console.error("Erro ao assinar download:", err.message);
+    res.status(500).json({ error: "Erro ao gerar link de download" });
+  }
 });
 
 export default router;

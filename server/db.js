@@ -1496,6 +1496,8 @@ adicionarColuna("users", "emailConfirmExpira", "INTEGER");
 adicionarColuna("users", "tokenVersion", "INTEGER NOT NULL DEFAULT 0");
 // Carimbo da última troca de chave Pix (base para cooldown de saque).
 adicionarColuna("sellers", "pixAlteradoEm", "INTEGER");
+// Chave S3 do upload (para gerar download assinado sem depender da URL pública).
+adicionarColuna("uploads", "s3key", "TEXT");
 
 // Trilha de auditoria de segurança (append-only). Nunca guarda senha, token
 // ou dado bancário completo — só o nome da ação, identificadores, contexto
