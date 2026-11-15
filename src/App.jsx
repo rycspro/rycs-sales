@@ -206,6 +206,16 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  // Navegar por vontade própria para /entrar ou /login encerra a sessão atual:
+  // o usuário pediu a tela de login, não o onboarding onde a sessão o prende.
+  useEffect(() => {
+    if (!user) return;
+    if (/^\/(entrar|login)\/?$/i.test(window.location.pathname)) {
+      api("/auth/logout", {}).catch(() => {});
+      setUser(null); setOnb(null); setDb(seed());
+    }
+  }, [rota, user]);
+
   // { silencioso } é para telas que mostram o erro no próprio campo.
   // Usado após confirmação de e-mail: o cookie já foi setado pelo servidor.
   const loginDireto = async (userData) => {
@@ -221,7 +231,8 @@ export default function App() {
         await api("/auth/logout", {});
         return { ok: false, roleErrado: r.role };
       }
-      if (r.role !== "empresa" && window.location.pathname.startsWith("/onboarding")) {
+      const pNow = window.location.pathname.replace(/\/+$/, "").toLowerCase();
+      if ((r.role !== "empresa" && window.location.pathname.startsWith("/onboarding")) || pNow === "/entrar" || pNow === "/login") {
         window.history.replaceState({}, "", "/");
       }
       setUser(r); userRef.current = r; await carregarState(r); return { ok: true, role: r.role };
@@ -292,7 +303,8 @@ export default function App() {
   // As telas públicas de cadastro (profissional/empresa e a escolha) devem
   // respeitar a URL mesmo com uma sessão ativa: abrir /cadastro/profissional
   // logado deixava de mostrar a página e jogava direto no dashboard.
-  const rotaCadastro = rota.tipo === "cadastro" || rota.tipo === "escolha";
+  const rotaLoginExplicita = /^\/(entrar|login)\/?$/i.test(window.location.pathname);
+  const rotaCadastro = rota.tipo === "cadastro" || rota.tipo === "escolha" || rotaLoginExplicita;
   if (!user || rotaCadastro) {
     if (rota.tipo === "landing") return <div className="vx-app"><style>{CSS}</style><Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><LandingPage /></Suspense></div>;
     return (
