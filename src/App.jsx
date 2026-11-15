@@ -165,6 +165,12 @@ export default function App() {
   useEffect(() => {
     let vivo = true;
     (async () => {
+      const p = window.location.pathname.replace(/\/+$/, "").toLowerCase();
+      if (p === "/entrar" || p === "/login") {
+        await api("/auth/logout", {});
+        if (vivo) setLoaded(true);
+        return;
+      }
       try {
         const me = await api("/auth/me");
         if (vivo && me?.id) {
