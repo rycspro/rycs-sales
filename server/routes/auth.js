@@ -245,6 +245,19 @@ router.post("/auth/forgot-password", async (req, res) => {
   res.json(resposta);
 });
 
+// Diagnóstico temporário — testar envio de e-mail de reset
+router.post("/auth/debug-reset", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "E-mail obrigatório" });
+  const emailNorm = String(email).toLowerCase().trim();
+  const user = db.prepare("SELECT id, email, role, entityId, resetEnviadoEm FROM users WHERE email = ?").get(emailNorm);
+  if (!user) return res.json({ etapa: "usuario_nao_encontrado", email: emailNorm });
+  const cooldown = !podeReenviarReset(user.resetEnviadoEm);
+  if (cooldown) return res.json({ etapa: "cooldown_ativo", resetEnviadoEm: user.resetEnviadoEm, agora: agora() });
+  const resultado = await emailResetSenha("Teste", user.email, "debug-token-invalido", FRONTEND);
+  res.json({ etapa: "email_enviado", resultado, frontend: FRONTEND, resendKey: process.env.RESEND_API_KEY ? "configurada" : "AUSENTE" });
+});
+
 router.post("/auth/reset-password", (req, res) => {
   const { token, senha } = req.body;
   if (!token || !senha) return res.status(400).json({ error: "Token e senha são obrigatórios" });
