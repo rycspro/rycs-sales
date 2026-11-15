@@ -1,12 +1,15 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowLeft, ImagePlus, Trash2 } from "lucide-react";
 import { CampoSenha } from "../ui.jsx";
+import ComboSelect from "../ui/ComboSelect.jsx";
+import CampoTelefone from "../CampoTelefone.jsx";
+import { PAISES, telefoneValido, normalizarTelefoneIntl } from "../../../shared/localidades.js";
 import Termos from "../auth/Termos.jsx";
 import RecuperarSenha from "../auth/RecuperarSenha.jsx";
 import MolduraOnboarding from "./MolduraOnboarding.jsx";
 import { api } from "../../lib/api.js";
 import { parametro, limparConviteOnboarding, ROTAS, navegar } from "../../lib/rotas.js";
-import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, normalizarWhatsapp, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
+import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
 
 // Etapa 1 do onboarding para quem ainda não tem conta: criar o acesso
 // (nome e logo da empresa, e-mail, senha e WhatsApp), entrar com uma conta existente ou recuperar a
@@ -14,15 +17,6 @@ import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, normalizarWhatsapp, LOG
 // travado no do convite.
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Máscara enquanto digita: (11) 91234-5678.
-function mascaraWhatsapp(valor) {
-  const d = String(valor || "").replace(/\D/g, "").replace(/^55(?=\d{10,})/, "").slice(0, 11);
-  if (d.length <= 2) return d ? `(${d}` : "";
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-}
 
 const lerArquivo = (arquivo) => new Promise((ok, falha) => {
   const r = new FileReader();
@@ -50,6 +44,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [pais, setPais] = useState("BR");
   const [nome, setNome] = useState("");
   // Logo fica só no navegador até o cadastro: { dataUri, mimetype }.
   const [logo, setLogo] = useState(null);
@@ -84,7 +79,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
     if (modo === "cadastro") {
       const s = validarSenhaEmpresa(senha);
       if (s) e.senha = s;
-      if (!normalizarWhatsapp(whatsapp)) e.whatsapp = "Informe um WhatsApp válido, com DDD.";
+      if (!telefoneValido(pais, whatsapp)) e.whatsapp = "Informe um WhatsApp válido para o país selecionado.";
       if (nome.trim().length < 2) e.nome = "Informe o nome da empresa.";
       if (!logo) e.logo = "Envie o logo da empresa.";
     } else if (!senha) e.senha = "Informe sua senha.";
@@ -113,7 +108,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
     setSalvando(true);
     if (modo === "cadastro") {
       const r = await onRegister({
-        role: "empresa", email: email.trim(), senha, whats: whatsapp, nome: nome.trim(),
+        role: "empresa", email: email.trim(), senha, whats: normalizarTelefoneIntl(pais, whatsapp) || whatsapp, pais, nome: nome.trim(),
         logo: { base64: logo.dataUri.split(",")[1], mimetype: logo.mimetype },
         aceitouTermos: true, indicacao: indicacao || undefined,
         convite: conviteValido ? conviteToken : undefined,
@@ -280,9 +275,13 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
                 </Campo>
 
                 {modo === "cadastro" && <>
-                  <Campo id={`${id}-whatsapp`} label="WhatsApp" erro={erros.whatsapp} dica="Com DDD. É por onde a RYCS fala com você sobre a operação.">
-                    <input id={`${id}-whatsapp`} className="vx-input" type="tel" inputMode="numeric" autoComplete="tel-national"
-                      placeholder="(11) 91234-5678" value={whatsapp} onChange={(e) => { setWhatsapp(mascaraWhatsapp(e.target.value)); limparErro("whatsapp"); }} {...props("whatsapp")} />
+                  <Campo id={`${id}-pais`} label="País">
+                    <ComboSelect opcoes={PAISES.map((p) => ({ value: p.code, label: `${p.nome} (+${p.ddi})` }))}
+                      valor={pais} onChange={(v) => setPais(v || "BR")} placeholder="Selecione o país" name="pais" />
+                  </Campo>
+                  <Campo id={`${id}-whatsapp`} label="WhatsApp" erro={erros.whatsapp} dica="É por onde a RYCS fala com você sobre a operação.">
+                    <CampoTelefone id={`${id}-whatsapp`} pais={pais} value={whatsapp} invalido={!!erros.whatsapp}
+                      onChange={(e) => { setWhatsapp(e.target.value); limparErro("whatsapp"); }} {...props("whatsapp")} />
                   </Campo>
                   {indicacao && (
                     <Campo id={`${id}-indicacao`} label="Código de indicação">

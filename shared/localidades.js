@@ -1,35 +1,73 @@
+// Cada país: code (ISO), nome, ddi (código internacional), fone [mín, máx]
+// de dígitos do número nacional (sem o DDI) e exemplo para placeholder.
+// As faixas são propositalmente tolerantes (fixo + móvel) para não recusar
+// números válidos; o importante é manter cada país coerente.
 export const PAISES = [
-  { code: "BR", nome: "Brasil" },
-  { code: "US", nome: "Estados Unidos" },
-  { code: "PT", nome: "Portugal" },
-  { code: "AR", nome: "Argentina" },
-  { code: "UY", nome: "Uruguai" },
-  { code: "PY", nome: "Paraguai" },
-  { code: "CL", nome: "Chile" },
-  { code: "CO", nome: "Colômbia" },
-  { code: "MX", nome: "México" },
-  { code: "PE", nome: "Peru" },
-  { code: "BO", nome: "Bolívia" },
-  { code: "EC", nome: "Equador" },
-  { code: "VE", nome: "Venezuela" },
-  { code: "CA", nome: "Canadá" },
-  { code: "GB", nome: "Reino Unido" },
-  { code: "DE", nome: "Alemanha" },
-  { code: "FR", nome: "França" },
-  { code: "ES", nome: "Espanha" },
-  { code: "IT", nome: "Itália" },
-  { code: "JP", nome: "Japão" },
-  { code: "CN", nome: "China" },
-  { code: "KR", nome: "Coreia do Sul" },
-  { code: "AU", nome: "Austrália" },
-  { code: "IN", nome: "Índia" },
-  { code: "ZA", nome: "África do Sul" },
-  { code: "AO", nome: "Angola" },
-  { code: "MZ", nome: "Moçambique" },
-  { code: "CV", nome: "Cabo Verde" },
-  { code: "IL", nome: "Israel" },
-  { code: "AE", nome: "Emirados Árabes Unidos" },
+  { code: "BR", nome: "Brasil", ddi: "55", fone: [10, 11], exemplo: "11 91234-5678" },
+  { code: "US", nome: "Estados Unidos", ddi: "1", fone: [10, 10], exemplo: "(555) 123-4567" },
+  { code: "PT", nome: "Portugal", ddi: "351", fone: [9, 9], exemplo: "912 345 678" },
+  { code: "AR", nome: "Argentina", ddi: "54", fone: [10, 11], exemplo: "11 2345-6789" },
+  { code: "UY", nome: "Uruguai", ddi: "598", fone: [8, 9], exemplo: "9 123 4567" },
+  { code: "PY", nome: "Paraguai", ddi: "595", fone: [9, 9], exemplo: "961 234567" },
+  { code: "CL", nome: "Chile", ddi: "56", fone: [9, 9], exemplo: "9 1234 5678" },
+  { code: "CO", nome: "Colômbia", ddi: "57", fone: [10, 10], exemplo: "301 2345678" },
+  { code: "MX", nome: "México", ddi: "52", fone: [10, 10], exemplo: "55 1234 5678" },
+  { code: "PE", nome: "Peru", ddi: "51", fone: [9, 9], exemplo: "912 345 678" },
+  { code: "BO", nome: "Bolívia", ddi: "591", fone: [8, 8], exemplo: "7123 4567" },
+  { code: "EC", nome: "Equador", ddi: "593", fone: [9, 9], exemplo: "99 123 4567" },
+  { code: "VE", nome: "Venezuela", ddi: "58", fone: [10, 10], exemplo: "412 1234567" },
+  { code: "CA", nome: "Canadá", ddi: "1", fone: [10, 10], exemplo: "(555) 123-4567" },
+  { code: "GB", nome: "Reino Unido", ddi: "44", fone: [10, 10], exemplo: "7400 123456" },
+  { code: "DE", nome: "Alemanha", ddi: "49", fone: [10, 11], exemplo: "1512 3456789" },
+  { code: "FR", nome: "França", ddi: "33", fone: [9, 9], exemplo: "6 12 34 56 78" },
+  { code: "ES", nome: "Espanha", ddi: "34", fone: [9, 9], exemplo: "612 34 56 78" },
+  { code: "IT", nome: "Itália", ddi: "39", fone: [9, 10], exemplo: "312 345 6789" },
+  { code: "JP", nome: "Japão", ddi: "81", fone: [10, 10], exemplo: "90 1234 5678" },
+  { code: "CN", nome: "China", ddi: "86", fone: [11, 11], exemplo: "131 2345 6789" },
+  { code: "KR", nome: "Coreia do Sul", ddi: "82", fone: [9, 10], exemplo: "10 1234 5678" },
+  { code: "AU", nome: "Austrália", ddi: "61", fone: [9, 9], exemplo: "412 345 678" },
+  { code: "IN", nome: "Índia", ddi: "91", fone: [10, 10], exemplo: "98765 43210" },
+  { code: "ZA", nome: "África do Sul", ddi: "27", fone: [9, 9], exemplo: "71 123 4567" },
+  { code: "AO", nome: "Angola", ddi: "244", fone: [9, 9], exemplo: "923 456 789" },
+  { code: "MZ", nome: "Moçambique", ddi: "258", fone: [9, 9], exemplo: "82 123 4567" },
+  { code: "CV", nome: "Cabo Verde", ddi: "238", fone: [7, 7], exemplo: "991 23 45" },
+  { code: "IL", nome: "Israel", ddi: "972", fone: [9, 9], exemplo: "50 123 4567" },
+  { code: "AE", nome: "Emirados Árabes Unidos", ddi: "971", fone: [9, 9], exemplo: "50 123 4567" },
 ];
+
+const PAIS_POR_CODE = Object.fromEntries(PAISES.map((p) => [p.code, p]));
+
+export function paisDe(code) {
+  return PAIS_POR_CODE[code] || PAISES[0];
+}
+
+// Dígitos do número NACIONAL (sem DDI). Remove tudo que não é dígito e, se a
+// pessoa digitou o DDI junto, tira do começo.
+export function digitosNacionais(code, valor) {
+  const p = paisDe(code);
+  let d = String(valor || "").replace(/\D/g, "");
+  if (p.ddi && d.startsWith(p.ddi) && d.length > p.ddi.length) d = d.slice(p.ddi.length);
+  return d;
+}
+
+// Validação coerente por país: confere a quantidade de dígitos nacionais.
+export function telefoneValido(code, valor) {
+  const p = paisDe(code);
+  const n = digitosNacionais(code, valor).length;
+  return n >= p.fone[0] && n <= p.fone[1];
+}
+
+// Número guardado: só dígitos, sempre com o DDI na frente (link wa.me funciona).
+// Retorna null quando o número não é válido para o país.
+export function normalizarTelefoneIntl(code, valor) {
+  if (!telefoneValido(code, valor)) return null;
+  const p = paisDe(code);
+  return `${p.ddi}${digitosNacionais(code, valor)}`;
+}
+
+export function exemploTelefone(code) {
+  return paisDe(code).exemplo || "";
+}
 
 export const ESTADOS_BR = [
   { uf: "AC", nome: "Acre" },

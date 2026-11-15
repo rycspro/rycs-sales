@@ -7,6 +7,7 @@ import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
+import { normalizarTelefoneIntl } from "../../shared/localidades.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { criarOnboarding, hashToken, novoToken } from "../services/onboarding.js";
 
@@ -82,7 +83,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
+  const { email, senha, role, nome, whats, pais, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -96,9 +97,13 @@ router.post("/auth/register", async (req, res) => {
     return res.status(400).json({ error: "E-mail inválido", campo: "email" });
 
   // Empresa: WhatsApp é obrigatório desde o acesso (etapa 1 do onboarding).
-  const whatsEmpresa = role === "empresa" ? normalizarWhatsapp(whats) : null;
+  // WhatsApp da empresa: coerente com o país informado (DDI + número nacional).
+  // Mantém o fallback BR para contas antigas que não enviam país.
+  const whatsEmpresa = role === "empresa"
+    ? (normalizarTelefoneIntl(pais || "BR", whats) || normalizarWhatsapp(whats))
+    : null;
   if (role === "empresa" && !whatsEmpresa)
-    return res.status(400).json({ error: "Informe um WhatsApp válido, com DDD.", campo: "whatsapp" });
+    return res.status(400).json({ error: "Informe um WhatsApp válido para o país selecionado.", campo: "whatsapp" });
 
   // Empresa: nome e logo também são pedidos já no acesso (etapa 1).
   let logoEmpresa = "";

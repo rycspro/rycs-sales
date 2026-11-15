@@ -6,7 +6,8 @@ import Termos from "./Termos.jsx";
 import MolduraAuth from "./MolduraAuth.jsx";
 import OnboardingProfissional from "./OnboardingProfissional.jsx";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
-import { PAISES, ESTADOS_BR, CIDADES_BR, IDIOMAS, NIVEIS_IDIOMA } from "../../../shared/localidades.js";
+import { PAISES, ESTADOS_BR, CIDADES_BR, IDIOMAS, NIVEIS_IDIOMA, telefoneValido, normalizarTelefoneIntl } from "../../../shared/localidades.js";
+import CampoTelefone from "../CampoTelefone.jsx";
 import { ROTAS, navegar, parametro } from "../../lib/rotas.js";
 import { LIMITES, avaliarFoto, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 
@@ -120,6 +121,7 @@ export default function CadastroProfissional({ onRegister }) {
       if (senha.length < 6) { setErroEtapa("Senha precisa ter no mínimo 6 caracteres."); return false; }
       if (senha !== senhaConfirm) { setErroEtapa("As senhas não coincidem."); return false; }
       if (!whats.trim()) { setErroEtapa("Preencha o WhatsApp."); return false; }
+      if (!telefoneValido(pais, whats)) { setErroEtapa("Informe um WhatsApp válido para o país selecionado."); return false; }
       if (idiomas.some((i) => !i.idioma)) { setErroEtapa("Preencha todos os idiomas adicionados."); return false; }
     }
     return true;
@@ -142,7 +144,7 @@ export default function CadastroProfissional({ onRegister }) {
     setLoading(true);
     const cidadeCompleta = pais === "BR" && estado ? `${cidade}, ${estado}` : cidade;
     await onRegister({
-      role: "vendedor", nome, email, senha, whats,
+      role: "vendedor", nome, email, senha, whats: normalizarTelefoneIntl(pais, whats) || whats,
       cidade: cidadeCompleta, pais, estado,
       dataNascimento: dataNasc, genero,
       perfil, idiomas: idiomas.filter((i) => i.idioma),
@@ -316,7 +318,7 @@ export default function CadastroProfissional({ onRegister }) {
             {erroSenha && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: -8, marginBottom: 10 }}>{erroSenha}</div>}
 
             <Campo label="WhatsApp *">
-              <input className="vx-input" value={whats} onChange={(e) => setWhats(e.target.value)} placeholder="(11) 90000-0000" inputMode="tel" required />
+              <CampoTelefone pais={pais} value={whats} onChange={(e) => setWhats(e.target.value)} required />
             </Campo>
 
             <Campo label="Como você atua hoje *">
