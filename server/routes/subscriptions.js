@@ -599,13 +599,17 @@ router.post("/subscription", async (req, res) => {
           return res.status(400).json({ error: "Confira o número, a validade e o CVV do cartão." });
         if (!documento || cep.length !== 8 || !endereco)
           return res.status(400).json({ error: "Informe CPF ou CNPJ, CEP e número do endereço do titular." });
+        const phoneRaw = String(titular.telefone || empresa.telefoneEmpresa || empresa.telefone || "").replace(/\D/g, "")
+          || (db.prepare("SELECT telefone FROM users WHERE id = ?").get(req.user.id)?.telefone || "").replace(/\D/g, "");
+        if (!phoneRaw)
+          return res.status(400).json({ error: "Cadastre um telefone nos dados da empresa antes de pagar com cartão.", campo: "telefone" });
         corpo.creditCardHolderInfo = {
           name: titular.nome || cartao.nome,
           email: email || undefined,
           cpfCnpj: documento,
           postalCode: cep,
           addressNumber: endereco,
-          phone: String(titular.telefone || empresa.telefoneEmpresa || "").replace(/\D/g, "") || undefined,
+          phone: phoneRaw,
         };
       }
     }
