@@ -124,20 +124,21 @@ export default function EntradaEmpresa() {
   }
 
   if (modo === "criar") {
+    const AZUL = "#318CE7";
     return (
-      <MolduraAuth
-        tarja="Empresa"
-        titulo="Criar sua conta"
-        subtitulo="Acesso rápido à plataforma. Você vai preencher os dados da empresa depois."
-        logoWidth={130}
-        compact
-        rodape={
-          <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }}
-            onClick={() => navegar(ROTAS.login)}>
-            ← Voltar
-          </button>
-        }
-      >
+      <div style={{ position: "fixed", inset: 0, background: "var(--bg)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        <style>{`.vx-login-card .vx-input:focus,.vx-login-card .vx-input:focus-visible{border-color:${AZUL};box-shadow:0 0 0 3px rgba(49,140,231,.15);outline:none}`}</style>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
+          <div className="vx-fade vx-login-card" style={{ width: "100%", maxWidth: 420 }}>
+            <div style={{ textAlign: "center", marginBottom: 22 }}>
+              <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+                style={{ height: 40, width: "auto", margin: "0 auto 18px", display: "block" }} />
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: AZUL, marginBottom: 10 }}>Conta empresarial</div>
+              <h1 className="vx-disp" style={{ fontSize: 27, fontWeight: 600, lineHeight: 1.2, color: "var(--ink)", margin: "0 0 8px" }}>Criar sua conta</h1>
+              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>Acesso rápido à plataforma. Você preenche os dados da empresa depois.</p>
+            </div>
+
         <form onSubmit={enviarCriarConta} noValidate>
           {erroGeral && <div className="vx-onb-erro" role="alert" style={{ marginBottom: 14 }}>{erroGeral}</div>}
 
@@ -244,14 +245,20 @@ export default function EntradaEmpresa() {
 
           <button
             type="submit"
-            className="vx-btn vx-btn-primary vx-btn-block"
-            style={{ minHeight: 48, marginTop: 6 }}
             disabled={salvando}
+            onMouseEnter={(e) => { if (!salvando) e.currentTarget.style.background = "#2b7cd0"; }}
+            onMouseLeave={(e) => { if (!salvando) e.currentTarget.style.background = AZUL; }}
+            style={{
+              marginTop: 18, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              background: AZUL, color: "#fff", border: "none", borderRadius: 10, padding: "13px 16px",
+              fontWeight: 600, fontSize: 14.5, cursor: salvando ? "default" : "pointer", opacity: salvando ? 0.75 : 1,
+              minHeight: 48, transition: "background .15s",
+            }}
           >
             {salvando ? "Criando conta…" : "Criar conta e confirmar e-mail"}
           </button>
 
-          <p style={{ fontSize: 12.5, color: "var(--muted)", textAlign: "center", marginTop: 12 }}>
+          <p style={{ fontSize: 12.5, color: "var(--muted)", textAlign: "center", marginTop: 14 }}>
             Já tem conta?{" "}
             <button type="button" className="vx-onb-link" onClick={() => navegar(ROTAS.login)}>
               Entrar
@@ -262,7 +269,10 @@ export default function EntradaEmpresa() {
             </button>
           </p>
         </form>
-      </MolduraAuth>
+          </div>
+        </div>
+        <footer style={{ textAlign: "center", padding: 16, fontSize: 12, color: "var(--muted-2)" }}>© 2026 RYCS</footer>
+      </div>
     );
   }
 
