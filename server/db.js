@@ -1491,6 +1491,30 @@ adicionarColuna("onboarding", "caminho", "TEXT NOT NULL DEFAULT 'guiado'");
 adicionarColuna("users", "emailVerificado", "INTEGER NOT NULL DEFAULT 0");
 adicionarColuna("users", "emailConfirmToken", "TEXT");
 adicionarColuna("users", "emailConfirmExpira", "INTEGER");
+// Versão da sessão: todo JWT carrega a versão vigente; redefinir a senha (ou
+// "sair de todos os dispositivos") incrementa, invalidando os tokens antigos.
+adicionarColuna("users", "tokenVersion", "INTEGER NOT NULL DEFAULT 0");
+adicionarColuna("users", "pixAlteradoEm", "INTEGER");
+
+// Trilha de auditoria de segurança (append-only). Nunca guarda senha, token
+// ou dado bancário completo — só o nome da ação, identificadores, contexto
+// mascarado e o resultado. Acesso restrito ao admin.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS security_audit (
+    id TEXT PRIMARY KEY,
+    ator TEXT,
+    papel TEXT,
+    acao TEXT NOT NULL,
+    alvo TEXT,
+    contexto TEXT DEFAULT '{}',
+    resultado TEXT,
+    ip TEXT,
+    userAgent TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_security_audit_acao ON security_audit(acao, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_security_audit_ator ON security_audit(ator, criadoEm);
+`);
 
 // Funil de analytics: registra eventos-chave do onboarding para medir conversão.
 db.exec(`

@@ -32,7 +32,11 @@ export function usuarioDev() {
 }
 
 export function signToken(payload) {
-  return jwt.sign(payload, SECRET, { expiresIn: "7d" });
+  // Carimba a versão de sessão vigente do usuário no token. Tokens emitidos
+  // antes do reset ficam com uma versão menor e são recusados no middleware.
+  let tv = 0;
+  try { tv = db.prepare("SELECT tokenVersion FROM users WHERE id = ?").get(payload.id)?.tokenVersion ?? 0; } catch { tv = 0; }
+  return jwt.sign({ ...payload, tv }, SECRET, { expiresIn: "7d" });
 }
 
 export function authMiddleware(req, res, next) {
@@ -46,9 +50,22 @@ export function authMiddleware(req, res, next) {
 
   try {
     req.user = jwt.verify(token, SECRET);
-    next();
   } catch {
     res.clearCookie("sm_token");
     return res.status(401).json({ error: "Sessão expirada" });
   }
+
+  // Revogação global: se a versão do token não bate com a atual do usuário
+  // (ex.: senha redefinida depois da emissão), a sessão foi invalidada.
+  // Tokens antigos sem `tv` contam como versão 0 — compatíveis enquanto o
+  // usuário ainda estiver na versão 0.
+  try {
+    const atual = db.prepare("SELECT tokenVersion FROM users WHERE id = ?").get(req.user.id);
+    if (atual && (req.user.tv ?? 0) !== (atual.tokenVersion ?? 0)) {
+      res.clearCookie("sm_token");
+      return res.status(401).json({ error: "Sessão expirada" });
+    }
+  } catch { /* na dúvida, não derruba a sessão por falha de leitura */ }
+
+  next();
 }

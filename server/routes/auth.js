@@ -3,13 +3,14 @@ import { randomBytes, timingSafeEqual } from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db, { uid, agora } from "../db.js";
-import { signToken, usuarioDev } from "../middleware/auth.js";
+import { signToken, usuarioDev, authMiddleware } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
 import { normalizarTelefoneIntl } from "../../shared/localidades.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { criarOnboarding, hashToken, novoToken } from "../services/onboarding.js";
+import { auditarSeguranca } from "../services/securityAudit.js";
 
 const router = Router();
 const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -262,7 +263,10 @@ router.post("/auth/reset-password", (req, res) => {
   } else if (senha.length < 6) return res.status(400).json({ error: "Senha deve ter pelo menos 6 caracteres" });
 
   const hash = bcrypt.hashSync(senha, 10);
-  db.prepare("UPDATE users SET senha = ?, resetToken = NULL, resetExpira = NULL WHERE id = ?").run(hash, user.id);
+  // Redefinir a senha invalida todas as sessões ativas (todos os dispositivos):
+  // incrementa a versão, que não bate mais com os tokens já emitidos.
+  db.prepare("UPDATE users SET senha = ?, resetToken = NULL, resetExpira = NULL, tokenVersion = tokenVersion + 1 WHERE id = ?").run(hash, user.id);
+  auditarSeguranca({ req, ator: user.id, papel: user.role, acao: "senha_redefinida", alvo: user.id, resultado: "ok", critico: true });
 
   res.json({ ok: true, message: "Senha redefinida com sucesso." });
 });
@@ -270,6 +274,28 @@ router.post("/auth/reset-password", (req, res) => {
 router.post("/auth/logout", (req, res) => {
   res.clearCookie("sm_token", { path: "/" });
   res.json({ ok: true });
+});
+
+// Sair de todos os dispositivos: incrementa a versão da sessão, invalidando
+// todos os tokens já emitidos (inclusive o atual). Requer sessão válida.
+router.post("/auth/logout-all", authMiddleware, (req, res) => {
+  db.prepare("UPDATE users SET tokenVersion = tokenVersion + 1 WHERE id = ?").run(req.user.id);
+  auditarSeguranca({ req, ator: req.user.id, papel: req.user.role, acao: "logout_todos", alvo: req.user.id, resultado: "ok" });
+  res.clearCookie("sm_token", { path: "/" });
+  res.json({ ok: true });
+});
+
+// Consulta da trilha de auditoria — restrita ao admin.
+router.get("/admin/security-audit", authMiddleware, (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Acesso restrito ao administrador." });
+  const limite = Math.min(500, Math.max(1, Number(req.query.limit) || 100));
+  const filtros = [];
+  const vals = [];
+  if (req.query.acao) { filtros.push("acao = ?"); vals.push(String(req.query.acao)); }
+  if (req.query.ator) { filtros.push("ator = ?"); vals.push(String(req.query.ator)); }
+  const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
+  const rows = db.prepare(`SELECT * FROM security_audit ${where} ORDER BY criadoEm DESC LIMIT ?`).all(...vals, limite);
+  res.json(rows.map((r) => ({ ...r, contexto: JSON.parse(r.contexto || "{}") })));
 });
 
 router.get("/auth/me", (req, res) => {
@@ -281,16 +307,21 @@ router.get("/auth/me", (req, res) => {
   if (!token) return res.status(401).json({ error: "Não autenticado" });
 
   try {
-    const { id, role, entityId } = jwt.verify(
+    const payload = jwt.verify(
       token,
       process.env.JWT_SECRET || "salesmachine-dev-secret-change-in-production"
     );
-    const user = db.prepare("SELECT id, email, role, entityId FROM users WHERE id = ?").get(id);
+    const user = db.prepare("SELECT id, email, role, entityId, tokenVersion FROM users WHERE id = ?").get(payload.id);
     if (!user) {
       res.clearCookie("sm_token", { path: "/" });
       return res.status(401).json({ error: "Usuário não encontrado" });
     }
-    res.json(user);
+    // Respeita a revogação global de sessões (V7).
+    if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) {
+      res.clearCookie("sm_token", { path: "/" });
+      return res.status(401).json({ error: "Sessão expirada" });
+    }
+    res.json({ id: user.id, email: user.email, role: user.role, entityId: user.entityId });
   } catch {
     res.clearCookie("sm_token", { path: "/" });
     return res.status(401).json({ error: "Sessão expirada" });
