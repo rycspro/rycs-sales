@@ -1,9 +1,8 @@
 import { useRef, useState } from "react";
 import { Eye, EyeOff, Camera, X, CheckCircle, XCircle, Plus, Trash2, Upload, FileText } from "lucide-react";
-import { Campo } from "../ui.jsx";
+// Campo e MolduraAuth não são mais usados — layout próprio do Profile Builder
 import ComboSelect from "../ui/ComboSelect.jsx";
 import Termos from "./Termos.jsx";
-import MolduraAuth from "./MolduraAuth.jsx";
 import OnboardingProfissional from "./OnboardingProfissional.jsx";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
 import { PAISES, ESTADOS_BR, CIDADES_BR, IDIOMAS, NIVEIS_IDIOMA, telefoneValido, normalizarTelefoneIntl } from "../../../shared/localidades.js";
@@ -35,8 +34,8 @@ const css = `
 
 /* header */
 .cp-header{text-align:center;margin-bottom:28px}
-.cp-logo{height:36px;width:auto;max-width:160px;object-fit:contain;display:block;margin:0 auto 14px}
-html.dark .cp-logo{filter:brightness(0) invert(1)}
+.cp-logo{height:30px;width:auto;max-width:70%;object-fit:contain;display:block;margin:0 auto 16px}
+html.dark .cp-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
 .cp-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${AZUL};border:1px solid rgba(49,140,231,.22);background:rgba(49,140,231,.06);border-radius:999px;padding:4px 14px;margin-bottom:14px}
 .cp-eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${AZUL};margin-bottom:6px}
 .cp-titulo{font-family:'Geist','Inter',system-ui,sans-serif;font-size:24px;font-weight:600;letter-spacing:-.025em;color:var(--ink);margin:0 0 6px;line-height:1.25}
@@ -51,7 +50,6 @@ html.dark .cp-logo{filter:brightness(0) invert(1)}
 
 /* card */
 .cp-card{background:var(--surface-solid);border:1px solid var(--border-strong);border-radius:16px;padding:28px 32px}
-@media(max-width:600px){.cp-card{padding:20px 16px;border-radius:12px}}
 
 /* foto */
 .cp-foto-area{display:flex;align-items:center;gap:16px;padding:18px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:14px;margin-bottom:20px}
@@ -67,7 +65,6 @@ html.dark .cp-logo{filter:brightness(0) invert(1)}
 
 /* grid 2 cols */
 .cp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:560px){.cp-row{grid-template-columns:1fr}}
 
 /* seção */
 .cp-secao{margin-bottom:4px}
@@ -126,6 +123,47 @@ html.dark .cp-logo{filter:brightness(0) invert(1)}
 
 /* perfil desc */
 .cp-perfil-desc{font-size:12px;color:var(--muted);line-height:1.5;margin:-6px 0 14px;padding:0 2px}
+
+/* ═══ MOBILE ═══ */
+@media(max-width:600px){
+  .cp-page{padding:24px 12px 36px}
+  .cp-header{margin-bottom:20px}
+  .cp-logo{height:26px;margin-bottom:12px}
+  .cp-badge{font-size:9px;padding:3px 10px;margin-bottom:10px}
+  .cp-eyebrow{font-size:9.5px;margin-bottom:4px}
+  .cp-titulo{font-size:20px;margin-bottom:4px}
+  .cp-desc{font-size:12.5px}
+  .cp-step-num{font-size:10.5px;margin-bottom:6px}
+  .cp-progress{gap:4px;margin-bottom:16px}
+  .cp-seg-label{font-size:9.5px}
+  .cp-card{padding:18px 14px;border-radius:12px}
+  .cp-row{grid-template-columns:1fr;gap:0}
+  .cp-foto-area{flex-direction:column;text-align:center;gap:12px;padding:16px 14px}
+  .cp-foto-circle{width:72px;height:72px}
+  .cp-foto-info{text-align:center}
+  .cp-foto-titulo{font-size:13px}
+  .cp-foto-desc{font-size:11.5px;margin-bottom:8px}
+  .cp-campo{margin-bottom:12px}
+  .cp-campo-label{font-size:11.5px}
+  .cp-secao-titulo{font-size:12px;margin:14px 0 8px}
+  .cp-idioma-row{flex-wrap:wrap;gap:6px}
+  .cp-idioma-row>div{min-width:calc(50% - 16px);flex:1 1 auto}
+  .cp-curriculo-area{flex-wrap:wrap;gap:10px;padding:12px 14px}
+  .cp-curriculo-icon{width:36px;height:36px;border-radius:8px}
+  .cp-nav{margin-top:16px}
+  .cp-nav-voltar{min-height:44px;font-size:13px;padding:10px 12px}
+  .cp-nav-avancar{min-height:44px;font-size:13.5px;padding:10px 16px}
+  .cp-depois{margin-top:14px;padding:12px 14px;font-size:12px}
+  .cp-footer{margin-top:16px}
+  .cp-footer-link{font-size:12px}
+}
+
+/* ═══ TABLET ═══ */
+@media(min-width:601px) and (max-width:768px){
+  .cp-page{padding:32px 20px 40px}
+  .cp-card{padding:24px 22px}
+  .cp-titulo{font-size:22px}
+}
 `;
 
 export default function CadastroProfissional({ onRegister }) {
@@ -283,7 +321,7 @@ export default function CadastroProfissional({ onRegister }) {
 
           {/* ══════════ CABEÇALHO ══════════ */}
           <div className="cp-header">
-            <img className="cp-logo" src="/logo-rycs.png" alt="RYCS Sales Machine"
+            <img className="cp-logo" src="/logo-rycs-sm.png" alt="RYCS Sales Machine"
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <div className="cp-badge">{t("cadProf.badge")}</div>
             <div className="cp-eyebrow">{t(`cadProf.${etapaInfo}.eyebrow`)}</div>
