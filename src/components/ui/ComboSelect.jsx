@@ -7,11 +7,12 @@ export default function ComboSelect({ opcoes = [], valor, onChange, placeholder 
   const ref = useRef(null);
   const inputRef = useRef(null);
 
+  const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const filtradas = busca
     ? opcoes.filter((o) => {
         const label = typeof o === "string" ? o : o.label || o.nome || "";
         const extra = typeof o === "string" ? "" : o.keywords || "";
-        return `${label} ${extra}`.toLowerCase().includes(busca.toLowerCase());
+        return norm(`${label} ${extra}`).includes(norm(busca));
       })
     : opcoes;
 

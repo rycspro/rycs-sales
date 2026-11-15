@@ -5,7 +5,7 @@ import ComboSelect from "../ui/ComboSelect.jsx";
 import Termos from "./Termos.jsx";
 import OnboardingProfissional from "./OnboardingProfissional.jsx";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
-import { PAISES, ESTADOS_BR, CIDADES_BR, IDIOMAS, NIVEIS_IDIOMA, telefoneValido, normalizarTelefoneIntl } from "../../../shared/localidades.js";
+import { PAISES, ESTADOS_BR, CIDADES_BR, IDIOMAS, NIVEIS_IDIOMA, telefoneValido, normalizarTelefoneIntl, SUBDIVISOES, SUBDIVISAO_LABEL } from "../../../shared/localidades.js";
 import CampoTelefone from "../CampoTelefone.jsx";
 import { ROTAS, navegar, parametro } from "../../lib/rotas.js";
 import { LIMITES, avaliarFoto, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
@@ -254,7 +254,11 @@ export default function CadastroProfissional({ onRegister }) {
 
   /* ── dados derivados ── */
   const cidadeLabel = pais === "BR" && estado ? (CIDADES_BR[estado] || []).map((c) => ({ value: c, label: c })) : [];
-  const estadosOpcoes = pais === "BR" ? ESTADOS_BR.map((e) => ({ value: e.uf, label: `${e.nome} (${e.uf})` })) : [];
+  const estadosOpcoes = pais === "BR"
+    ? ESTADOS_BR.map((e) => ({ value: e.uf, label: `${e.nome} (${e.uf})` }))
+    : (SUBDIVISOES[pais] || []).map((s) => ({ value: s, label: s }));
+  const temSubdivisao = pais === "BR" || estadosOpcoes.length > 0;
+  const subdivisaoLabel = SUBDIVISAO_LABEL[pais] || t("cadProf.campos.estadoRegiao");
   const generosOpcoes = GENEROS_MAP.map((g) => ({ value: g.value, label: t(`cadProf.generos.${g.key}`) }));
 
   /* ── validação ── */
@@ -405,24 +409,28 @@ export default function CadastroProfissional({ onRegister }) {
                         onChange={(v) => { setPais(v); setEstado(""); setCidade(""); }} placeholder={t("cadProf.selecionePais")} />
                     </div>
 
-                    {/* Estado + Cidade */}
-                    {pais === "BR" ? (
+                    {/* Estado/Subdivisão + Cidade */}
+                    {temSubdivisao ? (
                       <div className="cp-row">
                         <div className="cp-campo">
-                          <label className="cp-campo-label">{t("cadProf.campos.estado")} <span className="cp-req">*</span></label>
+                          <label className="cp-campo-label">{subdivisaoLabel} {pais === "BR" && <span className="cp-req">*</span>}</label>
                           <ComboSelect opcoes={estadosOpcoes} valor={estado}
-                            onChange={(v) => { setEstado(v); setCidade(""); }} placeholder={t("cadProf.selecione")} />
+                            onChange={(v) => { setEstado(v); if (pais === "BR") setCidade(""); }} placeholder={t("cadProf.selecione")} />
                         </div>
                         <div className="cp-campo">
                           <label className="cp-campo-label">{t("cadProf.campos.cidade")} <span className="cp-req">*</span></label>
-                          <ComboSelect opcoes={cidadeLabel} valor={cidade} onChange={setCidade}
-                            placeholder={estado ? t("cadProf.selecione") : t("cadProf.selecioneEstado")} disabled={!estado} />
+                          {pais === "BR" ? (
+                            <ComboSelect opcoes={cidadeLabel} valor={cidade} onChange={setCidade}
+                              placeholder={estado ? t("cadProf.selecione") : t("cadProf.selecioneEstado")} disabled={!estado} />
+                          ) : (
+                            <input className="vx-input" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex.: Mumbai" required />
+                          )}
                         </div>
                       </div>
                     ) : (
                       <div className="cp-row">
                         <div className="cp-campo">
-                          <label className="cp-campo-label">{t("cadProf.campos.estadoRegiao")}</label>
+                          <label className="cp-campo-label">{subdivisaoLabel}</label>
                           <input className="vx-input" value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="Ex.: California" />
                         </div>
                         <div className="cp-campo">

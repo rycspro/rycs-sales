@@ -644,3 +644,76 @@ export const NIVEIS_IDIOMA = [
   { value: "fluente", label: "Fluente" },
   { value: "nativo", label: "Nativo" },
 ];
+
+// Label da subdivisão por país (o que equivale a "Estado" em cada lugar).
+export const SUBDIVISAO_LABEL = {
+  BR: "Estado", US: "State", IN: "State", CA: "Province", AU: "State",
+  MX: "Estado", AR: "Provincia", CO: "Departamento", CL: "Región",
+  PE: "Departamento", JP: "Prefecture", CN: "Province", DE: "Bundesland",
+  GB: "County", FR: "Région", ES: "Comunidad autónoma", IT: "Regione",
+  KR: "Province", ZA: "Province", AO: "Província", MZ: "Província",
+  PT: "Distrito", PY: "Departamento", UY: "Departamento", BO: "Departamento",
+  EC: "Provincia", VE: "Estado", AE: "Emirate", IL: "District",
+};
+
+// Subdivisões dos países com listas de seleção (além de BR que usa ESTADOS_BR).
+export const SUBDIVISOES = {
+  IN: [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Delhi", "Chandigarh", "Jammu and Kashmir", "Ladakh", "Puducherry",
+    "Andaman and Nicobar Islands", "Dadra and Nagar Haveli and Daman and Diu", "Lakshadweep",
+  ],
+  US: [
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+    "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
+    "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana",
+    "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
+    "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+    "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+    "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+    "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
+    "Washington", "West Virginia", "Wisconsin", "Wyoming", "District of Columbia",
+  ],
+  MX: [
+    "Aguascalientes", "Baja California", "Baja California Sur", "Campeche",
+    "Chiapas", "Chihuahua", "Ciudad de México", "Coahuila", "Colima", "Durango",
+    "Estado de México", "Guanajuato", "Guerrero", "Hidalgo", "Jalisco",
+    "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla",
+    "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa", "Sonora",
+    "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas",
+  ],
+  AR: [
+    "Buenos Aires", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes",
+    "Entre Ríos", "Formosa", "Jujuy", "La Pampa", "La Rioja", "Mendoza",
+    "Misiones", "Neuquén", "Río Negro", "Salta", "San Juan", "San Luis",
+    "Santa Cruz", "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucumán",
+    "Ciudad Autónoma de Buenos Aires",
+  ],
+  CO: [
+    "Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá D.C.", "Bolívar",
+    "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó",
+    "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira",
+    "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío",
+    "Risaralda", "San Andrés y Providencia", "Santander", "Sucre", "Tolima",
+    "Valle del Cauca", "Vaupés", "Vichada",
+  ],
+  AU: [
+    "Australian Capital Territory", "New South Wales", "Northern Territory",
+    "Queensland", "South Australia", "Tasmania", "Victoria", "Western Australia",
+  ],
+  CA: [
+    "Alberta", "British Columbia", "Manitoba", "New Brunswick",
+    "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia",
+    "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon",
+  ],
+  PT: [
+    "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", "Coimbra",
+    "Évora", "Faro", "Guarda", "Leiria", "Lisboa", "Portalegre", "Porto",
+    "Santarém", "Setúbal", "Viana do Castelo", "Vila Real", "Viseu",
+    "Região Autónoma dos Açores", "Região Autónoma da Madeira",
+  ],
+};
