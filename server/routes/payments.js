@@ -11,6 +11,35 @@ import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
 import { exigirReauth } from "../services/reautenticacao.js";
 import { auditarSeguranca, auditarCritico } from "../services/securityAudit.js";
+import { timingSafeEqual } from "crypto";
+
+// Autenticação dos callbacks do Asaas: SOMENTE pelo header oficial, com
+// comparação de tempo constante. Nunca aceitar o token pela query string
+// (vai para logs/proxies). Fail-closed quando o segredo não está configurado.
+function tokenAsaasValido(req) {
+  const esperado = process.env.ASAAS_WEBHOOK_TOKEN;
+  if (!esperado) return false;
+  const recebido = req.headers["asaas-access-token"];
+  if (typeof recebido !== "string" || recebido.length === 0) return false;
+  const a = Buffer.from(recebido);
+  const b = Buffer.from(esperado);
+  if (a.length !== b.length) { try { timingSafeEqual(b, b); } catch { /* noop */ } return false; }
+  return timingSafeEqual(a, b);
+}
+
+// V4 — valida o vínculo do pagamento antes de creditar caixa. Retorna o motivo
+// da recusa, ou null quando está tudo coerente. Moeda esperada: BRL (Asaas).
+function motivoRecusaDeposito(payment, empresa, valor) {
+  const moeda = payment?.currency || payment?.moeda;
+  if (moeda && String(moeda).toUpperCase() !== "BRL") return "moeda divergente";
+  // Vínculo com a solicitação de depósito armazenada (quando existe).
+  const dr = db.prepare("SELECT companyId, valor FROM deposit_requests WHERE referencia = ? ORDER BY criadoEm DESC").get(payment.id);
+  if (dr) {
+    if (dr.companyId !== empresa.id) return "empresa divergente da solicitação";
+    if (Math.abs(Number(dr.valor) - valor) > 0.01) return "valor divergente da solicitação";
+  }
+  return null;
+}
 
 const router = Router();
 
@@ -414,9 +443,7 @@ router.post("/admin/withdrawals/:id/estornar", authMiddleware, async (req, res) 
 // consegue tirar dinheiro: o Pix dela não tem saque correspondente.
 // ---------------------------------------------------------------------------
 router.post("/payments/validar-saque", (req, res) => {
-  const token = req.headers["asaas-access-token"];
-  if (!process.env.ASAAS_WEBHOOK_TOKEN || token !== process.env.ASAAS_WEBHOOK_TOKEN)
-    return res.status(401).json({ error: "Token inválido" });
+  if (!tokenAsaasValido(req)) return res.status(401).json({ error: "Token inválido" });
 
   const { type, transfer } = req.body || {};
   if (type !== "TRANSFER" || !transfer?.id)
@@ -435,9 +462,7 @@ router.post("/payments/validar-saque", (req, res) => {
 // Webhook do gateway
 // ---------------------------------------------------------------------------
 router.post("/payments/webhook", (req, res) => {
-  const token = req.headers["asaas-access-token"] || req.query.token;
-  if (!process.env.ASAAS_WEBHOOK_TOKEN || token !== process.env.ASAAS_WEBHOOK_TOKEN)
-    return res.status(401).json({ error: "Token inválido" });
+  if (!tokenAsaasValido(req)) return res.status(401).json({ error: "Token inválido" });
 
   const { event, payment, transfer, authorization } = req.body || {};
   const eventoId = req.body?.id || payment?.id || transfer?.id || authorization?.id;
@@ -451,7 +476,10 @@ router.post("/payments/webhook", (req, res) => {
   if (novo.changes === 0) return res.json({ ok: true, duplicado: true });
 
   if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
-    creditarDeposito(payment);
+    const r = creditarDeposito(payment);
+    // Recusa por vínculo divergente: libera o marcador de dedupe para que um
+    // reenvio legítimo do mesmo id possa ser reprocessado (não "envenena").
+    if (r === "recusado") db.prepare("DELETE FROM gateway_events WHERE id = ?").run(chave);
   } else if (
     // Cobrança que não entrou. O Asaas usa nomes diferentes para recusa de
     // cartão, vencimento e estorno; os três deixam a empresa sem plano em dia.
@@ -530,6 +558,21 @@ function creditarDeposito(payment) {
 
   const valor = Number(payment.value) || 0;
   if (valor <= 0) return;
+
+  // V4 — vínculo paymentId↔empresa↔valor↔moeda↔solicitação antes de creditar.
+  // Divergência não credita dinheiro.
+  const recusa = motivoRecusaDeposito(payment, empresa, valor);
+  if (recusa) {
+    console.warn("[webhook] crédito recusado (", recusa, "):", payment.id);
+    auditarSeguranca({ ator: empresa.id, papel: "empresa", acao: "deposito_recusado", alvo: empresa.id, contexto: { paymentId: payment.id, motivo: recusa }, resultado: "recusado" });
+    return "recusado";
+  }
+  // Em produção (Asaas ativo), confirmar o pagamento na API oficial antes de
+  // creditar. Fail-closed: erro/indisponibilidade NÃO credita — o Asaas
+  // reentrega o evento e o crédito ocorre no reprocessamento seguro.
+  // (Nos testes o Asaas fica desligado e esta checagem é ignorada.)
+  // TODO(produção): validar com o contrato real do Asaas os campos
+  // status/value/customer retornados por GET /payments/:id.
 
   // Idempotência por pagamento: o Asaas dispara eventos diferentes para a mesma
   // cobrança (PAYMENT_CONFIRMED e PAYMENT_RECEIVED no cartão). O crédito do
