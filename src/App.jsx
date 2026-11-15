@@ -166,7 +166,15 @@ export default function App() {
     let vivo = true;
     (async () => {
       const p = window.location.pathname.replace(/\/+$/, "").toLowerCase();
-      if (p === "/entrar" || p === "/login") {
+      // Quem chega pelo "Entrar" da página de vendas (rycs.pro) ou pela URL de
+      // login deve ver o fluxo de login, não ser jogado no onboarding por uma
+      // sessão antiga. Visitas diretas/bookmarks ao app continuam retomando.
+      let veioDaVenda = false;
+      try {
+        const ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "";
+        veioDaVenda = ref === "rycs.pro";
+      } catch { /* referrer ausente */ }
+      if (p === "/entrar" || p === "/login" || ((p === "" || p === "/") && veioDaVenda)) {
         await api("/auth/logout", {});
         if (vivo) setLoaded(true);
         return;
@@ -240,6 +248,12 @@ export default function App() {
     setUser(null);
     setOnb(null);
     setDb(seed());
+    // Sai para a tela de login limpa (idioma → tipo → credenciais), em vez de
+    // ficar preso na URL de onboarding da empresa.
+    if (!window.location.pathname.replace(/\/+$/, "").match(/^\/?(entrar|login)?$/i)) {
+      window.history.replaceState({}, "", "/entrar");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
   };
 
   const up = (fn) => setDb((d) => ({ ...d, ...fn(d) }));
