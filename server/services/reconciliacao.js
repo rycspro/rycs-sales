@@ -2,52 +2,87 @@
 //
 // O saldo é um contador mutável; o financial_ledger é o registro auditável.
 // Esta reconciliação compara os dois e ALERTA divergências — nunca corrige
-// automaticamente (requisito). Não presume que todo lançamento afeta o mesmo
-// saldo: usa o sinal e o tipo de cada lançamento.
+// automaticamente, nem inventa lançamentos históricos.
 //
-// Invariante inequívoco enforçado: companies.totalAportado == SUM(deposito),
-// pois depósitos (Asaas e Stripe) são a ÚNICA origem de totalAportado e ambos
-// gravam tipo='deposito' com valor positivo. Para os demais contadores
-// (saldo/saldoReservado/disponivel/pendente/sacado) expomos os agregados por
-// tipo para inspeção; alguns fluxos (ex.: crédito de indicação) ainda não têm
-// lançamento correspondente — divergências aí são sinalizadas como "sem
-// lastro no ledger" para investigação, não como erro de reconciliação.
+// O que é COMPROVADAMENTE derivável do ledger:
+//   • companies.totalAportado == SUM(deposito)  — depósitos (Asaas e Stripe)
+//     são a única origem de totalAportado e ambos gravam tipo='deposito' (+).
+//
+// Lançamentos AUSENTES / tipos conflatados identificados (não há fórmula limpa,
+// então NÃO são "reconciliados", apenas sinalizados para investigação):
+//   • sellers.disponivel: as LIBERAÇÕES creditam disponivel sem lançar um
+//     movimento com sellerId no ledger (só o débito de saque é lançado).
+//   • tipo 'saque_estornado' é usado tanto para estorno de saque (sacado) quanto
+//     para devolução ao disponivel — conflata dois efeitos.
+//
+// Invariantes de integridade SEMPRE válidos (independentes do ledger):
+//   • nenhum contador pode ser negativo;
+//   • saldoReservado <= saldo (não se reserva mais do que existe).
 
 import db from "../db.js";
 
 const cent = (v) => Math.round((Number(v) || 0) * 100);
+const neg = (v) => cent(v) < 0;
+
+function agregadosPorTipo(coluna, id) {
+  return Object.fromEntries(
+    db.prepare(`SELECT tipo, COALESCE(SUM(valor),0) total FROM financial_ledger WHERE ${coluna} = ? GROUP BY tipo`).all(id).map((r) => [r.tipo, r.total])
+  );
+}
 
 export function reconciliarEmpresa(companyId) {
   const emp = db.prepare("SELECT saldo, saldoReservado, totalAportado FROM companies WHERE id = ?").get(companyId);
   if (!emp) return null;
-  const porTipo = Object.fromEntries(
-    db.prepare("SELECT tipo, COALESCE(SUM(valor),0) total FROM financial_ledger WHERE companyId = ? GROUP BY tipo").all(companyId).map((r) => [r.tipo, r.total])
-  );
+  const porTipo = agregadosPorTipo("companyId", companyId);
   const depositos = porTipo.deposito || 0;
-  const divergenciaAporte = cent(emp.totalAportado) - cent(depositos);
+  const difAporte = cent(emp.totalAportado) - cent(depositos);
+
+  const alertas = [];
+  if (difAporte !== 0) alertas.push({ tipo: "aporte_divergente", detalhe: `totalAportado=${emp.totalAportado} vs depósitos=${depositos}`, valor: difAporte / 100 });
+  if (neg(emp.saldo)) alertas.push({ tipo: "saldo_negativo", valor: emp.saldo });
+  if (neg(emp.saldoReservado)) alertas.push({ tipo: "reservado_negativo", valor: emp.saldoReservado });
+  if (cent(emp.saldoReservado) > cent(emp.saldo)) alertas.push({ tipo: "reservado_excede_saldo", detalhe: `reservado=${emp.saldoReservado} > saldo=${emp.saldo}` });
+
   return {
-    companyId,
-    totalAportado: emp.totalAportado,
-    depositosLedger: depositos,
-    divergenciaAporte: divergenciaAporte / 100,
-    divergente: divergenciaAporte !== 0,
-    saldo: emp.saldo,
-    saldoReservado: emp.saldoReservado,
+    escopo: "empresa", companyId,
+    totalAportado: emp.totalAportado, depositosLedger: depositos, divergenciaAporte: difAporte / 100,
+    saldo: emp.saldo, saldoReservado: emp.saldoReservado,
     agregadosPorTipo: porTipo,
+    divergente: alertas.length > 0, alertas,
   };
 }
 
-// Varre todas as empresas e devolve as divergências (invariante de aporte).
-// Loga cada divergência para observabilidade administrativa.
+export function reconciliarVendedor(sellerId) {
+  const s = db.prepare("SELECT disponivel, pendente, sacado FROM sellers WHERE id = ?").get(sellerId);
+  if (!s) return null;
+  const porTipo = agregadosPorTipo("sellerId", sellerId);
+  const alertas = [];
+  if (neg(s.disponivel)) alertas.push({ tipo: "disponivel_negativo", valor: s.disponivel });
+  if (neg(s.pendente)) alertas.push({ tipo: "pendente_negativo", valor: s.pendente });
+  if (neg(s.sacado)) alertas.push({ tipo: "sacado_negativo", valor: s.sacado });
+  return {
+    escopo: "vendedor", sellerId,
+    disponivel: s.disponivel, pendente: s.pendente, sacado: s.sacado,
+    agregadosPorTipo: porTipo,
+    // disponivel/sacado não têm fórmula limpa (ver cabeçalho): expostos para
+    // inspeção, não reconciliados.
+    observacao: "disponivel/sacado sem lançamento completo no ledger — inspeção manual",
+    divergente: alertas.length > 0, alertas,
+  };
+}
+
+// Varre empresas e vendedores; devolve e loga as divergências.
 export function varrerReconciliacao() {
-  const empresas = db.prepare("SELECT id FROM companies").all();
   const divergencias = [];
+  const empresas = db.prepare("SELECT id FROM companies").all();
   for (const { id } of empresas) {
     const r = reconciliarEmpresa(id);
-    if (r?.divergente) {
-      divergencias.push(r);
-      console.warn(`[reconciliacao] empresa ${id}: totalAportado=${r.totalAportado} vs depósitos no ledger=${r.depositosLedger} (dif=${r.divergenciaAporte})`);
-    }
+    if (r?.divergente) { divergencias.push(r); r.alertas.forEach((a) => console.warn(`[reconciliacao] empresa ${id}: ${a.tipo}`, a.detalhe || a.valor || "")); }
   }
-  return { empresasVerificadas: empresas.length, divergencias };
+  const vendedores = db.prepare("SELECT id FROM sellers").all();
+  for (const { id } of vendedores) {
+    const r = reconciliarVendedor(id);
+    if (r?.divergente) { divergencias.push(r); r.alertas.forEach((a) => console.warn(`[reconciliacao] vendedor ${id}: ${a.tipo}`, a.valor ?? "")); }
+  }
+  return { empresasVerificadas: empresas.length, vendedoresVerificados: vendedores.length, divergencias };
 }

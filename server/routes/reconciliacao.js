@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { varrerReconciliacao, reconciliarEmpresa } from "../services/reconciliacao.js";
+import { varrerReconciliacao, reconciliarEmpresa, reconciliarVendedor } from "../services/reconciliacao.js";
 
 const router = Router();
 
@@ -9,10 +9,17 @@ router.get("/admin/reconciliacao", (req, res) => {
   res.json(varrerReconciliacao());
 });
 
-router.get("/admin/reconciliacao/:companyId", (req, res) => {
+router.get("/admin/reconciliacao/empresa/:companyId", (req, res) => {
   if (req.user?.role !== "admin") return res.status(403).json({ error: "Acesso restrito ao administrador." });
   const r = reconciliarEmpresa(req.params.companyId);
   if (!r) return res.status(404).json({ error: "Empresa não encontrada" });
+  res.json(r);
+});
+
+router.get("/admin/reconciliacao/vendedor/:sellerId", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Acesso restrito ao administrador." });
+  const r = reconciliarVendedor(req.params.sellerId);
+  if (!r) return res.status(404).json({ error: "Profissional não encontrado" });
   res.json(r);
 });
 

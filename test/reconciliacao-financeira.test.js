@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 import Database from "better-sqlite3";
 import { subirServidor, cliente, assinar } from "./apoio/servidor.js";
 
-// V5 — Reconciliação read-only: detecta divergência entre o contador
-// (companies.totalAportado) e o registro auditável (SUM deposito no ledger),
-// sem corrigir automaticamente. Rota restrita ao admin.
+// V5 — Reconciliação read-only: invariante de aporte (totalAportado == SUM
+// deposito) + integridade (nenhum contador negativo; reservado <= saldo) para
+// empresa e vendedor. Nunca corrige automaticamente. Rota admin-only.
 
 const TOKEN = "token-recon";
 const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
-test("reconciliação detecta divergência de aporte sem corrigir; rota é admin-only", async (t) => {
+test("reconciliação detecta aporte divergente, saldo negativo e reservado>saldo, sem corrigir", async (t) => {
   const { base, dbPath } = await subirServidor(t, { ASAAS_WEBHOOK_TOKEN: TOKEN });
   const req = cliente(base);
   const db = new Database(dbPath);
@@ -19,34 +19,50 @@ test("reconciliação detecta divergência de aporte sem corrigir; rota é admin
 
   await req("/auth/register", { body: { role: "empresa", email: "recon@exemplo.invalid", senha: "12345678", whats: "11912345678", nome: "Recon", logo: { mimetype: "image/png", base64: PNG }, aceitouTermos: true } });
   const companyId = db.prepare("SELECT entityId FROM users WHERE email = 'recon@exemplo.invalid'").get().entityId;
-
-  // Depósito legítimo de R$100 pelo webhook (credita caixa + grava ledger).
   db.prepare("INSERT INTO deposit_requests (id, companyId, valor, status, referencia, criadoEm) VALUES ('drR', ?, 100, 'pendente', 'pay_r', ?)").run(companyId, Date.now());
   await req("/payments/webhook", { headers: { "asaas-access-token": TOKEN }, body: { event: "PAYMENT_RECEIVED", payment: { id: "pay_r", value: 100, currency: "BRL", externalReference: companyId } } });
 
   const ckAdmin = assinar({ id: "admin-recon", role: "admin", entityId: null });
+  const emp = () => req("/admin/reconciliacao/empresa/" + companyId, { cookie: ckAdmin });
 
-  // Consistente: totalAportado == SUM(deposito).
-  let r = await req("/admin/reconciliacao/" + companyId, { cookie: ckAdmin });
+  // Consistente após o depósito legítimo.
+  let r = await emp();
   assert.equal(r.status, 200);
-  assert.equal(r.corpo.divergente, false, "sem divergência após depósito legítimo");
+  assert.equal(r.corpo.divergente, false, "sem divergência");
   assert.equal(r.corpo.depositosLedger, 100);
 
-  // Injeta uma divergência direto no contador (sem lançamento no ledger).
+  // Aporte divergente (contador maior que o ledger).
   db.prepare("UPDATE companies SET totalAportado = totalAportado + 250 WHERE id = ?").run(companyId);
-
-  r = await req("/admin/reconciliacao/" + companyId, { cookie: ckAdmin });
-  assert.equal(r.corpo.divergente, true, "divergência detectada");
+  r = await emp();
+  assert.equal(r.corpo.divergente, true);
   assert.equal(r.corpo.divergenciaAporte, 250);
+  assert.ok(r.corpo.alertas.some((a) => a.tipo === "aporte_divergente"));
 
-  // A varredura geral também aponta a empresa divergente.
+  // Reservado maior que o saldo → alerta de integridade.
+  db.prepare("UPDATE companies SET saldo = 10, saldoReservado = 50 WHERE id = ?").run(companyId);
+  r = await emp();
+  assert.ok(r.corpo.alertas.some((a) => a.tipo === "reservado_excede_saldo"), "reservado>saldo detectado");
+
+  // Saldo negativo → alerta.
+  db.prepare("UPDATE companies SET saldo = -5, saldoReservado = 0 WHERE id = ?").run(companyId);
+  r = await emp();
+  assert.ok(r.corpo.alertas.some((a) => a.tipo === "saldo_negativo"), "saldo negativo detectado");
+
+  // Não corrige automaticamente.
+  assert.equal(db.prepare("SELECT saldo FROM companies WHERE id = ?").get(companyId).saldo, -5);
+
+  // Vendedor com disponivel negativo é detectado.
+  const reg = await req("/auth/register", { body: { role: "vendedor", email: "vrec@exemplo.invalid", senha: "123456", aceitouTermos: true } });
+  const sellerId = db.prepare("SELECT entityId FROM users WHERE email = 'vrec@exemplo.invalid'").get().entityId;
+  db.prepare("UPDATE sellers SET disponivel = -3 WHERE id = ?").run(sellerId);
+  r = await req("/admin/reconciliacao/vendedor/" + sellerId, { cookie: ckAdmin });
+  assert.ok(r.corpo.alertas.some((a) => a.tipo === "disponivel_negativo"), "disponivel negativo detectado");
+
+  // A varredura geral lista empresa e vendedor divergentes.
   r = await req("/admin/reconciliacao", { cookie: ckAdmin });
-  assert.ok(r.corpo.divergencias.some((d) => d.companyId === companyId), "varredura lista a divergência");
+  assert.ok(r.corpo.divergencias.some((d) => d.companyId === companyId));
+  assert.ok(r.corpo.divergencias.some((d) => d.sellerId === sellerId));
 
-  // Não corrige automaticamente: o contador segue como estava.
-  assert.equal(db.prepare("SELECT totalAportado FROM companies WHERE id = ?").get(companyId).totalAportado, 350);
-
-  // Rota é restrita ao admin.
-  const reg = await req("/auth/register", { body: { role: "vendedor", email: "naoadmin@exemplo.invalid", senha: "123456", aceitouTermos: true } });
+  // Rota é admin-only.
   assert.equal((await req("/admin/reconciliacao", { cookie: reg.cookie })).status, 403);
 });
