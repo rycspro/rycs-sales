@@ -83,7 +83,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, pais, cidade, perfil, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
+  const { email, senha, role, nome, whats, pais, cidade, perfil, cargosExp, perfilComercial, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -161,10 +161,14 @@ router.post("/auth/register", async (req, res) => {
       curriculoDataUri = `data:${curriculo.mimetype};base64,${curriculo.base64}`;
       curriculoNome = String(curriculo.nome || "curriculo").slice(0, 160);
     }
+    const perfilJSON = JSON.stringify({
+      ...(perfilComercial || {}),
+      cargosExp: Array.isArray(cargosExp) ? cargosExp : [],
+    });
     db.prepare(`
-      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?)
-    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, agora());
+      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, perfilComercial, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?, ?)
+    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, perfilJSON, agora());
     db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
       userId, emailNorm, hash, role, entityId, 1, agora()
     );

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import { Eye, EyeOff, Camera, X, CheckCircle, XCircle, Plus, Trash2, Upload, FileText } from "lucide-react";
-// Campo e MolduraAuth não são mais usados — layout próprio do Profile Builder
+import { Eye, EyeOff, Camera, X, CheckCircle, XCircle, Plus, Trash2, Upload, FileText, Star } from "lucide-react";
 import ComboSelect from "../ui/ComboSelect.jsx";
+import MultiSelect from "../ui/MultiSelect.jsx";
 import Termos from "./Termos.jsx";
 import OnboardingProfissional from "./OnboardingProfissional.jsx";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
@@ -16,6 +16,131 @@ const AZUL = "#318CE7";
 const MAX_W = 840;
 
 const ETAPAS_KEYS = ["pessoal", "profissional", "experiencia"];
+
+/* ─── Opções padronizadas dos novos campos ─── */
+const AREAS_ATUACAO = [
+  { value: "vendas-internas", label: "Vendas internas (Inside Sales)" },
+  { value: "vendas-externas", label: "Vendas externas (Field Sales)" },
+  { value: "telemarketing", label: "Telemarketing" },
+  { value: "e-commerce", label: "E-commerce / Vendas online" },
+  { value: "varejo", label: "Varejo" },
+  { value: "atacado", label: "Atacado / Distribuição" },
+  { value: "b2b", label: "B2B (Empresas)" },
+  { value: "b2c", label: "B2C (Consumidor final)" },
+  { value: "saas", label: "SaaS / Tecnologia" },
+  { value: "imoveis", label: "Imóveis" },
+  { value: "seguros", label: "Seguros" },
+  { value: "financeiro", label: "Serviços financeiros" },
+  { value: "saude", label: "Saúde / Bem-estar" },
+  { value: "educacao", label: "Educação" },
+  { value: "automotivo", label: "Automotivo" },
+  { value: "energia-solar", label: "Energia solar" },
+  { value: "marketing-digital", label: "Marketing digital" },
+  { value: "consultoria", label: "Consultoria" },
+];
+
+const HABILIDADES = [
+  { value: "prospeccao", label: "Prospecção ativa" },
+  { value: "qualificacao-leads", label: "Qualificação de leads" },
+  { value: "negociacao", label: "Negociação e fechamento" },
+  { value: "apresentacao", label: "Apresentação de produtos/serviços" },
+  { value: "cold-call", label: "Cold call" },
+  { value: "cold-email", label: "Cold e-mail / Outbound" },
+  { value: "social-selling", label: "Social selling (LinkedIn, redes)" },
+  { value: "follow-up", label: "Follow-up e nutrição de leads" },
+  { value: "rapport", label: "Rapport e relacionamento" },
+  { value: "contorno-objecoes", label: "Contorno de objeções" },
+  { value: "upsell-cross", label: "Upsell / Cross-sell" },
+  { value: "gestao-pipeline", label: "Gestão de pipeline" },
+  { value: "pos-venda", label: "Pós-venda e retenção" },
+  { value: "atendimento", label: "Atendimento ao cliente" },
+  { value: "redacao-comercial", label: "Redação comercial / Copywriting" },
+  { value: "analise-dados", label: "Análise de dados de vendas" },
+];
+
+const ANOS_EXPERIENCIA = [
+  { value: "menos-1", label: "Menos de 1 ano" },
+  { value: "1-2", label: "1 a 2 anos" },
+  { value: "3-5", label: "3 a 5 anos" },
+  { value: "6-10", label: "6 a 10 anos" },
+  { value: "mais-10", label: "Mais de 10 anos" },
+];
+
+const DISPONIBILIDADE = [
+  { value: "integral", label: "Integral (40h+/semana)" },
+  { value: "parcial-30", label: "Parcial (20–30h/semana)" },
+  { value: "parcial-20", label: "Parcial (10–20h/semana)" },
+  { value: "horista", label: "Horista (menos de 10h/semana)" },
+  { value: "fins-semana", label: "Somente fins de semana" },
+  { value: "noturno", label: "Somente período noturno" },
+];
+
+const SEGMENTOS = [
+  { value: "tecnologia", label: "Tecnologia / SaaS" },
+  { value: "industria", label: "Indústria / Manufatura" },
+  { value: "servicos", label: "Serviços" },
+  { value: "comercio", label: "Comércio / Varejo" },
+  { value: "agro", label: "Agronegócio" },
+  { value: "construcao", label: "Construção civil" },
+  { value: "saude", label: "Saúde" },
+  { value: "educacao", label: "Educação" },
+  { value: "financeiro", label: "Financeiro / Banking" },
+  { value: "logistica", label: "Logística / Transporte" },
+  { value: "alimentacao", label: "Alimentação / Food" },
+  { value: "moda", label: "Moda / Beleza" },
+  { value: "energia", label: "Energia" },
+  { value: "telecom", label: "Telecomunicações" },
+  { value: "governo", label: "Governo / Setor público" },
+  { value: "ongs", label: "ONGs / Terceiro setor" },
+];
+
+const FERRAMENTAS = [
+  { value: "hubspot", label: "HubSpot" },
+  { value: "salesforce", label: "Salesforce" },
+  { value: "pipedrive", label: "Pipedrive" },
+  { value: "rd-station", label: "RD Station" },
+  { value: "ploomes", label: "Ploomes" },
+  { value: "bitrix24", label: "Bitrix24" },
+  { value: "zoho", label: "Zoho CRM" },
+  { value: "excel-sheets", label: "Excel / Google Sheets" },
+  { value: "whatsapp-business", label: "WhatsApp Business" },
+  { value: "linkedin-navigator", label: "LinkedIn Sales Navigator" },
+  { value: "apollo", label: "Apollo.io" },
+  { value: "outreach", label: "Outreach" },
+  { value: "meetime", label: "Meetime" },
+  { value: "pipefy", label: "Pipefy" },
+  { value: "trello-notion", label: "Trello / Notion" },
+  { value: "google-workspace", label: "Google Workspace" },
+  { value: "slack-teams", label: "Slack / Microsoft Teams" },
+  { value: "canva", label: "Canva" },
+  { value: "chatgpt-ia", label: "ChatGPT / Ferramentas de IA" },
+];
+
+const FORMACOES = [
+  { value: "ensino-medio", label: "Ensino médio completo" },
+  { value: "superior-cursando", label: "Superior cursando" },
+  { value: "superior-completo", label: "Superior completo" },
+  { value: "pos-graduacao", label: "Pós-graduação / MBA" },
+  { value: "tecnologo", label: "Tecnólogo" },
+  { value: "curso-tecnico", label: "Curso técnico" },
+  { value: "cert-vendas", label: "Certificação em vendas" },
+  { value: "cert-marketing", label: "Certificação em marketing digital" },
+  { value: "cert-lideranca", label: "Certificação em liderança / gestão" },
+  { value: "cert-negociacao", label: "Curso de negociação" },
+  { value: "cert-coaching", label: "Coaching / Mentoria" },
+];
+
+const EQUIPAMENTOS = [
+  { value: "notebook", label: "Notebook / Computador" },
+  { value: "smartphone", label: "Smartphone" },
+  { value: "headset", label: "Headset / Fone com microfone" },
+  { value: "webcam", label: "Webcam" },
+  { value: "internet-estavel", label: "Internet estável (fibra)" },
+  { value: "ambiente-silencioso", label: "Ambiente silencioso para ligações" },
+  { value: "segundo-monitor", label: "Segundo monitor" },
+  { value: "impressora", label: "Impressora" },
+  { value: "veiculo", label: "Veículo próprio" },
+];
 
 const GENEROS_MAP = [
   { value: "masculino", key: "masculino" },
@@ -186,8 +311,21 @@ export default function CadastroProfissional({ onRegister }) {
   const [verSenha, setVerSenha] = useState(false);
   const [verSenhaConfirm, setVerSenhaConfirm] = useState(false);
   const [whats, setWhats] = useState("");
-  const [perfil, setPerfil] = useState("sdr");
   const [idiomas, setIdiomas] = useState([{ idioma: "Português", nivel: "nativo" }]);
+
+  /* ── estado: novos campos profissional ── */
+  const [areasAtuacao, setAreasAtuacao] = useState([]);
+  const [habilidades, setHabilidades] = useState([]);
+  const [anosExperiencia, setAnosExperiencia] = useState("");
+  const [disponibilidade, setDisponibilidade] = useState("");
+  const [segmentos, setSegmentos] = useState([]);
+  const [ferramentas, setFerramentas] = useState([]);
+  const [formacoes, setFormacoes] = useState([]);
+  const [equipamentos, setEquipamentos] = useState([]);
+
+  /* ── estado: experiência em vendas (cargos) ── */
+  const [cargosExp, setCargosExp] = useState([]);
+  const [cargoPrincipal, setCargoPrincipal] = useState("");
 
   /* ── estado: foto ── */
   const [foto, setFoto] = useState(null);
@@ -279,7 +417,15 @@ export default function CadastroProfissional({ onRegister }) {
       if (senha !== senhaConfirm) { setErroEtapa(t("cadProf.erros.senhaDif")); return false; }
       if (!whats.trim()) { setErroEtapa(t("cadProf.erros.whatsapp")); return false; }
       if (!telefoneValido(pais, whats)) { setErroEtapa(t("cadProf.erros.whatsInvalido")); return false; }
+      if (areasAtuacao.length === 0) { setErroEtapa("Selecione pelo menos uma área de atuação."); return false; }
+      if (habilidades.length === 0) { setErroEtapa("Selecione pelo menos uma habilidade."); return false; }
+      if (!anosExperiencia) { setErroEtapa("Selecione seus anos de experiência."); return false; }
+      if (!disponibilidade) { setErroEtapa("Selecione sua disponibilidade semanal."); return false; }
       if (idiomas.some((i) => !i.idioma)) { setErroEtapa(t("cadProf.erros.idiomas")); return false; }
+    }
+    if (etapa === 2) {
+      if (cargosExp.length === 0) { setErroEtapa("Selecione pelo menos um cargo com experiência em vendas."); return false; }
+      if (!cargoPrincipal) { setErroEtapa("Selecione qual é sua experiência principal."); return false; }
     }
     return true;
   };
@@ -304,7 +450,13 @@ export default function CadastroProfissional({ onRegister }) {
       role: "vendedor", nome, email, senha, whats: normalizarTelefoneIntl(pais, whats) || whats,
       cidade: cidadeCompleta, pais, estado,
       dataNascimento: dataNasc, genero,
-      perfil, idiomas: idiomas.filter((i) => i.idioma),
+      perfil: cargoPrincipal || "sdr",
+      cargosExp,
+      perfilComercial: {
+        areasAtuacao, habilidades, anosExperiencia, disponibilidade,
+        segmentos, ferramentas, formacoes, equipamentos,
+      },
+      idiomas: idiomas.filter((i) => i.idioma),
       aceitouTermos: true, indicacao: indicacao || undefined,
       foto, curriculo: curriculo || undefined,
     });
@@ -489,20 +641,51 @@ export default function CadastroProfissional({ onRegister }) {
                       <CampoTelefone pais={pais} value={whats} onChange={(e) => setWhats(e.target.value)} required />
                     </div>
 
-                    {/* Seção: Atuação */}
+                    {/* Seção: Perfil profissional */}
                     <div className="cp-secao">
-                      <div className="cp-secao-titulo">{t("cadProf.campos.atuacao")}</div>
+                      <div className="cp-secao-titulo">Perfil profissional</div>
                     </div>
 
                     <div className="cp-campo">
-                      <label className="cp-campo-label">{t("cadProf.campos.atuacao")} <span className="cp-req">*</span></label>
-                      <select className="vx-input" value={perfil} onChange={(e) => setPerfil(e.target.value)} style={{ minHeight: 42 }}>
-                        {ORDEM_FUNCOES.map((k) => (
-                          <option key={k} value={k}>{FUNCOES[k].nome} — {FUNCOES[k].completo}</option>
-                        ))}
-                      </select>
+                      <label className="cp-campo-label">Áreas de atuação <span className="cp-req">*</span></label>
+                      <MultiSelect opcoes={AREAS_ATUACAO} valor={areasAtuacao} onChange={setAreasAtuacao} placeholder="Selecione suas áreas" />
                     </div>
-                    <p className="cp-perfil-desc">{FUNCOES[perfil]?.descricao}</p>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Habilidades específicas <span className="cp-req">*</span></label>
+                      <MultiSelect opcoes={HABILIDADES} valor={habilidades} onChange={setHabilidades} placeholder="Selecione suas habilidades" />
+                    </div>
+
+                    <div className="cp-row">
+                      <div className="cp-campo">
+                        <label className="cp-campo-label">Anos de experiência <span className="cp-req">*</span></label>
+                        <ComboSelect opcoes={ANOS_EXPERIENCIA} valor={anosExperiencia} onChange={setAnosExperiencia} placeholder="Selecione" />
+                      </div>
+                      <div className="cp-campo">
+                        <label className="cp-campo-label">Disponibilidade semanal <span className="cp-req">*</span></label>
+                        <ComboSelect opcoes={DISPONIBILIDADE} valor={disponibilidade} onChange={setDisponibilidade} placeholder="Selecione" />
+                      </div>
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Experiência por segmento <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={SEGMENTOS} valor={segmentos} onChange={setSegmentos} placeholder="Selecione os segmentos" />
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Ferramentas que domina <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={FERRAMENTAS} valor={ferramentas} onChange={setFerramentas} placeholder="Selecione as ferramentas" />
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Formação e certificações <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={FORMACOES} valor={formacoes} onChange={setFormacoes} placeholder="Selecione" />
+                    </div>
+
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Equipamentos disponíveis <span className="cp-opt">(opcional)</span></label>
+                      <MultiSelect opcoes={EQUIPAMENTOS} valor={equipamentos} onChange={setEquipamentos} placeholder="Selecione seus equipamentos" />
+                    </div>
 
                     {/* Seção: Idiomas */}
                     <div className="cp-secao">
@@ -537,6 +720,51 @@ export default function CadastroProfissional({ onRegister }) {
                 {/* ━━━━━━━━ ETAPA 2: Experiência ━━━━━━━━ */}
                 {etapa === 2 && (
                   <>
+                    {/* Cargo com experiência em vendas */}
+                    <div className="cp-campo">
+                      <label className="cp-campo-label">Qual cargo você tem experiência em vendas? <span className="cp-req">*</span></label>
+                      <MultiSelect
+                        opcoes={ORDEM_FUNCOES.map((k) => ({ value: k, label: `${FUNCOES[k].nome} — ${FUNCOES[k].completo}` }))}
+                        valor={cargosExp}
+                        onChange={(v) => {
+                          setCargosExp(v);
+                          if (v.length === 1) setCargoPrincipal(v[0]);
+                          else if (!v.includes(cargoPrincipal)) setCargoPrincipal(v[0] || "");
+                        }}
+                        placeholder="Selecione um ou mais cargos"
+                      />
+                    </div>
+
+                    {cargosExp.length > 1 && (
+                      <div className="cp-campo">
+                        <label className="cp-campo-label">Qual é sua experiência principal? <span className="cp-req">*</span></label>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {cargosExp.map((k) => (
+                            <button key={k} type="button" onClick={() => setCargoPrincipal(k)}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 6,
+                                padding: "8px 14px", borderRadius: 10, cursor: "pointer",
+                                fontSize: 13, fontWeight: cargoPrincipal === k ? 600 : 500,
+                                border: cargoPrincipal === k ? `2px solid ${AZUL}` : "1px solid var(--border-strong)",
+                                background: cargoPrincipal === k ? "rgba(49,140,231,.08)" : "var(--surface-solid)",
+                                color: cargoPrincipal === k ? AZUL : "var(--ink)",
+                                transition: "all .15s",
+                              }}>
+                              {cargoPrincipal === k && <Star size={14} fill={AZUL} />}
+                              {FUNCOES[k]?.nome}
+                            </button>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
+                          Selecione o cargo onde você tem mais experiência.
+                        </p>
+                      </div>
+                    )}
+
+                    {cargoPrincipal && FUNCOES[cargoPrincipal] && (
+                      <p className="cp-perfil-desc" style={{ marginTop: 4 }}>{FUNCOES[cargoPrincipal].descricao}</p>
+                    )}
+
                     {/* Currículo */}
                     <div className="cp-curriculo-area">
                       <div className="cp-curriculo-icon">
@@ -560,17 +788,6 @@ export default function CadastroProfissional({ onRegister }) {
                         onChange={(e) => selecionarCurriculo(e.target.files?.[0])} />
                     </div>
                     {curriculoErro && <div className="cp-campo-erro" style={{ marginBottom: 14 }}>{curriculoErro}</div>}
-
-                    {/* Código de indicação */}
-                    <div className="cp-campo">
-                      <label className="cp-campo-label">
-                        {t("cadProf.campos.indicacao")}
-                        <span className="cp-opt">({t("cadProf.campos.indicacaoOpcional")})</span>
-                      </label>
-                      <input className="vx-input" style={{ fontFamily: "'Geist Mono','IBM Plex Mono',monospace", letterSpacing: ".08em" }}
-                        value={indicacao} placeholder={t("cadProf.campos.indicacaoPlaceholder")}
-                        onChange={(e) => setIndicacao(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))} />
-                    </div>
 
                     {/* Termos */}
                     <label className="cp-termos">
