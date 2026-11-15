@@ -198,15 +198,19 @@ export default function App() {
     if (userData?.id) { window.history.replaceState({}, "", "/"); setUser(userData); userRef.current = userData; await carregarState(userData); }
   };
 
-  const login = async (email, senha, { silencioso = false } = {}) => {
+  const login = async (email, senha, { silencioso = false, tipoConta } = {}) => {
     const r = await api("/auth/login", { email, senha });
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error }; }
     if (r?.id) {
-      // Vendedor ou admin logando numa URL de onboarding de empresa: redireciona.
+      const roleEsperado = tipoConta === "profissional" ? "vendedor" : tipoConta === "empresa" ? "empresa" : null;
+      if (roleEsperado && r.role !== roleEsperado) {
+        await api("/auth/logout", {});
+        return { ok: false, roleErrado: r.role };
+      }
       if (r.role !== "empresa" && window.location.pathname.startsWith("/onboarding")) {
         window.history.replaceState({}, "", "/");
       }
-      setUser(r); userRef.current = r; await carregarState(r); return { ok: true };
+      setUser(r); userRef.current = r; await carregarState(r); return { ok: true, role: r.role };
     }
     if (!silencioso) setToast("Erro ao fazer login.");
     return { ok: false, error: "Erro ao fazer login." };

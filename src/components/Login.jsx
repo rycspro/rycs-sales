@@ -57,10 +57,17 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
     if (parametro("ref")) navegar(ROTAS.cadastroVendedor);
   }, []);
 
+  const [erroTipo, setErroTipo] = useState("");
   const submit = async (e) => {
     e.preventDefault();
+    setErroTipo("");
     setLoading(true);
-    await onLogin(email, senha);
+    const r = await onLogin(email, senha, { tipoConta: contaTipo });
+    if (r?.roleErrado) {
+      setErroTipo(r.roleErrado === "empresa"
+        ? "Este e-mail está cadastrado como empresa. Para acessar como profissional, use outro e-mail."
+        : "Este e-mail está cadastrado como profissional. Para acessar como empresa, use outro e-mail.");
+    }
     setLoading(false);
   };
 
@@ -264,6 +271,8 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
               </div>
               <CampoSenha id="login-senha" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder={t("login.senhaPlaceholder")} />
             </div>
+
+            {erroTipo && <div role="alert" style={{ marginTop: 14, padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.25)", color: "#b91c1c", fontSize: 13, lineHeight: 1.5 }}>{erroTipo}</div>}
 
             <button type="submit" disabled={loading}
               onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#2b7cd0"; }}
