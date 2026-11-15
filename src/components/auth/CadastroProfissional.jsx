@@ -424,7 +424,9 @@ html.dark .cp-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
 
 export default function CadastroProfissional({ onRegister }) {
   const { t } = useI18n();
-  const [onboardingVisto, setOnboardingVisto] = useState(false);
+  const [onboardingVisto, setOnboardingVisto] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("rycs_cadastro_prof"))?.onboardingVisto || false; } catch { return false; }
+  });
   const [etapa, setEtapa] = useState(0);
 
   /* ── estado: dados pessoais ── */
@@ -511,6 +513,7 @@ export default function CadastroProfissional({ onRegister }) {
       if (s.cargosExp?.length) setCargosExp(s.cargosExp);
       if (s.cargoPrincipal) setCargoPrincipal(s.cargoPrincipal);
       if (s.indicacao) setIndicacao(s.indicacao);
+      if (s.onboardingVisto) setOnboardingVisto(true);
       if (s.etapa != null) setEtapa(s.etapa);
       if (s.fotoPrevia) { setFotoPrevia(s.fotoPrevia); setFoto(s.foto || null); }
     } catch {}
@@ -527,7 +530,7 @@ export default function CadastroProfissional({ onRegister }) {
           areasAtuacao, habilidades, anosExperiencia, disponibilidade,
           segmentos, ferramentas, formacoes, conhecimentos, equipamentos,
           cargosExp, cargoPrincipal, indicacao, etapa,
-          foto, fotoPrevia,
+          onboardingVisto, foto, fotoPrevia,
         }));
       } catch {}
     }, 400);
@@ -537,7 +540,7 @@ export default function CadastroProfissional({ onRegister }) {
     areasAtuacao, habilidades, anosExperiencia, disponibilidade,
     segmentos, ferramentas, formacoes, conhecimentos, equipamentos,
     cargosExp, cargoPrincipal, indicacao, etapa,
-    foto, fotoPrevia,
+    onboardingVisto, foto, fotoPrevia,
   ]);
 
   useEffect(() => { if (carregou.current) salvarRascunho(); }, [salvarRascunho]);
