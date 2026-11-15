@@ -26,8 +26,14 @@ router.post("/auth/login", (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ error: "E-mail e senha são obrigatórios" });
 
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email.toLowerCase().trim());
-  if (!user || !bcrypt.compareSync(senha, user.senha)) {
+  const emailNorm = email.toLowerCase().trim();
+  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(emailNorm);
+  if (!user) {
+    console.warn(`[auth] login falhou: e-mail não encontrado (${emailNorm})`);
+    return res.status(401).json({ error: "E-mail ou senha incorretos" });
+  }
+  if (!bcrypt.compareSync(senha, user.senha)) {
+    console.warn(`[auth] login falhou: senha incorreta para ${emailNorm} (role=${user.role}, hash=${user.senha?.slice(0, 7)}…)`);
     return res.status(401).json({ error: "E-mail ou senha incorretos" });
   }
 
@@ -210,7 +216,7 @@ router.post("/auth/register", async (req, res) => {
   res.json({ id: userId, email: emailNorm, role, entityId });
 });
 
-router.post("/auth/forgot-password", (req, res) => {
+router.post("/auth/forgot-password", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "E-mail é obrigatório" });
 
@@ -235,7 +241,7 @@ router.post("/auth/forgot-password", (req, res) => {
     ? db.prepare("SELECT nome FROM companies WHERE id = ?").get(user.entityId)?.nome
     : "Admin";
 
-  emailResetSenha(nome || "Usuário", user.email, resetToken, FRONTEND);
+  await emailResetSenha(nome || "Usuário", user.email, resetToken, FRONTEND);
 
   res.json(resposta);
 });
