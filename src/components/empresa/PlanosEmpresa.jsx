@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X, QrCode } from "lucide-react";
+import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X, XCircle, QrCode } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
@@ -77,11 +77,15 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     setTitular({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   };
 
-  const aplicar = async () => {
-    const r = await api(`/vouchers/validate?codigo=${encodeURIComponent(voucher)}&plano=${selecionado.chave}&ciclo=${ciclo}`);
-    if (r?.error) { setDesconto(null); return aviso(r.error); }
+  const [voucherStatus, setVoucherStatus] = useState(""); // "ok" | "erro" | "validando" | ""
+  const aplicar = async (codigo) => {
+    const v = codigo || voucher;
+    if (!v) return;
+    setVoucherStatus("validando");
+    const r = await api(`/vouchers/validate?codigo=${encodeURIComponent(v)}&plano=${selecionado.chave}&ciclo=${ciclo}`);
+    if (r?.error) { setDesconto(null); setVoucherStatus("erro"); return; }
     setDesconto(r);
-    aviso("Voucher aplicado ao checkout.");
+    setVoucherStatus("ok");
   };
 
   const contratar = async () => {
@@ -237,11 +241,23 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                 {/* Voucher */}
                 <label style={{ display: "block", marginBottom: vouchersUsados.length && !desconto ? 6 : 16 }}>
                   <span className="vx-label">Voucher</span>
-                  <div style={{ display: "flex", gap: 7 }}>
-                    <input className="vx-input" value={voucher}
-                      onChange={(e) => { setVoucher(e.target.value.toUpperCase()); setDesconto(null); }}
-                      onKeyDown={(e) => { if (e.key === "Enter" && voucher) aplicar(); }} />
-                    <button className="vx-btn" onClick={aplicar} disabled={!voucher}>Aplicar</button>
+                  <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      <input className="vx-input" value={voucher}
+                        style={{ paddingRight: voucherStatus ? 36 : undefined }}
+                        onChange={(e) => { setVoucher(e.target.value.toUpperCase()); setDesconto(null); setVoucherStatus(""); }}
+                        onKeyDown={(e) => { if (e.key === "Enter" && voucher) aplicar(); }} />
+                      {voucherStatus === "ok" && (
+                        <CheckCircle size={18} color="#16a34a" style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }} />
+                      )}
+                      {voucherStatus === "erro" && (
+                        <XCircle size={18} color="#dc2626" style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }} />
+                      )}
+                      {voucherStatus === "validando" && (
+                        <Loader size={16} color="var(--muted)" style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", animation: "spin 1s linear infinite" }} />
+                      )}
+                    </div>
+                    <button className="vx-btn" onClick={() => aplicar()} disabled={!voucher || voucherStatus === "validando"}>Aplicar</button>
                   </div>
                 </label>
                 {vouchersUsados.length > 0 && !desconto && (
@@ -250,7 +266,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
                       {vouchersUsados.map((v) => (
                         <button key={v.codigo} className="vx-btn" style={{ fontSize: 11, padding: "3px 10px" }}
-                          onClick={() => { setVoucher(v.codigo); }}>
+                          onClick={() => { setVoucher(v.codigo); aplicar(v.codigo); }}>
                           {v.codigo}
                         </button>
                       ))}
