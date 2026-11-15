@@ -1927,44 +1927,6 @@ db.exec(`
 // Voucher RICARDOMARTIN: ilimitado (sem limite total nem por empresa)
 db.prepare("UPDATE vouchers SET limiteTotal = 0, limitePorEmpresa = 0 WHERE codigo = 'RICARDOMARTIN' AND (limiteTotal != 0 OR limitePorEmpresa != 0)").run();
 
-// Migração pontual: exclusão definitiva de perfis solicitada pelo admin.
-// Remove user + entidade (seller ou company) e dependências diretas.
-// Roda só uma vez: se o user não existe mais, não faz nada.
-{
-  const emailsExcluir = [
-    "sarahstefhani1999@gmail.com",
-    "sarahstefhanimartin@gmail.com",
-  ];
-  const tabelasDB = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((t) => t.name);
-  const temCol = (t, c) => db.prepare("SELECT 1 FROM pragma_table_info(?) WHERE name = ?").get(t, c);
-  for (const email of emailsExcluir) {
-    const user = db.prepare("SELECT id, role, entityId FROM users WHERE email = ?").get(email);
-    if (!user) continue;
-    db.transaction(() => {
-      // Limpar dependências do entityId (seller ou company)
-      if (user.entityId) {
-        const entTabela = user.role === "empresa" ? "companies" : "sellers";
-        const colId = user.role === "empresa" ? "companyId" : "sellerId";
-        for (const t of tabelasDB) {
-          if (t === "users" || t === entTabela) continue;
-          if (temCol(t, colId)) {
-            try { db.prepare(`DELETE FROM "${t}" WHERE "${colId}" = ?`).run(user.entityId); } catch (_) {}
-          }
-        }
-        // Tabelas com userId
-        for (const t of tabelasDB) {
-          if (t === "users") continue;
-          if (temCol(t, "userId")) {
-            try { db.prepare(`DELETE FROM "${t}" WHERE userId = ?`).run(user.id); } catch (_) {}
-          }
-        }
-        try { db.prepare(`DELETE FROM "${entTabela}" WHERE id = ?`).run(user.entityId); } catch (_) {}
-      }
-      db.prepare("DELETE FROM users WHERE id = ?").run(user.id);
-      console.log(`[migração] perfil excluído: ${email} (role=${user.role})`);
-    })();
-  }
-}
 
 export default db;
 export { uid, agora };
