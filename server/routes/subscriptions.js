@@ -526,7 +526,7 @@ router.post("/subscription", async (req, res) => {
       : (doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO));
     const vencimento = dadosTentativa ? new Date(dadosTentativa.vencimento) : trialDias
       ? primeiraCobranca({ trialDias })
-      : forma === "PIX" ? new Date() : new Date(Date.now() + 3 * 86400000);
+      : new Date();
 
     if (forma === "PIX_AUTOMATICO") {
       const r = await criarPixAutomatico({ subId, entityId, chave, plano, customerId, calculo, voucher, trialDias });
