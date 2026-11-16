@@ -24,7 +24,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [processando, setProcessando] = useState(false);
   const [forma, setForma] = useState("");
   const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
-  const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "" });
+  const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   const [salvarCartao, setSalvarCartao] = useState(false);
   const [cartoesSalvos, setCartoesSalvos] = useState([]);
   const [cardSalvoId, setCardSalvoId] = useState(null); // cartão salvo selecionado
@@ -74,7 +74,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
     setCardSalvoId(null);
     setSalvarCartao(false);
     setCartao({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
-    setTitular({ nome: "", email: "", documento: "", cep: "", numero: "" });
+    setTitular({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
   };
 
   const [voucherStatus, setVoucherStatus] = useState(""); // "ok" | "erro" | "validando" | ""
@@ -425,13 +425,16 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
                         <input className="vx-input" value={titular.numero}
                           onChange={(e) => setTitular({ ...titular, numero: e.target.value })} /></label>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
                       <label><div className="vx-label">CPF ou CNPJ do titular</div>
                         <input className="vx-input vx-mono" inputMode="numeric" value={titular.documento}
                           onChange={(e) => setTitular({ ...titular, documento: SO_DIGITOS(e.target.value).slice(0, 14) })} /></label>
                       <label><div className="vx-label">E-mail do titular</div>
                         <input className="vx-input" type="email" value={titular.email}
                           onChange={(e) => setTitular({ ...titular, email: e.target.value })} /></label>
+                      <label><div className="vx-label">Telefone</div>
+                        <input className="vx-input vx-mono" inputMode="tel" value={titular.telefone}
+                          onChange={(e) => setTitular({ ...titular, telefone: e.target.value })} placeholder="(11) 99999-0000" /></label>
                     </div>
 
                     <div className="vx-mut" style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
