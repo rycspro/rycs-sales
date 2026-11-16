@@ -645,7 +645,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
           </select>
         </Block>
 
-        <Block title="País de origem" description="Define a moeda usada nos planos e nas campanhas (cobrança via Stripe quando fora do Brasil). Ao trocar a moeda, o saldo atual fica arquivado como uma carteira à parte.">
+        <Block title="Moeda (país de origem)" description="O país define a moeda usada nos planos e nas campanhas (cobrança via Stripe quando fora do Brasil). Ao trocar a moeda, o saldo atual fica arquivado como uma carteira à parte.">
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <select
               value={form.pais || "BR"}
