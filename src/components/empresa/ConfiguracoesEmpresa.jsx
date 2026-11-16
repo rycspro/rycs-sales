@@ -49,7 +49,7 @@ const SECOES_NAV = [
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
   { key: "seguranca", label: "Segurança", icon: Lock },
-  { key: "preferencias", label: "Preferências", icon: Settings },
+  { key: "preferencias", label: "País e Idioma", icon: Settings },
   { key: "indicar", label: "Indicar", icon: Gift },
 ];
 
@@ -627,30 +627,22 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     preferencias: (
       <>
-        <PgHead title="Preferências" description="Idioma da interface e país de origem." />
+        <PgHead title="País e Idioma" description="Idioma da interface e país de origem." />
 
         <Block title="Idioma" description="Define o idioma da interface do sistema. A escolha fica salva neste navegador.">
-          <div style={{ display: "grid", gap: 8 }}>
-            {IDIOMAS.map((i) => {
-              const ativo = idioma === i.code;
-              return (
-                <button
-                  key={i.code}
-                  type="button"
-                  onClick={() => escolherIdioma(i.code)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10,
-                    border: `1.5px solid ${ativo ? "var(--brand)" : "var(--border)"}`,
-                    background: ativo ? "var(--brand-50)" : "var(--surface)", cursor: "pointer", textAlign: "left", width: "100%",
-                  }}
-                >
-                  <span style={{ fontSize: 22 }}>{i.flag}</span>
-                  <span style={{ flex: 1, fontSize: 14, fontWeight: ativo ? 600 : 500, color: ativo ? "var(--brand)" : "var(--ink)" }}>{i.nome}</span>
-                  {ativo && <Check size={16} color="var(--brand)" strokeWidth={2.5} />}
-                </button>
-              );
-            })}
-          </div>
+          <select
+            value={idioma}
+            onChange={(e) => escolherIdioma(e.target.value)}
+            style={{
+              width: "100%", fontSize: 14, fontFamily: "inherit", minHeight: 44,
+              border: "1.5px solid var(--border)", borderRadius: 10, padding: "8px 12px",
+              background: "var(--surface)", color: "var(--ink)", cursor: "pointer",
+            }}
+          >
+            {IDIOMAS.map((i) => (
+              <option key={i.code} value={i.code}>{i.flag} {i.nome}</option>
+            ))}
+          </select>
         </Block>
 
         <Block title="País de origem" description="Define a moeda usada nos planos e nas campanhas (cobrança via Stripe quando fora do Brasil). Ao trocar a moeda, o saldo atual fica arquivado como uma carteira à parte.">
