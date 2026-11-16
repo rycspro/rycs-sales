@@ -57,14 +57,25 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
     if (s && !s.error) setAtual(s);
   }, []);
 
+  const buscarStripe = useCallback(async (tentativa = 0) => {
+    const r = await api("/stripe/status");
+    if (r && !r.error) return setStripe(r);
+    // Servidor pode estar reiniciando (deploy em andamento). Tenta de novo
+    // algumas vezes em intervalos curtos antes de desistir.
+    if (tentativa < 5) setTimeout(() => buscarStripe(tentativa + 1), 1500);
+  }, []);
+
   useEffect(() => {
     carregar();
-    api("/stripe/status").then((r) => r && !r.error && setStripe(r));
+    buscarStripe();
     api("/saved-cards").then((r) => Array.isArray(r) && setCartoesSalvos(r));
     api("/vouchers/history").then((r) => Array.isArray(r) && setVouchersUsados(r));
-  }, [carregar]);
+  }, [carregar, buscarStripe]);
 
   const abrirModal = (p, cicloEscolhido = CICLOS.MENSAL) => {
+    // Se o Stripe ainda não carregou (por ex. servidor estava reiniciando),
+    // tenta de novo agora antes de abrir o modal.
+    if (!stripe) buscarStripe();
     setSelecionado(p);
     setCiclo(cicloEscolhido);
     setVoucher("");
