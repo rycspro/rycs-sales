@@ -360,15 +360,33 @@ router.get("/subscription", async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
 
-  let atual = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? ORDER BY criadoEm DESC LIMIT 1").get(entityId);
+  // Prefere a assinatura ativa; se não houver, pega a mais recente não-cancelada;
+  // só cai para cancelada se nada mais existir. Isso evita que um cancelamento
+  // antigo mascare uma assinatura nova que ainda não ativou.
+  let atual = db.prepare(`
+    SELECT * FROM subscriptions
+    WHERE companyId = ?
+    ORDER BY
+      CASE status
+        WHEN 'ativa' THEN 1
+        WHEN 'trial' THEN 2
+        WHEN 'pendente' THEN 3
+        WHEN 'inadimplente' THEN 4
+        WHEN 'cancelada' THEN 5
+        ELSE 6 END,
+      criadoEm DESC
+    LIMIT 1
+  `).get(entityId);
 
-  // Auto-ativar: se a assinatura está pendente e o Asaas já confirmou o
+  // Auto-ativar: se a assinatura não está ativa e o Asaas já confirmou o
   // pagamento, ativa agora (cobre webhook atrasado ou perdido).
-  if (atual && atual.status === "pendente" && atual.asaasId && asaasAtivo()) {
+  if (atual && ["pendente", "inadimplente"].includes(atual.status) && atual.asaasId && asaasAtivo()) {
     try {
-      const lista = await asaas(`/payments?subscription=${encodeURIComponent(atual.asaasId)}&limit=5`);
+      const lista = await asaas(`/payments?subscription=${encodeURIComponent(atual.asaasId)}&limit=10`);
       const pgtos = lista?.data || [];
-      if (pgtos.some((p) => ["RECEIVED", "CONFIRMED"].includes(p.status))) {
+      const confirmado = pgtos.find((p) => ["RECEIVED", "CONFIRMED"].includes(p.status));
+      console.log(`[subscription] auto-ativar check: sub=${atual.id} status=${atual.status} asaasId=${atual.asaasId} pagamentos=${pgtos.length} confirmado=${!!confirmado}`);
+      if (confirmado) {
         ativarAssinatura(atual.asaasId);
         atual = db.prepare("SELECT * FROM subscriptions WHERE id = ?").get(atual.id);
       }
