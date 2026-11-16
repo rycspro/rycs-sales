@@ -199,19 +199,14 @@ export default function EntradaEmpresa() {
 
           <div className="vx-onb-campo" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <label
-              style={{
-                display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
-                border: `1.5px solid ${erros.termos ? "var(--erro, #e53e3e)" : aceitouTermos ? "var(--brand)" : "var(--border)"}`,
-                borderRadius: 10, padding: "12px 14px", background: aceitouTermos ? "var(--brand-50, #f0fdff)" : "var(--surface)",
-                transition: "border-color .15s, background .15s",
-              }}
+              style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", padding: "2px 2px" }}
             >
               <input
                 type="checkbox" checked={aceitouTermos} onChange={(e) => setAceitouTermos(e.target.checked)}
-                style={{ width: 18, height: 18, marginTop: 1, accentColor: "var(--brand)", flexShrink: 0 }}
+                style={{ width: 16, height: 16, marginTop: 1, accentColor: "var(--brand)", flexShrink: 0 }}
                 aria-describedby={erros.termos ? `${id}-termos-erro` : undefined}
               />
-              <span style={{ fontSize: 13.5, lineHeight: 1.5 }}>
+              <span style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--muted)" }}>
                 Li e aceito os{" "}
                 <a href="https://rycs.pro/termos" target="_blank" rel="noreferrer" className="vx-onb-link" style={{ fontSize: "inherit" }}>
                   Termos de Uso
@@ -221,19 +216,14 @@ export default function EntradaEmpresa() {
             {erros.termos && <div id={`${id}-termos-erro`} className="vx-onb-erro" role="alert">{erros.termos}</div>}
 
             <label
-              style={{
-                display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
-                border: `1.5px solid ${erros.privacidade ? "var(--erro, #e53e3e)" : aceitouPrivacidade ? "var(--brand)" : "var(--border)"}`,
-                borderRadius: 10, padding: "12px 14px", background: aceitouPrivacidade ? "var(--brand-50, #f0fdff)" : "var(--surface)",
-                transition: "border-color .15s, background .15s",
-              }}
+              style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", padding: "2px 2px" }}
             >
               <input
                 type="checkbox" checked={aceitouPrivacidade} onChange={(e) => setAceitouPrivacidade(e.target.checked)}
-                style={{ width: 18, height: 18, marginTop: 1, accentColor: "var(--brand)", flexShrink: 0 }}
+                style={{ width: 16, height: 16, marginTop: 1, accentColor: "var(--brand)", flexShrink: 0 }}
                 aria-describedby={erros.privacidade ? `${id}-privacidade-erro` : undefined}
               />
-              <span style={{ fontSize: 13.5, lineHeight: 1.5 }}>
+              <span style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--muted)" }}>
                 Li e aceito a{" "}
                 <a href="https://rycs.pro/privacidade" target="_blank" rel="noreferrer" className="vx-onb-link" style={{ fontSize: "inherit" }}>
                   Política de Privacidade
