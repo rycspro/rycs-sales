@@ -516,8 +516,7 @@ router.post("/subscription", async (req, res) => {
     if (forma === "PIX_AUTOMATICO" && !doOnboarding)
       return res.status(400).json({ error: "O Pix Automático é contratado na etapa de plano do cadastro." });
 
-    // Com trial, a primeira cobrança cai no fim dele.
-    // Sem trial: cartão cobra na hora; Pix tem 3 dias para o QR ser pago.
+    // Com trial, a primeira cobrança cai no fim dele. Sem trial, cobra na hora.
     const dadosTentativa = tentativaCredito ? JSON.parse(tentativaCredito.dados) : null;
     if (dadosTentativa) ({ voucher, calculo } = dadosTentativa);
     const trialDias = dadosTentativa?.trialDias ?? (PLANOS[chave]?.trial === false
@@ -525,7 +524,7 @@ router.post("/subscription", async (req, res) => {
       : (doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO));
     const vencimento = dadosTentativa ? new Date(dadosTentativa.vencimento) : trialDias
       ? primeiraCobranca({ trialDias })
-      : forma === "PIX" ? new Date(Date.now() + 3 * 86400000) : new Date();
+      : new Date();
 
     if (forma === "PIX_AUTOMATICO") {
       const r = await criarPixAutomatico({ subId, entityId, chave, plano, customerId, calculo, voucher, trialDias });
