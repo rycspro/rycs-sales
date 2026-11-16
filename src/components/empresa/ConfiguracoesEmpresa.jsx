@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import Indicacoes from "../Indicacoes.jsx";
+import { PAISES, paisPorCode, moedaDoPais } from "../../../shared/paises.js";
 
 // ── Data ─────────────────────────────────────────────────────────────
 
@@ -229,6 +230,36 @@ function InlineField({ label, value, onChange, type = "text", placeholder, multi
   );
 }
 
+// ── País (select inline) ─────────────────────────────────────────────
+// Dropdown nativo com o mesmo visual do InlineField. Mostra o país + moeda
+// atual e troca para outro quando selecionado. A confirmação da troca de
+// moeda fica no componente pai (afeta planos e campanhas).
+function InlinePaisSelect({ label, value, onChange }) {
+  const info = paisPorCode(value) || paisPorCode("BR");
+  return (
+    <div style={{ marginBottom: 10, borderRadius: 6, padding: "4px 6px", margin: "0 -6px 6px" }}>
+      <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>{label}</div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%", fontSize: 13.5, fontFamily: "inherit",
+          border: "1.5px solid transparent", borderRadius: 6, padding: "4px 8px",
+          background: "transparent", color: "var(--ink)", outline: "none",
+          cursor: "pointer", marginTop: 1, appearance: "menulist",
+        }}
+        onFocus={(e) => { e.currentTarget.style.border = "1.5px solid var(--brand)"; e.currentTarget.style.background = "var(--surface)"; }}
+        onBlur={(e) => { e.currentTarget.style.border = "1.5px solid transparent"; e.currentTarget.style.background = "transparent"; }}
+      >
+        {PAISES.map((p) => (
+          <option key={p.code} value={p.code}>{p.nome} ({p.moeda})</option>
+        ))}
+      </select>
+      <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2 }}>Moeda de operação: <b>{info.moeda}</b></div>
+    </div>
+  );
+}
+
 // ── Cartões salvos ───────────────────────────────────────────────────
 
 function CartoesSalvos({ aviso }) {
@@ -384,6 +415,8 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     // esta página não grava mais esses campos para não sobrescrever o que é
     // editado lá.
     payload.cor = form.cor || "";
+    payload.pais = form.pais || "BR";
+    payload.moeda = form.moeda || moedaDoPais(form.pais || "BR");
     payload.notifEmail = form.notifEmail;
     payload.notifSubmissoes = form.notifSubmissoes;
     payload.notifCandidaturas = form.notifCandidaturas;
@@ -479,6 +512,23 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
               {/* Coluna 1: Dados cadastrais */}
               <div>
                 <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Dados cadastrais</div>
+                <InlinePaisSelect
+                  label="País"
+                  value={form.pais || "BR"}
+                  onChange={(novoCode) => {
+                    const novoPais = paisPorCode(novoCode);
+                    if (!novoPais) return;
+                    const moedaAtual = form.moeda || "BRL";
+                    if (novoPais.moeda !== moedaAtual) {
+                      const ok = window.confirm(
+                        `Trocar o país para ${novoPais.nome} também mudará a moeda de operação de ${moedaAtual} para ${novoPais.moeda}. Isso afeta os planos e as campanhas. Deseja continuar?`
+                      );
+                      if (!ok) return;
+                    }
+                    setForm((f) => ({ ...f, pais: novoCode, moeda: novoPais.moeda }));
+                    setChanged(true); setSavedOk(false);
+                  }}
+                />
                 <InlineField label="Razão social" value={form.razaoSocial} onChange={set("razaoSocial")} placeholder="Razão social completa" />
                 <InlineField label="CNPJ / CPF" value={mascararDocumento(form.documento)} onChange={v => set("documento")(mascararDocumento(v))} placeholder="00.000.000/0000-00" />
               </div>

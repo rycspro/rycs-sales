@@ -30,10 +30,21 @@ router.patch("/companies/:id", (req, res) => {
   // ou por liberação de ação — nunca por escrita direta do cliente.
   const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "destaqueTipo", "visivel", "vagas", "cor", "documento",
     "razaoSocial", "endereco", "segmento", "regiao", "diferenciais", "objecoes", "representanteLegal",
-    "contatoFinanceiro", "contatoComercial", "situacaoCadastral", "dataAbertura", "naturezaJuridica", "cnaes", "telefoneEmpresa", "emailEmpresa"];
+    "contatoFinanceiro", "contatoComercial", "situacaoCadastral", "dataAbertura", "naturezaJuridica", "cnaes", "telefoneEmpresa", "emailEmpresa",
+    "pais", "moeda"];
   const jsonFields = ["comissoes", "curso", "qualificacao", "materiais"];
   const sets = [];
   const vals = [];
+
+  // Troca de país/moeda só é permitida quando a empresa ainda não tem saldo
+  // em caixa nem assinatura paga ativa — caso contrário, mudar a moeda
+  // deixaria valores inconsistentes entre caixa, campanhas e cobrança.
+  if (role === "empresa" && (fields.pais !== undefined || fields.moeda !== undefined)) {
+    const atual = db.prepare("SELECT saldo, totalAportado, assinatura FROM companies WHERE id = ?").get(id);
+    if (atual && (Number(atual.saldo) > 0 || Number(atual.totalAportado) > 0)) {
+      return res.status(409).json({ error: "Moeda travada: já existem aportes nesta conta. Para trocar o país, zere o saldo antes." });
+    }
+  }
 
   for (const [k, v] of Object.entries(fields)) {
     if (allowed.includes(k)) {
