@@ -237,13 +237,13 @@ export default function Login({ onLogin, conviteTrial = false, beta = false }) {
     : ehEmpresa ? t("login.descEmpresa") : t("login.descProfissional");
   const btnCadastro = (extra = {}) => ({
     display: "flex", alignItems: "center", justifyContent: "center", width: "100%",
-    background: "var(--surface-solid)", color: "var(--ink)", border: "1px solid var(--border-strong)",
+    background: "rgba(49,140,231,.10)", color: AZUL, border: `1px solid rgba(49,140,231,.35)`,
     borderRadius: 10, padding: "11px 16px", fontWeight: 600, fontSize: 13.5, cursor: "pointer",
     minHeight: 44, transition: "border-color .15s, background .15s", ...extra,
   });
   const realceCad = (e, on) => {
-    e.currentTarget.style.borderColor = on ? "rgba(49,140,231,.45)" : "var(--border-strong)";
-    e.currentTarget.style.background = on ? "rgba(49,140,231,.03)" : "var(--surface-solid)";
+    e.currentTarget.style.borderColor = on ? "rgba(49,140,231,.6)" : "rgba(49,140,231,.35)";
+    e.currentTarget.style.background = on ? "rgba(49,140,231,.16)" : "rgba(49,140,231,.10)";
   };
   return (
     <div style={{ position: "fixed", inset: 0, background: "var(--bg)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
