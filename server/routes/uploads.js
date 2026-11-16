@@ -141,4 +141,30 @@ router.get("/uploads/:id/url", async (req, res) => {
   }
 });
 
+// Deriva a chave S3 a partir da URL pública legada (sem tocar nos arquivos).
+export function derivarS3Key(url, endpoint = process.env.S3_ENDPOINT, bucket = process.env.S3_BUCKET) {
+  if (!endpoint || !bucket || !url || url.startsWith("local://")) return null;
+  const prefixo = `${endpoint}/${bucket}/`;
+  return url.startsWith(prefixo) ? url.slice(prefixo.length) : null;
+}
+
+// Migração idempotente: preenche `s3key` dos uploads antigos para que o
+// download assinado funcione quando o bucket for privado. Re-executável.
+export function backfillS3Keys({ aplicar = true } = {}) {
+  const rows = db.prepare("SELECT id, url FROM uploads WHERE s3key IS NULL AND url NOT LIKE 'local://%'").all();
+  const upd = db.prepare("UPDATE uploads SET s3key = ? WHERE id = ?");
+  let atualizados = 0;
+  for (const r of rows) {
+    const k = derivarS3Key(r.url);
+    if (k) { if (aplicar) upd.run(k, r.id); atualizados++; }
+  }
+  return { candidatos: rows.length, atualizados, modo: aplicar ? "aplicado" : "simulacao" };
+}
+
+// Rota admin para disparar/simular a migração (?dry=1 só simula).
+router.post("/admin/uploads/backfill-keys", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Acesso restrito ao administrador." });
+  res.json(backfillS3Keys({ aplicar: req.query.dry !== "1" }));
+});
+
 export default router;
