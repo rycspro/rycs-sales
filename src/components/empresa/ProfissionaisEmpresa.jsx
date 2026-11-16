@@ -8,15 +8,16 @@ import FichaProfissional from "./FichaProfissional.jsx";
 
 const PERFIL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
 
-// Bandeira do país do profissional (emoji). Default Brasil, que é o padrão do cadastro.
-const BANDEIRAS = {
-  "brasil": "🇧🇷", "brazil": "🇧🇷", "portugal": "🇵🇹", "argentina": "🇦🇷",
-  "estados unidos": "🇺🇸", "eua": "🇺🇸", "usa": "🇺🇸", "united states": "🇺🇸",
-  "méxico": "🇲🇽", "mexico": "🇲🇽", "espanha": "🇪🇸", "spain": "🇪🇸",
-  "chile": "🇨🇱", "colômbia": "🇨🇴", "colombia": "🇨🇴", "peru": "🇵🇪",
-  "uruguai": "🇺🇾", "paraguai": "🇵🇾", "bolívia": "🇧🇴", "bolivia": "🇧🇴",
-};
-const bandeiraPais = (p) => BANDEIRAS[String(p || "").trim().toLowerCase()] || "🌎";
+import { PAISES, paisDe } from "../../../shared/localidades.js";
+// Mapa nome → código ISO para normalizar valores antigos ("Brasil") e novos ("BR").
+const _nomePara = Object.fromEntries(PAISES.flatMap((p) => [
+  [p.code.toLowerCase(), p.code],
+  [p.nome.toLowerCase(), p.code],
+  [p.nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(), p.code],
+]));
+const normPais = (v) => { const k = String(v || "").trim().toLowerCase(); return _nomePara[k] || k.toUpperCase() || "BR"; };
+const bandeiraPais = (p) => { const c = normPais(p); return c.length === 2 ? String.fromCodePoint(...[...c.toUpperCase()].map((l) => 0x1F1E6 + l.charCodeAt(0) - 65)) : "🌎"; };
+const nomePais = (p) => { const info = paisDe(normPais(p)); return info?.nome || p || "Brasil"; };
 const STATUS = { aprovado: "Ativo/aprovado", parcial: "Ativo parcial", pendente: "Pendente", recusado: "Removido/recusado" };
 const nota = (n) => Number(n || 0);
 const arr = (v) => Array.isArray(v) ? v : [];
@@ -158,7 +159,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
     return {
       funcoes: [...new Set(profissionais.map((p) => p.perfil).filter(Boolean))],
       regioes: [...estadoMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([key, label]) => ({ key, label })),
-      paises: [...new Set(profissionais.map((p) => p.pais).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR")),
+      paises: [...new Set(profissionais.map((p) => normPais(p.pais)))].sort((a, b) => nomePais(a).localeCompare(nomePais(b), "pt-BR")),
     };
   }, [profissionais]);
 
@@ -194,7 +195,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
         && performanceOk
         && (!f.regiao || norm(regiao) === f.regiao)
         && scoreOk
-        && (!f.pais || p.pais === f.pais)
+        && (!f.pais || normPais(p.pais) === f.pais)
         && (!f.genero || p.genero === f.genero);
     });
 
@@ -544,7 +545,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
           <label><span className="vx-label">Campanha</span><select className="vx-input" value={f.campanha} onChange={(e) => setF({ ...f, campanha: e.target.value })}><option value="">Todas</option>{campanhasEmpresa.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select></label>
           <label><span className="vx-label">Status</span><select className="vx-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option value="">Todos</option><option value="aprovado">Ativo/aprovado</option><option value="pendente">Pendente</option><option value="recusado">Removido/recusado</option></select></label>
           <label><span className="vx-label">Performance</span><select className="vx-input" value={f.performance} onChange={(e) => setF({ ...f, performance: e.target.value })}><option value="">Todas</option><option value="alta">Alta aprovação</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>
-          <label><span className="vx-label">País</span><select className="vx-input" value={f.pais} onChange={(e) => setF({ ...f, pais: e.target.value })}><option value="">Todos</option>{opcoes.paises.map((x) => <option key={x} value={x}>{bandeiraPais(x)} {x}</option>)}</select></label>
+          <label><span className="vx-label">País</span><select className="vx-input" value={f.pais} onChange={(e) => setF({ ...f, pais: e.target.value })}><option value="">Todos</option>{opcoes.paises.map((x) => <option key={x} value={x}>{bandeiraPais(x)} {nomePais(x)}</option>)}</select></label>
           <label><span className="vx-label">Estado</span><select className="vx-input" value={f.regiao} onChange={(e) => setF({ ...f, regiao: e.target.value })}><option value="">Todos</option>{opcoes.regioes.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label><span className="vx-label">Score</span><select className="vx-input" value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })}><option value="">Todos</option><option value="80">80+ (verde)</option><option value="50">50-79 (amarelo)</option><option value="0">Abaixo de 50</option></select></label>
         </div>
