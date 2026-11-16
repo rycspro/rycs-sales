@@ -199,7 +199,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
             <PricingPlanos
               plans={planos}
               planoAtualChave={atual?.plano}
-              moeda={empresaInternacional ? "USD" : "BRL"}
+              moeda={emp?.moeda || "BRL"}
               onUsarGratis={usarGratis}
               onContratar={(chave, cicloEscolhido) => {
                 const p = planos.find((x) => x.chave === chave);
@@ -250,21 +250,21 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
               />
             ) : (
               <>
-                {/* Resumo — em USD quando a empresa é internacional */}
+                {/* Resumo — na moeda da empresa (INR, EUR, USD, BRL, etc.) */}
                 <div className="vx-checkout-total">
-                  <span>Plano {selecionado.nome} · {cicloLabel}</span><b>{empresaInternacional ? usd(precoUsdBruto) : money(baseCiclo)}</b>
+                  <span>Plano {selecionado.nome} · {cicloLabel}</span><b>{money(empresaInternacional ? precoUsdBruto : baseCiclo, empresaInternacional ? emp?.moeda : "BRL")}</b>
                   {ehRecorrenteLongo && (
-                    <><span>Cobrança</span><b>{empresaInternacional ? usd(precoUsdBruto) : money(baseCiclo)}{cicloSufixo}</b></>
+                    <><span>Cobrança</span><b>{money(empresaInternacional ? precoUsdBruto : baseCiclo, empresaInternacional ? emp?.moeda : "BRL")}{cicloSufixo}</b></>
                   )}
                   {desconto && (
                     <>
                       <span>Voucher {desconto.codigo}</span>
-                      <b>- {empresaInternacional ? usd(precoUsdBruto - precoUsd) : money(desconto.desconto)}</b>
+                      <b>- {money(empresaInternacional ? (precoUsdBruto - precoUsd) : desconto.desconto, empresaInternacional ? emp?.moeda : "BRL")}</b>
                       {!empresaInternacional && desconto.valorFinal > 0 && desconto.valorFinal < 6 && (
                         <><span>Taxa complementar (mín. gateway)</span><b>+ {money(6 - desconto.valorFinal)}</b></>
                       )}
                       <span>Total</span>
-                      <strong>{empresaInternacional ? usd(precoUsd) : money(Math.max(desconto.valorFinal, desconto.valorFinal > 0 ? 6 : 0))}</strong>
+                      <strong>{money(empresaInternacional ? precoUsd : Math.max(desconto.valorFinal, desconto.valorFinal > 0 ? 6 : 0), empresaInternacional ? emp?.moeda : "BRL")}</strong>
                     </>
                   )}
                 </div>
@@ -471,7 +471,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
                 {forma === "STRIPE" && (
                   <div className="vx-mut" style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 4 }}>
                     <ShieldCheck size={15} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                    Para empresas fora do Brasil: {usd(precoUsd)}{cicloSufixo}, pagos no formulário seguro do Stripe, aqui mesmo, com cartão
+                    Para empresas fora do Brasil: {money(precoUsd, emp?.moeda || "USD")}{cicloSufixo}, pagos no formulário seguro do Stripe, aqui mesmo, com cartão
                     internacional (ou UPI, na Índia). Cupons são aplicados direto no Stripe. O plano é liberado quando o Stripe confirmar.
                   </div>
                 )}
@@ -481,7 +481,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
                   {processando
                     ? <><Loader size={15} /> Processando…</>
                     : forma === "STRIPE"
-                      ? <><CreditCard size={15} /> Continuar para o pagamento ({usd(precoUsd)})</>
+                      ? <><CreditCard size={15} /> Continuar para o pagamento ({money(precoUsd, emp?.moeda || "USD")})</>
                       : forma === "PIX"
                         ? <><QrCode size={15} /> Pagar com Pix {money(precoFinal ?? selecionado.preco)}</>
                         : <><CreditCard size={15} /> Pagar com Cartão {money(precoFinal ?? selecionado.preco)}</>}

@@ -19,11 +19,22 @@ const pct = (d) => Math.round(d * 100);
 // Tailwind/shadcn), do bloco de pricing com alternância mensal/semestral/anual,
 // card "Popular" em destaque, preço animado e confete ao escolher um ciclo com
 // desconto.
+const LOCALE_POR_MOEDA = {
+  BRL: "pt-BR", USD: "en-US", EUR: "de-DE", GBP: "en-GB", CAD: "en-CA",
+  AUD: "en-AU", NZD: "en-NZ", MXN: "es-MX", ARS: "es-AR", CLP: "es-CL",
+  COP: "es-CO", PEN: "es-PE", UYU: "es-UY", CHF: "de-CH", SEK: "sv-SE",
+  NOK: "nb-NO", DKK: "da-DK", PLN: "pl-PL", TRY: "tr-TR", ZAR: "en-ZA",
+  AED: "ar-AE", SAR: "ar-SA", ILS: "he-IL", JPY: "ja-JP", CNY: "zh-CN",
+  HKD: "zh-HK", SGD: "en-SG", KRW: "ko-KR", MYR: "ms-MY", THB: "th-TH",
+  IDR: "id-ID", PHP: "en-PH", VND: "vi-VN", INR: "hi-IN", RUB: "ru-RU",
+  HUF: "hu-HU", CZK: "cs-CZ", RON: "ro-RO", BGN: "bg-BG",
+};
+
 export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, planoAtualChave, moeda = "BRL" }) {
-  const ehUSD = String(moeda).toUpperCase() === "USD";
-  const fmtCurrency = ehUSD ? "USD" : "BRL";
-  const fmtLocale = ehUSD ? "en-US" : "pt-BR";
-  const simboloZero = ehUSD ? "$ 0" : "R$ 0";
+  const fmtCurrency = String(moeda).toUpperCase();
+  const fmtLocale = LOCALE_POR_MOEDA[fmtCurrency] || "en-US";
+  let simboloZero = "R$ 0";
+  try { simboloZero = (0).toLocaleString(fmtLocale, { style: "currency", currency: fmtCurrency, minimumFractionDigits: 0, maximumFractionDigits: 0 }); } catch { /* fallback */ }
   const [ciclo, setCiclo] = useState(CICLOS.MENSAL);
   const segRef = useRef(null);
 
