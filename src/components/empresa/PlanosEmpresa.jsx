@@ -91,7 +91,7 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
   const contratar = async () => {
     if (forma === "STRIPE") {
       setProcessando(true);
-      const r = await api("/subscription/stripe", { plano: selecionado.chave, ciclo, retorno: window.location.pathname, embutido: !!stripe?.chavePublica });
+      const r = await api("/subscription/stripe", { plano: selecionado.chave, ciclo, voucher: voucher || undefined, retorno: window.location.pathname, embutido: !!stripe?.chavePublica });
       setProcessando(false);
       if (r?.clientSecret && r?.chavePublica) { setEmbutido(r); return; }
       if (!r || r.error || !r.url) return aviso(r?.error || "Não foi possível abrir o pagamento internacional.");

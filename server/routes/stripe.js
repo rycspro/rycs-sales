@@ -8,6 +8,7 @@ import {
   stripeAtivo, modoStripe, chavePublicaStripe, assinaturaValida, processarEvento, criarCheckoutAssinatura,
   encerrarCheckoutPendente, portalDoCliente, criarCheckoutDestaque, ErroStripe,
 } from "../services/stripe.js";
+import { validarVoucher, calcularVoucher } from "../services/vouchers.js";
 
 // Mesmo prazo de teste do checkout em reais (server/routes/subscriptions.js).
 const TRIAL_DIAS_PUBLICO = 5;
@@ -84,19 +85,37 @@ router.post("/subscription/stripe", soEmpresa, async (req, res) => {
   }
 
   const trialDias = PLANOS[chave]?.trial === false ? 0 : (doOnboarding ? trialDoOnboarding(entityId) : TRIAL_DIAS_PUBLICO);
-  const valor = valorInternacionalNoCiclo(chave, ciclo);
+  const valorBase = valorInternacionalNoCiclo(chave, ciclo);
+
+  // Valida o voucher (se informado) e calcula o valor final em USD. Voucher
+  // inválido rejeita o checkout antes de abrir sessão no Stripe.
+  let voucher = null;
+  let calculo = { valorOriginal: valorBase, desconto: 0, valorFinal: valorBase };
+  if (req.body?.voucher) {
+    const v = validarVoucher(db, { codigo: req.body.voucher, plano: chave, companyId: entityId });
+    if (!v.ok) return res.status(400).json({ error: v.error });
+    voucher = v.voucher;
+    calculo = calcularVoucher(valorBase, voucher);
+  }
+
   const subId = uid();
-  db.prepare(`INSERT INTO subscriptions (id, companyId, plano, status, valor, valorOriginal, desconto, criadoEm, trialDias, formaPagamento, ciclo, gateway, moeda, atualizadoEm)
-              VALUES (?, ?, ?, 'pendente', ?, ?, 0, ?, ?, 'STRIPE', ?, 'stripe', ?, ?)`)
-    .run(subId, entityId, chave, valor, valor, agora(), trialDias, ciclo, MOEDA_INTERNACIONAL, agora());
+  db.prepare(`INSERT INTO subscriptions (id, companyId, plano, status, valor, valorOriginal, desconto, voucherId, criadoEm, trialDias, formaPagamento, ciclo, gateway, moeda, atualizadoEm)
+              VALUES (?, ?, ?, 'pendente', ?, ?, ?, ?, ?, ?, 'STRIPE', ?, 'stripe', ?, ?)`)
+    .run(subId, entityId, chave, calculo.valorFinal, calculo.valorOriginal, calculo.desconto, voucher?.id || null, agora(), trialDias, ciclo, MOEDA_INTERNACIONAL, agora());
+
+  if (voucher) {
+    db.prepare(`INSERT INTO voucher_redemptions (id, voucherId, companyId, subscriptionId, valorOriginal, desconto, valorFinal, status, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, 'reservado', ?)`)
+      .run(uid(), voucher.id, entityId, subId, calculo.valorOriginal, calculo.desconto, calculo.valorFinal, agora());
+  }
 
   try {
     const embutido = req.body?.embutido === true && !!chavePublicaStripe();
-    const r = await criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo, trialDias, retorno: req.body?.retorno, embutido });
+    const r = await criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo, trialDias, retorno: req.body?.retorno, embutido, valorFinal: voucher ? calculo.valorFinal : null });
     res.json({ ok: true, subscriptionId: subId, url: r.url, clientSecret: r.clientSecret, chavePublica: embutido ? chavePublicaStripe() : null,
-               valor: r.valor, moeda: r.moeda, trialDias });
+               valor: r.valor, moeda: r.moeda, trialDias, desconto: calculo.desconto, voucherAplicado: voucher?.codigo || null });
   } catch (e) {
     db.prepare("UPDATE subscriptions SET status = 'cancelada', falhaMotivo = ?, atualizadoEm = ? WHERE id = ?").run(String(e.message).slice(0, 300), agora(), subId);
+    db.prepare("UPDATE voucher_redemptions SET status = 'cancelado' WHERE subscriptionId = ? AND status = 'reservado'").run(subId);
     console.error("[stripe] checkout:", e.message);
     res.status(e instanceof ErroStripe && e.status === 400 ? 400 : 502).json({ error: "Não foi possível abrir o pagamento internacional. Tente de novo." });
   }

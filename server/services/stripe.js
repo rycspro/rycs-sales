@@ -132,10 +132,12 @@ export async function encerrarCheckoutPendente(sub) {
 // embutido = true: o checkout abre dentro da RYCS (Embedded Checkout). A tela
 // recebe o client_secret e monta o formulário do Stripe num iframe; o cliente
 // não sai da plataforma. Sem embutido, devolve a URL da página do Stripe.
-export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo = CICLOS.MENSAL, trialDias = 0, retorno, embutido = false }) {
+export async function criarCheckoutAssinatura({ empresa, email, subId, chave, ciclo = CICLOS.MENSAL, trialDias = 0, retorno, embutido = false, valorFinal = null }) {
   const plano = planoDe(chave);
-  const valor = valorInternacionalNoCiclo(chave, ciclo);
-  if (!valor) throw new ErroStripe("Plano inválido.", { status: 400 });
+  const valorBase = valorInternacionalNoCiclo(chave, ciclo);
+  if (!valorBase) throw new ErroStripe("Plano inválido.", { status: 400 });
+  // Com voucher aplicado, usa o valor final (já com desconto). Sem voucher, usa o valor normal.
+  const valor = valorFinal != null ? Math.max(0.5, Number(valorFinal)) : valorBase;
   const customer = await garantirClienteStripe(empresa, email);
   // valor já é o total do período (N meses com desconto); a recorrência cobra
   // esse total a cada N meses — ano a ano no anual, semestre a semestre, etc.
