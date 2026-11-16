@@ -10,8 +10,8 @@ const conteudo = {
     heroBadge: "Para empresas",
     heroTitle: "Monte seu time de vendas sem custo fixo",
     heroSub: "Conecte sua empresa a vendedores autônomos qualificados. Pague só por resultado. Campanha criada com IA em menos de 5 minutos.",
-    ctaPrimario: { label: "Criar conta grátis", rota: "/cadastro/empresa" },
-    ctaSecundario: { label: "Entrar na plataforma", rota: "/entrar" },
+    ctaPrimario: { label: "Entrar na plataforma", rota: "/entrar" },
+    ctaSecundario: null,
     stats: [
       { valor: "500+", label: "Empresas ativas" },
       { valor: "98%", label: "Satisfação" },
@@ -36,8 +36,8 @@ const conteudo = {
     heroBadge: "Para vendedores autônomos",
     heroTitle: "Trabalhe pelas melhores campanhas e receba por resultado",
     heroSub: "Acesse campanhas de empresas selecionadas, construa seu histórico e aumente seus ganhos. Sem vínculo, sem burocracia.",
-    ctaPrimario: { label: "Criar conta grátis", rota: "/cadastro/profissional" },
-    ctaSecundario: { label: "Já tenho conta", rota: "/entrar" },
+    ctaPrimario: { label: "Entrar na plataforma", rota: "/entrar" },
+    ctaSecundario: null,
     stats: [
       { valor: "2.000+", label: "Profissionais" },
       { valor: "R$ 4.500", label: "Comissão média/mês" },
@@ -109,8 +109,7 @@ function MobileMenu({ open, onClose, onNav }) {
           ))}
         </nav>
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
-          <button style={st.btnPrimary} onClick={() => { onClose(); onNav("/cadastro/empresa"); }}>Criar conta grátis</button>
-          <button style={st.btnGhost} onClick={() => { onClose(); onNav("/entrar"); }}>Entrar</button>
+          <button style={st.btnPrimary} onClick={() => { onClose(); onNav("/entrar"); }}>Entrar</button>
         </div>
       </div>
     </div>
@@ -240,8 +239,7 @@ export default function LandingPage() {
           </nav>
 
           <div className="lp-nav-links" style={st.navRight}>
-            <button style={st.btnGhost} onClick={() => navegar("/entrar")}>Entrar</button>
-            <button style={st.btnPrimary} onClick={() => navegar(c.ctaPrimario.rota)}>Criar conta grátis</button>
+            <button style={st.btnPrimary} onClick={() => navegar("/entrar")}>Entrar</button>
           </div>
 
           <button className="lp-hamburger" style={st.hamburger} onClick={() => setMenuOpen(true)}>
@@ -283,9 +281,9 @@ export default function LandingPage() {
             {c.ctaPrimario.label}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
-          <button style={st.btnHeroSecondary} onClick={() => navegar(c.ctaSecundario.rota)}>
+          {c.ctaSecundario && <button style={st.btnHeroSecondary} onClick={() => navegar(c.ctaSecundario.rota)}>
             {c.ctaSecundario.label}
-          </button>
+          </button>}
         </div>
 
         {/* Social proof: avatares + texto */}
@@ -381,8 +379,6 @@ export default function LandingPage() {
               <h3 style={st.footerColSubtitle}>Links rápidos</h3>
               <nav style={st.footerNav}>
                 <button style={st.footerNavLink} onClick={() => navegar("/")}>Início</button>
-                <button style={st.footerNavLink} onClick={() => navegar("/cadastro/empresa")}>Cadastro empresa</button>
-                <button style={st.footerNavLink} onClick={() => navegar("/cadastro/profissional")}>Cadastro profissional</button>
                 <button style={st.footerNavLink} onClick={() => navegar("/entrar")}>Entrar na plataforma</button>
               </nav>
             </div>

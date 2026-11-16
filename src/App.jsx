@@ -6,7 +6,6 @@ import Shell from "./components/Shell.jsx";
 import Login from "./components/Login.jsx";
 import LoginPlataforma from "./components/LoginPlataforma.jsx";
 const CadastroProfissional = lazy(() => import("./components/auth/CadastroProfissional.jsx"));
-import EscolhaCadastro from "./components/auth/EscolhaCadastro.jsx";
 import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding, limparConviteOnboarding } from "./lib/rotas.js";
 import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
 import EntradaEmpresa from "./components/auth/EntradaEmpresa.jsx";
@@ -311,7 +310,7 @@ export default function App() {
         {environment === "beta" && <div className="vx-beta-login-badge">AMBIENTE BETA — DADOS FICTÍCIOS</div>}
         {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial beta={environment === "beta"} />
           : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
-          : rota.tipo === "escolha" ? <EscolhaCadastro />
+          : rota.tipo === "escolha" ? <Login onLogin={login} beta={environment === "beta"} />
           : rota.tipo === "cadastro" && rota.role === "vendedor" ? <Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><CadastroProfissional onRegister={registrar} /></Suspense>
           : rota.tipo === "cadastro" && rota.role === "empresa" ? <EntradaEmpresa />
           : rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
