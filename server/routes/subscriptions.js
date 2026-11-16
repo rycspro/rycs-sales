@@ -141,6 +141,19 @@ router.get("/admin/subscriptions", (req, res) => {
   res.json({ linhas, resumo, total: linhas.length });
 });
 
+router.get("/admin/cancellations", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+  const rows = db.prepare(`
+    SELECT s.id, s.companyId, c.nome AS empresa, s.plano, s.motivoCancelamento, s.canceladoEm, s.valor, s.formaPagamento
+    FROM subscriptions s
+    LEFT JOIN companies c ON c.id = s.companyId
+    WHERE s.status = 'cancelada' AND s.motivoCancelamento IS NOT NULL AND s.motivoCancelamento != ''
+    ORDER BY s.canceladoEm DESC
+    LIMIT 100
+  `).all();
+  res.json({ cancelamentos: rows });
+});
+
 router.get("/subscription/access", (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.json({ liberado: true, estado: "ativa" });
@@ -864,6 +877,9 @@ router.delete("/subscription", async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
 
+  const motivo = String(req.body?.motivo || "").trim();
+  if (!motivo) return res.status(400).json({ error: "Informe o motivo do cancelamento.", campo: "motivo" });
+
   const atual = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? AND status IN ('ativa','pendente','trial') ORDER BY criadoEm DESC LIMIT 1").get(entityId);
   if (!atual) return res.status(404).json({ error: "Nenhuma assinatura ativa" });
 
@@ -888,13 +904,21 @@ router.delete("/subscription", async (req, res) => {
     catch (e) { console.warn("[asaas] cancelamento da autorização:", e.message); }
   }
 
+  const agr = agora();
+  const vencimento = atual.proximaCobranca || atual.trialFim || null;
+
   db.transaction(() => {
-    db.prepare("UPDATE subscriptions SET status = 'cancelada' WHERE id = ?").run(atual.id);
+    db.prepare("UPDATE subscriptions SET status = 'cancelada', motivoCancelamento = ?, canceladoEm = ?, atualizadoEm = ? WHERE id = ?").run(motivo, agr, agr, atual.id);
     db.prepare("UPDATE voucher_redemptions SET status = 'cancelado' WHERE subscriptionId = ? AND status = 'reservado'").run(atual.id);
     db.prepare("UPDATE companies SET assinatura = 'free' WHERE id = ?").run(entityId);
   })();
 
-  res.json({ ok: true, message: "Assinatura cancelada. Sua conta voltou ao plano Free." });
+  const fimFormatado = vencimento ? new Date(vencimento).toLocaleDateString("pt-BR") : null;
+  const msg = fimFormatado
+    ? `Assinatura cancelada. Seu plano continua ativo até ${fimFormatado}.`
+    : "Assinatura cancelada. Sua conta voltou ao plano Free.";
+
+  res.json({ ok: true, message: msg, ativoAte: vencimento });
 });
 
 // Chamado pelo webhook do gateway quando uma cobrança de assinatura é paga.

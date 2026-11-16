@@ -40,9 +40,11 @@ export const apiPut = (path, body) =>
     credentials: "include",
   }).then((r) => r.json()).catch(() => null);
 
-export const apiDelete = (path) =>
+export const apiDelete = (path, body) =>
   fetch(`${API_URL}/api${path}`, {
     method: "DELETE",
+    headers: body ? { "Content-Type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
   }).then((r) => r.json()).catch(() => null);
 

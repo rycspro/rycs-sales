@@ -1102,6 +1102,8 @@ adicionarColuna("subscriptions", "asaasAutorizacaoId", "TEXT");
 adicionarColuna("subscriptions", "atualizadoEm", "INTEGER");
 // Ciclo de cobrança: MENSAL (padrão) ou ANUAL (12 meses com desconto).
 adicionarColuna("subscriptions", "ciclo", "TEXT DEFAULT 'MENSAL'");
+adicionarColuna("subscriptions", "motivoCancelamento", "TEXT DEFAULT ''");
+adicionarColuna("subscriptions", "canceladoEm", "INTEGER");
 
 // Lista de contatos por campanha
 db.prepare(`

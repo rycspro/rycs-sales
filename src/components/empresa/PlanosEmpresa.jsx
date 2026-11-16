@@ -33,6 +33,8 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   const [statusPagamento, setStatusPagamento] = useState(null);
   const [pixQr, setPixQr] = useState(null);
   const [vouchersUsados, setVouchersUsados] = useState([]);
+  const [cancelPopup, setCancelPopup] = useState(null); // null | "motivo" | "confirmar"
+  const [cancelMotivo, setCancelMotivo] = useState("");
   const pixPollRef = useRef(null);
 
   useEffect(() => {
@@ -139,8 +141,13 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   };
 
   const cancelar = async () => {
-    const r = await apiDelete("/subscription");
+    if (!cancelMotivo.trim()) return aviso("Informe o motivo do cancelamento.");
+    setProcessando(true);
+    const r = await apiDelete("/subscription", { motivo: cancelMotivo.trim() });
+    setProcessando(false);
     if (r?.error) return aviso(r.error);
+    setCancelPopup(null);
+    setCancelMotivo("");
     await carregar();
     await recarregar?.();
     aviso(r.message);
@@ -150,7 +157,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
   // correto é cancelar (encerra a recorrência no gateway); sem ela, troca direta.
   const usarGratis = async () => {
     const status = atual?.assinatura?.status;
-    if (["ativa", "pendente", "trial", "inadimplente"].includes(status)) return cancelar();
+    if (["ativa", "pendente", "trial", "inadimplente"].includes(status)) { setCancelPopup("motivo"); return; }
     const r = await api("/subscription", { plano: "free", ciclo: CICLOS.MENSAL });
     if (r?.error) return aviso(r.error);
     await carregar();
@@ -196,7 +203,7 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
             />
 
 {["ativa", "pendente", "trial"].includes(atual?.assinatura?.status) && (
-              <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={cancelar}>Cancelar assinatura</button>
+              <button className="vx-btn vx-btn-danger" style={{ marginTop: 14 }} onClick={() => setCancelPopup("motivo")}>Cancelar assinatura</button>
             )}
             {atual?.assinatura?.gateway === "stripe" && ["ativa", "trial", "inadimplente"].includes(atual?.assinatura?.status) && (
               <button className="vx-btn" style={{ marginTop: 14, marginLeft: 8 }} onClick={abrirPortal}>
@@ -513,6 +520,59 @@ export default function PlanosEmpresa({ aviso, recarregar }) {
             </p>
             <button className="vx-btn vx-btn-primary" onClick={() => { setStatusPagamento(null); setSelecionado(null); }}>
               Fechar
+            </button>
+          </div>
+        </div>
+      )}
+      {cancelPopup === "motivo" && (
+        <div className="vx-overlay" style={{ zIndex: 1100 }} onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}>
+          <div className="vx-sheet" style={{ maxWidth: 460, padding: "32px 28px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="vx-row">
+              <h2 style={{ margin: 0, fontSize: 20 }}>Por que deseja cancelar?</h2>
+              <button className="vx-btn vx-btn-ghost" onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}><X size={16} /></button>
+            </div>
+            <p className="vx-mut" style={{ margin: "8px 0 16px", fontSize: 13 }}>
+              Sua opinião nos ajuda a melhorar. Conte o que motivou sua decisão.
+            </p>
+            <textarea
+              value={cancelMotivo}
+              onChange={(e) => setCancelMotivo(e.target.value)}
+              placeholder="Ex: O plano não atende minhas necessidades, estou reduzindo custos..."
+              rows={4}
+              style={{ width: "100%", resize: "vertical", padding: 10, borderRadius: 8, border: "1px solid var(--border)", fontSize: 14, fontFamily: "inherit" }}
+            />
+            <button
+              className="vx-btn vx-btn-danger vx-btn-block"
+              style={{ marginTop: 16 }}
+              disabled={!cancelMotivo.trim()}
+              onClick={() => setCancelPopup("confirmar")}
+            >
+              Continuar com o cancelamento
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cancelPopup === "confirmar" && (
+        <div className="vx-overlay" style={{ zIndex: 1200 }} onClick={() => setCancelPopup("motivo")}>
+          <div className="vx-sheet" style={{ maxWidth: 420, textAlign: "center", padding: "40px 32px" }} onClick={(e) => e.stopPropagation()}>
+            <XCircle size={56} color="var(--danger, #e53e3e)" style={{ marginBottom: 16 }} />
+            <h2 style={{ margin: "0 0 8px", fontSize: 20 }}>Confirmar cancelamento?</h2>
+            <p className="vx-mut" style={{ margin: "0 0 8px" }}>
+              Sua assinatura será cancelada. O plano continua ativo até o vencimento do período já pago.
+            </p>
+            <p className="vx-mut" style={{ margin: "0 0 24px", fontSize: 12 }}>
+              Essa ação não pode ser desfeita.
+            </p>
+            <button
+              className="vx-btn vx-btn-danger vx-btn-block"
+              disabled={processando}
+              onClick={cancelar}
+            >
+              {processando ? <><Loader size={14} className="spin" /> Cancelando...</> : "Sim, cancelar minha assinatura"}
+            </button>
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}>
+              Manter meu plano
             </button>
           </div>
         </div>
