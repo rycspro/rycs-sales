@@ -699,9 +699,8 @@ router.post("/subscription", async (req, res) => {
       const lista = await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=1`);
       pagamento = lista?.data?.[0] || null;
       if (!credito && pagamento?.id) pix = await asaas(`/payments/${pagamento.id}/pixQrCode`);
-      } catch (e) {
-        console.warn("[asaas] QR da assinatura:", e.message);
-      }
+    } catch (e) {
+      console.warn("[asaas] QR da assinatura:", e.message);
     }
 
     // Com trial, a assinatura já nasce liberando acesso: o cartão foi
