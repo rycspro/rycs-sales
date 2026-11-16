@@ -6,29 +6,8 @@ import MolduraAuth from "./MolduraAuth.jsx";
 import { api } from "../../lib/api.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
 import { SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboarding.js";
-
-function formatarCnpj(valor) {
-  const d = valor.replace(/\D/g, "").slice(0, 14);
-  if (d.length <= 2) return d;
-  if (d.length <= 5) return `${d.slice(0,2)}.${d.slice(2)}`;
-  if (d.length <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
-  if (d.length <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
-  return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
-}
-
-function validarCnpj(valor) {
-  const d = valor.replace(/\D/g, "");
-  if (d.length !== 14) return "CNPJ inválido.";
-  if (/^(\d)\1+$/.test(d)) return "CNPJ inválido.";
-  const calc = (n) => {
-    let s = 0, p = n - 7;
-    for (let i = 0; i < n; i++) { s += parseInt(d[i]) * p--; if (p < 2) p = 9; }
-    const r = s % 11;
-    return r < 2 ? 0 : 11 - r;
-  };
-  if (calc(12) !== parseInt(d[12]) || calc(13) !== parseInt(d[13])) return "CNPJ inválido.";
-  return null;
-}
+import { useI18n } from "../../lib/i18n.jsx";
+import { PAISES, paisPadraoPorLocale, moedaDoPais } from "../../../shared/paises.js";
 
 // Página pública de entrada da empresa.
 // A empresa cria a conta por um formulário simples (e-mail, senha, termos) e
@@ -38,10 +17,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function EntradaEmpresa() {
   const id = useId();
+  const { locale } = useI18n();
   const [modo, setModo] = useState("criar"); // criar | link-enviado | recuperar
   const [email, setEmail] = useState("");
   const [nomeEmpresa, setNomeEmpresa] = useState("");
-  const [cnpj, setCnpj] = useState("");
+  const [pais, setPais] = useState(() => paisPadraoPorLocale(locale));
   const [senha, setSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
   const [aceitouTermos, setAceitouTermos] = useState(false);
@@ -54,9 +34,7 @@ export default function EntradaEmpresa() {
     e.preventDefault();
     const novos = {};
     if (!nomeEmpresa.trim()) novos.nomeEmpresa = "Nome da empresa é obrigatório.";
-    // CNPJ é opcional; valida apenas quando preenchido.
-    const errCnpj = cnpj.trim() ? validarCnpj(cnpj) : null;
-    if (errCnpj) novos.cnpj = errCnpj;
+    if (!pais) novos.pais = "Selecione o país da empresa.";
     if (!EMAIL_RE.test(email.trim())) novos.email = "E-mail inválido.";
     const errSenha = validarSenhaEmpresa(senha);
     if (errSenha) novos.senha = errSenha;
@@ -72,7 +50,7 @@ export default function EntradaEmpresa() {
       email: email.trim().toLowerCase(),
       senha,
       nomeEmpresa: nomeEmpresa.trim(),
-      cnpj: cnpj.replace(/\D/g, ""),
+      pais,
     });
     setSalvando(false);
 
@@ -154,15 +132,19 @@ export default function EntradaEmpresa() {
           </div>
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-cnpj`}>CNPJ <span className="vx-mut" style={{ fontWeight: 400 }}>(opcional)</span></label>
-            <input
-              id={`${id}-cnpj`} className="vx-input" type="text" inputMode="numeric" autoComplete="off"
-              placeholder="00.000.000/0000-00" value={cnpj}
-              onChange={(e) => setCnpj(formatarCnpj(e.target.value))}
-              aria-invalid={erros.cnpj ? true : undefined} aria-describedby={erros.cnpj ? `${id}-cnpj-erro` : undefined}
-              style={{ minHeight: 48 }}
-            />
-            {erros.cnpj && <div id={`${id}-cnpj-erro`} className="vx-onb-erro" role="alert">{erros.cnpj}</div>}
+            <label className="vx-label" htmlFor={`${id}-pais`}>País</label>
+            <select
+              id={`${id}-pais`} className="vx-input" value={pais}
+              onChange={(e) => setPais(e.target.value)}
+              aria-invalid={erros.pais ? true : undefined} aria-describedby={erros.pais ? `${id}-pais-erro` : `${id}-pais-dica`}
+              style={{ minHeight: 48, cursor: "pointer" }}
+            >
+              {PAISES.map((p) => (
+                <option key={p.code} value={p.code}>{p.nome} ({p.moeda})</option>
+              ))}
+            </select>
+            <div id={`${id}-pais-dica`} className="vx-onb-dica">Define a moeda dos planos e das campanhas ({moedaDoPais(pais)}).</div>
+            {erros.pais && <div id={`${id}-pais-erro`} className="vx-onb-erro" role="alert">{erros.pais}</div>}
           </div>
 
           <div className="vx-onb-campo">

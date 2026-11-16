@@ -41,7 +41,7 @@ const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
 const CONFIRMAR_EMAIL_EXPIRA_MS = 24 * 60 * 60 * 1000;
 
 onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
-  const { email, senha, nomeEmpresa, cnpj } = req.body || {};
+  const { email, senha, nomeEmpresa, pais } = req.body || {};
   if (!email || !senha) return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
   if (!nomeEmpresa || !String(nomeEmpresa).trim())
     return res.status(400).json({ error: "Nome da empresa é obrigatório.", campo: "nomeEmpresa" });
@@ -53,18 +53,14 @@ onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
   const errSenha = validarSenhaEmpresa(senha);
   if (errSenha) return res.status(400).json({ error: errSenha, campo: "senha" });
 
-  // CNPJ é opcional; quando informado, precisa ter 14 dígitos.
-  const cnpjDigitos = String(cnpj || "").replace(/\D/g, "");
-  if (cnpjDigitos && cnpjDigitos.length !== 14)
-    return res.status(400).json({ error: "CNPJ inválido.", campo: "cnpj" });
+  // País define a moeda em que a empresa opera (planos + campanhas).
+  // Cai no Brasil se vier vazio ou inválido.
+  const { paisPorCode, moedaDoPais } = await import("../../shared/paises.js");
+  const paisCode = paisPorCode(pais)?.code || "BR";
+  const moedaEmpresa = moedaDoPais(paisCode);
 
   const existe = db.prepare("SELECT id FROM users WHERE email = ?").get(emailNorm);
   if (existe) return res.status(409).json({ error: "E-mail já cadastrado.", campo: "email" });
-
-  if (cnpjDigitos) {
-    const cnpjExiste = db.prepare("SELECT id FROM companies WHERE documento = ?").get(cnpjDigitos);
-    if (cnpjExiste) return res.status(409).json({ error: "CNPJ já cadastrado.", campo: "cnpj" });
-  }
 
   const hash = bcrypt.hashSync(senha, 10);
   const userId = uid();
@@ -75,8 +71,8 @@ onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
   const expira = agora() + CONFIRMAR_EMAIL_EXPIRA_MS;
   const t = agora();
 
-  db.prepare(`INSERT INTO companies (id, nome, produto, documento, criadoEm) VALUES (?, ?, '', ?, ?)`)
-    .run(companyId, nomeFinal, cnpjDigitos, t);
+  db.prepare(`INSERT INTO companies (id, nome, produto, documento, pais, moeda, criadoEm) VALUES (?, ?, '', '', ?, ?, ?)`)
+    .run(companyId, nomeFinal, paisCode, moedaEmpresa, t);
   db.prepare(`INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, emailVerificado, emailConfirmToken, emailConfirmExpira, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, 0, ?, ?, ?)`)
     .run(userId, emailNorm, hash, companyId, tokenHash, expira, t);
   criarOnboarding({ companyId, origem: "site", caminho: "livre", acessoConcluido: true });

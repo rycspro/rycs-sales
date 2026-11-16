@@ -1008,6 +1008,7 @@ adicionarColuna("companies", "limiteCredito", "REAL DEFAULT 0");
 // Moeda de operação da empresa (ISO 4217). Travada no primeiro depósito: todo o
 // caixa, reserva, liquidação, repasse e take rate rodam nesta moeda.
 adicionarColuna("companies", "moeda", "TEXT DEFAULT 'BRL'");
+adicionarColuna("companies", "pais", "TEXT DEFAULT 'BR'");
 // Depósito multi-moeda: moeda do aporte, gateway usado e sessão do Stripe.
 adicionarColuna("deposit_requests", "moeda", "TEXT DEFAULT 'BRL'");
 adicionarColuna("deposit_requests", "gateway", "TEXT DEFAULT 'manual'");
