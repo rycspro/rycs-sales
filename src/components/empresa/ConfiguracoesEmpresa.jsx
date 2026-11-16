@@ -49,7 +49,7 @@ const SECOES_NAV = [
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
   { key: "seguranca", label: "Segurança", icon: Lock },
-  { key: "preferencias", label: "País e Idioma", icon: Settings },
+  { key: "preferencias", label: "País e Idioma", icon: Globe },
   { key: "indicar", label: "Indicar", icon: Gift },
 ];
 
