@@ -14,7 +14,8 @@ const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k)
 const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
 const mascaraCartao = (v) => SO_DIGITOS(v).slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 
-export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
+export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
+  const empresaInternacional = !!emp?.moeda && String(emp.moeda).toUpperCase() !== "BRL";
   const [planos, setPlanos] = useState([]);
   const [atual, setAtual] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
@@ -80,7 +81,8 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
     setCiclo(cicloEscolhido);
     setVoucher("");
     setDesconto(null);
-    setForma("");
+    // Empresa internacional (moeda != BRL): só pode pagar via Stripe, já pré-seleciona.
+    setForma(empresaInternacional ? "STRIPE" : "");
     setEmbutido(null);
     setCardSalvoId(null);
     setSalvarCartao(false);
@@ -197,6 +199,7 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
             <PricingPlanos
               plans={planos}
               planoAtualChave={atual?.plano}
+              moeda={empresaInternacional ? "USD" : "BRL"}
               onUsarGratis={usarGratis}
               onContratar={(chave, cicloEscolhido) => {
                 const p = planos.find((x) => x.chave === chave);
@@ -247,19 +250,21 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
               />
             ) : (
               <>
-                {/* Resumo */}
+                {/* Resumo — em USD quando a empresa é internacional */}
                 <div className="vx-checkout-total">
-                  <span>Plano {selecionado.nome} · {cicloLabel}</span><b>{money(baseCiclo)}</b>
+                  <span>Plano {selecionado.nome} · {cicloLabel}</span><b>{empresaInternacional ? usd(precoUsdBruto) : money(baseCiclo)}</b>
                   {ehRecorrenteLongo && (
-                    <><span>Cobrança</span><b>{money(baseCiclo)}{cicloSufixo}</b></>
+                    <><span>Cobrança</span><b>{empresaInternacional ? usd(precoUsdBruto) : money(baseCiclo)}{cicloSufixo}</b></>
                   )}
                   {desconto && (
                     <>
-                      <span>Voucher {desconto.codigo}</span><b>- {money(desconto.desconto)}</b>
-                      {desconto.valorFinal > 0 && desconto.valorFinal < 6 && (
+                      <span>Voucher {desconto.codigo}</span>
+                      <b>- {empresaInternacional ? usd(precoUsdBruto - precoUsd) : money(desconto.desconto)}</b>
+                      {!empresaInternacional && desconto.valorFinal > 0 && desconto.valorFinal < 6 && (
                         <><span>Taxa complementar (mín. gateway)</span><b>+ {money(6 - desconto.valorFinal)}</b></>
                       )}
-                      <span>Total</span><strong>{money(Math.max(desconto.valorFinal, desconto.valorFinal > 0 ? 6 : 0))}</strong>
+                      <span>Total</span>
+                      <strong>{empresaInternacional ? usd(precoUsd) : money(Math.max(desconto.valorFinal, desconto.valorFinal > 0 ? 6 : 0))}</strong>
                     </>
                   )}
                 </div>
@@ -306,7 +311,7 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
                 <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Forma de pagamento</div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                   {[
-                    { id: "nacional", titulo: "Pagamento nacional", sub: "Asaas · R$", icone: <span style={{ fontSize: 24 }} aria-label="Brasil">🇧🇷</span> },
+                    ...(empresaInternacional ? [] : [{ id: "nacional", titulo: "Pagamento nacional", sub: "Asaas · R$", icone: <span style={{ fontSize: 24 }} aria-label="Brasil">🇧🇷</span> }]),
                     ...(stripe?.ativo ? [{ id: "internacional", titulo: "Pagamento internacional", sub: "Stripe · US$", icone: <Globe size={26} strokeWidth={1.8} aria-hidden="true" /> }] : []),
                   ].map(({ id, titulo, sub, icone }) => {
                     const on = origem === id;

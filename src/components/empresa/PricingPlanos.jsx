@@ -19,7 +19,11 @@ const pct = (d) => Math.round(d * 100);
 // Tailwind/shadcn), do bloco de pricing com alternância mensal/semestral/anual,
 // card "Popular" em destaque, preço animado e confete ao escolher um ciclo com
 // desconto.
-export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, planoAtualChave }) {
+export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, planoAtualChave, moeda = "BRL" }) {
+  const ehUSD = String(moeda).toUpperCase() === "USD";
+  const fmtCurrency = ehUSD ? "USD" : "BRL";
+  const fmtLocale = ehUSD ? "en-US" : "pt-BR";
+  const simboloZero = ehUSD ? "$ 0" : "R$ 0";
   const [ciclo, setCiclo] = useState(CICLOS.MENSAL);
   const segRef = useRef(null);
 
@@ -71,7 +75,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
             {free.nome}
           </span>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: noFree ? "#fff" : "var(--ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>R$ 0</span>
+            <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: noFree ? "#fff" : "var(--ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{simboloZero}</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: noFree ? "rgba(255,255,255,.85)" : "var(--muted)" }}>/mês</span>
           </div>
         </div>
@@ -209,8 +213,8 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
                 <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: ehAtual ? "#fff" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>
                   <NumberFlow
                     value={mensalidade}
-                    format={{ style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }}
-                    locales="pt-BR"
+                    format={{ style: "currency", currency: fmtCurrency, minimumFractionDigits: 0, maximumFractionDigits: 0 }}
+                    locales={fmtLocale}
                     transformTiming={{ duration: 500, easing: "ease-out" }}
                     willChange
                   />

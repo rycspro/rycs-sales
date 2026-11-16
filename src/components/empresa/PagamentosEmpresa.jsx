@@ -475,7 +475,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       {secao === "plano" && <>
       {/* ── Planos disponíveis ── */}
       <div style={{ marginBottom: 24 }}>
-        <PlanosEmpresa aviso={aviso} recarregar={recarregar} onCancelar={() => setCancelPopup("motivo")} />
+        <PlanosEmpresa emp={emp} aviso={aviso} recarregar={recarregar} onCancelar={() => setCancelPopup("motivo")} />
       </div>
       {/* ── Visibilidade: destaque da empresa (unificado nesta página) ── */}
       <div style={{ borderTop: "1px solid var(--border)", paddingTop: 24 }}>
