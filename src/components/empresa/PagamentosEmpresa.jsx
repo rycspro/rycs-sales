@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpCircle, Check, ChevronDown, ChevronRight, Clock, CreditCard,
-  Landmark, Lock, Plus, QrCode, Search, TrendingUp, Wallet, X, Zap,
+  Landmark, Loader, Lock, Plus, QrCode, Search, TrendingUp, Wallet, X, XCircle, Zap,
 } from "lucide-react";
 import PlanosEmpresa from "./PlanosEmpresa.jsx";
 import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
 import CentralPagamentosCampanhas from "./CentralPagamentosCampanhas.jsx";
 import HoloCard from "../HoloCard.jsx";
-import { api } from "../../lib/api.js";
+import { api, apiDelete } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { isPremium } from "../../../shared/empresa.js";
 import { PLANOS } from "../../../shared/planos.js";
@@ -400,6 +400,27 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
   const [erro, setErro] = useState("");
   const [filtros, setFiltros] = useState({ dias: "30", tipo: "" });
   const [modalSaldo, setModalSaldo] = useState(false);
+  const [cancelPopup, setCancelPopup] = useState(null);
+  const [cancelMotivo, setCancelMotivo] = useState("");
+  const [cancelando, setCancelando] = useState(false);
+  const [assinaturaStatus, setAssinaturaStatus] = useState(null);
+
+  useEffect(() => {
+    api("/subscription").then((r) => { if (r?.assinatura?.status) setAssinaturaStatus(r.assinatura.status); });
+  }, []);
+
+  const confirmarCancelamento = async () => {
+    if (!cancelMotivo.trim()) return aviso("Informe o motivo do cancelamento.");
+    setCancelando(true);
+    const r = await apiDelete("/subscription", { motivo: cancelMotivo.trim() });
+    setCancelando(false);
+    if (r?.error) return aviso(r.error);
+    setCancelPopup(null);
+    setCancelMotivo("");
+    setAssinaturaStatus(null);
+    await recarregar?.();
+    aviso(r.message);
+  };
 
   const query = useMemo(() => {
     const p = new URLSearchParams();
@@ -454,12 +475,19 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       {secao === "plano" && <>
       {/* ── Planos disponíveis ── */}
       <div style={{ marginBottom: 24 }}>
-        <PlanosEmpresa aviso={aviso} recarregar={recarregar} />
+        <PlanosEmpresa aviso={aviso} recarregar={recarregar} onCancelar={() => setCancelPopup("motivo")} />
       </div>
       {/* ── Visibilidade: destaque da empresa (unificado nesta página) ── */}
       <div style={{ borderTop: "1px solid var(--border)", paddingTop: 24 }}>
         <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />
       </div>
+
+      {["ativa", "pendente", "trial", "inadimplente"].includes(assinaturaStatus) && (
+        <div style={{ borderTop: "1px solid var(--border)", marginTop: 40, paddingTop: 24, paddingBottom: 24, textAlign: "center" }}>
+          <p className="vx-mut" style={{ margin: "0 0 12px", fontSize: 13 }}>Deseja encerrar sua assinatura?</p>
+          <button className="vx-btn vx-btn-danger" onClick={() => setCancelPopup("motivo")}>Cancelar assinatura</button>
+        </div>
+      )}
       </>}
 
       {secao === "campanhas" && (
@@ -630,6 +658,60 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
           aoConfirmar={() => { recarregar?.(); carregar(); }}
           onFechar={() => setModalSaldo(false)}
         />
+      )}
+
+      {cancelPopup === "motivo" && (
+        <div className="vx-overlay" style={{ zIndex: 1100 }} onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}>
+          <div className="vx-sheet" style={{ maxWidth: 460, padding: "32px 28px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="vx-row">
+              <h2 style={{ margin: 0, fontSize: 20 }}>Por que deseja cancelar?</h2>
+              <button className="vx-btn vx-btn-ghost" onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}><X size={16} /></button>
+            </div>
+            <p className="vx-mut" style={{ margin: "8px 0 16px", fontSize: 13 }}>
+              Sua opinião nos ajuda a melhorar. Conte o que motivou sua decisão.
+            </p>
+            <textarea
+              value={cancelMotivo}
+              onChange={(e) => setCancelMotivo(e.target.value)}
+              placeholder="Ex: O plano não atende minhas necessidades, estou reduzindo custos..."
+              rows={4}
+              style={{ width: "100%", resize: "vertical", padding: 10, borderRadius: 8, border: "1px solid var(--border)", fontSize: 14, fontFamily: "inherit" }}
+            />
+            <button
+              className="vx-btn vx-btn-danger vx-btn-block"
+              style={{ marginTop: 16 }}
+              disabled={!cancelMotivo.trim()}
+              onClick={() => setCancelPopup("confirmar")}
+            >
+              Continuar com o cancelamento
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cancelPopup === "confirmar" && (
+        <div className="vx-overlay" style={{ zIndex: 1200 }} onClick={() => setCancelPopup("motivo")}>
+          <div className="vx-sheet" style={{ maxWidth: 420, textAlign: "center", padding: "40px 32px" }} onClick={(e) => e.stopPropagation()}>
+            <XCircle size={56} color="var(--danger, #e53e3e)" style={{ marginBottom: 16 }} />
+            <h2 style={{ margin: "0 0 8px", fontSize: 20 }}>Confirmar cancelamento?</h2>
+            <p className="vx-mut" style={{ margin: "0 0 8px" }}>
+              Sua assinatura será cancelada. O plano continua ativo até o vencimento do período já pago.
+            </p>
+            <p className="vx-mut" style={{ margin: "0 0 24px", fontSize: 12 }}>
+              Essa ação não pode ser desfeita.
+            </p>
+            <button
+              className="vx-btn vx-btn-danger vx-btn-block"
+              disabled={cancelando}
+              onClick={confirmarCancelamento}
+            >
+              {cancelando ? <><Loader size={14} className="spin" /> Cancelando...</> : "Sim, cancelar minha assinatura"}
+            </button>
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}>
+              Manter meu plano
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
