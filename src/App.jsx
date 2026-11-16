@@ -162,23 +162,14 @@ export default function App() {
   useEffect(() => {
     let vivo = true;
     (async () => {
-      const p = window.location.pathname.replace(/\/+$/, "").toLowerCase();
-      // Quem chega pelo "Entrar" da página de vendas (rycs.pro) ou pela URL de
-      // login deve ver o fluxo de login, não ser jogado no onboarding por uma
-      // sessão antiga. Visitas diretas/bookmarks ao app continuam retomando.
-      let veioDaVenda = false;
-      try {
-        const ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "";
-        veioDaVenda = ref === "rycs.pro";
-      } catch { /* referrer ausente */ }
-      if (p === "/entrar" || p === "/login" || ((p === "" || p === "/") && veioDaVenda)) {
-        await api("/auth/logout", {});
-        if (vivo) setLoaded(true);
-        return;
-      }
       try {
         const me = await api("/auth/me");
         if (vivo && me?.id) {
+          // Sessão válida em URL de login: redireciona para o dashboard.
+          const p = window.location.pathname.replace(/\/+$/, "").toLowerCase();
+          if (p === "/entrar" || p === "/login") {
+            window.history.replaceState({}, "", "/");
+          }
           setUser(me);
           userRef.current = me;
           if (vivo) setLoaded(true);
@@ -202,16 +193,6 @@ export default function App() {
     const t = setTimeout(() => setToast(""), 8000);
     return () => clearTimeout(t);
   }, [toast]);
-
-  // Navegar por vontade própria para /entrar ou /login encerra a sessão atual:
-  // o usuário pediu a tela de login, não o onboarding onde a sessão o prende.
-  useEffect(() => {
-    if (!user) return;
-    if (/^\/(entrar|login)\/?$/i.test(window.location.pathname)) {
-      api("/auth/logout", {}).catch(() => {});
-      setUser(null); setOnb(null); setDb(seed());
-    }
-  }, [rota, user]);
 
   // { silencioso } é para telas que mostram o erro no próprio campo.
   // Usado após confirmação de e-mail: o cookie já foi setado pelo servidor.
