@@ -697,26 +697,43 @@ router.post("/subscription", async (req, res) => {
       }
     }
 
+    // Cartão de crédito: o Asaas cobra de forma síncrona. Verificar se o
+    // pagamento já foi confirmado antes de responder — ativa na hora em vez
+    // de depender do webhook (que pode atrasar).
+    let jaPago = false;
+    if (credito && statusInicial === "pendente") {
+      try {
+        const lista = await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=5`);
+        const pgtos = lista?.data || [];
+        const confirmado = pgtos.find((p) => ["RECEIVED", "CONFIRMED"].includes(p.status));
+        if (confirmado) {
+          ativarAssinatura(cobranca.id);
+          jaPago = true;
+        }
+      } catch (e) { console.warn("[asaas] verificação pós-checkout:", e.message); }
+    }
+
     const onboarding = doOnboarding ? concluirEtapaOnboarding(entityId, "plano") : null;
 
-    // O plano só passa a valer no primeiro pagamento confirmado — o webhook
-    // é quem ativa. Liberar antes daria acesso sem receber.
     res.json({
       onboardingConcluido: !!onboarding,
       ok: true, subscriptionId: subId, asaasId: cobranca.id, ...calculo,
       taxaComplementar, valorCobrado: valorAsaas,
       pixCopiaECola:pix?.payload||null, pixQrCodeBase64:pix?.encodedImage||null,
       invoiceUrl: pagamento?.invoiceUrl||cobranca.invoiceUrl||null,
-      status: statusInicial,
+      status: jaPago ? "ativa" : statusInicial,
+      jaPago,
       formaPagamento: forma,
       trialDias,
       trialFim,
       primeiraCobranca: vencimento.getTime(),
       cartaoFinal: cartaoInfo.creditCardNumber || null,
       cartaoBandeira: cartaoInfo.creditCardBrand || null,
-      message: trialDias > 0
-        ? `Conta ativada. Seu período gratuito termina em ${vencimento.toLocaleDateString("pt-BR")} e a cobrança de R$ ${calculo.valorFinal.toFixed(2).replace(".", ",")} acontece automaticamente nessa data.`
-        : "Assinatura criada. O plano é liberado assim que o primeiro pagamento for confirmado.",
+      message: jaPago
+        ? `Plano ${planoDe(chave).nome} ativado!`
+        : trialDias > 0
+          ? `Conta ativada. Seu período gratuito termina em ${vencimento.toLocaleDateString("pt-BR")} e a cobrança de R$ ${calculo.valorFinal.toFixed(2).replace(".", ",")} acontece automaticamente nessa data.`
+          : "Assinatura registrada. A cobrança será realizada na data do vencimento.",
     });
   } catch (err) {
     console.error("[asaas] assinatura:", err.message, err.corpo || "");
