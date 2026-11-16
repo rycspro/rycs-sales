@@ -259,30 +259,30 @@ function InlinePaisSelect({ label, value, onChange }) {
   );
 }
 
-// ── Carteiras arquivadas (saldos em outras moedas após troca de país) ──
-function CarteirasArquivadas({ companyId }) {
+// ── Gavetas de moedas (uma por moeda, a ativa bate com companies.moeda) ──
+function CarteirasArquivadas({ companyId, moedaAtiva }) {
   const [dados, setDados] = useState(null);
-  useEffect(() => { api(`/companies/${companyId}/wallets`).then(setDados); }, [companyId]);
-  const arquivadas = dados?.arquivadas || [];
-  if (!arquivadas.length) return null;
+  useEffect(() => { api(`/companies/${companyId}/wallets`).then(setDados); }, [companyId, moedaAtiva]);
+  const outras = dados?.outras || [];
+  if (!outras.length) return null;
   const fmt = (moeda, valor) => {
-    try { return new Intl.NumberFormat("pt-BR", { style: "currency", currency: moeda }).format(Number(valor) || 0); }
+    try { return new Intl.NumberFormat(moeda === "BRL" ? "pt-BR" : "en-US", { style: "currency", currency: moeda }).format(Number(valor) || 0); }
     catch { return `${moeda} ${(Number(valor) || 0).toFixed(2)}`; }
   };
   return (
     <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px dashed var(--border)" }}>
       <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 10 }}>
-        Carteiras arquivadas em outras moedas
+        Outras gavetas de moeda
       </div>
       <div style={{ display: "grid", gap: 8 }}>
-        {arquivadas.map((w) => (
+        {outras.map((w) => (
           <div key={w.id} style={{
             border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px",
             background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap",
           }}>
             <div>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{w.moeda}</div>
-              <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>Arquivada em {new Date(w.atualizadoEm || w.criadoEm).toLocaleDateString("pt-BR")}</div>
+              <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>Criada em {new Date(w.criadoEm).toLocaleDateString("pt-BR")}</div>
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{fmt(w.moeda, w.saldo)}</div>
@@ -292,7 +292,7 @@ function CarteirasArquivadas({ companyId }) {
         ))}
       </div>
       <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "10px 2px 0", lineHeight: 1.5 }}>
-        Carteiras arquivadas são somente de leitura. Entre em contato com o suporte para solicitar devolução ou conversão do saldo.
+        Para operar numa dessas gavetas, troque a moeda acima — o saldo volta a ficar disponível para campanhas e planos.
       </p>
     </div>
   );
@@ -481,16 +481,16 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
       }
       return aviso(r?.error || "Não foi possível salvar.");
     }
-    // Atualiza local state. Quando a moeda muda, o backend arquiva o saldo
-    // e zera o caixa — reflete isso localmente para o UI não mostrar valor
-    // antigo em moeda nova (ex: "MXN 1.500,00" que era BRL).
+    // Atualiza local state. Quando a moeda muda, o backend troca a gaveta
+    // (guarda a atual na moeda antiga, carrega a gaveta da moeda nova) — o
+    // saldo no state local pode estar desatualizado, então chama recarregar
+    // para puxar o valor da gaveta certa.
     up((d) => ({
       companies: d.companies.map((c) =>
-        c.id === emp.id
-          ? { ...c, ...payload, ...(trocouMoeda ? { saldo: 0, saldoReservado: 0, totalAportado: 0 } : {}) }
-          : c
+        c.id === emp.id ? { ...c, ...payload } : c
       ),
     }));
+    if (trocouMoeda) recarregar?.();
     setChanged(false);
     setSavedOk(true);
     setTimeout(() => setSavedOk(false), 3500);
@@ -694,7 +694,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
               Moeda de operação: <b style={{ color: "var(--ink)" }}>{form.moeda || moedaDoPais(form.pais || "BR")}</b>
             </div>
           </div>
-          <CarteirasArquivadas companyId={emp.id} />
+          <CarteirasArquivadas companyId={emp.id} moedaAtiva={form.moeda || "BRL"} />
         </Block>
       </>
     ),

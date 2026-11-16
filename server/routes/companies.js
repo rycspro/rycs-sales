@@ -36,27 +36,40 @@ router.patch("/companies/:id", (req, res) => {
   const sets = [];
   const vals = [];
 
-  // Troca de moeda: a carteira atual é arquivada (fica visível, view-only)
-  // e nasce uma nova carteira em branco na nova moeda. Dois caixas separados.
+  // Troca de moeda: funciona como "gavetas" — cada moeda tem sua carteira
+  // ativa. Trocar a moeda só muda qual gaveta está em uso. Guarda a atual
+  // na gaveta da moeda antiga e carrega a gaveta da moeda nova (ou cria vazia).
   if (role === "empresa" && fields.moeda !== undefined) {
     const atual = db.prepare("SELECT moeda, saldo, saldoReservado, totalAportado FROM companies WHERE id = ?").get(id);
     const moedaAntiga = atual?.moeda || "BRL";
     const moedaNova = String(fields.moeda).toUpperCase();
     if (moedaAntiga !== moedaNova) {
-      const saldo = Number(atual?.saldo) || 0;
-      const reservado = Number(atual?.saldoReservado) || 0;
-      const totalAportado = Number(atual?.totalAportado) || 0;
-      const temMovimento = saldo > 0 || reservado > 0 || totalAportado > 0;
+      const saldoAtual = Number(atual?.saldo) || 0;
+      const reservadoAtual = Number(atual?.saldoReservado) || 0;
+      const totalAportadoAtual = Number(atual?.totalAportado) || 0;
       const t = agora();
       db.transaction(() => {
-        if (temMovimento) {
-          // Arquiva a carteira atual (snapshot) para a empresa ainda ver o saldo.
+        // 1) Guarda o que está em uso agora na gaveta da moeda antiga.
+        const gavetaAntiga = db.prepare("SELECT id FROM company_wallets WHERE companyId = ? AND moeda = ?").get(id, moedaAntiga);
+        if (gavetaAntiga) {
+          db.prepare("UPDATE company_wallets SET saldo = ?, reservado = ?, totalAportado = ?, status = 'ativa', atualizadoEm = ? WHERE id = ?")
+            .run(saldoAtual, reservadoAtual, totalAportadoAtual, t, gavetaAntiga.id);
+        } else {
           db.prepare(`INSERT INTO company_wallets (id, companyId, moeda, saldo, reservado, totalAportado, status, criadoEm, atualizadoEm)
-            VALUES (?, ?, ?, ?, ?, ?, 'arquivada', ?, ?)`)
-            .run(uid(), id, moedaAntiga, saldo, reservado, totalAportado, t, t);
+            VALUES (?, ?, ?, ?, ?, ?, 'ativa', ?, ?)`)
+            .run(uid(), id, moedaAntiga, saldoAtual, reservadoAtual, totalAportadoAtual, t, t);
         }
-        // Zera o caixa principal — a partir de agora, opera na moeda nova.
-        db.prepare("UPDATE companies SET saldo = 0, saldoReservado = 0, totalAportado = 0 WHERE id = ?").run(id);
+        // 2) Carrega a gaveta da moeda nova (se não existir, cria vazia).
+        const gavetaNova = db.prepare("SELECT saldo, reservado, totalAportado FROM company_wallets WHERE companyId = ? AND moeda = ?").get(id, moedaNova);
+        if (gavetaNova) {
+          db.prepare("UPDATE companies SET saldo = ?, saldoReservado = ?, totalAportado = ? WHERE id = ?")
+            .run(gavetaNova.saldo || 0, gavetaNova.reservado || 0, gavetaNova.totalAportado || 0, id);
+        } else {
+          db.prepare(`INSERT INTO company_wallets (id, companyId, moeda, saldo, reservado, totalAportado, status, criadoEm, atualizadoEm)
+            VALUES (?, ?, ?, 0, 0, 0, 'ativa', ?, ?)`)
+            .run(uid(), id, moedaNova, t, t);
+          db.prepare("UPDATE companies SET saldo = 0, saldoReservado = 0, totalAportado = 0 WHERE id = ?").run(id);
+        }
       })();
     }
   }
@@ -91,20 +104,27 @@ router.post("/companies/:id/cnpj/extract", async (req,res)=>{
 // Junta três fontes que sozinhas não dizem nada: o cadastro (o que ela
 // declara), as campanhas (o que ela realmente busca) e as submissões (como
 // ela trata quem entrega).
-// Carteiras arquivadas em outras moedas (sobram quando a empresa troca o país).
+// Gavetas da empresa — uma por moeda. A moeda em uso bate com companies.moeda
+// e seus valores batem com companies.saldo/saldoReservado/totalAportado.
 router.get("/companies/:id/wallets", (req, res) => {
   const { id } = req.params;
   const { role, entityId } = req.user;
   if (role === "empresa" && entityId !== id) return res.status(403).json({ error: "Sem permissão" });
   if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
-  const arquivadas = db.prepare(
-    "SELECT id, moeda, saldo, reservado, totalAportado, criadoEm, atualizadoEm FROM company_wallets WHERE companyId = ? AND status = 'arquivada' ORDER BY criadoEm DESC"
-  ).all(id);
   const empresa = db.prepare("SELECT moeda, saldo, saldoReservado AS reservado, totalAportado FROM companies WHERE id = ?").get(id);
-  res.json({
-    ativa: empresa ? { moeda: empresa.moeda || "BRL", saldo: empresa.saldo || 0, reservado: empresa.reservado || 0, totalAportado: empresa.totalAportado || 0 } : null,
-    arquivadas,
-  });
+  const moedaAtiva = empresa?.moeda || "BRL";
+
+  // Normaliza qualquer wallet antiga com status='arquivada' para 'ativa'.
+  db.prepare("UPDATE company_wallets SET status = 'ativa' WHERE companyId = ? AND status = 'arquivada'").run(id);
+
+  const gavetas = db.prepare(
+    "SELECT id, moeda, saldo, reservado, totalAportado, criadoEm, atualizadoEm FROM company_wallets WHERE companyId = ? ORDER BY criadoEm ASC"
+  ).all(id);
+
+  // Monta a lista final: a gaveta em uso vem de companies; as outras vêm da tabela.
+  const emUso = { moeda: moedaAtiva, saldo: empresa?.saldo || 0, reservado: empresa?.reservado || 0, totalAportado: empresa?.totalAportado || 0, emUso: true };
+  const outras = gavetas.filter((g) => g.moeda !== moedaAtiva).map((g) => ({ ...g, emUso: false }));
+  res.json({ emUso, outras, todas: [emUso, ...outras] });
 });
 
 router.get("/companies/:id/dossie", async (req, res) => {
