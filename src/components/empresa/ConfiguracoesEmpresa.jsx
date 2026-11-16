@@ -460,20 +460,37 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     payload.notifCandidaturas = form.notifCandidaturas;
     payload.notifFinanceiro = form.notifFinanceiro;
     payload.notifRelatorios = form.notifRelatorios;
-    const r = await apiPatch(`/companies/${emp.id}`, payload);
-    setSalvando(false);
-    if (!r || r.error) return aviso(r?.error || "Não foi possível salvar.");
-    up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, ...payload } : c) }));
-    // Troca de moeda: atualiza a moeda da UI imediatamente, sem precisar reload.
-    if (payload.moeda && payload.moeda !== emp.moeda) {
+    const trocouMoeda = payload.moeda && payload.moeda !== emp.moeda;
+    // Atualiza a moeda da UI ANTES do await — assim ao renderizar o toast
+    // e qualquer re-render imediato já usa o formato novo.
+    if (trocouMoeda) {
       try {
         const { setMoedaUi } = await import("../../lib/utils.js");
         setMoedaUi(payload.moeda);
       } catch { /* ignore */ }
-      // Recarrega o state completo para que campanhas, pagamentos e demais telas
-      // peguem a nova moeda em todas as chamadas que leem emp.moeda.
-      recarregar?.();
     }
+    const r = await apiPatch(`/companies/${emp.id}`, payload);
+    setSalvando(false);
+    if (!r || r.error) {
+      // Rollback do setMoedaUi se o save falhar.
+      if (trocouMoeda) {
+        try {
+          const { setMoedaUi } = await import("../../lib/utils.js");
+          setMoedaUi(emp.moeda || "BRL");
+        } catch { /* ignore */ }
+      }
+      return aviso(r?.error || "Não foi possível salvar.");
+    }
+    // Atualiza local state. Quando a moeda muda, o backend arquiva o saldo
+    // e zera o caixa — reflete isso localmente para o UI não mostrar valor
+    // antigo em moeda nova (ex: "MXN 1.500,00" que era BRL).
+    up((d) => ({
+      companies: d.companies.map((c) =>
+        c.id === emp.id
+          ? { ...c, ...payload, ...(trocouMoeda ? { saldo: 0, saldoReservado: 0, totalAportado: 0 } : {}) }
+          : c
+      ),
+    }));
     setChanged(false);
     setSavedOk(true);
     setTimeout(() => setSavedOk(false), 3500);
