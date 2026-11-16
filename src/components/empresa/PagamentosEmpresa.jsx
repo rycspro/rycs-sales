@@ -482,7 +482,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
         <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />
       </div>
 
-      {["ativa", "pendente", "trial", "inadimplente"].includes(assinaturaStatus) && (
+      {(temAssinatura || ["ativa", "pendente", "trial", "inadimplente"].includes(assinaturaStatus)) && (
         <div style={{ borderTop: "1px solid var(--border)", marginTop: 40, paddingTop: 24, paddingBottom: 24, textAlign: "center" }}>
           <p className="vx-mut" style={{ margin: "0 0 12px", fontSize: 13 }}>Deseja encerrar sua assinatura?</p>
           <button className="vx-btn vx-btn-danger" onClick={() => setCancelPopup("motivo")}>Cancelar assinatura</button>
