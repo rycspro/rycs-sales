@@ -50,7 +50,6 @@ const SECOES_NAV = [
   { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
   { key: "seguranca", label: "Segurança", icon: Lock },
   { key: "preferencias", label: "Preferências", icon: Settings },
-  { key: "idiomas", label: "Idiomas", icon: Globe },
   { key: "indicar", label: "Indicar", icon: Gift },
 ];
 
@@ -512,23 +511,6 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
               {/* Coluna 1: Dados cadastrais */}
               <div>
                 <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>Dados cadastrais</div>
-                <InlinePaisSelect
-                  label="País"
-                  value={form.pais || "BR"}
-                  onChange={(novoCode) => {
-                    const novoPais = paisPorCode(novoCode);
-                    if (!novoPais) return;
-                    const moedaAtual = form.moeda || "BRL";
-                    if (novoPais.moeda !== moedaAtual) {
-                      const ok = window.confirm(
-                        `Trocar o país para ${novoPais.nome} também mudará a moeda de operação de ${moedaAtual} para ${novoPais.moeda}. Isso afeta os planos e as campanhas. Deseja continuar?`
-                      );
-                      if (!ok) return;
-                    }
-                    setForm((f) => ({ ...f, pais: novoCode, moeda: novoPais.moeda }));
-                    setChanged(true); setSavedOk(false);
-                  }}
-                />
                 <InlineField label="Razão social" value={form.razaoSocial} onChange={set("razaoSocial")} placeholder="Razão social completa" />
                 <InlineField label="CNPJ / CPF" value={mascararDocumento(form.documento)} onChange={v => set("documento")(mascararDocumento(v))} placeholder="00.000.000/0000-00" />
               </div>
@@ -596,20 +578,9 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
     preferencias: (
       <>
-        <PgHead title="Preferências" description="Configurações de interface e experiência." />
-        <Block>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", color: "var(--muted)" }}>
-            <Globe size={18} strokeWidth={1.5} />
-            <span style={{ fontSize: 13.5 }}>Preferências adicionais estarão disponíveis em breve.</span>
-          </div>
-        </Block>
-      </>
-    ),
+        <PgHead title="Preferências" description="Idioma da interface e país de origem." />
 
-    idiomas: (
-      <>
-        <PgHead title="Idiomas" description="Escolha o idioma da interface do sistema." />
-        <Block>
+        <Block title="Idioma" description="Define o idioma da interface do sistema. A escolha fica salva neste navegador.">
           <div style={{ display: "grid", gap: 8 }}>
             {IDIOMAS.map((i) => {
               const ativo = idioma === i.code;
@@ -631,9 +602,40 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
               );
             })}
           </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", margin: "12px 2px 0", lineHeight: 1.6 }}>
-            A escolha fica salva neste navegador e define o idioma da interface.
-          </p>
+        </Block>
+
+        <Block title="País de origem" description="Define a moeda usada nos planos e nas campanhas (cobrança via Stripe quando fora do Brasil).">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <select
+              value={form.pais || "BR"}
+              onChange={(e) => {
+                const novoCode = e.target.value;
+                const novoPais = paisPorCode(novoCode);
+                if (!novoPais) return;
+                const moedaAtual = form.moeda || "BRL";
+                if (novoPais.moeda !== moedaAtual) {
+                  const ok = window.confirm(
+                    `Trocar o país para ${novoPais.nome} também mudará a moeda de operação de ${moedaAtual} para ${novoPais.moeda}. Isso afeta os planos e as campanhas. Deseja continuar?`
+                  );
+                  if (!ok) return;
+                }
+                setForm((f) => ({ ...f, pais: novoCode, moeda: novoPais.moeda }));
+                setChanged(true); setSavedOk(false);
+              }}
+              style={{
+                width: "100%", fontSize: 14, fontFamily: "inherit", minHeight: 44,
+                border: "1.5px solid var(--border)", borderRadius: 10, padding: "8px 12px",
+                background: "var(--surface)", color: "var(--ink)", cursor: "pointer",
+              }}
+            >
+              {PAISES.map((p) => (
+                <option key={p.code} value={p.code}>{p.nome} ({p.moeda})</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 12.5, color: "var(--muted)" }}>
+              Moeda de operação: <b style={{ color: "var(--ink)" }}>{form.moeda || moedaDoPais(form.pais || "BR")}</b>
+            </div>
+          </div>
         </Block>
       </>
     ),
@@ -641,7 +643,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     indicar: <Indicacoes aviso={aviso} />,
   };
 
-  const showSalvar = !["seguranca", "preferencias", "idiomas", "indicar"].includes(secao);
+  const showSalvar = !["seguranca", "indicar"].includes(secao);
 
   // ── Layout ────────────────────────────────────────────────────────
 
