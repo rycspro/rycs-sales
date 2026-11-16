@@ -221,6 +221,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
         if (ordenar.campo === "score") return Number(p.scoreTriagem ?? 0);
         if (ordenar.campo === "compatibilidade") return Number(fitCultural(p).percentual ?? 0);
         if (ordenar.campo === "idade") return calcularIdade(p.dataNascimento) ?? -1;
+        if (ordenar.campo === "recente") return new Date(p.criadoEm || 0).getTime();
         return 0;
       };
       const sinal = ordenar.direcao === "asc" ? 1 : -1;
@@ -366,7 +367,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                 <div>
                   <span className="vx-label">Classificar por</span>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 7 }}>
-                    {[["score", "Score"], ["compatibilidade", "Compatibilidade"], ["idade", "Idade"]].map(([campo, label]) => {
+                    {[["score", "Score"], ["compatibilidade", "Compatibilidade"], ["idade", "Idade"], ["recente", "Cadastro recente"]].map(([campo, label]) => {
                       const on = ordenar.campo === campo;
                       return (
                         <button key={campo} type="button"
