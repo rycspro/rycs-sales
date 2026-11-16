@@ -356,12 +356,26 @@ router.post("/admin/subscriptions/:companyId/secret-trial", (req, res) => {
   });
 });
 
-router.get("/subscription", (req, res) => {
+router.get("/subscription", async (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
 
+  let atual = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? ORDER BY criadoEm DESC LIMIT 1").get(entityId);
+
+  // Auto-ativar: se a assinatura está pendente e o Asaas já confirmou o
+  // pagamento, ativa agora (cobre webhook atrasado ou perdido).
+  if (atual && atual.status === "pendente" && atual.asaasId && asaasAtivo()) {
+    try {
+      const lista = await asaas(`/payments?subscription=${encodeURIComponent(atual.asaasId)}&limit=5`);
+      const pgtos = lista?.data || [];
+      if (pgtos.some((p) => ["RECEIVED", "CONFIRMED"].includes(p.status))) {
+        ativarAssinatura(atual.asaasId);
+        atual = db.prepare("SELECT * FROM subscriptions WHERE id = ?").get(atual.id);
+      }
+    } catch (e) { console.warn("[subscription] auto-ativar:", e.message); }
+  }
+
   const empresa = db.prepare("SELECT assinatura FROM companies WHERE id = ?").get(entityId);
-  const atual = db.prepare("SELECT * FROM subscriptions WHERE companyId = ? ORDER BY criadoEm DESC LIMIT 1").get(entityId);
   const chave = empresa?.assinatura || "free";
 
   res.json({ plano: chave, detalhes: { chave, ...planoDe(chave) }, assinatura: atual || null });
