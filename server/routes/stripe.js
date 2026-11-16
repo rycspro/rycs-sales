@@ -88,14 +88,25 @@ router.post("/subscription/stripe", soEmpresa, async (req, res) => {
   const valorBase = valorInternacionalNoCiclo(chave, ciclo);
 
   // Valida o voucher (se informado) e calcula o valor final em USD. Voucher
-  // inválido rejeita o checkout antes de abrir sessão no Stripe.
+  // inválido rejeita o checkout antes de abrir sessão no Stripe. Para voucher
+  // de valor fixo (em BRL), converte para o mesmo % de desconto aplicado em
+  // USD — senão R$ 50 virariam US$ 50, que é bem diferente.
   let voucher = null;
   let calculo = { valorOriginal: valorBase, desconto: 0, valorFinal: valorBase };
   if (req.body?.voucher) {
     const v = validarVoucher(db, { codigo: req.body.voucher, plano: chave, companyId: entityId });
     if (!v.ok) return res.status(400).json({ error: v.error });
     voucher = v.voucher;
-    calculo = calcularVoucher(valorBase, voucher);
+    if (voucher.tipo === "percentual") {
+      calculo = calcularVoucher(valorBase, voucher);
+    } else {
+      // Valor fixo em BRL: converter para % sobre o preço em BRL e aplicar no USD.
+      const { valorCobradoNoCiclo } = await import("../../shared/planos.js");
+      const precoBrl = valorCobradoNoCiclo(chave, ciclo);
+      const pct = precoBrl > 0 ? Math.min(1, (Number(voucher.valor) || 0) / precoBrl) : 0;
+      const desconto = Math.round(valorBase * pct * 100) / 100;
+      calculo = { valorOriginal: valorBase, desconto, valorFinal: Math.max(0.5, Math.round((valorBase - desconto) * 100) / 100) };
+    }
   }
 
   const subId = uid();

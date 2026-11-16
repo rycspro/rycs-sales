@@ -175,7 +175,13 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
   const precoFinalBruto = desconto?.valorFinal ?? baseCiclo;
   const precoFinal = precoFinalBruto > 0 ? Math.max(precoFinalBruto, 6) : precoFinalBruto;
   const usdPlano = selecionado && stripe?.planos?.find((x) => x.chave === selecionado.chave);
-  const precoUsd = usdPlano ? ({ MENSAL: usdPlano.mensal, SEMESTRAL: usdPlano.semestral, ANUAL: usdPlano.anual }[ciclo] ?? usdPlano.mensal) : 0;
+  const precoUsdBruto = usdPlano ? ({ MENSAL: usdPlano.mensal, SEMESTRAL: usdPlano.semestral, ANUAL: usdPlano.anual }[ciclo] ?? usdPlano.mensal) : 0;
+  // Aplica o mesmo percentual de desconto do voucher ao preço em USD; respeita
+  // o mínimo cobrável do Stripe ($0.50).
+  const percentualDesconto = desconto?.valorOriginal > 0 ? desconto.desconto / desconto.valorOriginal : 0;
+  const precoUsd = precoUsdBruto > 0 && percentualDesconto > 0
+    ? Math.max(0.5, Math.round(precoUsdBruto * (1 - percentualDesconto) * 100) / 100)
+    : precoUsdBruto;
   const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
   return (
