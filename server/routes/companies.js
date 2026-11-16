@@ -36,13 +36,28 @@ router.patch("/companies/:id", (req, res) => {
   const sets = [];
   const vals = [];
 
-  // Troca de país/moeda só é permitida quando a empresa ainda não tem saldo
-  // em caixa nem assinatura paga ativa — caso contrário, mudar a moeda
-  // deixaria valores inconsistentes entre caixa, campanhas e cobrança.
-  if (role === "empresa" && (fields.pais !== undefined || fields.moeda !== undefined)) {
-    const atual = db.prepare("SELECT saldo, totalAportado, assinatura FROM companies WHERE id = ?").get(id);
-    if (atual && (Number(atual.saldo) > 0 || Number(atual.totalAportado) > 0)) {
-      return res.status(409).json({ error: "Moeda travada: já existem aportes nesta conta. Para trocar o país, zere o saldo antes." });
+  // Troca de moeda: a carteira atual é arquivada (fica visível, view-only)
+  // e nasce uma nova carteira em branco na nova moeda. Dois caixas separados.
+  if (role === "empresa" && fields.moeda !== undefined) {
+    const atual = db.prepare("SELECT moeda, saldo, saldoReservado, totalAportado FROM companies WHERE id = ?").get(id);
+    const moedaAntiga = atual?.moeda || "BRL";
+    const moedaNova = String(fields.moeda).toUpperCase();
+    if (moedaAntiga !== moedaNova) {
+      const saldo = Number(atual?.saldo) || 0;
+      const reservado = Number(atual?.saldoReservado) || 0;
+      const totalAportado = Number(atual?.totalAportado) || 0;
+      const temMovimento = saldo > 0 || reservado > 0 || totalAportado > 0;
+      const t = agora();
+      db.transaction(() => {
+        if (temMovimento) {
+          // Arquiva a carteira atual (snapshot) para a empresa ainda ver o saldo.
+          db.prepare(`INSERT INTO company_wallets (id, companyId, moeda, saldo, reservado, totalAportado, status, criadoEm, atualizadoEm)
+            VALUES (?, ?, ?, ?, ?, ?, 'arquivada', ?, ?)`)
+            .run(uid(), id, moedaAntiga, saldo, reservado, totalAportado, t, t);
+        }
+        // Zera o caixa principal — a partir de agora, opera na moeda nova.
+        db.prepare("UPDATE companies SET saldo = 0, saldoReservado = 0, totalAportado = 0 WHERE id = ?").run(id);
+      })();
     }
   }
 
@@ -76,6 +91,22 @@ router.post("/companies/:id/cnpj/extract", async (req,res)=>{
 // Junta três fontes que sozinhas não dizem nada: o cadastro (o que ela
 // declara), as campanhas (o que ela realmente busca) e as submissões (como
 // ela trata quem entrega).
+// Carteiras arquivadas em outras moedas (sobram quando a empresa troca o país).
+router.get("/companies/:id/wallets", (req, res) => {
+  const { id } = req.params;
+  const { role, entityId } = req.user;
+  if (role === "empresa" && entityId !== id) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const arquivadas = db.prepare(
+    "SELECT id, moeda, saldo, reservado, totalAportado, criadoEm, atualizadoEm FROM company_wallets WHERE companyId = ? AND status = 'arquivada' ORDER BY criadoEm DESC"
+  ).all(id);
+  const empresa = db.prepare("SELECT moeda, saldo, saldoReservado AS reservado, totalAportado FROM companies WHERE id = ?").get(id);
+  res.json({
+    ativa: empresa ? { moeda: empresa.moeda || "BRL", saldo: empresa.saldo || 0, reservado: empresa.reservado || 0, totalAportado: empresa.totalAportado || 0 } : null,
+    arquivadas,
+  });
+});
+
 router.get("/companies/:id/dossie", async (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
 

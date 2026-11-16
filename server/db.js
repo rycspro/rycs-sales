@@ -1009,6 +1009,25 @@ adicionarColuna("companies", "limiteCredito", "REAL DEFAULT 0");
 // caixa, reserva, liquidação, repasse e take rate rodam nesta moeda.
 adicionarColuna("companies", "moeda", "TEXT DEFAULT 'BRL'");
 adicionarColuna("companies", "pais", "TEXT DEFAULT 'BR'");
+
+// Carteiras por moeda: quando a empresa troca de país/moeda, a carteira antiga
+// fica arquivada (status='arquivada') e nasce uma nova em branco na nova moeda.
+// A carteira ativa é sempre a que bate com companies.moeda.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS company_wallets (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    moeda TEXT NOT NULL,
+    saldo REAL NOT NULL DEFAULT 0,
+    reservado REAL NOT NULL DEFAULT 0,
+    totalAportado REAL NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'ativa',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_company_wallets_company ON company_wallets(companyId, status);
+`);
 // Depósito multi-moeda: moeda do aporte, gateway usado e sessão do Stripe.
 adicionarColuna("deposit_requests", "moeda", "TEXT DEFAULT 'BRL'");
 adicionarColuna("deposit_requests", "gateway", "TEXT DEFAULT 'manual'");

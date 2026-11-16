@@ -259,6 +259,45 @@ function InlinePaisSelect({ label, value, onChange }) {
   );
 }
 
+// ── Carteiras arquivadas (saldos em outras moedas após troca de país) ──
+function CarteirasArquivadas({ companyId }) {
+  const [dados, setDados] = useState(null);
+  useEffect(() => { api(`/companies/${companyId}/wallets`).then(setDados); }, [companyId]);
+  const arquivadas = dados?.arquivadas || [];
+  if (!arquivadas.length) return null;
+  const fmt = (moeda, valor) => {
+    try { return new Intl.NumberFormat("pt-BR", { style: "currency", currency: moeda }).format(Number(valor) || 0); }
+    catch { return `${moeda} ${(Number(valor) || 0).toFixed(2)}`; }
+  };
+  return (
+    <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px dashed var(--border)" }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 10 }}>
+        Carteiras arquivadas em outras moedas
+      </div>
+      <div style={{ display: "grid", gap: 8 }}>
+        {arquivadas.map((w) => (
+          <div key={w.id} style={{
+            border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px",
+            background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap",
+          }}>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{w.moeda}</div>
+              <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>Arquivada em {new Date(w.atualizadoEm || w.criadoEm).toLocaleDateString("pt-BR")}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{fmt(w.moeda, w.saldo)}</div>
+              {w.reservado > 0 && <div style={{ fontSize: 11, color: "var(--muted)" }}>Reservado: {fmt(w.moeda, w.reservado)}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "10px 2px 0", lineHeight: 1.5 }}>
+        Carteiras arquivadas são somente de leitura. Entre em contato com o suporte para solicitar devolução ou conversão do saldo.
+      </p>
+    </div>
+  );
+}
+
 // ── Cartões salvos ───────────────────────────────────────────────────
 
 function CartoesSalvos({ aviso }) {
@@ -604,7 +643,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
           </div>
         </Block>
 
-        <Block title="País de origem" description="Define a moeda usada nos planos e nas campanhas (cobrança via Stripe quando fora do Brasil).">
+        <Block title="País de origem" description="Define a moeda usada nos planos e nas campanhas (cobrança via Stripe quando fora do Brasil). Ao trocar a moeda, o saldo atual fica arquivado como uma carteira à parte.">
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <select
               value={form.pais || "BR"}
@@ -615,7 +654,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
                 const moedaAtual = form.moeda || "BRL";
                 if (novoPais.moeda !== moedaAtual) {
                   const ok = window.confirm(
-                    `Trocar o país para ${novoPais.nome} também mudará a moeda de operação de ${moedaAtual} para ${novoPais.moeda}. Isso afeta os planos e as campanhas. Deseja continuar?`
+                    `Trocar para ${novoPais.nome} muda a moeda de ${moedaAtual} para ${novoPais.moeda}. O saldo em ${moedaAtual} fica arquivado como uma carteira separada (visível aqui), e uma nova carteira vazia em ${novoPais.moeda} é criada. Continuar?`
                   );
                   if (!ok) return;
                 }
@@ -636,6 +675,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
               Moeda de operação: <b style={{ color: "var(--ink)" }}>{form.moeda || moedaDoPais(form.pais || "BR")}</b>
             </div>
           </div>
+          <CarteirasArquivadas companyId={emp.id} />
         </Block>
       </>
     ),
