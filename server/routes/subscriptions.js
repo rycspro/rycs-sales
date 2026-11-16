@@ -693,11 +693,12 @@ router.post("/subscription", async (req, res) => {
     }
 
     let pagamento = null, pix = null;
-    if (!credito) {
-      try {
-        const lista = await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=1`);
-        pagamento = lista?.data?.[0] || null;
-        if (pagamento?.id) pix = await asaas(`/payments/${pagamento.id}/pixQrCode`);
+    // Busca sempre o pagamento da assinatura: para Pix pegamos o QR, para cartão
+    // precisamos do creditCardToken (que vem no pagamento, não na subscription).
+    try {
+      const lista = await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=1`);
+      pagamento = lista?.data?.[0] || null;
+      if (!credito && pagamento?.id) pix = await asaas(`/payments/${pagamento.id}/pixQrCode`);
       } catch (e) {
         console.warn("[asaas] QR da assinatura:", e.message);
       }
@@ -708,7 +709,12 @@ router.post("/subscription", async (req, res) => {
     // gateway confirmar — liberar antes seria dar acesso sem receber.
     const statusInicial = trialDias > 0 ? "trial" : "pendente";
     const trialFim = trialDias > 0 ? vencimento.getTime() : null;
-    const cartaoInfo = cobranca.creditCard || {};
+    // creditCardToken vem no pagamento (depois da cobrança), não na subscription.
+    // Mesclamos as duas fontes para ter tudo num só lugar.
+    const cartaoInfo = {
+      ...(cobranca.creditCard || {}),
+      ...(pagamento?.creditCard || {}),
+    };
 
     db.transaction(()=>{db.prepare(`INSERT INTO subscriptions (id, companyId, plano, status, asaasId, valor, valorOriginal, desconto, voucherId, paymentId, invoiceUrl, criadoEm, trialFim, trialDias, formaPagamento, cartaoFinal, cartaoBandeira, proximaCobranca, ciclo, atualizadoEm)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
@@ -721,11 +727,15 @@ router.post("/subscription", async (req, res) => {
     })();
 
     // Salvar cartão para uso futuro, se pedido
-    if (!tentativaCredito && req.body?.salvarCartao && cartaoInfo.creditCardToken) {
-      const jaExiste = db.prepare("SELECT id FROM saved_cards WHERE companyId = ? AND token = ?").get(entityId, cartaoInfo.creditCardToken);
-      if (!jaExiste) {
-        db.prepare(`INSERT INTO saved_cards (id, companyId, apelido, bandeira, final4, token, holderName, tipo, criadoEm)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(uid(), entityId, "", cartaoInfo.creditCardBrand || "", cartaoInfo.creditCardNumber || "", cartaoInfo.creditCardToken, req.body?.cartao?.nome || "", forma, agora());
+    if (!tentativaCredito && req.body?.salvarCartao) {
+      if (!cartaoInfo.creditCardToken) {
+        console.warn(`[assinatura] salvarCartao pedido mas Asaas não devolveu creditCardToken. Sub=${cobranca.id} pgto=${pagamento?.id || "sem"} sub.creditCard=${JSON.stringify(cobranca.creditCard || null)} pgto.creditCard=${JSON.stringify(pagamento?.creditCard || null)}`);
+      } else {
+        const jaExiste = db.prepare("SELECT id FROM saved_cards WHERE companyId = ? AND token = ?").get(entityId, cartaoInfo.creditCardToken);
+        if (!jaExiste) {
+          db.prepare(`INSERT INTO saved_cards (id, companyId, apelido, bandeira, final4, token, holderName, tipo, criadoEm)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(uid(), entityId, "", cartaoInfo.creditCardBrand || "", cartaoInfo.creditCardNumber || "", cartaoInfo.creditCardToken, req.body?.cartao?.nome || "", forma, agora());
+        }
       }
     }
 
