@@ -464,6 +464,16 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
     setSalvando(false);
     if (!r || r.error) return aviso(r?.error || "Não foi possível salvar.");
     up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, ...payload } : c) }));
+    // Troca de moeda: atualiza a moeda da UI imediatamente, sem precisar reload.
+    if (payload.moeda && payload.moeda !== emp.moeda) {
+      try {
+        const { setMoedaUi } = await import("../../lib/utils.js");
+        setMoedaUi(payload.moeda);
+      } catch { /* ignore */ }
+      // Recarrega o state completo para que campanhas, pagamentos e demais telas
+      // peguem a nova moeda em todas as chamadas que leem emp.moeda.
+      recarregar?.();
+    }
     setChanged(false);
     setSavedOk(true);
     setTimeout(() => setSavedOk(false), 3500);

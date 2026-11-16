@@ -148,12 +148,22 @@ export default function App() {
       setDb((d) => ({ ...d, role: u.role }));
       return;
     }
+    // Define a moeda da UI a partir da empresa — faz toda chamada money()
+    // formatar na moeda certa (planos, campanhas, pagamentos).
+    const companyId = u.role === "empresa" ? u.entityId : state.companies[0]?.id || null;
+    const empresa = companyId ? state.companies.find((c) => c.id === companyId) : null;
+    if (empresa?.moeda) {
+      try {
+        const { setMoedaUi } = await import("./lib/utils.js");
+        setMoedaUi(empresa.moeda);
+      } catch { /* ignore */ }
+    }
     setDb((d) => ({
       ...d,
       ...state,
       role: u.role,
       sellerId: u.role === "vendedor" ? u.entityId : state.sellers.find((s) => s.status === "aprovado")?.id || null,
-      companyId: u.role === "empresa" ? u.entityId : state.companies[0]?.id || null,
+      companyId,
     }));
   }, []);
 
