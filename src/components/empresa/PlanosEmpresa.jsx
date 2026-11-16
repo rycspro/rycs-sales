@@ -195,6 +195,13 @@ export default function PlanosEmpresa({ aviso, recarregar, onCancelar }) {
         </div>
       </div>
 
+      {["ativa", "pendente", "trial", "inadimplente"].includes(atual?.assinatura?.status) && (
+        <div style={{ borderTop: "1px solid var(--border)", marginTop: 40, paddingTop: 24, paddingBottom: 24, textAlign: "center" }}>
+          <p className="vx-mut" style={{ margin: "0 0 12px", fontSize: 13 }}>Deseja encerrar sua assinatura?</p>
+          <button className="vx-btn vx-btn-danger" onClick={() => onCancelar?.()}>Cancelar assinatura</button>
+        </div>
+      )}
+
       {/* Modal de checkout */}
       {selecionado && (
         <div className="vx-overlay" onClick={() => setSelecionado(null)}>
