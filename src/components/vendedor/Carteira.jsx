@@ -5,6 +5,7 @@ import { money, dataCurta } from "../../lib/utils.js";
 import { SAQUE_MINIMO } from "../../../shared/saque.js";
 import { Stat, Campo } from "../ui.jsx";
 import MeusEnvios from "./MeusEnvios.jsx";
+import ModalConfirmarSenha from "../ModalConfirmarSenha.jsx";
 
 // Tudo que não fosse "pago" aparecia como "Processando" — inclusive saque
 // recusado e cancelado, cujo valor já tinha voltado para o saldo. O
@@ -30,29 +31,47 @@ export default function Carteira({ eu, db, setDb, up, aviso, recarregar }) {
   const [pix, setPix] = useState(eu.pix || "");
   const [pixTipo, setPixTipo] = useState(eu.pixTipo || "");
   const [valor, setValor] = useState("");
+  // Reautenticação (quando o servidor exige confirmação de senha): o modal só
+  // aparece se o backend responder reauth:true; caso contrário o fluxo é o atual.
+  const [reauth, setReauth] = useState({ aberto: false, erro: "", carregando: false });
   const meus = db.submissions.filter((s) => s.sellerId === eu.id);
   const saques = db.withdrawals.filter((w) => w.sellerId === eu.id);
   const MIN = SAQUE_MINIMO;
 
   // O servidor debita o saldo e dispara o Pix numa transação. O cliente não
   // envia saldo nem chave de destino: a chave usada é a do cadastro.
-  const sacar = async () => {
+  const sacar = async (senha) => {
     const v = Number(String(valor).replace(",", "."));
     if (!pix.trim()) return aviso("Informe a chave PIX.");
     if (!v || v < MIN) return aviso(`Saque mínimo de ${money(MIN)}.`);
-
     if (!pixTipo) return aviso("Escolha o tipo da sua chave Pix.");
+
+    const extra = senha ? { senha } : {};
+    const precisaReauth = (r) => {
+      if (r?.reauth) { setReauth({ aberto: true, carregando: false, erro: senha ? (r.error || "Senha incorreta.") : "" }); return true; }
+      return false;
+    };
+
     if (pix.trim() !== (eu.pix || "") || pixTipo !== (eu.pixTipo || "")) {
-      const r = await apiPatch(`/sellers/${eu.id}`, { pix: pix.trim(), pixTipo });
+      const r = await apiPatch(`/sellers/${eu.id}`, { pix: pix.trim(), pixTipo, ...extra });
+      if (precisaReauth(r)) return;
       if (r?.error) return aviso(r.error);
     }
 
-    const r = await api("/payments/withdraw", { valor: v });
+    const r = await api("/payments/withdraw", { valor: v, ...extra });
+    if (precisaReauth(r)) return;
     if (!r || r.error) return aviso(r?.error || "Não foi possível solicitar o saque.");
 
+    setReauth({ aberto: false, erro: "", carregando: false });
     await recarregar();
     setValor("");
     aviso(r.message || "Saque solicitado.");
+  };
+
+  const confirmarReauth = async (senha) => {
+    setReauth((s) => ({ ...s, carregando: true, erro: "" }));
+    await sacar(senha);
+    setReauth((s) => (s.aberto ? { ...s, carregando: false } : s));
   };
 
   return (
@@ -83,7 +102,7 @@ export default function Carteira({ eu, db, setDb, up, aviso, recarregar }) {
         <Campo label={`Valor (mínimo ${money(MIN)})`}>
           <input className="vx-input vx-mono" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" inputMode="decimal" />
         </Campo>
-        <button className="vx-btn vx-btn-primary vx-btn-block" disabled={eu.disponivel < MIN} onClick={sacar}>
+        <button className="vx-btn vx-btn-primary vx-btn-block" disabled={eu.disponivel < MIN} onClick={() => sacar()}>
           {eu.disponivel < MIN ? `Faltam ${money(Math.max(0, MIN - eu.disponivel))} para sacar` : "Solicitar saque"}
         </button>
       </div>
@@ -109,6 +128,15 @@ export default function Carteira({ eu, db, setDb, up, aviso, recarregar }) {
 
       <h3 className="vx-disp" style={{ fontSize: 16, marginBottom: 10 }}>Extrato de ações</h3>
       <MeusEnvios empresa={null} eu={eu} db={db} up={up} pedirRevisao={(sub) => pedirRevisaoHumana(recarregar, aviso, sub)} />
+
+      <ModalConfirmarSenha
+        aberto={reauth.aberto}
+        descricao="Para liberar o saque com segurança, confirme a senha da sua conta."
+        erro={reauth.erro}
+        carregando={reauth.carregando}
+        onConfirmar={confirmarReauth}
+        onFechar={() => setReauth({ aberto: false, erro: "", carregando: false })}
+      />
     </div>
   );
 }

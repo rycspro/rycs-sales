@@ -183,7 +183,7 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   const reauth = exigirReauth(req, { userId: req.user.id, senha: req.body?.senha, acao: "saque" });
   if (!reauth.ok) {
     if (reauth.status !== 401 || req.body?.senha) auditarSeguranca({ req, ator: req.user.id, papel: role, acao: "saque_reauth_falha", alvo: entityId, resultado: String(reauth.status) });
-    return res.status(reauth.status).json({ error: reauth.error });
+    return res.status(reauth.status).json({ error: reauth.error, reauth: true });
   }
 
   const valor = Number(req.body?.valor);

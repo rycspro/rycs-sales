@@ -270,7 +270,7 @@ router.patch("/sellers/:id", (req, res) => {
     const reauth = exigirReauth(req, { userId: req.user.id, senha: fields.senha, acao: "trocar_pix" });
     if (!reauth.ok) {
       if (reauth.status !== 401 || fields.senha) auditarSeguranca({ req, ator: req.user.id, papel: role, acao: "trocar_pix_reauth_falha", alvo: id, resultado: String(reauth.status) });
-      return res.status(reauth.status).json({ error: reauth.error });
+      return res.status(reauth.status).json({ error: reauth.error, reauth: true });
     }
   }
 
