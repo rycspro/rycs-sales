@@ -994,7 +994,12 @@ html[data-versao="sol"] .vx-balance-value{font-family:'Michroma','General Sans',
   letter-spacing:-.01em!important;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums;
   -webkit-text-stroke:.35px #171717}
 @media(max-width:1024px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:24px!important}}
-@media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:22px!important}}
+@media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:19px!important;-webkit-text-stroke:.25px #171717}}
+@media(max-width:400px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:17px!important}}
+@media(max-width:340px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:15.5px!important}}
+/* Responsividade dos números dos indicadores fora do tema Sol */
+@media(max-width:640px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:19px}}
+@media(max-width:400px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:17px}}
 /* Pagamentos das Campanhas: números um pouco menores que o padrão. */
 html[data-versao="sol"] .vx-centralpag .vx-num{font-size:21px!important}
 @media(max-width:640px){html[data-versao="sol"] .vx-centralpag .vx-num{font-size:19px!important}}
