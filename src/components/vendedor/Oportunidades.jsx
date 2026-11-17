@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2, Globe2, MapPin, Briefcase, Target, ChevronRight, ArrowLeft,
-  Wallet, CheckCircle2, Clock, Users, Flag, Languages,
+  Wallet, CheckCircle2, Clock, Flag, Search, SlidersHorizontal, X,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import { PAISES } from "../../../shared/paises.js";
+import { FUNCOES } from "../../../shared/funcoes.js";
 import { classificarCampanha, codigoPais, parsePaisesAceitos } from "../../../shared/oportunidades.js";
 
 // Lembra a aba escolhida ao voltar de uma página de detalhe (sem depender do
@@ -17,6 +18,7 @@ const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "—";
 
 const parseObj = (v) => { if (v && typeof v === "object") return v; try { return JSON.parse(v || "{}"); } catch { return {}; } };
+const maxTarefa = (c) => { const vs = Object.values(parseObj(c.tarefas)).map(Number).filter((n) => n > 0); return vs.length ? Math.max(...vs) : 0; };
 
 // Remuneração REAL oferecida ao profissional: valores de `tarefas` (por ação) +
 // percentual de comissão. Nunca o orçamento/saldo interno da empresa.
@@ -121,6 +123,50 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     return m;
   }, [campanhas]);
 
+  // ---------------- filtros (F4) ----------------
+  const FILTROS_VAZIO = { busca: "", pais: "", funcao: "", moeda: "", pagamento: "", remMin: "", ordenar: "recentes" };
+  const [filtros, setFiltros] = useState(FILTROS_VAZIO);
+  const [maisFiltros, setMaisFiltros] = useState(false);
+  const setFiltro = (k, v) => setFiltros((f) => ({ ...f, [k]: v }));
+  const limparFiltros = () => setFiltros(FILTROS_VAZIO);
+
+  const opcoes = useMemo(() => {
+    const paises = new Set(), funcoes = new Set(), moedas = new Set();
+    for (const { c, emp } of classificadas) {
+      if (emp.pais) paises.add(emp.pais);
+      if (c.funcao) funcoes.add(c.funcao);
+      if (emp.moeda) moedas.add(emp.moeda);
+    }
+    return { paises: [...paises], funcoes: [...funcoes], moedas: [...moedas] };
+  }, [classificadas]);
+
+  const aplicarFiltros = (lista) => {
+    const q = filtros.busca.trim().toLowerCase();
+    let out = lista.filter(({ c, emp }) => {
+      if (q && !`${c.titulo || ""} ${emp.nome || ""} ${c.descricao || ""}`.toLowerCase().includes(q)) return false;
+      if (filtros.pais && emp.pais !== filtros.pais) return false;
+      if (filtros.funcao && c.funcao !== filtros.funcao) return false;
+      if (filtros.moeda && emp.moeda !== filtros.moeda) return false;
+      const tarefas = parseObj(c.tarefas);
+      if (filtros.pagamento === "tarefa" && !Object.values(tarefas).some((v) => Number(v) > 0)) return false;
+      if (filtros.pagamento === "comissao" && !(Number(c.percentualComissao) > 0)) return false;
+      if (filtros.remMin && maxTarefa(c) < Number(filtros.remMin)) return false;
+      return true;
+    });
+    out = [...out].sort((a, b) => filtros.ordenar === "remuneracao"
+      ? maxTarefa(b.c) - maxTarefa(a.c)
+      : (b.c.criadoEm || 0) - (a.c.criadoEm || 0));
+    return out;
+  };
+
+  const empresasFiltradas = useMemo(() => {
+    const q = filtros.busca.trim().toLowerCase();
+    return empresas.filter((e) =>
+      (!q || (e.nome || "").toLowerCase().includes(q)) &&
+      (!filtros.pais || e.pais === filtros.pais) &&
+      (!filtros.moeda || e.moeda === filtros.moeda));
+  }, [empresas, filtros]);
+
   // ---- candidatura (mantém a lógica e os controles de segurança atuais) ----
   const [candidatando, setCandidatando] = useState(false);
   const candidatar = async (campanha, mensagem) => {
@@ -164,16 +210,20 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
       <FolderTabs abas={abas} aba={aba} setAba={setAba} />
       <div role="tabpanel" style={{ border: "1px solid var(--border)", borderRadius: "0 12px 12px 12px", background: "var(--surface)", padding: 16 }}>
+        <BarraFiltros filtros={filtros} setFiltro={setFiltro} opcoes={opcoes} empresa={aba === "empresas"}
+          maisFiltros={maisFiltros} setMaisFiltros={setMaisFiltros} limpar={limparFiltros}
+          total={aba === "empresas" ? empresasFiltradas.length : aba === "nacionais" ? aplicarFiltros(nacionais).length : aplicarFiltros(internacionais).length} />
+
         {aba === "empresas" && (
-          <GridEmpresas empresas={empresas} metricas={metricas} campsPorEmpresa={campsPorEmpresa} onAbrir={(e) => setEmpresaSel(e.id)} />
+          <GridEmpresas empresas={empresasFiltradas} metricas={metricas} campsPorEmpresa={campsPorEmpresa} onAbrir={(e) => setEmpresaSel(e.id)} />
         )}
         {aba === "nacionais" && (
-          <GridCampanhas itens={nacionais} onAbrir={(c) => setCampanhaSel(c.id)}
-            vazio="Nenhuma campanha nacional disponível para o seu país no momento." />
+          <GridCampanhas key={`nac-${JSON.stringify(filtros)}`} itens={aplicarFiltros(nacionais)} onAbrir={(c) => setCampanhaSel(c.id)}
+            vazio="Nenhuma campanha nacional corresponde aos filtros." />
         )}
         {aba === "internacionais" && (
-          <GridCampanhas itens={internacionais} internacional onAbrir={(c) => setCampanhaSel(c.id)}
-            vazio="Nenhuma campanha internacional aberta para o seu país no momento." />
+          <GridCampanhas key={`intl-${JSON.stringify(filtros)}`} itens={aplicarFiltros(internacionais)} internacional onAbrir={(c) => setCampanhaSel(c.id)}
+            vazio="Nenhuma campanha internacional corresponde aos filtros." />
         )}
       </div>
     </div>
@@ -266,11 +316,24 @@ function CampanhaCard({ item, internacional, onAbrir }) {
 }
 
 function GridCampanhas({ itens, internacional, onAbrir, vazio }) {
+  // Renderização incremental: evita montar centenas de cards de uma vez.
+  // O `key` no pai (assinatura dos filtros) remonta e reseta o limite ao filtrar.
+  const [limite, setLimite] = useState(12);
   if (!itens.length) return <Vazio Icon={internacional ? Globe2 : Flag} texto={vazio} />;
+  const visiveis = itens.slice(0, limite);
   return (
-    <div style={{ display: "grid", gap: 13, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))" }}>
-      {itens.map((item) => <CampanhaCard key={item.c.id} item={item} internacional={internacional} onAbrir={onAbrir} />)}
-    </div>
+    <>
+      <div style={{ display: "grid", gap: 13, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))" }}>
+        {visiveis.map((item) => <CampanhaCard key={item.c.id} item={item} internacional={internacional} onAbrir={onAbrir} />)}
+      </div>
+      {itens.length > limite && (
+        <div style={{ textAlign: "center", marginTop: 14 }}>
+          <button type="button" className="vx-btn vx-btn-sm" onClick={() => setLimite((l) => l + 12)}>
+            Ver mais campanhas ({itens.length - limite})
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -389,6 +452,91 @@ function DetalheCampanha({ item, candidatar, candidatando, abrirCampanha, onVolt
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Barra de filtros (F4): busca, país, função, ordenação + "mais filtros"
+// (moeda, tipo de pagamento, remuneração mínima). Chips removíveis e "limpar".
+function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMaisFiltros, limpar, total }) {
+  const selStyle = { fontSize: 13, padding: "7px 10px" };
+  const ativos = [];
+  if (filtros.busca) ativos.push(["busca", `"${filtros.busca}"`]);
+  if (filtros.pais) ativos.push(["pais", nomePais(filtros.pais)]);
+  if (filtros.funcao) ativos.push(["funcao", (FUNCOES[filtros.funcao]?.nome || filtros.funcao)]);
+  if (filtros.moeda) ativos.push(["moeda", filtros.moeda]);
+  if (filtros.pagamento) ativos.push(["pagamento", filtros.pagamento === "tarefa" ? "Por tarefa" : "Comissão"]);
+  if (filtros.remMin) ativos.push(["remMin", `≥ ${filtros.remMin}`]);
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ position: "relative", flex: "1 1 180px", minWidth: 150 }}>
+          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
+          <input className="vx-input" value={filtros.busca} onChange={(e) => setFiltro("busca", e.target.value)}
+            placeholder="Buscar empresa ou campanha" aria-label="Buscar"
+            style={{ paddingLeft: 30, fontSize: 13 }} />
+        </div>
+        {opcoes.paises.length > 1 && (
+          <select className="vx-input" style={selStyle} value={filtros.pais} onChange={(e) => setFiltro("pais", e.target.value)} aria-label="País">
+            <option value="">País</option>
+            {opcoes.paises.map((p) => <option key={p} value={p}>{nomePais(p)}</option>)}
+          </select>
+        )}
+        {!empresa && opcoes.funcoes.length > 1 && (
+          <select className="vx-input" style={selStyle} value={filtros.funcao} onChange={(e) => setFiltro("funcao", e.target.value)} aria-label="Função">
+            <option value="">Função</option>
+            {opcoes.funcoes.map((f) => <option key={f} value={f}>{FUNCOES[f]?.nome || f}</option>)}
+          </select>
+        )}
+        {!empresa && (
+          <select className="vx-input" style={selStyle} value={filtros.ordenar} onChange={(e) => setFiltro("ordenar", e.target.value)} aria-label="Ordenar">
+            <option value="recentes">Mais recentes</option>
+            <option value="remuneracao">Maior remuneração</option>
+          </select>
+        )}
+        <button type="button" className="vx-btn vx-btn-sm" onClick={() => setMaisFiltros((v) => !v)} aria-expanded={maisFiltros}>
+          <SlidersHorizontal size={13} /> Mais filtros
+        </button>
+        {ativos.length > 0 && (
+          <button type="button" className="vx-btn vx-btn-sm" onClick={limpar}>Limpar</button>
+        )}
+        <span className="vx-mono" style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>{total} resultado{total === 1 ? "" : "s"}</span>
+      </div>
+
+      {maisFiltros && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+          {opcoes.moedas.length > 1 && (
+            <select className="vx-input" style={selStyle} value={filtros.moeda} onChange={(e) => setFiltro("moeda", e.target.value)} aria-label="Moeda">
+              <option value="">Moeda</option>
+              {opcoes.moedas.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          )}
+          {!empresa && (
+            <select className="vx-input" style={selStyle} value={filtros.pagamento} onChange={(e) => setFiltro("pagamento", e.target.value)} aria-label="Tipo de pagamento">
+              <option value="">Tipo de pagamento</option>
+              <option value="tarefa">Por tarefa</option>
+              <option value="comissao">Comissão</option>
+            </select>
+          )}
+          {!empresa && (
+            <input className="vx-input" type="number" min="0" style={{ ...selStyle, width: 150 }} value={filtros.remMin}
+              onChange={(e) => setFiltro("remMin", e.target.value)} placeholder="Remuneração mín." aria-label="Remuneração mínima" />
+          )}
+        </div>
+      )}
+
+      {ativos.length > 0 && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+          {ativos.map(([k, label]) => (
+            <button key={k} type="button" className="vx-chip" onClick={() => setFiltro(k, "")}
+              style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, borderColor: "var(--brand)", color: "var(--brand)" }}>
+              {label} <X size={12} />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
