@@ -1,27 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { api } from "../../lib/api.js";
 import FiltroData from "../FiltroData.jsx";
-import PainelEmpresa from "./PainelEmpresa.jsx";
-import ConferirEmpresa from "./ConferirEmpresa.jsx";
-import TimeEmpresa from "./TimeEmpresa.jsx";
-import QualificacaoEmpresa from "./QualificacaoEmpresa.jsx";
-import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
-import TarefasEmpresa from "./TarefasEmpresa.jsx";
-import ValoresEmpresa from "./ValoresEmpresa.jsx";
-import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
-import PagamentosEmpresa, { ModalSaldo } from "./PagamentosEmpresa.jsx";
-import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
-import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
-import ConversasEmpresa from "./ConversasEmpresa.jsx";
-import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
-import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
+// A tela inicial é a primeira que a empresa vê — carrega junto. As demais abas
+// vêm por carregamento sob demanda (code-splitting), o que deixa o carregamento
+// inicial no celular bem mais leve: só baixa o código da aba que está aberta.
 import InicioEmpresa from "./InicioEmpresa.jsx";
-import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
-import SuporteEmpresa from "./SuporteEmpresa.jsx";
-import LeadsEmpresa from "./LeadsEmpresa.jsx";
-import Integracoes from "./integracoes/Integracoes.jsx";
-import MateriaisEmpresa from "./MateriaisEmpresa.jsx";
-import AcademyEmpresa from "./AcademyEmpresa.jsx";
+const PainelEmpresa = lazy(() => import("./PainelEmpresa.jsx"));
+const ConferirEmpresa = lazy(() => import("./ConferirEmpresa.jsx"));
+const TimeEmpresa = lazy(() => import("./TimeEmpresa.jsx"));
+const QualificacaoEmpresa = lazy(() => import("./QualificacaoEmpresa.jsx"));
+const CampanhasEmpresa = lazy(() => import("./CampanhasEmpresa.jsx"));
+const TarefasEmpresa = lazy(() => import("./TarefasEmpresa.jsx"));
+const ValoresEmpresa = lazy(() => import("./ValoresEmpresa.jsx"));
+const FinanceiroEmpresa = lazy(() => import("./FinanceiroEmpresa.jsx"));
+const PagamentosEmpresa = lazy(() => import("./PagamentosEmpresa.jsx"));
+const ModalSaldo = lazy(() => import("./PagamentosEmpresa.jsx").then((m) => ({ default: m.ModalSaldo })));
+const ProfissionaisEmpresa = lazy(() => import("./ProfissionaisEmpresa.jsx"));
+const ConversasEmpresa = lazy(() => import("./ConversasEmpresa.jsx"));
+const RycsAcademyEmpresa = lazy(() => import("./RycsAcademyEmpresa.jsx"));
+const AcademyEmpresaHub = lazy(() => import("./AcademyEmpresaHub.jsx"));
+const ConfiguracoesEmpresa = lazy(() => import("./ConfiguracoesEmpresa.jsx"));
+const SuporteEmpresa = lazy(() => import("./SuporteEmpresa.jsx"));
+const LeadsEmpresa = lazy(() => import("./LeadsEmpresa.jsx"));
+const Integracoes = lazy(() => import("./integracoes/Integracoes.jsx"));
+const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
+const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
@@ -109,6 +112,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
 
   return (
     <div className="vx-fade">
+      <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
       {aba === "inicio" && <>
         {filtroBar}
         <InicioEmpresa emp={emp} db={db} setAba={setAba} filtroData={filtroAtual} />
@@ -183,6 +187,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {modalSaldo && (
         <ModalSaldo emp={emp} aviso={aviso} aoConfirmar={() => recarregar?.()} onFechar={() => setModalSaldo(false)} />
       )}
+      </Suspense>
     </div>
   );
 }
