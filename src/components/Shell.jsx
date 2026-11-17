@@ -10,12 +10,17 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   useEffect(() => { setGruposAbertos({}); }, [active]);
   // Navegou: fecha o menu completo do celular.
   useEffect(() => { setMenuMobile(false); }, [active]);
-  // Trava o scroll da página de fundo enquanto o drawer está aberto.
+  const drawerRef = useRef(null);
+  // Enquanto o drawer está aberto: trava o scroll de fundo, leva o foco para o
+  // menu (leitor de tela / teclado) e permite fechar com Esc.
   useEffect(() => {
     if (!menuMobile) return;
     const anterior = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = anterior; };
+    drawerRef.current?.querySelector(".vx-mobilemenu-x")?.focus();
+    const onKey = (e) => { if (e.key === "Escape") setMenuMobile(false); };
+    document.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = anterior; document.removeEventListener("keydown", onKey); };
   }, [menuMobile]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const fimKeys = new Set(["configuracoes", "outros"]);
@@ -173,7 +178,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
       {/* Menu completo do celular (equivalente à sidebar web). */}
       {menuMobile && (
         <div className="vx-mobilemenu-overlay" onClick={() => setMenuMobile(false)}>
-          <div className="vx-mobilemenu" role="dialog" aria-modal="true" aria-label="Menu de navegação" onClick={(e) => e.stopPropagation()}>
+          <div className="vx-mobilemenu" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Menu de navegação" onClick={(e) => e.stopPropagation()}>
             <div className="vx-mobilemenu-head">
               <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" className="vx-mobilemenu-logo" />
               <button type="button" className="vx-mobilemenu-x" aria-label="Fechar menu" onClick={() => setMenuMobile(false)}><X size={18} strokeWidth={2} /></button>
