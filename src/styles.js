@@ -208,8 +208,8 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
   .vx-ai-trigger{bottom:22px}
   .vx-ai-panel{bottom:72px}
   .vx-sidebar-section{font-size:8.5px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--muted-2);
-    padding:12px 14px 3px;pointer-events:none;user-select:none;position:relative;z-index:1}
-  .vx-sidebtn{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:8px;border:0;
+    padding:8px 14px 2px;pointer-events:none;user-select:none;position:relative;z-index:1}
+  .vx-sidebtn{display:flex;align-items:center;gap:9px;padding:5px 11px;border-radius:8px;border:0;
     background:none;font:inherit;font-size:12.5px;font-weight:450;color:var(--icon-secondary);cursor:pointer;text-align:left;
     position:relative;z-index:1;transition:all .18s;letter-spacing:-.01em}
   .vx-sidebtn>svg{flex-shrink:0;width:17px;height:17px}

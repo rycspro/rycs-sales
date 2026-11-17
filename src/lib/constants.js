@@ -77,6 +77,8 @@ export const NAV = {
     { section: "Sua Empresa" },
     { key: "materiais", label: "Materiais", Icon: FolderOpen },
     { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
+    { divider: true },
+    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard },
     { key: "outros", label: "Outros", Icon: Settings },
   ],
   admin: [
