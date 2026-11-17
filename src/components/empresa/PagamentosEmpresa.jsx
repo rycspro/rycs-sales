@@ -661,7 +661,13 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
               <h2 style={{ margin: 0, fontSize: 20 }}>Por que deseja cancelar?</h2>
               <button className="vx-btn vx-btn-ghost" onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}><X size={16} /></button>
             </div>
-            <p className="vx-mut" style={{ margin: "8px 0 16px", fontSize: 13 }}>
+            {infPlano && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, margin: "14px 0 4px", padding: "12px 14px", borderRadius: 10, background: "var(--brand-50, #eff6ff)", border: "1px solid var(--brand)" }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase" }}>Plano atual</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: "var(--brand)" }}>{infPlano.nome}</span>
+              </div>
+            )}
+            <p className="vx-mut" style={{ margin: "12px 0 16px", fontSize: 13 }}>
               Sua opinião nos ajuda a melhorar. Conte o que motivou sua decisão.
             </p>
             <textarea
@@ -672,8 +678,15 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
               style={{ width: "100%", resize: "vertical", padding: 10, borderRadius: 8, border: "1px solid var(--border)", fontSize: 14, fontFamily: "inherit" }}
             />
             <button
-              className="vx-btn vx-btn-danger vx-btn-block"
+              className="vx-btn vx-btn-primary vx-btn-block"
               style={{ marginTop: 16 }}
+              onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}
+            >
+              Trocar plano
+            </button>
+            <button
+              className="vx-btn vx-btn-danger vx-btn-block"
+              style={{ marginTop: 8 }}
               disabled={!cancelMotivo.trim()}
               onClick={() => setCancelPopup("confirmar")}
             >
