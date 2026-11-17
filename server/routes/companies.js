@@ -28,10 +28,15 @@ router.patch("/companies/:id", (req, res) => {
   const fields = req.body;
   // saldo/totalAportado/aportes só mudam por pagamento confirmado no gateway
   // ou por liberação de ação — nunca por escrita direta do cliente.
-  const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "destaqueTipo", "visivel", "vagas", "cor", "documento",
+  const allowed = ["nome", "produto", "ticket", "icp", "visivel", "vagas", "cor", "documento",
     "razaoSocial", "endereco", "segmento", "regiao", "diferenciais", "objecoes", "representanteLegal",
     "contatoFinanceiro", "contatoComercial", "situacaoCadastral", "dataAbertura", "naturezaJuridica", "cnaes", "telefoneEmpresa", "emailEmpresa",
     "pais", "moeda"];
+  // Produtos pagos: "destaque"/"destaqueTipo" são ativados só pelo webhook do
+  // gateway (Asaas/Stripe) e "plano" pela assinatura. Uma empresa não pode
+  // auto-conceder destaque ou trocar o próprio plano por escrita direta —
+  // apenas o admin (operações internas) pode ajustá-los aqui.
+  if (role === "admin") allowed.push("plano", "destaque", "destaqueTipo");
   const jsonFields = ["comissoes", "curso", "qualificacao", "materiais"];
   const sets = [];
   const vals = [];

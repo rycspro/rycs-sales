@@ -257,7 +257,10 @@ function getFilteredState(user) {
     if (role === "vendedor") return getVendedorState(entityId);
   } catch (err) {
     console.error(`[state] erro em get${role}State(${entityId}):`, err.message);
-    return getFullState();
+    // Nunca cair para getFullState() aqui: um erro na consulta escopada de uma
+    // empresa/vendedor não pode expor o estado de todos os tenants. Devolve um
+    // estado vazio — o cliente trata como "sem dados", sem vazamento cruzado.
+    return { sellers: [], companies: [], submissions: [], withdrawals: [], messages: [], campaigns: [], leads: [] };
   }
 
   return getFullState();

@@ -14,6 +14,16 @@ router.patch("/course-progress", (req, res) => {
   if (!["vendedor", "empresa", "admin"].includes(role))
     return res.status(403).json({ error: "Sem permissão" });
 
+  // Uma empresa só escreve progresso de um profissional que já faz parte do seu
+  // Time (parceria aprovada). Sem isso, poderia forjar progresso para qualquer
+  // sellerId dentro do próprio companyId.
+  if (role === "empresa") {
+    const vinculo = db.prepare(
+      "SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'"
+    ).get(sellerId, companyId);
+    if (!vinculo) return res.status(403).json({ error: "Profissional não faz parte do seu Time" });
+  }
+
   const existing = db.prepare("SELECT * FROM course_progress WHERE sellerId = ? AND companyId = ?").get(sellerId, companyId);
   if (existing) {
     db.prepare("UPDATE course_progress SET moduleIds = ? WHERE sellerId = ? AND companyId = ?").run(JSON.stringify(moduleIds), sellerId, companyId);

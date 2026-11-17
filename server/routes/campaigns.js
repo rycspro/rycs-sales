@@ -168,8 +168,20 @@ router.get("/campaigns/:id", (req, res) => {
   }
   const campaign = parseCampaign(row);
 
-  const apps = db.prepare("SELECT * FROM campaign_applications WHERE campaignId = ?").all(req.params.id);
-  campaign.candidaturas = apps;
+  // Candidaturas (sellerId, status, mensagem de cada profissional) só para a
+  // empresa dona ou admin — um vendedor não pode ver a lista de concorrentes.
+  const ehDono = req.user.role === "admin" ||
+    (req.user.role === "empresa" && req.user.entityId === row.companyId);
+  if (ehDono) {
+    campaign.candidaturas = db.prepare("SELECT * FROM campaign_applications WHERE campaignId = ?").all(req.params.id);
+  } else if (req.user.role === "vendedor") {
+    // O vendedor só enxerga a própria candidatura.
+    campaign.candidaturas = db.prepare(
+      "SELECT * FROM campaign_applications WHERE campaignId = ? AND sellerId = ?"
+    ).all(req.params.id, req.user.entityId);
+  } else {
+    campaign.candidaturas = [];
+  }
 
   res.json(campaign);
 });
@@ -352,12 +364,21 @@ router.patch("/campaigns/:campaignId/applications/:appId", (req, res) => {
   res.json({ ok: true });
 });
 
+// Uma campanha só é acessível ao profissional quando está ativa e a empresa é
+// visível — a mesma regra do GET /campaigns/:id. Impede ler/responder o quiz de
+// rascunhos, campanhas pausadas/encerradas ou de empresas ocultas.
+function vendedorPodeVerCampanha(campaign) {
+  if (!campaign || campaign.status !== "ativa") return false;
+  const empresa = db.prepare("SELECT visivel FROM companies WHERE id = ?").get(campaign.companyId);
+  return !(empresa && empresa.visivel === 0);
+}
+
 // Quiz de certificação da campanha (só vendedor)
 router.get("/campaigns/:id/quiz", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
   const { role, entityId } = req.user;
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
-  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (!vendedorPodeVerCampanha(campaign)) return res.status(404).json({ error: "Campanha não encontrada" });
   const questoes = JSON.parse(campaign.quiz || "[]");
   // Vendedor nunca recebe a alternativa correta
   const semGabarito = questoes.map(({ correta, ...q }) => q);
@@ -374,9 +395,14 @@ router.post("/campaigns/:id/quiz", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
   const { entityId } = req.user;
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
-  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (!vendedorPodeVerCampanha(campaign)) return res.status(404).json({ error: "Campanha não encontrada" });
   const questoes = JSON.parse(campaign.quiz || "[]");
   if (!questoes.length) return res.status(422).json({ error: "Esta campanha não possui quiz." });
+  // Limite de tentativas: sem isto, o profissional repete o quiz até passar,
+  // derrotando a certificação.
+  const maxTentativas = campaign.maxTentativasQuiz || 3;
+  const feitas = db.prepare("SELECT COUNT(*) n FROM campaign_quiz_attempts WHERE campaignId = ? AND sellerId = ?").get(req.params.id, entityId).n;
+  if (feitas >= maxTentativas) return res.status(429).json({ error: "Limite de tentativas do quiz atingido." });
   const { respostas = [] } = req.body;
   const acertos = questoes.filter((q, i) => respostas[i] !== undefined && String(respostas[i]) === String(q.correta)).length;
   const score = Math.round((acertos / questoes.length) * 100);
