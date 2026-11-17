@@ -137,7 +137,7 @@ const css = `
 }
 `;
 
-export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false }) {
+export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false, apenasPrivacidade = false }) {
   const id = useId();
   const editorRef = useRef(null);
 
@@ -356,21 +356,26 @@ export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false }) {
       <div className="sa-wrap">
         {/* Header */}
         <div className="vx-onb-eyebrow" style={{ marginBottom: 6 }}>
-          {modoPerfil ? "Apresentação e personalidade" : "Passo 1 de 3 — Sua Apresentação"}
+          {apenasPrivacidade ? "Configurações" : modoPerfil ? "Apresentação e personalidade" : "Passo 1 de 3 — Sua Apresentação"}
         </div>
         <h1 className="vx-disp" style={{ fontSize: 28, margin: "0 0 6px" }}>
-          {modoPerfil ? "Dê personalidade ao seu perfil." : "Agora, vamos dar personalidade ao seu perfil."}
+          {apenasPrivacidade ? "Privacidade do perfil." : modoPerfil ? "Dê personalidade ao seu perfil." : "Agora, vamos dar personalidade ao seu perfil."}
         </h1>
-        <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7, margin: "0 0 6px", maxWidth: 600 }}>
-          {modoPerfil
+        <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7, margin: "0 0 24px", maxWidth: 600 }}>
+          {apenasPrivacidade
+            ? "Escolha o que as empresas podem ver no seu perfil. Nada aqui é obrigatório."
+            : modoPerfil
             ? "É isto que as empresas veem sobre você além da experiência. Edite quando quiser."
             : "Suas habilidades e experiências já estão cadastradas. Falta apenas mostrar às empresas quem está por trás delas."}
         </p>
-        <p className="sa-msg-discreta" style={{ marginBottom: 24 }}>
-          Esta parte é sobre você. Compartilhe o que quiser e mostre sua personalidade.
-        </p>
+        {!apenasPrivacidade && (
+          <p className="sa-msg-discreta" style={{ marginBottom: 24 }}>
+            Esta parte é sobre você. Compartilhe o que quiser e mostre sua personalidade.
+          </p>
+        )}
 
         <form onSubmit={enviar} noValidate>
+          {!apenasPrivacidade && (<>
           {/* 1. Identidade */}
           <div className="sa-hero-card">
             <div className="sa-avatar">
@@ -647,44 +652,43 @@ export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false }) {
                 </div>
               </div>
 
-              {/* Privacidade */}
-              <div className="sa-section">
-                <div className="sa-section-head">
-                  <Eye size={20} />
-                  <h3>Privacidade</h3>
-                </div>
-                <p className="sa-section-desc">
-                  Escolha o que as empresas podem ver no seu perfil.
-                </p>
-
-                {[
-                  { key: "bio", label: "Biografia" },
-                  { key: "video", label: "Vídeo de apresentação" },
-                  { key: "redesSociais", label: "Redes sociais" },
-                  { key: "interesses", label: "Interesses pessoais" },
-                  { key: "portfolio", label: "Portfólio e conquistas" },
-                ].map(p => (
-                  <div key={p.key} className="sa-priv-row">
-                    <span className="sa-priv-label">{p.label}</span>
-                    <label className="sa-priv-toggle">
-                      <input
-                        type="checkbox"
-                        checked={privacidade[p.key] !== false}
-                        onChange={e => setPrivacidade(prev => ({ ...prev, [p.key]: e.target.checked }))}
-                      />
-                      {privacidade[p.key] !== false ? <><Eye size={14} /> Visível</> : <><EyeOff size={14} /> Oculto</>}
-                    </label>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
+          </>)}
+
+          {apenasPrivacidade && (
+            <div className="sa-section" style={{ maxWidth: 560, margin: "0 auto" }}>
+              <div className="sa-section-head">
+                <Eye size={20} />
+                <h3>Privacidade</h3>
+              </div>
+              <p className="sa-section-desc">
+                Escolha o que as empresas podem ver no seu perfil.
+              </p>
+              {[
+                { key: "bio", label: "Biografia" },
+                { key: "video", label: "Vídeo de apresentação" },
+                { key: "redesSociais", label: "Redes sociais" },
+                { key: "interesses", label: "Interesses pessoais" },
+                { key: "portfolio", label: "Portfólio e conquistas" },
+              ].map(p => (
+                <div key={p.key} className="sa-priv-row">
+                  <span className="sa-priv-label">{p.label}</span>
+                  <label className="sa-priv-toggle">
+                    <input type="checkbox" checked={privacidade[p.key] !== false}
+                      onChange={e => setPrivacidade(prev => ({ ...prev, [p.key]: e.target.checked }))} />
+                    {privacidade[p.key] !== false ? <><Eye size={14} /> Visível</> : <><EyeOff size={14} /> Oculto</>}
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Botão principal */}
           <div style={{ marginTop: 24, textAlign: "center" }}>
             <button type="submit" className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" disabled={salvando}
               style={{ maxWidth: 420, margin: "0 auto" }}>
-              {salvando ? "Salvando..." : modoPerfil ? "Salvar apresentação" : <>Continuar para os testes <ArrowRight size={16} /></>}
+              {salvando ? "Salvando..." : apenasPrivacidade ? "Salvar privacidade" : modoPerfil ? "Salvar apresentação" : <>Continuar para os testes <ArrowRight size={16} /></>}
             </button>
             <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
               Todos os campos são opcionais. Você pode editar depois.

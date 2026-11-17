@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye, FileText, UserRound } from "lucide-react";
+import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye, FileText, UserRound, Settings } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import OnbPerfil from "./OnbPerfil.jsx";
 import VerificarWhatsapp from "./VerificarWhatsapp.jsx";
 import { LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
+import CropperFoto from "./CropperFoto.jsx";
 import MultiSelect from "../ui/MultiSelect.jsx";
 import ComboSelect from "../ui/ComboSelect.jsx";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
@@ -112,6 +113,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const [guiaAberto, setGuiaAberto] = useState(false);
   const [menuFoto, setMenuFoto] = useState(false);        // menu de opções da foto
   const [fotoAmpliada, setFotoAmpliada] = useState(false); // "Ver foto" em tamanho grande
+  const [cropperAberto, setCropperAberto] = useState(false); // "Editar foto" — enquadramento
   const [enviandoCv, setEnviandoCv] = useState(false);     // upload do currículo em arquivo
   const arquivo = useRef(null);
   const cvInput = useRef(null);
@@ -188,10 +190,12 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
     setEnviandoFoto(true);
     try {
       const img = await lerImagem(file);
+      // Imagem nova: guardamos a origem (sem recorte) para o editor de
+      // enquadramento poder reajustar depois, e zeramos o enquadramento salvo.
       const r = await fetch(`${API_URL}/api/sellers/${eu.id}/foto`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(img),
+        body: JSON.stringify({ ...img, original: { base64: img.base64, mimetype: img.mimetype }, enquadramento: {} }),
       });
       const corpo = await r.json();
       setEnviandoFoto(false);
@@ -201,8 +205,30 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
         return aviso(corpo.error || "Não foi possível enviar a foto.");
       }
       setAvaliacaoFoto(corpo.avaliacao);
-      up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, foto: corpo.foto, fotoScore: corpo.avaliacao.score } : s) }));
+      up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, foto: corpo.foto, fotoScore: corpo.avaliacao.score, fotoOriginal: `/api/sellers/${eu.id}/foto-original?t=${Date.now()}`, fotoEnquadramento: "{}" } : s) }));
       aviso(`Foto aprovada com ${corpo.avaliacao.score}/100.`);
+    } catch (err) {
+      setEnviandoFoto(false);
+      aviso(err.message);
+    }
+  };
+
+  // "Editar foto": salva um novo enquadramento (recorte) a partir da imagem
+  // existente, sem escolher outro arquivo. A origem é preservada no backend.
+  const salvarEnquadramento = async (payload) => {
+    setEnviandoFoto(true);
+    try {
+      const r = await fetch(`${API_URL}/api/sellers/${eu.id}/foto`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const corpo = await r.json();
+      setEnviandoFoto(false);
+      if (!r.ok) return aviso(corpo.error || "Não foi possível salvar o enquadramento.");
+      up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, foto: `${corpo.foto.split("#")[0]}`, fotoScore: corpo.avaliacao.score, fotoEnquadramento: JSON.stringify(payload.enquadramento || {}) } : s) }));
+      setCropperAberto(false);
+      aviso("Enquadramento salvo.");
     } catch (err) {
       setEnviandoFoto(false);
       aviso(err.message);
@@ -291,7 +317,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
                   borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,.18)",
                 }}>
                   {eu.foto && <ItemMenuFoto Icon={Eye} label="Ver foto" onClick={() => { setFotoAmpliada(true); setMenuFoto(false); }} />}
-                  <ItemMenuFoto Icon={Pencil} label={eu.foto ? "Editar foto" : "Adicionar foto"} onClick={() => { setGuiaAberto(true); setMenuFoto(false); }} />
+                  <ItemMenuFoto Icon={Pencil} label={eu.foto ? "Editar foto" : "Adicionar foto"}
+                    onClick={() => { setMenuFoto(false); if (eu.foto) setCropperAberto(true); else setGuiaAberto(true); }} />
                   <ItemMenuFoto Icon={Camera} label={eu.foto ? "Trocar" : "Escolher arquivo"} onClick={() => { setMenuFoto(false); arquivo.current?.click(); }} />
                   {eu.foto && <ItemMenuFoto Icon={Trash2} label="Remover" danger onClick={() => { setMenuFoto(false); removerFoto(); }} />}
                 </div>
@@ -337,6 +364,17 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
         {enviandoFoto && <div className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>Verificando a foto…</div>}
       </div>
+
+      {/* "Editar foto" — editor de enquadramento sobre a imagem existente. */}
+      {cropperAberto && eu.foto && (
+        <CropperFoto
+          src={`/api/sellers/${eu.id}/foto-original?t=${eu.fotoScore ?? ""}`}
+          inicial={(() => { try { return JSON.parse(eu.fotoEnquadramento || "{}"); } catch { return {}; } })()}
+          enviando={enviandoFoto}
+          onFechar={() => setCropperAberto(false)}
+          onSalvar={salvarEnquadramento}
+        />
+      )}
 
       {/* "Ver foto" — a foto atual em tamanho grande. */}
       {fotoAmpliada && eu.foto && (
@@ -463,7 +501,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
       `}</style>
       <div className="pf-tabs" role="tablist" aria-label="Seções do perfil"
         onKeyDown={(e) => {
-          const ks = ["curriculo", "apresentacao"];
+          const ks = ["curriculo", "apresentacao", "configuracoes"];
           const i = ks.indexOf(secao);
           let alvo = null;
           if (e.key === "ArrowRight") alvo = ks[(i + 1) % ks.length];
@@ -472,7 +510,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
           else if (e.key === "End") alvo = ks[ks.length - 1];
           if (alvo) { e.preventDefault(); setSecao(alvo); requestAnimationFrame(() => document.getElementById(`pf-tab-${alvo}`)?.focus()); }
         }}>
-        {[["curriculo", "Currículo comercial", FileText], ["apresentacao", "Apresentação", UserRound]].map(([k, l, Ico]) => (
+        {[["curriculo", "Currículo comercial", FileText], ["apresentacao", "Apresentação", UserRound], ["configuracoes", "Configurações", Settings]].map(([k, l, Ico]) => (
           <button key={k} id={`pf-tab-${k}`} type="button" role="tab" className="pf-tab"
             aria-selected={secao === k} aria-controls="pf-panel" tabIndex={secao === k ? 0 : -1}
             onClick={() => setSecao(k)}>
@@ -484,6 +522,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
       <div id="pf-panel" role="tabpanel" className="pf-panel" aria-labelledby={`pf-tab-${secao}`}>
       {secao === "apresentacao" ? (
         <OnbPerfil modoPerfil aviso={aviso} />
+      ) : secao === "configuracoes" ? (
+        <OnbPerfil modoPerfil apenasPrivacidade aviso={aviso} />
       ) : (
       <>
       {/* -------------------------------------------------- edição ---- */}
