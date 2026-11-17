@@ -712,13 +712,24 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
       {/* Secondary navigation — usa classe vx-sidebtn idêntica ao sidebar */}
       {!somenteConteudo && (mobile ? (
-        <div style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid var(--border)", scrollbarWidth: "none", padding: "4px 6px", gap: 2 }}>
-          {SECOES_NAV.map(({ key, label, icon: Icon }) => (
-            <button key={key} className="vx-sidebtn" data-on={secao === key ? "1" : "0"} onClick={() => setSecao(key)} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
-              <Icon size={18} strokeWidth={1.85} />
-              {label}
-            </button>
-          ))}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, padding: "2px 16px 14px", borderBottom: "1px solid var(--border)" }}>
+          {SECOES_NAV.map(({ key, label, icon: Icon }) => {
+            const on = secao === key;
+            return (
+              <button key={key} type="button" onClick={() => setSecao(key)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px",
+                  borderRadius: 999, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand-50)" : "var(--surface)",
+                  color: on ? "var(--brand)" : "var(--muted)",
+                  fontSize: 13, fontWeight: on ? 600 : 500, fontFamily: "inherit",
+                  cursor: "pointer", whiteSpace: "nowrap", transition: "background .15s, color .15s, border-color .15s",
+                }}>
+                <Icon size={15} strokeWidth={1.9} />
+                {label}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <nav style={{ width: 220, flexShrink: 0, borderRight: "1px solid var(--border)", padding: "8px 10px 0" }}>
