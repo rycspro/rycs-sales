@@ -7,7 +7,7 @@ import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
-import { normalizarTelefoneIntl } from "../../shared/localidades.js";
+import { normalizarTelefoneIntl, PAISES } from "../../shared/localidades.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { criarOnboarding, hashToken, novoToken } from "../services/onboarding.js";
 
@@ -89,7 +89,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, pais, cidade, perfil, cargosExp, perfilComercial, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
+  const { email, senha, role, nome, whats, pais, estado, cidade, dataNascimento, genero, perfil, cargosExp, perfilComercial, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -145,6 +145,9 @@ router.post("/auth/register", async (req, res) => {
 
   if (role === "vendedor") {
     entityId = uid();
+    // O cadastro envia o país como código ("BR"); guardamos o nome ("Brasil")
+    // para o perfil exibir legível. Default: Brasil.
+    const paisNome = PAISES.find((p) => p.code === pais || p.nome === pais)?.nome || (pais ? String(pais) : "Brasil");
     let fotoDataUri = "";
     let fotoScore = 0;
     if (foto?.base64 && foto?.mimetype) {
@@ -175,9 +178,9 @@ router.post("/auth/register", async (req, res) => {
     // já entra com a plataforma liberada (onboarding concluído). As avaliações
     // (DISC, etc.) passam a ser voluntárias, pela página "Testes e Avaliações".
     db.prepare(`
-      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, perfilComercial, onboardingEtapa, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, '', 'aprovado', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?, 'concluido', ?)
-    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, perfilJSON, agora());
+      INSERT INTO sellers (id, nome, email, whats, pais, estado, cidade, dataNascimento, genero, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, perfilComercial, onboardingEtapa, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 'aprovado', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?, 'concluido', ?)
+    `).run(entityId, nomeClean, emailNorm, whats || "", paisNome, estado || "", cidade || "", dataNascimento || "", genero || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, perfilJSON, agora());
     db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
       userId, emailNorm, hash, role, entityId, 1, agora()
     );
