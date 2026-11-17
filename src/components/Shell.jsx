@@ -140,11 +140,14 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             <span>Nenhuma movimentação financeira possui valor real. Dados podem ser resetados. Use somente para testes.</span>
           </div>
         )}
-        {/* Barra de topo do celular: logo RYCS à esquerda; à direita, um espaço
-            onde a página injeta o filtro de período (ex.: "Últimos 30 dias") via
-            portal. A conta e o "Sair" ficam no menu lateral (drawer). */}
+        {/* Barra de topo do celular: o logo RYCS aparece só na home (primeira aba);
+            nas demais telas, este espaço serve só para a página injetar o filtro de
+            período via portal. Quando não há logo nem filtro, a barra colapsa (CSS
+            :has). A conta e o "Sair" ficam no menu lateral (drawer). */}
         <div className="vx-mobile-topbar">
-          <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" className="vx-mobile-logo" />
+          {active === bottomItems[0]?.key && (
+            <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" className="vx-mobile-logo" />
+          )}
           <div id="vx-mobile-actions" className="vx-mobile-actions-slot">
             {!accountRole && onLogout && (
               <button type="button" className="vx-btn vx-btn-sm" onClick={onLogout}>

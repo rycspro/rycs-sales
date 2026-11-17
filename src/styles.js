@@ -151,6 +151,8 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 .vx-mobile-actions-slot{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;flex-shrink:0}
 .vx-topbar-filtro{display:flex;align-items:center}
 .vx-mobile-logo{height:30px;width:auto;max-width:150px;object-fit:contain;display:block}
+/* Sem logo (fora da home) e sem filtro/ação no slot → a barra de topo some. */
+.vx-mobile-topbar:not(:has(.vx-mobile-logo)):has(.vx-mobile-actions-slot:empty){display:none}
 .vx-content-chat>.vx-mobile-topbar,.vx-content-settings>.vx-mobile-topbar{padding:12px 16px 0;margin-bottom:12px}
 /* ───────── Menu lateral do celular — White Editorial ───────── */
 .vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(20,28,40,.38);display:flex;justify-content:flex-end;animation:vxin .18s ease;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}

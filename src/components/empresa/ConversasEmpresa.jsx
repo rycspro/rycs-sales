@@ -1060,7 +1060,7 @@ export default function ConversasEmpresa({ emp, db, up, bloqueado, irParaPlano }
   const mostraChat = !mobile || !!selSellerId;
 
   return (
-    <div style={{ display: "flex", height: mobile ? "calc(100dvh - 56px - 92px - env(safe-area-inset-bottom,0px))" : "calc(100vh - 56px)", overflow: "hidden", background: "#F8FAFC" }}>
+    <div style={{ display: "flex", boxSizing: "border-box", paddingTop: mobile ? "env(safe-area-inset-top,0px)" : 0, height: mobile ? "calc(100dvh - 90px - env(safe-area-inset-bottom,0px))" : "calc(100vh - 56px)", overflow: "hidden", background: "#F8FAFC" }}>
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
 
       {/* ── PAINEL 2: LISTA DE CONVERSAS ─────────────────────────────────── */}
