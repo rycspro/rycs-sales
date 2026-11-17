@@ -1025,7 +1025,7 @@ html[data-versao="sol"] .vx-conv-avatar{border-radius:8px!important}
   .vx-bottomnav{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:6px;gap:2px;border-radius:30px;
     border:1px solid var(--glass-border);background:var(--glass-strong);box-shadow:var(--glass-edge),var(--shadow-pop);min-height:0}
   .vx-navbtn{min-height:54px;border-radius:24px;padding:8px 2px 7px;transition:background .2s,color .2s}
-  .vx-navbtn[data-on="1"]{background:var(--brand-50)}
+  .vx-navbtn[data-on="1"]{background:none}
   .vx-navbar-indicator{display:none}
 }
 @supports not (backdrop-filter:blur(1px)){.vx-content,.vx-stat,.vx-account-group{background:var(--surface-solid)}}
