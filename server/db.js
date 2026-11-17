@@ -2183,6 +2183,46 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_club_redemptions_seller_prize ON club_redemptions(sellerId, prizeId);
 `);
 
+// ── Planos do profissional (Grátis/Pro/Premium) ──────────────────────────────
+// Separado de `subscriptions` (que é da empresa). O plano em vigor não fica
+// gravado: sai de planoDoProfissional() em shared/planosProfissional.js, a
+// partir de pagoAte. Docs: docs/rycs/planos-pro-premium.md.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS assinaturas_profissional (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    plano TEXT NOT NULL,                 -- 'pro' | 'premium'
+    ciclo TEXT NOT NULL DEFAULT 'anual',
+    status TEXT NOT NULL DEFAULT 'pendente', -- pendente|ativa|atrasada|cancelada|reembolsada|expirada
+    origem TEXT NOT NULL DEFAULT 'asaas',    -- asaas|admin|migracao
+    asaasId TEXT,
+    asaasCustomerId TEXT,
+    ultimoPaymentId TEXT,
+    valor REAL DEFAULT 0,
+    inicio INTEGER,
+    pagoAte INTEGER,
+    proximaCobranca INTEGER,
+    canceladoEm INTEGER,
+    motivo TEXT DEFAULT '',
+    criadoPor TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_assinaturas_profissional_seller ON assinaturas_profissional(sellerId);
+
+  CREATE TABLE IF NOT EXISTS uso_profissional (
+    sellerId TEXT NOT NULL,
+    recurso TEXT NOT NULL,               -- 'minutosDiscadora' | 'lembretesWhatsApp' | ...
+    periodo TEXT NOT NULL,               -- 'AAAA-MM' no fuso America/Sao_Paulo
+    usado REAL DEFAULT 0,
+    avisado80 INTEGER DEFAULT 0,
+    avisado100 INTEGER DEFAULT 0,
+    PRIMARY KEY (sellerId, recurso, periodo)
+  );
+`);
+adicionarColuna("sellers", "asaasCustomerId", "TEXT");
+
 
 export default db;
 export { uid, agora };

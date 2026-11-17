@@ -15,7 +15,8 @@ test("servidor e carteira leem o mesmo piso, sem número solto", () => {
   const carteira = readFileSync(new URL("../src/components/vendedor/Carteira.jsx", import.meta.url), "utf8");
 
   for (const [nome, fonte] of [["servidor", servidor], ["carteira", carteira]]) {
-    assert.match(fonte, /import \{[^}]*\bSAQUE_MINIMO\b[^}]*\} from ".*shared\/saque\.js"/, `${nome} não importa o piso compartilhado`);
+    // O servidor lê o piso por plano (saqueMinimoPara, que parte do SAQUE_MINIMO).
+    assert.match(fonte, /import \{[^}]*\b(SAQUE_MINIMO|saqueMinimoPara)\b[^}]*\} from ".*shared\/saque\.js"/, `${nome} não importa o piso compartilhado`);
     assert.doesNotMatch(fonte, /SAQUE_MINIMO\s*=\s*\d/, `${nome} redefine o piso em vez de importá-lo`);
   }
 });

@@ -36,7 +36,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   // "Conta"; no lado empresa, a conta inteira acende "Conta" (configuracoes), e
   // Leads/Aprovações/Profissionais acendem "Campanhas".
   const mobileActive = (() => {
-    if (role === "vendedor" && ["conta", "configuracoes", "perfil", "testes", "indicar", "suporte-conta"].includes(active)) return "conta";
+    if (role === "vendedor" && ["conta", "configuracoes", "perfil", "testes", "indicar", "planos", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
       if (["conta", "configuracoes", "outros", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "outros";
       if (["leads", "materiais", "academy-empresa", "profissionais", "conferir-fila", "conferir-time"].includes(active)) return "campanhas";

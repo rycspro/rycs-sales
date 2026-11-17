@@ -8,7 +8,9 @@ import { registrarMovimento } from "../services/financeiro.js";
 import { emailComprovantePagamento } from "../services/email.js";
 import { DESTAQUES } from "../../shared/planos.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
-import { SAQUE_MINIMO, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
+import { saqueMinimoPara, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
+import { limite } from "../../shared/planosProfissional.js";
+import { planoAtual, tratarEventoProfissional } from "../services/planosProfissional.js";
 
 const router = Router();
 
@@ -131,8 +133,10 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   const valor = Number(req.body?.valor);
   const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(entityId);
   if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
-  if (!Number.isFinite(valor) || valor < SAQUE_MINIMO)
-    return res.status(400).json({ error: `Valor mínimo: R$ ${SAQUE_MINIMO.toFixed(2).replace(".", ",")}` });
+  // Piso do saque: o plano pode baixar (limite "saqueMinimo"); pendente = piso de todos.
+  const minimo = saqueMinimoPara(limite(planoAtual(entityId).plano, "saqueMinimo"));
+  if (!Number.isFinite(valor) || valor < minimo)
+    return res.status(400).json({ error: `Valor mínimo: R$ ${minimo.toFixed(2).replace(".", ",")}` });
   if (!vendedor.pix) return res.status(400).json({ error: "Cadastre sua chave Pix antes de sacar" });
   if (!vendedor.pixTipo) return res.status(400).json({ error: "Informe o tipo da sua chave Pix (CPF, celular, e-mail ou aleatória)" });
 
@@ -438,6 +442,13 @@ router.post("/payments/webhook", (req, res) => {
   const novo = db.prepare("INSERT OR IGNORE INTO gateway_events (id, evento, criadoEm) VALUES (?, ?, ?)")
     .run(chave, event, agora());
   if (novo.changes === 0) return res.json({ ok: true, duplicado: true });
+
+  // Plano do profissional (Pro/Premium): desviado ANTES da lógica da empresa,
+  // senão o pagamento viraria depósito de caixa ou inadimplência de empresa.
+  if (String(payment?.externalReference || "").startsWith("prof:")) {
+    const resultado = tratarEventoProfissional(event, payment);
+    return res.json({ ok: true, resultado });
+  }
 
   if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
     creditarDeposito(payment);

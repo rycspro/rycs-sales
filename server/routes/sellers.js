@@ -6,6 +6,8 @@ import { detalharScore, pontosVendedor, explicacaoScore } from "../../shared/per
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { emailCadastroCompletadoAdmin } from "../services/email.js";
+import { ordenarComDesempate, pode, TOLERANCIA_DESEMPATE } from "../../shared/planosProfissional.js";
+import { planosAtuais } from "../services/planosProfissional.js";
 
 const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusiness.com.br";
 
@@ -46,7 +48,13 @@ export function invalidarCacheProfissionais() { _profCacheTs = 0; }
 router.get("/professionals/active", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
   const companyId = req.user.entityId;
-  const rows = getProfissionaisBase();
+  // Desempate do Pro: só reordena dentro da mesma faixa de Score; com a
+  // tolerância pendente (null) a lista sai como sempre saiu.
+  let rows = getProfissionaisBase();
+  if (TOLERANCIA_DESEMPATE) {
+    const planos = planosAtuais();
+    rows = ordenarComDesempate(rows, (s) => pode(planos.get(s.id) || "gratis", "desempateScore"));
+  }
   const certificacoes = db.prepare("SELECT sellerId, funcao, nivel, percentual FROM certifications").all();
   const pedidos = new Map(db.prepare("SELECT sellerId, status FROM partnership_requests WHERE companyId = ?").all(companyId).map((p) => [p.sellerId, p.status]));
   const notas = new Map(db.prepare("SELECT sellerId, observacao FROM professional_notes WHERE companyId = ?").all(companyId).map((n) => [n.sellerId, n.observacao]));
