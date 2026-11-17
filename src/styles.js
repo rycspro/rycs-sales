@@ -1002,6 +1002,21 @@ html[data-versao="sol"] .vx-balance-value{font-family:'Michroma','General Sans',
 /* Responsividade dos números dos indicadores fora do tema Sol */
 @media(max-width:640px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:19px}}
 @media(max-width:400px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:17px}}
+/* Início mobile — Desempenho Comercial: 2 colunas limpas, sem bordas apertadas */
+@media(max-width:640px){
+  .vx-metricas-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0!important;border-bottom:none!important}
+  .vx-metrica-cell{border-left:none!important;border-top:1px solid var(--border);padding:12px 10px!important}
+  .vx-metrica-cell:nth-child(2n){border-left:1px solid var(--border)!important}
+  .vx-metrica-cell:nth-child(-n+2){border-top:none}
+  .vx-metrica-cell .vx-tile-top span{white-space:normal;line-height:1.25}
+}
+/* Início mobile — Pendências: botão desce pra baixo em vez de esmagar o texto */
+@media(max-width:560px){
+  .vx-pend-item{flex-wrap:wrap;align-items:center}
+  .vx-pend-emoji{order:0;flex:0 0 auto}
+  .vx-pend-txt{order:1;flex:1 1 auto;min-width:0}
+  .vx-pend-cta{order:2;flex:1 1 100%;width:100%;margin-top:4px;justify-content:center}
+}
 /* Pagamentos das Campanhas: números um pouco menores que o padrão. */
 html[data-versao="sol"] .vx-centralpag .vx-num{font-size:21px!important}
 @media(max-width:640px){html[data-versao="sol"] .vx-centralpag .vx-num{font-size:19px!important}}
