@@ -267,7 +267,7 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
   return <div className="vx-fade">
     <div className="vx-page-head">
       <div><h1 className="vx-disp">Profissionais</h1><p>Gestão dos profissionais disponíveis, usando somente dados reais da plataforma.</p></div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span className="vx-chip"><UserRoundSearch size={13} />{filtrados.length} profissionais</span>
         <div style={{ position: "relative" }}>
           {!buscaAberta ? (
