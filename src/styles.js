@@ -819,7 +819,11 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 .vx-account-menu button.vx-account-sair{color:var(--red)}
 .vx-account-menu button.vx-account-sair:hover{background:var(--red-50)}
 .vx-account-menu{position:absolute;bottom:calc(100% + 8px);right:0;z-index:60;min-width:200px;padding:6px;background:var(--surface);border:1.5px solid var(--brand);border-radius:12px;box-shadow:var(--shadow-pop);max-height:calc(100dvh - 120px);overflow-y:auto}
-.vx-account-menu--down{bottom:auto;top:calc(100% + 8px)}.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
+.vx-account-menu--down{bottom:auto;top:calc(100% + 8px)}
+/* Menu de conta sempre opaco: o fundo glass deixava o conteúdo atrás vazar
+   (sobreposição ilegível), principalmente no dropdown da barra de topo mobile. */
+.vx-account-menu{background:var(--surface-solid,var(--surface))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
 /* ── Glass workspace ──────────────────────────────────────────────────────
    Material de vidro em toda a plataforma: fundo ambiente com luz difusa,
    painéis translúcidos com reflexo na borda superior, trilho lateral e
