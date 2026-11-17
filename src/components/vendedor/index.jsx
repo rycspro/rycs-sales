@@ -14,6 +14,7 @@ const TreinamentoEmpresa = lazy(() => import("./TreinamentoEmpresa.jsx"));
 const Carteira = lazy(() => import("./Carteira.jsx"));
 const PerfilVendedor = lazy(() => import("./PerfilVendedor.jsx"));
 const TestesAvaliacoes = lazy(() => import("./TestesAvaliacoes.jsx"));
+const RycsClub = lazy(() => import("./RycsClub.jsx"));
 const AcademyCatalogo = lazy(() => import("./AcademyCatalogo.jsx"));
 const Academy = lazy(() => import("./Academy.jsx"));
 const Indicacoes = lazy(() => import("../Indicacoes.jsx"));
@@ -104,6 +105,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
       {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} />}
       {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} aviso={aviso} />}
       {aba === "testes" && <TestesAvaliacoes eu={eu} db={db} aviso={aviso} recarregar={recarregar} />}
+      {aba === "club" && <RycsClub eu={eu} db={db} aviso={aviso} recarregar={recarregar} setAba={setAba} />}
       {["tarefas", "conversas"].includes(aba) && <AtividadeProfissional conversas={aba === "conversas"} eu={eu} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
       </Suspense>
 
