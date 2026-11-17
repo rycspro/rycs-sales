@@ -469,6 +469,9 @@ html.dark .vx-stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.24);border-color:var(
 .vx-overlay{align-items:flex-start;overflow-y:auto;overscroll-behavior:contain;padding:16px}}
 .vx-sheet{width:100%;max-width:580px;margin:auto;background:var(--surface);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:18px;padding:24px;box-shadow:0 -8px 40px -8px rgba(11,18,32,.12),inset 0 .5px 0 rgba(255,255,255,.4)}
 @media(min-width:640px){.vx-sheet{border-radius:18px}}
+/* No celular o modal (bottom sheet) rola internamente: altura máxima + scroll,
+   com folga embaixo para o último conteúdo passar da barra de navegação. */
+@media(max-width:639px){.vx-sheet{max-height:calc(100dvh - 20px);overflow-y:auto;overscroll-behavior:contain;padding-bottom:calc(24px + 92px + env(safe-area-inset-bottom,0px))}}
 /* --- RYCS Academy: grade de cursos ------------------------------------ */
 .vx-course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
 .vx-course-card{padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .2s,border-color .2s,box-shadow .2s;backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
