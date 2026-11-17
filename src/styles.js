@@ -1002,6 +1002,12 @@ html[data-versao="sol"] .vx-balance-value{font-family:'Michroma','General Sans',
 /* Responsividade dos números dos indicadores fora do tema Sol */
 @media(max-width:640px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:19px}}
 @media(max-width:400px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:17px}}
+/* Cabeçalho de seção no mobile: link desce para baixo do título — assim o
+   título fica em uma linha só, sem quebra. */
+@media(max-width:640px){
+  .vx-ph{flex-direction:column;align-items:flex-start;gap:4px}
+  .vx-ph-link{align-self:flex-start}
+}
 /* Início mobile — Desempenho Comercial: 2 colunas limpas, sem bordas apertadas */
 @media(max-width:640px){
   .vx-metricas-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0!important;border-bottom:none!important}
