@@ -214,7 +214,7 @@ export default function IntegracaoMeta({ aviso, campanhas = [], semCabecalho = f
           </div>
           {!metricas ? <div className="vx-spinner" /> : metricas.error ? <p style={{ fontSize: 13, color: "var(--muted)" }}>{metricas.error}</p> : (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 130px), 1fr))", gap: 10, marginBottom: 16 }}>
                 <Indicador rotulo="Investido" valor={moeda(metricas.total.gasto)} />
                 <Indicador rotulo="Leads (Meta)" valor={num(metricas.total.leads)} />
                 <Indicador rotulo="Custo por lead" valor={moeda(metricas.total.custoPorLead)} />

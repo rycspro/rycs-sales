@@ -178,7 +178,7 @@ export default function RycsClubAdmin({ aviso }) {
           </div>
           <div>
             <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Níveis</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 150px), 1fr))", gap: 12 }}>
               {FAIXAS.map((f) => (
                 <ImageSlot key={f.chave} pequeno titulo={f.nome} url={dados.imagens[`nivel:${f.chave}`]} aviso={aviso}
                   onSalvar={(u) => salvarImagem(`nivel:${f.chave}`, u)} onRemover={() => salvarImagem(`nivel:${f.chave}`, "")} />
@@ -187,7 +187,7 @@ export default function RycsClubAdmin({ aviso }) {
           </div>
           <div>
             <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Medalhas (conquistas)</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 150px), 1fr))", gap: 12 }}>
               {CONQUISTAS.map((c) => (
                 <ImageSlot key={c.id} pequeno titulo={c.nome} url={dados.imagens[`medalha:${c.id}`]} aviso={aviso}
                   onSalvar={(u) => salvarImagem(`medalha:${c.id}`, u)} onRemover={() => salvarImagem(`medalha:${c.id}`, "")} />
@@ -203,7 +203,7 @@ export default function RycsClubAdmin({ aviso }) {
             ? <FormularioPremio premio={editando.id ? editando : null} metricas={dados.metricas} aviso={aviso}
                 onSalvar={salvarPremio} onCancelar={() => setEditando(null)} />
             : <button className="vx-btn vx-btn-primary" onClick={() => setEditando({})} style={{ gap: 6, marginBottom: 16 }}><Plus size={15} /> Novo prêmio</button>}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 14 }}>
             {dados.premios.map((p) => (
               <div key={p.id} className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
                 <div style={{ aspectRatio: "16 / 9", background: "#F4F7FA", display: "grid", placeItems: "center" }}>

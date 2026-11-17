@@ -84,7 +84,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
         </div>
 
         {/* Camada 2 — tópicos */}
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "8px 20px" }}>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "8px 20px" }}>
           {free.inclui.map((i) => {
             const ehIA = /\bIA\b/.test(i);
             return (
@@ -164,7 +164,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 16, alignItems: "start" }}>
         {plans.map((p, index) => {
           const popular = p.chave === "scale";
           const ehAtual = p.chave === planoAtualChave;

@@ -560,7 +560,7 @@ function AprendizadoAba({ aviso }) {
         <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Acompanhe como os profissionais estão consumindo os treinamentos da sua empresa.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))", gap: 12, marginBottom: 28 }}>
         {cards.map((c) => (
           <div key={c.label} style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".5px" }}>{c.label}</div>

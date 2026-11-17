@@ -371,7 +371,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
 
       {/* Linha 1 — indicadores */}
       {campanhas.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12, marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: 12, marginBottom: 16 }}>
           <IndicadorTopo label="Campanhas ativas" valor={ativas} descricao="Operações em andamento" Icon={Megaphone} />
           <IndicadorTopo label="Profissionais trabalhando" valor={profissionaisTrabalhando} descricao="Ativos nas campanhas publicadas" Icon={UserCheck} />
           <IndicadorTopo label="Tarefas em execução" valor={tarefasExecucao} descricao="Atividades em andamento" Icon={Activity} />
@@ -426,7 +426,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
 
       {/* Estado vazio — nenhuma campanha criada */}
       {campanhas.length === 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 14 }}>
           <div onClick={() => onCriar(false)}
             style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10, transition: "border-color .15s" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; }}

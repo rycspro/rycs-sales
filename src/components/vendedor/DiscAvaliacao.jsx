@@ -284,7 +284,7 @@ function Intro({ dados, ocupado, onIniciar, onVoltar }) {
           costuma agir diante de diferentes situações profissionais.
         </p>
 
-        <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", marginBottom: 20 }}>
+        <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", marginBottom: 20 }}>
           <InfoLinha Icon={Layers} texto={`${dados?.totalBlocos || 24} blocos de perguntas`} />
           <InfoLinha Icon={Clock} texto="Aproximadamente 8 a 12 minutos" />
           <InfoLinha Icon={Brain} texto="Quatro dimensões comportamentais" />
@@ -293,7 +293,7 @@ function Intro({ dados, ocupado, onIniciar, onVoltar }) {
 
         {/* Quatro dimensões */}
         <div className="vx-eyebrow" style={{ marginBottom: 10 }}>As quatro dimensões</div>
-        <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginBottom: 20 }}>
+        <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", marginBottom: 20 }}>
           {dimensoes.map((d) => (
             <div key={d.letra} style={{ display: "flex", gap: 10, padding: "12px 14px", borderRadius: 12, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
               <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: `${d.cor}1a`, color: d.cor, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15 }}>{d.letra}</div>

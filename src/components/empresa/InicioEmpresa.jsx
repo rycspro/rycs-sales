@@ -408,7 +408,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       </div>
 
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))", gap: 12, marginBottom: 6 }}>
         <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} />
         <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} />
         <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} />
@@ -435,7 +435,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           <div className="vx-card" style={{ padding: "6px 20px 20px" }}>
 
             {/* Métricas rápidas do período — região unificada com divisores sutis */}
-            <div className="vx-metricas-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 0, marginBottom: 20, borderBottom: "1px solid var(--border)" }}>
+            <div className="vx-metricas-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 130px), 1fr))", gap: 0, marginBottom: 20, borderBottom: "1px solid var(--border)" }}>
               {[
                 { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
                 { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2 },

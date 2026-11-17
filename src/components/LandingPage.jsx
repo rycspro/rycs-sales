@@ -811,7 +811,7 @@ const st = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
     gap: 18,
     maxWidth: 1100,
     margin: "0 auto",
@@ -914,7 +914,7 @@ const st = {
   footerInner: { maxWidth: 1100, margin: "0 auto", padding: "48px 24px 0" },
   footerGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
     gap: "40px 32px",
   },
   footerCol: {},

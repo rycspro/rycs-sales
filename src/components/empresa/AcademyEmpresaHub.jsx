@@ -59,7 +59,7 @@ export default function AcademyEmpresaHub({ emp, aviso, onIrParaMateriais }) {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 16 }}>
         {/* Cérebro CTA principal */}
         <div style={{ background: "linear-gradient(135deg, var(--brand-50, #eff6ff), var(--brand-100, #dbeafe))", border: "2px solid var(--brand-200, #bfdbfe)", borderRadius: 16, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ fontSize: 36 }}>🧠</div>

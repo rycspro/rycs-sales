@@ -33,7 +33,7 @@ export default function EscolhaCadastro() {
       subtitulo="Cada perfil tem um ambiente próprio. Escolha para abrir o cadastro certo."
       rodape={<button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => navegar(ROTAS.login)}>Já tenho conta — entrar</button>}
     >
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))" }}>
         {OPCOES.map((o) => (
           <div key={o.role} style={{ border: "1px solid var(--border)", borderRadius: 14, padding: 18, display: "flex", flexDirection: "column" }}>
             <div className="vx-disp" style={{ fontSize: 17 }}>{o.titulo}</div>

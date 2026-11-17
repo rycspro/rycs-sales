@@ -76,7 +76,7 @@ export default function TarefasEmpresa({ emp, db }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 10, marginBottom: 20 }}>
         {[
           ["Tarefas", stats.total.toLocaleString("pt-BR"), ListChecks],
           ["Campanhas", stats.campanhas.toLocaleString("pt-BR"), Megaphone],

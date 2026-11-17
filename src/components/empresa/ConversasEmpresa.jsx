@@ -122,7 +122,7 @@ function PerfilModal({ seller, db, emp, empId, onFechar }) {
         {/* DADOS DO PERFIL */}
         <div className="vx-card" style={{ padding: "14px 18px", marginTop: 20 }}>
           <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Dados do Perfil</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px 20px", fontSize: 13 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: "10px 20px", fontSize: 13 }}>
             <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Função</div><b>{PERFIL_LABEL[p.perfil] || p.perfil || "Não informada"}</b></div>
             <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Localização</div><b>{[p.cidade, p.estado].filter(Boolean).join(" / ") || "—"}</b></div>
             {p.disponibilidade && <div><div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Disponibilidade</div><b>{p.disponibilidade}</b></div>}

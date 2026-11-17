@@ -156,7 +156,7 @@ export function CardsInformacoes({ resumo, onAbrir }) {
   return (
     <>
       <BarraProgresso pct={pct} />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 14 }}>
         {INFO_SECOES.map((s) => (
           <CardSecao key={s.chave} secao={s} estado={resumo?.[s.chave]?.estado || "vazio"} onClick={() => onAbrir(s.chave)} />
         ))}
@@ -420,7 +420,7 @@ function EditorRegistros({ secao, entradas, materiaisLib, onEditar, onCriar, onR
           </button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 230px), 1fr))", gap: 12 }}>
           {entradas.map((e) => (
             <CardRegistro key={e.id} entrada={e} schema={schema} onClick={() => setAbertoId(e.id)} />
           ))}

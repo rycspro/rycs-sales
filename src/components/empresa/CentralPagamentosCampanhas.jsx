@@ -380,7 +380,7 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
       )}
 
       {/* ── Linha 1: saldo disponível + liberação ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginBottom: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 14, marginBottom: 14 }}>
         {/* Card saldo disponível — fundo azul sutil para destaque */}
         <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-200)", borderRadius: 14, padding: "20px 22px", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -457,7 +457,7 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
       </div>
 
       {/* ── Linha 2: indicadores financeiros ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: 12, marginBottom: 24 }}>
         <Indicador label="Saldo reservado" valor={carregando ? "—" : money(posicao.reservado)} sub="Comprometido com tarefas" Icon={LockKeyhole} tone="amber" />
         <Indicador label="Aguardando aprovação" valor={money(aguardando)} sub={`${pendentesAprovacao.length} pagamento${pendentesAprovacao.length !== 1 ? "s" : ""} pendente${pendentesAprovacao.length !== 1 ? "s" : ""}`} Icon={Clock3} tone="ink" />
         <Indicador label="Total pago" valor={money(totalPago)} sub="Pagamentos concluídos" Icon={CheckCheck} tone="brand" />
@@ -488,7 +488,7 @@ export default function CentralPagamentosCampanhas({ emp, db, up, aviso, recarre
         ) : !campanhasFiltradas.length ? (
           <div style={{ textAlign: "center", padding: "30px 20px", color: "var(--muted)", fontSize: 13 }}>Nenhuma campanha encontrada para “{busca}”.</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: 12 }}>
             {campanhasFiltradas.map((c) => (
               <CampanhaCard key={c.id} campanha={c} submissions={submissions}
                 onPagamentos={() => setDrawerPag(c)} onSaldo={() => setDrawerSaldo(c)} />

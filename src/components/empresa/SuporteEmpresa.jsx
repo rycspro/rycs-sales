@@ -152,7 +152,7 @@ export default function SuporteEmpresa({ emp, aviso }) {
 
       {/* ── Acessos rápidos (ocultos durante a busca) ── */}
       {!termo && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginTop: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 14, marginTop: 16 }}>
           {[
             { icon: BookOpen, titulo: "Central de ajuda", desc: "Encontre tutoriais e orientações para utilizar os recursos da RYCS.", acao: "Explorar conteúdos", onClick: () => irPara(refAjuda) },
             { icon: Headset, titulo: "Falar com suporte", desc: "Precisa de atendimento? Entre em contato com nossa equipe.", acao: "Ver atendimento", onClick: () => irPara(refAtendimento) },
@@ -182,7 +182,7 @@ export default function SuporteEmpresa({ emp, aviso }) {
             </div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 12 }}>
             {categoriasFiltradas.map((c) => (
               <button key={c.chave} type="button" onClick={() => setCategoriaAberta(c)} className="vx-sup-card" style={{ textAlign: "left", background: "#fff", border: "1px solid #E8EAED", borderRadius: 12, padding: 16, cursor: "pointer", display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <div style={{ width: 36, height: 36, borderRadius: 9, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -212,7 +212,7 @@ export default function SuporteEmpresa({ emp, aviso }) {
 
       {/* ── Atendimento direto ── */}
       <Secao innerRef={refAtendimento} titulo="Atendimento direto" desc="Prefere falar com nossa equipe por outro canal?">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 12 }}>
           {/* WhatsApp */}
           <div style={{ background: "#fff", border: "1px solid #E8EAED", borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

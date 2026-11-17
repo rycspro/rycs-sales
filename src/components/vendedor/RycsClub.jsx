@@ -307,7 +307,7 @@ export default function RycsClub({ db, aviso, recarregar, setAba }) {
 
       {tab === "visao" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: 14 }}>
             <NivelResumo nivel={g.nivel} />
             <div className="vx-card" style={{ padding: 22 }}>
               <Eyebrow>Resumo</Eyebrow>
@@ -331,7 +331,7 @@ export default function RycsClub({ db, aviso, recarregar, setAba }) {
                 <Eyebrow>Missões em destaque</Eyebrow>
                 <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setTab("missoes")}>Ver todas <ChevronRight size={14} /></button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: 14 }}>
                 {missoes.slice(0, 4).map((m) => <MissaoCard key={m.id} m={m} onIr={irPara} />)}
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function RycsClub({ db, aviso, recarregar, setAba }) {
           <p style={{ margin: "0 0 2px", color: "var(--muted)", fontSize: 13.5 }}>Complete desafios e avance na sua jornada profissional.</p>
           {missoes.length === 0
             ? <div className="vx-card" style={{ padding: 32, textAlign: "center", color: "var(--muted)" }}><Trophy size={26} color={AZUL} /><div style={{ marginTop: 10, fontWeight: 600, color: "var(--ink)" }}>Você concluiu todas as missões disponíveis!</div><div style={{ fontSize: 13, marginTop: 4 }}>Novas missões aparecem conforme a plataforma evolui.</div></div>
-            : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
+            : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 14 }}>
                 {missoes.map((m) => <MissaoCard key={m.id} m={m} onIr={irPara} />)}
               </div>}
         </div>
@@ -374,7 +374,7 @@ export default function RycsClub({ db, aviso, recarregar, setAba }) {
           {Object.entries(CATEGORIAS).filter(([cat]) => conquistasPorCat[cat]?.length).map(([cat, label]) => (
             <div key={cat}>
               <Eyebrow>{label}</Eyebrow>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 190px), 1fr))", gap: 14 }}>
                 {conquistasPorCat[cat].map((c) => <ConquistaCard key={c.id} c={c} imagens={dados.imagens} />)}
               </div>
             </div>
@@ -393,7 +393,7 @@ export default function RycsClub({ db, aviso, recarregar, setAba }) {
                   <div style={{ marginTop: 12, fontWeight: 700, color: "var(--ink)", fontSize: 15 }}>Prêmios em breve</div>
                   <div style={{ fontSize: 13, marginTop: 6, maxWidth: 420, marginInline: "auto", lineHeight: 1.5 }}>As recompensas do RYCS Club estão sendo preparadas. Continue completando missões — os prêmios aparecem aqui assim que forem publicados.</div>
                 </div>
-              : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+              : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 16 }}>
                   {dados.premios.map((p) => <PremioCard key={p.id} p={p} onResgatar={resgatar} />)}
                 </div>}
         </div>
