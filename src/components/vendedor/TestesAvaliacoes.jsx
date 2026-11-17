@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ClipboardList, Brain, Layers, ShieldAlert, HeartHandshake, Compass,
   Puzzle, MessageSquare, Lightbulb, ListChecks, Scale,
   CheckCircle2, Clock, ArrowLeft, ArrowRight, Lock, Eye,
 } from "lucide-react";
-import { DIMENSOES } from "../../../shared/discQuiz.js";
+import { api } from "../../lib/api.js";
+import DiscAvaliacao from "./DiscAvaliacao.jsx";
+import BigFive from "./BigFive.jsx";
 
 // Azul institucional White Editorial (mesmo dos fluxos de cadastro/onboarding).
 const AZUL = "#318CE7";
@@ -32,17 +34,18 @@ const CATALOGO = [
     objetivo: "Identificar como você tende a agir, se comunicar e tomar decisões no dia a dia comercial.",
     avalia: "Quatro dimensões comportamentais: Dominância, Influência, Estabilidade e Conformidade.",
     instrucoes: "Em cada bloco, escolha a opção que MAIS e a que MENOS combina com você. Não há resposta certa ou errada.",
-    privacidade: "Resultado de personalidade. Visível para empresas apenas se você autorizar nas configurações do perfil. Nunca é usado para reprovar você.",
-    perguntas: "8 blocos", tempo: "3 a 5 min", publicado: true, fonte: "disc",
+    privacidade: "Resultado de personalidade. Visível para empresas apenas se você autorizar. Nunca é usado para reprovar você.",
+    perguntas: "24 blocos", tempo: "8 a 12 min", publicado: true, v2: true,
   },
   {
     id: "big-five", categoria: "personalidade", Icon: Layers,
-    nome: "Big Five — Traços de personalidade",
-    descricao: "Mapeie os cinco grandes traços que descrevem seu estilo pessoal.",
+    nome: "Big Five — Cinco grandes fatores",
+    descricao: "Mapeie os cinco grandes fatores que descrevem seu estilo pessoal.",
     objetivo: "Oferecer uma leitura ampla da sua personalidade por cinco fatores reconhecidos.",
-    avalia: "Abertura, conscienciosidade, extroversão, amabilidade e estabilidade emocional.",
-    instrucoes: "", privacidade: "Resultado de personalidade, sob seu controle de visibilidade.",
-    perguntas: "", tempo: "", publicado: false,
+    avalia: "Abertura, conscienciosidade, extroversão, amabilidade e neuroticismo.",
+    instrucoes: "Para cada afirmação, escolha o quanto você concorda, de 1 a 5. Não há resposta certa ou errada.",
+    privacidade: "Resultado de personalidade, privado por padrão. Visível para empresas só com sua autorização; nunca altera score, ranking ou campanhas.",
+    perguntas: "50 afirmações", tempo: "7 a 12 min", publicado: true, bf: true,
   },
   {
     id: "sabotadores", categoria: "personalidade", Icon: ShieldAlert,
@@ -125,9 +128,23 @@ const CATALOGO = [
 //   concluido    → já realizada (hoje, só o DISC, via dados existentes)
 //   andamento    → iniciada e não concluída (reservado para o futuro)
 //   disponivel   → publicada e ainda não iniciada
-function estadoDe(item, disc) {
+function estadoDe(item, discV2, big5) {
   if (!item.publicado) return "indisponivel";
-  if (item.fonte === "disc") return disc?.predominante ? "concluido" : "disponivel";
+  if (item.v2) {
+    if (discV2 && discV2.disponivel === false) return "indisponivel";
+    const st = discV2?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
+  if (item.bf) {
+    // Sob feature flag: até confirmar, o padrão seguro é "Em breve".
+    if (!big5 || big5.disponivel === false) return "indisponivel";
+    const st = big5?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
   return "disponivel";
 }
 
@@ -138,17 +155,18 @@ const ROTULO_ESTADO = {
   indisponivel: { txt: "Em breve", Icon: Lock, cor: "var(--muted-2)" },
 };
 
-export default function TestesAvaliacoes({ eu, aviso }) {
+export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const [vista, setVista] = useState({ tipo: "catalogo" });
+  const [discV2, setDiscV2] = useState(null);
+  const [big5, setBig5] = useState(null);
 
-  const disc = useMemo(() => {
-    try { return typeof eu.disc === "string" ? JSON.parse(eu.disc || "{}") : (eu.disc || {}); }
-    catch { return {}; }
-  }, [eu.disc]);
+  const carregarDisc = () => api("/disc/avaliacao").then((r) => { if (r && !r.error) setDiscV2(r); });
+  const carregarBig5 = () => api("/big-five").then((r) => { if (r && !r.error) setBig5(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, disc) })),
-    [disc]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5) })),
+    [discV2, big5]
   );
 
   const total = comEstado.length;
@@ -156,17 +174,33 @@ export default function TestesAvaliacoes({ eu, aviso }) {
   const pct = total ? Math.round((concluidas / total) * 100) : 0;
 
   const abrir = (item) => {
-    if (item.estado === "concluido" && item.fonte === "disc") setVista({ tipo: "resultado", id: item.id });
+    if (item.v2 && item.estado !== "indisponivel") setVista({ tipo: "disc" });
+    else if (item.bf && item.estado !== "indisponivel") setVista({ tipo: "bigfive" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
+  if (vista.tipo === "disc") {
+    return (
+      <DiscAvaliacao
+        eu={eu}
+        aviso={aviso}
+        onVoltar={() => { carregarDisc(); setVista({ tipo: "catalogo" }); }}
+        onConcluir={() => { carregarDisc(); recarregar?.(); }}
+      />
+    );
+  }
+  if (vista.tipo === "bigfive") {
+    return (
+      <BigFive
+        aviso={aviso}
+        recarregar={() => { carregarBig5(); recarregar?.(); }}
+        onVoltar={() => { carregarBig5(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
   if (vista.tipo === "detalhe") {
     const item = comEstado.find((a) => a.id === vista.id);
     return <Detalhe item={item} onVoltar={() => setVista({ tipo: "catalogo" })} aviso={aviso} />;
-  }
-  if (vista.tipo === "resultado") {
-    const item = comEstado.find((a) => a.id === vista.id);
-    return <ResultadoDisc item={item} disc={disc} onVoltar={() => setVista({ tipo: "catalogo" })} />;
   }
 
   return (
@@ -341,50 +375,3 @@ function Detalhe({ item, onVoltar, aviso }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Resultado do DISC — reusa os dados já existentes (eu.disc), sem recalcular.
-function ResultadoDisc({ item, disc, onVoltar }) {
-  const dimP = DIMENSOES[disc.predominante] || {};
-  const dimS = DIMENSOES[disc.secundario] || {};
-  const percentuais = disc.percentuais || {};
-
-  return (
-    <div className="vx-fade" style={{ maxWidth: 560, margin: "0 auto" }}>
-      <button type="button" className="vx-btn vx-btn-sm" onClick={onVoltar} style={{ marginBottom: 14 }}>
-        <ArrowLeft size={14} /> Voltar
-      </button>
-
-      <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
-        <div className="vx-eyebrow" style={{ color: AZUL }}>DISC — Perfil comportamental</div>
-        <div className="vx-disp" style={{ fontSize: 34, margin: "8px 0 0", color: dimP.cor || AZUL }}>{disc.label || "—"}</div>
-        {dimP.nome && (
-          <p className="vx-mut" style={{ fontSize: 13.5, maxWidth: 400, margin: "12px auto 0", lineHeight: 1.7 }}>
-            <b style={{ color: dimP.cor }}>{dimP.nome}</b> é sua dimensão principal: {String(dimP.descricao || "").toLowerCase()}
-            {dimS.nome && <> Com traços de <b style={{ color: dimS.cor }}>{dimS.nome}</b>: {String(dimS.descricao || "").toLowerCase()}</>}
-          </p>
-        )}
-
-        {!!Object.keys(percentuais).length && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 26 }}>
-            {["D", "I", "S", "C"].map((d) => (
-              <div key={d} style={{ textAlign: "center" }}>
-                <div style={{
-                  width: 52, height: 52, borderRadius: "50%", margin: "0 auto 6px",
-                  border: `3px solid ${DIMENSOES[d].cor}`, display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 15, fontWeight: 700, color: DIMENSOES[d].cor,
-                  background: d === disc.predominante ? `${DIMENSOES[d].cor}18` : "transparent",
-                }}>{percentuais[d] ?? 0}%</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: DIMENSOES[d].cor }}>{d}</div>
-                <div style={{ fontSize: 10.5, color: "var(--muted)" }}>{DIMENSOES[d].nome}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="vx-chart-source" style={{ textAlign: "center", marginTop: 12 }}>
-        Avaliação de personalidade — descreve tendências de comportamento, nunca aprova ou reprova você.
-      </div>
-    </div>
-  );
-}

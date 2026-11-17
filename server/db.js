@@ -1949,6 +1949,58 @@ db.exec(`
 // Voucher RICARDOMARTIN: ilimitado (sem limite total nem por empresa)
 db.prepare("UPDATE vouchers SET limiteTotal = 0, limitePorEmpresa = 0 WHERE codigo = 'RICARDOMARTIN' AND (limiteTotal != 0 OR limitePorEmpresa != 0)").run();
 
+// Central de Testes — DISC (perfil comportamental), instrumento rycs-disc-v1-24.
+// Tabela própria, separada do DISC antigo (sellers.disc, 8 perguntas), que é
+// preservado. Uma linha por (profissional, versão): refazer sobrescreve a
+// própria tentativa, sem tocar no resultado histórico do instrumento antigo.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS disc_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    algoritmo TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    ordem TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    contagens TEXT DEFAULT '{}',
+    saldos TEXT DEFAULT '{}',
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_disc_assessments_seller_versao ON disc_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_disc_assessments_seller ON disc_assessments(sellerId, iniciadoEm DESC);
+`);
+
+// Avaliação Big Five (IPIP-50) — instrumento próprio, separado do DISC. Persiste
+// versão do instrumento, idioma, chave de correção, respostas, pontuação e data
+// de conclusão. Compartilhamento com empresas é privado por padrão (= 0). O
+// resultado NUNCA toca perfilComercial, score comercial, ranking ou campanhas.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS bigfive_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    idioma TEXT DEFAULT '',
+    chave TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_bigfive_assessments_seller_versao ON bigfive_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_bigfive_assessments_seller ON bigfive_assessments(sellerId, iniciadoEm DESC);
+`);
+
 
 export default db;
 export { uid, agora };
