@@ -101,6 +101,7 @@ export const NAV = {
     { key: "saques", label: "Saques", Icon: Wallet },
     { section: "Conteúdo" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
+    { key: "club", label: "RYCS Club", Icon: Trophy },
     { key: "emails", label: "E-mails", Icon: Mail },
     { section: "Sistema" },
     { key: "beta", label: "Ambiente Beta", Icon: RotateCcw },

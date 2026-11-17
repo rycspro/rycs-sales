@@ -9,6 +9,7 @@ import EmpresasAdmin from "./EmpresasAdmin.jsx";
 import DepositosAdmin from "./DepositosAdmin.jsx";
 import AssinaturasAdmin from "./AssinaturasAdmin.jsx";
 import AcademyAdmin from "./AcademyAdmin.jsx";
+import RycsClubAdmin from "./RycsClubAdmin.jsx";
 import BetaEnvironmentAdmin from "./BetaEnvironmentAdmin.jsx";
 import CentralEmails from "./CentralEmails.jsx";
 import ConvitesOnboarding from "./ConvitesOnboarding.jsx";
@@ -94,6 +95,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   if (aba === "vouchers") return <VouchersAdmin aviso={aviso} />;
   if (aba === "depositos") return <DepositosAdmin aviso={aviso} recarregar={recarregar} />;
   if (aba === "academy") return <AcademyAdmin aviso={aviso} />;
+  if (aba === "club") return <RycsClubAdmin aviso={aviso} />;
   if (aba === "beta") return <BetaEnvironmentAdmin aviso={aviso} recarregar={recarregar} />;
   if (aba === "emails") return <CentralEmails aviso={aviso} />;
   if (aba === "onboarding") return <ConvitesOnboarding aviso={aviso} />;
