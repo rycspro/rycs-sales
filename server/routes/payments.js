@@ -520,6 +520,14 @@ function creditarDeposito(payment) {
   const valor = Number(payment.value) || 0;
   if (valor <= 0) return;
 
+  // Idempotência por cobrança, não por evento: o Asaas manda PAYMENT_RECEIVED e
+  // PAYMENT_CONFIRMED para o mesmo pagamento com ids de evento diferentes, então
+  // a trava de gateway_events não cobre os dois. O ledger tem UNIQUE(tipo,
+  // idempotencyKey), mas o crédito de saldo abaixo roda à parte — sem esta
+  // checagem o caixa seria creditado em dobro. Credita uma única vez por cobrança.
+  const jaCreditado = db.prepare("SELECT 1 FROM financial_ledger WHERE tipo = 'deposito' AND idempotencyKey = ?").get(payment.id);
+  if (jaCreditado) return;
+
   db.transaction(() => {
     db.prepare("UPDATE companies SET saldo = saldo + ?, totalAportado = totalAportado + ? WHERE id = ?")
       .run(valor, valor, empresa.id);
