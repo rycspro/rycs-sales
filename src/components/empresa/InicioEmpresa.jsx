@@ -418,10 +418,10 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       </div>
 
       {/* ── GRID PRINCIPAL ────────────────────────────────────────────────── */}
-      <div className="inicio-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, alignItems: "start" }}>
+      <div className="inicio-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
 
         {/* COLUNA ESQUERDA */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
 
 
           {/* ── DESEMPENHO COMERCIAL ──────────────────────────────────────── */}
@@ -597,7 +597,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       {/* Mobile: grid de uma coluna já é o padrão agora */}
       <style>{`
         @media (max-width: 860px) {
-          .inicio-grid { grid-template-columns: 1fr !important; }
+          .inicio-grid { grid-template-columns: minmax(0, 1fr) !important; }
         }
       `}</style>
     </div>
