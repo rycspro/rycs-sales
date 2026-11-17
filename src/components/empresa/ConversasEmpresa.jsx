@@ -769,10 +769,32 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
         <input ref={fotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={enviarFoto} />
         <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style={{ display: "none" }} onChange={enviarDoc} />
 
-        {/* Menu de anexos (3 pontinhos) — abre pra cima com todas as opções */}
+        {/* Input de texto */}
+        <textarea
+          ref={ref}
+          value={txt}
+          onChange={(e) => setTxt(e.target.value)}
+          onKeyDown={onKey}
+          placeholder="Escreva uma mensagem…"
+          rows={1}
+          disabled={gravando}
+          style={{
+            flex: 1, resize: "none", border: "1.5px solid #E2E8F0", borderRadius: 10,
+            padding: "9px 13px", fontSize: 13.5, fontFamily: "inherit", lineHeight: 1.5,
+            outline: "none", color: "#1E293B", background: "#F8FAFC",
+            transition: "border-color .15s", maxHeight: 120, overflowY: "auto",
+            opacity: gravando ? 0.4 : 1,
+          }}
+          onFocus={(e) => { if (!gravando) { e.target.style.borderColor = "#2563EB"; e.target.style.background = "#fff"; } }}
+          onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; e.target.style.background = "#F8FAFC"; }}
+          onInput={(e) => { e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
+          aria-label="Campo de mensagem"
+        />
+
+        {/* Menu de anexos (3 pontinhos) — ao lado do enviar, abre pra cima */}
         <div ref={menuRef} style={{ position: "relative", flexShrink: 0, paddingBottom: 1 }}>
           {showMenu && (
-            <div style={{ position: "absolute", bottom: 46, left: 0, width: 186, background: "#fff", borderRadius: 12, boxShadow: "0 8px 28px rgba(0,0,0,.16)", border: "1px solid #E2E8F0", zIndex: 1000, padding: 5 }}>
+            <div style={{ position: "absolute", bottom: 46, right: 0, width: 186, background: "#fff", borderRadius: 12, boxShadow: "0 8px 28px rgba(0,0,0,.16)", border: "1px solid #E2E8F0", zIndex: 1000, padding: 5 }}>
               {[
                 { Ic: Image, label: "Foto", onClick: () => { setShowMenu(false); fotoRef.current?.click(); } },
                 { Ic: FileText, label: "Documento", onClick: () => { setShowMenu(false); docRef.current?.click(); } },
@@ -793,9 +815,9 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
             </div>
           )}
 
-          {/* Painel emoji — ancorado acima do botão de menu */}
+          {/* Painel emoji */}
           {showEmoji && (
-            <div style={{ position: "absolute", bottom: 46, left: 0, width: 316, maxWidth: "calc(100vw - 28px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)", border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden" }}>
+            <div style={{ position: "absolute", bottom: 46, right: 0, width: 316, maxWidth: "calc(100vw - 28px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)", border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden" }}>
               <div style={{ display: "flex", gap: 1, padding: "8px 8px 0", borderBottom: "1px solid #F1F5F9", background: "#F8FAFC" }}>
                 {EMOJI_CATS.map((cat, i) => (
                   <button key={i} type="button" onClick={() => setCatEmoji(i)} style={{ flex: 1, fontSize: 16, padding: "5px 2px", border: "none", cursor: "pointer", background: catEmoji === i ? "#EFF6FF" : "transparent", borderRadius: 6, transition: "background .12s" }}>{cat.label}</button>
@@ -811,9 +833,9 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
             </div>
           )}
 
-          {/* Painel GIF — ancorado acima do botão de menu */}
+          {/* Painel GIF */}
           {showGif && (
-            <div style={{ position: "absolute", bottom: 46, left: 0, width: 316, maxWidth: "calc(100vw - 28px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)", border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden" }}>
+            <div style={{ position: "absolute", bottom: 46, right: 0, width: 316, maxWidth: "calc(100vw - 28px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)", border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden" }}>
               <div style={{ padding: "8px 8px 6px", borderBottom: "1px solid #F1F5F9" }}>
                 <input value={buscaGif} onChange={(e) => setBuscaGif(e.target.value)} placeholder="Buscar GIFs…" autoFocus
                   style={{ width: "100%", border: "1.5px solid #E2E8F0", borderRadius: 8, padding: "7px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "#F8FAFC" }}
@@ -841,28 +863,6 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
             <MoreHorizontal size={18} />
           </button>
         </div>
-
-        {/* Input de texto */}
-        <textarea
-          ref={ref}
-          value={txt}
-          onChange={(e) => setTxt(e.target.value)}
-          onKeyDown={onKey}
-          placeholder="Escreva uma mensagem… (Enter para enviar, Shift+Enter para nova linha)"
-          rows={1}
-          disabled={gravando}
-          style={{
-            flex: 1, resize: "none", border: "1.5px solid #E2E8F0", borderRadius: 10,
-            padding: "9px 13px", fontSize: 13.5, fontFamily: "inherit", lineHeight: 1.5,
-            outline: "none", color: "#1E293B", background: "#F8FAFC",
-            transition: "border-color .15s", maxHeight: 120, overflowY: "auto",
-            opacity: gravando ? 0.4 : 1,
-          }}
-          onFocus={(e) => { if (!gravando) { e.target.style.borderColor = "#2563EB"; e.target.style.background = "#fff"; } }}
-          onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; e.target.style.background = "#F8FAFC"; }}
-          onInput={(e) => { e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
-          aria-label="Campo de mensagem"
-        />
 
         {/* Botão enviar — sempre azul */}
         <button
