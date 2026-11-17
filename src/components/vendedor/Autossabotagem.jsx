@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ShieldAlert, ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, RotateCcw, Info,
+  ShieldAlert, ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, RotateCcw,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 
@@ -184,12 +184,6 @@ function Intro({ estado, onIniciar, onVoltar, enviando }) {
             </p>
           </div>
         </div>
-
-        {estado?.experimental && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--amber)", background: "rgba(245,158,11,.10)", borderRadius: 999, padding: "6px 12px", marginBottom: 16 }}>
-            <Info size={13} /> Versão experimental para avaliação interna.
-          </div>
-        )}
 
         <Linha rotulo="O que esperar">
           São {total} afirmações distribuídas em oito padrões de comportamento. Leva cerca de 8 a 12 minutos.
