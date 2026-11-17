@@ -81,6 +81,7 @@ export const NAV = {
       { key: "planos", label: "Planos RYCS" },
       { key: "pagamentos-campanhas", label: "Campanhas" },
     ] },
+    { key: "suporte", label: "Ajuda e suporte", Icon: Headphones },
     { key: "outros", label: "Outros", Icon: Settings },
   ],
   admin: [
