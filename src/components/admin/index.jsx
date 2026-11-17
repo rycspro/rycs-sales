@@ -13,6 +13,7 @@ import RycsClubAdmin from "./RycsClubAdmin.jsx";
 import BetaEnvironmentAdmin from "./BetaEnvironmentAdmin.jsx";
 import CentralEmails from "./CentralEmails.jsx";
 import ConvitesOnboarding from "./ConvitesOnboarding.jsx";
+import JornadaAdmin from "./JornadaAdmin.jsx";
 import VouchersAdmin from "./VouchersAdmin.jsx";
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
@@ -99,6 +100,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   if (aba === "beta") return <BetaEnvironmentAdmin aviso={aviso} recarregar={recarregar} />;
   if (aba === "emails") return <CentralEmails aviso={aviso} />;
   if (aba === "onboarding") return <ConvitesOnboarding aviso={aviso} />;
+  if (aba === "jornada") return <JornadaAdmin />;
 
   return (
     <div className="vx-fade">

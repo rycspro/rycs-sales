@@ -572,5 +572,41 @@
     </div>
   </footer>
 
+  <script>
+    // Jornada desde o anúncio: guarda a origem (UTM/fbclid) do primeiro clique,
+    // registra a visita e leva origem + id do visitante para os links do app.
+    (function () {
+      var API = "https://app.rycs.pro/api/jornada/evento";
+      var CAMPOS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid", "gclid"];
+      function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+      function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+      var vid = ler("rycs_vid");
+      if (!vid || !/^[A-Za-z0-9_-]{8,64}$/.test(vid)) {
+        vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+        gravar("rycs_vid", vid);
+      }
+      var params = new URLSearchParams(location.search);
+      var origem = {};
+      CAMPOS.forEach(function (c) { if (params.get(c)) origem[c] = params.get(c).slice(0, 120); });
+      if (Object.keys(origem).length && !ler("rycs_origem")) {
+        origem.landing = location.pathname;
+        gravar("rycs_origem", JSON.stringify(origem));
+      }
+      try { origem = JSON.parse(ler("rycs_origem") || "{}"); } catch (e) { origem = {}; }
+      if (!Object.keys(origem).length && document.referrer) {
+        try { var ref = new URL(document.referrer).hostname; if (ref && !/rycs\.pro$/.test(ref)) origem = { referrer: ref }; } catch (e) {}
+      }
+      fetch(API, {
+        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ visitanteId: vid, evento: "visita", origem: origem })
+      }).catch(function () {});
+      document.querySelectorAll('a[href^="https://app.rycs.pro"]').forEach(function (a) {
+        var url = new URL(a.href);
+        url.searchParams.set("vid", vid);
+        CAMPOS.forEach(function (c) { if (origem[c]) url.searchParams.set(c, origem[c]); });
+        a.href = url.toString();
+      });
+    })();
+  </script>
 </body>
 </html>

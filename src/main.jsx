@@ -3,6 +3,10 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
+import { capturarOrigem, rastrear } from "./lib/rastreio.js";
+
+capturarOrigem();
+rastrear("visita");
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

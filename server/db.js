@@ -1508,6 +1508,31 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_onb_eventos_tipo ON onboarding_eventos(evento, criadoEm);
 `);
 
+// Jornada desde o primeiro clique: visitante anônimo (id no navegador) com a
+// origem de primeiro toque (UTM/fbclid), e os passos do cadastro antes de a
+// conta existir. Ao criar a conta, o visitante fica ligado ao usuário.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS jornada_visitantes (
+    visitanteId TEXT PRIMARY KEY,
+    origem TEXT NOT NULL DEFAULT '{}',
+    papel TEXT NOT NULL DEFAULT '',
+    primeiroEm INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS jornada_eventos (
+    id TEXT PRIMARY KEY,
+    visitanteId TEXT NOT NULL,
+    evento TEXT NOT NULL,
+    papel TEXT NOT NULL DEFAULT '',
+    etapa TEXT NOT NULL DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_jornada_evento_unico ON jornada_eventos(visitanteId, evento, papel, etapa);
+  CREATE INDEX IF NOT EXISTS idx_jornada_evento_data ON jornada_eventos(criadoEm);
+`);
+adicionarColuna("users", "origem", "TEXT DEFAULT '{}'");
+adicionarColuna("users", "visitanteId", "TEXT DEFAULT ''");
+db.exec("CREATE INDEX IF NOT EXISTS idx_users_visitante ON users(visitanteId)");
+
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@rycs.pro").toLowerCase().trim();

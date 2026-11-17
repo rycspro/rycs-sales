@@ -10,6 +10,7 @@ import CampoTelefone from "../CampoTelefone.jsx";
 import { ROTAS, navegar, parametro } from "../../lib/rotas.js";
 import { LIMITES, avaliarFoto, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 import { useI18n } from "../../lib/i18n.jsx";
+import { rastrear } from "../../lib/rastreio.js";
 
 /* ─── constantes visuais ─── */
 const AZUL = "#318CE7";
@@ -445,6 +446,10 @@ export default function CadastroProfissional({ onRegister }) {
     try { return JSON.parse(localStorage.getItem("rycs_cadastro_prof"))?.onboardingVisto || false; } catch { return false; }
   });
   const [etapa, setEtapa] = useState(0);
+  useEffect(() => { rastrear("cadastro_aberto", { papel: "vendedor" }); }, []);
+  useEffect(() => {
+    if (onboardingVisto) rastrear("cadastro_etapa", { papel: "vendedor", etapa: ETAPAS_KEYS[etapa] });
+  }, [etapa, onboardingVisto]);
 
   /* ── estado: dados pessoais ── */
   const [nome, setNome] = useState("");

@@ -52,6 +52,7 @@ import clubeRoutes from "./routes/clube.js";
 import jarvasRoutes, { aquecerVozJarvas } from "./routes/jarvas.js";
 import stripeRoutes, { stripePublico } from "./routes/stripe.js";
 import metaRoutes, { metaPublico } from "./routes/meta.js";
+import jornadaRoutes, { jornadaPublico } from "./routes/jornada.js";
 import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
 import { semearCatalogo, sincronizarCursoInterativo } from "./services/academy.js";
@@ -188,6 +189,8 @@ app.use("/api", stripePublico);
 app.use("/api", materiaisPublico);
 // Entrada de leads por webhook: sistemas externos chamam sem cookie (auth = token na URL).
 app.use("/api", webhooksPublico);
+// Passos da jornada antes do cadastro (visita, formulário): visitante sem conta.
+app.use("/api", jornadaPublico);
 
 // Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
 app.use("/api", authMiddleware, onboardingGuard);
@@ -217,6 +220,7 @@ app.use("/api", authMiddleware, auditRoutes);
 app.use("/api", authMiddleware, courseRoutes2);
 app.use("/api", authMiddleware, brainRoutes);
 app.use("/api", authMiddleware, emailAdminRoutes);
+app.use("/api", authMiddleware, jornadaRoutes);
 app.use("/api", authMiddleware, billingRoutes);
 app.use("/api", authMiddleware, onboardingRoutes);
 app.use("/api", authMiddleware, onboardingProRoutes);

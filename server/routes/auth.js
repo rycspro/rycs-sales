@@ -6,6 +6,7 @@ import db, { uid, agora } from "../db.js";
 import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
+import { vincularVisitante } from "../services/jornada.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
 import { normalizarTelefoneIntl, PAISES } from "../../shared/localidades.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
@@ -227,6 +228,7 @@ router.post("/auth/register", async (req, res) => {
   );
   // Vínculo de indicação: nada é creditado agora, só registrado.
   if (indicacao) vincularIndicacao(indicacao, userId, role);
+  vincularVisitante(userId, req.body);
 
   const token = signToken({ id: userId, role, entityId });
   res.cookie("sm_token", token, COOKIE_OPTS);

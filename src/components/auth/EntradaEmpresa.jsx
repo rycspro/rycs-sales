@@ -1,9 +1,10 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { MailCheck } from "lucide-react";
 import { CampoSenha } from "../ui.jsx";
 import RecuperarSenha from "./RecuperarSenha.jsx";
 import MolduraAuth from "./MolduraAuth.jsx";
 import { api } from "../../lib/api.js";
+import { dadosRastreio, rastrear } from "../../lib/rastreio.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
 import { SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboarding.js";
 import { useI18n } from "../../lib/i18n.jsx";
@@ -29,9 +30,11 @@ export default function EntradaEmpresa() {
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState("");
   const [salvando, setSalvando] = useState(false);
+  useEffect(() => { rastrear("cadastro_aberto", { papel: "empresa" }); }, []);
 
   const enviarCriarConta = async (e) => {
     e.preventDefault();
+    rastrear("cadastro_etapa", { papel: "empresa", etapa: "acesso" });
     const novos = {};
     if (!nomeEmpresa.trim()) novos.nomeEmpresa = "Nome da empresa é obrigatório.";
     if (!pais) novos.pais = "Selecione o país da empresa.";
@@ -51,6 +54,7 @@ export default function EntradaEmpresa() {
       senha,
       nomeEmpresa: nomeEmpresa.trim(),
       pais,
+      ...dadosRastreio(),
     });
     setSalvando(false);
 
