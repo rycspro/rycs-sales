@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { LogOut, ChevronDown, Building2 } from "lucide-react";
+import { LogOut, ChevronDown, ChevronUp, Building2 } from "lucide-react";
 import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
@@ -158,6 +158,7 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
     </div>}
     <button type="button" className="vx-account-logo" ref={trigger} aria-haspopup="menu" aria-expanded={open} aria-label={nome} title={nome} onClick={() => setOpen(!open)}>
       {avatar ? <img src={avatar} alt="" /> : <span className="vx-account-initial">{nome.slice(0,1).toUpperCase()}</span>}
+      <ChevronUp size={15} className="vx-account-chevron" style={{ transition: "transform .2s", transform: open ? "rotate(180deg)" : "none" }} />
     </button>
   </div>;
 }
