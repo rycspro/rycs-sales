@@ -147,6 +147,9 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 /* Barra de topo do celular: logo RYCS à esquerda, conta/empresa à direita */
 .vx-mobile-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
 .vx-mobile-topbar .vx-btn{min-height:40px}
+/* Lado direito da barra de topo mobile: recebe o filtro de período da página. */
+.vx-mobile-actions-slot{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;flex-shrink:0}
+.vx-topbar-filtro{display:flex;align-items:center}
 .vx-mobile-logo{height:30px;width:auto;max-width:150px;object-fit:contain;display:block}
 .vx-content-chat>.vx-mobile-topbar,.vx-content-settings>.vx-mobile-topbar{padding:12px 16px 0;margin-bottom:12px}
 /* ───────── Menu lateral do celular — White Editorial ───────── */

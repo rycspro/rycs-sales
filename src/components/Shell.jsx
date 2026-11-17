@@ -140,16 +140,18 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             <span>Nenhuma movimentação financeira possui valor real. Dados podem ser resetados. Use somente para testes.</span>
           </div>
         )}
-        {/* Barra de topo do celular: logo RYCS à esquerda, conta/logo da empresa à direita. */}
+        {/* Barra de topo do celular: logo RYCS à esquerda; à direita, um espaço
+            onde a página injeta o filtro de período (ex.: "Últimos 30 dias") via
+            portal. A conta e o "Sair" ficam no menu lateral (drawer). */}
         <div className="vx-mobile-topbar">
           <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" className="vx-mobile-logo" />
-          {accountRole
-            ? <AccountMenu user={user} entity={entity} onSelect={onSelect} onLogout={onLogout} dropDown />
-            : onLogout && (
+          <div id="vx-mobile-actions" className="vx-mobile-actions-slot">
+            {!accountRole && onLogout && (
               <button type="button" className="vx-btn vx-btn-sm" onClick={onLogout}>
                 <LogOut size={16} aria-hidden="true" /> Sair
               </button>
             )}
+          </div>
         </div>
         {children}
       </div>
@@ -188,14 +190,14 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             </div>
             {accountRole && (
               <div className="vx-mobilemenu-footer">
-                <div className="vx-mobilemenu-conta">
+                <button type="button" className="vx-mobilemenu-conta" onClick={() => onSelect(role === "empresa" ? "configuracoes" : "conta")}>
                   <span className="vx-mobilemenu-avatar">
                     {(role === "empresa" ? entity?.logo : entity?.foto)
                       ? <img src={role === "empresa" ? entity.logo : entity.foto} alt="" />
                       : <span>{(entity?.nome || user?.email || "?").slice(0, 1).toUpperCase()}</span>}
                   </span>
                   <span className="vx-mobilemenu-conta-nome">{entity?.nome || user?.email || "Minha conta"}</span>
-                </div>
+                </button>
                 {onLogout && (
                   <button type="button" className="vx-mobilemenu-sair" onClick={onLogout}>
                     <LogOut size={17} strokeWidth={1.9} /> Sair da conta

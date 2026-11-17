@@ -1,4 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../../lib/api.js";
 import FiltroData from "../FiltroData.jsx";
 // A tela inicial é a primeira que a empresa vê — carrega junto. As demais abas
@@ -42,6 +43,18 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   const [modalSaldo, setModalSaldo] = useState(false);
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
   const [filtros, setFiltros] = useState({});
+  // No celular, o filtro de período vai para a barra de topo (onde ficava o logo
+  // da empresa), via portal. No desktop, segue solto na própria linha.
+  const [slotTopo, setSlotTopo] = useState(null);
+  const [celular, setCelular] = useState(false);
+  useEffect(() => {
+    setSlotTopo(document.getElementById("vx-mobile-actions"));
+    const mq = window.matchMedia("(max-width: 767px)");
+    const atualizar = () => setCelular(mq.matches);
+    atualizar();
+    mq.addEventListener("change", atualizar);
+    return () => mq.removeEventListener("change", atualizar);
+  }, []);
   // Volta do login da Meta (?meta=...): abre direto em Integrações.
   const [voltouDaMeta] = useState(() => new URLSearchParams(window.location.search).has("meta"));
   useEffect(() => { if (voltouDaMeta) setAba?.("integracoes"); }, []);
@@ -104,14 +117,19 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     />
   );
 
-  const filtroBar = filtroDataEl && (
+  const filtroBar = filtroDataEl && !celular && (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
       {filtroDataEl}
     </div>
   );
+  // Quando embutido no header de telas como Campanhas/Conferir, no celular o
+  // filtro já está no topo — não repetir aqui.
+  const filtroHeader = celular ? null : filtroDataEl;
 
   return (
     <div className="vx-fade">
+      {celular && slotTopo && filtroDataEl && createPortal(
+        <div className="vx-topbar-filtro">{filtroDataEl}</div>, slotTopo)}
       <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
       {aba === "inicio" && <>
         {filtroBar}
@@ -133,7 +151,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       </>}
       {aba === "campanhas" && (
         <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
-          filtroData={filtroAtual} filtroBar={filtroDataEl} bloqueado={bloqueado} irParaPlano={irParaPlano} />
+          filtroData={filtroAtual} filtroBar={filtroHeader} bloqueado={bloqueado} irParaPlano={irParaPlano} />
       )}
       {aba === "campanhas-comissoes" && (
         <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} escopo="comissoes" />
@@ -151,7 +169,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("outros"); }} />}
       </>}
       {aba === "conferir-fila" && <>
-        <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} filtroBar={filtroDataEl} />
+        <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} filtroBar={filtroHeader} />
       </>}
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
