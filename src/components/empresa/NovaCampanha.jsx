@@ -9,6 +9,12 @@ import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../..
 import { campanhaPodeSerPublicada, requisitosPublicacao, saldoDisponivel, isPosPago } from "../../../shared/empresa.js";
 import { sugerirValores, sugerirValorVisita, impactoNoRoi } from "../../../shared/valorTarefa.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
+import MultiSelect from "../ui/MultiSelect.jsx";
+import { PAISES } from "../../../shared/paises.js";
+
+const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
+const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
+const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
 // Criação de campanha em três passos.
 //
@@ -180,8 +186,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   const criar = async () => {
     if (!campanha?.titulo?.trim()) return aviso("Dê um título à campanha.");
+    const alc = campanha.alcance || "nacional";
+    if ((alc === "internacional" || alc === "ambas") && !(campanha.paisesAceitos || []).length)
+      return aviso("Selecione pelo menos um país aceito para a campanha.");
     setSalvando(true);
-    const payload = { ...campanha };
+    const payload = { ...campanha, alcance: alc, paisesAceitos: campanha.paisesAceitos || [] };
     if (ehCampanhaVisita && visitasPorDiaLocal) payload.visitasPorDia = Number(visitasPorDiaLocal) || 0;
     const r = await api("/campaigns", payload);
     setSalvando(false);
@@ -305,6 +314,29 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 </select></label>
             </div>
             <CidadeEstadoSelector estado={campanha.estado||""} cidade={campanha.cidade||""} onEstado={(v)=>set("estado",v)} onCidade={(v)=>set("cidade",v)} />
+
+            {/* Alcance geográfico: define se a campanha aparece nas abas Nacional
+                e/ou Internacional do profissional, e quais países podem atuar. */}
+            <div style={{ marginTop: 12 }}>
+              <div className="vx-label">Alcance da campanha <span style={{ color: "var(--danger, #dc2626)" }}>*</span></div>
+              <select className="vx-input" value={campanha.alcance || "nacional"}
+                onChange={(e) => { const alc = e.target.value; set("alcance", alc); if (alc === "nacional") set("paisesAceitos", []); }}>
+                <option value="nacional">Nacional — só o seu país ({nomePais(emp.pais)})</option>
+                <option value="internacional">Internacional — profissionais de outros países</option>
+                <option value="ambas">Ambas — seu país e outros países</option>
+              </select>
+            </div>
+            {(campanha.alcance === "internacional" || campanha.alcance === "ambas") && (
+              <div style={{ marginTop: 10 }}>
+                <div className="vx-label">Países aceitos <span style={{ color: "var(--danger, #dc2626)" }}>*</span></div>
+                <MultiSelect opcoes={OPC_PAISES} valor={campanha.paisesAceitos || []}
+                  onChange={(v) => set("paisesAceitos", v)} placeholder="Selecione os países" />
+                <div className="vx-mut" style={{ fontSize: 11, marginTop: 4 }}>
+                  Profissionais desses países poderão se candidatar.
+                  {campanha.alcance === "ambas" ? ` O seu país (${nomePais(emp.pais)}) é incluído automaticamente.` : ""}
+                </div>
+              </div>
+            )}
             <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
               <label><div className="vx-label">% de comissão por venda <span className="vx-mut" style={{fontSize:11}}>(opcional)</span></div>
                 <div style={{position:"relative"}}><input className="vx-input vx-mono" type="number" min="0" max="100" step="0.5" value={campanha.percentualComissao||0} onChange={(e)=>set("percentualComissao",Number(e.target.value))} /><span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",color:"var(--muted)",fontSize:13}}>%</span></div>
