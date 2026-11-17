@@ -8,8 +8,33 @@ import { empresaLiberada } from "../services/acessoEmpresa.js";
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
 import { obterOperacaoCampanha, obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
+import { sanearAlcance, sanearPaisesAceitos, parsePaisesAceitos } from "../../shared/oportunidades.js";
 
 const router = Router();
+
+// País da empresa (ISO-2), para normalizar o alcance geográfico da campanha.
+function paisDaEmpresa(companyId) {
+  const c = db.prepare("SELECT pais FROM companies WHERE id = ?").get(companyId);
+  return c?.pais || "BR";
+}
+
+// Marketplace Oportunidades — total EFETIVAMENTE pago aos profissionais por
+// empresa (só tarefas concluídas). platform_earnings tem uma linha por tarefa
+// aprovada e `liquido` em coluna própria: sem pendente, sem estorno, sem
+// depósito. Uma query agregada (não por card). A moeda é a da empresa
+// (companies.moeda) — o frontend formata cada card na moeda da empresa.
+router.get("/oportunidades/metricas-empresas", (req, res) => {
+  const rows = db.prepare(`
+    SELECT pe.companyId AS companyId, ROUND(SUM(pe.liquido), 2) AS totalPago, COUNT(*) AS tarefasPagas
+    FROM platform_earnings pe
+    JOIN companies co ON co.id = pe.companyId
+    WHERE co.visivel = 1
+    GROUP BY pe.companyId
+  `).all();
+  const metricas = {};
+  for (const r of rows) metricas[r.companyId] = { totalPago: r.totalPago || 0, tarefasPagas: r.tarefasPagas || 0 };
+  res.json({ metricas });
+});
 
 function certificacoesDoProfissional(sellerId) {
   const trilhas = db.prepare("SELECT funcao, percentual FROM certifications WHERE sellerId = ?").all(sellerId);
@@ -186,11 +211,17 @@ router.post("/campaigns", (req, res) => {
   const { titulo, descricao, produto, publico, vagas, comissoes, treinamento, requisitos, objetivo, regiao,
     funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, limitePorProfissional,
     aceitaLeadProprio, exigeCertificacao, duracaoDias, visitasPorDia, cidade, estado, percentualComissao, modoJarvas,
-    candidaturasAbertas } = req.body;
+    candidaturasAbertas, alcance, paisesAceitos } = req.body;
   if (!titulo) return res.status(400).json({ error: "Título é obrigatório" });
 
   const companyId = role === "empresa" ? entityId : req.body.companyId;
   if (!companyId) return res.status(400).json({ error: "companyId é obrigatório" });
+
+  // Alcance geográfico: normalizado contra o país da empresa. Campos têm padrão
+  // seguro ('nacional' → só o país da empresa), então criação antiga não quebra.
+  const paisEmpresa = paisDaEmpresa(companyId);
+  const alcanceLimpo = sanearAlcance(alcance);
+  const paisesLimpos = JSON.stringify(sanearPaisesAceitos(paisesAceitos, paisEmpresa, alcanceLimpo));
 
   // Pipeline padrão para toda nova campanha
   const PIPELINE_PADRAO = JSON.stringify([
@@ -209,15 +240,15 @@ router.post("/campaigns", (req, res) => {
     db.prepare(`
       INSERT INTO campaigns (id, companyId, titulo, descricao, produto, publico, status, vagas, comissoes, treinamento,
         requisitos, objetivo, regiao, funcao, orcamento, tarefas, evidencias, criteriosAprovacao, prazoHoras, duracaoDias,
-        limitePorProfissional, aceitaLeadProprio, exigeCertificacao, visitasPorDia, cidade, estado, percentualComissao, modoJarvas, candidaturasAbertas, etapasPipeline, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        limitePorProfissional, aceitaLeadProprio, exigeCertificacao, visitasPorDia, cidade, estado, percentualComissao, modoJarvas, candidaturasAbertas, alcance, paisesAceitos, etapasPipeline, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, companyId, titulo, descricao || "", produto || "", publico || "",
       vagas || 0, JSON.stringify(comissoes || {}), JSON.stringify(treinamento || []),
       requisitos || "", objetivo || "", regiao || "", funcao || "", Number(orcamento) || 0,
       JSON.stringify(tarefas || {}), JSON.stringify(evidencias || {}), JSON.stringify(criteriosAprovacao || {}),
       Math.max(1, Number(prazoHoras) || 48), Math.max(1, Number(duracaoDias) || 30), Math.max(0, Number(limitePorProfissional) || 0),
       aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, Math.max(0, Number(visitasPorDia) || 0),
-      cidade || "", estado || "", Number(percentualComissao) || 0, modoJarvas || "", candidaturasAbertas === false ? 0 : 1, PIPELINE_PADRAO, criadoEm);
+      cidade || "", estado || "", Number(percentualComissao) || 0, modoJarvas || "", candidaturasAbertas === false ? 0 : 1, alcanceLimpo, paisesLimpos, PIPELINE_PADRAO, criadoEm);
     registrarEventoCampanha({ companyId, campaignId: id, tipo: "CAMPAIGN_CREATED", actorId: req.user.id, actorRole: role, source: "USER", criadoEm });
   })();
 
@@ -245,6 +276,15 @@ router.patch("/campaigns/:id", (req, res) => {
       vals.push(["aceitaLeadProprio", "exigeCertificacao", "candidaturasAbertas"].includes(k) ? (v ? 1 : 0) : v);
     }
     else if (jsonFields.includes(k)) { sets.push(`${k} = ?`); vals.push(JSON.stringify(v)); }
+  }
+  // Alcance + países aceitos são co-dependentes: normaliza juntos contra o país
+  // da empresa (não entram em `allowed` por isso).
+  if ("alcance" in req.body || "paisesAceitos" in req.body) {
+    const paisEmpresa = paisDaEmpresa(campaign.companyId);
+    const alc = sanearAlcance("alcance" in req.body ? req.body.alcance : campaign.alcance);
+    const lista = "paisesAceitos" in req.body ? req.body.paisesAceitos : parsePaisesAceitos(campaign.paisesAceitos);
+    sets.push("alcance = ?"); vals.push(alc);
+    sets.push("paisesAceitos = ?"); vals.push(JSON.stringify(sanearPaisesAceitos(lista, paisEmpresa, alc)));
   }
   if (!sets.length) return res.status(400).json({ error: "Nenhum campo válido" });
   vals.push(req.params.id);

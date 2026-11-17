@@ -1637,6 +1637,21 @@ adicionarColuna("campaigns", "modelosCampos", "TEXT DEFAULT '[]'");
 // Candidaturas abertas (1) ou encerradas (0). Não há limite de profissionais —
 // a empresa apenas liga/desliga a entrada de novas candidaturas na campanha.
 adicionarColuna("campaigns", "candidaturasAbertas", "INTEGER DEFAULT 1");
+
+// Alcance geográfico da campanha (marketplace Oportunidades): a empresa declara
+// se a campanha é nacional, internacional ou ambas, e escolhe os países aceitos
+// (ISO-2). 'nacional' = só o país da empresa; 'internacional'/'ambas' usam a
+// lista paisesAceitos. Classifica a campanha nas abas Nacional/Internacional.
+adicionarColuna("campaigns", "alcance", "TEXT DEFAULT 'nacional'");
+adicionarColuna("campaigns", "paisesAceitos", "TEXT DEFAULT '[]'");
+// Backfill: campanhas existentes viram 'nacional' e aceitam o país da empresa.
+(() => {
+  const sem = db.prepare("SELECT c.id, co.pais AS pais FROM campaigns c JOIN companies co ON co.id = c.companyId WHERE c.paisesAceitos IS NULL OR c.paisesAceitos = '' OR c.paisesAceitos = '[]'").all();
+  if (!sem.length) return;
+  const upd = db.prepare("UPDATE campaigns SET alcance = CASE WHEN alcance IS NULL OR alcance = '' THEN 'nacional' ELSE alcance END, paisesAceitos = ? WHERE id = ?");
+  db.transaction(() => sem.forEach((r) => upd.run(JSON.stringify([r.pais || "BR"]), r.id)))();
+  console.log(`[migração] alcance/paisesAceitos preenchido em ${sem.length} campanha(s)`);
+})();
 adicionarColuna("sellers", "cidadeBase", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "estadoBase", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "raioKm", "REAL DEFAULT 50");
