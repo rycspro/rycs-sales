@@ -248,32 +248,32 @@ function Questionario({
         <ArrowLeft size={14} /> Sair (progresso salvo)
       </button>
 
-      {/* Barra de progresso segmentada */}
-      <div style={{ marginBottom: 6 }}>
-        <div style={{ display: "flex", gap: 2, alignItems: "stretch", height: 6 }}>
-          {itens.map((it, i) => {
-            const feito = !!respostas[it.id];
-            const ativo = i === atual;
-            return (
-              <div key={it.id} aria-hidden="true" style={{
-                flex: 1, minWidth: 0, borderRadius: 2,
-                background: feito ? AZUL : "var(--surface-2)",
-                outline: ativo ? `1.5px solid ${AZUL}` : "none",
-                outlineOffset: ativo ? 1 : 0,
-                transition: "background .2s ease",
-              }} />
-            );
-          })}
+      {/* Cabeçalho (padrão do sistema: nome + contador mono) */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: AZUL }}>
+          <ShieldAlert size={16} /> Padrões de Autossabotagem
         </div>
+        <span className="vx-mono" style={{ fontSize: 13, color: "var(--muted)" }}>
+          Afirmação {String(atual + 1).padStart(2, "0")} de {String(total).padStart(2, "0")}
+        </span>
       </div>
-      <div className="vx-mono" style={{ fontSize: 12, color: "var(--muted)", marginBottom: 18, display: "flex", justifyContent: "space-between" }}>
-        <span>Afirmação {atual + 1} de {total}</span>
-        <span>{respondidas} respondidas</span>
+
+      {/* Barra de progresso segmentada (padrão do sistema) */}
+      <div style={{ display: "flex", gap: 3, height: 6, borderRadius: 3, overflow: "hidden", marginBottom: 26 }}>
+        {itens.map((it, i) => {
+          const feito = !!respostas[it.id];
+          return (
+            <div key={it.id} aria-hidden="true" style={{
+              flex: 1, borderRadius: 3, transition: "background .3s",
+              background: feito ? AZUL : i === atual ? "rgba(49,140,231,.3)" : "var(--surface-3, #e5e7eb)",
+            }} />
+          );
+        })}
       </div>
 
       <div className="vx-card" style={{ padding: 24 }}>
         <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
-          <legend style={{ fontSize: 19, fontWeight: 600, color: "var(--ink)", lineHeight: 1.4, marginBottom: 4, width: "100%" }}>
+          <legend style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", lineHeight: 1.5, marginBottom: 4, width: "100%" }}>
             {item?.texto}
           </legend>
           <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 18px" }}>
