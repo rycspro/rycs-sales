@@ -1072,7 +1072,7 @@ export function ativarAssinatura(asaasSubscriptionId) {
   const user = db.prepare("SELECT id, email FROM users WHERE entityId = ? AND role = 'empresa'").get(sub.companyId);
   if (user) {
     notificar(user.id, "assinatura", `Plano ${planoDe(sub.plano).nome} ativado!`);
-    qualificarIndicacao(user.id);
+    qualificarIndicacao(user.id, sub.plano);
     const empresa = db.prepare("SELECT nome FROM companies WHERE id = ?").get(sub.companyId);
     const valor = Number(sub.valor) || valorCobradoNoCiclo(sub.plano, sub.ciclo);
     try { emailComprovantePagamento({ nome: empresa?.nome, email: user.email, tipo: "plano", valor, nomePlano: planoDe(sub.plano).nome }); }

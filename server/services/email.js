@@ -110,7 +110,9 @@ export function emailComprovantePagamento({ nome, email, tipo = "campanha", valo
   return sendEmail(email, assunto, comprovanteHtml({ assunto, corpoHtml, valor, botao }));
 }
 
-export async function sendEmail(to, subject, html) {
+// `opcoes.headers` permite o cabeçalho List-Unsubscribe dos e-mails de
+// sequência; `opcoes.text` é a versão em texto puro.
+export async function sendEmail(to, subject, html, opcoes = {}) {
   if (!RESEND_KEY) {
     console.log(`[EMAIL] Para: ${to} | Assunto: ${subject}`);
     console.log(`[EMAIL] (Resend não configurado — e-mail não enviado)`);
@@ -121,7 +123,11 @@ export async function sendEmail(to, subject, html) {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_KEY}` },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
+      body: JSON.stringify({
+        from: FROM, to, subject, html,
+        ...(opcoes.text ? { text: opcoes.text } : {}),
+        ...(opcoes.headers ? { headers: opcoes.headers } : {}),
+      }),
       signal: AbortSignal.timeout(8000),
     });
     const data = await res.json();
@@ -133,6 +139,31 @@ export async function sendEmail(to, subject, html) {
     return { ok: false, error: err.message };
   }
 }
+
+// Layout dos e-mails de sequência: um título, parágrafos curtos, UM botão e
+// o rodapé com o link de descadastro (obrigatório em e-mail de relacionamento).
+export function layoutSequencia({ titulo, paragrafos = [], botao, link, rodape, descadastro, textoDescadastro, preheader = "" }) {
+  const ps = paragrafos.map((p) => `<p style="color:#4b5563;line-height:1.6;margin:0 0 12px">${p}</p>`).join("");
+  return `
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
+      ${preheader ? `<div style="display:none;max-height:0;overflow:hidden">${seguro(preheader)}</div>` : ""}
+      ${CABECALHO}
+      <div style="background:#f9fafb;padding:24px;border-radius:0 0 12px 12px">
+        <h2 style="margin:0 0 14px;font-size:19px;color:#111827">${seguro(titulo)}</h2>
+        ${ps}
+        <div style="text-align:center;margin:22px 0 8px">
+          <a href="${seguro(link)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:600;padding:13px 26px;border-radius:10px;font-size:15px">${seguro(botao)}</a>
+        </div>
+        <p style="color:#6b7280;font-size:13px;margin-top:18px">${seguro(rodape)}</p>
+      </div>
+      <p style="color:#9ca3af;font-size:11.5px;text-align:center;margin-top:14px;line-height:1.5">
+        RYCS SALES MACHINE INOVA SIMPLES (I.S.) · CNPJ 69.802.687/0001-85<br/>
+        <a href="${seguro(descadastro)}" style="color:#9ca3af">${seguro(textoDescadastro)}</a>
+      </p>
+    </div>`;
+}
+
+export const urlApp = () => APP_URL;
 
 export function emailBoasVindas(nome, email, role) {
   const roleLabel = role === "vendedor" ? "Profissional" : "Empresa";

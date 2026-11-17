@@ -58,6 +58,8 @@ import stripeRoutes, { stripePublico } from "./routes/stripe.js";
 import metaRoutes, { metaPublico } from "./routes/meta.js";
 import jornadaRoutes, { jornadaPublico } from "./routes/jornada.js";
 import whatsappVerificacaoRoutes from "./routes/whatsappVerificacao.js";
+import sequenciasEmailRoutes, { sequenciasPublico } from "./routes/sequenciasEmail.js";
+import { iniciarSequenciasEmail } from "./services/sequenciasEmail.js";
 import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
 import planosProfissionalRoutes from "./routes/planosProfissional.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
@@ -197,6 +199,8 @@ app.use("/api", materiaisPublico);
 app.use("/api", webhooksPublico);
 // Passos da jornada antes do cadastro (visita, formulário): visitante sem conta.
 app.use("/api", jornadaPublico);
+// Descadastro dos e-mails de sequência: link do rodapé, sem login.
+app.use("/api", sequenciasPublico);
 
 // Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
 app.use("/api", authMiddleware, onboardingGuard);
@@ -228,6 +232,7 @@ app.use("/api", authMiddleware, brainRoutes);
 app.use("/api", authMiddleware, emailAdminRoutes);
 app.use("/api", authMiddleware, jornadaRoutes);
 app.use("/api", authMiddleware, whatsappVerificacaoRoutes);
+app.use("/api", authMiddleware, sequenciasEmailRoutes);
 app.use("/api", authMiddleware, whatsappAdminRoutes);
 app.use("/api", authMiddleware, billingRoutes);
 app.use("/api", authMiddleware, onboardingRoutes);
@@ -365,6 +370,7 @@ app.listen(PORT, () => {
   iniciarWorker();
   iniciarWorkerIA();
   iniciarWorkerMeta();
+  iniciarSequenciasEmail();
   retomarDisparosWhatsapp();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,
   // que usam um ElevenLabs falso e contam as chamadas).

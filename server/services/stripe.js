@@ -340,7 +340,7 @@ function liberar(sub, { status, proximaCobranca = null, trialFim = null }) {
   const user = usuarioDaEmpresa(sub.companyId);
   if (!user) return;
   if (status === "trial") notificar(user.id, "assinatura", `Plano ${planoDe(sub.plano).nome} liberado`, "Seu período gratuito começou. A cobrança acontece no fim dele, no cartão cadastrado.");
-  else { notificar(user.id, "assinatura", `Plano ${planoDe(sub.plano).nome} ativado!`); qualificarIndicacao(user.id); }
+  else { notificar(user.id, "assinatura", `Plano ${planoDe(sub.plano).nome} ativado!`); qualificarIndicacao(user.id, sub.plano); }
 }
 
 function inadimplente(sub, motivo) {

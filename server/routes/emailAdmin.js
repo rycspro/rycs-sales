@@ -1,6 +1,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { sendEmail, emailFotoPendente } from "../services/email.js";
+import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
 import Anthropic from "@anthropic-ai/sdk";
 
 const router = Router();
@@ -127,35 +128,13 @@ function buildHtml({ assunto, preheader, conteudo, cta, teste }) {
 // POST /api/admin/emails/disparar-foto-pendente
 // Disparo para todos os profissionais com cadastro incompleto (sem foto ou outros campos)
 router.post("/admin/emails/disparar-foto-pendente", requireAdmin, async (req, res) => {
-  const CAMPOS_OBRIGATORIOS = [
-    { campo: "foto", label: "Foto de perfil" },
-    { campo: "titulo", label: "Título profissional" },
-    { campo: "bio", label: "Descrição pessoal (Bio)" },
-    { campo: "disponibilidade", label: "Disponibilidade" },
-    { campo: "cidade", label: "Cidade" },
-  ];
-  const CAMPOS_LISTA = [
-    { campo: "segmentos", label: "Segmentos de atuação" },
-    { campo: "modalidades", label: "Modalidades de trabalho" },
-    { campo: "skills", label: "Habilidades (Skills)" },
-  ];
-
   const profissionais = db.prepare(
     "SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills FROM sellers WHERE status NOT IN ('excluido','bloqueado')"
   ).all();
 
   const incompletos = profissionais.filter((s) => {
-    const pendentes = [];
-    for (const { campo, label } of CAMPOS_OBRIGATORIOS) {
-      if (!s[campo]) pendentes.push(label);
-    }
-    for (const { campo, label } of CAMPOS_LISTA) {
-      let lista = [];
-      try { lista = JSON.parse(s[campo] || "[]"); } catch {}
-      if (!lista.length) pendentes.push(label);
-    }
-    s._pendentes = pendentes;
-    return pendentes.length > 0;
+    s._pendentes = pendenciasPerfil(s);
+    return s._pendentes.length > 0;
   });
 
   if (!incompletos.length) return res.json({ ok: true, quantidade: 0, falhas: 0, mensagem: "Nenhum profissional com cadastro incompleto." });
@@ -179,14 +158,7 @@ router.get("/admin/emails/foto-pendente/preview", requireAdmin, (req, res) => {
   const profissionais = db.prepare(
     "SELECT id, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills FROM sellers WHERE status NOT IN ('excluido','bloqueado')"
   ).all();
-  const total = profissionais.filter((s) => {
-    if (!s.foto || !s.titulo || !s.bio || !s.disponibilidade || !s.cidade) return true;
-    for (const campo of ["segmentos", "modalidades", "skills"]) {
-      let lista = []; try { lista = JSON.parse(s[campo] || "[]"); } catch {}
-      if (!lista.length) return true;
-    }
-    return false;
-  }).length;
+  const total = profissionais.filter((s) => pendenciasPerfil(s).length > 0).length;
   res.json({ total });
 });
 

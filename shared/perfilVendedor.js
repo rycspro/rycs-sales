@@ -74,3 +74,34 @@ export function explicacaoScore(xp, disc) {
   if (fracos.length) partes.push(`frágil em ${fracos.join(", ")}`);
   return `A partir do que o profissional declarou no cadastro: ${partes.length ? partes.join("; ") : "informações equilibradas entre os critérios"}.`;
 }
+
+// Perfil completo do profissional: o que a RYCS exige para o perfil ser
+// aprovado e aparecer para as empresas. Fonte única para os avisos por e-mail,
+// para a inativação de perfil incompleto e para o disparo manual do admin.
+export const CAMPOS_PERFIL = [
+  { campo: "foto", label: "Foto de perfil" },
+  { campo: "titulo", label: "Título profissional" },
+  { campo: "bio", label: "Descrição pessoal (Bio)" },
+  { campo: "disponibilidade", label: "Disponibilidade" },
+  { campo: "cidade", label: "Cidade" },
+];
+export const CAMPOS_PERFIL_LISTA = [
+  { campo: "segmentos", label: "Segmentos de atuação" },
+  { campo: "modalidades", label: "Modalidades de trabalho" },
+  { campo: "skills", label: "Habilidades (Skills)" },
+];
+
+export function pendenciasPerfil(s) {
+  const pendentes = [];
+  for (const { campo, label } of CAMPOS_PERFIL) {
+    if (!String(s?.[campo] ?? "").trim()) pendentes.push(label);
+  }
+  for (const { campo, label } of CAMPOS_PERFIL_LISTA) {
+    let lista = s?.[campo];
+    if (typeof lista === "string") { try { lista = JSON.parse(lista || "[]"); } catch { lista = []; } }
+    if (!Array.isArray(lista) || !lista.length) pendentes.push(label);
+  }
+  return pendentes;
+}
+
+export const perfilCompleto = (s) => pendenciasPerfil(s).length === 0;

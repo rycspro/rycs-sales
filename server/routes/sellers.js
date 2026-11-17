@@ -2,7 +2,8 @@ import { Router } from "express";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
-import { detalharScore, pontosVendedor, explicacaoScore } from "../../shared/perfilVendedor.js";
+import { detalharScore, pontosVendedor, explicacaoScore, perfilCompleto } from "../../shared/perfilVendedor.js";
+import { aoAtualizarPerfil } from "../services/sequenciasEmail.js";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { emailCadastroCompletadoAdmin } from "../services/email.js";
@@ -11,18 +12,14 @@ import { planosAtuais } from "../services/planosProfissional.js";
 
 const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusiness.com.br";
 
-function cadastroCompleto(s) {
-  if (!s.foto || !s.titulo || !s.bio || !s.disponibilidade || !s.cidade) return false;
-  for (const campo of ["segmentos", "modalidades", "skills"]) {
-    let lista = []; try { lista = JSON.parse(s[campo] || "[]"); } catch {}
-    if (!lista.length) return false;
-  }
-  return true;
-}
+const cadastroCompleto = perfilCompleto;
 
 function notificarCadastroCompleto(sellerId) {
   const s = db.prepare("SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills, cadastroCompletadoNotificado FROM sellers WHERE id = ?").get(sellerId);
-  if (!s || !cadastroCompleto(s) || s.cadastroCompletadoNotificado) return;
+  if (!s || !cadastroCompleto(s)) return;
+  // Reativa conta inativada por perfil incompleto e conta o bônus de indicação.
+  try { aoAtualizarPerfil(sellerId); } catch (e) { console.warn("[perfil] pós-completo:", e.message); }
+  if (s.cadastroCompletadoNotificado) return;
   db.prepare("UPDATE sellers SET cadastroCompletadoNotificado = 1 WHERE id = ?").run(sellerId);
   emailCadastroCompletadoAdmin({ nomeProfissional: s.nome, emailProfissional: s.email, adminEmail: ADMIN_NOTIF_EMAIL });
 }
@@ -39,7 +36,7 @@ function getProfissionaisBase() {
     CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
     CASE WHEN curriculo IS NOT NULL AND curriculo != '' THEN 1 ELSE 0 END AS temCurriculo, curriculoNome,
     titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, genero, criadoEm, status, xpRespostas, disc
-    FROM sellers ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
+    FROM sellers WHERE inativoEm IS NULL ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   _profCacheTs = now;
   return _profCache;
 }

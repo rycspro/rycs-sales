@@ -4,7 +4,7 @@ import { api } from "../lib/api.js";
 import { money, dataCurta } from "../lib/utils.js";
 import { ROTAS } from "../lib/rotas.js";
 
-const PAPEL = { empresa: "Empresa" };
+const PAPEL = { empresa: "Empresa", vendedor: "Profissional" };
 
 export default function Indicacoes({ aviso }) {
   const [dados, setDados] = useState(null);
@@ -16,6 +16,10 @@ export default function Indicacoes({ aviso }) {
   // O convite leva direto ao cadastro de profissional: quem recebe um código
   // de indicação vem criar conta, e a raiz é a tela de quem já tem uma.
   const link = `${window.location.origin}${ROTAS.cadastroVendedor}?ref=${dados.codigo}`;
+  // Empresas entram pelo cadastro da empresa, que lê o mesmo código.
+  const linkEmpresa = `${window.location.origin}${ROTAS.onboarding}?ref=${dados.codigo}`;
+  const indicaEmpresa = !!dados.recompensas?.empresa;
+  const prof = dados.profissionais;
 
   const copiar = async (texto, oque) => {
     try { await navigator.clipboard.writeText(texto); aviso(`${oque} copiado.`); }
@@ -51,10 +55,22 @@ export default function Indicacoes({ aviso }) {
           </button>
         </div>
 
-        <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10 }}
+        <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10, minHeight: 44 }}
           onClick={() => copiar(link, "Link de convite")}>
-          Copiar link de convite
+          {dados.recompensas?.vendedor ? "Copiar link para profissionais" : "Copiar link de convite"}
         </button>
+        {indicaEmpresa && dados.recompensas?.vendedor && (
+          <button className="vx-btn vx-btn-block" style={{ marginTop: 8, minHeight: 44 }}
+            onClick={() => copiar(linkEmpresa, "Link para empresas")}>
+            Copiar link para empresas
+          </button>
+        )}
+        {prof && dados.recompensas?.vendedor && (
+          <p className="vx-mut" style={{ fontSize: 12.5, margin: "10px 0 0" }}>
+            {prof.qualificados} {prof.qualificados === 1 ? "profissional indicado completou" : "profissionais indicados completaram"} o perfil.
+            Faltam {prof.faltam} para o próximo bônus.
+          </p>
+        )}
 
         <hr className="vx-sep" />
         <div className="vx-grid vx-g2">
@@ -77,16 +93,17 @@ export default function Indicacoes({ aviso }) {
               <div>
                 <b>{PAPEL[papel] || papel}</b>
                 <div className="vx-mut" style={{ fontSize: 12 }}>
-                  Liberado após {dados.gatilhos[papel]}
+                  {r.descricao || `Liberado após ${dados.gatilhos[papel]}`}
                 </div>
               </div>
-              <b className="vx-mono" style={{ color: "var(--brand)" }}>{money(r.valor)}</b>
+              <b className="vx-mono" style={{ color: "var(--brand)" }}>{money(r.valor)}{r.percentual ? ` + ${Math.round(r.percentual * 100)}%` : ""}</b>
             </div>
           ))}
         </div>
         <p className="vx-mut" style={{ fontSize: 12, marginTop: 14 }}>
-          A recompensa não é paga por cadastro. Ela entra quando quem você indicou
-          contrata um plano elegível e o pagamento é confirmado. Cadastro sem pagamento não gera comissão.
+          {dados.recompensas?.vendedor
+            ? "Cadastro sozinho não gera recompensa: a empresa precisa ter o cadastro aprovado, e o profissional precisa completar o perfil. Cada recompensa é paga uma única vez."
+            : "A recompensa não é paga por cadastro. Ela entra quando quem você indicou contrata um plano elegível e o pagamento é confirmado. Cadastro sem pagamento não gera comissão."}
         </p>
       </div>
 
@@ -101,7 +118,7 @@ export default function Indicacoes({ aviso }) {
       ) : (
         <div className="vx-grid">
           {dados.indicacoes.map((i, idx) => {
-            const pago = i.status === "pago";
+            const pago = i.status === "pago" || i.status === "qualificada";
             return (
               <div key={idx} className="vx-card vx-row" style={{ padding: 14 }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
@@ -116,7 +133,7 @@ export default function Indicacoes({ aviso }) {
                   </div>
                 </div>
                 <span className={"vx-badge " + (pago ? "vx-badge-brand" : "vx-badge-amber")}>
-                  {pago ? money(i.valor) : "Pendente"}
+                  {i.status === "qualificada" ? "Perfil completo" : pago ? money(i.valor) : "Pendente"}
                 </span>
               </div>
             );

@@ -35,6 +35,17 @@ export function signToken(payload) {
   return jwt.sign(payload, SECRET, { expiresIn: "7d" });
 }
 
+// Último acesso do usuário, para as sequências de reengajamento. Gravado no
+// máximo uma vez por hora por usuário para não escrever no banco a cada request.
+const ULTIMO_TOQUE = new Map();
+function tocarAcesso(userId) {
+  if (!userId) return;
+  const agora = Date.now();
+  if (agora - (ULTIMO_TOQUE.get(userId) || 0) < 60 * 60 * 1000) return;
+  ULTIMO_TOQUE.set(userId, agora);
+  try { db.prepare("UPDATE users SET ultimoAcessoEm = ? WHERE id = ?").run(agora, userId); } catch {}
+}
+
 export function authMiddleware(req, res, next) {
   if (DEV_SEM_LOGIN) {
     req.user = usuarioDev();
@@ -46,6 +57,7 @@ export function authMiddleware(req, res, next) {
 
   try {
     req.user = jwt.verify(token, SECRET);
+    tocarAcesso(req.user.id);
     next();
   } catch {
     res.clearCookie("sm_token");

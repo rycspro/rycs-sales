@@ -13,6 +13,7 @@ import { extrairTextoPdf } from "../services/reportPdf.js";
 import { montarDossieEmpresa, narrativaEmpresa } from "../services/dossieEmpresa.js";
 import { excluirEmpresa, arquivosDaEmpresa } from "../services/exclusaoEmpresa.js";
 import { remover as removerArquivo } from "../services/arquivos.js";
+import { ativarIndicacaoEmpresa } from "../services/indicacoes.js";
 
 const router = Router();
 
@@ -211,6 +212,8 @@ router.post("/companies/:id/submit-review", async (req, res) => {
   if (empresa.statusCadastro === "aprovada") return res.json({ ok: true, status: "aprovada", duplicado: true });
 
   db.prepare("UPDATE companies SET statusCadastro = 'aprovada', aprovadoEm = ? WHERE id = ?").run(Date.now(), id);
+  // Empresa indicada por profissional: a aprovação libera a recompensa de ativação.
+  try { ativarIndicacaoEmpresa(id); } catch (e) { console.warn("[indicacao] ativação:", e.message); }
   const usuario = db.prepare("SELECT email FROM users WHERE entityId = ? AND role = 'empresa'").get(id);
   if (usuario?.email) await emailStatusEmpresa(empresa.nome, usuario.email, "aprovada");
   res.json({ ok: true, status: "aprovada" });

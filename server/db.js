@@ -2284,6 +2284,22 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_organizacao_assessments_seller ON organizacao_assessments(sellerId, iniciadoEm DESC);
 `);
 
+// Sequências de e-mail do funil e regras que elas anunciam.
+// perfilCompletoEm: primeira vez que o perfil ficou completo (âncora da
+// sequência de indicações). inativoEm: conta inativada por perfil incompleto,
+// reversível — volta sozinha quando o perfil é completado.
+adicionarColuna("sellers", "perfilCompletoEm", "INTEGER");
+adicionarColuna("sellers", "inativoEm", "INTEGER");
+adicionarColuna("sellers", "inativoMotivo", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "bonusIndicacaoBlocos", "INTEGER DEFAULT 0");
+adicionarColuna("users", "ultimoAcessoEm", "INTEGER");
+// Indicações: 'v1' é a regra antiga (valor fixo no pagamento) e continua
+// valendo para quem já estava pendente. 'v2' paga a ativação da empresa e um
+// percentual da primeira mensalidade, cada um uma única vez.
+adicionarColuna("referrals", "regra", "TEXT DEFAULT 'v1'");
+adicionarColuna("referrals", "ativadaEm", "INTEGER");
+adicionarColuna("referrals", "pagamentoEm", "INTEGER");
+
 
 export default db;
 export { uid, agora };

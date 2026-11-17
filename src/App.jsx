@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } fro
 import { api } from "./lib/api.js";
 import { dadosRastreio } from "./lib/rastreio.js";
 import { seed } from "./lib/seed.js";
+import { NAV } from "./lib/constants.js";
 import { CSS } from "./styles.js";
 import Shell from "./components/Shell.jsx";
 import Login from "./components/Login.jsx";
@@ -288,6 +289,19 @@ export default function App() {
 
   const aba = nav[role];
   const setAba = (k) => setNav((n) => ({ ...n, [role]: k }));
+
+  // Link direto para uma aba (?aba=perfil), usado pelos botões dos e-mails.
+  useEffect(() => {
+    if (!role) return;
+    const p = new URLSearchParams(window.location.search);
+    const k = p.get("aba");
+    if (!k) return;
+    const existe = (NAV[role] || []).some((i) => i.key === k || i.children?.some((c) => c.key === k));
+    if (existe) setNav((n) => ({ ...n, [role]: k }));
+    p.delete("aba");
+    const q = p.toString();
+    window.history.replaceState({}, "", window.location.pathname + (q ? `?${q}` : ""));
+  }, [role]);
 
   if (!loaded) return <div className="vx-app" style={{ minHeight: "100dvh" }}><style>{CSS}</style></div>;
 

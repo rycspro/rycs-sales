@@ -6,6 +6,7 @@ import db, { uid, agora } from "../db.js";
 import { signToken, usuarioDev } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
+import { sequenciasLigadas } from "../services/sequenciasEmail.js";
 import { vincularVisitante } from "../services/jornada.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
 import { normalizarTelefoneIntl, PAISES } from "../../shared/localidades.js";
@@ -223,9 +224,13 @@ router.post("/auth/register", async (req, res) => {
   // Confirmação de cadastro em segundo plano: a conta já está criada acima, e
   // esperar o provedor de e-mail responder deixava a tela "carregando sem sair"
   // quando o envio demora — levando a pessoa a reenviar e cair em "já cadastrado".
-  emailBoasVindas(nomeClean, emailNorm, role).catch((e) =>
-    console.error(`[auth] falha ao enviar boas-vindas para ${emailNorm}:`, e?.message || e)
-  );
+  // Profissional recebe as boas-vindas pela sequência de onboarding (com o
+  // limite de 1 e-mail por dia); aqui só quando as sequências estão desligadas.
+  if (role !== "vendedor" || !sequenciasLigadas()) {
+    emailBoasVindas(nomeClean, emailNorm, role).catch((e) =>
+      console.error(`[auth] falha ao enviar boas-vindas para ${emailNorm}:`, e?.message || e)
+    );
+  }
   // Vínculo de indicação: nada é creditado agora, só registrado.
   if (indicacao) vincularIndicacao(indicacao, userId, role);
   vincularVisitante(userId, req.body);

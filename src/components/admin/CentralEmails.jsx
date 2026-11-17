@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Mail, Plus, Send, Eye, Users, Building2, UserCheck, X, CheckCircle, AlertTriangle, Sparkles, FileText, GitBranch } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
+import SequenciasFunil from "./SequenciasFunil.jsx";
 
 const STATUS_LABEL = {
   rascunho: { txt: "Rascunho", color: "var(--muted)" },
@@ -368,6 +369,9 @@ function Sequencias({ aviso, onVoltar }) {
         <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModal(true)}>+ Nova sequência</button>
       </div>
 
+      <SequenciasFunil aviso={aviso} />
+
+      <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>Sequências manuais</h3>
       <div className="vx-card" style={{ padding: 18, marginBottom: 20, background: "var(--surface-2)" }}>
         <b style={{ fontSize: 13 }}>Stop conditions ativas</b>
         <div style={{ color: "var(--muted)", fontSize: 12, marginTop: 4 }}>
