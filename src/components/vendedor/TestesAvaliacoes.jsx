@@ -197,11 +197,12 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const carregarAuto = () => api("/autossabotagem").then((r) => { if (r && !r.error) setAuto(r); });
   const carregarIe = () => api("/inteligencia-emocional").then((r) => { if (r && !r.error) setIe(r); });
   const carregarRi = () => api("/riasec").then((r) => { if (r && !r.error) setRi(r); });
-  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); }, []);
+  const carregarCp = () => api("/comunicacao").then((r) => { if (r && !r.error) setCp(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); carregarCp(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri) })),
-    [discV2, big5, auto, ie, ri]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri, cp) })),
+    [discV2, big5, auto, ie, ri, cp]
   );
 
   const total = comEstado.length;
@@ -214,6 +215,7 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
     else if (item.auto && item.estado !== "indisponivel") setVista({ tipo: "autossabotagem" });
     else if (item.ie && item.estado !== "indisponivel") setVista({ tipo: "inteligencia-emocional" });
     else if (item.ri && item.estado !== "indisponivel") setVista({ tipo: "riasec" });
+    else if (item.cp && item.estado !== "indisponivel") setVista({ tipo: "comunicacao" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
@@ -260,6 +262,15 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
         aviso={aviso}
         recarregar={() => { carregarRi(); recarregar?.(); }}
         onVoltar={() => { carregarRi(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "comunicacao") {
+    return (
+      <ComunicacaoProfissional
+        aviso={aviso}
+        recarregar={() => { carregarCp(); recarregar?.(); }}
+        onVoltar={() => { carregarCp(); setVista({ tipo: "catalogo" }); }}
       />
     );
   }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye, FileText } from "lucide-react";
+import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye, FileText, UserRound } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
@@ -443,17 +443,45 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
       <VerificarWhatsapp eu={eu} up={up} aviso={aviso} />
 
-      {/* abas: Currículo comercial | Apresentação */}
-      <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
-        {[["curriculo", "Currículo comercial"], ["apresentacao", "Apresentação"]].map(([k, l]) => (
-          <button key={k} type="button" className={"vx-chip" + (secao === k ? " vx-badge-brand" : "")}
-            onClick={() => setSecao(k)}
-            style={{ cursor: "pointer", borderColor: secao === k ? "var(--brand)" : "var(--border)", fontWeight: secao === k ? 600 : 500 }}>
-            {l}
+      {/* abas estilo fichário: Currículo comercial | Apresentação */}
+      <style>{`
+        .pf-tabs{display:flex;gap:4px;align-items:flex-end;position:relative;z-index:2;margin:14px 0 0;padding:0 2px}
+        .pf-tab{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12.5px;font-weight:500;cursor:pointer;
+          padding:0 15px;height:34px;color:#64748B;background:#F8FAFC;
+          border:1px solid #E2E8F0;border-bottom-color:var(--border);border-radius:10px 10px 0 0;white-space:nowrap;
+          transition:height .2s ease-out,background .2s ease-out,color .2s ease-out,box-shadow .2s ease-out}
+        .pf-tab svg{color:#94A3B8;transition:color .2s ease-out}
+        .pf-tab[aria-selected="false"]:hover{color:#334155;background:#F1F5F9}
+        .pf-tab[aria-selected="true"]{height:40px;background:#fff;color:var(--ink);font-weight:600;
+          border-color:#CBD5E1;border-bottom-color:#fff;margin-bottom:-1px;box-shadow:0 -2px 5px rgba(15,23,42,.04)}
+        .pf-tab[aria-selected="true"] svg{color:#318CE7}
+        .pf-tab:focus-visible{outline:2px solid #318CE7;outline-offset:2px}
+        .pf-panel{position:relative;z-index:1}
+        .pf-panel>.vx-card:first-child{margin-top:0}
+        @media (prefers-reduced-motion:reduce){.pf-tab{transition:none}}
+        @media (max-width:560px){.pf-tabs{overflow-x:auto;scrollbar-width:none}.pf-tabs::-webkit-scrollbar{display:none}.pf-tab{flex:none;min-height:44px}}
+      `}</style>
+      <div className="pf-tabs" role="tablist" aria-label="Seções do perfil"
+        onKeyDown={(e) => {
+          const ks = ["curriculo", "apresentacao"];
+          const i = ks.indexOf(secao);
+          let alvo = null;
+          if (e.key === "ArrowRight") alvo = ks[(i + 1) % ks.length];
+          else if (e.key === "ArrowLeft") alvo = ks[(i - 1 + ks.length) % ks.length];
+          else if (e.key === "Home") alvo = ks[0];
+          else if (e.key === "End") alvo = ks[ks.length - 1];
+          if (alvo) { e.preventDefault(); setSecao(alvo); requestAnimationFrame(() => document.getElementById(`pf-tab-${alvo}`)?.focus()); }
+        }}>
+        {[["curriculo", "Currículo comercial", FileText], ["apresentacao", "Apresentação", UserRound]].map(([k, l, Ico]) => (
+          <button key={k} id={`pf-tab-${k}`} type="button" role="tab" className="pf-tab"
+            aria-selected={secao === k} aria-controls="pf-panel" tabIndex={secao === k ? 0 : -1}
+            onClick={() => setSecao(k)}>
+            <Ico size={15} aria-hidden="true" /> {l}
           </button>
         ))}
       </div>
 
+      <div id="pf-panel" role="tabpanel" className="pf-panel" aria-labelledby={`pf-tab-${secao}`}>
       {secao === "apresentacao" ? (
         <OnbPerfil modoPerfil aviso={aviso} />
       ) : (
@@ -748,6 +776,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
       )}
       </>
       )}
+      </div>
     </div>
   );
 }
