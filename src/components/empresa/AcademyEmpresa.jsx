@@ -169,10 +169,10 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
         </button>
       </div>
 
-      {/* Abas */}
-      <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${BORDA}`, marginBottom: 24 }}>
+      {/* Abas — roláveis na horizontal no celular, sem estourar a largura */}
+      <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${BORDA}`, marginBottom: 24, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
         {ABAS.map(([k, label]) => (
-          <button key={k} onClick={() => setAba(k)} style={{ padding: "10px 16px", fontSize: 14, fontWeight: aba === k ? 600 : 400, color: aba === k ? AZUL : "#737373", background: "none", border: "none", borderBottom: aba === k ? `2px solid ${AZUL}` : "2px solid transparent", cursor: "pointer", marginBottom: -1 }}>{label}</button>
+          <button key={k} onClick={() => setAba(k)} style={{ padding: "10px 16px", fontSize: 14, fontWeight: aba === k ? 600 : 400, color: aba === k ? AZUL : "#737373", background: "none", border: "none", borderBottom: aba === k ? `2px solid ${AZUL}` : "2px solid transparent", cursor: "pointer", marginBottom: -1, whiteSpace: "nowrap", flexShrink: 0 }}>{label}</button>
         ))}
       </div>
 
