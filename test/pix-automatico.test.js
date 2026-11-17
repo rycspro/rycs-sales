@@ -37,6 +37,10 @@ test("primeiro débito do Pix Automático: fim do trial, com pelo menos 3 dias �
 test("Pix Automático: R$ 1,00 de ativação, autorização, débito agendado e etapa concluída", async (t) => {
   let ativa = false;
   const autorizacoes = [];
+  // Pagamentos que a API oficial "conhece" — a confirmação V4 (fail-closed)
+  // consulta GET /payments/:id antes de creditar/ativar; o valor é preenchido
+  // conforme o fluxo (ativação R$1 e, depois, a mensalidade do plano).
+  const pagamentos = { pay_ativacao: 1 };
   const baseAsaas = servidorFalso(t, (req, corpo) => {
     if (req.url.startsWith("/customers")) return [200, { id: "cus_pix" }];
     if (req.url === "/pix/automatic/authorizations" && req.method === "POST") {
@@ -45,6 +49,10 @@ test("Pix Automático: R$ 1,00 de ativação, autorização, débito agendado e 
     }
     if (req.url === "/pix/automatic/authorizations/aut_1" && req.method === "GET")
       return [200, ativa ? { id: "aut_1", status: "ACTIVE", subscriptionId: "sub_asaas_1" } : { id: "aut_1", status: "CREATED" }];
+    if (req.url.startsWith("/payments/") && req.method === "GET") {
+      const id = req.url.split("/payments/")[1];
+      if (pagamentos[id] !== undefined) return [200, { id, status: "CONFIRMED", value: pagamentos[id], customer: "cus_pix" }];
+    }
     return [404, { errors: [{ description: "rota falsa inexistente" }] }];
   });
 
@@ -103,6 +111,7 @@ test("Pix Automático: R$ 1,00 de ativação, autorização, débito agendado e 
   assert.equal((await req("/onboarding", { cookie: ck })).corpo.atual, "campanha");
 
   // Primeiro débito confirmado: assinatura ativa pelo fluxo de sempre.
+  pagamentos.pay_mes1 = plano.preco; // a API oficial confirma a mensalidade (V4)
   await webhook({ id: "evt_deb", event: "PAYMENT_CONFIRMED", payment: { id: "pay_mes1", customer: "cus_pix", value: plano.preco, subscription: "sub_asaas_1" } });
   assert.equal(db.prepare("SELECT status FROM subscriptions WHERE id = ?").get(sub.id).status, "ativa");
 
