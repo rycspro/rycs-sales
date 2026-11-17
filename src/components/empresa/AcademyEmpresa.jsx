@@ -307,7 +307,7 @@ function ModuloCard({ c, numero, stats, onGerenciar, onEditar, onGerarAulas, onV
   };
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, flexWrap: "wrap" }}>
         {/* Reordenar */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", color: "#c5c9d0" }}>
           <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onSubir} disabled={!podeSubir} style={{ padding: 0, height: 16 }} title="Subir"><ChevronUp size={14} /></button>
