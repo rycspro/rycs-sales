@@ -153,15 +153,15 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 .vx-mobile-logo{height:30px;width:auto;max-width:150px;object-fit:contain;display:block}
 .vx-content-chat>.vx-mobile-topbar,.vx-content-settings>.vx-mobile-topbar{padding:12px 16px 0;margin-bottom:12px}
 /* ───────── Menu lateral do celular — White Editorial ───────── */
-.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(20,28,40,.38);display:flex;justify-content:flex-start;animation:vxin .18s ease;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(20,28,40,.38);display:flex;justify-content:flex-end;animation:vxin .18s ease;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .vx-mobilemenu{
   --mm-bg:#FFFFFF;--mm-ink:#252525;--mm-mut:#858585;--mm-border:#E9EDF2;--mm-active:#318CE7;--mm-active-bg:#EAF4FF;--mm-hover:#F4F7FA;
   width:min(88vw,340px);height:100%;background:var(--mm-bg);
-  border-right:1px solid var(--mm-border);box-shadow:8px 0 40px rgba(20,30,45,.12);
+  border-left:1px solid var(--mm-border);box-shadow:-8px 0 40px rgba(20,30,45,.12);
   display:flex;flex-direction:column;animation:vxslidein .24s cubic-bezier(.22,1,.36,1);
   padding-top:env(safe-area-inset-top,0px)}
 html.dark .vx-mobilemenu{--mm-bg:#15181F;--mm-ink:#E7EAEE;--mm-mut:#9298A3;--mm-border:#262B34;--mm-active:#4D9FFF;--mm-active-bg:#17273C;--mm-hover:#1C212A}
-@keyframes vxslidein{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes vxslidein{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .vx-mobilemenu-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 13px;border-bottom:1px solid var(--mm-border);flex-shrink:0}
 .vx-mobilemenu-logo{height:24px;width:auto;max-width:130px;object-fit:contain;display:block}
 .vx-mobilemenu-x{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;border:0;background:transparent;color:var(--mm-mut);cursor:pointer;transition:background .16s,color .16s}
