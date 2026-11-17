@@ -16,6 +16,30 @@ import { remover as removerArquivo } from "../services/arquivos.js";
 
 const router = Router();
 
+// Cura resíduo de gaveta na moeda ATIVA da empresa. Versões antigas deixavam
+// uma gaveta na própria moeda em uso (dinheiro invisível: companies tinha sido
+// zerado) ou uma cópia (versão que carregava sem apagar). Traz o valor pro caixa
+// com regra anti-duplicação e remove as gavetas dessa moeda. Idempotente: só age
+// quando há gaveta na moeda ativa. Retorna a empresa com os valores já corrigidos.
+function curarResiduoMoedaAtiva(id) {
+  const empresa = db.prepare("SELECT moeda, saldo, saldoReservado, totalAportado FROM companies WHERE id = ?").get(id);
+  if (!empresa) return empresa;
+  const moedaAtiva = empresa.moeda || "BRL";
+  const gavetas = db.prepare("SELECT saldo, reservado, totalAportado FROM company_wallets WHERE companyId = ? AND moeda = ?").all(id, moedaAtiva);
+  if (!gavetas.length) return empresa;
+  const soma = (campo) => gavetas.reduce((s, w) => s + (Number(w[campo]) || 0), 0);
+  const gSaldo = soma("saldo"), gReserv = soma("reservado"), gAporte = soma("totalAportado");
+  const caixaSaldo = Number(empresa.saldo) || 0, caixaReserv = Number(empresa.saldoReservado) || 0, caixaAporte = Number(empresa.totalAportado) || 0;
+  // caixa==0 → move (estava escondido); caixa==gaveta → cópia (não soma); divergem → o maior.
+  const resolver = (caixa, gaveta) => caixa === 0 ? gaveta : (caixa === gaveta ? caixa : Math.max(caixa, gaveta));
+  const novoSaldo = resolver(caixaSaldo, gSaldo), novoReserv = resolver(caixaReserv, gReserv), novoAporte = resolver(caixaAporte, gAporte);
+  db.transaction(() => {
+    db.prepare("UPDATE companies SET saldo = ?, saldoReservado = ?, totalAportado = ? WHERE id = ?").run(novoSaldo, novoReserv, novoAporte, id);
+    db.prepare("DELETE FROM company_wallets WHERE companyId = ? AND moeda = ?").run(id, moedaAtiva);
+  })();
+  return { ...empresa, saldo: novoSaldo, saldoReservado: novoReserv, totalAportado: novoAporte };
+}
+
 router.patch("/companies/:id", (req, res) => {
   const { id } = req.params;
   const { role, entityId } = req.user;
@@ -40,7 +64,9 @@ router.patch("/companies/:id", (req, res) => {
   // ativa. Trocar a moeda só muda qual gaveta está em uso. Guarda a atual
   // na gaveta da moeda antiga e carrega a gaveta da moeda nova (ou cria vazia).
   if (role === "empresa" && fields.moeda !== undefined) {
-    const atual = db.prepare("SELECT moeda, saldo, saldoReservado, totalAportado FROM companies WHERE id = ?").get(id);
+    // Antes de qualquer coisa, recupera dinheiro que tenha ficado numa gaveta da
+    // moeda ativa (senão o passo "salvar gaveta antiga" o sobrescreveria).
+    const atual = curarResiduoMoedaAtiva(id) || db.prepare("SELECT moeda, saldo, saldoReservado, totalAportado FROM companies WHERE id = ?").get(id);
     const moedaAntiga = atual?.moeda || "BRL";
     const moedaNova = String(fields.moeda).toUpperCase();
     if (moedaAntiga !== moedaNova) {
@@ -49,27 +75,29 @@ router.patch("/companies/:id", (req, res) => {
       const totalAportadoAtual = Number(atual?.totalAportado) || 0;
       const t = agora();
       db.transaction(() => {
-        // 1) Guarda o que está em uso agora na gaveta da moeda antiga.
-        const gavetaAntiga = db.prepare("SELECT id FROM company_wallets WHERE companyId = ? AND moeda = ?").get(id, moedaAntiga);
-        if (gavetaAntiga) {
+        // 1) Guarda o caixa atual na gaveta da moeda antiga. Consolida eventuais
+        //    duplicatas (versões antigas criavam uma gaveta nova a cada troca):
+        //    mantém uma só e grava nela o saldo em uso.
+        const antigas = db.prepare("SELECT id FROM company_wallets WHERE companyId = ? AND moeda = ?").all(id, moedaAntiga);
+        if (antigas.length) {
           db.prepare("UPDATE company_wallets SET saldo = ?, reservado = ?, totalAportado = ?, status = 'ativa', atualizadoEm = ? WHERE id = ?")
-            .run(saldoAtual, reservadoAtual, totalAportadoAtual, t, gavetaAntiga.id);
+            .run(saldoAtual, reservadoAtual, totalAportadoAtual, t, antigas[0].id);
+          for (const w of antigas.slice(1)) db.prepare("DELETE FROM company_wallets WHERE id = ?").run(w.id);
         } else {
           db.prepare(`INSERT INTO company_wallets (id, companyId, moeda, saldo, reservado, totalAportado, status, criadoEm, atualizadoEm)
             VALUES (?, ?, ?, ?, ?, ?, 'ativa', ?, ?)`)
             .run(uid(), id, moedaAntiga, saldoAtual, reservadoAtual, totalAportadoAtual, t, t);
         }
-        // 2) Carrega a gaveta da moeda nova (se não existir, cria vazia).
-        const gavetaNova = db.prepare("SELECT saldo, reservado, totalAportado FROM company_wallets WHERE companyId = ? AND moeda = ?").get(id, moedaNova);
-        if (gavetaNova) {
-          db.prepare("UPDATE companies SET saldo = ?, saldoReservado = ?, totalAportado = ? WHERE id = ?")
-            .run(gavetaNova.saldo || 0, gavetaNova.reservado || 0, gavetaNova.totalAportado || 0, id);
-        } else {
-          db.prepare(`INSERT INTO company_wallets (id, companyId, moeda, saldo, reservado, totalAportado, status, criadoEm, atualizadoEm)
-            VALUES (?, ?, ?, 0, 0, 0, 'ativa', ?, ?)`)
-            .run(uid(), id, moedaNova, t, t);
-          db.prepare("UPDATE companies SET saldo = 0, saldoReservado = 0, totalAportado = 0 WHERE id = ?").run(id);
-        }
+        // 2) Carrega a gaveta da moeda nova: SOMA todas as gavetas dessa moeda
+        //    (recupera saldo que ficou espalhado em trocas anteriores), joga no
+        //    caixa e remove as gavetas — a moeda ativa vive só em companies.
+        const novas = db.prepare("SELECT saldo, reservado, totalAportado FROM company_wallets WHERE companyId = ? AND moeda = ?").all(id, moedaNova);
+        const somaSaldo = novas.reduce((s, w) => s + (Number(w.saldo) || 0), 0);
+        const somaReserv = novas.reduce((s, w) => s + (Number(w.reservado) || 0), 0);
+        const somaAporte = novas.reduce((s, w) => s + (Number(w.totalAportado) || 0), 0);
+        db.prepare("UPDATE companies SET saldo = ?, saldoReservado = ?, totalAportado = ? WHERE id = ?")
+          .run(somaSaldo, somaReserv, somaAporte, id);
+        db.prepare("DELETE FROM company_wallets WHERE companyId = ? AND moeda = ?").run(id, moedaNova);
       })();
     }
   }
@@ -111,19 +139,29 @@ router.get("/companies/:id/wallets", (req, res) => {
   const { role, entityId } = req.user;
   if (role === "empresa" && entityId !== id) return res.status(403).json({ error: "Sem permissão" });
   if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
-  const empresa = db.prepare("SELECT moeda, saldo, saldoReservado AS reservado, totalAportado FROM companies WHERE id = ?").get(id);
+  // Normaliza wallets antigas 'arquivada' → 'ativa' e cura resíduo na moeda ativa
+  // (dinheiro que tinha ficado escondido numa gaveta da própria moeda em uso).
+  db.prepare("UPDATE company_wallets SET status = 'ativa' WHERE companyId = ? AND status = 'arquivada'").run(id);
+  const empresa = curarResiduoMoedaAtiva(id);
   const moedaAtiva = empresa?.moeda || "BRL";
 
-  // Normaliza qualquer wallet antiga com status='arquivada' para 'ativa'.
-  db.prepare("UPDATE company_wallets SET status = 'ativa' WHERE companyId = ? AND status = 'arquivada'").run(id);
-
   const gavetas = db.prepare(
-    "SELECT id, moeda, saldo, reservado, totalAportado, criadoEm, atualizadoEm FROM company_wallets WHERE companyId = ? ORDER BY criadoEm ASC"
+    "SELECT moeda, saldo, reservado, totalAportado, criadoEm, atualizadoEm FROM company_wallets WHERE companyId = ? ORDER BY criadoEm ASC"
   ).all(id);
 
-  // Monta a lista final: a gaveta em uso vem de companies; as outras vêm da tabela.
-  const emUso = { moeda: moedaAtiva, saldo: empresa?.saldo || 0, reservado: empresa?.reservado || 0, totalAportado: empresa?.totalAportado || 0, emUso: true };
-  const outras = gavetas.filter((g) => g.moeda !== moedaAtiva).map((g) => ({ ...g, emUso: false }));
+  // Agrega por moeda: trocas antigas podiam criar várias gavetas da mesma moeda.
+  const porMoeda = {};
+  for (const g of gavetas) {
+    const m = g.moeda;
+    porMoeda[m] = porMoeda[m] || { moeda: m, saldo: 0, reservado: 0, totalAportado: 0, criadoEm: g.criadoEm, atualizadoEm: g.atualizadoEm };
+    porMoeda[m].saldo += Number(g.saldo) || 0;
+    porMoeda[m].reservado += Number(g.reservado) || 0;
+    porMoeda[m].totalAportado += Number(g.totalAportado) || 0;
+    porMoeda[m].atualizadoEm = Math.max(porMoeda[m].atualizadoEm || 0, g.atualizadoEm || 0);
+  }
+
+  const emUso = { moeda: moedaAtiva, saldo: empresa?.saldo || 0, reservado: empresa?.saldoReservado || 0, totalAportado: empresa?.totalAportado || 0, emUso: true };
+  const outras = Object.values(porMoeda).filter((g) => g.moeda !== moedaAtiva).map((g) => ({ ...g, emUso: false }));
   res.json({ emUso, outras, todas: [emUso, ...outras] });
 });
 
