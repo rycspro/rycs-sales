@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   MessageSquare, Search, X, ChevronLeft,
   CheckCheck, Check, CheckCircle2,
-  Paperclip, Image, FileText, Mic, MicOff, Download, Lock,
+  Paperclip, Image, FileText, Mic, MicOff, Download, Lock, MoreHorizontal,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora, money, dataCurta } from "../../lib/utils.js";
@@ -609,6 +609,7 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [catEmoji, setCatEmoji] = useState(0);
   const [showGif, setShowGif] = useState(false);
+  const [showMenu, setShowMenu] = useState(false); // menu de anexos (3 pontinhos)
   const [buscaGif, setBuscaGif] = useState("");
   const [gifs, setGifs] = useState([]);
   const [loadingGif, setLoadingGif] = useState(false);
@@ -619,21 +620,22 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
   const mrRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
-  const rightRef = useRef(null);
+  const menuRef = useRef(null);
   const gifDebRef = useRef(null);
 
-  // Fechar painéis ao clicar fora
+  // Fechar o menu de anexos e seus painéis (emoji/GIF) ao clicar fora.
   useEffect(() => {
-    if (!showEmoji && !showGif) return;
+    if (!showEmoji && !showGif && !showMenu) return;
     const handler = (e) => {
-      if (!rightRef.current?.contains(e.target)) {
+      if (!menuRef.current?.contains(e.target)) {
         setShowEmoji(false);
         setShowGif(false);
+        setShowMenu(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [showEmoji, showGif]);
+  }, [showEmoji, showGif, showMenu]);
 
   // Carregar/buscar GIFs
   useEffect(() => {
@@ -764,26 +766,80 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
       )}
 
       <div style={{ padding: "10px 14px", display: "flex", gap: 8, alignItems: "flex-end" }}>
-        {/* Botões de anexo — esquerda */}
-        <div style={{ display: "flex", gap: 4, flexShrink: 0, paddingBottom: 1 }}>
-          <input ref={fotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={enviarFoto} />
-          <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style={{ display: "none" }} onChange={enviarDoc} />
+        <input ref={fotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={enviarFoto} />
+        <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style={{ display: "none" }} onChange={enviarDoc} />
 
-          <button onClick={() => fotoRef.current?.click()} title="Enviar foto" disabled={gravando || enviando}
-            style={btnAnexoStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
-          ><Image size={15} /></button>
+        {/* Menu de anexos (3 pontinhos) — abre pra cima com todas as opções */}
+        <div ref={menuRef} style={{ position: "relative", flexShrink: 0, paddingBottom: 1 }}>
+          {showMenu && (
+            <div style={{ position: "absolute", bottom: 46, left: 0, width: 186, background: "#fff", borderRadius: 12, boxShadow: "0 8px 28px rgba(0,0,0,.16)", border: "1px solid #E2E8F0", zIndex: 1000, padding: 5 }}>
+              {[
+                { Ic: Image, label: "Foto", onClick: () => { setShowMenu(false); fotoRef.current?.click(); } },
+                { Ic: FileText, label: "Documento", onClick: () => { setShowMenu(false); docRef.current?.click(); } },
+                { Ic: Mic, label: "Áudio", onClick: () => { setShowMenu(false); iniciarGravacao(); } },
+                { emoji: "😊", label: "Emoji", onClick: () => { setShowMenu(false); setShowGif(false); setShowEmoji(true); } },
+                { txt: "GIF", label: "GIF", onClick: () => { setShowMenu(false); setShowEmoji(false); setBuscaGif(""); setShowGif(true); } },
+              ].map((o) => (
+                <button key={o.label} type="button" onClick={o.onClick} disabled={enviando}
+                  style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", padding: "10px 11px", border: "none", background: "none", borderRadius: 9, cursor: "pointer", fontSize: 14, color: "#1E293B", fontFamily: "inherit", textAlign: "left" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#F1F5F9"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}>
+                  <span style={{ width: 20, display: "grid", placeItems: "center", color: "#64748B" }}>
+                    {o.Ic ? <o.Ic size={17} /> : o.emoji ? <span style={{ fontSize: 16, lineHeight: 1 }}>{o.emoji}</span> : <span style={{ fontSize: 11, fontWeight: 700 }}>{o.txt}</span>}
+                  </span>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
 
-          <button onClick={() => docRef.current?.click()} title="Enviar documento" disabled={gravando || enviando}
-            style={btnAnexoStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
-          ><FileText size={15} /></button>
+          {/* Painel emoji — ancorado acima do botão de menu */}
+          {showEmoji && (
+            <div style={{ position: "absolute", bottom: 46, left: 0, width: 316, maxWidth: "calc(100vw - 28px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)", border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden" }}>
+              <div style={{ display: "flex", gap: 1, padding: "8px 8px 0", borderBottom: "1px solid #F1F5F9", background: "#F8FAFC" }}>
+                {EMOJI_CATS.map((cat, i) => (
+                  <button key={i} type="button" onClick={() => setCatEmoji(i)} style={{ flex: 1, fontSize: 16, padding: "5px 2px", border: "none", cursor: "pointer", background: catEmoji === i ? "#EFF6FF" : "transparent", borderRadius: 6, transition: "background .12s" }}>{cat.label}</button>
+                ))}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 2, padding: "6px 8px", maxHeight: 220, overflowY: "auto" }}>
+                {EMOJI_CATS[catEmoji].emojis.map((em) => (
+                  <button key={em} type="button" onClick={() => inserirEmoji(em)} title={em} style={{ fontSize: 20, padding: 4, border: "none", background: "transparent", cursor: "pointer", borderRadius: 6, transition: "background .1s", lineHeight: 1.2 }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#F1F5F9"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>{em}</button>
+                ))}
+              </div>
+            </div>
+          )}
 
-          <button onClick={gravando ? pararGravacao : iniciarGravacao} title={gravando ? "Parar gravação" : "Gravar áudio"} disabled={enviando}
-            style={{ ...btnAnexoStyle, border: `1.5px solid ${gravando ? "#DC2626" : "#E2E8F0"}`, background: gravando ? "#FEF2F2" : "#F8FAFC", color: gravando ? "#DC2626" : "#64748B" }}
-          >{gravando ? <MicOff size={15} /> : <Mic size={15} />}</button>
+          {/* Painel GIF — ancorado acima do botão de menu */}
+          {showGif && (
+            <div style={{ position: "absolute", bottom: 46, left: 0, width: 316, maxWidth: "calc(100vw - 28px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)", border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden" }}>
+              <div style={{ padding: "8px 8px 6px", borderBottom: "1px solid #F1F5F9" }}>
+                <input value={buscaGif} onChange={(e) => setBuscaGif(e.target.value)} placeholder="Buscar GIFs…" autoFocus
+                  style={{ width: "100%", border: "1.5px solid #E2E8F0", borderRadius: 8, padding: "7px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "#F8FAFC" }}
+                  onFocus={(e) => { e.target.style.borderColor = "#2563EB"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; }} />
+              </div>
+              <div style={{ maxHeight: 240, overflowY: "auto", padding: 6, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                {loadingGif ? (
+                  <div style={{ gridColumn: "1/-1", display: "flex", justifyContent: "center", padding: 24 }}><div className="vx-spinner" /></div>
+                ) : gifs.length === 0 ? (
+                  <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 20, color: "#94A3B8", fontSize: 13 }}>Nenhum GIF encontrado</div>
+                ) : gifs.map((gif) => (
+                  <button key={gif.id} type="button" onClick={() => enviarGif(gif)} style={{ padding: 0, border: "none", borderRadius: 8, overflow: "hidden", cursor: "pointer", background: "#F1F5F9", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <img src={gif.images?.fixed_height_small?.url || gif.images?.downsized_small?.url} alt={gif.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
+                  </button>
+                ))}
+              </div>
+              <div style={{ padding: "4px 8px 6px", textAlign: "right" }}><span style={{ fontSize: 10, color: "#94A3B8" }}>Powered by GIPHY</span></div>
+            </div>
+          )}
+
+          {/* Botão 3 pontinhos */}
+          <button type="button" onClick={() => { setShowMenu((v) => !v); setShowEmoji(false); setShowGif(false); }} title="Mais opções" disabled={gravando || enviando}
+            style={{ ...btnAnexoStyle, borderColor: showMenu ? "#2563EB" : "#E2E8F0", color: showMenu ? "#2563EB" : "#64748B" }}>
+            <MoreHorizontal size={18} />
+          </button>
         </div>
 
         {/* Input de texto */}
@@ -808,130 +864,24 @@ function CampoEnvio({ onEnviar, onEnviarAnexo, enviando }) {
           aria-label="Campo de mensagem"
         />
 
-        {/* Botões direita: emoji + GIF + enviar */}
-        <div ref={rightRef} style={{ position: "relative", display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
-
-          {/* Painel emoji */}
-          {showEmoji && (
-            <div style={{
-              position: "absolute", bottom: 46, right: 0, width: 316,
-              background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)",
-              border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden",
-            }}>
-              <div style={{ display: "flex", gap: 1, padding: "8px 8px 0", borderBottom: "1px solid #F1F5F9", background: "#F8FAFC" }}>
-                {EMOJI_CATS.map((cat, i) => (
-                  <button key={i} onClick={() => setCatEmoji(i)} style={{
-                    flex: 1, fontSize: 16, padding: "5px 2px", border: "none", cursor: "pointer",
-                    background: catEmoji === i ? "#EFF6FF" : "transparent",
-                    borderRadius: 6, transition: "background .12s",
-                  }}>{cat.label}</button>
-                ))}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 2, padding: "6px 8px", maxHeight: 220, overflowY: "auto" }}>
-                {EMOJI_CATS[catEmoji].emojis.map((em) => (
-                  <button key={em} onClick={() => inserirEmoji(em)} title={em} style={{
-                    fontSize: 20, padding: 4, border: "none", background: "transparent",
-                    cursor: "pointer", borderRadius: 6, transition: "background .1s", lineHeight: 1.2,
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#F1F5F9"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >{em}</button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Painel GIF */}
-          {showGif && (
-            <div style={{
-              position: "absolute", bottom: 46, right: 0, width: 316,
-              background: "#fff", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.13)",
-              border: "1px solid #E2E8F0", zIndex: 1000, overflow: "hidden",
-            }}>
-              <div style={{ padding: "8px 8px 6px", borderBottom: "1px solid #F1F5F9" }}>
-                <input
-                  value={buscaGif}
-                  onChange={(e) => setBuscaGif(e.target.value)}
-                  placeholder="Buscar GIFs…"
-                  autoFocus
-                  style={{
-                    width: "100%", border: "1.5px solid #E2E8F0", borderRadius: 8,
-                    padding: "7px 10px", fontSize: 13, outline: "none", fontFamily: "inherit",
-                    boxSizing: "border-box", background: "#F8FAFC",
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = "#2563EB"; }}
-                  onBlur={(e) => { e.target.style.borderColor = "#E2E8F0"; }}
-                />
-              </div>
-              <div style={{ maxHeight: 240, overflowY: "auto", padding: 6, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-                {loadingGif ? (
-                  <div style={{ gridColumn: "1/-1", display: "flex", justifyContent: "center", padding: 24 }}>
-                    <div className="vx-spinner" />
-                  </div>
-                ) : gifs.length === 0 ? (
-                  <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 20, color: "#94A3B8", fontSize: 13 }}>Nenhum GIF encontrado</div>
-                ) : gifs.map((gif) => (
-                  <button key={gif.id} onClick={() => enviarGif(gif)} style={{
-                    padding: 0, border: "none", borderRadius: 8, overflow: "hidden",
-                    cursor: "pointer", background: "#F1F5F9", aspectRatio: "16/9",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <img
-                      src={gif.images?.fixed_height_small?.url || gif.images?.downsized_small?.url}
-                      alt={gif.title}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
-              </div>
-              <div style={{ padding: "4px 8px 6px", textAlign: "right" }}>
-                <span style={{ fontSize: 10, color: "#94A3B8" }}>Powered by GIPHY</span>
-              </div>
-            </div>
-          )}
-
-          {/* Botão emoji */}
-          <button
-            onClick={() => { setShowEmoji((v) => !v); setShowGif(false); }}
-            title="Emoji"
-            disabled={gravando || enviando}
-            style={{ ...btnAnexoStyle, borderColor: showEmoji ? "#2563EB" : "#E2E8F0" }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; }}
-            onMouseLeave={(e) => { if (!showEmoji) e.currentTarget.style.borderColor = "#E2E8F0"; }}
-          >
-            <span style={{ fontSize: 16, lineHeight: 1 }}>😊</span>
-          </button>
-
-          {/* Botão GIF */}
-          <button
-            onClick={() => { setShowGif((v) => !v); setShowEmoji(false); if (!showGif) setBuscaGif(""); }}
-            title="GIF"
-            disabled={gravando || enviando}
-            style={{ ...btnAnexoStyle, fontSize: 10, fontWeight: 700, letterSpacing: "0.03em", borderColor: showGif ? "#2563EB" : "#E2E8F0", color: showGif ? "#2563EB" : "#64748B" }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563EB"; e.currentTarget.style.color = "#2563EB"; }}
-            onMouseLeave={(e) => { if (!showGif) { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; } }}
-          >GIF</button>
-
-          {/* Botão enviar — sempre azul */}
-          <button
-            onClick={submeter}
-            disabled={!podeSend}
-            aria-label="Enviar mensagem"
-            style={{
-              width: 38, height: 38, borderRadius: 10, border: "none",
-              background: "#2563EB", color: "#fff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: podeSend ? "pointer" : "not-allowed",
-              opacity: podeSend ? 1 : 0.4,
-              transition: "opacity .15s", flexShrink: 0,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        </div>
+        {/* Botão enviar — sempre azul */}
+        <button
+          onClick={submeter}
+          disabled={!podeSend}
+          aria-label="Enviar mensagem"
+          style={{
+            width: 38, height: 38, borderRadius: 10, border: "none",
+            background: "#2563EB", color: "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: podeSend ? "pointer" : "not-allowed",
+            opacity: podeSend ? 1 : 0.4,
+            transition: "opacity .15s", flexShrink: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
       </div>
     </div>
   );
