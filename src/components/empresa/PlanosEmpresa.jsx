@@ -3,6 +3,7 @@ import { CheckCircle, CreditCard, Globe, Loader, ShieldCheck, X, XCircle, QrCode
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shared/planos.js";
+import confetti from "canvas-confetti";
 import PricingPlanos from "./PricingPlanos.jsx";
 import CheckoutStripe from "./CheckoutStripe.jsx";
 import HoloCard from "../HoloCard.jsx";
@@ -57,6 +58,19 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
     else setPlanos(PLANOS_ESTATICOS);
     if (s && !s.error) setAtual(s);
   }, []);
+
+  // Confete ao abrir o modal de sucesso da assinatura (mesmo gesto do seletor
+  // de ciclo). Já recarrega o plano atual para o card contratado virar azul.
+  useEffect(() => {
+    if (!statusPagamento) return;
+    confetti({
+      particleCount: 90, spread: 70, startVelocity: 35, gravity: 1.1, decay: 0.92,
+      ticks: 220, shapes: ["circle"], origin: { x: 0.5, y: 0.35 },
+      colors: ["#16a34a", "#22c55e", "#4ade80", "#2563EB", "#0EA5E9"],
+    });
+    carregar();
+    recarregar?.();
+  }, [statusPagamento]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const buscarStripe = useCallback(async (tentativa = 0) => {
     const r = await api("/stripe/status");
@@ -522,12 +536,12 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
       {statusPagamento && (
         <div className="vx-overlay" style={{ zIndex: 1100 }}>
           <div className="vx-sheet" style={{ maxWidth: 420, textAlign: "center", padding: "40px 32px" }}>
-            <CheckCircle size={56} color="var(--brand)" style={{ marginBottom: 16 }} />
+            <CheckCircle size={56} color="#16a34a" style={{ marginBottom: 16 }} />
             <h2 style={{ margin: "0 0 8px", fontSize: 20 }}>
               {statusPagamento === "confirmado" ? "Pagamento confirmado" : "Assinatura registrada"}
             </h2>
             <p className="vx-mut" style={{ margin: "0 0 24px" }}>
-              {statusPagamento === "confirmado" ? "Seu plano está ativo." : "A primeira cobrança será processada no vencimento."}
+              Tudo pronto para uso, publique suas campanhas.
             </p>
             <button className="vx-btn vx-btn-primary" onClick={() => { setStatusPagamento(null); setSelecionado(null); }}>
               Fechar
