@@ -47,14 +47,14 @@ test("plano free antigo conta como sem assinatura", () => {
   assert.equal(r.liberado, false);
 });
 
-test("empresa antiga com plano pago na conta continua liberada", () => {
-  // Cadastrada antes deste sistema: tem `assinatura` em companies e nenhuma
-  // linha em subscriptions. Derrubar o acesso dela seria punir o cliente por
-  // uma mudança nossa.
+test("empresa só com companies.assinatura (sem pagamento) não é liberada", () => {
+  // Regra de 55f0e89 (plano pago exige pagamento real, para todas as contas):
+  // `assinatura` em companies sem linha em subscriptions NÃO libera. A empresa
+  // fica no gratuito até escolher e pagar um plano.
   const r = acessoDaEmpresa({ empresa: { assinatura: "growth" }, assinatura: null }, AGORA);
-  assert.equal(r.estado, ESTADOS.ativa);
-  assert.equal(r.liberado, true);
-  assert.equal(r.plano, "growth");
+  assert.equal(r.estado, ESTADOS.sem);
+  assert.equal(r.liberado, false);
+  assert.equal(r.plano, null);
 });
 
 test("checkout pendente não libera, mas também não acusa inadimplência", () => {

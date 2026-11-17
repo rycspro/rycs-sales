@@ -41,6 +41,8 @@ jobs:
           echo "Sintaxe do server OK"
       - name: Build do frontend
         run: npm run build
+      - name: Testes (apenas a suíte deste repo, em test/)
+        run: npm test
 
   deploy:
     needs: validar

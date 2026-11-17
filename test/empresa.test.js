@@ -37,11 +37,11 @@ test("campanha sem caixa ou treinamento fica bloqueada", () => {
 });
 
 test("planos seguem preços e taxas aprovados no plano de produto", () => {
-  assert.deepEqual([planoDe("starter").preco, planoDe("starter").takeRate], [499, 0.30]);
-  assert.deepEqual([planoDe("growth").preco, planoDe("growth").takeRate], [999.90, 0.15]);
-  assert.deepEqual([planoDe("scale").preco, planoDe("scale").takeRate], [2700, 0.07]);
-  assert.equal(dentroDoLimite("starter", "campanhasAtivas", 0), true);
-  assert.equal(dentroDoLimite("starter", "campanhasAtivas", 1), false);
+  assert.deepEqual([planoDe("starter").preco, planoDe("starter").takeRate], [399, 0.20]);
+  assert.deepEqual([planoDe("growth").preco, planoDe("growth").takeRate], [799, 0.15]);
+  assert.deepEqual([planoDe("scale").preco, planoDe("scale").takeRate], [1499, 0.10]);
+  assert.equal(dentroDoLimite("starter", "campanhasAtivas", 2), true);
+  assert.equal(dentroDoLimite("starter", "campanhasAtivas", 3), false);
 });
 
 // Campanha completa: o que falta nos testes abaixo é sempre da empresa.

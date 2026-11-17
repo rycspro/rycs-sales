@@ -67,7 +67,7 @@ test("Pix Automático: R$ 1,00 de ativação, autorização, débito agendado e 
   }
   r = await req("/onboarding/ia/aprovar-tudo", { cookie: ck, body: {} });
   assert.equal(r.corpo.atual, "plano");
-  const plano = (await req("/onboarding/plano", { cookie: ck })).corpo.planos[0];
+  const plano = (await req("/onboarding/plano", { cookie: ck })).corpo.planos.find((p) => p.preco > 0 && p.trial);
 
   // Checkout: autorização no modo SUBSCRIPTION, R$ 1,00 agora, mensalidade no primeiro débito.
   r = await req("/subscription", { cookie: ck, body: { plano: plano.chave, onboarding: true, formaPagamento: "PIX_AUTOMATICO", titular: { documento: "12345678909" } } });
