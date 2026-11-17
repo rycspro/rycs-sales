@@ -48,14 +48,21 @@ jobs:
     steps:
       - name: Deploy via SSH to EC2 (com health check e rollback)
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          META_VERIFY_TOKEN: ${{ secrets.META_VERIFY_TOKEN }}
         with:
           host: 3.132.225.173
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           timeout: 30s
           command_timeout: 20m
+          envs: META_VERIFY_TOKEN
           script: |
             set -e
+            if [ -n "$META_VERIFY_TOKEN" ]; then
+              sed -i '/^META_VERIFY_TOKEN=/d' /home/ec2-user/env_producao.txt
+              echo "META_VERIFY_TOKEN=$META_VERIFY_TOKEN" >> /home/ec2-user/env_producao.txt
+            fi
             cd /home/ec2-user/rycs-sales
             git fetch origin main
             git reset --hard origin/main
