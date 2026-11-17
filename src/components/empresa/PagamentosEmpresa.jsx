@@ -681,7 +681,12 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
             <button
               className="vx-btn vx-btn-primary vx-btn-block"
               style={{ marginTop: 16 }}
-              onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}
+              onClick={() => {
+                setCancelPopup(null);
+                setCancelMotivo("");
+                aviso?.("Escolha o novo plano abaixo — clique em \"Trocar para este plano\".");
+                setTimeout(() => document.getElementById("vx-planos-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+              }}
             >
               Trocar plano
             </button>

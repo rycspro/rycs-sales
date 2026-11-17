@@ -208,7 +208,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
   const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
   return (
-    <div className="vx-fade">
+    <div className="vx-fade" id="vx-planos-grid">
       <div>
         <div style={{ padding: "4px 0 16px" }}>
           <div className="vx-eyebrow">Assinatura empresarial</div>
