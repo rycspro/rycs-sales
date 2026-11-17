@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ShieldAlert, ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, RotateCcw,
 } from "lucide-react";
-import { api } from "../../lib/api.js";
+import { api, API_URL } from "../../lib/api.js";
 
 // Azul institucional White Editorial (mesmo dos demais fluxos).
 const AZUL = "#318CE7";
@@ -47,14 +47,62 @@ export default function Autossabotagem({ onVoltar, aviso, recarregar }) {
   }, [aviso, onVoltar]);
 
   // ---- Auto-save (debounce) das respostas enquanto preenche ----
+  // O último mapa fica sempre num ref para conseguirmos gravar NA HORA de sair
+  // (clicar em "Sair", trocar de tela interna ou fechar/atualizar a aba) sem
+  // depender do debounce — assim nenhuma resposta se perde ao deixar o teste.
   const salvarTimer = useRef(null);
+  const respostasRef = useRef({});
+  const faseRef = useRef("intro");
+  useEffect(() => { faseRef.current = fase; }, [fase]);
+
   const agendarSalvar = useCallback((mapa) => {
+    respostasRef.current = mapa;
     if (salvarTimer.current) clearTimeout(salvarTimer.current);
     salvarTimer.current = setTimeout(() => {
       api("/autossabotagem/progresso", { respostas: mapa });
     }, 600);
   }, []);
-  useEffect(() => () => { if (salvarTimer.current) clearTimeout(salvarTimer.current); }, []);
+
+  // Grava imediatamente o que estiver pendente. Usa fetch com keepalive para
+  // sobreviver à navegação/fechamento da aba. Só grava durante o preenchimento.
+  const flushSalvar = useCallback(() => {
+    if (salvarTimer.current) { clearTimeout(salvarTimer.current); salvarTimer.current = null; }
+    if (faseRef.current !== "quiz") return;
+    const mapa = respostasRef.current;
+    if (!mapa || !Object.keys(mapa).length) return;
+    try {
+      fetch(`${API_URL}/api/autossabotagem/progresso`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ respostas: mapa }),
+        credentials: "include",
+        keepalive: true,
+      });
+    } catch { /* silencioso: é apenas o salvamento de saída */ }
+  }, []);
+
+  // Fechar/atualizar a aba e desmontar o componente: grava o progresso antes de
+  // a tela sumir, para o profissional retomar exatamente de onde parou.
+  useEffect(() => {
+    const aoSair = () => flushSalvar();
+    window.addEventListener("pagehide", aoSair);
+    window.addEventListener("beforeunload", aoSair);
+    return () => {
+      window.removeEventListener("pagehide", aoSair);
+      window.removeEventListener("beforeunload", aoSair);
+      flushSalvar();
+    };
+  }, [flushSalvar]);
+
+  // Sair do quiz pelo botão: garante a gravação antes de voltar ao catálogo.
+  const sairDoQuiz = useCallback(async () => {
+    if (salvarTimer.current) { clearTimeout(salvarTimer.current); salvarTimer.current = null; }
+    const mapa = respostasRef.current;
+    if (mapa && Object.keys(mapa).length) {
+      await api("/autossabotagem/progresso", { respostas: mapa });
+    }
+    onVoltar?.();
+  }, [onVoltar]);
 
   const iniciar = async () => {
     setEnviando(true);
@@ -65,6 +113,7 @@ export default function Autossabotagem({ onVoltar, aviso, recarregar }) {
     setItens(r.itens || []);
     setAlternativas(r.alternativas || alternativas);
     setRespostas(resp);
+    respostasRef.current = resp;
     // Retoma do primeiro item sem resposta.
     const idx = (r.itens || []).findIndex((it) => !resp[it.id]);
     setAtual(idx >= 0 ? idx : 0);
@@ -134,7 +183,7 @@ export default function Autossabotagem({ onVoltar, aviso, recarregar }) {
         onProximo={irProximo}
         onAnterior={irAnterior}
         onConcluir={concluir}
-        onVoltar={onVoltar}
+        onVoltar={sairDoQuiz}
         enviando={enviando}
         todasRespondidas={todasRespondidas}
       />
