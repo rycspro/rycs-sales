@@ -10,6 +10,8 @@ import BigFive from "./BigFive.jsx";
 import Autossabotagem from "./Autossabotagem.jsx";
 import InteligenciaEmocional from "./InteligenciaEmocional.jsx";
 import RiasecInteresses from "./RiasecInteresses.jsx";
+import ComunicacaoProfissional from "./ComunicacaoProfissional.jsx";
+import OrganizacaoProdutividade from "./OrganizacaoProdutividade.jsx";
 
 // Azul institucional White Editorial (mesmo dos fluxos de cadastro/onboarding).
 const AZUL = "#318CE7";
@@ -111,12 +113,13 @@ const CATALOGO = [
   },
   {
     id: "organizacao", categoria: "competencias", Icon: ListChecks,
-    nome: "Organização e produtividade",
-    descricao: "Avalie como você prioriza, planeja e mantém consistência.",
-    objetivo: "Medir seus hábitos de organização e execução.",
-    avalia: "Priorização, planejamento, foco e constância.",
-    instrucoes: "", privacidade: "Indicador de competência, visível para empresas apenas se você autorizar.",
-    perguntas: "", tempo: "", publicado: false,
+    nome: "Organização e Produtividade",
+    descricao: "Avalie como você identifica boas práticas para organizar tarefas, administrar o tempo e acompanhar entregas.",
+    objetivo: "Avaliar seu desempenho ao identificar estratégias de planejamento, gestão do tempo, priorização, atenção aos detalhes e acompanhamento de entregas.",
+    avalia: "Cinco competências: planejamento, gestão do tempo, priorização, atenção aos detalhes e acompanhamento de entregas.",
+    instrucoes: "Leia cada situação e escolha a alternativa mais adequada. O gabarito só aparece ao concluir. Você pode pausar e continuar.",
+    privacidade: "Desempenho nestes cenários, privado por padrão. Visível para empresas só com sua autorização; não é certificação e não altera score, ranking ou campanhas.",
+    perguntas: "20 situações", tempo: "12 a 18 min", publicado: true, op: true,
   },
   {
     id: "julgamento", categoria: "competencias", Icon: Scale,
@@ -134,7 +137,7 @@ const CATALOGO = [
 //   concluido    → já realizada (hoje, só o DISC, via dados existentes)
 //   andamento    → iniciada e não concluída (reservado para o futuro)
 //   disponivel   → publicada e ainda não iniciada
-function estadoDe(item, discV2, big5, auto, ie, ri) {
+function estadoDe(item, discV2, big5, auto, ie, ri, cp, op) {
   if (!item.publicado) return "indisponivel";
   if (item.v2) {
     if (discV2 && discV2.disponivel === false) return "indisponivel";
@@ -174,6 +177,20 @@ function estadoDe(item, discV2, big5, auto, ie, ri) {
     if (st === "andamento") return "andamento";
     return "disponivel";
   }
+  if (item.cp) {
+    if (!cp || cp.disponivel === false) return "indisponivel";
+    const st = cp?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
+  if (item.op) {
+    if (!op || op.disponivel === false) return "indisponivel";
+    const st = op?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
   return "disponivel";
 }
 
@@ -191,6 +208,8 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const [auto, setAuto] = useState(null);
   const [ie, setIe] = useState(null);
   const [ri, setRi] = useState(null);
+  const [cp, setCp] = useState(null);
+  const [op, setOp] = useState(null);
 
   const carregarDisc = () => api("/disc/avaliacao").then((r) => { if (r && !r.error) setDiscV2(r); });
   const carregarBig5 = () => api("/big-five").then((r) => { if (r && !r.error) setBig5(r); });
@@ -198,11 +217,12 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const carregarIe = () => api("/inteligencia-emocional").then((r) => { if (r && !r.error) setIe(r); });
   const carregarRi = () => api("/riasec").then((r) => { if (r && !r.error) setRi(r); });
   const carregarCp = () => api("/comunicacao").then((r) => { if (r && !r.error) setCp(r); });
-  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); carregarCp(); }, []);
+  const carregarOp = () => api("/organizacao").then((r) => { if (r && !r.error) setOp(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); carregarCp(); carregarOp(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri, cp) })),
-    [discV2, big5, auto, ie, ri, cp]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri, cp, op) })),
+    [discV2, big5, auto, ie, ri, cp, op]
   );
 
   const total = comEstado.length;
@@ -216,6 +236,7 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
     else if (item.ie && item.estado !== "indisponivel") setVista({ tipo: "inteligencia-emocional" });
     else if (item.ri && item.estado !== "indisponivel") setVista({ tipo: "riasec" });
     else if (item.cp && item.estado !== "indisponivel") setVista({ tipo: "comunicacao" });
+    else if (item.op && item.estado !== "indisponivel") setVista({ tipo: "organizacao" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
@@ -271,6 +292,15 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
         aviso={aviso}
         recarregar={() => { carregarCp(); recarregar?.(); }}
         onVoltar={() => { carregarCp(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "organizacao") {
+    return (
+      <OrganizacaoProdutividade
+        aviso={aviso}
+        recarregar={() => { carregarOp(); recarregar?.(); }}
+        onVoltar={() => { carregarOp(); setVista({ tipo: "catalogo" }); }}
       />
     );
   }
