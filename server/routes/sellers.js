@@ -37,7 +37,7 @@ function getProfissionaisBase() {
     CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
     CASE WHEN curriculo IS NOT NULL AND curriculo != '' THEN 1 ELSE 0 END AS temCurriculo, curriculoNome,
     titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, genero, criadoEm, status, xpRespostas, disc
-    FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
+    FROM sellers ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   _profCacheTs = now;
   return _profCache;
 }
@@ -151,8 +151,8 @@ router.get("/sellers/:id/curriculo", (req, res) => {
 
 router.post("/professionals/:id/note", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
-  const seller = db.prepare("SELECT id FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(req.params.id);
-  if (!seller) return res.status(404).json({ error: "Profissional ativo não encontrado" });
+  const seller = db.prepare("SELECT id FROM sellers WHERE id = ?").get(req.params.id);
+  if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
   const observacao = String(req.body?.observacao || "").slice(0, 1200);
   db.prepare(`INSERT INTO professional_notes (companyId, sellerId, observacao, atualizadoEm)
     VALUES (?, ?, ?, ?)
@@ -163,8 +163,8 @@ router.post("/professionals/:id/note", (req, res) => {
 
 router.post("/professionals/:id/partnership", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
-  const seller = db.prepare("SELECT id, status FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(req.params.id);
-  if (!seller) return res.status(404).json({ error: "Profissional ativo não encontrado" });
+  const seller = db.prepare("SELECT id, status FROM sellers WHERE id = ?").get(req.params.id);
+  if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
   const id = uid();
   const mensagem = String(req.body?.mensagem || "").slice(0, 600);
   db.prepare(`INSERT INTO partnership_requests (id, companyId, sellerId, status, mensagem, origem, criadoEm)
@@ -208,7 +208,7 @@ router.post("/sellers", (req, res) => {
   const id = uid();
   db.prepare(`
     INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'triagem', ?, ?, 0, 0, 0, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'aprovado', ?, ?, 0, 0, 0, ?, ?, ?)
   `).run(id, nome, email, whats, cidade || "", perfil || "sdr", experiencia || "", nota || 100, pix || "", JSON.stringify(respostas || []), video || "", agora());
   res.json({ id });
 });

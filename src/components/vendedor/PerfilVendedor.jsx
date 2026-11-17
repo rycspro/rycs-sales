@@ -97,9 +97,9 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
     };
   }, [db, eu]);
 
-  // O selo diz só se o perfil foi aprovado, com a nota da avaliação ao lado.
-  // "Parcial" era um terceiro estado que não significava nada para quem lê.
-  const aprovado = eu.status === "aprovado" || eu.status === "parcial";
+  // Não há mais etapa de aprovação: todo profissional entra ativo na plataforma.
+  // O selo só mostra que o perfil está ativo, com a nota da avaliação ao lado
+  // quando existir.
   const nota = Number(eu.scoreTriagem) || 0;
 
   const salvar = async () => {
@@ -193,8 +193,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
           </div>
 
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-            <span className={"vx-badge " + (aprovado ? "vx-badge-brand" : "vx-badge-red")}>
-              {aprovado ? "Perfil aprovado" : "Perfil não aprovado"}
+            <span className="vx-badge vx-badge-brand">
+              Perfil ativo
               {nota > 0 && <> · {nota}%</>}
             </span>
             {/* A avaliação fica sempre à mão. Quem estudou na Academy precisa
