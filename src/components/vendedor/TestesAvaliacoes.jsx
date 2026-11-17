@@ -8,6 +8,7 @@ import { api } from "../../lib/api.js";
 import DiscAvaliacao from "./DiscAvaliacao.jsx";
 import BigFive from "./BigFive.jsx";
 import Autossabotagem from "./Autossabotagem.jsx";
+import InteligenciaEmocional from "./InteligenciaEmocional.jsx";
 
 // Azul institucional White Editorial (mesmo dos fluxos de cadastro/onboarding).
 const AZUL = "#318CE7";
@@ -60,12 +61,13 @@ const CATALOGO = [
   },
   {
     id: "inteligencia-emocional", categoria: "personalidade", Icon: HeartHandshake,
-    nome: "Inteligência emocional",
-    descricao: "Avalie como você percebe e lida com emoções no trabalho.",
-    objetivo: "Medir sua percepção e gestão emocional em situações profissionais.",
-    avalia: "Autoconsciência, autorregulação, empatia e relacionamento.",
-    instrucoes: "", privacidade: "Resultado de autoconhecimento, sob seu controle de visibilidade.",
-    perguntas: "", tempo: "", publicado: false,
+    nome: "Inteligência Emocional",
+    descricao: "Explore como você reconhece, regula e expressa emoções no trabalho.",
+    objetivo: "Ajudar você a refletir sobre como reconhece, regula e expressa emoções no ambiente profissional.",
+    avalia: "Cinco competências: autoconsciência, autorregulação, percepção das emoções alheias, gestão de relacionamentos e adaptação emocional.",
+    instrucoes: "Para cada afirmação, escolha a frequência com que isso acontece com você. Não há resposta certa ou errada.",
+    privacidade: "Avaliação voluntária e de autoconhecimento, privada por padrão. Visível para empresas só com sua autorização; nunca altera score, ranking ou campanhas.",
+    perguntas: "30 afirmações", tempo: "7 a 10 min", publicado: true, ie: true,
   },
   {
     id: "riasec", categoria: "personalidade", Icon: Compass,
@@ -130,7 +132,7 @@ const CATALOGO = [
 //   concluido    → já realizada (hoje, só o DISC, via dados existentes)
 //   andamento    → iniciada e não concluída (reservado para o futuro)
 //   disponivel   → publicada e ainda não iniciada
-function estadoDe(item, discV2, big5, auto) {
+function estadoDe(item, discV2, big5, auto, ie) {
   if (!item.publicado) return "indisponivel";
   if (item.v2) {
     if (discV2 && discV2.disponivel === false) return "indisponivel";
@@ -155,6 +157,14 @@ function estadoDe(item, discV2, big5, auto) {
     if (st === "andamento") return "andamento";
     return "disponivel";
   }
+  if (item.ie) {
+    // Sob feature flag (revisão interna): padrão seguro é "Em breve".
+    if (!ie || ie.disponivel === false) return "indisponivel";
+    const st = ie?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
   return "disponivel";
 }
 
@@ -170,15 +180,17 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const [discV2, setDiscV2] = useState(null);
   const [big5, setBig5] = useState(null);
   const [auto, setAuto] = useState(null);
+  const [ie, setIe] = useState(null);
 
   const carregarDisc = () => api("/disc/avaliacao").then((r) => { if (r && !r.error) setDiscV2(r); });
   const carregarBig5 = () => api("/big-five").then((r) => { if (r && !r.error) setBig5(r); });
   const carregarAuto = () => api("/autossabotagem").then((r) => { if (r && !r.error) setAuto(r); });
-  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); }, []);
+  const carregarIe = () => api("/inteligencia-emocional").then((r) => { if (r && !r.error) setIe(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto) })),
-    [discV2, big5, auto]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie) })),
+    [discV2, big5, auto, ie]
   );
 
   const total = comEstado.length;
@@ -189,6 +201,7 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
     if (item.v2 && item.estado !== "indisponivel") setVista({ tipo: "disc" });
     else if (item.bf && item.estado !== "indisponivel") setVista({ tipo: "bigfive" });
     else if (item.auto && item.estado !== "indisponivel") setVista({ tipo: "autossabotagem" });
+    else if (item.ie && item.estado !== "indisponivel") setVista({ tipo: "inteligencia-emocional" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
@@ -217,6 +230,15 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
         aviso={aviso}
         recarregar={() => { carregarAuto(); recarregar?.(); }}
         onVoltar={() => { carregarAuto(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "inteligencia-emocional") {
+    return (
+      <InteligenciaEmocional
+        aviso={aviso}
+        recarregar={() => { carregarIe(); recarregar?.(); }}
+        onVoltar={() => { carregarIe(); setVista({ tipo: "catalogo" }); }}
       />
     );
   }
