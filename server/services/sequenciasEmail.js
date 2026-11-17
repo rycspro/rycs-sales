@@ -132,7 +132,10 @@ function dadosGerais(agora) {
   return { campanhasAtivas, empresasNovasSemana };
 }
 
-export function candidatos(agora = Date.now()) {
+// Avalia TODO mundo (profissionais e empresas): próximo passo de cada um e o
+// que o segura (descadastro, intervalo de 20h). `candidatos` filtra daqui quem
+// recebe agora; o painel do admin mostra a lista inteira.
+function avaliarTodos(agora) {
   const lanc = lancamento();
   const { enviados, ultimoPorEmail } = historico();
   const fora = descadastrados();
@@ -146,7 +149,8 @@ export function candidatos(agora = Date.now()) {
     WHERE s.status NOT IN ('excluido', 'bloqueado', 'recusado', 'ia_recusado') AND s.email != ''`).all();
   for (const s of sellers) {
     const email = normEmail(s.email);
-    if (!email || fora.has(email)) continue;
+    if (!email) continue;
+    if (fora.has(email)) { lista.push({ tipo: "vendedor", id: s.id, nome: s.nome, email, criadoEm: s.criadoEm, inativo: !!s.inativoEm, descadastrado: true, proximoPasso: null }); continue; }
     const ctx = {
       ancora: Math.max(s.criadoEm || 0, lanc),
       novo: (s.criadoEm || 0) >= lanc,
@@ -163,9 +167,10 @@ export function candidatos(agora = Date.now()) {
       const plano = planoAtual(s.id)?.plano || "gratis";
       if (plano !== "gratis") passo = proximoEmailVendedor({ ...ctx, plano }, agora);
     }
-    if (!passo) continue;
-    if (agora - (ultimoPorEmail.get(email) || 0) < INTERVALO_MIN_POR_PESSOA) continue;
-    lista.push({ tipo: "vendedor", id: s.id, userId: s.userId, nome: s.nome, email, idioma: idiomaDoPais(s.pais), seller: s, ancora: ctx.ancora, ...passo });
+    const espera = passo ? agora - (ultimoPorEmail.get(email) || 0) < INTERVALO_MIN_POR_PESSOA : false;
+    lista.push({ tipo: "vendedor", id: s.id, userId: s.userId, nome: s.nome, email, idioma: idiomaDoPais(s.pais), seller: s, ancora: ctx.ancora,
+      criadoEm: s.criadoEm, inativo: !!s.inativoEm, descadastrado: false, perfilCompleto: ctx.perfilCompleto, espera,
+      proximoPasso: passo ? { chave: passo.chave, seq: passo.seq } : null, ...(passo || {}) });
   }
 
   const empresas = db.prepare(`
@@ -174,15 +179,21 @@ export function candidatos(agora = Date.now()) {
     WHERE u.email != ''`).all();
   for (const c of empresas) {
     const email = normEmail(c.email);
-    if (!email || fora.has(email)) continue;
+    if (!email) continue;
+    if (fora.has(email)) { lista.push({ tipo: "empresa", id: c.id, nome: c.nome, email, descadastrado: true, proximoPasso: null }); continue; }
     const passo = proximoEmailEmpresa({
       ultimaAtividade: Math.max(c.ultimoAcessoEm || 0, lanc),
       enviados: enviados.get(`empresa:${c.id}`) || new Map(),
     }, agora);
-    if (!passo) continue;
-    if (agora - (ultimoPorEmail.get(email) || 0) < INTERVALO_MIN_POR_PESSOA) continue;
-    lista.push({ tipo: "empresa", id: c.id, userId: c.userId, nome: c.nome, empresa: c.empresa, email, idioma: idiomaDoPais(c.pais), ancora: 0, ...passo });
+    const espera = passo ? agora - (ultimoPorEmail.get(email) || 0) < INTERVALO_MIN_POR_PESSOA : false;
+    lista.push({ tipo: "empresa", id: c.id, userId: c.userId, nome: c.nome, empresa: c.empresa, email, idioma: idiomaDoPais(c.pais), ancora: 0,
+      descadastrado: false, espera, proximoPasso: passo ? { chave: passo.chave, seq: passo.seq } : null, ...(passo || {}) });
   }
+  return { lista, enviados };
+}
+
+export function candidatos(agora = Date.now()) {
+  const lista = avaliarTodos(agora).lista.filter((c) => c.proximoPasso && !c.espera && !c.descadastrado);
 
   // Prioridade: ordem das sequências; dentro dela, quem entrou antes.
   lista.sort((a, b) => ORDEM_SEQUENCIAS.indexOf(a.seq) - ORDEM_SEQUENCIAS.indexOf(b.seq) || a.ancora - b.ancora);
@@ -250,6 +261,25 @@ export async function rodada(agora = Date.now(), { ignorarJanela = false } = {})
   } finally {
     rodando = false;
   }
+}
+
+// Painel do admin: cada pessoa com o que já recebeu (ou falhou) e o próximo
+// e-mail previsto. `proximo.status`: "na_fila" (sai na próxima rodada),
+// "aguardando_intervalo" (recebeu outro há menos de 20h) ou ausente (nada a
+// enviar agora).
+export function destinatariosSequencias(agora = Date.now()) {
+  const envios = new Map();
+  for (const r of db.prepare("SELECT destinatarioTipo, destinatarioId, chave, status, erro, enviadoEm FROM email_sequencia_envios ORDER BY enviadoEm").all()) {
+    const k = `${r.destinatarioTipo}:${r.destinatarioId}`;
+    if (!envios.has(k)) envios.set(k, []);
+    envios.get(k).push({ chave: r.chave.split("@")[0], status: r.status, erro: r.erro || "", em: r.enviadoEm });
+  }
+  return avaliarTodos(agora).lista.map((c) => ({
+    tipo: c.tipo, id: c.id, nome: c.nome || "", email: c.email, criadoEm: c.criadoEm || null,
+    inativo: !!c.inativo, descadastrado: !!c.descadastrado, perfilCompleto: c.perfilCompleto ?? null,
+    envios: envios.get(`${c.tipo}:${c.id}`) || [],
+    proximo: c.proximoPasso ? { chave: c.proximoPasso.chave.split("@")[0], status: c.espera ? "aguardando_intervalo" : "na_fila" } : null,
+  }));
 }
 
 export function resumoSequencias(agora = Date.now()) {

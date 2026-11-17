@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
-  emailDoParametro, validarDescadastro, descadastrar, resumoSequencias, montarEmail, rodada,
-} from "../services/sequenciasEmail.js";
+  emailDoParametro, validarDescadastro, descadastrar, resumoSequencias, montarEmail, rodada, destinatariosSequencias } from "../services/sequenciasEmail.js";
 import { CHAVES_TEXTOS, PASSOS_EMPRESA_OFFLINE } from "../../shared/sequenciasEmail.js";
 import { sendEmail } from "../services/email.js";
 import db from "../db.js";
@@ -42,6 +41,9 @@ const router = Router();
 const soAdmin = (req, res, next) => (req.user?.role === "admin" ? next() : res.status(403).json({ error: "Apenas administradores." }));
 
 router.get("/admin/sequencias-email", soAdmin, (req, res) => res.json(resumoSequencias()));
+
+// Quem já recebeu cada e-mail, o que falhou e o próximo previsto de cada pessoa.
+router.get("/admin/sequencias-email/destinatarios", soAdmin, (req, res) => res.json({ destinatarios: destinatariosSequencias() }));
 
 // Lista de todos os e-mails possíveis, para a prévia.
 router.get("/admin/sequencias-email/modelos", soAdmin, (req, res) => {
