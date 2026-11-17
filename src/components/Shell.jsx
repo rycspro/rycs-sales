@@ -153,7 +153,7 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
       e.preventDefault(); const buttons = [...menu.current.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
       buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length-1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
-      {company && <button type="button" role="menuitem" onClick={() => choose(() => onSelect('outros'))}><Building2 size={18} />Dados da empresa</button>}
+      {company && <button type="button" role="menuitem" onClick={() => choose(() => onSelect('configuracoes'))}><Building2 size={18} />Dados da empresa</button>}
       <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>
     </div>}
     <button type="button" className="vx-account-logo" ref={trigger} aria-haspopup="menu" aria-expanded={open} aria-label={nome} title={nome} onClick={() => setOpen(!open)}>
