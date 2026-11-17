@@ -54,7 +54,7 @@ export function tratarEventoProfissional(event, payment) {
     if (a.ultimoPaymentId && a.ultimoPaymentId === payment.id) return "ja_processado";
     if (a.status === "reembolsada") return "ignorado";
     const venc = dataDoAsaas(payment.dueDate) || t;
-    const pagoAte = estenderPeriodo(a.pagoAte, venc);
+    const pagoAte = estenderPeriodo(a.pagoAte, venc, a.ciclo);
     const status = a.status === "cancelada" ? "cancelada" : "ativa";
     db.prepare(`UPDATE assinaturas_profissional SET status = ?, pagoAte = ?, inicio = COALESCE(inicio, ?),
       ultimoPaymentId = ?, valor = COALESCE(?, valor), proximaCobranca = ?, atualizadoEm = ? WHERE id = ?`)

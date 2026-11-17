@@ -1,19 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Check, Loader, QrCode, ShieldCheck, Sparkles, X } from "lucide-react";
 import NumberFlow from "@number-flow/react";
+import confetti from "canvas-confetti";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { mascararDocumento } from "../../../shared/documentoConta.js";
-import { PLANOS_PROFISSIONAL, PLANOS_PAGOS_PROFISSIONAL, BENEFICIOS_VITRINE } from "../../../shared/planosProfissional.js";
+import { PLANOS_PROFISSIONAL, PLANOS_PAGOS_PROFISSIONAL, BENEFICIOS_VITRINE, CICLOS, mensalidadeProfissional, valorProfissionalNoCiclo } from "../../../shared/planosProfissional.js";
+import { descontoDoCiclo } from "../../../shared/planos.js";
 
 // Planos do profissional (Grátis/Pro/Premium), no mesmo template da vitrine de
 // planos da empresa (PlanosEmpresa + PricingPlanos): faixa larga do plano
-// gratuito, cards com preço animado, checkout em janela e QR Code do Pix.
-// Preços e benefícios vêm de shared/planosProfissional.js. Cobrança só anual,
-// só por Pix. O texto nunca promete mais vendas: o Grátis continua completo.
+// gratuito, seletor mensal/semestral/anual com os mesmos descontos, cards com
+// preço animado, checkout em janela e QR Code do Pix. Preços e benefícios vêm
+// de shared/planosProfissional.js. Pagamento só por Pix. O texto nunca promete mais vendas: o Grátis continua completo.
 
 const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
+const pct = (d) => Math.round(d * 100);
+const OPCOES_CICLO = [
+  { id: CICLOS.MENSAL, label: "Mensal" },
+  { id: CICLOS.SEMESTRAL, label: "Semestral" },
+  { id: CICLOS.ANUAL, label: "Anual" },
+];
+const CICLO_NOME = { MENSAL: "Mensal", SEMESTRAL: "Semestral", ANUAL: "Anual" };
+const CICLO_SUFIXO = { MENSAL: "/mês", SEMESTRAL: "/semestre", ANUAL: "/ano" };
 const dataBr = (t) => (t ? new Date(t).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "");
 
 // Tópicos de cada card: o que o plano soma ao anterior, com o detalhe do plano
@@ -31,6 +41,20 @@ export default function PlanosProfissional({ aviso }) {
   const [cpf, setCpf] = useState("");
   const [processando, setProcessando] = useState(false);
   const [pix, setPix] = useState(null);
+  const [ciclo, setCiclo] = useState(CICLOS.MENSAL);
+  const segRef = useRef(null);
+
+  const alternar = (novo) => {
+    setCiclo(novo);
+    if (descontoDoCiclo(novo) > 0 && segRef.current) {
+      const r = segRef.current.getBoundingClientRect();
+      confetti({
+        particleCount: 50, spread: 60, startVelocity: 30, gravity: 1.2, decay: 0.94, ticks: 200, shapes: ["circle"],
+        origin: { x: (r.left + r.width / 2) / window.innerWidth, y: (r.top + r.height / 2) / window.innerHeight },
+        colors: ["#2563EB", "#4338CA", "#0EA5E9", "#60A5FA"],
+      });
+    }
+  };
 
   const carregar = async () => setInfo(await api("/profissional/plano"));
   useEffect(() => { carregar(); }, []);
@@ -61,13 +85,13 @@ export default function PlanosProfissional({ aviso }) {
     if (!info.cobrancaAtiva) return aviso?.("A assinatura dos planos ainda não está disponível.");
     if (!noGratis) return aviso?.("A troca de plano no meio do período ainda não está disponível.");
     setCpf("");
-    setSelecionado(PLANOS_PROFISSIONAL[chave]);
+    setSelecionado({ ...PLANOS_PROFISSIONAL[chave], ciclo, valor: valorProfissionalNoCiclo(chave, ciclo) });
   };
 
   const pagar = async () => {
     if (precisaCpf && SO_DIGITOS(cpf).length !== 11) return aviso?.("Informe o seu CPF com 11 números.");
     setProcessando(true);
-    const r = await api("/profissional/assinatura", { plano: selecionado.chave, ...(precisaCpf ? { cpf: SO_DIGITOS(cpf) } : {}) });
+    const r = await api("/profissional/assinatura", { plano: selecionado.chave, ciclo: selecionado.ciclo, ...(precisaCpf ? { cpf: SO_DIGITOS(cpf) } : {}) });
     setProcessando(false);
     if (!r || r.error) return aviso?.(r?.error || "Não foi possível gerar a cobrança.");
     await carregar();
@@ -119,7 +143,7 @@ export default function PlanosProfissional({ aviso }) {
             </span>
             <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
               <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: noGratis ? "#fff" : "var(--ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>R$ 0</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: noGratis ? "rgba(255,255,255,.85)" : "var(--muted)" }}>para sempre</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: noGratis ? "rgba(255,255,255,.85)" : "var(--muted)" }}>/mês</span>
             </div>
           </div>
 
@@ -146,7 +170,33 @@ export default function PlanosProfissional({ aviso }) {
           </button>
         </div>
 
-        {/* Cards dos planos pagos — cobrança anual. */}
+        {/* Alternância mensal / semestral / anual (mesmos descontos da empresa) */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 26 }}>
+          <div ref={segRef} role="radiogroup" aria-label="Ciclo de cobrança"
+            style={{ display: "flex", gap: 4, padding: 4, borderRadius: 999, background: "var(--surface-2, #F1F5F9)", border: "1px solid var(--border)", flexWrap: "nowrap", justifyContent: "center", width: "100%", maxWidth: 360 }}>
+            {OPCOES_CICLO.map((o) => {
+              const ativo = ciclo === o.id;
+              const desc = descontoDoCiclo(o.id);
+              return (
+                <button key={o.id} type="button" role="radio" aria-checked={ativo} onClick={() => alternar(o.id)}
+                  style={{
+                    flex: "1 1 0", minWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4,
+                    padding: "8px 6px", borderRadius: 999, border: "none", cursor: "pointer",
+                    fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", whiteSpace: "nowrap",
+                    color: ativo ? "#fff" : "var(--muted)", background: ativo ? "var(--brand)" : "transparent",
+                    boxShadow: ativo ? "var(--shadow-brand, 0 1px 3px rgba(37,99,235,.35))" : "none", transition: "background .2s, color .2s",
+                  }}>
+                  {o.label}
+                  {desc > 0 && (
+                    <span style={{ fontSize: 9.5, fontWeight: 700, lineHeight: 1, flexShrink: 0, padding: "2px 5px", borderRadius: 999, background: ativo ? "rgba(255,255,255,.22)" : "var(--brand-50)", color: ativo ? "#fff" : "var(--brand)" }}>-{pct(desc)}%</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Cards dos planos pagos */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 16, alignItems: "start" }}>
           {PLANOS_PAGOS_PROFISSIONAL.map((chave, index) => {
             const p = PLANOS_PROFISSIONAL[chave];
@@ -178,12 +228,14 @@ export default function PlanosProfissional({ aviso }) {
 
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6, margin: "16px 0 2px" }}>
                   <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: ehAtual ? "#fff" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>
-                    <NumberFlow value={p.precoAnual} format={{ style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }} locales="pt-BR" willChange />
+                    <NumberFlow value={mensalidadeProfissional(chave, ciclo)} format={{ style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }} locales="pt-BR" transformTiming={{ duration: 500, easing: "ease-out" }} willChange />
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: ehAtual ? "rgba(255,255,255,.85)" : "var(--muted)" }}>/ano</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: ehAtual ? "rgba(255,255,255,.85)" : "var(--muted)" }}>/mês</span>
                 </div>
                 <div style={{ fontSize: 11.5, color: ehAtual ? "rgba(255,255,255,.7)" : "var(--muted)", textAlign: "center", marginBottom: 4 }}>
-                  cobrado anualmente · pagamento por Pix
+                  {ciclo === CICLOS.ANUAL ? `${money(valorProfissionalNoCiclo(chave, ciclo))} cobrado anualmente · economize ${pct(descontoDoCiclo(ciclo))}%`
+                    : ciclo === CICLOS.SEMESTRAL ? `${money(valorProfissionalNoCiclo(chave, ciclo))} a cada 6 meses · economize ${pct(descontoDoCiclo(ciclo))}%`
+                    : "cobrado mensalmente"}
                 </div>
 
                 <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 9 }}>
@@ -231,8 +283,8 @@ export default function PlanosProfissional({ aviso }) {
             </div>
 
             <div className="vx-checkout-total">
-              <span>Plano {selecionado.nome} · Anual</span><b>{money(selecionado.precoAnual)}</b>
-              <span>Cobrança</span><b>{money(selecionado.precoAnual)}/ano</b>
+              <span>Plano {selecionado.nome} · {CICLO_NOME[selecionado.ciclo]}</span><b>{money(selecionado.valor)}</b>
+              <span>Cobrança</span><b>{money(selecionado.valor)}{CICLO_SUFIXO[selecionado.ciclo]}</b>
             </div>
 
             {precisaCpf && (
@@ -251,12 +303,12 @@ export default function PlanosProfissional({ aviso }) {
             </div>
             <div className="vx-mut" style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, marginTop: 10, lineHeight: 1.6 }}>
               <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-              Renova a cada ano. Você pode cancelar a renovação quando quiser e mantém os benefícios até o fim do período pago.
+              Renova automaticamente a cada {selecionado.ciclo === CICLOS.MENSAL ? "mês" : selecionado.ciclo === CICLOS.SEMESTRAL ? "6 meses" : "ano"}. Você pode cancelar a renovação quando quiser e mantém os benefícios até o fim do período pago.
             </div>
 
             <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 16, minHeight: 44 }}
               disabled={processando || (precisaCpf && SO_DIGITOS(cpf).length !== 11)} onClick={pagar}>
-              {processando ? <><Loader size={15} /> Processando…</> : <><QrCode size={15} /> Pagar com Pix {money(selecionado.precoAnual)}</>}
+              {processando ? <><Loader size={15} /> Processando…</> : <><QrCode size={15} /> Pagar com Pix {money(selecionado.valor)}</>}
             </button>
             <p className="vx-chart-source">Nenhuma cobrança é feita sem esta confirmação. Ativação apenas após confirmação do gateway.</p>
           </div>

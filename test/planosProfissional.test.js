@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   PLANOS_PROFISSIONAL, PERMISSOES, pode, limite, desconto, planoDoProfissional,
   estenderPeriodo, periodoDaCota, avaliarConsumo, ordenarComDesempate, BENEFICIOS_VITRINE,
+  mensalidadeProfissional, valorProfissionalNoCiclo,
 } from "../shared/planosProfissional.js";
 import { SAQUE_MINIMO, saqueMinimoPara } from "../shared/saque.js";
 import { PLANOS } from "../shared/planos.js";
@@ -10,10 +11,22 @@ import { PLANOS } from "../shared/planos.js";
 const AGORA = Date.UTC(2026, 10, 17, 12);
 const DIA = 86_400_000;
 
-test("preços anuais em reais vêm de um lugar só", () => {
-  assert.equal(PLANOS_PROFISSIONAL.gratis.precoAnual, 0);
-  assert.equal(PLANOS_PROFISSIONAL.pro.precoAnual, 197);
-  assert.equal(PLANOS_PROFISSIONAL.premium.precoAnual, 497);
+test("mensalidade cheia em reais vem de um lugar só", () => {
+  assert.equal(PLANOS_PROFISSIONAL.gratis.preco, 0);
+  assert.equal(PLANOS_PROFISSIONAL.pro.preco, 29.9);
+  assert.equal(PLANOS_PROFISSIONAL.premium.preco, 69.9);
+});
+
+test("ciclos seguem a regra da empresa: semestral -15%, anual -30%", () => {
+  assert.equal(valorProfissionalNoCiclo("pro", "MENSAL"), 29.9);
+  assert.equal(mensalidadeProfissional("pro", "SEMESTRAL"), 25.42);
+  assert.equal(valorProfissionalNoCiclo("pro", "SEMESTRAL"), 152.52);
+  assert.equal(mensalidadeProfissional("pro", "ANUAL"), 20.93);
+  assert.equal(valorProfissionalNoCiclo("pro", "ANUAL"), 251.16);
+  assert.equal(valorProfissionalNoCiclo("premium", "MENSAL"), 69.9);
+  assert.equal(valorProfissionalNoCiclo("premium", "SEMESTRAL"), 356.52);
+  assert.equal(valorProfissionalNoCiclo("premium", "ANUAL"), 587.16);
+  assert.equal(valorProfissionalNoCiclo("pro", "qualquer"), 29.9); // ciclo inválido = mensal
 });
 
 test("planos da empresa continuam separados", () => {
@@ -89,6 +102,13 @@ test("período anual conta do vencimento e não encurta quem renova antes", () =
   const venc = Date.UTC(2026, 10, 17);
   assert.equal(estenderPeriodo(null, venc), Date.UTC(2027, 10, 17));
   assert.equal(estenderPeriodo(Date.UTC(2027, 0, 1), venc), Date.UTC(2028, 0, 1));
+});
+
+test("período mensal e semestral somam os meses do ciclo", () => {
+  const venc = Date.UTC(2026, 10, 17);
+  assert.equal(estenderPeriodo(null, venc, "MENSAL"), Date.UTC(2026, 11, 17));
+  assert.equal(estenderPeriodo(null, venc, "SEMESTRAL"), Date.UTC(2027, 4, 17));
+  assert.equal(estenderPeriodo(null, venc, "anual"), Date.UTC(2027, 10, 17));
 });
 
 test("cota conta por mês no fuso de Brasília", () => {

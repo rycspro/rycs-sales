@@ -11,15 +11,38 @@
 // (docs/rycs/planos-pro-premium.md §8). Enquanto for null o recurso fica
 // DESLIGADO para todos — nenhum número é inventado aqui.
 
+import { CICLOS, descontoDoCiclo, mesesDoCiclo, normalizarCiclo } from "./planos.js";
+
 const DIA = 86_400_000;
 
-export const CICLO_PROFISSIONAL = "anual";
+// Ciclos e descontos são os MESMOS dos planos da empresa (shared/planos.js):
+// mensal cheio, semestral -15%, anual -30%. `preco` é a mensalidade cheia.
+export { CICLOS, normalizarCiclo };
+export const CICLOS_PROFISSIONAL = [CICLOS.MENSAL, CICLOS.SEMESTRAL, CICLOS.ANUAL];
 
 export const PLANOS_PROFISSIONAL = {
-  gratis: { chave: "gratis", nome: "Grátis", precoAnual: 0, resumo: "Tudo para trabalhar e ganhar: perfil, candidaturas sem limite e saques." },
-  pro: { chave: "pro", nome: "Pro", precoAnual: 197, resumo: "Ferramentas, treino e prioridade de visibilidade para acelerar o seu trabalho." },
-  premium: { chave: "premium", nome: "Premium", precoAnual: 497, resumo: "Tudo do Pro, com acompanhamento, mentoria e acesso às campanhas premium." },
+  gratis: { chave: "gratis", nome: "Grátis", preco: 0, resumo: "Tudo para trabalhar e ganhar: perfil, candidaturas sem limite e saques." },
+  pro: { chave: "pro", nome: "Pro", preco: 29.9, resumo: "Ferramentas, treino e prioridade de visibilidade para acelerar o seu trabalho." },
+  premium: { chave: "premium", nome: "Premium", preco: 69.9, resumo: "Tudo do Pro, com acompanhamento, mentoria e acesso às campanhas premium." },
 };
+
+const arred2 = (n) => Math.round(n * 100) / 100;
+
+// Mensalidade equivalente no ciclo (com o desconto do ciclo).
+export function mensalidadeProfissional(chave, ciclo = CICLOS.MENSAL) {
+  const preco = PLANOS_PROFISSIONAL[chave]?.preco || 0;
+  return arred2(preco * (1 - descontoDoCiclo(normalizarCiclo(ciclo))));
+}
+
+// Valor cobrado de uma vez a cada ciclo (mensalidade com desconto × meses).
+export function valorProfissionalNoCiclo(chave, ciclo = CICLOS.MENSAL) {
+  const c = normalizarCiclo(ciclo);
+  return arred2(mensalidadeProfissional(chave, c) * mesesDoCiclo(c));
+}
+
+// Valor cobrado no ciclo anual (com o desconto de 30%), para quem lê o preço
+// anual direto do plano.
+for (const p of Object.values(PLANOS_PROFISSIONAL)) p.precoAnual = valorProfissionalNoCiclo(p.chave, CICLOS.ANUAL);
 
 export const ORDEM_PLANOS_PROFISSIONAL = ["gratis", "pro", "premium"];
 export const PLANOS_PAGOS_PROFISSIONAL = ["pro", "premium"];
@@ -118,9 +141,11 @@ export function planoDoProfissional(assinaturas = [], agora = Date.now(), carenc
 }
 
 // Fim do período pago: o ano conta do vencimento, não do dia em que pagou.
-export function estenderPeriodo(pagoAteAtual, vencimento) {
+// Soma os meses do ciclo pago ao maior entre o "pago até" atual e o vencimento.
+// Ciclo ausente ou antigo ('anual') conta como anual.
+export function estenderPeriodo(pagoAteAtual, vencimento, ciclo = CICLOS.ANUAL) {
   const base = new Date(Math.max(Number(pagoAteAtual) || 0, Number(vencimento) || 0));
-  base.setUTCFullYear(base.getUTCFullYear() + 1);
+  base.setUTCMonth(base.getUTCMonth() + mesesDoCiclo(normalizarCiclo(ciclo || CICLOS.ANUAL)));
   return base.getTime();
 }
 

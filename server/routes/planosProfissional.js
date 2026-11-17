@@ -9,7 +9,11 @@ import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { asaas, asaasAtivo, AsaasError, garantirClienteProfissional } from "../services/asaas.js";
 import { assinaturasDoProfissional, planoAtual, cobrancaProfissionalAtiva } from "../services/planosProfissional.js";
-import { PLANOS_PROFISSIONAL, PLANOS_PAGOS_PROFISSIONAL, limite } from "../../shared/planosProfissional.js";
+import { PLANOS_PROFISSIONAL, PLANOS_PAGOS_PROFISSIONAL, limite, normalizarCiclo, valorProfissionalNoCiclo } from "../../shared/planosProfissional.js";
+
+// Mesmo mapa de ciclo da assinatura da empresa (routes/subscriptions.js).
+const CICLO_ASAAS = { MENSAL: "MONTHLY", SEMESTRAL: "SEMIANNUALLY", ANUAL: "YEARLY" };
+const CICLO_LABEL = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" };
 import { saqueMinimoPara } from "../../shared/saque.js";
 import { cpfValido } from "../services/regras.js";
 
@@ -59,6 +63,7 @@ router.post("/profissional/assinatura", async (req, res) => {
 
   const chave = String(req.body?.plano || "");
   if (!PLANOS_PAGOS_PROFISSIONAL.includes(chave)) return res.status(400).json({ error: "Plano inválido." });
+  const ciclo = normalizarCiclo(req.body?.ciclo);
   const sellerId = req.user.entityId;
   const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(sellerId);
   if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
@@ -71,7 +76,7 @@ router.post("/profissional/assinatura", async (req, res) => {
 
   // Já existe cobrança aberta: devolve a mesma (mesmo plano) ou encerra a antiga.
   const pendente = db.prepare("SELECT * FROM assinaturas_profissional WHERE sellerId = ? AND status = 'pendente' AND origem = 'asaas' ORDER BY criadoEm DESC LIMIT 1").get(sellerId);
-  if (pendente && pendente.plano === chave && pendente.asaasId)
+  if (pendente && pendente.plano === chave && normalizarCiclo(pendente.ciclo) === ciclo && pendente.asaasId)
     return res.json({ assinatura: publica(pendente), pix: await pixDaPrimeiraCobranca(pendente.asaasId) });
   if (pendente) {
     if (pendente.asaasId) { try { await asaas(`/subscriptions/${pendente.asaasId}`, { method: "DELETE" }); } catch { /* já removida */ } }
@@ -96,10 +101,11 @@ router.post("/profissional/assinatura", async (req, res) => {
   }
 
   const plano = PLANOS_PROFISSIONAL[chave];
+  const valor = valorProfissionalNoCiclo(chave, ciclo);
   const id = uid();
   const t = agora();
   db.prepare(`INSERT INTO assinaturas_profissional (id, sellerId, plano, ciclo, status, origem, asaasCustomerId, valor, criadoEm, atualizadoEm)
-    VALUES (?, ?, ?, 'anual', 'pendente', 'asaas', ?, ?, ?, ?)`).run(id, sellerId, chave, customerId, plano.precoAnual, t, t);
+    VALUES (?, ?, ?, ?, 'pendente', 'asaas', ?, ?, ?, ?)`).run(id, sellerId, chave, ciclo, customerId, valor, t, t);
 
   try {
     const sub = await asaas("/subscriptions", {
@@ -107,10 +113,10 @@ router.post("/profissional/assinatura", async (req, res) => {
       body: {
         customer: customerId,
         billingType: "PIX",
-        cycle: "YEARLY",
-        value: plano.precoAnual,
+        cycle: CICLO_ASAAS[ciclo],
+        value: valor,
         nextDueDate: hojeIso(),
-        description: `RYCS ${plano.nome} — assinatura anual`,
+        description: `RYCS ${plano.nome} — assinatura ${CICLO_LABEL[ciclo]}`,
         externalReference: `prof:${id}`,
       },
     });
@@ -164,7 +170,7 @@ router.post("/admin/profissionais/:sellerId/plano", (req, res) => {
 
   const t = agora();
   db.prepare(`INSERT INTO assinaturas_profissional (id, sellerId, plano, ciclo, status, origem, valor, inicio, pagoAte, motivo, criadoPor, criadoEm, atualizadoEm)
-    VALUES (?, ?, ?, 'anual', 'ativa', ?, 0, ?, ?, ?, ?, ?, ?)`)
+    VALUES (?, ?, ?, 'ANUAL', 'ativa', ?, 0, ?, ?, ?, ?, ?, ?)`)
     .run(uid(), req.params.sellerId, plano, origem, t, pagoAte, String(motivo).trim().slice(0, 300), String(req.user.entityId || req.user.id || "admin"), t, t);
   res.status(201).json(planoAtual(req.params.sellerId));
 });
