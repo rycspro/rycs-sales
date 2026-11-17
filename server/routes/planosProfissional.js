@@ -11,6 +11,7 @@ import { asaas, asaasAtivo, AsaasError, garantirClienteProfissional } from "../s
 import { assinaturasDoProfissional, planoAtual, cobrancaProfissionalAtiva } from "../services/planosProfissional.js";
 import { PLANOS_PROFISSIONAL, PLANOS_PAGOS_PROFISSIONAL, limite } from "../../shared/planosProfissional.js";
 import { saqueMinimoPara } from "../../shared/saque.js";
+import { cpfValido } from "../services/regras.js";
 
 const router = Router();
 const hojeIso = () => new Date().toISOString().slice(0, 10);
@@ -24,8 +25,11 @@ const publica = (a) => a && ({
 function resumoDoPlano(sellerId) {
   const atual = planoAtual(sellerId);
   const assinaturas = assinaturasDoProfissional(sellerId);
+  const v = db.prepare("SELECT documento, asaasCustomerId FROM sellers WHERE id = ?").get(sellerId) || {};
   return {
     ...atual,
+    // O checkout pede o CPF na hora quando ele ainda não foi cadastrado.
+    temDocumento: !!(v.documento || v.asaasCustomerId),
     cobrancaAtiva: cobrancaProfissionalAtiva(),
     saqueMinimo: saqueMinimoPara(limite(atual.plano, "saqueMinimo")),
     assinatura: publica(assinaturas.find((a) => VIVAS.includes(a.status) || a.id === atual.assinaturaId) || null),
@@ -72,6 +76,16 @@ router.post("/profissional/assinatura", async (req, res) => {
   if (pendente) {
     if (pendente.asaasId) { try { await asaas(`/subscriptions/${pendente.asaasId}`, { method: "DELETE" }); } catch { /* já removida */ } }
     db.prepare("UPDATE assinaturas_profissional SET status = 'expirada', atualizadoEm = ? WHERE id = ?").run(agora(), pendente.id);
+  }
+
+  // CPF informado no próprio checkout: só preenche quem ainda não tem documento,
+  // nunca troca um já cadastrado.
+  if (!vendedor.documento && !vendedor.asaasCustomerId) {
+    const cpf = String(req.body?.cpf || "").replace(/\D/g, "");
+    if (!cpf) return res.status(400).json({ error: "Informe o seu CPF para assinar um plano.", codigo: "FALTA_DOCUMENTO" });
+    if (!cpfValido(cpf)) return res.status(400).json({ error: "CPF inválido. Confira os números.", codigo: "CPF_INVALIDO" });
+    db.prepare("UPDATE sellers SET documento = ? WHERE id = ? AND (documento IS NULL OR documento = '')").run(cpf, sellerId);
+    vendedor.documento = cpf;
   }
 
   let customerId;
