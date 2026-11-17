@@ -189,14 +189,10 @@ html.dark .vx-mobilemenu{--mm-bg:#15181F;--mm-ink:#E7EAEE;--mm-mut:#9298A3;--mm-
 .vx-mobilemenu-list .vx-sidedot{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
 /* Rodapé fixo — conta + sair */
 .vx-mobilemenu-footer{flex-shrink:0;border-top:1px solid var(--mm-border);padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:space-between;gap:10px}
-.vx-mobilemenu-conta{display:flex;align-items:center;gap:10px;min-width:0}
+.vx-mobilemenu-conta{display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0;margin:0;cursor:pointer;font:inherit;text-align:left;color:inherit}
 .vx-mobilemenu-avatar{width:36px;height:36px;border-radius:10px;overflow:hidden;flex-shrink:0;display:grid;place-items:center;background:var(--mm-active-bg);color:var(--mm-active);font-weight:700;font-size:14px;border:1px solid var(--mm-border)}
-/* Com logo, sem caixa: fundo transparente e sem borda — só a imagem. O
-   mix-blend-mode multiply funde um fundo branco/claro do PNG com o rodapé,
-   eliminando o "quadrado" cinza que vem embutido na imagem. */
-.vx-mobilemenu-avatar:has(img){background:transparent;border:0;border-radius:0}
-.vx-mobilemenu-avatar img{width:100%;height:100%;object-fit:contain;display:block;mix-blend-mode:multiply}
-html.dark .vx-mobilemenu-avatar img{mix-blend-mode:normal}
+/* Foto (vendedor) preenche o círculo; a inicial (empresa) fica no chip. */
+.vx-mobilemenu-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .vx-mobilemenu-conta-nome{font-size:13.5px;font-weight:600;color:var(--mm-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vx-mobilemenu-sair{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;border:0;background:transparent;cursor:pointer;color:#E5484D;font:600 13px inherit;padding:8px 6px;border-radius:9px;transition:background .16s}
 .vx-mobilemenu-sair:hover{background:rgba(229,72,77,.08)}

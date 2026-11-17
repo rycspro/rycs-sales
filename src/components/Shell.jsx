@@ -195,8 +195,11 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
               <div className="vx-mobilemenu-footer">
                 <button type="button" className="vx-mobilemenu-conta" onClick={() => onSelect(role === "empresa" ? "configuracoes" : "conta")}>
                   <span className="vx-mobilemenu-avatar">
-                    {(role === "empresa" ? entity?.logo : entity?.foto)
-                      ? <img src={role === "empresa" ? entity.logo : entity.foto} alt="" />
+                    {/* Vendedor: foto real preenche o círculo. Empresa: inicial num
+                        chip limpo — o logo enviado costuma ter fundo (quadrado cinza),
+                        que não dá para remover por CSS. */}
+                    {role === "vendedor" && entity?.foto
+                      ? <img src={entity.foto} alt="" />
                       : <span>{(entity?.nome || user?.email || "?").slice(0, 1).toUpperCase()}</span>}
                   </span>
                   <span className="vx-mobilemenu-conta-nome">{entity?.nome || user?.email || "Minha conta"}</span>
