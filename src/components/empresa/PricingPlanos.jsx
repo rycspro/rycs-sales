@@ -122,9 +122,10 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
           role="radiogroup"
           aria-label="Ciclo de cobrança"
           style={{
-            display: "inline-flex", gap: 4, padding: 4, borderRadius: 999,
+            display: "flex", gap: 4, padding: 4, borderRadius: 999,
             background: "var(--surface-2, #F1F5F9)", border: "1px solid var(--border)",
-            flexWrap: "wrap", justifyContent: "center",
+            flexWrap: "nowrap", justifyContent: "center",
+            width: "100%", maxWidth: 360,
           }}
         >
           {OPCOES_CICLO.map((o) => {
@@ -138,9 +139,10 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
                 aria-checked={ativo}
                 onClick={() => alternar(o.id)}
                 style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-                  fontSize: 13.5, fontWeight: 600, fontFamily: "inherit",
+                  flex: "1 1 0", minWidth: 0,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4,
+                  padding: "8px 6px", borderRadius: 999, border: "none", cursor: "pointer",
+                  fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", whiteSpace: "nowrap",
                   color: ativo ? "#fff" : "var(--muted)",
                   background: ativo ? "var(--brand)" : "transparent",
                   boxShadow: ativo ? "var(--shadow-brand, 0 1px 3px rgba(37,99,235,.35))" : "none",
@@ -150,8 +152,8 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
                 {o.label}
                 {desc > 0 && (
                   <span style={{
-                    fontSize: 10.5, fontWeight: 700, lineHeight: 1,
-                    padding: "2px 6px", borderRadius: 999,
+                    fontSize: 9.5, fontWeight: 700, lineHeight: 1, flexShrink: 0,
+                    padding: "2px 5px", borderRadius: 999,
                     background: ativo ? "rgba(255,255,255,.22)" : "var(--brand-50)",
                     color: ativo ? "#fff" : "var(--brand)",
                   }}>-{pct(desc)}%</span>
