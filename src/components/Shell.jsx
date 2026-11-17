@@ -96,8 +96,8 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
           </button>
         )}
         <div className="vx-sidebar-footer">
-          {accountRole && <AccountMenu user={user} entity={entity} onSelect={onSelect} onLogout={onLogout} />}
           <ThemeSwitcher />
+          {accountRole && <AccountMenu user={user} entity={entity} onSelect={onSelect} onLogout={onLogout} />}
         </div>
       </aside>
 
