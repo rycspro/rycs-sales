@@ -45,11 +45,11 @@ export const AUTO_PENDENCIAS = [
   "Revisão interna dos textos interpretativos dos oito padrões.",
 ];
 
-// Flag de disponibilização. DESLIGADA por padrão: a avaliação só aparece aos
-// profissionais quando AUTOSSABOTAGEM_DISPONIVEL=1 (ou, no servidor, em ambiente
-// beta — ver a rota). Mantém o questionário fora do ar durante a revisão interna.
+// Flag de disponibilização. LIGADA por padrão (liberada aos profissionais).
+// Pode ser desligada com AUTOSSABOTAGEM_DISPONIVEL=0 (ex.: pausar para revisão),
+// e segue ligada em ambiente beta — ver a rota.
 export const autossabotagemDisponivel = () =>
-  String(process.env.AUTOSSABOTAGEM_DISPONIVEL ?? "0").trim() === "1";
+  String(process.env.AUTOSSABOTAGEM_DISPONIVEL ?? "1").trim() !== "0";
 
 // -----------------------------------------------------------------------------
 // Os oito padrões, na ordem de apresentação do gráfico (A→H). `chave` interno

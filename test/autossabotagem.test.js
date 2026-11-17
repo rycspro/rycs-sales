@@ -201,8 +201,8 @@ test("Autossabotagem: rotas exigem dono, retomam progresso e são idempotentes",
 });
 
 test("Autossabotagem: feature flag desligada mantém a avaliação fora do ar", async (t) => {
-  // Sem AUTOSSABOTAGEM_DISPONIVEL e fora do beta: indisponível (produção).
-  const { base, dbPath } = await subirServidor(t);
+  // AUTOSSABOTAGEM_DISPONIVEL=0 e fora do beta: indisponível (pausa de revisão).
+  const { base, dbPath } = await subirServidor(t, { AUTOSSABOTAGEM_DISPONIVEL: "0" });
 
   const db = new Database(dbPath);
   db.prepare("INSERT INTO sellers (id, nome, email, whats, criadoEm) VALUES (?, ?, ?, ?, ?)")
