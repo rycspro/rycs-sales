@@ -154,7 +154,7 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
       buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length-1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
       {company && <button type="button" role="menuitem" onClick={() => choose(() => onSelect('configuracoes'))}><Building2 size={18} />Dados da empresa</button>}
-      <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>
+      <button type="button" role="menuitem" className="vx-account-sair" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>
     </div>}
     <button type="button" className="vx-account-logo" ref={trigger} aria-haspopup="menu" aria-expanded={open} aria-label={nome} title={nome} onClick={() => setOpen(!open)}>
       {avatar ? <img src={avatar} alt="" /> : <span className="vx-account-initial">{nome.slice(0,1).toUpperCase()}</span>}

@@ -802,6 +802,8 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 .vx-account-logo[aria-expanded="true"]{box-shadow:0 0 0 2px var(--brand-50)}
 .vx-account-logo>img,.vx-account-initial{width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0}.vx-account-initial{display:grid;place-items:center;background:var(--surface-2);color:var(--brand);font-weight:700;font-size:15px}
 .vx-account-chevron{color:var(--brand);flex-shrink:0}
+.vx-account-menu button.vx-account-sair{color:var(--red)}
+.vx-account-menu button.vx-account-sair:hover{background:var(--red-50)}
 .vx-account-menu{position:absolute;bottom:calc(100% + 8px);right:0;z-index:60;min-width:200px;padding:6px;background:var(--surface);border:1.5px solid var(--brand);border-radius:12px;box-shadow:var(--shadow-pop);max-height:calc(100dvh - 120px);overflow-y:auto}.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
 /* ── Glass workspace ──────────────────────────────────────────────────────
    Material de vidro em toda a plataforma: fundo ambiente com luz difusa,
