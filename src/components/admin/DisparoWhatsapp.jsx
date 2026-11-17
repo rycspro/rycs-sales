@@ -40,7 +40,7 @@ export default function DisparoWhatsapp({ aviso }) {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="vx-btn vx-btn-sm" onClick={carregar} style={{ minHeight: 44 }}><RefreshCw size={14} /> Atualizar</button>
-          <button className="vx-btn vx-btn-primary" disabled={!info?.configurado || andamento} onClick={() => setTela("novo")} style={{ minHeight: 44 }}>
+          <button className="vx-btn vx-btn-primary" disabled={!info?.configurado || andamento || info?.freios?.bloqueioRecente} onClick={() => setTela("novo")} style={{ minHeight: 44 }}>
             <Plus size={15} /> Novo disparo
           </button>
         </div>
@@ -51,6 +51,15 @@ export default function DisparoWhatsapp({ aviso }) {
           <AlertTriangle size={18} style={{ color: "var(--amber)", flexShrink: 0 }} />
           <div style={{ fontSize: 13 }}>
             <b>Envio ainda não configurado.</b> Falta no servidor: <span className="vx-mono">{info.faltando.join(", ")}</span>.
+          </div>
+        </div>
+      )}
+
+      {info?.freios?.bloqueioRecente && (
+        <div role="alert" className="vx-card" style={{ padding: 16, marginBottom: 16, borderColor: "var(--red)", display: "flex", gap: 10 }}>
+          <AlertTriangle size={18} style={{ color: "var(--red)", flexShrink: 0 }} />
+          <div style={{ fontSize: 13 }}>
+            <b>Disparos pausados por 24h.</b> A Meta avisou que está limitando o número porque muitas mensagens foram bloqueadas ou denunciadas. Novos disparos voltam a ser liberados 24h depois do aviso.
           </div>
         </div>
       )}
@@ -93,7 +102,9 @@ function Historico({ disparos, aviso }) {
           <span>Template</span><span>Público</span><span>Total</span><span>Enviados</span><span>Entregues</span><span>Lidos</span><span>Falhas</span><span>Data</span><span>Status</span>
         </div>
         {disparos.map((d) => {
-          const st = STATUS[d.status] || STATUS.concluido;
+          const st = d.status === "enviando" && d.aguardandoHorario
+            ? { txt: "Aguardando horário", color: "var(--amber)" }
+            : STATUS[d.status] || STATUS.concluido;
           const nFalhas = (d.falhasEnvio || 0) + (d.falhasEntrega || 0);
           return (
             <div key={d.id} style={{ borderBottom: "1px solid var(--border)" }}>
@@ -144,6 +155,7 @@ function NovoDisparo({ aviso, publicos, onVoltar, onConcluir }) {
   const [variaveis, setVariaveis] = useState([]);
   const [publico, setPublico] = useState(publicos[0]?.key || "ativos");
   const [preview, setPreview] = useState(null);
+  const [lote, setLote] = useState("");
   const [para, setPara] = useState("");
   const [nomeTeste, setNomeTeste] = useState("");
   const [testando, setTestando] = useState(false);
@@ -166,12 +178,18 @@ function NovoDisparo({ aviso, publicos, onVoltar, onConcluir }) {
 
   const revisar = async () => {
     if (variaveis.some((v) => v.origem === "fixo" && !v.texto.trim())) return aviso("Preencha o texto das variáveis fixas.");
-    const r = await api("/admin/whatsapp/preview", { publico });
+    const r = await api("/admin/whatsapp/preview", { publico, template: tpl.nome });
     if (r?.error) return aviso(r.error);
     setPreview(r);
+    setLote(String(Math.min(r.freios.lotePadrao, r.quantidade, r.freios.vagas24h)));
     setConfirmado(false);
     setPasso(3);
   };
+
+  // Tamanho da rodada: nunca acima do que o público, o lote máximo e as vagas de 24h permitem.
+  const maxLote = preview ? Math.min(preview.quantidade, preview.freios.loteMaximo, preview.freios.vagas24h) : 0;
+  const nLote = Math.trunc(Number(lote));
+  const loteOk = nLote >= 1 && nLote <= maxLote;
 
   const enviarTeste = async () => {
     if (!para.trim()) return aviso("Informe o número para o teste.");
@@ -183,8 +201,9 @@ function NovoDisparo({ aviso, publicos, onVoltar, onConcluir }) {
 
   const disparar = async () => {
     if (!confirmado) return aviso("Confirme o envio.");
+    if (!loteOk) return aviso(`Escolha de 1 a ${maxLote} pessoas nesta rodada.`);
     setEnviando(true);
-    const r = await api("/admin/whatsapp/disparar", { publico, template: tpl.nome, idioma: tpl.idioma, variaveis });
+    const r = await api("/admin/whatsapp/disparar", { publico, template: tpl.nome, idioma: tpl.idioma, variaveis, limite: nLote });
     setEnviando(false);
     if (r?.error) return aviso(r.error);
     aviso(`Disparo iniciado para ${r.quantidade} vendedor(es).`);
@@ -274,14 +293,32 @@ function NovoDisparo({ aviso, publicos, onVoltar, onConcluir }) {
           <div className="vx-card" style={{ padding: 22 }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 16 }}>Resumo</h3>
             <div style={{ fontSize: 14, marginBottom: 8 }}>
-              <b className="vx-mono">{preview.quantidade}</b> de {preview.total} {preview.publicoLabel.toLowerCase()} vão receber <b>{tpl.nome}</b> ({tpl.idioma}).
+              <b className="vx-mono">{preview.quantidade}</b> de {preview.total} {preview.publicoLabel.toLowerCase()} podem receber <b>{tpl.nome}</b> ({tpl.idioma}).
             </div>
             <ul style={{ margin: "0 0 12px", paddingLeft: 18, fontSize: 12.5, color: "var(--muted)" }}>
+              <li>{preview.jaReceberam} já receberam este template</li>
               <li>{preview.semNumero} sem WhatsApp válido</li>
               <li>{preview.descadastrados} pediram para não receber mais</li>
               <li>{preview.duplicados} com número repetido</li>
             </ul>
             <Bolha tpl={tpl} variaveis={variaveis} />
+          </div>
+
+          <div className="vx-card" style={{ padding: 22 }}>
+            <h3 style={{ margin: "0 0 6px", fontSize: 16 }}>Tamanho desta rodada</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
+              Comece pequeno e confira entregas, bloqueios e pedidos para sair antes da próxima rodada. Quem já recebeu não entra de novo.
+            </p>
+            <div style={{ maxWidth: 220 }}>
+              <label className="vx-label" htmlFor="wa-lote">Pessoas nesta rodada (máx. {maxLote})</label>
+              <input id="wa-lote" className="vx-input" type="number" inputMode="numeric" min={1} max={maxLote} value={lote}
+                onChange={(e) => { setLote(e.target.value); setConfirmado(false); }} aria-invalid={!loteOk} style={{ minHeight: 44 }} />
+            </div>
+            <ul style={{ margin: "12px 0 0", paddingLeft: 18, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6 }}>
+              <li>Limite de segurança: {preview.freios.limite24h} pessoas a cada 24h, somando todos os disparos. Restam {preview.freios.vagas24h}.</li>
+              <li>Envio só das {preview.freios.horario.inicio}h às {preview.freios.horario.fim}h no horário de cada vendedor. Fora disso, a fila espera.</li>
+              <li>O disparo para sozinho se a Meta avisar sobre bloqueios ou se 30% ou mais das mensagens falharem.</li>
+            </ul>
           </div>
 
           <div className="vx-card" style={{ padding: 22 }}>
@@ -302,11 +339,11 @@ function NovoDisparo({ aviso, publicos, onVoltar, onConcluir }) {
           <div className="vx-card" style={{ padding: 22 }}>
             <label style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13.5, minHeight: 44, cursor: "pointer" }}>
               <input type="checkbox" checked={confirmado} onChange={(e) => setConfirmado(e.target.checked)} style={{ width: 20, height: 20 }} />
-              Confirmo o envio para {preview.quantidade} vendedor(es). Não dá para desfazer.
+              Confirmo o envio para {loteOk ? nLote : "—"} vendedor(es). Não dá para desfazer.
             </label>
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <button className="vx-btn vx-btn-sm" onClick={() => setPasso(2)} style={{ minHeight: 44 }}>← Voltar</button>
-              <button className="vx-btn vx-btn-primary" onClick={disparar} disabled={!confirmado || enviando || !preview.quantidade} style={{ minHeight: 44 }}>
+              <button className="vx-btn vx-btn-primary" onClick={disparar} disabled={!confirmado || enviando || !loteOk} style={{ minHeight: 44 }}>
                 <Send size={15} /> {enviando ? "Iniciando..." : "Disparar"}
               </button>
             </div>

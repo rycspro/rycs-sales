@@ -89,8 +89,9 @@ export function variacoes(n) {
 // ── Quem pediu para sair ──────────────────────────────────────────────
 
 const normalizar = (t) => semAcento(t).trim().toLowerCase().replace(/[.!]+$/, "");
+// "Agora não" / "Not now" são os botões de recusa do template de aceite.
 const PALAVRAS_SAIR = new Set(["stop", "stop messages", "parar", "parar mensagens", "sair", "cancelar",
-  "descadastrar", "nao quero receber", "nao quero mais receber", "unsubscribe"].map(normalizar));
+  "descadastrar", "nao quero receber", "nao quero mais receber", "unsubscribe", "agora nao", "not now"].map(normalizar));
 
 export function descadastrados() {
   const rows = db.prepare(`SELECT de, texto FROM whatsapp_mensagens
@@ -111,23 +112,81 @@ const primeiroNome = (nome) => {
   return p ? p[0].toUpperCase() + p.slice(1).toLowerCase() : "";
 };
 
-export function destinatarios(publico) {
+const sqlRecebidos = db.prepare(`SELECT DISTINCT e.numero FROM whatsapp_envios e
+  JOIN whatsapp_disparos d ON d.id = e.disparoId WHERE d.template = ? AND e.status IN ('enviado','fila')`);
+
+// Com `template`, quem já recebeu esse template (em qualquer idioma) fica de
+// fora: a segunda rodada continua de onde a primeira parou, sem repetir ninguém.
+export function destinatarios(publico, { template } = {}) {
   const p = PUBLICOS[publico];
   if (!p) return null;
   const rows = db.prepare(`SELECT id, nome, whats, pais FROM sellers WHERE ${p.where} ORDER BY criadoEm`).all();
   const sair = descadastrados();
+  const recebidos = new Set(template ? sqlRecebidos.all(template).map((r) => r.numero) : []);
   const vistos = new Set();
   const lista = [];
-  let semNumero = 0, optOut = 0, duplicados = 0;
+  let semNumero = 0, optOut = 0, duplicados = 0, jaReceberam = 0;
   for (const s of rows) {
     const numero = numeroWhatsapp(s.whats, s.pais);
     if (!numero) { semNumero++; continue; }
     if (variacoes(numero).some((x) => sair.has(x))) { optOut++; continue; }
     if (vistos.has(numero)) { duplicados++; continue; }
     vistos.add(numero);
+    if (recebidos.has(numero)) { jaReceberam++; continue; }
     lista.push({ sellerId: s.id, numero, nome: primeiroNome(s.nome) });
   }
-  return { label: p.label, lista, total: rows.length, semNumero, descadastrados: optOut, duplicados };
+  return { label: p.label, lista, total: rows.length, semNumero, descadastrados: optOut, duplicados, jaReceberam };
+}
+
+// ── Freios que protegem a conta ───────────────────────────────────────
+//
+// O número oficial é o ativo mais valioso do WhatsApp da RYCS: se muita gente
+// bloqueia ou denuncia, a Meta derruba a qualidade e pode travar a conta. Por
+// isso o disparo é deliberadamente conservador.
+
+export const LIMITE_24H = 250; // pessoas diferentes a cada 24h, somando todos os disparos
+export const LOTE_PADRAO = 50;
+export const LOTE_MAXIMO = 250;
+export const HORARIO = { inicio: 8, fim: 20 }; // no horário local de quem recebe
+const DIA = 24 * 60 * 60 * 1000;
+const ERRO_BLOQUEIOS = "131048"; // "Spam rate limit": muitas mensagens bloqueadas ou denunciadas
+const TAXA_FALHA_MAXIMA = 0.3;
+const MINIMO_PARA_TAXA = 20;
+
+const sqlUsados24h = db.prepare(`SELECT COUNT(DISTINCT numero) AS n FROM whatsapp_envios
+  WHERE status = 'fila' OR (status = 'enviado' AND enviadoEm > ?)`);
+const sqlBloqueio = db.prepare(`SELECT 1 FROM whatsapp_status WHERE status = 'failed' AND erro LIKE ? AND recebidoEm > ? LIMIT 1`);
+const sqlFalhas = db.prepare(`SELECT
+    (SELECT COUNT(*) FROM whatsapp_envios WHERE disparoId = @id AND status = 'enviado') AS enviados,
+    (SELECT COUNT(*) FROM whatsapp_envios WHERE disparoId = @id AND status = 'falhou' AND erro GLOB '[0-9]*') AS falhasEnvio,
+    (SELECT COUNT(DISTINCT e.id) FROM whatsapp_envios e JOIN whatsapp_status s ON s.wamid = e.wamid
+      WHERE e.disparoId = @id AND e.wamid <> '' AND s.status = 'failed') AS falhasEntrega`);
+const sqlNaFila = db.prepare("SELECT COUNT(*) AS n FROM whatsapp_envios WHERE disparoId = ? AND status = 'fila'");
+
+// Vagas no limite de 24h: quem recebeu nas últimas 24h e quem ainda está na fila.
+export function vagas24h(ms = Date.now()) {
+  return Math.max(0, LIMITE_24H - sqlUsados24h.get(ms - DIA).n);
+}
+
+// A Meta avisou nas últimas 24h que está limitando o número por bloqueios.
+export const bloqueioRecente = (ms = Date.now()) => !!sqlBloqueio.get(`${ERRO_BLOQUEIOS}%`, ms - DIA);
+
+const FUSOS = [["55", "America/Sao_Paulo"], ["91", "Asia/Kolkata"], ["351", "Europe/Lisbon"], ["44", "Europe/London"], ["1", "America/New_York"]];
+export const fusoDoNumero = (numero) => (FUSOS.find(([ddi]) => String(numero).startsWith(ddi)) || FUSOS[0])[1];
+
+export function dentroDoHorario(numero, ms = Date.now()) {
+  const hora = Number(new Intl.DateTimeFormat("en-US", { timeZone: fusoDoNumero(numero), hour: "numeric", hourCycle: "h23" }).format(ms));
+  return hora >= HORARIO.inicio && hora < HORARIO.fim;
+}
+
+// Motivo para parar o disparo agora, ou "" para seguir.
+function freio(id, ms) {
+  if (bloqueioRecente(ms)) return `${ERRO_BLOQUEIOS} A Meta está limitando o número porque muitas mensagens foram bloqueadas ou denunciadas.`;
+  const n = sqlFalhas.get({ id });
+  const tentados = n.enviados + n.falhasEnvio;
+  if (tentados >= MINIMO_PARA_TAXA && (n.falhasEnvio + n.falhasEntrega) / tentados >= TAXA_FALHA_MAXIMA)
+    return `Muitas falhas (${n.falhasEnvio + n.falhasEntrega} de ${tentados}). Disparo parado para proteger a conta.`;
+  return "";
 }
 
 // ── Templates ─────────────────────────────────────────────────────────
@@ -204,10 +263,17 @@ export async function enviarTemplate({ numero, tpl, componentes }) {
 
 export const disparoEmAndamento = () => db.prepare("SELECT id FROM whatsapp_disparos WHERE status = 'enviando' LIMIT 1").get();
 
-export function criarDisparo({ adminId, tpl, variaveis, publico }) {
-  const d = destinatarios(publico);
+// `limite` é o tamanho da rodada: começar pequeno e olhar bloqueios antes de ampliar.
+export function criarDisparo({ adminId, tpl, variaveis, publico, limite = LOTE_PADRAO }) {
+  if (bloqueioRecente()) throw new Error("A Meta avisou nas últimas 24h que está limitando o número por bloqueios. Espere antes de disparar de novo.");
+  const tamanho = Math.trunc(Number(limite));
+  if (!(tamanho >= 1 && tamanho <= LOTE_MAXIMO)) throw new Error(`Escolha de 1 a ${LOTE_MAXIMO} pessoas por rodada.`);
+  const vagas = vagas24h();
+  if (!vagas) throw new Error(`Limite de segurança atingido: ${LIMITE_24H} pessoas a cada 24h. Tente de novo mais tarde.`);
+  const d = destinatarios(publico, { template: tpl.nome });
   if (!d) throw new Error("Público inválido.");
-  if (!d.lista.length) throw new Error("Nenhum destinatário com WhatsApp válido nesse público.");
+  if (!d.lista.length) throw new Error("Ninguém nesse público para receber este template.");
+  d.lista = d.lista.slice(0, Math.min(tamanho, vagas));
   const id = uid();
   const ts = agora();
   const inserir = db.prepare("INSERT OR IGNORE INTO whatsapp_envios (id, disparoId, sellerId, numero, nome) VALUES (?, ?, ?, ?, ?)");
@@ -220,13 +286,24 @@ export function criarDisparo({ adminId, tpl, variaveis, publico }) {
 }
 
 // Erros que valem para o disparo inteiro: continuar só repetiria a falha.
-const ERROS_FATAIS = new Set([4, 368, 80007, 131031, 131042, 132000, 132001, 132015, 132016]);
+// 131048 é a Meta limitando o número por bloqueios e denúncias.
+const ERROS_FATAIS = new Set([4, 368, 80007, 131031, 131042, 131048, 132000, 132001, 132015, 132016]);
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const descreverErro = (e) => `${e?.codigo ? `${e.codigo} ` : ""}${e?.message || "Falha no envio"}`.slice(0, 300);
 
 const processando = new Set();
 
-export async function processarDisparo(id, { pausaMs = 250 } = {}) {
+// Quem está fora do horário fica na fila; o disparo volta a olhar a fila a cada 15 min.
+const ESPERA_HORARIO_MS = 15 * 60 * 1000;
+const aguardando = new Map();
+function retomarDepois(id) {
+  if (aguardando.has(id)) return;
+  const t = setTimeout(() => { aguardando.delete(id); processarDisparo(id).catch(() => null); }, ESPERA_HORARIO_MS);
+  t.unref?.();
+  aguardando.set(id, t);
+}
+
+export async function processarDisparo(id, { pausaMs = 250, relogio = Date.now } = {}) {
   if (processando.has(id)) return;
   processando.add(id);
   try {
@@ -236,9 +313,14 @@ export async function processarDisparo(id, { pausaMs = 250 } = {}) {
     const variaveis = JSON.parse(disp.variaveis || "[]");
     const marcar = db.prepare("UPDATE whatsapp_envios SET status = ?, wamid = ?, erro = ?, enviadoEm = ? WHERE id = ?");
     const fila = db.prepare("SELECT * FROM whatsapp_envios WHERE disparoId = ? AND status = 'fila' ORDER BY rowid").all(id);
-    let fatal = "";
+    let fatal = freio(id, relogio());
+    let tentados = 0;
 
-    for (const e of fila) {
+    for (const e of fatal ? [] : fila) {
+      if (!dentroDoHorario(e.numero, relogio())) continue;
+      // A cada 10 envios confere se a Meta reclamou ou se as falhas passaram do limite.
+      if (tentados && tentados % 10 === 0 && (fatal = freio(id, relogio()))) break;
+      tentados++;
       const componentes = montarComponentes(tpl, variaveis, e.nome);
       if (componentes[0]?.parameters.some((p) => !p.text)) { marcar.run("falhou", "", "Vendedor sem nome cadastrado", agora(), e.id); continue; }
       for (let tentativa = 1; ; tentativa++) {
@@ -257,6 +339,11 @@ export async function processarDisparo(id, { pausaMs = 250 } = {}) {
       if (pausaMs) await esperar(pausaMs);
     }
 
+    if (!fatal) fatal = freio(id, relogio());
+    const naFila = sqlNaFila.get(id).n;
+    if (!fatal && naFila) { retomarDepois(id); return; }
+    clearTimeout(aguardando.get(id));
+    aguardando.delete(id);
     if (fatal) db.prepare("UPDATE whatsapp_envios SET status = 'falhou', erro = 'Disparo interrompido' WHERE disparoId = ? AND status = 'fila'").run(id);
     const n = db.prepare(`SELECT SUM(status = 'enviado') AS enviados, SUM(status = 'falhou') AS falhas FROM whatsapp_envios WHERE disparoId = ?`).get(id);
     const status = !n.falhas ? "concluido" : !n.enviados ? "falhou" : "parcial";
@@ -283,7 +370,8 @@ export function listarDisparos() {
       ${porStatus("s.status IN ('delivered','read')")} AS entregues,
       ${porStatus("s.status = 'read'")} AS lidos,
       ${porStatus("s.status = 'failed'")} AS falhasEntrega
-    FROM whatsapp_disparos d ORDER BY d.criadoEm DESC LIMIT 50`).all();
+    FROM whatsapp_disparos d ORDER BY d.criadoEm DESC LIMIT 50`).all()
+    .map((d) => ({ ...d, aguardandoHorario: aguardando.has(d.id) }));
 }
 
 // Falhas de um disparo: as do envio e as que a Meta avisou depois pelo webhook.

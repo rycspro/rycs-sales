@@ -17,6 +17,10 @@ const { default: db } = await import("../server/db.js");
 test.after(() => { db.close(); rmSync(dir, { recursive: true, force: true }); });
 
 const ts = Date.now();
+// 12h UTC = 9h em São Paulo e 17h30 na Índia: dentro da janela de envio nos dois.
+const NO_HORARIO = () => Date.UTC(2026, 10, 17, 12, 0);
+// 2h UTC = 23h em São Paulo e 7h30 na Índia: fora da janela nos dois.
+const FORA_DO_HORARIO = () => Date.UTC(2026, 10, 17, 2, 0);
 const vendedor = (id, nome, whats, status = "aprovado", pais = "Brasil") =>
   db.prepare("INSERT INTO sellers (id, nome, email, whats, status, pais, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)")
     .run(id, nome, `${id}@x.invalid`, whats, status, pais, ts + Number(id.replace(/\D/g, "") || 0));
@@ -49,17 +53,19 @@ test("público de ativos: só aprovados, sem duplicados, sem número inválido e
   vendedor("s4", "Ravi Kumar", "98765 43210", "aprovado", "India");
   vendedor("s5", "Carla Sai", "(21) 98888-7777");
   vendedor("s6", "Em Triagem", "(31) 97777-6666", "triagem");
+  vendedor("s7", "Davi Recusa", "(41) 96666-5555");
   // Carla tocou "Stop messages"; o WhatsApp identificou o número antigo, sem o nono dígito.
   guardarAvisoWhatsapp({ object: "whatsapp_business_account", entry: [{ id: "WABA1", changes: [{ field: "messages", value: {
     metadata: { phone_number_id: "PN1" },
-    messages: [{ from: "552188887777", id: "wamid.sair", timestamp: "1763300000", type: "button", button: { text: "Stop messages" } }],
+    messages: [{ from: "552188887777", id: "wamid.sair", timestamp: "1763300000", type: "button", button: { text: "Stop messages" } },
+      { from: "5541966665555", id: "wamid.recusa", timestamp: "1763300001", type: "button", button: { text: "Agora não" } }],
   } }] }] });
 
   const d = wa.destinatarios("ativos");
   assert.deepEqual(d.lista.map((p) => p.numero), ["5511912345678", "919876543210"]);
   assert.equal(d.lista[0].nome, "Ana");
   assert.deepEqual({ total: d.total, semNumero: d.semNumero, descadastrados: d.descadastrados, duplicados: d.duplicados },
-    { total: 5, semNumero: 1, descadastrados: 1, duplicados: 1 });
+    { total: 6, semNumero: 1, descadastrados: 2, duplicados: 1 });
   assert.equal(wa.destinatarios("inexistente"), null);
 });
 
@@ -92,7 +98,7 @@ test("disparo envia um por um, registra wamid, falha individual não para o rest
 
   const d = wa.criarDisparo({ adminId: "admin", tpl, variaveis, publico: "ativos" });
   assert.ok(wa.disparoEmAndamento());
-  await wa.processarDisparo(d.id, { pausaMs: 0 });
+  await wa.processarDisparo(d.id, { pausaMs: 0, relogio: NO_HORARIO });
 
   assert.equal(chamadas.length, 2);
   assert.equal(chamadas[0].metodo, "POST");
@@ -119,11 +125,11 @@ test("disparo envia um por um, registra wamid, falha individual não para o rest
 });
 
 test("token inválido interrompe o disparo em vez de repetir a falha para todos", async () => {
-  const tpl = wa.resumirTemplate(TEMPLATE);
+  const tpl = wa.resumirTemplate({ ...TEMPLATE, name: "aviso_token" });
   chamadas = [];
   responder = () => ({ error: { message: "Invalid OAuth access token", code: 190 } });
   const d = wa.criarDisparo({ adminId: "admin", tpl, variaveis: [{ origem: "nome" }, { origem: "fixo", texto: "x" }], publico: "ativos" });
-  await wa.processarDisparo(d.id, { pausaMs: 0 });
+  await wa.processarDisparo(d.id, { pausaMs: 0, relogio: NO_HORARIO });
 
   assert.equal(chamadas.length, 1);
   const disp = db.prepare("SELECT status, erro FROM whatsapp_disparos WHERE id = ?").get(d.id);
@@ -131,4 +137,89 @@ test("token inválido interrompe o disparo em vez de repetir a falha para todos"
   assert.match(disp.erro, /^190 /);
   assert.deepEqual(db.prepare("SELECT erro FROM whatsapp_envios WHERE disparoId = ? ORDER BY rowid").all(d.id).map((e) => e.erro),
     ["190 Invalid OAuth access token", "Disparo interrompido"]);
+});
+
+const VARS = [{ origem: "nome" }, { origem: "fixo", texto: "x" }];
+const sucesso = () => { responder = () => ({ messages: [{ id: `wamid.r${chamadas.length}` }] }); };
+
+test("rodada: tamanho escolhido, quem já recebeu fica de fora e o limite de 24h conta", () => {
+  const tpl = wa.resumirTemplate(TEMPLATE); // aviso_vendedores: Ana já recebeu no teste do disparo
+  const d = wa.destinatarios("ativos", { template: tpl.nome });
+  assert.deepEqual(d.lista.map((p) => p.numero), ["919876543210"], "Ravi falhou antes, então ainda pode receber");
+  assert.equal(d.jaReceberam, 1);
+
+  assert.throws(() => wa.criarDisparo({ adminId: "admin", tpl, variaveis: VARS, publico: "ativos", limite: 0 }), /de 1 a 250/);
+  assert.throws(() => wa.criarDisparo({ adminId: "admin", tpl, variaveis: VARS, publico: "ativos", limite: 251 }), /de 1 a 250/);
+
+  const antes = wa.vagas24h();
+  const r = wa.criarDisparo({ adminId: "admin", tpl: { ...tpl, nome: "aviso_rodada" }, variaveis: VARS, publico: "ativos", limite: 1 });
+  assert.equal(r.lista.length, 1, "só 1 nesta rodada");
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM whatsapp_envios WHERE disparoId = ?").get(r.id).n, 1);
+  assert.equal(r.lista[0].numero, "5511912345678");
+  assert.equal(wa.vagas24h(), antes, "Ana já recebeu nas últimas 24h: a mesma pessoa ocupa uma vaga só");
+  db.prepare("UPDATE whatsapp_envios SET numero = '5511900000000' WHERE disparoId = ?").run(r.id);
+  assert.equal(wa.vagas24h(), antes - 1, "quem está na fila já ocupa vaga do limite de 24h");
+  db.prepare("UPDATE whatsapp_envios SET status = 'falhou', erro = 'teste' WHERE disparoId = ?").run(r.id);
+  db.prepare("UPDATE whatsapp_disparos SET status = 'falhou' WHERE id = ?").run(r.id);
+});
+
+test("fora das 8h às 20h no horário de quem recebe, a fila espera", async () => {
+  const tpl = wa.resumirTemplate({ ...TEMPLATE, name: "aviso_horario" });
+  assert.equal(wa.dentroDoHorario("5511912345678", NO_HORARIO()), true);
+  assert.equal(wa.dentroDoHorario("919876543210", NO_HORARIO()), true);
+  assert.equal(wa.dentroDoHorario("5511912345678", FORA_DO_HORARIO()), false, "23h em São Paulo");
+  assert.equal(wa.dentroDoHorario("919876543210", FORA_DO_HORARIO()), false, "7h30 na Índia");
+
+  chamadas = [];
+  sucesso();
+  const d = wa.criarDisparo({ adminId: "admin", tpl, variaveis: VARS, publico: "ativos" });
+  await wa.processarDisparo(d.id, { pausaMs: 0, relogio: FORA_DO_HORARIO });
+  assert.equal(chamadas.length, 0, "nada sai fora do horário");
+  const esperando = wa.listarDisparos().find((x) => x.id === d.id);
+  assert.equal(esperando.status, "enviando");
+  assert.equal(esperando.aguardandoHorario, true);
+
+  await wa.processarDisparo(d.id, { pausaMs: 0, relogio: NO_HORARIO });
+  assert.equal(chamadas.length, 2);
+  const fim = wa.listarDisparos().find((x) => x.id === d.id);
+  assert.equal(fim.status, "concluido");
+  assert.equal(fim.aguardandoHorario, false);
+});
+
+test("muitas falhas param o disparo para proteger a conta", async () => {
+  for (let i = 1; i <= 25; i++) vendedor(`t${i}`, `Teste ${i}`, `11 9${String(i).padStart(8, "0")}`);
+  const tpl = wa.resumirTemplate({ ...TEMPLATE, name: "aviso_taxa" });
+  chamadas = [];
+  responder = () => ({ error: { message: "Message undeliverable", code: 131026 } });
+  const d = wa.criarDisparo({ adminId: "admin", tpl, variaveis: VARS, publico: "ativos" });
+  await wa.processarDisparo(d.id, { pausaMs: 0, relogio: NO_HORARIO });
+
+  assert.equal(chamadas.length, 20, "para no primeiro freio depois de 20 tentativas");
+  const disp = db.prepare("SELECT status, erro FROM whatsapp_disparos WHERE id = ?").get(d.id);
+  assert.equal(disp.status, "falhou");
+  assert.match(disp.erro, /Muitas falhas/);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM whatsapp_envios WHERE disparoId = ? AND erro = 'Disparo interrompido'").get(d.id).n, d.lista.length - 20);
+});
+
+// Por último: o aviso de bloqueio trava novos disparos por 24h.
+test("aviso de bloqueios da Meta (131048) para o disparo e trava novos por 24h", async () => {
+  const tpl = wa.resumirTemplate({ ...TEMPLATE, name: "aviso_bloqueio" });
+  chamadas = [];
+  sucesso();
+  const d = wa.criarDisparo({ adminId: "admin", tpl, variaveis: VARS, publico: "ativos", limite: 2 });
+  assert.equal(wa.bloqueioRecente(), false);
+
+  guardarAvisoWhatsapp({ object: "whatsapp_business_account", entry: [{ id: "WABA1", changes: [{ field: "messages", value: {
+    metadata: { phone_number_id: "PN1" },
+    statuses: [{ id: "wamid.ok1", status: "failed", recipient_id: "5511912345678", timestamp: "1763300300",
+      errors: [{ code: 131048, title: "Spam rate limit hit" }] }],
+  } }] }] });
+  assert.equal(wa.bloqueioRecente(), true);
+
+  await wa.processarDisparo(d.id, { pausaMs: 0, relogio: NO_HORARIO });
+  assert.equal(chamadas.length, 0, "nenhuma mensagem sai depois do aviso");
+  const disp = db.prepare("SELECT status, erro FROM whatsapp_disparos WHERE id = ?").get(d.id);
+  assert.equal(disp.status, "falhou");
+  assert.match(disp.erro, /^131048 /);
+  assert.throws(() => wa.criarDisparo({ adminId: "admin", tpl: { ...tpl, nome: "outro" }, variaveis: VARS, publico: "ativos" }), /limitando o número/);
 });

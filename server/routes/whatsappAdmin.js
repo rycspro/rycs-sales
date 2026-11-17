@@ -22,6 +22,12 @@ async function templateAprovado(nome, idioma) {
   return lista.find((t) => t.nome === nome && t.idioma === idioma) || null;
 }
 
+// Freios de segurança que a tela mostra ao admin.
+const freios = () => ({
+  limite24h: wa.LIMITE_24H, vagas24h: wa.vagas24h(), lotePadrao: wa.LOTE_PADRAO, loteMaximo: wa.LOTE_MAXIMO,
+  horario: wa.HORARIO, bloqueioRecente: wa.bloqueioRecente(),
+});
+
 // GET /api/admin/whatsapp — configuração, públicos e histórico
 router.get("/admin/whatsapp", requireAdmin, (req, res) => {
   res.json({
@@ -29,6 +35,7 @@ router.get("/admin/whatsapp", requireAdmin, (req, res) => {
     faltando: wa.faltandoConfig(),
     publicos: Object.entries(wa.PUBLICOS).map(([key, p]) => ({ key, label: p.label })),
     disparos: wa.listarDisparos(),
+    freios: freios(),
   });
 });
 
@@ -39,9 +46,12 @@ router.get("/admin/whatsapp/templates", requireAdmin, exigirConfig, async (req, 
 
 // POST /api/admin/whatsapp/preview — quantos recebem e quantos ficam de fora
 router.post("/admin/whatsapp/preview", requireAdmin, (req, res) => {
-  const d = wa.destinatarios(req.body?.publico);
+  const d = wa.destinatarios(req.body?.publico, { template: String(req.body?.template || "") || undefined });
   if (!d) return res.status(400).json({ error: "Público inválido." });
-  res.json({ publicoLabel: d.label, quantidade: d.lista.length, total: d.total, semNumero: d.semNumero, descadastrados: d.descadastrados, duplicados: d.duplicados });
+  res.json({
+    publicoLabel: d.label, quantidade: d.lista.length, total: d.total, semNumero: d.semNumero,
+    descadastrados: d.descadastrados, duplicados: d.duplicados, jaReceberam: d.jaReceberam, freios: freios(),
+  });
 });
 
 // POST /api/admin/whatsapp/teste — envia o template para um número só
@@ -63,8 +73,9 @@ router.post("/admin/whatsapp/teste", requireAdmin, exigirConfig, async (req, res
 
 // POST /api/admin/whatsapp/disparar — cria o disparo e envia em segundo plano
 router.post("/admin/whatsapp/disparar", requireAdmin, exigirConfig, async (req, res) => {
-  const { publico, template, idioma, variaveis } = req.body || {};
+  const { publico, template, idioma, variaveis, limite } = req.body || {};
   if (wa.disparoEmAndamento()) return res.status(409).json({ error: "Já existe um disparo em andamento. Aguarde terminar." });
+  if (wa.bloqueioRecente()) return res.status(409).json({ error: "A Meta avisou nas últimas 24h que está limitando o número por bloqueios. Espere antes de disparar de novo." });
   try {
     const tpl = await templateAprovado(template, idioma);
     if (!tpl) return res.status(400).json({ error: "Template não encontrado entre os aprovados." });
@@ -73,7 +84,7 @@ router.post("/admin/whatsapp/disparar", requireAdmin, exigirConfig, async (req, 
     if (erro) return res.status(400).json({ error: erro });
     // Confere de novo depois da ida à Meta: dois cliques seguidos não viram dois disparos.
     if (wa.disparoEmAndamento()) return res.status(409).json({ error: "Já existe um disparo em andamento. Aguarde terminar." });
-    const d = wa.criarDisparo({ adminId: req.user.id, tpl, variaveis, publico });
+    const d = wa.criarDisparo({ adminId: req.user.id, tpl, variaveis, publico, limite });
     wa.processarDisparo(d.id).catch(() => null);
     res.json({ ok: true, id: d.id, quantidade: d.lista.length });
   } catch (e) {
