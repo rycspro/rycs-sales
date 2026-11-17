@@ -1532,6 +1532,9 @@ db.exec(`
 adicionarColuna("users", "origem", "TEXT DEFAULT '{}'");
 adicionarColuna("users", "visitanteId", "TEXT DEFAULT ''");
 db.exec("CREATE INDEX IF NOT EXISTS idx_users_visitante ON users(visitanteId)");
+// WhatsApp do profissional confirmado por código (services/whatsappVerificacao.js).
+adicionarColuna("sellers", "whatsVerificadoNumero", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "whatsVerificadoEm", "INTEGER");
 
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.

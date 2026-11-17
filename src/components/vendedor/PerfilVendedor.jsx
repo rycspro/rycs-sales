@@ -4,6 +4,7 @@ import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import OnbPerfil from "./OnbPerfil.jsx";
+import VerificarWhatsapp from "./VerificarWhatsapp.jsx";
 import { LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 import MultiSelect from "../ui/MultiSelect.jsx";
 import ComboSelect from "../ui/ComboSelect.jsx";
@@ -439,6 +440,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
           </div>
         </div>
       )}
+
+      <VerificarWhatsapp eu={eu} up={up} aviso={aviso} />
 
       {/* abas: Currículo comercial | Apresentação */}
       <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
