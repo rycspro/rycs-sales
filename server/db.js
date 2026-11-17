@@ -993,6 +993,10 @@ adicionarColuna("sellers", "emailVerificado", "INTEGER DEFAULT 0");
 // configurado, e sem storage o upload seria só aparência.
 adicionarColuna("sellers", "foto", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "fotoScore", "INTEGER");
+// Imagem original (sem recorte) e parâmetros do enquadramento, para o editor de
+// foto reabrir e reajustar sem perder a imagem de origem.
+adicionarColuna("sellers", "fotoOriginal", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "fotoEnquadramento", "TEXT DEFAULT '{}'");
 // Currículo enviado no cadastro (data URI) + nome original do arquivo, visível à empresa.
 adicionarColuna("sellers", "curriculo", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "curriculoNome", "TEXT DEFAULT ''");

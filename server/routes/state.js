@@ -106,6 +106,10 @@ function buildSellersWithRelations(sellers) {
     const parsed = parseSeller(s);
     const temFoto = !!(parsed.foto);
     parsed.foto = temFoto ? `/api/sellers/${s.id}/foto` : null;
+    // A imagem original (sem recorte) é tão pesada quanto a foto: serve por URL,
+    // nunca no /state. `fotoEnquadramento` (JSON pequeno) segue no estado.
+    const temFotoOriginal = !!(parsed.fotoOriginal);
+    parsed.fotoOriginal = temFotoOriginal ? `/api/sellers/${s.id}/foto-original` : null;
     // Currículo é base64 de até 8MB por profissional. Mandá-lo no /state faz a
     // resposta inteira pesar dezenas de MB (trava o painel admin). Serve por URL,
     // igual à foto — quem precisa do arquivo abre /api/sellers/:id/curriculo.

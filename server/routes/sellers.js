@@ -422,7 +422,7 @@ router.post("/sellers/:id/foto", (req, res) => {
   if (role !== "admin" && entityId !== req.params.id)
     return res.status(403).json({ error: "Sem permissão" });
 
-  const { base64, mimetype, largura, altura } = req.body || {};
+  const { base64, mimetype, largura, altura, original, enquadramento } = req.body || {};
   if (!base64) return res.status(400).json({ error: "Envie a imagem" });
 
   const tamanhoBytes = Math.round((String(base64).length * 3) / 4);
@@ -436,17 +436,45 @@ router.post("/sellers/:id/foto", (req, res) => {
   }
 
   const dataUri = `data:${mimetype};base64,${base64}`;
-  db.prepare("UPDATE sellers SET foto = ?, fotoScore = ? WHERE id = ?")
-    .run(dataUri, avaliacao.score, req.params.id);
+  // `original` acompanha o upload de uma imagem NOVA (Trocar): guardamos a origem
+  // sem recorte para o editor poder reajustar depois. No reenquadramento (Editar)
+  // ele não vem, e a origem é preservada. `enquadramento` são os parâmetros do
+  // recorte (zoom, rotação, deslocamento) — JSON pequeno.
+  const colunas = ["foto = ?", "fotoScore = ?"];
+  const valores = [dataUri, avaliacao.score];
+  if (original?.base64 && original?.mimetype) {
+    colunas.push("fotoOriginal = ?");
+    valores.push(`data:${original.mimetype};base64,${original.base64}`);
+  }
+  if (enquadramento !== undefined) {
+    colunas.push("fotoEnquadramento = ?");
+    valores.push(JSON.stringify(enquadramento || {}));
+  }
+  valores.push(req.params.id);
+  db.prepare(`UPDATE sellers SET ${colunas.join(", ")} WHERE id = ?`).run(...valores);
   notificarCadastroCompleto(req.params.id);
   res.json({ ok: true, avaliacao, foto: dataUri });
+});
+
+// Imagem ORIGINAL (sem recorte), para o editor de enquadramento. Cai na foto
+// recortada quando ainda não há original guardada (usuários antigos).
+router.get("/sellers/:id/foto-original", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "admin" && entityId !== req.params.id) return res.status(403).end();
+  const row = db.prepare("SELECT fotoOriginal, foto FROM sellers WHERE id = ?").get(req.params.id);
+  const uri = row?.fotoOriginal || row?.foto;
+  if (!uri) return res.status(404).end();
+  const m = /^data:([^;]+);base64,(.*)$/s.exec(uri);
+  if (!m) return res.status(404).end();
+  res.set("Content-Type", m[1]);
+  res.send(Buffer.from(m[2], "base64"));
 });
 
 router.delete("/sellers/:id/foto", (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "admin" && entityId !== req.params.id)
     return res.status(403).json({ error: "Sem permissão" });
-  db.prepare("UPDATE sellers SET foto = '', fotoScore = NULL WHERE id = ?").run(req.params.id);
+  db.prepare("UPDATE sellers SET foto = '', fotoScore = NULL, fotoOriginal = '', fotoEnquadramento = '{}' WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
 });
 
