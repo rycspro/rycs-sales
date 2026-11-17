@@ -37,6 +37,8 @@ import auditRoutes from "./routes/audit.js";
 import courseRoutes2 from "./routes/courses.js";
 import brainRoutes from "./routes/brain.js";
 import emailAdminRoutes from "./routes/emailAdmin.js";
+import whatsappAdminRoutes from "./routes/whatsappAdmin.js";
+import { retomarDisparos as retomarDisparosWhatsapp } from "./services/whatsappDisparo.js";
 import billingRoutes from "./routes/billing.js";
 import materiaisRoutes, { materiaisPublico } from "./routes/materiais.js";
 import academyEmpresaRoutes from "./routes/academyEmpresa.js";
@@ -221,6 +223,7 @@ app.use("/api", authMiddleware, courseRoutes2);
 app.use("/api", authMiddleware, brainRoutes);
 app.use("/api", authMiddleware, emailAdminRoutes);
 app.use("/api", authMiddleware, jornadaRoutes);
+app.use("/api", authMiddleware, whatsappAdminRoutes);
 app.use("/api", authMiddleware, billingRoutes);
 app.use("/api", authMiddleware, onboardingRoutes);
 app.use("/api", authMiddleware, onboardingProRoutes);
@@ -354,6 +357,7 @@ app.listen(PORT, () => {
   iniciarWorker();
   iniciarWorkerIA();
   iniciarWorkerMeta();
+  retomarDisparosWhatsapp();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,
   // que usam um ElevenLabs falso e contam as chamadas).
   if (process.env.NODE_ENV !== "test") aquecerVozJarvas().catch((e) => console.warn("[jarvas] aquecimento:", e.message));

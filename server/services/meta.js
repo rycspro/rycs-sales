@@ -109,11 +109,14 @@ export class ErroMeta extends Error {
   get tokenInvalido() { return this.codigo === 190 || this.codigo === 102 || this.codigo === 10 || this.codigo === 200; }
 }
 
-export async function graph(caminho, { token, params = {}, metodo = "GET" } = {}) {
+// `dados` vai como corpo JSON (envio de mensagens do WhatsApp precisa de objeto aninhado).
+export async function graph(caminho, { token, params = {}, metodo = "GET", dados } = {}) {
   const url = new URL(caminho.startsWith("http") ? caminho : `${GRAPH()}${caminho}`);
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   if (token) url.searchParams.set("access_token", token);
-  const r = await _fetch(url.toString(), { method: metodo });
+  const r = await _fetch(url.toString(), dados === undefined
+    ? { method: metodo }
+    : { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) });
   const corpo = await r.json().catch(() => ({}));
   if (!r.ok || corpo?.error) {
     const e = corpo?.error || {};
