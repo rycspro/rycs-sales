@@ -44,12 +44,11 @@ export const IE_PENDENCIAS = [
   "Revisão interna dos textos interpretativos das cinco competências.",
 ];
 
-// Flag de disponibilização. DESLIGADA por padrão: a avaliação só aparece aos
-// profissionais quando INTELIGENCIA_EMOCIONAL_DISPONIVEL=1 (ou, no servidor, em
-// ambiente beta — ver a rota). Mantém o questionário fora do ar durante a revisão
-// interna (spec, seção 12).
+// Flag de disponibilização. LIGADA por padrão (liberada aos profissionais).
+// Pode ser desligada com INTELIGENCIA_EMOCIONAL_DISPONIVEL=0 (ex.: pausar para
+// revisão), e segue ligada em ambiente beta — ver a rota.
 export const inteligenciaEmocionalDisponivel = () =>
-  String(process.env.INTELIGENCIA_EMOCIONAL_DISPONIVEL ?? "0").trim() === "1";
+  String(process.env.INTELIGENCIA_EMOCIONAL_DISPONIVEL ?? "1").trim() !== "0";
 
 // -----------------------------------------------------------------------------
 // As cinco competências, na ordem de apresentação do gráfico (A→E). `chave`
