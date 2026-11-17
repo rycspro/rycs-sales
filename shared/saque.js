@@ -10,6 +10,15 @@
 // come parte relevante do que o profissional recebe.
 export const SAQUE_MINIMO = 10;
 
+// Piso do saque de quem assina um plano (shared/planosProfissional.js,
+// limite "saqueMinimo"). O plano só pode BAIXAR o piso; valor pendente (null)
+// ou inválido mantém o SAQUE_MINIMO de todos.
+export function saqueMinimoPara(minimoDoPlano) {
+  const v = Number(minimoDoPlano);
+  if (minimoDoPlano === null || minimoDoPlano === undefined || !Number.isFinite(v) || v < 0) return SAQUE_MINIMO;
+  return Math.min(v, SAQUE_MINIMO);
+}
+
 // O que fazer com o status que o gateway devolve ao criar a transferência.
 //
 // Antes esta resposta era descartada: o saque nascia "solicitado" e só mudava

@@ -18,6 +18,7 @@ const RycsClub = lazy(() => import("./RycsClub.jsx"));
 const AcademyCatalogo = lazy(() => import("./AcademyCatalogo.jsx"));
 const Academy = lazy(() => import("./Academy.jsx"));
 const Indicacoes = lazy(() => import("../Indicacoes.jsx"));
+const PlanosProfissional = lazy(() => import("./PlanosProfissional.jsx"));
 
 const ESPERA = <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
 
@@ -102,6 +103,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
             navegar={navegar} tour={tour} limparTour={() => setTour(null)} />)}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
+      {aba === "planos" && <PlanosProfissional aviso={aviso} />}
       {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} />}
       {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} aviso={aviso} />}
       {aba === "testes" && <TestesAvaliacoes eu={eu} db={db} aviso={aviso} recarregar={recarregar} />}
