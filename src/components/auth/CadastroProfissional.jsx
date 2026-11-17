@@ -219,7 +219,7 @@ export const FERRAMENTAS = [
   { value: "n8n", label: "n8n" },
 ];
 
-const TIPOS_FORMACAO = [
+export const TIPOS_FORMACAO = [
   { value: "ensino-medio", label: "Ensino médio" },
   { value: "curso-tecnico", label: "Curso técnico" },
   { value: "tecnologo", label: "Tecnólogo" },

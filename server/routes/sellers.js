@@ -271,6 +271,16 @@ router.patch("/sellers/:id", (req, res) => {
       if (typeof fields.perfilComercial[c] === "string")
         limpo[c] = fields.perfilComercial[c].slice(0, 80);
     }
+    if (Array.isArray(fields.perfilComercial.cargosExp))
+      limpo.cargosExp = fields.perfilComercial.cargosExp.slice(0, 20).map((x) => String(x).slice(0, 40));
+    if (Array.isArray(fields.perfilComercial.formacoes))
+      limpo.formacoes = fields.perfilComercial.formacoes.slice(0, 20)
+        .map((f) => ({ tipo: String(f?.tipo || "").slice(0, 60), descricao: String(f?.descricao || "").slice(0, 200) }))
+        .filter((f) => f.tipo || f.descricao);
+    if (Array.isArray(fields.perfilComercial.idiomas))
+      limpo.idiomas = fields.perfilComercial.idiomas.slice(0, 20)
+        .map((i) => ({ idioma: String(i?.idioma || "").slice(0, 40), nivel: String(i?.nivel || "").slice(0, 40) }))
+        .filter((i) => i.idioma);
     sets.push("perfilComercial = ?");
     vals.push(JSON.stringify({ ...atual, ...limpo }));
   }

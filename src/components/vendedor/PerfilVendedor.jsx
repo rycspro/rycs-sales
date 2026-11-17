@@ -7,16 +7,21 @@ import OnbPerfil from "./OnbPerfil.jsx";
 import { LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 import MultiSelect from "../ui/MultiSelect.jsx";
 import ComboSelect from "../ui/ComboSelect.jsx";
+import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
+import { IDIOMAS, NIVEIS_IDIOMA } from "../../../shared/localidades.js";
 import {
   AREAS_ATUACAO, HABILIDADES, ANOS_EXPERIENCIA, DISPONIBILIDADE as DISPONIBILIDADE_CAD,
-  SEGMENTOS as SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS,
+  SEGMENTOS as SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS, TIPOS_FORMACAO,
 } from "../auth/CadastroProfissional.jsx";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", bdr: "BDR", pap: "PAP", "sem-exp": "Iniciante" };
 
+// Cargos de vendas como opções {value,label} para o multi-seletor.
+const CARGOS_OPC = ORDEM_FUNCOES.map((k) => ({ value: k, label: FUNCOES[k]?.nome || k }));
+
 // Mapa value→label de todas as listas comerciais do cadastro, para a vitrine.
 const LABELS_COMERCIAIS = {};
-for (const lista of [AREAS_ATUACAO, HABILIDADES, SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS, ANOS_EXPERIENCIA, DISPONIBILIDADE_CAD])
+for (const lista of [AREAS_ATUACAO, HABILIDADES, SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS, ANOS_EXPERIENCIA, DISPONIBILIDADE_CAD, TIPOS_FORMACAO, NIVEIS_IDIOMA, CARGOS_OPC])
   for (const o of lista) LABELS_COMERCIAIS[o.value] = o.label;
 const rotuloComercial = (v) => LABELS_COMERCIAIS[v] || v;
 
@@ -107,11 +112,16 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
         segmentos: p.segmentos || [], ferramentas: p.ferramentas || [],
         conhecimentos: p.conhecimentos || [], equipamentos: p.equipamentos || [],
         anosExperiencia: p.anosExperiencia || "", disponibilidade: p.disponibilidade || "",
+        cargosExp: p.cargosExp || [], formacoes: p.formacoes || [], idiomas: p.idiomas || [],
       },
     };
   });
 
   const setPC = (campo, valor) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: valor } }));
+  // Itens repetíveis (formações, idiomas): adicionar, editar um campo, remover.
+  const addItem = (campo, vazio) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: [...(f.perfilComercial[campo] || []), vazio] } }));
+  const setItem = (campo, i, chave, val) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: f.perfilComercial[campo].map((x, j) => j === i ? { ...x, [chave]: val } : x) } }));
+  const remItem = (campo, i) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: f.perfilComercial[campo].filter((_, j) => j !== i) } }));
 
   const stats = useMemo(() => {
     const meus = (db.submissions || []).filter((s) => s.sellerId === eu.id);
@@ -446,6 +456,42 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             </div>
           </div>
 
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Cargos com experiência em vendas</div>
+            <MultiSelect opcoes={CARGOS_OPC} valor={form.perfilComercial.cargosExp} onChange={(v) => setPC("cargosExp", v)} placeholder="Selecione" />
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <div className="vx-label">Formações</div>
+            {form.perfilComercial.formacoes.map((f, i) => (
+              <div key={i} className="vx-grid vx-g2" style={{ marginBottom: 8 }}>
+                <ComboSelect opcoes={TIPOS_FORMACAO} valor={f.tipo} onChange={(v) => setItem("formacoes", i, "tipo", v)} placeholder="Tipo de formação" />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input className="vx-input" style={{ flex: 1 }} value={f.descricao || ""} maxLength={120}
+                    placeholder="Curso / instituição" onChange={(e) => setItem("formacoes", i, "descricao", e.target.value)} />
+                  <button type="button" className="vx-btn vx-btn-sm" onClick={() => remItem("formacoes", i)} aria-label="Remover formação"><Trash2 size={13} /></button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="vx-btn vx-btn-sm" onClick={() => addItem("formacoes", { tipo: "", descricao: "" })}>+ Adicionar formação</button>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <div className="vx-label">Idiomas</div>
+            {form.perfilComercial.idiomas.map((idi, i) => (
+              <div key={i} className="vx-grid vx-g2" style={{ marginBottom: 8 }}>
+                <ComboSelect opcoes={IDIOMAS} valor={idi.idioma} onChange={(v) => setItem("idiomas", i, "idioma", v)} placeholder="Idioma" />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ flex: 1 }}>
+                    <ComboSelect opcoes={NIVEIS_IDIOMA} valor={idi.nivel} onChange={(v) => setItem("idiomas", i, "nivel", v)} placeholder="Nível" />
+                  </div>
+                  <button type="button" className="vx-btn vx-btn-sm" onClick={() => remItem("idiomas", i)} aria-label="Remover idioma"><Trash2 size={13} /></button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="vx-btn vx-btn-sm" onClick={() => addItem("idiomas", { idioma: "", nivel: "" })}>+ Adicionar idioma</button>
+          </div>
+
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
             <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={salvar}>
               {salvando ? "Salvando…" : "Salvar perfil"}
@@ -463,6 +509,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
         <>
           {(() => {
             const secoes = [
+              ["Cargos", pc.cargosExp],
               ["Áreas de atuação", pc.areasAtuacao],
               ["Habilidades", pc.habilidades],
               ["Segmentos", pc.segmentos],
@@ -470,7 +517,9 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
               ["Conhecimentos", pc.conhecimentos],
               ["Equipamentos", pc.equipamentos],
             ].filter(([, arr]) => arr?.length);
-            const temAlgo = secoes.length || pc.anosExperiencia || pc.disponibilidade;
+            const formacoes = (pc.formacoes || []).filter((f) => f?.tipo || f?.descricao);
+            const idiomas = (pc.idiomas || []).filter((i) => i?.idioma);
+            const temAlgo = secoes.length || formacoes.length || idiomas.length || pc.anosExperiencia || pc.disponibilidade;
             return temAlgo ? (
               <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
                 {secoes.map(([titulo, arr]) => (
@@ -481,6 +530,24 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
                     </div>
                   </div>
                 ))}
+                {!!idiomas.length && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Idiomas</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {idiomas.map((i, k) => <span key={k} className="vx-chip">{i.idioma}{i.nivel ? ` · ${rotuloComercial(i.nivel)}` : ""}</span>)}
+                    </div>
+                  </div>
+                )}
+                {!!formacoes.length && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Formações</div>
+                    {formacoes.map((f, k) => (
+                      <div key={k} style={{ fontSize: 13, color: "var(--ink-2)", marginBottom: 3 }}>
+                        <b>{rotuloComercial(f.tipo) || "Formação"}</b>{f.descricao ? ` — ${f.descricao}` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {(pc.anosExperiencia || pc.disponibilidade) && (
                   <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
                     {pc.anosExperiencia && <div><div className="vx-eyebrow" style={{ marginBottom: 6 }}>Experiência</div><span className="vx-chip">{rotuloComercial(pc.anosExperiencia)}</span></div>}

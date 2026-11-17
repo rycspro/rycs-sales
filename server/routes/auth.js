@@ -89,7 +89,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, pais, estado, cidade, dataNascimento, genero, perfil, cargosExp, perfilComercial, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
+  const { email, senha, role, nome, whats, pais, estado, cidade, dataNascimento, genero, perfil, cargosExp, idiomas, perfilComercial, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -170,9 +170,15 @@ router.post("/auth/register", async (req, res) => {
       curriculoDataUri = `data:${curriculo.mimetype};base64,${curriculo.base64}`;
       curriculoNome = String(curriculo.nome || "curriculo").slice(0, 160);
     }
+    // Idiomas não têm coluna própria: ficam dentro de perfilComercial, junto do
+    // resto do currículo comercial (editável depois em "Meu Perfil").
+    const idiomasLimpos = Array.isArray(idiomas)
+      ? idiomas.filter((i) => i && i.idioma).map((i) => ({ idioma: String(i.idioma).slice(0, 40), nivel: String(i.nivel || "").slice(0, 40) })).slice(0, 20)
+      : [];
     const perfilJSON = JSON.stringify({
       ...(perfilComercial || {}),
       cargosExp: Array.isArray(cargosExp) ? cargosExp : [],
+      idiomas: idiomasLimpos,
     });
     // O quiz deixou de ser obrigatório: ao concluir o cadastro, o profissional
     // já entra com a plataforma liberada (onboarding concluído). As avaliações
