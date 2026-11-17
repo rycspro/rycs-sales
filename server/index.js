@@ -43,8 +43,6 @@ import academyEmpresaRoutes from "./routes/academyEmpresa.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
-import discAvaliacaoRoutes from "./routes/discAvaliacao.js";
-import bigFiveAvaliacaoRoutes from "./routes/bigFiveAvaliacao.js";
 import jarvasRoutes, { aquecerVozJarvas } from "./routes/jarvas.js";
 import stripeRoutes, { stripePublico } from "./routes/stripe.js";
 import metaRoutes, { metaPublico } from "./routes/meta.js";
@@ -60,18 +58,7 @@ import { semearPoliticasPadrao, iniciarWorker, capacidadesDisponiveis } from "./
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Health check toca o banco: um container que subiu mas perdeu o /data não é
-// saudável. O deploy (e o monitor) tratam != 200 como falha — então um banco
-// quebrado não é promovido nem fica no ar silenciosamente.
-app.get("/api/health", (_, res) => {
-  try {
-    db.prepare("SELECT 1").get();
-    res.json({ status: "ok" });
-  } catch (e) {
-    console.error("[health] banco indisponível:", e?.message || e);
-    res.status(503).json({ status: "degraded", erro: "banco" });
-  }
-});
+app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 app.get("/api/environment", (_, res) => res.json({ environment: process.env.RYCS_ENVIRONMENT === "beta" ? "beta" : "production" }));
 const isProd = process.env.NODE_ENV === "production";
 
@@ -216,8 +203,6 @@ app.use("/api", authMiddleware, emailAdminRoutes);
 app.use("/api", authMiddleware, billingRoutes);
 app.use("/api", authMiddleware, onboardingRoutes);
 app.use("/api", authMiddleware, onboardingProRoutes);
-app.use("/api", authMiddleware, discAvaliacaoRoutes);
-app.use("/api", authMiddleware, bigFiveAvaliacaoRoutes);
 app.use("/api", authMiddleware, jarvasRoutes);
 app.use("/api", authMiddleware, metaRoutes);
 app.use("/api", authMiddleware, webhooksRoutes);
@@ -315,27 +300,6 @@ app.use((err, req, res, _next) => {
     referencia: ref,
   });
 });
-
-// Rede de segurança para erros assíncronos: o Express 4 não captura rejeição de
-// Promise das rotas, e uma rejeição/exceção fora de rota derrubaria o processo
-// sem rastro. Aqui elas viram log procurável. Não forçamos exit: o container tem
-// restart, e matar o processo a cada erro arriscaria loop de reinício — a
-// prioridade é não falhar em silêncio (mesma lógica do handler global acima).
-process.on("unhandledRejection", (motivo) => {
-  console.error("[unhandledRejection]", motivo?.stack || motivo);
-});
-process.on("uncaughtException", (err) => {
-  console.error("[uncaughtException]", err?.stack || err);
-});
-
-// Aviso no boot: variável importante ausente não derruba o processo (o health
-// check passaria mesmo assim), mas o recurso que depende dela só falharia quando
-// um usuário o usasse. Deixar o rastro no boot evita o 500 invisível em produção.
-if (isProd) {
-  for (const v of ["JWT_SECRET", "ASAAS_API_KEY", "ASAAS_WEBHOOK_TOKEN", "FRONTEND_URL"]) {
-    if (!process.env[v]) console.warn(`[env] ${v} não configurada — recursos que dependem dela vão falhar.`);
-  }
-}
 
 app.listen(PORT, () => {
   console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);

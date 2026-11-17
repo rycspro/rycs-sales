@@ -171,9 +171,12 @@ router.post("/auth/register", async (req, res) => {
       ...(perfilComercial || {}),
       cargosExp: Array.isArray(cargosExp) ? cargosExp : [],
     });
+    // O quiz deixou de ser obrigatório: ao concluir o cadastro, o profissional
+    // já entra com a plataforma liberada (onboarding concluído). As avaliações
+    // (DISC, etc.) passam a ser voluntárias, pela página "Testes e Avaliações".
     db.prepare(`
-      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, perfilComercial, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?, ?)
+      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, perfilComercial, onboardingEtapa, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, '', 'aprovado', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?, 'concluido', ?)
     `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, perfilJSON, agora());
     db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
       userId, emailNorm, hash, role, entityId, 1, agora()
