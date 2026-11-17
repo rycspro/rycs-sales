@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -121,7 +121,7 @@ export const MOBILE_NAV = {
     { key: "inicio", label: "Início", Icon: Home },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
     { key: "conversas", label: "Conversas", Icon: MessageSquare },
-    { key: "outros", label: "Outros", Icon: Settings },
+    { key: "outros", label: "Menu", Icon: Menu },
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },
