@@ -712,7 +712,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
       {/* Secondary navigation — usa classe vx-sidebtn idêntica ao sidebar */}
       {!somenteConteudo && (mobile ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, padding: "2px 16px 14px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, padding: "20px 16px 14px", borderBottom: "1px solid var(--border)" }}>
           {SECOES_NAV.map(({ key, label, icon: Icon }) => {
             const on = secao === key;
             return (
