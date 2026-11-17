@@ -11,11 +11,10 @@ import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
 import TreinamentoEmpresa from "./TreinamentoEmpresa.jsx";
 import Carteira from "./Carteira.jsx";
 import PerfilVendedor from "./PerfilVendedor.jsx";
+import TestesAvaliacoes from "./TestesAvaliacoes.jsx";
 import AcademyCatalogo from "./AcademyCatalogo.jsx";
 import Academy from "./Academy.jsx";
 import Indicacoes from "../Indicacoes.jsx";
-import Triagem from "./Triagem.jsx";
-import OnboardingProfissional from "./OnboardingProfissional.jsx";
 
 export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, setAba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
@@ -25,7 +24,6 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
   // real; guardamos curso + aula para ele voltar exatamente de onde parou.
   const [tour, setTour] = useState(null);
   const navegar = (destino, ctx) => { if (ctx) setTour(ctx); setAba(destino); };
-  const [refazendo, setRefazendo] = useState(false);
   // Quando true, o profissional abriu a empresa mas ainda não está aprovado:
   // mostra TreinamentoEmpresa em vez de CampanhasEmpresa.
   const [modoTreinamento, setModoTreinamento] = useState(false);
@@ -40,26 +38,9 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
     return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
   }
 
-  const emOnboarding = eu.onboardingEtapa && eu.onboardingEtapa !== "concluido";
-  if (emOnboarding && !refazendo && !["conta", "configuracoes", "suporte-conta"].includes(aba))
-    return (
-      <OnboardingProfissional
-        aviso={aviso}
-        recarregar={recarregar}
-        aoConcluir={() => recarregar()}
-      />
-    );
-
-  const precisaAvaliar = eu.status === "triagem" || eu.status === "recusado";
-  if ((precisaAvaliar || refazendo) && !["conta", "configuracoes", "suporte-conta"].includes(aba))
-    return (
-      <Triagem
-        aviso={aviso}
-        recarregar={recarregar}
-        irAcademy={() => { setRefazendo(false); setAba("academy"); }}
-        voltar={refazendo ? () => setRefazendo(false) : null}
-      />
-    );
+  // O quiz/triagem antigos deixaram de ser obrigatórios e não bloqueiam mais o
+  // acesso: ao concluir o cadastro, o profissional entra direto na plataforma.
+  // As avaliações (DISC, etc.) são voluntárias, pela página "Testes e Avaliações".
 
   const empresaAberta = db.companies.find((c) => c.id === abertaId);
   const campanhaAberta = db.campaigns?.find((c) => c.id === campanhaAbertaId);
@@ -115,8 +96,9 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
             navegar={navegar} tour={tour} limparTour={() => setTour(null)} />)}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
-      {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} refazerAvaliacao={() => setRefazendo(true)} />}
-      {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} aviso={aviso} refazerAvaliacao={() => setRefazendo(true)} />}
+      {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} />}
+      {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} aviso={aviso} />}
+      {aba === "testes" && <TestesAvaliacoes eu={eu} db={db} aviso={aviso} recarregar={recarregar} />}
       {["tarefas", "conversas"].includes(aba) && <AtividadeProfissional conversas={aba === "conversas"} eu={eu} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
 
       {/* Tour de aula: enquanto o aluno explora a ferramenta real, um atalho

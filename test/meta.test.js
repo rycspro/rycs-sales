@@ -139,3 +139,50 @@ test("resumo para a tela nunca expõe tokens", () => {
   assert.ok(!JSON.stringify(r).includes("v1:"));
   assert.equal(r.pagina.id, "P1");
 });
+
+const avisoWhats = (value) => ({ object: "whatsapp_business_account", entry: [{ id: "WABA1", changes: [{ field: "messages", value: {
+  messaging_product: "whatsapp", metadata: { display_phone_number: "5515999999999", phone_number_id: "PN1" }, ...value } }] }] });
+
+test("mensagem do WhatsApp é guardada uma vez só, com nome e texto", async () => {
+  const corpo = avisoWhats({
+    contacts: [{ wa_id: "5511988887777", profile: { name: "Cliente Teste" } }],
+    messages: [{ from: "5511988887777", id: "wamid.A1", timestamp: "1763300000", type: "text", text: { body: "Olá, quero saber mais" } }],
+  });
+  assert.equal(await meta.processarAvisoWebhook(corpo), 1);
+  assert.equal(await meta.processarAvisoWebhook(corpo), 0);
+  const m = db.prepare("SELECT * FROM whatsapp_mensagens WHERE wamid = 'wamid.A1'").get();
+  assert.equal(m.de, "5511988887777");
+  assert.equal(m.nome, "Cliente Teste");
+  assert.equal(m.texto, "Olá, quero saber mais");
+  assert.equal(m.phoneNumberId, "PN1");
+  assert.equal(m.wabaId, "WABA1");
+  assert.equal(m.enviadoEm, 1763300000000);
+  assert.equal(JSON.parse(m.dados).text.body, "Olá, quero saber mais");
+});
+
+test("tipos sem texto puro guardam legenda, botão ou reação", async () => {
+  await meta.processarAvisoWebhook(avisoWhats({ messages: [
+    { from: "551100", id: "wamid.B1", timestamp: "1", type: "image", image: { id: "img", caption: "foto do produto" } },
+    { from: "551100", id: "wamid.B2", timestamp: "2", type: "interactive", interactive: { type: "button_reply", button_reply: { id: "x", title: "Quero" } } },
+    { from: "551100", id: "wamid.B3", timestamp: "3", type: "reaction", reaction: { message_id: "wamid.B1", emoji: "👍" } },
+    { from: "551100", id: "wamid.B4", timestamp: "4", type: "sticker", sticker: { id: "s" } },
+  ] }));
+  const t = Object.fromEntries(db.prepare("SELECT wamid, texto FROM whatsapp_mensagens WHERE de = '551100'").all().map((r) => [r.wamid, r.texto]));
+  assert.deepEqual(t, { "wamid.B1": "foto do produto", "wamid.B2": "Quero", "wamid.B3": "👍", "wamid.B4": "" });
+});
+
+test("status de entrega do WhatsApp são guardados sem repetir", async () => {
+  const st = (status, extra = {}) => avisoWhats({ statuses: [{ id: "wamid.S1", status, timestamp: "1763300100", recipient_id: "5511977776666", ...extra }] });
+  await meta.processarAvisoWebhook(st("sent"));
+  await meta.processarAvisoWebhook(st("delivered"));
+  await meta.processarAvisoWebhook(st("delivered"));
+  await meta.processarAvisoWebhook(st("failed", { errors: [{ code: 131026, title: "Message undeliverable" }] }));
+  assert.equal(contar("SELECT COUNT(*) n FROM whatsapp_status WHERE wamid = 'wamid.S1'"), 3);
+  assert.equal(db.prepare("SELECT erro FROM whatsapp_status WHERE wamid = 'wamid.S1' AND status = 'failed'").get().erro, "131026 Message undeliverable");
+});
+
+test("aviso do WhatsApp não mexe em leads da Meta", async () => {
+  const antes = contar("SELECT COUNT(*) n FROM meta_leads");
+  await meta.processarAvisoWebhook(avisoWhats({ messages: [{ from: "551200", id: "wamid.C1", timestamp: "1", type: "text", text: { body: "oi" } }] }));
+  assert.equal(contar("SELECT COUNT(*) n FROM meta_leads"), antes);
+});

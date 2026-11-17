@@ -137,7 +137,7 @@ const css = `
 }
 `;
 
-export default function OnbPerfil({ aviso, aoAvancar }) {
+export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false }) {
   const id = useId();
   const editorRef = useRef(null);
 
@@ -339,7 +339,8 @@ export default function OnbPerfil({ aviso, aoAvancar }) {
       aviso(r.error);
       return;
     }
-    aoAvancar("quiz");
+    if (modoPerfil) { aviso?.("Apresentação atualizada."); window.scrollTo?.({ top: 0, behavior: "smooth" }); }
+    else aoAvancar("quiz");
   };
 
   if (carregando) {
@@ -354,15 +355,19 @@ export default function OnbPerfil({ aviso, aoAvancar }) {
       <style>{css}</style>
       <div className="sa-wrap">
         {/* Header */}
-        <div className="vx-onb-eyebrow" style={{ marginBottom: 6 }}>Passo 1 de 3 — Sua Apresentação</div>
+        <div className="vx-onb-eyebrow" style={{ marginBottom: 6 }}>
+          {modoPerfil ? "Apresentação e personalidade" : "Passo 1 de 3 — Sua Apresentação"}
+        </div>
         <h1 className="vx-disp" style={{ fontSize: 28, margin: "0 0 6px" }}>
-          Agora, vamos dar personalidade ao seu perfil.
+          {modoPerfil ? "Dê personalidade ao seu perfil." : "Agora, vamos dar personalidade ao seu perfil."}
         </h1>
         <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7, margin: "0 0 6px", maxWidth: 600 }}>
-          Suas habilidades e experiências já estão cadastradas. Falta apenas mostrar às empresas quem está por trás delas.
+          {modoPerfil
+            ? "É isto que as empresas veem sobre você além da experiência. Edite quando quiser."
+            : "Suas habilidades e experiências já estão cadastradas. Falta apenas mostrar às empresas quem está por trás delas."}
         </p>
         <p className="sa-msg-discreta" style={{ marginBottom: 24 }}>
-          Esta etapa é sobre você. Compartilhe o que quiser e mostre sua personalidade.
+          Esta parte é sobre você. Compartilhe o que quiser e mostre sua personalidade.
         </p>
 
         <form onSubmit={enviar} noValidate>
@@ -679,7 +684,7 @@ export default function OnbPerfil({ aviso, aoAvancar }) {
           <div style={{ marginTop: 24, textAlign: "center" }}>
             <button type="submit" className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" disabled={salvando}
               style={{ maxWidth: 420, margin: "0 auto" }}>
-              {salvando ? "Salvando..." : <>Continuar para os testes <ArrowRight size={16} /></>}
+              {salvando ? "Salvando..." : modoPerfil ? "Salvar apresentação" : <>Continuar para os testes <ArrowRight size={16} /></>}
             </button>
             <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
               Todos os campos são opcionais. Você pode editar depois.

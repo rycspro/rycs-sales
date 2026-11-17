@@ -401,6 +401,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
   const [filtros, setFiltros] = useState({ dias: "30", tipo: "" });
   const [modalSaldo, setModalSaldo] = useState(false);
   const [cancelPopup, setCancelPopup] = useState(null);
+  const [cancelPlano, setCancelPlano] = useState(null);
   const [cancelMotivo, setCancelMotivo] = useState("");
   const [cancelando, setCancelando] = useState(false);
   const [assinaturaStatus, setAssinaturaStatus] = useState(null);
@@ -475,7 +476,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       {secao === "plano" && <>
       {/* ── Planos disponíveis ── */}
       <div style={{ marginBottom: 24 }}>
-        <PlanosEmpresa emp={emp} aviso={aviso} recarregar={recarregar} onCancelar={() => setCancelPopup("motivo")} />
+        <PlanosEmpresa emp={emp} aviso={aviso} recarregar={recarregar} onCancelar={(chave) => { setCancelPlano(chave || null); setCancelPopup("motivo"); }} />
       </div>
       {/* ── Visibilidade: destaque da empresa (unificado nesta página) ── */}
       <div style={{ borderTop: "1px solid var(--border)", paddingTop: 24 }}>
@@ -661,10 +662,10 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
               <h2 style={{ margin: 0, fontSize: 20 }}>Por que deseja cancelar?</h2>
               <button className="vx-btn vx-btn-ghost" onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}><X size={16} /></button>
             </div>
-            {infPlano && (
+            {(PLANOS[cancelPlano] || infPlano) && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, margin: "14px 0 4px", padding: "12px 14px", borderRadius: 10, background: "var(--brand-50, #eff6ff)", border: "1px solid var(--brand)" }}>
                 <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase" }}>Plano atual</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: "var(--brand)" }}>{infPlano.nome}</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: "var(--brand)" }}>{(PLANOS[cancelPlano] || infPlano).nome}</span>
               </div>
             )}
             <p className="vx-mut" style={{ margin: "12px 0 16px", fontSize: 13 }}>
@@ -680,7 +681,12 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
             <button
               className="vx-btn vx-btn-primary vx-btn-block"
               style={{ marginTop: 16 }}
-              onClick={() => { setCancelPopup(null); setCancelMotivo(""); }}
+              onClick={() => {
+                setCancelPopup(null);
+                setCancelMotivo("");
+                aviso?.("Escolha o novo plano abaixo — clique em \"Trocar para este plano\".");
+                setTimeout(() => document.getElementById("vx-planos-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+              }}
             >
               Trocar plano
             </button>

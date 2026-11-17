@@ -3,6 +3,7 @@ import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCc
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
+import OnbPerfil from "./OnbPerfil.jsx";
 import { MODALIDADES, SEGMENTOS, DISPONIBILIDADES, SKILLS, LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", bdr: "BDR", pap: "PAP", "sem-exp": "Iniciante" };
@@ -61,6 +62,7 @@ function Marcadores({ opcoes, valor = [], onChange, max = 12 }) {
 }
 
 export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) {
+  const [secao, setSecao] = useState("curriculo"); // curriculo | apresentacao
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [avaliacaoFoto, setAvaliacaoFoto] = useState(null);
@@ -74,7 +76,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   useEffect(() => { api("/courses/me/certificates").then((r) => setCertificados(r?.certificados || [])); }, []);
 
   const [form, setForm] = useState(() => ({
-    nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "", bio: eu.bio || "",
+    nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "",
     pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
     genero: eu.genero || "",
     experiencia: eu.experiencia || "", disponibilidade: eu.disponibilidade || "",
@@ -101,7 +103,6 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const nota = Number(eu.scoreTriagem) || 0;
 
   const salvar = async () => {
-    if (!form.bio?.trim()) return aviso("A apresentação é obrigatória.");
     setSalvando(true);
     const r = await apiPatch(`/sellers/${eu.id}`, form);
     setSalvando(false);
@@ -204,14 +205,17 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
                 <RotateCcw size={13} /> {nota > 0 ? "Refazer avaliação" : "Fazer avaliação"}
               </button>
             )}
-            <button className="vx-btn vx-btn-sm" onClick={() => setEditando(!editando)}>
-              {editando ? <><X size={13} /> Cancelar</> : <><Pencil size={13} /> Editar perfil</>}
-            </button>
+            {secao === "curriculo" && (
+              <button className="vx-btn vx-btn-sm" onClick={() => setEditando(!editando)}>
+                {editando ? <><X size={13} /> Cancelar</> : <><Pencil size={13} /> Editar perfil</>}
+              </button>
+            )}
           </div>
         </div>
 
         {eu.bio && !editando && (
-          <p className="vx-mut" style={{ fontSize: 13, marginTop: 14, marginBottom: 0, whiteSpace: "pre-wrap" }}>{eu.bio}</p>
+          <div className="vx-mut" style={{ fontSize: 13, marginTop: 14, marginBottom: 0, lineHeight: 1.6 }}
+            dangerouslySetInnerHTML={{ __html: eu.bio }} />
         )}
 
         {enviandoFoto && <div className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>Verificando a foto…</div>}
@@ -306,6 +310,21 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
         </div>
       )}
 
+      {/* abas: Currículo comercial | Apresentação */}
+      <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
+        {[["curriculo", "Currículo comercial"], ["apresentacao", "Apresentação"]].map(([k, l]) => (
+          <button key={k} type="button" className={"vx-chip" + (secao === k ? " vx-badge-brand" : "")}
+            onClick={() => setSecao(k)}
+            style={{ cursor: "pointer", borderColor: secao === k ? "var(--brand)" : "var(--border)", fontWeight: secao === k ? 600 : 500 }}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {secao === "apresentacao" ? (
+        <OnbPerfil modoPerfil aviso={aviso} />
+      ) : (
+      <>
       {/* -------------------------------------------------- edição ---- */}
       {editando && (
         <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
@@ -350,13 +369,9 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             </label>
           </div>
 
-          <label style={{ display: "block", marginTop: 9 }}>
-            <div className="vx-label">Apresentação *</div>
-            <textarea className="vx-input" rows={4} maxLength={1200} value={form.bio}
-              placeholder="Conte sua experiência comercial, segmentos em que trabalhou e os tipos de venda em que tem mais experiência."
-              onChange={(e) => setForm({ ...form, bio: e.target.value })} />
-            <div className="vx-mut" style={{ fontSize: 11, textAlign: "right" }}>{form.bio.length}/1200</div>
-          </label>
+          <div className="vx-mut" style={{ fontSize: 12, marginTop: 10, padding: "9px 12px", background: "var(--surface-1)", borderRadius: 8 }}>
+            Sua apresentação, bio, redes sociais, vídeo e portfólio ficam na aba <b>Apresentação</b>, acima.
+          </div>
 
           <div style={{ marginTop: 12 }}>
             <div className="vx-label">Disponibilidade</div>
@@ -482,6 +497,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             </div>
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   );

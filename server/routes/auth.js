@@ -7,7 +7,7 @@ import { signToken, usuarioDev, authMiddleware } from "../middleware/auth.js";
 import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
-import { normalizarTelefoneIntl } from "../../shared/localidades.js";
+import { normalizarTelefoneIntl, PAISES } from "../../shared/localidades.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
 import { criarOnboarding, hashToken, novoToken } from "../services/onboarding.js";
 import { auditarSeguranca } from "../services/securityAudit.js";
@@ -90,7 +90,7 @@ function comparaSegura(a, b) {
 }
 
 router.post("/auth/register", async (req, res) => {
-  const { email, senha, role, nome, whats, pais, cidade, perfil, cargosExp, perfilComercial, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
+  const { email, senha, role, nome, whats, pais, estado, cidade, dataNascimento, genero, perfil, cargosExp, perfilComercial, produto, ticket, icp, aceitouTermos, indicacao, convite, logo, foto, curriculo } = req.body;
   if (!email || !senha || !role) return res.status(400).json({ error: "email, senha e role são obrigatórios" });
   if (!["vendedor", "empresa"].includes(role)) return res.status(400).json({ error: "role deve ser vendedor ou empresa" });
   if (role === "empresa") {
@@ -146,6 +146,9 @@ router.post("/auth/register", async (req, res) => {
 
   if (role === "vendedor") {
     entityId = uid();
+    // O cadastro envia o país como código ("BR"); guardamos o nome ("Brasil")
+    // para o perfil exibir legível. Default: Brasil.
+    const paisNome = PAISES.find((p) => p.code === pais || p.nome === pais)?.nome || (pais ? String(pais) : "Brasil");
     let fotoDataUri = "";
     let fotoScore = 0;
     if (foto?.base64 && foto?.mimetype) {
@@ -172,10 +175,13 @@ router.post("/auth/register", async (req, res) => {
       ...(perfilComercial || {}),
       cargosExp: Array.isArray(cargosExp) ? cargosExp : [],
     });
+    // O quiz deixou de ser obrigatório: ao concluir o cadastro, o profissional
+    // já entra com a plataforma liberada (onboarding concluído). As avaliações
+    // (DISC, etc.) passam a ser voluntárias, pela página "Testes e Avaliações".
     db.prepare(`
-      INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, perfilComercial, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, '', 'triagem', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?, ?)
-    `).run(entityId, nomeClean, emailNorm, whats || "", cidade || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, perfilJSON, agora());
+      INSERT INTO sellers (id, nome, email, whats, pais, estado, cidade, dataNascimento, genero, perfil, experiencia, status, nota, nivel, pix, disponivel, pendente, sacado, respostas, video, foto, fotoScore, curriculo, curriculoNome, perfilComercial, onboardingEtapa, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 'aprovado', 100, 'starter', '', 0, 0, 0, '[]', '', ?, ?, ?, ?, ?, 'concluido', ?)
+    `).run(entityId, nomeClean, emailNorm, whats || "", paisNome, estado || "", cidade || "", dataNascimento || "", genero || "", perfil || "sdr", fotoDataUri, fotoScore, curriculoDataUri, curriculoNome, perfilJSON, agora());
     db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
       userId, emailNorm, hash, role, entityId, 1, agora()
     );
@@ -208,7 +214,12 @@ router.post("/auth/register", async (req, res) => {
     if (!conviteOk) return res.status(409).json({ error: MOTIVOS_CONVITE_ONBOARDING.usado, motivo: "usado" });
   }
 
-  await emailBoasVindas(nomeClean, emailNorm, role);
+  // Confirmação de cadastro em segundo plano: a conta já está criada acima, e
+  // esperar o provedor de e-mail responder deixava a tela "carregando sem sair"
+  // quando o envio demora — levando a pessoa a reenviar e cair em "já cadastrado".
+  emailBoasVindas(nomeClean, emailNorm, role).catch((e) =>
+    console.error(`[auth] falha ao enviar boas-vindas para ${emailNorm}:`, e?.message || e)
+  );
   // Vínculo de indicação: nada é creditado agora, só registrado.
   if (indicacao) vincularIndicacao(indicacao, userId, role);
 

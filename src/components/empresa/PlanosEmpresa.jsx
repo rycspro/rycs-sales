@@ -165,11 +165,18 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
     else aviso(r?.error || "Não foi possível abrir o portal de pagamento.");
   };
 
+  // Plano efetivo do cliente: com assinatura paga ativa/pendente/trial, vale o
+  // plano da própria assinatura — companies.assinatura pode ainda estar "free"
+  // enquanto o gateway não confirmou. Fora disso, cai no plano gravado.
+  const planoEfetivo = ["ativa", "pendente", "trial", "inadimplente"].includes(atual?.assinatura?.status)
+    ? (atual?.assinatura?.plano || atual?.plano)
+    : atual?.plano;
+
   // Voltar ao plano gratuito. Com assinatura paga ativa/pendente/trial, o caminho
   // correto é cancelar (encerra a recorrência no gateway); sem ela, troca direta.
   const usarGratis = async () => {
     const status = atual?.assinatura?.status;
-    if (["ativa", "pendente", "trial", "inadimplente"].includes(status)) { onCancelar?.(); return; }
+    if (["ativa", "pendente", "trial", "inadimplente"].includes(status)) { onCancelar?.(planoEfetivo); return; }
     const r = await api("/subscription", { plano: "free", ciclo: CICLOS.MENSAL });
     if (r?.error) return aviso(r.error);
     await carregar();
@@ -201,7 +208,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
   const usd = (n) => (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
   return (
-    <div className="vx-fade">
+    <div className="vx-fade" id="vx-planos-grid">
       <div>
         <div style={{ padding: "4px 0 16px" }}>
           <div className="vx-eyebrow">Assinatura empresarial</div>
@@ -212,7 +219,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
         <div style={{ padding: "4px 0 8px" }}>
             <PricingPlanos
               plans={planos}
-              planoAtualChave={atual?.plano}
+              planoAtualChave={planoEfetivo}
               moeda={emp?.moeda || "BRL"}
               onUsarGratis={usarGratis}
               onContratar={(chave, cicloEscolhido) => {
@@ -232,7 +239,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
       {["ativa", "pendente", "trial", "inadimplente"].includes(atual?.assinatura?.status) && (
         <div style={{ borderTop: "1px solid var(--border)", marginTop: 40, paddingTop: 24, paddingBottom: 24, textAlign: "center" }}>
           <p className="vx-mut" style={{ margin: "0 0 12px", fontSize: 13 }}>Deseja encerrar sua assinatura?</p>
-          <button className="vx-btn vx-btn-danger" onClick={() => onCancelar?.()}>Cancelar assinatura</button>
+          <button className="vx-btn vx-btn-danger" onClick={() => onCancelar?.(planoEfetivo)}>Cancelar assinatura</button>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  ArrowLeft, ChevronRight, CircleUserRound, GraduationCap, Gift, Headphones,
+  ArrowLeft, ChevronRight, CircleUserRound, ClipboardList, GraduationCap, Gift, Headphones,
   LogOut, Mail, RotateCcw, Settings, ShieldCheck, Target, Wallet,
 } from "lucide-react";
 import ThemeSwitcher from "../ThemeSwitcher.jsx";
@@ -95,6 +95,7 @@ export default function MinhaConta({
             <Item Icon={CircleUserRound} titulo="Meu perfil" descricao="Foto, dados e especialidades" onClick={() => onNavigate?.("perfil")} />
             <Item Icon={Wallet} titulo="Carteira" descricao="Saldo, saques e extrato de ações" onClick={() => onNavigate?.("carteira")} />
             <Item Icon={GraduationCap} titulo="Academy" descricao="Cursos e certificações" onClick={() => onNavigate?.("academy")} />
+            <Item Icon={ClipboardList} titulo="Testes e Avaliações" descricao="Perfil comportamental e competências" onClick={() => onNavigate?.("testes")} />
             <Item Icon={Gift} titulo="Indicar" descricao="Convide outros profissionais" onClick={() => onNavigate?.("indicar")} />
           </div>
 

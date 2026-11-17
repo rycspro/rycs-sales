@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { LogOut, ChevronUp, ChevronDown, Headphones, Gem } from "lucide-react";
+import { LogOut, ChevronDown, Headphones, Gem } from "lucide-react";
 import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
@@ -21,7 +21,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   // "Conta"; no lado empresa, a conta inteira acende "Conta" (configuracoes), e
   // Leads/Aprovações/Profissionais acendem "Campanhas".
   const mobileActive = (() => {
-    if (role === "vendedor" && ["conta", "configuracoes", "perfil", "indicar", "suporte-conta"].includes(active)) return "conta";
+    if (role === "vendedor" && ["conta", "configuracoes", "perfil", "testes", "indicar", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
       if (["conta", "configuracoes", "outros", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "outros";
       if (["leads", "materiais", "academy-empresa", "profissionais", "conferir-fila", "conferir-time", "conversas"].includes(active)) return "campanhas";
@@ -38,7 +38,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", scrollbarWidth: "none" }}>
-          {allItems.filter(item => !accountRole || !["perfil"].includes(item.key)).map((item, i) => {
+          {allItems.filter(item => item.key !== "perfil" || role === "vendedor").map((item, i) => {
             if (item.divider) {
               return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
             }
@@ -84,7 +84,6 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
           })}
         </div>
 
-        {accountRole && <AccountMenu user={user} entity={entity} onSelect={onSelect} onLogout={onLogout} />}
         {!accountRole && onLogout && (
           <button
             type="button"
@@ -96,7 +95,8 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             Sair
           </button>
         )}
-        <div style={{ padding: "10px 0", display: "flex", justifyContent: "center", borderTop: "1px solid var(--border)" }}>
+        <div className="vx-sidebar-footer">
+          {accountRole && <AccountMenu user={user} entity={entity} onSelect={onSelect} onLogout={onLogout} />}
           <ThemeSwitcher />
         </div>
       </aside>
@@ -157,9 +157,8 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
       <button type="button" role="menuitem" onClick={() => choose(() => onSelect('suporte-conta'))}><Headphones size={18} />Ajuda e suporte</button>
       <button type="button" role="menuitem" onClick={() => choose(onLogout)}><LogOut size={18} />Sair da conta</button>
     </div>}
-    <button type="button" className="vx-account-trigger" ref={trigger} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+    <button type="button" className="vx-account-logo" ref={trigger} aria-haspopup="menu" aria-expanded={open} aria-label={nome} title={nome} onClick={() => setOpen(!open)}>
       {avatar ? <img src={avatar} alt="" /> : <span className="vx-account-initial">{nome.slice(0,1).toUpperCase()}</span>}
-      <span><strong>{nome}</strong><small>{company ? 'Empresa' : 'Profissional'}</small></span><ChevronUp size={17} />
     </button>
   </div>;
 }

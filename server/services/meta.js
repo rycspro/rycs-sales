@@ -15,6 +15,7 @@ import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, 
 import db, { uid, agora } from "../db.js";
 import { notificar } from "../routes/notifications.js";
 import { registrarEventoCampanha } from "./campaignEvents.js";
+import { guardarAvisoWhatsapp } from "./whatsapp.js";
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS meta_conexoes (
@@ -356,6 +357,10 @@ export async function processarLead(leadgenId) {
 }
 
 export async function processarAvisoWebhook(corpo) {
+  if (corpo?.object === "whatsapp_business_account") {
+    const r = guardarAvisoWhatsapp(corpo);
+    return r.mensagens + r.status;
+  }
   if (corpo?.object !== "page") return 0;
   const novos = [];
   for (const entrada of corpo.entry || []) {

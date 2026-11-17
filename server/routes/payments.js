@@ -635,10 +635,14 @@ function creditarDeposito(payment) {
   // TODO(produção): validar com o contrato real do Asaas os campos
   // status/value/customer retornados por GET /payments/:id.
 
-  // Idempotência por pagamento: o Asaas dispara eventos diferentes para a mesma
-  // cobrança (PAYMENT_CONFIRMED e PAYMENT_RECEIVED no cartão). O crédito do
-  // caixa fica amarrado ao INSERT único do ledger (UNIQUE tipo+idempotencyKey),
-  // então o mesmo payment.id credita uma única vez, qualquer que seja o evento.
+  // Idempotência por cobrança, não por evento: o Asaas manda PAYMENT_RECEIVED e
+  // PAYMENT_CONFIRMED para o mesmo pagamento com ids de evento diferentes, então
+  // a trava de gateway_events não cobre os dois. O crédito fica amarrado ao
+  // INSERT único do ledger (UNIQUE tipo+idempotencyKey); esta pré-checagem é
+  // defesa em profundidade (da origin/main): credita uma única vez por cobrança.
+  const jaCreditado = db.prepare("SELECT 1 FROM financial_ledger WHERE tipo = 'deposito' AND idempotencyKey = ?").get(payment.id);
+  if (jaCreditado) return;
+
   let creditou = false;
   db.transaction(() => {
     const mov = registrarMovimento({ companyId: empresa.id, tipo: "deposito", valor, idempotencyKey: payment.id, dados: { gateway: "asaas" } });

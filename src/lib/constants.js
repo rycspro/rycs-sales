@@ -45,9 +45,10 @@ export const NAV = {
     { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { key: "academy", label: "Academy", Icon: GraduationCap },
+    { key: "testes", label: "Testes e Avaliações", Icon: ClipboardList },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "indicar", label: "Indicar", Icon: Gift },
-    { key: "perfil", label: "Perfil", Icon: UserIcon },
+    { key: "perfil", label: "Meu Perfil", Icon: UserIcon },
   ],
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },
@@ -76,6 +77,8 @@ export const NAV = {
     { section: "Sua Empresa" },
     { key: "materiais", label: "Materiais", Icon: FolderOpen },
     { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
+    { divider: true },
+    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard },
     { key: "outros", label: "Outros", Icon: Settings },
   ],
   admin: [

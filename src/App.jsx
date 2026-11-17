@@ -229,14 +229,18 @@ export default function App() {
     return { ok: false, error: "Erro ao fazer login." };
   };
 
-  const registrar = async (dados, { silencioso = false } = {}) => {
+  const registrar = async (dados, { silencioso = false, autoEntrar = true } = {}) => {
     const r = await api("/auth/register", dados);
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error, campo: r.campo }; }
     if (r?.id) {
-      // Limpa a URL de cadastro/onboarding para não sobreviver a um F5.
-      window.history.replaceState({}, "", "/");
-      setUser(r); userRef.current = r; await carregarState(r);
-      return { ok: true };
+      const entrar = async () => {
+        // Limpa a URL de cadastro/onboarding para não sobreviver a um F5.
+        window.history.replaceState({}, "", "/");
+        setUser(r); userRef.current = r; await carregarState(r);
+      };
+      // autoEntrar=false deixa a tela mostrar a confirmação antes de entrar.
+      if (autoEntrar) { await entrar(); return { ok: true }; }
+      return { ok: true, entrar };
     }
     if (!silencioso) setToast("Erro ao registrar.");
     return { ok: false, error: "Erro ao registrar." };
@@ -302,7 +306,7 @@ export default function App() {
         {rota.tipo === "trial" ? <Login onLogin={login} conviteTrial beta={environment === "beta"} />
           : rota.tipo === "plataforma" ? <LoginPlataforma onEntrar={entrarComoAdmin} />
           : rota.tipo === "escolha" ? <Login onLogin={login} beta={environment === "beta"} />
-          : rota.tipo === "cadastro" && rota.role === "vendedor" ? <Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><CadastroProfissional onRegister={registrar} /></Suspense>
+          : rota.tipo === "cadastro" && rota.role === "vendedor" ? <Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><CadastroProfissional onRegister={(d) => registrar(d, { autoEntrar: false })} /></Suspense>
           : rota.tipo === "cadastro" && rota.role === "empresa" ? <EntradaEmpresa />
           : rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
             ? <EtapaAcesso conviteToken={rota.tipo === "convite-onboarding" ? rota.token : null}

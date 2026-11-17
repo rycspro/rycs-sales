@@ -84,8 +84,13 @@ router.get("/onboarding-pro", (req, res) => {
   let apresentacao = {};
   try { apresentacao = JSON.parse(seller.apresentacaoData || "{}"); } catch {}
 
+  // A Apresentação saiu do onboarding (virou "Meu Perfil"). Perfis com a etapa
+  // antiga "perfil" entram direto no quiz.
+  const etapaAtual = !seller.onboardingEtapa || seller.onboardingEtapa === "perfil"
+    ? "quiz" : seller.onboardingEtapa;
+
   res.json({
-    etapa: seller.onboardingEtapa || "perfil",
+    etapa: etapaAtual,
     concluido: seller.onboardingEtapa === "concluido",
     perfil: {
       nome: seller.nome,
@@ -164,11 +169,13 @@ router.post("/onboarding-pro/perfil", (req, res) => {
 
   const linkedinLimpo = validarUrl(linkedin || "");
 
+  // Só avança a etapa quando ainda está na antiga "perfil"; se a pessoa já
+  // concluiu o onboarding e está editando por "Meu Perfil", a etapa é preservada.
   db.prepare(`UPDATE sellers SET
     bio = CASE WHEN ? != '' THEN ? ELSE bio END,
     linkedin = CASE WHEN ? != '' THEN ? ELSE linkedin END,
     apresentacaoData = ?,
-    onboardingEtapa = 'quiz'
+    onboardingEtapa = CASE WHEN onboardingEtapa = 'perfil' THEN 'quiz' ELSE onboardingEtapa END
     WHERE id = ?`)
     .run(
       bioLimpa, bioLimpa,
