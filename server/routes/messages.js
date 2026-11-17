@@ -53,7 +53,7 @@ router.post("/messages", (req, res) => {
     if (!vinculo) return res.status(403).json({ error: "Conversa disponível apenas para vínculos aprovados" });
   }
   if (role === "empresa") {
-    const prof = db.prepare("SELECT 1 FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(sellerId);
+    const prof = db.prepare("SELECT 1 FROM sellers WHERE id = ?").get(sellerId);
     if (!prof) return res.status(403).json({ error: "Profissional não encontrado ou inativo" });
   }
 

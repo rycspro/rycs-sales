@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { isIP } from "node:net";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
@@ -235,6 +236,121 @@ router.post("/destaque/checkout", async (req, res) => {
     console.error("[asaas] destaque:", err.message);
     res.status(502).json({ error: err instanceof AsaasError ? err.message : "Erro ao gerar a cobrança" });
   }
+});
+
+// Contratar o destaque como ASSINATURA RECORRENTE no cartão (mensal, sem trial).
+// Mesma lógica dos planos: assina no cartão e renova todo mês. O destaque é
+// ativado pelo webhook quando o pagamento é confirmado (externalReference
+// "destaque:<empresa>:<tipo>"). Sem Pix — cartão apenas no caminho nacional; o
+// internacional continua no Stripe (/destaque/stripe).
+router.post("/destaque/subscription", async (req, res) => {
+  const { role, entityId, id: userId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem contratar destaque" });
+  const tipo = String(req.body?.tipo || "");
+  const d = DESTAQUES[tipo];
+  if (!d) return res.status(400).json({ error: "Tipo de destaque inválido" });
+  if (!asaasAtivo()) return res.status(503).json({ error: "Pagamento indisponível no momento." });
+
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  if (!empresa.documento) return res.status(400).json({ error: "Cadastre o CNPJ ou CPF da empresa antes de contratar." });
+
+  try {
+    const customer = await garantirCliente(db, empresa);
+    const corpo = {
+      customer,
+      billingType: "CREDIT_CARD",
+      value: d.preco,
+      nextDueDate: new Date().toISOString().split("T")[0],
+      cycle: "MONTHLY",
+      description: `Destaque ${d.nome} — RYCS`,
+      externalReference: `destaque:${entityId}:${tipo}`,
+    };
+
+    if (!isIP(req.ip)) return res.status(400).json({ error: "Não foi possível identificar o IP do pagador." });
+    corpo.remoteIp = req.ip;
+
+    // Dados do cartão vão direto ao gateway. Guardamos só o que o Asaas devolve
+    // tokenizado (bandeira e quatro dígitos).
+    const savedCardId = req.body?.savedCardId;
+    if (savedCardId) {
+      const saved = db.prepare("SELECT * FROM saved_cards WHERE id = ? AND companyId = ?").get(savedCardId, entityId);
+      if (!saved) return res.status(400).json({ error: "Cartão salvo não encontrado." });
+      corpo.creditCardToken = saved.token;
+    } else {
+      const cartao = req.body?.cartao || {};
+      const titular = req.body?.titular || {};
+      const faltando = ["numero", "validadeMes", "validadeAno", "cvv", "nome"].filter((k) => !String(cartao[k] || "").trim());
+      if (faltando.length) return res.status(400).json({ error: "Preencha todos os dados do cartão." });
+      corpo.creditCard = {
+        holderName: cartao.nome,
+        number: String(cartao.numero).replace(/\D/g, ""),
+        expiryMonth: String(cartao.validadeMes).padStart(2, "0"),
+        expiryYear: String(cartao.validadeAno).length === 2 ? `20${cartao.validadeAno}` : String(cartao.validadeAno),
+        ccv: String(cartao.cvv),
+      };
+      const email = String(titular.email || "").trim() || db.prepare("SELECT email FROM users WHERE id = ?").get(userId)?.email;
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Informe um e-mail válido do titular.", campo: "email" });
+      const documento = String(titular.documento || "").replace(/\D/g, "");
+      const cep = String(titular.cep || "").replace(/\D/g, "");
+      const endereco = String(titular.numero || "").trim();
+      if (![11, 14].includes(documento.length) || cep.length !== 8 || !endereco)
+        return res.status(400).json({ error: "Informe CPF ou CNPJ, CEP e número do endereço do titular." });
+      const phoneRaw = String(titular.telefone || empresa.telefoneEmpresa || empresa.whatsapp || "").replace(/\D/g, "");
+      if (!phoneRaw) return res.status(400).json({ error: "Cadastre um telefone antes de pagar com cartão.", campo: "telefone" });
+      corpo.creditCardHolderInfo = { name: titular.nome || cartao.nome, email, cpfCnpj: documento, postalCode: cep, addressNumber: endereco, phone: phoneRaw };
+    }
+
+    // Troca de nível: cancela a recorrência anterior antes de criar a nova.
+    if (empresa.destaqueAsaasId) {
+      try { await asaas(`/subscriptions/${empresa.destaqueAsaasId}`, { method: "DELETE" }); }
+      catch (e) { console.warn("[asaas] cancelar destaque anterior:", e.status ?? e.message); }
+    }
+
+    const cobranca = await asaas("/subscriptions", { method: "POST", body: corpo, timeoutMs: 60_000 });
+    if (!cobranca?.id) throw new Error("Asaas retornou uma assinatura sem identificador");
+    db.prepare("UPDATE companies SET destaqueAsaasId = ? WHERE id = ?").run(cobranca.id, entityId);
+
+    // Cartão cobra de forma síncrona: se já confirmou, ativa na hora (o webhook
+    // também ativa, de forma idempotente).
+    let ativado = false, cartaoInfo = {};
+    try {
+      const lista = await asaas(`/payments?subscription=${encodeURIComponent(cobranca.id)}&limit=5`);
+      const pgtos = lista?.data || [];
+      cartaoInfo = { ...(cobranca.creditCard || {}), ...(pgtos[0]?.creditCard || {}) };
+      if (pgtos.some((p) => ["RECEIVED", "CONFIRMED"].includes(p.status))) {
+        db.prepare("UPDATE companies SET destaque = 1, destaqueTipo = ? WHERE id = ?").run(tipo, entityId);
+        ativado = true;
+      }
+    } catch (e) { console.warn("[asaas] confirmação destaque:", e.message); }
+
+    if (!savedCardId && req.body?.salvarCartao && cartaoInfo.creditCardToken) {
+      const jaExiste = db.prepare("SELECT id FROM saved_cards WHERE companyId = ? AND token = ?").get(entityId, cartaoInfo.creditCardToken);
+      if (!jaExiste) db.prepare(`INSERT INTO saved_cards (id, companyId, apelido, bandeira, final4, token, holderName, tipo, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(uid(), entityId, "", cartaoInfo.creditCardBrand || "", cartaoInfo.creditCardNumber || "", cartaoInfo.creditCardToken, req.body?.cartao?.nome || "", "CREDIT_CARD", agora());
+    }
+
+    res.json({ ok: true, ativado, tipo, cartaoFinal: cartaoInfo.creditCardNumber || "" });
+  } catch (err) {
+    console.error("[asaas] destaque assinatura:", err.message);
+    const primeiro = Array.isArray(err.corpo?.errors) ? err.corpo.errors[0] : null;
+    res.status(err instanceof AsaasError ? 400 : 502)
+      .json({ error: primeiro?.description || (err instanceof AsaasError ? err.message : "Não foi possível processar o pagamento.") });
+  }
+});
+
+// Encerrar o destaque: cancela a recorrência no Asaas e desliga a visibilidade.
+router.post("/destaque/cancel", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresas podem cancelar destaque" });
+  const empresa = db.prepare("SELECT id, destaqueAsaasId FROM companies WHERE id = ?").get(entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+  if (empresa.destaqueAsaasId && asaasAtivo()) {
+    try { await asaas(`/subscriptions/${empresa.destaqueAsaasId}`, { method: "DELETE" }); }
+    catch (e) { console.warn("[asaas] cancelar destaque:", e.status ?? e.message); }
+  }
+  db.prepare("UPDATE companies SET destaque = 0, destaqueTipo = '', destaqueAsaasId = NULL WHERE id = ?").run(entityId);
+  res.json({ ok: true });
 });
 
 // A empresa vê os próprios pedidos; o admin vê todos os pendentes.

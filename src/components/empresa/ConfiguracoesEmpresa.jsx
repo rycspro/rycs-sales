@@ -3,7 +3,7 @@ import { useUnsavedChanges } from "../../lib/unsavedChanges.js";
 import SegurancaConta from "../conta/SegurancaConta.jsx";
 import { useState, useEffect, useRef } from "react";
 import {
-  Building2, Users, Bell, Lock, Save, Check, Settings,
+  Users, Bell, Lock, Save, Check, Settings,
   AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
   ImagePlus, Trash2, Eye, EyeOff,
@@ -45,7 +45,6 @@ const NOTIF_OPCOES = [
 ];
 
 const SECOES_NAV = [
-  { key: "dados", label: "Dados da empresa", icon: Building2 },
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
   { key: "seguranca", label: "Segurança", icon: Lock },
@@ -531,7 +530,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
             }}
           >
             {visivel ? <Eye size={15} /> : <EyeOff size={15} />}
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Deixar visível</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Deixar Empresa Visível para Profissionais</span>
             <span style={{ width: 38, height: 22, borderRadius: 999, padding: 2, background: visivel ? "var(--brand)" : "var(--surface-3, #d1d5db)", transition: "background .2s", display: "inline-block" }}>
               <span style={{ display: "block", width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transform: visivel ? "translateX(16px)" : "translateX(0)", transition: "transform .2s" }} />
             </span>

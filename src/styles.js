@@ -144,6 +144,19 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 .vx-mobile-actions{display:flex;justify-content:flex-end;margin-bottom:12px}
 .vx-mobile-actions .vx-btn{min-height:44px}
 .vx-content-chat>.vx-mobile-actions,.vx-content-settings>.vx-mobile-actions{padding:12px 16px 0;margin-bottom:12px}
+/* Barra de topo do celular: logo RYCS à esquerda, conta/empresa à direita */
+.vx-mobile-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.vx-mobile-topbar .vx-btn{min-height:40px}
+.vx-mobile-logo{height:30px;width:auto;max-width:150px;object-fit:contain;display:block}
+.vx-content-chat>.vx-mobile-topbar,.vx-content-settings>.vx-mobile-topbar{padding:12px 16px 0;margin-bottom:12px}
+/* Menu completo do celular (equivalente à sidebar web) */
+.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(17,24,39,.42);display:flex;justify-content:flex-end;animation:vxin .18s ease}
+.vx-mobilemenu{width:min(84vw,340px);height:100%;background:var(--surface-solid,var(--surface));border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(20,30,45,.18);display:flex;flex-direction:column;animation:vxslidein .22s cubic-bezier(.22,1,.36,1)}
+@keyframes vxslidein{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.vx-mobilemenu-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.vx-mobilemenu-list{flex:1;overflow-y:auto;padding:8px 8px 4px;display:flex;flex-direction:column;gap:0}
+.vx-mobilemenu-list .vx-subitem{padding-left:36px!important;min-height:40px!important;font-size:13.5px!important}
+.vx-mobilemenu-sair{margin:4px 8px calc(10px + env(safe-area-inset-bottom,0px));color:var(--red)!important;flex-shrink:0;border-top:1px solid var(--border);border-radius:0}
 .vx-content{padding:24px max(16px,env(safe-area-inset-right,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:820px;margin:0 auto}
 .vx-content-chat{padding:0!important;max-width:none!important;margin:0!important;overflow:hidden;display:flex;flex-direction:column}
 .vx-content-settings{padding:0!important;max-width:none!important;margin:0!important;}
@@ -174,6 +187,7 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
 
 @media (min-width:900px){
   .vx-mobile-actions{display:none}
+  .vx-mobile-topbar{display:none}
   .vx-content{padding:30px 36px 56px;max-width:none;margin:0;width:100%}
   .vx-content-chat{padding:0!important;overflow:hidden}
   .vx-body{display:grid;grid-template-columns:220px 1fr;max-width:none;margin:0}
@@ -798,10 +812,18 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 .vx-account-section{min-width:0}.vx-account-section>h2{font-size:22px;margin:20px 0}.vx-account-form{display:grid;gap:18px;max-width:560px}.vx-account-form label,.vx-account-email{display:grid;gap:8px;font-size:14px}.vx-account-form .vx-btn{justify-self:start;min-height:44px}.vx-account-email{max-width:560px;margin-bottom:20px}.vx-account :is(input,textarea,select){max-width:100%;min-width:0}.vx-account .vx-grid{min-width:0}.vx-account-notification{border-bottom:1px solid var(--border);padding:16px 0;overflow-wrap:anywhere}.vx-account-notification p{font-size:14px}.vx-account-notification .vx-chip{margin-left:8px}
 .vx-sidebar-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-top:1px solid var(--border)}
 .vx-sidebar-account{position:relative;flex-shrink:0}
-.vx-account-logo{display:grid;place-items:center;width:40px;height:40px;padding:3px;border:1.5px solid var(--brand);border-radius:12px;background:var(--surface);cursor:pointer}
+.vx-account-logo{display:flex;align-items:center;gap:4px;height:40px;padding:3px 6px 3px 3px;border:1.5px solid var(--brand);border-radius:12px;background:var(--surface);cursor:pointer}
 .vx-account-logo[aria-expanded="true"]{box-shadow:0 0 0 2px var(--brand-50)}
-.vx-account-logo>img,.vx-account-initial{width:100%;height:100%;border-radius:9px;object-fit:cover}.vx-account-initial{display:grid;place-items:center;background:var(--surface-2);color:var(--brand);font-weight:700;font-size:15px}
-.vx-account-menu{position:absolute;bottom:calc(100% + 8px);right:0;z-index:60;min-width:200px;padding:6px;background:var(--surface);border:1.5px solid var(--brand);border-radius:12px;box-shadow:var(--shadow-pop);max-height:calc(100dvh - 120px);overflow-y:auto}.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
+.vx-account-logo>img,.vx-account-initial{width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0}.vx-account-initial{display:grid;place-items:center;background:var(--surface-2);color:var(--brand);font-weight:700;font-size:15px}
+.vx-account-chevron{color:var(--brand);flex-shrink:0}
+.vx-account-menu button.vx-account-sair{color:var(--red)}
+.vx-account-menu button.vx-account-sair:hover{background:var(--red-50)}
+.vx-account-menu{position:absolute;bottom:calc(100% + 8px);right:0;z-index:60;min-width:200px;padding:6px;background:var(--surface);border:1.5px solid var(--brand);border-radius:12px;box-shadow:var(--shadow-pop);max-height:calc(100dvh - 120px);overflow-y:auto}
+.vx-account-menu--down{bottom:auto;top:calc(100% + 8px)}
+/* Menu de conta sempre opaco: o fundo glass deixava o conteúdo atrás vazar
+   (sobreposição ilegível), principalmente no dropdown da barra de topo mobile. */
+.vx-account-menu{background:var(--surface-solid,var(--surface))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
 /* ── Glass workspace ──────────────────────────────────────────────────────
    Material de vidro em toda a plataforma: fundo ambiente com luz difusa,
    painéis translúcidos com reflexo na borda superior, trilho lateral e
@@ -1007,7 +1029,7 @@ html[data-versao="sol"] .vx-conv-avatar{border-radius:8px!important}
   .vx-bottomnav{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:6px;gap:2px;border-radius:30px;
     border:1px solid var(--glass-border);background:var(--glass-strong);box-shadow:var(--glass-edge),var(--shadow-pop);min-height:0}
   .vx-navbtn{min-height:54px;border-radius:24px;padding:8px 2px 7px;transition:background .2s,color .2s}
-  .vx-navbtn[data-on="1"]{background:var(--brand-50)}
+  .vx-navbtn[data-on="1"]{background:none}
   .vx-navbar-indicator{display:none}
 }
 @supports not (backdrop-filter:blur(1px)){.vx-content,.vx-stat,.vx-account-group{background:var(--surface-solid)}}

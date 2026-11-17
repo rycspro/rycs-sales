@@ -1,12 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw } from "lucide-react";
+import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import OnbPerfil from "./OnbPerfil.jsx";
-import { MODALIDADES, SEGMENTOS, DISPONIBILIDADES, SKILLS, LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
+import { LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
+import MultiSelect from "../ui/MultiSelect.jsx";
+import ComboSelect from "../ui/ComboSelect.jsx";
+import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
+import { IDIOMAS, NIVEIS_IDIOMA } from "../../../shared/localidades.js";
+import {
+  AREAS_ATUACAO, HABILIDADES, ANOS_EXPERIENCIA, DISPONIBILIDADE as DISPONIBILIDADE_CAD,
+  SEGMENTOS as SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS, TIPOS_FORMACAO,
+} from "../auth/CadastroProfissional.jsx";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", bdr: "BDR", pap: "PAP", "sem-exp": "Iniciante" };
+
+// Cargos de vendas como opções {value,label} para o multi-seletor.
+const CARGOS_OPC = ORDEM_FUNCOES.map((k) => ({ value: k, label: FUNCOES[k]?.nome || k }));
+
+// Mapa value→label de todas as listas comerciais do cadastro, para a vitrine.
+const LABELS_COMERCIAIS = {};
+for (const lista of [AREAS_ATUACAO, HABILIDADES, SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS, ANOS_EXPERIENCIA, DISPONIBILIDADE_CAD, TIPOS_FORMACAO, NIVEIS_IDIOMA, CARGOS_OPC])
+  for (const o of lista) LABELS_COMERCIAIS[o.value] = o.label;
+const rotuloComercial = (v) => LABELS_COMERCIAIS[v] || v;
+
+// Lê o perfilComercial (JSON string ou objeto) com tolerância a formato.
+function lerPerfilComercial(valor) {
+  try { const o = typeof valor === "string" ? JSON.parse(valor || "{}") : (valor || {}); return o || {}; }
+  catch { return {}; }
+}
 
 // Cadastros antigos guardavam "Guarulhos, SP" inteiro no campo cidade. Repetir
 // o estado depois disso vira "Guarulhos, SP · SP".
@@ -61,13 +84,33 @@ function Marcadores({ opcoes, valor = [], onChange, max = 12 }) {
   );
 }
 
+// Item do menu de opções da foto de perfil.
+function ItemMenuFoto({ Icon, label, onClick, danger }) {
+  return (
+    <button type="button" role="menuitem" onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", gap: 9, width: "100%", textAlign: "left",
+        padding: "8px 10px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer",
+        font: "inherit", fontSize: 13, color: danger ? "var(--danger, #dc2626)" : "var(--ink)",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-1)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+      <Icon size={14} /> {label}
+    </button>
+  );
+}
+
 export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) {
   const [secao, setSecao] = useState("curriculo"); // curriculo | apresentacao
-  const [editando, setEditando] = useState(false);
+  // Abre já em modo de edição: os campos ficam visíveis e editáveis sem
+  // precisar clicar em "Editar perfil" — o profissional muda quando quiser.
+  const [editando, setEditando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [avaliacaoFoto, setAvaliacaoFoto] = useState(null);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
   const [guiaAberto, setGuiaAberto] = useState(false);
+  const [menuFoto, setMenuFoto] = useState(false);        // menu de opções da foto
+  const [fotoAmpliada, setFotoAmpliada] = useState(false); // "Ver foto" em tamanho grande
   const arquivo = useRef(null);
   const [certificados, setCertificados] = useState([]);
 
@@ -75,14 +118,30 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   // currículo comercial dele — é o que a empresa lê antes de convidar.
   useEffect(() => { api("/courses/me/certificates").then((r) => setCertificados(r?.certificados || [])); }, []);
 
-  const [form, setForm] = useState(() => ({
-    nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "",
-    pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
-    genero: eu.genero || "",
-    experiencia: eu.experiencia || "", disponibilidade: eu.disponibilidade || "",
-    segmentos: eu.segmentos || [], modalidades: eu.modalidades || [],
-    regioes: eu.regioes || [], skills: eu.skills || [],
-  }));
+  // Dados comerciais vêm do cadastro, guardados em perfilComercial (JSON).
+  const pc = useMemo(() => lerPerfilComercial(eu.perfilComercial), [eu.perfilComercial]);
+
+  const [form, setForm] = useState(() => {
+    const p = lerPerfilComercial(eu.perfilComercial);
+    return {
+      nome: eu.nome || "", perfil: eu.perfil || "",
+      pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
+      genero: eu.genero || "",
+      perfilComercial: {
+        areasAtuacao: p.areasAtuacao || [], habilidades: p.habilidades || [],
+        segmentos: p.segmentos || [], ferramentas: p.ferramentas || [],
+        conhecimentos: p.conhecimentos || [], equipamentos: p.equipamentos || [],
+        anosExperiencia: p.anosExperiencia || "", disponibilidade: p.disponibilidade || "",
+        cargosExp: p.cargosExp || [], formacoes: p.formacoes || [], idiomas: p.idiomas || [],
+      },
+    };
+  });
+
+  const setPC = (campo, valor) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: valor } }));
+  // Itens repetíveis (formações, idiomas): adicionar, editar um campo, remover.
+  const addItem = (campo, vazio) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: [...(f.perfilComercial[campo] || []), vazio] } }));
+  const setItem = (campo, i, chave, val) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: f.perfilComercial[campo].map((x, j) => j === i ? { ...x, [chave]: val } : x) } }));
+  const remItem = (campo, i) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: f.perfilComercial[campo].filter((_, j) => j !== i) } }));
 
   const stats = useMemo(() => {
     const meus = (db.submissions || []).filter((s) => s.sellerId === eu.id);
@@ -97,9 +156,9 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
     };
   }, [db, eu]);
 
-  // O selo diz só se o perfil foi aprovado, com a nota da avaliação ao lado.
-  // "Parcial" era um terceiro estado que não significava nada para quem lê.
-  const aprovado = eu.status === "aprovado" || eu.status === "parcial";
+  // Não há mais etapa de aprovação: todo profissional entra ativo na plataforma.
+  // O selo só mostra que o perfil está ativo, com a nota da avaliação ao lado
+  // quando existir.
   const nota = Number(eu.scoreTriagem) || 0;
 
   const salvar = async () => {
@@ -107,7 +166,15 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
     const r = await apiPatch(`/sellers/${eu.id}`, form);
     setSalvando(false);
     if (r?.error) return aviso(r.error);
-    up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, ...form } : s) }));
+    up((d) => ({
+      sellers: d.sellers.map((s) => {
+        if (s.id !== eu.id) return s;
+        const atual = lerPerfilComercial(s.perfilComercial);
+        const { perfilComercial, ...cols } = form;
+        // perfilComercial fica como string no estado local, igual ao servidor.
+        return { ...s, ...cols, perfilComercial: JSON.stringify({ ...atual, ...perfilComercial }) };
+      }),
+    }));
     setEditando(false);
     aviso("Perfil atualizado.");
   };
@@ -173,13 +240,31 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
                 ? <img src={eu.foto} alt={`Foto de ${eu.nome}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : String(eu.nome || "?").slice(0, 1).toUpperCase()}
             </div>
-            <button className="vx-btn vx-btn-sm" onClick={() => setGuiaAberto(true)} disabled={enviandoFoto}
+            <button className="vx-btn vx-btn-sm" onClick={() => setMenuFoto((v) => !v)} disabled={enviandoFoto}
               style={{ position: "absolute", right: -6, bottom: -6, padding: "5px 7px", borderRadius: 999 }}
-              title="Trocar foto">
+              aria-haspopup="menu" aria-expanded={menuFoto} title="Opções da foto">
               <Camera size={13} />
             </button>
             <input ref={arquivo} hidden type="file" accept={LIMITES.tiposAceitos.join(",")}
               onChange={(e) => { enviarFoto(e.target.files?.[0]); e.target.value = ""; }} />
+
+            {/* Menu de opções da foto: ver, editar (guia de enquadramento),
+                trocar (escolher arquivo) e remover. */}
+            {menuFoto && (
+              <>
+                <div onClick={() => setMenuFoto(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                <div role="menu" style={{
+                  position: "absolute", left: "50%", top: "100%", transform: "translateX(-50%)", marginTop: 10,
+                  zIndex: 41, minWidth: 168, padding: 5, background: "var(--surface)", border: "1px solid var(--border)",
+                  borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,.18)",
+                }}>
+                  {eu.foto && <ItemMenuFoto Icon={Eye} label="Ver foto" onClick={() => { setFotoAmpliada(true); setMenuFoto(false); }} />}
+                  <ItemMenuFoto Icon={Pencil} label={eu.foto ? "Editar foto" : "Adicionar foto"} onClick={() => { setGuiaAberto(true); setMenuFoto(false); }} />
+                  <ItemMenuFoto Icon={Camera} label={eu.foto ? "Trocar" : "Escolher arquivo"} onClick={() => { setMenuFoto(false); arquivo.current?.click(); }} />
+                  {eu.foto && <ItemMenuFoto Icon={Trash2} label="Remover" danger onClick={() => { setMenuFoto(false); removerFoto(); }} />}
+                </div>
+              </>
+            )}
           </div>
 
           <div style={{ flex: 1, minWidth: 200 }}>
@@ -193,8 +278,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
           </div>
 
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-            <span className={"vx-badge " + (aprovado ? "vx-badge-brand" : "vx-badge-red")}>
-              {aprovado ? "Perfil aprovado" : "Perfil não aprovado"}
+            <span className="vx-badge vx-badge-brand">
+              Perfil ativo
               {nota > 0 && <> · {nota}%</>}
             </span>
             {/* A avaliação fica sempre à mão. Quem estudou na Academy precisa
@@ -207,7 +292,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             )}
             {secao === "curriculo" && (
               <button className="vx-btn vx-btn-sm" onClick={() => setEditando(!editando)}>
-                {editando ? <><X size={13} /> Cancelar</> : <><Pencil size={13} /> Editar perfil</>}
+                {editando ? <><Eye size={13} /> Ver Perfil</> : <><Pencil size={13} /> Editar perfil</>}
               </button>
             )}
           </div>
@@ -220,6 +305,20 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
         {enviandoFoto && <div className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>Verificando a foto…</div>}
       </div>
+
+      {/* "Ver foto" — a foto atual em tamanho grande. */}
+      {fotoAmpliada && eu.foto && (
+        <div onClick={() => setFotoAmpliada(false)} role="dialog" aria-label="Foto de perfil"
+          style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: 420, width: "100%" }}>
+            <img src={eu.foto} alt={`Foto de ${eu.nome}`} style={{ width: "100%", borderRadius: 16, display: "block" }} />
+            <button className="vx-btn vx-btn-sm" onClick={() => setFotoAmpliada(false)} aria-label="Fechar"
+              style={{ position: "absolute", top: 8, right: 8, borderRadius: 999, padding: "5px 7px" }}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Orientação antes do upload. Descobrir o padrão levando recusa é a
           pior forma de aprender qual foto serve. */}
@@ -333,10 +432,6 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
           <div className="vx-grid vx-g2">
             {campo("nome", "Nome *")}
-            {campo("sobrenome", "Sobrenome *")}
-          </div>
-          <div className="vx-grid vx-g2" style={{ marginTop: 9 }}>
-            {campo("titulo", "Título profissional", { placeholder: "Closer B2B | SaaS | Energia" })}
             {campo("whats", "WhatsApp")}
           </div>
           <div className="vx-grid vx-g3" style={{ marginTop: 9 }}>
@@ -373,31 +468,93 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             Sua apresentação, bio, redes sociais, vídeo e portfólio ficam na aba <b>Apresentação</b>, acima.
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div className="vx-label">Disponibilidade</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {DISPONIBILIDADES.map((d) => (
-                <button key={d.chave} type="button"
-                  className={"vx-chip" + (form.disponibilidade === d.chave ? " vx-badge-brand" : "")}
-                  onClick={() => setForm({ ...form, disponibilidade: form.disponibilidade === d.chave ? "" : d.chave })}
-                  style={{ cursor: "pointer", borderColor: form.disponibilidade === d.chave ? "var(--brand)" : "var(--border)" }}>
-                  {d.nome}
-                </button>
-              ))}
+          <div className="vx-eyebrow" style={{ margin: "18px 0 10px" }}>Experiência comercial</div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Áreas de atuação</div>
+            <MultiSelect opcoes={AREAS_ATUACAO} valor={form.perfilComercial.areasAtuacao} onChange={(v) => setPC("areasAtuacao", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Habilidades</div>
+            <MultiSelect opcoes={HABILIDADES} valor={form.perfilComercial.habilidades} onChange={(v) => setPC("habilidades", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Segmentos em que já vendeu</div>
+            <MultiSelect opcoes={SEGMENTOS_CAD} valor={form.perfilComercial.segmentos} onChange={(v) => setPC("segmentos", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Ferramentas que domina</div>
+            <MultiSelect opcoes={FERRAMENTAS} valor={form.perfilComercial.ferramentas} onChange={(v) => setPC("ferramentas", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Conhecimentos</div>
+            <MultiSelect opcoes={CONHECIMENTOS} valor={form.perfilComercial.conhecimentos} onChange={(v) => setPC("conhecimentos", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Equipamentos</div>
+            <MultiSelect opcoes={EQUIPAMENTOS} valor={form.perfilComercial.equipamentos} onChange={(v) => setPC("equipamentos", v)} placeholder="Selecione" />
+          </div>
+          <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
+            <div>
+              <div className="vx-label">Anos de experiência</div>
+              <ComboSelect opcoes={ANOS_EXPERIENCIA} valor={form.perfilComercial.anosExperiencia} onChange={(v) => setPC("anosExperiencia", v)} placeholder="Selecione" />
+            </div>
+            <div>
+              <div className="vx-label">Disponibilidade</div>
+              <ComboSelect opcoes={DISPONIBILIDADE_CAD} valor={form.perfilComercial.disponibilidade} onChange={(v) => setPC("disponibilidade", v)} placeholder="Selecione" />
             </div>
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div className="vx-label">Modalidades comerciais</div>
-            <Marcadores opcoes={MODALIDADES} valor={form.modalidades} onChange={(v) => setForm({ ...form, modalidades: v })} />
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Cargos com experiência em vendas</div>
+            <MultiSelect opcoes={CARGOS_OPC} valor={form.perfilComercial.cargosExp}
+              onChange={(v) => setForm((f) => ({ ...f, perfil: v.includes(f.perfil) ? f.perfil : (v[0] || ""), perfilComercial: { ...f.perfilComercial, cargosExp: v } }))}
+              placeholder="Selecione" />
+            {form.perfilComercial.cargosExp.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <div className="vx-label">Experiência principal</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {form.perfilComercial.cargosExp.map((k) => (
+                    <button key={k} type="button"
+                      className={"vx-chip" + (form.perfil === k ? " vx-badge-brand" : "")}
+                      onClick={() => setForm((f) => ({ ...f, perfil: k }))}
+                      style={{ cursor: "pointer", borderColor: form.perfil === k ? "var(--brand)" : "var(--border)" }}>
+                      {FUNCOES[k]?.nome || k}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
           <div style={{ marginTop: 12 }}>
-            <div className="vx-label">Segmentos em que já vendeu</div>
-            <Marcadores opcoes={SEGMENTOS} valor={form.segmentos} onChange={(v) => setForm({ ...form, segmentos: v })} />
+            <div className="vx-label">Formações</div>
+            {form.perfilComercial.formacoes.map((f, i) => (
+              <div key={i} className="vx-grid vx-g2" style={{ marginBottom: 8 }}>
+                <ComboSelect opcoes={TIPOS_FORMACAO} valor={f.tipo} onChange={(v) => setItem("formacoes", i, "tipo", v)} placeholder="Tipo de formação" />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input className="vx-input" style={{ flex: 1 }} value={f.descricao || ""} maxLength={120}
+                    placeholder="Curso / instituição" onChange={(e) => setItem("formacoes", i, "descricao", e.target.value)} />
+                  <button type="button" className="vx-btn vx-btn-sm" onClick={() => remItem("formacoes", i)} aria-label="Remover formação"><Trash2 size={13} /></button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="vx-btn vx-btn-sm" onClick={() => addItem("formacoes", { tipo: "", descricao: "" })}>+ Adicionar formação</button>
           </div>
+
           <div style={{ marginTop: 12 }}>
-            <div className="vx-label">Habilidades</div>
-            <Marcadores opcoes={SKILLS} valor={form.skills} onChange={(v) => setForm({ ...form, skills: v })} />
+            <div className="vx-label">Idiomas</div>
+            {form.perfilComercial.idiomas.map((idi, i) => (
+              <div key={i} className="vx-grid vx-g2" style={{ marginBottom: 8 }}>
+                <ComboSelect opcoes={IDIOMAS} valor={idi.idioma} onChange={(v) => setItem("idiomas", i, "idioma", v)} placeholder="Idioma" />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ flex: 1 }}>
+                    <ComboSelect opcoes={NIVEIS_IDIOMA} valor={idi.nivel} onChange={(v) => setItem("idiomas", i, "nivel", v)} placeholder="Nível" />
+                  </div>
+                  <button type="button" className="vx-btn vx-btn-sm" onClick={() => remItem("idiomas", i)} aria-label="Remover idioma"><Trash2 size={13} /></button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="vx-btn vx-btn-sm" onClick={() => addItem("idiomas", { idioma: "", nivel: "" })}>+ Adicionar idioma</button>
           </div>
 
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
@@ -415,35 +572,63 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
       {/* -------------------------------------------------- vitrine ---- */}
       {!editando && (
         <>
-          {(eu.modalidades?.length || eu.segmentos?.length || eu.skills?.length) ? (
-            <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
-              {!!eu.modalidades?.length && <>
-                <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Modalidades</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                  {eu.modalidades.map((m) => <span key={m} className="vx-chip">{m}</span>)}
-                </div>
-              </>}
-              {!!eu.segmentos?.length && <>
-                <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Segmentos</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                  {eu.segmentos.map((m) => <span key={m} className="vx-chip">{m}</span>)}
-                </div>
-              </>}
-              {!!eu.skills?.length && <>
-                <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Habilidades</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {eu.skills.map((m) => <span key={m} className="vx-chip">{m}</span>)}
-                </div>
-              </>}
-            </div>
-          ) : (
-            <div className="vx-card" style={{ padding: 18, marginTop: 12, textAlign: "center" }}>
-              <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>
-                Seu currículo comercial ainda está vazio. Toque em <b>Editar perfil</b> para adicionar
-                título, apresentação, modalidades e segmentos — é o que as empresas leem antes de te convidar.
-              </p>
-            </div>
-          )}
+          {(() => {
+            const secoes = [
+              ["Cargos", pc.cargosExp],
+              ["Áreas de atuação", pc.areasAtuacao],
+              ["Habilidades", pc.habilidades],
+              ["Segmentos", pc.segmentos],
+              ["Ferramentas", pc.ferramentas],
+              ["Conhecimentos", pc.conhecimentos],
+              ["Equipamentos", pc.equipamentos],
+            ].filter(([, arr]) => arr?.length);
+            const formacoes = (pc.formacoes || []).filter((f) => f?.tipo || f?.descricao);
+            const idiomas = (pc.idiomas || []).filter((i) => i?.idioma);
+            const temAlgo = secoes.length || formacoes.length || idiomas.length || pc.anosExperiencia || pc.disponibilidade;
+            return temAlgo ? (
+              <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
+                {secoes.map(([titulo, arr]) => (
+                  <div key={titulo} style={{ marginBottom: 14 }}>
+                    <div className="vx-eyebrow" style={{ marginBottom: 6 }}>{titulo}</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {arr.map((v) => <span key={v} className="vx-chip">{rotuloComercial(v)}</span>)}
+                    </div>
+                  </div>
+                ))}
+                {!!idiomas.length && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Idiomas</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {idiomas.map((i, k) => <span key={k} className="vx-chip">{i.idioma}{i.nivel ? ` · ${rotuloComercial(i.nivel)}` : ""}</span>)}
+                    </div>
+                  </div>
+                )}
+                {!!formacoes.length && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Formações</div>
+                    {formacoes.map((f, k) => (
+                      <div key={k} style={{ fontSize: 13, color: "var(--ink-2)", marginBottom: 3 }}>
+                        <b>{rotuloComercial(f.tipo) || "Formação"}</b>{f.descricao ? ` — ${f.descricao}` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {(pc.anosExperiencia || pc.disponibilidade) && (
+                  <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+                    {pc.anosExperiencia && <div><div className="vx-eyebrow" style={{ marginBottom: 6 }}>Experiência</div><span className="vx-chip">{rotuloComercial(pc.anosExperiencia)}</span></div>}
+                    {pc.disponibilidade && <div><div className="vx-eyebrow" style={{ marginBottom: 6 }}>Disponibilidade</div><span className="vx-chip">{rotuloComercial(pc.disponibilidade)}</span></div>}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="vx-card" style={{ padding: 18, marginTop: 12, textAlign: "center" }}>
+                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>
+                  Seu currículo comercial ainda está vazio. Toque em <b>Editar perfil</b> para adicionar suas
+                  áreas, habilidades e segmentos — é o que as empresas leem antes de te convidar.
+                </p>
+              </div>
+            );
+          })()}
 
           <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
             <div className="vx-row" style={{ marginBottom: 10 }}>

@@ -40,7 +40,7 @@ function getProfissionaisBase() {
     CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END AS temFoto,
     CASE WHEN curriculo IS NOT NULL AND curriculo != '' THEN 1 ELSE 0 END AS temCurriculo, curriculoNome,
     titulo, bio, segmentos, modalidades, skills, disponibilidade, dataNascimento, genero, criadoEm, status, xpRespostas, disc
-    FROM sellers WHERE status IN ('aprovado','parcial') ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
+    FROM sellers ORDER BY nota DESC, criadoEm DESC LIMIT 200`).all();
   _profCacheTs = now;
   return _profCache;
 }
@@ -154,8 +154,8 @@ router.get("/sellers/:id/curriculo", (req, res) => {
 
 router.post("/professionals/:id/note", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
-  const seller = db.prepare("SELECT id FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(req.params.id);
-  if (!seller) return res.status(404).json({ error: "Profissional ativo não encontrado" });
+  const seller = db.prepare("SELECT id FROM sellers WHERE id = ?").get(req.params.id);
+  if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
   const observacao = String(req.body?.observacao || "").slice(0, 1200);
   db.prepare(`INSERT INTO professional_notes (companyId, sellerId, observacao, atualizadoEm)
     VALUES (?, ?, ?, ?)
@@ -166,8 +166,8 @@ router.post("/professionals/:id/note", (req, res) => {
 
 router.post("/professionals/:id/partnership", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
-  const seller = db.prepare("SELECT id, status FROM sellers WHERE id = ? AND status IN ('aprovado','parcial')").get(req.params.id);
-  if (!seller) return res.status(404).json({ error: "Profissional ativo não encontrado" });
+  const seller = db.prepare("SELECT id, status FROM sellers WHERE id = ?").get(req.params.id);
+  if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
   const id = uid();
   const mensagem = String(req.body?.mensagem || "").slice(0, 600);
   db.prepare(`INSERT INTO partnership_requests (id, companyId, sellerId, status, mensagem, origem, criadoEm)
@@ -211,7 +211,7 @@ router.post("/sellers", (req, res) => {
   const id = uid();
   db.prepare(`
     INSERT INTO sellers (id, nome, email, whats, cidade, perfil, experiencia, status, nota, pix, disponivel, pendente, sacado, respostas, video, criadoEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'triagem', ?, ?, 0, 0, 0, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'aprovado', ?, ?, 0, 0, 0, ?, ?, ?)
   `).run(id, nome, email, whats, cidade || "", perfil || "sdr", experiencia || "", nota || 100, pix || "", JSON.stringify(respostas || []), video || "", agora());
   res.json({ id });
 });
@@ -261,6 +261,36 @@ router.patch("/sellers/:id", (req, res) => {
       vals.push(JSON.stringify((Array.isArray(v) ? v : []).slice(0, 20).map((x) => String(x).slice(0, 60))));
     }
   }
+  // perfilComercial é um bloco JSON. Mesclamos as chaves do currículo comercial
+  // (as mesmas do cadastro) preservando o resto do objeto — nunca sobrescrever
+  // disc/experiencia nem perder o que já existe.
+  if (fields.perfilComercial && typeof fields.perfilComercial === "object" && !Array.isArray(fields.perfilComercial) && role !== "empresa") {
+    const row = db.prepare("SELECT perfilComercial FROM sellers WHERE id = ?").get(id);
+    let atual = {};
+    try { atual = JSON.parse(row?.perfilComercial || "{}") || {}; } catch {}
+    const limpo = {};
+    for (const c of ["areasAtuacao", "habilidades", "segmentos", "ferramentas", "conhecimentos", "equipamentos"]) {
+      if (Array.isArray(fields.perfilComercial[c]))
+        limpo[c] = fields.perfilComercial[c].slice(0, 40).map((x) => String(x).slice(0, 80));
+    }
+    for (const c of ["anosExperiencia", "disponibilidade"]) {
+      if (typeof fields.perfilComercial[c] === "string")
+        limpo[c] = fields.perfilComercial[c].slice(0, 80);
+    }
+    if (Array.isArray(fields.perfilComercial.cargosExp))
+      limpo.cargosExp = fields.perfilComercial.cargosExp.slice(0, 20).map((x) => String(x).slice(0, 40));
+    if (Array.isArray(fields.perfilComercial.formacoes))
+      limpo.formacoes = fields.perfilComercial.formacoes.slice(0, 20)
+        .map((f) => ({ tipo: String(f?.tipo || "").slice(0, 60), descricao: String(f?.descricao || "").slice(0, 200) }))
+        .filter((f) => f.tipo || f.descricao);
+    if (Array.isArray(fields.perfilComercial.idiomas))
+      limpo.idiomas = fields.perfilComercial.idiomas.slice(0, 20)
+        .map((i) => ({ idioma: String(i?.idioma || "").slice(0, 40), nivel: String(i?.nivel || "").slice(0, 40) }))
+        .filter((i) => i.idioma);
+    sets.push("perfilComercial = ?");
+    vals.push(JSON.stringify({ ...atual, ...limpo }));
+  }
+
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
 
   // Troca de chave Pix é operação sensível: reautenticação (atrás de flag),

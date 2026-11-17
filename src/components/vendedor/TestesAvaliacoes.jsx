@@ -7,6 +7,7 @@ import {
 import { api } from "../../lib/api.js";
 import DiscAvaliacao from "./DiscAvaliacao.jsx";
 import BigFive from "./BigFive.jsx";
+import Autossabotagem from "./Autossabotagem.jsx";
 
 // Azul institucional White Editorial (mesmo dos fluxos de cadastro/onboarding).
 const AZUL = "#318CE7";
@@ -48,13 +49,14 @@ const CATALOGO = [
     perguntas: "50 afirmações", tempo: "7 a 12 min", publicado: true, bf: true,
   },
   {
-    id: "sabotadores", categoria: "personalidade", Icon: ShieldAlert,
-    nome: "Sabotadores internos",
-    descricao: "Entenda padrões mentais que podem atrapalhar seu desempenho.",
-    objetivo: "Reconhecer gatilhos internos para trabalhá-los conscientemente.",
-    avalia: "Padrões automáticos de autossabotagem e reação sob pressão.",
-    instrucoes: "", privacidade: "Resultado pessoal e de autoconhecimento, sob seu controle de visibilidade.",
-    perguntas: "", tempo: "", publicado: false,
+    id: "autossabotagem", categoria: "personalidade", Icon: ShieldAlert,
+    nome: "Padrões de Autossabotagem",
+    descricao: "Reconheça hábitos e reações que podem dificultar seu desenvolvimento.",
+    objetivo: "Ajudar a reconhecer comportamentos e hábitos que podem estar dificultando seu desenvolvimento profissional.",
+    avalia: "Oito padrões de comportamento, como autocrítica, perfeccionismo, controle e dificuldade de delegar.",
+    instrucoes: "Para cada afirmação, escolha a frequência com que isso acontece com você. Não há resposta certa ou errada.",
+    privacidade: "Avaliação voluntária e de autoconhecimento, privada por padrão. Visível para empresas só com sua autorização; nunca altera score, ranking ou campanhas.",
+    perguntas: "40 afirmações", tempo: "8 a 12 min", publicado: true, auto: true,
   },
   {
     id: "inteligencia-emocional", categoria: "personalidade", Icon: HeartHandshake,
@@ -128,7 +130,7 @@ const CATALOGO = [
 //   concluido    → já realizada (hoje, só o DISC, via dados existentes)
 //   andamento    → iniciada e não concluída (reservado para o futuro)
 //   disponivel   → publicada e ainda não iniciada
-function estadoDe(item, discV2, big5) {
+function estadoDe(item, discV2, big5, auto) {
   if (!item.publicado) return "indisponivel";
   if (item.v2) {
     if (discV2 && discV2.disponivel === false) return "indisponivel";
@@ -141,6 +143,14 @@ function estadoDe(item, discV2, big5) {
     // Sob feature flag: até confirmar, o padrão seguro é "Em breve".
     if (!big5 || big5.disponivel === false) return "indisponivel";
     const st = big5?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
+  if (item.auto) {
+    // Sob feature flag (revisão interna): padrão seguro é "Em breve".
+    if (!auto || auto.disponivel === false) return "indisponivel";
+    const st = auto?.tentativa?.status;
     if (st === "concluido") return "concluido";
     if (st === "andamento") return "andamento";
     return "disponivel";
@@ -159,14 +169,16 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const [vista, setVista] = useState({ tipo: "catalogo" });
   const [discV2, setDiscV2] = useState(null);
   const [big5, setBig5] = useState(null);
+  const [auto, setAuto] = useState(null);
 
   const carregarDisc = () => api("/disc/avaliacao").then((r) => { if (r && !r.error) setDiscV2(r); });
   const carregarBig5 = () => api("/big-five").then((r) => { if (r && !r.error) setBig5(r); });
-  useEffect(() => { carregarDisc(); carregarBig5(); }, []);
+  const carregarAuto = () => api("/autossabotagem").then((r) => { if (r && !r.error) setAuto(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5) })),
-    [discV2, big5]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto) })),
+    [discV2, big5, auto]
   );
 
   const total = comEstado.length;
@@ -176,6 +188,7 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const abrir = (item) => {
     if (item.v2 && item.estado !== "indisponivel") setVista({ tipo: "disc" });
     else if (item.bf && item.estado !== "indisponivel") setVista({ tipo: "bigfive" });
+    else if (item.auto && item.estado !== "indisponivel") setVista({ tipo: "autossabotagem" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
@@ -195,6 +208,15 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
         aviso={aviso}
         recarregar={() => { carregarBig5(); recarregar?.(); }}
         onVoltar={() => { carregarBig5(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "autossabotagem") {
+    return (
+      <Autossabotagem
+        aviso={aviso}
+        recarregar={() => { carregarAuto(); recarregar?.(); }}
+        onVoltar={() => { carregarAuto(); setVista({ tipo: "catalogo" }); }}
       />
     );
   }

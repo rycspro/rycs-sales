@@ -193,8 +193,8 @@ test("Big Five: rotas exigem dono, retomam progresso e são idempotentes", async
 });
 
 test("Big Five: feature flag desligada mantém a avaliação fora do ar", async (t) => {
-  // Sem BIG5_DISPONIVEL e fora do beta: indisponível (comportamento de produção).
-  const { base, dbPath } = await subirServidor(t);
+  // BIG5_DISPONIVEL=0 força indisponível (padrão agora é ligada, como o DISC v2).
+  const { base, dbPath } = await subirServidor(t, { BIG5_DISPONIVEL: "0", RYCS_ENVIRONMENT: "" });
 
   const db = new Database(dbPath);
   db.prepare("INSERT INTO sellers (id, nome, email, whats, criadoEm) VALUES (?, ?, ?, ?, ?)")
