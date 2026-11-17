@@ -3,7 +3,7 @@ import { useUnsavedChanges } from "../../lib/unsavedChanges.js";
 import SegurancaConta from "../conta/SegurancaConta.jsx";
 import { useState, useEffect, useRef } from "react";
 import {
-  Building2, Users, Bell, Lock, Save, Check, Settings,
+  Users, Bell, Lock, Save, Check, Settings,
   AlertCircle, ChevronRight, Globe,
   CreditCard, Headphones, Gift, Mail, MessageCircle, ExternalLink,
   ImagePlus, Trash2, Eye, EyeOff,
@@ -45,7 +45,6 @@ const NOTIF_OPCOES = [
 ];
 
 const SECOES_NAV = [
-  { key: "dados", label: "Dados da empresa", icon: Building2 },
   { key: "notificacoes", label: "Notificações", icon: Bell },
   { key: "cartoes", label: "Cartões salvos", icon: CreditCard },
   { key: "seguranca", label: "Segurança", icon: Lock },

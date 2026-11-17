@@ -80,6 +80,7 @@ export const NAV = {
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
       { key: "planos", label: "Planos RYCS" },
       { key: "pagamentos-campanhas", label: "Campanhas" },
+      { key: "destaques", label: "Destaques" },
     ] },
     { key: "suporte", label: "Ajuda e suporte", Icon: Headphones },
     { key: "outros", label: "Outros", Icon: Settings },

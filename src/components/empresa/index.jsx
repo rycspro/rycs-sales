@@ -162,6 +162,10 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
           secao="plano" onTrocarSecao={() => {}} />
       )}
+      {aba === "destaques" && (
+        <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
+          secao="destaque" onTrocarSecao={() => {}} />
+      )}
       {aba === "pagamentos-campanhas" && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
           secao="campanhas"
@@ -172,7 +176,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial="dados" somenteConteudo />
       )}
       {aba === "outros" && (
-        <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} />
+        <ConfiguracoesEmpresa emp={emp} up={up} aviso={aviso} db={db} recarregar={recarregar} secaoInicial="notificacoes" />
       )}
       {(aba === "suporte" || aba === "suporte-conta") && <SuporteEmpresa emp={emp} aviso={aviso} />}
 

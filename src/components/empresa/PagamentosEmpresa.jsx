@@ -461,7 +461,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
   return (
     <div className="vx-fade">
       {/* ── Tarja: empresa sem plano contratado (não aparece na seção Campanhas) ── */}
-      {!temAssinatura && !premium && secao !== "campanhas" && (
+      {!temAssinatura && !premium && secao !== "campanhas" && secao !== "destaque" && (
         <div style={{
           background: "linear-gradient(90deg,var(--brand) 0%,var(--sky-600,#0ea5e9) 100%)",
           color: "#fff", padding: "12px 18px", minHeight: 48, borderRadius: 12, marginBottom: 18,
@@ -478,12 +478,12 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       <div style={{ marginBottom: 24 }}>
         <PlanosEmpresa emp={emp} aviso={aviso} recarregar={recarregar} onCancelar={(chave) => { setCancelPlano(chave || null); setCancelPopup("motivo"); }} />
       </div>
-      {/* ── Visibilidade: destaque da empresa (unificado nesta página) ── */}
-      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 24 }}>
-        <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />
-      </div>
-
       </>}
+
+      {/* ── Destaques: visibilidade da empresa na vitrine (página separada) ── */}
+      {secao === "destaque" && (
+        <DestaqueEmpresa emp={emp} up={up} aviso={aviso} recarregar={recarregar} />
+      )}
 
       {secao === "campanhas" && (
         <CentralPagamentosCampanhas

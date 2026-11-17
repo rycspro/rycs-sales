@@ -58,11 +58,13 @@ export const BIG5_PENDENCIAS = [
   "Revisão interna das interpretações das cinco dimensões antes da liberação.",
 ];
 
-// Flag de disponibilização. DESLIGADA por padrão: a avaliação só aparece aos
-// profissionais quando BIG5_DISPONIVEL=1 (ou, no servidor, em ambiente beta —
-// ver a rota). Mantém o questionário fora do ar até confirmar tradução e chave.
+// Flag de disponibilização. LIGADA por padrão (como o DISC v2): a avaliação
+// aparece aos profissionais como instrumento experimental. Desligue com
+// BIG5_DISPONIVEL=0. O rótulo "experimental", a privacidade por padrão, a
+// ausência de percentis e as pendências (tradução BR validada + normas)
+// continuam visíveis ao participante.
 export const bigFiveDisponivel = () =>
-  String(process.env.BIG5_DISPONIVEL ?? "0").trim() === "1";
+  String(process.env.BIG5_DISPONIVEL ?? "1").trim() !== "0";
 
 // -----------------------------------------------------------------------------
 // As cinco dimensões, na ordem de apresentação do relatório (spec, seção 4).
