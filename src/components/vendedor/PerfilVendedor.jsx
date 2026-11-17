@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw } from "lucide-react";
+import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
@@ -84,6 +84,22 @@ function Marcadores({ opcoes, valor = [], onChange, max = 12 }) {
   );
 }
 
+// Item do menu de opções da foto de perfil.
+function ItemMenuFoto({ Icon, label, onClick, danger }) {
+  return (
+    <button type="button" role="menuitem" onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", gap: 9, width: "100%", textAlign: "left",
+        padding: "8px 10px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer",
+        font: "inherit", fontSize: 13, color: danger ? "var(--danger, #dc2626)" : "var(--ink)",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-1)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+      <Icon size={14} /> {label}
+    </button>
+  );
+}
+
 export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) {
   const [secao, setSecao] = useState("curriculo"); // curriculo | apresentacao
   // Abre já em modo de edição: os campos ficam visíveis e editáveis sem
@@ -93,6 +109,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const [avaliacaoFoto, setAvaliacaoFoto] = useState(null);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
   const [guiaAberto, setGuiaAberto] = useState(false);
+  const [menuFoto, setMenuFoto] = useState(false);        // menu de opções da foto
+  const [fotoAmpliada, setFotoAmpliada] = useState(false); // "Ver foto" em tamanho grande
   const arquivo = useRef(null);
   const [certificados, setCertificados] = useState([]);
 
@@ -106,7 +124,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const [form, setForm] = useState(() => {
     const p = lerPerfilComercial(eu.perfilComercial);
     return {
-      nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "",
+      nome: eu.nome || "", perfil: eu.perfil || "",
       pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
       genero: eu.genero || "",
       perfilComercial: {
@@ -222,13 +240,31 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
                 ? <img src={eu.foto} alt={`Foto de ${eu.nome}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : String(eu.nome || "?").slice(0, 1).toUpperCase()}
             </div>
-            <button className="vx-btn vx-btn-sm" onClick={() => setGuiaAberto(true)} disabled={enviandoFoto}
+            <button className="vx-btn vx-btn-sm" onClick={() => setMenuFoto((v) => !v)} disabled={enviandoFoto}
               style={{ position: "absolute", right: -6, bottom: -6, padding: "5px 7px", borderRadius: 999 }}
-              title="Trocar foto">
+              aria-haspopup="menu" aria-expanded={menuFoto} title="Opções da foto">
               <Camera size={13} />
             </button>
             <input ref={arquivo} hidden type="file" accept={LIMITES.tiposAceitos.join(",")}
               onChange={(e) => { enviarFoto(e.target.files?.[0]); e.target.value = ""; }} />
+
+            {/* Menu de opções da foto: ver, editar (guia de enquadramento),
+                trocar (escolher arquivo) e remover. */}
+            {menuFoto && (
+              <>
+                <div onClick={() => setMenuFoto(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                <div role="menu" style={{
+                  position: "absolute", left: "50%", top: "100%", transform: "translateX(-50%)", marginTop: 10,
+                  zIndex: 41, minWidth: 168, padding: 5, background: "var(--surface)", border: "1px solid var(--border)",
+                  borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,.18)",
+                }}>
+                  {eu.foto && <ItemMenuFoto Icon={Eye} label="Ver foto" onClick={() => { setFotoAmpliada(true); setMenuFoto(false); }} />}
+                  <ItemMenuFoto Icon={Pencil} label={eu.foto ? "Editar foto" : "Adicionar foto"} onClick={() => { setGuiaAberto(true); setMenuFoto(false); }} />
+                  <ItemMenuFoto Icon={Camera} label={eu.foto ? "Trocar" : "Escolher arquivo"} onClick={() => { setMenuFoto(false); arquivo.current?.click(); }} />
+                  {eu.foto && <ItemMenuFoto Icon={Trash2} label="Remover" danger onClick={() => { setMenuFoto(false); removerFoto(); }} />}
+                </div>
+              </>
+            )}
           </div>
 
           <div style={{ flex: 1, minWidth: 200 }}>
@@ -256,7 +292,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             )}
             {secao === "curriculo" && (
               <button className="vx-btn vx-btn-sm" onClick={() => setEditando(!editando)}>
-                {editando ? <><X size={13} /> Cancelar</> : <><Pencil size={13} /> Editar perfil</>}
+                {editando ? <><Eye size={13} /> Ver Perfil</> : <><Pencil size={13} /> Editar perfil</>}
               </button>
             )}
           </div>
@@ -269,6 +305,20 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
         {enviandoFoto && <div className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>Verificando a foto…</div>}
       </div>
+
+      {/* "Ver foto" — a foto atual em tamanho grande. */}
+      {fotoAmpliada && eu.foto && (
+        <div onClick={() => setFotoAmpliada(false)} role="dialog" aria-label="Foto de perfil"
+          style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: 420, width: "100%" }}>
+            <img src={eu.foto} alt={`Foto de ${eu.nome}`} style={{ width: "100%", borderRadius: 16, display: "block" }} />
+            <button className="vx-btn vx-btn-sm" onClick={() => setFotoAmpliada(false)} aria-label="Fechar"
+              style={{ position: "absolute", top: 8, right: 8, borderRadius: 999, padding: "5px 7px" }}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Orientação antes do upload. Descobrir o padrão levando recusa é a
           pior forma de aprender qual foto serve. */}
@@ -382,10 +432,6 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
           <div className="vx-grid vx-g2">
             {campo("nome", "Nome *")}
-            {campo("sobrenome", "Sobrenome *")}
-          </div>
-          <div className="vx-grid vx-g2" style={{ marginTop: 9 }}>
-            {campo("titulo", "Título profissional", { placeholder: "Closer B2B | SaaS | Energia" })}
             {campo("whats", "WhatsApp")}
           </div>
           <div className="vx-grid vx-g3" style={{ marginTop: 9 }}>
@@ -460,7 +506,24 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
 
           <div style={{ marginTop: 10 }}>
             <div className="vx-label">Cargos com experiência em vendas</div>
-            <MultiSelect opcoes={CARGOS_OPC} valor={form.perfilComercial.cargosExp} onChange={(v) => setPC("cargosExp", v)} placeholder="Selecione" />
+            <MultiSelect opcoes={CARGOS_OPC} valor={form.perfilComercial.cargosExp}
+              onChange={(v) => setForm((f) => ({ ...f, perfil: v.includes(f.perfil) ? f.perfil : (v[0] || ""), perfilComercial: { ...f.perfilComercial, cargosExp: v } }))}
+              placeholder="Selecione" />
+            {form.perfilComercial.cargosExp.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <div className="vx-label">Experiência principal</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {form.perfilComercial.cargosExp.map((k) => (
+                    <button key={k} type="button"
+                      className={"vx-chip" + (form.perfil === k ? " vx-badge-brand" : "")}
+                      onClick={() => setForm((f) => ({ ...f, perfil: k }))}
+                      style={{ cursor: "pointer", borderColor: form.perfil === k ? "var(--brand)" : "var(--border)" }}>
+                      {FUNCOES[k]?.nome || k}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ marginTop: 12 }}>
