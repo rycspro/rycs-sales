@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Eye, EyeOff, Camera, X, CheckCircle, XCircle, Plus, Trash2, Upload, FileText, Star } from "lucide-react";
+import { Eye, EyeOff, Camera, X, CheckCircle, XCircle, Plus, Trash2, Upload, FileText, Star, ZoomIn, Image as ImageIcon } from "lucide-react";
 import ComboSelect from "../ui/ComboSelect.jsx";
 import MultiSelect from "../ui/MultiSelect.jsx";
 import Termos from "./Termos.jsx";
@@ -322,6 +322,11 @@ html.dark .cp-logo{mix-blend-mode:normal;filter:brightness(0) invert(1)}
 .cp-foto-circle{width:80px;height:80px;border-radius:50%;border:2px dashed var(--border-strong);background:var(--surface-solid);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:border-color .2s}
 .cp-foto-circle:hover{border-color:${AZUL}}
 .cp-foto-circle.has-photo{border-style:solid;border-color:${AZUL}}
+.cp-editor-frame{position:relative;margin:4px auto 0;border-radius:50%;overflow:hidden;background:var(--surface-2);cursor:grab;touch-action:none;user-select:none;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+.cp-editor-frame:active{cursor:grabbing}
+.cp-editor-ring{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 2px ${AZUL},inset 0 0 0 9999px rgba(0,0,0,.02);pointer-events:none}
+.cp-editor-zoom{display:flex;align-items:center;gap:10px;margin:16px 2px 4px}
+.cp-editor-zoom input[type=range]{flex:1;accent-color:${AZUL};height:4px;cursor:pointer}
 .cp-foto-info{flex:1;min-width:0}
 .cp-foto-titulo{font-size:14px;font-weight:600;color:var(--ink);margin:0 0 2px}
 .cp-foto-desc{font-size:12px;color:var(--muted);line-height:1.45;margin:0 0 10px}
@@ -480,6 +485,14 @@ export default function CadastroProfissional({ onRegister }) {
   const [mostrarGuia, setMostrarGuia] = useState(false);
   const inputFoto = useRef(null);
 
+  /* ── estado: enquadramento da foto (zoom + arraste) ── */
+  const FRAME = 240; // tamanho do quadro de enquadramento (px)
+  const [editorSrc, setEditorSrc] = useState("");          // data URL da imagem original
+  const [editorNat, setEditorNat] = useState({ w: 0, h: 0 }); // dimensões naturais
+  const [editorZoom, setEditorZoom] = useState(1);
+  const [editorOff, setEditorOff] = useState({ x: 0, y: 0 }); // deslocamento em px
+  const editorDrag = useRef(null);
+
   /* ── estado: currículo ── */
   const [curriculo, setCurriculo] = useState(null);
   const [curriculoErro, setCurriculoErro] = useState("");
@@ -492,6 +505,7 @@ export default function CadastroProfissional({ onRegister }) {
   const [loading, setLoading] = useState(false);
   const [erroSenha, setErroSenha] = useState("");
   const [erroEtapa, setErroEtapa] = useState("");
+  const [sucesso, setSucesso] = useState(null); // { entrar } após cadastro concluído
 
   /* ── persistência localStorage ── */
   const STORAGE_KEY = "rycs_cadastro_prof";
@@ -585,13 +599,62 @@ export default function CadastroProfissional({ onRegister }) {
       }
       const reader = new FileReader();
       reader.onload = () => {
-        setFoto({ base64: reader.result.split(",")[1], mimetype: arquivo.type, largura: img.naturalWidth, altura: img.naturalHeight });
-        setFotoPrevia(reader.result);
+        // Abre o enquadrador: o usuário posiciona/aproxima antes de salvar.
+        setEditorNat({ w: img.naturalWidth, h: img.naturalHeight });
+        setEditorZoom(1);
+        setEditorOff({ x: 0, y: 0 });
+        setEditorSrc(reader.result);
       };
       reader.readAsDataURL(arquivo);
     };
     img.onerror = () => setFotoErro(t("cadProf.erros.fotoLeitura"));
     img.src = URL.createObjectURL(arquivo);
+  };
+
+  /* ── enquadramento: mantém a imagem sempre cobrindo o quadro ── */
+  const clampOff = (off, zoom) => {
+    const base = Math.max(FRAME / editorNat.w, FRAME / editorNat.h) * zoom;
+    const maxX = Math.max(0, (editorNat.w * base - FRAME) / 2);
+    const maxY = Math.max(0, (editorNat.h * base - FRAME) / 2);
+    return {
+      x: Math.max(-maxX, Math.min(maxX, off.x)),
+      y: Math.max(-maxY, Math.min(maxY, off.y)),
+    };
+  };
+
+  const editorPointerDown = (e) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    editorDrag.current = { px: e.clientX, py: e.clientY, ox: editorOff.x, oy: editorOff.y };
+  };
+  const editorPointerMove = (e) => {
+    const d = editorDrag.current;
+    if (!d) return;
+    setEditorOff(clampOff({ x: d.ox + (e.clientX - d.px), y: d.oy + (e.clientY - d.py) }, editorZoom));
+  };
+  const editorPointerUp = () => { editorDrag.current = null; };
+  const editorSetZoom = (z) => { setEditorZoom(z); setEditorOff((o) => clampOff(o, z)); };
+
+  // Gera a imagem quadrada já enquadrada e a envia ao fluxo normal da foto.
+  const confirmarEnquadramento = () => {
+    const OUT = 600;
+    const im = new Image();
+    im.onload = () => {
+      const base = Math.max(FRAME / editorNat.w, FRAME / editorNat.h) * editorZoom;
+      const dispW = editorNat.w * base, dispH = editorNat.h * base;
+      const sLado = FRAME / base; // lado do recorte, em px da imagem original
+      const sx = (dispW / 2 - FRAME / 2 - editorOff.x) / base;
+      const sy = (dispH / 2 - FRAME / 2 - editorOff.y) / base;
+      const canvas = document.createElement("canvas");
+      canvas.width = OUT; canvas.height = OUT;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, OUT, OUT);
+      ctx.drawImage(im, sx, sy, sLado, sLado, 0, 0, OUT, OUT);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+      setFoto({ base64: dataUrl.split(",")[1], mimetype: "image/jpeg", largura: OUT, altura: OUT });
+      setFotoPrevia(dataUrl);
+      setEditorSrc("");
+    };
+    im.src = editorSrc;
   };
 
   const abrirSeletorFoto = () => {
@@ -665,7 +728,7 @@ export default function CadastroProfissional({ onRegister }) {
     if (senha !== senhaConfirm) { setErroSenha(t("cadProf.erros.senhaDif")); setEtapa(1); return; }
     setLoading(true);
     const cidadeCompleta = pais === "BR" && estado ? `${cidade}, ${estado}` : cidade;
-    await onRegister({
+    const res = await onRegister({
       role: "vendedor", nome, email, senha, whats: normalizarTelefoneIntl(pais, whats) || whats,
       cidade: cidadeCompleta, pais, estado,
       dataNascimento: dataNasc, genero,
@@ -679,13 +742,46 @@ export default function CadastroProfissional({ onRegister }) {
       aceitouTermos: true, indicacao: indicacao || undefined,
       foto, curriculo: curriculo || undefined,
     });
-    limparRascunho();
     setLoading(false);
+    // Erro: preserva o rascunho e leva ao campo certo em vez de perder tudo.
+    if (!res?.ok) {
+      const msg = res?.error || "Não foi possível concluir o cadastro. Tente novamente.";
+      if (res?.campo === "email") { setEtapa(1); setErroEtapa(msg); }
+      else if (res?.campo === "foto") { setEtapa(0); setFotoErro(msg); }
+      else if (res?.campo === "senha") { setEtapa(1); setErroSenha(msg); }
+      else setErroEtapa(msg);
+      return;
+    }
+    // Sucesso: limpa o rascunho e mostra a confirmação antes de entrar.
+    limparRascunho();
+    setSucesso({ entrar: res.entrar });
   };
 
   /* ── telas auxiliares ── */
   if (!onboardingVisto) return <OnboardingProfissional onConcluir={() => setOnboardingVisto(true)} />;
   if (showTermos) return <Termos onAceitar={() => { setAceitouTermos(true); setShowTermos(false); }} onVoltar={() => setShowTermos(false)} />;
+
+  // Confirmação de cadastro: dá o retorno claro que faltava e evita reenvio.
+  if (sucesso) return (
+    <div style={{ position: "fixed", inset: 0, background: "var(--bg)", overflowY: "auto", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div className="vx-fade" style={{ background: "var(--surface-solid)", border: "1px solid var(--border-strong)", borderRadius: 16, padding: 32, maxWidth: 420, width: "100%", textAlign: "center" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(34,197,94,.12)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
+          <CheckCircle size={34} style={{ color: "var(--green, #22c55e)" }} />
+        </div>
+        <h1 className="vx-disp" style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", margin: "0 0 10px" }}>Cadastro concluído!</h1>
+        <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6, margin: "0 0 6px" }}>
+          Sua conta foi criada com sucesso. Enviamos um e-mail de confirmação para <b style={{ color: "var(--ink)" }}>{email}</b>.
+        </p>
+        <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.6, margin: "0 0 22px" }}>
+          Seu perfil passará por uma triagem da plataforma. Você será avisado por e-mail quando a análise terminar.
+        </p>
+        <button type="button" className="cp-nav-avancar" style={{ width: "100%" }}
+          onClick={() => sucesso.entrar?.()}>
+          Acessar minha conta
+        </button>
+      </div>
+    </div>
+  );
 
   const etapaInfo = [`s1`, `s2`, `s3`][etapa];
 
@@ -1219,6 +1315,49 @@ export default function CadastroProfissional({ onRegister }) {
           </div>
         </div>
       )}
+
+      {/* ══════════ ENQUADRAR FOTO (zoom + arraste) ══════════ */}
+      {editorSrc && (() => {
+        const base = editorNat.w ? Math.max(FRAME / editorNat.w, FRAME / editorNat.h) * editorZoom : 1;
+        const edW = editorNat.w * base, edH = editorNat.h * base;
+        return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 920, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            onClick={(e) => { if (e.target === e.currentTarget) setEditorSrc(""); }}>
+            <div style={{ background: "var(--surface-solid)", borderRadius: 16, padding: 24, maxWidth: 360, width: "100%", maxHeight: "92vh", overflowY: "auto", position: "relative", border: "1px solid var(--border-strong)" }}>
+              <button type="button" onClick={() => setEditorSrc("")} aria-label="Fechar"
+                style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--muted)" }}>
+                <X size={20} />
+              </button>
+              <h3 style={{ margin: "0 0 4px", fontSize: 17, fontWeight: 600, color: "var(--ink)" }}>Ajustar foto</h3>
+              <p style={{ margin: "0 0 16px", fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
+                Arraste para posicionar o rosto e use o controle para aproximar.
+              </p>
+
+              <div className="cp-editor-frame" style={{ width: FRAME, height: FRAME }}
+                onPointerDown={editorPointerDown} onPointerMove={editorPointerMove}
+                onPointerUp={editorPointerUp} onPointerLeave={editorPointerUp}>
+                <img src={editorSrc} alt="" draggable={false}
+                  style={{ position: "absolute", width: edW, height: edH,
+                    left: FRAME / 2 + editorOff.x - edW / 2, top: FRAME / 2 + editorOff.y - edH / 2,
+                    maxWidth: "none", pointerEvents: "none", userSelect: "none" }} />
+                <div className="cp-editor-ring" />
+              </div>
+
+              <div className="cp-editor-zoom">
+                <ImageIcon size={16} style={{ color: "var(--muted-2)", flexShrink: 0 }} />
+                <input type="range" min={1} max={3} step={0.01} value={editorZoom}
+                  aria-label="Aproximar" onChange={(e) => editorSetZoom(Number(e.target.value))} />
+                <ZoomIn size={18} style={{ color: "var(--muted-2)", flexShrink: 0 }} />
+              </div>
+
+              <div className="cp-nav" style={{ marginTop: 18 }}>
+                <button type="button" className="cp-nav-voltar" onClick={() => setEditorSrc("")}>Cancelar</button>
+                <button type="button" className="cp-nav-avancar" onClick={confirmarEnquadramento}>Usar esta foto</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }

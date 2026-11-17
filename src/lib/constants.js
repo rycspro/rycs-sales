@@ -45,9 +45,10 @@ export const NAV = {
     { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { key: "academy", label: "Academy", Icon: GraduationCap },
+    { key: "testes", label: "Testes e Avaliações", Icon: ClipboardList },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "indicar", label: "Indicar", Icon: Gift },
-    { key: "perfil", label: "Perfil", Icon: UserIcon },
+    { key: "perfil", label: "Meu Perfil", Icon: UserIcon },
   ],
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },

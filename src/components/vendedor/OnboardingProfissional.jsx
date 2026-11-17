@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Check } from "lucide-react";
 import { api } from "../../lib/api.js";
-import OnbPerfil from "./OnbPerfil.jsx";
 import OnbQuizDisc from "./OnbQuizDisc.jsx";
 import OnbOportunidades from "./OnbOportunidades.jsx";
 
+// A "Apresentação" saiu do onboarding e virou a página "Meu Perfil" (editável a
+// qualquer momento). O onboarding agora é só Quiz → Oportunidades.
 const ETAPAS = [
-  { chave: "perfil", n: 1, label: "Apresentação" },
-  { chave: "quiz", n: 2, label: "Quiz" },
-  { chave: "oportunidades", n: 3, label: "Oportunidades" },
+  { chave: "quiz", n: 1, label: "Quiz" },
+  { chave: "oportunidades", n: 2, label: "Oportunidades" },
 ];
 
 function estadoEtapa(etapaAtual, chave) {
@@ -94,10 +94,14 @@ export default function OnboardingProfissional({ aviso, recarregar, aoConcluir }
     window.scrollTo?.(0, 0);
   };
 
+  // Perfis antigos podem ter a etapa gravada como "perfil" (a antiga
+  // Apresentação, hoje em Meu Perfil). Tratamos como "quiz" para não travar.
+  const etapaEfetiva = !etapa || etapa === "perfil" ? "quiz" : etapa;
+
   if (loading) {
     return (
       <div className="vx-onb">
-        <BarraProgresso etapaAtual="perfil" />
+        <BarraProgresso etapaAtual="quiz" />
         <div className="vx-onb-corpo">
           <div className="vx-onb-estado">Carregando…</div>
         </div>
@@ -105,7 +109,7 @@ export default function OnboardingProfissional({ aviso, recarregar, aoConcluir }
     );
   }
 
-  if (etapa === "concluido") {
+  if (etapaEfetiva === "concluido") {
     return (
       <div className="vx-onb">
         <BarraProgresso etapaAtual="concluido" />
@@ -118,10 +122,9 @@ export default function OnboardingProfissional({ aviso, recarregar, aoConcluir }
 
   return (
     <div className="vx-onb">
-      <BarraProgresso etapaAtual={etapa} />
+      <BarraProgresso etapaAtual={etapaEfetiva} />
       <div className="vx-onb-corpo">
-        {etapa === "perfil" && <OnbPerfil aviso={aviso} aoAvancar={(e) => avancar(e)} />}
-        {etapa === "quiz" && <OnbQuizDisc aviso={aviso} aoAvancar={(e, d) => avancar(e, d)} />}
+        {etapaEfetiva === "quiz" && <OnbQuizDisc aviso={aviso} aoAvancar={(e, d) => avancar(e, d)} />}
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
 import TreinamentoEmpresa from "./TreinamentoEmpresa.jsx";
 import Carteira from "./Carteira.jsx";
 import PerfilVendedor from "./PerfilVendedor.jsx";
+import TestesAvaliacoes from "./TestesAvaliacoes.jsx";
 import AcademyCatalogo from "./AcademyCatalogo.jsx";
 import Academy from "./Academy.jsx";
 import Indicacoes from "../Indicacoes.jsx";
@@ -117,6 +118,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
       {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} refazerAvaliacao={() => setRefazendo(true)} />}
       {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} aviso={aviso} refazerAvaliacao={() => setRefazendo(true)} />}
+      {aba === "testes" && <TestesAvaliacoes eu={eu} db={db} aviso={aviso} />}
       {["tarefas", "conversas"].includes(aba) && <AtividadeProfissional conversas={aba === "conversas"} eu={eu} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
 
       {/* Tour de aula: enquanto o aluno explora a ferramenta real, um atalho

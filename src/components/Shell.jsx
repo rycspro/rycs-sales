@@ -21,7 +21,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   // "Conta"; no lado empresa, a conta inteira acende "Conta" (configuracoes), e
   // Leads/Aprovações/Profissionais acendem "Campanhas".
   const mobileActive = (() => {
-    if (role === "vendedor" && ["conta", "configuracoes", "perfil", "indicar", "suporte-conta"].includes(active)) return "conta";
+    if (role === "vendedor" && ["conta", "configuracoes", "perfil", "testes", "indicar", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
       if (["conta", "configuracoes", "outros", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "outros";
       if (["leads", "materiais", "academy-empresa", "profissionais", "conferir-fila", "conferir-time", "conversas"].includes(active)) return "campanhas";
@@ -38,7 +38,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", scrollbarWidth: "none" }}>
-          {allItems.filter(item => !accountRole || !["perfil"].includes(item.key)).map((item, i) => {
+          {allItems.filter(item => item.key !== "perfil" || role === "vendedor").map((item, i) => {
             if (item.divider) {
               return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
             }

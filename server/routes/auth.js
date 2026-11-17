@@ -207,7 +207,12 @@ router.post("/auth/register", async (req, res) => {
     if (!conviteOk) return res.status(409).json({ error: MOTIVOS_CONVITE_ONBOARDING.usado, motivo: "usado" });
   }
 
-  await emailBoasVindas(nomeClean, emailNorm, role);
+  // Confirmação de cadastro em segundo plano: a conta já está criada acima, e
+  // esperar o provedor de e-mail responder deixava a tela "carregando sem sair"
+  // quando o envio demora — levando a pessoa a reenviar e cair em "já cadastrado".
+  emailBoasVindas(nomeClean, emailNorm, role).catch((e) =>
+    console.error(`[auth] falha ao enviar boas-vindas para ${emailNorm}:`, e?.message || e)
+  );
   // Vínculo de indicação: nada é creditado agora, só registrado.
   if (indicacao) vincularIndicacao(indicacao, userId, role);
 
