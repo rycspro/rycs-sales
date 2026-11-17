@@ -949,6 +949,9 @@ adicionarColuna("companies", "telefoneEmpresa", "TEXT DEFAULT ''");
 adicionarColuna("companies", "emailEmpresa", "TEXT DEFAULT ''");
 adicionarColuna("companies", "saldoReservado", "REAL DEFAULT 0");
 adicionarColuna("companies", "destaqueTipo", "TEXT DEFAULT ''");
+// Assinatura recorrente (Asaas) do destaque/visibilidade — guardada para poder
+// cancelar a recorrência no gateway quando a empresa encerrar o destaque.
+adicionarColuna("companies", "destaqueAsaasId", "TEXT");
 adicionarColuna("companies", "visivel", "INTEGER DEFAULT 1");
 adicionarColuna("companies", "aprovadoPor", "TEXT");
 // Regras de aprovação automática configuradas pela empresa. Guardadas como

@@ -451,7 +451,12 @@ router.post("/payments/webhook", (req, res) => {
     event === "PAYMENT_REFUNDED" ||
     event === "PAYMENT_CHARGEBACK_REQUESTED"
   ) {
-    if (payment?.subscription) {
+    // Renovação do destaque falhou: desliga a visibilidade (a recorrência do
+    // destaque é uma subscription, então distinguimos pela externalReference).
+    if (payment?.externalReference && String(payment.externalReference).startsWith("destaque:")) {
+      const [, companyId] = String(payment.externalReference).split(":");
+      db.prepare("UPDATE companies SET destaque = 0 WHERE id = ?").run(companyId);
+    } else if (payment?.subscription) {
       marcarInadimplencia(payment.subscription, `${event}${payment?.status ? ` (${payment.status})` : ""}`);
     }
   } else if (event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED" && authorization?.id) {
@@ -476,13 +481,9 @@ router.post("/payments/webhook", (req, res) => {
 function creditarDeposito(payment) {
   if (!payment) return;
 
-  // Cobrança de assinatura não é aporte de caixa: ativa o plano e para aqui.
-  if (payment.subscription) {
-    ativarAssinatura(payment.subscription);
-    return;
-  }
-
   // Destaque/visibilidade: ativa o destaque na empresa (não credita caixa).
+  // Vem antes da assinatura de plano porque a recorrência do destaque também
+  // é uma subscription no Asaas — o que distingue é a externalReference.
   if (payment.externalReference && String(payment.externalReference).startsWith("destaque:")) {
     const [, companyId, tipo] = String(payment.externalReference).split(":");
     const d = DESTAQUES[tipo];
@@ -499,6 +500,12 @@ function creditarDeposito(payment) {
         }
       }
     }
+    return;
+  }
+
+  // Cobrança de assinatura de plano não é aporte de caixa: ativa o plano e para aqui.
+  if (payment.subscription) {
+    ativarAssinatura(payment.subscription);
     return;
   }
   // externalReference guarda o id interno; asaasCustomerId cobre cobranças
