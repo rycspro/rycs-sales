@@ -86,7 +86,9 @@ function Marcadores({ opcoes, valor = [], onChange, max = 12 }) {
 
 export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) {
   const [secao, setSecao] = useState("curriculo"); // curriculo | apresentacao
-  const [editando, setEditando] = useState(false);
+  // Abre já em modo de edição: os campos ficam visíveis e editáveis sem
+  // precisar clicar em "Editar perfil" — o profissional muda quando quiser.
+  const [editando, setEditando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [avaliacaoFoto, setAvaliacaoFoto] = useState(null);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
