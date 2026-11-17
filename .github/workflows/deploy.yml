@@ -52,19 +52,24 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           META_VERIFY_TOKEN: ${{ secrets.META_VERIFY_TOKEN }}
+          META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+          META_APP_ID: ${{ secrets.META_APP_ID }}
         with:
           host: 3.132.225.173
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           timeout: 30s
           command_timeout: 20m
-          envs: META_VERIFY_TOKEN
+          envs: META_VERIFY_TOKEN,META_APP_SECRET,META_APP_ID
           script: |
             set -e
-            if [ -n "$META_VERIFY_TOKEN" ]; then
-              sed -i '/^META_VERIFY_TOKEN=/d' /home/ec2-user/env_producao.txt
-              echo "META_VERIFY_TOKEN=$META_VERIFY_TOKEN" >> /home/ec2-user/env_producao.txt
-            fi
+            for nome in META_VERIFY_TOKEN META_APP_SECRET META_APP_ID; do
+              valor="${!nome}"
+              if [ -n "$valor" ]; then
+                sed -i "/^$nome=/d" /home/ec2-user/env_producao.txt
+                echo "$nome=$valor" >> /home/ec2-user/env_producao.txt
+              fi
+            done
             cd /home/ec2-user/rycs-sales
             git fetch origin main
             git reset --hard origin/main
