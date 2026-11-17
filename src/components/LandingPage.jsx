@@ -402,7 +402,10 @@ export default function LandingPage() {
             </div>
           </div>
           <div style={st.footerBottom}>
-            <p style={st.footerCopy}>© {new Date().getFullYear()} RYCS Sales Solutions. Todos os direitos reservados.</p>
+            <div>
+              <p style={st.footerCopy}>© {new Date().getFullYear()} RYCS Sales Solutions. Todos os direitos reservados.</p>
+              <p style={{ ...st.footerCopy, marginTop: 3 }}>RYCS SALES MACHINE INOVA SIMPLES (I.S.) · CNPJ 69.802.687/0001-85</p>
+            </div>
             <nav style={st.footerBottomNav}>
               <button style={st.footerBottomLink}>Política de privacidade</button>
               <button style={st.footerBottomLink}>Termos de uso</button>
@@ -808,7 +811,7 @@ const st = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
     gap: 18,
     maxWidth: 1100,
     margin: "0 auto",
@@ -911,7 +914,7 @@ const st = {
   footerInner: { maxWidth: 1100, margin: "0 auto", padding: "48px 24px 0" },
   footerGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
     gap: "40px 32px",
   },
   footerCol: {},

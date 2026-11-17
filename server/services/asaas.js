@@ -138,3 +138,29 @@ export async function garantirCliente(db, empresa) {
   db.prepare("UPDATE companies SET asaasCustomerId = ? WHERE id = ?").run(cliente.id, empresa.id);
   return cliente.id;
 }
+
+// Irmã de garantirCliente para o profissional (plano Pro/Premium). Usa o CPF
+// do cadastro (sellers.documento) e guarda o id em sellers.asaasCustomerId.
+export async function garantirClienteProfissional(db, vendedor) {
+  if (vendedor.asaasCustomerId) {
+    await desativarNotificacoesAsaas(vendedor.asaasCustomerId);
+    return vendedor.asaasCustomerId;
+  }
+  if (!vendedor.documento) {
+    const e = new Error("Cadastre o seu CPF antes de assinar um plano.");
+    e.faltaDocumento = true;
+    throw e;
+  }
+  const cliente = await asaas("/customers", {
+    method: "POST",
+    body: {
+      name: [vendedor.nome, vendedor.sobrenome].filter(Boolean).join(" "),
+      cpfCnpj: String(vendedor.documento).replace(/\D/g, ""),
+      email: vendedor.email || undefined,
+      externalReference: `seller:${vendedor.id}`,
+      notificationDisabled: true,
+    },
+  });
+  db.prepare("UPDATE sellers SET asaasCustomerId = ? WHERE id = ?").run(cliente.id, vendedor.id);
+  return cliente.id;
+}

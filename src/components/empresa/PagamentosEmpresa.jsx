@@ -508,7 +508,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
             <Plus size={14} /> Adicionar saldo
           </button>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 10 }}>
           <div style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", padding: "12px 14px" }}>
             <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>Reservado em ações</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#B45309", fontVariantNumeric: "tabular-nums" }}>{carregando ? "—" : money(posicao.reservado)}</div>
@@ -527,7 +527,7 @@ export default function PagamentosEmpresa({ emp, db, up, aviso, recarregar, seca
       {/* ── 3. Resultados financeiros ── */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 10 }}>Resultados financeiros</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))", gap: 10 }}>
           <StatCard label="Resultado gerado" value={money(resultadoGerado)} icon={TrendingUp} tone="brand"
             sub={`${submissoes.length} ação${submissoes.length !== 1 ? "ões" : ""} liberada${submissoes.length !== 1 ? "s" : ""}`} />
           <StatCard label="Total pago" value={money(resumo.repassado)} icon={Wallet} tone="red"

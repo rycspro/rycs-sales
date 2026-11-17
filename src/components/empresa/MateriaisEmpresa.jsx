@@ -332,7 +332,7 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
                   Armazene apresentações, documentos e outros recursos da sua empresa.
                 </p>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14, marginBottom: 32 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 14, marginBottom: 32 }}>
                 {PASTAS.map((p) => (
                   <CardPasta key={p.chave} pasta={p} quantidade={contagem[p.chave] || 0} onClick={() => abrirPasta(p.chave)} />
                 ))}
@@ -405,7 +405,7 @@ function CardPasta({ pasta, quantidade, onClick }) {
 /* ====================== GRID DE ARQUIVOS ====================== */
 function GridArquivos({ materiais, onSelect, selecionado, menuAberto, setMenuAberto, onExcluir, onPreview, onRenomear, mostrarCategoria }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 14 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 210px), 1fr))", gap: 14 }}>
       {materiais.map((m) => (
         <CardArquivo key={m.id} m={m} ativo={selecionado === m.id} onClick={() => onSelect(m)}
           menuAberto={menuAberto === m.id} setMenuAberto={setMenuAberto} onExcluir={onExcluir}

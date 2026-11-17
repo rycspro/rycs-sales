@@ -147,16 +147,55 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 /* Barra de topo do celular: logo RYCS à esquerda, conta/empresa à direita */
 .vx-mobile-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
 .vx-mobile-topbar .vx-btn{min-height:40px}
+/* Lado direito da barra de topo mobile: recebe o filtro de período da página. */
+.vx-mobile-actions-slot{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;flex-shrink:0}
+.vx-topbar-filtro{display:flex;align-items:center}
 .vx-mobile-logo{height:30px;width:auto;max-width:150px;object-fit:contain;display:block}
+/* Sem logo (fora da home) e sem filtro/ação no slot → a barra de topo some. */
+.vx-mobile-topbar:not(:has(.vx-mobile-logo)):has(.vx-mobile-actions-slot:empty){display:none}
 .vx-content-chat>.vx-mobile-topbar,.vx-content-settings>.vx-mobile-topbar{padding:12px 16px 0;margin-bottom:12px}
-/* Menu completo do celular (equivalente à sidebar web) */
-.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(17,24,39,.42);display:flex;justify-content:flex-end;animation:vxin .18s ease}
-.vx-mobilemenu{width:min(84vw,340px);height:100%;background:var(--surface-solid,var(--surface));border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(20,30,45,.18);display:flex;flex-direction:column;animation:vxslidein .22s cubic-bezier(.22,1,.36,1)}
+/* ───────── Menu lateral do celular — White Editorial ───────── */
+.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(20,28,40,.38);display:flex;justify-content:flex-end;animation:vxin .18s ease;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.vx-mobilemenu{
+  --mm-bg:#FFFFFF;--mm-ink:#252525;--mm-mut:#858585;--mm-border:#E9EDF2;--mm-active:#318CE7;--mm-active-bg:#EAF4FF;--mm-hover:#F4F7FA;
+  width:min(88vw,340px);height:100%;background:var(--mm-bg);
+  border-left:1px solid var(--mm-border);box-shadow:-8px 0 40px rgba(20,30,45,.12);
+  display:flex;flex-direction:column;animation:vxslidein .24s cubic-bezier(.22,1,.36,1);
+  padding-top:env(safe-area-inset-top,0px)}
+html.dark .vx-mobilemenu{--mm-bg:#15181F;--mm-ink:#E7EAEE;--mm-mut:#9298A3;--mm-border:#262B34;--mm-active:#4D9FFF;--mm-active-bg:#17273C;--mm-hover:#1C212A}
 @keyframes vxslidein{from{transform:translateX(100%)}to{transform:translateX(0)}}
-.vx-mobilemenu-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
-.vx-mobilemenu-list{flex:1;overflow-y:auto;padding:8px 8px 4px;display:flex;flex-direction:column;gap:0}
-.vx-mobilemenu-list .vx-subitem{padding-left:36px!important;min-height:40px!important;font-size:13.5px!important}
-.vx-mobilemenu-sair{margin:4px 8px calc(10px + env(safe-area-inset-bottom,0px));color:var(--red)!important;flex-shrink:0;border-top:1px solid var(--border);border-radius:0}
+.vx-mobilemenu-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 13px;border-bottom:1px solid var(--mm-border);flex-shrink:0}
+.vx-mobilemenu-logo{height:24px;width:auto;max-width:130px;object-fit:contain;display:block}
+.vx-mobilemenu-x{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;border:0;background:transparent;color:var(--mm-mut);cursor:pointer;transition:background .16s,color .16s}
+.vx-mobilemenu-x:hover{background:var(--mm-hover);color:var(--mm-ink)}
+.vx-mobilemenu-list{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:10px 10px 6px;display:flex;flex-direction:column;gap:1px}
+.vx-mobilemenu-list::-webkit-scrollbar{width:0}
+/* Títulos de seção */
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebar-section{font-size:10px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--mm-mut);padding:14px 12px 5px}
+.vx-mobilemenu-list>.vx-sidebar-section:first-child{padding-top:4px}
+/* Itens — linhas limpas, sem caixa */
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;padding:0 12px;
+  border:0;background:transparent;border-radius:10px;cursor:pointer;
+  font:500 14.5px inherit;color:var(--mm-ink);text-align:left;letter-spacing:-.01em;
+  transition:background .17s ease,color .17s ease}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn>svg{flex-shrink:0;width:19px;height:19px;color:var(--mm-mut);transition:color .17s ease}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn:hover{background:var(--mm-hover)}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn[data-on="1"]{background:var(--mm-active-bg);color:var(--mm-active);font-weight:600}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn[data-on="1"]>svg{color:var(--mm-active)}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn>svg:not(:first-child){margin-left:auto;width:16px;height:16px}
+/* Subitens — recuo e tipografia menor */
+.vx-mobilemenu .vx-mobilemenu-list .vx-subitem{min-height:40px!important;padding-left:42px!important;font-size:13.5px!important;font-weight:500!important;color:var(--mm-mut)!important}
+.vx-mobilemenu .vx-mobilemenu-list .vx-subitem[data-on="1"]{background:var(--mm-active-bg)!important;color:var(--mm-active)!important;font-weight:600!important}
+.vx-mobilemenu-list .vx-sidedot{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+/* Rodapé fixo — conta + sair */
+.vx-mobilemenu-footer{flex-shrink:0;border-top:1px solid var(--mm-border);padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vx-mobilemenu-conta{display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0;margin:0;cursor:pointer;font:inherit;text-align:left;color:inherit}
+.vx-mobilemenu-avatar{width:36px;height:36px;border-radius:10px;overflow:hidden;flex-shrink:0;display:grid;place-items:center;background:var(--mm-active-bg);color:var(--mm-active);font-weight:700;font-size:14px;border:1px solid var(--mm-border)}
+/* Foto (vendedor) preenche o círculo; a inicial (empresa) fica no chip. */
+.vx-mobilemenu-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.vx-mobilemenu-conta-nome{font-size:13.5px;font-weight:600;color:var(--mm-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vx-mobilemenu-sair{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;border:0;background:transparent;cursor:pointer;color:#E5484D;font:600 13px inherit;padding:8px 6px;border-radius:9px;transition:background .16s}
+.vx-mobilemenu-sair:hover{background:rgba(229,72,77,.08)}
 .vx-content{padding:24px max(16px,env(safe-area-inset-right,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:820px;margin:0 auto}
 .vx-content-chat{padding:0!important;max-width:none!important;margin:0!important;overflow:hidden;display:flex;flex-direction:column}
 .vx-content-settings{padding:0!important;max-width:none!important;margin:0!important;}
@@ -426,6 +465,9 @@ html.dark .vx-stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.24);border-color:var(
 .vx-overlay{align-items:flex-start;overflow-y:auto;overscroll-behavior:contain;padding:16px}}
 .vx-sheet{width:100%;max-width:580px;margin:auto;background:var(--surface);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:18px;padding:24px;box-shadow:0 -8px 40px -8px rgba(11,18,32,.12),inset 0 .5px 0 rgba(255,255,255,.4)}
 @media(min-width:640px){.vx-sheet{border-radius:18px}}
+/* No celular o modal (bottom sheet) rola internamente: altura máxima + scroll,
+   com folga embaixo para o último conteúdo passar da barra de navegação. */
+@media(max-width:639px){.vx-sheet{max-height:calc(100dvh - 20px);overflow-y:auto;overscroll-behavior:contain;padding-bottom:calc(24px + 92px + env(safe-area-inset-bottom,0px))}}
 /* --- RYCS Academy: grade de cursos ------------------------------------ */
 .vx-course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
 .vx-course-card{padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .2s,border-color .2s,box-shadow .2s;backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
@@ -958,7 +1000,33 @@ html[data-versao="sol"] .vx-balance-value{font-family:'Michroma','General Sans',
   letter-spacing:-.01em!important;color:#171717;line-height:1.1;font-variant-numeric:lining-nums tabular-nums;
   -webkit-text-stroke:.35px #171717}
 @media(max-width:1024px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:24px!important}}
-@media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:22px!important}}
+@media(max-width:640px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:19px!important;-webkit-text-stroke:.25px #171717}}
+@media(max-width:400px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:17px!important}}
+@media(max-width:340px){html[data-versao="sol"] .vx-tile-val,html[data-versao="sol"] .vx-stat-val,html[data-versao="sol"] .vx-num,html[data-versao="sol"] .vx-balance-value{font-size:15.5px!important}}
+/* Responsividade dos números dos indicadores fora do tema Sol */
+@media(max-width:640px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:19px}}
+@media(max-width:400px){.vx-tile-val,.vx-stat-val,.vx-num,.vx-balance-value{font-size:17px}}
+/* Cabeçalho de seção no mobile: link desce para baixo do título — assim o
+   título fica em uma linha só, sem quebra. */
+@media(max-width:640px){
+  .vx-ph{flex-direction:column;align-items:flex-start;gap:4px}
+  .vx-ph-link{align-self:flex-start}
+}
+/* Início mobile — Desempenho Comercial: 2 colunas limpas, sem bordas apertadas */
+@media(max-width:640px){
+  .vx-metricas-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0!important;border-bottom:none!important}
+  .vx-metrica-cell{border-left:none!important;border-top:1px solid var(--border);padding:12px 10px!important}
+  .vx-metrica-cell:nth-child(2n){border-left:1px solid var(--border)!important}
+  .vx-metrica-cell:nth-child(-n+2){border-top:none}
+  .vx-metrica-cell .vx-tile-top span{white-space:normal;line-height:1.25}
+}
+/* Início mobile — Pendências: botão desce pra baixo em vez de esmagar o texto */
+@media(max-width:560px){
+  .vx-pend-item{flex-wrap:wrap;align-items:center}
+  .vx-pend-emoji{order:0;flex:0 0 auto}
+  .vx-pend-txt{order:1;flex:1 1 auto;min-width:0}
+  .vx-pend-cta{order:2;flex:1 1 100%;width:100%;margin-top:4px;justify-content:center}
+}
 /* Pagamentos das Campanhas: números um pouco menores que o padrão. */
 html[data-versao="sol"] .vx-centralpag .vx-num{font-size:21px!important}
 @media(max-width:640px){html[data-versao="sol"] .vx-centralpag .vx-num{font-size:19px!important}}

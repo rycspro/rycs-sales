@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { api } from "./lib/api.js";
+import { dadosRastreio } from "./lib/rastreio.js";
 import { seed } from "./lib/seed.js";
 import { CSS } from "./styles.js";
 import Shell from "./components/Shell.jsx";
@@ -230,7 +231,7 @@ export default function App() {
   };
 
   const registrar = async (dados, { silencioso = false, autoEntrar = true } = {}) => {
-    const r = await api("/auth/register", dados);
+    const r = await api("/auth/register", { ...dados, ...dadosRastreio() });
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error, campo: r.campo }; }
     if (r?.id) {
       const entrar = async () => {

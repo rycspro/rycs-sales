@@ -1,27 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../../lib/api.js";
 import FiltroData from "../FiltroData.jsx";
-import PainelEmpresa from "./PainelEmpresa.jsx";
-import ConferirEmpresa from "./ConferirEmpresa.jsx";
-import TimeEmpresa from "./TimeEmpresa.jsx";
-import QualificacaoEmpresa from "./QualificacaoEmpresa.jsx";
-import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
-import TarefasEmpresa from "./TarefasEmpresa.jsx";
-import ValoresEmpresa from "./ValoresEmpresa.jsx";
-import FinanceiroEmpresa from "./FinanceiroEmpresa.jsx";
-import PagamentosEmpresa, { ModalSaldo } from "./PagamentosEmpresa.jsx";
-import DestaqueEmpresa from "./DestaqueEmpresa.jsx";
-import ProfissionaisEmpresa from "./ProfissionaisEmpresa.jsx";
-import ConversasEmpresa from "./ConversasEmpresa.jsx";
-import RycsAcademyEmpresa from "./RycsAcademyEmpresa.jsx";
-import AcademyEmpresaHub from "./AcademyEmpresaHub.jsx";
+// A tela inicial é a primeira que a empresa vê — carrega junto. As demais abas
+// vêm por carregamento sob demanda (code-splitting), o que deixa o carregamento
+// inicial no celular bem mais leve: só baixa o código da aba que está aberta.
 import InicioEmpresa from "./InicioEmpresa.jsx";
-import ConfiguracoesEmpresa from "./ConfiguracoesEmpresa.jsx";
-import SuporteEmpresa from "./SuporteEmpresa.jsx";
-import LeadsEmpresa from "./LeadsEmpresa.jsx";
-import Integracoes from "./integracoes/Integracoes.jsx";
-import MateriaisEmpresa from "./MateriaisEmpresa.jsx";
-import AcademyEmpresa from "./AcademyEmpresa.jsx";
+const PainelEmpresa = lazy(() => import("./PainelEmpresa.jsx"));
+const ConferirEmpresa = lazy(() => import("./ConferirEmpresa.jsx"));
+const TimeEmpresa = lazy(() => import("./TimeEmpresa.jsx"));
+const QualificacaoEmpresa = lazy(() => import("./QualificacaoEmpresa.jsx"));
+const CampanhasEmpresa = lazy(() => import("./CampanhasEmpresa.jsx"));
+const TarefasEmpresa = lazy(() => import("./TarefasEmpresa.jsx"));
+const ValoresEmpresa = lazy(() => import("./ValoresEmpresa.jsx"));
+const FinanceiroEmpresa = lazy(() => import("./FinanceiroEmpresa.jsx"));
+const PagamentosEmpresa = lazy(() => import("./PagamentosEmpresa.jsx"));
+const ModalSaldo = lazy(() => import("./PagamentosEmpresa.jsx").then((m) => ({ default: m.ModalSaldo })));
+const ProfissionaisEmpresa = lazy(() => import("./ProfissionaisEmpresa.jsx"));
+const ConversasEmpresa = lazy(() => import("./ConversasEmpresa.jsx"));
+const RycsAcademyEmpresa = lazy(() => import("./RycsAcademyEmpresa.jsx"));
+const AcademyEmpresaHub = lazy(() => import("./AcademyEmpresaHub.jsx"));
+const ConfiguracoesEmpresa = lazy(() => import("./ConfiguracoesEmpresa.jsx"));
+const SuporteEmpresa = lazy(() => import("./SuporteEmpresa.jsx"));
+const LeadsEmpresa = lazy(() => import("./LeadsEmpresa.jsx"));
+const Integracoes = lazy(() => import("./integracoes/Integracoes.jsx"));
+const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
+const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
@@ -39,6 +43,18 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
   const [modalSaldo, setModalSaldo] = useState(false);
   const [secaoAcademy, setSecaoAcademy] = useState("rycs");
   const [filtros, setFiltros] = useState({});
+  // No celular, o filtro de período vai para a barra de topo (onde ficava o logo
+  // da empresa), via portal. No desktop, segue solto na própria linha.
+  const [slotTopo, setSlotTopo] = useState(null);
+  const [celular, setCelular] = useState(false);
+  useEffect(() => {
+    setSlotTopo(document.getElementById("vx-mobile-actions"));
+    const mq = window.matchMedia("(max-width: 767px)");
+    const atualizar = () => setCelular(mq.matches);
+    atualizar();
+    mq.addEventListener("change", atualizar);
+    return () => mq.removeEventListener("change", atualizar);
+  }, []);
   // Volta do login da Meta (?meta=...): abre direto em Integrações.
   const [voltouDaMeta] = useState(() => new URLSearchParams(window.location.search).has("meta"));
   useEffect(() => { if (voltouDaMeta) setAba?.("integracoes"); }, []);
@@ -101,14 +117,20 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
     />
   );
 
-  const filtroBar = filtroDataEl && (
+  const filtroBar = filtroDataEl && !celular && (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
       {filtroDataEl}
     </div>
   );
+  // Quando embutido no header de telas como Campanhas/Conferir, no celular o
+  // filtro já está no topo — não repetir aqui.
+  const filtroHeader = celular ? null : filtroDataEl;
 
   return (
     <div className="vx-fade">
+      {celular && slotTopo && filtroDataEl && createPortal(
+        <div className="vx-topbar-filtro">{filtroDataEl}</div>, slotTopo)}
+      <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
       {aba === "inicio" && <>
         {filtroBar}
         <InicioEmpresa emp={emp} db={db} setAba={setAba} filtroData={filtroAtual} />
@@ -129,7 +151,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       </>}
       {aba === "campanhas" && (
         <CampanhasEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
-          filtroData={filtroAtual} filtroBar={filtroDataEl} bloqueado={bloqueado} irParaPlano={irParaPlano} />
+          filtroData={filtroAtual} filtroBar={filtroHeader} bloqueado={bloqueado} irParaPlano={irParaPlano} />
       )}
       {aba === "campanhas-comissoes" && (
         <ValoresEmpresa emp={emp} db={db} up={up} aviso={aviso} escopo="comissoes" />
@@ -147,7 +169,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         {secaoAcademy === "qualificacao" && <QualificacaoEmpresa emp={emp} up={up} aviso={aviso} completarInformacoes={() => { setAba?.("outros"); }} />}
       </>}
       {aba === "conferir-fila" && <>
-        <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} filtroBar={filtroDataEl} />
+        <ConferirEmpresa emp={emp} db={db} setDb={setDb} aviso={aviso} secao="fila" recarregar={recarregar} filtroData={filtroAtual} filtroBar={filtroHeader} />
       </>}
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
@@ -183,6 +205,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {modalSaldo && (
         <ModalSaldo emp={emp} aviso={aviso} aoConfirmar={() => recarregar?.()} onFechar={() => setModalSaldo(false)} />
       )}
+      </Suspense>
     </div>
   );
 }

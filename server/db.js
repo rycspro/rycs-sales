@@ -1535,6 +1535,34 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_onb_eventos_tipo ON onboarding_eventos(evento, criadoEm);
 `);
 
+// Jornada desde o primeiro clique: visitante anônimo (id no navegador) com a
+// origem de primeiro toque (UTM/fbclid), e os passos do cadastro antes de a
+// conta existir. Ao criar a conta, o visitante fica ligado ao usuário.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS jornada_visitantes (
+    visitanteId TEXT PRIMARY KEY,
+    origem TEXT NOT NULL DEFAULT '{}',
+    papel TEXT NOT NULL DEFAULT '',
+    primeiroEm INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS jornada_eventos (
+    id TEXT PRIMARY KEY,
+    visitanteId TEXT NOT NULL,
+    evento TEXT NOT NULL,
+    papel TEXT NOT NULL DEFAULT '',
+    etapa TEXT NOT NULL DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_jornada_evento_unico ON jornada_eventos(visitanteId, evento, papel, etapa);
+  CREATE INDEX IF NOT EXISTS idx_jornada_evento_data ON jornada_eventos(criadoEm);
+`);
+adicionarColuna("users", "origem", "TEXT DEFAULT '{}'");
+adicionarColuna("users", "visitanteId", "TEXT DEFAULT ''");
+db.exec("CREATE INDEX IF NOT EXISTS idx_users_visitante ON users(visitanteId)");
+// WhatsApp do profissional confirmado por código (services/whatsappVerificacao.js).
+adicionarColuna("sellers", "whatsVerificadoNumero", "TEXT DEFAULT ''");
+adicionarColuna("sellers", "whatsVerificadoEm", "INTEGER");
+
 // Conta fixa da plataforma. O e-mail fica no código; a senha nunca — este
 // repositório é público, e o admin aprova saques e vê todas as empresas.
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@rycs.pro").toLowerCase().trim();
@@ -2058,6 +2086,169 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_autossabotagem_assessments_seller_versao ON autossabotagem_assessments(sellerId, versao);
   CREATE INDEX IF NOT EXISTS idx_autossabotagem_assessments_seller ON autossabotagem_assessments(sellerId, iniciadoEm DESC);
 `);
+
+// Avaliação Inteligência Emocional (instrumento autoral rycs-inteligencia-
+// emocional-v1-30) — tabela própria, separada das demais avaliações. Persiste
+// versão do instrumento, idioma, chave, versão do algoritmo, respostas, pontuação
+// (soma e média por competência, dentro de `resultado`) e data de conclusão.
+// Compartilhamento com empresas é privado por padrão (= 0). O resultado NUNCA
+// toca perfilComercial, score comercial, ranking ou campanhas.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS inteligencia_emocional_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    idioma TEXT DEFAULT '',
+    chave TEXT DEFAULT '',
+    algoritmo TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_inteligencia_emocional_assessments_seller_versao ON inteligencia_emocional_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_inteligencia_emocional_assessments_seller ON inteligencia_emocional_assessments(sellerId, iniciadoEm DESC);
+`);
+
+// Avaliação RIASEC — Interesses Profissionais (instrumento autoral rycs-riasec-
+// v1-36) — tabela própria, separada das demais avaliações. Persiste versão do
+// instrumento, idioma, chave, versão do algoritmo, respostas, pontuação (soma e
+// média por dimensão, dimensões destacadas e código exploratório, dentro de
+// `resultado`) e data de conclusão. Compartilhamento com empresas é privado por
+// padrão (= 0). O resultado NUNCA toca perfilComercial, score comercial, ranking
+// ou campanhas.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS riasec_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    idioma TEXT DEFAULT '',
+    chave TEXT DEFAULT '',
+    algoritmo TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_riasec_assessments_seller_versao ON riasec_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_riasec_assessments_seller ON riasec_assessments(sellerId, iniciadoEm DESC);
+`);
+
+// Gamificação do profissional (camada separada do RYCS Score / nível operacional).
+// Aditivo e idempotente: o XP é um livro-razão com chave única por evento, então
+// reprocessar nunca concede pontos em dobro.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS gamification_xp (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    chave TEXT NOT NULL,        -- idempotência: "badge:<id>", "tarefa:<submissionId>"...
+    xp INTEGER NOT NULL DEFAULT 0,
+    motivo TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_gamification_xp_seller_chave ON gamification_xp(sellerId, chave);
+
+  CREATE TABLE IF NOT EXISTS gamification_badges (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    badgeId TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_gamification_badges_seller_badge ON gamification_badges(sellerId, badgeId);
+`);
+
+// ── RYCS Club: imagens configuráveis, prêmios e resgates ──────────────────────
+// Camada administrativa do Club. Nada aqui toca em finanças, score ou nível
+// operacional. Imagens ficam por "slot" (banner, nível, medalha); prêmios
+// nascem em rascunho e só aparecem ao profissional quando publicados.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS club_config (
+    chave TEXT PRIMARY KEY,        -- 'banner', 'nivel:<chave>', 'medalha:<badgeId>'
+    url TEXT DEFAULT '',
+    atualizadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS club_prizes (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    tipo TEXT DEFAULT 'fisico',          -- 'fisico' | 'digital'
+    imagem TEXT DEFAULT '',
+    metrica TEXT DEFAULT '',             -- métrica do engine (ex.: 'tarefasAprovadas')
+    alvo REAL DEFAULT 0,                 -- marco para desbloquear (Modelo A)
+    paises TEXT DEFAULT '[]',            -- JSON de códigos de país; [] = todos
+    quantidade INTEGER,                  -- NULL = ilimitado
+    status TEXT DEFAULT 'rascunho',      -- 'rascunho' | 'publicado' | 'arquivado'
+    ordem INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS club_redemptions (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    prizeId TEXT NOT NULL,
+    estado TEXT DEFAULT 'solicitado',    -- solicitado|analise|aprovado|enviado|entregue|recusado
+    endereco TEXT DEFAULT '',
+    observacao TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_club_redemptions_seller_prize ON club_redemptions(sellerId, prizeId);
+`);
+
+// ── Planos do profissional (Grátis/Pro/Premium) ──────────────────────────────
+// Separado de `subscriptions` (que é da empresa). O plano em vigor não fica
+// gravado: sai de planoDoProfissional() em shared/planosProfissional.js, a
+// partir de pagoAte. Docs: docs/rycs/planos-pro-premium.md.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS assinaturas_profissional (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    plano TEXT NOT NULL,                 -- 'pro' | 'premium'
+    ciclo TEXT NOT NULL DEFAULT 'anual',
+    status TEXT NOT NULL DEFAULT 'pendente', -- pendente|ativa|atrasada|cancelada|reembolsada|expirada
+    origem TEXT NOT NULL DEFAULT 'asaas',    -- asaas|admin|migracao
+    asaasId TEXT,
+    asaasCustomerId TEXT,
+    ultimoPaymentId TEXT,
+    valor REAL DEFAULT 0,
+    inicio INTEGER,
+    pagoAte INTEGER,
+    proximaCobranca INTEGER,
+    canceladoEm INTEGER,
+    motivo TEXT DEFAULT '',
+    criadoPor TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_assinaturas_profissional_seller ON assinaturas_profissional(sellerId);
+
+  CREATE TABLE IF NOT EXISTS uso_profissional (
+    sellerId TEXT NOT NULL,
+    recurso TEXT NOT NULL,               -- 'minutosDiscadora' | 'lembretesWhatsApp' | ...
+    periodo TEXT NOT NULL,               -- 'AAAA-MM' no fuso America/Sao_Paulo
+    usado REAL DEFAULT 0,
+    avisado80 INTEGER DEFAULT 0,
+    avisado100 INTEGER DEFAULT 0,
+    PRIMARY KEY (sellerId, recurso, periodo)
+  );
+`);
+adicionarColuna("sellers", "asaasCustomerId", "TEXT");
 
 
 export default db;

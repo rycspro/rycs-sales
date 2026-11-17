@@ -8,6 +8,7 @@ import Termos from "../auth/Termos.jsx";
 import RecuperarSenha from "../auth/RecuperarSenha.jsx";
 import MolduraOnboarding from "./MolduraOnboarding.jsx";
 import { api } from "../../lib/api.js";
+import { rastrear } from "../../lib/rastreio.js";
 import { parametro, limparConviteOnboarding, ROTAS, navegar } from "../../lib/rotas.js";
 import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
 
@@ -40,6 +41,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const id = useId();
   const [modo, setModo] = useState("cadastro"); // cadastro | login | recuperar | termos
   const [fase, setFase] = useState("intro"); // intro | form — só relevante quando modo=cadastro
+  useEffect(() => { rastrear("cadastro_aberto", { papel: "empresa" }); }, []);
   const [voltarPara, setVoltarPara] = useState("cadastro");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -104,6 +106,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const enviar = async (ev) => {
     ev.preventDefault();
     setErroGeral("");
+    if (modo === "cadastro") rastrear("cadastro_etapa", { papel: "empresa", etapa: "acesso" });
     if (!validar()) return;
     setSalvando(true);
     if (modo === "cadastro") {

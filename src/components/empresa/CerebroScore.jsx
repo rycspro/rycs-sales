@@ -140,7 +140,7 @@ export default function CerebroScore({ onIniciarOnboarding, aviso }) {
       {/* Dimensões */}
       <div style={{ marginBottom: 24 }}>
         <h3 style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-muted)", marginBottom: 12 }}>Categorias</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 200px), 1fr))", gap: 8 }}>
           {(dims || []).map((d) => (
             <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 12px", background: "var(--surface-1, #f8fafc)", borderRadius: 8, border: `1px solid ${d.completo ? "var(--border)" : "var(--orange, #fed7aa)"}` }}>
               <span style={{ fontSize: 16 }}>{d.completo ? "✓" : "○"}</span>

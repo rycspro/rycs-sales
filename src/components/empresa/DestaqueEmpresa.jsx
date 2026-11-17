@@ -272,7 +272,7 @@ export default function DestaqueEmpresa({ emp, up, aviso, recarregar }) {
           Aumente a visibilidade da sua empresa na vitrine. Disponível para qualquer empresa, independente do plano contratado — assinatura mensal no cartão, cancele quando quiser.
         </p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 16, alignItems: "start" }}>
         {ORDEM_DESTAQUES.map((key) => {
           const d = DESTAQUES[key];
           const on = ativo === key;

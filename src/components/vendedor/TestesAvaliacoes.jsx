@@ -8,6 +8,8 @@ import { api } from "../../lib/api.js";
 import DiscAvaliacao from "./DiscAvaliacao.jsx";
 import BigFive from "./BigFive.jsx";
 import Autossabotagem from "./Autossabotagem.jsx";
+import InteligenciaEmocional from "./InteligenciaEmocional.jsx";
+import RiasecInteresses from "./RiasecInteresses.jsx";
 
 // Azul institucional White Editorial (mesmo dos fluxos de cadastro/onboarding).
 const AZUL = "#318CE7";
@@ -60,21 +62,23 @@ const CATALOGO = [
   },
   {
     id: "inteligencia-emocional", categoria: "personalidade", Icon: HeartHandshake,
-    nome: "Inteligência emocional",
-    descricao: "Avalie como você percebe e lida com emoções no trabalho.",
-    objetivo: "Medir sua percepção e gestão emocional em situações profissionais.",
-    avalia: "Autoconsciência, autorregulação, empatia e relacionamento.",
-    instrucoes: "", privacidade: "Resultado de autoconhecimento, sob seu controle de visibilidade.",
-    perguntas: "", tempo: "", publicado: false,
+    nome: "Inteligência Emocional",
+    descricao: "Explore como você reconhece, regula e expressa emoções no trabalho.",
+    objetivo: "Ajudar você a refletir sobre como reconhece, regula e expressa emoções no ambiente profissional.",
+    avalia: "Cinco competências: autoconsciência, autorregulação, percepção das emoções alheias, gestão de relacionamentos e adaptação emocional.",
+    instrucoes: "Para cada afirmação, escolha a frequência com que isso acontece com você. Não há resposta certa ou errada.",
+    privacidade: "Avaliação voluntária e de autoconhecimento, privada por padrão. Visível para empresas só com sua autorização; nunca altera score, ranking ou campanhas.",
+    perguntas: "30 afirmações", tempo: "7 a 10 min", publicado: true, ie: true,
   },
   {
     id: "riasec", categoria: "personalidade", Icon: Compass,
     nome: "RIASEC — Interesses profissionais",
-    descricao: "Descubra as áreas de atuação mais alinhadas aos seus interesses.",
-    objetivo: "Relacionar seus interesses a famílias de atividades profissionais.",
-    avalia: "Seis tipos de interesse: realista, investigativo, artístico, social, empreendedor e convencional.",
-    instrucoes: "", privacidade: "Resultado de interesses, sob seu controle de visibilidade. Nunca restringe campanhas.",
-    perguntas: "", tempo: "", publicado: false,
+    descricao: "Descubra quais atividades profissionais mais despertam seu interesse.",
+    objetivo: "Ajudar você a identificar atividades que despertam seu interesse, independentemente de experiência ou habilidade atual.",
+    avalia: "Seis áreas de interesse: realista, investigativo, artístico, social, empreendedor e convencional.",
+    instrucoes: "Para cada atividade, indique o quanto gostaria de realizá-la, mesmo sem experiência anterior. Não há resposta certa ou errada.",
+    privacidade: "Avaliação voluntária de interesses, privada por padrão. Visível para empresas só com sua autorização; mapeia interesses, não habilidades, e nunca restringe oportunidades.",
+    perguntas: "36 atividades", tempo: "7 a 10 min", publicado: true, ri: true,
   },
 
   // ---- Competências profissionais ----
@@ -130,7 +134,7 @@ const CATALOGO = [
 //   concluido    → já realizada (hoje, só o DISC, via dados existentes)
 //   andamento    → iniciada e não concluída (reservado para o futuro)
 //   disponivel   → publicada e ainda não iniciada
-function estadoDe(item, discV2, big5, auto) {
+function estadoDe(item, discV2, big5, auto, ie, ri) {
   if (!item.publicado) return "indisponivel";
   if (item.v2) {
     if (discV2 && discV2.disponivel === false) return "indisponivel";
@@ -155,6 +159,21 @@ function estadoDe(item, discV2, big5, auto) {
     if (st === "andamento") return "andamento";
     return "disponivel";
   }
+  if (item.ie) {
+    // Sob feature flag (revisão interna): padrão seguro é "Em breve".
+    if (!ie || ie.disponivel === false) return "indisponivel";
+    const st = ie?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
+  if (item.ri) {
+    if (!ri || ri.disponivel === false) return "indisponivel";
+    const st = ri?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
   return "disponivel";
 }
 
@@ -170,15 +189,19 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const [discV2, setDiscV2] = useState(null);
   const [big5, setBig5] = useState(null);
   const [auto, setAuto] = useState(null);
+  const [ie, setIe] = useState(null);
+  const [ri, setRi] = useState(null);
 
   const carregarDisc = () => api("/disc/avaliacao").then((r) => { if (r && !r.error) setDiscV2(r); });
   const carregarBig5 = () => api("/big-five").then((r) => { if (r && !r.error) setBig5(r); });
   const carregarAuto = () => api("/autossabotagem").then((r) => { if (r && !r.error) setAuto(r); });
-  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); }, []);
+  const carregarIe = () => api("/inteligencia-emocional").then((r) => { if (r && !r.error) setIe(r); });
+  const carregarRi = () => api("/riasec").then((r) => { if (r && !r.error) setRi(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto) })),
-    [discV2, big5, auto]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri) })),
+    [discV2, big5, auto, ie, ri]
   );
 
   const total = comEstado.length;
@@ -189,6 +212,8 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
     if (item.v2 && item.estado !== "indisponivel") setVista({ tipo: "disc" });
     else if (item.bf && item.estado !== "indisponivel") setVista({ tipo: "bigfive" });
     else if (item.auto && item.estado !== "indisponivel") setVista({ tipo: "autossabotagem" });
+    else if (item.ie && item.estado !== "indisponivel") setVista({ tipo: "inteligencia-emocional" });
+    else if (item.ri && item.estado !== "indisponivel") setVista({ tipo: "riasec" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
@@ -217,6 +242,24 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
         aviso={aviso}
         recarregar={() => { carregarAuto(); recarregar?.(); }}
         onVoltar={() => { carregarAuto(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "inteligencia-emocional") {
+    return (
+      <InteligenciaEmocional
+        aviso={aviso}
+        recarregar={() => { carregarIe(); recarregar?.(); }}
+        onVoltar={() => { carregarIe(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "riasec") {
+    return (
+      <RiasecInteresses
+        aviso={aviso}
+        recarregar={() => { carregarRi(); recarregar?.(); }}
+        onVoltar={() => { carregarRi(); setVista({ tipo: "catalogo" }); }}
       />
     );
   }

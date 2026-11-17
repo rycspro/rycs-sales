@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   ArrowLeft, ChevronRight, CircleUserRound, ClipboardList, GraduationCap, Gift, Headphones,
-  LogOut, Mail, RotateCcw, Settings, ShieldCheck, Target, Wallet,
+  LogOut, Mail, RotateCcw, Settings, ShieldCheck, Target, Wallet, Crown,
 } from "lucide-react";
 import ThemeSwitcher from "../ThemeSwitcher.jsx";
 
@@ -97,6 +97,7 @@ export default function MinhaConta({
             <Item Icon={GraduationCap} titulo="Academy" descricao="Cursos e certificações" onClick={() => onNavigate?.("academy")} />
             <Item Icon={ClipboardList} titulo="Testes e Avaliações" descricao="Perfil comportamental e competências" onClick={() => onNavigate?.("testes")} />
             <Item Icon={Gift} titulo="Indicar" descricao="Convide outros profissionais" onClick={() => onNavigate?.("indicar")} />
+            <Item Icon={Crown} titulo="Planos" descricao="Grátis, Pro e Premium" onClick={() => onNavigate?.("planos")} />
           </div>
 
           <div className="vx-account-group">

@@ -1,20 +1,26 @@
-import MinhaConta from "../conta/MinhaConta.jsx";
-import AtividadeProfissional from "../conta/AtividadeProfissional.jsx";
 import { ArrowLeft } from "lucide-react";
-import { useState, useEffect } from "react";
-import Cadastro from "./Cadastro.jsx";
+import { useState, useEffect, lazy, Suspense } from "react";
+// As duas telas iniciais do profissional (painel e oportunidades) carregam
+// junto; as demais vêm sob demanda, para o carregamento inicial no celular ficar
+// mais leve.
 import PainelVendedor from "./PainelVendedor.jsx";
 import Oportunidades from "./Oportunidades.jsx";
-import Workspace from "./Workspace.jsx";
-import CampanhaPage from "./CampanhaPage.jsx";
-import CampanhasEmpresa from "./CampanhasEmpresa.jsx";
-import TreinamentoEmpresa from "./TreinamentoEmpresa.jsx";
-import Carteira from "./Carteira.jsx";
-import PerfilVendedor from "./PerfilVendedor.jsx";
-import TestesAvaliacoes from "./TestesAvaliacoes.jsx";
-import AcademyCatalogo from "./AcademyCatalogo.jsx";
-import Academy from "./Academy.jsx";
-import Indicacoes from "../Indicacoes.jsx";
+const MinhaConta = lazy(() => import("../conta/MinhaConta.jsx"));
+const AtividadeProfissional = lazy(() => import("../conta/AtividadeProfissional.jsx"));
+const Cadastro = lazy(() => import("./Cadastro.jsx"));
+const CampanhaPage = lazy(() => import("./CampanhaPage.jsx"));
+const CampanhasEmpresa = lazy(() => import("./CampanhasEmpresa.jsx"));
+const TreinamentoEmpresa = lazy(() => import("./TreinamentoEmpresa.jsx"));
+const Carteira = lazy(() => import("./Carteira.jsx"));
+const PerfilVendedor = lazy(() => import("./PerfilVendedor.jsx"));
+const TestesAvaliacoes = lazy(() => import("./TestesAvaliacoes.jsx"));
+const RycsClub = lazy(() => import("./RycsClub.jsx"));
+const AcademyCatalogo = lazy(() => import("./AcademyCatalogo.jsx"));
+const Academy = lazy(() => import("./Academy.jsx"));
+const Indicacoes = lazy(() => import("../Indicacoes.jsx"));
+const PlanosProfissional = lazy(() => import("./PlanosProfissional.jsx"));
+
+const ESPERA = <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
 
 export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, setAba, recarregar }) {
   const [abertaId, setAbertaId] = useState(null);
@@ -35,7 +41,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
   if (!eu) {
     if (db.sellers.length === 0)
       return <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
-    return <Cadastro db={db} setDb={setDb} up={up} aviso={aviso} />;
+    return <Suspense fallback={ESPERA}><Cadastro db={db} setDb={setDb} up={up} aviso={aviso} /></Suspense>;
   }
 
   // O quiz/triagem antigos deixaram de ser obrigatórios e não bloqueiam mais o
@@ -47,12 +53,12 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
 
   if (empresaAberta) {
     if (campanhaAberta) {
-      return <CampanhaPage campanha={campanhaAberta} empresa={empresaAberta} eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} voltar={() => setCampanhaAbertaId(null)} recarregar={recarregar} />;
+      return <Suspense fallback={ESPERA}><CampanhaPage campanha={campanhaAberta} empresa={empresaAberta} eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} voltar={() => setCampanhaAbertaId(null)} recarregar={recarregar} /></Suspense>;
     }
     // Profissional aprovado nesta empresa → vai direto para campanhas
     if (eu.aplicacoes?.[empresaAberta.id] === "aprovado" && !modoTreinamento) {
       return (
-        <CampanhasEmpresa
+        <Suspense fallback={ESPERA}><CampanhasEmpresa
           empresa={empresaAberta}
           eu={eu}
           db={db}
@@ -61,25 +67,26 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
           aviso={aviso}
           recarregar={recarregar}
           irAcademy={(funcao) => { setAcademyFuncao(funcao); setAbertaId(null); setAba("academy"); }}
-        />
+        /></Suspense>
       );
     }
     // Não aprovado ainda → treinamento + certificação
     return (
-      <TreinamentoEmpresa
+      <Suspense fallback={ESPERA}><TreinamentoEmpresa
         empresa={empresaAberta}
         eu={eu}
         voltar={() => { setAbertaId(null); setModoTreinamento(false); }}
         onAprovado={() => { setModoTreinamento(false); }}
         aviso={aviso}
         recarregar={recarregar}
-      />
+      /></Suspense>
     );
   }
 
   return (
     <>
-      {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("oportunidades")} />}
+      <Suspense fallback={ESPERA}>
+      {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("oportunidades")} setAba={setAba} />}
       {aba === "oportunidades" && (
         <Oportunidades
           eu={eu}
@@ -96,10 +103,13 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
             navegar={navegar} tour={tour} limparTour={() => setTour(null)} />)}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
+      {aba === "planos" && <PlanosProfissional aviso={aviso} />}
       {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} />}
       {aba === "perfil" && <PerfilVendedor eu={eu} db={db} up={up} aviso={aviso} />}
       {aba === "testes" && <TestesAvaliacoes eu={eu} db={db} aviso={aviso} recarregar={recarregar} />}
+      {aba === "club" && <RycsClub eu={eu} db={db} aviso={aviso} recarregar={recarregar} setAba={setAba} />}
       {["tarefas", "conversas"].includes(aba) && <AtividadeProfissional conversas={aba === "conversas"} eu={eu} db={db} up={up} aviso={aviso} recarregar={recarregar} />}
+      </Suspense>
 
       {/* Tour de aula: enquanto o aluno explora a ferramenta real, um atalho
           sempre visível o traz de volta à aula de onde saiu. */}

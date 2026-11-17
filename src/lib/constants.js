@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -46,8 +46,10 @@ export const NAV = {
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "testes", label: "Testes e Avaliações", Icon: ClipboardList },
+    { key: "club", label: "RYCS Club", Icon: Trophy },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "indicar", label: "Indicar", Icon: Gift },
+    { key: "planos", label: "Planos", Icon: Crown },
     { key: "perfil", label: "Meu Perfil", Icon: UserIcon },
   ],
   empresa: [
@@ -87,6 +89,7 @@ export const NAV = {
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },
+    { key: "jornada", label: "Rastreamento", Icon: Route },
     { section: "Pessoas" },
     { key: "profissionais", label: "Profissionais", Icon: UserCheck },
     { key: "empresas", label: "Empresas", Icon: Building2 },
@@ -100,7 +103,9 @@ export const NAV = {
     { key: "saques", label: "Saques", Icon: Wallet },
     { section: "Conteúdo" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
+    { key: "club", label: "RYCS Club", Icon: Trophy },
     { key: "emails", label: "E-mails", Icon: Mail },
+    { key: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
     { section: "Sistema" },
     { key: "beta", label: "Ambiente Beta", Icon: RotateCcw },
   ],

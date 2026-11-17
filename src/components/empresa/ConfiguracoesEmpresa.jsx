@@ -540,30 +540,32 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
         {/* ── Cartão editável ── */}
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
           {/* Header gradiente — nome e segmento editáveis */}
-          <div style={{ background: `linear-gradient(135deg, ${form.cor || "var(--brand)"} 0%, ${form.cor || "#3b82f6"} 100%)`, padding: "24px 28px 20px", display: "flex", alignItems: "center", gap: 18 }}>
-            <div style={{ width: 60, height: 60, borderRadius: 14, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -1, flexShrink: 0, border: "2px solid rgba(255,255,255,.35)", overflow: "hidden" }}>
-              {logo ? <img src={logo} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome || "?")[0].toUpperCase()}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <InlineField label="" value={form.nome} onChange={(v) => { set("nome")(v); setChanged(true); }} placeholder="Nome fantasia" dark
-                extraStyle={{ fontSize: 20, fontWeight: 700 }} />
-              <InlineField label="" value={form.segmento} onChange={(v) => { set("segmento")(v); setChanged(true); }} placeholder="Segmento da empresa" dark />
+          <div style={{ background: `linear-gradient(135deg, ${form.cor || "var(--brand)"} 0%, ${form.cor || "#3b82f6"} 100%)`, padding: mobile ? "20px 18px 18px" : "24px 28px 20px", display: "flex", flexDirection: mobile ? "column" : "row", alignItems: mobile ? "stretch" : "center", gap: mobile ? 14 : 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+              <div style={{ width: mobile ? 52 : 60, height: mobile ? 52 : 60, borderRadius: 14, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -1, flexShrink: 0, border: "2px solid rgba(255,255,255,.35)", overflow: "hidden" }}>
+                {logo ? <img src={logo} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome || "?")[0].toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <InlineField label="" value={form.nome} onChange={(v) => { set("nome")(v); setChanged(true); }} placeholder="Nome fantasia" dark
+                  extraStyle={{ fontSize: mobile ? 17 : 20, fontWeight: 700 }} />
+                <InlineField label="" value={form.segmento} onChange={(v) => { set("segmento")(v); setChanged(true); }} placeholder="Segmento da empresa" dark />
+              </div>
             </div>
             {/* Logo upload inline no header */}
-            <div style={{ flexShrink: 0 }}>
+            <div style={{ flexShrink: 0, display: "flex", flexDirection: mobile ? "row" : "column", gap: mobile ? 8 : 4, justifyContent: mobile ? "flex-start" : "initial" }}>
               <input ref={inputLogoRef} type="file" accept="image/jpeg,image/png" onChange={enviarLogo} style={{ display: "none" }} />
               <button
                 onClick={() => inputLogoRef.current?.click()}
                 disabled={enviandoLogo}
                 title={logo ? "Trocar logo" : "Enviar logo"}
-                style={{ background: "rgba(255,255,255,.18)", border: "1.5px solid rgba(255,255,255,.4)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: "#fff", fontSize: 12, fontFamily: "inherit" }}
+                style={{ background: "rgba(255,255,255,.18)", border: "1.5px solid rgba(255,255,255,.4)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: "#fff", fontSize: 12, fontFamily: "inherit", whiteSpace: "nowrap" }}
               >
                 <ImagePlus size={13} />
                 {enviandoLogo ? "…" : logo ? "Trocar" : "Logo"}
               </button>
               {logo && (
                 <button onClick={removerLogo} disabled={enviandoLogo} title="Remover logo"
-                  style={{ marginTop: 4, background: "rgba(255,0,0,.25)", border: "1.5px solid rgba(255,100,100,.5)", borderRadius: 8, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: "#fff", fontSize: 11, fontFamily: "inherit" }}>
+                  style={{ marginTop: mobile ? 0 : 4, background: "rgba(255,0,0,.25)", border: "1.5px solid rgba(255,100,100,.5)", borderRadius: 8, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: "#fff", fontSize: 11, fontFamily: "inherit", whiteSpace: "nowrap" }}>
                   <Trash2 size={11} /> Remover
                 </button>
               )}
@@ -710,13 +712,24 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
       {/* Secondary navigation — usa classe vx-sidebtn idêntica ao sidebar */}
       {!somenteConteudo && (mobile ? (
-        <div style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid var(--border)", scrollbarWidth: "none", padding: "4px 6px", gap: 2 }}>
-          {SECOES_NAV.map(({ key, label, icon: Icon }) => (
-            <button key={key} className="vx-sidebtn" data-on={secao === key ? "1" : "0"} onClick={() => setSecao(key)} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
-              <Icon size={18} strokeWidth={1.85} />
-              {label}
-            </button>
-          ))}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, padding: "20px 16px 14px", borderBottom: "1px solid var(--border)" }}>
+          {SECOES_NAV.map(({ key, label, icon: Icon }) => {
+            const on = secao === key;
+            return (
+              <button key={key} type="button" onClick={() => setSecao(key)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px",
+                  borderRadius: 999, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand-50)" : "var(--surface)",
+                  color: on ? "var(--brand)" : "var(--muted)",
+                  fontSize: 13, fontWeight: on ? 600 : 500, fontFamily: "inherit",
+                  cursor: "pointer", whiteSpace: "nowrap", transition: "background .15s, color .15s, border-color .15s",
+                }}>
+                <Icon size={15} strokeWidth={1.9} />
+                {label}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <nav style={{ width: 220, flexShrink: 0, borderRight: "1px solid var(--border)", padding: "8px 10px 0" }}>

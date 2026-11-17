@@ -277,18 +277,18 @@ function CampanhaRow({ c, s, onAbrir, onCandidaturas, onToggleCandidaturas, menu
   );
   return (
     <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-      <div onClick={() => onAbrir(c)} style={{ flex: 1, minWidth: 180, cursor: "pointer" }}>
+      <div onClick={() => onAbrir(c)} style={{ flex: "1 1 160px", minWidth: 0, cursor: "pointer" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <StatusBadge status={c.status} />
         </div>
         <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", marginTop: 5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.titulo || "Sem título"}</div>
       </div>
-      <div style={{ display: "flex", gap: 18 }}>
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
         {col(s.recebidas, "Candidat.")}
         {col(s.ativos, "Ativos")}
         {col(s.concluidas, "Concl.")}
       </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", flex: "1 1 auto" }}>
         <button className="vx-btn vx-btn-sm" onClick={() => onCandidaturas(c)} style={{ whiteSpace: "nowrap" }}>
           Candidaturas{s.pendentes > 0 && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: "var(--brand-50)", color: "var(--brand)" }}>{s.pendentes}</span>}
         </button>
@@ -371,7 +371,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
 
       {/* Linha 1 — indicadores */}
       {campanhas.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12, marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: 12, marginBottom: 16 }}>
           <IndicadorTopo label="Campanhas ativas" valor={ativas} descricao="Operações em andamento" Icon={Megaphone} />
           <IndicadorTopo label="Profissionais trabalhando" valor={profissionaisTrabalhando} descricao="Ativos nas campanhas publicadas" Icon={UserCheck} />
           <IndicadorTopo label="Tarefas em execução" valor={tarefasExecucao} descricao="Atividades em andamento" Icon={Activity} />
@@ -426,7 +426,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
 
       {/* Estado vazio — nenhuma campanha criada */}
       {campanhas.length === 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 14 }}>
           <div onClick={() => onCriar(false)}
             style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10, transition: "border-color .15s" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; }}
@@ -460,7 +460,7 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
 
       {/* Lista de campanhas */}
       {visiveis.length > 0 && (vista === "grade" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 12 }}>
           {visiveis.map((c) => (
             <CampanhaCard key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} onToggleCandidaturas={onToggleCandidaturas} menu={menuDe(c)} />
           ))}

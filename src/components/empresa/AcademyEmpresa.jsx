@@ -169,10 +169,10 @@ function Lista({ emp, aviso, onAbrir, onIrMateriais }) {
         </button>
       </div>
 
-      {/* Abas */}
-      <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${BORDA}`, marginBottom: 24 }}>
+      {/* Abas — roláveis na horizontal no celular, sem estourar a largura */}
+      <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${BORDA}`, marginBottom: 24, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
         {ABAS.map(([k, label]) => (
-          <button key={k} onClick={() => setAba(k)} style={{ padding: "10px 16px", fontSize: 14, fontWeight: aba === k ? 600 : 400, color: aba === k ? AZUL : "#737373", background: "none", border: "none", borderBottom: aba === k ? `2px solid ${AZUL}` : "2px solid transparent", cursor: "pointer", marginBottom: -1 }}>{label}</button>
+          <button key={k} onClick={() => setAba(k)} style={{ padding: "10px 16px", fontSize: 14, fontWeight: aba === k ? 600 : 400, color: aba === k ? AZUL : "#737373", background: "none", border: "none", borderBottom: aba === k ? `2px solid ${AZUL}` : "2px solid transparent", cursor: "pointer", marginBottom: -1, whiteSpace: "nowrap", flexShrink: 0 }}>{label}</button>
         ))}
       </div>
 
@@ -307,7 +307,7 @@ function ModuloCard({ c, numero, stats, onGerenciar, onEditar, onGerarAulas, onV
   };
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, flexWrap: "wrap" }}>
         {/* Reordenar */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", color: "#c5c9d0" }}>
           <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onSubir} disabled={!podeSubir} style={{ padding: 0, height: 16 }} title="Subir"><ChevronUp size={14} /></button>
@@ -560,7 +560,7 @@ function AprendizadoAba({ aviso }) {
         <p style={{ color: "#737373", margin: "2px 0 0", fontSize: 13 }}>Acompanhe como os profissionais estão consumindo os treinamentos da sua empresa.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))", gap: 12, marginBottom: 28 }}>
         {cards.map((c) => (
           <div key={c.label} style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".5px" }}>{c.label}</div>

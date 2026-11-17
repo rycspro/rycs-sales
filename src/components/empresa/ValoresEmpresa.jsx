@@ -163,7 +163,7 @@ function RemuneracaoResumo({ emp, campanhas, onAbrir, onAbrirCampanhas }) {
             </div>
             <span className="vx-chip" style={{ fontSize: 11 }}>{tarefasConfiguradas.length} tipo{tarefasConfiguradas.length !== 1 ? "s" : ""}</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 140px), 1fr))", gap: 8 }}>
             {tarefasConfiguradas.map((k) => (
               <div key={k} style={{ padding: "10px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                 <div className="vx-mut" style={{ fontSize: 11, marginBottom: 4 }}>{ACOES[k]?.nome || k}</div>
@@ -514,7 +514,7 @@ function PainelRemuneracao({ emp, db, up, aviso, onFechar }) {
               {/* Modo manual */}
               {modo === "manual" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 12 }}>
                     {[...selecionadas].filter((k) => k !== "venda").map((k) => (
                       <label key={k}>
                         <div className="vx-label">{ACOES[k]?.nome || k}</div>
@@ -695,7 +695,7 @@ function PainelCampanhasCustom({ campanhas, defaults, onFechar, onEditar }) {
                         <Settings2 size={13} /> Editar
                       </button>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 6 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 120px), 1fr))", gap: 6 }}>
                       {Object.entries(tarefas).filter(([, v]) => Number(v) > 0).map(([k, v]) => (
                         <div key={k} style={{ fontSize: 12, padding: "6px 8px", borderRadius: 8, background: "var(--surface-2)" }}>
                           <span className="vx-mut">{ACOES[k]?.nome || k}</span>
@@ -818,7 +818,7 @@ function PainelComissaoCampanha({ campanha, defaults, onFechar, onSalvar }) {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 12 }}>
                 {ACOES_SEM_VENDA.map((k) => (
                   <label key={k}>
                     <div className="vx-label">{ACOES[k]?.nome || k}</div>

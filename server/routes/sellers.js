@@ -9,6 +9,8 @@ import { emailCadastroCompletadoAdmin } from "../services/email.js";
 import { podeEditarVendedor } from "../services/escopo.js";
 import { exigirReauth } from "../services/reautenticacao.js";
 import { auditarSeguranca } from "../services/securityAudit.js";
+import { ordenarComDesempate, pode, TOLERANCIA_DESEMPATE } from "../../shared/planosProfissional.js";
+import { planosAtuais } from "../services/planosProfissional.js";
 
 const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusiness.com.br";
 
@@ -49,7 +51,13 @@ export function invalidarCacheProfissionais() { _profCacheTs = 0; }
 router.get("/professionals/active", (req, res) => {
   if (req.user.role !== "empresa") return res.status(403).json({ error: "Apenas empresas" });
   const companyId = req.user.entityId;
-  const rows = getProfissionaisBase();
+  // Desempate do Pro: só reordena dentro da mesma faixa de Score; com a
+  // tolerância pendente (null) a lista sai como sempre saiu.
+  let rows = getProfissionaisBase();
+  if (TOLERANCIA_DESEMPATE) {
+    const planos = planosAtuais();
+    rows = ordenarComDesempate(rows, (s) => pode(planos.get(s.id) || "gratis", "desempateScore"));
+  }
   const certificacoes = db.prepare("SELECT sellerId, funcao, nivel, percentual FROM certifications").all();
   const pedidos = new Map(db.prepare("SELECT sellerId, status FROM partnership_requests WHERE companyId = ?").all(companyId).map((p) => [p.sellerId, p.status]));
   const notas = new Map(db.prepare("SELECT sellerId, observacao FROM professional_notes WHERE companyId = ?").all(companyId).map((n) => [n.sellerId, n.observacao]));
@@ -150,6 +158,40 @@ router.get("/sellers/:id/curriculo", (req, res) => {
     "Content-Length": buf.length,
   });
   res.end(buf);
+});
+
+// Enviar / trocar o currículo pelo próprio profissional (depois do cadastro).
+// Só o dono mexe no próprio currículo. PDF ou Word, até ~8MB (mesma regra do
+// cadastro em auth.js).
+const CURRICULO_TIPOS = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+
+router.post("/sellers/:id/curriculo", (req, res) => {
+  if (req.user.role !== "vendedor" || req.user.entityId !== req.params.id)
+    return res.status(403).json({ error: "Sem permissão" });
+  const seller = db.prepare("SELECT id FROM sellers WHERE id = ?").get(req.params.id);
+  if (!seller) return res.status(404).json({ error: "Profissional não encontrado" });
+
+  const { base64, mimetype, nome } = req.body || {};
+  if (!base64 || !mimetype) return res.status(400).json({ error: "Envie o arquivo do currículo." });
+  if (!CURRICULO_TIPOS.includes(mimetype))
+    return res.status(422).json({ error: "Envie o currículo em PDF ou Word.", campo: "curriculo" });
+  const bytes = Math.round((String(base64).length * 3) / 4);
+  if (bytes > 8 * 1024 * 1024)
+    return res.status(422).json({ error: "O currículo deve ter no máximo 8MB.", campo: "curriculo" });
+
+  const dataUri = `data:${mimetype};base64,${base64}`;
+  const nomeLimpo = String(nome || "curriculo").slice(0, 160);
+  db.prepare("UPDATE sellers SET curriculo = ?, curriculoNome = ? WHERE id = ?")
+    .run(dataUri, nomeLimpo, req.params.id);
+
+  res.json({ ok: true, curriculoNome: nomeLimpo, url: `/api/sellers/${req.params.id}/curriculo` });
+});
+
+router.delete("/sellers/:id/curriculo", (req, res) => {
+  if (req.user.role !== "vendedor" || req.user.entityId !== req.params.id)
+    return res.status(403).json({ error: "Sem permissão" });
+  db.prepare("UPDATE sellers SET curriculo = '', curriculoNome = '' WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
 });
 
 router.post("/professionals/:id/note", (req, res) => {

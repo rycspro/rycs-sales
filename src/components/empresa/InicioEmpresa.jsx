@@ -408,7 +408,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       </div>
 
       {/* ── CARDS DE INDICADORES ──────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))", gap: 12, marginBottom: 6 }}>
         <CardIndicador icon={UserCheck} label="Profissionais ativos" valor={sellersAtivos.length} onClick={() => ir("profissionais")} />
         <CardIndicador icon={Megaphone} label="Campanhas ativas" valor={campanhasAtivas.length} onClick={() => ir("campanhas")} />
         <CardIndicador icon={MessageSquare} label="Conversas" valor={conversas} onClick={() => ir("conversas")} />
@@ -418,10 +418,10 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       </div>
 
       {/* ── GRID PRINCIPAL ────────────────────────────────────────────────── */}
-      <div className="inicio-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, alignItems: "start" }}>
+      <div className="inicio-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
 
         {/* COLUNA ESQUERDA */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
 
 
           {/* ── DESEMPENHO COMERCIAL ──────────────────────────────────────── */}
@@ -435,14 +435,14 @@ export default function InicioEmpresa({ emp, db, setAba }) {
           <div className="vx-card" style={{ padding: "6px 20px 20px" }}>
 
             {/* Métricas rápidas do período — região unificada com divisores sutis */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 0, marginBottom: 20, borderBottom: "1px solid var(--border)" }}>
+            <div className="vx-metricas-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 130px), 1fr))", gap: 0, marginBottom: 20, borderBottom: "1px solid var(--border)" }}>
               {[
                 { label: "Tarefas no período", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo).length, icon: Activity },
                 { label: "Aprovadas", val: submissions.filter((s) => Number(s.criadoEm) >= corte && Number(s.criadoEm) <= fimPeriodo && s.status === "liberado").length, icon: CheckCircle2 },
                 { label: "Leads no período", val: leads.filter((l) => { const t = Number(l.criadoEm || l.atualizadoEm); return t >= corte && t <= fimPeriodo; }).length, icon: Target },
                 { label: "Campanhas criadas", val: campaigns.filter((c) => Number(c.criadoEm) >= corte && Number(c.criadoEm) <= fimPeriodo).length, icon: Megaphone },
               ].map(({ label, val, icon: Ic }, i) => (
-                <div key={label} style={{ padding: "14px 16px", borderLeft: i === 0 ? "none" : "1px solid var(--border)" }}>
+                <div key={label} className="vx-metrica-cell" style={{ padding: "14px 16px", borderLeft: i === 0 ? "none" : "1px solid var(--border)" }}>
                   <div className="vx-tile-top" style={{ marginBottom: 10 }}>
                     <span>{label}</span>
                     <Ic size={15} strokeWidth={1.7} />
@@ -544,19 +544,19 @@ export default function InicioEmpresa({ emp, db, setAba }) {
               {itensPendencia.map((item) => {
                 const Ic = item.Icon;
                 return (
-                  <div key={item.key} style={{
+                  <div key={item.key} className="vx-pend-item" style={{
                     display: "flex", alignItems: "center", gap: 14,
                     background: "var(--brand-50)", border: "1px solid var(--brand-100)",
                     borderRadius: 12, padding: "14px 18px",
                   }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 20 }}>
+                    <div className="vx-pend-emoji" style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 20 }}>
                       {item.emoji ? item.emoji : (Ic ? <Ic size={18} color="var(--brand)" strokeWidth={2} /> : null)}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="vx-pend-txt" style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{item.title}</div>
                       {item.desc && <div style={{ fontSize: 13, color: "var(--brand-600)", marginTop: 2 }}>{item.desc}</div>}
                     </div>
-                    <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flexShrink: 0, gap: 6, whiteSpace: "nowrap" }} onClick={item.onClick}>
+                    <button className="vx-btn vx-btn-primary vx-btn-sm vx-pend-cta" style={{ flexShrink: 0, gap: 6, whiteSpace: "nowrap" }} onClick={item.onClick}>
                       {item.cta} <ArrowRight size={13} />
                     </button>
                   </div>
@@ -597,7 +597,7 @@ export default function InicioEmpresa({ emp, db, setAba }) {
       {/* Mobile: grid de uma coluna já é o padrão agora */}
       <style>{`
         @media (max-width: 860px) {
-          .inicio-grid { grid-template-columns: 1fr !important; }
+          .inicio-grid { grid-template-columns: minmax(0, 1fr) !important; }
         }
       `}</style>
     </div>

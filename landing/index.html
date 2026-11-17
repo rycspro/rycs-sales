@@ -111,9 +111,9 @@
     .disp { font-family: 'Space Grotesk', 'Inter', sans-serif; letter-spacing: -.035em; }
     .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
 
-    .logo { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); }
-    .logo::after { content: "RYCS"; font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -.03em; }
-    .logo img { width: 34px; height: 34px !important; border-radius: 10px; object-fit: cover; display: block; box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
+    .logo { display: inline-flex; align-items: center; color: var(--ink); }
+    .logo img { height: 34px; width: auto; display: block; }
+    .footer-brand .logo img { height: 64px; }
 
     nav { position: fixed; inset: 0 0 auto; z-index: 100; padding-top: 16px; pointer-events: none; }
     nav .inner {
@@ -180,7 +180,6 @@
         radial-gradient(circle at 78% 58%, rgba(110,160,255,.72) 0 2px, transparent 3px);
     }
     .hero .container { position: relative; }
-    .hero-eyebrow { display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px; border-radius: 999px; background: rgba(11,17,28,.68); border: 1px solid var(--brand-100); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); color: #a7c0ff; font-size: 12px; font-weight: 600; margin-bottom: 30px; }
     .hero h1 { font-size: clamp(43px, 6.3vw, 76px); font-weight: 650; line-height: 1.02; max-width: 980px; margin: 0 auto 27px; text-wrap: balance; }
     .hero h1 span { color: transparent; background: linear-gradient(110deg, #bcd0ff 0%, #6e9aff 45%, #76dbff 100%); background-clip: text; -webkit-background-clip: text; }
     .hero p { font-size: 17px; color: var(--ink-2); max-width: 660px; margin: 0 auto 36px; line-height: 1.75; }
@@ -258,15 +257,12 @@
       .container { padding-inline: 16px; }
       nav { padding-top: 10px; }
       nav .inner { height: 58px; border-radius: 15px; padding-inline: 10px; }
-      .logo { gap: 8px; }
-      .logo::after { display: none; }
-      .logo img { width: 32px; height: 32px !important; }
+      .logo img { height: 22px; }
       .nav-links { gap: 6px; }
       .btn-nav { padding: 8px 10px; font-size: 11.5px; }
       .hero { min-height: auto; padding: 150px 0 155px; }
       .hero::before { width: 620px; height: 520px; top: 65px; }
       .hero::after { width: 620px; bottom: 54px; }
-      .hero-eyebrow { margin-bottom: 24px; }
       .hero h1 { font-size: clamp(39px, 12vw, 52px); }
       .hero p { font-size: 15.5px; line-height: 1.68; }
       .hero-actions { width: min(100%, 340px); margin-inline: auto; }
@@ -321,7 +317,7 @@
   <!-- redeploy: botão único Acessar Plataforma -->
   <nav>
     <div class="container inner">
-      <a href="/" class="logo"><img src="favicon-rycs.png" alt="RYCS Sales Machine"></a>
+      <a href="/" class="logo"><img src="logo-rycs-horizontal.png" alt="RYCS Sales Machine" width="840" height="102"></a>
       <div class="nav-links">
         <a href="#como-funciona">Como funciona</a>
         <a href="#para-quem">Para quem</a>
@@ -333,7 +329,6 @@
 
   <section class="hero">
     <div class="container">
-      <div class="hero-eyebrow"><span class="dot"></span> Auditoria de alta tecnologia em cada ação</div>
       <h1 class="disp">Vendas por <span>ação verificada</span>. Sem risco. Sem CLT.</h1>
       <p>De um lado, empresas que precisam vender mais sem montar equipe. Do outro, profissionais de vendas que querem ganhar por resultado, no próprio ritmo. A RYCS conecta os dois e verifica cada entrega antes que ela vire dinheiro.</p>
       <div class="hero-actions">
@@ -543,7 +538,7 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <div class="logo"><img src="favicon-rycs.png" alt="RYCS"></div>
+          <div class="logo"><img src="logo-rycs-empilhado.png" alt="RYCS Sales Machine" width="720" height="300"></div>
           <p>Plataforma de vendas por ação verificada. Conectando empresas a profissionais de vendas qualificados, com auditoria por inteligência artificial.</p>
         </div>
         <div class="footer-col">
@@ -566,10 +561,47 @@
         </div>
       </div>
       <div class="footer-bottom">
-        © 2026 RYCS Sales Machine. Todos os direitos reservados.
+        © 2026 RYCS Sales Machine. Todos os direitos reservados.<br>
+        RYCS SALES MACHINE INOVA SIMPLES (I.S.) · CNPJ 69.802.687/0001-85
       </div>
     </div>
   </footer>
 
+  <script>
+    // Jornada desde o anúncio: guarda a origem (UTM/fbclid) do primeiro clique,
+    // registra a visita e leva origem + id do visitante para os links do app.
+    (function () {
+      var API = "https://app.rycs.pro/api/jornada/evento";
+      var CAMPOS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid", "gclid"];
+      function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+      function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+      var vid = ler("rycs_vid");
+      if (!vid || !/^[A-Za-z0-9_-]{8,64}$/.test(vid)) {
+        vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+        gravar("rycs_vid", vid);
+      }
+      var params = new URLSearchParams(location.search);
+      var origem = {};
+      CAMPOS.forEach(function (c) { if (params.get(c)) origem[c] = params.get(c).slice(0, 120); });
+      if (Object.keys(origem).length && !ler("rycs_origem")) {
+        origem.landing = location.pathname;
+        gravar("rycs_origem", JSON.stringify(origem));
+      }
+      try { origem = JSON.parse(ler("rycs_origem") || "{}"); } catch (e) { origem = {}; }
+      if (!Object.keys(origem).length && document.referrer) {
+        try { var ref = new URL(document.referrer).hostname; if (ref && !/rycs\.pro$/.test(ref)) origem = { referrer: ref }; } catch (e) {}
+      }
+      fetch(API, {
+        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ visitanteId: vid, evento: "visita", origem: origem })
+      }).catch(function () {});
+      document.querySelectorAll('a[href^="https://app.rycs.pro"]').forEach(function (a) {
+        var url = new URL(a.href);
+        url.searchParams.set("vid", vid);
+        CAMPOS.forEach(function (c) { if (origem[c]) url.searchParams.set(c, origem[c]); });
+        a.href = url.toString();
+      });
+    })();
+  </script>
 </body>
 </html>

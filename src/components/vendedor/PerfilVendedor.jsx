@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye } from "lucide-react";
+import { Award, Camera, CheckCircle2, GraduationCap, Pencil, Trash2, X, RotateCcw, Eye, FileText } from "lucide-react";
 import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import OnbPerfil from "./OnbPerfil.jsx";
+import VerificarWhatsapp from "./VerificarWhatsapp.jsx";
 import { LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 import MultiSelect from "../ui/MultiSelect.jsx";
 import ComboSelect from "../ui/ComboSelect.jsx";
@@ -111,7 +112,9 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const [guiaAberto, setGuiaAberto] = useState(false);
   const [menuFoto, setMenuFoto] = useState(false);        // menu de opções da foto
   const [fotoAmpliada, setFotoAmpliada] = useState(false); // "Ver foto" em tamanho grande
+  const [enviandoCv, setEnviandoCv] = useState(false);     // upload do currículo em arquivo
   const arquivo = useRef(null);
+  const cvInput = useRef(null);
   const [certificados, setCertificados] = useState([]);
 
   // Os certificados que o profissional tirou na Academy fazem parte do
@@ -212,6 +215,35 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
     up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, foto: "", fotoScore: null } : s) }));
     setAvaliacaoFoto(null);
     aviso("Foto removida.");
+  };
+
+  // Currículo em arquivo (PDF/Word): enviar/trocar/remover depois do cadastro.
+  const enviarCurriculo = async (file) => {
+    if (!file) return;
+    setEnviandoCv(true);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || "").split(",")[1] || "");
+        reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+        reader.readAsDataURL(file);
+      });
+      const r = await api(`/sellers/${eu.id}/curriculo`, { base64, mimetype: file.type, nome: file.name });
+      setEnviandoCv(false);
+      if (r?.error) return aviso(r.error);
+      up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, curriculo: r.url, curriculoNome: r.curriculoNome } : s) }));
+      aviso("Currículo enviado.");
+    } catch (err) {
+      setEnviandoCv(false);
+      aviso(err.message);
+    }
+  };
+
+  const removerCurriculo = async () => {
+    const r = await apiDelete(`/sellers/${eu.id}/curriculo`);
+    if (r?.error) return aviso(r.error);
+    up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, curriculo: null, curriculoNome: "" } : s) }));
+    aviso("Currículo removido.");
   };
 
   const campo = (chave, label, extra = {}) => (
@@ -409,6 +441,8 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
         </div>
       )}
 
+      <VerificarWhatsapp eu={eu} up={up} aviso={aviso} />
+
       {/* abas: Currículo comercial | Apresentação */}
       <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
         {[["curriculo", "Currículo comercial"], ["apresentacao", "Apresentação"]].map(([k, l]) => (
@@ -555,6 +589,35 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
               </div>
             ))}
             <button type="button" className="vx-btn vx-btn-sm" onClick={() => addItem("idiomas", { idioma: "", nivel: "" })}>+ Adicionar idioma</button>
+          </div>
+
+          {/* Currículo em arquivo (PDF/Word) — mesmo do cadastro, editável aqui. */}
+          <div style={{ marginTop: 16 }}>
+            <div className="vx-label">Currículo (PDF ou Word)</div>
+            <input ref={cvInput} hidden type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={(e) => { enviarCurriculo(e.target.files?.[0]); e.target.value = ""; }} />
+            {eu.curriculo ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 12, flexWrap: "wrap" }}>
+                <FileText size={18} style={{ color: "var(--brand)", flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 140, fontSize: 13.5, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {eu.curriculoNome || "Currículo enviado"}
+                </div>
+                <a className="vx-btn vx-btn-sm" href={`${API_URL}/api/sellers/${eu.id}/curriculo`} target="_blank" rel="noreferrer">
+                  <Eye size={13} /> Ver
+                </a>
+                <button type="button" className="vx-btn vx-btn-sm" disabled={enviandoCv} onClick={() => cvInput.current?.click()}>
+                  <RotateCcw size={13} /> {enviandoCv ? "Enviando…" : "Trocar"}
+                </button>
+                <button type="button" className="vx-btn vx-btn-sm vx-btn-danger" onClick={removerCurriculo}>
+                  <Trash2 size={13} /> Remover
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="vx-btn vx-btn-sm" disabled={enviandoCv} onClick={() => cvInput.current?.click()}>
+                <FileText size={13} /> {enviandoCv ? "Enviando…" : "Enviar currículo"}
+              </button>
+            )}
+            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 6 }}>PDF ou Word, até 8MB. As empresas podem baixar seu currículo.</div>
           </div>
 
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
