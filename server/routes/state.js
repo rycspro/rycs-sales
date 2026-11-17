@@ -196,7 +196,9 @@ function getVendedorState(entityId) {
   const rawSeller = db.prepare("SELECT * FROM sellers WHERE id = ?").all(meuId);
   const sellers = buildSellersWithRelations(rawSeller);
   const meuVendedor = sellers[0];
-  const oportunidadesLiberadas = ["aprovado", "parcial"].includes(meuVendedor?.status);
+  // Sem etapa de aprovação: todo profissional vê as empresas ativas e as
+  // campanhas publicadas. O status deixou de bloquear o acesso.
+  const oportunidadesLiberadas = true;
 
   let companies = [];
   if (oportunidadesLiberadas) {
