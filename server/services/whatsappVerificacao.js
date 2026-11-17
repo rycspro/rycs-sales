@@ -41,6 +41,40 @@ async function modeloAprovado() {
 }
 export const verificacaoConfigurada = async () => configBasica() && modeloAprovado();
 
+// Situação do modelo na Meta, para o admin acompanhar (sem cache).
+export async function estadoModelo() {
+  const c = config();
+  const base = { configurado: configBasica(), nome: c.template, idioma: c.idioma, status: null, motivo: "" };
+  if (!base.configurado) return base;
+  const r = await graph(`${c.base}/${c.contaId}/message_templates`, {
+    token: c.token, params: { name: c.template, fields: "name,language,status,rejected_reason", limit: 20 },
+  });
+  const t = (r.data || []).find((x) => x.name === c.template && x.language === c.idioma);
+  return { ...base, status: t?.status || null, motivo: t?.rejected_reason && t.rejected_reason !== "NONE" ? t.rejected_reason : "" };
+}
+
+// O Gerenciador do WhatsApp recusa criar modelo de autenticação nesta conta;
+// pela API, com o token do servidor, funciona. Código com botão "Copiar código"
+// e validade igual à do sistema.
+export async function criarModelo() {
+  const atual = await estadoModelo();
+  if (!atual.configurado || atual.status) return atual;
+  const c = config();
+  await graph(`${c.base}/${c.contaId}/message_templates`, {
+    token: c.token, metodo: "POST",
+    dados: {
+      name: c.template, language: c.idioma, category: "AUTHENTICATION",
+      components: [
+        { type: "BODY", add_security_recommendation: true },
+        { type: "FOOTER", code_expiration_minutes: VALIDADE_MS / 60000 },
+        { type: "BUTTONS", buttons: [{ type: "OTP", otp_type: "COPY_CODE", text: "Copiar código" }] },
+      ],
+    },
+  });
+  cacheModelo = { em: 0, aprovado: false };
+  return estadoModelo();
+}
+
 const HORA = 60 * 60 * 1000;
 
 db.exec(`

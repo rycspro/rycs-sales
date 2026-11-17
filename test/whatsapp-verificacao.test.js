@@ -33,13 +33,20 @@ test("mensagem usa o modelo de autenticação com o código no corpo e no botão
 // Meta falsa: responde à consulta do modelo e guarda as mensagens enviadas.
 async function metaFalsa(t, { modeloAprovado }) {
   const enviados = [];
+  const modelos = modeloAprovado ? [{ name: "rycs_codigo", language: "pt_BR", status: "APPROVED" }] : [];
   const meta = createServer((req, res) => {
     let corpo = "";
     req.on("data", (d) => { corpo += d; });
     req.on("end", () => {
       res.setHeader("Content-Type", "application/json");
-      if (req.method === "GET" && req.url.startsWith("/conta-1/message_templates"))
-        return res.end(JSON.stringify({ data: modeloAprovado ? [{ name: "rycs_codigo", language: "pt_BR", status: "APPROVED" }] : [] }));
+      if (req.url.startsWith("/conta-1/message_templates")) {
+        if (req.method === "POST") {
+          const m = JSON.parse(corpo);
+          modelos.push({ name: m.name, language: m.language, status: "PENDING", criado: m });
+          return res.end(JSON.stringify({ id: "tpl-1", status: "PENDING", category: m.category }));
+        }
+        return res.end(JSON.stringify({ data: modelos }));
+      }
       enviados.push({ url: req.url, corpo: JSON.parse(corpo || "{}") });
       res.end(JSON.stringify({ messages: [{ id: `wamid.${enviados.length}` }] }));
     });
@@ -50,7 +57,7 @@ async function metaFalsa(t, { modeloAprovado }) {
     WHATSAPP_TOKEN: "token-teste", WHATSAPP_PHONE_NUMBER_ID: "999", WHATSAPP_WABA_ID: "conta-1",
     WHATSAPP_TEMPLATE_CODIGO: "rycs_codigo", WHATSAPP_API_BASE: `http://127.0.0.1:${meta.address().port}`,
   };
-  return { enviados, env };
+  return { enviados, modelos, env };
 }
 
 function criarProfissionais(dbPath, lista) {
@@ -65,7 +72,7 @@ function criarProfissionais(dbPath, lista) {
 }
 
 test("rotas: sem o modelo aprovado na Meta, a verificação fica indisponível", async (t) => {
-  const { enviados, env } = await metaFalsa(t, { modeloAprovado: false });
+  const { enviados, modelos, env } = await metaFalsa(t, { modeloAprovado: false });
   const { base, dbPath } = await subirServidor(t, env);
   const [cookie] = criarProfissionais(dbPath, [["prof-x", "5511912345678"]]);
   const req = cliente(base);
@@ -74,6 +81,25 @@ test("rotas: sem o modelo aprovado na Meta, a verificação fica indisponível",
   r = await req("/whatsapp/verificacao/enviar", { cookie, body: {} });
   assert.equal(r.status, 503);
   assert.equal(enviados.length, 0);
+
+  // O admin cria o modelo de autenticação pela API; profissional não pode.
+  const admin = assinar({ id: "admin-teste", role: "admin", entityId: null });
+  r = await req("/admin/whatsapp/modelo-codigo", { cookie, body: {} });
+  assert.equal(r.status, 403);
+  r = await req("/admin/whatsapp/modelo-codigo", { cookie: admin });
+  assert.equal(r.corpo.status, null);
+  r = await req("/admin/whatsapp/modelo-codigo", { cookie: admin, body: {} });
+  assert.equal(r.status, 200);
+  assert.equal(r.corpo.status, "PENDING");
+  assert.equal(modelos.length, 1);
+  const criado = modelos[0].criado;
+  assert.equal(criado.category, "AUTHENTICATION");
+  assert.equal(criado.language, "pt_BR");
+  assert.deepEqual(criado.components[2].buttons[0], { type: "OTP", otp_type: "COPY_CODE", text: "Copiar código" });
+  assert.equal(criado.components[1].code_expiration_minutes, 10);
+  // Criar de novo não duplica.
+  r = await req("/admin/whatsapp/modelo-codigo", { cookie: admin, body: {} });
+  assert.equal(modelos.length, 1);
 });
 
 test("rotas: envia o código pelo WhatsApp, confirma, limita reenvio e bloqueia número de outra conta", async (t) => {

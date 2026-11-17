@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { MessageSquare, Plus, Send, AlertTriangle, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
+import ModeloCodigoWhatsapp from "./ModeloCodigoWhatsapp.jsx";
 
 const STATUS = {
   enviando: { txt: "Enviando", color: "var(--brand)" },
@@ -53,6 +54,8 @@ export default function DisparoWhatsapp({ aviso }) {
           </div>
         </div>
       )}
+
+      <ModeloCodigoWhatsapp aviso={aviso} />
 
       {!info ? (
         <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Carregando...</div>

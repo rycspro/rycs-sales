@@ -1,10 +1,15 @@
 import { Router } from "express";
-import { statusVerificacao, enviarCodigo, confirmarCodigo } from "../services/whatsappVerificacao.js";
+import { statusVerificacao, enviarCodigo, confirmarCodigo, estadoModelo, criarModelo } from "../services/whatsappVerificacao.js";
 
 const router = Router();
 
 function soProfissional(req, res, next) {
   if (req.user?.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais verificam o WhatsApp." });
+  next();
+}
+
+function soAdmin(req, res, next) {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Acesso restrito ao administrador." });
   next();
 }
 
@@ -22,6 +27,16 @@ router.post("/whatsapp/verificacao/enviar", soProfissional, async (req, res) => 
 router.post("/whatsapp/verificacao/confirmar", soProfissional, (req, res) => {
   const r = confirmarCodigo(req.user.entityId, req.body?.codigo);
   res.status(r.status).json(r.corpo);
+});
+
+router.get("/admin/whatsapp/modelo-codigo", soAdmin, async (req, res) => {
+  try { res.json(await estadoModelo()); }
+  catch (e) { res.status(502).json({ error: `A Meta respondeu: ${e.message}` }); }
+});
+
+router.post("/admin/whatsapp/modelo-codigo", soAdmin, async (req, res) => {
+  try { res.json(await criarModelo()); }
+  catch (e) { res.status(502).json({ error: `A Meta recusou: ${e.message}` }); }
 });
 
 export default router;
