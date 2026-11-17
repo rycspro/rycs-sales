@@ -10,6 +10,13 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
   useEffect(() => { setGruposAbertos({}); }, [active]);
   // Navegou: fecha o menu completo do celular.
   useEffect(() => { setMenuMobile(false); }, [active]);
+  // Trava o scroll da página de fundo enquanto o drawer está aberto.
+  useEffect(() => {
+    if (!menuMobile) return;
+    const anterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = anterior; };
+  }, [menuMobile]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const fimKeys = new Set(["configuracoes", "outros"]);
   const fimItems = rawItems.filter((item) => fimKeys.has(item.key));
@@ -33,9 +40,22 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     return active;
   })();
 
+  // Itens do menu completo do celular: mesma navegação, com rótulos de seção
+  // "Início" e "Configurações" injetados só aqui (não mexe na sidebar desktop).
+  // Dividers viram seções; a ordem e as permissões vêm de allItems.
+  const mobileItems = (() => {
+    const base = allItems.filter((item) => !item.divider);
+    const out = [{ section: "Início" }];
+    for (const item of base) {
+      if (item.key === "suporte") out.push({ section: "Configurações" });
+      out.push(item);
+    }
+    return out;
+  })();
+
   // Renderiza a lista de navegação (usada na sidebar web e no menu completo do
   // celular). A sidebar esconde "perfil" para a empresa; o menu mobile mostra tudo.
-  const renderNav = ({ mobile = false } = {}) => allItems
+  const renderNav = (items, { mobile = false } = {}) => items
     .filter((item) => item.key !== "perfil" || role === "vendedor")
     .map((item, i) => {
       if (item.divider) return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
@@ -88,7 +108,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", scrollbarWidth: "none" }}>
-          {renderNav()}
+          {renderNav(allItems)}
         </div>
 
         {!accountRole && onLogout && (
@@ -153,18 +173,30 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
       {/* Menu completo do celular (equivalente à sidebar web). */}
       {menuMobile && (
         <div className="vx-mobilemenu-overlay" onClick={() => setMenuMobile(false)}>
-          <div className="vx-mobilemenu" onClick={(e) => e.stopPropagation()}>
+          <div className="vx-mobilemenu" role="dialog" aria-modal="true" aria-label="Menu de navegação" onClick={(e) => e.stopPropagation()}>
             <div className="vx-mobilemenu-head">
-              <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" style={{ height: 26, width: "auto" }} />
-              <button type="button" className="vx-btn vx-btn-ghost" aria-label="Fechar" onClick={() => setMenuMobile(false)}><X size={18} /></button>
+              <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" className="vx-mobilemenu-logo" />
+              <button type="button" className="vx-mobilemenu-x" aria-label="Fechar menu" onClick={() => setMenuMobile(false)}><X size={18} strokeWidth={2} /></button>
             </div>
             <div className="vx-mobilemenu-list">
-              {renderNav({ mobile: true })}
+              {renderNav(mobileItems, { mobile: true })}
             </div>
-            {onLogout && (
-              <button type="button" className="vx-sidebtn vx-mobilemenu-sair" onClick={onLogout}>
-                <LogOut size={18} strokeWidth={1.85} /> Sair da conta
-              </button>
+            {accountRole && (
+              <div className="vx-mobilemenu-footer">
+                <div className="vx-mobilemenu-conta">
+                  <span className="vx-mobilemenu-avatar">
+                    {(role === "empresa" ? entity?.logo : entity?.foto)
+                      ? <img src={role === "empresa" ? entity.logo : entity.foto} alt="" />
+                      : <span>{(entity?.nome || user?.email || "?").slice(0, 1).toUpperCase()}</span>}
+                  </span>
+                  <span className="vx-mobilemenu-conta-nome">{entity?.nome || user?.email || "Minha conta"}</span>
+                </div>
+                {onLogout && (
+                  <button type="button" className="vx-mobilemenu-sair" onClick={onLogout}>
+                    <LogOut size={17} strokeWidth={1.9} /> Sair da conta
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

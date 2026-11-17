@@ -149,14 +149,47 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 .vx-mobile-topbar .vx-btn{min-height:40px}
 .vx-mobile-logo{height:30px;width:auto;max-width:150px;object-fit:contain;display:block}
 .vx-content-chat>.vx-mobile-topbar,.vx-content-settings>.vx-mobile-topbar{padding:12px 16px 0;margin-bottom:12px}
-/* Menu completo do celular (equivalente à sidebar web) */
-.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(17,24,39,.42);display:flex;justify-content:flex-end;animation:vxin .18s ease}
-.vx-mobilemenu{width:min(84vw,340px);height:100%;background:var(--surface-solid,var(--surface));border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(20,30,45,.18);display:flex;flex-direction:column;animation:vxslidein .22s cubic-bezier(.22,1,.36,1)}
-@keyframes vxslidein{from{transform:translateX(100%)}to{transform:translateX(0)}}
-.vx-mobilemenu-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
-.vx-mobilemenu-list{flex:1;overflow-y:auto;padding:8px 8px 4px;display:flex;flex-direction:column;gap:0}
-.vx-mobilemenu-list .vx-subitem{padding-left:36px!important;min-height:40px!important;font-size:13.5px!important}
-.vx-mobilemenu-sair{margin:4px 8px calc(10px + env(safe-area-inset-bottom,0px));color:var(--red)!important;flex-shrink:0;border-top:1px solid var(--border);border-radius:0}
+/* ───────── Menu lateral do celular — White Editorial ───────── */
+.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(20,28,40,.38);display:flex;justify-content:flex-start;animation:vxin .18s ease;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.vx-mobilemenu{
+  --mm-bg:#FFFFFF;--mm-ink:#252525;--mm-mut:#858585;--mm-border:#E9EDF2;--mm-active:#318CE7;--mm-active-bg:#EAF4FF;--mm-hover:#F4F7FA;
+  width:min(88vw,340px);height:100%;background:var(--mm-bg);
+  border-right:1px solid var(--mm-border);box-shadow:8px 0 40px rgba(20,30,45,.12);
+  display:flex;flex-direction:column;animation:vxslidein .24s cubic-bezier(.22,1,.36,1);
+  padding-top:env(safe-area-inset-top,0px)}
+html.dark .vx-mobilemenu{--mm-bg:#15181F;--mm-ink:#E7EAEE;--mm-mut:#9298A3;--mm-border:#262B34;--mm-active:#4D9FFF;--mm-active-bg:#17273C;--mm-hover:#1C212A}
+@keyframes vxslidein{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+.vx-mobilemenu-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 13px;border-bottom:1px solid var(--mm-border);flex-shrink:0}
+.vx-mobilemenu-logo{height:24px;width:auto;max-width:130px;object-fit:contain;display:block}
+.vx-mobilemenu-x{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;border:0;background:transparent;color:var(--mm-mut);cursor:pointer;transition:background .16s,color .16s}
+.vx-mobilemenu-x:hover{background:var(--mm-hover);color:var(--mm-ink)}
+.vx-mobilemenu-list{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:10px 10px 6px;display:flex;flex-direction:column;gap:1px}
+.vx-mobilemenu-list::-webkit-scrollbar{width:0}
+/* Títulos de seção */
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebar-section{font-size:10px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--mm-mut);padding:14px 12px 5px}
+.vx-mobilemenu-list>.vx-sidebar-section:first-child{padding-top:4px}
+/* Itens — linhas limpas, sem caixa */
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;padding:0 12px;
+  border:0;background:transparent;border-radius:10px;cursor:pointer;
+  font:500 14.5px inherit;color:var(--mm-ink);text-align:left;letter-spacing:-.01em;
+  transition:background .17s ease,color .17s ease}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn>svg{flex-shrink:0;width:19px;height:19px;color:var(--mm-mut);transition:color .17s ease}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn:hover{background:var(--mm-hover)}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn[data-on="1"]{background:var(--mm-active-bg);color:var(--mm-active);font-weight:600}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn[data-on="1"]>svg{color:var(--mm-active)}
+.vx-mobilemenu .vx-mobilemenu-list .vx-sidebtn>svg:not(:first-child){margin-left:auto;width:16px;height:16px}
+/* Subitens — recuo e tipografia menor */
+.vx-mobilemenu .vx-mobilemenu-list .vx-subitem{min-height:40px!important;padding-left:42px!important;font-size:13.5px!important;font-weight:500!important;color:var(--mm-mut)!important}
+.vx-mobilemenu .vx-mobilemenu-list .vx-subitem[data-on="1"]{background:var(--mm-active-bg)!important;color:var(--mm-active)!important;font-weight:600!important}
+.vx-mobilemenu-list .vx-sidedot{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+/* Rodapé fixo — conta + sair */
+.vx-mobilemenu-footer{flex-shrink:0;border-top:1px solid var(--mm-border);padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vx-mobilemenu-conta{display:flex;align-items:center;gap:10px;min-width:0}
+.vx-mobilemenu-avatar{width:36px;height:36px;border-radius:10px;overflow:hidden;flex-shrink:0;display:grid;place-items:center;background:var(--mm-active-bg);color:var(--mm-active);font-weight:700;font-size:14px;border:1px solid var(--mm-border)}
+.vx-mobilemenu-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.vx-mobilemenu-conta-nome{font-size:13.5px;font-weight:600;color:var(--mm-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vx-mobilemenu-sair{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;border:0;background:transparent;cursor:pointer;color:#E5484D;font:600 13px inherit;padding:8px 6px;border-radius:9px;transition:background .16s}
+.vx-mobilemenu-sair:hover{background:rgba(229,72,77,.08)}
 .vx-content{padding:24px max(16px,env(safe-area-inset-right,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:820px;margin:0 auto}
 .vx-content-chat{padding:0!important;max-width:none!important;margin:0!important;overflow:hidden;display:flex;flex-direction:column}
 .vx-content-settings{padding:0!important;max-width:none!important;margin:0!important;}
