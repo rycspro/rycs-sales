@@ -39,6 +39,8 @@ jobs:
             exit 1
           fi
           echo "Sintaxe do server OK"
+      - name: Lint do backend (pega variável/import indefinido — ReferenceError)
+        run: npm run lint
       - name: Build do frontend
         run: npm run build
       - name: Testes (apenas a suíte deste repo, em test/)
