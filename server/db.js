@@ -2089,6 +2089,72 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_riasec_assessments_seller ON riasec_assessments(sellerId, iniciadoEm DESC);
 `);
 
+// Gamificação do profissional (camada separada do RYCS Score / nível operacional).
+// Aditivo e idempotente: o XP é um livro-razão com chave única por evento, então
+// reprocessar nunca concede pontos em dobro.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS gamification_xp (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    chave TEXT NOT NULL,        -- idempotência: "badge:<id>", "tarefa:<submissionId>"...
+    xp INTEGER NOT NULL DEFAULT 0,
+    motivo TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_gamification_xp_seller_chave ON gamification_xp(sellerId, chave);
+
+  CREATE TABLE IF NOT EXISTS gamification_badges (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    badgeId TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_gamification_badges_seller_badge ON gamification_badges(sellerId, badgeId);
+`);
+
+// ── RYCS Club: imagens configuráveis, prêmios e resgates ──────────────────────
+// Camada administrativa do Club. Nada aqui toca em finanças, score ou nível
+// operacional. Imagens ficam por "slot" (banner, nível, medalha); prêmios
+// nascem em rascunho e só aparecem ao profissional quando publicados.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS club_config (
+    chave TEXT PRIMARY KEY,        -- 'banner', 'nivel:<chave>', 'medalha:<badgeId>'
+    url TEXT DEFAULT '',
+    atualizadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS club_prizes (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    tipo TEXT DEFAULT 'fisico',          -- 'fisico' | 'digital'
+    imagem TEXT DEFAULT '',
+    metrica TEXT DEFAULT '',             -- métrica do engine (ex.: 'tarefasAprovadas')
+    alvo REAL DEFAULT 0,                 -- marco para desbloquear (Modelo A)
+    paises TEXT DEFAULT '[]',            -- JSON de códigos de país; [] = todos
+    quantidade INTEGER,                  -- NULL = ilimitado
+    status TEXT DEFAULT 'rascunho',      -- 'rascunho' | 'publicado' | 'arquivado'
+    ordem INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS club_redemptions (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    prizeId TEXT NOT NULL,
+    estado TEXT DEFAULT 'solicitado',    -- solicitado|analise|aprovado|enviado|entregue|recusado
+    endereco TEXT DEFAULT '',
+    observacao TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_club_redemptions_seller_prize ON club_redemptions(sellerId, prizeId);
+`);
+
 
 export default db;
 export { uid, agora };

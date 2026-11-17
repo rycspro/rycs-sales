@@ -84,7 +84,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
   return (
     <>
       <Suspense fallback={ESPERA}>
-      {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("oportunidades")} />}
+      {aba === "painel" && <PainelVendedor eu={eu} db={db} abrirEmpresas={() => setAba("oportunidades")} setAba={setAba} />}
       {aba === "oportunidades" && (
         <Oportunidades
           eu={eu}

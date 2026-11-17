@@ -1,6 +1,7 @@
 import { Router } from "express";
 import db from "../db.js";
 import { BETA_DEFAULT_BALANCE, ajustarSaldoBeta, isBetaEnvironment, resetBetaEnvironment } from "../services/betaEnvironment.js";
+import { avaliarProfissional, estadoGamificacao } from "../services/gamificacao.js";
 
 const router = Router();
 
@@ -248,7 +249,13 @@ function getVendedorState(entityId) {
     });
   }
 
-  return { sellers, companies, submissions, withdrawals, messages, campaigns, leads };
+  // Gamificação: reconhece conquistas/XP a partir dos dados reais (idempotente)
+  // e devolve o estado para o Painel. Falha aqui nunca derruba o state.
+  let gamificacao = null;
+  try { avaliarProfissional(meuId); gamificacao = estadoGamificacao(meuId); }
+  catch (e) { console.error(`[gamificacao] falha para ${meuId}:`, e.message); }
+
+  return { sellers, companies, submissions, withdrawals, messages, campaigns, leads, gamificacao };
 }
 
 function getFilteredState(user) {
