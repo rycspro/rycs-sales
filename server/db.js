@@ -2001,6 +2001,34 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_bigfive_assessments_seller ON bigfive_assessments(sellerId, iniciadoEm DESC);
 `);
 
+// Avaliação Padrões de Autossabotagem (instrumento autoral rycs-autossabotagem-
+// v1-40) — tabela própria, separada do DISC e do Big Five. Persiste versão do
+// instrumento, idioma, chave, versão do algoritmo, respostas, pontuação (soma e
+// média por padrão, dentro de `resultado`) e data de conclusão. Compartilhamento
+// com empresas é privado por padrão (= 0). O resultado NUNCA toca perfilComercial,
+// score comercial, ranking ou campanhas.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS autossabotagem_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    idioma TEXT DEFAULT '',
+    chave TEXT DEFAULT '',
+    algoritmo TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_autossabotagem_assessments_seller_versao ON autossabotagem_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_autossabotagem_assessments_seller ON autossabotagem_assessments(sellerId, iniciadoEm DESC);
+`);
+
 
 export default db;
 export { uid, agora };
