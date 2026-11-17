@@ -184,12 +184,6 @@ function Intro({ estado, onIniciar, onVoltar, enviando }) {
           </div>
         </div>
 
-        {estado?.experimental && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--amber)", background: "rgba(245,158,11,.10)", borderRadius: 999, padding: "6px 12px", marginBottom: 16 }}>
-            <Info size={13} /> Versão experimental para avaliação interna.
-          </div>
-        )}
-
         <Linha rotulo="Objetivo">
           Oferecer uma leitura ampla da sua personalidade por cinco fatores: abertura à experiência,
           conscienciosidade, extroversão, amabilidade e neuroticismo.
