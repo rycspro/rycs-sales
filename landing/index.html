@@ -111,9 +111,9 @@
     .disp { font-family: 'Space Grotesk', 'Inter', sans-serif; letter-spacing: -.035em; }
     .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
 
-    .logo { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); }
-    .logo::after { content: "RYCS"; font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -.03em; }
-    .logo img { width: 34px; height: 34px !important; border-radius: 10px; object-fit: cover; display: block; box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
+    .logo { display: inline-flex; align-items: center; color: var(--ink); }
+    .logo img { height: 34px; width: auto; display: block; }
+    .footer-brand .logo img { height: 64px; }
 
     nav { position: fixed; inset: 0 0 auto; z-index: 100; padding-top: 16px; pointer-events: none; }
     nav .inner {
@@ -258,9 +258,7 @@
       .container { padding-inline: 16px; }
       nav { padding-top: 10px; }
       nav .inner { height: 58px; border-radius: 15px; padding-inline: 10px; }
-      .logo { gap: 8px; }
-      .logo::after { display: none; }
-      .logo img { width: 32px; height: 32px !important; }
+      .logo img { height: 22px; }
       .nav-links { gap: 6px; }
       .btn-nav { padding: 8px 10px; font-size: 11.5px; }
       .hero { min-height: auto; padding: 150px 0 155px; }
@@ -321,7 +319,7 @@
   <!-- redeploy: botão único Acessar Plataforma -->
   <nav>
     <div class="container inner">
-      <a href="/" class="logo"><img src="favicon-rycs.png" alt="RYCS Sales Machine"></a>
+      <a href="/" class="logo"><img src="logo-rycs-horizontal.png" alt="RYCS Sales Machine" width="840" height="102"></a>
       <div class="nav-links">
         <a href="#como-funciona">Como funciona</a>
         <a href="#para-quem">Para quem</a>
@@ -543,7 +541,7 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <div class="logo"><img src="favicon-rycs.png" alt="RYCS"></div>
+          <div class="logo"><img src="logo-rycs-empilhado.png" alt="RYCS Sales Machine" width="720" height="300"></div>
           <p>Plataforma de vendas por ação verificada. Conectando empresas a profissionais de vendas qualificados, com auditoria por inteligência artificial.</p>
         </div>
         <div class="footer-col">
