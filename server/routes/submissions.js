@@ -24,6 +24,11 @@ router.post("/submissions", async (req, res) => {
 
   if (role === "vendedor" && entityId !== sellerId)
     return res.status(403).json({ error: "Sem permissão" });
+  // Só o profissional que executou a ação (ou o admin) envia comprovação. Uma
+  // empresa nunca envia — e, se pudesse, com o companyId vindo do corpo
+  // reservaria o caixa de outro tenant. Bloqueia o papel errado de saída.
+  if (role !== "vendedor" && role !== "admin")
+    return res.status(403).json({ error: "Apenas profissionais enviam comprovações" });
   if (!exigirOportunidadesLiberadas(req, res, sellerId)) return;
   if (!tipo || !companyId) return res.status(400).json({ error: "tipo e companyId são obrigatórios" });
 
@@ -34,6 +39,16 @@ router.post("/submissions", async (req, res) => {
 
   const empresa = db.prepare("SELECT comissoes, assinatura, saldo, saldoReservado, regrasAprovacao FROM companies WHERE id = ?").get(companyId);
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  // Isolamento multi-tenant: o companyId do corpo precisa bater com uma parceria
+  // aprovada do profissional (mesmo modelo de vínculo já exigido no caminho de
+  // campanha). Sem isto, um vendedor liberado reservaria o caixa de qualquer
+  // empresa cujo comissoes[tipo] > 0. O admin não é tenant e é dispensado.
+  if (role === "vendedor") {
+    const parceria = db.prepare("SELECT status FROM applications WHERE sellerId = ? AND companyId = ?").get(sellerId, companyId);
+    if (parceria?.status !== "aprovado")
+      return res.status(403).json({ error: "Profissional não vinculado a esta empresa" });
+  }
 
   let campanha = null;
   if (campaignId) {

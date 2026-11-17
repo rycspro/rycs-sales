@@ -171,8 +171,12 @@ router.get("/deposits/:id", (req, res) => {
   const { role, entityId } = req.user;
   const row = db.prepare("SELECT id, companyId, valor, status, confirmadoEm FROM deposit_requests WHERE id = ?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "Depósito não encontrado" });
-  if (role === "empresa" && row.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
-  res.json({ id: row.id, valor: row.valor, status: row.status, confirmadoEm: row.confirmadoEm || null });
+  // Só a empresa dona ou o admin. Antes, qualquer vendedor logado lia o
+  // depósito de qualquer empresa por id (IDOR).
+  if (role === "admin" || (role === "empresa" && row.companyId === entityId)) {
+    return res.json({ id: row.id, valor: row.valor, status: row.status, confirmadoEm: row.confirmadoEm || null });
+  }
+  return res.status(403).json({ error: "Sem permissão" });
 });
 
 // Contratar um destaque (visibilidade): cria uma assinatura mensal no Asaas.

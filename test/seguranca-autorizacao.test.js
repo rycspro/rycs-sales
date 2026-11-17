@@ -25,6 +25,60 @@ async function registrarVendedor(req, db, email) {
   return { cookie: r.cookie, id };
 }
 
+test("submissions.js: companyId do corpo não reserva caixa de outro tenant", async (t) => {
+  const { base, dbPath } = await subirServidor(t);
+  const req = cliente(base);
+  const db = new Database(dbPath);
+  db.pragma("busy_timeout = 5000");
+  t.after(() => db.close());
+
+  const A = await registrarEmpresa(req, db, "dona-sub-a@exemplo.invalid");
+  const B = await registrarEmpresa(req, db, "dona-sub-b@exemplo.invalid");
+  const V = await registrarVendedor(req, db, "v-sub@exemplo.invalid");
+
+  // V liberado na triagem; comissão de agendamento nas duas empresas; B com caixa.
+  db.prepare("UPDATE sellers SET status = 'aprovado' WHERE id = ?").run(V.id);
+  db.prepare("UPDATE companies SET comissoes = ? WHERE id IN (?, ?)").run(JSON.stringify({ agendamento: 10 }), A.id, B.id);
+  db.prepare("UPDATE companies SET saldo = 1000 WHERE id = ?").run(B.id);
+  // Vínculo aprovado só com A.
+  db.prepare("INSERT INTO applications (sellerId, companyId, status) VALUES (?, ?, 'aprovado')").run(V.id, A.id);
+
+  // Empresa nunca envia comprovação (e, se pudesse, com companyId do corpo
+  // reservaria caixa alheio).
+  let r = await req("/submissions", { cookie: A.cookie, body: { sellerId: V.id, companyId: B.id, tipo: "agendamento", prova: {} } });
+  assert.equal(r.status, 403, "empresa não envia comprovação");
+
+  // Vendedor sem vínculo com B: bloqueado, e o caixa de B não é tocado.
+  r = await req("/submissions", { cookie: V.cookie, body: { sellerId: V.id, companyId: B.id, tipo: "agendamento", prova: {} } });
+  assert.equal(r.status, 403, "vendedor sem vínculo com B é bloqueado");
+  assert.equal(db.prepare("SELECT saldoReservado FROM companies WHERE id = ?").get(B.id).saldoReservado || 0, 0, "caixa de B intacto");
+
+  // Vendedor vinculado a A: passa a autorização (o veredito da IA é irrelevante aqui).
+  r = await req("/submissions", { cookie: V.cookie, body: { sellerId: V.id, companyId: A.id, tipo: "agendamento", prova: {} } });
+  assert.equal(r.status, 200, "fluxo legítimo (vínculo com A) é aceito");
+});
+
+test("deposits.js: só a empresa dona ou admin lê GET /deposits/:id", async (t) => {
+  const { base, dbPath } = await subirServidor(t);
+  const req = cliente(base);
+  const db = new Database(dbPath);
+  db.pragma("busy_timeout = 5000");
+  t.after(() => db.close());
+
+  const A = await registrarEmpresa(req, db, "dona-dep-a@exemplo.invalid");
+  const B = await registrarEmpresa(req, db, "dona-dep-b@exemplo.invalid");
+  const V = await registrarVendedor(req, db, "v-dep@exemplo.invalid");
+  db.prepare("INSERT INTO deposit_requests (id, companyId, valor, status, criadoEm) VALUES ('dep1', ?, 250, 'pendente', ?)").run(A.id, Date.now());
+
+  let r = await req("/deposits/dep1", { cookie: V.cookie });
+  assert.equal(r.status, 403, "vendedor não lê depósito (IDOR fechado)");
+  r = await req("/deposits/dep1", { cookie: B.cookie });
+  assert.equal(r.status, 403, "outra empresa não lê");
+  r = await req("/deposits/dep1", { cookie: A.cookie });
+  assert.equal(r.status, 200, "empresa dona lê");
+  assert.equal(r.corpo.valor, 250);
+});
+
 test("contacts.js: só a empresa dona (ou admin) lê/escreve contatos da campanha", async (t) => {
   const { base, dbPath } = await subirServidor(t);
   const req = cliente(base);
