@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { statusVerificacao, enviarCodigo, confirmarCodigo, estadoModelo, criarModelo } from "../services/whatsappVerificacao.js";
+import { statusVerificacao, enviarCodigo, confirmarCodigo, estadoModelo, criarModelo, iniciarRecebida } from "../services/whatsappVerificacao.js";
 
 const router = Router();
 
@@ -21,6 +21,11 @@ router.get("/whatsapp/verificacao", soProfissional, async (req, res) => {
 
 router.post("/whatsapp/verificacao/enviar", soProfissional, async (req, res) => {
   const r = await enviarCodigo(req.user.entityId);
+  res.status(r.status).json(r.corpo);
+});
+
+router.post("/whatsapp/verificacao/recebida", soProfissional, async (req, res) => {
+  const r = await iniciarRecebida(req.user.entityId);
   res.status(r.status).json(r.corpo);
 });
 

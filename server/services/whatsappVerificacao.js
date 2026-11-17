@@ -4,6 +4,7 @@ import { graph, GRAPH } from "./meta.js";
 import {
   CODIGO_TAMANHO, VALIDADE_MS, MAX_TENTATIVAS, INTERVALO_REENVIO_MS, MAX_ENVIOS_POR_HORA,
   numeroWhatsapp, whatsVerificado, mensagemCodigo,
+  VALIDADE_RECEBIDA_MS, textoVerificacao, extrairCodigo, mesmoWhatsapp,
 } from "../../shared/whatsappVerificacao.js";
 
 // Ambiente: WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID e WHATSAPP_WABA_ID (os
@@ -107,13 +108,125 @@ export async function statusVerificacao(sellerId) {
   const numero = numeroWhatsapp(s.whats, s.pais);
   const p = db.prepare("SELECT numero, expiraEm, enviadoEm FROM whatsapp_verificacoes WHERE sellerId = ?").get(sellerId);
   const pendente = p && p.numero === numero && p.expiraEm > agora() ? { expiraEm: p.expiraEm, reenviarEm: p.enviadoEm + INTERVALO_REENVIO_MS } : null;
+  const r = db.prepare("SELECT codigo, numero, expiraEm FROM whatsapp_verificacoes_recebidas WHERE sellerId = ?").get(sellerId);
+  const numeroRycs = r && r.numero === numero && r.expiraEm > agora() ? await numeroDaRycs() : null;
   return {
     configurado: await verificacaoConfigurada(),
+    recebimento: configRecebimento(),
     numero,
     verificado: whatsVerificado(s),
     verificadoEm: whatsVerificado(s) ? s.whatsVerificadoEm : null,
     pendente,
+    recebida: numeroRycs ? pedidoRecebida(r.codigo, numeroRycs, r.expiraEm) : null,
   };
+}
+
+// ── Verificação por mensagem recebida ────────────────────────────────────────
+// O profissional envia um texto com código para o WhatsApp da RYCS. O número
+// que chega pela API oficial prova que o WhatsApp é dele. Não precisa de modelo
+// aprovado e a conversa iniciada pelo cliente não tem custo.
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS whatsapp_verificacoes_recebidas (
+    sellerId TEXT PRIMARY KEY,
+    codigo TEXT NOT NULL UNIQUE,
+    numero TEXT NOT NULL,
+    expiraEm INTEGER NOT NULL,
+    criadoEm INTEGER NOT NULL
+  )
+`);
+
+const configRecebimento = () => { const c = config(); return !!(c.token && c.numeroId); };
+
+let numeroRycsCache = "";
+async function numeroDaRycs() {
+  if (process.env.WHATSAPP_NUMERO_EXIBICAO) return process.env.WHATSAPP_NUMERO_EXIBICAO.replace(/\D/g, "");
+  if (numeroRycsCache) return numeroRycsCache;
+  const c = config();
+  try {
+    const r = await graph(`${c.base}/${c.numeroId}`, { token: c.token, params: { fields: "display_phone_number" } });
+    numeroRycsCache = String(r.display_phone_number || "").replace(/\D/g, "");
+  } catch (e) {
+    console.error("[whatsapp-verificacao] número da RYCS:", e?.message);
+  }
+  return numeroRycsCache;
+}
+
+const pedidoRecebida = (codigo, numeroRycs, expiraEm) => ({
+  codigo,
+  texto: textoVerificacao(codigo),
+  link: `https://wa.me/${numeroRycs}?text=${encodeURIComponent(textoVerificacao(codigo))}`,
+  expiraEm,
+});
+
+export async function iniciarRecebida(sellerId) {
+  if (!configRecebimento()) return falha(503, "A verificação pelo WhatsApp ainda não está disponível.");
+  const s = db.prepare("SELECT whats, pais, whatsVerificadoNumero FROM sellers WHERE id = ?").get(sellerId);
+  if (!s) return falha(404, "Profissional não encontrado.");
+  const numero = numeroWhatsapp(s.whats, s.pais);
+  if (!numero) return falha(400, "Cadastre um WhatsApp válido, com DDD, no seu perfil.");
+  if (whatsVerificado(s)) return falha(409, "Este WhatsApp já está verificado.");
+  if (numeroEmOutraConta(sellerId, numero)) return falha(409, "Este número já está verificado em outra conta.");
+  const numeroRycs = await numeroDaRycs();
+  if (!numeroRycs) return falha(503, "A verificação pelo WhatsApp ainda não está disponível.");
+
+  const t = agora();
+  const atual = db.prepare("SELECT codigo, numero, expiraEm FROM whatsapp_verificacoes_recebidas WHERE sellerId = ?").get(sellerId);
+  if (atual && atual.numero === numero && atual.expiraEm > t)
+    return { status: 200, corpo: pedidoRecebida(atual.codigo, numeroRycs, atual.expiraEm) };
+
+  let codigo;
+  do codigo = String(randomInt(0, 10 ** CODIGO_TAMANHO)).padStart(CODIGO_TAMANHO, "0");
+  while (db.prepare("SELECT 1 FROM whatsapp_verificacoes_recebidas WHERE codigo = ?").get(codigo));
+  db.prepare(`INSERT INTO whatsapp_verificacoes_recebidas (sellerId, codigo, numero, expiraEm, criadoEm) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(sellerId) DO UPDATE SET codigo = excluded.codigo, numero = excluded.numero, expiraEm = excluded.expiraEm, criadoEm = excluded.criadoEm`)
+    .run(sellerId, codigo, numero, t + VALIDADE_RECEBIDA_MS, t);
+  return { status: 200, corpo: pedidoRecebida(codigo, numeroRycs, t + VALIDADE_RECEBIDA_MS) };
+}
+
+async function responder(para, texto) {
+  const c = config();
+  try {
+    await graph(`${c.base}/${c.numeroId}/messages`, {
+      token: c.token, metodo: "POST",
+      dados: { messaging_product: "whatsapp", to: para, type: "text", text: { body: texto } },
+    });
+  } catch (e) {
+    console.warn("[whatsapp-verificacao] resposta:", e?.message);
+  }
+}
+
+// Chamado com cada aviso do webhook da Meta. Mensagem com código válido vinda
+// do número cadastrado no perfil conclui a verificação.
+export async function verificarPorMensagens(corpo) {
+  if (corpo?.object !== "whatsapp_business_account") return 0;
+  let verificados = 0;
+  for (const entrada of corpo.entry || []) {
+    for (const mudanca of entrada.changes || []) {
+      if (mudanca.field !== "messages") continue;
+      for (const m of mudanca.value?.messages || []) {
+        const codigo = extrairCodigo(m.text?.body || m.button?.text || "");
+        if (!codigo || !m.from) continue;
+        const p = db.prepare("SELECT * FROM whatsapp_verificacoes_recebidas WHERE codigo = ?").get(codigo);
+        if (!p || p.expiraEm <= agora()) {
+          await responder(m.from, "Este código de verificação expirou. Gere um novo no seu perfil da RYCS.");
+          continue;
+        }
+        if (!mesmoWhatsapp(m.from, p.numero)) {
+          await responder(m.from, "Este número não é o WhatsApp cadastrado no seu perfil da RYCS. Envie a mensagem do número que está no perfil.");
+          continue;
+        }
+        const ok = db.transaction(() => {
+          if (numeroEmOutraConta(p.sellerId, p.numero)) return false;
+          db.prepare("UPDATE sellers SET whatsVerificadoNumero = ?, whatsVerificadoEm = ? WHERE id = ?").run(p.numero, agora(), p.sellerId);
+          db.prepare("DELETE FROM whatsapp_verificacoes_recebidas WHERE sellerId = ?").run(p.sellerId);
+          return true;
+        })();
+        if (ok) { verificados++; await responder(m.from, "Pronto! Seu WhatsApp foi verificado na RYCS. Pode voltar para a plataforma."); }
+      }
+    }
+  }
+  return verificados;
 }
 
 export async function enviarCodigo(sellerId) {

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import { verificarPorMensagens } from "../services/whatsappVerificacao.js";
 import { randomBytes } from "crypto";
 import {
   metaConfigurada, urlLogin, concluirLogin, conexaoDe, resumoConexao, opcoesDisponiveis,
@@ -28,7 +29,10 @@ metaPublico.post("/webhooks/meta", (req, res) => {
   if (!assinaturaValida(req.rawBody, req.get("x-hub-signature-256"))) return res.sendStatus(401);
   // Responde já: a Meta reenvia se demorar. O processamento segue em seguida.
   res.sendStatus(200);
-  setImmediate(() => processarAvisoWebhook(req.body).catch((e) => console.warn("[meta] webhook:", e.message)));
+  setImmediate(() => {
+    processarAvisoWebhook(req.body).catch((e) => console.warn("[meta] webhook:", e.message));
+    verificarPorMensagens(req.body).catch((e) => console.warn("[meta] verificação whatsapp:", e.message));
+  });
 });
 
 metaPublico.get("/meta/callback", async (req, res) => {

@@ -28,6 +28,24 @@ export function whatsVerificado(seller) {
   return !!verificado && numeroWhatsapp(seller?.whats, seller?.pais) === verificado;
 }
 
+// O WhatsApp identifica alguns celulares brasileiros sem o 9 da frente
+// (55 DD XXXX-XXXX): os dois formatos são o mesmo número.
+function comNoveBR(numero) {
+  const d = String(numero || "").replace(/\D/g, "");
+  const m = d.match(/^55(\d{2})([6-9]\d{7})$/);
+  return m ? `55${m[1]}9${m[2]}` : d;
+}
+export const mesmoWhatsapp = (a, b) => !!a && !!b && comNoveBR(a) === comNoveBR(b);
+
+// Verificação por mensagem recebida: o profissional envia este texto para o
+// WhatsApp da RYCS a partir do próprio número.
+export const VALIDADE_RECEBIDA_MS = 30 * 60 * 1000;
+export const textoVerificacao = (codigo) => `Quero verificar meu WhatsApp na RYCS. Código: RYCS-${codigo}`;
+export function extrairCodigo(texto) {
+  const m = String(texto || "").match(/RYCS\s*-?\s*(\d{6})(?!\d)/i);
+  return m ? m[1] : null;
+}
+
 export function formatarNumero(numero) {
   const d = String(numero || "");
   const m = d.match(/^55(\d{2})(\d{4,5})(\d{4})$/);

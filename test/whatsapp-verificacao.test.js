@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { createHmac } from "node:crypto";
 import Database from "better-sqlite3";
-import { numeroWhatsapp, whatsVerificado, formatarNumero, mensagemCodigo } from "../shared/whatsappVerificacao.js";
+import { numeroWhatsapp, whatsVerificado, formatarNumero, mensagemCodigo, mesmoWhatsapp, extrairCodigo, textoVerificacao } from "../shared/whatsappVerificacao.js";
 import { subirServidor, assinar, cliente } from "./apoio/servidor.js";
 
 test("número com DDI: nacional brasileiro ganha 55, curto ou longo demais é recusado", () => {
@@ -19,6 +20,20 @@ test("verificação vale só enquanto o número do perfil for o verificado", () 
   assert.equal(whatsVerificado({ whats: "5511912345678", whatsVerificadoNumero: "5511912345678" }), true);
   assert.equal(whatsVerificado({ whats: "5511900000000", whatsVerificadoNumero: "5511912345678" }), false);
   assert.equal(whatsVerificado({ whats: "5511912345678", whatsVerificadoNumero: "" }), false);
+});
+
+test("número brasileiro com e sem o 9 é o mesmo WhatsApp", () => {
+  assert.equal(mesmoWhatsapp("5511987654321", "551187654321"), true);
+  assert.equal(mesmoWhatsapp("551187654321", "5511987654321"), true);
+  assert.equal(mesmoWhatsapp("5511912345678", "5511912345679"), false);
+  assert.equal(mesmoWhatsapp("14155550100", "14155550100"), true);
+});
+
+test("código da mensagem de verificação é reconhecido no texto", () => {
+  assert.equal(extrairCodigo(textoVerificacao("048213")), "048213");
+  assert.equal(extrairCodigo("oi rycs 123456 tudo bem"), "123456");
+  assert.equal(extrairCodigo("RYCS-1234567"), null);
+  assert.equal(extrairCodigo("sem código"), null);
 });
 
 test("mensagem usa o modelo de autenticação com o código no corpo e no botão", () => {
@@ -47,6 +62,8 @@ async function metaFalsa(t, { modeloAprovado }) {
         }
         return res.end(JSON.stringify({ data: modelos }));
       }
+      if (req.method === "GET" && req.url.startsWith("/999?"))
+        return res.end(JSON.stringify({ display_phone_number: "+55 15 99832-0707" }));
       enviados.push({ url: req.url, corpo: JSON.parse(corpo || "{}") });
       res.end(JSON.stringify({ messages: [{ id: `wamid.${enviados.length}` }] }));
     });
@@ -56,6 +73,7 @@ async function metaFalsa(t, { modeloAprovado }) {
   const env = {
     WHATSAPP_TOKEN: "token-teste", WHATSAPP_PHONE_NUMBER_ID: "999", WHATSAPP_WABA_ID: "conta-1",
     WHATSAPP_TEMPLATE_CODIGO: "rycs_codigo", WHATSAPP_API_BASE: `http://127.0.0.1:${meta.address().port}`,
+    META_APP_SECRET: "segredo-app-teste",
   };
   return { enviados, modelos, env };
 }
@@ -145,4 +163,55 @@ test("rotas: envia o código pelo WhatsApp, confirma, limita reenvio e bloqueia 
   // Empresa não usa esta rota.
   r = await req("/whatsapp/verificacao", { cookie: assinar({ id: "u-emp", role: "empresa", entityId: "emp" }) });
   assert.equal(r.status, 403);
+});
+
+test("rotas: verificação pela mensagem que o profissional envia ao WhatsApp da RYCS", async (t) => {
+  const { enviados, env } = await metaFalsa(t, { modeloAprovado: false });
+  const { base, dbPath } = await subirServidor(t, env);
+  const [cookie] = criarProfissionais(dbPath, [["prof-r", "5511987654321"]]);
+  const req = cliente(base);
+  const aviso = async (de, texto) => {
+    const corpo = JSON.stringify({ object: "whatsapp_business_account", entry: [{ id: "conta-1", changes: [{ field: "messages", value: {
+      metadata: { phone_number_id: "999" }, contacts: [{ wa_id: de, profile: { name: "Prof" } }],
+      messages: [{ id: `wamid.${de}.${Date.now()}`, from: de, type: "text", timestamp: "1", text: { body: texto } }],
+    } }] }] });
+    const assinatura = `sha256=${createHmac("sha256", "segredo-app-teste").update(corpo).digest("hex")}`;
+    return req("/webhooks/meta", { bruto: corpo, headers: { "Content-Type": "application/json", "x-hub-signature-256": assinatura } });
+  };
+  const esperarVerificado = async (esperado) => {
+    for (let i = 0; i < 30; i++) {
+      const r = await req("/whatsapp/verificacao", { cookie });
+      if (r.corpo.verificado === esperado) return r.corpo;
+      await new Promise((ok) => setTimeout(ok, 100));
+    }
+    return (await req("/whatsapp/verificacao", { cookie })).corpo;
+  };
+
+  let r = await req("/whatsapp/verificacao", { cookie });
+  assert.equal(r.corpo.recebimento, true);
+  r = await req("/whatsapp/verificacao/recebida", { cookie, body: {} });
+  assert.equal(r.status, 200);
+  assert.match(r.corpo.link, /^https:\/\/wa\.me\/5515998320707\?text=/);
+  const codigo = r.corpo.codigo;
+  // Pedir de novo devolve o mesmo código enquanto vale.
+  assert.equal((await req("/whatsapp/verificacao/recebida", { cookie, body: {} })).corpo.codigo, codigo);
+
+  // Assinatura errada é recusada.
+  r = await req("/webhooks/meta", { body: { object: "whatsapp_business_account" }, headers: { "x-hub-signature-256": "sha256=errada" } });
+  assert.equal(r.status, 401);
+
+  // De outro número: não verifica e avisa quem mandou.
+  assert.equal((await aviso("5521988887777", textoVerificacao(codigo))).status, 200);
+  await new Promise((ok) => setTimeout(ok, 300));
+  assert.equal((await req("/whatsapp/verificacao", { cookie })).corpo.verificado, false);
+  assert.ok(enviados.some((e) => e.corpo.to === "5521988887777" && /não é o WhatsApp cadastrado/.test(e.corpo.text?.body || "")));
+
+  // Do número do perfil, mesmo sem o 9: verifica e confirma por mensagem.
+  await aviso("551187654321", textoVerificacao(codigo));
+  const fim = await esperarVerificado(true);
+  assert.equal(fim.verificado, true);
+  assert.equal(fim.recebida, null);
+  const confirmou = () => enviados.some((e) => e.corpo.to === "551187654321" && /verificado na RYCS/.test(e.corpo.text?.body || ""));
+  for (let i = 0; i < 30 && !confirmou(); i++) await new Promise((ok) => setTimeout(ok, 100));
+  assert.ok(confirmou());
 });
