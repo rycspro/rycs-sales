@@ -271,11 +271,6 @@ function Intro({ dados, ocupado, onIniciar, onVoltar }) {
           </div>
           <div>
             <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>DISC — Perfil comportamental</h1>
-            {dados?.experimental && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "var(--amber, #b45309)", background: "var(--amber-50, rgba(245,158,11,.12))", borderRadius: 999, padding: "3px 10px", marginTop: 6 }}>
-                <Info size={12} /> Instrumento experimental de autoconhecimento
-              </span>
-            )}
           </div>
         </div>
 
