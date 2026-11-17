@@ -65,7 +65,6 @@ export const NAV = {
     ] },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
       { key: "campanhas", label: "Campanhas" },
-      { key: "pagamentos-campanhas", label: "Pagamentos" },
       { key: "campanhas-comissoes", label: "Comissões" },
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
@@ -78,7 +77,10 @@ export const NAV = {
     { key: "materiais", label: "Materiais", Icon: FolderOpen },
     { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
     { divider: true },
-    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard },
+    { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
+      { key: "planos", label: "Planos RYCS" },
+      { key: "pagamentos-campanhas", label: "Pagamentos" },
+    ] },
     { key: "outros", label: "Outros", Icon: Settings },
   ],
   admin: [
