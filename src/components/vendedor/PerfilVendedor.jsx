@@ -4,9 +4,27 @@ import { api, apiPatch, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import OnbPerfil from "./OnbPerfil.jsx";
-import { MODALIDADES, SEGMENTOS, DISPONIBILIDADES, SKILLS, LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
+import { LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
+import MultiSelect from "../ui/MultiSelect.jsx";
+import ComboSelect from "../ui/ComboSelect.jsx";
+import {
+  AREAS_ATUACAO, HABILIDADES, ANOS_EXPERIENCIA, DISPONIBILIDADE as DISPONIBILIDADE_CAD,
+  SEGMENTOS as SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS,
+} from "../auth/CadastroProfissional.jsx";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", bdr: "BDR", pap: "PAP", "sem-exp": "Iniciante" };
+
+// Mapa value→label de todas as listas comerciais do cadastro, para a vitrine.
+const LABELS_COMERCIAIS = {};
+for (const lista of [AREAS_ATUACAO, HABILIDADES, SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS, ANOS_EXPERIENCIA, DISPONIBILIDADE_CAD])
+  for (const o of lista) LABELS_COMERCIAIS[o.value] = o.label;
+const rotuloComercial = (v) => LABELS_COMERCIAIS[v] || v;
+
+// Lê o perfilComercial (JSON string ou objeto) com tolerância a formato.
+function lerPerfilComercial(valor) {
+  try { const o = typeof valor === "string" ? JSON.parse(valor || "{}") : (valor || {}); return o || {}; }
+  catch { return {}; }
+}
 
 // Cadastros antigos guardavam "Guarulhos, SP" inteiro no campo cidade. Repetir
 // o estado depois disso vira "Guarulhos, SP · SP".
@@ -75,14 +93,25 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   // currículo comercial dele — é o que a empresa lê antes de convidar.
   useEffect(() => { api("/courses/me/certificates").then((r) => setCertificados(r?.certificados || [])); }, []);
 
-  const [form, setForm] = useState(() => ({
-    nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "",
-    pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
-    genero: eu.genero || "",
-    experiencia: eu.experiencia || "", disponibilidade: eu.disponibilidade || "",
-    segmentos: eu.segmentos || [], modalidades: eu.modalidades || [],
-    regioes: eu.regioes || [], skills: eu.skills || [],
-  }));
+  // Dados comerciais vêm do cadastro, guardados em perfilComercial (JSON).
+  const pc = useMemo(() => lerPerfilComercial(eu.perfilComercial), [eu.perfilComercial]);
+
+  const [form, setForm] = useState(() => {
+    const p = lerPerfilComercial(eu.perfilComercial);
+    return {
+      nome: eu.nome || "", sobrenome: eu.sobrenome || "", titulo: eu.titulo || "",
+      pais: eu.pais || "Brasil", cidade: eu.cidade || "", estado: eu.estado || "", whats: eu.whats || "", dataNascimento: eu.dataNascimento || "",
+      genero: eu.genero || "",
+      perfilComercial: {
+        areasAtuacao: p.areasAtuacao || [], habilidades: p.habilidades || [],
+        segmentos: p.segmentos || [], ferramentas: p.ferramentas || [],
+        conhecimentos: p.conhecimentos || [], equipamentos: p.equipamentos || [],
+        anosExperiencia: p.anosExperiencia || "", disponibilidade: p.disponibilidade || "",
+      },
+    };
+  });
+
+  const setPC = (campo, valor) => setForm((f) => ({ ...f, perfilComercial: { ...f.perfilComercial, [campo]: valor } }));
 
   const stats = useMemo(() => {
     const meus = (db.submissions || []).filter((s) => s.sellerId === eu.id);
@@ -107,7 +136,15 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
     const r = await apiPatch(`/sellers/${eu.id}`, form);
     setSalvando(false);
     if (r?.error) return aviso(r.error);
-    up((d) => ({ sellers: d.sellers.map((s) => s.id === eu.id ? { ...s, ...form } : s) }));
+    up((d) => ({
+      sellers: d.sellers.map((s) => {
+        if (s.id !== eu.id) return s;
+        const atual = lerPerfilComercial(s.perfilComercial);
+        const { perfilComercial, ...cols } = form;
+        // perfilComercial fica como string no estado local, igual ao servidor.
+        return { ...s, ...cols, perfilComercial: JSON.stringify({ ...atual, ...perfilComercial }) };
+      }),
+    }));
     setEditando(false);
     aviso("Perfil atualizado.");
   };
@@ -373,31 +410,40 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             Sua apresentação, bio, redes sociais, vídeo e portfólio ficam na aba <b>Apresentação</b>, acima.
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div className="vx-label">Disponibilidade</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {DISPONIBILIDADES.map((d) => (
-                <button key={d.chave} type="button"
-                  className={"vx-chip" + (form.disponibilidade === d.chave ? " vx-badge-brand" : "")}
-                  onClick={() => setForm({ ...form, disponibilidade: form.disponibilidade === d.chave ? "" : d.chave })}
-                  style={{ cursor: "pointer", borderColor: form.disponibilidade === d.chave ? "var(--brand)" : "var(--border)" }}>
-                  {d.nome}
-                </button>
-              ))}
-            </div>
+          <div className="vx-eyebrow" style={{ margin: "18px 0 10px" }}>Experiência comercial</div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Áreas de atuação</div>
+            <MultiSelect opcoes={AREAS_ATUACAO} valor={form.perfilComercial.areasAtuacao} onChange={(v) => setPC("areasAtuacao", v)} placeholder="Selecione" />
           </div>
-
-          <div style={{ marginTop: 12 }}>
-            <div className="vx-label">Modalidades comerciais</div>
-            <Marcadores opcoes={MODALIDADES} valor={form.modalidades} onChange={(v) => setForm({ ...form, modalidades: v })} />
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <div className="vx-label">Segmentos em que já vendeu</div>
-            <Marcadores opcoes={SEGMENTOS} valor={form.segmentos} onChange={(v) => setForm({ ...form, segmentos: v })} />
-          </div>
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 10 }}>
             <div className="vx-label">Habilidades</div>
-            <Marcadores opcoes={SKILLS} valor={form.skills} onChange={(v) => setForm({ ...form, skills: v })} />
+            <MultiSelect opcoes={HABILIDADES} valor={form.perfilComercial.habilidades} onChange={(v) => setPC("habilidades", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Segmentos em que já vendeu</div>
+            <MultiSelect opcoes={SEGMENTOS_CAD} valor={form.perfilComercial.segmentos} onChange={(v) => setPC("segmentos", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Ferramentas que domina</div>
+            <MultiSelect opcoes={FERRAMENTAS} valor={form.perfilComercial.ferramentas} onChange={(v) => setPC("ferramentas", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Conhecimentos</div>
+            <MultiSelect opcoes={CONHECIMENTOS} valor={form.perfilComercial.conhecimentos} onChange={(v) => setPC("conhecimentos", v)} placeholder="Selecione" />
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Equipamentos</div>
+            <MultiSelect opcoes={EQUIPAMENTOS} valor={form.perfilComercial.equipamentos} onChange={(v) => setPC("equipamentos", v)} placeholder="Selecione" />
+          </div>
+          <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
+            <div>
+              <div className="vx-label">Anos de experiência</div>
+              <ComboSelect opcoes={ANOS_EXPERIENCIA} valor={form.perfilComercial.anosExperiencia} onChange={(v) => setPC("anosExperiencia", v)} placeholder="Selecione" />
+            </div>
+            <div>
+              <div className="vx-label">Disponibilidade</div>
+              <ComboSelect opcoes={DISPONIBILIDADE_CAD} valor={form.perfilComercial.disponibilidade} onChange={(v) => setPC("disponibilidade", v)} placeholder="Selecione" />
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
@@ -415,35 +461,42 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
       {/* -------------------------------------------------- vitrine ---- */}
       {!editando && (
         <>
-          {(eu.modalidades?.length || eu.segmentos?.length || eu.skills?.length) ? (
-            <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
-              {!!eu.modalidades?.length && <>
-                <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Modalidades</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                  {eu.modalidades.map((m) => <span key={m} className="vx-chip">{m}</span>)}
-                </div>
-              </>}
-              {!!eu.segmentos?.length && <>
-                <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Segmentos</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                  {eu.segmentos.map((m) => <span key={m} className="vx-chip">{m}</span>)}
-                </div>
-              </>}
-              {!!eu.skills?.length && <>
-                <div className="vx-eyebrow" style={{ marginBottom: 6 }}>Habilidades</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {eu.skills.map((m) => <span key={m} className="vx-chip">{m}</span>)}
-                </div>
-              </>}
-            </div>
-          ) : (
-            <div className="vx-card" style={{ padding: 18, marginTop: 12, textAlign: "center" }}>
-              <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>
-                Seu currículo comercial ainda está vazio. Toque em <b>Editar perfil</b> para adicionar
-                título, apresentação, modalidades e segmentos — é o que as empresas leem antes de te convidar.
-              </p>
-            </div>
-          )}
+          {(() => {
+            const secoes = [
+              ["Áreas de atuação", pc.areasAtuacao],
+              ["Habilidades", pc.habilidades],
+              ["Segmentos", pc.segmentos],
+              ["Ferramentas", pc.ferramentas],
+              ["Conhecimentos", pc.conhecimentos],
+              ["Equipamentos", pc.equipamentos],
+            ].filter(([, arr]) => arr?.length);
+            const temAlgo = secoes.length || pc.anosExperiencia || pc.disponibilidade;
+            return temAlgo ? (
+              <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
+                {secoes.map(([titulo, arr]) => (
+                  <div key={titulo} style={{ marginBottom: 14 }}>
+                    <div className="vx-eyebrow" style={{ marginBottom: 6 }}>{titulo}</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {arr.map((v) => <span key={v} className="vx-chip">{rotuloComercial(v)}</span>)}
+                    </div>
+                  </div>
+                ))}
+                {(pc.anosExperiencia || pc.disponibilidade) && (
+                  <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+                    {pc.anosExperiencia && <div><div className="vx-eyebrow" style={{ marginBottom: 6 }}>Experiência</div><span className="vx-chip">{rotuloComercial(pc.anosExperiencia)}</span></div>}
+                    {pc.disponibilidade && <div><div className="vx-eyebrow" style={{ marginBottom: 6 }}>Disponibilidade</div><span className="vx-chip">{rotuloComercial(pc.disponibilidade)}</span></div>}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="vx-card" style={{ padding: 18, marginTop: 12, textAlign: "center" }}>
+                <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>
+                  Seu currículo comercial ainda está vazio. Toque em <b>Editar perfil</b> para adicionar suas
+                  áreas, habilidades e segmentos — é o que as empresas leem antes de te convidar.
+                </p>
+              </div>
+            );
+          })()}
 
           <div className="vx-card" style={{ padding: 18, marginTop: 12 }}>
             <div className="vx-row" style={{ marginBottom: 10 }}>

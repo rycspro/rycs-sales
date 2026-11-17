@@ -255,6 +255,26 @@ router.patch("/sellers/:id", (req, res) => {
       vals.push(JSON.stringify((Array.isArray(v) ? v : []).slice(0, 20).map((x) => String(x).slice(0, 60))));
     }
   }
+  // perfilComercial é um bloco JSON. Mesclamos as chaves do currículo comercial
+  // (as mesmas do cadastro) preservando o resto do objeto — nunca sobrescrever
+  // disc/experiencia nem perder o que já existe.
+  if (fields.perfilComercial && typeof fields.perfilComercial === "object" && !Array.isArray(fields.perfilComercial) && role !== "empresa") {
+    const row = db.prepare("SELECT perfilComercial FROM sellers WHERE id = ?").get(id);
+    let atual = {};
+    try { atual = JSON.parse(row?.perfilComercial || "{}") || {}; } catch {}
+    const limpo = {};
+    for (const c of ["areasAtuacao", "habilidades", "segmentos", "ferramentas", "conhecimentos", "equipamentos"]) {
+      if (Array.isArray(fields.perfilComercial[c]))
+        limpo[c] = fields.perfilComercial[c].slice(0, 40).map((x) => String(x).slice(0, 80));
+    }
+    for (const c of ["anosExperiencia", "disponibilidade"]) {
+      if (typeof fields.perfilComercial[c] === "string")
+        limpo[c] = fields.perfilComercial[c].slice(0, 80);
+    }
+    sets.push("perfilComercial = ?");
+    vals.push(JSON.stringify({ ...atual, ...limpo }));
+  }
+
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
   vals.push(id);
   db.prepare(`UPDATE sellers SET ${sets.join(", ")} WHERE id = ?`).run(...vals);

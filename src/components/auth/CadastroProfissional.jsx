@@ -18,7 +18,7 @@ const MAX_W = 840;
 const ETAPAS_KEYS = ["pessoal", "profissional", "experiencia"];
 
 /* ─── Opções padronizadas dos novos campos ─── */
-const AREAS_ATUACAO = [
+export const AREAS_ATUACAO = [
   { value: "b2b", label: "B2B (Venda para empresas)" },
   { value: "b2c", label: "B2C (Venda para consumidor final)" },
   { value: "inside-sales", label: "Inside Sales (Vendas remotas)" },
@@ -37,7 +37,7 @@ const AREAS_ATUACAO = [
   { value: "exportacao", label: "Exportação / Comércio exterior" },
 ];
 
-const HABILIDADES = [
+export const HABILIDADES = [
   { value: "prospeccao", label: "Prospecção ativa" },
   { value: "qualificacao-leads", label: "Qualificação de leads" },
   { value: "negociacao", label: "Negociação e fechamento" },
@@ -56,7 +56,7 @@ const HABILIDADES = [
   { value: "escuta-ativa", label: "Escuta ativa" },
 ];
 
-const ANOS_EXPERIENCIA = [
+export const ANOS_EXPERIENCIA = [
   { value: "menos-1", label: "Menos de 1 ano" },
   { value: "1-2", label: "1 a 2 anos" },
   { value: "3-5", label: "3 a 5 anos" },
@@ -64,7 +64,7 @@ const ANOS_EXPERIENCIA = [
   { value: "mais-10", label: "Mais de 10 anos" },
 ];
 
-const DISPONIBILIDADE = [
+export const DISPONIBILIDADE = [
   { value: "integral", label: "Integral (40h+/semana)" },
   { value: "parcial-30", label: "Parcial (20–30h/semana)" },
   { value: "parcial-20", label: "Parcial (10–20h/semana)" },
@@ -73,7 +73,7 @@ const DISPONIBILIDADE = [
   { value: "noturno", label: "Somente período noturno" },
 ];
 
-const SEGMENTOS = [
+export const SEGMENTOS = [
   { value: "tecnologia-saas", label: "Tecnologia / SaaS / Software" },
   { value: "ti-infraestrutura", label: "TI / Infraestrutura / Cloud" },
   { value: "telecomunicacoes", label: "Telecomunicações" },
@@ -116,7 +116,7 @@ const SEGMENTOS = [
   { value: "grafica-impressao", label: "Gráfica / Impressão / Sinalização" },
 ];
 
-const FERRAMENTAS = [
+export const FERRAMENTAS = [
   // CRMs
   { value: "hubspot", label: "HubSpot CRM" },
   { value: "salesforce", label: "Salesforce" },
@@ -233,7 +233,7 @@ const TIPOS_FORMACAO = [
   { value: "treinamento", label: "Treinamento corporativo" },
 ];
 
-const CONHECIMENTOS = [
+export const CONHECIMENTOS = [
   // Metodologias de vendas
   { value: "spin-selling", label: "SPIN Selling" },
   { value: "bant", label: "BANT / Qualificação" },
@@ -271,7 +271,7 @@ const CONHECIMENTOS = [
   { value: "scrum-agile", label: "Scrum / Agile" },
 ];
 
-const EQUIPAMENTOS = [
+export const EQUIPAMENTOS = [
   { value: "notebook", label: "Notebook / Computador" },
   { value: "smartphone", label: "Smartphone" },
   { value: "headset", label: "Headset / Fone com microfone" },
