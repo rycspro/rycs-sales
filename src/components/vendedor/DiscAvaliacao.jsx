@@ -3,7 +3,7 @@ import {
   Brain, ArrowLeft, ArrowRight, Clock, Layers, CheckCircle2, Sparkles,
   Eye, EyeOff, Info, RefreshCw,
 } from "lucide-react";
-import { api } from "../../lib/api.js";
+import { api, API_URL } from "../../lib/api.js";
 
 const AZUL = "#318CE7";
 
@@ -47,13 +47,52 @@ export default function DiscAvaliacao({ eu, aviso, onVoltar, onConcluir }) {
     window.scrollTo?.(0, 0);
   };
 
-  // Auto-save com debounce. Guarda o mapa inteiro a cada alteração.
+  // Rascunho / auto-save. Cada alteração é guardada no servidor (debounce de
+  // 600ms). O ponto crítico é NÃO perder o que já foi feito quando o
+  // profissional sai: ao desmontar (trocar de aba, "Voltar à central") ou
+  // fechar/atualizar a página, gravamos na hora o que estiver pendente.
   const saveTimer = useRef(null);
-  const agendarSalvar = (mapa) => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { api("/disc/avaliacao/progresso", { respostas: mapa }); }, 600);
+  const respostasRef = useRef({});   // sempre o último mapa, para o flush ao sair
+  const pendenteRef = useRef(false);  // há alteração ainda não persistida?
+  useEffect(() => { respostasRef.current = respostas; }, [respostas]);
+
+  const salvarProgresso = (mapa, aoSair = false) => {
+    pendenteRef.current = false;
+    if (aoSair) {
+      // keepalive: a requisição completa mesmo se a aba estiver fechando.
+      try {
+        fetch(`${API_URL}/api/disc/avaliacao/progresso`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ respostas: mapa }),
+          credentials: "include",
+          keepalive: true,
+        });
+      } catch { /* melhor esforço: o próximo save cobre */ }
+    } else {
+      api("/disc/avaliacao/progresso", { respostas: mapa });
+    }
   };
-  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
+
+  const agendarSalvar = (mapa) => {
+    pendenteRef.current = true;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => salvarProgresso(mapa), 600);
+  };
+
+  useEffect(() => {
+    // Fechar/atualizar a aba: grava o rascunho imediatamente.
+    const aoFechar = () => { if (pendenteRef.current) salvarProgresso(respostasRef.current, true); };
+    window.addEventListener("beforeunload", aoFechar);
+    window.addEventListener("pagehide", aoFechar);
+    return () => {
+      window.removeEventListener("beforeunload", aoFechar);
+      window.removeEventListener("pagehide", aoFechar);
+      // Desmontou (saiu da tela sem fechar): descarta o timer e grava o pendente.
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (pendenteRef.current) salvarProgresso(respostasRef.current, true);
+    };
+  }, []);
 
   if (estado === "carregando") {
     return <div className="vx-fade" style={{ padding: 48, textAlign: "center" }}><div className="vx-spinner" /></div>;
@@ -101,8 +140,10 @@ export default function DiscAvaliacao({ eu, aviso, onVoltar, onConcluir }) {
 
   const concluir = async () => {
     setOcupado(true);
-    // Garante que o último estado foi salvo antes de concluir.
+    // Garante que o último estado foi salvo antes de concluir e evita um flush
+    // de rascunho tardio depois que a tentativa já virou "concluído".
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    pendenteRef.current = false;
     const r = await api("/disc/avaliacao/concluir", { respostas });
     setOcupado(false);
     if (!r || r.error) { aviso?.(r?.error || "Não foi possível concluir a avaliação."); return; }
