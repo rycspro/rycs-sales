@@ -161,10 +161,13 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
   const empresasFiltradas = useMemo(() => {
     const q = filtros.busca.trim().toLowerCase();
+    // Empresas com logo/imagem sempre primeiro; as sem logo vão para o fim.
+    // sort é estável, então dentro de cada grupo a ordem original é mantida.
     return empresas.filter((e) =>
       (!q || (e.nome || "").toLowerCase().includes(q)) &&
       (!filtros.pais || e.pais === filtros.pais) &&
-      (!filtros.moeda || e.moeda === filtros.moeda));
+      (!filtros.moeda || e.moeda === filtros.moeda))
+      .sort((a, b) => (b.logo ? 1 : 0) - (a.logo ? 1 : 0));
   }, [empresas, filtros]);
 
   // ---- candidatura (mantém a lógica e os controles de segurança atuais) ----
