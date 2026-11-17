@@ -79,7 +79,7 @@ export const NAV = {
     { divider: true },
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
       { key: "planos", label: "Planos RYCS" },
-      { key: "pagamentos-campanhas", label: "Pagamentos" },
+      { key: "pagamentos-campanhas", label: "Campanhas" },
     ] },
     { key: "outros", label: "Outros", Icon: Settings },
   ],
