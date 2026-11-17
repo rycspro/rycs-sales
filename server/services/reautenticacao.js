@@ -1,10 +1,11 @@
 // Reautenticação para operações financeiras sensíveis (troca de Pix, saque,
 // dados bancários).
 //
-// A EXIGÊNCIA fica atrás da flag REAUTH_FINANCEIRO=1 para não quebrar o fluxo
-// atual enquanto o modal de confirmação não é publicado no frontend. O
-// mecanismo (confirmar senha + limite por conta/IP + anti-automação) está
-// pronto e testável com a flag ligada.
+// O modal de confirmação já está publicado no frontend (Carteira + troca de Pix
+// tratam `reauth:true`), então a exigência fica ATIVA por padrão em produção.
+// Em test/dev continua desligada (para não quebrar fluxos e testes que não
+// confirmam senha), salvo REAUTH_FINANCEIRO=1. Override explícito em qualquer
+// ambiente: REAUTH_FINANCEIRO=0 desliga; REAUTH_FINANCEIRO=1 liga.
 //
 // Limite de tentativas em memória (processo único). Para múltiplas instâncias,
 // trocar por um store compartilhado — documentado na entrega.
@@ -12,7 +13,9 @@
 import bcrypt from "bcryptjs";
 import db from "../db.js";
 
-export const reauthAtivo = () => process.env.REAUTH_FINANCEIRO === "1";
+export const reauthAtivo = () =>
+  process.env.REAUTH_FINANCEIRO === "1" ||
+  (process.env.NODE_ENV === "production" && process.env.REAUTH_FINANCEIRO !== "0");
 
 const MAX_FALHAS = 5;
 const JANELA_MS = 15 * 60 * 1000;

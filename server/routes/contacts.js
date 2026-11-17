@@ -7,6 +7,15 @@ const router = Router();
 
 const SEM_PERMISSAO = { error: "Sem permissão para acessar estes contatos." };
 
+// Um contato só pode ser atribuído a um profissional que faz parte do Time da
+// empresa dona (parceria `applications` aprovada). Sem isto, a empresa poderia
+// expor os próprios contatos (nome/telefone de clientes) a um sellerId qualquer.
+function profissionalDoTime(companyId, sellerId) {
+  if (!sellerId) return true; // limpar a atribuição (sellerId vazio) é permitido
+  const vinc = db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(sellerId, companyId);
+  return !!vinc;
+}
+
 // Parse CSV simples (sem dependência externa)
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -106,6 +115,8 @@ router.patch("/contacts/:id", (req, res) => {
   const contato = contatoGerenciavel(req, req.params.id);
   if (!contato) return res.status(403).json(SEM_PERMISSAO);
   const { status, sellerId } = req.body;
+  if (sellerId !== undefined && !profissionalDoTime(contato.companyId, sellerId))
+    return res.status(422).json({ error: "Profissional não faz parte do Time desta empresa." });
   const campos = [];
   const vals = [];
   if (status) { campos.push("status=?"); vals.push(status); }
@@ -126,7 +137,11 @@ router.post("/contacts/distribuir", (req, res) => {
   if (!campaignId || !Array.isArray(sellers) || !sellers.length) {
     return res.status(400).json({ error: "campaignId e sellers[] são obrigatórios." });
   }
-  if (!campanhaGerenciavel(req, campaignId)) return res.status(403).json(SEM_PERMISSAO);
+  const campanha = campanhaGerenciavel(req, campaignId);
+  if (!campanha) return res.status(403).json(SEM_PERMISSAO);
+  // Todos os profissionais precisam ser do Time da empresa dona da campanha.
+  const foraDoTime = sellers.filter((s) => !profissionalDoTime(campanha.companyId, s));
+  if (foraDoTime.length) return res.status(422).json({ error: "Há profissionais que não fazem parte do Time desta empresa." });
   const disponiveis = db.prepare(
     "SELECT id FROM campaign_contacts WHERE campaignId=? AND status='disponivel' ORDER BY RANDOM()"
   ).all(campaignId);

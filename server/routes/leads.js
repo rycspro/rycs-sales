@@ -36,6 +36,38 @@ router.get("/leads", (req, res) => {
   res.json(db.prepare(sql).all(...args));
 });
 
+// IMPORTANTE: precisa vir ANTES de "/leads/:id", senão a rota paramétrica captura
+// "comissoes" como se fosse um id e devolve 404 (rota sombreada).
+router.get("/leads/comissoes", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresas" });
+
+  const companyId = role === "empresa" ? entityId : req.query.companyId;
+  if (!companyId) return res.status(400).json({ error: "companyId obrigatório para admin" });
+
+  const rows = db.prepare(`
+    SELECT l.id, l.nome, l.sellerId, l.campaignId, l.valorVenda, l.comissaoCalculada, l.etapa, l.atualizadoEm,
+           s.nome AS sellerNome, c.titulo AS campanhaTitulo, c.percentualComissao
+    FROM leads l
+    JOIN sellers s ON s.id = l.sellerId
+    LEFT JOIN campaigns c ON c.id = l.campaignId
+    WHERE l.companyId = ? AND l.etapa IN ('ganho', 'fechado') AND l.valorVenda > 0
+    ORDER BY l.atualizadoEm DESC
+  `).all(companyId);
+
+  const porVendedor = {};
+  for (const r of rows) {
+    if (!porVendedor[r.sellerId]) porVendedor[r.sellerId] = { sellerId: r.sellerId, nome: r.sellerNome, fechamentos: 0, totalVendas: 0, totalComissoes: 0, leads: [] };
+    const v = porVendedor[r.sellerId];
+    v.fechamentos++;
+    v.totalVendas += Number(r.valorVenda) || 0;
+    v.totalComissoes += Number(r.comissaoCalculada) || 0;
+    v.leads.push(r);
+  }
+
+  res.json({ vendedores: Object.values(porVendedor), total: rows.length });
+});
+
 router.get("/leads/:id", (req, res) => {
   const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(req.params.id);
   if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
@@ -293,35 +325,4 @@ router.get("/leads-resumo", (req, res) => {
 });
 
 // Painel de comissionamento — visão da empresa
-router.get("/leads/comissoes", (req, res) => {
-  const { role, entityId } = req.user;
-  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresas" });
-
-  const companyId = role === "empresa" ? entityId : req.query.companyId;
-  if (!companyId) return res.status(400).json({ error: "companyId obrigatório para admin" });
-
-  const rows = db.prepare(`
-    SELECT l.id, l.nome, l.sellerId, l.campaignId, l.valorVenda, l.comissaoCalculada, l.etapa, l.atualizadoEm,
-           s.nome AS sellerNome, c.titulo AS campanhaTitulo, c.percentualComissao
-    FROM leads l
-    JOIN sellers s ON s.id = l.sellerId
-    LEFT JOIN campaigns c ON c.id = l.campaignId
-    WHERE l.companyId = ? AND l.etapa IN ('ganho', 'fechado') AND l.valorVenda > 0
-    ORDER BY l.atualizadoEm DESC
-  `).all(companyId);
-
-  // Agrupa por vendedor
-  const porVendedor = {};
-  for (const r of rows) {
-    if (!porVendedor[r.sellerId]) porVendedor[r.sellerId] = { sellerId: r.sellerId, nome: r.sellerNome, fechamentos: 0, totalVendas: 0, totalComissoes: 0, leads: [] };
-    const v = porVendedor[r.sellerId];
-    v.fechamentos++;
-    v.totalVendas += Number(r.valorVenda) || 0;
-    v.totalComissoes += Number(r.comissaoCalculada) || 0;
-    v.leads.push(r);
-  }
-
-  res.json({ vendedores: Object.values(porVendedor), total: rows.length });
-});
-
 export default router;
