@@ -408,6 +408,15 @@ router.post("/admin/withdrawals/:id/estornar", authMiddleware, async (req, res) 
   if (w.status === "cancelado" || w.status === "falhou")
     return res.json({ ok: true, jaDevolvido: true, message: "Este saque já estava devolvido — o valor está no saldo do profissional." });
 
+  // Defesa em profundidade: um saque marcado "pago" SEM registro de
+  // transferência no gateway (asaasId) não pode ser estornado automaticamente —
+  // sem o asaasId não há como consultar o banco e confirmar que o Pix não saiu,
+  // e devolver o saldo pagaria o profissional duas vezes. Hoje nenhum fluxo da
+  // API chega a 'pago' sem asaasId (todo caminho que marca pago grava asaasId,
+  // real ou BETA-SIMULADO); esta trava protege contra estados futuros/manuais.
+  if (w.status === "pago" && !w.asaasId)
+    return res.status(409).json({ error: "Saque pago sem registro de transferência no gateway. Confirme no banco se o Pix saiu antes de devolver — devolver agora poderia pagar duas vezes." });
+
   if (w.asaasId) {
     if (!asaasAtivo()) return res.status(503).json({ error: `Gateway indisponível: ${asaasMotivoDesligado()}` });
 
