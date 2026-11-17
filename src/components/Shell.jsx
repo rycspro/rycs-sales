@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { LogOut, ChevronDown, ChevronUp, Building2 } from "lucide-react";
+import { LogOut, ChevronDown, ChevronUp, Building2, X } from "lucide-react";
 import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
   const [gruposAbertos, setGruposAbertos] = useState({});
+  const [menuMobile, setMenuMobile] = useState(false);
   // Ao navegar para outra página, fecha os submenus abertos manualmente — só o
   // grupo que contém a página ativa permanece aberto (comportamento sanfona).
   useEffect(() => { setGruposAbertos({}); }, [active]);
+  // Navegou: fecha o menu completo do celular.
+  useEffect(() => { setMenuMobile(false); }, [active]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
   const fimKeys = new Set(["configuracoes", "outros"]);
   const fimItems = rawItems.filter((item) => fimKeys.has(item.key));
@@ -30,6 +33,53 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     return active;
   })();
 
+  // Renderiza a lista de navegação (usada na sidebar web e no menu completo do
+  // celular). A sidebar esconde "perfil" para a empresa; o menu mobile mostra tudo.
+  const renderNav = ({ mobile = false } = {}) => allItems
+    .filter((item) => item.key !== "perfil" || role === "vendedor")
+    .map((item, i) => {
+      if (item.divider) return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
+      if (item.section) return <div key={`sec-${i}`} className="vx-sidebar-section">{item.section}</div>;
+      const { key, label, Icon, children } = item;
+      if (children) {
+        const grupoAtivo = active === key || children.some((c) => c.key === active);
+        const aberto = gruposAbertos[key] !== undefined ? gruposAbertos[key] : grupoAtivo;
+        return (
+          <div key={key} style={{ display: "flex", flexDirection: "column" }}>
+            <button
+              className="vx-sidebtn"
+              data-on={grupoAtivo ? "1" : "0"}
+              aria-expanded={aberto}
+              onClick={() => {
+                const novo = !aberto;
+                setGruposAbertos((a) => ({ ...a, [key]: novo }));
+                // No menu completo do celular o grupo só expande — navegar fecharia
+                // o menu antes de a pessoa escolher a subpágina. Na sidebar web,
+                // abrir um grupo já leva à primeira página dele.
+                if (!mobile && novo && !grupoAtivo) onSelect(children[0]?.key ?? key);
+              }}
+            >
+              <Icon size={18} strokeWidth={1.85} />
+              {label}
+              <ChevronDown size={16} style={{ marginLeft: "auto", flexShrink: 0, color: "var(--muted)", transition: "transform .2s", transform: aberto ? "rotate(180deg)" : "none" }} />
+            </button>
+            {aberto && children.map((sub) => (
+              <button key={sub.key} className="vx-sidebtn vx-subitem" data-on={active === sub.key ? "1" : "0"} onClick={() => onSelect(sub.key)}>
+                {sub.label}
+              </button>
+            ))}
+          </div>
+        );
+      }
+      return (
+        <button key={key} className="vx-sidebtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
+          <Icon size={18} strokeWidth={1.85} />
+          {label}
+          {counts?.[key] > 0 && <span className="vx-sidedot">{counts[key]}</span>}
+        </button>
+      );
+    });
+
   return (
     <div className="vx-body">
       <aside className="vx-sidebar">
@@ -38,50 +88,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", scrollbarWidth: "none" }}>
-          {allItems.filter(item => item.key !== "perfil" || role === "vendedor").map((item, i) => {
-            if (item.divider) {
-              return <div key={`div-${i}`} style={{ margin: "2px 14px", borderTop: "1px solid var(--border)", opacity: 0.4 }} />;
-            }
-            if (item.section) {
-              return <div key={`sec-${i}`} className="vx-sidebar-section">{item.section}</div>;
-            }
-            const { key, label, Icon, children } = item;
-            if (children) {
-              const grupoAtivo = active === key || children.some((c) => c.key === active);
-              const aberto = gruposAbertos[key] !== undefined ? gruposAbertos[key] : grupoAtivo;
-              return (
-                <div key={key} style={{ display: "flex", flexDirection: "column" }}>
-                  <button
-                    className="vx-sidebtn"
-                    data-on={grupoAtivo ? "1" : "0"}
-                    aria-expanded={aberto}
-                    onClick={() => {
-                      const novo = !aberto;
-                      setGruposAbertos((a) => ({ ...a, [key]: novo }));
-                      // Ao abrir um grupo, vai sempre para a PRIMEIRA página do submenu.
-                      if (novo && !grupoAtivo) onSelect(children[0]?.key ?? key);
-                    }}
-                  >
-                    <Icon size={18} strokeWidth={1.85} />
-                    {label}
-                    <ChevronDown size={16} style={{ marginLeft: "auto", flexShrink: 0, color: "var(--muted)", transition: "transform .2s", transform: aberto ? "rotate(180deg)" : "none" }} />
-                  </button>
-                  {aberto && children.map((sub) => (
-                    <button key={sub.key} className="vx-sidebtn vx-subitem" data-on={active === sub.key ? "1" : "0"} onClick={() => onSelect(sub.key)}>
-                      {sub.label}
-                    </button>
-                  ))}
-                </div>
-              );
-            }
-            return (
-              <button key={key} className="vx-sidebtn" data-on={active === key ? "1" : "0"} onClick={() => onSelect(key)}>
-                <Icon size={18} strokeWidth={1.85} />
-                {label}
-                {counts?.[key] > 0 && <span className="vx-sidedot">{counts[key]}</span>}
-              </button>
-            );
-          })}
+          {renderNav()}
         </div>
 
         {!accountRole && onLogout && (
@@ -108,31 +115,65 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
             <span>Nenhuma movimentação financeira possui valor real. Dados podem ser resetados. Use somente para testes.</span>
           </div>
         )}
-        {onLogout && (
-          <div className="vx-mobile-actions">
-            <button type="button" className="vx-btn vx-btn-sm" onClick={onLogout}>
-              <LogOut size={16} aria-hidden="true" /> Sair
-            </button>
-          </div>
-        )}
+        {/* Barra de topo do celular: logo RYCS à esquerda, conta/logo da empresa à direita. */}
+        <div className="vx-mobile-topbar">
+          <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" className="vx-mobile-logo" />
+          {accountRole
+            ? <AccountMenu user={user} entity={entity} onSelect={onSelect} onLogout={onLogout} dropDown />
+            : onLogout && (
+              <button type="button" className="vx-btn vx-btn-sm" onClick={onLogout}>
+                <LogOut size={16} aria-hidden="true" /> Sair
+              </button>
+            )}
+        </div>
         {children}
       </div>
 
       <nav className="vx-bottomnav">
-        {bottomItems.map(({ key, label, Icon }) => (
-          <button key={key} className="vx-navbtn" aria-current={mobileActive === key ? "page" : undefined} data-on={mobileActive === key ? "1" : "0"} onClick={() => onSelect(key)}>
-            {mobileActive === key && <span className="vx-navbar-indicator" />}
-            {counts?.[key] > 0 && <span className="vx-navdot">{counts[key]}</span>}
-            <Icon size={22} strokeWidth={1.95} />
-            <span>{label}</span>
-          </button>
-        ))}
+        {bottomItems.map(({ key, label, Icon }) => {
+          const ehMenu = key === "outros";
+          const aceso = ehMenu ? menuMobile || mobileActive === key : mobileActive === key;
+          return (
+            <button
+              key={key}
+              className="vx-navbtn"
+              aria-current={aceso ? "page" : undefined}
+              data-on={aceso ? "1" : "0"}
+              onClick={() => ehMenu ? setMenuMobile(true) : onSelect(key)}
+            >
+              {aceso && <span className="vx-navbar-indicator" />}
+              {counts?.[key] > 0 && <span className="vx-navdot">{counts[key]}</span>}
+              <Icon size={22} strokeWidth={1.95} />
+              <span>{label}</span>
+            </button>
+          );
+        })}
       </nav>
+
+      {/* Menu completo do celular (equivalente à sidebar web). */}
+      {menuMobile && (
+        <div className="vx-mobilemenu-overlay" onClick={() => setMenuMobile(false)}>
+          <div className="vx-mobilemenu" onClick={(e) => e.stopPropagation()}>
+            <div className="vx-mobilemenu-head">
+              <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" style={{ height: 26, width: "auto" }} />
+              <button type="button" className="vx-btn vx-btn-ghost" aria-label="Fechar" onClick={() => setMenuMobile(false)}><X size={18} /></button>
+            </div>
+            <div className="vx-mobilemenu-list">
+              {renderNav({ mobile: true })}
+            </div>
+            {onLogout && (
+              <button type="button" className="vx-sidebtn vx-mobilemenu-sair" onClick={onLogout}>
+                <LogOut size={18} strokeWidth={1.85} /> Sair da conta
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function AccountMenu({ user, entity, onSelect, onLogout }) {
+function AccountMenu({ user, entity, onSelect, onLogout, dropDown = false }) {
   const [open, setOpen] = useState(false);
   const root = useRef(null), trigger = useRef(null), menu = useRef(null);
   const company = user?.role === 'empresa';
@@ -148,7 +189,7 @@ function AccountMenu({ user, entity, onSelect, onLogout }) {
   }, [open]);
   const choose = action => { setOpen(false); trigger.current?.focus(); action(); };
   return <div className="vx-sidebar-account" ref={root} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
-    {open && <div className="vx-account-menu" ref={menu} role="menu" aria-label="Menu da conta" onKeyDown={e => {
+    {open && <div className={`vx-account-menu${dropDown ? " vx-account-menu--down" : ""}`} ref={menu} role="menu" aria-label="Menu da conta" onKeyDown={e => {
       if (!['ArrowDown','ArrowUp','Home','End'].includes(e.key)) return;
       e.preventDefault(); const buttons = [...menu.current.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
       buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length-1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();

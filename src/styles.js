@@ -144,6 +144,19 @@ html.dark .vx-sidebar-logo img{filter:brightness(0) invert(1)}
 .vx-mobile-actions{display:flex;justify-content:flex-end;margin-bottom:12px}
 .vx-mobile-actions .vx-btn{min-height:44px}
 .vx-content-chat>.vx-mobile-actions,.vx-content-settings>.vx-mobile-actions{padding:12px 16px 0;margin-bottom:12px}
+/* Barra de topo do celular: logo RYCS à esquerda, conta/empresa à direita */
+.vx-mobile-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.vx-mobile-topbar .vx-btn{min-height:40px}
+.vx-mobile-logo{height:30px;width:auto;max-width:150px;object-fit:contain;display:block}
+.vx-content-chat>.vx-mobile-topbar,.vx-content-settings>.vx-mobile-topbar{padding:12px 16px 0;margin-bottom:12px}
+/* Menu completo do celular (equivalente à sidebar web) */
+.vx-mobilemenu-overlay{position:fixed;inset:0;z-index:70;background:rgba(17,24,39,.42);display:flex;justify-content:flex-end;animation:vxin .18s ease}
+.vx-mobilemenu{width:min(84vw,340px);height:100%;background:var(--surface-solid,var(--surface));border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(20,30,45,.18);display:flex;flex-direction:column;animation:vxslidein .22s cubic-bezier(.22,1,.36,1)}
+@keyframes vxslidein{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.vx-mobilemenu-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.vx-mobilemenu-list{flex:1;overflow-y:auto;padding:8px 8px 4px;display:flex;flex-direction:column;gap:0}
+.vx-mobilemenu-list .vx-subitem{padding-left:36px!important;min-height:40px!important;font-size:13.5px!important}
+.vx-mobilemenu-sair{margin:4px 8px calc(10px + env(safe-area-inset-bottom,0px));color:var(--red)!important;flex-shrink:0;border-top:1px solid var(--border);border-radius:0}
 .vx-content{padding:24px max(16px,env(safe-area-inset-right,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:820px;margin:0 auto}
 .vx-content-chat{padding:0!important;max-width:none!important;margin:0!important;overflow:hidden;display:flex;flex-direction:column}
 .vx-content-settings{padding:0!important;max-width:none!important;margin:0!important;}
@@ -174,6 +187,7 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
 
 @media (min-width:900px){
   .vx-mobile-actions{display:none}
+  .vx-mobile-topbar{display:none}
   .vx-content{padding:30px 36px 56px;max-width:none;margin:0;width:100%}
   .vx-content-chat{padding:0!important;overflow:hidden}
   .vx-body{display:grid;grid-template-columns:220px 1fr;max-width:none;margin:0}
@@ -804,7 +818,8 @@ button.vx-btn:active:not(:disabled){transform:scale(.97)}
 .vx-account-chevron{color:var(--brand);flex-shrink:0}
 .vx-account-menu button.vx-account-sair{color:var(--red)}
 .vx-account-menu button.vx-account-sair:hover{background:var(--red-50)}
-.vx-account-menu{position:absolute;bottom:calc(100% + 8px);right:0;z-index:60;min-width:200px;padding:6px;background:var(--surface);border:1.5px solid var(--brand);border-radius:12px;box-shadow:var(--shadow-pop);max-height:calc(100dvh - 120px);overflow-y:auto}.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
+.vx-account-menu{position:absolute;bottom:calc(100% + 8px);right:0;z-index:60;min-width:200px;padding:6px;background:var(--surface);border:1.5px solid var(--brand);border-radius:12px;box-shadow:var(--shadow-pop);max-height:calc(100dvh - 120px);overflow-y:auto}
+.vx-account-menu--down{bottom:auto;top:calc(100% + 8px)}.vx-account-menu button{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;background:none;border:0;padding:10px;color:var(--ink);text-align:left;font-size:13px;cursor:pointer;border-radius:8px}
 /* ── Glass workspace ──────────────────────────────────────────────────────
    Material de vidro em toda a plataforma: fundo ambiente com luz difusa,
    painéis translúcidos com reflexo na borda superior, trilho lateral e
