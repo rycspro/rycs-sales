@@ -118,7 +118,12 @@ export default function VerificarWhatsapp({ eu, up, aviso }) {
           </p>
 
           {!disponivel && <p className="vx-mut" style={{ fontSize: 12.5, margin: 0 }}>A verificação pelo WhatsApp ainda não está disponível. Tente mais tarde.</p>}
+        </div>
+      </div>
 
+      {/* Ações no rodapé do card, alinhadas à esquerda (fora da indentação do ícone) */}
+      {(status.numero || erro) && (
+        <div style={{ marginTop: 14 }}>
           {status.numero && status.recebimento && !status.recebida && !pendente && (
             <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" style={{ minHeight: 44 }} onClick={iniciarRecebida} disabled={ocupado}>
               {ocupado ? "Preparando…" : "Verificar pelo WhatsApp"}
@@ -167,7 +172,7 @@ export default function VerificarWhatsapp({ eu, up, aviso }) {
 
           {erro && <p role="alert" style={{ color: "var(--danger)", fontSize: 12.5, margin: "8px 0 0" }}>{erro}</p>}
         </div>
-      </div>
+      )}
     </div>
   );
 }
