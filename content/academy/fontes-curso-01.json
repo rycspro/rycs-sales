@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "verificado_em": "2026-11-17",
+  "escopo": "Fontes do curso 01. Não constituem pesquisa concluída dos demais cursos. Não substituem revisão jurídica habilitada.",
+  "sources": [
+    {
+      "id": "S1",
+      "titulo": "Quarterly Retail E-Commerce Sales, 4th Quarter 2024 — edição histórica",
+      "autor": "U.S. Census Bureau",
+      "url": "https://www2.census.gov/retail/releases/historical/ecomm/24q4.pdf",
+      "publicacao": "2025-02-19",
+      "localizacao": "página 1, parágrafo anual; aviso de revisão no início",
+      "tipo": "estatistica_oficial_historica",
+      "afirmacao_usada": "A edição citada informou participação de 16,1% do comércio eletrônico no varejo dos EUA em 2024.",
+      "populacao": "Varejo dos EUA definido no levantamento; não representa toda a economia nem todo B2B.",
+      "metodo": "Estimativa de pesquisa de varejo e registros administrativos.",
+      "limitacoes": [
+        "Arquivo avisa revisão histórica posterior: não usar como valor mais recente.",
+        "Participação de canal não mede conversão, preferência individual ou desempenho de vendedor.",
+        "Não extrapolar para Brasil, Índia ou venda de serviços."
+      ],
+      "uso": "Leitura crítica da edição de um dado; não é recomendação de canal.",
+      "aulas": [
+        "1.3"
+      ]
+    },
+    {
+      "id": "S2",
+      "titulo": "State of Sales, 6th edition",
+      "autor": "Salesforce Research",
+      "url": "https://assets.ctfassets.net/f43wltp2j5se/2gHMpCURXzpMW7PJ3SlWZJ/3cad8d7e8496abbd3c0f99d5c7f16ef4/salesforce-state-of-sales-report-6-ed.pdf",
+      "publicacao": "2024; data exata não confirmada no PDF consultado",
+      "localizacao": "página 3 (metodologia), página 13 (tempo)",
+      "tipo": "pesquisa_de_fornecedor_autorrelato",
+      "afirmacao_usada": "O relatório apresenta 70% do tempo dos vendedores respondentes em tarefas classificadas como não relacionadas à venda.",
+      "metodo": "Pesquisa de painel; campo de 08/03 a 18/04/2024. Amostra total de 5.500 profissionais em 27 países; não atribuir esse total automaticamente ao subgrupo do gráfico.",
+      "limitacoes": [
+        "Autorrelato, não cronometração independente.",
+        "Fornecedor possui interesse comercial no tema.",
+        "Associação não estabelece causalidade.",
+        "Média da amostra não é meta ideal nem prova de desperdício."
+      ],
+      "uso": "Estimular revisão das tarefas próprias sem importar uma meta externa.",
+      "aulas": [
+        "1.4"
+      ]
+    },
+    {
+      "id": "S3",
+      "titulo": "Glossário de Proteção de Dados Pessoais e Privacidade",
+      "autor": "ANPD",
+      "url": "https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/glossario-anpd",
+      "publicacao": "2024; página consultada informa atualização em 2026",
+      "tipo": "referencia_oficial_de_conceitos",
+      "uso": "Vocabulário de finalidade, necessidade, dados pessoais e privacidade; aplicação concreta depende de análise responsável.",
+      "aulas": [
+        "2.2",
+        "3.1",
+        "4.3"
+      ]
+    },
+    {
+      "id": "S4",
+      "titulo": "CAN-SPAM Act: A Compliance Guide for Business",
+      "autor": "Federal Trade Commission",
+      "url": "https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business",
+      "publicacao": "Guia on-line; conferir versão antes de cada publicação",
+      "tipo": "orientacao_oficial_eua",
+      "afirmacao_usada": "O guia aborda mensagens comerciais inclusive B2B, identidade e assunto verdadeiros e possibilidade de interrupção.",
+      "limitacoes": [
+        "Não é checklist completo neste curso.",
+        "Não resolve outras regras de privacidade, telefone, SMS ou gravação.",
+        "Não copiar valores de multas sem atualização e revisão."
+      ],
+      "uso": "Referência de localização en-US, aula 3.2.",
+      "aulas": [
+        "3.2"
+      ]
+    },
+    {
+      "id": "S5",
+      "titulo": "Digital Personal Data Protection Rules, 2025 — Gazette notification G.S.R. 846(E)",
+      "autor": "Ministry of Electronics and Information Technology, India",
+      "url": "https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf",
+      "publicacao": "Notificação de 13/11/2025, identificador de publicação de 14/11/2025",
+      "localizacao": "Regra 1, início da versão inglesa no mesmo documento",
+      "tipo": "norma_oficial_india",
+      "afirmacao_usada": "O documento possui disposições com entradas em vigor em momentos diferentes.",
+      "limitacoes": [
+        "Não afirmar vigência integral uniforme.",
+        "Revisor local deve confirmar regras aplicáveis, atos associados e situação na data do uso.",
+        "Regras de canais e telecomunicações exigem análise adicional."
+      ],
+      "uso": "Referência de revisão de localização en-IN, não parecer jurídico.",
+      "aulas": [
+        "2.2",
+        "3.2"
+      ]
+    }
+  ]
+}

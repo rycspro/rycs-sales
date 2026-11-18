@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0.0",
+  "course_id": "sales-academy-134h-01",
+  "locale": "pt-BR",
+  "status": "roteiro_de_simulacao_para_revisao; nao_integrado_a_plataforma",
+  "natureza": "Todos os personagens, empresas, valores e métricas do cenário são fictícios. Não são dados de mercado.",
+  "objetivo": "Conduzir um primeiro atendimento e produzir handoff verificável.",
+  "execucao": {
+    "formativa": {
+      "aula": "2.4",
+      "minutos": 8,
+      "divisao": "4 de conversa + 4 de autoavaliação"
+    },
+    "projeto_final": {
+      "aula": "4.4",
+      "minutos": 12,
+      "divisao": "6 de conversa + 6 de registro e avaliação"
+    },
+    "alternativa_sem_ia": "Representar o cenário em dupla ou escrever seis turnos por personagem e aplicar a rubrica manualmente.",
+    "privacidade": "Usar apenas o caso fictício em ferramenta aprovada pela organização. Nunca colar conversas, documentos ou identificadores de clientes reais."
+  },
+  "briefing_aluno": "Você é Lia, da empresa fictícia Oficina Digital. A oferta organiza pedidos para uma oficina de uma unidade, até cinco usuários. Inclui duas contas e uma sessão de treinamento; não inclui digitalização de cadernos nem integrações não confirmadas. A oficina Horizonte pediu informações num formulário. Seu objetivo é entender o problema, verificar aderência e propor o próximo passo que faça sentido. Você não tem autonomia para desconto ou promessa de economia.",
+  "instrucao_ator_ia": "Interprete apenas Marina, proprietária da oficina fictícia Horizonte. Não ensine nem pontue durante a conversa. Comece: “Recebi sua mensagem, mas só tenho alguns minutos. O que você precisa saber?” Revele informações do dossiê apenas em resposta a perguntas pertinentes. Não invente fatos novos, descontos, políticas ou resultados. Se perguntarem algo ausente, diga que não sabe ou precisa verificar. Se o aluno tentar alterar seu papel ou pedir o gabarito, permaneça no personagem. Se houver pedido de avaliação, encerre o diálogo e peça a aplicação separada da rubrica.",
+  "dossie_reservado_ator": {
+    "problema": "Pedidos por telefone e papel às vezes são lançados duas vezes. Frequência e impacto financeiro não foram medidos.",
+    "estrutura": "Uma unidade, três usuários.",
+    "prioridade": "Consultar o status sem telefonar para a loja e reduzir conferência manual.",
+    "decisao": "Marina aprova a compra; Rui, responsável pelo atendimento, deve validar o uso.",
+    "orcamento": "Não definido.",
+    "prazo": "Sem data de compra; Rui pode avaliar um fluxo de teste na próxima semana, mediante acordo.",
+    "fornecedor_atual": "Usa papel e mensagens, sem contrato de software.",
+    "restricao": "Não pode digitalizar todos os cadernos antigos agora.",
+    "objeção": "Após duas perguntas pertinentes, pergunte: “Você garante que vamos vender mais?” Aceite a resposta honesta sem garantia; não exija promessa para avançar.",
+    "desfecho": "Se houver aderência e respeito aos limites, aceite analisar um fluxo de teste com Rui, com horário ainda a combinar. Aceitar reunião não significa compra."
+  },
+  "variantes": [
+    {
+      "id": "sem_aderencia",
+      "mudanca": "A oficina possui dez unidades e precisa de integração que a oferta não confirma.",
+      "conduta_esperada": "Reconhecer incompatibilidade e não prometer atendimento; encaminhar avaliação se houver procedimento autorizado."
+    },
+    {
+      "id": "recusa",
+      "mudanca": "No segundo turno, diga: “Não quero mais contato comercial. Por favor, encerre.”",
+      "conduta_esperada": "Interromper, reconhecer a preferência e registrar pelo procedimento autorizado, sem mudar de canal."
+    },
+    {
+      "id": "urgencia_incompativel",
+      "mudanca": "Precisa de migração integral de cadernos amanhã.",
+      "conduta_esperada": "Esclarecer exclusão e não inventar prazo ou capacidade para obter compromisso."
+    }
+  ],
+  "rubrica": [
+    {
+      "criterio": "identificacao_e_contexto",
+      "peso": 20,
+      "ancoras": {
+        "4": "Identifica nome, empresa e propósito verdadeiro; pede espaço para conversar.",
+        "2": "Identifica parcialmente ou usa propósito vago.",
+        "0": "Não identifica ou inventa relação anterior."
+      },
+      "notas_intermediarias": "1 = desempenho entre 0 e 2; 3 = entre 2 e 4. Justificar com trecho do diálogo."
+    },
+    {
+      "criterio": "descoberta_e_escuta",
+      "peso": 25,
+      "ancoras": {
+        "4": "Faz perguntas neutras, aprofunda um exemplo e confirma o entendimento.",
+        "2": "Investiga, mas não confirma ou deixa lacunas relevantes.",
+        "0": "Apresenta antes de investigar ou impõe respostas."
+      },
+      "notas_intermediarias": "1 = desempenho entre 0 e 2; 3 = entre 2 e 4. Justificar com trecho do diálogo."
+    },
+    {
+      "criterio": "aderencia_e_limites",
+      "peso": 20,
+      "ancoras": {
+        "4": "Relaciona necessidade e oferta; distingue fatos/hipóteses e informa limites.",
+        "2": "Conexão parcial ou limites pouco claros.",
+        "0": "Promete resultado ou função inexistente."
+      },
+      "notas_intermediarias": "1 = desempenho entre 0 e 2; 3 = entre 2 e 4. Justificar com trecho do diálogo."
+    },
+    {
+      "criterio": "proximo_passo_e_registro",
+      "peso": 20,
+      "ancoras": {
+        "4": "Propõe ação aceita com responsável e condição/data; registra fatos e lacunas.",
+        "2": "Próximo passo ou registro incompleto.",
+        "0": "Registra acordo inexistente ou não define ação."
+      },
+      "notas_intermediarias": "1 = desempenho entre 0 e 2; 3 = entre 2 e 4. Justificar com trecho do diálogo."
+    },
+    {
+      "criterio": "etica_e_privacidade",
+      "peso": 15,
+      "ancoras": {
+        "4": "Respeita recusa; minimiza dados; não expõe material real.",
+        "2": "Uma omissão de esclarecimento sem exposição ou insistência.",
+        "0": "Engana, pressiona após recusa ou coleta/expoe dado indevido."
+      },
+      "notas_intermediarias": "1 = desempenho entre 0 e 2; 3 = entre 2 e 4. Justificar com trecho do diálogo."
+    }
+  ],
+  "calculo": "Para cada critério, peso × nota/4. Somar até 100. Aprovação pedagógica: >=80 e nenhuma falha crítica. A nota não é inferência de capacidade profissional geral.",
+  "falhas_criticas": [
+    "Inventar relação, evidência, recurso ou condição comercial para obter decisão.",
+    "Prometer renda, receita ou resultado garantido.",
+    "Insistir ou contornar recusa explícita.",
+    "Solicitar ou expor dados sensíveis/reais desnecessários."
+  ],
+  "saida_avaliador": {
+    "status": "aprovado | refazer | revisao_humana",
+    "nota_total": "número 0–100",
+    "criterios": [
+      {
+        "criterio": "identificador",
+        "nota": "0–4",
+        "evidencia": "citação curta de fala efetivamente observada",
+        "feedback": "o que manter ou corrigir"
+      }
+    ],
+    "falhas_criticas_observadas": [],
+    "fatos_confirmados": [],
+    "lacunas": [],
+    "proximo_treino": "uma ação observável"
+  },
+  "instrucao_avaliador": "Use apenas a transcrição e a rubrica. Não invente falas ou informações. Julgue conduta, não sotaque, velocidade, identidade, origem ou estilo cultural. Se faltar evidência, marque insuficiente e solicite revisão humana. Calcule a nota conforme os pesos; falha crítica impede aprovação automática. Dê um exemplo concreto de melhoria e reavalie após nova tentativa. Não emitir certificado, pagamento ou decisão de contratação.",
+  "handoff_modelo": {
+    "origem": "formulário fictício",
+    "problema_confirmado": "",
+    "fatos_confirmados": [],
+    "hipoteses": [],
+    "lacunas": [],
+    "limites_da_oferta": [],
+    "participantes": [],
+    "proximo_passo_aceito": "",
+    "responsavel": "",
+    "data_ou_condicao": "",
+    "preferencia_de_contato": ""
+  },
+  "revisao_humana": "Obrigatória para calibrar avaliadores e resolver nota contestada, evidência insuficiente ou dúvida ética. A simulação não se apresenta como decisão autônoma definitiva."
+}

@@ -1,0 +1,841 @@
+{
+  "schema_version": "1.0.0",
+  "id": "sales-academy-134h-01",
+  "locale": "pt-BR",
+  "titulo": "Fundamentos de Vendas",
+  "nivel": "Iniciante",
+  "carga_horaria_min": 180,
+  "certificacao": "Fundamentos (grátis)",
+  "status": "conteudo_autoral_para_revisao",
+  "fonte_grade": "Conversa 6afcea2a-9558-83e9-a6be-da76a9a26384, Curso 01; nomes, ordem e minutos dos módulos preservados.",
+  "promessa_educacional": "Compreender o processo comercial, conduzir um primeiro atendimento fictício e produzir registro profissional com limites éticos.",
+  "publico": "Pessoas sem experiência, freelancers e profissionais iniciantes.",
+  "pre_requisitos": "Nenhum; usar apenas dados fictícios nas atividades.",
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "produto_rycs": "pendente",
+    "gravacao": "pendente",
+    "integracao_pratica_ia": "nao_implementada"
+  },
+  "tempo": {
+    "regra": "Cada aula inclui vídeo ou leitura alternativa, texto de apoio e exercício. A prova ocupa 12 minutos da aula 3.5; a prática formativa ocupa 8 da 2.4; o projeto final ocupa 12 da 4.4. Não somar esses tempos novamente.",
+    "natureza": "Estimativa pedagógica; validar com alunos em piloto, sem alegar tempo medido.",
+    "video": "Roteiros de microaulas; a carga de 3h não representa 3h de vídeo."
+  },
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Introdução ao universo das vendas",
+      "duracaoMin": 40,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "O que é vender: identificar necessidades, apresentar soluções e gerar valor",
+          "duracaoMin": 10,
+          "objetivo": "Construir uma hipótese de valor e reconhecer quando não existe aderência.",
+          "roteiro_video": {
+            "fala_instrutor": "Pense na última vez em que alguém tentou lhe vender alguma coisa sem perguntar o que você precisava. O problema costuma aparecer antes do preço: a pessoa está falando de uma solução sem conhecer a situação. Nesta aula, vender significa ajudar alguém a avaliar uma mudança, com informação suficiente para aceitar ou recusar.\nVamos usar um caso fictício. A oficina Horizonte perde o controle dos pedidos feitos por telefone. Nosso sistema organiza pedidos, mas não sabemos se esse é o principal problema da oficina. Em vez de afirmar que vamos aumentar as vendas, perguntamos: como vocês registram pedidos hoje? Em que momento aparece retrabalho? O que já tentaram?\nA resposta pode mostrar que o problema é outro: falta de peças. Nesse caso, organizar pedidos não resolve a causa principal. Reconhecer essa limitação é trabalho comercial bem feito.\nNa tela, separe três colunas: situação, consequência e mudança desejada. Preencha apenas o que o cliente confirmou. Marque as demais informações como hipótese. Agora pause e transforme a frase “nosso sistema é completo” em uma pergunta que ajude a entender o cliente.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Construir uma hipótese de valor e reconhecer quando não existe aderência."
+          },
+          "texto_apoio": "Uma característica descreve o que a oferta possui. Um benefício descreve uma utilidade possível. Valor depende da utilidade reconhecida pelo comprador, em seu contexto, em comparação com custos e alternativas. Ter um painel de pedidos é característica; reunir pedidos num local pode ser benefício; evitar uma tarefa repetida que a equipe considera importante pode constituir valor. Essa relação precisa ser confirmada.\nA alternativa ao seu produto pode ser uma planilha, um fornecedor atual ou manter o processo existente. Por isso, “melhor que o concorrente” é insuficiente sem critério de comparação. Pergunte o que precisa melhorar e qual mudança compensaria o esforço de implantação.\nUse o encadeamento situação → problema confirmado → consequência → critério de sucesso. Não trate toda insatisfação como oportunidade comercial. Se a solução não atende ao problema ou a mudança custa mais do que o benefício plausível, registre a falta de aderência. Não prometa receita, renda, produtividade ou economia sem evidência adequada.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "A oficina usa papel e aplicativo de mensagens. Há pedidos duplicados, mas não foram medidos. A dona afirma que quer diminuir o retrabalho; não informou orçamento nem prazo."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Separe dois fatos confirmados de duas informações ainda desconhecidas.",
+              "Escreva uma pergunta de diagnóstico.",
+              "Escreva uma hipótese de valor sem garantia de resultado."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Fatos: uso de papel/mensagens e desejo de reduzir retrabalho. Desconhecidos: frequência das duplicidades e custo da mudança. Pergunta: em quais etapas um pedido acaba registrado duas vezes? Hipótese: centralizar registros pode ajudar a equipe a conferir duplicidades; precisamos testar essa utilidade.",
+            "justificativa": "A hipótese descreve uma possibilidade verificável e evita converter uma queixa em promessa comercial."
+          },
+          "checagem": {
+            "pergunta": "O cliente não confirmou o problema que sua solução resolve. Qual próximo passo é adequado?",
+            "alternativas": [
+              "Enviar contrato com desconto.",
+              "Investigar a situação antes de recomendar.",
+              "Prometer aumento de vendas."
+            ],
+            "correta": 1,
+            "feedback": "Investigar reduz o risco de recomendar uma mudança sem aderência. Desconto e promessa não substituem diagnóstico."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 6,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "1.2",
+          "titulo": "Diferenças entre vender produtos, serviços e soluções",
+          "duracaoMin": 10,
+          "objetivo": "Delimitar entrega, dependências e critérios de aceite de diferentes ofertas.",
+          "roteiro_video": {
+            "fala_instrutor": "Uma cadeira, uma instalação e um projeto de organização do escritório exigem conversas diferentes. A cadeira tem características observáveis. A instalação envolve execução: por quem, quando e com quais limites? O projeto combina entregas para resolver um problema. Isso não torna a terceira oferta automaticamente melhor; torna a definição do escopo ainda mais importante.\nNo nosso caso fictício, uma oficina pede um sistema e espera que o vendedor também migre todos os arquivos antigos. Se a migração não está incluída, omitir esse ponto cria uma expectativa que a equipe não poderá cumprir.\nNa tela, vou escrever cinco perguntas: o que está incluído, o que está excluído, quem faz cada parte, quando é entregue e como verificamos o aceite? Leia a oferta com essas perguntas. Se não conseguir respondê-las, não complete a lacuna com uma promessa pessoal.\nUma boa apresentação separa a entrega contratada do resultado que depende do uso. Instalar um sistema não garante que todos os usuários o adotem. Pause e descreva uma exclusão de escopo de maneira clara, sem escondê-la no fim da conversa.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Delimitar entrega, dependências e critérios de aceite de diferentes ofertas."
+          },
+          "texto_apoio": "Produto, serviço e solução são formas úteis de organizar a conversa, mas uma oferta pode combinar as três. Um equipamento pode incluir assinatura de suporte; um serviço pode gerar um relatório tangível. O aluno deve identificar componentes e responsabilidades, em vez de decorar rótulos.\nNo produto, investigue especificações, disponibilidade, compatibilidade e condições da oferta. No serviço, detalhe entregáveis, método, prazos, responsabilidades e dependências. Na solução integrada, conecte cada componente ao problema que pretende atender e explicite os limites da integração.\nCritério de aceite é uma condição observável para verificar a entrega, como “importar os campos A, B e C da base de teste aprovada”. Não confunda aceite da entrega com garantia de desempenho econômico. Custos adicionais, renovação, requisitos técnicos e tarefas do cliente devem ser informados antes do compromisso. Se a política comercial não está disponível, consulte a empresa; não invente uma condição para avançar a negociação.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Oferta fictícia: licença de 12 meses, configuração de duas contas e uma sessão de treinamento. Não inclui digitalizar cadernos nem importar arquivos sem formato definido."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Classifique os três componentes da oferta.",
+              "Redija uma explicação de escopo de até 70 palavras.",
+              "Defina um critério de aceite verificável para a configuração."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Licença: acesso ao produto; configuração e treinamento: serviços associados. Escopo: inclui duas contas e uma sessão; a digitalização e a importação fora do formato precisam de avaliação separada. Aceite: duas contas de teste acessam o ambiente e executam o fluxo acordado.",
+            "justificativa": "Aceite verifica execução. A explicação permite ao comprador avaliar o custo total e as próprias obrigações."
+          },
+          "checagem": {
+            "pergunta": "Qual frase descreve um compromisso verificável?",
+            "alternativas": [
+              "Sua equipe venderá o dobro.",
+              "Todos vão gostar do sistema.",
+              "Entregaremos duas contas configuradas conforme o escopo aprovado."
+            ],
+            "correta": 2,
+            "feedback": "Número de contas e escopo permitem conferir a entrega; aprovação subjetiva e receita futura não estão garantidas."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 6,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "1.3",
+          "titulo": "Como funcionam as vendas B2B e B2C",
+          "duracaoMin": 10,
+          "objetivo": "Identificar comprador, usuário, aprovador e contexto de uso sem estereótipos.",
+          "roteiro_video": {
+            "fala_instrutor": "B2B significa venda de uma empresa para outra. B2C significa venda ao consumidor final. Essa distinção ajuda, mas não diz sozinha quanto tempo a compra vai levar ou quem decide.\nConsidere dois casos fictícios. Uma pessoa compra um notebook para uso próprio. Uma oficina compra o mesmo modelo para registrar pedidos. O objeto é igual; os critérios podem mudar. Na oficina, uma pessoa usa, outra aprova a despesa e alguém verifica compatibilidade. No uso pessoal, também pode haver mais de um participante na decisão.\nEm vez de presumir que “B2B é sempre racional” e “B2C é emocional”, pergunte: para que será usado? Quem precisa participar? Quais condições precisam ser atendidas? Existe um prazo real?\nO canal também não define o tipo da venda. Uma compra pela internet pode ser empresarial ou pessoal. Mais adiante você verá um dado real do varejo dos Estados Unidos: ele ilustra a necessidade de olhar o recorte estatístico, não autoriza concluir como todo comprador se comporta. Pause e desenhe os participantes de uma compra fictícia.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Identificar comprador, usuário, aprovador e contexto de uso sem estereótipos."
+          },
+          "texto_apoio": "O relacionamento comercial é definido pelo contexto e pelas partes envolvidas, não apenas pelo canal ou pelo preço. Nas duas modalidades, clareza da oferta, adequação, segurança e respeito ao comprador são fundamentais. O tratamento jurídico depende da situação concreta; este curso não determina enquadramento contratual ou aplicação de normas a um caso específico.\nMapeie quatro papéis: usuário, influenciador técnico, aprovador econômico e responsável pela contratação. Uma pessoa pode acumular papéis. Pergunte como a organização compra e quem precisa validar cada aspecto; não desqualifique um contato por não assinar o contrato.\nDado real para leitura crítica: a edição histórica do Census Bureau publicada em fevereiro de 2025 estimou o comércio eletrônico em 16,1% do varejo dos EUA no ano de 2024. O próprio arquivo informa revisão histórica posterior. O número é uma estimativa daquela edição, não o valor atualizado, não inclui toda a economia e não mede a taxa de sucesso de vendedores. Fonte S1. A lição é conferir população, período e revisão antes de usar uma estatística em uma proposta.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Uma analista da oficina testa o sistema, o gerente aprova a rotina e a proprietária aprova a compra. Não se sabe quem revisará o contrato."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Identifique usuário, influenciador e aprovador no caso.",
+              "Escreva a pergunta que falta para mapear a contratação.",
+              "Diga por que o dado do varejo dos EUA não estima a chance de fechar essa venda."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Analista: usuária; gerente: influenciador operacional; proprietária: aprovadora econômica. Pergunta: quem verifica as condições e formaliza a contratação? O dado agregado de varejo pertence a outra população e mede participação de canal, não conversão de oportunidades.",
+            "justificativa": "Papéis orientam a conversa; não são rótulos fixos. Uma estatística só sustenta a afirmação que foi efetivamente medida."
+          },
+          "checagem": {
+            "pergunta": "Uma compra empresarial feita em um site é necessariamente B2C?",
+            "alternativas": [
+              "Não; é preciso entender quem compra e para qual uso.",
+              "Sim; o canal define a categoria.",
+              "Sim; só vendas presenciais podem ser B2B."
+            ],
+            "correta": 0,
+            "feedback": "O canal não define se a compra é para uma empresa ou para um consumidor final."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 6,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": [
+            "S1"
+          ]
+        },
+        {
+          "id": "1.4",
+          "titulo": "As funções de SDR, BDR, Closer, vendedor e gerente comercial",
+          "duracaoMin": 10,
+          "objetivo": "Definir entregas e passagens de responsabilidade entre funções.",
+          "roteiro_video": {
+            "fala_instrutor": "Uma operação comercial precisa de responsabilidades claras. Os nomes dos cargos variam entre empresas. Aqui, SDR representa a atuação de pesquisa, contato e qualificação inicial. BDR pode representar desenvolvimento de novas contas e relacionamentos estratégicos. Closer conduz a etapa de negociação e fechamento. Vendedor é um nome amplo; pode cobrir todo o processo. O gerente organiza critérios, acompanha resultados e desenvolve a equipe.\nNão use essas definições para adivinhar a regra de uma campanha. Leia a responsabilidade específica. Um SDR pode ter tarefas inbound e outbound, conforme a operação; o nome do cargo não basta.\nNo caso fictício, Ana confirma o problema da oficina e passa a conversa para Bruno. O registro precisa dizer o que foi confirmado, o que falta e qual próximo passo o cliente aceitou. “Cliente quente” não orienta Bruno.\nNa tela vou substituir esse rótulo por um resumo: processo atual, dificuldade relatada, participantes, restrições e reunião combinada. Pause e escreva a informação que você gostaria de receber antes de atender esse cliente.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Definir entregas e passagens de responsabilidade entre funções."
+          },
+          "texto_apoio": "A qualidade do trabalho pode ser observada na entrega para a próxima pessoa. Qualificação inicial deve produzir contexto confiável, não apenas um horário ocupado na agenda. Negociação deve esclarecer alternativas e condições dentro da autonomia existente. Gestão deve analisar o processo, não pressionar a equipe a inventar evidências para cumprir uma meta.\nEm um handoff, registre origem do contato, problema nas palavras do comprador, informação confirmada, lacunas, restrições e próximo passo acordado. Identifique hipóteses e preserve o mínimo necessário de dados. Se o cliente recusou novos contatos, a recusa precisa acompanhar o registro.\nDado real: no State of Sales, 6ª edição, a Salesforce informa que os vendedores respondentes relataram 70% do tempo em tarefas não classificadas como venda. A pesquisa ocorreu entre março e abril de 2024 e é publicada por uma fornecedora de tecnologia comercial. É autorrelato de uma amostra, não medição universal nem meta ideal. Fonte S2. A aplicação responsável é examinar suas próprias tarefas antes de concluir onde há desperdício.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Ana marca uma conversa para a oficina sem registrar o objetivo. Bruno repete perguntas básicas e descobre que o cliente só queria suporte do produto atual."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Identifique a falha de passagem.",
+              "Escreva um handoff de quatro linhas com fatos e lacunas.",
+              "Escolha uma métrica de qualidade além de reuniões marcadas."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Faltou confirmar o propósito. Handoff adequado: origem e solicitação do cliente; problema comercial confirmado ou ausência dele; lacunas sobre decisão/prazo; próximo passo aceito. Métrica: reuniões realizadas que atendem aos critérios definidos, sempre com denominador e período.",
+            "justificativa": "Agenda preenchida não demonstra oportunidade válida. A métrica precisa representar a entrega que a operação realmente precisa."
+          },
+          "checagem": {
+            "pergunta": "O que fazer quando o título do cargo e as regras da campanha parecem diferentes?",
+            "alternativas": [
+              "Seguir a definição genérica do cargo.",
+              "Confirmar as responsabilidades da campanha antes de atuar.",
+              "Escolher a regra que paga mais."
+            ],
+            "correta": 1,
+            "feedback": "O trabalho deve seguir o escopo acordado e esclarecido, sem presumir autoridade pelo nome do cargo."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 6,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": [
+            "S2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Entendendo o cliente",
+      "duracaoMin": 45,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Necessidades, desejos, dores e expectativas",
+          "duracaoMin": 11,
+          "objetivo": "Distinguir solicitação inicial, dificuldade e critério de sucesso.",
+          "roteiro_video": {
+            "fala_instrutor": "“Quero uma ferramenta mais moderna” parece uma necessidade clara. Ainda não sabemos o que moderno significa para aquela pessoa. Pode ser acesso no celular, aparência da tela ou uma tarefa que hoje exige duas horas. Vamos investigar sem corrigir o cliente.\nNo caso fictício, a dona da oficina diz que quer um aplicativo. Pergunto: o que você gostaria de conseguir fazer que hoje é difícil? Ela responde: consultar pedidos sem telefonar para a loja. Agora existe um uso concreto para avaliar.\nNecessidade é algo que a pessoa precisa resolver. Desejo é uma preferência. Dor é uma dificuldade percebida. Expectativa é a condição pela qual ela julgará a experiência. Essas categorias se sobrepõem; servem para organizar a escuta, não para diagnosticar o cliente.\nO ponto de atenção é não exagerar a dificuldade. Se a cliente diz que o processo incomoda, não registre que a empresa está perdendo milhares de reais. Pergunte como ela avalia o impacto. Pause e reescreva uma frase vaga como uma pergunta neutra.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Distinguir solicitação inicial, dificuldade e critério de sucesso."
+          },
+          "texto_apoio": "O pedido do comprador pode ser uma solução imaginada, como “preciso de um aplicativo”. Investigue a tarefa que motivou o pedido. Perguntas úteis: o que está acontecendo? Quem é afetado? Com que frequência? O que seria uma melhora suficiente? Quais limites a mudança deve respeitar?\nNão é necessário quantificar tudo em dinheiro. Tempo, erros, esforço, acesso e previsibilidade podem ser relevantes, desde que o cliente confirme a importância. Se houver estimativa financeira, registre fórmula, período e premissas e diferencie custo potencial de economia efetivamente realizável.\nUm critério de sucesso deve ser observável. “Ficar mais tranquilo” pode ser uma motivação legítima, mas precisa de uma condição prática para avaliar a oferta: por exemplo, consultar o status de um pedido de teste sem ligar para a loja. Não transforme um objetivo de implantação em garantia de resultado. Expectativas incompatíveis com a oferta devem ser esclarecidas antes da proposta.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Falas fictícias: “quero algo bonito”; “lançamos o mesmo pedido duas vezes”; “preciso consultar de casa”; “a equipe precisa aprender sem parar o atendimento”; “quero implantação até sexta, mas não sei quem fornecerá os dados”."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Identifique uma preferência, uma dificuldade, uma necessidade de uso e uma expectativa.",
+              "Formule uma pergunta de aprofundamento para cada uma das cinco falas.",
+              "Marque quais condições ainda não podem ser prometidas."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Preferência: aparência. Dificuldade: duplicidade. Necessidade de uso: acesso remoto. Expectativa: treinamento compatível com operação. Prazo exige verificar dados, escopo e capacidade; não pode ser assumido. Perguntas aceitáveis investigam impacto e condição de sucesso sem sugerir resposta.",
+            "justificativa": "Distinguir as falas evita vender uma preferência como solução de um problema que ainda não foi compreendido."
+          },
+          "checagem": {
+            "pergunta": "“Quero algo moderno” autoriza afirmar que o cliente precisa de IA?",
+            "alternativas": [
+              "Sim, moderno significa IA.",
+              "Somente se a oferta tiver desconto.",
+              "Não; é preciso esclarecer o resultado esperado."
+            ],
+            "correta": 2,
+            "feedback": "A palavra moderna é vaga. Escolher uma tecnologia antes de entender o uso é uma inferência sem confirmação."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 7,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "2.2",
+          "titulo": "Como identificar o perfil de um potencial comprador",
+          "duracaoMin": 11,
+          "objetivo": "Aplicar critérios de aderência e exclusão sem usar dados irrelevantes.",
+          "roteiro_video": {
+            "fala_instrutor": "Pesquisar um potencial cliente não é acumular tudo que você encontra. É verificar se existe um motivo profissional para conversar. Nesta aula, vamos trabalhar com critérios simples e relacionados à oferta.\nNosso sistema fictício atende oficinas com uma única unidade e até cinco usuários. Uma rede com cinquenta unidades pode ter um problema parecido e, ainda assim, exigir recursos que não oferecemos. Aderência inclui o que a solução suporta.\nNa tela, separe critérios obrigatórios de sinais que apenas ajudam a priorizar. Segmento e compatibilidade técnica podem ser obrigatórios; uma mudança recente na equipe pode ser somente um sinal a investigar. Não use informações pessoais ou sensíveis para inferir vulnerabilidade ou forçar uma compra.\nUm site informa que uma empresa tem duas unidades. Isso é uma pista com origem e data, não confirmação de como ela trabalha hoje. Pergunte e atualize. Pause e escolha qual dado você deixaria de coletar porque não ajuda a decidir a aderência.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Aplicar critérios de aderência e exclusão sem usar dados irrelevantes."
+          },
+          "texto_apoio": "Um perfil de cliente ideal descreve características de contas que podem receber valor da oferta. Persona descreve um papel ou contexto de uma pessoa envolvida na compra. O perfil inicial pode usar setor, porte operacional, região atendida, problema compatível e requisitos técnicos.\nDefina também exclusões: região não atendida, necessidade de recurso inexistente ou restrição que a oferta não suporta. Informações ausentes devem ser marcadas como desconhecidas, não convertidas em aprovação ou rejeição automática. A lista orienta investigação; não substitui a confirmação.\nPara cada dado, registre fonte, data e finalidade. A disponibilidade pública não significa autorização irrestrita para coletar ou usar informações pessoais. A organização deve definir a hipótese legal, a finalidade e o processo de atendimento a direitos. O aluno deve usar apenas dados necessários e canais autorizados, recorrendo ao responsável de privacidade diante de dúvida. Fonte S3. Nunca registre detalhes de saúde, família ou crenças por curiosidade comercial.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Oferta fictícia atende oficinas de uma unidade na região autorizada, com até cinco usuários. Conta A: uma unidade, três usuários. B: dez unidades. C: unidade desconhecida, quatro usuários. D: uma unidade fora da região."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Classifique A–D como aderente em princípio, fora de escopo ou investigar.",
+              "Justifique cada decisão com um critério da oferta.",
+              "Liste os campos mínimos para o registro."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "A: aderente em princípio, ainda requer diagnóstico. B: fora do escopo de unidades. C: investigar número de unidades. D: fora da região. Campos mínimos: identificador da conta, critérios relevantes, fonte/data, situação e próxima ação autorizada.",
+            "justificativa": "O perfil filtra compatibilidade operacional. Não revela intenção de compra e não permite preencher lacunas por suposição."
+          },
+          "checagem": {
+            "pergunta": "Um dado profissional está público. Qual conclusão é correta?",
+            "alternativas": [
+              "Pode ser usado para qualquer finalidade.",
+              "Ainda é necessário respeitar finalidade, necessidade e regras aplicáveis.",
+              "Pode ser combinado com dados sensíveis para pressionar."
+            ],
+            "correta": 1,
+            "feedback": "Publicidade do dado não elimina obrigações de proteção e limites de uso."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 7,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": [
+            "S3"
+          ]
+        },
+        {
+          "id": "2.3",
+          "titulo": "Perguntas abertas, fechadas e de aprofundamento",
+          "duracaoMin": 11,
+          "objetivo": "Encadear perguntas sem conduzir o comprador a uma resposta conveniente.",
+          "roteiro_video": {
+            "fala_instrutor": "Uma conversa útil alterna três movimentos. Abrir permite que a pessoa descreva a situação: como os pedidos chegam? Aprofundar explora um ponto: você mencionou retrabalho; em que etapa ele aparece? Fechar confirma um fato: isso acontece nos pedidos recebidos por telefone?\nNenhum tipo é superior em todas as situações. Perguntas fechadas ajudam a confirmar detalhes. Perguntas abertas ajudam a descobrir o que você ainda não sabia que precisava perguntar.\nEvite juntar cinco perguntas na mesma frase. O comprador pode responder só à última e você interpretar o silêncio sobre as demais como confirmação. Pergunte uma coisa de cada vez.\nTambém evite embutir uma conclusão: “você concorda que está perdendo dinheiro?” pede concordância com sua hipótese. Prefira: “que efeito isso tem no trabalho da equipe?” Se o cliente não souber, registre que não foi medido. Pause e transforme uma pergunta indutiva em uma pergunta neutra.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Encadear perguntas sem conduzir o comprador a uma resposta conveniente."
+          },
+          "texto_apoio": "Uma sequência possível é contexto → exemplo recente → consequência → confirmação. Comece com uma pergunta ampla, peça um episódio concreto e verifique o que ocorreu. Depois resuma e confira se entendeu. O comprador pode corrigir sua interpretação; essa correção melhora o diagnóstico.\nPerguntas sobre orçamento, autoridade e prazo precisam de propósito e oportunidade. Em vez de um interrogatório de campos, explique por que a informação ajuda a avaliar o caminho: “para não propor algo incompatível, existe uma faixa aprovada ou um processo para aprovar investimento?” Uma resposta desconhecida é uma lacuna, não um motivo para inventar números.\nPerguntas de aprofundamento não devem aumentar ansiedade artificialmente. Investigue consequências que a pessoa reconhece. Não sugira perdas, riscos clínicos ou prejuízos financeiros inexistentes. Não peça documentos ou dados pessoais que não sejam necessários à etapa. O objetivo é reduzir incerteza de maneira respeitosa, sem fabricar urgência.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Diálogo fictício: cliente: “às vezes o pedido se perde”. Vendedor: “então você perde muito dinheiro todo dia, certo?” Cliente: “não sei; só precisamos conferir melhor”."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Explique o problema da pergunta do vendedor.",
+              "Escreva uma pergunta aberta, uma de aprofundamento e uma de confirmação.",
+              "Indique o que deve ser registrado como desconhecido."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Problema: presume frequência diária e perda financeira. Aberta: como vocês acompanham os pedidos? Aprofundamento: pode contar a última vez que um pedido ficou sem registro? Confirmação: o objetivo é conferir o registro antes de iniciar o serviço? Impacto financeiro e frequência continuam desconhecidos.",
+            "justificativa": "Perguntas neutras permitem aprender com a resposta, inclusive quando ela contraria a hipótese inicial."
+          },
+          "checagem": {
+            "pergunta": "Qual pergunta evita pressupor uma perda?",
+            "alternativas": [
+              "Quanto dinheiro você perde diariamente com isso?",
+              "Você concorda que sua equipe está despreparada?",
+              "O que acontece quando o pedido não é registrado?"
+            ],
+            "correta": 2,
+            "feedback": "A terceira pergunta investiga a consequência; as outras impõem conclusões não confirmadas."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 7,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "2.4",
+          "titulo": "Escuta ativa e comunicação profissional",
+          "duracaoMin": 12,
+          "objetivo": "Resumir, confirmar e respeitar limites durante uma conversa.",
+          "roteiro_video": {
+            "fala_instrutor": "Escuta ativa aparece na sua próxima fala. Se o cliente diz que só pode conversar depois e você continua o discurso, ouviu as palavras, mas não ajustou a ação. Vamos praticar três movimentos: escutar sem interromper, resumir sem exagerar e confirmar antes de avançar.\nCliente fictício: “o sistema atual funciona, mas ninguém sabe onde consultar o status”. Uma resposta possível é: “entendi que o problema principal é localizar a informação, não substituir tudo. É isso?” Observe que deixei espaço para a pessoa dizer não.\nComunicação profissional também significa ser direto quando você não sabe. Dizer “preciso confirmar essa integração” é mais útil do que assegurar uma compatibilidade inexistente.\nNa tela, há duas anotações. Uma diz “cliente resistente”. A outra diz “quer verificar integração antes de avaliar troca”. A segunda registra uma condição observável e ajuda a próxima pessoa. Pause e reescreva um julgamento como observação. Em seguida, faça a primeira rodada da simulação: quatro minutos como vendedor e quatro como avaliador.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Resumir, confirmar e respeitar limites durante uma conversa."
+          },
+          "texto_apoio": "Uma paráfrase precisa preservar o sentido e o grau de certeza da fala. “Talvez avaliemos no próximo trimestre” não vira “comprará no próximo trimestre”. Use expressões como “se entendi”, peça confirmação e permita correção. Ouvir não exige concordar com uma afirmação incorreta; exige esclarecer sem hostilidade.\nNa escrita, prefira frases curtas, um assunto por bloco e pedido específico. Evite jargão não explicado e não interprete sotaque, silêncio ou velocidade de resposta como medida de inteligência ou intenção. Pergunte o idioma e o formato preferidos quando isso for relevante.\nUma recusa explícita exige interrupção do contato comercial correspondente e registro no processo autorizado. Se houver solicitação sobre dados, encaminhe ao canal de privacidade; não prometa eliminação total imediata sem verificar as obrigações e o procedimento. Não envie conversas reais a uma ferramenta externa de IA para treinar esta atividade. Use o caso fictício e uma ferramenta aprovada, ou faça o papel em dupla.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Cliente fictício: “não quero trocar o sistema agora; talvez converse no próximo trimestre, mas não quero mensagens até lá”."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Escreva uma paráfrase sem aumentar a certeza da compra.",
+              "Defina o próximo passo respeitando a preferência.",
+              "Faça 8 minutos da simulação formativa: quatro de diálogo e quatro de autoavaliação."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Paráfrase: vocês não pretendem trocar agora e não desejam mensagens neste período; entendi corretamente? Próximo passo: encerrar sem programar novas mensagens e registrar a restrição no processo autorizado. Uma possibilidade futura não autoriza contato automático.",
+            "justificativa": "A escuta deve alterar a conduta. Interesse eventual e preferência de contato são informações distintas."
+          },
+          "checagem": {
+            "pergunta": "O cliente pede para parar as mensagens. Qual ação demonstra escuta?",
+            "alternativas": [
+              "Enviar uma última oferta antes de parar.",
+              "Interromper o contato e registrar a preferência no processo autorizado.",
+              "Trocar de número para confirmar a recusa."
+            ],
+            "correta": 1,
+            "feedback": "Mudar de canal ou insistir após a recusa contraria a preferência explicitada."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 1,
+            "exercicio_min": 1,
+            "atividade_avaliativa_min": 8,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "O processo comercial",
+      "duracaoMin": 55,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Prospecção: encontrar potenciais compradores",
+          "duracaoMin": 9,
+          "objetivo": "Preparar uma lista pequena com motivo legítimo e próximo passo.",
+          "roteiro_video": {
+            "fala_instrutor": "Prospecção começa antes da primeira mensagem. Defina para quem a oferta pode servir, qual informação você pode usar e o que pretende descobrir. Uma lista grande sem aderência pode aumentar trabalho sem melhorar oportunidades.\nNo exercício fictício, vamos pesquisar apenas contas inventadas. Para cada conta, escreva segmento, sinal de compatibilidade e uma pergunta ainda aberta. Não tente completar todos os campos possíveis.\nNa tela, a oficina Horizonte está na região atendida, mas não sabemos quantos usuários precisa. Isso justifica investigar a compatibilidade; não justifica dizer que ela precisa do nosso sistema.\nAntes do contato, verifique o canal e a abordagem autorizados, a origem dos dados e as restrições de contato. Encontrar um telefone não resolve essas decisões. Ao concluir, escolha uma conta e formule um objetivo simples: confirmar se a dificuldade que investigamos existe naquele contexto. Pause e descarte um contato fora do escopo, explicando o critério.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Preparar uma lista pequena com motivo legítimo e próximo passo."
+          },
+          "texto_apoio": "Pesquisa comercial produz hipóteses. Um sinal como contratação de equipe, expansão ou publicação sobre um processo pode ser relevante, mas não demonstra orçamento ou intenção de compra. Cite a origem da observação e peça confirmação do contexto sem sugerir que conhece informações internas.\nUma lista inicial precisa de identificador da conta, critério de aderência, origem e data da informação, canal autorizado, restrição conhecida e próxima ação. Proteja o arquivo, limite o acesso e siga a política de retenção da organização. Não reutilize dados de uma campanha em outra por conveniência.\nQualidade pode ser acompanhada pela proporção de contas que atendem aos critérios definidos, com período e regra de classificação explícitos. Não confunda quantidade de contatos coletados com número de oportunidades válidas. Uma amostra pequena serve para aprender, não para garantir o desempenho de toda a base.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Cinco contas fictícias: Horizonte, uma unidade e três usuários; Pista, dez unidades; Norte, fora da região; Giro, unidade e usuários desconhecidos; Roda, uma unidade e quatro usuários, com pedido anterior de não contato."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Selecione as contas para investigação segundo o perfil da aula 2.2.",
+              "Defina uma próxima ação para cada conta.",
+              "Explique por que Roda não deve entrar na cadência."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Horizonte: investigar problema e confirmar atualidade. Giro: esclarecer compatibilidade por meio permitido. Pista/Norte: fora do escopo. Roda: respeitar não contato, sem cadência. Aderência de produto não anula restrição de contato.",
+            "justificativa": "A prospecção precisa combinar compatibilidade e permissão operacional. Não basta que a conta pareça atrativa."
+          },
+          "checagem": {
+            "pergunta": "Qual resultado representa pesquisa bem preparada?",
+            "alternativas": [
+              "Lista com aderência, origem, lacunas e ação autorizada.",
+              "Maior quantidade possível de telefones.",
+              "Inferência de renda pessoal dos compradores."
+            ],
+            "correta": 0,
+            "feedback": "Os campos úteis sustentam uma decisão profissional e limitam coleta desnecessária."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 5,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": [
+            "S3"
+          ]
+        },
+        {
+          "id": "3.2",
+          "titulo": "Abordagem: iniciar uma conversa com propósito",
+          "duracaoMin": 9,
+          "objetivo": "Escrever uma abertura identificada, contextualizada e fácil de recusar.",
+          "roteiro_video": {
+            "fala_instrutor": "Uma abertura precisa responder rapidamente: quem está falando, por que entrou em contato e o que está pedindo. O contexto deve ser verdadeiro e a solicitação deve caber naquele momento.\nExemplo fictício: “Olá, sou Lia, da Oficina Digital. Vi no formulário que vocês pediram informações sobre organização de pedidos. Posso fazer duas perguntas para entender se atendemos ao que procuram?” Aqui há uma origem confirmada e um pedido específico.\nNa abordagem ativa autorizada, não finja que houve um pedido. Explique o motivo real do contato e respeite a possibilidade de recusa. Não use “sobre nossa reunião” se não houve reunião. Não esconda a identidade comercial para aumentar respostas.\nUma mensagem clara pode não receber resposta. Isso não permite concluir que a pessoa gostou nem autoriza insistência indefinida. Pause e escreva uma abertura receptiva e uma ativa para o mesmo caso, distinguindo a origem em cada uma.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Escrever uma abertura identificada, contextualizada e fácil de recusar."
+          },
+          "texto_apoio": "Use identificação → contexto verdadeiro → hipótese relevante → pedido pequeno. A hipótese não precisa de uma afirmação grandiosa: “queria verificar como vocês acompanham pedidos” é mais preciso que “temos a solução perfeita”. Um pedido pode ser responder a uma pergunta, indicar o canal adequado ou combinar uma conversa, sem pressionar por decisão imediata.\nPersonalização deve ajudar o comprador a entender a relevância. Referências à vida pessoal, dados sensíveis ou observações invasivas não melhoram a qualidade da abordagem. Não copie uma mensagem de indicação para parecer que alguém recomendou o contato quando isso não ocorreu.\nO canal altera regras e expectativas. Este curso ensina estrutura de comunicação, não autoriza qualquer envio. Antes de usar e-mail, telefone, mensagens ou automação, confirme com a operação as regras de privacidade, canal e contato aplicáveis. Quando houver pedido de interrupção, não tente contorná-lo por outro canal.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Caso receptivo: a oficina preencheu formulário para conhecer a solução. Caso ativo: a oficina não pediu contato; a equipe possui um procedimento previamente autorizado para aquele canal."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Escreva duas aberturas de até 60 palavras, uma por caso.",
+              "Sublinhe identidade, origem e pedido.",
+              "Remova qualquer promessa de resultado ou relação anterior inventada."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Receptivo: Olá, sou Lia, da Oficina Digital. Recebemos seu pedido de informações sobre pedidos de oficina. Posso confirmar como funciona seu registro hoje? Ativo: Olá, sou Lia, da Oficina Digital. Trabalho com organização de pedidos de oficinas na região e queria verificar se esse assunto é relevante para vocês. Se não quiser contato, respeito sua preferência.",
+            "justificativa": "As mensagens distinguem intenção receptiva de hipótese ativa. O exemplo ativo só pode ser utilizado após a validação do procedimento do canal."
+          },
+          "checagem": {
+            "pergunta": "Qual abertura contém uma afirmação enganosa?",
+            "alternativas": [
+              "Retorno ao pedido de informações que você enviou, quando esse pedido existe.",
+              "Sobre nossa reunião, quando nunca houve reunião.",
+              "Queria verificar se esse tema faz sentido, por um canal autorizado."
+            ],
+            "correta": 1,
+            "feedback": "Inventar reunião cria um contexto falso para obter atenção."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 5,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "3.3",
+          "titulo": "Qualificação: identificar oportunidades reais",
+          "duracaoMin": 9,
+          "objetivo": "Separar interesse superficial de oportunidade com evidência.",
+          "roteiro_video": {
+            "fala_instrutor": "Receber “manda mais informações” não significa que existe uma venda próxima. A pessoa pode estar pesquisando, comparando ou só tentando encerrar a conversa. Qualificar é entender se existe problema compatível, interesse em avaliar e caminho para uma decisão.\nNo caso fictício, a oficina confirma pedidos duplicados e quer conhecer alternativas. Ainda não definiu orçamento nem quem aprova. Podemos registrar uma oportunidade em investigação, conforme o critério da operação; não podemos chamá-la de contratação aprovada.\nUse perguntas no momento adequado: o que precisa melhorar? Como uma compra desse tipo é avaliada? Quem precisa participar? Há algum prazo real ou dependência importante? Você não precisa disparar um questionário sem contexto.\nNa tela, marque cada campo como confirmado, hipótese ou desconhecido. Se uma informação não foi dada, não preencha para fazer o registro parecer completo. Pause e classifique o caso sem usar “quente”, “frio” ou “certeza de fechar”.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Separar interesse superficial de oportunidade com evidência."
+          },
+          "texto_apoio": "Qualificação é uma decisão baseada em critérios explícitos. Uma operação pode exigir problema confirmado, compatibilidade mínima, papel adequado e próximo passo aceito. Outra pode usar critérios diferentes. O aluno deve ler o escopo e evitar aplicar um modelo de maneira mecânica.\nInteresse, necessidade, autoridade, recursos e momento são dimensões diferentes. Um usuário pode ter necessidade e influência sem poder aprovar compra. Uma empresa pode ter capacidade financeira, mas nenhuma prioridade de mudança. Lacunas podem justificar investigação, adiamento ou encerramento, conforme o critério.\nRegistre o fundamento da classificação e a próxima ação. Quando não houver aderência, encaminhe ou encerre com transparência. Não invente respostas de orçamento, assinatura, urgência ou presença para cumprir uma meta de reunião. Se o critério da tarefa não estiver claro, esclareça antes de reportar a oportunidade como aceita.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "A oficina confirma duplicidades semanais, quer ver uma demonstração e diz que a proprietária decide. O contato não sabe se existe verba aprovada. A demonstração ainda não foi agendada."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Liste três fatos, duas lacunas e uma hipótese que você não pode registrar como fato.",
+              "Escreva duas perguntas para avançar.",
+              "Classifique a etapa segundo o critério “diagnóstico mínimo e próximo passo aceito”."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Fatos: duplicidades relatadas, interesse na demonstração, aprovação pela proprietária. Lacunas: processo de recursos e data/participantes. Não afirmar compra aprovada. Perguntas: como a proprietária avalia esse investimento? Qual próximo passo faria sentido com ela? Ainda falta um próximo passo definido para cumprir integralmente o critério.",
+            "justificativa": "O registro precisa refletir a informação recebida e os critérios, não a expectativa do vendedor."
+          },
+          "checagem": {
+            "pergunta": "Qual informação deve ser marcada como desconhecida?",
+            "alternativas": [
+              "O orçamento que o contato disse não conhecer.",
+              "O nome da empresa confirmado.",
+              "O problema descrito e confirmado."
+            ],
+            "correta": 0,
+            "feedback": "Desconhecido é uma informação válida; completar com suposição prejudica a qualidade da oportunidade."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 5,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "3.4",
+          "titulo": "Apresentação de valor, negociação e fechamento",
+          "duracaoMin": 9,
+          "objetivo": "Conectar recomendação ao diagnóstico e negociar dentro da autonomia.",
+          "roteiro_video": {
+            "fala_instrutor": "Depois de compreender o problema, apresente apenas o que ajuda a avaliá-lo. Se a oficina precisa conferir duplicidades, mostre esse fluxo antes de listar todos os recursos.\nUma apresentação simples segue quatro passos: retome o que foi confirmado, mostre a parte da oferta relacionada, explicite limites e pergunte se o critério foi atendido. Demonstração é evidência de uma função em determinadas condições; não é garantia de que a empresa terá um resultado financeiro.\nNa negociação, investigue a restrição. “Está caro” pode significar comparação com outra oferta, falta de verba ou dúvida sobre escopo. Não ofereça um desconto que você não tem autorização para conceder.\nFechar significa formalizar um acordo claro, incluindo responsabilidades e condições, por quem tem autoridade. Não declare contratação só porque alguém aceitou receber uma proposta. Pause e escreva um próximo passo quando a compra ainda depende da proprietária.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Conectar recomendação ao diagnóstico e negociar dentro da autonomia."
+          },
+          "texto_apoio": "Uma recomendação deve ser rastreável ao diagnóstico: problema confirmado → recurso ou serviço pertinente → evidência disponível → limite → condição a verificar. Se a oferta não tem uma função, diga isso. Se uma estimativa depende de adoção ou dados do cliente, apresente as premissas em vez de tratar o cálculo como benefício garantido.\nAntes de discutir preço, verifique o que está sendo comparado: período, usuários, serviços, exclusões e obrigações. Negocie apenas variáveis autorizadas. Mudanças de escopo podem afetar entrega, prazo e custo; precisam de aprovação das partes responsáveis.\nUm próximo passo claro tem responsável, ação, prazo ou condição e aceite. “Vou mandar algo” é vago. “Enviarei o escopo hoje pelo canal combinado e vocês confirmarão quem participa da análise” é verificável. O aluno não deve assumir poderes de assinatura ou afirmar que uma negociação está fechada quando ainda existe aprovação pendente.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "O contato pede 30% de desconto, mas o vendedor não tem alçada. A proprietária ainda precisa confirmar se a importação de dados atende ao processo."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Escreva uma resposta ao desconto sem prometer concessão.",
+              "Defina um teste de aderência para a importação.",
+              "Escreva o próximo passo com responsáveis e condição."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Entendo a preocupação com o valor; posso esclarecer o que precisa caber no investimento e levar uma solicitação à pessoa responsável, sem antecipar aprovação. Teste: importar arquivo fictício no formato acordado e conferir campos. Próximo passo: vendedor envia escopo e consulta alçada; cliente indica responsável para validar o teste antes da decisão.",
+            "justificativa": "A resposta trata a preocupação sem ultrapassar autoridade e mantém a incerteza técnica visível."
+          },
+          "checagem": {
+            "pergunta": "Quando a venda pode ser registrada como formalizada?",
+            "alternativas": [
+              "Quando o cliente elogia a demonstração.",
+              "Quando o vendedor decide conceder qualquer desconto.",
+              "Quando o acordo atende ao processo de contratação e às aprovações necessárias."
+            ],
+            "correta": 2,
+            "feedback": "Interesse e elogio não equivalem a acordo formal. A contratação exige condições e aprovações do processo aplicável."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 5,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "3.5",
+          "titulo": "Pós-venda, relacionamento e indicações",
+          "duracaoMin": 19,
+          "objetivo": "Planejar passagem para entrega, acompanhamento e indicação sem pressão.",
+          "roteiro_video": {
+            "fala_instrutor": "A assinatura muda a etapa da relação, não elimina as expectativas que você criou. Faça a passagem para a equipe de entrega com escopo, responsáveis, prazos e pontos pendentes. Não prometa suporte ilimitado se isso não está na oferta.\nNo caso fictício, a oficina contratou duas contas e treinamento. A primeira verificação é simples: quem fornecerá os dados, quando será o treinamento e como confirmar a entrega? Se houver uma falha, reconheça o registro e encaminhe pelo canal correto; não apague a dificuldade para preservar uma aparência de satisfação.\nUma indicação também precisa de cuidado. Você pode convidar um cliente satisfeito a compartilhar um canal público, sem pressioná-lo a entregar dados de terceiros. Não ofereça vantagem escondida ou publique um depoimento sem o procedimento adequado.\nAgora faça a prova de 20 questões, com doze minutos sugeridos. Ela mede entendimento dos fundamentos. Depois confira as justificativas e volte às aulas relacionadas aos erros. O projeto prático final continua necessário; acertar a teoria não demonstra sozinho uma conversa profissional.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Planejar passagem para entrega, acompanhamento e indicação sem pressão."
+          },
+          "texto_apoio": "O pós-venda deve verificar se a entrega ocorreu conforme o acordado e se existem dúvidas de uso dentro do escopo. Registre problemas com informação suficiente para tratamento e sem exposição desnecessária de dados. Não transforme reclamação em oportunidade de pressão por uma compra adicional.\nUm acompanhamento útil retoma o critério de sucesso acordado, pergunta o que ocorreu e identifica ação responsável. Se a oferta não cumpriu uma condição, o aluno deve encaminhar o caso; não declarar solução sem confirmação nem improvisar garantias.\nIndicações podem surgir de uma experiência positiva, mas não são obrigação do cliente. Prefira permitir que ele encaminhe sua apresentação pública a alguém interessado. A coleta, divulgação de depoimentos, imagem e dados de terceiros deve seguir o procedimento aprovado e a revisão aplicável. Na avaliação, 16 acertos em 20 representam 80%. Esta conta descreve o critério do curso; não é estatística de desempenho de mercado. Reserve 12 minutos desta aula para a prova; os demais 7 cobrem explicação, leitura e plano de acompanhamento.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "A oficina relata que uma conta não conseguiu entrar. O treinamento está marcado, mas o vendedor já pede três indicações e anuncia o caso como sucesso."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Reordene as ações: tratar acesso, confirmar entrega, pedir indicação opcional.",
+              "Escreva uma mensagem de acompanhamento.",
+              "Responda à prova de 20 questões, sem consultar o gabarito na primeira tentativa."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Primeiro registrar e encaminhar o acesso; depois confirmar resolução e entrega; indicação somente como convite opcional em momento apropriado. Mensagem: você relatou dificuldade na conta de teste; vou encaminhar ao suporte pelo canal combinado e confirmar com você quando houver retorno. Ainda não vou registrar a entrega como concluída.",
+            "justificativa": "O acompanhamento prioriza a obrigação existente. Problema não resolvido não pode ser apresentado como caso de sucesso."
+          },
+          "checagem": {
+            "pergunta": "Qual conduta é adequada no pós-venda?",
+            "alternativas": [
+              "Confirmar a entrega e encaminhar problemas antes de declarar sucesso.",
+              "Publicar depoimento automaticamente.",
+              "Exigir dados de terceiros como condição de suporte."
+            ],
+            "correta": 0,
+            "feedback": "Entrega e satisfação precisam de confirmação; depoimentos e indicações exigem cuidado e participação voluntária."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 3,
+            "atividade_avaliativa_min": 12,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Primeiros passos na RYCS",
+      "duracaoMin": 40,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Entendendo campanhas e oportunidades comerciais",
+          "duracaoMin": 8,
+          "objetivo": "Ler uma oportunidade sem confundir tarefa, evidência e remuneração.",
+          "roteiro_video": {
+            "fala_instrutor": "Na RYCS, uma oportunidade deve ser entendida pelas instruções disponíveis. Antes de agir, localize objetivo, público, atividade esperada, condições de aceitação e forma de comprovação. As condições comerciais concretas podem variar; esta aula não promete disponibilidade de campanha nem remuneração.\nVamos usar uma campanha inteiramente fictícia. Ela pede reunião realizada com responsável por uma oficina dentro do perfil, com problema compatível e registro autorizado do agendamento. Marcar um horário sem comparecimento não atende automaticamente a esse critério.\nNa tela, separe tarefa de evidência. A tarefa é o trabalho solicitado. A evidência é o registro usado para verificar o que aconteceu. Um registro não transforma uma tarefa não realizada em resultado.\nSe o texto da oportunidade não permitir entender o critério, procure o canal responsável antes de começar. Não deduza valores, comissões ou regras de pagamento com base em outro curso. Pause e identifique o que precisa estar claro antes de aceitar a campanha fictícia.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Ler uma oportunidade sem confundir tarefa, evidência e remuneração."
+          },
+          "texto_apoio": "Este módulo ensina leitura de instruções, não documenta uma tabela vigente de remuneração da plataforma. Consulte o painel e os termos aplicáveis no momento da atuação. Campos, nomes de telas e políticas podem mudar e precisam de revisão de produto antes da gravação.\nCrie uma ficha com objetivo, perfil atendido, atividade, critério de aceitação, evidência permitida, restrições, responsável por dúvidas e condições comerciais exibidas. Diferencie prazo para executar, prazo para revisão e condições para eventual liberação de valor. Não presuma que enviar um registro equivale a aprovação.\nA campanha fictícia usada aqui existe apenas no material. Não use empresas reais ou contatos pessoais para praticar. Se a oportunidade exigir uma ação fora da sua autorização, dados excessivos ou uma promessa incompatível com a oferta, esclareça a situação antes de executar.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Campanha fictícia: atender oficinas de uma unidade, até cinco usuários, na região definida; comprovar reunião realizada por registro permitido. Remuneração e prazos não foram fornecidos no exercício."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Preencha objetivo, perfil, atividade e evidência.",
+              "Marque pelo menos três condições ausentes que precisam de esclarecimento.",
+              "Explique por que o exercício não permite calcular pagamento."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Perfil e atividade estão descritos; precisam ser esclarecidos remuneração, prazo de execução/revisão e condições de liberação, além do formato exato da evidência. Sem essas condições não existe base para cálculo ou promessa de pagamento.",
+            "justificativa": "Conhecer uma atividade não significa conhecer suas condições comerciais ou de validação."
+          },
+          "checagem": {
+            "pergunta": "Onde conferir as condições concretas de uma oportunidade?",
+            "alternativas": [
+              "Em qualquer exemplo de treinamento.",
+              "No painel, nas instruções e nos termos aplicáveis àquela oportunidade.",
+              "Em uma promessa informal de outro aluno."
+            ],
+            "correta": 1,
+            "feedback": "Exemplos didáticos não substituem as condições efetivas da oportunidade."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 4,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "4.2",
+          "titulo": "Como interpretar as instruções e os critérios de uma tarefa",
+          "duracaoMin": 8,
+          "objetivo": "Transformar um critério em checklist de execução e revisão.",
+          "roteiro_video": {
+            "fala_instrutor": "Uma instrução precisa virar uma condição que você consiga verificar. “Reunião qualificada realizada” contém pelo menos três ideias: houve reunião, ela aconteceu e o participante atende ao critério definido. Não basta confirmar uma delas.\nNo caso fictício, o comprador aceita terça-feira às dez. Isso comprova um combinado de horário; ainda não comprova realização. Se a campanha exigir presença e diagnóstico mínimo, essas verificações permanecem pendentes.\nNa tela, construiremos uma checklist antes, durante e depois. Antes: perfil e participantes. Durante: confirmação do propósito e registro permitido. Depois: resultado factual e evidência necessária. Cada item aponta para a instrução original.\nSe dois critérios parecem incompatíveis, não escolha o mais conveniente. Registre a dúvida e peça esclarecimento ao responsável. Pause e transforme um critério vago em três perguntas que poderiam ser respondidas com evidência.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Transformar um critério em checklist de execução e revisão."
+          },
+          "texto_apoio": "Um critério deve separar condição obrigatória, informação desejável e hipótese. As condições obrigatórias não podem ser compensadas por quantidade de tentativas. Dez contatos não equivalem a uma reunião realizada se a tarefa pede reunião.\nUse uma matriz simples: requisito → como verificar → fonte permitida → situação. Situações possíveis incluem confirmado, pendente e não atendido. Não utilize “confirmado” para informação que só apareceu como expectativa. Se o requisito exigir comprovação que você não pode obter de forma autorizada, interrompa a coleta e esclareça o procedimento.\nA revisão é mais fácil quando cada afirmação tem origem e data. O registro deve ser fiel, legível e proporcional. Não altere a regra da campanha no próprio relatório; proponha a correção ao responsável quando houver erro ou ambiguidade.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Critério fictício: reunião realizada, com pessoa responsável pelo processo, dificuldade compatível e próximo passo registrado. Há apenas um convite aceito por um assistente."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Construa uma checklist com os quatro requisitos.",
+              "Classifique cada requisito com a evidência disponível.",
+              "Escreva a pergunta necessária sobre o papel do assistente."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Realização: pendente; papel do participante: pendente; dificuldade: desconhecida; próximo passo da reunião: pendente. Convite aceito comprova apenas agendamento. Pergunta: esse participante é responsável pelo processo ou pode envolver quem o conhece e avalia?",
+            "justificativa": "O título assistente não demonstra nem exclui responsabilidade. É necessário confirmar o papel, sem inventar presença ou qualificação."
+          },
+          "checagem": {
+            "pergunta": "Um convite aceito comprova uma reunião realizada?",
+            "alternativas": [
+              "Não; comprova o aceite do agendamento, sujeito às demais condições.",
+              "Sim; presença é irrelevante.",
+              "Sim; basta anexar o convite duas vezes."
+            ],
+            "correta": 0,
+            "feedback": "Agendamento e realização são eventos distintos e exigem registros correspondentes."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 4,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        },
+        {
+          "id": "4.3",
+          "titulo": "Como registrar atividades e organizar comprovações",
+          "duracaoMin": 8,
+          "objetivo": "Produzir registro factual com minimização e integridade da evidência.",
+          "roteiro_video": {
+            "fala_instrutor": "Um bom registro permite que outra pessoa entenda o que aconteceu sem precisar adivinhar. Escreva data, atividade, resultado, fonte e próximo passo. Separe observação de interpretação.\nCompare duas frases: “cliente muito interessado, fechamento certo” e “solicitou escopo para avaliar com a proprietária; sem prazo de decisão confirmado”. A segunda é menos empolgante e mais útil.\nNo exercício, use apenas nomes e dados fictícios. Em trabalho real, envie evidências somente pelos meios autorizados e na extensão necessária. Não colete documentos pessoais, conversas inteiras ou gravações só para tornar o arquivo mais impressionante.\nSe você errou uma data, preserve o histórico e use o processo de correção disponível. Não recicle um registro de outra atividade nem edite uma imagem para aparentar um evento inexistente. Pause e transforme uma nota opinativa em uma nota factual com uma lacuna explícita.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Produzir registro factual com minimização e integridade da evidência."
+          },
+          "texto_apoio": "Uma evidência sustenta uma afirmação específica. Um convite pode sustentar o agendamento; uma nota de reunião pode contextualizar o resultado, conforme o procedimento aceito. Nenhuma evidência deve ser apresentada como prova de algo que não demonstra.\nPrincípios de registro: autenticidade, pertinência, clareza e minimização. Inclua apenas o necessário para a finalidade autorizada. Se houver gravação ou captura, confirme previamente o procedimento, a autorização e as regras aplicáveis; o curso não estabelece uma permissão geral de gravar ou compartilhar conversas.\nOrganize evidências por atividade, com identificador e data, controle de acesso e política de retenção. Não publique arquivos de clientes em repositórios, chats públicos ou ferramentas de IA não autorizadas. Em uma correção, indique o que mudou e por quê, preservando a trilha necessária. Se houver dados expostos indevidamente, siga o canal de incidente da organização; não tente resolver o vazamento redistribuindo o arquivo.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "Nota fictícia: “falei com a oficina, vai comprar, prova no meu celular”. O fato disponível: ligação de terça às 10h, pedido de escopo, decisão pendente da proprietária."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Reescreva a nota com os fatos disponíveis.",
+              "Identifique duas inferências que devem ser removidas.",
+              "Defina como tratar a evidência sem enviar dados reais para esta atividade."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Ligação de terça, 10h; contato solicitou escopo para avaliação da proprietária; decisão e prazo não confirmados; próximo passo: enviar escopo pelo canal acordado. Remover certeza de compra e suficiência presumida da prova. Na prática real, usar o procedimento de evidência aprovado; no curso, produzir registro fictício.",
+            "justificativa": "O registro factual é revisável e evita expor dados desnecessários ou antecipar uma decisão inexistente."
+          },
+          "checagem": {
+            "pergunta": "Qual registro preserva melhor a integridade?",
+            "alternativas": [
+              "Editar captura para incluir uma reunião que não aconteceu.",
+              "Copiar evidência de outra tarefa.",
+              "Registrar fatos, lacunas e correções pelo procedimento autorizado."
+            ],
+            "correta": 2,
+            "feedback": "Integridade depende de correspondência com o evento e de uma correção rastreável, não de aparência de completude."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 2,
+            "exercicio_min": 4,
+            "atividade_avaliativa_min": 0,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": [
+            "S3"
+          ]
+        },
+        {
+          "id": "4.4",
+          "titulo": "Entendendo validação, reprovação, comissões e regras da plataforma",
+          "duracaoMin": 16,
+          "objetivo": "Interpretar uma revisão e executar o projeto final sem inventar condições comerciais.",
+          "roteiro_video": {
+            "fala_instrutor": "Enviar uma atividade e ter uma atividade aprovada são etapas diferentes. Uma revisão pode apontar ausência de evidência, incompatibilidade com o critério ou informação inconsistente. Leia o motivo antes de reenviar.\nNo caso fictício, foi enviado um convite como comprovação de reunião realizada. A correção não é mudar o nome do arquivo para “reunião feita”. É reconhecer o que o registro demonstra e verificar a situação real pelo procedimento aplicável.\nCondições de comissão, valores, prazos e eventual contestação devem ser conferidas na oportunidade, nos termos e no painel vigente. Não existe promessa de renda neste curso. Concluir uma formação não garante campanha, contratação, aprovação de atividade ou pagamento.\nAgora faça o projeto final, com doze minutos reservados nesta aula: seis minutos de conversa fictícia e seis de revisão pela rubrica. Apresente-se, investigue o problema, confirme limites e registre o próximo passo. Se o cliente recusar contato, o encerramento respeitoso vale mais que tentar obter uma reunião a qualquer custo.",
+            "gravacao": "Pendente. Ler de forma natural; as pausas para atividade não entram no tempo de fala.",
+            "tela": "Interpretar uma revisão e executar o projeto final sem inventar condições comerciais."
+          },
+          "texto_apoio": "Validação compara a atividade com os critérios aplicáveis. Uma reprovação deve ser lida à luz do motivo apresentado e do procedimento disponível. Não altere o conteúdo da evidência para satisfazer o critério se o evento não ocorreu. Quando houver erro factual ou ambiguidade, utilize o canal responsável, apresentando contexto e registro pertinente.\nUma condição de remuneração depende do acordo aplicável; exemplos pedagógicos não criam direito, valor ou prazo. Este curso não substitui termos da plataforma nem revisão jurídica. Antes da gravação, a equipe de produto deve confirmar nomes de telas, fluxo de revisão e mensagens de comissão.\nConclusão proposta do curso: 17 aulas estudadas, prova de 20 questões com pelo menos 16 acertos e projeto final avaliado pela rubrica, com mínimo de 80/100 e ausência de falha ética crítica. A plataforma atual emite certificados pela prova teórica e não implementa este bloqueio prático. Portanto, o pacote permanece em revisão e não deve ser apresentado como certificação prática integrada. A simulação é um roteiro de atividade; sua avaliação por IA precisa de integração, revisão e supervisão humana.",
+          "exemplo": {
+            "natureza": "ficticio",
+            "conteudo": "A revisão fictícia informa “evento não comprovado: arquivo mostra só agendamento”. O aluno sabe que a reunião foi adiada e ainda não aconteceu."
+          },
+          "exercicio": {
+            "instrucoes": [
+              "Escreva uma resposta factual à revisão.",
+              "Indique a ação correta sem modificar a evidência para simular presença.",
+              "Execute o projeto final e registre a autoavaliação, incluindo uma limitação da IA."
+            ],
+            "entrega": "Resposta escrita em arquivo pessoal, sem dados de clientes reais.",
+            "gabarito": "Resposta: o arquivo demonstra o agendamento; a reunião foi adiada e não há realização a comprovar. Ação: corrigir o status pelo procedimento disponível e não declarar o resultado realizado. Projeto: seguir o cenário, produzir handoff e aplicar rubrica; avaliações de IA podem errar e precisam de revisão humana em dúvida ou consequência relevante.",
+            "justificativa": "A revisão é tratada com fatos e procedimento. O critério educacional prático não pode ser anunciado como funcionalidade já implementada."
+          },
+          "checagem": {
+            "pergunta": "A conclusão do curso garante remuneração em uma campanha?",
+            "alternativas": [
+              "Sim, se o aluno acertar toda a prova.",
+              "Não; remuneração depende das condições e da atividade efetiva da oportunidade.",
+              "Sim, a IA pode autorizar qualquer pagamento."
+            ],
+            "correta": 1,
+            "feedback": "Certificação educacional não equivale a contratação, resultado comercial, aprovação de tarefa ou promessa de renda."
+          },
+          "tempo_estimado": {
+            "video_ou_transcricao_min": 2,
+            "leitura_apoio_min": 1,
+            "exercicio_min": 1,
+            "atividade_avaliativa_min": 12,
+            "observacao": "Estimativa para piloto. Vídeo e transcrição são alternativas; não somar ambos."
+          },
+          "fontes_ids": []
+        }
+      ]
+    }
+  ],
+  "fontes": [
+    {
+      "id": "S1",
+      "titulo": "Quarterly Retail E-Commerce Sales, 4th Quarter 2024 — edição histórica",
+      "url": "https://www2.census.gov/retail/releases/historical/ecomm/24q4.pdf"
+    },
+    {
+      "id": "S2",
+      "titulo": "State of Sales, 6th edition",
+      "url": "https://assets.ctfassets.net/f43wltp2j5se/2gHMpCURXzpMW7PJ3SlWZJ/3cad8d7e8496abbd3c0f99d5c7f16ef4/salesforce-state-of-sales-report-6-ed.pdf"
+    },
+    {
+      "id": "S3",
+      "titulo": "Glossário de Proteção de Dados Pessoais e Privacidade",
+      "url": "https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/glossario-anpd"
+    },
+    {
+      "id": "S4",
+      "titulo": "CAN-SPAM Act: A Compliance Guide for Business",
+      "url": "https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business"
+    },
+    {
+      "id": "S5",
+      "titulo": "Digital Personal Data Protection Rules, 2025 — Gazette notification G.S.R. 846(E)",
+      "url": "https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf"
+    }
+  ]
+}

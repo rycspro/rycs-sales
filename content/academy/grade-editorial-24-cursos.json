@@ -1,0 +1,3974 @@
+{
+  "schema_version": "1.0.0",
+  "total_hours": 134,
+  "status": "grade_editorial; nao_equivale_a_material_completo",
+  "origem": "Cursos 1–10 recuperados; curso 11 parcialmente recuperado; restante desenvolvido após autorização do usuário neste chat.",
+  "regra_tempo": "Carga inclui leitura, exercícios, simulações e avaliações. Distribuição de minutos por aula é proposta e exige piloto. Não somar prova e prática fora dos totais.",
+  "courses": [
+    {
+      "id": 1,
+      "name": "Fundamentos de Vendas",
+      "level": "Iniciante",
+      "hours": 3,
+      "certification": "Fundamentos (grátis)",
+      "slug": "sales-academy-134h-01",
+      "status_material": "primeira_versao_pt_en_us_en_in_para_revisao",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Introdução ao universo das vendas",
+          "duracaoMin": 40,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O que é vender: identificar necessidades, apresentar soluções e gerar valor",
+              "duracaoMin": 10,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Diferenças entre vender produtos, serviços e soluções",
+              "duracaoMin": 10,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Como funcionam as vendas B2B e B2C",
+              "duracaoMin": 10,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "1.4",
+              "titulo": "As funções de SDR, BDR, Closer, vendedor e gerente comercial",
+              "duracaoMin": 10,
+              "status": "escrita_para_revisao"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Entendendo o cliente",
+          "duracaoMin": 45,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Necessidades, desejos, dores e expectativas",
+              "duracaoMin": 11,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Como identificar o perfil de um potencial comprador",
+              "duracaoMin": 11,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Perguntas abertas, fechadas e de aprofundamento",
+              "duracaoMin": 11,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Escuta ativa e comunicação profissional",
+              "duracaoMin": 12,
+              "status": "escrita_para_revisao"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "O processo comercial",
+          "duracaoMin": 55,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Prospecção: encontrar potenciais compradores",
+              "duracaoMin": 9,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Abordagem: iniciar uma conversa com propósito",
+              "duracaoMin": 9,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Qualificação: identificar oportunidades reais",
+              "duracaoMin": 9,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Apresentação de valor, negociação e fechamento",
+              "duracaoMin": 9,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Pós-venda, relacionamento e indicações",
+              "duracaoMin": 19,
+              "status": "escrita_para_revisao"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Primeiros passos na RYCS",
+          "duracaoMin": 40,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Entendendo campanhas e oportunidades comerciais",
+              "duracaoMin": 8,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Como interpretar as instruções e os critérios de uma tarefa",
+              "duracaoMin": 8,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Como registrar atividades e organizar comprovações",
+              "duracaoMin": 8,
+              "status": "escrita_para_revisao"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Entendendo validação, reprovação, comissões e regras da plataforma",
+              "duracaoMin": 16,
+              "status": "escrita_para_revisao"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "fundamentos",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "20_questoes_por_locale_escritas_para_revisao"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "SDR",
+      "level": "Iniciante a intermediário",
+      "hours": 8,
+      "certification": "Profissional",
+      "slug": "sales-academy-134h-02",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "O papel estratégico do SDR",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O que é um SDR e quais são suas responsabilidades",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Diferenças entre SDR inbound e outbound",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "O SDR no funil comercial: do lead à reunião",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Como interpretar campanhas, metas e critérios de qualificação",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.5",
+              "titulo": "Indicadores: tentativas, conexões, respostas, reuniões e comparecimento",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Prospecção e pesquisa comercial",
+          "duracaoMin": 120,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Construção do Perfil de Cliente Ideal (ICP)",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Personas e decisores de compra",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Identificação de empresas com potencial de compra",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Pesquisa de contatos por fontes permitidas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Organização e enriquecimento responsável de dados",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.6",
+              "titulo": "Preparação da lista de prospecção",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Abordagem e qualificação",
+          "duracaoMin": 150,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Estrutura de uma abordagem comercial",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Personalização de mensagens",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Cold calls e prospecção por voz",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "WhatsApp, e-mail e LinkedIn como canais de contato",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Técnicas BANT, SPIN e qualificação situacional",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.6",
+              "titulo": "Identificação de interesse, necessidade, momento e autoridade",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.7",
+              "titulo": "Tratamento inicial de objeções",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Agendamento e passagem de oportunidades",
+          "duracaoMin": 120,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Como propor uma reunião sem pressionar o prospect",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Confirmação de data, horário, fuso e participantes",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Handoff: passagem de contexto ao vendedor responsável",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Registro no CRM e organização do histórico",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.5",
+              "titulo": "Como registrar evidências autorizadas na RYCS",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.6",
+              "titulo": "Como reduzir reuniões desqualificadas e faltas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "profissional",
+        "questoes_planejadas": 40,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Cold Call na Prática",
+      "level": "Intermediário",
+      "hours": 8,
+      "certification": "Profissional",
+      "slug": "sales-academy-134h-03",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Fundamentos da prospecção telefônica",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O papel da ligação fria no processo comercial",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Quando uma ligação comercial é apropriada",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Preparação psicológica e técnica",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Pesquisa prévia e definição do objetivo",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.5",
+              "titulo": "Identificação do responsável pela decisão",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Estrutura de uma ligação",
+          "duracaoMin": 120,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Como se apresentar com clareza",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Abertura e contextualização",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Como formular uma hipótese de valor",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Como despertar interesse sem recorrer a promessas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Técnicas de entonação, ritmo e pausas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.6",
+              "titulo": "Como fazer perguntas úteis em ligações curtas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Objeções e situações difíceis",
+          "duracaoMin": 150,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "O cliente diz: Não tenho tempo",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "O cliente diz: Não tenho interesse",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "O cliente diz: Mande um e-mail",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "O cliente já possui outro fornecedor",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Como conversar com recepcionistas e assistentes sem enganar",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.6",
+              "titulo": "Como reconhecer uma recusa definitiva",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.7",
+              "titulo": "Encerramento profissional, inclusive quando não há oportunidade",
+              "duracaoMin": 21,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Operação e desempenho",
+          "duracaoMin": 120,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Planejamento de blocos de ligação",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Construção de scripts flexíveis",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Indicadores de conexão e conversão",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Registro de resultados e feedback",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.5",
+              "titulo": "Como avaliar gravações obtidas de forma lícita",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.6",
+              "titulo": "Melhorias contínuas no roteiro",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "profissional",
+        "questoes_planejadas": 40,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "WhatsApp Comercial",
+      "level": "Intermediário",
+      "hours": 6,
+      "certification": "Profissional",
+      "slug": "sales-academy-134h-04",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Fundamentos do atendimento",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O WhatsApp como canal de vendas e relacionamento",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Diferenças entre atendimento receptivo e ativo",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Perfil profissional e identidade comercial",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Consentimento, preferências e limites de contato",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Conversas que geram interesse",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Primeira mensagem: identificação, contexto e objetivo",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Personalização sem mensagens excessivamente longas",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Perguntas de qualificação por texto",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Uso de áudio, vídeo e arquivos",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Como apresentar uma solução sem excesso de informações",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Fluxos comerciais",
+          "duracaoMin": 120,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Atendimento de leads vindos de anúncios",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Atendimento a indicações",
+              "duracaoMin": 17,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Reativação de contatos com base legal adequada",
+              "duracaoMin": 17,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Follow-up e cadência de mensagens",
+              "duracaoMin": 17,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Agendamento de reuniões e confirmações",
+              "duracaoMin": 17,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.6",
+              "titulo": "Recuperação de conversas interrompidas",
+              "duracaoMin": 17,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.7",
+              "titulo": "Uso adequado de modelos e automações permitidas",
+              "duracaoMin": 17,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Operação profissional",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "WhatsApp Business: etiquetas e recursos de organização",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "CRM e histórico comercial",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Métricas de resposta, qualificação e agendamento",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Boas práticas de privacidade e segurança",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.5",
+              "titulo": "Registro de comprovações na RYCS",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "profissional",
+        "questoes_planejadas": 40,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Prospecção por E-mail e LinkedIn",
+      "level": "Intermediário",
+      "hours": 5,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-05",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Prospecção multicanal",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Quando usar e-mail ou LinkedIn",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Como identificar empresas e decisores",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Como encontrar motivos relevantes para contato",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Organização de listas e origens de dados",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "E-mails comerciais",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Estrutura de um cold email profissional",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Assuntos claros e contextualizados",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Personalização e proposta de valor",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Como escrever CTAs simples",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Entregabilidade, reputação e prevenção de spam",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "LinkedIn comercial",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Perfil e credibilidade profissional",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Pesquisa de contas e contatos",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Convites de conexão contextualizados",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Mensagens após a conexão",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Relacionamento por conteúdo e interações relevantes",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Cadência e análise",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Construção de sequências multicanal",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Intervalos e limites de contato",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Métricas de respostas e reuniões",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Experimentos A/B e otimização",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Vendas por Instagram e Redes Sociais",
+      "level": "Intermediário",
+      "hours": 5,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-06",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Fundamentos de social selling",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O que diferencia social selling de spam",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Jornada de compra nas redes sociais",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Credibilidade e posicionamento profissional",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Identificação de oportunidades em perfis comerciais",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Instagram comercial",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Como analisar um perfil empresarial",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Identificação de possíveis necessidades",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Abordagens por mensagens diretas",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Como responder a interações espontâneas",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Comunicação por Stories e conteúdos relevantes",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Outras redes e relacionamento",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Facebook e comunidades temáticas",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "LinkedIn como ambiente de relacionamento",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Comentários profissionais e conversas públicas",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Conteúdo educativo como apoio comercial",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Transição de uma conversa social para uma reunião",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Conversão e mensuração",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Qualificação de interessados",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Acompanhamento de oportunidades",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Indicadores de conversão por canal",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Cuidados com reputação e privacidade",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Lista, ICP e Qualificação",
+      "level": "Iniciante a intermediário",
+      "hours": 4,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-07",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Perfil do cliente ideal",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O que é ICP",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "ICP versus persona",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Segmentação por setor, porte e localização",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Como identificar sinais de aderência comercial",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Construção de listas",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Fontes de pesquisa e limites legais",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Informações essenciais de uma conta",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Padronização e atualização de registros",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Duplicidades e qualidade da base",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Qualificação de oportunidades",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Lead, prospect e oportunidade",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "BANT, CHAMP e modelos de qualificação",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Identificação de problemas e prioridades",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Sistemas de classificação e pontuação",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Entrega e controle",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Como documentar dados e fontes",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Lead aceito versus lead rejeitado",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Critérios de uma oportunidade válida",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Como reportar problemas e corrigir inconsistências",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Descoberta e Venda Consultiva",
+      "level": "Intermediário",
+      "hours": 6,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-08",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Mentalidade consultiva",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O que caracteriza uma venda consultiva",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Produto versus solução",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Diagnóstico antes da proposta",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Credibilidade e confiança",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Técnicas de investigação",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Fundamentos do SPIN Selling",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Perguntas de situação",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Perguntas de problema",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Perguntas de implicação e necessidade de solução",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Diagnóstico comercial",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Como identificar problemas prioritários",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Impactos operacionais e financeiros",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Critérios de decisão e partes interessadas",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Como resumir o diagnóstico e validar entendimento",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Próximos passos",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Transformando informações em recomendações",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Como relacionar benefícios aos problemas encontrados",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Organização de próximos passos",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Registro de descoberta no CRM",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Objeções",
+      "level": "Intermediário",
+      "hours": 5,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-09",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Compreendendo objeções",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O que é uma objeção",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Objeção real versus ausência de interesse",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Problemas de confiança e percepção de valor",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Como investigar antes de responder",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Objeções comerciais frequentes",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Está caro",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Não tenho orçamento",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Preciso pensar",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Já trabalho com outra empresa",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Não é prioridade agora",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Técnicas de resposta",
+          "duracaoMin": 90,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Escuta e validação da preocupação",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Perguntas de esclarecimento",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Evidências, demonstrações e provas verificáveis",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Negociação de alternativas",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Como reconhecer quando a venda não faz sentido",
+              "duracaoMin": 18,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Laboratório de objeções",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Objeções por telefone",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Objeções por WhatsApp",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Objeções em reunião",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Feedback e evolução do repertório",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Follow-up e Retomada",
+      "level": "Intermediário",
+      "hours": 4,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-10",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "O papel do follow-up",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Por que oportunidades precisam de acompanhamento",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Diferenças entre follow-up e insistência",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Como interpretar sinais de interesse",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Quando não continuar o contato",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Planejamento de cadências",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Como definir o objetivo de cada interação",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Sequência inicial de acompanhamento",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Follow-up após reuniões e propostas",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Cadências com intervalos razoáveis e opt-out",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Comunicação de retomada",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Mensagens com contexto relevante",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Como acrescentar valor em cada contato",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Retomada de propostas sem resposta",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Tratamento de adiamentos",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Automação e indicadores",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Tarefas e lembretes no CRM",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Personalização de automações",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Métricas de resposta e continuidade",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Encerramento e arquivamento de oportunidades",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Apresentação e Proposta",
+      "level": "Intermediário",
+      "hours": 5,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-11",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Apresentações comerciais",
+          "duracaoMin": 60,
+          "origem": "recuperada_da_conversa",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Objetivo de uma apresentação de vendas",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Adaptação ao perfil do comprador",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Narrativa comercial orientada a problemas",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Como evitar apresentações genéricas",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Demonstração de valor",
+          "duracaoMin": 90,
+          "origem": "titulo_modulo_recuperado_aulas_desenvolvidas_com_autorizacao",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Características, utilidades e critérios de decisão",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Demonstração orientada ao cenário confirmado",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Evidência, hipótese e limite de uma afirmação",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Construção de comparação justa entre alternativas",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Proposta comercial e escopo",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Estrutura de uma proposta com responsabilidades",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Preço, período, exclusões e condições comerciais",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Premissas de uma estimativa de retorno",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Revisão interna e aprovações antes do envio",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Apresentação e revisão da proposta",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Condução da conversa de proposta",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Tratamento de dúvidas e pedidos de alteração",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Próximo passo com responsáveis e condições",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Laboratório: proposta comentada e revisão por pares",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Challenger 1 — Ensinar",
+      "level": "Avançado",
+      "hours": 6,
+      "certification": "Parte da Avançada",
+      "slug": "sales-academy-134h-12",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Ensino comercial e investigação",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "O que constitui um insight comercial e o que é opinião",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Conhecer o processo antes de propor uma mudança",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Pesquisar fontes e comparar alternativas",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Limites éticos do ensino comercial",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Construção de uma perspectiva útil",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Observação verificável e hipótese de causa",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Reenquadramento sem alarmismo",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Consequências e custos de inação com premissas",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Critérios para refutar a própria hipótese",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Narrativa e evidências",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Construir uma sequência de raciocínio",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Integrar dados com população e período",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Explicar incerteza e transferibilidade",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Conectar a perspectiva à capacidade real da oferta",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Laboratório de ensino comercial",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Preparar um caso com bibliografia rastreável",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Conduzir uma conversa que permite discordância",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Responder a contestação sem inventar fatos",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Projeto integrador: apresentar e defender uma hipótese",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "avancada_integrada",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito",
+        "observacao": "Participação na trilha não equivale isoladamente à Certificação Avançada; estudo de caso, prática e revisão humana integrados ainda pendentes."
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Challenger 2 — Adaptar",
+      "level": "Avançado",
+      "hours": 6,
+      "certification": "Parte da Avançada",
+      "slug": "sales-academy-134h-13",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Compreender os participantes",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Usuários, avaliadores, patrocinadores e aprovadores",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Mapear objetivos sem usar estereótipos",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Investigar critérios e conflitos de prioridade",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Confirmar o processo de decisão",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Adaptar a mensagem",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Traduzir o mesmo problema para funções distintas",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Escolher detalhe técnico e linguagem acessível",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Ajustar evidência ao critério de cada participante",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Manter consistência entre conversas",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Alinhamento entre áreas",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Identificar dependências de implantação",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Facilitar uma discussão de critérios",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Registrar desacordos e lacunas sem ocultá-los",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Construir um resumo comum revisável",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Laboratório de adaptação",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Três apresentações para o mesmo caso",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Reunião com critérios conflitantes",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Revisão de mensagens por participantes",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Projeto: mapa de partes interessadas e plano de conversa",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "avancada_integrada",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito",
+        "observacao": "Participação na trilha não equivale isoladamente à Certificação Avançada; estudo de caso, prática e revisão humana integrados ainda pendentes."
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Challenger 3 — Assumir o Controle",
+      "level": "Avançado",
+      "hours": 6,
+      "certification": "Parte da Avançada",
+      "slug": "sales-academy-134h-14",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Controle responsável do processo",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Diferenciar condução, pressão e coerção",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Definir agenda com concordância do comprador",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Estabelecer limites e autonomia comercial",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Reconhecer quando interromper a negociação",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Conversas difíceis",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Discutir investimento sem desviar da dúvida",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Discordar com evidência e respeito",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Tratar indefinição sem fabricar urgência",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Negociar compromissos recíprocos possíveis",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Plano de decisão",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Mapear etapas e dependências",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Responsáveis, critérios e condições de avanço",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Revisar riscos e lacunas de informação",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Reconhecer ausência de prioridade ou aderência",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Avaliação avançada",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Estudo de caso integrado: ensinar, adaptar e conduzir",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Simulação com vários participantes",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Registro e defesa do plano de decisão",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Revisão humana da evidência e plano de melhoria",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "avancada_integrada",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito",
+        "observacao": "Participação na trilha não equivale isoladamente à Certificação Avançada; estudo de caso, prática e revisão humana integrados ainda pendentes."
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Closer",
+      "level": "Avançado",
+      "hours": 8,
+      "certification": "Profissional",
+      "slug": "sales-academy-134h-15",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Preparação para fechar com responsabilidade",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Conferir diagnóstico e qualificação",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Mapear aprovação econômica e contratação",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Verificar escopo, capacidade e riscos",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Separar preferência de requisito obrigatório",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.5",
+              "titulo": "Preparar alternativas dentro da autonomia",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.6",
+              "titulo": "Definir critério de avanço ou encerramento",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Valor, proposta e decisão",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Resumo validado do problema",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Demonstração orientada ao critério",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Estimativa econômica com premissas e sensibilidade",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Comparação de opções sem omissões",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Conversa de proposta e dúvidas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.6",
+              "titulo": "Registro do que ainda impede a decisão",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Negociação e contratação",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Interesses, posições e variáveis negociáveis",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Concessões condicionadas e autorizadas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Preço, prazo e escopo em conjunto",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Compras, revisão jurídica e dependências",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Reconhecer pressão indevida e urgência falsa",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.6",
+              "titulo": "Acordo claro e formalização responsável",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Fechamento e passagem para entrega",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Confirmar os termos antes do compromisso",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Perda, adiamento e ausência de aderência",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Handoff de implantação e limites vendidos",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Acompanhar entrega sem prometer resultado",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.5",
+              "titulo": "Laboratório de negociação com IA e rubrica",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.6",
+              "titulo": "Prova teórica e revisão de desempenho",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "profissional",
+        "questoes_planejadas": 40,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "BDR — Contas Grandes",
+      "level": "Avançado",
+      "hours": 8,
+      "certification": "Profissional",
+      "slug": "sales-academy-134h-16",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Estratégia de contas grandes",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Diferenças de complexidade em contas maiores",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Selecionar contas com critérios explícitos",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Pesquisar estrutura e iniciativas permitidas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Hipóteses comerciais e limites de inferência",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.5",
+              "titulo": "Definir prioridade e esforço de pesquisa",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.6",
+              "titulo": "Construir um plano de conta revisável",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Partes interessadas e acesso",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Mapear usuários, influenciadores e aprovadores",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Investigar compras e critérios técnicos",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Construir relações sem manipular intermediários",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Contato multilateral com contexto consistente",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Reconhecer conflito de interesse e impedimentos",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.6",
+              "titulo": "Documentar papéis e incertezas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Desenvolvimento da oportunidade",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Criar motivo verificável para conversar",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Descobrir problemas entre áreas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Adaptar mensagens sem contradizer o escopo",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Qualificar iniciativa, recursos e momento",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Organizar reuniões com propósito e fuso",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.6",
+              "titulo": "Handoff de conta com evidência pertinente",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Execução e avaliação",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Cadência por conta com interrupção definida",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Métricas de cobertura e avanço com denominador",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Revisão de perdas e ausência de resposta",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Atualização do plano de conta e fontes",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.5",
+              "titulo": "Simulação de comitê com IA e rubrica",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.6",
+              "titulo": "Prova teórica e defesa do plano de conta",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "profissional",
+        "questoes_planejadas": 40,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Porta a Porta",
+      "level": "Intermediário",
+      "hours": 5,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-17",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Preparação e segurança na atuação presencial",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Ler território, oferta e regras da atividade",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Identificação profissional e propósito",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Segurança pessoal e limites de acesso",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Dados mínimos e materiais autorizados",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Abordagem presencial",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Pedir espaço para conversar sem bloquear a saída",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Abertura clara e contextualizada",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Perguntas curtas e escuta no ambiente",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Respeitar recusa, sinais de desconforto e horários",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Apresentação e decisão",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Demonstrar dentro do escopo",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Explicar condições e limitações sem omissões",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Tratar dúvidas sem pressão",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Encerrar ou combinar próximo passo consentido",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Operação e laboratório",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Registro factual da visita e evidência permitida",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Organizar território sem revisitas indesejadas",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Indicadores e revisão de conduta",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Simulação de visita, recusa e encaminhamento",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Gerente Comercial",
+      "level": "Avançado",
+      "hours": 8,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-18",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Diagnóstico e planejamento comercial",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Entender objetivo, capacidade e restrições",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Definir etapas e critérios do funil",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Planejar recursos e carga da equipe",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Metas com premissas, não promessas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.5",
+              "titulo": "Território, carteira e distribuição transparente",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.6",
+              "titulo": "Plano de ação e hipóteses de melhoria",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Gestão de indicadores",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Definir métricas, denominadores e períodos",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Diferenciar atividade, qualidade e resultado",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Ler coortes e tempos de ciclo",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Forecast como estimativa com incerteza",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.5",
+              "titulo": "Identificar vieses e incentivos perversos",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.6",
+              "titulo": "Revisão de dados e integridade dos registros",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Desenvolvimento da equipe",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Observação e feedback com evidências",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Coaching de uma habilidade por vez",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Calibrar rubricas e avaliações",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Treinamento e adaptação de rotinas",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.5",
+              "titulo": "Tratar erros sem incentivar ocultação",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.6",
+              "titulo": "Conduta, privacidade e escalonamento",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Ritmo de gestão e projeto",
+          "duracaoMin": 120,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Reunião individual com propósito",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Revisão de pipeline orientada a decisões",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Experimentos comerciais com critérios de parada",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Revisão de perdas e aprendizados",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.5",
+              "titulo": "Plano de gestão de 30 dias com dados fictícios",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.6",
+              "titulo": "Apresentação e revisão humana do projeto",
+              "duracaoMin": 20,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "CRM, Rotina e Métricas",
+      "level": "Iniciante a intermediário",
+      "hours": 4,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-19",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Fundamentos do registro comercial",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Conta, contato, oportunidade e atividade",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Etapas do funil e critérios de entrada",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Qualidade mínima e campos necessários",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Origem dos dados e controle de acesso",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Rotina e continuidade",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Tarefas com objetivo, responsável e condição",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Histórico factual e passagem entre pessoas",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Duplicidades e correções rastreáveis",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Encerramento, retenção e preferências",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Métricas que orientam decisões",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Contagens, taxas e denominadores",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Conversão por etapa e período",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Comparecimento e qualidade de oportunidade",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Tempo de ciclo e dados incompletos",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Laboratório de CRM",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Organizar um conjunto fictício de registros",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Encontrar inconsistências sem inventar dados",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Construir um painel simples e explicar limites",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Definir uma mudança de rotina e verificá-la",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "IA para Vendedores",
+      "level": "Intermediário",
+      "hours": 4,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-20",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Usos e limites da IA em vendas",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Modelo de linguagem, geração e incerteza",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Tarefas adequadas e decisões que exigem responsável",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Alucinações, vieses e falsa precisão",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Ferramentas aprovadas e limites de dados",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Preparação de pedidos e contexto",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Objetivo, público, fonte e formato de saída",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Trabalhar com dados fictícios ou autorizados",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Separar instruções de documentos não confiáveis",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Exigir evidência e registrar lacunas",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Aplicações comerciais supervisionadas",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Rascunhar mensagens com contexto verdadeiro",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Resumir notas sem aumentar a certeza",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Praticar conversas com papéis definidos",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Comparar versões sem alegar desempenho não medido",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Verificação e projeto",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Checar fatos, números, condições e fontes",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Testar consistência e exposição de dados",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Revisar antes de enviar ou registrar",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Projeto: fluxo assistido com pontos de revisão humana",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "Ética, LGPD e Contato Responsável",
+      "level": "Todos",
+      "hours": 3,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-21",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Ética e responsabilidade comercial",
+          "duracaoMin": 45,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Identificação e transparência de propósito",
+              "duracaoMin": 12,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Verdade, evidência e limites de promessa",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Recusa, vulnerabilidade e pressão indevida",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Responsabilidades e encaminhamento de dúvidas",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Princípios de proteção de dados",
+          "duracaoMin": 45,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Dado pessoal, dado sensível e finalidade",
+              "duracaoMin": 12,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Necessidade, adequação e minimização",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Hipóteses legais e decisão do responsável",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Informação pública e limites de reutilização",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Contato e direitos",
+          "duracaoMin": 45,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Preferências, opt-out e listas de supressão",
+              "duracaoMin": 12,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Pedidos de acesso, correção e eliminação",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Retenção e obrigações que precisam de análise",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Canais de contato e normas aplicáveis",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Segurança e avaliação de conduta",
+          "duracaoMin": 45,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Acesso, compartilhamento e ferramentas externas",
+              "duracaoMin": 12,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Gravações e evidências sob procedimento aprovado",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Identificação e encaminhamento de incidente",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Casos de decisão com revisão jurídica obrigatória",
+              "duracaoMin": 11,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local",
+        "juridica_habilitada_setorial"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "Vender para EUA e Índia",
+      "level": "Intermediário",
+      "hours": 6,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-22",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Preparação para vendas internacionais",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Pesquisar um mercado sem generalizar pessoas",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Confirmar oferta, elegibilidade e capacidade de atender",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Idioma, acessibilidade e preferência do comprador",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Fontes locais e limites da comparação estatística",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Atuação com clientes nos EUA",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Contexto de compra e papéis a investigar",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Mensagens profissionais com identidade verdadeira",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Fusos, horário de verão e confirmação por data",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Privacidade, canais e revisão local antes do contato",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Atuação com clientes na Índia",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Contexto de compra e diversidade de operação",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Idioma preferido e clareza sem julgar sotaques",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "IST, agenda e participantes da decisão",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Proteção de dados e canais com revisão de vigência",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Laboratório internacional",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Proposta: moeda, período, escopo e impostos a confirmar",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Simulação EUA com critérios de decisão próprios",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Simulação Índia com cenário independente",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Handoff internacional e comparação crítica dos casos",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "Vendas para Saúde, Educação e Infoprodutos",
+      "level": "Intermediário",
+      "hours": 5,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-23",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Limites de atuação em setores sensíveis",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Separar atividade comercial de orientação clínica",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Qualificação comercial sem coletar dados de saúde",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Educação: escopo, público e condições da oferta",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Infoprodutos: prova, entrega e limites de promessa",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Comunicação e alegações",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Diferenciar benefício, hipótese e evidência",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Não garantir cura, desempenho acadêmico ou renda",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Depoimentos, imagens e autorização de uso",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Revisão profissional e jurídica antes da divulgação",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Descoberta e proposta por setor",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Saúde: conversar sobre operação sem dados de pacientes",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Educação: investigar aderência sem garantir resultado",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Infoprodutos: conteúdo, suporte e pré-requisitos",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Explicar preço, prazo, exclusões e condições",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Laboratórios e revisão",
+          "duracaoMin": 60,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Cenário fictício de gestão de clínica sem pacientes",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Cenário fictício de formação educacional",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Cenário fictício de produto digital com alegação inadequada",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Identificar riscos e encaminhar a revisão habilitada",
+              "duracaoMin": 15,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local",
+        "juridica_habilitada_setorial"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "Vendas B2B de Serviços",
+      "level": "Intermediário a avançado",
+      "hours": 6,
+      "certification": "Conclusão",
+      "slug": "sales-academy-134h-24",
+      "status_material": "somente_grade_sem_aulas_escritas",
+      "modulos": [
+        {
+          "id": "1",
+          "titulo": "Diagnóstico de serviços B2B",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "1.1",
+              "titulo": "Entender tarefa, processo e resultado desejado",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.2",
+              "titulo": "Mapear responsáveis e dependências",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.3",
+              "titulo": "Investigar escopo sem prometer execução",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "1.4",
+              "titulo": "Registrar critério de sucesso e lacunas",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "titulo": "Desenho da proposta de serviço",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "2.1",
+              "titulo": "Entregáveis, exclusões e premissas",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.2",
+              "titulo": "Responsabilidades do cliente e do fornecedor",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.3",
+              "titulo": "Critérios de aceite verificáveis",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "2.4",
+              "titulo": "Estimativa de esforço, prazo e preço sob autorização",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "titulo": "Negociação e contratação",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "3.1",
+              "titulo": "Comparar propostas pelo mesmo escopo",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.2",
+              "titulo": "Tratar risco e incerteza de implantação",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.3",
+              "titulo": "Pedidos de alteração e efeitos no acordo",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "3.4",
+              "titulo": "Revisão comercial, técnica e jurídica responsável",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "titulo": "Entrega e expansão responsável",
+          "duracaoMin": 90,
+          "origem": "desenvolvida_com_autorizacao_do_usuario",
+          "aulas": [
+            {
+              "id": "4.1",
+              "titulo": "Handoff de projeto e condições vendidas",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.2",
+              "titulo": "Acompanhar aceite e encaminhar problemas",
+              "duracaoMin": 23,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.3",
+              "titulo": "Renovação e expansão com necessidade confirmada",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            },
+            {
+              "id": "4.4",
+              "titulo": "Projeto: diagnóstico, proposta e plano de entrega",
+              "duracaoMin": 22,
+              "status": "roteiro_e_material_pendentes"
+            }
+          ]
+        }
+      ],
+      "avaliacao": {
+        "tipo": "conclusao",
+        "questoes_planejadas": 20,
+        "minimo_percentual": 80,
+        "pratica": "simulacao_com_rubrica_e_revisao_humana",
+        "banco_status": "nao_escrito"
+      },
+      "revisoes_obrigatorias": [
+        "pedagogica",
+        "produto",
+        "privacidade",
+        "ingles_nativo_e_local"
+      ]
+    }
+  ]
+}

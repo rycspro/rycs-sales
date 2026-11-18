@@ -1,0 +1,263 @@
+{
+  "schema_version": "1.0.0",
+  "course_id": "sales-academy-134h-01",
+  "locale": "en-US",
+  "natureza": "fundamentals_knowledge_check_not_professional_certification",
+  "questoes": [
+    {
+      "id": "FUND-01",
+      "aula": "1.1",
+      "pergunta": "Cedar Auto reports repeated entries but the cause is unknown. What should the rep do before recommending a tool?",
+      "alternativas": [
+        "Ask where duplication occurs and verify the underlying task.",
+        "Guarantee lower costs to create interest.",
+        "Send an agreement because every workshop needs software."
+      ],
+      "correta": 0,
+      "justificativa": "Discovery checks whether the offer fits. A reported difficulty does not establish its cause or guarantee savings."
+    },
+    {
+      "id": "FUND-02",
+      "aula": "1.1",
+      "pergunta": "Which statement is a testable value hypothesis?",
+      "alternativas": [
+        "The tool will eliminate all errors.",
+        "We can test whether a shared record helps your team check duplicate entries.",
+        "Every buyer will grow revenue."
+      ],
+      "correta": 1,
+      "justificativa": "The second statement proposes a contextual benefit to test. The other statements promise results without evidence."
+    },
+    {
+      "id": "FUND-03",
+      "aula": "1.2",
+      "pergunta": "The buyer expects historical paper records to be entered, but that work is excluded. What is the appropriate action?",
+      "alternativas": [
+        "Let the buyer assume it is included.",
+        "Blame the buyer for misunderstanding.",
+        "Clarify the exclusion before agreement and evaluate the separate need."
+      ],
+      "correta": 2,
+      "justificativa": "Scope must be clear before commitment. Silence and blame do not resolve the expectation."
+    },
+    {
+      "id": "FUND-04",
+      "aula": "1.2",
+      "pergunta": "Which condition checks delivery of account setup?",
+      "alternativas": [
+        "Two test accounts complete the workflow defined in the agreed scope.",
+        "The buyer necessarily doubles revenue.",
+        "No user ever needs support."
+      ],
+      "correta": 0,
+      "justificativa": "An observed workflow checks a specified deliverable. Future revenue and absence of all questions are not setup guarantees."
+    },
+    {
+      "id": "FUND-05",
+      "aula": "1.3",
+      "pergunta": "A workshop orders equipment on a website for business use. Does the online channel alone make this B2C?",
+      "alternativas": [
+        "Yes, every website purchase is B2C.",
+        "No, the parties and use context still matter.",
+        "Yes, B2B requires a site visit."
+      ],
+      "correta": 1,
+      "justificativa": "Channel does not determine buying context. Businesses can buy online."
+    },
+    {
+      "id": "FUND-06",
+      "aula": "1.3",
+      "pergunta": "A supervisor tests the workflow and the owner approves spending. Which question remains relevant?",
+      "alternativas": [
+        "What is the supervisor’s personal income?",
+        "Which person is easiest to pressure?",
+        "Who reviews terms and formalises the agreement?"
+      ],
+      "correta": 2,
+      "justificativa": "The contracting path is relevant to the decision; personal income and pressure are not a substitute for understanding it."
+    },
+    {
+      "id": "FUND-07",
+      "aula": "1.4",
+      "pergunta": "A colleague hands over a record labelled “hot lead”. What would improve it?",
+      "alternativas": [
+        "Confirmed problem, participants, unknowns and a buyer-accepted next step.",
+        "More enthusiastic punctuation.",
+        "Treating every assumption as confirmed."
+      ],
+      "correta": 0,
+      "justificativa": "A factual handoff enables continuity. A label or artificial certainty does not."
+    },
+    {
+      "id": "FUND-08",
+      "aula": "2.1",
+      "pergunta": "The only buyer statement is “we want something modern”. Which response is neutral?",
+      "alternativas": [
+        "You mean AI, correct?",
+        "What would you like to do that is difficult today?",
+        "How much money do you lose without our product?"
+      ],
+      "correta": 1,
+      "justificativa": "The neutral question explores the task without imposing a technology or financial loss."
+    },
+    {
+      "id": "FUND-09",
+      "aula": "2.2",
+      "pergunta": "The offer supports one location and up to five users. The prospect requires ten connected locations. What is the correct initial assessment?",
+      "alternativas": [
+        "Qualified, because larger firms always buy.",
+        "Qualified if the contact is friendly.",
+        "Outside the stated scope; check an authorised alternative before promising fit."
+      ],
+      "correta": 2,
+      "justificativa": "Product scope limits fit. Size and friendliness do not solve the operational mismatch."
+    },
+    {
+      "id": "FUND-10",
+      "aula": "2.2",
+      "pergunta": "A business email address appears on a public page. What follows?",
+      "alternativas": [
+        "Record the source; any use still needs the applicable purpose, privacy and channel checks.",
+        "It can be used for any campaign indefinitely.",
+        "It can be combined with sensitive personal data to pressure the buyer."
+      ],
+      "correta": 0,
+      "justificativa": "A public source is not blanket permission for every purpose. The organisation must use its approved procedures."
+    },
+    {
+      "id": "FUND-11",
+      "aula": "2.3",
+      "pergunta": "Which sequence avoids a premature conclusion?",
+      "alternativas": [
+        "How much are you losing? Why is your team failing? Will you buy today?",
+        "How does it work now? Can you describe a recent example? Have I understood the difficulty correctly?",
+        "Do you agree our product is the best?"
+      ],
+      "correta": 1,
+      "justificativa": "The second sequence explores context, an example and confirmation. The alternatives lead or pressure the buyer."
+    },
+    {
+      "id": "FUND-12",
+      "aula": "2.4",
+      "pergunta": "The buyer says they may review the offer later but wants marketing messages stopped now. What is a faithful record?",
+      "alternativas": [
+        "Purchase confirmed for later.",
+        "Continue weekly reminders.",
+        "Future interest uncertain; stop the requested contact and record the preference through the approved process."
+      ],
+      "correta": 2,
+      "justificativa": "Possible future interest is not a commitment and does not cancel an explicit stop request."
+    },
+    {
+      "id": "FUND-13",
+      "aula": "3.1",
+      "pergunta": "An account fits the product but has a recorded no-contact request. What should you do?",
+      "alternativas": [
+        "Keep it out of the outreach sequence and respect the restriction.",
+        "Use another sender to test the refusal.",
+        "Ask a colleague to contact the same person instead."
+      ],
+      "correta": 0,
+      "justificativa": "Fit does not override a stop request. Changing the sender to evade it is inappropriate."
+    },
+    {
+      "id": "FUND-14",
+      "aula": "3.2",
+      "pergunta": "Which opening invents context?",
+      "alternativas": [
+        "Replying to your enquiry, when an enquiry exists.",
+        "Following our meeting, when no meeting occurred.",
+        "I am from the supplier and would like to check relevance, through an approved channel."
+      ],
+      "correta": 1,
+      "justificativa": "Inventing a meeting creates a false relationship. Identity and context must be truthful."
+    },
+    {
+      "id": "FUND-15",
+      "aula": "3.3",
+      "pergunta": "The contact confirms a relevant problem but does not know the funding process. How should that field be recorded?",
+      "alternativas": [
+        "Approved, because the problem is important.",
+        "Zero, because no amount was given.",
+        "Unknown; explore the approval process at an appropriate point."
+      ],
+      "correta": 2,
+      "justificativa": "Unknown funding is neither approved nor zero. Preserve uncertainty rather than filling a field by assumption."
+    },
+    {
+      "id": "FUND-16",
+      "aula": "3.4",
+      "pergunta": "The buyer asks for a discount outside your authority. What is appropriate?",
+      "alternativas": [
+        "Clarify the constraint and consult the authorised owner without promising approval.",
+        "Grant it first and ask for approval later.",
+        "Promise that the discount guarantees financial results."
+      ],
+      "correta": 0,
+      "justificativa": "Delegated authority limits commitments. Consultation preserves both trust and a valid negotiation."
+    },
+    {
+      "id": "FUND-17",
+      "aula": "3.5",
+      "pergunta": "One account cannot access the service. The rep wants to publish a success story. What should happen first?",
+      "alternativas": [
+        "Require three referrals.",
+        "Route the access issue and confirm actual delivery before declaring success.",
+        "Publish a testimonial without checking permission."
+      ],
+      "correta": 1,
+      "justificativa": "Delivery has not been confirmed while the issue remains unresolved. Referrals and publicity do not replace support."
+    },
+    {
+      "id": "FUND-18",
+      "aula": "4.1",
+      "pergunta": "A fictional RYCS exercise contains no payment amount or release conditions. Can it establish your earnings?",
+      "alternativas": [
+        "Yes, it represents every live campaign.",
+        "Yes, multiply the number of contacts by any example price.",
+        "No, actual opportunity terms and valid activity determine the applicable conditions."
+      ],
+      "correta": 2,
+      "justificativa": "A learning example does not create remuneration terms, availability or a promise of income."
+    },
+    {
+      "id": "FUND-19",
+      "aula": "4.2",
+      "pergunta": "A task requires a meeting that was held. The only evidence is an accepted invitation. What does it show by itself?",
+      "alternativas": [
+        "Scheduling acceptance, not confirmed attendance.",
+        "Attendance by every invitee.",
+        "Automatic approval of payment."
+      ],
+      "correta": 0,
+      "justificativa": "Scheduling, attendance and review are distinct events. Evidence must support the specific claim."
+    },
+    {
+      "id": "FUND-20",
+      "aula": "4.4",
+      "pergunta": "A review says the evidence shows only scheduling. You know the meeting was postponed. What is correct?",
+      "alternativas": [
+        "Alter the screenshot to imply attendance.",
+        "Acknowledge the fact and correct the status through the available process, preserving record integrity.",
+        "Rename the same attachment as completed meeting."
+      ],
+      "correta": 1,
+      "justificativa": "A correction must reflect the event. A changed image or title cannot establish an activity that did not happen.",
+      "aulas_relacionadas": [
+        "4.3",
+        "4.4"
+      ]
+    }
+  ],
+  "criterios": {
+    "quantidade": 20,
+    "minimo_acertos": 16,
+    "nota_minima": 80,
+    "tempo_sugerido_min": 12,
+    "included_in_lesson": "3.5",
+    "practical_requirement": "Required by the educational model; not enforced by the current platform."
+  },
+  "learner_instruction": "Answer without the key first. Review explanations afterwards and revisit the linked lessons. All scenarios are fictional.",
+  "instructor_instruction": "Keep correct answers server-side or in the instructor review package. Do not expose the answer key before submission. Questions assess the same learning outcomes across markets; teaching cases and scripts are independently localised.",
+  "review_status": "instructional and native-language review pending"
+}

@@ -1,0 +1,264 @@
+{
+  "schema_version": "1.0.0",
+  "course_id": "sales-academy-134h-01",
+  "locale": "pt-BR",
+  "natureza": "avaliacao_teorica_de_fundamentos_nao_profissional",
+  "questoes": [
+    {
+      "id": "FUND-01",
+      "aula": "1.1",
+      "pergunta": "A dona da oficina descreve retrabalho, mas você ainda não conhece a causa. O que fazer antes de recomendar o sistema?",
+      "alternativas": [
+        "Perguntar em que etapa o retrabalho aparece e confirmar o problema.",
+        "Garantir redução de custos para criar interesse.",
+        "Encaminhar contrato porque toda oficina precisa de software."
+      ],
+      "correta": 0,
+      "justificativa": "Investigar a causa permite avaliar aderência. A queixa não comprova que o produto resolve o problema nem sustenta promessa de economia."
+    },
+    {
+      "id": "FUND-02",
+      "aula": "1.1",
+      "pergunta": "Qual frase diferencia adequadamente uma hipótese de valor de uma promessa?",
+      "alternativas": [
+        "O sistema eliminará seus erros.",
+        "Podemos testar se o registro centralizado ajuda a conferir duplicidades no seu fluxo.",
+        "Toda empresa que usa nosso sistema aumenta receita."
+      ],
+      "correta": 1,
+      "justificativa": "A hipótese propõe uma utilidade a testar, com contexto. As outras frases garantem resultados sem evidência."
+    },
+    {
+      "id": "FUND-03",
+      "aula": "1.2",
+      "pergunta": "O pacote inclui duas contas e treinamento, mas o cliente espera digitalização dos cadernos. Qual ação é correta?",
+      "alternativas": [
+        "Aceitar implicitamente para não perder a venda.",
+        "Dizer que o cliente deveria ter lido os detalhes.",
+        "Esclarecer a exclusão antes do compromisso e avaliar separadamente a necessidade."
+      ],
+      "correta": 2,
+      "justificativa": "A expectativa deve ser alinhada antes da contratação. Omissão e responsabilização hostil do comprador não esclarecem escopo."
+    },
+    {
+      "id": "FUND-04",
+      "aula": "1.2",
+      "pergunta": "Qual critério permite verificar a entrega de configuração?",
+      "alternativas": [
+        "Duas contas de teste executam o fluxo acordado no escopo.",
+        "A receita do cliente aumenta necessariamente.",
+        "Nenhum usuário terá dúvidas durante o ano."
+      ],
+      "correta": 0,
+      "justificativa": "O primeiro critério é observável e corresponde à entrega. Receita e ausência universal de dúvidas não são garantias da configuração."
+    },
+    {
+      "id": "FUND-05",
+      "aula": "1.3",
+      "pergunta": "Uma empresa compra um notebook em um site para uso na operação. O canal on-line determina que a venda é B2C?",
+      "alternativas": [
+        "Sim; toda venda pela internet é B2C.",
+        "Não; o contexto e as partes precisam ser considerados.",
+        "Sim; B2B exige visita presencial."
+      ],
+      "correta": 1,
+      "justificativa": "O canal não define a relação. Uma compra empresarial pode ocorrer pela internet."
+    },
+    {
+      "id": "FUND-06",
+      "aula": "1.3",
+      "pergunta": "A analista usará o sistema, o gerente valida a rotina e a proprietária aprova o gasto. O que falta descobrir?",
+      "alternativas": [
+        "A renda pessoal da analista.",
+        "Qual pessoa é mais fácil de pressionar.",
+        "Como a contratação é formalizada e quem precisa revisar as condições."
+      ],
+      "correta": 2,
+      "justificativa": "O caminho de decisão e contratação é pertinente. Renda pessoal e pressão não ajudam a esclarecer a compra de forma profissional."
+    },
+    {
+      "id": "FUND-07",
+      "aula": "1.4",
+      "pergunta": "Um SDR informa apenas “cliente quente” ao responsável pela próxima reunião. Qual melhoria é mais útil?",
+      "alternativas": [
+        "Registrar problema confirmado, lacunas, participantes e próximo passo aceito.",
+        "Acrescentar pontos de exclamação para transmitir urgência.",
+        "Converter toda hipótese em fato para facilitar o trabalho."
+      ],
+      "correta": 0,
+      "justificativa": "Um handoff útil permite continuidade com informação verificável. Rótulos e certeza artificial não substituem contexto."
+    },
+    {
+      "id": "FUND-08",
+      "aula": "2.1",
+      "pergunta": "“Quero um sistema moderno” é a única fala do comprador. Qual pergunta aprofunda sem induzir?",
+      "alternativas": [
+        "Você quer IA, certo?",
+        "O que você gostaria de conseguir fazer que hoje é difícil?",
+        "Quanto dinheiro você perde por não ter nosso produto?"
+      ],
+      "correta": 1,
+      "justificativa": "A pergunta investiga o uso desejado sem pressupor tecnologia ou prejuízo."
+    },
+    {
+      "id": "FUND-09",
+      "aula": "2.2",
+      "pergunta": "A oferta atende uma unidade e até cinco usuários. Uma conta tem dez unidades. Qual classificação inicial faz sentido?",
+      "alternativas": [
+        "Aprovada, pois empresas maiores sempre compram.",
+        "Aprovada se o contato parecer simpático.",
+        "Fora do escopo informado; verificar se existe outra oferta adequada antes de prometer atendimento."
+      ],
+      "correta": 2,
+      "justificativa": "A compatibilidade é limitada pelo escopo. Porte maior e simpatia não corrigem incompatibilidade técnica."
+    },
+    {
+      "id": "FUND-10",
+      "aula": "2.2",
+      "pergunta": "Você encontra um e-mail profissional em uma página pública. O que essa disponibilidade significa?",
+      "alternativas": [
+        "É uma origem a registrar; o uso ainda precisa respeitar finalidade, necessidade e regras aplicáveis.",
+        "Existe permissão para qualquer campanha e finalidade.",
+        "É permitido combinar o dado com informações de saúde para personalizar."
+      ],
+      "correta": 0,
+      "justificativa": "Origem pública não elimina limites de uso. A operação deve avaliar o procedimento e a hipótese legal aplicável."
+    },
+    {
+      "id": "FUND-11",
+      "aula": "2.3",
+      "pergunta": "Qual sequência de perguntas ajuda a evitar conclusões prematuras?",
+      "alternativas": [
+        "Quanto você perde? Por que sua equipe erra? Vai comprar hoje?",
+        "Como funciona hoje? Pode contar um exemplo recente? Entendi corretamente que a dificuldade é conferir o pedido?",
+        "Você concorda que nosso produto é a melhor escolha?"
+      ],
+      "correta": 1,
+      "justificativa": "A sequência investiga contexto, episódio e confirmação. As demais embutem conclusões ou pressionam por concordância."
+    },
+    {
+      "id": "FUND-12",
+      "aula": "2.4",
+      "pergunta": "O contato diz “talvez no próximo trimestre, mas não quero mensagens até lá”. Qual registro é fiel?",
+      "alternativas": [
+        "Compra confirmada para o próximo trimestre.",
+        "Agendar mensagens semanais até a data.",
+        "Interesse futuro incerto; interromper mensagens e registrar a preferência pelo processo autorizado."
+      ],
+      "correta": 2,
+      "justificativa": "Possibilidade futura não é compromisso e não anula a restrição expressa de contato."
+    },
+    {
+      "id": "FUND-13",
+      "aula": "3.1",
+      "pergunta": "Uma conta parece aderente, mas possui pedido registrado de não contato. O que fazer?",
+      "alternativas": [
+        "Respeitar a restrição e não colocá-la na cadência.",
+        "Usar outro número para testar a recusa.",
+        "Pedir a um colega que faça o contato em seu lugar."
+      ],
+      "correta": 0,
+      "justificativa": "Aderência não anula recusa. Trocar remetente ou canal para contornar a restrição não é uma solução aceitável."
+    },
+    {
+      "id": "FUND-14",
+      "aula": "3.2",
+      "pergunta": "Qual mensagem cria contexto enganoso?",
+      "alternativas": [
+        "Recebemos seu formulário de interesse, quando o formulário existe.",
+        "Retomando nossa reunião, quando nenhuma reunião aconteceu.",
+        "Sou Lia, da empresa X, e queria verificar se este assunto é relevante, por canal autorizado."
+      ],
+      "correta": 1,
+      "justificativa": "A referência a uma reunião inexistente simula vínculo anterior. A identificação e o contexto devem ser verdadeiros."
+    },
+    {
+      "id": "FUND-15",
+      "aula": "3.3",
+      "pergunta": "O contato tem um problema compatível, mas não conhece o orçamento. Como registrar esse campo?",
+      "alternativas": [
+        "Aprovado, porque o problema é importante.",
+        "Zero, porque não respondeu um valor.",
+        "Desconhecido; investigar o processo de aprovação no momento adequado."
+      ],
+      "correta": 2,
+      "justificativa": "Não conhecer um valor não significa orçamento zero nem aprovado. O registro deve preservar a lacuna."
+    },
+    {
+      "id": "FUND-16",
+      "aula": "3.4",
+      "pergunta": "O comprador pede desconto acima da autonomia do vendedor. Qual resposta preserva a negociação?",
+      "alternativas": [
+        "Entender a restrição e consultar a alçada responsável sem prometer aprovação.",
+        "Conceder o desconto e pedir autorização depois.",
+        "Dizer que o desconto garante resultado financeiro."
+      ],
+      "correta": 0,
+      "justificativa": "A negociação deve respeitar a autonomia. Não antecipar aprovação mantém a oferta confiável."
+    },
+    {
+      "id": "FUND-17",
+      "aula": "3.5",
+      "pergunta": "Uma conta ainda não acessa o produto e o vendedor quer divulgar o caso como sucesso. O que deve ocorrer primeiro?",
+      "alternativas": [
+        "Pedir três indicações.",
+        "Registrar e encaminhar a falha, depois confirmar a entrega antes de declarar sucesso.",
+        "Publicar o depoimento sem consultar o cliente."
+      ],
+      "correta": 1,
+      "justificativa": "Uma dificuldade não resolvida precisa de tratamento. O sucesso da entrega não deve ser anunciado por conveniência comercial."
+    },
+    {
+      "id": "FUND-18",
+      "aula": "4.1",
+      "pergunta": "Uma aula mostra uma campanha fictícia sem valor ou prazo de pagamento. Você pode usar o exemplo para calcular sua remuneração na RYCS?",
+      "alternativas": [
+        "Sim, porque o exemplo representa todas as campanhas.",
+        "Sim, basta multiplicar o número de contatos.",
+        "Não; é preciso consultar as condições concretas da oportunidade e os termos aplicáveis."
+      ],
+      "correta": 2,
+      "justificativa": "O exemplo é pedagógico. Atividade, aprovação e remuneração dependem de condições específicas."
+    },
+    {
+      "id": "FUND-19",
+      "aula": "4.2",
+      "pergunta": "A tarefa exige reunião realizada. O arquivo enviado contém um convite aceito. O que o arquivo demonstra, por si só?",
+      "alternativas": [
+        "Aceite do agendamento, sem comprovar realização.",
+        "Presença de todos os convidados.",
+        "Aprovação automática da remuneração."
+      ],
+      "correta": 0,
+      "justificativa": "Agendamento, comparecimento e validação são eventos diferentes. Um registro não comprova os demais por inferência."
+    },
+    {
+      "id": "FUND-20",
+      "aula": "4.4",
+      "pergunta": "Uma revisão aponta que a evidência mostra apenas agendamento e você sabe que a reunião foi adiada. Qual resposta é adequada?",
+      "alternativas": [
+        "Editar a imagem para indicar comparecimento.",
+        "Reconhecer o fato e corrigir o status pelo procedimento disponível, preservando a integridade do registro.",
+        "Reenviar a mesma evidência com um título de reunião realizada."
+      ],
+      "correta": 1,
+      "justificativa": "A correção deve refletir o evento real. Alterar aparência ou título não produz evidência de realização.",
+      "aulas_relacionadas": [
+        "4.3",
+        "4.4"
+      ]
+    }
+  ],
+  "criterios": {
+    "quantidade": 20,
+    "minimo_acertos": 16,
+    "nota_minima": 80,
+    "tempo_sugerido_min": 12,
+    "tempo_ja_incluido_na_aula": "3.5",
+    "pratica_obrigatoria_no_modelo_pedagogico": true,
+    "bloqueio_pratico_na_plataforma": "nao implementado; revisão e integração pendentes"
+  },
+  "orientacao_aluno": "Faça a primeira tentativa sem gabarito. Depois leia a justificativa de cada erro e retome a aula vinculada. Não envie dados reais de clientes.",
+  "orientacao_importacao": "Este arquivo inclui respostas e deve permanecer no servidor ou área de revisão do instrutor. Nunca enviar correta/justificativa antes da tentativa por uma nova API. A API atual da plataforma já separa as respostas.",
+  "revisao": "pendente"
+}
