@@ -46,6 +46,10 @@ db.exec(`
 const SEGREDO = process.env.JWT_SECRET || "salesmachine-dev-secret-change-in-production";
 export const sequenciasLigadas = () => process.env.SEQUENCIAS_EMAIL !== "off" && process.env.NODE_ENV !== "test";
 const MAX_POR_RODADA = 40;
+// Resend: no máximo ~2 envios por segundo por conta.
+const PAUSA_ENTRE_ENVIOS_MS = 600;
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+const limiteDeTaxa = (erro) => /too many requests|rate limit/i.test(String(erro || ""));
 
 // Início das sequências: fixado na primeira subida. Âncora de quem já tinha
 // conta (não recebe boas-vindas atrasadas) e base do aquecimento do domínio.
@@ -250,7 +254,14 @@ export async function rodada(agora = Date.now(), { ignorarJanela = false } = {})
     for (const c of candidatos(agora).slice(0, restante)) {
       const m = montarEmail(c, gerais);
       if (!m) continue;
-      const r = await sendEmail(c.email, m.assunto, m.html, { text: m.text, headers: m.headers });
+      // O Resend limita envios por segundo: espaça os envios e, se ele pedir
+      // para esperar (limite de taxa), espera e tenta de novo.
+      let r;
+      for (let tentativa = 0; tentativa < 4; tentativa++) {
+        await esperar(PAUSA_ENTRE_ENVIOS_MS * (tentativa === 0 ? 1 : 3 * tentativa));
+        r = await sendEmail(c.email, m.assunto, m.html, { text: m.text, headers: m.headers });
+        if (r?.ok || !limiteDeTaxa(r?.error)) break;
+      }
       const ok = !!r?.ok;
       // Falha não grava como enviado: a próxima rodada tenta de novo.
       db.prepare(`INSERT INTO email_sequencia_envios (id, chave, sequencia, destinatarioTipo, destinatarioId, email, idioma, assunto, status, resendId, erro, enviadoEm)
