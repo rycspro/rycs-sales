@@ -1,187 +1,306 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  Gift, Copy, Clock, CheckCircle2, TrendingUp, Building2, Users, Percent,
-  Lock, Trophy, Rocket, DollarSign, Hourglass,
+  Copy, Share2, CheckCircle2, Clock, Building2, Users, ArrowRight, ChevronRight,
+  Sparkles, TrendingUp, Trophy, Wallet, Filter,
 } from "lucide-react";
 import { api } from "../lib/api.js";
 import { money, dataCurta } from "../lib/utils.js";
 import { ROTAS } from "../lib/rotas.js";
 
-const PAPEL = { empresa: "Empresa", vendedor: "Profissional" };
 const AZUL = "#318CE7";
+const PAPEL = { empresa: "Empresa", vendedor: "Profissional" };
+// Paleta das medalhas por posição na trilha (do iniciante ao topo).
+const CORES_NIVEL = ["#8C97A3", "#B06E3B", "#C79A2B", "#318CE7", "#7C3AED"];
 
-// Central de Afiliados — "Indique. Evolua. Ganhe." Combina o compartilhamento do
-// código/link (dados de /referrals) com a Jornada de Indicações gamificada
-// (dados reais de /afiliados/resumo). Enquanto o programa progressivo não é
-// ativado, a trilha é apresentada como prévia e a política vigente (30% da
-// primeira mensalidade) é a que efetivamente paga.
+const prefersReduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+// Animações suaves, respeitando movimento reduzido.
+const estilos = `
+.ind-wrap{max-width:900px}
+.ind-hero{position:relative;overflow:hidden;border-radius:20px;border:1px solid ${AZUL}33;
+  background:linear-gradient(135deg,#0F4C8A 0%,#2563EB 48%,#318CE7 100%);color:#fff}
+.ind-hero-grid{display:grid;grid-template-columns:1.35fr .9fr;gap:8px}
+@media(max-width:720px){.ind-hero-grid{grid-template-columns:1fr}}
+.ind-slot{position:relative;border-radius:16px;overflow:hidden;background:
+  radial-gradient(120% 120% at 70% 20%, rgba(255,255,255,.22), rgba(255,255,255,0) 60%),
+  linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.22);display:grid;place-items:center}
+.ind-slot--claro{background:
+  radial-gradient(120% 120% at 70% 20%, rgba(49,140,231,.14), rgba(49,140,231,0) 60%),
+  linear-gradient(160deg, var(--surface-2), var(--surface));border:1px solid var(--border)}
+.ind-slot img{width:100%;height:100%;object-fit:contain}
+.ind-medal{transition:${prefersReduced ? "none" : "transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s"}}
+.ind-medal:hover{transform:${prefersReduced ? "none" : "translateY(-3px)"}}
+.ind-trilha{display:flex;gap:0;overflow-x:auto;padding:6px 2px 10px;scrollbar-width:thin}
+.ind-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden}
+.ind-bar>i{display:block;height:100%;border-radius:999px;background:#fff;transition:${prefersReduced ? "none" : "width .6s cubic-bezier(.22,1,.36,1)"}}
+`;
+
+// Placeholder de ilustração/medalha premium (gradiente + motivo discreto),
+// pronto para receber a arte final via `src`. Nunca usa ícone Lucide ampliado
+// como arte principal — o glifo é só uma marca d'água sutil.
+function SlotArte({ src, alt = "", cor = AZUL, claro = false, children, style }) {
+  return (
+    <div className={"ind-slot" + (claro ? " ind-slot--claro" : "")} style={style}>
+      {src ? <img src={src} alt={alt} /> : children}
+    </div>
+  );
+}
+
+// Medalhão de nível: anel colorido com brilho conforme o estado.
+function Medalhao({ cor, estado, numero, src, nome }) {
+  const conquistado = estado === "conquistado" || estado === "atual";
+  const fundo = conquistado
+    ? `radial-gradient(120% 120% at 30% 20%, #fff6, transparent 55%), conic-gradient(from 210deg, ${cor}, #ffffff55, ${cor})`
+    : "linear-gradient(160deg, var(--surface-2), var(--surface))";
+  return (
+    <div className="ind-medal" style={{
+      width: 62, height: 62, borderRadius: "50%", margin: "0 auto", display: "grid", placeItems: "center",
+      background: fundo, border: `2px solid ${conquistado ? cor : "var(--border)"}`,
+      boxShadow: estado === "atual" ? `0 0 0 4px ${cor}22, 0 6px 18px ${cor}44` : conquistado ? `0 4px 12px ${cor}33` : "none",
+      filter: estado === "bloqueado" ? "grayscale(1) opacity(.55)" : "none", overflow: "hidden", position: "relative",
+    }}>
+      {src ? <img src={src} alt={nome} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+        : <span style={{ fontSize: 20, fontWeight: 800, color: conquistado ? "#fff" : "var(--muted-2)", textShadow: conquistado ? "0 1px 2px rgba(0,0,0,.25)" : "none" }}>{numero}</span>}
+      {estado === "atual" && !prefersReduced && (
+        <span style={{ position: "absolute", inset: -2, borderRadius: "50%", boxShadow: `0 0 14px ${cor}`, opacity: .5, pointerEvents: "none" }} />
+      )}
+    </div>
+  );
+}
+
 export default function Indicacoes({ aviso }) {
   const [dados, setDados] = useState(null);
   const [afil, setAfil] = useState(null);
+  const [fHist, setFHist] = useState("todas"); // todas | pagas | pendentes
 
   useEffect(() => {
     api("/referrals").then((r) => { if (r && !r.error) setDados(r); });
     api("/afiliados/resumo").then((r) => { if (r && !r.error) setAfil(r); });
   }, []);
 
-  if (!dados) return <div className="vx-mut" style={{ padding: 20 }}>Carregando…</div>;
-
-  const link = `${window.location.origin}${ROTAS.cadastroVendedor}?ref=${dados.codigo}`;
-  const linkEmpresa = `${window.location.origin}${ROTAS.onboarding}?ref=${dados.codigo}`;
-  const indicaEmpresa = !!dados.recompensas?.empresa;
-  const prof = dados.profissionais;
-  const ind = afil?.indicadores;
-
   const copiar = async (texto, oque) => {
     try { await navigator.clipboard.writeText(texto); aviso(`${oque} copiado.`); }
     catch { aviso("Não foi possível copiar. Selecione e copie manualmente."); }
   };
+  const compartilhar = async (titulo, texto, url, rotulo) => {
+    if (navigator.share) { try { await navigator.share({ title: titulo, text: texto, url }); return; } catch { /* cancelado */ } }
+    copiar(url, rotulo);
+  };
+
+  const irParaCompartilhar = () => document.getElementById("ind-compartilhar")?.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth", block: "start" });
+
+  const trilha = afil?.trilha || [];
+  const atualIdx = trilha.findIndex((n) => n.atual);
+  const nivelAtual = trilha[atualIdx] || trilha[0] || null;
+  const proxNode = atualIdx >= 0 ? trilha[atualIdx + 1] : null;
+  const pagantes = afil?.indicadores?.clientesPagantes ?? 0;
+  const progresso = useMemo(() => {
+    if (!nivelAtual || !proxNode) return 100;
+    const faixa = proxNode.min - nivelAtual.min;
+    return faixa > 0 ? Math.max(0, Math.min(100, Math.round(((pagantes - nivelAtual.min) / faixa) * 100))) : 100;
+  }, [nivelAtual, proxNode, pagantes]);
+
+  if (!dados) return <div className="vx-fade ind-wrap"><div className="vx-card vx-skeleton" style={{ height: 180 }} /></div>;
+
+  const ind = afil?.indicadores;
+  const link = `${window.location.origin}${ROTAS.cadastroVendedor}?ref=${dados.codigo}`;
+  const linkEmpresa = `${window.location.origin}${ROTAS.onboarding}?ref=${dados.codigo}`;
+  const indicaEmpresa = !!dados.recompensas?.empresa;
+  const indicaProf = !!dados.recompensas?.vendedor;
+  const pctAplicavel = ind?.percentualAtual ?? afil?.politicaVigente?.percentual;
+
+  const indicacoesFiltradas = (dados.indicacoes || []).filter((i) => {
+    const pago = i.status === "pago" || i.status === "qualificada";
+    if (fHist === "pagas") return pago;
+    if (fHist === "pendentes") return !pago;
+    return true;
+  });
 
   return (
-    <div className="vx-fade" style={{ maxWidth: 820 }}>
-      {/* ───────────── Cabeçalho ───────────── */}
-      <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 18 }}>
-        <div style={{ width: 46, height: 46, borderRadius: 13, flex: "none", background: "rgba(49,140,231,.10)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Rocket size={23} color={AZUL} strokeWidth={2.1} />
-        </div>
-        <div>
-          <h1 className="vx-disp" style={{ fontSize: 24, margin: 0 }}>Indique. Evolua. Ganhe.</h1>
-          <p className="vx-mut" style={{ fontSize: 13.5, margin: "4px 0 0", lineHeight: 1.55, maxWidth: 560 }}>
-            Compartilhe a RYCS, conquiste clientes e desbloqueie comissões maiores conforme sua jornada.
-          </p>
-        </div>
-      </div>
+    <div className="vx-fade ind-wrap">
+      <style>{estilos}</style>
 
-      {/* ───────────── Indicadores ───────────── */}
-      {ind && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 12, marginBottom: 16 }}>
-          <Indicador Icon={DollarSign} rotulo="Comissões recebidas" valor={money(ind.comissoesRecebidas)} cor={AZUL} />
-          <Indicador Icon={CheckCircle2} rotulo="Disponíveis" valor={money(ind.comissoesDisponiveis)} cor="var(--green, #22c55e)" />
-          <Indicador Icon={Hourglass} rotulo="Pendentes" valor={money(ind.comissoesPendentes)} cor="var(--amber)" />
-          <Indicador Icon={Building2} rotulo="Empresas indicadas" valor={ind.empresasIndicadas} />
-          <Indicador Icon={Users} rotulo="Clientes pagantes" valor={ind.clientesPagantes} />
-          <Indicador Icon={Percent} rotulo="Percentual atual" valor={`${ind.percentualAtual}%`} cor={AZUL} />
-        </div>
-      )}
-
-      {/* ───────────── Jornada / trilha de níveis ───────────── */}
-      {afil?.trilha?.length > 0 && (
-        <div className="vx-card" style={{ padding: 20, marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
-            <div className="vx-eyebrow" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <TrendingUp size={14} /> Jornada de Indicações
+      {/* 1. Banner principal — Hero */}
+      <div className="ind-hero" style={{ marginBottom: 18 }}>
+        <div className="ind-hero-grid">
+          <div style={{ padding: "26px 28px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 11px", borderRadius: 999, background: "rgba(255,255,255,.16)", fontSize: 11.5, fontWeight: 600, letterSpacing: ".04em", marginBottom: 14 }}>
+              <Trophy size={13} /> Programa de recompensas
             </div>
-            {!afil.ativo && (
-              <span className="vx-badge" style={{ fontSize: 11 }}>Prévia · níveis em preparação</span>
-            )}
-          </div>
-          {afil.proximoNivel ? (
-            <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 16px", lineHeight: 1.5 }}>
-              Você está a <b style={{ color: "var(--ink)" }}>{afil.proximoNivel.faltam}</b>{" "}
-              {afil.proximoNivel.faltam === 1 ? "cliente pagante" : "clientes pagantes"} de desbloquear o nível{" "}
-              <b style={{ color: AZUL }}>{afil.proximoNivel.nome}</b>.
+            <h1 className="vx-disp" style={{ fontSize: 30, lineHeight: 1.08, margin: "0 0 10px", letterSpacing: -0.8, color: "#fff" }}>Indique. Evolua. Ganhe.</h1>
+            <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.55, color: "rgba(255,255,255,.9)", maxWidth: 440 }}>
+              Compartilhe a RYCS, conquiste clientes e desbloqueie novas recompensas.
             </p>
-          ) : (
-            <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 16px" }}>Você alcançou o nível máximo da jornada. Parabéns!</p>
-          )}
 
-          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
-            {afil.trilha.map((n) => <CartaoNivel key={n.chave} n={n} />)}
+            {afil && (
+              <div style={{ marginTop: 20 }}>
+                <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 10.5, opacity: .8, textTransform: "uppercase", letterSpacing: ".06em" }}>Nível atual</div>
+                    <div style={{ fontSize: 18, fontWeight: 800 }}>{nivelAtual?.nome || "—"}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10.5, opacity: .8, textTransform: "uppercase", letterSpacing: ".06em" }}>Comissão aplicável</div>
+                    <div style={{ fontSize: 18, fontWeight: 800 }}>{pctAplicavel}%</div>
+                  </div>
+                  {proxNode && (
+                    <div>
+                      <div style={{ fontSize: 10.5, opacity: .8, textTransform: "uppercase", letterSpacing: ".06em" }}>Próximo nível</div>
+                      <div style={{ fontSize: 18, fontWeight: 800 }}>{proxNode.nome}</div>
+                    </div>
+                  )}
+                </div>
+                {proxNode ? (
+                  <>
+                    <div className="ind-bar"><i style={{ width: `${progresso}%` }} /></div>
+                    <div style={{ fontSize: 12, opacity: .9, marginTop: 6 }}>
+                      Faltam <b>{afil.proximoNivel?.faltam ?? Math.max(0, proxNode.min - pagantes)}</b> cliente{(afil.proximoNivel?.faltam ?? 1) === 1 ? "" : "s"} pagante{(afil.proximoNivel?.faltam ?? 1) === 1 ? "" : "s"} para {proxNode.nome}.
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12.5, opacity: .9 }}>Você alcançou o topo da jornada. Parabéns! 🏆</div>
+                )}
+              </div>
+            )}
+
+            <button className="vx-btn" style={{ marginTop: 20, background: "#fff", color: AZUL, border: "none", fontWeight: 700, gap: 7 }} onClick={irParaCompartilhar}>
+              Começar a indicar <ArrowRight size={16} />
+            </button>
           </div>
-          <p className="vx-mut" style={{ fontSize: 11.5, marginTop: 12, lineHeight: 1.5 }}>
-            Os percentuais por nível são uma prévia configurável e dependem de aprovação. A comissão sempre
-            considera o valor efetivamente pago do plano. Hoje vale a política vigente de{" "}
-            {afil.politicaVigente?.percentual}% da primeira mensalidade.
+
+          {/* Direita — ilustração 3D (slot configurável) */}
+          <div style={{ padding: 16, display: "flex" }}>
+            <SlotArte alt="Troféu de recompensas" style={{ flex: 1, minHeight: 190 }}>
+              <div style={{ textAlign: "center", color: "rgba(255,255,255,.85)" }}>
+                <div style={{ width: 92, height: 92, margin: "0 auto 10px", borderRadius: "50%", background: "conic-gradient(from 210deg,#FFD66B,#fff6,#F2A93B,#FFD66B)", display: "grid", placeItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,.25)" }}>
+                  <Trophy size={44} color="#7a4b00" />
+                </div>
+                <div style={{ fontSize: 11, opacity: .75 }}>Ilustração do troféu · em breve</div>
+              </div>
+            </SlotArte>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Jornada visual de níveis */}
+      {trilha.length > 0 && (
+        <div className="vx-card" style={{ padding: 20, marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+            <div className="vx-eyebrow" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><TrendingUp size={14} /> Jornada de níveis</div>
+            {!afil?.ativo && <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "var(--surface-2)", color: "var(--muted)" }}>Prévia · níveis em preparação</span>}
+          </div>
+          <div className="ind-trilha">
+            {trilha.map((n, i) => {
+              const cor = CORES_NIVEL[Math.min(i, CORES_NIVEL.length - 1)];
+              const estado = n.atual ? "atual" : n.desbloqueado ? "conquistado" : (i === atualIdx + 1 ? "proximo" : "bloqueado");
+              return (
+                <div key={n.chave} style={{ flex: "0 0 128px", textAlign: "center", position: "relative" }}>
+                  {i < trilha.length - 1 && <div style={{ position: "absolute", top: 31, left: "50%", width: "100%", height: 3, background: n.desbloqueado ? cor : "var(--border)", zIndex: 0 }} />}
+                  <div style={{ position: "relative", zIndex: 1, padding: "0 6px" }}>
+                    <Medalhao cor={cor} estado={estado} numero={i + 1} src={n.emblema} nome={n.nome} />
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginTop: 8 }}>{n.nome}</div>
+                    <div className="vx-mono" style={{ fontSize: 14, fontWeight: 800, color: n.desbloqueado || n.atual ? cor : "var(--muted)" }}>{n.pct}%</div>
+                    <div className="vx-mut" style={{ fontSize: 11 }}>{n.min === 0 ? "início" : `${n.min}+ clientes`}</div>
+                    {estado === "atual" && <div style={{ fontSize: 10, fontWeight: 700, color: cor, marginTop: 3, textTransform: "uppercase", letterSpacing: ".04em" }}>Nível atual</div>}
+                    {estado === "proximo" && <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", marginTop: 3, textTransform: "uppercase", letterSpacing: ".04em" }}>A desbloquear</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="vx-mut" style={{ fontSize: 11.5, marginTop: 12, lineHeight: 1.5, padding: "10px 12px", background: "var(--surface-2)", borderRadius: 10 }}>
+            <b style={{ color: "var(--ink)" }}>Comissão vigente: {afil?.politicaVigente?.percentual}% da primeira mensalidade.</b> Os percentuais por nível acima são uma <b>prévia</b> configurável e dependem de aprovação — não são benefícios já disponíveis. A comissão sempre considera o valor efetivamente pago do plano.
           </p>
         </div>
       )}
 
-      {/* ───────────── Código + links ───────────── */}
-      <div className="vx-card" style={{ padding: 22, marginBottom: 16 }}>
-        <div style={{ display: "flex", gap: 13, alignItems: "flex-start", marginBottom: 16 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 12, flex: "none", background: "var(--brand-50)", border: "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Gift size={21} color="var(--brand)" strokeWidth={2.1} />
-          </div>
-          <div>
-            <div className="vx-eyebrow">Seu convite</div>
-            <div className="vx-disp" style={{ fontSize: 19, marginTop: 2 }}>Compartilhe seu código</div>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "14px 16px", borderRadius: 12, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-          <span className="vx-mono vx-disp" style={{ fontSize: 23, letterSpacing: ".12em", color: "var(--brand)" }}>{dados.codigo}</span>
-          <button className="vx-btn vx-btn-sm" onClick={() => copiar(dados.codigo, "Código")}>
-            <Copy size={13} /> Copiar
-          </button>
-        </div>
-
-        <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 10, minHeight: 44 }}
-          onClick={() => copiar(link, "Link de convite")}>
-          {dados.recompensas?.vendedor ? "Copiar link para profissionais" : "Copiar link de convite"}
-        </button>
-        {indicaEmpresa && dados.recompensas?.vendedor && (
-          <button className="vx-btn vx-btn-block" style={{ marginTop: 8, minHeight: 44 }}
-            onClick={() => copiar(linkEmpresa, "Link para empresas")}>
-            Copiar link para empresas
-          </button>
+      {/* 3. Cards ilustrados para indicar */}
+      <div id="ind-compartilhar" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 14, marginBottom: 18 }}>
+        {indicaEmpresa && (
+          <CardCompartilhar
+            titulo="Indique empresas" cor="#2563EB" Icon={Building2}
+            descricao={`Ganhe ${afil?.politicaVigente?.percentual ?? ""}% da primeira mensalidade quando a empresa que você indicar contratar um plano.`}
+            link={linkEmpresa} codigo={dados.codigo}
+            onCopiar={() => copiar(linkEmpresa, "Link para empresas")}
+            onCompartilhar={() => compartilhar("Conheça a RYCS", "Cadastre sua empresa na RYCS pelo meu convite:", linkEmpresa, "Link para empresas")}
+            ilustra={<SlotArte claro alt="Empresas" style={{ height: 120 }}><PanelMotivo Icon={Building2} cor="#2563EB" rotulo="Ilustração de empresas · em breve" /></SlotArte>}
+          />
         )}
-        {prof && dados.recompensas?.vendedor && (
-          <p className="vx-mut" style={{ fontSize: 12.5, margin: "10px 0 0" }}>
-            {prof.qualificados} {prof.qualificados === 1 ? "profissional indicado completou" : "profissionais indicados completaram"} o perfil.
-            Faltam {prof.faltam} para o próximo bônus.
-          </p>
+        {indicaProf && (
+          <CardCompartilhar
+            titulo="Indique profissionais" cor="#7C3AED" Icon={Users}
+            descricao={dados.recompensas?.vendedor ? (dados.recompensas.vendedor.descricao || `Recompensa de ${money(dados.recompensas.vendedor.valor)} quando o profissional indicado completa o perfil.`) : "Convide profissionais para a RYCS."}
+            link={link} codigo={dados.codigo}
+            onCopiar={() => copiar(link, "Link para profissionais")}
+            onCompartilhar={() => compartilhar("Venha para a RYCS", "Crie seu perfil de profissional na RYCS pelo meu convite:", link, "Link para profissionais")}
+            ilustra={<SlotArte claro alt="Profissionais" style={{ height: 120 }}><PanelMotivo Icon={Users} cor="#7C3AED" rotulo="Ilustração de profissionais · em breve" /></SlotArte>}
+          />
         )}
       </div>
 
-      {/* ───────────── Quanto vale cada indicação ───────────── */}
-      <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
-        <div className="vx-disp" style={{ fontSize: 16, marginBottom: 10 }}>Quanto vale cada indicação</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {Object.entries(dados.recompensas).map(([papel, r]) => (
-            <div key={papel} className="vx-row" style={{ fontSize: 13.5 }}>
-              <div>
-                <b>{PAPEL[papel] || papel}</b>
-                <div className="vx-mut" style={{ fontSize: 12 }}>{r.descricao || `Liberado após ${dados.gatilhos[papel]}`}</div>
+      {/* 4. Resumo financeiro compacto */}
+      {ind && (
+        <div className="vx-card" style={{ padding: 0, overflow: "hidden", marginBottom: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(50%, 150px), 1fr))" }}>
+            {[
+              ["Total recebido", money(ind.comissoesRecebidas), AZUL],
+              ["Disponível", money(ind.comissoesDisponiveis), "#16A34A"],
+              ["Pendente", money(ind.comissoesPendentes), "#B45309"],
+              ["Clientes pagantes", String(ind.clientesPagantes), "var(--ink)"],
+            ].map(([rot, val, cor], i) => (
+              <div key={rot} style={{ padding: "16px 18px", borderLeft: i % 4 === 0 ? "none" : "1px solid var(--border)", borderTop: "none" }}>
+                <div className="vx-mut" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em" }}>{rot}</div>
+                <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: cor, marginTop: 4 }}>{val}</div>
               </div>
-              <b className="vx-mono" style={{ color: "var(--brand)" }}>{money(r.valor)}{r.percentual ? ` + ${Math.round(r.percentual * 100)}%` : ""}</b>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        <p className="vx-mut" style={{ fontSize: 12, marginTop: 14 }}>
-          {dados.recompensas?.vendedor
-            ? "Cadastro sozinho não gera recompensa: a empresa precisa ter o cadastro aprovado, e o profissional precisa completar o perfil. Cada recompensa é paga uma única vez."
-            : "A recompensa não é paga por cadastro. Ela entra quando quem você indicou contrata um plano elegível e o pagamento é confirmado. Cadastro sem pagamento não gera comissão."}
-        </p>
-      </div>
+      )}
 
-      {/* ───────────── Minhas empresas indicadas ───────────── */}
+      {/* 5. Minhas indicações e histórico */}
       {afil?.empresas?.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>
-            Minhas empresas indicadas ({afil.empresas.length})
-          </h3>
+        <div style={{ marginBottom: 18 }}>
+          <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>Empresas indicadas ({afil.empresas.length})</h3>
           <div className="vx-grid" style={{ gap: 10 }}>
             {afil.empresas.map((e, i) => <CartaoEmpresa key={e.companyId || i} e={e} />)}
           </div>
         </div>
       )}
 
-      {/* ───────────── Lista geral de indicações ───────────── */}
-      <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 10px" }}>
-        Suas indicações {dados.indicacoes.length > 0 && `(${dados.indicacoes.length})`}
-      </h3>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+        <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Histórico de indicações {dados.indicacoes.length > 0 && `(${dados.indicacoes.length})`}</h3>
+        {dados.indicacoes.length > 0 && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Filter size={13} color="var(--muted)" />
+            {[["todas", "Todas"], ["pagas", "Pagas"], ["pendentes", "Pendentes"]].map(([k, l]) => (
+              <button key={k} onClick={() => setFHist(k)} style={{
+                fontSize: 12, padding: "5px 11px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit",
+                border: `1px solid ${fHist === k ? AZUL : "var(--border)"}`, background: fHist === k ? "#EAF4FF" : "#fff", color: fHist === k ? AZUL : "var(--ink)", fontWeight: fHist === k ? 600 : 500,
+              }}>{l}</button>
+            ))}
+          </div>
+        )}
+      </div>
       {dados.indicacoes.length === 0 ? (
-        <div className="vx-card vx-mut" style={{ padding: 20, fontSize: 13.5, textAlign: "center" }}>
-          Ninguém se cadastrou com seu código ainda.
+        <div className="vx-card" style={{ padding: 36, textAlign: "center" }}>
+          <span style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: "#EAF4FF", color: AZUL, margin: "0 auto 14px" }}><Sparkles size={26} /></span>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>Sua jornada de indicações começa aqui.</div>
+          <p className="vx-mut" style={{ fontSize: 13, maxWidth: 420, margin: "0 auto 16px", lineHeight: 1.55 }}>
+            Compartilhe seu convite com empresas e profissionais. Assim que alguém se cadastrar pelo seu link, aparece aqui — e a comissão entra quando o pagamento é confirmado.
+          </p>
+          <button className="vx-btn vx-btn-primary" style={{ background: AZUL, borderColor: AZUL, gap: 7 }} onClick={irParaCompartilhar}>Compartilhar convite <ChevronRight size={15} /></button>
         </div>
+      ) : indicacoesFiltradas.length === 0 ? (
+        <div className="vx-card vx-mut" style={{ padding: 22, textAlign: "center", fontSize: 13.5 }}>Nenhuma indicação para este filtro.</div>
       ) : (
         <div className="vx-grid">
-          {dados.indicacoes.map((i, idx) => {
+          {indicacoesFiltradas.map((i, idx) => {
             const pago = i.status === "pago" || i.status === "qualificada";
             return (
               <div key={idx} className="vx-card vx-row" style={{ padding: 14 }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
-                  {pago ? <CheckCircle2 size={17} color="var(--brand)" style={{ flex: "none" }} /> : <Clock size={17} color="var(--amber)" style={{ flex: "none" }} />}
+                  {pago ? <CheckCircle2 size={17} color={AZUL} style={{ flex: "none" }} /> : <Clock size={17} color="var(--amber)" style={{ flex: "none" }} />}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600 }}>{i.contato}</div>
                     <div className="vx-mut" style={{ fontSize: 11.5 }}>{PAPEL[i.papel] || i.papel} · {dataCurta(i.criadoEm)}</div>
@@ -199,43 +318,35 @@ export default function Indicacoes({ aviso }) {
   );
 }
 
-function Indicador({ Icon, rotulo, valor, cor }) {
+function PanelMotivo({ Icon, cor, rotulo }) {
   return (
-    <div className="vx-card" style={{ padding: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
-        <Icon size={15} color={cor || "var(--muted)"} />
-        <div className="vx-mut" style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: ".04em" }}>{rotulo}</div>
-      </div>
-      <div className="vx-disp vx-mono" style={{ fontSize: 21, color: cor || "var(--ink)" }}>{valor}</div>
+    <div style={{ textAlign: "center", color: "var(--muted)" }}>
+      <div style={{ width: 54, height: 54, margin: "0 auto 8px", borderRadius: 14, background: cor + "18", display: "grid", placeItems: "center", color: cor }}><Icon size={26} /></div>
+      <div style={{ fontSize: 10.5 }}>{rotulo}</div>
     </div>
   );
 }
 
-// Emblema de nível com placeholder (nenhuma imagem é gerada automaticamente;
-// o admin poderá cadastrar as imagens depois — usamos troféu/cadeado por ora).
-function CartaoNivel({ n }) {
-  const ativo = n.desbloqueado;
+function CardCompartilhar({ titulo, descricao, cor, Icon, link, codigo, onCopiar, onCompartilhar, ilustra }) {
   return (
-    <div style={{
-      flex: "0 0 auto", width: 128, textAlign: "center", padding: "14px 10px", borderRadius: 14,
-      border: `1.5px solid ${n.atual ? AZUL : "var(--border, #e5e7eb)"}`,
-      background: n.atual ? "rgba(49,140,231,.06)" : "var(--surface, #fff)",
-      opacity: ativo ? 1 : 0.6,
-    }}>
-      <div style={{
-        width: 52, height: 52, borderRadius: "50%", margin: "0 auto 8px",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: ativo ? "rgba(49,140,231,.12)" : "var(--surface-2)",
-        color: ativo ? AZUL : "var(--muted-2)",
-      }}>
-        {n.emblema
-          ? <img src={n.emblema} alt={n.nome} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-          : ativo ? <Trophy size={24} /> : <Lock size={22} />}
+    <div className="vx-card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", borderTop: `3px solid ${cor}` }}>
+      {ilustra}
+      <div style={{ padding: 18, display: "flex", flexDirection: "column", flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}>
+          <span style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: cor + "18", color: cor }}><Icon size={17} /></span>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>{titulo}</div>
+        </div>
+        <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 14px", lineHeight: 1.5, flex: 1 }}>{descricao}</p>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "9px 12px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--border)", marginBottom: 10 }}>
+          <span className="vx-mono" style={{ fontSize: 12.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--muted)" }}>{link.replace(/^https?:\/\//, "")}</span>
+          <span className="vx-mono" style={{ fontSize: 12, fontWeight: 700, color: cor, flexShrink: 0, letterSpacing: ".06em" }}>{codigo}</span>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="vx-btn" style={{ flex: 1, justifyContent: "center", gap: 6 }} onClick={onCopiar}><Copy size={14} /> Copiar link</button>
+          <button className="vx-btn vx-btn-primary" style={{ flex: 1, justifyContent: "center", gap: 6, background: cor, borderColor: cor }} onClick={onCompartilhar}><Share2 size={14} /> Compartilhar</button>
+        </div>
       </div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{n.nome}</div>
-      <div className="vx-mono" style={{ fontSize: 15, color: ativo ? AZUL : "var(--muted)", fontWeight: 700 }}>{n.pct}%</div>
-      <div className="vx-mut" style={{ fontSize: 11 }}>{n.min === 0 ? "início" : `${n.min}+ clientes`}</div>
-      {n.atual && <div style={{ fontSize: 10.5, fontWeight: 700, color: AZUL, marginTop: 4, textTransform: "uppercase", letterSpacing: ".04em" }}>Nível atual</div>}
     </div>
   );
 }
@@ -252,13 +363,13 @@ function CartaoEmpresa({ e }) {
     <div className="vx-card" style={{ padding: 14 }}>
       <div className="vx-row" style={{ marginBottom: 10 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
-          <Building2 size={17} color={e.pagante ? "var(--brand)" : "var(--muted-2)"} style={{ flex: "none" }} />
+          <Building2 size={17} color={e.pagante ? AZUL : "var(--muted-2)"} style={{ flex: "none" }} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nome}</div>
-            <div className="vx-mut" style={{ fontSize: 11.5 }}>{dataCurta(e.criadoEm)}</div>
+            <div className="vx-mut" style={{ fontSize: 11.5 }}>{dataCurta(e.criadoEm)}{e.assinatura ? ` · ${e.assinatura}` : ""}</div>
           </div>
         </div>
-        <span className={"vx-badge " + (e.comissaoRecebida > 0 ? "vx-badge-brand" : e.pagante ? "vx-badge-brand" : "")}>
+        <span className={"vx-badge " + (e.comissaoRecebida > 0 || e.pagante ? "vx-badge-brand" : "")}>
           {e.comissaoRecebida > 0 ? money(e.comissaoRecebida) : e.pagante ? "Pagante" : "Sem pagamento"}
         </span>
       </div>
@@ -266,19 +377,12 @@ function CartaoEmpresa({ e }) {
         {etapas.map((et, i) => (
           <div key={et.chave} style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, flex: "none" }}>
-              <div style={{
-                width: 16, height: 16, borderRadius: "50%", flex: "none",
-                background: et.ok ? AZUL : "var(--surface-2)",
-                border: `1.5px solid ${et.ok ? AZUL : "var(--border, #e5e7eb)"}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
+              <div style={{ width: 16, height: 16, borderRadius: "50%", flex: "none", background: et.ok ? AZUL : "var(--surface-2)", border: `1.5px solid ${et.ok ? AZUL : "var(--border)"}`, display: "grid", placeItems: "center" }}>
                 {et.ok && <CheckCircle2 size={11} color="#fff" />}
               </div>
               <span style={{ fontSize: 9.5, color: et.ok ? "var(--ink-2)" : "var(--muted-2)" }}>{et.rotulo}</span>
             </div>
-            {i < etapas.length - 1 && (
-              <div style={{ height: 2, flex: 1, borderRadius: 2, background: et.ok ? AZUL : "var(--surface-2)", marginBottom: 14 }} />
-            )}
+            {i < etapas.length - 1 && <div style={{ height: 2, flex: 1, borderRadius: 2, background: et.ok ? AZUL : "var(--surface-2)", marginBottom: 14 }} />}
           </div>
         ))}
       </div>
