@@ -112,6 +112,17 @@ function SequenciaCompleta({ chaves, idioma, contagem }) {
   });
 }
 
+const NOME_SEQ = { onboarding: "Onboarding", indicacoes: "Indicações", graduacao: "Graduação", repescagem: "Repescagem", empresas_offline: "Empresa parada" };
+// Fase da pessoa no funil: a do próximo e-mail ou, sem próximo, a do último recebido.
+function faseDe(d) {
+  if (d.descadastrado) return "Descadastrado";
+  if (d.inativo) return "Conta inativa";
+  const k = d.proximo?.chave || [...d.envios].reverse().find((e) => e.status === "enviado")?.chave;
+  const base = k ? NOME_SEQ[k.split(":")[0]] || "" : "Sem e-mail previsto";
+  if (d.tipo !== "vendedor" || d.perfilCompleto == null) return base;
+  return `${base} · perfil ${d.perfilCompleto ? "completo" : "incompleto"}`;
+}
+
 const SITUACOES = [
   ["todos", "Todos"], ["recebeu", "Já recebeu algum"], ["nenhum", "Ainda não recebeu nenhum"],
   ["fila", "Com e-mail na fila"], ["falhou", "Com falha"], ["descadastrado", "Descadastrados"], ["inativo", "Contas inativas"],
@@ -182,6 +193,7 @@ function Destinatarios({ lista }) {
           <thead>
             <tr style={{ textAlign: "left", color: "var(--muted)" }}>
               <th scope="col" style={{ padding: "6px 8px" }}>Pessoa</th>
+              <th scope="col" style={{ padding: "6px 8px" }}>Fase</th>
               <th scope="col" style={{ padding: "6px 8px" }}>E-mails recebidos</th>
               <th scope="col" style={{ padding: "6px 8px" }}>Próximo</th>
             </tr>
@@ -196,6 +208,7 @@ function Destinatarios({ lista }) {
                     <div style={{ color: "var(--red)", marginTop: 2 }}>{d.descadastrado ? "Descadastrado" : "Conta inativa (perfil incompleto)"}</div>
                   )}
                 </td>
+                <td style={{ padding: "8px", whiteSpace: "nowrap" }}>{faseDe(d)}</td>
                 <td style={{ padding: "8px" }}>
                   {d.envios.length === 0 ? <span className="vx-mut">Nenhum ainda</span> : (
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -273,7 +286,7 @@ export default function SequenciasFunil({ aviso }) {
     if (r?.error) return aviso(r.error);
     if (r?.ocupado) return aviso("Já existe um disparo em andamento. Aguarde e atualize.");
     const n = r?.enviados || 0;
-    aviso(`${n} e-mail(s) enviado(s)${r?.falhas ? `, ${r.falhas} falha(s)` : ""}.${r?.tetoAtingido ? " Teto de hoje atingido; o resto sai amanhã." : n === 0 ? " Ninguém na fila agora." : ""}`);
+    aviso(`${n} e-mail(s) enviado(s)${r?.falhas ? `, ${r.falhas} falha(s)` : ""}.${n === 0 ? " Ninguém na fila agora." : ""}`);
     carregar();
     carregarDestinatarios();
   };

@@ -77,13 +77,13 @@ router.post("/admin/sequencias-email/teste", soAdmin, async (req, res) => {
   res.json({ ok: true, para: req.user.email });
 });
 
-// Força o disparo agora: roda em sequência até esvaziar a fila ou bater o
-// teto do dia (respeita teto e 1 por pessoa; ignora só o horário).
+// Força o disparo agora para todos na fila: ignora o horário e o teto de
+// aquecimento; continua 1 por pessoa a cada 20h e respeita o descadastro.
 router.post("/admin/sequencias-email/rodar", soAdmin, async (req, res) => {
   const total = { enviados: 0, falhas: 0, inativados: 0 };
   let r = {};
   for (let i = 0; i < 100; i++) {
-    r = await rodada(Date.now(), { ignorarJanela: true });
+    r = await rodada(Date.now(), { ignorarJanela: true, ignorarTeto: true });
     if (r?.ocupado) { if (i === 0) return res.json({ ocupado: true }); break; }
     total.enviados += r.enviados || 0;
     total.falhas += r.falhas || 0;

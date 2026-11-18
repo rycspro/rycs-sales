@@ -155,11 +155,14 @@ function avaliarTodos(agora) {
     const email = normEmail(s.email);
     if (!email) continue;
     if (fora.has(email)) { lista.push({ tipo: "vendedor", id: s.id, nome: s.nome, email, criadoEm: s.criadoEm, inativo: !!s.inativoEm, descadastrado: true, proximoPasso: null }); continue; }
+    // Cada profissional entra pela fase em que está: quem chegou depois do
+    // lançamento recebe o boas-vindas; quem já tinha conta conta os dias desde
+    // o cadastro real, pula o boas-vindas e começa no primeiro passo que faz
+    // sentido para ele (perfil incompleto → "falta pouco"; completo → segue).
+    const novo = (s.criadoEm || 0) >= lanc;
     const ctx = {
-      ancora: Math.max(s.criadoEm || 0, lanc),
-      // Toda a base entra pelo começo: quem já tinha conta também recebe o
-      // boas-vindas (decisão do dono, 17/11/2026), contando a partir do lançamento.
-      novo: true,
+      ancora: novo ? s.criadoEm : (s.criadoEm || lanc),
+      novo,
       perfilCompleto: pendenciasPerfil(s).length === 0,
       inativo: !!s.inativoEm,
       indicacaoUsada: !!s.indicacaoUsada,
@@ -237,7 +240,7 @@ export function enviadosHoje(agora = Date.now()) {
 }
 
 let rodando = false;
-export async function rodada(agora = Date.now(), { ignorarJanela = false } = {}) {
+export async function rodada(agora = Date.now(), { ignorarJanela = false, ignorarTeto = false } = {}) {
   if (rodando) return { ocupado: true };
   rodando = true;
   try {
@@ -246,7 +249,8 @@ export async function rodada(agora = Date.now(), { ignorarJanela = false } = {})
     if (!ignorarJanela && !dentroDaJanela(agora)) return { inativados, enviados: 0, foraDaJanela: true };
 
     const teto = tetoDoDia((agora - lancamento()) / DIA);
-    const restante = Math.min(MAX_POR_RODADA, teto - enviadosHoje(agora));
+    // Disparo manual do admin pode passar do teto de aquecimento (pedido do dono).
+    const restante = ignorarTeto ? MAX_POR_RODADA : Math.min(MAX_POR_RODADA, teto - enviadosHoje(agora));
     if (restante <= 0) return { inativados, enviados: 0, tetoAtingido: true };
 
     const gerais = dadosGerais(agora);
