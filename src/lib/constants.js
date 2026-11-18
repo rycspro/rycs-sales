@@ -44,13 +44,16 @@ export const NAV = {
   vendedor: [
     { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
+    { section: "Desenvolvimento" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "testes", label: "Testes e Avaliações", Icon: ClipboardList },
     { key: "club", label: "RYCS Club", Icon: Trophy },
+    { section: "Financeiro" },
     { key: "carteira", label: "Carteira", Icon: Wallet },
-    { key: "indicar", label: "Indicar", Icon: Gift },
     { key: "planos", label: "Planos", Icon: Crown },
+    { section: "Minha conta" },
     { key: "perfil", label: "Meu Perfil", Icon: UserIcon },
+    { key: "indicar", label: "Indicar", Icon: Gift },
   ],
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },
