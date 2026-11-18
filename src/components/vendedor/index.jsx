@@ -101,7 +101,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
             navegar={navegar} tour={tour} limparTour={() => setTour(null)} />
         : <AcademyCatalogo eu={eu} aviso={aviso}
             navegar={navegar} tour={tour} limparTour={() => setTour(null)} />)}
-      {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} />}
+      {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} setAba={setAba} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
       {aba === "planos" && <PlanosProfissional aviso={aviso} />}
       {["conta", "configuracoes", "suporte-conta"].includes(aba) && <MinhaConta key={aba} secaoInicial={aba === "suporte-conta" ? "suporte" : aba === "configuracoes" ? "preferencias" : ""} user={user} entity={eu} db={db} up={up} setDb={setDb} aviso={aviso} recarregar={recarregar} onNavigate={setAba} onLogout={onLogout} />}
