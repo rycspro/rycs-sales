@@ -9,7 +9,7 @@ import { emailComprovantePagamento } from "../services/email.js";
 import { DESTAQUES } from "../../shared/planos.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { saqueMinimoPara, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
-import { limite } from "../../shared/planosProfissional.js";
+import { limite, horasSaque } from "../../shared/planosProfissional.js";
 import { planoAtual, tratarEventoProfissional } from "../services/planosProfissional.js";
 import { ehEventoDeCurso, tratarEventoCurso } from "../services/academyCompra.js";
 
@@ -135,7 +135,8 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
   const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(entityId);
   if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
   // Piso do saque: o plano pode baixar (limite "saqueMinimo"); pendente = piso de todos.
-  const minimo = saqueMinimoPara(limite(planoAtual(entityId).plano, "saqueMinimo"));
+  const plano = planoAtual(entityId).plano;
+  const minimo = saqueMinimoPara(limite(plano, "saqueMinimo"));
   if (!Number.isFinite(valor) || valor < minimo)
     return res.status(400).json({ error: `Valor mínimo: R$ ${minimo.toFixed(2).replace(".", ",")}` });
   if (!vendedor.pix) return res.status(400).json({ error: "Cadastre sua chave Pix antes de sacar" });
@@ -149,8 +150,13 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
       const atual = db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(entityId);
       if (atual.disponivel < valor) throw new Error("SALDO_INSUFICIENTE");
       db.prepare("UPDATE sellers SET disponivel = disponivel - ? WHERE id = ?").run(valor, entityId);
-      db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm) VALUES (?, ?, ?, ?, 'solicitado', ?)")
-        .run(wId, entityId, valor, vendedor.pix, agora());
+      // Prazo de processamento interno pelo plano ativo. Registra solicitação,
+      // prazo previsto e status para acompanhamento/auditoria. O relógio conta a
+      // partir daqui (solicitação válida). Não é o prazo de compensação bancária.
+      const ts = agora();
+      const processaAte = ts + horasSaque(plano) * 3600000;
+      db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm, processaAte) VALUES (?, ?, ?, ?, 'solicitado', ?, ?)")
+        .run(wId, entityId, valor, vendedor.pix, ts, processaAte);
       registrarMovimento({ sellerId: entityId, tipo: "saque_reservado", valor: -valor, idempotencyKey: wId });
     })();
   } catch (e) {

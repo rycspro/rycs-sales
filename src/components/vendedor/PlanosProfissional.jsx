@@ -255,7 +255,7 @@ export default function PlanosProfissional({ aviso }) {
                   onClick={() => abrir(chave)}
                   style={{ marginTop: "auto", fontWeight: 700, minHeight: 44, ...(ehAtual ? { background: "rgba(255,255,255,.2)", color: "#fff", border: "1px solid rgba(255,255,255,.3)" } : {}) }}
                 >
-                  {ehAtual ? "Plano atual" : !info.cobrancaAtiva ? "Disponível em breve" : noGratis ? "Assinar" : "Trocar para este plano"}
+                  {ehAtual ? "Plano atual" : !info.cobrancaAtiva ? "Disponível em breve" : noGratis ? (p.cta || "Assinar") : "Trocar para este plano"}
                 </button>
               </motion.article>
             );

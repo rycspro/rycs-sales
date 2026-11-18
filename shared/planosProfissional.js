@@ -20,10 +20,61 @@ const DIA = 86_400_000;
 export { CICLOS, normalizarCiclo };
 export const CICLOS_PROFISSIONAL = [CICLOS.MENSAL, CICLOS.SEMESTRAL, CICLOS.ANUAL];
 
+// Quatro planos: Free (chave gratis), Start, Pro e Elite (chave premium, mantida
+// para não quebrar assinaturas já gravadas: `assinaturas_profissional.plano`
+// guarda 'pro'/'premium', e planoDoProfissional()/PERMISSOES usam essas chaves).
+// `beneficios` são os bullets exibidos no card; `cta` é o rótulo do botão.
 export const PLANOS_PROFISSIONAL = {
-  gratis: { chave: "gratis", nome: "Grátis", preco: 0, resumo: "Tudo para trabalhar e ganhar: perfil, candidaturas sem limite e saques." },
-  pro: { chave: "pro", nome: "Pro", preco: 29.9, resumo: "Ferramentas, treino e prioridade de visibilidade para acelerar o seu trabalho." },
-  premium: { chave: "premium", nome: "Premium", preco: 69.9, resumo: "Tudo do Pro, com acompanhamento, mentoria e acesso às campanhas premium." },
+  gratis: {
+    chave: "gratis", nome: "Grátis", preco: 0,
+    resumo: "Comece a trabalhar e ganhar dinheiro.",
+    cta: "Continuar gratuitamente",
+    beneficios: [
+      "Acesso às campanhas públicas",
+      "Candidate-se às oportunidades",
+      "Receba por tarefas realizadas",
+      "Perfil profissional gratuito",
+      "Saques em até 5 dias",
+    ],
+  },
+  start: {
+    chave: "start", nome: "Start", preco: 24.9,
+    resumo: "Mais oportunidades, dinheiro mais rápido.",
+    cta: "Escolher Start",
+    beneficios: [
+      "Tudo do Free",
+      "Saques em até 3 dias",
+      "Avisos de novas campanhas pelo WhatsApp",
+      "Perfil destacado para empresas — nível 3",
+      "Recomendações de oportunidades por e-mail",
+      "Agenda de tarefas e reuniões com lembretes automáticos",
+    ],
+  },
+  pro: {
+    chave: "pro", nome: "Pro", preco: 47.9, popular: true,
+    resumo: "Seja visto por mais empresas e receba antes.",
+    cta: "Escolher Pro",
+    beneficios: [
+      "Tudo do Start",
+      "Saques em até 24 horas",
+      "Perfil destacado para empresas — nível 2",
+      "Convites de empresas interessadas no seu perfil",
+      "Divulgação do perfil para empresas",
+    ],
+  },
+  premium: {
+    chave: "premium", nome: "Elite", preco: 97.9, elite: true,
+    resumo: "Receba mais rápido e tenha IA para vender melhor.",
+    cta: "Escolher Elite",
+    beneficios: [
+      "Tudo do Pro",
+      "Saque imediato após aprovação, quando o saldo estiver disponível",
+      "Perfil destacado para empresas — nível 1",
+      "Treinamento de vendas com inteligência artificial",
+      "Simulações de negociação com inteligência artificial",
+      "Assistente de vendas com IA para ajudar em negociações reais",
+    ],
+  },
 };
 
 const arred2 = (n) => Math.round(n * 100) / 100;
@@ -44,8 +95,8 @@ export function valorProfissionalNoCiclo(chave, ciclo = CICLOS.MENSAL) {
 // anual direto do plano.
 for (const p of Object.values(PLANOS_PROFISSIONAL)) p.precoAnual = valorProfissionalNoCiclo(p.chave, CICLOS.ANUAL);
 
-export const ORDEM_PLANOS_PROFISSIONAL = ["gratis", "pro", "premium"];
-export const PLANOS_PAGOS_PROFISSIONAL = ["pro", "premium"];
+export const ORDEM_PLANOS_PROFISSIONAL = ["gratis", "start", "pro", "premium"];
+export const PLANOS_PAGOS_PROFISSIONAL = ["start", "pro", "premium"];
 
 // Pendências (§8): carência da renovação atrasada e faixa do desempate.
 export const CARENCIA_DIAS = null;
@@ -54,35 +105,44 @@ export const TOLERANCIA_DESEMPATE = null;
 // Tabela de permissões (§2.3). tipo: bool | numero | fracao | nivel.
 // Para números: Infinity = ilimitado; null = pendente (desligado).
 export const PERMISSOES = {
-  etiquetaPro:                     { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  desempateScore:                  { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  prioridadeCampanhasPremium:      { tipo: "bool",   gratis: false, pro: false, premium: true },
-  vagasAntecipadasHoras:           { tipo: "numero", gratis: 0,     pro: 24,    premium: 24 },
-  alertaVagaApp:                   { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  alertaVagaWhatsApp:              { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  saqueNaHora:                     { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  saqueMinimo:                     { tipo: "numero", gratis: null,  pro: null,  premium: null }, // null = SAQUE_MINIMO
-  cursosNicho:                     { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  descontoTrilhaChallenger:        { tipo: "fracao", gratis: 0,     pro: null,  premium: 1 },
-  certProfissionalIncluida:        { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  renovacoesCertProfissional:      { tipo: "numero", gratis: 0,     pro: 1,     premium: Infinity },
-  descontoCertAvancada:            { tipo: "fracao", gratis: 0,     pro: 0.3,   premium: 0 },
-  tentativasCertAvancadaIncluidas: { tipo: "numero", gratis: 0,     pro: 0,     premium: null },
-  treinadorIA:                     { tipo: "numero", gratis: 0,     pro: Infinity, premium: Infinity },
-  treinadorCenariosAvancados:      { tipo: "bool",   gratis: false, pro: false, premium: true },
-  scriptsIAPorCampanha:            { tipo: "bool",   gratis: false, pro: true,  premium: true },
-  painel:                          { tipo: "nivel",  gratis: "basico", pro: "completo", premium: "comparativo" },
-  minutosDiscadora:                { tipo: "numero", gratis: 0,     pro: null,  premium: null },
-  discadoraGravacaoTranscricaoFeedback: { tipo: "bool", gratis: false, pro: false, premium: true },
-  lembretesWhatsApp:               { tipo: "numero", gratis: 0,     pro: null,  premium: null },
-  mentoriaGrupoMensal:             { tipo: "bool",   gratis: false, pro: false, premium: true },
-  comunidade:                      { tipo: "bool",   gratis: false, pro: false, premium: true },
-  revisaoHumanaPorTrimestre:       { tipo: "numero", gratis: 0,     pro: 0,     premium: 1 },
-  vitrineTopTalent:                { tipo: "bool",   gratis: false, pro: false, premium: true }, // + etiqueta dourada
-  cartaRecomendacao:               { tipo: "bool",   gratis: false, pro: false, premium: true }, // + etiqueta dourada
-  suporte:                         { tipo: "nivel",  gratis: "normal", pro: "prioritario", premium: "direto" },
-  bonusIndicacaoAssinante:         { tipo: "numero", gratis: 0,     pro: null,  premium: null },
-  acessoAntecipado:                { tipo: "bool",   gratis: false, pro: false, premium: true },
+  etiquetaPro:                     { tipo: "bool",   gratis: false, start: false, pro: true,  premium: true },
+  desempateScore:                  { tipo: "bool",   gratis: false, start: false, pro: true,  premium: true },
+  prioridadeCampanhasPremium:      { tipo: "bool",   gratis: false, start: false, pro: false, premium: true },
+  vagasAntecipadasHoras:           { tipo: "numero", gratis: 0,     start: 0,     pro: 24,    premium: 24 },
+  alertaVagaApp:                   { tipo: "bool",   gratis: false, start: true,  pro: true,  premium: true },
+  alertaVagaWhatsApp:              { tipo: "bool",   gratis: false, start: true,  pro: true,  premium: true },
+  // Timing do saque. `prazoSaqueHoras` é a fonte de verdade do prazo de
+  // PROCESSAMENTO interno: Free 120h, Start 72h, Pro 24h, Elite 0h (imediato após
+  // aprovação, quando o saldo estiver disponível). `saqueNaHora` fica para
+  // compatibilidade com consumidores existentes.
+  prazoSaqueHoras:                 { tipo: "numero", gratis: 120,   start: 72,    pro: 24,    premium: 0 },
+  saqueNaHora:                     { tipo: "bool",   gratis: false, start: false, pro: true,  premium: true },
+  saqueMinimo:                     { tipo: "numero", gratis: null,  start: null,  pro: null,  premium: null }, // null = SAQUE_MINIMO
+  // Nível comercial de destaque na descoberta por empresas (quanto maior, mais
+  // destaque): Free 0, Start 1 (nível 3), Pro 2 (nível 2), Elite 3 (nível 1).
+  // Não altera Score/avaliação; só pesa na ordenação das vitrines comerciais.
+  pesoVitrine:                     { tipo: "numero", gratis: 0,     start: 1,     pro: 2,     premium: 3 },
+  cursosNicho:                     { tipo: "bool",   gratis: false, start: false, pro: true,  premium: true },
+  descontoTrilhaChallenger:        { tipo: "fracao", gratis: 0,     start: 0,     pro: null,  premium: 1 },
+  certProfissionalIncluida:        { tipo: "bool",   gratis: false, start: false, pro: true,  premium: true },
+  renovacoesCertProfissional:      { tipo: "numero", gratis: 0,     start: 0,     pro: 1,     premium: Infinity },
+  descontoCertAvancada:            { tipo: "fracao", gratis: 0,     start: 0,     pro: 0.3,   premium: 0 },
+  tentativasCertAvancadaIncluidas: { tipo: "numero", gratis: 0,     start: 0,     pro: 0,     premium: null },
+  treinadorIA:                     { tipo: "numero", gratis: 0,     start: 0,     pro: Infinity, premium: Infinity },
+  treinadorCenariosAvancados:      { tipo: "bool",   gratis: false, start: false, pro: false, premium: true },
+  scriptsIAPorCampanha:            { tipo: "bool",   gratis: false, start: false, pro: true,  premium: true },
+  painel:                          { tipo: "nivel",  gratis: "basico", start: "basico", pro: "completo", premium: "comparativo" },
+  minutosDiscadora:                { tipo: "numero", gratis: 0,     start: 0,     pro: null,  premium: null },
+  discadoraGravacaoTranscricaoFeedback: { tipo: "bool", gratis: false, start: false, pro: false, premium: true },
+  lembretesWhatsApp:               { tipo: "numero", gratis: 0,     start: null,  pro: null,  premium: null },
+  mentoriaGrupoMensal:             { tipo: "bool",   gratis: false, start: false, pro: false, premium: true },
+  comunidade:                      { tipo: "bool",   gratis: false, start: false, pro: false, premium: true },
+  revisaoHumanaPorTrimestre:       { tipo: "numero", gratis: 0,     start: 0,     pro: 0,     premium: 1 },
+  vitrineTopTalent:                { tipo: "bool",   gratis: false, start: false, pro: false, premium: true }, // + etiqueta dourada
+  cartaRecomendacao:               { tipo: "bool",   gratis: false, start: false, pro: false, premium: true }, // + etiqueta dourada
+  suporte:                         { tipo: "nivel",  gratis: "normal", start: "normal", pro: "prioritario", premium: "direto" },
+  bonusIndicacaoAssinante:         { tipo: "numero", gratis: 0,     start: null,  pro: null,  premium: null },
+  acessoAntecipado:                { tipo: "bool",   gratis: false, start: false, pro: false, premium: true },
 };
 
 // Recursos que exigem, além do plano, a etiqueta dourada (certificação
@@ -121,6 +181,31 @@ export function desconto(plano, recurso) {
 }
 
 export const nivel = (plano, recurso) => valorDe(plano, recurso);
+
+// Prazo de PROCESSAMENTO interno do saque, em horas, pelo plano ativo. É o
+// prazo interno — não o de compensação do banco/provedor. O relógio só começa
+// após a solicitação válida de saque de saldo disponível.
+export function horasSaque(plano) {
+  const h = limite(plano, "prazoSaqueHoras");
+  return typeof h === "number" ? h : 120; // fallback: prazo do Grátis
+}
+
+// Texto do prazo de saque para exibição (sem prometer como garantia).
+export function prazoSaqueTexto(plano) {
+  const h = horasSaque(plano);
+  if (h <= 0) return "imediato após aprovação, quando o saldo estiver disponível";
+  if (h <= 24) return `em até ${h} horas`;
+  const dias = Math.round(h / 24);
+  return `em até ${dias} ${dias === 1 ? "dia" : "dias"}`;
+}
+
+// Nível comercial de destaque exibido ao profissional (1 = maior, Elite;
+// 3 = inicial, Start; 0/sem = Free). Deriva de `pesoVitrine` para não duplicar
+// configuração. Só afeta vitrines comerciais, nunca Score/avaliação.
+export function nivelDestaqueComercial(plano) {
+  const peso = limite(plano, "pesoVitrine") || 0;
+  return peso > 0 ? (4 - peso) : 0; // peso 3→nível 1, 2→2, 1→3
+}
 
 // Assinaturas que ainda dão benefício. `cancelada` vale até o fim do que
 // foi pago; `atrasada` vale até pagoAte + carência; reembolsada/expirada/

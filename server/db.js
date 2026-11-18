@@ -925,6 +925,8 @@ function adicionarColuna(tabela, coluna, definicao) {
 adicionarColuna("companies", "documento", "TEXT DEFAULT ''");
 adicionarColuna("companies", "asaasCustomerId", "TEXT");
 adicionarColuna("withdrawals", "falhaMotivo", "TEXT");
+// Prazo de processamento interno previsto (pelo plano ativo na solicitação).
+adicionarColuna("withdrawals", "processaAte", "INTEGER");
 // `plano` já existia com outro sentido ('saldo'/'destaque'); a assinatura
 // SaaS vive em coluna própria para não misturar os dois conceitos.
 adicionarColuna("companies", "assinatura", "TEXT DEFAULT 'free'");
