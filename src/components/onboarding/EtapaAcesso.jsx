@@ -235,7 +235,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
 
                 {modo === "cadastro" && <>
                   <div className="vx-onb-campo">
-                    <span className="vx-label" id={`${id}-logo-rotulo`}>Logo da empresa</span>
+                    <span className="vx-label" id={`${id}-logo-rotulo`}>Logo da empresa <span style={{ color: "var(--red)", fontWeight: 600 }}>· obrigatório</span></span>
                     <div className="vx-onb-logo">
                       <div className="vx-onb-logo-previa" aria-hidden={!logo}>
                         {logo ? <img src={logo.dataUri} alt="Logo escolhido" /> : <ImagePlus size={22} aria-hidden="true" />}
@@ -255,7 +255,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
                       <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
                         onChange={(e) => escolherLogo(e.target.files?.[0])} />
                     </div>
-                    <div id={`${id}-logo-dica`} className="vx-onb-dica">PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
+                    <div id={`${id}-logo-dica`} className="vx-onb-dica">Envie o <b>logo oficial da sua empresa</b> (não uma foto pessoal). PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
                     {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
                   </div>
 
