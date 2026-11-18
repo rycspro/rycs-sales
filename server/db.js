@@ -2392,6 +2392,85 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_resolucao_assessments_seller ON resolucao_assessments(sellerId, iniciadoEm DESC);
 `);
 
+// Programa de Afiliados (Incremento A) — camada ADITIVA sobre o programa de
+// indicações existente (tabela `referrals`). Enquanto a flag AFILIADOS_ENABLED
+// estiver desligada, estas tabelas apenas materializam/auditam dados derivados
+// das indicações atuais; NENHUM crédito novo é feito e a política vigente
+// continua sendo a de 30% da primeira mensalidade. Valores de comissão vivem em
+// CENTAVOS INTEIROS (nunca ponto flutuante). A conversão para o saldo em reais
+// só ocorre na fronteira do crédito, reaproveitando o caminho existente.
+db.exec(`
+  -- Atribuição permanente AFILIADO → EMPRESA (não "usuário que clicou").
+  -- Uma atribuição ativa por empresa (UNIQUE companyId).
+  CREATE TABLE IF NOT EXISTS affiliate_attributions (
+    id TEXT PRIMARY KEY,
+    affiliateUserId TEXT NOT NULL,
+    affiliateCode TEXT DEFAULT '',
+    companyId TEXT NOT NULL,
+    referralId TEXT,
+    metodo TEXT DEFAULT 'primeiro_vinculo',
+    status TEXT NOT NULL DEFAULT 'ativo',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_affiliate_attr_company ON affiliate_attributions(companyId);
+  CREATE INDEX IF NOT EXISTS idx_affiliate_attr_affiliate ON affiliate_attributions(affiliateUserId, criadoEm DESC);
+
+  -- Contabilização de comissões em CENTAVOS INTEIROS. Uma comissão por evento
+  -- financeiro elegível (UNIQUE idempotencyKey). O percentual é congelado
+  -- (percentualSnapshot) no momento da constituição.
+  CREATE TABLE IF NOT EXISTS affiliate_commissions (
+    id TEXT PRIMARY KEY,
+    affiliateUserId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    subscriptionId TEXT,
+    provider TEXT DEFAULT '',
+    providerPaymentId TEXT DEFAULT '',
+    policy TEXT DEFAULT '',
+    percentualSnapshot REAL NOT NULL DEFAULT 0,
+    moeda TEXT NOT NULL DEFAULT 'BRL',
+    baseCents INTEGER NOT NULL DEFAULT 0,
+    comissaoCents INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'identificada',
+    idempotencyKey TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    disponivelEm INTEGER,
+    creditadoEm INTEGER,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_affiliate_comm_idem ON affiliate_commissions(idempotencyKey);
+  CREATE INDEX IF NOT EXISTS idx_affiliate_comm_affiliate ON affiliate_commissions(affiliateUserId, status, criadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_affiliate_comm_company ON affiliate_commissions(companyId);
+
+  -- Níveis configuráveis (proposta inicial, inativos até aprovação). Mudanças
+  -- não alteram retroativamente comissões já constituídas (snapshot acima).
+  CREATE TABLE IF NOT EXISTS affiliate_commission_tiers (
+    id TEXT PRIMARY KEY,
+    chave TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    minCompanies INTEGER NOT NULL DEFAULT 0,
+    percentual REAL NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 0,
+    effectiveFrom INTEGER,
+    effectiveUntil INTEGER,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_affiliate_tier_chave ON affiliate_commission_tiers(chave);
+
+  -- Histórico auditável de transições de estado das comissões.
+  CREATE TABLE IF NOT EXISTS affiliate_commission_events (
+    id TEXT PRIMARY KEY,
+    commissionId TEXT NOT NULL,
+    eventType TEXT NOT NULL,
+    previousStatus TEXT,
+    newStatus TEXT,
+    dados TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (commissionId) REFERENCES affiliate_commissions(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_affiliate_comm_events ON affiliate_commission_events(commissionId, criadoEm DESC);
+`);
+
 
 export default db;
 export { uid, agora };
