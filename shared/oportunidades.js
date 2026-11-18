@@ -61,6 +61,19 @@ export function parsePaisesAceitos(valor) {
 
 // Classifica uma campanha para um profissional. paisEmpresa e paisProfissional
 // podem vir como código ou nome; a função normaliza.
+//
+// REGRA NACIONAL × INTERNACIONAL (registrada a pedido do produto):
+//   O país de referência é sempre o país em que a EMPRESA está registrada
+//   (`paisEmpresa`), seja ele qual for — não é "Brasil" fixo. Uma campanha de
+//   alcance NACIONAL só aparece para profissionais que residem no MESMO país da
+//   empresa: empresa alemã → aparece para alemães; empresa brasileira → para
+//   brasileiros; empresa americana → para americanos (de alemão para alemão, de
+//   brasileiro para brasileiro). Ou seja, nacional ⇔ paisProfissional ===
+//   paisEmpresa. Quando o profissional reside em país DIFERENTE do da empresa
+//   (e a campanha o aceita via `paisesAceitos`/alcance), a campanha é
+//   INTERNACIONAL. Em ambos os casos a interface mostra sempre a BANDEIRA do
+//   país ao lado do nome (ver `bandeiraPais` em shared/paises.js), em vez de um
+//   ícone de localização — menos informação visual e identificação imediata.
 export function classificarCampanha({ alcance, paisesAceitos, paisEmpresa, paisProfissional }) {
   const home = codigoPais(paisEmpresa);
   const prof = codigoPais(paisProfissional);

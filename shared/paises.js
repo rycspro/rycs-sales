@@ -39,6 +39,18 @@ export const PAISES = [
   { code: "OUTRO", nome: "Outro país",     moeda: "USD", locales: [] },
 ];
 
+// Bandeira (emoji) a partir do código ISO-3166 de 2 letras (BR, US, DE…),
+// montada com os símbolos indicadores regionais Unicode. Serve para mostrar a
+// bandeira ao lado do nome do país em vez de um ícone de localização genérico —
+// menos ruído visual e identificação imediata do país. Código "OUTRO" ou
+// inválido cai num globo neutro.
+export function bandeiraPais(code) {
+  const c = String(code || "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(c)) return "🌐";
+  const base = 0x1F1E6; // 🇦 (Regional Indicator Symbol Letter A)
+  return String.fromCodePoint(base + (c.charCodeAt(0) - 65), base + (c.charCodeAt(1) - 65));
+}
+
 const POR_CODE = Object.fromEntries(PAISES.map((p) => [p.code, p]));
 const POR_LOCALE = {};
 for (const p of PAISES) for (const l of p.locales) POR_LOCALE[l.toLowerCase()] = p.code;

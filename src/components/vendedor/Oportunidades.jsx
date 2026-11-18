@@ -6,7 +6,7 @@ import {
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
-import { PAISES } from "../../../shared/paises.js";
+import { PAISES, bandeiraPais } from "../../../shared/paises.js";
 import { FUNCOES } from "../../../shared/funcoes.js";
 import { classificarCampanha, codigoPais, parsePaisesAceitos } from "../../../shared/oportunidades.js";
 
@@ -248,8 +248,8 @@ function GridEmpresas({ empresas, metricas, campsPorEmpresa, onAbrir }) {
               <Logo empresa={e} size={48} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nome}</div>
-                <div className="vx-mut" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                  <MapPin size={11} /> {nomePais(e.pais)}
+                <div className="vx-mut" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+                  <span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1 }}>{bandeiraPais(e.pais)}</span> {nomePais(e.pais)}
                 </div>
               </div>
             </div>
@@ -294,7 +294,7 @@ function CampanhaCard({ item, internacional, onAbrir }) {
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, fontSize: 11.5 }}>
         {c.funcao && <span className="vx-chip" style={{ fontSize: 11 }}><Briefcase size={10} style={{ marginRight: 3, verticalAlign: -1 }} />{String(c.funcao).toUpperCase()}</span>}
-        <span className="vx-chip" style={{ fontSize: 11 }}><MapPin size={10} style={{ marginRight: 3, verticalAlign: -1 }} />{nomePais(cls.paisEmpresa)}</span>
+        <span className="vx-chip" style={{ fontSize: 11 }}><span aria-hidden="true" style={{ marginRight: 4 }}>{bandeiraPais(cls.paisEmpresa)}</span>{nomePais(cls.paisEmpresa)}</span>
         {c.modeloOperacao && <span className="vx-chip" style={{ fontSize: 11 }}>{c.modeloOperacao}</span>}
       </div>
 
@@ -353,7 +353,7 @@ function DetalheEmpresa({ emp, itens, metrica, onVoltar, onAbrirCampanha }) {
           <div style={{ flex: 1, minWidth: 180 }}>
             <h2 className="vx-disp" style={{ fontSize: 20, margin: 0 }}>{emp.nome}</h2>
             <div className="vx-mut" style={{ fontSize: 12.5, display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {nomePais(emp.pais)}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1 }}>{bandeiraPais(emp.pais)}</span> {nomePais(emp.pais)}</span>
               {emp.segmento && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Briefcase size={12} /> {emp.segmento}</span>}
             </div>
           </div>
