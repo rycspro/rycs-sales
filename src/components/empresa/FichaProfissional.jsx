@@ -34,6 +34,48 @@ function resumoIA(p) {
   return partes.length ? partes.join(" ") : "Sem dados reais suficientes para gerar resumo confiável.";
 }
 
+const ROMANOS = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+
+// Brasão/escudo da patente, com a cor do nível e o numeral romano.
+function Escudo({ cor, numero, size = 44 }) {
+  const gid = `patente-${numero}-${cor.replace("#", "")}`;
+  return (
+    <svg width={size} height={size * 1.14} viewBox="0 0 40 46" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={cor} stopOpacity="0.95" />
+          <stop offset="1" stopColor={cor} stopOpacity="0.68" />
+        </linearGradient>
+      </defs>
+      <path d="M20 1.5 L37 7 V22 C37 33 29.5 40 20 44.5 C10.5 40 3 33 3 22 V7 Z" fill={`url(#${gid})`} stroke={cor} strokeWidth="1.3" />
+      <text x="20" y="27.5" textAnchor="middle" fontSize="15" fontWeight="800" fill="#fff" fontFamily="'Space Grotesk', sans-serif">{ROMANOS[numero] || numero}</text>
+    </svg>
+  );
+}
+
+// Patente/nível do profissional, com explicação do que significa.
+function PatenteProfissional({ nivel }) {
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 14px", borderRadius: 12, background: "var(--surface-2)", border: "1px solid var(--border)", marginBottom: 14 }}>
+      <Escudo cor={nivel.cor} numero={nivel.numero} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>Patente {nivel.nome}</span>
+          <span className="vx-chip vx-mono" style={{ fontSize: 11 }}>Nível {nivel.numero}/{nivel.totalNiveis || 6}</span>
+          <span className="vx-mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>{nivel.xp} XP</span>
+          {nivel.proximoNome && <span className="vx-mut" style={{ fontSize: 11 }}>· próximo: {nivel.proximoNome}</span>}
+        </div>
+        <p className="vx-mut" style={{ fontSize: 12, lineHeight: 1.55, margin: "5px 0 0" }}>
+          A patente reflete a jornada do profissional na RYCS: completar o perfil, concluir avaliações e
+          treinamentos e ter tarefas aprovadas acumulam XP, avançando de Starter a Elite (Starter → Bronze →
+          Prata → Ouro → Platina → Elite). Indica engajamento e evolução na plataforma — não é uma nota de
+          qualidade nem garantia de resultado.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function FichaProfissional({ p, fit = { percentual: 0, pontos: [], atencao: [] }, topo = null, acoes = null, onFechar }) {
   const [bioExpandida, setBioExpandida] = useState(false);
   const nomeCompleto = capitalizar([p.nome, p.sobrenome].filter(Boolean).join(" ") || p.nome);
@@ -73,6 +115,9 @@ export default function FichaProfissional({ p, fit = { percentual: 0, pontos: []
           <div style={{ flex: 1, minWidth: 240 }}>
             {/* A. Nome */}
             <h2 className="vx-disp" style={{ margin: "0 0 12px", fontSize: 24 }}>{nomeCompleto}</h2>
+
+            {/* A2. Patente / nível (gamificação) — com explicação para a empresa */}
+            {p.nivelGamificacao && <PatenteProfissional nivel={p.nivelGamificacao} />}
 
             {/* B. Biografia (clamp 6 linhas) */}
             <div style={{ marginBottom: 12 }}>

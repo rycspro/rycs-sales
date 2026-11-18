@@ -9,6 +9,7 @@ import { notificar } from "./notifications.js";
 import { emailCadastroCompletadoAdmin } from "../services/email.js";
 import { ordenarComDesempate, pode, TOLERANCIA_DESEMPATE } from "../../shared/planosProfissional.js";
 import { planosAtuais } from "../services/planosProfissional.js";
+import { nivelPorXp, FAIXAS } from "../../shared/gamificacao.js";
 
 const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusiness.com.br";
 
@@ -73,6 +74,8 @@ router.get("/professionals/active", (req, res) => {
     ORDER BY ca.criadoEm DESC
   `).all(companyId);
   const leads = new Map(db.prepare("SELECT sellerId, COUNT(*) total FROM leads WHERE companyId = ? GROUP BY sellerId").all(companyId).map((l) => [l.sellerId, l.total]));
+  // Patente/nível do profissional (gamificação): XP acumulado por conquistas.
+  const xpPorSeller = new Map(db.prepare("SELECT sellerId, COALESCE(SUM(xp), 0) AS xp FROM gamification_xp GROUP BY sellerId").all().map((r) => [r.sellerId, r.xp]));
   res.json(rows.map((s) => {
     let perfilComercial = {}; try { perfilComercial = JSON.parse(s.perfilComercial || "{}"); } catch {}
     const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
@@ -109,6 +112,10 @@ router.get("/professionals/active", (req, res) => {
       leadsGerados: Number(leads.get(s.id) || 0),
       observacaoInterna: notas.get(s.id) || "",
       parceria: pedidos.get(s.id) || null,
+      nivelGamificacao: (() => {
+        const n = nivelPorXp(xpPorSeller.get(s.id) || 0);
+        return { chave: n.chave, nome: n.nome, cor: n.cor, numero: n.numero, xp: n.xp, totalNiveis: FAIXAS.length, progresso: n.progresso, proximoNome: n.proximo?.nome || null };
+      })(),
     };
   }));
 });
@@ -159,6 +166,11 @@ router.get("/professionals/me", (req, res) => {
     resultadosGerados: 0, leadsGerados: 0,
     observacaoInterna: "",
     parceria: null,
+    nivelGamificacao: (() => {
+      const totalXp = db.prepare("SELECT COALESCE(SUM(xp), 0) AS xp FROM gamification_xp WHERE sellerId = ?").get(sellerId)?.xp || 0;
+      const n = nivelPorXp(totalXp);
+      return { chave: n.chave, nome: n.nome, cor: n.cor, numero: n.numero, xp: n.xp, totalNiveis: FAIXAS.length, progresso: n.progresso, proximoNome: n.proximo?.nome || null };
+    })(),
     ehPreviaPropria: true,
   });
 });
