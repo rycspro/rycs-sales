@@ -153,7 +153,9 @@ function avaliarTodos(agora) {
     if (fora.has(email)) { lista.push({ tipo: "vendedor", id: s.id, nome: s.nome, email, criadoEm: s.criadoEm, inativo: !!s.inativoEm, descadastrado: true, proximoPasso: null }); continue; }
     const ctx = {
       ancora: Math.max(s.criadoEm || 0, lanc),
-      novo: (s.criadoEm || 0) >= lanc,
+      // Toda a base entra pelo começo: quem já tinha conta também recebe o
+      // boas-vindas (decisão do dono, 17/11/2026), contando a partir do lançamento.
+      novo: true,
       perfilCompleto: pendenciasPerfil(s).length === 0,
       inativo: !!s.inativoEm,
       indicacaoUsada: !!s.indicacaoUsada,
@@ -174,7 +176,7 @@ function avaliarTodos(agora) {
   }
 
   const empresas = db.prepare(`
-    SELECT c.id, c.nome AS empresa, c.nome, c.pais, u.id AS userId, u.email, u.ultimoAcessoEm
+    SELECT c.id, c.nome AS empresa, c.nome, c.pais, c.criadoEm, u.id AS userId, u.email, u.ultimoAcessoEm
     FROM companies c JOIN users u ON u.entityId = c.id AND u.role = 'empresa'
     WHERE u.email != ''`).all();
   for (const c of empresas) {
@@ -182,7 +184,8 @@ function avaliarTodos(agora) {
     if (!email) continue;
     if (fora.has(email)) { lista.push({ tipo: "empresa", id: c.id, nome: c.nome, email, descadastrado: true, proximoPasso: null }); continue; }
     const passo = proximoEmailEmpresa({
-      ultimaAtividade: Math.max(c.ultimoAcessoEm || 0, lanc),
+      // Último uso real (não o lançamento): empresa já parada entra na hora.
+      ultimaAtividade: Math.max(c.ultimoAcessoEm || 0, c.criadoEm || 0),
       enviados: enviados.get(`empresa:${c.id}`) || new Map(),
     }, agora);
     const espera = passo ? agora - (ultimoPorEmail.get(email) || 0) < INTERVALO_MIN_POR_PESSOA : false;

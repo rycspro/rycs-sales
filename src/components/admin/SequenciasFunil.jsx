@@ -271,7 +271,9 @@ export default function SequenciasFunil({ aviso }) {
     const r = await api("/admin/sequencias-email/rodar", {});
     setOcupado(false);
     if (r?.error) return aviso(r.error);
-    aviso(r?.tetoAtingido ? "Teto de hoje já atingido." : `${r?.enviados || 0} e-mail(s) enviado(s).`);
+    if (r?.ocupado) return aviso("Já existe um disparo em andamento. Aguarde e atualize.");
+    const n = r?.enviados || 0;
+    aviso(`${n} e-mail(s) enviado(s)${r?.falhas ? `, ${r.falhas} falha(s)` : ""}.${r?.tetoAtingido ? " Teto de hoje atingido; o resto sai amanhã." : n === 0 ? " Ninguém na fila agora." : ""}`);
     carregar();
     carregarDestinatarios();
   };
@@ -292,7 +294,7 @@ export default function SequenciasFunil({ aviso }) {
               Envia das 9h às 20h (Brasília), no máximo 1 por pessoa por dia. O teto diário sobe 50 por dia para aquecer o domínio.
             </div>
           </div>
-          <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={rodarAgora} disabled={ocupado || !dados.ligado}>Rodar agora</button>
+          <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={rodarAgora} disabled={ocupado || !dados.ligado}>{ocupado ? "Enviando…" : "Rodar agora"}</button>
         </div>
 
         <div className="vx-grid vx-g2" style={{ marginTop: 14, gap: 10 }}>
