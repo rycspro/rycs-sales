@@ -22,7 +22,7 @@ function CardCurso({ curso, abrir }) {
       <div className="vx-course-capa">
         <img src={curso.capa} alt="" loading="lazy" />
         <span className={"vx-badge " + (curso.gratuito ? "vx-badge-brand" : "vx-badge-amber")}>
-          {curso.gratuito ? "Gratuito" : `R$ ${Number(curso.preco).toFixed(2).replace(".", ",")}`}
+          {curso.totalAulas === 0 ? "Em preparação" : curso.gratuito ? "Gratuito" : `R$ ${Number(curso.preco).toFixed(2).replace(".", ",")}`}
         </span>
         {curso.certificado && (
           <span className="vx-badge vx-badge-indigo vx-course-cert"><Award size={11} /> Certificado</span>

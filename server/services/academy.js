@@ -4,6 +4,7 @@
 // partir daí a plataforma edita pelo painel e nada aqui depende de deploy.
 
 import { randomBytes } from "crypto";
+import { validarEdicaoCurso } from "../../shared/academy/validacao.js";
 import { CATALOGO_PLANEJADO } from "../../shared/academy/planejado.js";
 import db, { uid, agora } from "../db.js";
 import { CATALOGO_INICIAL, gerarCapa, NIVEIS_CURSO } from "../../shared/academy/catalogo.js";
@@ -19,6 +20,19 @@ const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; 
 // Curso já existente não é tocado: a plataforma pode tê-lo editado, e
 // sobrescrever apagaria esse trabalho.
 export function semearCatalogo() {
+  // Publicação única da edição de 134h: só os rascunhos originais, sem
+  // conteúdo, são promovidos. Edições e arquivamentos do admin são preservados.
+  db.transaction(() => {
+    const publicar = db.prepare(`UPDATE courses SET status = 'publicado', descricao = ?, atualizadoEm = ?
+      WHERE slug = ? AND status = 'rascunho' AND descricao = ?
+      AND (companyId IS NULL OR companyId = '')
+      AND NOT EXISTS (SELECT 1 FROM course_lessons WHERE courseId = courses.id)
+      AND NOT EXISTS (SELECT 1 FROM course_questions WHERE courseId = courses.id)`);
+    for (const curso of CATALOGO_PLANEJADO) {
+      publicar.run(curso.descricao, agora(), curso.slug,
+        curso.descricao.replace("Catálogo em preparação.", "Rascunho curricular."));
+    }
+  })();
   const existentes = new Set(db.prepare("SELECT slug FROM courses").all().map((c) => c.slug));
   const novos = [...CATALOGO_INICIAL, ...CATALOGO_PLANEJADO].filter((c) => !existentes.has(c.slug));
   if (!novos.length) return 0;
@@ -115,6 +129,11 @@ export function criarCurso(dados) {
 }
 
 export function atualizarCurso(id, dados) {
+  const atual = db.prepare("SELECT id, gratuito, preco FROM courses WHERE id = ?").get(id);
+  if (!atual) return { erro: "Curso não encontrado" };
+  const erro = validarEdicaoCurso(atual, dados);
+  if (erro) return { erro };
+  if (dados?.gratuito === true) dados = { ...dados, preco: 0 };
   const campos = ["titulo", "subtitulo", "descricao", "categoria", "nivel", "professor",
     "capa", "requisitos", "funcao", "gratuito", "preco", "notaMinima", "status", "ordem"];
   const sets = [];
@@ -224,6 +243,9 @@ export function matricular({ courseId, sellerId }) {
   const curso = db.prepare("SELECT id, gratuito, status FROM courses WHERE id = ?").get(courseId);
   if (!curso) return { erro: "Curso não encontrado" };
   if (curso.status !== "publicado") return { erro: "Curso ainda não publicado" };
+
+  if (!db.prepare("SELECT 1 FROM course_lessons WHERE courseId = ? LIMIT 1").get(courseId))
+    return { erro: "Este curso está em preparação. As aulas ainda não estão disponíveis." };
 
   // Curso pago exige compra. Não existe caminho no código que matricule em
   // curso pago sem pagamento confirmado — liberar por engano aqui seria dar

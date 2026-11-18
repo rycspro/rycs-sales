@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Archive, Award, BookOpen, Copy, Eye, EyeOff, GraduationCap, Plus, Users,
+  Archive, Award, BookOpen, Copy, Eye, EyeOff, GraduationCap, Pencil, Plus, Users,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { Stat, Vazio, Medidor } from "../ui.jsx";
@@ -29,6 +29,36 @@ export default function AcademyAdmin({ aviso }) {
   const [criando, setCriando] = useState(false);
   const [rascunho, setRascunho] = useState(() => JSON.stringify(MODELO, null, 2));
   const [salvando, setSalvando] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [erroEdicao, setErroEdicao] = useState("");
+
+  const editar = (curso) => {
+    setErroEdicao("");
+    setEditando({ id: curso.id, titulo: curso.titulo, subtitulo: curso.subtitulo || "",
+      descricao: curso.descricao || "", requisitos: curso.requisitos || "",
+      categoria: curso.categoria, nivel: curso.nivel, professor: curso.professor || "",
+      gratuito: curso.gratuito, preco: curso.preco, notaMinima: curso.notaMinima });
+  };
+  const salvarEdicao = async (e) => {
+    e.preventDefault();
+    setErroEdicao("");
+    if (!editando.titulo.trim()) return setErroEdicao("Informe o título do curso.");
+    const preco = editando.gratuito ? 0 : Number(editando.preco);
+    if (!Number.isFinite(preco) || preco < 0 || (!editando.gratuito && preco <= 0))
+      return setErroEdicao("Informe um preço maior que zero para o curso pago.");
+    const notaMinima = Number(editando.notaMinima);
+    if (!Number.isFinite(notaMinima) || notaMinima < 1 || notaMinima > 100)
+      return setErroEdicao("A nota mínima deve estar entre 1 e 100.");
+    setSalvando(true);
+    try {
+      const { id, ...campos } = editando;
+      const r = await apiPatch(`/admin/courses/${id}`, { ...campos, titulo: campos.titulo.trim(), preco, notaMinima });
+      if (r?.error) return setErroEdicao(r.error);
+      setEditando(null);
+      await carregar();
+      aviso("Curso atualizado.");
+    } finally { setSalvando(false); }
+  };
 
   const carregar = async () => {
     const [c, s] = await Promise.all([api("/courses?todos=1"), api("/admin/courses/stats")]);
@@ -122,6 +152,41 @@ export default function AcademyAdmin({ aviso }) {
         </div>
       )}
 
+      {editando && (
+        <form className="vx-card" style={{ padding: 18, marginTop: 16 }} onSubmit={salvarEdicao}>
+          <h2 className="vx-disp" style={{ fontSize: 18 }}>Editar curso</h2>
+          <div className="vx-grid vx-g2">
+            {[["titulo", "Título"], ["subtitulo", "Subtítulo"], ["professor", "Professor"]].map(([campo, label]) => (
+              <label key={campo}>{label}<input className="vx-input" value={editando[campo]}
+                required={campo === "titulo"} onChange={(e) => setEditando({ ...editando, [campo]: e.target.value })} /></label>
+            ))}
+            <label>Categoria<select className="vx-input" value={editando.categoria} onChange={(e) => setEditando({ ...editando, categoria: e.target.value })}>
+              {[...new Set([...CATEGORIAS, editando.categoria])].map((c) => <option key={c}>{c}</option>)}
+            </select></label>
+            <label>Nível<select className="vx-input" value={editando.nivel} onChange={(e) => setEditando({ ...editando, nivel: e.target.value })}>
+              {Object.entries(NIVEIS_CURSO).map(([k, v]) => <option key={k} value={k}>{v.nome}</option>)}
+            </select></label>
+            <label>Acesso<select className="vx-input" value={editando.gratuito ? "gratuito" : "pago"} onChange={(e) => setEditando({ ...editando, gratuito: e.target.value === "gratuito" })}>
+              <option value="gratuito">Gratuito</option><option value="pago">Pago</option>
+            </select></label>
+            {!editando.gratuito && <label>Preço (R$)<input className="vx-input" type="number" min="0.01" step="0.01" required value={editando.preco}
+              onChange={(e) => setEditando({ ...editando, preco: e.target.value })} /></label>}
+            <label>Nota mínima (%)<input className="vx-input" type="number" min="1" max="100" required value={editando.notaMinima}
+              onChange={(e) => setEditando({ ...editando, notaMinima: e.target.value })} /></label>
+          </div>
+          {[["descricao", "Descrição"], ["requisitos", "Requisitos"]].map(([campo, label]) => (
+            <label key={campo} style={{ display: "block", marginTop: 12 }}>{label}<textarea className="vx-input" rows={3} value={editando[campo]}
+              onChange={(e) => setEditando({ ...editando, [campo]: e.target.value })} /></label>
+          ))}
+          {!editando.gratuito && <p className="vx-mut">O preço será exibido no catálogo quando houver aulas. A compra de cursos ainda não está disponível; cursos pagos não permitem matrícula sem compra.</p>}
+          {erroEdicao && <p className="vx-notice vx-notice-amber" role="alert">{erroEdicao}</p>}
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button className="vx-btn vx-btn-primary" type="submit" disabled={salvando}>{salvando ? "Salvando…" : "Salvar alterações"}</button>
+            <button className="vx-btn" type="button" disabled={salvando} onClick={() => setEditando(null)}>Cancelar</button>
+          </div>
+        </form>
+      )}
+
       {["publicado", "rascunho", "arquivado"].map((st) => (
         !porStatus[st].length ? null : (
           <div key={st} style={{ marginTop: 22 }}>
@@ -157,6 +222,7 @@ export default function AcademyAdmin({ aviso }) {
                             <EyeOff size={12} /> Despublicar
                           </button>
                         )}
+                        <button className="vx-btn vx-btn-sm" onClick={() => editar(c)}><Pencil size={12} /> Editar detalhes e preço</button>
                         <button className="vx-btn vx-btn-sm" onClick={() => duplicar(c)}><Copy size={12} /> Duplicar</button>
                         {c.status !== "arquivado" && (
                           <button className="vx-btn vx-btn-sm" onClick={() => mudarStatus(c, "arquivado")}>

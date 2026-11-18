@@ -172,6 +172,19 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
 
   const { curso, progresso, certificado } = dados;
 
+  if (curso.totalAulas === 0) return (
+    <div className="vx-fade">
+      <button className="vx-btn vx-btn-sm" onClick={voltar}><ArrowLeft size={13} /> Voltar</button>
+      <section className="vx-card" style={{ padding: 24, marginTop: 12 }}>
+        <span className="vx-badge vx-badge-amber">Em preparação</span>
+        <h1 className="vx-disp">{curso.titulo}</h1>
+        <p>{curso.subtitulo}</p>
+        <p className="vx-mut">{curso.descricao}</p>
+        <p>As aulas e avaliações ainda não estão disponíveis. Matrícula e certificação serão liberadas quando o conteúdo estiver pronto.</p>
+      </section>
+    </div>
+  );
+
   // ------------------------------------------------------- resultado ----
   if (fase === "resultado" && resultado) {
     return (
