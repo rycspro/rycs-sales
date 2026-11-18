@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, CircleDashed } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, CircleDashed, Download, RefreshCw, Search } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 
@@ -43,8 +43,11 @@ function Status({ ok, aviso, children }) {
   );
 }
 
-function StatusRastreio({ rastreio, gastoMeta }) {
+const quando = (ms) => (ms ? new Date(ms).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—");
+
+function StatusRastreio({ rastreio, gastoMeta, onSincronizar, sincronizando }) {
   const eventos = Object.entries(rastreio.eventos || {}).sort((a, b) => b[1].enviados - a[1].enviados);
+  const lf = rastreio.leadsFormulario || {};
   return (
     <div className="vx-card" style={{ padding: 16, marginBottom: 16 }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>Rastreamento</div>
@@ -56,7 +59,15 @@ function StatusRastreio({ rastreio, gastoMeta }) {
         {gastoMeta.status === "ok" && <Status ok>Gasto, impressões e cliques vêm da conta de anúncios RYCS SALES MACHINE.</Status>}
         {gastoMeta.status === "sem_token" && <Status>Gasto da Meta não conectado: crie o secret <code>META_ADS_TOKEN</code> para ver gasto e custo por conta.</Status>}
         {gastoMeta.status === "erro" && <Status aviso>Não foi possível buscar o gasto na Meta: {gastoMeta.erro}</Status>}
+        {!lf.conectado && <Status>Leads dos formulários instantâneos não conectados: crie o secret <code>META_ADS_TOKEN</code> (com a Página e a permissão de leads).</Status>}
+        {lf.conectado && !lf.erro && <Status ok>Leads dos formulários instantâneos: {num(lf.total)} importados · última busca {quando(lf.ultimoOkEm)}.</Status>}
+        {lf.conectado && lf.erro && <Status aviso>Não foi possível buscar os leads dos formulários: {lf.erro}</Status>}
       </div>
+      {lf.conectado && (
+        <button type="button" className="vx-btn vx-btn-sm" style={{ marginTop: 12, minHeight: 36, display: "inline-flex", alignItems: "center", gap: 6 }} onClick={onSincronizar} disabled={sincronizando}>
+          <RefreshCw size={14} aria-hidden="true" /> {sincronizando ? "Buscando leads…" : "Buscar leads agora"}
+        </button>
+      )}
       {eventos.length > 0 && (
         <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
           <span className="vx-mut" style={{ fontSize: 12, alignSelf: "center" }}>Enviados à Meta pelo servidor no período:</span>
@@ -105,7 +116,7 @@ function Barras({ titulo, dias, campo, formatar = num, foco, setFoco }) {
   );
 }
 
-function Historico({ dias, comGasto, titulo, onLimpar }) {
+function Historico({ dias, comGasto, comLeads, titulo, onLimpar }) {
   const [foco, setFoco] = useState(null);
   const d = foco != null ? dias[foco] : null;
   return (
@@ -115,10 +126,11 @@ function Historico({ dias, comGasto, titulo, onLimpar }) {
         {onLimpar && <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 36 }} onClick={onLimpar}>Ver todas as campanhas</button>}
       </div>
       <div className="vx-mut" aria-live="polite" style={{ fontSize: 12, minHeight: 18, marginBottom: 8, fontVariantNumeric: "tabular-nums" }}>
-        {d ? <>{diaCurto(d.dia)}: <b style={{ color: "var(--ink)" }}>{num(d.visitas)}</b> {d.visitas === 1 ? "visita" : "visitas"} · <b style={{ color: "var(--ink)" }}>{num(d.contas)}</b> {d.contas === 1 ? "conta" : "contas"}{comGasto && <> · <b style={{ color: "var(--ink)" }}>{brl(d.gasto)}</b> de gasto</>}</>
+        {d ? <>{diaCurto(d.dia)}: {comLeads && <><b style={{ color: "var(--ink)" }}>{num(d.leads)}</b> {d.leads === 1 ? "lead" : "leads"} · </>}<b style={{ color: "var(--ink)" }}>{num(d.visitas)}</b> {d.visitas === 1 ? "visita" : "visitas"} · <b style={{ color: "var(--ink)" }}>{num(d.contas)}</b> {d.contas === 1 ? "conta" : "contas"}{comGasto && <> · <b style={{ color: "var(--ink)" }}>{brl(d.gasto)}</b> de gasto</>}</>
           : "Passe o mouse num dia para ver os números."}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 18 }}>
+        {comLeads && <Barras titulo="Leads do formulário" dias={dias} campo="leads" foco={foco} setFoco={setFoco} />}
         <Barras titulo="Visitas" dias={dias} campo="visitas" foco={foco} setFoco={setFoco} />
         <Barras titulo="Contas criadas" dias={dias} campo="contas" foco={foco} setFoco={setFoco} />
         {comGasto && <Barras titulo="Gasto" dias={dias} campo="gasto" formatar={brl} foco={foco} setFoco={setFoco} />}
@@ -142,12 +154,12 @@ function preencherDias(diasComDados, periodo) {
   const lista = [];
   for (let t = primeiro; chaveDia(t) <= chaveDia(hoje) && lista.length < 800; t += DIA) {
     const k = chaveDia(t);
-    if (!lista.length || lista[lista.length - 1].dia !== k) lista.push(porDia.get(k) || { dia: k, visitas: 0, contas: 0, gasto: 0 });
+    if (!lista.length || lista[lista.length - 1].dia !== k) lista.push(porDia.get(k) || { dia: k, visitas: 0, contas: 0, leads: 0, gasto: 0 });
   }
   return lista;
 }
 
-const COLUNAS = "minmax(220px,2fr) repeat(3,minmax(72px,.7fr)) repeat(4,minmax(92px,.8fr)) minmax(90px,.8fr) minmax(90px,.8fr) minmax(120px,1fr)";
+const COLUNAS = "minmax(220px,2fr) repeat(2,minmax(80px,.7fr)) repeat(3,minmax(72px,.7fr)) repeat(4,minmax(92px,.8fr)) minmax(90px,.8fr) minmax(90px,.8fr) minmax(120px,1fr)";
 
 function Celula({ valor, sub }) {
   return (
@@ -173,6 +185,8 @@ function LinhaGrupo({ g, marcos, nivel, aberto, onAlternar, selecionado, temGast
   const conteudo = (
     <>
       {Nome}
+      <Celula valor={num(g.leads)} sub={temGasto && g.custoPorLead != null ? `${brl(g.custoPorLead)} cada` : null} />
+      <Celula valor={num(g.leadsConta)} sub={g.leads ? taxa(g.leadsConta, g.leads) : null} />
       <Celula valor={num(g.visitas)} sub={g.abriram ? `${num(g.abriram)} abriram` : null} />
       <Celula valor={num(g.contas)} />
       <Celula valor={taxa(g.contas, g.visitas)} />
@@ -202,9 +216,9 @@ function TabelaCampanhas({ dados, abertos, alternar, selecionada }) {
   return (
     <div className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
       <div style={{ overflowX: "auto" }}>
-        <div style={{ minWidth: 1180 }}>
+        <div style={{ minWidth: 1360 }}>
           <div className="vx-mut" style={{ display: "grid", gridTemplateColumns: COLUNAS, gap: 10, padding: "10px 14px", fontSize: 11.5, fontWeight: 600, borderBottom: "1px solid var(--border)" }}>
-            <span>Campanha → conjunto → anúncio</span><span>Visitas</span><span>Contas</span><span>Visita → conta</span>
+            <span>Campanha → conjunto → anúncio</span><span>Leads do formulário</span><span>Lead → conta</span><span>Visitas</span><span>Contas</span><span>Visita → conta</span>
             {marcos.map((m) => <span key={m.chave}>{m.label}</span>)}
             <span>Gasto</span><span>Custo por conta</span><span>Países</span>
           </div>
@@ -236,8 +250,87 @@ function TabelaCampanhas({ dados, abertos, alternar, selecionada }) {
       </div>
       {!campanhas.length && (
         <div className="vx-mut" style={{ padding: 28, textAlign: "center", fontSize: 13, lineHeight: 1.6 }}>
-          Nenhuma campanha com visitas ou contas neste período. Os anúncios precisam dos parâmetros de URL
-          (utm_campaign, utm_term, utm_content) para aparecer aqui.
+          Nenhuma campanha com leads, visitas ou contas neste período. Anúncios que levam ao site precisam dos parâmetros
+          de URL (utm_campaign, utm_term, utm_content); anúncios de formulário instantâneo aparecem depois da busca de leads.
+        </div>
+      )}
+    </div>
+  );
+}
+
+const csv = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+function baixarCsv(leads) {
+  const colunas = ["Data", "Nome", "E-mail", "Telefone", "Cidade", "País", "Campanha", "Conjunto", "Anúncio", "Formulário", "Criou conta", "Outras respostas"];
+  const linhas = leads.map((l) => [
+    new Date(l.em).toLocaleString("pt-BR"), l.nome, l.email, l.telefone, l.cidade, l.pais, l.campanha, l.conjunto, l.anuncio, l.formulario,
+    l.conta ? "sim" : "não", Object.entries(l.outros || {}).map(([k, v]) => `${k}: ${v}`).join(" | "),
+  ].map(csv).join(";"));
+  // BOM: o Excel abre acentos certo; ";" é o separador do Excel em português.
+  const blob = new Blob(["\ufeff" + [colunas.map(csv).join(";"), ...linhas].join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `leads-rycs-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function ListaLeads({ leads, titulo }) {
+  const id = useId();
+  const [busca, setBusca] = useState("");
+  const [semConta, setSemConta] = useState(false);
+  const [limite, setLimite] = useState(50);
+  const lista = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    return leads.filter((l) => (!semConta || !l.conta) &&
+      (!termo || `${l.nome} ${l.email} ${l.telefone} ${l.cidade} ${l.anuncio} ${l.conjunto}`.toLowerCase().includes(termo)));
+  }, [leads, busca, semConta]);
+  if (!leads.length) return null;
+  return (
+    <div className="vx-card" style={{ padding: 0, overflow: "hidden", marginTop: 16 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>Leads do formulário · {titulo} <span className="vx-mut" style={{ fontWeight: 500 }}>({num(lista.length)})</span></div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, color: "var(--ink-2)", minHeight: 36 }}>
+            <input type="checkbox" checked={semConta} onChange={(e) => setSemConta(e.target.checked)} /> Só quem ainda não criou conta
+          </label>
+          <label style={{ position: "relative", flex: "0 1 220px" }}>
+            <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }} id={`${id}-b`}>Buscar lead</span>
+            <Search size={14} color="var(--muted)" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} aria-hidden="true" />
+            <input className="vx-input" aria-labelledby={`${id}-b`} style={{ paddingLeft: 30 }} placeholder="Nome, e-mail, telefone" value={busca} onChange={(e) => setBusca(e.target.value)} />
+          </label>
+          <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 36, display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => baixarCsv(lista)}>
+            <Download size={14} aria-hidden="true" /> Exportar CSV
+          </button>
+        </div>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <div style={{ minWidth: 900 }}>
+          {lista.slice(0, limite).map((l) => (
+            <div key={l.id} style={{ display: "grid", gridTemplateColumns: "110px minmax(160px,1.2fr) minmax(200px,1.4fr) minmax(220px,1.6fr) 120px", gap: 10, alignItems: "center", padding: "10px 14px", borderBottom: "1px solid var(--border)", fontSize: 12.5 }}>
+              <span className="vx-mut" style={{ fontVariantNumeric: "tabular-nums" }}>{quando(l.em)}</span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: "block", fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.nome || "—"}</span>
+                <span className="vx-mut" style={{ fontSize: 11.5 }}>{[l.cidade, l.pais].filter(Boolean).join(" · ") || l.plataforma || ""}</span>
+              </span>
+              <span style={{ minWidth: 0, color: "var(--ink-2)" }}>
+                <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.email || "—"}</span>
+                <span className="vx-mut" style={{ fontSize: 11.5 }}>{l.telefone || ""}</span>
+              </span>
+              <span className="vx-mut" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${l.campanha} › ${l.conjunto} › ${l.anuncio}`}>
+                {l.organico ? "Orgânico" : `${l.conjunto || "—"} › ${l.anuncio || "—"}`}
+              </span>
+              <span>{l.conta
+                ? <span className="vx-badge vx-badge-brand">Criou conta</span>
+                : <span className="vx-badge vx-badge-muted">Sem conta</span>}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {!lista.length && <div className="vx-mut" style={{ padding: 24, textAlign: "center", fontSize: 13 }}>Nenhum lead com esses filtros.</div>}
+      {lista.length > limite && (
+        <div style={{ padding: 12, textAlign: "center" }}>
+          <button type="button" className="vx-btn vx-btn-sm" onClick={() => setLimite((n) => n + 100)}>Mostrar mais ({num(lista.length - limite)})</button>
         </div>
       )}
     </div>
@@ -253,6 +346,10 @@ export default function CampanhasAdmin() {
   const [erro, setErro] = useState("");
   const [abertos, setAbertos] = useState(() => new Set());
   const [selecionada, setSelecionada] = useState("");
+  const [leads, setLeads] = useState([]);
+  const [recarga, setRecarga] = useState(0);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [avisoSync, setAvisoSync] = useState("");
 
   useEffect(() => {
     setDados(null); setErro(""); setAbertos(new Set()); setSelecionada("");
@@ -261,7 +358,16 @@ export default function CampanhasAdmin() {
       if (!r || r.error) return setErro(r?.error || "Não foi possível carregar as campanhas.");
       setDados(r);
     });
-  }, [tipo, dias, origem]);
+    api(`/admin/campanhas/leads?${new URLSearchParams({ dias })}`).then((r) => setLeads(r?.leads || []));
+  }, [tipo, dias, origem, recarga]);
+
+  const sincronizar = async () => {
+    setSincronizando(true); setAvisoSync("");
+    const r = await api("/admin/campanhas/leads/sincronizar", {});
+    setSincronizando(false);
+    setAvisoSync(r?.error || `${num(r?.novos)} lead(s) novo(s) importado(s).`);
+    setRecarga((n) => n + 1);
+  };
 
   const alternar = (chave, campanha) => {
     setAbertos((s) => {
@@ -277,6 +383,13 @@ export default function CampanhasAdmin() {
     const base = selecionada ? dados.campanhas.find((c) => c.nome === selecionada)?.dias : dados.total.dias;
     return preencherDias(base || [], dias);
   }, [dados, selecionada, dias]);
+
+  // A lista segue a aba (profissionais/empresas) e a campanha aberta.
+  const leadsVisiveis = useMemo(() => {
+    if (!dados) return [];
+    const nomes = new Set(dados.campanhas.map((c) => c.nome));
+    return leads.filter((l) => (selecionada ? (l.campanha || "(sem campanha)") === selecionada : nomes.has(l.campanha || "(sem campanha)")));
+  }, [dados, leads, selecionada]);
 
   const t = dados?.total;
   const ultimoMarco = dados?.marcos?.[dados.marcos.length - 1];
@@ -315,9 +428,12 @@ export default function CampanhasAdmin() {
       {!dados && !erro && <div className="vx-card vx-skeleton" style={{ height: 260, marginBottom: 16 }} />}
 
       {dados && <>
-        <StatusRastreio rastreio={dados.rastreio} gastoMeta={dados.gastoMeta} />
+        <StatusRastreio rastreio={dados.rastreio} gastoMeta={dados.gastoMeta} onSincronizar={sincronizar} sincronizando={sincronizando} />
+        {avisoSync && <div className="vx-mut" role="status" style={{ fontSize: 12.5, marginTop: -8, marginBottom: 12 }}>{avisoSync}</div>}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10, marginBottom: 16 }}>
+          {t.leads > 0 && <Indicador label="Leads do formulário" valor={num(t.leads)} sub={`${num(t.leadsConta)} já criaram conta (${taxa(t.leadsConta, t.leads)})`} />}
+          {t.leads > 0 && t.temGasto && <Indicador label="Custo por lead" valor={t.custoPorLead != null ? brl(t.custoPorLead) : "—"} />}
           <Indicador label="Visitas" valor={num(t.visitas)} sub={t.abriram ? `${num(t.abriram)} abriram o cadastro` : null} />
           <Indicador label={`Contas de ${nomeTipo}`} valor={num(t.contas)} sub={`${taxa(t.contas, t.visitas)} das visitas`} />
           {t.temGasto && <Indicador label="Gasto" valor={brl(t.gasto)} sub={t.cliques ? `${num(t.cliques)} cliques no link` : null} />}
@@ -325,8 +441,9 @@ export default function CampanhasAdmin() {
           {ultimoMarco && <Indicador label={ultimoMarco.label} valor={num(t.marcos?.[ultimoMarco.chave])} sub={`${taxa(t.marcos?.[ultimoMarco.chave] || 0, t.contas)} das contas`} />}
         </div>
 
-        <Historico dias={serie} comGasto={!!t.temGasto} titulo={selecionada || "todas as campanhas"} onLimpar={selecionada ? () => setSelecionada("") : null} />
+        <Historico dias={serie} comGasto={!!t.temGasto} comLeads={t.leads > 0} titulo={selecionada || "todas as campanhas"} onLimpar={selecionada ? () => setSelecionada("") : null} />
         <TabelaCampanhas dados={dados} abertos={abertos} alternar={alternar} selecionada={selecionada} />
+        <ListaLeads leads={leadsVisiveis} titulo={selecionada || "todas as campanhas"} />
       </>}
     </div>
   );

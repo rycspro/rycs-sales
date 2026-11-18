@@ -41,15 +41,15 @@ const nomes = (o = {}) => [o.utm_campaign || SEM_CAMPANHA, o.utm_term || SEM_CON
 export function tipoPeloNome(nome) {
   const n = String(nome || "").toLowerCase();
   if (/prof|vendedor|seller|freelanc|sales ?rep/.test(n)) return "vendedor";
-  if (/empresa|company|business|b2b|negocio|negócio/.test(n)) return "empresa";
+  if (/empresa|compan|business|b2b|negocio|negócio/.test(n)) return "empresa";
   return "";
 }
 
 function novoGrupo(nome) {
-  return { nome, visitas: 0, abriram: 0, contas: 0, marcos: {}, paises: {}, depositos: {}, gasto: 0, impressoes: 0, cliques: 0, temGasto: false, dias: {} };
+  return { nome, visitas: 0, abriram: 0, contas: 0, leads: 0, leadsConta: 0, marcos: {}, paises: {}, depositos: {}, gasto: 0, impressoes: 0, cliques: 0, temGasto: false, dias: {} };
 }
 
-const dia = (g, d) => (g.dias[d] ||= { dia: d, visitas: 0, contas: 0, gasto: 0 });
+const dia = (g, d) => (g.dias[d] ||= { dia: d, visitas: 0, contas: 0, leads: 0, gasto: 0 });
 const mais = (obj, chave, n = 1) => { obj[chave] = (obj[chave] || 0) + n; };
 
 function fechar(g, filhos) {
@@ -57,18 +57,22 @@ function fechar(g, filhos) {
   return {
     ...resto,
     custoPorConta: g.temGasto && g.contas ? g.gasto / g.contas : null,
+    custoPorLead: g.temGasto && g.leads ? g.gasto / g.leads : null,
     dias: Object.values(dias).sort((a, b) => a.dia.localeCompare(b.dia)),
     ...(filhos && { [filhos.chave]: filhos.lista }),
   };
 }
 
-const ordenar = (a, b) => b.contas - a.contas || b.visitas - a.visitas || b.gasto - a.gasto || a.nome.localeCompare(b.nome);
+// Resultado = contas criadas + leads de formulário; depois visitas e gasto.
+const ordenar = (a, b) => (b.contas + b.leads) - (a.contas + a.leads) || b.visitas - a.visitas || b.gasto - a.gasto || a.nome.localeCompare(b.nome);
 
 // visitantes: [{ origem, em, papel }] — papel = qual cadastro abriu ("" se nenhum)
 // contas:     [{ origem, criadoEm, papel, pais, marcos, depositos: { BRL: 100 } }]
 // gastos:     [{ campanha, conjunto, anuncio, gasto, impressoes, cliques }] (por anúncio)
 // gastosDia:  [{ campanha, dia, gasto }]
-export function agruparCampanhas({ tipo, visitantes = [], contas = [], gastos = [], gastosDia = [] }) {
+// leads:      [{ campanha, conjunto, anuncio, em, conta }] — formulário instantâneo da Meta;
+//             `conta` = a pessoa já criou conta na plataforma
+export function agruparCampanhas({ tipo, visitantes = [], contas = [], gastos = [], gastosDia = [], leads = [] }) {
   const papel = tipo === "empresa" ? "empresa" : "vendedor";
 
   // 1) Tipo de cada campanha: sinais dos dois cadastros; sem sinal, o nome.
@@ -119,6 +123,16 @@ export function agruparCampanhas({ tipo, visitantes = [], contas = [], gastos = 
     }
   }
 
+  for (const l of leads) {
+    const n = [l.campanha || SEM_CAMPANHA, l.conjunto || SEM_CONJUNTO, l.anuncio || SEM_ANUNCIO];
+    if (!entra(n[0])) continue;
+    for (const g of grupos(n)) {
+      g.leads += 1;
+      if (l.conta) g.leadsConta += 1;
+      dia(g, chaveDia(l.em)).leads += 1;
+    }
+  }
+
   for (const x of gastos) {
     const n = [x.campanha || SEM_CAMPANHA, x.conjunto || SEM_CONJUNTO, x.anuncio || SEM_ANUNCIO];
     if (!entra(n[0])) continue;
@@ -147,3 +161,26 @@ export function agruparCampanhas({ tipo, visitantes = [], contas = [], gastos = 
 
   return { tipo: papel, marcos, total: fechar(total), campanhas: lista };
 }
+
+// field_data de um lead do formulário instantâneo → { nome, email, telefone, cidade, pais, outros }.
+// Os nomes padrão da Meta vêm em inglês; perguntas próprias ficam em `outros`.
+const PADRAO = { full_name: "nome", email: "email", phone_number: "telefone", city: "cidade", country: "pais" };
+export function lerCamposLead(fieldData = []) {
+  const lido = { nome: "", email: "", telefone: "", cidade: "", pais: "", outros: {} };
+  let primeiro = "", ultimo = "";
+  for (const campo of Array.isArray(fieldData) ? fieldData : []) {
+    const nome = String(campo?.name || "");
+    const valor = String((campo?.values || [])[0] ?? "").trim().slice(0, 300);
+    if (!nome || !valor) continue;
+    if (PADRAO[nome]) lido[PADRAO[nome]] = valor;
+    else if (nome === "first_name") primeiro = valor;
+    else if (nome === "last_name") ultimo = valor;
+    else lido.outros[nome.slice(0, 80)] = valor;
+  }
+  if (!lido.nome) lido.nome = [primeiro, ultimo].filter(Boolean).join(" ");
+  lido.email = lido.email.toLowerCase();
+  return lido;
+}
+
+// Últimos dígitos do telefone, para casar lead e conta mesmo com DDI/formatos diferentes.
+export const chaveTelefone = (v) => String(v || "").replace(/\D/g, "").slice(-10);

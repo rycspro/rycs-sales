@@ -9,6 +9,7 @@ import { META_PIXEL_ID } from "../../shared/metaPixel.js";
 import { jornadasVendedores, jornadasEmpresas } from "./jornada.js";
 import { capiAtiva } from "./metaConversoes.js";
 import { anunciosConectados, gastosMeta } from "./metaAnuncios.js";
+import { leadsRycs, statusLeadsRycs } from "./metaLeadsRycs.js";
 
 const DIA = 24 * 60 * 60 * 1000;
 const json = (texto) => { try { return JSON.parse(texto || "{}") || {}; } catch { return {}; } };
@@ -58,9 +59,12 @@ export async function relatorioCampanhas({ tipo = "vendedor", dias = 30, origem 
     catch (e) { gasto = { status: "erro", erro: String(e?.message || e).slice(0, 200) }; }
   }
 
+  // Leads de formulário instantâneo são sempre da Meta.
+  const leads = !origem || origem === "meta" ? leadsRycs({ desde }) : [];
+
   return {
-    ...agruparCampanhas({ tipo, visitantes, contas, gastos: dadosGasto?.gastos, gastosDia: dadosGasto?.gastosDia }),
+    ...agruparCampanhas({ tipo, visitantes, contas, gastos: dadosGasto?.gastos, gastosDia: dadosGasto?.gastosDia, leads }),
     gastoMeta: gasto,
-    rastreio: statusRastreio(desde),
+    rastreio: { ...statusRastreio(desde), leadsFormulario: statusLeadsRycs() },
   };
 }

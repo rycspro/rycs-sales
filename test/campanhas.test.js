@@ -40,8 +40,8 @@ test("campanhas de profissionais: só as do tipo, com contas, marcos, países e 
   // Ordem: mais contas, depois mais visitas (Mumbai teve 2).
   assert.deepEqual(c.conjuntos.map((s) => [s.nome, s.contas, s.gasto]), [["Mumbai", 1, 30], ["Delhi", 1, 10]]);
   assert.deepEqual(c.dias, [
-    { dia: "2026-11-10", visitas: 2, contas: 1, gasto: 30 },
-    { dia: "2026-11-11", visitas: 1, contas: 1, gasto: 10 },
+    { dia: "2026-11-10", visitas: 2, contas: 1, leads: 0, gasto: 30 },
+    { dia: "2026-11-11", visitas: 1, contas: 1, leads: 0, gasto: 10 },
   ]);
   assert.equal(r.total.contas, 2);
   assert.equal(r.total.gasto, 45);
@@ -65,4 +65,33 @@ test("sem UTM a conta cai em '(sem campanha)'; dia no fuso de Brasília; tipo pe
   assert.equal(tipoPeloNome("Cadastro Profissionais Índia"), "vendedor");
   assert.equal(tipoPeloNome("Empresas mundo"), "empresa");
   assert.equal(tipoPeloNome("Black Friday"), "");
+});
+
+test("leads de formulário instantâneo entram por campanha, com custo por lead e quantos viraram conta", () => {
+  const leads = [
+    { campanha: "[SELLERS] [INDIA]", conjunto: "[INDIA] [INGLES] [TODOS]", anuncio: "Ad 1", em: dia1, conta: true },
+    { campanha: "[SELLERS] [INDIA]", conjunto: "[INDIA] [INGLES] [TODOS]", anuncio: "Ad 1", em: dia1, conta: false },
+    { campanha: "[SELLERS] [INDIA]", conjunto: "[INDIA] [INGLES] [TODOS]", anuncio: "Ad 2", em: dia2, conta: false },
+    { campanha: "[COMPANIES] [WORLD]", conjunto: "x", anuncio: "y", em: dia2, conta: false },
+  ];
+  const gastosForm = [{ campanha: "[SELLERS] [INDIA]", conjunto: "[INDIA] [INGLES] [TODOS]", anuncio: "Ad 1", gasto: 3, impressoes: 10, cliques: 2 }];
+  const r = agruparCampanhas({ tipo: "vendedor", leads, gastos: gastosForm });
+  assert.deepEqual(r.campanhas.map((c) => c.nome), ["[SELLERS] [INDIA]"], "[COMPANIES] é campanha de empresas");
+  const c = r.campanhas[0];
+  assert.equal(c.leads, 3);
+  assert.equal(c.leadsConta, 1);
+  assert.equal(c.custoPorLead, 1);
+  assert.deepEqual(c.dias.map((d) => [d.dia, d.leads]), [["2026-11-10", 2], ["2026-11-11", 1]]);
+  assert.equal(agruparCampanhas({ tipo: "empresa", leads }).campanhas[0].nome, "[COMPANIES] [WORLD]");
+});
+
+test("campos do formulário: padrão da Meta, nome em duas partes e perguntas próprias", async () => {
+  const { lerCamposLead, chaveTelefone } = await import("../shared/campanhas.js");
+  assert.deepEqual(lerCamposLead([
+    { name: "first_name", values: ["Ravi"] }, { name: "last_name", values: ["Kumar"] },
+    { name: "email", values: [" Ravi@Exemplo.IN "] }, { name: "phone_number", values: ["+91 98765-43210"] },
+    { name: "years_of_experience", values: ["3"] }, { name: "vazio", values: [""] },
+  ]), { nome: "Ravi Kumar", email: "ravi@exemplo.in", telefone: "+91 98765-43210", cidade: "", pais: "", outros: { years_of_experience: "3" } });
+  assert.deepEqual(lerCamposLead("lixo"), { nome: "", email: "", telefone: "", cidade: "", pais: "", outros: {} });
+  assert.equal(chaveTelefone("+91 98765-43210"), "9876543210");
 });

@@ -33,16 +33,18 @@ Admin → **Campanhas** mostra o histórico de cada campanha, separado em **camp
 
 O tipo de cada campanha sai dos dados (qual cadastro as pessoas abriram e criaram). Enquanto não há dados, vale o nome: use "PROF" ou "EMP" no nome da campanha.
 
-### Gasto e custo por conta (opcional)
+### Leads dos formulários instantâneos, gasto e custo (token META_ADS_TOKEN)
 
-Para ver gasto, cliques e custo por conta, a RYCS precisa ler a conta de anúncios RYCS SALES MACHINE:
+Campanhas de **formulário instantâneo** (objetivo Leads, destino "no anúncio") não passam pelo site: o pixel não vê esses leads. A RYCS busca os leads na Meta a cada 10 minutos (ou no botão "Buscar leads agora") e mostra por campanha, conjunto e anúncio, quantos já criaram conta (mesmo e-mail ou telefone) e a lista para exportar em CSV. O mesmo token traz gasto, cliques, custo por lead e custo por conta.
 
 1. Configurações do negócio (Rycs Sales Machine) → Usuários → **Usuários do sistema** → adicionar (função Admin).
-2. **Atribuir ativos** → Contas de anúncios → RYCS SALES MACHINE → permissão de ver desempenho.
-3. **Gerar token** com a permissão `ads_read`.
+2. **Atribuir ativos**:
+   - Contas de anúncios → RYCS SALES MACHINE → ver desempenho;
+   - Páginas → **Rycs Sales Machine** → incluir acesso a **leads**.
+3. **Gerar token** no app da RYCS com as permissões `ads_read`, `leads_retrieval`, `pages_show_list`, `pages_read_engagement` e `pages_manage_ads`.
 4. GitHub → Settings → Secrets and variables → Actions → secret **`META_ADS_TOKEN`** → rodar o deploy.
 
-Sem esse token a aba funciona igual, só sem as colunas de gasto.
+Sem esse token a aba funciona só com os dados do site (visitas e contas). A Meta guarda os leads por 90 dias: a primeira busca traz todos desse período.
 
 ## Nos anúncios
 

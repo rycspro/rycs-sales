@@ -5,6 +5,8 @@
 export const META_PIXEL_ID = "1690802939434598";
 // Conta de anúncios "RYCS SALES MACHINE": de onde vem o gasto no admin (Campanhas).
 export const META_AD_ACCOUNT_ID = "4047463885388488";
+// Página "Rycs Sales Machine": dona dos formulários instantâneos (Lead Ads) da RYCS.
+export const META_PAGE_ID = "1500235606487832";
 
 // Escolha do visitante sobre cookies de marketing. Cookie (e não
 // localStorage) no domínio .rycs.pro, para valer igual em rycs.pro e no app.

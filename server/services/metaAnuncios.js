@@ -14,21 +14,26 @@ export const anunciosConectados = () => !!process.env.META_ADS_TOKEN;
 const CACHE_MS = 10 * 60 * 1000;
 const cache = new Map();
 
-async function insights(params) {
-  const conta = String(process.env.META_AD_ACCOUNT_ID || META_AD_ACCOUNT_ID).replace(/^act_/, "");
-  let url = new URL(`${GRAPH()}/act_${conta}/insights`);
-  for (const [k, v] of Object.entries({ ...params, limit: 500, access_token: process.env.META_ADS_TOKEN }))
+// GET na Graph API seguindo a paginação (até `maxPaginas`). O token nunca vai
+// para log: os erros levam só a mensagem da Meta.
+export async function lerGraph(caminho, params = {}, { token = process.env.META_ADS_TOKEN, maxPaginas = 20 } = {}) {
+  let url = new URL(`${GRAPH()}${caminho}`);
+  for (const [k, v] of Object.entries({ limit: 500, ...params, access_token: token }))
     url.searchParams.set(k, typeof v === "string" || typeof v === "number" ? String(v) : JSON.stringify(v));
   const linhas = [];
-  for (let pagina = 0; url && pagina < 20; pagina++) {
+  for (let pagina = 0; url && pagina < maxPaginas; pagina++) {
     const r = await fetch(url, { signal: AbortSignal.timeout(20_000) });
     const corpo = await r.json().catch(() => ({}));
     if (!r.ok || corpo.error) throw new Error(corpo.error?.message || `HTTP ${r.status}`);
-    linhas.push(...(corpo.data || []));
+    if (!Array.isArray(corpo.data)) return corpo;
+    linhas.push(...corpo.data);
     url = corpo.paging?.next ? new URL(corpo.paging.next) : null;
   }
   return linhas;
 }
+
+const contaAnuncios = () => String(process.env.META_AD_ACCOUNT_ID || META_AD_ACCOUNT_ID).replace(/^act_/, "");
+const insights = (params) => lerGraph(`/act_${contaAnuncios()}/insights`, params);
 
 // desde = 0 → todo o período da conta.
 export async function gastosMeta({ desde, ate }) {
