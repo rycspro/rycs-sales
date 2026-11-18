@@ -287,10 +287,13 @@ export async function rodada(agora = Date.now(), { ignorarJanela = false, ignora
 // enviar agora).
 export function destinatariosSequencias(agora = Date.now()) {
   const envios = new Map();
-  for (const r of db.prepare("SELECT destinatarioTipo, destinatarioId, chave, status, erro, enviadoEm FROM email_sequencia_envios ORDER BY enviadoEm").all()) {
+  for (const r of db.prepare("SELECT * FROM email_sequencia_envios ORDER BY enviadoEm").all()) {
     const k = `${r.destinatarioTipo}:${r.destinatarioId}`;
     if (!envios.has(k)) envios.set(k, []);
-    envios.get(k).push({ chave: r.chave.split("@")[0], status: r.status, erro: r.erro || "", em: r.enviadoEm });
+    envios.get(k).push({
+      chave: r.chave.split("@")[0], status: r.status, erro: r.erro || "", em: r.enviadoEm,
+      entregue: !!r.entregueEm, aberto: !!r.abertoEm, clicado: !!r.clicadoEm, devolvido: !!r.devolvidoEm, spam: !!r.spamEm,
+    });
   }
   return avaliarTodos(agora).lista.map((c) => ({
     tipo: c.tipo, id: c.id, nome: c.nome || "", email: c.email, criadoEm: c.criadoEm || null,

@@ -157,7 +157,7 @@ app.use(cors({
 }));
 
 // Os webhooks da Meta e do Stripe são assinados sobre o corpo cru; guardamos só nessas rotas.
-app.use(express.json({ limit: "15mb", verify: (req, _res, buf) => { if (req.originalUrl.startsWith("/api/webhooks/meta") || req.originalUrl.startsWith("/api/webhooks/stripe")) req.rawBody = buf; } }));
+app.use(express.json({ limit: "15mb", verify: (req, _res, buf) => { if (req.originalUrl.startsWith("/api/webhooks/meta") || req.originalUrl.startsWith("/api/webhooks/stripe") || req.originalUrl.startsWith("/api/webhooks/resend")) req.rawBody = buf; } }));
 app.use(cookieParser());
 
 const authLimiter = rateLimit({

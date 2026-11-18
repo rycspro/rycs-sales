@@ -123,9 +123,90 @@ function faseDe(d) {
   return `${base} · perfil ${d.perfilCompleto ? "completo" : "incompleto"}`;
 }
 
+const pctTxt = (v) => (v == null ? "—" : `${String(v).replace(".", ",")}%`);
+const KPIS = [
+  ["enviados", "Enviados", null],
+  ["taxaEntrega", "Entrega", "entregues"],
+  ["taxaAbertura", "Abertura", "abertos"],
+  ["taxaClique", "Cliques", "clicados"],
+  ["taxaCliqueSobreAbertura", "Clique / abertura", null],
+  ["taxaDevolucao", "Devolução", "devolvidos"],
+  ["taxaSpam", "Marcado como spam", "spam"],
+  ["taxaDescadastro", "Descadastro", "descadastros"],
+];
+
+// Desempenho dos e-mails: taxas no total e por e-mail da sequência.
+function Metricas({ m, ordem, onSincronizar, sincronizando }) {
+  if (!m) return <div className="vx-card" style={{ padding: 18, marginBottom: 14 }}>Carregando métricas…</div>;
+  const passos = ordem.filter((k) => m.passos[k]);
+  return (
+    <div className="vx-card" style={{ padding: 18, marginBottom: 14 }}>
+      <div className="vx-row" style={{ gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
+        <div>
+          <div className="vx-disp" style={{ fontSize: 15 }}>Desempenho dos e-mails</div>
+          <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.5 }}>
+            Abertura e cliques são sobre os entregues. Abertura é aproximada: alguns aplicativos (como o Mail do iPhone) abrem as imagens sozinhos.
+            {m.ultimoEvento ? ` Último evento do Resend: ${dataCurta(m.ultimoEvento)}.` : ""}
+          </div>
+        </div>
+        <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={onSincronizar} disabled={sincronizando}>
+          {sincronizando ? "Atualizando…" : "Atualizar pelo Resend"}
+        </button>
+      </div>
+      {!m.webhookConfigurado && (
+        <div style={{ marginTop: 12, padding: 12, borderRadius: 10, border: "1px solid var(--amber)", fontSize: 12.5, lineHeight: 1.6 }}>
+          <b>Falta ligar o webhook do Resend</b> para entrega, abertura e clique chegarem sozinhos. Enquanto isso, use "Atualizar pelo Resend".
+          No Resend: Webhooks → Add endpoint → <span className="vx-mono">https://app.rycs.pro/api/webhooks/resend</span>, com todos os eventos de e-mail;
+          copie o Signing secret e salve no GitHub como o segredo <span className="vx-mono">RESEND_WEBHOOK_SECRET</span>. Em Domains, ligue Open tracking e Click tracking.
+        </div>
+      )}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))", gap: 10, marginTop: 14 }}>
+        {KPIS.map(([k, rotulo, qtd]) => (
+          <div key={k} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 12 }}>
+            <div className="vx-mut" style={{ fontSize: 12 }}>{rotulo}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{k === "enviados" ? m.total.enviados : pctTxt(m.total[k])}</div>
+            {qtd && <div className="vx-mut" style={{ fontSize: 11.5 }}>{m.total[qtd]} {qtd === "abertos" ? "abriram" : qtd === "clicados" ? "clicaram" : ""}</div>}
+          </div>
+        ))}
+      </div>
+      {passos.length > 0 && (
+        <div style={{ overflowX: "auto", marginTop: 14 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+            <thead>
+              <tr style={{ textAlign: "right", color: "var(--muted)" }}>
+                <th scope="col" style={{ textAlign: "left", padding: "6px 8px" }}>E-mail</th>
+                {KPIS.map(([k, rotulo]) => <th key={k} scope="col" style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>{rotulo}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {passos.map((k) => (
+                <tr key={k} style={{ borderTop: "1px solid var(--border)", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                  <th scope="row" style={{ textAlign: "left", fontWeight: 500, padding: "8px", whiteSpace: "nowrap" }}>{nomePasso(k)}</th>
+                  {KPIS.map(([c]) => <td key={c} style={{ padding: "8px" }}>{c === "enviados" ? m.passos[k].enviados : pctTxt(m.passos[k][c])}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {m.linksMaisClicados?.length > 0 && (
+        <div style={{ marginTop: 14, fontSize: 12.5 }}>
+          <b>Links mais clicados</b>
+          {m.linksMaisClicados.map((l) => (
+            <div key={l.link} className="vx-row" style={{ gap: 10, padding: "4px 0", borderBottom: "1px solid var(--border)" }}>
+              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.link}</span>
+              <span className="vx-mono">{l.cliques}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const SITUACOES = [
   ["todos", "Todos"], ["recebeu", "Já recebeu algum"], ["nenhum", "Ainda não recebeu nenhum"],
-  ["fila", "Com e-mail na fila"], ["falhou", "Com falha"], ["descadastrado", "Descadastrados"], ["inativo", "Contas inativas"],
+  ["abriu", "Abriu algum"], ["clicou", "Clicou em algum"], ["naoabriu", "Recebeu e não abriu"], ["fila", "Com e-mail na fila"], ["falhou", "Com falha"], ["descadastrado", "Descadastrados"], ["inativo", "Contas inativas"],
 ];
 
 // Quem recebeu o quê, quem ainda não recebeu e o próximo e-mail de cada pessoa.
@@ -146,6 +227,9 @@ function Destinatarios({ lista }) {
     if (situacao === "recebeu" && !recebidos.length) return false;
     if (situacao === "nenhum" && recebidos.length) return false;
     if (situacao === "fila" && d.proximo?.status !== "na_fila") return false;
+    if (situacao === "abriu" && !d.envios.some((e) => e.aberto)) return false;
+    if (situacao === "clicou" && !d.envios.some((e) => e.clicado)) return false;
+    if (situacao === "naoabriu" && (!recebidos.length || d.envios.some((e) => e.aberto))) return false;
     if (situacao === "falhou" && !d.envios.some((e) => e.status === "falhou")) return false;
     if (situacao === "descadastrado" && !d.descadastrado) return false;
     if (situacao === "inativo" && !d.inativo) return false;
@@ -218,7 +302,8 @@ function Destinatarios({ lista }) {
                           border: `1px solid ${e.status === "enviado" ? "var(--border)" : "var(--red)"}`,
                           color: e.status === "enviado" ? "var(--ink)" : "var(--red)",
                         }}>
-                          {nomePasso(e.chave)} · {e.status === "enviado" ? dataCurta(e.em) : "falhou"}
+                          {nomePasso(e.chave)} · {e.status !== "enviado" ? "falhou"
+                            : e.spam ? "marcou como spam" : e.devolvido ? "devolvido" : e.clicado ? "clicou" : e.aberto ? "abriu" : e.entregue ? "entregue" : dataCurta(e.em)}
                         </span>
                       ))}
                     </div>
@@ -261,12 +346,25 @@ export default function SequenciasFunil({ aviso }) {
   const [ocupado, setOcupado] = useState(false);
   const [completa, setCompleta] = useState(false);
   const [destinatarios, setDestinatarios] = useState(null);
+  const [metricas, setMetricas] = useState(null);
+  const [sincronizando, setSincronizando] = useState(false);
+  const carregarMetricas = () => api("/admin/sequencias-email/metricas").then((r) => { if (r && !r.error) setMetricas(r); });
+  const sincronizar = async () => {
+    setSincronizando(true);
+    const r = await api("/admin/sequencias-email/sincronizar", {});
+    setSincronizando(false);
+    if (!r || r.erro || r.error) return aviso(r?.erro || r?.error || "Não foi possível consultar o Resend.");
+    aviso(`${r.verificados} e-mail(s) consultado(s), ${r.atualizados} atualizado(s)${r.falhas ? `, ${r.falhas} sem resposta` : ""}.`);
+    carregarMetricas();
+    carregarDestinatarios();
+  };
   const carregarDestinatarios = () => api("/admin/sequencias-email/destinatarios").then((r) => { if (Array.isArray(r?.destinatarios)) setDestinatarios(r.destinatarios); });
 
   const carregar = () => api("/admin/sequencias-email").then((r) => { if (r && !r.error) setDados(r); });
   useEffect(() => {
     carregar();
     carregarDestinatarios();
+    carregarMetricas();
     api("/admin/sequencias-email/modelos").then((r) => { if (r?.chaves) setChaves(r.chaves); });
   }, []);
   useEffect(() => {
@@ -289,6 +387,7 @@ export default function SequenciasFunil({ aviso }) {
     aviso(`${n} e-mail(s) enviado(s)${r?.falhas ? `, ${r.falhas} falha(s)` : ""}.${n === 0 ? " Ninguém na fila agora." : ""}`);
     carregar();
     carregarDestinatarios();
+    carregarMetricas();
   };
 
   if (!dados) return <div className="vx-card" style={{ padding: 20, marginBottom: 20 }}>Carregando sequências automáticas…</div>;
@@ -326,6 +425,8 @@ export default function SequenciasFunil({ aviso }) {
           ))}
         </div>
       </div>
+
+      <Metricas m={metricas} ordem={[...Object.keys(NOMES_PASSO), ...chaves.filter((k) => !NOMES_PASSO[k])]} onSincronizar={sincronizar} sincronizando={sincronizando} />
 
       <Destinatarios lista={destinatarios} />
 

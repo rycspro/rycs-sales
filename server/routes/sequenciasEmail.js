@@ -4,6 +4,7 @@ import {
 import { CHAVES_TEXTOS, PASSOS_EMPRESA_OFFLINE } from "../../shared/sequenciasEmail.js";
 import { sendEmail } from "../services/email.js";
 import db from "../db.js";
+import { assinaturaResendValida, registrarEventoResend, sincronizarStatusResend, metricasSequencias } from "../services/emailMetricas.js";
 
 // Público (sem login): descadastro pelo link do rodapé e pelo botão
 // "cancelar inscrição" do Gmail (POST one-click, RFC 8058).
@@ -36,11 +37,28 @@ sequenciasPublico.post("/email/descadastro", (req, res) => {
   res.send(pagina("Pronto", "Você não vai mais receber os e-mails de acompanhamento da RYCS."));
 });
 
+// Eventos do Resend (entregue, aberto, clicado, devolvido, spam). Assinado
+// pelo Svix com RESEND_WEBHOOK_SECRET; sem o segredo, recusa tudo.
+sequenciasPublico.post("/webhooks/resend", (req, res) => {
+  const corpo = req.rawBody ? req.rawBody.toString("utf8") : null;
+  const ok = assinaturaResendValida({
+    id: req.headers["svix-id"], timestamp: req.headers["svix-timestamp"], assinatura: req.headers["svix-signature"], corpo,
+  });
+  if (!ok) return res.status(401).json({ error: "Assinatura inválida." });
+  res.json({ ok: true, resultado: registrarEventoResend(req.headers["svix-id"], req.body) });
+});
+
 // Admin: acompanhamento, prévia e teste.
 const router = Router();
 const soAdmin = (req, res, next) => (req.user?.role === "admin" ? next() : res.status(403).json({ error: "Apenas administradores." }));
 
 router.get("/admin/sequencias-email", soAdmin, (req, res) => res.json(resumoSequencias()));
+
+// Entrega, abertura, clique, devolução, spam e descadastro, por e-mail e no total.
+router.get("/admin/sequencias-email/metricas", soAdmin, (req, res) => res.json(metricasSequencias()));
+
+// Pergunta ao Resend o status dos e-mails já enviados (antes do webhook).
+router.post("/admin/sequencias-email/sincronizar", soAdmin, async (req, res) => res.json(await sincronizarStatusResend()));
 
 // Quem já recebeu cada e-mail, o que falhou e o próximo previsto de cada pessoa.
 router.get("/admin/sequencias-email/destinatarios", soAdmin, (req, res) => res.json({ destinatarios: destinatariosSequencias() }));
