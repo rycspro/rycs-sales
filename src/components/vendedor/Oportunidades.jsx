@@ -517,6 +517,9 @@ function PopoverFiltro({ Icon, rotulo, valorLabel, largura = 240, children }) {
           position: "fixed", left: pos.left, top: pos.top, width: pos.width, zIndex: 1300,
           background: "var(--surface-solid, #fff)", border: "1px solid var(--border)", borderRadius: 12,
           boxShadow: "0 10px 34px rgba(20,30,45,.16)", overflow: "hidden",
+          // Portado para o document.body (fora de .vx-app): precisa declarar a
+          // fonte editorial, senão herda a fonte do body e sai diferente da página.
+          fontFamily: "'General Sans','Inter',system-ui,-apple-system,sans-serif", color: "var(--ink)",
         }}>
           {children(() => setAberto(false))}
         </div>, document.body)}
