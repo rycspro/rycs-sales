@@ -2315,6 +2315,35 @@ adicionarColuna("referrals", "regra", "TEXT DEFAULT 'v1'");
 adicionarColuna("referrals", "ativadaEm", "INTEGER");
 adicionarColuna("referrals", "pagamentoEm", "INTEGER");
 
+// Avaliação Julgamento Situacional Profissional (instrumento autoral situacional
+// rycs-julgamento-situacional-v1-25) — tabela própria, separada das demais.
+// Persiste versão, idioma, versão do gabarito (coluna `chave`), versão do
+// algoritmo, respostas (letra por questão), pontuação (acertos totais e por
+// competência, dentro de `resultado`) e data de conclusão. Compartilhamento
+// privado por padrão (= 0). O resultado NUNCA toca perfilComercial, score,
+// ranking ou campanhas.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS julgamento_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    idioma TEXT DEFAULT '',
+    chave TEXT DEFAULT '',
+    algoritmo TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_julgamento_assessments_seller_versao ON julgamento_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_julgamento_assessments_seller ON julgamento_assessments(sellerId, iniciadoEm DESC);
+`);
+
 
 export default db;
 export { uid, agora };
