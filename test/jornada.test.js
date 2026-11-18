@@ -58,7 +58,7 @@ test("rotas da jornada: evento público, vínculo no cadastro e relatório só p
   await req("/jornada/evento", { body: { visitanteId: vid, evento: "cadastro_aberto", papel: "empresa" } });
   await req("/jornada/evento", { body: { visitanteId: vid, evento: "cadastro_etapa", papel: "empresa", etapa: "acesso" } });
 
-  r = await req("/onboarding/criar-conta", { body: { email: "jornada@exemplo.invalid", senha: "12345678", nomeEmpresa: "Empresa Jornada", pais: "BR", visitanteId: vid } });
+  r = await req("/onboarding/criar-conta", { body: { email: "jornada@exemplo.invalid", senha: "12345678", nomeEmpresa: "Empresa Jornada", pais: "BR", logo: { base64: "QUFBQQ==", mimetype: "image/png" }, visitanteId: vid } });
   assert.equal(r.status, 200);
   const cookieEmpresa = r.cookie;
 

@@ -42,10 +42,20 @@ const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
 const CONFIRMAR_EMAIL_EXPIRA_MS = 24 * 60 * 60 * 1000;
 
 onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
-  const { email, senha, nomeEmpresa, pais } = req.body || {};
+  const { email, senha, nomeEmpresa, pais, logo } = req.body || {};
   if (!email || !senha) return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
   if (!nomeEmpresa || !String(nomeEmpresa).trim())
     return res.status(400).json({ error: "Nome da empresa é obrigatório.", campo: "nomeEmpresa" });
+
+  // Logo obrigatório já na criação da conta: é a identidade da empresa na
+  // vitrine. Validação de tipo/tamanho/SVG seguro é a mesma do onboarding.
+  if (!logo?.base64 || !logo?.mimetype)
+    return res.status(400).json({ error: "Envie o logo da empresa.", campo: "logo" });
+  const logoBytes = Math.round((String(logo.base64).length * 3) / 4);
+  const logoSvgTexto = logo.mimetype === "image/svg+xml" ? Buffer.from(logo.base64, "base64").toString("utf8") : "";
+  const erroLogo = avaliarLogo({ mimetype: logo.mimetype, tamanhoBytes: logoBytes, svgTexto: logoSvgTexto });
+  if (erroLogo) return res.status(400).json({ error: erroLogo, campo: "logo" });
+  const logoUri = `data:${logo.mimetype};base64,${logo.base64}`;
 
   const emailNorm = String(email).toLowerCase().trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm))
@@ -72,8 +82,8 @@ onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
   const expira = agora() + CONFIRMAR_EMAIL_EXPIRA_MS;
   const t = agora();
 
-  db.prepare(`INSERT INTO companies (id, nome, produto, documento, pais, moeda, criadoEm) VALUES (?, ?, '', '', ?, ?, ?)`)
-    .run(companyId, nomeFinal, paisCode, moedaEmpresa, t);
+  db.prepare(`INSERT INTO companies (id, nome, produto, documento, pais, moeda, logo, criadoEm) VALUES (?, ?, '', '', ?, ?, ?, ?)`)
+    .run(companyId, nomeFinal, paisCode, moedaEmpresa, logoUri, t);
   db.prepare(`INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, emailVerificado, emailConfirmToken, emailConfirmExpira, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, 0, ?, ?, ?)`)
     .run(userId, emailNorm, hash, companyId, tokenHash, expira, t);
   criarOnboarding({ companyId, origem: "site", caminho: "livre", acessoConcluido: true });

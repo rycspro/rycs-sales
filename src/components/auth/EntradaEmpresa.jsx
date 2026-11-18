@@ -1,12 +1,12 @@
-import { useEffect, useId, useState } from "react";
-import { MailCheck } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { MailCheck, ImagePlus, Trash2 } from "lucide-react";
 import { CampoSenha } from "../ui.jsx";
 import RecuperarSenha from "./RecuperarSenha.jsx";
 import MolduraAuth from "./MolduraAuth.jsx";
 import { api } from "../../lib/api.js";
 import { dadosRastreio, rastrear } from "../../lib/rastreio.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
-import { SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboarding.js";
+import { SENHA_MIN_EMPRESA, validarSenhaEmpresa, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
 import { useI18n } from "../../lib/i18n.jsx";
 import { PAISES, paisPadraoPorLocale, moedaDoPais } from "../../../shared/paises.js";
 
@@ -22,6 +22,8 @@ export default function EntradaEmpresa() {
   const [modo, setModo] = useState("criar"); // criar | link-enviado | recuperar
   const [email, setEmail] = useState("");
   const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [logo, setLogo] = useState(null); // { dataUri, mimetype } — só no navegador até criar a conta
+  const inputLogo = useRef(null);
   const [pais, setPais] = useState(() => paisPadraoPorLocale(locale));
   const [senha, setSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
@@ -32,10 +34,31 @@ export default function EntradaEmpresa() {
   const [salvando, setSalvando] = useState(false);
   useEffect(() => { rastrear("cadastro_aberto", { papel: "empresa" }); }, []);
 
+  const escolherLogo = async (arquivo) => {
+    if (inputLogo.current) inputLogo.current.value = "";
+    if (!arquivo) return;
+    setErros((e) => { const { logo: _l, ...resto } = e; return resto; });
+    try {
+      const svgTexto = arquivo.type === "image/svg+xml" ? await arquivo.text() : "";
+      const erro = avaliarLogo({ mimetype: arquivo.type, tamanhoBytes: arquivo.size, svgTexto });
+      if (erro) { setErros((e) => ({ ...e, logo: erro })); return; }
+      const dataUri = await new Promise((ok, falha) => {
+        const r = new FileReader();
+        r.onerror = () => falha(r.error);
+        r.onload = () => ok(String(r.result));
+        r.readAsDataURL(arquivo);
+      });
+      setLogo({ dataUri, mimetype: arquivo.type });
+    } catch {
+      setErros((e) => ({ ...e, logo: "Não foi possível ler o arquivo. Tente outro." }));
+    }
+  };
+
   const enviarCriarConta = async (e) => {
     e.preventDefault();
     rastrear("cadastro_etapa", { papel: "empresa", etapa: "acesso" });
     const novos = {};
+    if (!logo) novos.logo = "Envie o logo da empresa.";
     if (!nomeEmpresa.trim()) novos.nomeEmpresa = "Nome da empresa é obrigatório.";
     if (!pais) novos.pais = "Selecione o país da empresa.";
     if (!EMAIL_RE.test(email.trim())) novos.email = "E-mail inválido.";
@@ -54,6 +77,7 @@ export default function EntradaEmpresa() {
       senha,
       nomeEmpresa: nomeEmpresa.trim(),
       pais,
+      logo: { base64: logo.dataUri.split(",")[1], mimetype: logo.mimetype },
       ...dadosRastreio(),
     });
     setSalvando(false);
@@ -123,6 +147,31 @@ export default function EntradaEmpresa() {
 
         <form onSubmit={enviarCriarConta} noValidate>
           {erroGeral && <div className="vx-onb-erro" role="alert" style={{ marginBottom: 14 }}>{erroGeral}</div>}
+
+          <div className="vx-onb-campo">
+            <span className="vx-label" id={`${id}-logo-rotulo`}>Logo da empresa <span style={{ color: "var(--red)", fontWeight: 600 }}>· obrigatório</span></span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 12, flexShrink: 0, display: "grid", placeItems: "center", overflow: "hidden", background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--muted)" }} aria-hidden={!logo}>
+                {logo ? <img src={logo.dataUri} alt="Logo escolhido" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <ImagePlus size={22} aria-hidden="true" />}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="button" className="vx-btn" style={{ minHeight: 44 }}
+                  aria-describedby={[`${id}-logo-rotulo`, `${id}-logo-dica`, erros.logo && `${id}-logo-erro`].filter(Boolean).join(" ")}
+                  onClick={() => inputLogo.current?.click()}>
+                  {logo ? "Trocar logo" : "Enviar logo"}
+                </button>
+                {logo && (
+                  <button type="button" className="vx-btn vx-btn-ghost" style={{ minHeight: 44 }} onClick={() => setLogo(null)}>
+                    <Trash2 size={15} aria-hidden="true" /> Remover
+                  </button>
+                )}
+              </div>
+              <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                onChange={(e) => escolherLogo(e.target.files?.[0])} />
+            </div>
+            <div id={`${id}-logo-dica`} className="vx-onb-dica">Envie o <b>logo oficial da sua empresa</b> (não uma foto pessoal). PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
+            {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
+          </div>
 
           <div className="vx-onb-campo">
             <label className="vx-label" htmlFor={`${id}-nome`}>Nome da empresa</label>
