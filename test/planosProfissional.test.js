@@ -13,20 +13,21 @@ const DIA = 86_400_000;
 
 test("mensalidade cheia em reais vem de um lugar só", () => {
   assert.equal(PLANOS_PROFISSIONAL.gratis.preco, 0);
-  assert.equal(PLANOS_PROFISSIONAL.pro.preco, 29.9);
-  assert.equal(PLANOS_PROFISSIONAL.premium.preco, 69.9);
+  assert.equal(PLANOS_PROFISSIONAL.start.preco, 24.9);
+  assert.equal(PLANOS_PROFISSIONAL.pro.preco, 47.9);
+  assert.equal(PLANOS_PROFISSIONAL.premium.preco, 97.9);
 });
 
 test("ciclos seguem a regra da empresa: semestral -15%, anual -30%", () => {
-  assert.equal(valorProfissionalNoCiclo("pro", "MENSAL"), 29.9);
-  assert.equal(mensalidadeProfissional("pro", "SEMESTRAL"), 25.42);
-  assert.equal(valorProfissionalNoCiclo("pro", "SEMESTRAL"), 152.52);
-  assert.equal(mensalidadeProfissional("pro", "ANUAL"), 20.93);
-  assert.equal(valorProfissionalNoCiclo("pro", "ANUAL"), 251.16);
-  assert.equal(valorProfissionalNoCiclo("premium", "MENSAL"), 69.9);
-  assert.equal(valorProfissionalNoCiclo("premium", "SEMESTRAL"), 356.52);
-  assert.equal(valorProfissionalNoCiclo("premium", "ANUAL"), 587.16);
-  assert.equal(valorProfissionalNoCiclo("pro", "qualquer"), 29.9); // ciclo inválido = mensal
+  assert.equal(valorProfissionalNoCiclo("pro", "MENSAL"), 47.9);
+  assert.equal(mensalidadeProfissional("pro", "SEMESTRAL"), 40.71);
+  assert.equal(valorProfissionalNoCiclo("pro", "SEMESTRAL"), 244.26);
+  assert.equal(mensalidadeProfissional("pro", "ANUAL"), 33.53);
+  assert.equal(valorProfissionalNoCiclo("pro", "ANUAL"), 402.36);
+  assert.equal(valorProfissionalNoCiclo("premium", "MENSAL"), 97.9);
+  assert.equal(valorProfissionalNoCiclo("premium", "SEMESTRAL"), 499.32);
+  assert.equal(valorProfissionalNoCiclo("premium", "ANUAL"), 822.36);
+  assert.equal(valorProfissionalNoCiclo("pro", "qualquer"), 47.9); // ciclo inválido = mensal
 });
 
 test("planos da empresa continuam separados", () => {

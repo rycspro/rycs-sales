@@ -85,7 +85,7 @@ test("textos: todos em PT e EN, assunto com o nome, um botão e valores das regr
   assert.match(op.paragrafos.join(" "), /R\$ 1,50/);
   assert.match(op.paragrafos.join(" "), /30% da primeira mensalidade/);
   const pl = montarTexto("graduacao:planos", "pt", { nome: "Ana" }).paragrafos.join(" ");
-  assert.match(pl, /R\$ 29,90 por mês/);
+  assert.match(pl, /R\$ 47,90 por mês/);
   assert.ok(!pl.includes("NaN"));
   const emp = montarTexto("empresas_offline:d3@2026-11-17", "pt", { nome: "Acme Ltda", empresa: "Acme Ltda" });
   assert.match(emp.assunto, /^Acme Ltda,/);
