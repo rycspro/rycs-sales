@@ -378,7 +378,7 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
       {/* ───────────── Cabeçalho ───────────── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 18 }}>
         <div>
-          <h1 className="vx-disp" style={{ fontSize: 26, margin: "0 0 6px" }}>Skill Lab</h1>
+          <h1 className="vx-disp" style={{ fontSize: 26, margin: "0 0 6px" }}>Skill Labs</h1>
           <p className="vx-mut" style={{ fontSize: 14, margin: 0, maxWidth: 560, lineHeight: 1.6 }}>
             Descubra suas habilidades, conheça seu perfil e acompanhe seu desenvolvimento profissional.
           </p>
