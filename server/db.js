@@ -2328,6 +2328,9 @@ adicionarColuna("sellers", "inativoEm", "INTEGER");
 adicionarColuna("sellers", "inativoMotivo", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "bonusIndicacaoBlocos", "INTEGER DEFAULT 0");
 adicionarColuna("users", "ultimoAcessoEm", "INTEGER");
+// WhatsApp de marketing da empresa: aceite no cadastro e pedido para sair.
+adicionarColuna("companies", "whatsappMarketingEm", "INTEGER");
+adicionarColuna("companies", "whatsappMarketingSaiuEm", "INTEGER");
 // Indicações: 'v1' é a regra antiga (valor fixo no pagamento) e continua
 // valendo para quem já estava pendente. 'v2' paga a ativação da empresa e um
 // percentual da primeira mensalidade, cada um uma única vez.

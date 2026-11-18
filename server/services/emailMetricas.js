@@ -127,7 +127,7 @@ export function metricasSequencias() {
   for (const l of linhas) {
     const m = (por[l.passo] = por[l.passo] || vazio());
     for (const alvo of [m, total]) {
-      if (l.status !== "enviado") { alvo.falhas++; continue; }
+      if (l.status !== "enviado") { if (l.status === "falhou") alvo.falhas++; continue; }
       alvo.enviados++;
       if (l.entregueEm) alvo.entregues++;
       if (l.abertoEm) alvo.abertos++;

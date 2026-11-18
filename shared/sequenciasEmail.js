@@ -43,7 +43,10 @@ export const SEQUENCIAS = {
   indicacoes: { nome: "Indicações", publico: "vendedor" },
   graduacao: { nome: "Graduação", publico: "vendedor" },
   repescagem: { nome: "Repescagem", publico: "vendedor" },
-  empresas_offline: { nome: "Empresas offline", publico: "empresa" },
+  // Desligada: substituída pela reativação (shared/reativacaoEmpresas.js). Fica
+  // aqui só para o histórico de envios aparecer no painel.
+  empresas_offline: { nome: "Empresas offline (desligada)", publico: "empresa" },
+  reativacao_empresas: { nome: "Reativação de empresas", publico: "empresa" },
 };
 export const ORDEM_SEQUENCIAS = Object.keys(SEQUENCIAS);
 
@@ -81,19 +84,6 @@ export function proximoEmailVendedor(ctx, agora) {
       { chave: `repescagem:ultima@${ep}`, quando: !!em("novas") && agora - em("novas") >= 4 * DIA },
     ];
     for (const p of rep) if (p.quando && !ja(p.chave)) return { ...p, seq: "repescagem" };
-  }
-  return null;
-}
-
-// Empresa parada: um e-mail por dia durante 7 dias.
-export const PASSOS_EMPRESA_OFFLINE = 7;
-export function proximoEmailEmpresa(ctx, agora) {
-  const parado = diasDesde(ctx.ultimaAtividade, agora);
-  if (parado < DIAS_INATIVIDADE) return null;
-  const ep = episodio(ctx.ultimaAtividade);
-  for (let i = 0; i < PASSOS_EMPRESA_OFFLINE; i++) {
-    const chave = `empresas_offline:d${i + 1}@${ep}`;
-    if (parado >= DIAS_INATIVIDADE + i && !ctx.enviados.has(chave)) return { chave, seq: "empresas_offline", passo: i };
   }
   return null;
 }
@@ -352,38 +342,6 @@ const TEXTOS = {
   },
 };
 
-// Empresa parada: 7 mensagens curtas, uma por dia, cada uma com um motivo.
-const OFFLINE_PT = [
-  ["{n}, sua campanha está esperando", "Faz alguns dias que ninguém da {e} entra na RYCS. Os profissionais continuam disponíveis para a sua campanha."],
-  ["{n}, tem profissional pronto para vender", "Há profissionais com perfil completo esperando campanhas. Entre e veja quem combina com a {e}."],
-  ["{n}, quanto custa ficar parado", "Cada dia sem campanha ativa é um dia sem reuniões no funil da {e}."],
-  ["{n}, retome em 5 minutos", "Abra o painel, revise a campanha e publique. A IA da RYCS ajuda com o script."],
-  ["{n}, você aprova cada ação", "As ações dos profissionais só são pagas depois que você aprova. Vale reativar a campanha da {e}."],
-  ["{n}, precisa de ajuda?", "Se algo travou no uso da plataforma, responda este e-mail que a equipe RYCS ajuda."],
-  ["{n}, último lembrete", "Este é o último lembrete desta semana. Quando quiser voltar, o painel da {e} está do jeito que você deixou."],
-];
-const OFFLINE_EN = [
-  ["{n}, your campaign is waiting", "No one from {e} has logged in to RYCS for a few days. Professionals are still available for your campaign."],
-  ["{n}, professionals are ready to sell", "There are professionals with complete profiles waiting for campaigns. Log in and see who fits {e}."],
-  ["{n}, the cost of standing still", "Every day without an active campaign is a day without meetings in {e}'s pipeline."],
-  ["{n}, get back in 5 minutes", "Open the dashboard, review your campaign and publish. RYCS AI helps with the script."],
-  ["{n}, you approve every action", "Professionals' actions are only paid after you approve them. It's worth reactivating {e}'s campaign."],
-  ["{n}, need help?", "If something got stuck, reply to this email and the RYCS team will help."],
-  ["{n}, last reminder", "This is the last reminder this week. Whenever you come back, {e}'s dashboard is just as you left it."],
-];
-
-function textoEmpresaOffline(passo, idioma, d) {
-  const [assunto, corpo] = (idioma === "en" ? OFFLINE_EN : OFFLINE_PT)[passo];
-  const f = (t, html) => t.replace("{n}", html ? esc(d.n) : d.n).replace("{e}", html ? `<b>${esc(d.empresa)}</b>` : d.empresa);
-  return {
-    assunto: f(assunto, false),
-    titulo: f(assunto, false).replace(/^[^,]+,\s*/, "").replace(/^./, (c) => c.toUpperCase()),
-    paragrafos: [f(corpo, true)],
-    botao: idioma === "en" ? "Open my dashboard" : "Abrir meu painel",
-    aba: "inicio",
-  };
-}
-
 const RODAPE = { pt: "Equipe RYCS", en: "The RYCS team" };
 export const TEXTO_DESCADASTRO = {
   pt: "Não quer mais receber estes e-mails? Descadastre-se",
@@ -395,12 +353,8 @@ export const TEXTO_DESCADASTRO = {
 export function montarTexto(chave, idioma, dados) {
   const lang = idioma === "en" ? "en" : "pt";
   const base = chave.split("@")[0];
-  // Profissional: primeiro nome. Empresa: o nome da empresa inteiro.
-  const empresa = base.startsWith("empresas_offline:");
-  const d = { ...dados, n: (empresa ? String(dados.nome || "").trim() : primeiroNome(dados.nome)) || (lang === "en" ? "Hi" : "Olá") };
-  const t = empresa
-    ? textoEmpresaOffline(dados.passo ?? (Number(base.split(":d")[1]) - 1), lang, d)
-    : TEXTOS[base]?.[lang]?.(d);
+  const d = { ...dados, n: primeiroNome(dados.nome) || (lang === "en" ? "Hi" : "Olá") };
+  const t = TEXTOS[base]?.[lang]?.(d);
   if (!t) return null;
   return { ...t, rodape: RODAPE[lang], textoDescadastro: TEXTO_DESCADASTRO[lang] };
 }

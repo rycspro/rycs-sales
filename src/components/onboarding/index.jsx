@@ -32,6 +32,7 @@ function AcessoLogado({ estado, email, aoAtualizar, aoAvancar }) {
   const id = useId();
   const concluida = estado.etapas.acesso === "concluida";
   const [whatsapp, setWhatsapp] = useState(estado.whatsapp ? formatarWhatsapp(estado.whatsapp) : "");
+  const [whatsappMarketing, setWhatsappMarketing] = useState(!!estado.whatsappMarketing);
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
 
@@ -40,7 +41,7 @@ function AcessoLogado({ estado, email, aoAtualizar, aoAvancar }) {
     if (!normalizarWhatsapp(whatsapp)) { setErro("Informe um WhatsApp válido, com DDD."); return; }
     setErro("");
     setSalvando(true);
-    const r = await api("/onboarding/acesso", { whatsapp });
+    const r = await api("/onboarding/acesso", { whatsapp, whatsappMarketing });
     setSalvando(false);
     if (!r || r.error) { setErro(r?.error || "Não foi possível salvar. Tente de novo."); return; }
     aoAtualizar(r);
@@ -69,6 +70,11 @@ function AcessoLogado({ estado, email, aoAtualizar, aoAvancar }) {
             <div id={`${id}-dica`} className="vx-onb-dica">Com DDD.</div>
             {erro && <div id={`${id}-erro`} className="vx-onb-erro" role="alert">{erro}</div>}
           </div>
+          <label htmlFor={`${id}-mkt`} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, cursor: "pointer", marginBottom: 8 }}>
+            <input id={`${id}-mkt`} type="checkbox" checked={whatsappMarketing} onChange={(e) => setWhatsappMarketing(e.target.checked)}
+              style={{ width: 20, height: 20, flexShrink: 0 }} />
+            <span className="vx-onb-dica" style={{ margin: 0 }}>Quero receber novidades e dicas da RYCS pelo WhatsApp. Dá para parar quando quiser.</span>
+          </label>
           <Acoes salvando={salvando} rotuloContinuar={concluida ? "Salvar e continuar" : "Continuar"} />
         </form>
       </section>

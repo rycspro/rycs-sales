@@ -157,6 +157,11 @@ router.post("/onboarding/acesso", (req, res) => {
   const whatsapp = normalizarWhatsapp(req.body?.whatsapp);
   if (!whatsapp) return res.status(400).json({ error: "Informe um WhatsApp válido, com DDD.", campo: "whatsapp" });
   db.prepare("UPDATE companies SET whatsapp = ? WHERE id = ?").run(whatsapp, req.user.entityId);
+  // Aceite de novidades por WhatsApp (opcional; marcar de novo vale como novo aceite).
+  if (req.body?.whatsappMarketing === true)
+    db.prepare("UPDATE companies SET whatsappMarketingEm = COALESCE(whatsappMarketingEm, ?), whatsappMarketingSaiuEm = NULL WHERE id = ?").run(Date.now(), req.user.entityId);
+  else if (req.body?.whatsappMarketing === false)
+    db.prepare("UPDATE companies SET whatsappMarketingEm = NULL WHERE id = ?").run(req.user.entityId);
   const linha = concluir(req.user.entityId, "acesso");
   if (!linha) return res.status(409).json({ error: "Não foi possível concluir esta etapa." });
   res.json(serializar(linha));

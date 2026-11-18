@@ -1,7 +1,8 @@
 import { Router } from "express";
 import {
   emailDoParametro, validarDescadastro, descadastrar, resumoSequencias, montarEmail, rodada, destinatariosSequencias } from "../services/sequenciasEmail.js";
-import { CHAVES_TEXTOS, PASSOS_EMPRESA_OFFLINE } from "../../shared/sequenciasEmail.js";
+import { CHAVES_TEXTOS } from "../../shared/sequenciasEmail.js";
+import * as reativacao from "../services/reativacaoEmpresas.js";
 import { sendEmail } from "../services/email.js";
 import db from "../db.js";
 import { assinaturaResendValida, registrarEventoResend, sincronizarStatusResend, metricasSequencias } from "../services/emailMetricas.js";
@@ -65,17 +66,14 @@ router.get("/admin/sequencias-email/destinatarios", soAdmin, (req, res) => res.j
 
 // Lista de todos os e-mails possíveis, para a prévia.
 router.get("/admin/sequencias-email/modelos", soAdmin, (req, res) => {
-  const chaves = [...CHAVES_TEXTOS, ...Array.from({ length: PASSOS_EMPRESA_OFFLINE }, (_, i) => `empresas_offline:d${i + 1}`)];
-  res.json({ chaves });
+  res.json({ chaves: CHAVES_TEXTOS });
 });
 
 function exemplo(chave, idioma, email) {
-  const empresa = chave.startsWith("empresas_offline:");
   return montarEmail({
-    tipo: empresa ? "empresa" : "vendedor", chave, idioma: idioma === "en" ? "en" : "pt", email,
-    nome: empresa ? "Empresa Exemplo" : "Maria Silva", empresa: "Empresa Exemplo", userId: null,
-    passo: empresa ? Number(chave.split(":d")[1]) - 1 : undefined,
-    seller: empresa ? null : { foto: "", bio: "", titulo: "Vendedora", disponibilidade: "integral", cidade: "São Paulo", segmentos: "[\"SaaS\"]", modalidades: "[\"remoto\"]", skills: "[\"prospecção\"]" },
+    tipo: "vendedor", chave, idioma: idioma === "en" ? "en" : "pt", email,
+    nome: "Maria Silva", empresa: "Empresa Exemplo", userId: null,
+    seller: { foto: "", bio: "", titulo: "Vendedora", disponibilidade: "integral", cidade: "São Paulo", segmentos: "[\"SaaS\"]", modalidades: "[\"remoto\"]", skills: "[\"prospecção\"]" },
   }, { campanhasAtivas: db.prepare("SELECT COUNT(*) AS n FROM campaigns WHERE status = 'ativa'").get().n, empresasNovasSemana: 0 });
 }
 
@@ -109,6 +107,23 @@ router.post("/admin/sequencias-email/rodar", soAdmin, async (req, res) => {
     if (r.tetoAtingido || !r.enviados || (r.falhas || 0) >= 3) break;
   }
   res.json({ ...total, tetoAtingido: !!r.tetoAtingido });
+});
+
+// ─── Reativação de empresas ────────────────────────────────────────────────
+// Configuração, pendências, métricas e a última simulação da rodada.
+router.get("/admin/reativacao", soAdmin, (req, res) => res.json(reativacao.painel()));
+
+// DRY_RUN: quem receberia o quê hoje (o dia inteiro), sem enviar nem gravar.
+router.get("/admin/reativacao/simulacao", soAdmin, (req, res) =>
+  res.json(reativacao.resumirPlano(reativacao.planejar(Date.now(), { diaInteiro: true }))));
+
+// Teste interno: todos os e-mails e os modelos aprovados para um e-mail e um número.
+router.post("/admin/reativacao/teste", soAdmin, async (req, res) => {
+  const email = String(req.body?.email || "").trim();
+  const numero = String(req.body?.numero || "").trim();
+  if (!email && !numero) return res.status(400).json({ error: "Informe um e-mail ou um número." });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "E-mail inválido." });
+  res.json(await reativacao.enviarTeste({ email, numero }));
 });
 
 export default router;

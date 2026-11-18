@@ -111,7 +111,8 @@ export function emailComprovantePagamento({ nome, email, tipo = "campanha", valo
 }
 
 // `opcoes.headers` permite o cabeçalho List-Unsubscribe dos e-mails de
-// sequência; `opcoes.text` é a versão em texto puro.
+// sequência; `opcoes.text` é a versão em texto puro; `opcoes.from`,
+// `opcoes.replyTo` e `opcoes.tags` (Resend) trocam remetente, resposta e tags.
 export async function sendEmail(to, subject, html, opcoes = {}) {
   if (!RESEND_KEY) {
     console.log(`[EMAIL] Para: ${to} | Assunto: ${subject}`);
@@ -124,9 +125,11 @@ export async function sendEmail(to, subject, html, opcoes = {}) {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_KEY}` },
       body: JSON.stringify({
-        from: FROM, to, subject, html,
+        from: opcoes.from || FROM, to, subject, html,
         ...(opcoes.text ? { text: opcoes.text } : {}),
         ...(opcoes.headers ? { headers: opcoes.headers } : {}),
+        ...(opcoes.replyTo ? { reply_to: opcoes.replyTo } : {}),
+        ...(opcoes.tags?.length ? { tags: opcoes.tags } : {}),
       }),
       signal: AbortSignal.timeout(8000),
     });

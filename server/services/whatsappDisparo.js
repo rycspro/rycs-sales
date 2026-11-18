@@ -93,11 +93,16 @@ const normalizar = (t) => semAcento(t).trim().toLowerCase().replace(/[.!]+$/, ""
 const PALAVRAS_SAIR = new Set(["stop", "stop messages", "parar", "parar mensagens", "sair", "cancelar",
   "descadastrar", "nao quero receber", "nao quero mais receber", "unsubscribe", "agora nao", "not now"].map(normalizar));
 
+// Exceção: "Agora não" da reativação de empresas (payload "reativacao:agora_nao:…")
+// é só uma resposta, não um pedido para sair.
 export function descadastrados() {
-  const rows = db.prepare(`SELECT de, texto FROM whatsapp_mensagens
+  const rows = db.prepare(`SELECT de, texto, json_extract(dados, '$.button.payload') AS payload FROM whatsapp_mensagens
     WHERE tipo IN ('text','button','interactive') AND length(texto) <= 40`).all();
   const s = new Set();
-  for (const r of rows) if (PALAVRAS_SAIR.has(normalizar(r.texto))) for (const x of variacoes(String(r.de))) s.add(x);
+  for (const r of rows) {
+    if (String(r.payload || "").startsWith("reativacao:") && !String(r.payload).startsWith("reativacao:parar")) continue;
+    if (PALAVRAS_SAIR.has(normalizar(r.texto))) for (const x of variacoes(String(r.de))) s.add(x);
+  }
   return s;
 }
 
@@ -258,6 +263,17 @@ export async function enviarTemplate({ numero, tpl, componentes }) {
   const r = await graph(`/${NUMERO_ID()}/messages`, { token: TOKEN(), metodo: "POST", dados: corpo });
   return r.messages?.[0]?.id || "";
 }
+
+// Texto livre: só vale dentro da janela de 24h aberta por uma mensagem da pessoa.
+export async function enviarTexto({ numero, texto }) {
+  const corpo = { messaging_product: "whatsapp", recipient_type: "individual", to: numero, type: "text", text: { body: texto } };
+  const r = await graph(`/${NUMERO_ID()}/messages`, { token: TOKEN(), metodo: "POST", dados: corpo });
+  return r.messages?.[0]?.id || "";
+}
+
+// Erro da Meta que vale para tudo (token, conta, número limitado): parar de enviar.
+export const erroFatal = (err) => err instanceof ErroMeta && (err.tokenInvalido || ERROS_FATAIS.has(err.codigo));
+export { descreverErro };
 
 // ── Disparo ───────────────────────────────────────────────────────────
 
