@@ -8,6 +8,7 @@ import { emailBoasVindas, emailResetSenha } from "../services/email.js";
 import { vincularIndicacao } from "../services/indicacoes.js";
 import { sequenciasLigadas } from "../services/sequenciasEmail.js";
 import { vincularVisitante } from "../services/jornada.js";
+import { registrarCadastroMeta } from "../services/metaConversoes.js";
 import { validarSenhaEmpresa, normalizarWhatsapp, conviteServeParaEmail, MOTIVOS_CONVITE_ONBOARDING, podeReenviarReset, avaliarLogo } from "../../shared/onboarding.js";
 import { normalizarTelefoneIntl, PAISES } from "../../shared/localidades.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
@@ -234,6 +235,7 @@ router.post("/auth/register", async (req, res) => {
   // Vínculo de indicação: nada é creditado agora, só registrado.
   if (indicacao) vincularIndicacao(indicacao, userId, role);
   vincularVisitante(userId, req.body);
+  registrarCadastroMeta(req, userId, role);
 
   const token = signToken({ id: userId, role, entityId });
   res.cookie("sm_token", token, COOKIE_OPTS);

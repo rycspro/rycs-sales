@@ -66,6 +66,7 @@ import { iniciarSequenciasEmail } from "./services/sequenciasEmail.js";
 import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
 import planosProfissionalRoutes from "./routes/planosProfissional.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
+import { iniciarConversoesMeta } from "./services/metaConversoes.js";
 import { semearCatalogo, sincronizarCursoInterativo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
@@ -376,6 +377,7 @@ app.listen(PORT, () => {
   iniciarWorker();
   iniciarWorkerIA();
   iniciarWorkerMeta();
+  iniciarConversoesMeta();
   iniciarSequenciasEmail();
   retomarDisparosWhatsapp();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,

@@ -11,6 +11,7 @@ import {
 import { hashToken, novoToken, criarOnboarding, obterOnboarding, concluir, serializar, trialDoOnboarding } from "../services/onboarding.js";
 import { registrarEvento, metricas as metricasOnboarding } from "../services/onboardingEventos.js";
 import { vincularVisitante } from "../services/jornada.js";
+import { registrarCadastroMeta } from "../services/metaConversoes.js";
 import { emailConfirmacaoConta } from "../services/email.js";
 import { armazenamentoDisponivel, salvar, remover, ArquivoGrandeDemais } from "../services/arquivos.js";
 import { motorAtual, geracaoAtual, serializarGeracao, criarGeracao, tentarDeNovo } from "../services/iaOnboarding.js";
@@ -89,6 +90,7 @@ onboardingPublico.post("/onboarding/criar-conta", async (req, res) => {
   criarOnboarding({ companyId, origem: "site", caminho: "livre", acessoConcluido: true });
   registrarEvento(companyId, "criou_conta", { caminho: "livre" });
   vincularVisitante(userId, req.body);
+  registrarCadastroMeta(req, userId, "empresa");
 
   await emailConfirmacaoConta(nomeFinal, emailNorm, token, FRONTEND);
 

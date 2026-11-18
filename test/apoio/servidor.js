@@ -21,7 +21,7 @@ async function tentarSubir(dbPath, envExtra) {
   const env = { ...process.env, DB_PATH: dbPath, PORT: String(porta), JWT_SECRET: SEGREDO, NODE_ENV: "test", DEV_SEM_LOGIN: "" };
   // Vazias, não apagadas: o servidor carrega o .env local com dotenv, que só
   // preenche o que não existe. Apagar faria o teste mandar e-mail de verdade.
-  Object.assign(env, { RESEND_API_KEY: "", ANTHROPIC_API_KEY: "", ASAAS_API_KEY: "", S3_BUCKET: "", BUCKET: "" });
+  Object.assign(env, { RESEND_API_KEY: "", ANTHROPIC_API_KEY: "", ASAAS_API_KEY: "", S3_BUCKET: "", BUCKET: "", META_CAPI_TOKEN: "" });
   delete env.NODE_TEST_CONTEXT; // senão o servidor se comporta como processo de teste
   Object.assign(env, envExtra);
   const filho = spawn(process.execPath, ["server/index.js"], { env, stdio: ["ignore", "pipe", "pipe"] });

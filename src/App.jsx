@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { api } from "./lib/api.js";
-import { dadosRastreio } from "./lib/rastreio.js";
+import { cadastroConcluido, dadosRastreio } from "./lib/rastreio.js";
+import AvisoCookies from "./components/AvisoCookies.jsx";
 import { seed } from "./lib/seed.js";
 import { NAV } from "./lib/constants.js";
 import { CSS } from "./styles.js";
@@ -235,6 +236,7 @@ export default function App() {
     const r = await api("/auth/register", { ...dados, ...dadosRastreio() });
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error, campo: r.campo }; }
     if (r?.id) {
+      cadastroConcluido(r.role);
       const entrar = async () => {
         // Limpa a URL de cadastro/onboarding para não sobreviver a um F5.
         window.history.replaceState({}, "", "/");
@@ -313,7 +315,7 @@ export default function App() {
   const rotaLoginExplicita = /^\/(entrar|login)\/?$/i.test(window.location.pathname);
   const rotaCadastro = rota.tipo === "cadastro" || rota.tipo === "escolha" || rotaLoginExplicita;
   if (!user || rotaCadastro) {
-    if (rota.tipo === "landing") return <div className="vx-app"><style>{CSS}</style><Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><LandingPage /></Suspense></div>;
+    if (rota.tipo === "landing") return <div className="vx-app"><style>{CSS}</style><Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><LandingPage /></Suspense><AvisoCookies /></div>;
     return (
       <div className="vx-app">
         <style>{CSS}</style>
@@ -328,6 +330,7 @@ export default function App() {
                 onRegister={(d) => registrar(d, { silencioso: true })} onLogin={(e, s) => login(e, s, { silencioso: true })} />
           : rota.tipo === "confirmar-email" ? <ConfirmarEmail token={rota.token} onLogin={loginDireto} />
           : <Login onLogin={login} beta={environment === "beta"} />}
+        <AvisoCookies />
         {toast && (
           <div className="vx-fade" style={{
             position: "fixed", bottom: 30, left: 16, right: 16, zIndex: 50, maxWidth: 480, margin: "0 auto",

@@ -66,7 +66,8 @@ export function limparOrigem(origem) {
   for (const campo of CAMPOS_ORIGEM) {
     const v = origem[campo];
     if (v == null || v === "") continue;
-    limpo[campo] = String(v).slice(0, 120);
+    // fbclid/gclid passam de 120 caracteres, e cortados não servem para a Meta/Google.
+    limpo[campo] = String(v).slice(0, campo === "fbclid" || campo === "gclid" ? 500 : 120);
   }
   return limpo;
 }

@@ -5,7 +5,7 @@ import RecuperarSenha from "./RecuperarSenha.jsx";
 import MolduraAuth from "./MolduraAuth.jsx";
 import ComboSelect from "../ui/ComboSelect.jsx";
 import { api } from "../../lib/api.js";
-import { dadosRastreio, rastrear } from "../../lib/rastreio.js";
+import { cadastroConcluido, dadosRastreio, rastrear } from "../../lib/rastreio.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
 import { SENHA_MIN_EMPRESA, validarSenhaEmpresa, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
 import { useI18n } from "../../lib/i18n.jsx";
@@ -88,6 +88,7 @@ export default function EntradaEmpresa() {
       else setErroGeral(r?.error || "Não foi possível criar a conta. Tente de novo.");
       return;
     }
+    cadastroConcluido("empresa");
     // Conta criada: entra direto na plataforma; a confirmação de e-mail fica para depois.
     if (r.autenticado) { window.location.href = "/"; return; }
     setModo("link-enviado");

@@ -140,6 +140,14 @@
     .btn-outline { background: rgba(255,255,255,.025); color: var(--ink); border-color: var(--border-strong); }
     .btn-outline:hover { transform: translateY(-2px); background: rgba(255,255,255,.065); border-color: rgba(153,181,240,.38); }
     .btn-lg { padding: 15px 30px; font-size: 15px; border-radius: 13px; }
+    /* Aviso de cookies (LGPD): o pixel da Meta só carrega depois do aceite. */
+    .cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60; max-width: 560px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 48px rgba(0,0,0,.45); }
+    .cookies[hidden] { display: none; }
+    .cookies p { margin: 0; flex: 1 1 260px; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+    .cookies-acoes { display: flex; gap: 8px; }
+    .cookies .btn { min-height: 44px; }
+    .cookies .btn:focus-visible, .link-cookies:focus-visible { outline: 2px solid var(--brand-600); outline-offset: 2px; }
+    .link-cookies { background: none; border: 0; padding: 0; margin-top: 8px; min-height: 44px; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
     .btn-nav { padding: 9px 16px; font-size: 12.5px; }
 
     .hero {
@@ -562,10 +570,46 @@
       </div>
       <div class="footer-bottom">
         © 2026 RYCS Sales Machine. Todos os direitos reservados.<br>
-        RYCS SALES MACHINE INOVA SIMPLES (I.S.) · CNPJ 69.802.687/0001-85
+        RYCS SALES MACHINE INOVA SIMPLES (I.S.) · CNPJ 69.802.687/0001-85<br>
+        <button type="button" class="link-cookies" id="preferencias-cookies">Preferências de cookies</button>
       </div>
     </div>
   </footer>
+
+  <div class="cookies" id="aviso-cookies" role="region" aria-label="Aviso de cookies" hidden>
+    <p>Usamos cookies para saber de qual anúncio cada cadastro veio e melhorar nossas campanhas na Meta (Facebook e Instagram). Recusar não muda nada no uso da plataforma.</p>
+    <div class="cookies-acoes">
+      <button type="button" class="btn btn-outline" data-cookies="recusado">Recusar</button>
+      <button type="button" class="btn btn-primary" data-cookies="aceito">Aceitar</button>
+    </div>
+  </div>
+
+  <script>
+    // Pixel da Meta (RYCS Plataforma), só depois do aceite de cookies. A
+    // escolha fica num cookie em .rycs.pro e vale também no app.
+    (function () {
+      var PIXEL = "1690802939434598";
+      var aviso = document.getElementById("aviso-cookies");
+      function escolha() { var m = document.cookie.match(/(?:^|; )rycs_consentimento=([^;]*)/); return m ? m[1] : ""; }
+      function carregarPixel() {
+        if (window.fbq || escolha() !== "aceito") return;
+        !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = "2.0"; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+        fbq("init", PIXEL);
+        fbq("track", "PageView");
+      }
+      aviso.addEventListener("click", function (e) {
+        var valor = e.target.getAttribute && e.target.getAttribute("data-cookies");
+        if (valor !== "aceito" && valor !== "recusado") return;
+        var dominio = /rycs\.pro$/.test(location.hostname) ? "; domain=.rycs.pro" : "";
+        var seguro = location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = "rycs_consentimento=" + valor + "; path=/; max-age=31536000; SameSite=Lax" + dominio + seguro;
+        aviso.hidden = true;
+        carregarPixel();
+      });
+      document.getElementById("preferencias-cookies").addEventListener("click", function () { aviso.hidden = false; });
+      if (escolha()) carregarPixel(); else aviso.hidden = false;
+    })();
+  </script>
 
   <script>
     // Jornada desde o anúncio: guarda a origem (UTM/fbclid) do primeiro clique,
@@ -582,7 +626,7 @@
       }
       var params = new URLSearchParams(location.search);
       var origem = {};
-      CAMPOS.forEach(function (c) { if (params.get(c)) origem[c] = params.get(c).slice(0, 120); });
+      CAMPOS.forEach(function (c) { if (params.get(c)) origem[c] = params.get(c).slice(0, c === "fbclid" || c === "gclid" ? 500 : 120); });
       if (Object.keys(origem).length && !ler("rycs_origem")) {
         origem.landing = location.pathname;
         gravar("rycs_origem", JSON.stringify(origem));

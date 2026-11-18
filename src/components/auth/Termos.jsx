@@ -27,6 +27,7 @@ export default function Termos({ onAceitar, onVoltar }) {
               <p><b>Dados coletados:</b> nome, e-mail, telefone, cidade, chave Pix, vídeos e áudios de comprovação.</p>
               <p><b>Finalidade:</b> operação da plataforma, verificação de ações, processamento de pagamentos e comunicação com o usuário.</p>
               <p><b>Compartilhamento:</b> dados são compartilhados apenas entre as partes envolvidas na operação (empresa ↔ RYCS ↔ profissional) e com processadores de pagamento.</p>
+              <p><b>Cookies de marketing:</b> só com a sua permissão no aviso de cookies, usamos o pixel e a API de Conversões da Meta (Facebook e Instagram) para medir os resultados dos anúncios da RYCS. Nesse caso, e-mail, telefone, nome e cidade vão para a Meta criptografados (hash), nunca senha ou dados de pagamento. Recusar não muda nada no uso da plataforma.</p>
               <p><b>Retenção:</b> dados são mantidos enquanto a conta estiver ativa e por 5 anos após o encerramento, conforme obrigações legais.</p>
               <p><b>Direitos do titular:</b> acesso, correção, exclusão, portabilidade e revogação do consentimento podem ser solicitados via e-mail: contato@rycs.com.br.</p>
               <p><b>Segurança:</b> utilizamos criptografia, tokens seguros e cookies HttpOnly para proteger seus dados.</p>

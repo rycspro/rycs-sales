@@ -51,7 +51,8 @@ function primeiroAcessoPorVisitante() {
   return mapa(db.prepare("SELECT visitanteId AS id, MIN(criadoEm) AS em FROM jornada_eventos GROUP BY visitanteId").all());
 }
 
-function jornadasVendedores(desde) {
+// Exportadas também para a API de Conversões (services/metaConversoes.js).
+export function jornadasVendedores(desde) {
   const linhas = db.prepare(`
     SELECT s.id, s.nome, s.email, s.criadoEm, s.bio, s.pix,
            length(COALESCE(s.foto, '')) > 0 AS temFoto,
@@ -85,9 +86,9 @@ function jornadasVendedores(desde) {
   }));
 }
 
-function jornadasEmpresas(desde) {
+export function jornadasEmpresas(desde) {
   const linhas = db.prepare(`
-    SELECT c.id, c.nome, c.criadoEm, c.tipoEmpresa, u.email, u.origem, u.visitanteId, o.etapas
+    SELECT c.id, c.nome, c.criadoEm, c.tipoEmpresa, u.email, u.origem, u.visitanteId, u.emailVerificado AS emailOk, o.etapas
     FROM companies c
     JOIN users u ON u.entityId = c.id AND u.role = 'empresa'
     LEFT JOIN onboarding o ON o.companyId = c.id
@@ -117,6 +118,8 @@ function jornadasEmpresas(desde) {
       marcos: {
         acesso: Math.min(acesso.get(c.visitanteId) || c.criadoEm, c.criadoEm),
         conta: c.criadoEm,
+        // Fora de ETAPAS_EMPRESA (não entra no funil); usado pela API de Conversões.
+        email: !!c.emailOk,
         empresa: etapaOnb("empresa"),
         academy: etapaOnb("academy"),
         ia: etapaOnb("ia"),
