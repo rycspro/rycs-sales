@@ -2,7 +2,9 @@
 
 Os 24 cursos têm uma versão básica escrita em português e inglês contextualizado para EUA e Índia. Cada arquivo reúne aulas curtas, roteiro, exercício com resposta, caso fictício, projeto, avaliação discursiva e roteiro de simulação.
 
-As 134h continuam como planejamento da grade. A versão enxuta não comprova essa duração. Aprofundamento, bancos profissionais de 40 questões, revisão humana, gravação e integração permanecem pendentes. Nenhum curso deste pacote foi importado ou publicado automaticamente.
+As 134h continuam como planejamento da grade. A versão enxuta não comprova essa duração. Aprofundamento, bancos profissionais de 40 questões, revisão humana e gravação permanecem pendentes.
+
+As aulas entram no app sozinhas quando o servidor inicia (`server/services/academyBasico.js`), uma única vez e só nos cursos globais que ainda não têm módulos, aulas nem questões. Preço, status e textos editados pelo administrador não mudam, então um curso em rascunho continua fora da vitrine. Sem questões, o curso aparece como estudo sem certificado.
 
 | Curso | Aulas | Horas planejadas | Português | EUA | Índia |
 |---|---:|---:|---|---|---|
