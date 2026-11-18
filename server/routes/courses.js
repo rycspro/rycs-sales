@@ -2,8 +2,10 @@ import { Router } from "express";
 import {
   catalogo, carregarCurso, matricular, concluirAula, reabrirAula, progressoDoCurso,
   provaDoCurso, responderProva, certificadosDoProfissional, verificarCertificado,
-  tentativasDoProfissional, criarCurso, atualizarCurso, duplicarCurso, estatisticas,
+  tentativasDoProfissional, criarCurso, atualizarCurso, duplicarCurso, estatisticas, acessoAoCurso, incluidoNoPlano,
 } from "../services/academy.js";
+import { comprarCurso } from "../services/academyCompra.js";
+import { planoAtual } from "../services/planosProfissional.js";
 import { CATEGORIAS, NIVEIS_CURSO } from "../../shared/academy/catalogo.js";
 import { notificar } from "./notifications.js";
 import db from "../db.js";
@@ -36,8 +38,22 @@ router.get("/courses/:id", (req, res) => {
     return res.status(404).json({ error: "Curso não encontrado" });
 
   const sellerId = req.user.role === "vendedor" ? req.user.entityId : null;
+  const plano = sellerId ? planoAtual(sellerId).plano : null;
+  const { acesso } = req.user.role === "admin" ? { acesso: true } : acessoAoCurso({ curso, sellerId, plano });
+  // Curso pago sem acesso: mostra o sumário (títulos), nunca o texto das aulas.
+  if (!acesso) {
+    curso.modulos = curso.modulos.map((m) => ({
+      ...m, aulas: m.aulas.map((a) => ({ ...a, conteudo: "", videoUrl: "", materiais: [] })),
+    }));
+  }
+  const compraPendente = sellerId && !acesso
+    ? !!db.prepare("SELECT 1 FROM course_purchases WHERE courseId = ? AND sellerId = ? AND status = 'pendente' LIMIT 1").get(curso.id, sellerId)
+    : false;
   res.json({
     curso,
+    acesso,
+    incluidoNoPlano: !!sellerId && !curso.gratuito && incluidoNoPlano(curso, plano),
+    compraPendente,
     progresso: sellerId ? progressoDoCurso({ courseId: curso.id, sellerId }) : null,
     tentativas: sellerId ? tentativasDoProfissional({ courseId: curso.id, sellerId }) : [],
     certificado: sellerId
@@ -55,10 +71,17 @@ router.post("/courses/:id/enroll", (req, res) => {
   res.json(r);
 });
 
+// Compra avulsa: gera o Pix. A matrícula só sai no webhook do pagamento.
+router.post("/courses/:id/comprar", async (req, res) => {
+  const sellerId = souVendedor(req, res); if (!sellerId) return;
+  const r = await comprarCurso({ courseId: req.params.id, sellerId, cpf: req.body?.cpf });
+  res.status(r.status).json(r.corpo);
+});
+
 router.post("/courses/:id/lessons/:lessonId/complete", (req, res) => {
   const sellerId = souVendedor(req, res); if (!sellerId) return;
   const r = concluirAula({ courseId: req.params.id, lessonId: req.params.lessonId, sellerId });
-  if (r.erro) return res.status(404).json({ error: r.erro });
+  if (r.erro) return res.status(r.pago ? 402 : 404).json({ error: r.erro, pago: !!r.pago });
   res.json(r);
 });
 

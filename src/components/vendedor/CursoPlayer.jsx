@@ -7,6 +7,7 @@ import { api, apiDelete } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import { DEMOS, temDemo } from "./academyDemos.jsx";
+import CompraCurso from "./CompraCurso.jsx";
 
 // Rótulo das abas para onde um passo interativo pode levar o aluno.
 const ABA_LABEL = {
@@ -100,7 +101,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
 
   const carregar = async () => {
     const r = await api(`/courses/${courseId}`);
-    if (!r || r.error) return setErro(r?.error || "Curso indisponível.");
+    if (!r || r.error) { setErro(r?.error || "Curso indisponível."); return false; }
     setDados(r);
     setAbertos(Object.fromEntries(r.curso.modulos.map((m) => [m.id, true])));
     // Ao voltar de um tour na ferramenta real, retoma exatamente a aula de onde
@@ -109,6 +110,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
     const retomar = aulaInicialId && todas.some((a) => a.id === aulaInicialId) ? aulaInicialId : null;
     if (retomar) setAulaId(retomar);
     else if (!aulaId) setAulaId(r.progresso?.proximaAula?.id || todas[0]?.id || null);
+    return r.acesso !== false;
   };
 
   useEffect(() => { carregar(); /* eslint-disable-next-line */ }, [courseId]);
@@ -171,6 +173,8 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
   if (!dados) return <div className="vx-card vx-skeleton" style={{ height: 400 }} />;
 
   const { curso, progresso, certificado } = dados;
+  // Só profissional sem compra recebe acesso === false; prévia da empresa e admin veem tudo.
+  const semAcesso = dados.acesso === false;
 
   if (curso.totalAulas === 0) return (
     <div className="vx-fade">
@@ -320,7 +324,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
 
           {curso.requisitos && <div className="vx-chart-source">Requisitos: {curso.requisitos}</div>}
 
-          {!progresso || progresso.total === 0 ? null : (
+          {!progresso || progresso.total === 0 || semAcesso ? null : (
             <div style={{ marginTop: 16 }}>
               <div className="vx-row" style={{ fontSize: 12.5, marginBottom: 5 }}>
                 <span className="vx-mut">{progresso.concluidas} de {progresso.total} aulas</span>
@@ -329,6 +333,12 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
               <Medidor value={progresso.percentual} tone={progresso.percentual === 100 ? "brand" : "amber"} />
             </div>
           )}
+
+          {semAcesso ? (
+            <CompraCurso curso={curso} compraPendente={dados.compraPendente} aviso={aviso} aoConfirmar={carregar} />
+          ) : dados.incluidoNoPlano ? (
+            <div className="vx-chart-source">Incluído no seu plano.</div>
+          ) : null}
 
           {certificado ? (
             <div className="vx-notice" style={{ marginTop: 14 }}>
@@ -420,7 +430,12 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
                 </div>
               )}
 
-              <Conteudo texto={aula.conteudo} navegar={irFerramenta} />
+              {semAcesso ? (
+                <div className="vx-notice">
+                  <Lock size={13} style={{ verticalAlign: -2, marginRight: 5 }} />
+                  Esta aula faz parte de um curso pago. Compre o curso no topo da página para liberar todas as aulas.
+                </div>
+              ) : <Conteudo texto={aula.conteudo} navegar={irFerramenta} />}
 
               {!!aula.materiais?.length && (
                 <div style={{ marginTop: 16 }}>
@@ -431,7 +446,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
                 </div>
               )}
 
-              <hr className="vx-sep" />
+              {!semAcesso && <><hr className="vx-sep" />
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button className="vx-btn" disabled={indice <= 0}
                   onClick={() => setAulaId(aulas[indice - 1]?.id)}>Aula anterior</button>
@@ -441,7 +456,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
                 <button className="vx-btn vx-btn-primary" style={{ flex: 1, minWidth: 160 }} onClick={concluirEAvancar}>
                   {indice + 1 < aulas.length ? "Concluir e avançar" : "Concluir última aula"}
                 </button>
-              </div>
+              </div></>}
             </div>
           )}
         </div>

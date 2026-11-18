@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { precoAcademy } from "./precos.js";
 
 // Nova edição em preparação: não substitui cursos nem progresso existentes.
 const catalogo = JSON.parse(readFileSync(new URL("../../content/academy/catalogo-134h.json", import.meta.url), "utf8"));
@@ -13,8 +14,8 @@ export const CATALOGO_PLANEJADO = catalogo.courses.map((curso) => ({
   categoria: "Vendas consultivas",
   professor: "RYCS Academy",
   status: "publicado",
-  gratuito: curso.id === 1,
-  preco: 0,
+  gratuito: !(precoAcademy(curso.id) > 0),
+  preco: precoAcademy(curso.id) || 0,
   notaMinima: 80,
   modulos: [],
   prova: [],

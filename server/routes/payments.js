@@ -11,6 +11,7 @@ import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { saqueMinimoPara, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
 import { limite } from "../../shared/planosProfissional.js";
 import { planoAtual, tratarEventoProfissional } from "../services/planosProfissional.js";
+import { ehEventoDeCurso, tratarEventoCurso } from "../services/academyCompra.js";
 
 const router = Router();
 
@@ -445,6 +446,12 @@ router.post("/payments/webhook", (req, res) => {
 
   // Plano do profissional (Pro/Premium): desviado ANTES da lógica da empresa,
   // senão o pagamento viraria depósito de caixa ou inadimplência de empresa.
+  // Compra avulsa de curso da Academy: mesmo motivo do desvio acima.
+  if (ehEventoDeCurso(payment)) {
+    const resultado = tratarEventoCurso(event, payment);
+    return res.json({ ok: true, resultado });
+  }
+
   if (String(payment?.externalReference || "").startsWith("prof:")) {
     const resultado = tratarEventoProfissional(event, payment);
     return res.json({ ok: true, resultado });

@@ -5,6 +5,10 @@
 
 import { randomBytes } from "crypto";
 import { importarAcademyBasico } from "./academyBasico.js";
+import { aplicarPrecosAcademy } from "./academyPrecos.js";
+import { planoAtual } from "./planosProfissional.js";
+import { pode, desconto } from "../../shared/planosProfissional.js";
+import { numeroAcademy, CURSOS_NICHO, CURSOS_CHALLENGER } from "../../shared/academy/precos.js";
 import { validarEdicaoCurso } from "../../shared/academy/validacao.js";
 import { CATALOGO_PLANEJADO } from "../../shared/academy/planejado.js";
 import db, { uid, agora } from "../db.js";
@@ -38,6 +42,7 @@ export function semearCatalogo() {
   const novos = [...CATALOGO_INICIAL, ...CATALOGO_PLANEJADO].filter((c) => !existentes.has(c.slug));
   if (!novos.length) {
     importarAcademyBasico(db, uid, agora);
+    aplicarPrecosAcademy(db, agora);
     return 0;
   }
 
@@ -48,6 +53,7 @@ export function semearCatalogo() {
 
   console.log(`[academy] ${novos.length} curso(s) incluído(s): ${novos.map((c) => c.slug).join(", ")}`);
   importarAcademyBasico(db, uid, agora);
+  aplicarPrecosAcademy(db, agora);
   return novos.length;
 }
 
@@ -224,8 +230,10 @@ export function catalogo({ sellerId = null, incluirRascunhos = false } = {}) {
     ? db.prepare("SELECT courseId, codigo, percentual, emitidoEm FROM course_certificates WHERE sellerId = ?").all(sellerId)
     : [];
 
+  const plano = sellerId ? planoAtual(sellerId).plano : null;
   return cursos.map((c) => {
     const t = totais.find((x) => x.courseId === c.id) || { aulas: 0, minutos: 0 };
+    const { acesso } = acessoAoCurso({ curso: c, sellerId, plano });
     const feitas = progresso.find((x) => x.courseId === c.id)?.n || 0;
     const matricula = matriculas.find((x) => x.courseId === c.id) || null;
     return {
@@ -235,6 +243,8 @@ export function catalogo({ sellerId = null, incluirRascunhos = false } = {}) {
       duracaoMin: t.minutos || 0,
       alunos: alunos.find((x) => x.courseId === c.id)?.n || 0,
       matriculado: !!matricula,
+      acesso,
+      incluidoNoPlano: !!sellerId && !c.gratuito && incluidoNoPlano(c, plano),
       aulasConcluidas: feitas,
       progresso: t.aulas ? Math.round((feitas / t.aulas) * 100) : 0,
       certificado: certificados.find((x) => x.courseId === c.id) || null,
@@ -244,27 +254,49 @@ export function catalogo({ sellerId = null, incluirRascunhos = false } = {}) {
 
 // ------------------------------------------------------------ matrícula ----
 
+// O plano do profissional inclui este curso? Pro e Premium incluem os cursos de
+// nicho; o Premium inclui a trilha Challenger. Pergunta por recurso, nunca
+// pelo nome do plano.
+export function incluidoNoPlano(curso, plano) {
+  const n = numeroAcademy(curso?.slug);
+  if (!n) return false;
+  if (CURSOS_NICHO.includes(n) && pode(plano, "cursosNicho")) return true;
+  if (CURSOS_CHALLENGER.includes(n) && desconto(plano, "descontoTrilhaChallenger") >= 1) return true;
+  return false;
+}
+
+// Quem pode estudar o curso. Matrícula vinda do plano só vale enquanto o
+// plano valer; matrícula de compra estornada não dá acesso.
+export function acessoAoCurso({ curso, sellerId, plano }) {
+  if (!curso) return { acesso: false };
+  if (curso.gratuito) return { acesso: true, motivo: "gratuito" };
+  if (!sellerId) return { acesso: false };
+  const planoVigente = plano ?? planoAtual(sellerId).plano;
+  const m = db.prepare("SELECT origem FROM course_enrollments WHERE courseId = ? AND sellerId = ?").get(curso.id, sellerId);
+  if (m && ["compra", "cortesia", "gratuito"].includes(m.origem)) return { acesso: true, motivo: m.origem };
+  if (incluidoNoPlano(curso, planoVigente)) return { acesso: true, motivo: "plano" };
+  return { acesso: false };
+}
+
 export function matricular({ courseId, sellerId }) {
-  const curso = db.prepare("SELECT id, gratuito, status FROM courses WHERE id = ?").get(courseId);
+  const curso = db.prepare("SELECT id, slug, gratuito, status FROM courses WHERE id = ?").get(courseId);
   if (!curso) return { erro: "Curso não encontrado" };
   if (curso.status !== "publicado") return { erro: "Curso ainda não publicado" };
 
   if (!db.prepare("SELECT 1 FROM course_lessons WHERE courseId = ? LIMIT 1").get(courseId))
     return { erro: "Este curso está em preparação. As aulas ainda não estão disponíveis." };
 
-  // Curso pago exige compra. Não existe caminho no código que matricule em
-  // curso pago sem pagamento confirmado — liberar por engano aqui seria dar
-  // produto de graça sem ninguém perceber.
-  if (!curso.gratuito) {
-    return { erro: "Este curso é pago. A compra ainda não está disponível nesta versão.", pago: true };
-  }
+  // Curso pago exige compra confirmada (webhook) ou plano que o inclua. Não
+  // existe outro caminho que matricule em curso pago.
+  const { acesso, motivo } = acessoAoCurso({ curso, sellerId });
+  if (!acesso) return { erro: "Este curso é pago. Compre o curso para começar.", pago: true };
 
-  const ja = db.prepare("SELECT id FROM course_enrollments WHERE courseId = ? AND sellerId = ?").get(courseId, sellerId);
+  const ja = db.prepare("SELECT id, origem FROM course_enrollments WHERE courseId = ? AND sellerId = ?").get(courseId, sellerId);
   if (ja) return { id: ja.id, jaMatriculado: true };
 
   const id = uid();
-  db.prepare("INSERT INTO course_enrollments (id, courseId, sellerId, origem, criadoEm) VALUES (?, ?, ?, 'gratuito', ?)")
-    .run(id, courseId, sellerId, agora());
+  db.prepare("INSERT INTO course_enrollments (id, courseId, sellerId, origem, criadoEm) VALUES (?, ?, ?, ?, ?)")
+    .run(id, courseId, sellerId, motivo, agora());
   return { id };
 }
 

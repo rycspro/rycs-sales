@@ -2242,6 +2242,24 @@ db.exec(`
 `);
 adicionarColuna("sellers", "asaasCustomerId", "TEXT");
 
+// Compra avulsa de curso da Academy (Pix pelo Asaas, externalReference
+// "curso:<id>"). A matrícula só nasce do pagamento confirmado no webhook.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS course_purchases (
+    id TEXT PRIMARY KEY,
+    courseId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    valor REAL NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pendente', -- pendente|paga|reembolsada|expirada
+    asaasId TEXT,
+    asaasCustomerId TEXT,
+    pagoEm INTEGER,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_course_purchases_seller ON course_purchases(sellerId, courseId);
+`);
+
 // Avaliação Comunicação Profissional (instrumento autoral situacional rycs-
 // comunicacao-profissional-v1-20) — tabela própria, separada das demais. Persiste
 // versão, idioma, versão do gabarito (coluna `chave`), versão do algoritmo,

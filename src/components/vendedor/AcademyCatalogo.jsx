@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Award, BookOpen, CheckCircle2, Clock3, GraduationCap, Play, Search, Users } from "lucide-react";
+import { Award, BookOpen, CheckCircle2, Clock3, GraduationCap, Play, Search, ShoppingCart, Users } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Medidor, Vazio } from "../ui.jsx";
+import { formatarPreco } from "../../../shared/academy/precos.js";
 import CursoPlayer from "./CursoPlayer.jsx";
 
 const ABAS = [
@@ -22,7 +23,7 @@ function CardCurso({ curso, abrir }) {
       <div className="vx-course-capa">
         <img src={curso.capa} alt="" loading="lazy" />
         <span className={"vx-badge " + (curso.gratuito ? "vx-badge-brand" : "vx-badge-amber")}>
-          {curso.totalAulas === 0 ? "Em preparação" : curso.gratuito ? "Gratuito" : `R$ ${Number(curso.preco).toFixed(2).replace(".", ",")}`}
+          {curso.totalAulas === 0 ? "Em preparação" : curso.gratuito ? "Gratuito" : curso.incluidoNoPlano ? "Incluído no plano" : formatarPreco(curso.preco)}
         </span>
         {curso.certificado && (
           <span className="vx-badge vx-badge-indigo vx-course-cert"><Award size={11} /> Certificado</span>
@@ -53,8 +54,9 @@ function CardCurso({ curso, abrir }) {
         <button className={"vx-btn vx-btn-block " + (curso.matriculado ? "" : "vx-btn-primary")} style={{ marginTop: 12 }}>
           {curso.certificado ? <><Award size={14} /> Ver certificado</>
             : emAndamento ? <><Play size={14} /> Continuar</>
-              : curso.matriculado ? <><Play size={14} /> Começar</>
-                : <><GraduationCap size={14} /> Ver curso</>}
+              : curso.matriculado && curso.acesso !== false ? <><Play size={14} /> Começar</>
+                : curso.acesso === false && curso.totalAulas > 0 ? <><ShoppingCart size={14} /> Comprar · {formatarPreco(curso.preco)}</>
+                  : <><GraduationCap size={14} /> Ver curso</>}
         </button>
       </div>
     </article>
