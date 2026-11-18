@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Check, Loader, QrCode, ShieldCheck, X, User, Zap, Gem, Crown } from "lucide-react";
+import {
+  Check, Loader, QrCode, ShieldCheck, X, User, Zap, Gem, Crown,
+  Layers, Wallet, MessageCircle, Mail, CalendarClock, Star, UserPlus, Megaphone,
+  Sparkles, GraduationCap, MessagesSquare, Bot, Target, Send, Banknote,
+} from "lucide-react";
 import NumberFlow from "@number-flow/react";
 import confetti from "canvas-confetti";
 import { api, apiDelete } from "../../lib/api.js";
@@ -35,6 +39,29 @@ const META_PLANO = {
   pro:     { Icon: Gem,   cor: "#7C3AED", badge: "Recomendado" },
   premium: { Icon: Crown, cor: "#C79A2B", badge: "Premium" },
 };
+
+// Ícone representativo de cada tópico de benefício, por palavra-chave (os textos
+// são a fonte única; aqui só escolhemos um ícone que combine com o assunto).
+function iconeDoBeneficio(texto) {
+  const s = String(texto).toLowerCase();
+  if (s.includes("tudo do")) return Layers;
+  if (s.includes("imediato") || s.includes("24 hora")) return Zap;
+  if (s.includes("saque")) return Wallet;
+  if (s.includes("whatsapp")) return MessageCircle;
+  if (s.includes("e-mail") || s.includes("email")) return Mail;
+  if (s.includes("agenda") || s.includes("lembrete") || s.includes("reuni")) return CalendarClock;
+  if (s.includes("convite")) return UserPlus;
+  if (s.includes("divulga")) return Megaphone;
+  if (s.includes("treinamento")) return GraduationCap;
+  if (s.includes("simula")) return MessagesSquare;
+  if (s.includes("assistente") || s.includes(" ia")) return Bot;
+  if (s.includes("destacado") || s.includes("nível")) return Star;
+  if (s.includes("campanha")) return Target;
+  if (s.includes("candidat")) return Send;
+  if (s.includes("tarefa") || s.includes("receba")) return Banknote;
+  if (s.includes("perfil")) return User;
+  return Check;
+}
 
 export default function PlanosProfissional({ aviso }) {
   const [info, setInfo] = useState(null);
@@ -211,11 +238,17 @@ export default function PlanosProfissional({ aviso }) {
 
                 {/* 5. Benefícios */}
                 <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 9, flex: 1 }}>
-                  {p.beneficios.map((b) => (
-                    <li key={b} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "var(--text-2, var(--ink))" }}>
-                      <Check size={15} color={m.cor} strokeWidth={2.4} style={{ flexShrink: 0, marginTop: 1 }} /> {b}
-                    </li>
-                  ))}
+                  {p.beneficios.map((b) => {
+                    const IconeB = iconeDoBeneficio(b);
+                    return (
+                      <li key={b} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "var(--text-2, var(--ink))" }}>
+                        <span style={{ width: 22, height: 22, borderRadius: 7, flexShrink: 0, display: "grid", placeItems: "center", background: m.cor + "14", color: m.cor, marginTop: -1 }}>
+                          <IconeB size={13} strokeWidth={2.2} />
+                        </span>
+                        {b}
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 {/* 6. Ação */}
