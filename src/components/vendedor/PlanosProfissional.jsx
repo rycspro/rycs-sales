@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Check, Loader, QrCode, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Check, Loader, QrCode, ShieldCheck, X, User, Zap, Gem, Crown } from "lucide-react";
 import NumberFlow from "@number-flow/react";
 import confetti from "canvas-confetti";
 import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { mascararDocumento } from "../../../shared/documentoConta.js";
-import { PLANOS_PROFISSIONAL, PLANOS_PAGOS_PROFISSIONAL, BENEFICIOS_VITRINE, CICLOS, mensalidadeProfissional, valorProfissionalNoCiclo } from "../../../shared/planosProfissional.js";
+import { PLANOS_PROFISSIONAL, ORDEM_PLANOS_PROFISSIONAL, CICLOS, mensalidadeProfissional, valorProfissionalNoCiclo } from "../../../shared/planosProfissional.js";
 import { descontoDoCiclo } from "../../../shared/planos.js";
 
 // Planos do profissional (Grátis/Pro/Premium), no mesmo template da vitrine de
@@ -26,13 +26,14 @@ const CICLO_NOME = { MENSAL: "Mensal", SEMESTRAL: "Semestral", ANUAL: "Anual" };
 const CICLO_SUFIXO = { MENSAL: "/mês", SEMESTRAL: "/semestre", ANUAL: "/ano" };
 const dataBr = (t) => (t ? new Date(t).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "");
 
-// Tópicos de cada card: o que o plano soma ao anterior, com o detalhe do plano
-// quando ele existe ("Ilimitado", "Completo"...).
-const comDetalhe = (b, chave) => (typeof b[chave] === "string" ? `${b.texto}: ${b[chave]}` : b.texto);
-const INCLUI = {
-  gratis: BENEFICIOS_VITRINE.filter((b) => b.gratis).map((b) => comDetalhe(b, "gratis")),
-  pro: BENEFICIOS_VITRINE.filter((b) => b.pro && !b.gratis).map((b) => comDetalhe(b, "pro")),
-  premium: ["Tudo do Pro", ...BENEFICIOS_VITRINE.filter((b) => b.premium && b.premium !== b.pro).map((b) => comDetalhe(b, "premium"))],
+// Identidade visual de cada plano — ícone colorido e cor de acento. Os textos e
+// benefícios vêm EXCLUSIVAMENTE de PLANOS_PROFISSIONAL (fonte única de verdade);
+// nada de listas antigas (cursos de nicho, discadora, scripts, etc.).
+const META_PLANO = {
+  gratis:  { Icon: User,  cor: "#8C97A3", badge: null },
+  start:   { Icon: Zap,   cor: "#318CE7", badge: null },
+  pro:     { Icon: Gem,   cor: "#7C3AED", badge: "Recomendado" },
+  premium: { Icon: Crown, cor: "#C79A2B", badge: "Premium" },
 };
 
 export default function PlanosProfissional({ aviso }) {
@@ -112,7 +113,7 @@ export default function PlanosProfissional({ aviso }) {
       <div style={{ padding: "4px 0 16px" }}>
         <div className="vx-eyebrow">Assinatura profissional</div>
         <h1 className="vx-disp" style={{ margin: "2px 0 3px" }}>Planos RYCS</h1>
-        <p style={{ margin: 0 }}>O plano Grátis já permite se candidatar sem limite, trabalhar e sacar. Pro e Premium somam ferramentas, treino e prioridade de visibilidade. Nenhum plano garante propostas, vendas ou ganhos, e o Score continua decidindo a ordem.</p>
+        <p style={{ margin: 0, color: "var(--muted)" }}>Comece grátis e evolua quando quiser. Cancele a renovação a qualquer momento.</p>
       </div>
 
       {!noGratis && (
@@ -125,52 +126,7 @@ export default function PlanosProfissional({ aviso }) {
       )}
 
       <div style={{ padding: "4px 0 8px" }}>
-        {/* Plano gratuito — faixa larga, em 3 camadas: nome + preço, tópicos, ação. */}
-        <div
-          className="vx-free-banner"
-          style={{
-            display: "grid", gridTemplateColumns: "minmax(140px, 190px) 1fr auto",
-            alignItems: "center", gap: 24, padding: "20px 24px", marginBottom: 20,
-            borderRadius: "var(--radius-lg, 16px)",
-            ...(noGratis
-              ? { border: "none", background: "linear-gradient(120deg, #2563EB 0%, #4338CA 52%, #0EA5E9 100%)", boxShadow: "0 10px 26px rgba(37,99,235,.28)", color: "#fff" }
-              : { border: "1px solid var(--border)", background: "var(--bg-card, #fff)", boxShadow: "var(--shadow-card)", color: "var(--ink)" }),
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, borderRight: noGratis ? "1px solid rgba(255,255,255,.25)" : "1px solid var(--border)", paddingRight: 20 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: noGratis ? "rgba(255,255,255,.85)" : "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase" }}>
-              {PLANOS_PROFISSIONAL.gratis.nome}
-            </span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-              <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: noGratis ? "#fff" : "var(--ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>R$ 0</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: noGratis ? "rgba(255,255,255,.85)" : "var(--muted)" }}>/mês</span>
-            </div>
-          </div>
-
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "8px 20px" }}>
-            {INCLUI.gratis.map((i) => (
-              <li key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 500, color: noGratis ? "#fff" : "var(--ink)" }}>
-                <Check size={15} color={noGratis ? "#fff" : "var(--brand)"} strokeWidth={2.6} style={{ flexShrink: 0 }} /> {i}
-              </li>
-            ))}
-          </ul>
-
-          <button
-            type="button"
-            disabled
-            style={{
-              fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0, minWidth: 150, minHeight: 44,
-              padding: "10px 18px", borderRadius: 10, fontFamily: "inherit", fontSize: 13.5, cursor: "default",
-              border: noGratis ? "1px solid rgba(255,255,255,.45)" : "1px solid var(--border)",
-              background: noGratis ? "rgba(255,255,255,.18)" : "transparent",
-              color: noGratis ? "#fff" : "var(--muted)",
-            }}
-          >
-            {noGratis ? "Plano atual" : "Incluso em todos"}
-          </button>
-        </div>
-
-        {/* Alternância mensal / semestral / anual (mesmos descontos da empresa) */}
+        {/* Seletor de cobrança — mensal / semestral / anual (descontos reais). */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 26 }}>
           <div ref={segRef} role="radiogroup" aria-label="Ciclo de cobrança"
             style={{ display: "flex", gap: 4, padding: 4, borderRadius: 999, background: "var(--surface-2, #F1F5F9)", border: "1px solid var(--border)", flexWrap: "nowrap", justifyContent: "center", width: "100%", maxWidth: 360 }}>
@@ -196,71 +152,94 @@ export default function PlanosProfissional({ aviso }) {
           </div>
         </div>
 
-        {/* Cards dos planos pagos */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 16, alignItems: "start" }}>
-          {PLANOS_PAGOS_PROFISSIONAL.map((chave, index) => {
+        {/* Cards dos planos — Free · Start · Pro · Elite (fonte única: PLANOS_PROFISSIONAL) */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 16, alignItems: "stretch" }}>
+          {ORDEM_PLANOS_PROFISSIONAL.map((chave, index) => {
             const p = PLANOS_PROFISSIONAL[chave];
-            const destaque = chave === "premium";
+            const m = META_PLANO[chave];
+            const Icon = m.Icon;
+            const isFree = chave === "gratis";
             const ehAtual = chave === atual;
+            const destaque = chave === "pro"; // recomendado
             return (
               <motion.article
                 key={chave}
-                initial={{ y: 40, opacity: 0 }}
+                initial={{ y: 22, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.3, type: "spring", stiffness: 260, damping: 28, delay: 0.02 + index * 0.025 }}
-                className={`vx-card${ehAtual ? " vx-card--active" : ""}`}
-                style={{ position: "relative", padding: "26px 22px", display: "flex", flexDirection: "column", border: destaque ? "2px solid var(--brand)" : undefined, overflow: "hidden" }}
+                transition={{ duration: 0.28, delay: 0.02 + index * 0.03 }}
+                className="vx-card"
+                style={{
+                  position: "relative", padding: "22px 20px", display: "flex", flexDirection: "column", overflow: "hidden",
+                  borderTop: `3px solid ${m.cor}`,
+                  boxShadow: ehAtual ? `0 0 0 1.5px ${m.cor}, var(--shadow-card)` : undefined,
+                }}
               >
-                {ehAtual && (
-                  <div style={{ position: "absolute", top: 0, left: 0, display: "flex", alignItems: "center", gap: 4, background: "var(--brand)", color: "#fff", padding: "4px 10px", borderBottomRightRadius: 12, fontSize: 11, fontWeight: 700 }}>
-                    <Check size={12} strokeWidth={3} /> Seu plano
-                  </div>
-                )}
-                {destaque && (
-                  <div style={{ position: "absolute", top: 0, right: 0, display: "flex", alignItems: "center", gap: 4, background: "var(--brand)", color: "#fff", padding: "4px 10px", borderBottomLeftRadius: 12, fontSize: 11, fontWeight: 700 }}>
-                    <Sparkles size={12} /> Completo
-                  </div>
-                )}
+                {/* Selo: plano atual tem prioridade; senão, o destaque do plano. */}
+                {ehAtual ? (
+                  <span style={{ position: "absolute", top: 14, right: 14, fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: m.cor + "18", color: m.cor }}>Seu plano</span>
+                ) : m.badge ? (
+                  <span style={{ position: "absolute", top: 14, right: 14, fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: m.cor + "18", color: m.cor }}>{m.badge}</span>
+                ) : null}
 
-                <div style={{ fontSize: 13, fontWeight: 700, color: ehAtual ? "rgba(255,255,255,.85)" : "var(--muted)", letterSpacing: ".04em", textTransform: "uppercase", marginTop: 6 }}>
-                  {p.nome}
-                </div>
-
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6, margin: "16px 0 2px" }}>
-                  <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: ehAtual ? "#fff" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>
-                    <NumberFlow value={mensalidadeProfissional(chave, ciclo)} format={{ style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }} locales="pt-BR" transformTiming={{ duration: 500, easing: "ease-out" }} willChange />
+                {/* 1. Ícone colorido + nome */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <span style={{ width: 38, height: 38, borderRadius: 11, display: "grid", placeItems: "center", background: m.cor + "16", color: m.cor, flexShrink: 0 }}>
+                    <Icon size={20} strokeWidth={2.1} />
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: ehAtual ? "rgba(255,255,255,.85)" : "var(--muted)" }}>/mês</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", letterSpacing: ".05em", textTransform: "uppercase" }}>{p.nome}</span>
                 </div>
-                <div style={{ fontSize: 11.5, color: ehAtual ? "rgba(255,255,255,.7)" : "var(--muted)", textAlign: "center", marginBottom: 4 }}>
-                  {ciclo === CICLOS.ANUAL ? `${money(valorProfissionalNoCiclo(chave, ciclo))} cobrado anualmente · economize ${pct(descontoDoCiclo(ciclo))}%`
-                    : ciclo === CICLOS.SEMESTRAL ? `${money(valorProfissionalNoCiclo(chave, ciclo))} a cada 6 meses · economize ${pct(descontoDoCiclo(ciclo))}%`
+
+                {/* 2. Preço */}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                  <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ink)", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                    {isFree ? "R$ 0" : <NumberFlow value={mensalidadeProfissional(chave, ciclo)} format={{ style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }} locales="pt-BR" transformTiming={{ duration: 500, easing: "ease-out" }} willChange />}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>/mês</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 4, minHeight: 15 }}>
+                  {isFree ? "Para sempre"
+                    : ciclo === CICLOS.ANUAL ? `${money(valorProfissionalNoCiclo(chave, ciclo))} cobrado anualmente · −${pct(descontoDoCiclo(ciclo))}%`
+                    : ciclo === CICLOS.SEMESTRAL ? `${money(valorProfissionalNoCiclo(chave, ciclo))} a cada 6 meses · −${pct(descontoDoCiclo(ciclo))}%`
                     : "cobrado mensalmente"}
                 </div>
 
-                <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 9 }}>
-                  {(INCLUI[chave] || p.beneficios || []).map((i) => (
-                    <li key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: ehAtual ? "#fff" : "var(--text-2, var(--ink))", textAlign: "left" }}>
-                      <Check size={15} color={ehAtual ? "#fff" : "var(--brand)"} strokeWidth={2.4} style={{ flexShrink: 0, marginTop: 1 }} /> {i}
+                {/* 3. Descrição curta */}
+                <p style={{ fontSize: 13, color: "var(--ink-2, var(--ink))", margin: "12px 0 0", lineHeight: 1.45, minHeight: 36 }}>{p.resumo}</p>
+
+                {/* 4. Divisória */}
+                <div style={{ borderTop: "1px solid var(--border)", margin: "16px 0 14px" }} />
+
+                {/* 5. Benefícios */}
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 9, flex: 1 }}>
+                  {p.beneficios.map((b) => (
+                    <li key={b} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "var(--text-2, var(--ink))" }}>
+                      <Check size={15} color={m.cor} strokeWidth={2.4} style={{ flexShrink: 0, marginTop: 1 }} /> {b}
                     </li>
                   ))}
                 </ul>
 
-                <div style={{ borderTop: ehAtual ? "1px solid rgba(255,255,255,.25)" : "1px solid var(--border)", margin: "18px 0 14px" }} />
-
+                {/* 6. Ação */}
                 <button
                   type="button"
-                  className={`vx-btn vx-btn-block ${ehAtual ? "" : "vx-btn-primary"}`}
-                  disabled={ehAtual || !info.cobrancaAtiva}
-                  onClick={() => abrir(chave)}
-                  style={{ marginTop: "auto", fontWeight: 700, minHeight: 44, ...(ehAtual ? { background: "rgba(255,255,255,.2)", color: "#fff", border: "1px solid rgba(255,255,255,.3)" } : {}) }}
+                  className={`vx-btn vx-btn-block ${ehAtual || isFree ? "" : "vx-btn-primary"}`}
+                  disabled={isFree || ehAtual || !info.cobrancaAtiva}
+                  onClick={() => !isFree && abrir(chave)}
+                  style={{ marginTop: 18, fontWeight: 700, minHeight: 44, ...(destaque && !ehAtual && !isFree ? { background: m.cor, borderColor: m.cor } : {}) }}
                 >
-                  {ehAtual ? "Plano atual" : !info.cobrancaAtiva ? "Disponível em breve" : noGratis ? (p.cta || "Assinar") : "Trocar para este plano"}
+                  {ehAtual ? "Plano atual"
+                    : isFree ? (p.cta || "Continuar gratuitamente")
+                    : !info.cobrancaAtiva ? "Disponível em breve"
+                    : noGratis ? (p.cta || "Assinar")
+                    : "Trocar para este plano"}
                 </button>
               </motion.article>
             );
           })}
         </div>
+
+        <p className="vx-mut" style={{ fontSize: 11.5, marginTop: 18, lineHeight: 1.6, maxWidth: 680 }}>
+          Pagamento por Pix. A assinatura renova automaticamente e você pode cancelar a renovação quando quiser, mantendo os benefícios até o fim do período pago. Nenhum plano garante propostas, vendas ou ganhos — o Score continua decidindo a ordem. Os prazos de saque seguem as regras vigentes de cada plano.
+        </p>
       </div>
 
       {podeCancelar && (
