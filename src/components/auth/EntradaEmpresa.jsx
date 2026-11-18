@@ -3,6 +3,7 @@ import { MailCheck, ImagePlus, Trash2 } from "lucide-react";
 import { CampoSenha } from "../ui.jsx";
 import RecuperarSenha from "./RecuperarSenha.jsx";
 import MolduraAuth from "./MolduraAuth.jsx";
+import ComboSelect from "../ui/ComboSelect.jsx";
 import { api } from "../../lib/api.js";
 import { dadosRastreio, rastrear } from "../../lib/rastreio.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
@@ -185,18 +186,15 @@ export default function EntradaEmpresa() {
           </div>
 
           <div className="vx-onb-campo">
-            <label className="vx-label" htmlFor={`${id}-pais`}>País</label>
-            <select
-              id={`${id}-pais`} className="vx-input" value={pais}
-              onChange={(e) => setPais(e.target.value)}
-              aria-invalid={erros.pais ? true : undefined} aria-describedby={erros.pais ? `${id}-pais-erro` : `${id}-pais-dica`}
-              style={{ minHeight: 48, cursor: "pointer" }}
-            >
-              {PAISES.map((p) => (
-                <option key={p.code} value={p.code}>{p.nome} ({p.moeda})</option>
-              ))}
-            </select>
-            <div id={`${id}-pais-dica`} className="vx-onb-dica">Define a moeda dos planos e das campanhas ({moedaDoPais(pais)}).</div>
+            <label className="vx-label" id={`${id}-pais`}>País</label>
+            <ComboSelect
+              name="pais"
+              valor={pais}
+              onChange={(v) => { setPais(v); setErros((e) => { const { pais: _p, ...resto } = e; return resto; }); }}
+              placeholder="Digite ou selecione o país…"
+              opcoes={PAISES.map((p) => ({ value: p.code, label: `${p.nome} (${p.moeda})`, extra: `${p.moeda} ${p.code}` }))}
+            />
+            <div id={`${id}-pais-dica`} className="vx-onb-dica">Comece a digitar o nome do país. Define a moeda dos planos e das campanhas ({moedaDoPais(pais)}).</div>
             {erros.pais && <div id={`${id}-pais-erro`} className="vx-onb-erro" role="alert">{erros.pais}</div>}
           </div>
 
