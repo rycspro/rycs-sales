@@ -7,6 +7,7 @@ import {
 import { money } from "../../lib/utils.js";
 import { api } from "../../lib/api.js";
 import { Stat, Medidor, Donut } from "../ui.jsx";
+import AchievementBadge from "./AchievementBadge.jsx";
 import { desempenhoVendedor, potencialDeGanhos } from "../../../shared/desempenhoVendedor.js";
 import { CATEGORIAS } from "../../../shared/gamificacao.js";
 import { ler as lerArmazenamento, gravar as gravarArmazenamento } from "../../lib/armazenamento.js";
@@ -169,38 +170,17 @@ export default function PainelVendedor({ eu, db, abrirEmpresas, setAba }) {
         <span className="vx-chip vx-mono">{g.resumo.conquistadas} / {g.resumo.total}</span>
       </div>
       <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 12px" }}>Cada passo da sua trajetória merece reconhecimento.</p>
-      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 150px), 1fr))" }}>
-        {g.conquistas.map((cq) => {
-          const info = CAT[cq.categoria] || CAT.perfil;
-          const Ico = cq.desbloqueada ? info.Icon : Lock;
-          const emProgresso = !cq.desbloqueada && cq.progresso.atual > 0;
-          const cor = cq.desbloqueada ? info.cor : "var(--muted-2)";
-          return (
-            <button key={cq.id} type="button" onClick={() => setConquistaAberta(cq)}
-              className="vx-card" style={{
-                padding: 14, textAlign: "center", cursor: "pointer", border: "1px solid var(--border)",
-                opacity: cq.desbloqueada ? 1 : 0.9, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                background: cq.desbloqueada ? `${info.cor}18` : "var(--surface-2)",
-                border: `2px solid ${cq.desbloqueada ? info.cor : "var(--border-strong)"}`, color: cor,
-              }}>
-                <Ico size={22} />
-              </div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", lineHeight: 1.25 }}>{cq.nome}</div>
-              {cq.desbloqueada ? (
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: VERDE, display: "inline-flex", alignItems: "center", gap: 3 }}>
-                  <CheckCircle2 size={11} /> Conquistada
-                </span>
-              ) : emProgresso ? (
-                <span className="vx-mono" style={{ fontSize: 10.5, color: "var(--amber)" }}>{cq.progresso.atual}/{cq.progresso.alvo}</span>
-              ) : (
-                <span style={{ fontSize: 10.5, color: "var(--muted-2)" }}>Bloqueada</span>
-              )}
-            </button>
-          );
-        })}
+      {/* Coleção de medalhas 3D colecionáveis (estilo Premium 3D Collectible).
+          Cada conquista é uma AchievementBadge com seu asset, estado e animação. */}
+      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 150px), 1fr))" }}>
+        {g.conquistas.map((cq) => (
+          <AchievementBadge
+            key={cq.id}
+            conquista={cq}
+            novo={novas.some((n) => n.id === cq.id)}
+            onClick={() => setConquistaAberta(cq)}
+          />
+        ))}
       </div>
 
       {/* ══════════ 6. CERTIFICADOS ══════════ */}
