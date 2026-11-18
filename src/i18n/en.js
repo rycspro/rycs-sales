@@ -10,6 +10,12 @@ export default {
     voltar: "Back",
     continuar: "Continue",
   },
+  cookies: {
+    texto: "We use cookies to know which ad each sign-up came from and to improve our campaigns on Meta (Facebook and Instagram). Declining changes nothing in how you use the platform.",
+    aceitar: "Accept",
+    recusar: "Decline",
+    rotulo: "Cookie notice",
+  },
   conta: {
     eyebrow: "CHOOSE YOUR PROFILE",
     titulo: "How do you want to use RYCS?",

@@ -15,6 +15,7 @@ import CentralEmails from "./CentralEmails.jsx";
 import DisparoWhatsapp from "./DisparoWhatsapp.jsx";
 import ConvitesOnboarding from "./ConvitesOnboarding.jsx";
 import JornadaAdmin from "./JornadaAdmin.jsx";
+import CampanhasAdmin from "./CampanhasAdmin.jsx";
 import VouchersAdmin from "./VouchersAdmin.jsx";
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
@@ -103,6 +104,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   if (aba === "whatsapp") return <DisparoWhatsapp aviso={aviso} />;
   if (aba === "onboarding") return <ConvitesOnboarding aviso={aviso} />;
   if (aba === "jornada") return <JornadaAdmin />;
+  if (aba === "anuncios") return <CampanhasAdmin />;
 
   return (
     <div className="vx-fade">

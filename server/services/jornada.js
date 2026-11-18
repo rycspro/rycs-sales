@@ -54,7 +54,7 @@ function primeiroAcessoPorVisitante() {
 // Exportadas também para a API de Conversões (services/metaConversoes.js).
 export function jornadasVendedores(desde) {
   const linhas = db.prepare(`
-    SELECT s.id, s.nome, s.email, s.criadoEm, s.bio, s.pix,
+    SELECT s.id, s.nome, s.email, s.criadoEm, s.bio, s.pix, s.pais,
            length(COALESCE(s.foto, '')) > 0 AS temFoto,
            COALESCE(s.emailVerificado, 0) OR COALESCE(u.emailVerificado, 0) AS emailOk,
            u.origem, u.visitanteId
@@ -70,7 +70,7 @@ export function jornadasVendedores(desde) {
   const pagamento = mapa(db.prepare("SELECT sellerId AS id, MIN(criadoEm) AS em FROM withdrawals WHERE status = 'pago' GROUP BY sellerId").all());
 
   return linhas.map((s) => ({
-    id: s.id, nome: s.nome, email: s.email, criadoEm: s.criadoEm, origemBruta: json(s.origem),
+    id: s.id, nome: s.nome, email: s.email, criadoEm: s.criadoEm, pais: s.pais || "", origemBruta: json(s.origem),
     marcos: {
       acesso: Math.min(acesso.get(s.visitanteId) || s.criadoEm, s.criadoEm),
       conta: s.criadoEm,
@@ -88,7 +88,7 @@ export function jornadasVendedores(desde) {
 
 export function jornadasEmpresas(desde) {
   const linhas = db.prepare(`
-    SELECT c.id, c.nome, c.criadoEm, c.tipoEmpresa, u.email, u.origem, u.visitanteId, u.emailVerificado AS emailOk, o.etapas
+    SELECT c.id, c.nome, c.criadoEm, c.tipoEmpresa, c.pais, u.email, u.origem, u.visitanteId, u.emailVerificado AS emailOk, o.etapas
     FROM companies c
     JOIN users u ON u.entityId = c.id AND u.role = 'empresa'
     LEFT JOIN onboarding o ON o.companyId = c.id
@@ -114,7 +114,7 @@ export function jornadasEmpresas(desde) {
     const onb = json(c.etapas);
     const etapaOnb = (chave) => onb[chave] === "concluida" ? (etapasOnb.get(`${c.id}:${chave}`) || true) : null;
     return {
-      id: c.id, nome: c.nome, email: c.email, criadoEm: c.criadoEm, origemBruta: json(c.origem),
+      id: c.id, nome: c.nome, email: c.email, criadoEm: c.criadoEm, pais: c.pais || "", origemBruta: json(c.origem),
       marcos: {
         acesso: Math.min(acesso.get(c.visitanteId) || c.criadoEm, c.criadoEm),
         conta: c.criadoEm,

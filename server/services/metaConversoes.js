@@ -219,7 +219,8 @@ export function registrarCadastroMeta(req, userId, papel) {
 
 function primeiroDeposito(companyId) {
   return db.prepare(`
-    SELECT d.valor, c.moeda FROM deposit_requests d JOIN companies c ON c.id = d.companyId
+    SELECT d.valor, COALESCE(NULLIF(d.moeda, ''), NULLIF(c.moeda, ''), 'BRL') AS moeda
+    FROM deposit_requests d JOIN companies c ON c.id = d.companyId
     WHERE d.companyId = ? AND d.status = 'confirmado' ORDER BY COALESCE(d.confirmadoEm, d.criadoEm) LIMIT 1
   `).get(companyId);
 }

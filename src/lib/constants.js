@@ -94,6 +94,7 @@ export const NAV = {
   admin: [
     { key: "dashboard", label: "Dashboard", Icon: BarChart3 },
     { key: "jornada", label: "Rastreamento", Icon: Route },
+    { key: "anuncios", label: "Campanhas", Icon: Megaphone },
     { section: "Pessoas" },
     { key: "profissionais", label: "Profissionais", Icon: UserCheck },
     { key: "empresas", label: "Empresas", Icon: Building2 },

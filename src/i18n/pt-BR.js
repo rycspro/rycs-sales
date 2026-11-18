@@ -13,6 +13,13 @@ export default {
     voltar: "Voltar",
     continuar: "Continuar",
   },
+  // Aviso de cookies de marketing (components/AvisoCookies.jsx).
+  cookies: {
+    texto: "Usamos cookies para saber de qual anúncio cada cadastro veio e melhorar nossas campanhas na Meta (Facebook e Instagram). Recusar não muda nada no uso da plataforma.",
+    aceitar: "Aceitar",
+    recusar: "Recusar",
+    rotulo: "Aviso de cookies",
+  },
   conta: {
     eyebrow: "ESCOLHA SEU PERFIL",
     titulo: "Como você deseja utilizar a RYCS?",

@@ -10,6 +10,12 @@ export default {
     voltar: "Kembali",
     continuar: "Lanjutkan",
   },
+  cookies: {
+    texto: "Kami menggunakan cookie untuk mengetahui dari iklan mana setiap pendaftaran berasal dan meningkatkan kampanye kami di Meta (Facebook dan Instagram). Menolak tidak mengubah apa pun dalam penggunaan platform.",
+    aceitar: "Terima",
+    recusar: "Tolak",
+    rotulo: "Pemberitahuan cookie",
+  },
   conta: {
     eyebrow: "PILIH PROFIL ANDA",
     titulo: "Bagaimana Anda ingin menggunakan RYCS?",

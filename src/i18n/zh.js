@@ -10,6 +10,12 @@ export default {
     voltar: "返回",
     continuar: "继续",
   },
+  cookies: {
+    texto: "我们使用 Cookie 来了解每次注册来自哪条广告，并改进我们在 Meta（Facebook 和 Instagram）上的广告活动。拒绝不会影响您使用平台。",
+    aceitar: "接受",
+    recusar: "拒绝",
+    rotulo: "Cookie 通知",
+  },
   conta: {
     eyebrow: "选择您的身份",
     titulo: "您想如何使用 RYCS？",

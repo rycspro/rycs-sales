@@ -16,13 +16,33 @@ Pixel: **RYCS Plataforma** (`1690802939434598`), no Business "Rycs Sales Machine
 ## Ativar a API de Conversões
 
 1. Gerenciador de Eventos → RYCS Plataforma → Configurações → API de Conversões → **Gerar token de acesso**.
-2. Salve como secret do GitHub (o valor é colado no terminal, nunca no código ou no chat):
-   ```bash
-   gh secret set META_CAPI_TOKEN --repo rycspro/rycs-sales
-   ```
+2. Salve como secret do GitHub (nunca no código ou no chat): repositório rycs-sales → Settings → Secrets and variables → Actions → New repository secret → `META_CAPI_TOKEN`.
 3. O próximo deploy da `main` grava o token no servidor e a rotina liga sozinha (`[meta-capi] API de Conversões ativa` no log).
 
 Para testar fora da produção, `META_TEST_EVENT_CODE` (código da aba "Eventos de teste") manda os eventos só para essa aba. Não use em produção: eventos de teste não contam para os anúncios.
+
+## No admin: aba Campanhas
+
+Admin → **Campanhas** mostra o histórico de cada campanha, separado em **campanhas de profissionais** e **campanhas de empresas**:
+
+- campanha → conjunto → anúncio (clique para abrir), com visitas, quem abriu o cadastro, contas criadas e taxa visita → conta;
+- o que as contas fizeram depois (profissional: e-mail, perfil, candidatura, aprovação; empresa: e-mail, plano, campanha publicada, depósito com valor por moeda);
+- país das contas (Índia x Brasil, empresas do mundo todo);
+- histórico por dia (visitas, contas e gasto) de todas as campanhas ou da campanha aberta;
+- saúde do rastreamento: pixel, API de Conversões e eventos enviados à Meta (com erros, se houver).
+
+O tipo de cada campanha sai dos dados (qual cadastro as pessoas abriram e criaram). Enquanto não há dados, vale o nome: use "PROF" ou "EMP" no nome da campanha.
+
+### Gasto e custo por conta (opcional)
+
+Para ver gasto, cliques e custo por conta, a RYCS precisa ler a conta de anúncios RYCS SALES MACHINE:
+
+1. Configurações do negócio (Rycs Sales Machine) → Usuários → **Usuários do sistema** → adicionar (função Admin).
+2. **Atribuir ativos** → Contas de anúncios → RYCS SALES MACHINE → permissão de ver desempenho.
+3. **Gerar token** com a permissão `ads_read`.
+4. GitHub → Settings → Secrets and variables → Actions → secret **`META_ADS_TOKEN`** → rodar o deploy.
+
+Sem esse token a aba funciona igual, só sem as colunas de gasto.
 
 ## Nos anúncios
 
@@ -31,6 +51,14 @@ Parâmetros de URL de todo anúncio (o painel de jornada da RYCS lê a origem po
 ```
 utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}
 ```
+
+Links de destino (o `?lang=` abre o cadastro já no idioma da campanha):
+
+| Campanha | Link |
+| --- | --- |
+| Profissionais Índia | `https://app.rycs.pro/cadastro/profissional?lang=en` (ou `lang=hi`) |
+| Profissionais Brasil | `https://app.rycs.pro/cadastro/profissional` |
+| Empresas mundo | `https://app.rycs.pro/cadastro/empresa?lang=en` (Brasil sem `lang`) |
 
 Conversões personalizadas a criar no Gerenciador de Eventos, para otimizar cada público separado:
 

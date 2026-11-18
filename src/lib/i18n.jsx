@@ -30,6 +30,16 @@ const CHAVE = "rycs-idioma";
 const I18nContext = createContext(null);
 
 function lerLocaleInicial() {
+  // Link de anúncio com ?lang=en (hi, es…) já abre no idioma da campanha e
+  // fica salvo, como se a pessoa tivesse escolhido no seletor.
+  try {
+    let daUrl = new URLSearchParams(window.location.search).get("lang");
+    if (daUrl === "pt") daUrl = "pt-BR";
+    if (daUrl && DICIONARIOS[daUrl]) {
+      try { window.localStorage?.setItem(CHAVE, daUrl); } catch { /* storage bloqueado */ }
+      return daUrl;
+    }
+  } catch { /* sem URL */ }
   try { return window.localStorage?.getItem(CHAVE) || "pt-BR"; } catch { return "pt-BR"; }
 }
 
