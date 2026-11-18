@@ -1,0 +1,495 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-09",
+  "course_number": 9,
+  "locale": "en-IN",
+  "titulo": "Objections",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: What an objection means",
+      "titulo_original_pt": "Compreendendo objeções",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "What an objection means",
+          "tipo": "texto",
+          "conteudo": "An objection expresses concern about progress, possibly value, risk, timing or fit. Clarify its concrete meaning before answering. A final refusal need not become a debate.",
+          "roteiro_video": "In this lesson we explore what an objection means. An objection expresses concern about progress, possibly value, risk, timing or fit. Clarify its concrete meaning before answering. A final refusal need not become a debate. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “What an objection means” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "An objection expresses concern about progress, possibly value, risk, timing or fit. Clarify its concrete meaning before answering. A final refusal need not become a debate.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Concern or no interest",
+          "tipo": "texto",
+          "conteudo": "A concern may invite clarification; no interest may end the conversation. Clarify ambiguity without pressure and respect the answer. Not every no conceals a yes.",
+          "roteiro_video": "In this lesson we explore concern or no interest. A concern may invite clarification; no interest may end the conversation. Clarify ambiguity without pressure and respect the answer. Not every no conceals a yes. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Concern or no interest” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A concern may invite clarification; no interest may end the conversation. Clarify ambiguity without pressure and respect the answer. Not every no conceals a yes.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Trust and value",
+          "tipo": "texto",
+          "conteudo": "Distrust may arise from broad promises, unclear scope or prior experience. Identify what needs verification. More forceful argument cannot replace evidence or clear limitations.",
+          "roteiro_video": "In this lesson we explore trust and value. Distrust may arise from broad promises, unclear scope or prior experience. Identify what needs verification. More forceful argument cannot replace evidence or clear limitations. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Trust and value” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Distrust may arise from broad promises, unclear scope or prior experience. Identify what needs verification. More forceful argument cannot replace evidence or clear limitations.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Investigate before answering",
+          "tipo": "texto",
+          "conteudo": "Reflect the concern and ask a specific question: expensive compared with what? A single word does not diagnose it. Cash flow, scope and priority call for different responses.",
+          "roteiro_video": "In this lesson we explore investigate before answering. Reflect the concern and ask a specific question: expensive compared with what? A single word does not diagnose it. Cash flow, scope and priority call for different responses. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Investigate before answering” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Reflect the concern and ask a specific question: expensive compared with what? A single word does not diagnose it. Cash flow, scope and priority call for different responses.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Too expensive",
+      "titulo_original_pt": "Objeções comerciais frequentes",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Too expensive",
+          "tipo": "texto",
+          "conteudo": "Compare term, scope, implementation and risk before discounting. Unaffordable differs from expensive relative to an alternative. Offer concessions only within delegated authority.",
+          "roteiro_video": "In this lesson we explore too expensive. Compare term, scope, implementation and risk before discounting. Unaffordable differs from expensive relative to an alternative. Offer concessions only within delegated authority. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Too expensive” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare term, scope, implementation and risk before discounting. Unaffordable differs from expensive relative to an alternative. Offer concessions only within delegated authority.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "No budget",
+          "tipo": "texto",
+          "conteudo": "Clarify whether funding, approval or priority is missing without probing personal finances. Accept deferral or closure when no viable path exists. Do not invent savings to justify an unaffordable purchase.",
+          "roteiro_video": "In this lesson we explore no budget. Clarify whether funding, approval or priority is missing without probing personal finances. Accept deferral or closure when no viable path exists. Do not invent savings to justify an unaffordable purchase. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “No budget” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Clarify whether funding, approval or priority is missing without probing personal finances. Accept deferral or closure when no viable path exists. Do not invent savings to justify an unaffordable purchase.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Need to think",
+          "tipo": "texto",
+          "conteudo": "Ask whether information is missing and whether help comparing it is wanted. Taking time is legitimate. Agree follow-up only if desired, without a fictional deadline.",
+          "roteiro_video": "In this lesson we explore need to think. Ask whether information is missing and whether help comparing it is wanted. Taking time is legitimate. Agree follow-up only if desired, without a fictional deadline. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Need to think” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask whether information is missing and whether help comparing it is wanted. Taking time is legitimate. Agree follow-up only if desired, without a fictional deadline.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Existing provider",
+          "tipo": "texto",
+          "conteudo": "Explore what works and whether a real reason exists to evaluate alternatives. Switching costs matter. Do not attack an incumbent or assume dissatisfaction from a conversation.",
+          "roteiro_video": "In this lesson we explore existing provider. Explore what works and whether a real reason exists to evaluate alternatives. Switching costs matter. Do not attack an incumbent or assume dissatisfaction from a conversation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Existing provider” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore what works and whether a real reason exists to evaluate alternatives. Switching costs matter. Do not attack an incumbent or assume dissatisfaction from a conversation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Not a priority",
+          "tipo": "texto",
+          "conteudo": "If the buyer wants to clarify, ask what would make the topic relevant. Lack of priority may justify archiving. Do not dramatise consequences to manufacture urgency.",
+          "roteiro_video": "In this lesson we explore not a priority. If the buyer wants to clarify, ask what would make the topic relevant. Lack of priority may justify archiving. Do not dramatise consequences to manufacture urgency. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Not a priority” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "If the buyer wants to clarify, ask what would make the topic relevant. Lack of priority may justify archiving. Do not dramatise consequences to manufacture urgency.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Acknowledging concerns",
+      "titulo_original_pt": "Técnicas de resposta",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Acknowledging concerns",
+          "tipo": "texto",
+          "conteudo": "Acknowledging concern demonstrates understanding, not agreement with false claims. Use faithful paraphrase rather than automatic reassurance that minimises risk. Confirm before responding.",
+          "roteiro_video": "In this lesson we explore acknowledging concerns. Acknowledging concern demonstrates understanding, not agreement with false claims. Use faithful paraphrase rather than automatic reassurance that minimises risk. Confirm before responding. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Acknowledging concerns” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Acknowledging concern demonstrates understanding, not agreement with false claims. Use faithful paraphrase rather than automatic reassurance that minimises risk. Confirm before responding.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Clarifying questions",
+          "tipo": "texto",
+          "conteudo": "Ask a question that distinguishes possible causes, such as which scope element is unsuitable. Avoid steering toward a convenient answer. Clarification may reveal a genuine mismatch.",
+          "roteiro_video": "In this lesson we explore clarifying questions. Ask a question that distinguishes possible causes, such as which scope element is unsuitable. Avoid steering toward a convenient answer. Clarification may reveal a genuine mismatch. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Clarifying questions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask a question that distinguishes possible causes, such as which scope element is unsuitable. Avoid steering toward a convenient answer. Clarification may reveal a genuine mismatch.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Verifiable evidence",
+          "tipo": "texto",
+          "conteudo": "Match evidence to the claim: a test for capability, a document for terms, a study for findings. Do not turn one case into a general rate. State what evidence does not establish.",
+          "roteiro_video": "In this lesson we explore verifiable evidence. Match evidence to the claim: a test for capability, a document for terms, a study for findings. Do not turn one case into a general rate. State what evidence does not establish. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Verifiable evidence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Match evidence to the claim: a test for capability, a document for terms, a study for findings. Do not turn one case into a general rate. State what evidence does not establish.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Negotiating alternatives",
+          "tipo": "texto",
+          "conteudo": "Explore scope, sequence and authorised terms without hiding consequences. A smaller package may reduce deliverables, not just price. Confirm it still meets mandatory buyer requirements.",
+          "roteiro_video": "In this lesson we explore negotiating alternatives. Explore scope, sequence and authorised terms without hiding consequences. A smaller package may reduce deliverables, not just price. Confirm it still meets mandatory buyer requirements. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Negotiating alternatives” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore scope, sequence and authorised terms without hiding consequences. A smaller package may reduce deliverables, not just price. Confirm it still meets mandatory buyer requirements.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "When not to sell",
+          "tipo": "texto",
+          "conteudo": "Closure may be correct when fit or affordability fails or the buyer declines. Record a factual reason. Not every lost deal reflects poor argumentation.",
+          "roteiro_video": "In this lesson we explore when not to sell. Closure may be correct when fit or affordability fails or the buyer declines. Record a factual reason. Not every lost deal reflects poor argumentation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “When not to sell” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Closure may be correct when fit or affordability fails or the buyer declines. Record a factual reason. Not every lost deal reflects poor argumentation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Phone objections",
+      "titulo_original_pt": "Laboratório de objeções",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Phone objections",
+          "tipo": "texto",
+          "conteudo": "Respond in short blocks and allow a reaction before adding arguments. Tone does not replace substance. Respect time limits rather than speeding through a long pitch.",
+          "roteiro_video": "In this lesson we explore phone objections. Respond in short blocks and allow a reaction before adding arguments. Tone does not replace substance. Respect time limits rather than speeding through a long pitch. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Phone objections” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Respond in short blocks and allow a reaction before adding arguments. Tone does not replace substance. Respect time limits rather than speeding through a long pitch.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Chat objections",
+          "tipo": "texto",
+          "conteudo": "Summarise the concern and answer one point at a time. Avoid attachment bombardment. Text lacks tone; a short reply does not establish hostility or final intent.",
+          "roteiro_video": "In this lesson we explore chat objections. Summarise the concern and answer one point at a time. Avoid attachment bombardment. Text lacks tone; a short reply does not establish hostility or final intent. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Chat objections” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Summarise the concern and answer one point at a time. Avoid attachment bombardment. Text lacks tone; a short reply does not establish hostility or final intent.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Meeting objections",
+          "tipo": "texto",
+          "conteudo": "Identify who raised the concern and who can validate it. Record disagreements rather than hide them behind a sponsor's enthusiasm. Agree verification with the relevant owner.",
+          "roteiro_video": "In this lesson we explore meeting objections. Identify who raised the concern and who can validate it. Record disagreements rather than hide them behind a sponsor's enthusiasm. Agree verification with the relevant owner. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Meeting objections” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Identify who raised the concern and who can validate it. Record disagreements rather than hide them behind a sponsor's enthusiasm. Agree verification with the relevant owner.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Improving the repertoire",
+          "tipo": "texto",
+          "conteudo": "Review identified cause, evidence, response and next step using an authorised or fictional excerpt. Assess conduct, not personality. A polished answer may still miss the actual concern.",
+          "roteiro_video": "In this lesson we explore improving the repertoire. Review identified cause, evidence, response and next step using an authorised or fictional excerpt. Assess conduct, not personality. A polished answer may still miss the actual concern. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Improving the repertoire” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Review identified cause, evidence, response and next step using an authorised or fictional excerpt. Assess conduct, not personality. A polished answer may still miss the actual concern.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A fictional proposal costs 1,200 currency units monthly for two service units with one onboarding session. The buyer compares it with 700 for one unit without onboarding, then reveals no change approval this quarter. No discount authority exists.\n\nAn Indian training provider compares INR 30,000/month for two cohorts with INR 18,000 for one. The accounts team needs tax and billing clarification, and the academic lead cannot approve a change before the current programme ends."
+  },
+  "projeto": {
+    "instrucoes": "Prepare responses for price, funding, timing, incumbent and priority, each with a discriminating question, required evidence and closure condition.",
+    "gabarito": "Compare scope before drawing value conclusions. Two units are not automatically better; confirm need. Do not invent a discount or treat missing approval as something to defeat. Record deferral or closure according to actual interest."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "09-M1",
+        "pergunta": "How would you apply “Module 1: What an objection means” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "An objection expresses concern about progress, possibly value, risk, timing or fit. Clarify its concrete meaning before answering. A final refusal need not become a debate.",
+          "A concern may invite clarification; no interest may end the conversation. Clarify ambiguity without pressure and respect the answer. Not every no conceals a yes.",
+          "Distrust may arise from broad promises, unclear scope or prior experience. Identify what needs verification. More forceful argument cannot replace evidence or clear limitations.",
+          "Reflect the concern and ask a specific question: expensive compared with what? A single word does not diagnose it. Cash flow, scope and priority call for different responses."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "09-M2",
+        "pergunta": "How would you apply “Module 2: Too expensive” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Compare term, scope, implementation and risk before discounting. Unaffordable differs from expensive relative to an alternative. Offer concessions only within delegated authority.",
+          "Clarify whether funding, approval or priority is missing without probing personal finances. Accept deferral or closure when no viable path exists. Do not invent savings to justify an unaffordable purchase.",
+          "Ask whether information is missing and whether help comparing it is wanted. Taking time is legitimate. Agree follow-up only if desired, without a fictional deadline.",
+          "Explore what works and whether a real reason exists to evaluate alternatives. Switching costs matter. Do not attack an incumbent or assume dissatisfaction from a conversation.",
+          "If the buyer wants to clarify, ask what would make the topic relevant. Lack of priority may justify archiving. Do not dramatise consequences to manufacture urgency."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "09-M3",
+        "pergunta": "How would you apply “Module 3: Acknowledging concerns” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Acknowledging concern demonstrates understanding, not agreement with false claims. Use faithful paraphrase rather than automatic reassurance that minimises risk. Confirm before responding.",
+          "Ask a question that distinguishes possible causes, such as which scope element is unsuitable. Avoid steering toward a convenient answer. Clarification may reveal a genuine mismatch.",
+          "Match evidence to the claim: a test for capability, a document for terms, a study for findings. Do not turn one case into a general rate. State what evidence does not establish.",
+          "Explore scope, sequence and authorised terms without hiding consequences. A smaller package may reduce deliverables, not just price. Confirm it still meets mandatory buyer requirements.",
+          "Closure may be correct when fit or affordability fails or the buyer declines. Record a factual reason. Not every lost deal reflects poor argumentation."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "09-M4",
+        "pergunta": "How would you apply “Module 4: Phone objections” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Respond in short blocks and allow a reaction before adding arguments. Tone does not replace substance. Respect time limits rather than speeding through a long pitch.",
+          "Summarise the concern and answer one point at a time. Avoid attachment bombardment. Text lacks tone; a short reply does not establish hostility or final intent.",
+          "Identify who raised the concern and who can validate it. Record disagreements rather than hide them behind a sponsor's enthusiasm. Agree verification with the relevant owner.",
+          "Review identified cause, evidence, response and next step using an authorised or fictional excerpt. Assess conduct, not personality. A polished answer may still miss the actual concern."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "09-FINAL",
+        "pergunta": "Prepare responses for price, funding, timing, incumbent and priority, each with a discriminating question, required evidence and closure condition.",
+        "resposta_modelo": "Compare scope before drawing value conclusions. Two units are not automatically better; confirm need. Do not invent a discount or treat missing approval as something to defeat. Record deferral or closure according to actual interest.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

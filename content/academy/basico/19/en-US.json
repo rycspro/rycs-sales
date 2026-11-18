@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-19",
+  "course_number": 19,
+  "locale": "en-US",
+  "titulo": "CRM, Routine and Metrics",
+  "nivel_original": "Iniciante a intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: CRM entities",
+      "titulo_original_pt": "Fundamentos do registro comercial",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "CRM entities",
+          "tipo": "texto",
+          "conteudo": "An account is an organisation, contact a person, opportunity a buying process and activity an event. Mixing them creates duplicates and incorrect counts. Attempts are not new opportunities.",
+          "roteiro_video": "In this lesson we explore crm entities. An account is an organisation, contact a person, opportunity a buying process and activity an event. Mixing them creates duplicates and incorrect counts. Attempts are not new opportunities. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “CRM entities” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "An account is an organisation, contact a person, opportunity a buying process and activity an event. Mixing them creates duplicates and incorrect counts. Attempts are not new opportunities.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Stage entry",
+          "tipo": "texto",
+          "conteudo": "Define minimum stage evidence and exit conditions. Relabelling without new information is not progress. Records should explain why classification changed.",
+          "roteiro_video": "In this lesson we explore stage entry. Define minimum stage evidence and exit conditions. Relabelling without new information is not progress. Records should explain why classification changed. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Stage entry” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define minimum stage evidence and exit conditions. Relabelling without new information is not progress. Records should explain why classification changed.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Minimum data quality",
+          "tipo": "texto",
+          "conteudo": "Required fields should support real decisions. Blank, zero and unknown differ. Do not invent data to pass validation; fix workflows demanding nonexistent certainty.",
+          "roteiro_video": "In this lesson we explore minimum data quality. Required fields should support real decisions. Blank, zero and unknown differ. Do not invent data to pass validation; fix workflows demanding nonexistent certainty. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Minimum data quality” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Required fields should support real decisions. Blank, zero and unknown differ. Do not invent data to pass validation; fix workflows demanding nonexistent certainty.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Provenance and access",
+          "tipo": "texto",
+          "conteudo": "Record provenance and use limits and restrict access by need. Personal spreadsheet exports may lose control. Do not repurpose information merely for convenience.",
+          "roteiro_video": "In this lesson we explore provenance and access. Record provenance and use limits and restrict access by need. Personal spreadsheet exports may lose control. Do not repurpose information merely for convenience. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Provenance and access” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record provenance and use limits and restrict access by need. Personal spreadsheet exports may lose control. Do not repurpose information merely for convenience.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Actionable tasks",
+      "titulo_original_pt": "Rotina e continuidade",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Actionable tasks",
+          "tipo": "texto",
+          "conteudo": "Tasks need action, owner, date/condition and purpose. Reminders do not authorise contact. Check current preferences and whether another person already resolved the issue.",
+          "roteiro_video": "In this lesson we explore actionable tasks. Tasks need action, owner, date/condition and purpose. Reminders do not authorise contact. Check current preferences and whether another person already resolved the issue. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Actionable tasks” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Tasks need action, owner, date/condition and purpose. Reminders do not authorise contact. Check current preferences and whether another person already resolved the issue.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Factual history",
+          "tipo": "texto",
+          "conteudo": "Separate buyer statements, observations and inference. Possible review is not expected purchase. Preserve enough context for continuity without unnecessary full-conversation storage.",
+          "roteiro_video": "In this lesson we explore factual history. Separate buyer statements, observations and inference. Possible review is not expected purchase. Preserve enough context for continuity without unnecessary full-conversation storage. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Factual history” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate buyer statements, observations and inference. Possible review is not expected purchase. Preserve enough context for continuity without unnecessary full-conversation storage.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Duplicates and corrections",
+          "tipo": "texto",
+          "conteudo": "Verify identity before consolidation and preserve restrictive preferences while resolving conflicts. Corrections need history. Do not delete valid activity to improve a rate.",
+          "roteiro_video": "In this lesson we explore duplicates and corrections. Verify identity before consolidation and preserve restrictive preferences while resolving conflicts. Corrections need history. Do not delete valid activity to improve a rate. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Duplicates and corrections” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Verify identity before consolidation and preserve restrictive preferences while resolving conflicts. Corrections need history. Do not delete valid activity to improve a rate.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Closure and retention",
+          "tipo": "texto",
+          "conteudo": "Closing an opportunity updates sales status; retention and deletion follow separate rules. Archiving must not erase suppression obligations. Route data requests to the responsible owner.",
+          "roteiro_video": "In this lesson we explore closure and retention. Closing an opportunity updates sales status; retention and deletion follow separate rules. Archiving must not erase suppression obligations. Route data requests to the responsible owner. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Closure and retention” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Closing an opportunity updates sales status; retention and deletion follow separate rules. Archiving must not erase suppression obligations. Route data requests to the responsible owner.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Counts and rates",
+      "titulo_original_pt": "Métricas que orientam decisões",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Counts and rates",
+          "tipo": "texto",
+          "conteudo": "Rates require coherent numerator, denominator and period. Five sales reveal no conversion rate without the eligible base. People, accounts, opportunities and activities are different units.",
+          "roteiro_video": "In this lesson we explore counts and rates. Rates require coherent numerator, denominator and period. Five sales reveal no conversion rate without the eligible base. People, accounts, opportunities and activities are different units. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Counts and rates” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Rates require coherent numerator, denominator and period. Five sales reveal no conversion rate without the eligible base. People, accounts, opportunities and activities are different units.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Stage conversion",
+          "tipo": "texto",
+          "conteudo": "Follow a cohort across stages rather than divide old outcomes by new entries. Treat still-open cases explicitly. Mix changes may explain a decline without worse execution.",
+          "roteiro_video": "In this lesson we explore stage conversion. Follow a cohort across stages rather than divide old outcomes by new entries. Treat still-open cases explicitly. Mix changes may explain a decline without worse execution. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Stage conversion” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Follow a cohort across stages rather than divide old outcomes by new entries. Treat still-open cases explicitly. Mix changes may explain a decline without worse execution.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Attendance and quality",
+          "tipo": "texto",
+          "conteudo": "Compare held meetings with eligible bookings and assess fit separately. A held meeting may fail quality criteria. Define treatment of cancellations and reschedules.",
+          "roteiro_video": "In this lesson we explore attendance and quality. Compare held meetings with eligible bookings and assess fit separately. A held meeting may fail quality criteria. Define treatment of cancellations and reschedules. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Attendance and quality” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare held meetings with eligible bookings and assess fit separately. A held meeting may fail quality criteria. Define treatment of cancellations and reschedules.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Cycle time",
+          "tipo": "texto",
+          "conteudo": "Define start/end events and inspect the distribution, not only the mean. Long and still-open cases affect interpretation. Completed-deal cycles do not guarantee a new deal's timing.",
+          "roteiro_video": "In this lesson we explore cycle time. Define start/end events and inspect the distribution, not only the mean. Long and still-open cases affect interpretation. Completed-deal cycles do not guarantee a new deal's timing. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Cycle time” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define start/end events and inspect the distribution, not only the mean. Long and still-open cases affect interpretation. Completed-deal cycles do not guarantee a new deal's timing.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Cleaning a fictional dataset",
+      "titulo_original_pt": "Laboratório de CRM",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Cleaning a fictional dataset",
+          "tipo": "texto",
+          "conteudo": "Standardise fields, identify possible duplicates and retain gaps. Document transformations and preserve original input. A visually clean dataset may still be conceptually wrong.",
+          "roteiro_video": "In this lesson we explore cleaning a fictional dataset. Standardise fields, identify possible duplicates and retain gaps. Document transformations and preserve original input. A visually clean dataset may still be conceptually wrong. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Cleaning a fictional dataset” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Standardise fields, identify possible duplicates and retain gaps. Document transformations and preserve original input. A visually clean dataset may still be conceptually wrong.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Finding inconsistencies",
+          "tipo": "texto",
+          "conteudo": "Look for conflicting dates, unsupported stages and mixed units. Verify before correcting. Do not infer close dates from last activity merely to fill a field.",
+          "roteiro_video": "In this lesson we explore finding inconsistencies. Look for conflicting dates, unsupported stages and mixed units. Verify before correcting. Do not infer close dates from last activity merely to fill a field. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Finding inconsistencies” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Look for conflicting dates, unsupported stages and mixed units. Verify before correcting. Do not infer close dates from last activity merely to fill a field.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "A simple dashboard",
+          "tipo": "texto",
+          "conteudo": "Select decision-linked measures and show definitions and freshness. Include volume and quality without context-free rankings. Charts should support questions, not conceal uncertainty behind visual precision.",
+          "roteiro_video": "In this lesson we explore a simple dashboard. Select decision-linked measures and show definitions and freshness. Include volume and quality without context-free rankings. Charts should support questions, not conceal uncertainty behind visual precision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A simple dashboard” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Select decision-linked measures and show definitions and freshness. Include volume and quality without context-free rankings. Charts should support questions, not conceal uncertainty behind visual precision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Testing a routine change",
+          "tipo": "texto",
+          "conteudo": "Choose an observed gap, a small change and verification measure. Describe comparison conditions. Do not infer causality from one improvement without considering simultaneous changes.",
+          "roteiro_video": "In this lesson we explore testing a routine change. Choose an observed gap, a small change and verification measure. Describe comparison conditions. Do not infer causality from one improvement without considering simultaneous changes. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Testing a routine change” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Choose an observed gap, a small change and verification measure. Describe comparison conditions. Do not infer causality from one improvement without considering simultaneous changes.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A fictional dataset has 20 opportunities: eight won, four lost and eight still open. Of 30 activities, five duplicate existing records. Two opportunities end before their start date. A blank budget was converted to zero without confirmation.\n\nA US CRM team imports timestamps from two time zones and must normalise display without changing event history. USD amount fields need term and scope; annual and monthly values are not comparable without conversion rules."
+  },
+  "projeto": {
+    "instrucoes": "Create a minimum data dictionary, flag inconsistencies, calculate explicit-denominator rates and propose a routine preventing recurrence.",
+    "gabarito": "Win rate among closed=8/12=66.67%; wins among all=8/20=40%, answering different questions. Open cases are not losses. Verify duplicates, correct dates from sources and restore unknown budgets rather than invent values."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "19-M1",
+        "pergunta": "How would you apply “Module 1: CRM entities” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "An account is an organisation, contact a person, opportunity a buying process and activity an event. Mixing them creates duplicates and incorrect counts. Attempts are not new opportunities.",
+          "Define minimum stage evidence and exit conditions. Relabelling without new information is not progress. Records should explain why classification changed.",
+          "Required fields should support real decisions. Blank, zero and unknown differ. Do not invent data to pass validation; fix workflows demanding nonexistent certainty.",
+          "Record provenance and use limits and restrict access by need. Personal spreadsheet exports may lose control. Do not repurpose information merely for convenience."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "19-M2",
+        "pergunta": "How would you apply “Module 2: Actionable tasks” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Tasks need action, owner, date/condition and purpose. Reminders do not authorise contact. Check current preferences and whether another person already resolved the issue.",
+          "Separate buyer statements, observations and inference. Possible review is not expected purchase. Preserve enough context for continuity without unnecessary full-conversation storage.",
+          "Verify identity before consolidation and preserve restrictive preferences while resolving conflicts. Corrections need history. Do not delete valid activity to improve a rate.",
+          "Closing an opportunity updates sales status; retention and deletion follow separate rules. Archiving must not erase suppression obligations. Route data requests to the responsible owner."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "19-M3",
+        "pergunta": "How would you apply “Module 3: Counts and rates” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Rates require coherent numerator, denominator and period. Five sales reveal no conversion rate without the eligible base. People, accounts, opportunities and activities are different units.",
+          "Follow a cohort across stages rather than divide old outcomes by new entries. Treat still-open cases explicitly. Mix changes may explain a decline without worse execution.",
+          "Compare held meetings with eligible bookings and assess fit separately. A held meeting may fail quality criteria. Define treatment of cancellations and reschedules.",
+          "Define start/end events and inspect the distribution, not only the mean. Long and still-open cases affect interpretation. Completed-deal cycles do not guarantee a new deal's timing."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "19-M4",
+        "pergunta": "How would you apply “Module 4: Cleaning a fictional dataset” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Standardise fields, identify possible duplicates and retain gaps. Document transformations and preserve original input. A visually clean dataset may still be conceptually wrong.",
+          "Look for conflicting dates, unsupported stages and mixed units. Verify before correcting. Do not infer close dates from last activity merely to fill a field.",
+          "Select decision-linked measures and show definitions and freshness. Include volume and quality without context-free rankings. Charts should support questions, not conceal uncertainty behind visual precision.",
+          "Choose an observed gap, a small change and verification measure. Describe comparison conditions. Do not infer causality from one improvement without considering simultaneous changes."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "19-FINAL",
+        "pergunta": "Create a minimum data dictionary, flag inconsistencies, calculate explicit-denominator rates and propose a routine preventing recurrence.",
+        "resposta_modelo": "Win rate among closed=8/12=66.67%; wins among all=8/20=40%, answering different questions. Open cases are not losses. Verify duplicates, correct dates from sources and restore unknown budgets rather than invent values.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

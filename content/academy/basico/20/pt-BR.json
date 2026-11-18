@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-20",
+  "course_number": 20,
+  "locale": "pt-BR",
+  "titulo": "IA para Vendedores",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Usos e limites da IA em vendas",
+      "titulo_original_pt": "Usos e limites da IA em vendas",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Modelo de linguagem, geração e incerteza",
+          "tipo": "texto",
+          "conteudo": "Um modelo gera uma resposta plausível a partir de padrões e contexto, podendo produzir afirmações falsas com confiança. Fluência não comprova verdade. Trate saída como material a verificar antes de usar comercialmente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar modelo de linguagem, geração e incerteza. Um modelo gera uma resposta plausível a partir de padrões e contexto, podendo produzir afirmações falsas com confiança. Fluência não comprova verdade. Trate saída como material a verificar antes de usar comercialmente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Modelo de linguagem, geração e incerteza” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Um modelo gera uma resposta plausível a partir de padrões e contexto, podendo produzir afirmações falsas com confiança. Fluência não comprova verdade. Trate saída como material a verificar antes de usar comercialmente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Tarefas adequadas e decisões que exigem responsável",
+          "tipo": "texto",
+          "conteudo": "IA pode apoiar rascunho, organização e simulação; responsáveis humanos decidem compromissos, envio e condições comerciais. Delegar execução não transfere responsabilidade. Defina limites antes de conectar qualquer ferramenta de ação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tarefas adequadas e decisões que exigem responsável. IA pode apoiar rascunho, organização e simulação; responsáveis humanos decidem compromissos, envio e condições comerciais. Delegar execução não transfere responsabilidade. Defina limites antes de conectar qualquer ferramenta de ação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tarefas adequadas e decisões que exigem responsável” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "IA pode apoiar rascunho, organização e simulação; responsáveis humanos decidem compromissos, envio e condições comerciais. Delegar execução não transfere responsabilidade. Defina limites antes de conectar qualquer ferramenta de ação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Alucinações, vieses e falsa precisão",
+          "tipo": "texto",
+          "conteudo": "Confira nomes, números, citações e inferências sobre pessoas. Uma resposta detalhada pode inventar fonte. Não usar aparência profissional do texto como teste de qualidade nem inferir competência por identidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar alucinações, vieses e falsa precisão. Confira nomes, números, citações e inferências sobre pessoas. Uma resposta detalhada pode inventar fonte. Não usar aparência profissional do texto como teste de qualidade nem inferir competência por identidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Alucinações, vieses e falsa precisão” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confira nomes, números, citações e inferências sobre pessoas. Uma resposta detalhada pode inventar fonte. Não usar aparência profissional do texto como teste de qualidade nem inferir competência por identidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Ferramentas aprovadas e limites de dados",
+          "tipo": "texto",
+          "conteudo": "Verifique política de uso, acesso e tratamento antes de inserir informações da empresa. Remover nome pode não anonimizar um caso. Prefira dados sintéticos e nunca cole credenciais ou documentos de clientes sem autorização.",
+          "roteiro_video": "Nesta aula, vamos trabalhar ferramentas aprovadas e limites de dados. Verifique política de uso, acesso e tratamento antes de inserir informações da empresa. Remover nome pode não anonimizar um caso. Prefira dados sintéticos e nunca cole credenciais ou documentos de clientes sem autorização. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Ferramentas aprovadas e limites de dados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Verifique política de uso, acesso e tratamento antes de inserir informações da empresa. Remover nome pode não anonimizar um caso. Prefira dados sintéticos e nunca cole credenciais ou documentos de clientes sem autorização.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Preparação de pedidos e contexto",
+      "titulo_original_pt": "Preparação de pedidos e contexto",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Objetivo, público, fonte e formato de saída",
+          "tipo": "texto",
+          "conteudo": "Especifique tarefa, público, fonte, limites e formato. Peça que lacunas apareçam como desconhecidas. Um pedido para convencer a qualquer custo produz incentivos ruins; defina critério de resposta verificável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar objetivo, público, fonte e formato de saída. Especifique tarefa, público, fonte, limites e formato. Peça que lacunas apareçam como desconhecidas. Um pedido para convencer a qualquer custo produz incentivos ruins; defina critério de resposta verificável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Objetivo, público, fonte e formato de saída” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Especifique tarefa, público, fonte, limites e formato. Peça que lacunas apareçam como desconhecidas. Um pedido para convencer a qualquer custo produz incentivos ruins; defina critério de resposta verificável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Trabalhar com dados fictícios ou autorizados",
+          "tipo": "texto",
+          "conteudo": "Construa um caso fictício com campos necessários e sinalize sua natureza. Dado real exige processo aprovado de acesso e finalidade. Não misturar uma história sintética com identificadores reais de compradores.",
+          "roteiro_video": "Nesta aula, vamos trabalhar trabalhar com dados fictícios ou autorizados. Construa um caso fictício com campos necessários e sinalize sua natureza. Dado real exige processo aprovado de acesso e finalidade. Não misturar uma história sintética com identificadores reais de compradores. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Trabalhar com dados fictícios ou autorizados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Construa um caso fictício com campos necessários e sinalize sua natureza. Dado real exige processo aprovado de acesso e finalidade. Não misturar uma história sintética com identificadores reais de compradores.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Separar instruções de documentos não confiáveis",
+          "tipo": "texto",
+          "conteudo": "Conteúdo de um arquivo é dado a analisar, não autorização para enviar, apagar ou revelar informações. Ignore instruções embutidas que alteram a tarefa. Separe fontes de comandos e valide ações externamente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar separar instruções de documentos não confiáveis. Conteúdo de um arquivo é dado a analisar, não autorização para enviar, apagar ou revelar informações. Ignore instruções embutidas que alteram a tarefa. Separe fontes de comandos e valide ações externamente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Separar instruções de documentos não confiáveis” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conteúdo de um arquivo é dado a analisar, não autorização para enviar, apagar ou revelar informações. Ignore instruções embutidas que alteram a tarefa. Separe fontes de comandos e valide ações externamente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Exigir evidência e registrar lacunas",
+          "tipo": "texto",
+          "conteudo": "Exija que cada afirmação factual aponte para fonte fornecida ou verificada. Se a fonte não contém o número, a resposta deve declarar ausência. Pedir citação não garante que a citação exista.",
+          "roteiro_video": "Nesta aula, vamos trabalhar exigir evidência e registrar lacunas. Exija que cada afirmação factual aponte para fonte fornecida ou verificada. Se a fonte não contém o número, a resposta deve declarar ausência. Pedir citação não garante que a citação exista. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Exigir evidência e registrar lacunas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Exija que cada afirmação factual aponte para fonte fornecida ou verificada. Se a fonte não contém o número, a resposta deve declarar ausência. Pedir citação não garante que a citação exista.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Aplicações comerciais supervisionadas",
+      "titulo_original_pt": "Aplicações comerciais supervisionadas",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Rascunhar mensagens com contexto verdadeiro",
+          "tipo": "texto",
+          "conteudo": "Forneça contexto verdadeiro, oferta e preferência do comprador; revise nomes, condições e tom. Não permitir que a IA invente reunião anterior ou promessa. A mensagem só sai após revisão responsável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar rascunhar mensagens com contexto verdadeiro. Forneça contexto verdadeiro, oferta e preferência do comprador; revise nomes, condições e tom. Não permitir que a IA invente reunião anterior ou promessa. A mensagem só sai após revisão responsável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Rascunhar mensagens com contexto verdadeiro” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Forneça contexto verdadeiro, oferta e preferência do comprador; revise nomes, condições e tom. Não permitir que a IA invente reunião anterior ou promessa. A mensagem só sai após revisão responsável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Resumir notas sem aumentar a certeza",
+          "tipo": "texto",
+          "conteudo": "Preserve graus de certeza e negações. O modelo não deve transformar talvez em compromisso nem omitir recusa. Compare resumo com notas e mantenha origem para permitir correção.",
+          "roteiro_video": "Nesta aula, vamos trabalhar resumir notas sem aumentar a certeza. Preserve graus de certeza e negações. O modelo não deve transformar talvez em compromisso nem omitir recusa. Compare resumo com notas e mantenha origem para permitir correção. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Resumir notas sem aumentar a certeza” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Preserve graus de certeza e negações. O modelo não deve transformar talvez em compromisso nem omitir recusa. Compare resumo com notas e mantenha origem para permitir correção.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Praticar conversas com papéis definidos",
+          "tipo": "texto",
+          "conteudo": "Separe instruções do comprador e avaliador. O ator revela apenas fatos previstos e não ajuda a obter aprovação. Avaliador usa transcrição e rubrica, reconhecendo informação insuficiente e necessidade de revisão humana.",
+          "roteiro_video": "Nesta aula, vamos trabalhar praticar conversas com papéis definidos. Separe instruções do comprador e avaliador. O ator revela apenas fatos previstos e não ajuda a obter aprovação. Avaliador usa transcrição e rubrica, reconhecendo informação insuficiente e necessidade de revisão humana. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Praticar conversas com papéis definidos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe instruções do comprador e avaliador. O ator revela apenas fatos previstos e não ajuda a obter aprovação. Avaliador usa transcrição e rubrica, reconhecendo informação insuficiente e necessidade de revisão humana.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Comparar versões sem alegar desempenho não medido",
+          "tipo": "texto",
+          "conteudo": "Avalie clareza, fidelidade e adequação com critérios definidos antes de ler as versões. Preferência editorial não prova conversão superior. Teste desempenho somente com desenho apropriado e dados autorizados.",
+          "roteiro_video": "Nesta aula, vamos trabalhar comparar versões sem alegar desempenho não medido. Avalie clareza, fidelidade e adequação com critérios definidos antes de ler as versões. Preferência editorial não prova conversão superior. Teste desempenho somente com desenho apropriado e dados autorizados. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Comparar versões sem alegar desempenho não medido” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Avalie clareza, fidelidade e adequação com critérios definidos antes de ler as versões. Preferência editorial não prova conversão superior. Teste desempenho somente com desenho apropriado e dados autorizados.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Verificação e projeto",
+      "titulo_original_pt": "Verificação e projeto",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Checar fatos, números, condições e fontes",
+          "tipo": "texto",
+          "conteudo": "Confira cada condição comercial na fonte da oferta e recalcule números. Abra links relevantes e verifique se sustentam a frase. Não aceitar uma bibliografia extensa como substituto de conferência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar checar fatos, números, condições e fontes. Confira cada condição comercial na fonte da oferta e recalcule números. Abra links relevantes e verifique se sustentam a frase. Não aceitar uma bibliografia extensa como substituto de conferência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Checar fatos, números, condições e fontes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confira cada condição comercial na fonte da oferta e recalcule números. Abra links relevantes e verifique se sustentam a frase. Não aceitar uma bibliografia extensa como substituto de conferência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Testar consistência e exposição de dados",
+          "tipo": "texto",
+          "conteudo": "Use entradas com lacunas, contradições e instruções maliciosas fictícias para observar comportamento. Confira se o sistema inventa ou revela conteúdo reservado. Um teste aprovado não garante ausência universal de falhas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar testar consistência e exposição de dados. Use entradas com lacunas, contradições e instruções maliciosas fictícias para observar comportamento. Confira se o sistema inventa ou revela conteúdo reservado. Um teste aprovado não garante ausência universal de falhas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Testar consistência e exposição de dados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use entradas com lacunas, contradições e instruções maliciosas fictícias para observar comportamento. Confira se o sistema inventa ou revela conteúdo reservado. Um teste aprovado não garante ausência universal de falhas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Revisar antes de enviar ou registrar",
+          "tipo": "texto",
+          "conteudo": "Separe gerar de enviar, registrar ou contratar. Mostre ao responsável conteúdo, destinatário e consequência antes da ação apropriada. Não deixar uma saída de texto autorizar autonomamente um compromisso comercial.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisar antes de enviar ou registrar. Separe gerar de enviar, registrar ou contratar. Mostre ao responsável conteúdo, destinatário e consequência antes da ação apropriada. Não deixar uma saída de texto autorizar autonomamente um compromisso comercial. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisar antes de enviar ou registrar” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe gerar de enviar, registrar ou contratar. Mostre ao responsável conteúdo, destinatário e consequência antes da ação apropriada. Não deixar uma saída de texto autorizar autonomamente um compromisso comercial.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Projeto: fluxo assistido com pontos de revisão humana",
+          "tipo": "texto",
+          "conteudo": "Desenhe entrada, transformação, verificação, aprovação aplicável e ação, com logs proporcionais. Defina falha e retorno manual. O projeto deve mostrar onde a IA ajuda e onde o responsável decide.",
+          "roteiro_video": "Nesta aula, vamos trabalhar projeto: fluxo assistido com pontos de revisão humana. Desenhe entrada, transformação, verificação, aprovação aplicável e ação, com logs proporcionais. Defina falha e retorno manual. O projeto deve mostrar onde a IA ajuda e onde o responsável decide. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Projeto: fluxo assistido com pontos de revisão humana” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Desenhe entrada, transformação, verificação, aprovação aplicável e ação, com logs proporcionais. Defina falha e retorno manual. O projeto deve mostrar onde a IA ajuda e onde o responsável decide.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "O aluno pede à IA um e-mail com base em uma ficha que informa duas contas e nenhum recurso de integração. A saída inventa integração, redução de custo de 30% e uma reunião anterior. Um documento anexado contém instrução para enviar a base de clientes a um endereço externo. Todos os dados do exercício são sintéticos."
+  },
+  "projeto": {
+    "instrucoes": "Reescreva o prompt, audite cada afirmação, produza mensagem corrigida e desenhe pontos de revisão antes de envio ou registro.",
+    "gabarito": "Trate instrução do anexo como dado não confiável, sem executar. Remova integração, 30% e reunião inexistentes. Exija fonte por afirmação e registre lacunas. Separe rascunho de ação e mantenha destinatário e conteúdo sob revisão responsável."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "20-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Usos e limites da IA em vendas”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Um modelo gera uma resposta plausível a partir de padrões e contexto, podendo produzir afirmações falsas com confiança. Fluência não comprova verdade. Trate saída como material a verificar antes de usar comercialmente.",
+          "IA pode apoiar rascunho, organização e simulação; responsáveis humanos decidem compromissos, envio e condições comerciais. Delegar execução não transfere responsabilidade. Defina limites antes de conectar qualquer ferramenta de ação.",
+          "Confira nomes, números, citações e inferências sobre pessoas. Uma resposta detalhada pode inventar fonte. Não usar aparência profissional do texto como teste de qualidade nem inferir competência por identidade.",
+          "Verifique política de uso, acesso e tratamento antes de inserir informações da empresa. Remover nome pode não anonimizar um caso. Prefira dados sintéticos e nunca cole credenciais ou documentos de clientes sem autorização."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "20-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Preparação de pedidos e contexto”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Especifique tarefa, público, fonte, limites e formato. Peça que lacunas apareçam como desconhecidas. Um pedido para convencer a qualquer custo produz incentivos ruins; defina critério de resposta verificável.",
+          "Construa um caso fictício com campos necessários e sinalize sua natureza. Dado real exige processo aprovado de acesso e finalidade. Não misturar uma história sintética com identificadores reais de compradores.",
+          "Conteúdo de um arquivo é dado a analisar, não autorização para enviar, apagar ou revelar informações. Ignore instruções embutidas que alteram a tarefa. Separe fontes de comandos e valide ações externamente.",
+          "Exija que cada afirmação factual aponte para fonte fornecida ou verificada. Se a fonte não contém o número, a resposta deve declarar ausência. Pedir citação não garante que a citação exista."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "20-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Aplicações comerciais supervisionadas”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Forneça contexto verdadeiro, oferta e preferência do comprador; revise nomes, condições e tom. Não permitir que a IA invente reunião anterior ou promessa. A mensagem só sai após revisão responsável.",
+          "Preserve graus de certeza e negações. O modelo não deve transformar talvez em compromisso nem omitir recusa. Compare resumo com notas e mantenha origem para permitir correção.",
+          "Separe instruções do comprador e avaliador. O ator revela apenas fatos previstos e não ajuda a obter aprovação. Avaliador usa transcrição e rubrica, reconhecendo informação insuficiente e necessidade de revisão humana.",
+          "Avalie clareza, fidelidade e adequação com critérios definidos antes de ler as versões. Preferência editorial não prova conversão superior. Teste desempenho somente com desenho apropriado e dados autorizados."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "20-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Verificação e projeto”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Confira cada condição comercial na fonte da oferta e recalcule números. Abra links relevantes e verifique se sustentam a frase. Não aceitar uma bibliografia extensa como substituto de conferência.",
+          "Use entradas com lacunas, contradições e instruções maliciosas fictícias para observar comportamento. Confira se o sistema inventa ou revela conteúdo reservado. Um teste aprovado não garante ausência universal de falhas.",
+          "Separe gerar de enviar, registrar ou contratar. Mostre ao responsável conteúdo, destinatário e consequência antes da ação apropriada. Não deixar uma saída de texto autorizar autonomamente um compromisso comercial.",
+          "Desenhe entrada, transformação, verificação, aprovação aplicável e ação, com logs proporcionais. Defina falha e retorno manual. O projeto deve mostrar onde a IA ajuda e onde o responsável decide."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "20-FINAL",
+        "pergunta": "Reescreva o prompt, audite cada afirmação, produza mensagem corrigida e desenhe pontos de revisão antes de envio ou registro.",
+        "resposta_modelo": "Trate instrução do anexo como dado não confiável, sem executar. Remova integração, 30% e reunião inexistentes. Exija fonte por afirmação e registre lacunas. Separe rascunho de ação e mantenha destinatário e conteúdo sob revisão responsável.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

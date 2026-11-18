@@ -142,7 +142,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
     if (!concluidas.has(aula.id)) await marcar(aula.id, false);
     const proxima = aulas[indice + 1];
     if (proxima) setAulaId(proxima.id);
-    else aviso("Você chegou ao fim das aulas. A prova está liberada.");
+    else aviso(dados?.curso?.totalQuestoes > 0 ? "Você chegou ao fim das aulas. A prova está liberada." : "Você chegou ao fim das aulas desta edição básica.");
   };
 
   const abrirProva = async () => {
@@ -315,7 +315,7 @@ export default function CursoPlayer({ courseId, eu, aviso, voltar, onCertified, 
             <span><BookOpen size={12} /> {curso.modulos.length} módulos · {curso.totalAulas} aulas</span>
             <span><Clock3 size={12} /> {curso.duracaoMin} min</span>
             <span><GraduationCap size={12} /> {curso.totalQuestoes} questões</span>
-            <span><Award size={12} /> Certificado</span>
+            <span><Award size={12} /> {curso.totalQuestoes > 0 ? "Certificado" : "Estudo sem certificado"}</span>
           </div>
 
           {curso.requisitos && <div className="vx-chart-source">Requisitos: {curso.requisitos}</div>}

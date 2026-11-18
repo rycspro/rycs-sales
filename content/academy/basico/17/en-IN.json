@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-17",
+  "course_number": 17,
+  "locale": "en-IN",
+  "titulo": "Door-to-Door Sales",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Territory and assignment",
+      "titulo_original_pt": "Preparação e segurança na atuação presencial",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Territory and assignment",
+          "tipo": "texto",
+          "conteudo": "Check offer, permitted territory, identification and local rules before visiting. An address does not authorise entry. Plan routes and safety procedures without entering restricted areas.",
+          "roteiro_video": "In this lesson we explore territory and assignment. Check offer, permitted territory, identification and local rules before visiting. An address does not authorise entry. Plan routes and safety procedures without entering restricted areas. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Territory and assignment” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check offer, permitted territory, identification and local rules before visiting. An address does not authorise entry. Plan routes and safety procedures without entering restricted areas.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Identity and purpose",
+          "tipo": "texto",
+          "conteudo": "State name, company and commercial purpose before requesting time or information. Do not impersonate officials, inspectors or existing contractors. Materials must clearly identify the real offer.",
+          "roteiro_video": "In this lesson we explore identity and purpose. State name, company and commercial purpose before requesting time or information. Do not impersonate officials, inspectors or existing contractors. Materials must clearly identify the real offer. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Identity and purpose” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "State name, company and commercial purpose before requesting time or information. Do not impersonate officials, inspectors or existing contractors. Materials must clearly identify the real offer.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Personal safety and access",
+          "tipo": "texto",
+          "conteudo": "Respect barriers, reception and no-access signals. Withdraw and use the operating protocol when unsafe or unwelcome. Do not remain against the wishes of those controlling access.",
+          "roteiro_video": "In this lesson we explore personal safety and access. Respect barriers, reception and no-access signals. Withdraw and use the operating protocol when unsafe or unwelcome. Do not remain against the wishes of those controlling access. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Personal safety and access” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Respect barriers, reception and no-access signals. Withdraw and use the operating protocol when unsafe or unwelcome. Do not remain against the wishes of those controlling access.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Minimal visit data",
+          "tipo": "texto",
+          "conteudo": "Record only relevant permitted information. Do not photograph people, documents or interiors for convenience. Visit evidence must follow procedure without unnecessary exposure.",
+          "roteiro_video": "In this lesson we explore minimal visit data. Record only relevant permitted information. Do not photograph people, documents or interiors for convenience. Visit evidence must follow procedure without unnecessary exposure. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Minimal visit data” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record only relevant permitted information. Do not photograph people, documents or interiors for convenience. Visit evidence must follow procedure without unnecessary exposure.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Permission to speak",
+      "titulo_original_pt": "Abordagem presencial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Permission to speak",
+          "tipo": "texto",
+          "conteudo": "Keep exits clear and appropriate distance; ask whether the person wants to hear the purpose. Blocking movement or continuing after refusal undermines choice. Accept immediate closure.",
+          "roteiro_video": "In this lesson we explore permission to speak. Keep exits clear and appropriate distance; ask whether the person wants to hear the purpose. Blocking movement or continuing after refusal undermines choice. Accept immediate closure. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Permission to speak” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Keep exits clear and appropriate distance; ask whether the person wants to hear the purpose. Blocking movement or continuing after refusal undermines choice. Accept immediate closure.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "A clear opening",
+          "tipo": "texto",
+          "conteudo": "Connect identity, context and a short question without false familiarity. A grand promise at the door does not replace relevance. Do not demand attention when the timing is unsuitable.",
+          "roteiro_video": "In this lesson we explore a clear opening. Connect identity, context and a short question without false familiarity. A grand promise at the door does not replace relevance. Do not demand attention when the timing is unsuitable. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A clear opening” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Connect identity, context and a short question without false familiarity. A grand promise at the door does not replace relevance. Do not demand attention when the timing is unsuitable.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Short environmental questions",
+          "tipo": "texto",
+          "conteudo": "Ask questions suitable for available time and privacy. Avoid discussing budgets or third-party data in public. Propose an appropriate voluntary format for detailed discussion.",
+          "roteiro_video": "In this lesson we explore short environmental questions. Ask questions suitable for available time and privacy. Avoid discussing budgets or third-party data in public. Propose an appropriate voluntary format for detailed discussion. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Short environmental questions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask questions suitable for available time and privacy. Avoid discussing budgets or third-party data in public. Propose an appropriate voluntary format for detailed discussion.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Refusal and discomfort",
+          "tipo": "texto",
+          "conteudo": "Respect verbal refusal and clear closure signals rather than reinterpret them as challenges. Thank the person and leave. Record preferences under policy to avoid repeated unwanted visits.",
+          "roteiro_video": "In this lesson we explore refusal and discomfort. Respect verbal refusal and clear closure signals rather than reinterpret them as challenges. Thank the person and leave. Record preferences under policy to avoid repeated unwanted visits. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Refusal and discomfort” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Respect verbal refusal and clear closure signals rather than reinterpret them as challenges. Thank the person and leave. Record preferences under policy to avoid repeated unwanted visits.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Demonstrating within scope",
+      "titulo_original_pt": "Apresentação e decisão",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Demonstrating within scope",
+          "tipo": "texto",
+          "conteudo": "Demonstrate available capability with authorised material and fictional data. Do not request passwords or documents for an initial demo. State limits; a quick test does not prove future results.",
+          "roteiro_video": "In this lesson we explore demonstrating within scope. Demonstrate available capability with authorised material and fictional data. Do not request passwords or documents for an initial demo. State limits; a quick test does not prove future results. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Demonstrating within scope” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Demonstrate available capability with authorised material and fictional data. Do not request passwords or documents for an initial demo. State limits; a quick test does not prove future results.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Explaining conditions",
+          "tipo": "texto",
+          "conteudo": "Explain available price, term, exclusions and responsibilities before commitment. Do not invent unreviewed contract rules. Off-premises sales require specific local review by the operation.",
+          "roteiro_video": "In this lesson we explore explaining conditions. Explain available price, term, exclusions and responsibilities before commitment. Do not invent unreviewed contract rules. Off-premises sales require specific local review by the operation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Explaining conditions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explain available price, term, exclusions and responsibilities before commitment. Do not invent unreviewed contract rules. Off-premises sales require specific local review by the operation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Questions without pressure",
+          "tipo": "texto",
+          "conteudo": "Explore concerns and answer with verifiable information. Do not use physical presence to rush a decision. Offer verification only when the person wants continuity.",
+          "roteiro_video": "In this lesson we explore questions without pressure. Explore concerns and answer with verifiable information. Do not use physical presence to rush a decision. Offer verification only when the person wants continuity. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Questions without pressure” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore concerns and answer with verifiable information. Do not use physical presence to rush a decision. Offer verification only when the person wants continuity.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Closing or agreeing a step",
+          "tipo": "texto",
+          "conteudo": "Summarise the accepted action and channel or close without an unsolicited return promise. Receiving a card is not purchase acceptance. Record the agreement accurately and proportionately.",
+          "roteiro_video": "In this lesson we explore closing or agreeing a step. Summarise the accepted action and channel or close without an unsolicited return promise. Receiving a card is not purchase acceptance. Record the agreement accurately and proportionately. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Closing or agreeing a step” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Summarise the accepted action and channel or close without an unsolicited return promise. Receiving a card is not purchase acceptance. Record the agreement accurately and proportionately.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Factual visit records",
+      "titulo_original_pt": "Operação e laboratório",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Factual visit records",
+          "tipo": "texto",
+          "conteudo": "Record date, relevant location, activity and outcome without personal judgement. Do not use another route's evidence to claim a visit. Preserve uncertainty until verified.",
+          "roteiro_video": "In this lesson we explore factual visit records. Record date, relevant location, activity and outcome without personal judgement. Do not use another route's evidence to claim a visit. Preserve uncertainty until verified. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Factual visit records” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record date, relevant location, activity and outcome without personal judgement. Do not use another route's evidence to claim a visit. Preserve uncertainty until verified.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Territory coordination",
+          "tipo": "texto",
+          "conteudo": "Share restrictions and ownership through approved systems to prevent unwanted repeat visits. Efficient routes must not create uncoordinated contact. A new seller does not erase a no-visit request.",
+          "roteiro_video": "In this lesson we explore territory coordination. Share restrictions and ownership through approved systems to prevent unwanted repeat visits. Efficient routes must not create uncoordinated contact. A new seller does not erase a no-visit request. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Territory coordination” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Share restrictions and ownership through approved systems to prevent unwanted repeat visits. Efficient routes must not create uncoordinated contact. A new seller does not erase a no-visit request.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Visit indicators",
+          "tipo": "texto",
+          "conteudo": "Separate eligible addresses, attempted visits, conversations and accepted next steps. Absence is not refusal. Rates need consistent periods and eligibility rules.",
+          "roteiro_video": "In this lesson we explore visit indicators. Separate eligible addresses, attempted visits, conversations and accepted next steps. Absence is not refusal. Rates need consistent periods and eligibility rules. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Visit indicators” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate eligible addresses, attempted visits, conversations and accepted next steps. Absence is not refusal. Rates need consistent periods and eligibility rules.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Visit role-play",
+          "tipo": "texto",
+          "conteudo": "Practise opening, questions, mismatch and refusal in simulation. Assess distance, clarity and closure without involving the public. Passing requires safe conduct, not a sale at any cost.",
+          "roteiro_video": "In this lesson we explore visit role-play. Practise opening, questions, mismatch and refusal in simulation. Assess distance, clarity and closure without involving the public. Passing requires safe conduct, not a sale at any cost. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Visit role-play” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Practise opening, questions, mismatch and refusal in simulation. Assess distance, clarity and closure without involving the public. Passing requires safe conduct, not a sale at any cost.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A team practises visits in an approved fictional territory. One location posts no sales visits, another is serving a customer and a third allows one minute. The offer cannot activate immediately. The rep planned interior photographs without an approved evidence procedure.\n\nAn Indian business-premises exercise includes a reception-controlled entrance and a manager requesting a scheduled visit. Confirm language and timing; do not follow staff into restricted areas or photograph business records."
+  },
+  "projeto": {
+    "instrucoes": "Plan the route, write three openings and endings and produce a visit record without exposing people or documents.",
+    "gabarito": "Respect the notice and access control; do not demand attention during service. In the accepted minute, identify purpose and ask a relevant question. Promise no immediate activation and take no unauthorised photos. Record outcome and preferences."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "17-M1",
+        "pergunta": "How would you apply “Module 1: Territory and assignment” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Check offer, permitted territory, identification and local rules before visiting. An address does not authorise entry. Plan routes and safety procedures without entering restricted areas.",
+          "State name, company and commercial purpose before requesting time or information. Do not impersonate officials, inspectors or existing contractors. Materials must clearly identify the real offer.",
+          "Respect barriers, reception and no-access signals. Withdraw and use the operating protocol when unsafe or unwelcome. Do not remain against the wishes of those controlling access.",
+          "Record only relevant permitted information. Do not photograph people, documents or interiors for convenience. Visit evidence must follow procedure without unnecessary exposure."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "17-M2",
+        "pergunta": "How would you apply “Module 2: Permission to speak” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Keep exits clear and appropriate distance; ask whether the person wants to hear the purpose. Blocking movement or continuing after refusal undermines choice. Accept immediate closure.",
+          "Connect identity, context and a short question without false familiarity. A grand promise at the door does not replace relevance. Do not demand attention when the timing is unsuitable.",
+          "Ask questions suitable for available time and privacy. Avoid discussing budgets or third-party data in public. Propose an appropriate voluntary format for detailed discussion.",
+          "Respect verbal refusal and clear closure signals rather than reinterpret them as challenges. Thank the person and leave. Record preferences under policy to avoid repeated unwanted visits."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "17-M3",
+        "pergunta": "How would you apply “Module 3: Demonstrating within scope” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Demonstrate available capability with authorised material and fictional data. Do not request passwords or documents for an initial demo. State limits; a quick test does not prove future results.",
+          "Explain available price, term, exclusions and responsibilities before commitment. Do not invent unreviewed contract rules. Off-premises sales require specific local review by the operation.",
+          "Explore concerns and answer with verifiable information. Do not use physical presence to rush a decision. Offer verification only when the person wants continuity.",
+          "Summarise the accepted action and channel or close without an unsolicited return promise. Receiving a card is not purchase acceptance. Record the agreement accurately and proportionately."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "17-M4",
+        "pergunta": "How would you apply “Module 4: Factual visit records” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Record date, relevant location, activity and outcome without personal judgement. Do not use another route's evidence to claim a visit. Preserve uncertainty until verified.",
+          "Share restrictions and ownership through approved systems to prevent unwanted repeat visits. Efficient routes must not create uncoordinated contact. A new seller does not erase a no-visit request.",
+          "Separate eligible addresses, attempted visits, conversations and accepted next steps. Absence is not refusal. Rates need consistent periods and eligibility rules.",
+          "Practise opening, questions, mismatch and refusal in simulation. Assess distance, clarity and closure without involving the public. Passing requires safe conduct, not a sale at any cost."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "17-FINAL",
+        "pergunta": "Plan the route, write three openings and endings and produce a visit record without exposing people or documents.",
+        "resposta_modelo": "Respect the notice and access control; do not demand attention during service. In the accepted minute, identify purpose and ask a relevant question. Promise no immediate activation and take no unauthorised photos. Record outcome and preferences.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

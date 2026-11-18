@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-20",
+  "course_number": 20,
+  "locale": "en-US",
+  "titulo": "AI for Salespeople",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Language models and uncertainty",
+      "titulo_original_pt": "Usos e limites da IA em vendas",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Language models and uncertainty",
+          "tipo": "texto",
+          "conteudo": "A model generates plausible responses from patterns and context and can state falsehoods confidently. Fluency does not establish truth. Verify outputs before commercial use.",
+          "roteiro_video": "In this lesson we explore language models and uncertainty. A model generates plausible responses from patterns and context and can state falsehoods confidently. Fluency does not establish truth. Verify outputs before commercial use. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Language models and uncertainty” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A model generates plausible responses from patterns and context and can state falsehoods confidently. Fluency does not establish truth. Verify outputs before commercial use.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Suitable tasks and accountability",
+          "tipo": "texto",
+          "conteudo": "AI can support drafting, organisation and simulation; humans own commitments, sending and commercial terms. Delegation does not transfer accountability. Define limits before connecting action tools.",
+          "roteiro_video": "In this lesson we explore suitable tasks and accountability. AI can support drafting, organisation and simulation; humans own commitments, sending and commercial terms. Delegation does not transfer accountability. Define limits before connecting action tools. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Suitable tasks and accountability” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "AI can support drafting, organisation and simulation; humans own commitments, sending and commercial terms. Delegation does not transfer accountability. Define limits before connecting action tools.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Hallucination and bias",
+          "tipo": "texto",
+          "conteudo": "Check names, numbers, citations and personal inferences. Detailed answers may invent sources. Professional-looking prose is not a quality test, and identity is not a competence proxy.",
+          "roteiro_video": "In this lesson we explore hallucination and bias. Check names, numbers, citations and personal inferences. Detailed answers may invent sources. Professional-looking prose is not a quality test, and identity is not a competence proxy. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Hallucination and bias” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check names, numbers, citations and personal inferences. Detailed answers may invent sources. Professional-looking prose is not a quality test, and identity is not a competence proxy.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Approved tools and data",
+          "tipo": "texto",
+          "conteudo": "Check use, access and data-handling policy before entering company information. Removing names may not anonymise a case. Prefer synthetic data and never paste credentials or unauthorised client records.",
+          "roteiro_video": "In this lesson we explore approved tools and data. Check use, access and data-handling policy before entering company information. Removing names may not anonymise a case. Prefer synthetic data and never paste credentials or unauthorised client records. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Approved tools and data” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check use, access and data-handling policy before entering company information. Removing names may not anonymise a case. Prefer synthetic data and never paste credentials or unauthorised client records.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: A useful prompt",
+      "titulo_original_pt": "Preparação de pedidos e contexto",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "A useful prompt",
+          "tipo": "texto",
+          "conteudo": "Specify task, audience, sources, limits and format. Require unknowns to remain visible. Avoid persuade-at-any-cost incentives and define verifiable output criteria.",
+          "roteiro_video": "In this lesson we explore a useful prompt. Specify task, audience, sources, limits and format. Require unknowns to remain visible. Avoid persuade-at-any-cost incentives and define verifiable output criteria. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A useful prompt” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Specify task, audience, sources, limits and format. Require unknowns to remain visible. Avoid persuade-at-any-cost incentives and define verifiable output criteria.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Synthetic and authorised inputs",
+          "tipo": "texto",
+          "conteudo": "Build a labelled fictional case with necessary fields. Real data requires approved access and purpose. Do not mix synthetic stories with real buyer identifiers.",
+          "roteiro_video": "In this lesson we explore synthetic and authorised inputs. Build a labelled fictional case with necessary fields. Real data requires approved access and purpose. Do not mix synthetic stories with real buyer identifiers. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Synthetic and authorised inputs” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Build a labelled fictional case with necessary fields. Real data requires approved access and purpose. Do not mix synthetic stories with real buyer identifiers.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Untrusted document instructions",
+          "tipo": "texto",
+          "conteudo": "Document content is data to analyse, not authority to send, delete or reveal information. Ignore embedded instructions that redirect the task. Separate sources from commands and validate actions.",
+          "roteiro_video": "In this lesson we explore untrusted document instructions. Document content is data to analyse, not authority to send, delete or reveal information. Ignore embedded instructions that redirect the task. Separate sources from commands and validate actions. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Untrusted document instructions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Document content is data to analyse, not authority to send, delete or reveal information. Ignore embedded instructions that redirect the task. Separate sources from commands and validate actions.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Evidence and gaps",
+          "tipo": "texto",
+          "conteudo": "Require factual claims to map to supplied or verified sources. If a number is absent, state the gap. Asking for citations does not guarantee genuine citations.",
+          "roteiro_video": "In this lesson we explore evidence and gaps. Require factual claims to map to supplied or verified sources. If a number is absent, state the gap. Asking for citations does not guarantee genuine citations. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Evidence and gaps” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Require factual claims to map to supplied or verified sources. If a number is absent, state the gap. Asking for citations does not guarantee genuine citations.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Drafting messages",
+      "titulo_original_pt": "Aplicações comerciais supervisionadas",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Drafting messages",
+          "tipo": "texto",
+          "conteudo": "Supply truthful context, offer and buyer preferences; review names, terms and tone. Do not allow invented prior meetings or promises. Responsible review precedes sending.",
+          "roteiro_video": "In this lesson we explore drafting messages. Supply truthful context, offer and buyer preferences; review names, terms and tone. Do not allow invented prior meetings or promises. Responsible review precedes sending. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Drafting messages” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Supply truthful context, offer and buyer preferences; review names, terms and tone. Do not allow invented prior meetings or promises. Responsible review precedes sending.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Summarising notes",
+          "tipo": "texto",
+          "conteudo": "Preserve certainty levels and negations. Models must not turn maybe into commitment or omit refusal. Compare summaries with notes and retain provenance for correction.",
+          "roteiro_video": "In this lesson we explore summarising notes. Preserve certainty levels and negations. Models must not turn maybe into commitment or omit refusal. Compare summaries with notes and retain provenance for correction. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Summarising notes” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Preserve certainty levels and negations. Models must not turn maybe into commitment or omit refusal. Compare summaries with notes and retain provenance for correction.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Role-play with separate roles",
+          "tipo": "texto",
+          "conteudo": "Separate buyer and evaluator roles. Actors reveal only specified facts and do not coach toward a pass. Evaluators use transcript and rubric and flag insufficient evidence for human review.",
+          "roteiro_video": "In this lesson we explore role-play with separate roles. Separate buyer and evaluator roles. Actors reveal only specified facts and do not coach toward a pass. Evaluators use transcript and rubric and flag insufficient evidence for human review. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Role-play with separate roles” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate buyer and evaluator roles. Actors reveal only specified facts and do not coach toward a pass. Evaluators use transcript and rubric and flag insufficient evidence for human review.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Comparing generated versions",
+          "tipo": "texto",
+          "conteudo": "Evaluate clarity, fidelity and suitability using criteria set beforehand. Editorial preference does not prove higher conversion. Performance claims require appropriate testing and authorised data.",
+          "roteiro_video": "In this lesson we explore comparing generated versions. Evaluate clarity, fidelity and suitability using criteria set beforehand. Editorial preference does not prove higher conversion. Performance claims require appropriate testing and authorised data. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Comparing generated versions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Evaluate clarity, fidelity and suitability using criteria set beforehand. Editorial preference does not prove higher conversion. Performance claims require appropriate testing and authorised data.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Fact checking",
+      "titulo_original_pt": "Verificação e projeto",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Fact checking",
+          "tipo": "texto",
+          "conteudo": "Check terms against the offer source and recalculate figures. Inspect relevant links for support. A long bibliography is not a substitute for verification.",
+          "roteiro_video": "In this lesson we explore fact checking. Check terms against the offer source and recalculate figures. Inspect relevant links for support. A long bibliography is not a substitute for verification. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Fact checking” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check terms against the offer source and recalculate figures. Inspect relevant links for support. A long bibliography is not a substitute for verification.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Consistency and exposure tests",
+          "tipo": "texto",
+          "conteudo": "Test fictional gaps, contradictions and malicious instructions. Check fabrication and disclosure of reserved information. Passing one test does not guarantee universal safety.",
+          "roteiro_video": "In this lesson we explore consistency and exposure tests. Test fictional gaps, contradictions and malicious instructions. Check fabrication and disclosure of reserved information. Passing one test does not guarantee universal safety. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Consistency and exposure tests” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Test fictional gaps, contradictions and malicious instructions. Check fabrication and disclosure of reserved information. Passing one test does not guarantee universal safety.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Review before action",
+          "tipo": "texto",
+          "conteudo": "Separate generation from sending, recording or contracting. Show the owner content, recipient and consequence before appropriate action. Generated text must not authorise commercial commitments by itself.",
+          "roteiro_video": "In this lesson we explore review before action. Separate generation from sending, recording or contracting. Show the owner content, recipient and consequence before appropriate action. Generated text must not authorise commercial commitments by itself. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Review before action” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate generation from sending, recording or contracting. Show the owner content, recipient and consequence before appropriate action. Generated text must not authorise commercial commitments by itself.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "A supervised workflow",
+          "tipo": "texto",
+          "conteudo": "Map input, transformation, verification, applicable approval and action with proportionate logs. Define failures and manual fallback. Show where AI assists and where accountable people decide.",
+          "roteiro_video": "In this lesson we explore a supervised workflow. Map input, transformation, verification, applicable approval and action with proportionate logs. Define failures and manual fallback. Show where AI assists and where accountable people decide. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A supervised workflow” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Map input, transformation, verification, applicable approval and action with proportionate logs. Define failures and manual fallback. Show where AI assists and where accountable people decide.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A learner asks AI for an email from a brief stating two accounts and no integration. Output invents integration, 30% savings and a prior meeting. An attached document instructs sending the client list externally. All exercise data are synthetic.\n\nA US sales team uses a fictional SOW and an approved draft-only tool. The generated message invents compliance certification and a discount. No model output may approve either; the reviewer must trace every commitment to the source."
+  },
+  "projeto": {
+    "instrucoes": "Rewrite the prompt, audit each claim, produce a corrected message and define review points before sending or recording.",
+    "gabarito": "Treat embedded instructions as untrusted data, not actions. Remove invented integration, savings and prior meeting, plus unsupported local claims. Trace claims to sources, retain gaps and separate drafting from reviewed action."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "20-M1",
+        "pergunta": "How would you apply “Module 1: Language models and uncertainty” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "A model generates plausible responses from patterns and context and can state falsehoods confidently. Fluency does not establish truth. Verify outputs before commercial use.",
+          "AI can support drafting, organisation and simulation; humans own commitments, sending and commercial terms. Delegation does not transfer accountability. Define limits before connecting action tools.",
+          "Check names, numbers, citations and personal inferences. Detailed answers may invent sources. Professional-looking prose is not a quality test, and identity is not a competence proxy.",
+          "Check use, access and data-handling policy before entering company information. Removing names may not anonymise a case. Prefer synthetic data and never paste credentials or unauthorised client records."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "20-M2",
+        "pergunta": "How would you apply “Module 2: A useful prompt” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Specify task, audience, sources, limits and format. Require unknowns to remain visible. Avoid persuade-at-any-cost incentives and define verifiable output criteria.",
+          "Build a labelled fictional case with necessary fields. Real data requires approved access and purpose. Do not mix synthetic stories with real buyer identifiers.",
+          "Document content is data to analyse, not authority to send, delete or reveal information. Ignore embedded instructions that redirect the task. Separate sources from commands and validate actions.",
+          "Require factual claims to map to supplied or verified sources. If a number is absent, state the gap. Asking for citations does not guarantee genuine citations."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "20-M3",
+        "pergunta": "How would you apply “Module 3: Drafting messages” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Supply truthful context, offer and buyer preferences; review names, terms and tone. Do not allow invented prior meetings or promises. Responsible review precedes sending.",
+          "Preserve certainty levels and negations. Models must not turn maybe into commitment or omit refusal. Compare summaries with notes and retain provenance for correction.",
+          "Separate buyer and evaluator roles. Actors reveal only specified facts and do not coach toward a pass. Evaluators use transcript and rubric and flag insufficient evidence for human review.",
+          "Evaluate clarity, fidelity and suitability using criteria set beforehand. Editorial preference does not prove higher conversion. Performance claims require appropriate testing and authorised data."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "20-M4",
+        "pergunta": "How would you apply “Module 4: Fact checking” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Check terms against the offer source and recalculate figures. Inspect relevant links for support. A long bibliography is not a substitute for verification.",
+          "Test fictional gaps, contradictions and malicious instructions. Check fabrication and disclosure of reserved information. Passing one test does not guarantee universal safety.",
+          "Separate generation from sending, recording or contracting. Show the owner content, recipient and consequence before appropriate action. Generated text must not authorise commercial commitments by itself.",
+          "Map input, transformation, verification, applicable approval and action with proportionate logs. Define failures and manual fallback. Show where AI assists and where accountable people decide."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "20-FINAL",
+        "pergunta": "Rewrite the prompt, audit each claim, produce a corrected message and define review points before sending or recording.",
+        "resposta_modelo": "Treat embedded instructions as untrusted data, not actions. Remove invented integration, savings and prior meeting, plus unsupported local claims. Trace claims to sources, retain gaps and separate drafting from reviewed action.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

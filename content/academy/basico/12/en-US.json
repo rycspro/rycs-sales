@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-12",
+  "course_number": 12,
+  "locale": "en-US",
+  "titulo": "Challenger 1 — Teach",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Parte da Avançada",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Insight and opinion",
+      "titulo_original_pt": "Ensino comercial e investigação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Insight and opinion",
+          "tipo": "texto",
+          "conteudo": "A commercial insight connects an observable fact to a useful testable interpretation. Unsupported opinion may start a question but must not be presented as a proven finding.",
+          "roteiro_video": "In this lesson we explore insight and opinion. A commercial insight connects an observable fact to a useful testable interpretation. Unsupported opinion may start a question but must not be presented as a proven finding. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Insight and opinion” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A commercial insight connects an observable fact to a useful testable interpretation. Unsupported opinion may start a question but must not be presented as a proven finding.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Understand the process first",
+          "tipo": "texto",
+          "conteudo": "Map inputs, execution, handoffs and outputs before recommending change. A perceived problem may originate in an external dependency. Do not assign cause to the easiest stage to sell.",
+          "roteiro_video": "In this lesson we explore understand the process first. Map inputs, execution, handoffs and outputs before recommending change. A perceived problem may originate in an external dependency. Do not assign cause to the easiest stage to sell. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Understand the process first” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Map inputs, execution, handoffs and outputs before recommending change. A perceived problem may originate in an external dependency. Do not assign cause to the easiest stage to sell.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Researching alternatives",
+          "tipo": "texto",
+          "conteudo": "Seek primary sources, definitions and scope, including contradictory evidence. Compare real alternatives, including the status quo. Research is not selecting numbers that flatter a proposal.",
+          "roteiro_video": "In this lesson we explore researching alternatives. Seek primary sources, definitions and scope, including contradictory evidence. Compare real alternatives, including the status quo. Research is not selecting numbers that flatter a proposal. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Researching alternatives” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Seek primary sources, definitions and scope, including contradictory evidence. Compare real alternatives, including the status quo. Research is not selecting numbers that flatter a proposal.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Ethical commercial teaching",
+          "tipo": "texto",
+          "conteudo": "Teaching requires room for disagreement, uncertainty and buyer choice. Do not use apparent authority, shame or fear to suppress questions. The offer must support the proposed change.",
+          "roteiro_video": "In this lesson we explore ethical commercial teaching. Teaching requires room for disagreement, uncertainty and buyer choice. Do not use apparent authority, shame or fear to suppress questions. The offer must support the proposed change. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Ethical commercial teaching” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Teaching requires room for disagreement, uncertainty and buyer choice. Do not use apparent authority, shame or fear to suppress questions. The offer must support the proposed change.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Observation and cause",
+      "titulo_original_pt": "Construção de uma perspectiva útil",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Observation and cause",
+          "tipo": "texto",
+          "conteudo": "Separate an observed event from its causal explanation. Delay associated with losses does not prove faster response fixes sales. List alternative causes and a discriminating test.",
+          "roteiro_video": "In this lesson we explore observation and cause. Separate an observed event from its causal explanation. Delay associated with losses does not prove faster response fixes sales. List alternative causes and a discriminating test. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Observation and cause” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate an observed event from its causal explanation. Delay associated with losses does not prove faster response fixes sales. List alternative causes and a discriminating test.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Responsible reframing",
+          "tipo": "texto",
+          "conteudo": "Reframe by reorganising known facts, not inventing a hidden problem. Offer a hypothesis and invite a counterexample. The perspective should improve the buyer's decision.",
+          "roteiro_video": "In this lesson we explore responsible reframing. Reframe by reorganising known facts, not inventing a hidden problem. Offer a hypothesis and invite a counterexample. The perspective should improve the buyer's decision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Responsible reframing” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Reframe by reorganising known facts, not inventing a hidden problem. Offer a hypothesis and invite a counterexample. The perspective should improve the buyer's decision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Cost of inaction",
+          "tipo": "texto",
+          "conteudo": "Estimate consequences with explicit frequency, units and period. Include action costs and the option not to change. Potentially saved hours are not necessarily recoverable cash.",
+          "roteiro_video": "In this lesson we explore cost of inaction. Estimate consequences with explicit frequency, units and period. Include action costs and the option not to change. Potentially saved hours are not necessarily recoverable cash. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Cost of inaction” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Estimate consequences with explicit frequency, units and period. Include action costs and the option not to change. Potentially saved hours are not necessarily recoverable cash.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Falsifying the hypothesis",
+          "tipo": "texto",
+          "conteudo": "Define what would overturn or revise the thesis before presenting. If no observation can contradict it, the test is unhelpful. Record disconfirmation to avoid insisting on a poor fit.",
+          "roteiro_video": "In this lesson we explore falsifying the hypothesis. Define what would overturn or revise the thesis before presenting. If no observation can contradict it, the test is unhelpful. Record disconfirmation to avoid insisting on a poor fit. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Falsifying the hypothesis” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define what would overturn or revise the thesis before presenting. If no observation can contradict it, the test is unhelpful. Record disconfirmation to avoid insisting on a poor fit.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Building the argument",
+      "titulo_original_pt": "Narrativa e evidências",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Building the argument",
+          "tipo": "texto",
+          "conteudo": "Organise fact, interpretation, possible consequence, alternative and test. Do not jump from a general statistic to an individual recommendation. Make each assumption understandable and challengeable.",
+          "roteiro_video": "In this lesson we explore building the argument. Organise fact, interpretation, possible consequence, alternative and test. Do not jump from a general statistic to an individual recommendation. Make each assumption understandable and challengeable. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Building the argument” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Organise fact, interpretation, possible consequence, alternative and test. Do not jump from a general statistic to an individual recommendation. Make each assumption understandable and challengeable.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Using statistics",
+          "tipo": "texto",
+          "conteudo": "State population, period, unit and method with a statistic. A mean does not describe every case and estimates carry uncertainty. Disclose vendor authorship and limitations.",
+          "roteiro_video": "In this lesson we explore using statistics. State population, period, unit and method with a statistic. A mean does not describe every case and estimates carry uncertainty. Disclose vendor authorship and limitations. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Using statistics” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "State population, period, unit and method with a statistic. A mean does not describe every case and estimates carry uncertainty. Disclose vendor authorship and limitations.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Transferability",
+          "tipo": "texto",
+          "conteudo": "Check whether study industry, size, process and period resemble the case. Another country's result may suggest investigation but cannot automatically predict a local outcome.",
+          "roteiro_video": "In this lesson we explore transferability. Check whether study industry, size, process and period resemble the case. Another country's result may suggest investigation but cannot automatically predict a local outcome. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Transferability” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check whether study industry, size, process and period resemble the case. Another country's result may suggest investigation but cannot automatically predict a local outcome.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Linking insight and capability",
+          "tipo": "texto",
+          "conteudo": "After testing the perspective, show the actual capability supporting it and any uncovered requirement. Do not build a strategic-looking thesis around capabilities the offer lacks.",
+          "roteiro_video": "In this lesson we explore linking insight and capability. After testing the perspective, show the actual capability supporting it and any uncovered requirement. Do not build a strategic-looking thesis around capabilities the offer lacks. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Linking insight and capability” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "After testing the perspective, show the actual capability supporting it and any uncovered requirement. Do not build a strategic-looking thesis around capabilities the offer lacks.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: A traceable case",
+      "titulo_original_pt": "Laboratório de ensino comercial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "A traceable case",
+          "tipo": "texto",
+          "conteudo": "Build a claims register with source, location, interpretation and limit. Separate real findings from fictional scenarios. A reviewer should reproduce calculations and locate evidence.",
+          "roteiro_video": "In this lesson we explore a traceable case. Build a claims register with source, location, interpretation and limit. Separate real findings from fictional scenarios. A reviewer should reproduce calculations and locate evidence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A traceable case” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Build a claims register with source, location, interpretation and limit. Separate real findings from fictional scenarios. A reviewer should reproduce calculations and locate evidence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Inviting disagreement",
+          "tipo": "texto",
+          "conteudo": "Ask what does not match the buyer's operation and listen before defending. Disagreement may expose an omitted variable. Questions must do more than introduce the same argument again.",
+          "roteiro_video": "In this lesson we explore inviting disagreement. Ask what does not match the buyer's operation and listen before defending. Disagreement may expose an omitted variable. Questions must do more than introduce the same argument again. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Inviting disagreement” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask what does not match the buyer's operation and listen before defending. Disagreement may expose an omitted variable. Questions must do more than introduce the same argument again.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Handling challenges",
+          "tipo": "texto",
+          "conteudo": "Narrow or withdraw claims unsupported by the source. Do not invent additional research when challenged. Record the unresolved point and return only with verifiable evidence.",
+          "roteiro_video": "In this lesson we explore handling challenges. Narrow or withdraw claims unsupported by the source. Do not invent additional research when challenged. Record the unresolved point and return only with verifiable evidence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Handling challenges” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Narrow or withdraw claims unsupported by the source. Do not invent additional research when challenged. Record the unresolved point and return only with verifiable evidence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Defending a hypothesis",
+          "tipo": "texto",
+          "conteudo": "Present thesis, assumptions, alternatives and test criterion, addressing the strongest objection. Assessment rewards revisable reasoning, not buyer agreement. A refuted thesis can still demonstrate sound learning.",
+          "roteiro_video": "In this lesson we explore defending a hypothesis. Present thesis, assumptions, alternatives and test criterion, addressing the strongest objection. Assessment rewards revisable reasoning, not buyer agreement. A refuted thesis can still demonstrate sound learning. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Defending a hypothesis” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Present thesis, assumptions, alternatives and test criterion, addressing the strongest objection. Assessment rewards revisable reasoning, not buyer agreement. A refuted thesis can still demonstrate sound learning.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A thesis claims every sales delay causes lost deals. A fictional set has 20 opportunities: ten fast responses with four advancing, ten slow responses with three advancing. Fit and industry differ. The offer organises tasks but cannot fix poor fit.\n\nA US services team uses the dataset to propose a workflow pilot, but IT access and lead-source differences remain unresolved. The buyer asks whether the result proves causal improvement; it does not."
+  },
+  "projeto": {
+    "instrucoes": "Build a bounded thesis, calculate rates, give an alternative explanation and define a test capable of refuting the recommendation.",
+    "gabarito": "Observed progress is 40% versus 30%, a 10-percentage-point gap in a small non-comparable sample. It does not prove causality. Fit and source may explain it. Propose comparable criteria and allow a no-benefit outcome."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "12-M1",
+        "pergunta": "How would you apply “Module 1: Insight and opinion” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "A commercial insight connects an observable fact to a useful testable interpretation. Unsupported opinion may start a question but must not be presented as a proven finding.",
+          "Map inputs, execution, handoffs and outputs before recommending change. A perceived problem may originate in an external dependency. Do not assign cause to the easiest stage to sell.",
+          "Seek primary sources, definitions and scope, including contradictory evidence. Compare real alternatives, including the status quo. Research is not selecting numbers that flatter a proposal.",
+          "Teaching requires room for disagreement, uncertainty and buyer choice. Do not use apparent authority, shame or fear to suppress questions. The offer must support the proposed change."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "12-M2",
+        "pergunta": "How would you apply “Module 2: Observation and cause” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Separate an observed event from its causal explanation. Delay associated with losses does not prove faster response fixes sales. List alternative causes and a discriminating test.",
+          "Reframe by reorganising known facts, not inventing a hidden problem. Offer a hypothesis and invite a counterexample. The perspective should improve the buyer's decision.",
+          "Estimate consequences with explicit frequency, units and period. Include action costs and the option not to change. Potentially saved hours are not necessarily recoverable cash.",
+          "Define what would overturn or revise the thesis before presenting. If no observation can contradict it, the test is unhelpful. Record disconfirmation to avoid insisting on a poor fit."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "12-M3",
+        "pergunta": "How would you apply “Module 3: Building the argument” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Organise fact, interpretation, possible consequence, alternative and test. Do not jump from a general statistic to an individual recommendation. Make each assumption understandable and challengeable.",
+          "State population, period, unit and method with a statistic. A mean does not describe every case and estimates carry uncertainty. Disclose vendor authorship and limitations.",
+          "Check whether study industry, size, process and period resemble the case. Another country's result may suggest investigation but cannot automatically predict a local outcome.",
+          "After testing the perspective, show the actual capability supporting it and any uncovered requirement. Do not build a strategic-looking thesis around capabilities the offer lacks."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "12-M4",
+        "pergunta": "How would you apply “Module 4: A traceable case” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Build a claims register with source, location, interpretation and limit. Separate real findings from fictional scenarios. A reviewer should reproduce calculations and locate evidence.",
+          "Ask what does not match the buyer's operation and listen before defending. Disagreement may expose an omitted variable. Questions must do more than introduce the same argument again.",
+          "Narrow or withdraw claims unsupported by the source. Do not invent additional research when challenged. Record the unresolved point and return only with verifiable evidence.",
+          "Present thesis, assumptions, alternatives and test criterion, addressing the strongest objection. Assessment rewards revisable reasoning, not buyer agreement. A refuted thesis can still demonstrate sound learning."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "12-FINAL",
+        "pergunta": "Build a bounded thesis, calculate rates, give an alternative explanation and define a test capable of refuting the recommendation.",
+        "resposta_modelo": "Observed progress is 40% versus 30%, a 10-percentage-point gap in a small non-comparable sample. It does not prove causality. Fit and source may explain it. Propose comparable criteria and allow a no-benefit outcome.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

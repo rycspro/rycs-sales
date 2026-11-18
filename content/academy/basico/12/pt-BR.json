@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-12",
+  "course_number": 12,
+  "locale": "pt-BR",
+  "titulo": "Challenger 1 — Ensinar",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Parte da Avançada",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Ensino comercial e investigação",
+      "titulo_original_pt": "Ensino comercial e investigação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "O que constitui um insight comercial e o que é opinião",
+          "tipo": "texto",
+          "conteudo": "Insight comercial conecta observação verificável a uma interpretação útil que pode ser testada. Opinião sem evidência pode iniciar uma pergunta, mas não deve ser apresentada como descoberta comprovada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar o que constitui um insight comercial e o que é opinião. Insight comercial conecta observação verificável a uma interpretação útil que pode ser testada. Opinião sem evidência pode iniciar uma pergunta, mas não deve ser apresentada como descoberta comprovada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “O que constitui um insight comercial e o que é opinião” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Insight comercial conecta observação verificável a uma interpretação útil que pode ser testada. Opinião sem evidência pode iniciar uma pergunta, mas não deve ser apresentada como descoberta comprovada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Conhecer o processo antes de propor uma mudança",
+          "tipo": "texto",
+          "conteudo": "Mapeie entrada, execução, passagem e saída do processo antes de recomendar mudança. Problema percebido pode surgir em uma dependência externa. Não atribuir causa à etapa mais fácil de vender.",
+          "roteiro_video": "Nesta aula, vamos trabalhar conhecer o processo antes de propor uma mudança. Mapeie entrada, execução, passagem e saída do processo antes de recomendar mudança. Problema percebido pode surgir em uma dependência externa. Não atribuir causa à etapa mais fácil de vender. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Conhecer o processo antes de propor uma mudança” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mapeie entrada, execução, passagem e saída do processo antes de recomendar mudança. Problema percebido pode surgir em uma dependência externa. Não atribuir causa à etapa mais fácil de vender.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Pesquisar fontes e comparar alternativas",
+          "tipo": "texto",
+          "conteudo": "Procure fonte primária, definição e recorte, além de dados que contradizem a hipótese. Compare alternativas reais, incluindo manter o processo. Pesquisa não é seleção de números que favorecem a proposta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar pesquisar fontes e comparar alternativas. Procure fonte primária, definição e recorte, além de dados que contradizem a hipótese. Compare alternativas reais, incluindo manter o processo. Pesquisa não é seleção de números que favorecem a proposta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Pesquisar fontes e comparar alternativas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Procure fonte primária, definição e recorte, além de dados que contradizem a hipótese. Compare alternativas reais, incluindo manter o processo. Pesquisa não é seleção de números que favorecem a proposta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Limites éticos do ensino comercial",
+          "tipo": "texto",
+          "conteudo": "Ensinar requer permitir discordância, explicar incerteza e respeitar decisão. Não usar autoridade aparente, vergonha ou medo para bloquear perguntas. A oferta precisa sustentar a mudança sugerida.",
+          "roteiro_video": "Nesta aula, vamos trabalhar limites éticos do ensino comercial. Ensinar requer permitir discordância, explicar incerteza e respeitar decisão. Não usar autoridade aparente, vergonha ou medo para bloquear perguntas. A oferta precisa sustentar a mudança sugerida. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Limites éticos do ensino comercial” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Ensinar requer permitir discordância, explicar incerteza e respeitar decisão. Não usar autoridade aparente, vergonha ou medo para bloquear perguntas. A oferta precisa sustentar a mudança sugerida.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Construção de uma perspectiva útil",
+      "titulo_original_pt": "Construção de uma perspectiva útil",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Observação verificável e hipótese de causa",
+          "tipo": "texto",
+          "conteudo": "Separe o evento observado da explicação causal. Correlação entre demora e perda não prova que reduzir demora resolverá a venda. Liste causas alternativas e um teste que discrimine entre elas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar observação verificável e hipótese de causa. Separe o evento observado da explicação causal. Correlação entre demora e perda não prova que reduzir demora resolverá a venda. Liste causas alternativas e um teste que discrimine entre elas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Observação verificável e hipótese de causa” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe o evento observado da explicação causal. Correlação entre demora e perda não prova que reduzir demora resolverá a venda. Liste causas alternativas e um teste que discrimine entre elas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Reenquadramento sem alarmismo",
+          "tipo": "texto",
+          "conteudo": "Reenquadre mostrando outra forma de organizar fatos já conhecidos, sem inventar problema oculto. Apresente como hipótese e peça um contraexemplo. A nova perspectiva precisa melhorar a decisão do comprador.",
+          "roteiro_video": "Nesta aula, vamos trabalhar reenquadramento sem alarmismo. Reenquadre mostrando outra forma de organizar fatos já conhecidos, sem inventar problema oculto. Apresente como hipótese e peça um contraexemplo. A nova perspectiva precisa melhorar a decisão do comprador. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Reenquadramento sem alarmismo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Reenquadre mostrando outra forma de organizar fatos já conhecidos, sem inventar problema oculto. Apresente como hipótese e peça um contraexemplo. A nova perspectiva precisa melhorar a decisão do comprador.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Consequências e custos de inação com premissas",
+          "tipo": "texto",
+          "conteudo": "Calcule consequências com frequência, unidade e período explícitos. Inclua custo de agir e possibilidade de não mudar. Não transformar cada hora potencialmente poupada em dinheiro necessariamente recuperável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar consequências e custos de inação com premissas. Calcule consequências com frequência, unidade e período explícitos. Inclua custo de agir e possibilidade de não mudar. Não transformar cada hora potencialmente poupada em dinheiro necessariamente recuperável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Consequências e custos de inação com premissas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Calcule consequências com frequência, unidade e período explícitos. Inclua custo de agir e possibilidade de não mudar. Não transformar cada hora potencialmente poupada em dinheiro necessariamente recuperável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Critérios para refutar a própria hipótese",
+          "tipo": "texto",
+          "conteudo": "Escreva qual observação faria abandonar ou revisar a tese antes de apresentar. Se nenhuma resposta pode contrariá-la, não há teste útil. Registrar refutação evita insistir numa solução inadequada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar critérios para refutar a própria hipótese. Escreva qual observação faria abandonar ou revisar a tese antes de apresentar. Se nenhuma resposta pode contrariá-la, não há teste útil. Registrar refutação evita insistir numa solução inadequada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Critérios para refutar a própria hipótese” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escreva qual observação faria abandonar ou revisar a tese antes de apresentar. Se nenhuma resposta pode contrariá-la, não há teste útil. Registrar refutação evita insistir numa solução inadequada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Narrativa e evidências",
+      "titulo_original_pt": "Narrativa e evidências",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Construir uma sequência de raciocínio",
+          "tipo": "texto",
+          "conteudo": "Organize fato, interpretação, consequência possível, alternativa e teste. Não saltar de estatística geral para recomendação individual. Cada transição precisa de premissa compreensível e contestável pelo comprador.",
+          "roteiro_video": "Nesta aula, vamos trabalhar construir uma sequência de raciocínio. Organize fato, interpretação, consequência possível, alternativa e teste. Não saltar de estatística geral para recomendação individual. Cada transição precisa de premissa compreensível e contestável pelo comprador. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Construir uma sequência de raciocínio” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Organize fato, interpretação, consequência possível, alternativa e teste. Não saltar de estatística geral para recomendação individual. Cada transição precisa de premissa compreensível e contestável pelo comprador.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Integrar dados com população e período",
+          "tipo": "texto",
+          "conteudo": "Informe população, período, unidade e método junto ao dado. Média não descreve todo caso; estimativa tem incerteza. Uma pesquisa de fornecedor deve ter autoria e limitações visíveis.",
+          "roteiro_video": "Nesta aula, vamos trabalhar integrar dados com população e período. Informe população, período, unidade e método junto ao dado. Média não descreve todo caso; estimativa tem incerteza. Uma pesquisa de fornecedor deve ter autoria e limitações visíveis. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Integrar dados com população e período” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Informe população, período, unidade e método junto ao dado. Média não descreve todo caso; estimativa tem incerteza. Uma pesquisa de fornecedor deve ter autoria e limitações visíveis.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Explicar incerteza e transferibilidade",
+          "tipo": "texto",
+          "conteudo": "Pergunte se setor, porte, processo e período do estudo se parecem com o caso. Um resultado de outro país pode sugerir investigação, mas não justificar previsão automática de resultado local.",
+          "roteiro_video": "Nesta aula, vamos trabalhar explicar incerteza e transferibilidade. Pergunte se setor, porte, processo e período do estudo se parecem com o caso. Um resultado de outro país pode sugerir investigação, mas não justificar previsão automática de resultado local. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Explicar incerteza e transferibilidade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte se setor, porte, processo e período do estudo se parecem com o caso. Um resultado de outro país pode sugerir investigação, mas não justificar previsão automática de resultado local.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Conectar a perspectiva à capacidade real da oferta",
+          "tipo": "texto",
+          "conteudo": "Depois de validar a perspectiva, mostre qual capacidade real atende ao requisito e qual fica descoberta. Não criar uma tese que exige recursos inexistentes só para parecer estratégica.",
+          "roteiro_video": "Nesta aula, vamos trabalhar conectar a perspectiva à capacidade real da oferta. Depois de validar a perspectiva, mostre qual capacidade real atende ao requisito e qual fica descoberta. Não criar uma tese que exige recursos inexistentes só para parecer estratégica. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Conectar a perspectiva à capacidade real da oferta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Depois de validar a perspectiva, mostre qual capacidade real atende ao requisito e qual fica descoberta. Não criar uma tese que exige recursos inexistentes só para parecer estratégica.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Laboratório de ensino comercial",
+      "titulo_original_pt": "Laboratório de ensino comercial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Preparar um caso com bibliografia rastreável",
+          "tipo": "texto",
+          "conteudo": "Prepare um registro de afirmações com fonte, localização, interpretação e limite. Separe dados reais do cenário fictício. Um revisor deve conseguir reproduzir o cálculo e localizar a evidência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar preparar um caso com bibliografia rastreável. Prepare um registro de afirmações com fonte, localização, interpretação e limite. Separe dados reais do cenário fictício. Um revisor deve conseguir reproduzir o cálculo e localizar a evidência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Preparar um caso com bibliografia rastreável” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Prepare um registro de afirmações com fonte, localização, interpretação e limite. Separe dados reais do cenário fictício. Um revisor deve conseguir reproduzir o cálculo e localizar a evidência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Conduzir uma conversa que permite discordância",
+          "tipo": "texto",
+          "conteudo": "Pergunte o que não corresponde à operação do comprador e ouça antes de defender a tese. Discordância pode revelar variável omitida. Não usar perguntas apenas como preparação para repetir o argumento.",
+          "roteiro_video": "Nesta aula, vamos trabalhar conduzir uma conversa que permite discordância. Pergunte o que não corresponde à operação do comprador e ouça antes de defender a tese. Discordância pode revelar variável omitida. Não usar perguntas apenas como preparação para repetir o argumento. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Conduzir uma conversa que permite discordância” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte o que não corresponde à operação do comprador e ouça antes de defender a tese. Discordância pode revelar variável omitida. Não usar perguntas apenas como preparação para repetir o argumento.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Responder a contestação sem inventar fatos",
+          "tipo": "texto",
+          "conteudo": "Se a fonte não sustenta a afirmação, reduza ou retire a conclusão. Não invente pesquisa complementar ao ser questionado. Registre o ponto pendente e combine retorno apenas com evidência verificável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar responder a contestação sem inventar fatos. Se a fonte não sustenta a afirmação, reduza ou retire a conclusão. Não invente pesquisa complementar ao ser questionado. Registre o ponto pendente e combine retorno apenas com evidência verificável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Responder a contestação sem inventar fatos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Se a fonte não sustenta a afirmação, reduza ou retire a conclusão. Não invente pesquisa complementar ao ser questionado. Registre o ponto pendente e combine retorno apenas com evidência verificável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Projeto integrador: apresentar e defender uma hipótese",
+          "tipo": "texto",
+          "conteudo": "Apresente tese, premissas, alternativas e critério de teste; responda à objeção mais forte. A avaliação premia raciocínio revisável, não adesão do cliente. Tese refutada pode produzir aprendizagem correta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar projeto integrador: apresentar e defender uma hipótese. Apresente tese, premissas, alternativas e critério de teste; responda à objeção mais forte. A avaliação premia raciocínio revisável, não adesão do cliente. Tese refutada pode produzir aprendizagem correta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Projeto integrador: apresentar e defender uma hipótese” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Apresente tese, premissas, alternativas e critério de teste; responda à objeção mais forte. A avaliação premia raciocínio revisável, não adesão do cliente. Tese refutada pode produzir aprendizagem correta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A tese proposta diz que toda demora comercial causa perda de vendas. O conjunto fictício contém 20 oportunidades: dez tiveram resposta rápida e quatro avançaram; dez tiveram resposta lenta e três avançaram. Segmento e fit diferem entre grupos. A oferta organiza tarefas, mas não resolve falta de aderência."
+  },
+  "projeto": {
+    "instrucoes": "Construa uma tese limitada, calcule as taxas, apresente explicação alternativa e defina um teste que poderia refutar sua recomendação.",
+    "gabarito": "Avanço observado: 40% e 30%, diferença de 10 pontos percentuais em amostra pequena e grupos não comparáveis. Não prova causalidade. Fit e origem podem explicar o resultado. Proponha testar processo com critérios comparáveis, mantendo possibilidade de não haver benefício."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "12-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Ensino comercial e investigação”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Insight comercial conecta observação verificável a uma interpretação útil que pode ser testada. Opinião sem evidência pode iniciar uma pergunta, mas não deve ser apresentada como descoberta comprovada.",
+          "Mapeie entrada, execução, passagem e saída do processo antes de recomendar mudança. Problema percebido pode surgir em uma dependência externa. Não atribuir causa à etapa mais fácil de vender.",
+          "Procure fonte primária, definição e recorte, além de dados que contradizem a hipótese. Compare alternativas reais, incluindo manter o processo. Pesquisa não é seleção de números que favorecem a proposta.",
+          "Ensinar requer permitir discordância, explicar incerteza e respeitar decisão. Não usar autoridade aparente, vergonha ou medo para bloquear perguntas. A oferta precisa sustentar a mudança sugerida."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "12-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Construção de uma perspectiva útil”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Separe o evento observado da explicação causal. Correlação entre demora e perda não prova que reduzir demora resolverá a venda. Liste causas alternativas e um teste que discrimine entre elas.",
+          "Reenquadre mostrando outra forma de organizar fatos já conhecidos, sem inventar problema oculto. Apresente como hipótese e peça um contraexemplo. A nova perspectiva precisa melhorar a decisão do comprador.",
+          "Calcule consequências com frequência, unidade e período explícitos. Inclua custo de agir e possibilidade de não mudar. Não transformar cada hora potencialmente poupada em dinheiro necessariamente recuperável.",
+          "Escreva qual observação faria abandonar ou revisar a tese antes de apresentar. Se nenhuma resposta pode contrariá-la, não há teste útil. Registrar refutação evita insistir numa solução inadequada."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "12-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Narrativa e evidências”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Organize fato, interpretação, consequência possível, alternativa e teste. Não saltar de estatística geral para recomendação individual. Cada transição precisa de premissa compreensível e contestável pelo comprador.",
+          "Informe população, período, unidade e método junto ao dado. Média não descreve todo caso; estimativa tem incerteza. Uma pesquisa de fornecedor deve ter autoria e limitações visíveis.",
+          "Pergunte se setor, porte, processo e período do estudo se parecem com o caso. Um resultado de outro país pode sugerir investigação, mas não justificar previsão automática de resultado local.",
+          "Depois de validar a perspectiva, mostre qual capacidade real atende ao requisito e qual fica descoberta. Não criar uma tese que exige recursos inexistentes só para parecer estratégica."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "12-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Laboratório de ensino comercial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Prepare um registro de afirmações com fonte, localização, interpretação e limite. Separe dados reais do cenário fictício. Um revisor deve conseguir reproduzir o cálculo e localizar a evidência.",
+          "Pergunte o que não corresponde à operação do comprador e ouça antes de defender a tese. Discordância pode revelar variável omitida. Não usar perguntas apenas como preparação para repetir o argumento.",
+          "Se a fonte não sustenta a afirmação, reduza ou retire a conclusão. Não invente pesquisa complementar ao ser questionado. Registre o ponto pendente e combine retorno apenas com evidência verificável.",
+          "Apresente tese, premissas, alternativas e critério de teste; responda à objeção mais forte. A avaliação premia raciocínio revisável, não adesão do cliente. Tese refutada pode produzir aprendizagem correta."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "12-FINAL",
+        "pergunta": "Construa uma tese limitada, calcule as taxas, apresente explicação alternativa e defina um teste que poderia refutar sua recomendação.",
+        "resposta_modelo": "Avanço observado: 40% e 30%, diferença de 10 pontos percentuais em amostra pequena e grupos não comparáveis. Não prova causalidade. Fit e origem podem explicar o resultado. Proponha testar processo com critérios comparáveis, mantendo possibilidade de não haver benefício.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

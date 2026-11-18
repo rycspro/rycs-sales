@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-17",
+  "course_number": 17,
+  "locale": "pt-BR",
+  "titulo": "Porta a Porta",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Preparação e segurança na atuação presencial",
+      "titulo_original_pt": "Preparação e segurança na atuação presencial",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Ler território, oferta e regras da atividade",
+          "tipo": "texto",
+          "conteudo": "Confira oferta, território permitido, identificação e regras locais antes da visita. O endereço existir não autoriza entrar. Planeje rota e processo de segurança da operação sem improvisar acesso a áreas restritas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar ler território, oferta e regras da atividade. Confira oferta, território permitido, identificação e regras locais antes da visita. O endereço existir não autoriza entrar. Planeje rota e processo de segurança da operação sem improvisar acesso a áreas restritas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Ler território, oferta e regras da atividade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confira oferta, território permitido, identificação e regras locais antes da visita. O endereço existir não autoriza entrar. Planeje rota e processo de segurança da operação sem improvisar acesso a áreas restritas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Identificação profissional e propósito",
+          "tipo": "texto",
+          "conteudo": "Apresente nome, empresa e motivo comercial antes de pedir tempo ou informação. Não parecer agente público, fiscal ou prestador já contratado. Materiais devem identificar claramente a oferta real.",
+          "roteiro_video": "Nesta aula, vamos trabalhar identificação profissional e propósito. Apresente nome, empresa e motivo comercial antes de pedir tempo ou informação. Não parecer agente público, fiscal ou prestador já contratado. Materiais devem identificar claramente a oferta real. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Identificação profissional e propósito” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Apresente nome, empresa e motivo comercial antes de pedir tempo ou informação. Não parecer agente público, fiscal ou prestador já contratado. Materiais devem identificar claramente a oferta real.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Segurança pessoal e limites de acesso",
+          "tipo": "texto",
+          "conteudo": "Respeite barreiras, recepção e sinais de não atendimento. Se houver desconforto ou risco, afaste-se e use o protocolo da operação. Não permanecer em local contra a vontade de quem controla o acesso.",
+          "roteiro_video": "Nesta aula, vamos trabalhar segurança pessoal e limites de acesso. Respeite barreiras, recepção e sinais de não atendimento. Se houver desconforto ou risco, afaste-se e use o protocolo da operação. Não permanecer em local contra a vontade de quem controla o acesso. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Segurança pessoal e limites de acesso” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Respeite barreiras, recepção e sinais de não atendimento. Se houver desconforto ou risco, afaste-se e use o protocolo da operação. Não permanecer em local contra a vontade de quem controla o acesso.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Dados mínimos e materiais autorizados",
+          "tipo": "texto",
+          "conteudo": "Registre somente informações pertinentes à atividade e permitidas. Não fotografar pessoas, documentos ou interior por conveniência. A comprovação da visita deve seguir o procedimento, sem criar exposição desnecessária.",
+          "roteiro_video": "Nesta aula, vamos trabalhar dados mínimos e materiais autorizados. Registre somente informações pertinentes à atividade e permitidas. Não fotografar pessoas, documentos ou interior por conveniência. A comprovação da visita deve seguir o procedimento, sem criar exposição desnecessária. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Dados mínimos e materiais autorizados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre somente informações pertinentes à atividade e permitidas. Não fotografar pessoas, documentos ou interior por conveniência. A comprovação da visita deve seguir o procedimento, sem criar exposição desnecessária.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Abordagem presencial",
+      "titulo_original_pt": "Abordagem presencial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Pedir espaço para conversar sem bloquear a saída",
+          "tipo": "texto",
+          "conteudo": "Mantenha passagem livre e distância adequada; pergunte se a pessoa deseja ouvir o motivo. Bloquear saída ou prolongar fala após recusa compromete liberdade de escolha. Aceite encerramento imediato.",
+          "roteiro_video": "Nesta aula, vamos trabalhar pedir espaço para conversar sem bloquear a saída. Mantenha passagem livre e distância adequada; pergunte se a pessoa deseja ouvir o motivo. Bloquear saída ou prolongar fala após recusa compromete liberdade de escolha. Aceite encerramento imediato. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Pedir espaço para conversar sem bloquear a saída” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mantenha passagem livre e distância adequada; pergunte se a pessoa deseja ouvir o motivo. Bloquear saída ou prolongar fala após recusa compromete liberdade de escolha. Aceite encerramento imediato.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Abertura clara e contextualizada",
+          "tipo": "texto",
+          "conteudo": "Conecte identidade, contexto e pergunta curta, sem exagerar familiaridade. Uma promessa grandiosa na porta não substitui relevância. Se o momento não permite conversa, não exigir atenção.",
+          "roteiro_video": "Nesta aula, vamos trabalhar abertura clara e contextualizada. Conecte identidade, contexto e pergunta curta, sem exagerar familiaridade. Uma promessa grandiosa na porta não substitui relevância. Se o momento não permite conversa, não exigir atenção. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Abertura clara e contextualizada” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conecte identidade, contexto e pergunta curta, sem exagerar familiaridade. Uma promessa grandiosa na porta não substitui relevância. Se o momento não permite conversa, não exigir atenção.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Perguntas curtas e escuta no ambiente",
+          "tipo": "texto",
+          "conteudo": "Use perguntas compatíveis com privacidade e tempo disponíveis. Não discutir orçamento ou dados de terceiros em ambiente público. Se a conversa exige detalhe, proponha formato apropriado e voluntário.",
+          "roteiro_video": "Nesta aula, vamos trabalhar perguntas curtas e escuta no ambiente. Use perguntas compatíveis com privacidade e tempo disponíveis. Não discutir orçamento ou dados de terceiros em ambiente público. Se a conversa exige detalhe, proponha formato apropriado e voluntário. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Perguntas curtas e escuta no ambiente” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use perguntas compatíveis com privacidade e tempo disponíveis. Não discutir orçamento ou dados de terceiros em ambiente público. Se a conversa exige detalhe, proponha formato apropriado e voluntário.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Respeitar recusa, sinais de desconforto e horários",
+          "tipo": "texto",
+          "conteudo": "Observe recusa verbal e sinais claros de encerramento sem tentar reinterpretá-los como desafio. Agradeça e saia. Registre preferência para evitar visitas repetidas, conforme política de dados da operação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar respeitar recusa, sinais de desconforto e horários. Observe recusa verbal e sinais claros de encerramento sem tentar reinterpretá-los como desafio. Agradeça e saia. Registre preferência para evitar visitas repetidas, conforme política de dados da operação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Respeitar recusa, sinais de desconforto e horários” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Observe recusa verbal e sinais claros de encerramento sem tentar reinterpretá-los como desafio. Agradeça e saia. Registre preferência para evitar visitas repetidas, conforme política de dados da operação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Apresentação e decisão",
+      "titulo_original_pt": "Apresentação e decisão",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Demonstrar dentro do escopo",
+          "tipo": "texto",
+          "conteudo": "Mostre apenas função disponível com material autorizado e dados fictícios. Não pedir senha ou documento para uma demonstração inicial. Um teste rápido precisa declarar limitações e não provar resultados futuros.",
+          "roteiro_video": "Nesta aula, vamos trabalhar demonstrar dentro do escopo. Mostre apenas função disponível com material autorizado e dados fictícios. Não pedir senha ou documento para uma demonstração inicial. Um teste rápido precisa declarar limitações e não provar resultados futuros. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Demonstrar dentro do escopo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mostre apenas função disponível com material autorizado e dados fictícios. Não pedir senha ou documento para uma demonstração inicial. Um teste rápido precisa declarar limitações e não provar resultados futuros.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Explicar condições e limitações sem omissões",
+          "tipo": "texto",
+          "conteudo": "Informe preço, período, exclusões e responsabilidades disponíveis antes de compromisso. Se condição contratual depende de revisão, não invente regra. Compras fora do estabelecimento exigem análise local específica pela operação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar explicar condições e limitações sem omissões. Informe preço, período, exclusões e responsabilidades disponíveis antes de compromisso. Se condição contratual depende de revisão, não invente regra. Compras fora do estabelecimento exigem análise local específica pela operação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Explicar condições e limitações sem omissões” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Informe preço, período, exclusões e responsabilidades disponíveis antes de compromisso. Se condição contratual depende de revisão, não invente regra. Compras fora do estabelecimento exigem análise local específica pela operação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Tratar dúvidas sem pressão",
+          "tipo": "texto",
+          "conteudo": "Investigue a dúvida e responda com informação verificável. Não usar presença física para acelerar decisão. Se falta resposta, combine verificação somente quando a pessoa desejar continuidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tratar dúvidas sem pressão. Investigue a dúvida e responda com informação verificável. Não usar presença física para acelerar decisão. Se falta resposta, combine verificação somente quando a pessoa desejar continuidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tratar dúvidas sem pressão” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Investigue a dúvida e responda com informação verificável. Não usar presença física para acelerar decisão. Se falta resposta, combine verificação somente quando a pessoa desejar continuidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Encerrar ou combinar próximo passo consentido",
+          "tipo": "texto",
+          "conteudo": "Resuma ação e canal aceitos ou encerre claramente sem promessa de retorno não solicitado. Receber um cartão não equivale a aceitar compra. Registre o acordo com precisão proporcional.",
+          "roteiro_video": "Nesta aula, vamos trabalhar encerrar ou combinar próximo passo consentido. Resuma ação e canal aceitos ou encerre claramente sem promessa de retorno não solicitado. Receber um cartão não equivale a aceitar compra. Registre o acordo com precisão proporcional. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Encerrar ou combinar próximo passo consentido” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Resuma ação e canal aceitos ou encerre claramente sem promessa de retorno não solicitado. Receber um cartão não equivale a aceitar compra. Registre o acordo com precisão proporcional.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Operação e laboratório",
+      "titulo_original_pt": "Operação e laboratório",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Registro factual da visita e evidência permitida",
+          "tipo": "texto",
+          "conteudo": "Descreva data, local pertinente, atividade e resultado sem julgamento pessoal. Não afirmar visita realizada com evidência de outra rota. Informações incertas devem permanecer incertas até confirmação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar registro factual da visita e evidência permitida. Descreva data, local pertinente, atividade e resultado sem julgamento pessoal. Não afirmar visita realizada com evidência de outra rota. Informações incertas devem permanecer incertas até confirmação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Registro factual da visita e evidência permitida” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Descreva data, local pertinente, atividade e resultado sem julgamento pessoal. Não afirmar visita realizada com evidência de outra rota. Informações incertas devem permanecer incertas até confirmação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Organizar território sem revisitas indesejadas",
+          "tipo": "texto",
+          "conteudo": "Compartilhe restrições e responsáveis pelo processo autorizado para evitar revisitas indesejadas. Rota eficiente não deve sobrepor contatos sem contexto. Mudança de vendedor não apaga pedido de não visita.",
+          "roteiro_video": "Nesta aula, vamos trabalhar organizar território sem revisitas indesejadas. Compartilhe restrições e responsáveis pelo processo autorizado para evitar revisitas indesejadas. Rota eficiente não deve sobrepor contatos sem contexto. Mudança de vendedor não apaga pedido de não visita. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Organizar território sem revisitas indesejadas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Compartilhe restrições e responsáveis pelo processo autorizado para evitar revisitas indesejadas. Rota eficiente não deve sobrepor contatos sem contexto. Mudança de vendedor não apaga pedido de não visita.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Indicadores e revisão de conduta",
+          "tipo": "texto",
+          "conteudo": "Separe endereços elegíveis, visitas tentadas, conversas e próximos passos aceitos. Não considerar ausência como recusa. Taxas devem refletir o mesmo período e regras de elegibilidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar indicadores e revisão de conduta. Separe endereços elegíveis, visitas tentadas, conversas e próximos passos aceitos. Não considerar ausência como recusa. Taxas devem refletir o mesmo período e regras de elegibilidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Indicadores e revisão de conduta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe endereços elegíveis, visitas tentadas, conversas e próximos passos aceitos. Não considerar ausência como recusa. Taxas devem refletir o mesmo período e regras de elegibilidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Simulação de visita, recusa e encaminhamento",
+          "tipo": "texto",
+          "conteudo": "Pratique abertura, dúvida, incompatibilidade e recusa em ambiente simulado. O avaliador observa distância, clareza e encerramento, sem expor público real. Aprovação exige conduta segura, não venda a qualquer custo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar simulação de visita, recusa e encaminhamento. Pratique abertura, dúvida, incompatibilidade e recusa em ambiente simulado. O avaliador observa distância, clareza e encerramento, sem expor público real. Aprovação exige conduta segura, não venda a qualquer custo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Simulação de visita, recusa e encaminhamento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pratique abertura, dúvida, incompatibilidade e recusa em ambiente simulado. O avaliador observa distância, clareza e encerramento, sem expor público real. Aprovação exige conduta segura, não venda a qualquer custo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A equipe visita estabelecimentos em território aprovado para exercício fictício. Um local tem placa de não receber vendedores, outro está atendendo cliente e um terceiro aceita ouvir por um minuto. A oferta não permite ativação imediata. O vendedor preparou fotos do interior como prova sem procedimento autorizado."
+  },
+  "projeto": {
+    "instrucoes": "Planeje a rota, escreva três aberturas e três encerramentos e produza um registro de visita que não exponha pessoas ou documentos.",
+    "gabarito": "Respeite a placa e o controle de acesso; não interrompa atendimento exigindo atenção. No minuto aceito, identifique propósito e faça pergunta pertinente. Não prometa ativação imediata nem fotografe sem procedimento. Registre resultado factual e preferência para evitar revisita indesejada."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "17-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Preparação e segurança na atuação presencial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Confira oferta, território permitido, identificação e regras locais antes da visita. O endereço existir não autoriza entrar. Planeje rota e processo de segurança da operação sem improvisar acesso a áreas restritas.",
+          "Apresente nome, empresa e motivo comercial antes de pedir tempo ou informação. Não parecer agente público, fiscal ou prestador já contratado. Materiais devem identificar claramente a oferta real.",
+          "Respeite barreiras, recepção e sinais de não atendimento. Se houver desconforto ou risco, afaste-se e use o protocolo da operação. Não permanecer em local contra a vontade de quem controla o acesso.",
+          "Registre somente informações pertinentes à atividade e permitidas. Não fotografar pessoas, documentos ou interior por conveniência. A comprovação da visita deve seguir o procedimento, sem criar exposição desnecessária."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "17-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Abordagem presencial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Mantenha passagem livre e distância adequada; pergunte se a pessoa deseja ouvir o motivo. Bloquear saída ou prolongar fala após recusa compromete liberdade de escolha. Aceite encerramento imediato.",
+          "Conecte identidade, contexto e pergunta curta, sem exagerar familiaridade. Uma promessa grandiosa na porta não substitui relevância. Se o momento não permite conversa, não exigir atenção.",
+          "Use perguntas compatíveis com privacidade e tempo disponíveis. Não discutir orçamento ou dados de terceiros em ambiente público. Se a conversa exige detalhe, proponha formato apropriado e voluntário.",
+          "Observe recusa verbal e sinais claros de encerramento sem tentar reinterpretá-los como desafio. Agradeça e saia. Registre preferência para evitar visitas repetidas, conforme política de dados da operação."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "17-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Apresentação e decisão”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Mostre apenas função disponível com material autorizado e dados fictícios. Não pedir senha ou documento para uma demonstração inicial. Um teste rápido precisa declarar limitações e não provar resultados futuros.",
+          "Informe preço, período, exclusões e responsabilidades disponíveis antes de compromisso. Se condição contratual depende de revisão, não invente regra. Compras fora do estabelecimento exigem análise local específica pela operação.",
+          "Investigue a dúvida e responda com informação verificável. Não usar presença física para acelerar decisão. Se falta resposta, combine verificação somente quando a pessoa desejar continuidade.",
+          "Resuma ação e canal aceitos ou encerre claramente sem promessa de retorno não solicitado. Receber um cartão não equivale a aceitar compra. Registre o acordo com precisão proporcional."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "17-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Operação e laboratório”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Descreva data, local pertinente, atividade e resultado sem julgamento pessoal. Não afirmar visita realizada com evidência de outra rota. Informações incertas devem permanecer incertas até confirmação.",
+          "Compartilhe restrições e responsáveis pelo processo autorizado para evitar revisitas indesejadas. Rota eficiente não deve sobrepor contatos sem contexto. Mudança de vendedor não apaga pedido de não visita.",
+          "Separe endereços elegíveis, visitas tentadas, conversas e próximos passos aceitos. Não considerar ausência como recusa. Taxas devem refletir o mesmo período e regras de elegibilidade.",
+          "Pratique abertura, dúvida, incompatibilidade e recusa em ambiente simulado. O avaliador observa distância, clareza e encerramento, sem expor público real. Aprovação exige conduta segura, não venda a qualquer custo."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "17-FINAL",
+        "pergunta": "Planeje a rota, escreva três aberturas e três encerramentos e produza um registro de visita que não exponha pessoas ou documentos.",
+        "resposta_modelo": "Respeite a placa e o controle de acesso; não interrompa atendimento exigindo atenção. No minuto aceito, identifique propósito e faça pergunta pertinente. Não prometa ativação imediata nem fotografe sem procedimento. Registre resultado factual e preferência para evitar revisita indesejada.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

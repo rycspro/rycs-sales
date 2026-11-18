@@ -1,0 +1,609 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-16",
+  "course_number": 16,
+  "locale": "en-IN",
+  "titulo": "BDR — Enterprise Accounts",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Profissional",
+  "carga_horaria_planejada_h": 8,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Complexity in large accounts",
+      "titulo_original_pt": "Estratégia de contas grandes",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Complexity in large accounts",
+          "tipo": "texto",
+          "conteudo": "Large accounts may involve multiple units, dependencies and approvals. Complexity is not simply a high price. Map decisions and delivery capability before committing disproportionate effort.",
+          "roteiro_video": "In this lesson we explore complexity in large accounts. Large accounts may involve multiple units, dependencies and approvals. Complexity is not simply a high price. Map decisions and delivery capability before committing disproportionate effort. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Complexity in large accounts” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Large accounts may involve multiple units, dependencies and approvals. Complexity is not simply a high price. Map decisions and delivery capability before committing disproportionate effort.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Selecting accounts",
+          "tipo": "texto",
+          "conteudo": "Define required fit, investigable potential and pursuit cost. Do not select only famous logos. A prestigious account needing unsupported capabilities may be unsuitable.",
+          "roteiro_video": "In this lesson we explore selecting accounts. Define required fit, investigable potential and pursuit cost. Do not select only famous logos. A prestigious account needing unsupported capabilities may be unsuitable. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Selecting accounts” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define required fit, investigable potential and pursuit cost. Do not select only famous logos. A prestigious account needing unsupported capabilities may be unsuitable.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Researching initiatives",
+          "tipo": "texto",
+          "conteudo": "Use permitted business sources and distinguish announcements from approved projects. Record date and scope. A corporate initiative does not establish funding or equivalent authority in every unit.",
+          "roteiro_video": "In this lesson we explore researching initiatives. Use permitted business sources and distinguish announcements from approved projects. Record date and scope. A corporate initiative does not establish funding or equivalent authority in every unit. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Researching initiatives” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use permitted business sources and distinguish announcements from approved projects. Record date and scope. A corporate initiative does not establish funding or equivalent authority in every unit.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Account hypotheses",
+          "tipo": "texto",
+          "conteudo": "Write hypothesis, evidence, alternatives and verification question. Do not turn inference into fact in an account dossier. Research must allow the thesis to be rejected when corrected.",
+          "roteiro_video": "In this lesson we explore account hypotheses. Write hypothesis, evidence, alternatives and verification question. Do not turn inference into fact in an account dossier. Research must allow the thesis to be rejected when corrected. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Account hypotheses” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Write hypothesis, evidence, alternatives and verification question. Do not turn inference into fact in an account dossier. Research must allow the thesis to be rejected when corrected.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.5",
+          "titulo": "Prioritising research effort",
+          "tipo": "texto",
+          "conteudo": "Set effort limits and reassessment criteria per account. Research investment does not justify persistence after mismatch. Evaluate information quality rather than page count.",
+          "roteiro_video": "In this lesson we explore prioritising research effort. Set effort limits and reassessment criteria per account. Research investment does not justify persistence after mismatch. Evaluate information quality rather than page count. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Prioritising research effort” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Set effort limits and reassessment criteria per account. Research investment does not justify persistence after mismatch. Evaluate information quality rather than page count.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.6",
+          "titulo": "A reviewable account plan",
+          "tipo": "texto",
+          "conteudo": "Organise objectives, sources, roles, criteria, hypotheses, restrictions and next steps. Each gap needs a feasible investigation route. An account plan is not a guaranteed purchase forecast.",
+          "roteiro_video": "In this lesson we explore a reviewable account plan. Organise objectives, sources, roles, criteria, hypotheses, restrictions and next steps. Each gap needs a feasible investigation route. An account plan is not a guaranteed purchase forecast. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A reviewable account plan” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Organise objectives, sources, roles, criteria, hypotheses, restrictions and next steps. Each gap needs a feasible investigation route. An account plan is not a guaranteed purchase forecast.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Stakeholder roles",
+      "titulo_original_pt": "Partes interessadas e acesso",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Stakeholder roles",
+          "tipo": "texto",
+          "conteudo": "Confirm users, influencers, technical evaluators and approvers. Influence varies by decision; titles alone do not establish power. Respect intermediaries without deceptive bypasses.",
+          "roteiro_video": "In this lesson we explore stakeholder roles. Confirm users, influencers, technical evaluators and approvers. Influence varies by decision; titles alone do not establish power. Respect intermediaries without deceptive bypasses. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Stakeholder roles” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Confirm users, influencers, technical evaluators and approvers. Influence varies by decision; titles alone do not establish power. Respect intermediaries without deceptive bypasses.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Procurement criteria",
+          "tipo": "texto",
+          "conteudo": "Explore onboarding, security, capacity and contracting requirements at the appropriate stage. Do not promise undocumented compliance. A commercial sponsor does not replace technical or procurement approval.",
+          "roteiro_video": "In this lesson we explore procurement criteria. Explore onboarding, security, capacity and contracting requirements at the appropriate stage. Do not promise undocumented compliance. A commercial sponsor does not replace technical or procurement approval. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Procurement criteria” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore onboarding, security, capacity and contracting requirements at the appropriate stage. Do not promise undocumented compliance. A commercial sponsor does not replace technical or procurement approval.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Respectful access",
+          "tipo": "texto",
+          "conteudo": "Ask about the process and explain relevance without inventing prior relationships. Trust includes everyone involved. Never offer improper benefits for access or internal information.",
+          "roteiro_video": "In this lesson we explore respectful access. Ask about the process and explain relevance without inventing prior relationships. Trust includes everyone involved. Never offer improper benefits for access or internal information. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Respectful access” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask about the process and explain relevance without inventing prior relationships. Trust includes everyone involved. Never offer improper benefits for access or internal information.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Coordinated multithreading",
+          "tipo": "texto",
+          "conteudo": "Multiple stakeholders require consistent context and coordination, not organisational bombardment. Track knowledge and preferences. Do not use one refusal as a reason to deceive another contact.",
+          "roteiro_video": "In this lesson we explore coordinated multithreading. Multiple stakeholders require consistent context and coordination, not organisational bombardment. Track knowledge and preferences. Do not use one refusal as a reason to deceive another contact. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Coordinated multithreading” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Multiple stakeholders require consistent context and coordination, not organisational bombardment. Track knowledge and preferences. Do not use one refusal as a reason to deceive another contact.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Conflicts and restrictions",
+          "tipo": "texto",
+          "conteudo": "Identify restrictions, confidentiality and conflicts and route them to responsible owners. Do not solicit unauthorised internal documents. Access does not legitimise every later use.",
+          "roteiro_video": "In this lesson we explore conflicts and restrictions. Identify restrictions, confidentiality and conflicts and route them to responsible owners. Do not solicit unauthorised internal documents. Access does not legitimise every later use. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Conflicts and restrictions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Identify restrictions, confidentiality and conflicts and route them to responsible owners. Do not solicit unauthorised internal documents. Access does not legitimise every later use.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.6",
+          "titulo": "Evidence-based role mapping",
+          "tipo": "texto",
+          "conteudo": "Every role needs source, date and confirmation level. Contacts may leave; keep records current. Assumed support must not appear as approval.",
+          "roteiro_video": "In this lesson we explore evidence-based role mapping. Every role needs source, date and confirmation level. Contacts may leave; keep records current. Assumed support must not appear as approval. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Evidence-based role mapping” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Every role needs source, date and confirmation level. Contacts may leave; keep records current. Assumed support must not appear as approval.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: A credible conversation reason",
+      "titulo_original_pt": "Desenvolvimento da oportunidade",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "A credible conversation reason",
+          "tipo": "texto",
+          "conteudo": "Connect a confirmed initiative to a relevant workflow question. Do not claim internal knowledge from news. Initially verify context rather than announce a complete diagnosis.",
+          "roteiro_video": "In this lesson we explore a credible conversation reason. Connect a confirmed initiative to a relevant workflow question. Do not claim internal knowledge from news. Initially verify context rather than announce a complete diagnosis. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A credible conversation reason” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Connect a confirmed initiative to a relevant workflow question. Do not claim internal knowledge from news. Initially verify context rather than announce a complete diagnosis.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Cross-functional discovery",
+          "tipo": "texto",
+          "conteudo": "Explore how handoffs create work or risk. One function may gain while another incurs cost. Record both before proposing change or estimating return.",
+          "roteiro_video": "In this lesson we explore cross-functional discovery. Explore how handoffs create work or risk. One function may gain while another incurs cost. Record both before proposing change or estimating return. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Cross-functional discovery” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore how handoffs create work or risk. One function may gain while another incurs cost. Record both before proposing change or estimating return.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Consistent adaptation",
+          "tipo": "texto",
+          "conteudo": "Adapt evidence and language to participant criteria while keeping scope consistent. Do not sell integration to IT and a non-integrated workflow to operations as the same offer.",
+          "roteiro_video": "In this lesson we explore consistent adaptation. Adapt evidence and language to participant criteria while keeping scope consistent. Do not sell integration to IT and a non-integrated workflow to operations as the same offer. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Consistent adaptation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Adapt evidence and language to participant criteria while keeping scope consistent. Do not sell integration to IT and a non-integrated workflow to operations as the same offer.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Initiative qualification",
+          "tipo": "texto",
+          "conteudo": "Verify project existence, resources, ownership and timing separately. A public priority does not guarantee purchase. Gaps may justify investigation, reduced effort or archiving.",
+          "roteiro_video": "In this lesson we explore initiative qualification. Verify project existence, resources, ownership and timing separately. A public priority does not guarantee purchase. Gaps may justify investigation, reduced effort or archiving. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Initiative qualification” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Verify project existence, resources, ownership and timing separately. A public priority does not guarantee purchase. Gaps may justify investigation, reduced effort or archiving.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Purposeful account meetings",
+          "tipo": "texto",
+          "conteudo": "Confirm agenda, roles, language, time zones and pre-read needs. More executives do not automatically improve a meeting. Each participant needs a decision or discovery purpose.",
+          "roteiro_video": "In this lesson we explore purposeful account meetings. Confirm agenda, roles, language, time zones and pre-read needs. More executives do not automatically improve a meeting. Each participant needs a decision or discovery purpose. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Purposeful account meetings” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Confirm agenda, roles, language, time zones and pre-read needs. More executives do not automatically improve a meeting. Each participant needs a decision or discovery purpose.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.6",
+          "titulo": "Account handoff",
+          "tipo": "texto",
+          "conteudo": "Handoff role map, diagnosis, authorised documents, limits and open issues. An influencer hypothesis is not a corporate commitment. State the unit and scope of each fact.",
+          "roteiro_video": "In this lesson we explore account handoff. Handoff role map, diagnosis, authorised documents, limits and open issues. An influencer hypothesis is not a corporate commitment. State the unit and scope of each fact. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Account handoff” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Handoff role map, diagnosis, authorised documents, limits and open issues. An influencer hypothesis is not a corporate commitment. State the unit and scope of each fact.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Account-level cadence",
+      "titulo_original_pt": "Execução e avaliação",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Account-level cadence",
+          "tipo": "texto",
+          "conteudo": "Coordinate account and participant actions with purpose and stopping rules. Individual attempt metrics can hide collective overcontact. Stop actions conflicting with restrictions or changed context.",
+          "roteiro_video": "In this lesson we explore account-level cadence. Coordinate account and participant actions with purpose and stopping rules. Individual attempt metrics can hide collective overcontact. Stop actions conflicting with restrictions or changed context. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Account-level cadence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Coordinate account and participant actions with purpose and stopping rules. Individual attempt metrics can hide collective overcontact. Stop actions conflicting with restrictions or changed context.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Coverage and progress",
+          "tipo": "texto",
+          "conteudo": "Coverage measures understanding of relevant roles, not collected names. Progress needs verifiable new information or decisions. Repeated contacts are not new account coverage.",
+          "roteiro_video": "In this lesson we explore coverage and progress. Coverage measures understanding of relevant roles, not collected names. Progress needs verifiable new information or decisions. Repeated contacts are not new account coverage. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Coverage and progress” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Coverage measures understanding of relevant roles, not collected names. Progress needs verifiable new information or decisions. Repeated contacts are not new account coverage.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Loss and silence review",
+          "tipo": "texto",
+          "conteudo": "Separate confirmed reasons, hypotheses and no response. Silence does not prove high price or a competitor win. Review fit, relevance, channel and process without inventing causation.",
+          "roteiro_video": "In this lesson we explore loss and silence review. Separate confirmed reasons, hypotheses and no response. Silence does not prove high price or a competitor win. Review fit, relevance, channel and process without inventing causation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Loss and silence review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate confirmed reasons, hypotheses and no response. Silence does not prove high price or a competitor win. Review fit, relevance, channel and process without inventing causation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Updating the plan",
+          "tipo": "texto",
+          "conteudo": "Track source, role and condition changes while preserving useful history. New information may lower priority. Do not retain an old thesis merely because effort was invested.",
+          "roteiro_video": "In this lesson we explore updating the plan. Track source, role and condition changes while preserving useful history. New information may lower priority. Do not retain an old thesis merely because effort was invested. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Updating the plan” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Track source, role and condition changes while preserving useful history. New information may lower priority. Do not retain an old thesis merely because effort was invested.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.5",
+          "titulo": "Committee simulation",
+          "tipo": "texto",
+          "conteudo": "Distribute criteria across operations, security and procurement. Learners must investigate dependencies and recognise unresolved vetoes. One actor's agreement must not imply universal approval.",
+          "roteiro_video": "In this lesson we explore committee simulation. Distribute criteria across operations, security and procurement. Learners must investigate dependencies and recognise unresolved vetoes. One actor's agreement must not imply universal approval. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Committee simulation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Distribute criteria across operations, security and procurement. Learners must investigate dependencies and recognise unresolved vetoes. One actor's agreement must not imply universal approval.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.6",
+          "titulo": "Account-plan defence",
+          "tipo": "texto",
+          "conteudo": "Defend selection, evidence, priorities and actions, including stopping criteria. Professional theory has 40 items; practice assesses reasoning and conduct, not guaranteed access or enterprise contracts.",
+          "roteiro_video": "In this lesson we explore account-plan defence. Defend selection, evidence, priorities and actions, including stopping criteria. Professional theory has 40 items; practice assesses reasoning and conduct, not guaranteed access or enterprise contracts. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Account-plan defence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Defend selection, evidence, priorities and actions, including stopping criteria. Professional theory has 40 items; practice assesses reasoning and conduct, not guaranteed access or enterprise contracts.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Beacon Group has six sites. Operations wants standard records, IT an access test, procurement vendor onboarding, and finance has not approved funds. The sponsor accepts a presentation but cannot contract. An expansion announcement was incorrectly recorded as approved budget.\n\nAn Indian group has regional operational leads and central accounts approval. The requested pilot spans two cities with different staffing availability. The supplier must confirm training support and invoicing requirements without assuming universal rollout."
+  },
+  "projeto": {
+    "instrucoes": "Deliver an account plan, four-role map, sourced hypothesis and five coordinated actions, including conditions for reducing priority or closing.",
+    "gabarito": "Correct budget to unknown. Verify multi-site capability and requirements before proposing a pilot. Coordinate operations, IT, procurement and finance with distinct purposes. Reduce effort or close when mandatory requirements cannot be met."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "16-M1",
+        "pergunta": "How would you apply “Module 1: Complexity in large accounts” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Large accounts may involve multiple units, dependencies and approvals. Complexity is not simply a high price. Map decisions and delivery capability before committing disproportionate effort.",
+          "Define required fit, investigable potential and pursuit cost. Do not select only famous logos. A prestigious account needing unsupported capabilities may be unsuitable.",
+          "Use permitted business sources and distinguish announcements from approved projects. Record date and scope. A corporate initiative does not establish funding or equivalent authority in every unit.",
+          "Write hypothesis, evidence, alternatives and verification question. Do not turn inference into fact in an account dossier. Research must allow the thesis to be rejected when corrected.",
+          "Set effort limits and reassessment criteria per account. Research investment does not justify persistence after mismatch. Evaluate information quality rather than page count.",
+          "Organise objectives, sources, roles, criteria, hypotheses, restrictions and next steps. Each gap needs a feasible investigation route. An account plan is not a guaranteed purchase forecast."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "16-M2",
+        "pergunta": "How would you apply “Module 2: Stakeholder roles” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Confirm users, influencers, technical evaluators and approvers. Influence varies by decision; titles alone do not establish power. Respect intermediaries without deceptive bypasses.",
+          "Explore onboarding, security, capacity and contracting requirements at the appropriate stage. Do not promise undocumented compliance. A commercial sponsor does not replace technical or procurement approval.",
+          "Ask about the process and explain relevance without inventing prior relationships. Trust includes everyone involved. Never offer improper benefits for access or internal information.",
+          "Multiple stakeholders require consistent context and coordination, not organisational bombardment. Track knowledge and preferences. Do not use one refusal as a reason to deceive another contact.",
+          "Identify restrictions, confidentiality and conflicts and route them to responsible owners. Do not solicit unauthorised internal documents. Access does not legitimise every later use.",
+          "Every role needs source, date and confirmation level. Contacts may leave; keep records current. Assumed support must not appear as approval."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "16-M3",
+        "pergunta": "How would you apply “Module 3: A credible conversation reason” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Connect a confirmed initiative to a relevant workflow question. Do not claim internal knowledge from news. Initially verify context rather than announce a complete diagnosis.",
+          "Explore how handoffs create work or risk. One function may gain while another incurs cost. Record both before proposing change or estimating return.",
+          "Adapt evidence and language to participant criteria while keeping scope consistent. Do not sell integration to IT and a non-integrated workflow to operations as the same offer.",
+          "Verify project existence, resources, ownership and timing separately. A public priority does not guarantee purchase. Gaps may justify investigation, reduced effort or archiving.",
+          "Confirm agenda, roles, language, time zones and pre-read needs. More executives do not automatically improve a meeting. Each participant needs a decision or discovery purpose.",
+          "Handoff role map, diagnosis, authorised documents, limits and open issues. An influencer hypothesis is not a corporate commitment. State the unit and scope of each fact."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "16-M4",
+        "pergunta": "How would you apply “Module 4: Account-level cadence” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Coordinate account and participant actions with purpose and stopping rules. Individual attempt metrics can hide collective overcontact. Stop actions conflicting with restrictions or changed context.",
+          "Coverage measures understanding of relevant roles, not collected names. Progress needs verifiable new information or decisions. Repeated contacts are not new account coverage.",
+          "Separate confirmed reasons, hypotheses and no response. Silence does not prove high price or a competitor win. Review fit, relevance, channel and process without inventing causation.",
+          "Track source, role and condition changes while preserving useful history. New information may lower priority. Do not retain an old thesis merely because effort was invested.",
+          "Distribute criteria across operations, security and procurement. Learners must investigate dependencies and recognise unresolved vetoes. One actor's agreement must not imply universal approval.",
+          "Defend selection, evidence, priorities and actions, including stopping criteria. Professional theory has 40 items; practice assesses reasoning and conduct, not guaranteed access or enterprise contracts."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "16-FINAL",
+        "pergunta": "Deliver an account plan, four-role map, sourced hypothesis and five coordinated actions, including conditions for reducing priority or closing.",
+        "resposta_modelo": "Correct budget to unknown. Verify multi-site capability and requirements before proposing a pilot. Coordinate operations, IT, procurement and finance with distinct purposes. Reduce effort or close when mandatory requirements cannot be met.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-24",
+  "course_number": 24,
+  "locale": "en-IN",
+  "titulo": "B2B Services Sales",
+  "nivel_original": "Intermediário a avançado",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Task, process and outcome",
+      "titulo_original_pt": "Diagnóstico de serviços B2B",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Task, process and outcome",
+          "tipo": "texto",
+          "conteudo": "Start with the task and observable outcome. A request for consulting is broad. Explore current process, difficulty and criteria before defining effort or price.",
+          "roteiro_video": "In this lesson we explore task, process and outcome. Start with the task and observable outcome. A request for consulting is broad. Explore current process, difficulty and criteria before defining effort or price. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Task, process and outcome” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Start with the task and observable outcome. A request for consulting is broad. Explore current process, difficulty and criteria before defining effort or price.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Owners and dependencies",
+          "tipo": "texto",
+          "conteudo": "Identify who supplies data, decides, executes and accepts delivery. Unconfirmed dependencies can invalidate timing. Interest in a proposal does not establish client-team availability.",
+          "roteiro_video": "In this lesson we explore owners and dependencies. Identify who supplies data, decides, executes and accepts delivery. Unconfirmed dependencies can invalidate timing. Interest in a proposal does not establish client-team availability. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Owners and dependencies” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Identify who supplies data, decides, executes and accepts delivery. Unconfirmed dependencies can invalidate timing. Interest in a proposal does not establish client-team availability.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Scope discovery",
+          "tipo": "texto",
+          "conteudo": "Clarify volume, format, coverage and constraints before promising execution. A discovery question is not scope acceptance. Record items needing responsible technical verification.",
+          "roteiro_video": "In this lesson we explore scope discovery. Clarify volume, format, coverage and constraints before promising execution. A discovery question is not scope acceptance. Record items needing responsible technical verification. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Scope discovery” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Clarify volume, format, coverage and constraints before promising execution. A discovery question is not scope acceptance. Record items needing responsible technical verification.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Success criteria and gaps",
+          "tipo": "texto",
+          "conteudo": "Define observable delivery conditions separately from client-dependent economic results. Clarify vague criteria before contracting. List what cannot yet be estimated.",
+          "roteiro_video": "In this lesson we explore success criteria and gaps. Define observable delivery conditions separately from client-dependent economic results. Clarify vague criteria before contracting. List what cannot yet be estimated. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Success criteria and gaps” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define observable delivery conditions separately from client-dependent economic results. Clarify vague criteria before contracting. List what cannot yet be estimated.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Deliverables and exclusions",
+      "titulo_original_pt": "Desenho da proposta de serviço",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Deliverables and exclusions",
+          "tipo": "texto",
+          "conteudo": "Describe artefacts, quantity, expected quality and exclusions. Meetings are activities, not necessarily sufficient deliverables. Buyers need to understand what exists when service ends.",
+          "roteiro_video": "In this lesson we explore deliverables and exclusions. Describe artefacts, quantity, expected quality and exclusions. Meetings are activities, not necessarily sufficient deliverables. Buyers need to understand what exists when service ends. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Deliverables and exclusions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Describe artefacts, quantity, expected quality and exclusions. Meetings are activities, not necessarily sufficient deliverables. Buyers need to understand what exists when service ends.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Shared responsibilities",
+          "tipo": "texto",
+          "conteudo": "State supplier and client responsibilities, including access and review. Do not assign undisclosed duties after sale. Dependencies belong in both schedule and acceptance criteria.",
+          "roteiro_video": "In this lesson we explore shared responsibilities. State supplier and client responsibilities, including access and review. Do not assign undisclosed duties after sale. Dependencies belong in both schedule and acceptance criteria. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Shared responsibilities” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "State supplier and client responsibilities, including access and review. Do not assign undisclosed duties after sale. Dependencies belong in both schedule and acceptance criteria.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Acceptance tests",
+          "tipo": "texto",
+          "conteudo": "Define verification with examples, owners and correction process. Criteria cannot change unilaterally at the end. Accepting a report does not prove resulting revenue growth.",
+          "roteiro_video": "In this lesson we explore acceptance tests. Define verification with examples, owners and correction process. Criteria cannot change unilaterally at the end. Accepting a report does not prove resulting revenue growth. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Acceptance tests” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define verification with examples, owners and correction process. Criteria cannot change unilaterally at the end. Accepting a report does not prove resulting revenue growth.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Effort, timing and price",
+          "tipo": "texto",
+          "conteudo": "Estimate by tasks and assumptions, including coordination and review. State uncertainty and authority limits. Unsupported precision can be less reliable than a reasoned range needing confirmation.",
+          "roteiro_video": "In this lesson we explore effort, timing and price. Estimate by tasks and assumptions, including coordination and review. State uncertainty and authority limits. Unsupported precision can be less reliable than a reasoned range needing confirmation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Effort, timing and price” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Estimate by tasks and assumptions, including coordination and review. State uncertainty and authority limits. Unsupported precision can be less reliable than a reasoned range needing confirmation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Equivalent service comparison",
+      "titulo_original_pt": "Negociação e contratação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Equivalent service comparison",
+          "tipo": "texto",
+          "conteudo": "Compare deliverables, depth, revisions, access and responsibilities over the same period. A low quote may exclude essential work. Do not assert competitor inferiority without evidence.",
+          "roteiro_video": "In this lesson we explore equivalent service comparison. Compare deliverables, depth, revisions, access and responsibilities over the same period. A low quote may exclude essential work. Do not assert competitor inferiority without evidence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Equivalent service comparison” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare deliverables, depth, revisions, access and responsibilities over the same period. A low quote may exclude essential work. Do not assert competitor inferiority without evidence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Implementation risk",
+          "tipo": "texto",
+          "conteudo": "Record dependencies, possible impact and mitigation owners. Neither hide risk nor use it as a vague excuse. Review timing when essential conditions change.",
+          "roteiro_video": "In this lesson we explore implementation risk. Record dependencies, possible impact and mitigation owners. Neither hide risk nor use it as a vague excuse. Review timing when essential conditions change. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Implementation risk” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record dependencies, possible impact and mitigation owners. Neither hide risk nor use it as a vague excuse. Review timing when essential conditions change.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Change control",
+          "tipo": "texto",
+          "conteudo": "Additional requests need description, impact and authorised acceptance before execution. Distinguish correcting an error from expanding scope. Informal discussion does not automatically settle price and timing.",
+          "roteiro_video": "In this lesson we explore change control. Additional requests need description, impact and authorised acceptance before execution. Distinguish correcting an error from expanding scope. Informal discussion does not automatically settle price and timing. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Change control” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Additional requests need description, impact and authorised acceptance before execution. Distinguish correcting an error from expanding scope. Informal discussion does not automatically settle price and timing.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Responsible review",
+          "tipo": "texto",
+          "conteudo": "Align commercial proposal with technical capacity and applicable legal conditions. Maintain one accepted version. Refer uncertain clauses rather than improvise interpretation to avoid delay.",
+          "roteiro_video": "In this lesson we explore responsible review. Align commercial proposal with technical capacity and applicable legal conditions. Maintain one accepted version. Refer uncertain clauses rather than improvise interpretation to avoid delay. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Responsible review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Align commercial proposal with technical capacity and applicable legal conditions. Maintain one accepted version. Refer uncertain clauses rather than improvise interpretation to avoid delay.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Project handoff",
+      "titulo_original_pt": "Entrega e expansão responsável",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Project handoff",
+          "tipo": "texto",
+          "conteudo": "Handoff problem, scope, assumptions, acceptance, owners and commitments, including exclusions and open questions. Delivery should not discover what was sold from the client alone.",
+          "roteiro_video": "In this lesson we explore project handoff. Handoff problem, scope, assumptions, acceptance, owners and commitments, including exclusions and open questions. Delivery should not discover what was sold from the client alone. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Project handoff” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Handoff problem, scope, assumptions, acceptance, owners and commitments, including exclusions and open questions. Delivery should not discover what was sold from the client alone.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Acceptance and issues",
+          "tipo": "texto",
+          "conteudo": "Compare delivery with agreed criteria and document evidenced differences. Assign correction ownership and next steps. Do not infer acceptance from silence without applicable terms and procedure.",
+          "roteiro_video": "In this lesson we explore acceptance and issues. Compare delivery with agreed criteria and document evidenced differences. Assign correction ownership and next steps. Do not infer acceptance from silence without applicable terms and procedure. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Acceptance and issues” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare delivery with agreed criteria and document evidenced differences. Assign correction ownership and next steps. Do not infer acceptance from silence without applicable terms and procedure.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Renewal and expansion",
+          "tipo": "texto",
+          "conteudo": "Explore new needs and observed results before expansion. Renewal must not conceal current delivery failures. Present updated scope and terms without guaranteed future outcomes.",
+          "roteiro_video": "In this lesson we explore renewal and expansion. Explore new needs and observed results before expansion. Renewal must not conceal current delivery failures. Present updated scope and terms without guaranteed future outcomes. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Renewal and expansion” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore new needs and observed results before expansion. Renewal must not conceal current delivery failures. Present updated scope and terms without guaranteed future outcomes.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Service proposal project",
+          "tipo": "texto",
+          "conteudo": "Connect diagnosis, proposal and delivery plan using consistent facts. Review a scope change and its effects. Assess feasibility, clarity and limits alongside persuasive communication.",
+          "roteiro_video": "In this lesson we explore service proposal project. Connect diagnosis, proposal and delivery plan using consistent facts. Review a scope change and its effects. Assess feasibility, clarity and limits alongside persuasive communication. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Service proposal project” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Connect diagnosis, proposal and delivery plan using consistent facts. Review a scope change and its effects. Assess feasibility, clarity and limits alongside persuasive communication.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Process Studio offers analysis of four workflows and a report three weeks after inputs arrive, excluding implementation. The buyer adds training and integration without changing price or timing. Acceptance criteria and input ownership are missing. Sales promised an immediate start.\n\nAn Indian services buyer needs branch input owners and central accounts review. Training language and on-site availability are unresolved. INR proposal terms require separate costing rather than automatic conversion from a US example."
+  },
+  "projeto": {
+    "instrucoes": "Produce a diagnosis, scoped proposal and delivery plan; assess the additional request as a change affecting time, responsibility and price.",
+    "gabarito": "Keep four-workflow analysis and report as the baseline, starting after inputs. Define ownership and acceptance. Training and integration require separate review and approval, not automatic error correction. Correct the unsupported immediate-start promise."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "24-M1",
+        "pergunta": "How would you apply “Module 1: Task, process and outcome” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Start with the task and observable outcome. A request for consulting is broad. Explore current process, difficulty and criteria before defining effort or price.",
+          "Identify who supplies data, decides, executes and accepts delivery. Unconfirmed dependencies can invalidate timing. Interest in a proposal does not establish client-team availability.",
+          "Clarify volume, format, coverage and constraints before promising execution. A discovery question is not scope acceptance. Record items needing responsible technical verification.",
+          "Define observable delivery conditions separately from client-dependent economic results. Clarify vague criteria before contracting. List what cannot yet be estimated."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "24-M2",
+        "pergunta": "How would you apply “Module 2: Deliverables and exclusions” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Describe artefacts, quantity, expected quality and exclusions. Meetings are activities, not necessarily sufficient deliverables. Buyers need to understand what exists when service ends.",
+          "State supplier and client responsibilities, including access and review. Do not assign undisclosed duties after sale. Dependencies belong in both schedule and acceptance criteria.",
+          "Define verification with examples, owners and correction process. Criteria cannot change unilaterally at the end. Accepting a report does not prove resulting revenue growth.",
+          "Estimate by tasks and assumptions, including coordination and review. State uncertainty and authority limits. Unsupported precision can be less reliable than a reasoned range needing confirmation."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "24-M3",
+        "pergunta": "How would you apply “Module 3: Equivalent service comparison” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Compare deliverables, depth, revisions, access and responsibilities over the same period. A low quote may exclude essential work. Do not assert competitor inferiority without evidence.",
+          "Record dependencies, possible impact and mitigation owners. Neither hide risk nor use it as a vague excuse. Review timing when essential conditions change.",
+          "Additional requests need description, impact and authorised acceptance before execution. Distinguish correcting an error from expanding scope. Informal discussion does not automatically settle price and timing.",
+          "Align commercial proposal with technical capacity and applicable legal conditions. Maintain one accepted version. Refer uncertain clauses rather than improvise interpretation to avoid delay."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "24-M4",
+        "pergunta": "How would you apply “Module 4: Project handoff” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Handoff problem, scope, assumptions, acceptance, owners and commitments, including exclusions and open questions. Delivery should not discover what was sold from the client alone.",
+          "Compare delivery with agreed criteria and document evidenced differences. Assign correction ownership and next steps. Do not infer acceptance from silence without applicable terms and procedure.",
+          "Explore new needs and observed results before expansion. Renewal must not conceal current delivery failures. Present updated scope and terms without guaranteed future outcomes.",
+          "Connect diagnosis, proposal and delivery plan using consistent facts. Review a scope change and its effects. Assess feasibility, clarity and limits alongside persuasive communication."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "24-FINAL",
+        "pergunta": "Produce a diagnosis, scoped proposal and delivery plan; assess the additional request as a change affecting time, responsibility and price.",
+        "resposta_modelo": "Keep four-workflow analysis and report as the baseline, starting after inputs. Define ownership and acceptance. Training and integration require separate review and approval, not automatic error correction. Correct the unsupported immediate-start promise.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

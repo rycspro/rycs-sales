@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-08",
+  "course_number": 8,
+  "locale": "en-IN",
+  "titulo": "Discovery and Consultative Selling",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Consultative selling",
+      "titulo_original_pt": "Mentalidade consultiva",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Consultative selling",
+          "tipo": "texto",
+          "conteudo": "Consultative selling begins with understanding and permits a no-fit conclusion. Diagnosis organises a decision; it must not manufacture fear to make buying seem inevitable.",
+          "roteiro_video": "In this lesson we explore consultative selling. Consultative selling begins with understanding and permits a no-fit conclusion. Diagnosis organises a decision; it must not manufacture fear to make buying seem inevitable. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Consultative selling” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Consultative selling begins with understanding and permits a no-fit conclusion. Diagnosis organises a decision; it must not manufacture fear to make buying seem inevitable.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Product and solution",
+          "tipo": "texto",
+          "conteudo": "A product describes capability; a solution requires fit between capability, problem and implementation. A feature may not address the cause. Verify the connection and dependencies.",
+          "roteiro_video": "In this lesson we explore product and solution. A product describes capability; a solution requires fit between capability, problem and implementation. A feature may not address the cause. Verify the connection and dependencies. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Product and solution” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A product describes capability; a solution requires fit between capability, problem and implementation. A feature may not address the cause. Verify the connection and dependencies.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Discovery before proposal",
+          "tipo": "texto",
+          "conteudo": "A premature proposal can lock in the wrong scope. Confirm task, difficulty, impact, participants and success criteria. Expose material unknowns before commitment rather than pretending complete knowledge.",
+          "roteiro_video": "In this lesson we explore discovery before proposal. A premature proposal can lock in the wrong scope. Confirm task, difficulty, impact, participants and success criteria. Expose material unknowns before commitment rather than pretending complete knowledge. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Discovery before proposal” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A premature proposal can lock in the wrong scope. Confirm task, difficulty, impact, participants and success criteria. Expose material unknowns before commitment rather than pretending complete knowledge.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Credibility",
+          "tipo": "texto",
+          "conteudo": "Credibility grows when information, capability and commitment align. Saying you need to verify protects a legitimate uncertainty. Evidence and limitations are more useful than unverifiable superlatives.",
+          "roteiro_video": "In this lesson we explore credibility. Credibility grows when information, capability and commitment align. Saying you need to verify protects a legitimate uncertainty. Evidence and limitations are more useful than unverifiable superlatives. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Credibility” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Credibility grows when information, capability and commitment align. Saying you need to verify protects a legitimate uncertainty. Evidence and limitations are more useful than unverifiable superlatives.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: SPIN as a question guide",
+      "titulo_original_pt": "Técnicas de investigação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "SPIN as a question guide",
+          "tipo": "texto",
+          "conteudo": "SPIN organises situation, problem, implication and need-payoff questions. It is neither a rigid sequence nor permission to amplify anxiety. Let answers guide the next question.",
+          "roteiro_video": "In this lesson we explore spin as a question guide. SPIN organises situation, problem, implication and need-payoff questions. It is neither a rigid sequence nor permission to amplify anxiety. Let answers guide the next question. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “SPIN as a question guide” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "SPIN organises situation, problem, implication and need-payoff questions. It is neither a rigid sequence nor permission to amplify anxiety. Let answers guide the next question.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Situation questions",
+          "tipo": "texto",
+          "conteudo": "Ask only necessary context not already reliably available. Repeating supplied basics adds effort. Explain how the information helps understand the workflow.",
+          "roteiro_video": "In this lesson we explore situation questions. Ask only necessary context not already reliably available. Repeating supplied basics adds effort. Explain how the information helps understand the workflow. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Situation questions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask only necessary context not already reliably available. Repeating supplied basics adds effort. Explain how the information helps understand the workflow.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Problem questions",
+          "tipo": "texto",
+          "conteudo": "Ask for a recent difficulty, known frequency and affected people. Do not assume every different process is defective. The buyer may be satisfied with no reason to change.",
+          "roteiro_video": "In this lesson we explore problem questions. Ask for a recent difficulty, known frequency and affected people. Do not assume every different process is defective. The buyer may be satisfied with no reason to change. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Problem questions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask for a recent difficulty, known frequency and affected people. Do not assume every different process is defective. The buyer may be satisfied with no reason to change.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Implication and need-payoff",
+          "tipo": "texto",
+          "conteudo": "Explore consequences the buyer recognises and what improvement would enable. Do not invent financial loss. Test relevance and scale without turning possibility into certainty.",
+          "roteiro_video": "In this lesson we explore implication and need-payoff. Explore consequences the buyer recognises and what improvement would enable. Do not invent financial loss. Test relevance and scale without turning possibility into certainty. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Implication and need-payoff” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore consequences the buyer recognises and what improvement would enable. Do not invent financial loss. Test relevance and scale without turning possibility into certainty.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Prioritising problems",
+      "titulo_original_pt": "Diagnóstico comercial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Prioritising problems",
+          "tipo": "texto",
+          "conteudo": "Compare frequency, impact, dependencies and buyer-assigned importance. The most dramatic problem is not always the priority. Record criteria and disagreements before recommending an order.",
+          "roteiro_video": "In this lesson we explore prioritising problems. Compare frequency, impact, dependencies and buyer-assigned importance. The most dramatic problem is not always the priority. Record criteria and disagreements before recommending an order. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Prioritising problems” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare frequency, impact, dependencies and buyer-assigned importance. The most dramatic problem is not always the priority. Record criteria and disagreements before recommending an order.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Operational and financial impact",
+          "tipo": "texto",
+          "conteudo": "Calculate with units, period and assumptions. Freed hours do not automatically reduce expense. Distinguish potential capacity, avoided cost and revenue without double-counting the same effect.",
+          "roteiro_video": "In this lesson we explore operational and financial impact. Calculate with units, period and assumptions. Freed hours do not automatically reduce expense. Distinguish potential capacity, avoided cost and revenue without double-counting the same effect. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Operational and financial impact” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Calculate with units, period and assumptions. Freed hours do not automatically reduce expense. Distinguish potential capacity, avoided cost and revenue without double-counting the same effect.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Decision criteria",
+          "tipo": "texto",
+          "conteudo": "Ask how alternatives are evaluated and who verifies each condition. Security, adoption and timing may compete with price. Confirm criteria rather than infer them from titles.",
+          "roteiro_video": "In this lesson we explore decision criteria. Ask how alternatives are evaluated and who verifies each condition. Security, adoption and timing may compete with price. Confirm criteria rather than infer them from titles. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Decision criteria” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask how alternatives are evaluated and who verifies each condition. Security, adoption and timing may compete with price. Confirm criteria rather than infer them from titles.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Validating the diagnosis",
+          "tipo": "texto",
+          "conteudo": "Summarise facts, causal hypothesis, known impact and gaps; invite correction. Validation does not require agreement to buy. Buyer corrections should update the diagnosis.",
+          "roteiro_video": "In this lesson we explore validating the diagnosis. Summarise facts, causal hypothesis, known impact and gaps; invite correction. Validation does not require agreement to buy. Buyer corrections should update the diagnosis. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Validating the diagnosis” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Summarise facts, causal hypothesis, known impact and gaps; invite correction. Validation does not require agreement to buy. Buyer corrections should update the diagnosis.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Recommendations",
+      "titulo_original_pt": "Próximos passos",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Recommendations",
+          "tipo": "texto",
+          "conteudo": "Tie each recommendation to a confirmed need and available capability. Include the current-state alternative and test conditions. Novelty or higher price alone does not justify a feature.",
+          "roteiro_video": "In this lesson we explore recommendations. Tie each recommendation to a confirmed need and available capability. Include the current-state alternative and test conditions. Novelty or higher price alone does not justify a feature. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Recommendations” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Tie each recommendation to a confirmed need and available capability. Include the current-state alternative and test conditions. Novelty or higher price alone does not justify a feature.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Benefits and problems",
+          "tipo": "texto",
+          "conteudo": "Make the chain explicit: capability, workflow change, possible benefit, evidence and limit. Mark unproven links as hypotheses. Testimonials do not guarantee individual outcomes.",
+          "roteiro_video": "In this lesson we explore benefits and problems. Make the chain explicit: capability, workflow change, possible benefit, evidence and limit. Mark unproven links as hypotheses. Testimonials do not guarantee individual outcomes. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Benefits and problems” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Make the chain explicit: capability, workflow change, possible benefit, evidence and limit. Mark unproven links as hypotheses. Testimonials do not guarantee individual outcomes.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Agreed next steps",
+          "tipo": "texto",
+          "conteudo": "Define action, owner, condition/date and expected output. Record access or approval dependencies. An accepted next step is not a final purchase decision.",
+          "roteiro_video": "In this lesson we explore agreed next steps. Define action, owner, condition/date and expected output. Record access or approval dependencies. An accepted next step is not a final purchase decision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Agreed next steps” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define action, owner, condition/date and expected output. Record access or approval dependencies. An accepted next step is not a final purchase decision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Discovery records",
+          "tipo": "texto",
+          "conteudo": "Record relevant buyer statements without unnecessary details. Separate certainty and hypothesis and preserve open issues. History should support continuity and correction rather than an artificial closing narrative.",
+          "roteiro_video": "In this lesson we explore discovery records. Record relevant buyer statements without unnecessary details. Separate certainty and hypothesis and preserve open issues. History should support continuity and correction rather than an artificial closing narrative. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Discovery records” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record relevant buyer statements without unnecessary details. Separate certainty and hypothesis and preserve open issues. History should support continuity and correction rather than an artificial closing narrative.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Clear Delivery reports ten repeated checks per week, each lasting 12 minutes, over four example weeks. Effort is valued at 40 currency units per hour, with no staffing reduction. Training is required and the legacy system is not integrated. The cause remains unconfirmed.\n\nA Pune distributor values effort at a fictional INR 800/hour and requires supervisor review before training. Do not convert the US example as a market benchmark. The local process includes a second manual approval that may explain repeated checking."
+  },
+  "projeto": {
+    "instrucoes": "Conduct discovery using situation, problem, implication and utility questions; calculate effort, separate potential value from cash and propose a test distinguishing two causes.",
+    "gabarito": "10×12×4=480 minutes=8 hours. At USD 40 this values effort at USD 320; at INR 800, INR 6,400. Neither is realised cash savings. Test causes with synthetic records, account for training and missing integration, and validate the diagnosis."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "08-M1",
+        "pergunta": "How would you apply “Module 1: Consultative selling” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Consultative selling begins with understanding and permits a no-fit conclusion. Diagnosis organises a decision; it must not manufacture fear to make buying seem inevitable.",
+          "A product describes capability; a solution requires fit between capability, problem and implementation. A feature may not address the cause. Verify the connection and dependencies.",
+          "A premature proposal can lock in the wrong scope. Confirm task, difficulty, impact, participants and success criteria. Expose material unknowns before commitment rather than pretending complete knowledge.",
+          "Credibility grows when information, capability and commitment align. Saying you need to verify protects a legitimate uncertainty. Evidence and limitations are more useful than unverifiable superlatives."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "08-M2",
+        "pergunta": "How would you apply “Module 2: SPIN as a question guide” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "SPIN organises situation, problem, implication and need-payoff questions. It is neither a rigid sequence nor permission to amplify anxiety. Let answers guide the next question.",
+          "Ask only necessary context not already reliably available. Repeating supplied basics adds effort. Explain how the information helps understand the workflow.",
+          "Ask for a recent difficulty, known frequency and affected people. Do not assume every different process is defective. The buyer may be satisfied with no reason to change.",
+          "Explore consequences the buyer recognises and what improvement would enable. Do not invent financial loss. Test relevance and scale without turning possibility into certainty."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "08-M3",
+        "pergunta": "How would you apply “Module 3: Prioritising problems” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Compare frequency, impact, dependencies and buyer-assigned importance. The most dramatic problem is not always the priority. Record criteria and disagreements before recommending an order.",
+          "Calculate with units, period and assumptions. Freed hours do not automatically reduce expense. Distinguish potential capacity, avoided cost and revenue without double-counting the same effect.",
+          "Ask how alternatives are evaluated and who verifies each condition. Security, adoption and timing may compete with price. Confirm criteria rather than infer them from titles.",
+          "Summarise facts, causal hypothesis, known impact and gaps; invite correction. Validation does not require agreement to buy. Buyer corrections should update the diagnosis."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "08-M4",
+        "pergunta": "How would you apply “Module 4: Recommendations” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Tie each recommendation to a confirmed need and available capability. Include the current-state alternative and test conditions. Novelty or higher price alone does not justify a feature.",
+          "Make the chain explicit: capability, workflow change, possible benefit, evidence and limit. Mark unproven links as hypotheses. Testimonials do not guarantee individual outcomes.",
+          "Define action, owner, condition/date and expected output. Record access or approval dependencies. An accepted next step is not a final purchase decision.",
+          "Record relevant buyer statements without unnecessary details. Separate certainty and hypothesis and preserve open issues. History should support continuity and correction rather than an artificial closing narrative."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "08-FINAL",
+        "pergunta": "Conduct discovery using situation, problem, implication and utility questions; calculate effort, separate potential value from cash and propose a test distinguishing two causes.",
+        "resposta_modelo": "10×12×4=480 minutes=8 hours. At USD 40 this values effort at USD 320; at INR 800, INR 6,400. Neither is realised cash savings. Test causes with synthetic records, account for training and missing integration, and validate the diagnosis.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

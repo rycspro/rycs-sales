@@ -1,0 +1,609 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-03",
+  "course_number": 3,
+  "locale": "en-US",
+  "titulo": "Cold Calling in Practice",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Profissional",
+  "carga_horaria_planejada_h": 8,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: The role of a cold call",
+      "titulo_original_pt": "Fundamentos da prospecção telefônica",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "The role of a cold call",
+          "tipo": "texto",
+          "conteudo": "A call tests relevance and possible continuity; it need not close a sale in minutes. Define what information supports progress and what response requires closure.",
+          "roteiro_video": "In this lesson we explore the role of a cold call. A call tests relevance and possible continuity; it need not close a sale in minutes. Define what information supports progress and what response requires closure. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “The role of a cold call” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A call tests relevance and possible continuity; it need not close a sale in minutes. Define what information supports progress and what response requires closure.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "When calling is appropriate",
+          "tipo": "texto",
+          "conteudo": "Check contact source, restrictions, local time and applicable channel rules before calling. A visible number does not settle these conditions. Resolve missing operational authorisation first.",
+          "roteiro_video": "In this lesson we explore when calling is appropriate. Check contact source, restrictions, local time and applicable channel rules before calling. A visible number does not settle these conditions. Resolve missing operational authorisation first. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “When calling is appropriate” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check contact source, restrictions, local time and applicable channel rules before calling. A visible number does not settle these conditions. Resolve missing operational authorisation first.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Mental and technical preparation",
+          "tipo": "texto",
+          "conteudo": "Check audio, environment and offer facts. Set an observable behaviour goal, such as listening without interrupting. Rejection of an approach is not a judgement of personal worth.",
+          "roteiro_video": "In this lesson we explore mental and technical preparation. Check audio, environment and offer facts. Set an observable behaviour goal, such as listening without interrupting. Rejection of an approach is not a judgement of personal worth. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Mental and technical preparation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check audio, environment and offer facts. Set an observable behaviour goal, such as listening without interrupting. Rejection of an approach is not a judgement of personal worth.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Research and call objective",
+          "tipo": "texto",
+          "conteudo": "Research one relevant fact and form a falsifiable hypothesis. Choose a feasible objective: check relevance or arrange discovery, without inventing a diagnosis before listening.",
+          "roteiro_video": "In this lesson we explore research and call objective. Research one relevant fact and form a falsifiable hypothesis. Choose a feasible objective: check relevance or arrange discovery, without inventing a diagnosis before listening. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Research and call objective” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Research one relevant fact and form a falsifiable hypothesis. Choose a feasible objective: check relevance or arrange discovery, without inventing a diagnosis before listening.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.5",
+          "titulo": "Finding the responsible person",
+          "tipo": "texto",
+          "conteudo": "Ask who owns the relevant workflow rather than demanding the owner every time. A user may explain needs and an assistant may identify the appropriate route.",
+          "roteiro_video": "In this lesson we explore finding the responsible person. Ask who owns the relevant workflow rather than demanding the owner every time. A user may explain needs and an assistant may identify the appropriate route. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Finding the responsible person” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask who owns the relevant workflow rather than demanding the owner every time. A user may explain needs and an assistant may identify the appropriate route.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Clear identification",
+      "titulo_original_pt": "Estrutura de uma ligação",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Clear identification",
+          "tipo": "texto",
+          "conteudo": "State your name, company and commercial purpose clearly. Avoid false familiarity or concealed identity. Identify yourself before asking about the buyer's operation.",
+          "roteiro_video": "In this lesson we explore clear identification. State your name, company and commercial purpose clearly. Avoid false familiarity or concealed identity. Identify yourself before asking about the buyer's operation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Clear identification” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "State your name, company and commercial purpose clearly. Avoid false familiarity or concealed identity. Identify yourself before asking about the buyer's operation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Contextual opening",
+          "tipo": "texto",
+          "conteudo": "Connect a truthful reason to the possible topic and ask for room to speak. If the person is busy, offer to close or agree another time rather than force a pitch.",
+          "roteiro_video": "In this lesson we explore contextual opening. Connect a truthful reason to the possible topic and ask for room to speak. If the person is busy, offer to close or agree another time rather than force a pitch. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Contextual opening” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Connect a truthful reason to the possible topic and ask for room to speak. If the person is busy, offer to close or agree another time rather than force a pitch.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Value hypothesis",
+          "tipo": "texto",
+          "conteudo": "Offer a conditional utility tied to a task rather than a guaranteed outcome. Exploring order checking differs from promising higher revenue.",
+          "roteiro_video": "In this lesson we explore value hypothesis. Offer a conditional utility tied to a task rather than a guaranteed outcome. Exploring order checking differs from promising higher revenue. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Value hypothesis” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Offer a conditional utility tied to a task rather than a guaranteed outcome. Exploring order checking differs from promising higher revenue.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Interest without promises",
+          "tipo": "texto",
+          "conteudo": "Use a relevant question or available demonstration to make the hypothesis concrete. Do not invent percentages, references, scarcity or urgency. Interest rests on verifiable relevance.",
+          "roteiro_video": "In this lesson we explore interest without promises. Use a relevant question or available demonstration to make the hypothesis concrete. Do not invent percentages, references, scarcity or urgency. Interest rests on verifiable relevance. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Interest without promises” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use a relevant question or available demonstration to make the hypothesis concrete. Do not invent percentages, references, scarcity or urgency. Interest rests on verifiable relevance.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Pace and pauses",
+          "tipo": "texto",
+          "conteudo": "Speak in short units and pause after questions. Adjust clarity and volume without imitating accents. Brief silence may be thinking; do not fill every gap with arguments.",
+          "roteiro_video": "In this lesson we explore pace and pauses. Speak in short units and pause after questions. Adjust clarity and volume without imitating accents. Brief silence may be thinking; do not fill every gap with arguments. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Pace and pauses” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Speak in short units and pause after questions. Adjust clarity and volume without imitating accents. Brief silence may be thinking; do not fill every gap with arguments.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.6",
+          "titulo": "Useful short questions",
+          "tipo": "texto",
+          "conteudo": "Prioritise one context question and one probe. Avoid packing five fields into a sentence. Confirm meaning before using the answer for qualification.",
+          "roteiro_video": "In this lesson we explore useful short questions. Prioritise one context question and one probe. Avoid packing five fields into a sentence. Confirm meaning before using the answer for qualification. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Useful short questions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Prioritise one context question and one probe. Avoid packing five fields into a sentence. Confirm meaning before using the answer for qualification.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: I do not have time",
+      "titulo_original_pt": "Objeções e situações difíceis",
+      "duracaoMin_planejada": 150,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "I do not have time",
+          "tipo": "texto",
+          "conteudo": "Treat limited time as a real constraint. Ask once whether another time is wanted; otherwise close. Do not answer a time restriction with another unsolicited pitch.",
+          "roteiro_video": "In this lesson we explore i do not have time. Treat limited time as a real constraint. Ask once whether another time is wanted; otherwise close. Do not answer a time restriction with another unsolicited pitch. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “I do not have time” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Treat limited time as a real constraint. Ask once whether another time is wanted; otherwise close. Do not answer a time restriction with another unsolicited pitch.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "I am not interested",
+          "tipo": "texto",
+          "conteudo": "A clear refusal ends the attempt. Ambiguity may justify a respectful clarification, but clarification must not become a pretext for ignoring an explicit no.",
+          "roteiro_video": "In this lesson we explore i am not interested. A clear refusal ends the attempt. Ambiguity may justify a respectful clarification, but clarification must not become a pretext for ignoring an explicit no. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “I am not interested” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A clear refusal ends the attempt. Ambiguity may justify a respectful clarification, but clarification must not become a pretext for ignoring an explicit no.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Send an email",
+          "tipo": "texto",
+          "conteudo": "Confirm the requested topic and appropriate address without treating email permission as a qualified meeting. Send the agreed material through the approved process, not an assumed automated sequence.",
+          "roteiro_video": "In this lesson we explore send an email. Confirm the requested topic and appropriate address without treating email permission as a qualified meeting. Send the agreed material through the approved process, not an assumed automated sequence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Send an email” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Confirm the requested topic and appropriate address without treating email permission as a qualified meeting. Send the agreed material through the approved process, not an assumed automated sequence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "An existing supplier",
+          "tipo": "texto",
+          "conteudo": "Explore whether the buyer wants to evaluate anything without attacking the incumbent. Satisfaction may justify closure. Switching requires plausible value and consideration of change costs.",
+          "roteiro_video": "In this lesson we explore an existing supplier. Explore whether the buyer wants to evaluate anything without attacking the incumbent. Satisfaction may justify closure. Switching requires plausible value and consideration of change costs. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “An existing supplier” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore whether the buyer wants to evaluate anything without attacking the incumbent. Satisfaction may justify closure. Switching requires plausible value and consideration of change costs.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 21,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Receptionists and assistants",
+          "tipo": "texto",
+          "conteudo": "Explain identity and topic and ask about the process. Do not invent friendship, operational urgency or a requested callback. Intermediaries deserve clarity and respect.",
+          "roteiro_video": "In this lesson we explore receptionists and assistants. Explain identity and topic and ask about the process. Do not invent friendship, operational urgency or a requested callback. Intermediaries deserve clarity and respect. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Receptionists and assistants” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explain identity and topic and ask about the process. Do not invent friendship, operational urgency or a requested callback. Intermediaries deserve clarity and respect.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 21,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.6",
+          "titulo": "Recognising a final refusal",
+          "tipo": "texto",
+          "conteudo": "Distinguish an offer concern from a request to stop contact. Final refusal is not a persistence test. Record the restriction through the approved process and stop the sequence.",
+          "roteiro_video": "In this lesson we explore recognising a final refusal. Distinguish an offer concern from a request to stop contact. Final refusal is not a persistence test. Record the restriction through the approved process and stop the sequence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Recognising a final refusal” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Distinguish an offer concern from a request to stop contact. Final refusal is not a persistence test. Record the restriction through the approved process and stop the sequence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 21,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.7",
+          "titulo": "Professional closure",
+          "tipo": "texto",
+          "conteudo": "Summarise only agreed action, owner, condition and channel. Without an opportunity, close without guilt or threat. Do not record a commitment the buyer never accepted.",
+          "roteiro_video": "In this lesson we explore professional closure. Summarise only agreed action, owner, condition and channel. Without an opportunity, close without guilt or threat. Do not record a commitment the buyer never accepted. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Professional closure” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Summarise only agreed action, owner, condition and channel. Without an opportunity, close without guilt or threat. Do not record a commitment the buyer never accepted.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 21,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Planning call blocks",
+      "titulo_original_pt": "Operação e desempenho",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Planning call blocks",
+          "tipo": "texto",
+          "conteudo": "Allocate preparation, calls and recording time; volume without records creates rework. Respect permitted hours and availability, with breaks. Seller convenience alone should not determine timing.",
+          "roteiro_video": "In this lesson we explore planning call blocks. Allocate preparation, calls and recording time; volume without records creates rework. Respect permitted hours and availability, with breaks. Seller convenience alone should not determine timing. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Planning call blocks” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Allocate preparation, calls and recording time; volume without records creates rework. Respect permitted hours and availability, with breaks. Seller convenience alone should not determine timing.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Flexible scripts",
+          "tipo": "texto",
+          "conteudo": "Build an opening, questions and response branches. A script supports memory and must adapt to new information. Include no-fit, refusal and referral paths.",
+          "roteiro_video": "In this lesson we explore flexible scripts. Build an opening, questions and response branches. A script supports memory and must adapt to new information. Include no-fit, refusal and referral paths. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Flexible scripts” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Build an opening, questions and response branches. A script supports memory and must adapt to new information. Include no-fit, refusal and referral paths.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Connection and conversion",
+          "tipo": "texto",
+          "conteudo": "Define a relevant human connection before measuring. Voicemail is not a conversation. Separate connection rate from progress among conversations; an aggregate rate can hide different problems.",
+          "roteiro_video": "In this lesson we explore connection and conversion. Define a relevant human connection before measuring. Voicemail is not a conversation. Separate connection rate from progress among conversations; an aggregate rate can hide different problems. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Connection and conversion” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define a relevant human connection before measuring. Voicemail is not a conversation. Separate connection rate from progress among conversations; an aggregate rate can hide different problems.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Results and feedback",
+          "tipo": "texto",
+          "conteudo": "Use consistent outcome categories and a short factual note. Review one behaviour per round using observed evidence. Not every ending is an objection or every conversation interest.",
+          "roteiro_video": "In this lesson we explore results and feedback. Use consistent outcome categories and a short factual note. Review one behaviour per round using observed evidence. Not every ending is an objection or every conversation interest. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Results and feedback” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use consistent outcome categories and a short factual note. Review one behaviour per round using observed evidence. Not every ending is an objection or every conversation interest.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.5",
+          "titulo": "Reviewing lawful recordings",
+          "tipo": "texto",
+          "conteudo": "Use recordings obtained and shared under a valid procedure with restricted access. Review clarity, listening and judgement, not accent. Without authorised recordings, use fictional role-play.",
+          "roteiro_video": "In this lesson we explore reviewing lawful recordings. Use recordings obtained and shared under a valid procedure with restricted access. Review clarity, listening and judgement, not accent. Without authorised recordings, use fictional role-play. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Reviewing lawful recordings” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use recordings obtained and shared under a valid procedure with restricted access. Review clarity, listening and judgement, not accent. Without authorised recordings, use fictional role-play.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.6",
+          "titulo": "Improving the script",
+          "tipo": "texto",
+          "conteudo": "Change one hypothesis at a time and define outcome, population and period. A small sample does not prove general superiority. Stop experiments causing confusion, complaints or inappropriate contact.",
+          "roteiro_video": "In this lesson we explore improving the script. Change one hypothesis at a time and define outcome, population and period. A small sample does not prove general superiority. Stop experiments causing confusion, complaints or inappropriate contact. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Improving the script” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Change one hypothesis at a time and define outcome, population and period. A small sample does not prove general superiority. Stop experiments causing confusion, complaints or inappropriate contact.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Clear Line offers work-order organisation. The contact has one minute, uses an incumbent and has not measured delays. The exercise list is approved, but there is no permission to record real calls. After two questions the contact asks not to be called again.\n\nA Cleveland service business requires an IT review before changing tools. The call is a fictional practice in a permitted training setting; no US calling permission is inferred. The owner requests a written summary before any meeting."
+  },
+  "projeto": {
+    "instrucoes": "Write a 30-second opening, two questions and three endings: busy, requested material and final refusal. Perform the refusal branch without overriding the restriction.",
+    "gabarito": "Identify company and purpose; check relevance and the actual difficulty. Offer another time only if wanted. Send only requested material. On refusal, close and record the restriction without recording or calling from another number."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "03-M1",
+        "pergunta": "How would you apply “Module 1: The role of a cold call” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "A call tests relevance and possible continuity; it need not close a sale in minutes. Define what information supports progress and what response requires closure.",
+          "Check contact source, restrictions, local time and applicable channel rules before calling. A visible number does not settle these conditions. Resolve missing operational authorisation first.",
+          "Check audio, environment and offer facts. Set an observable behaviour goal, such as listening without interrupting. Rejection of an approach is not a judgement of personal worth.",
+          "Research one relevant fact and form a falsifiable hypothesis. Choose a feasible objective: check relevance or arrange discovery, without inventing a diagnosis before listening.",
+          "Ask who owns the relevant workflow rather than demanding the owner every time. A user may explain needs and an assistant may identify the appropriate route."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "03-M2",
+        "pergunta": "How would you apply “Module 2: Clear identification” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "State your name, company and commercial purpose clearly. Avoid false familiarity or concealed identity. Identify yourself before asking about the buyer's operation.",
+          "Connect a truthful reason to the possible topic and ask for room to speak. If the person is busy, offer to close or agree another time rather than force a pitch.",
+          "Offer a conditional utility tied to a task rather than a guaranteed outcome. Exploring order checking differs from promising higher revenue.",
+          "Use a relevant question or available demonstration to make the hypothesis concrete. Do not invent percentages, references, scarcity or urgency. Interest rests on verifiable relevance.",
+          "Speak in short units and pause after questions. Adjust clarity and volume without imitating accents. Brief silence may be thinking; do not fill every gap with arguments.",
+          "Prioritise one context question and one probe. Avoid packing five fields into a sentence. Confirm meaning before using the answer for qualification."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "03-M3",
+        "pergunta": "How would you apply “Module 3: I do not have time” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Treat limited time as a real constraint. Ask once whether another time is wanted; otherwise close. Do not answer a time restriction with another unsolicited pitch.",
+          "A clear refusal ends the attempt. Ambiguity may justify a respectful clarification, but clarification must not become a pretext for ignoring an explicit no.",
+          "Confirm the requested topic and appropriate address without treating email permission as a qualified meeting. Send the agreed material through the approved process, not an assumed automated sequence.",
+          "Explore whether the buyer wants to evaluate anything without attacking the incumbent. Satisfaction may justify closure. Switching requires plausible value and consideration of change costs.",
+          "Explain identity and topic and ask about the process. Do not invent friendship, operational urgency or a requested callback. Intermediaries deserve clarity and respect.",
+          "Distinguish an offer concern from a request to stop contact. Final refusal is not a persistence test. Record the restriction through the approved process and stop the sequence.",
+          "Summarise only agreed action, owner, condition and channel. Without an opportunity, close without guilt or threat. Do not record a commitment the buyer never accepted."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "03-M4",
+        "pergunta": "How would you apply “Module 4: Planning call blocks” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Allocate preparation, calls and recording time; volume without records creates rework. Respect permitted hours and availability, with breaks. Seller convenience alone should not determine timing.",
+          "Build an opening, questions and response branches. A script supports memory and must adapt to new information. Include no-fit, refusal and referral paths.",
+          "Define a relevant human connection before measuring. Voicemail is not a conversation. Separate connection rate from progress among conversations; an aggregate rate can hide different problems.",
+          "Use consistent outcome categories and a short factual note. Review one behaviour per round using observed evidence. Not every ending is an objection or every conversation interest.",
+          "Use recordings obtained and shared under a valid procedure with restricted access. Review clarity, listening and judgement, not accent. Without authorised recordings, use fictional role-play.",
+          "Change one hypothesis at a time and define outcome, population and period. A small sample does not prove general superiority. Stop experiments causing confusion, complaints or inappropriate contact."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "03-FINAL",
+        "pergunta": "Write a 30-second opening, two questions and three endings: busy, requested material and final refusal. Perform the refusal branch without overriding the restriction.",
+        "resposta_modelo": "Identify company and purpose; check relevance and the actual difficulty. Offer another time only if wanted. Send only requested material. On refusal, close and record the restriction without recording or calling from another number.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-07",
+  "course_number": 7,
+  "locale": "en-IN",
+  "titulo": "Lists, ICP and Qualification",
+  "nivel_original": "Iniciante a intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Defining an ICP",
+      "titulo_original_pt": "Perfil do cliente ideal",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Defining an ICP",
+          "tipo": "texto",
+          "conteudo": "An ICP is a hypothesis about accounts the offer can serve and benefit. Define requirements, exclusions and observable signals. It must reject attractive accounts needing unsupported capabilities.",
+          "roteiro_video": "In this lesson we explore defining an icp. An ICP is a hypothesis about accounts the offer can serve and benefit. Define requirements, exclusions and observable signals. It must reject attractive accounts needing unsupported capabilities. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Defining an ICP” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "An ICP is a hypothesis about accounts the offer can serve and benefit. Define requirements, exclusions and observable signals. It must reject attractive accounts needing unsupported capabilities.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "ICP and persona",
+          "tipo": "texto",
+          "conteudo": "ICP describes an organisation; persona describes a role's context. Do not confuse industry with job title. One account may require users, technical evaluators and different approvers.",
+          "roteiro_video": "In this lesson we explore icp and persona. ICP describes an organisation; persona describes a role's context. Do not confuse industry with job title. One account may require users, technical evaluators and different approvers. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “ICP and persona” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "ICP describes an organisation; persona describes a role's context. Do not confuse industry with job title. One account may require users, technical evaluators and different approvers.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Segmentation",
+          "tipo": "texto",
+          "conteudo": "Use industry, operational size and region where they affect capability or need. Arbitrary segmentation can exclude suitable accounts. Explain how each variable changes the commercial decision.",
+          "roteiro_video": "In this lesson we explore segmentation. Use industry, operational size and region where they affect capability or need. Arbitrary segmentation can exclude suitable accounts. Explain how each variable changes the commercial decision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Segmentation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use industry, operational size and region where they affect capability or need. Arbitrary segmentation can exclude suitable accounts. Explain how each variable changes the commercial decision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Fit signals",
+          "tipo": "texto",
+          "conteudo": "Mark signals confirmed, indirect or unknown. Expansion news is indirect evidence of a systems need. Several weak signals do not establish approved funding.",
+          "roteiro_video": "In this lesson we explore fit signals. Mark signals confirmed, indirect or unknown. Expansion news is indirect evidence of a systems need. Several weak signals do not establish approved funding. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Fit signals” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Mark signals confirmed, indirect or unknown. Expansion news is indirect evidence of a systems need. Several weak signals do not establish approved funding.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Sources and limits",
+      "titulo_original_pt": "Construção de listas",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Sources and limits",
+          "tipo": "texto",
+          "conteudo": "Define approved sources, purpose and restrictions before collection. Avoid prohibited extraction methods. Prefer relevant questions over excessive personal-data gathering where appropriate.",
+          "roteiro_video": "In this lesson we explore sources and limits. Define approved sources, purpose and restrictions before collection. Avoid prohibited extraction methods. Prefer relevant questions over excessive personal-data gathering where appropriate. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Sources and limits” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define approved sources, purpose and restrictions before collection. Avoid prohibited extraction methods. Prefer relevant questions over excessive personal-data gathering where appropriate.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Essential account fields",
+          "tipo": "texto",
+          "conteudo": "Record account identifier, fit criteria, source/date, restrictions and next action. Optional fields need a purpose. Do not require personal information irrelevant to the current decision.",
+          "roteiro_video": "In this lesson we explore essential account fields. Record account identifier, fit criteria, source/date, restrictions and next action. Optional fields need a purpose. Do not require personal information irrelevant to the current decision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Essential account fields” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record account identifier, fit criteria, source/date, restrictions and next action. Optional fields need a purpose. Do not require personal information irrelevant to the current decision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Standardising records",
+          "tipo": "texto",
+          "conteudo": "Standardise units, fields and states while preserving provenance. Blank, zero and not applicable differ. Define update rules and ownership of conflicting information.",
+          "roteiro_video": "In this lesson we explore standardising records. Standardise units, fields and states while preserving provenance. Blank, zero and not applicable differ. Define update rules and ownership of conflicting information. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Standardising records” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Standardise units, fields and states while preserving provenance. Blank, zero and not applicable differ. Define update rules and ownership of conflicting information.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Duplicates and quality",
+          "tipo": "texto",
+          "conteudo": "Verify identity before merging. A shared name does not prove the same company; one domain may contain distinct units. Preserve history and preferences through authorised consolidation.",
+          "roteiro_video": "In this lesson we explore duplicates and quality. Verify identity before merging. A shared name does not prove the same company; one domain may contain distinct units. Preserve history and preferences through authorised consolidation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Duplicates and quality” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Verify identity before merging. A shared name does not prove the same company; one domain may contain distinct units. Preserve history and preferences through authorised consolidation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Lead, prospect and opportunity",
+      "titulo_original_pt": "Qualificação de oportunidades",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Lead, prospect and opportunity",
+          "tipo": "texto",
+          "conteudo": "Define terms within the local process. A discovered contact is not automatically an opportunity. Each stage needs new information or acceptance, not merely a CRM label change.",
+          "roteiro_video": "In this lesson we explore lead, prospect and opportunity. Define terms within the local process. A discovered contact is not automatically an opportunity. Each stage needs new information or acceptance, not merely a CRM label change. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Lead, prospect and opportunity” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define terms within the local process. A discovered contact is not automatically an opportunity. Each stage needs new information or acceptance, not merely a CRM label change.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Qualification models",
+          "tipo": "texto",
+          "conteudo": "BANT covers budget, authority, need and timing; CHAMP starts with challenges and considers authority, money and priority. Frameworks guide questions rather than replace company criteria.",
+          "roteiro_video": "In this lesson we explore qualification models. BANT covers budget, authority, need and timing; CHAMP starts with challenges and considers authority, money and priority. Frameworks guide questions rather than replace company criteria. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Qualification models” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "BANT covers budget, authority, need and timing; CHAMP starts with challenges and considers authority, money and priority. Frameworks guide questions rather than replace company criteria.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Problems and priorities",
+          "tipo": "texto",
+          "conteudo": "An existing difficulty is not necessarily a priority project. Ask what competes for attention, what would justify change and who evaluates it. Record genuine deferral rather than manufacture urgency.",
+          "roteiro_video": "In this lesson we explore problems and priorities. An existing difficulty is not necessarily a priority project. Ask what competes for attention, what would justify change and who evaluates it. Record genuine deferral rather than manufacture urgency. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Problems and priorities” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "An existing difficulty is not necessarily a priority project. Ask what competes for attention, what would justify change and who evaluates it. Record genuine deferral rather than manufacture urgency.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Scoring",
+          "tipo": "texto",
+          "conteudo": "Separate exclusion criteria from priority points. A high score cannot offset a mandatory mismatch or refusal. Weights are hypotheses to validate, not universal scientific facts.",
+          "roteiro_video": "In this lesson we explore scoring. Separate exclusion criteria from priority points. A high score cannot offset a mandatory mismatch or refusal. Weights are hypotheses to validate, not universal scientific facts. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Scoring” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate exclusion criteria from priority points. A high score cannot offset a mandatory mismatch or refusal. Weights are hypotheses to validate, not universal scientific facts.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Documenting sources",
+      "titulo_original_pt": "Entrega e controle",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Documenting sources",
+          "tipo": "texto",
+          "conteudo": "Relevant claims need provenance and date. Identify reported, documented and inferred information. Old sources may support history but require confirmation for a current decision.",
+          "roteiro_video": "In this lesson we explore documenting sources. Relevant claims need provenance and date. Identify reported, documented and inferred information. Old sources may support history but require confirmation for a current decision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Documenting sources” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Relevant claims need provenance and date. Identify reported, documented and inferred information. Old sources may support history but require confirmation for a current decision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Accepted and rejected leads",
+          "tipo": "texto",
+          "conteudo": "Acceptance compares evidence with agreed criteria. Rejection needs a clear reason and a factual correction route. Do not change criteria retroactively to improve metrics.",
+          "roteiro_video": "In this lesson we explore accepted and rejected leads. Acceptance compares evidence with agreed criteria. Rejection needs a clear reason and a factual correction route. Do not change criteria retroactively to improve metrics. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Accepted and rejected leads” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Acceptance compares evidence with agreed criteria. Rejection needs a clear reason and a factual correction route. Do not change criteria retroactively to improve metrics.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Valid opportunities",
+          "tipo": "texto",
+          "conteudo": "Combine fit, need and next step under local rules. A gap may call for investigation rather than automatic approval or rejection. Explain classification so another person can review it.",
+          "roteiro_video": "In this lesson we explore valid opportunities. Combine fit, need and next step under local rules. A gap may call for investigation rather than automatic approval or rejection. Explain classification so another person can review it. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Valid opportunities” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Combine fit, need and next step under local rules. A gap may call for investigation rather than automatic approval or rejection. Explain classification so another person can review it.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Correcting inconsistencies",
+          "tipo": "texto",
+          "conteudo": "Correct with provenance and history rather than guesses. When sources conflict, record the discrepancy and verify with the owner. Explain the impact and corrective action.",
+          "roteiro_video": "In this lesson we explore correcting inconsistencies. Correct with provenance and history rather than guesses. When sources conflict, record the discrepancy and verify with the owner. Explain the impact and corrective action. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Correcting inconsistencies” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Correct with provenance and history rather than guesses. When sources conflict, record the discrepancy and verify with the owner. Explain the impact and corrective action.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "The offer supports one site, up to five users and a defined region. A fictional 30-row list contains ten initially fitting accounts, six requiring multiple sites, four outside the region, five with essential unknowns, three no-contact records and two confirmed duplicates.\n\nA Pune supplier serves a defined area and requires accounts to verify invoice prerequisites later in qualification. Similar trading names do not establish identity; do not request personal identity numbers to fix a basic account duplicate."
+  },
+  "projeto": {
+    "instrucoes": "Classify all 30 rows, select ten for initial investigation with reasons, record five gaps and explain duplicate consolidation without losing restrictions.",
+    "gabarito": "Ten have initial fit, not confirmed purchase. Six and four fall outside scope; five need verification; three remain suppressed. Duplicates are not new accounts and must preserve history. Scores cannot override refusal or mandatory mismatch."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "07-M1",
+        "pergunta": "How would you apply “Module 1: Defining an ICP” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "An ICP is a hypothesis about accounts the offer can serve and benefit. Define requirements, exclusions and observable signals. It must reject attractive accounts needing unsupported capabilities.",
+          "ICP describes an organisation; persona describes a role's context. Do not confuse industry with job title. One account may require users, technical evaluators and different approvers.",
+          "Use industry, operational size and region where they affect capability or need. Arbitrary segmentation can exclude suitable accounts. Explain how each variable changes the commercial decision.",
+          "Mark signals confirmed, indirect or unknown. Expansion news is indirect evidence of a systems need. Several weak signals do not establish approved funding."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "07-M2",
+        "pergunta": "How would you apply “Module 2: Sources and limits” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Define approved sources, purpose and restrictions before collection. Avoid prohibited extraction methods. Prefer relevant questions over excessive personal-data gathering where appropriate.",
+          "Record account identifier, fit criteria, source/date, restrictions and next action. Optional fields need a purpose. Do not require personal information irrelevant to the current decision.",
+          "Standardise units, fields and states while preserving provenance. Blank, zero and not applicable differ. Define update rules and ownership of conflicting information.",
+          "Verify identity before merging. A shared name does not prove the same company; one domain may contain distinct units. Preserve history and preferences through authorised consolidation."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "07-M3",
+        "pergunta": "How would you apply “Module 3: Lead, prospect and opportunity” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Define terms within the local process. A discovered contact is not automatically an opportunity. Each stage needs new information or acceptance, not merely a CRM label change.",
+          "BANT covers budget, authority, need and timing; CHAMP starts with challenges and considers authority, money and priority. Frameworks guide questions rather than replace company criteria.",
+          "An existing difficulty is not necessarily a priority project. Ask what competes for attention, what would justify change and who evaluates it. Record genuine deferral rather than manufacture urgency.",
+          "Separate exclusion criteria from priority points. A high score cannot offset a mandatory mismatch or refusal. Weights are hypotheses to validate, not universal scientific facts."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "07-M4",
+        "pergunta": "How would you apply “Module 4: Documenting sources” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Relevant claims need provenance and date. Identify reported, documented and inferred information. Old sources may support history but require confirmation for a current decision.",
+          "Acceptance compares evidence with agreed criteria. Rejection needs a clear reason and a factual correction route. Do not change criteria retroactively to improve metrics.",
+          "Combine fit, need and next step under local rules. A gap may call for investigation rather than automatic approval or rejection. Explain classification so another person can review it.",
+          "Correct with provenance and history rather than guesses. When sources conflict, record the discrepancy and verify with the owner. Explain the impact and corrective action."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "07-FINAL",
+        "pergunta": "Classify all 30 rows, select ten for initial investigation with reasons, record five gaps and explain duplicate consolidation without losing restrictions.",
+        "resposta_modelo": "Ten have initial fit, not confirmed purchase. Six and four fall outside scope; five need verification; three remain suppressed. Duplicates are not new accounts and must preserve history. Scores cannot override refusal or mandatory mismatch.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

@@ -1,0 +1,495 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-05",
+  "course_number": 5,
+  "locale": "pt-BR",
+  "titulo": "Prospecção por E-mail e LinkedIn",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Prospecção multicanal",
+      "titulo_original_pt": "Prospecção multicanal",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Quando usar e-mail ou LinkedIn",
+          "tipo": "texto",
+          "conteudo": "Escolha o canal pelo contexto de trabalho, preferência e procedimento autorizado. E-mail permite mensagem estruturada; conexão profissional pode apoiar contexto. Nenhum canal torna relevante uma oferta sem aderência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar quando usar e-mail ou linkedin. Escolha o canal pelo contexto de trabalho, preferência e procedimento autorizado. E-mail permite mensagem estruturada; conexão profissional pode apoiar contexto. Nenhum canal torna relevante uma oferta sem aderência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Quando usar e-mail ou LinkedIn” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escolha o canal pelo contexto de trabalho, preferência e procedimento autorizado. E-mail permite mensagem estruturada; conexão profissional pode apoiar contexto. Nenhum canal torna relevante uma oferta sem aderência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Como identificar empresas e decisores",
+          "tipo": "texto",
+          "conteudo": "Pesquise empresa e responsabilidade relacionada à tarefa. Não inferir alçada por senioridade aparente. Registre quem utiliza, avalia e aprova, deixando explícito o papel ainda desconhecido.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como identificar empresas e decisores. Pesquise empresa e responsabilidade relacionada à tarefa. Não inferir alçada por senioridade aparente. Registre quem utiliza, avalia e aprova, deixando explícito o papel ainda desconhecido. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como identificar empresas e decisores” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pesquise empresa e responsabilidade relacionada à tarefa. Não inferir alçada por senioridade aparente. Registre quem utiliza, avalia e aprova, deixando explícito o papel ainda desconhecido.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Como encontrar motivos relevantes para contato",
+          "tipo": "texto",
+          "conteudo": "Um motivo útil conecta fato verificável a hipótese de necessidade. Contratação de equipe pode justificar pergunta sobre processo, mas não prova orçamento. Evite elogio genérico usado como falsa personalização.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como encontrar motivos relevantes para contato. Um motivo útil conecta fato verificável a hipótese de necessidade. Contratação de equipe pode justificar pergunta sobre processo, mas não prova orçamento. Evite elogio genérico usado como falsa personalização. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como encontrar motivos relevantes para contato” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Um motivo útil conecta fato verificável a hipótese de necessidade. Contratação de equipe pode justificar pergunta sobre processo, mas não prova orçamento. Evite elogio genérico usado como falsa personalização.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Organização de listas e origens de dados",
+          "tipo": "texto",
+          "conteudo": "Registre fonte, data, finalidade e restrição de cada contato. Uma base comprada não prova adequação de uso. Deduplicate e verifique supressões antes de iniciar qualquer sequência aprovada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar organização de listas e origens de dados. Registre fonte, data, finalidade e restrição de cada contato. Uma base comprada não prova adequação de uso. Deduplicate e verifique supressões antes de iniciar qualquer sequência aprovada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Organização de listas e origens de dados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre fonte, data, finalidade e restrição de cada contato. Uma base comprada não prova adequação de uso. Deduplicate e verifique supressões antes de iniciar qualquer sequência aprovada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "E-mails comerciais",
+      "titulo_original_pt": "E-mails comerciais",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Estrutura de um cold email profissional",
+          "tipo": "texto",
+          "conteudo": "Assunto fiel, identificação, contexto, hipótese e pedido simples devem formar uma sequência compreensível. Evite anexos sem contexto no primeiro contato. Não simule resposta a conversa que nunca existiu.",
+          "roteiro_video": "Nesta aula, vamos trabalhar estrutura de um cold email profissional. Assunto fiel, identificação, contexto, hipótese e pedido simples devem formar uma sequência compreensível. Evite anexos sem contexto no primeiro contato. Não simule resposta a conversa que nunca existiu. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Estrutura de um cold email profissional” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Assunto fiel, identificação, contexto, hipótese e pedido simples devem formar uma sequência compreensível. Evite anexos sem contexto no primeiro contato. Não simule resposta a conversa que nunca existiu.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Assuntos claros e contextualizados",
+          "tipo": "texto",
+          "conteudo": "O assunto deve antecipar o conteúdo real. Usar RE, cobrança ou reunião confirmada sem correspondência engana sobre a natureza da mensagem. Avalie clareza pelo entendimento, não só pela abertura.",
+          "roteiro_video": "Nesta aula, vamos trabalhar assuntos claros e contextualizados. O assunto deve antecipar o conteúdo real. Usar RE, cobrança ou reunião confirmada sem correspondência engana sobre a natureza da mensagem. Avalie clareza pelo entendimento, não só pela abertura. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Assuntos claros e contextualizados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "O assunto deve antecipar o conteúdo real. Usar RE, cobrança ou reunião confirmada sem correspondência engana sobre a natureza da mensagem. Avalie clareza pelo entendimento, não só pela abertura.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Personalização e proposta de valor",
+          "tipo": "texto",
+          "conteudo": "Conecte uma observação específica a uma utilidade condicional. Limite o texto a uma hipótese principal. Estatística de outro mercado pode contextualizar uma pergunta, mas não prever o resultado do destinatário.",
+          "roteiro_video": "Nesta aula, vamos trabalhar personalização e proposta de valor. Conecte uma observação específica a uma utilidade condicional. Limite o texto a uma hipótese principal. Estatística de outro mercado pode contextualizar uma pergunta, mas não prever o resultado do destinatário. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Personalização e proposta de valor” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conecte uma observação específica a uma utilidade condicional. Limite o texto a uma hipótese principal. Estatística de outro mercado pode contextualizar uma pergunta, mas não prever o resultado do destinatário.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Como escrever CTAs simples",
+          "tipo": "texto",
+          "conteudo": "Peça uma decisão pequena e coerente, como confirmar relevância ou indicar o responsável. Três pedidos competindo dificultam resposta. Não exigir reunião antes de esclarecer o motivo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como escrever ctas simples. Peça uma decisão pequena e coerente, como confirmar relevância ou indicar o responsável. Três pedidos competindo dificultam resposta. Não exigir reunião antes de esclarecer o motivo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como escrever CTAs simples” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Peça uma decisão pequena e coerente, como confirmar relevância ou indicar o responsável. Três pedidos competindo dificultam resposta. Não exigir reunião antes de esclarecer o motivo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Entregabilidade, reputação e prevenção de spam",
+          "tipo": "texto",
+          "conteudo": "Autenticação, reputação, lista e expectativa afetam entrega; cabe à equipe técnica validar requisitos do provedor. Não contornar bloqueios com novos domínios. Abertura não é leitura humana comprovada nem interesse.",
+          "roteiro_video": "Nesta aula, vamos trabalhar entregabilidade, reputação e prevenção de spam. Autenticação, reputação, lista e expectativa afetam entrega; cabe à equipe técnica validar requisitos do provedor. Não contornar bloqueios com novos domínios. Abertura não é leitura humana comprovada nem interesse. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Entregabilidade, reputação e prevenção de spam” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Autenticação, reputação, lista e expectativa afetam entrega; cabe à equipe técnica validar requisitos do provedor. Não contornar bloqueios com novos domínios. Abertura não é leitura humana comprovada nem interesse.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "LinkedIn comercial",
+      "titulo_original_pt": "LinkedIn comercial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Perfil e credibilidade profissional",
+          "tipo": "texto",
+          "conteudo": "Descreva função e oferta com exemplos verificáveis e sem credenciais inventadas. Perfil deve permitir compreender quem você representa. Não publicar cliente, logotipo ou depoimento sem autorização aplicável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar perfil e credibilidade profissional. Descreva função e oferta com exemplos verificáveis e sem credenciais inventadas. Perfil deve permitir compreender quem você representa. Não publicar cliente, logotipo ou depoimento sem autorização aplicável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Perfil e credibilidade profissional” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Descreva função e oferta com exemplos verificáveis e sem credenciais inventadas. Perfil deve permitir compreender quem você representa. Não publicar cliente, logotipo ou depoimento sem autorização aplicável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Pesquisa de contas e contatos",
+          "tipo": "texto",
+          "conteudo": "Use recursos permitidos e leia o contexto da informação. Não utilizar bots ou extensões proibidas para extrair perfis. Uma mudança de cargo exige atualização, não pressuposição de continuidade de autoridade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar pesquisa de contas e contatos. Use recursos permitidos e leia o contexto da informação. Não utilizar bots ou extensões proibidas para extrair perfis. Uma mudança de cargo exige atualização, não pressuposição de continuidade de autoridade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Pesquisa de contas e contatos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use recursos permitidos e leia o contexto da informação. Não utilizar bots ou extensões proibidas para extrair perfis. Uma mudança de cargo exige atualização, não pressuposição de continuidade de autoridade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Convites de conexão contextualizados",
+          "tipo": "texto",
+          "conteudo": "Convite deve explicar contexto real e permitir recusa. Conexão aceita não equivale a aceite de campanha externa. Evite transformar cada convite em proposta longa sem relação demonstrada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar convites de conexão contextualizados. Convite deve explicar contexto real e permitir recusa. Conexão aceita não equivale a aceite de campanha externa. Evite transformar cada convite em proposta longa sem relação demonstrada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Convites de conexão contextualizados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Convite deve explicar contexto real e permitir recusa. Conexão aceita não equivale a aceite de campanha externa. Evite transformar cada convite em proposta longa sem relação demonstrada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Mensagens após a conexão",
+          "tipo": "texto",
+          "conteudo": "Agradeça somente quando útil e inicie por assunto pertinente. Não enviar sequência automática de pressão após aceite. Uma pergunta respondida deve orientar a próxima mensagem, inclusive encerramento.",
+          "roteiro_video": "Nesta aula, vamos trabalhar mensagens após a conexão. Agradeça somente quando útil e inicie por assunto pertinente. Não enviar sequência automática de pressão após aceite. Uma pergunta respondida deve orientar a próxima mensagem, inclusive encerramento. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Mensagens após a conexão” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Agradeça somente quando útil e inicie por assunto pertinente. Não enviar sequência automática de pressão após aceite. Uma pergunta respondida deve orientar a próxima mensagem, inclusive encerramento.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Relacionamento por conteúdo e interações relevantes",
+          "tipo": "texto",
+          "conteudo": "Contribua com informação que responde ao tema público, sem sequestrar a conversa. Interação recorrente não prova intenção de compra. Separe contribuição educativa de proposta comercial claramente identificada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar relacionamento por conteúdo e interações relevantes. Contribua com informação que responde ao tema público, sem sequestrar a conversa. Interação recorrente não prova intenção de compra. Separe contribuição educativa de proposta comercial claramente identificada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Relacionamento por conteúdo e interações relevantes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Contribua com informação que responde ao tema público, sem sequestrar a conversa. Interação recorrente não prova intenção de compra. Separe contribuição educativa de proposta comercial claramente identificada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Cadência e análise",
+      "titulo_original_pt": "Cadência e análise",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Construção de sequências multicanal",
+          "tipo": "texto",
+          "conteudo": "Organize um histórico comum para que canais não repitam perguntas nem contornem recusas. Cada etapa tem objetivo, condição e parada. Relevância precisa ser revisada quando surge informação nova.",
+          "roteiro_video": "Nesta aula, vamos trabalhar construção de sequências multicanal. Organize um histórico comum para que canais não repitam perguntas nem contornem recusas. Cada etapa tem objetivo, condição e parada. Relevância precisa ser revisada quando surge informação nova. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Construção de sequências multicanal” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Organize um histórico comum para que canais não repitam perguntas nem contornem recusas. Cada etapa tem objetivo, condição e parada. Relevância precisa ser revisada quando surge informação nova.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Intervalos e limites de contato",
+          "tipo": "texto",
+          "conteudo": "Defina limites pela política, contexto e preferência; não existe número universal de tentativas. Registre o retorno combinado. Se houver recusa ou incompatibilidade, encerre independentemente da etapa da sequência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar intervalos e limites de contato. Defina limites pela política, contexto e preferência; não existe número universal de tentativas. Registre o retorno combinado. Se houver recusa ou incompatibilidade, encerre independentemente da etapa da sequência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Intervalos e limites de contato” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina limites pela política, contexto e preferência; não existe número universal de tentativas. Registre o retorno combinado. Se houver recusa ou incompatibilidade, encerre independentemente da etapa da sequência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Métricas de respostas e reuniões",
+          "tipo": "texto",
+          "conteudo": "Conte destinatários elegíveis, respostas relevantes e reuniões por coorte. Resposta negativa também é resposta, mas não oportunidade. Compare conteúdo de respostas antes de comemorar crescimento da taxa total.",
+          "roteiro_video": "Nesta aula, vamos trabalhar métricas de respostas e reuniões. Conte destinatários elegíveis, respostas relevantes e reuniões por coorte. Resposta negativa também é resposta, mas não oportunidade. Compare conteúdo de respostas antes de comemorar crescimento da taxa total. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Métricas de respostas e reuniões” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conte destinatários elegíveis, respostas relevantes e reuniões por coorte. Resposta negativa também é resposta, mas não oportunidade. Compare conteúdo de respostas antes de comemorar crescimento da taxa total.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Experimentos A/B e otimização",
+          "tipo": "texto",
+          "conteudo": "Mude uma variável, mantenha populações comparáveis e defina métrica antes do envio. Não atribua diferença pequena a causalidade sem análise. Preferências e interrupções valem também durante experimentos.",
+          "roteiro_video": "Nesta aula, vamos trabalhar experimentos a/b e otimização. Mude uma variável, mantenha populações comparáveis e defina métrica antes do envio. Não atribua diferença pequena a causalidade sem análise. Preferências e interrupções valem também durante experimentos. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Experimentos A/B e otimização” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mude uma variável, mantenha populações comparáveis e defina métrica antes do envio. Não atribua diferença pequena a causalidade sem análise. Preferências e interrupções valem também durante experimentos.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A Norte Serviços publicou uma expansão. A Equipe Clara oferece organização comercial, mas não sabe se a expansão exige mudança. Há 80 destinatários fictícios elegíveis: 12 responderam, sendo quatro recusas, cinco pedidos de informação e três pedidos de reunião. Uma mensagem usa assunto RE: nossa reunião, sem reunião anterior."
+  },
+  "projeto": {
+    "instrucoes": "Escreva cinco e-mails com propósitos distintos, três mensagens profissionais e uma cadência fictícia de dez dias com regras de parada; calcule respostas e pedidos de reunião separadamente.",
+    "gabarito": "Remova a falsa relação anterior. Taxa de resposta: 12/80=15%; pedidos de reunião: 3/80=3,75%, não reuniões realizadas. Recusas saem da cadência. Use mensagens para investigar relevância, responder dúvida, enviar material pedido, confirmar próximo passo e encerrar quando adequado."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "05-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Prospecção multicanal”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Escolha o canal pelo contexto de trabalho, preferência e procedimento autorizado. E-mail permite mensagem estruturada; conexão profissional pode apoiar contexto. Nenhum canal torna relevante uma oferta sem aderência.",
+          "Pesquise empresa e responsabilidade relacionada à tarefa. Não inferir alçada por senioridade aparente. Registre quem utiliza, avalia e aprova, deixando explícito o papel ainda desconhecido.",
+          "Um motivo útil conecta fato verificável a hipótese de necessidade. Contratação de equipe pode justificar pergunta sobre processo, mas não prova orçamento. Evite elogio genérico usado como falsa personalização.",
+          "Registre fonte, data, finalidade e restrição de cada contato. Uma base comprada não prova adequação de uso. Deduplicate e verifique supressões antes de iniciar qualquer sequência aprovada."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "05-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “E-mails comerciais”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Assunto fiel, identificação, contexto, hipótese e pedido simples devem formar uma sequência compreensível. Evite anexos sem contexto no primeiro contato. Não simule resposta a conversa que nunca existiu.",
+          "O assunto deve antecipar o conteúdo real. Usar RE, cobrança ou reunião confirmada sem correspondência engana sobre a natureza da mensagem. Avalie clareza pelo entendimento, não só pela abertura.",
+          "Conecte uma observação específica a uma utilidade condicional. Limite o texto a uma hipótese principal. Estatística de outro mercado pode contextualizar uma pergunta, mas não prever o resultado do destinatário.",
+          "Peça uma decisão pequena e coerente, como confirmar relevância ou indicar o responsável. Três pedidos competindo dificultam resposta. Não exigir reunião antes de esclarecer o motivo.",
+          "Autenticação, reputação, lista e expectativa afetam entrega; cabe à equipe técnica validar requisitos do provedor. Não contornar bloqueios com novos domínios. Abertura não é leitura humana comprovada nem interesse."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "05-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “LinkedIn comercial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Descreva função e oferta com exemplos verificáveis e sem credenciais inventadas. Perfil deve permitir compreender quem você representa. Não publicar cliente, logotipo ou depoimento sem autorização aplicável.",
+          "Use recursos permitidos e leia o contexto da informação. Não utilizar bots ou extensões proibidas para extrair perfis. Uma mudança de cargo exige atualização, não pressuposição de continuidade de autoridade.",
+          "Convite deve explicar contexto real e permitir recusa. Conexão aceita não equivale a aceite de campanha externa. Evite transformar cada convite em proposta longa sem relação demonstrada.",
+          "Agradeça somente quando útil e inicie por assunto pertinente. Não enviar sequência automática de pressão após aceite. Uma pergunta respondida deve orientar a próxima mensagem, inclusive encerramento.",
+          "Contribua com informação que responde ao tema público, sem sequestrar a conversa. Interação recorrente não prova intenção de compra. Separe contribuição educativa de proposta comercial claramente identificada."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "05-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Cadência e análise”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Organize um histórico comum para que canais não repitam perguntas nem contornem recusas. Cada etapa tem objetivo, condição e parada. Relevância precisa ser revisada quando surge informação nova.",
+          "Defina limites pela política, contexto e preferência; não existe número universal de tentativas. Registre o retorno combinado. Se houver recusa ou incompatibilidade, encerre independentemente da etapa da sequência.",
+          "Conte destinatários elegíveis, respostas relevantes e reuniões por coorte. Resposta negativa também é resposta, mas não oportunidade. Compare conteúdo de respostas antes de comemorar crescimento da taxa total.",
+          "Mude uma variável, mantenha populações comparáveis e defina métrica antes do envio. Não atribua diferença pequena a causalidade sem análise. Preferências e interrupções valem também durante experimentos."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "05-FINAL",
+        "pergunta": "Escreva cinco e-mails com propósitos distintos, três mensagens profissionais e uma cadência fictícia de dez dias com regras de parada; calcule respostas e pedidos de reunião separadamente.",
+        "resposta_modelo": "Remova a falsa relação anterior. Taxa de resposta: 12/80=15%; pedidos de reunião: 3/80=3,75%, não reuniões realizadas. Recusas saem da cadência. Use mensagens para investigar relevância, responder dúvida, enviar material pedido, confirmar próximo passo e encerrar quando adequado.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

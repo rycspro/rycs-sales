@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-22",
+  "course_number": 22,
+  "locale": "pt-BR",
+  "titulo": "Vender para EUA e Índia",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Preparação para vendas internacionais",
+      "titulo_original_pt": "Preparação para vendas internacionais",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Pesquisar um mercado sem generalizar pessoas",
+          "tipo": "texto",
+          "conteudo": "Estude setor, processo e condições de atendimento, não traços atribuídos a nacionalidades. Dados agregados orientam perguntas e não descrevem cada comprador. Confirme idioma, preferência e critério com a pessoa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar pesquisar um mercado sem generalizar pessoas. Estude setor, processo e condições de atendimento, não traços atribuídos a nacionalidades. Dados agregados orientam perguntas e não descrevem cada comprador. Confirme idioma, preferência e critério com a pessoa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Pesquisar um mercado sem generalizar pessoas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Estude setor, processo e condições de atendimento, não traços atribuídos a nacionalidades. Dados agregados orientam perguntas e não descrevem cada comprador. Confirme idioma, preferência e critério com a pessoa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Confirmar oferta, elegibilidade e capacidade de atender",
+          "tipo": "texto",
+          "conteudo": "Antes de prospectar, confirme se a oferta pode ser contratada, entregue e apoiada naquele mercado. Idioma, moeda e suporte são dependências reais. Não presumir elegibilidade ou pagamento internacional pela existência de um site.",
+          "roteiro_video": "Nesta aula, vamos trabalhar confirmar oferta, elegibilidade e capacidade de atender. Antes de prospectar, confirme se a oferta pode ser contratada, entregue e apoiada naquele mercado. Idioma, moeda e suporte são dependências reais. Não presumir elegibilidade ou pagamento internacional pela existência de um site. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Confirmar oferta, elegibilidade e capacidade de atender” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Antes de prospectar, confirme se a oferta pode ser contratada, entregue e apoiada naquele mercado. Idioma, moeda e suporte são dependências reais. Não presumir elegibilidade ou pagamento internacional pela existência de um site.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Idioma, acessibilidade e preferência do comprador",
+          "tipo": "texto",
+          "conteudo": "Pergunte formato e idioma preferidos quando relevante e use linguagem clara. Não avaliar inteligência por sotaque. Ofereça resumo escrito e confirme entendimento sem infantilizar o interlocutor.",
+          "roteiro_video": "Nesta aula, vamos trabalhar idioma, acessibilidade e preferência do comprador. Pergunte formato e idioma preferidos quando relevante e use linguagem clara. Não avaliar inteligência por sotaque. Ofereça resumo escrito e confirme entendimento sem infantilizar o interlocutor. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Idioma, acessibilidade e preferência do comprador” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte formato e idioma preferidos quando relevante e use linguagem clara. Não avaliar inteligência por sotaque. Ofereça resumo escrito e confirme entendimento sem infantilizar o interlocutor.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Fontes locais e limites da comparação estatística",
+          "tipo": "texto",
+          "conteudo": "Confira população, período, moeda e definição antes de comparar mercados. Uma taxa de varejo não descreve todo B2B. Fonte local ajuda contexto, mas não elimina a investigação da conta específica.",
+          "roteiro_video": "Nesta aula, vamos trabalhar fontes locais e limites da comparação estatística. Confira população, período, moeda e definição antes de comparar mercados. Uma taxa de varejo não descreve todo B2B. Fonte local ajuda contexto, mas não elimina a investigação da conta específica. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Fontes locais e limites da comparação estatística” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confira população, período, moeda e definição antes de comparar mercados. Uma taxa de varejo não descreve todo B2B. Fonte local ajuda contexto, mas não elimina a investigação da conta específica.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Atuação com clientes nos EUA",
+      "titulo_original_pt": "Atuação com clientes nos EUA",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Contexto de compra e papéis a investigar",
+          "tipo": "texto",
+          "conteudo": "Investigue usuário, aprovador, compras e revisão técnica conforme a organização. Não presumir decisão individual rápida ou processo único nos EUA. Confirme o que cada pessoa precisa avaliar e formalizar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar contexto de compra e papéis a investigar. Investigue usuário, aprovador, compras e revisão técnica conforme a organização. Não presumir decisão individual rápida ou processo único nos EUA. Confirme o que cada pessoa precisa avaliar e formalizar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Contexto de compra e papéis a investigar” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Investigue usuário, aprovador, compras e revisão técnica conforme a organização. Não presumir decisão individual rápida ou processo único nos EUA. Confirme o que cada pessoa precisa avaliar e formalizar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Mensagens profissionais com identidade verdadeira",
+          "tipo": "texto",
+          "conteudo": "Use identificação, contexto verdadeiro e pedido claro, com revisão das regras do canal. E-mail comercial B2B não deve ser tratado como automaticamente isento de exigências. Telefone e SMS exigem análise própria.",
+          "roteiro_video": "Nesta aula, vamos trabalhar mensagens profissionais com identidade verdadeira. Use identificação, contexto verdadeiro e pedido claro, com revisão das regras do canal. E-mail comercial B2B não deve ser tratado como automaticamente isento de exigências. Telefone e SMS exigem análise própria. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Mensagens profissionais com identidade verdadeira” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use identificação, contexto verdadeiro e pedido claro, com revisão das regras do canal. E-mail comercial B2B não deve ser tratado como automaticamente isento de exigências. Telefone e SMS exigem análise própria.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Fusos, horário de verão e confirmação por data",
+          "tipo": "texto",
+          "conteudo": "Confirme cidade, data e fuso no convite; não converter usando apenas uma diferença fixa. Horário de verão pode alterar a relação com Brasil e Índia. Peça aceite do horário convertido.",
+          "roteiro_video": "Nesta aula, vamos trabalhar fusos, horário de verão e confirmação por data. Confirme cidade, data e fuso no convite; não converter usando apenas uma diferença fixa. Horário de verão pode alterar a relação com Brasil e Índia. Peça aceite do horário convertido. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Fusos, horário de verão e confirmação por data” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confirme cidade, data e fuso no convite; não converter usando apenas uma diferença fixa. Horário de verão pode alterar a relação com Brasil e Índia. Peça aceite do horário convertido.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Privacidade, canais e revisão local antes do contato",
+          "tipo": "texto",
+          "conteudo": "Regras podem variar por canal, estado e contexto, inclusive gravação. O vendedor não deve escolher uma regra geral conveniente. Use procedimento revisado para o público e a ação concretos.",
+          "roteiro_video": "Nesta aula, vamos trabalhar privacidade, canais e revisão local antes do contato. Regras podem variar por canal, estado e contexto, inclusive gravação. O vendedor não deve escolher uma regra geral conveniente. Use procedimento revisado para o público e a ação concretos. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Privacidade, canais e revisão local antes do contato” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Regras podem variar por canal, estado e contexto, inclusive gravação. O vendedor não deve escolher uma regra geral conveniente. Use procedimento revisado para o público e a ação concretos.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Atuação com clientes na Índia",
+      "titulo_original_pt": "Atuação com clientes na Índia",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Contexto de compra e diversidade de operação",
+          "tipo": "texto",
+          "conteudo": "Organizações na Índia variam em porte, setor, idioma e processo de compras. Confirme unidades e responsabilidades. Não transformar um caso de Pune ou Bengaluru em descrição de todas as empresas indianas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar contexto de compra e diversidade de operação. Organizações na Índia variam em porte, setor, idioma e processo de compras. Confirme unidades e responsabilidades. Não transformar um caso de Pune ou Bengaluru em descrição de todas as empresas indianas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Contexto de compra e diversidade de operação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Organizações na Índia variam em porte, setor, idioma e processo de compras. Confirme unidades e responsabilidades. Não transformar um caso de Pune ou Bengaluru em descrição de todas as empresas indianas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Idioma preferido e clareza sem julgar sotaques",
+          "tipo": "texto",
+          "conteudo": "Inglês pode ser adequado para um participante e não para todo o grupo. Pergunte necessidade de idioma e formato sem prometer suporte inexistente. Não confundir cortesia ou silêncio com concordância.",
+          "roteiro_video": "Nesta aula, vamos trabalhar idioma preferido e clareza sem julgar sotaques. Inglês pode ser adequado para um participante e não para todo o grupo. Pergunte necessidade de idioma e formato sem prometer suporte inexistente. Não confundir cortesia ou silêncio com concordância. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Idioma preferido e clareza sem julgar sotaques” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Inglês pode ser adequado para um participante e não para todo o grupo. Pergunte necessidade de idioma e formato sem prometer suporte inexistente. Não confundir cortesia ou silêncio com concordância.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "IST, agenda e participantes da decisão",
+          "tipo": "texto",
+          "conteudo": "Confirme data, horário em IST e participantes necessários, usando calendário com fuso. A diferença de meia hora pode causar erro em conversão manual. Disponibilidade precisa ser acordada, não presumida.",
+          "roteiro_video": "Nesta aula, vamos trabalhar ist, agenda e participantes da decisão. Confirme data, horário em IST e participantes necessários, usando calendário com fuso. A diferença de meia hora pode causar erro em conversão manual. Disponibilidade precisa ser acordada, não presumida. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “IST, agenda e participantes da decisão” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confirme data, horário em IST e participantes necessários, usando calendário com fuso. A diferença de meia hora pode causar erro em conversão manual. Disponibilidade precisa ser acordada, não presumida.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Proteção de dados e canais com revisão de vigência",
+          "tipo": "texto",
+          "conteudo": "Verifique as disposições aplicáveis e respectivas entradas em vigor, além de telecomunicações e política da plataforma. Não afirmar que uma norma foi integralmente implementada só por ter sido publicada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar proteção de dados e canais com revisão de vigência. Verifique as disposições aplicáveis e respectivas entradas em vigor, além de telecomunicações e política da plataforma. Não afirmar que uma norma foi integralmente implementada só por ter sido publicada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Proteção de dados e canais com revisão de vigência” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Verifique as disposições aplicáveis e respectivas entradas em vigor, além de telecomunicações e política da plataforma. Não afirmar que uma norma foi integralmente implementada só por ter sido publicada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Laboratório internacional",
+      "titulo_original_pt": "Laboratório internacional",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Proposta: moeda, período, escopo e impostos a confirmar",
+          "tipo": "texto",
+          "conteudo": "Explicite moeda, período, escopo, suporte e condições de impostos a confirmar pela equipe responsável. Não converter preço sem revisar custos e termos. Taxa de câmbio é informação datada, não fixa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar proposta: moeda, período, escopo e impostos a confirmar. Explicite moeda, período, escopo, suporte e condições de impostos a confirmar pela equipe responsável. Não converter preço sem revisar custos e termos. Taxa de câmbio é informação datada, não fixa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Proposta: moeda, período, escopo e impostos a confirmar” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Explicite moeda, período, escopo, suporte e condições de impostos a confirmar pela equipe responsável. Não converter preço sem revisar custos e termos. Taxa de câmbio é informação datada, não fixa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Simulação EUA com critérios de decisão próprios",
+          "tipo": "texto",
+          "conteudo": "Use caso com requisitos de integração e revisão de contrato, sem assumir autonomia do contato. Confirme fuso por data e evidência de aceite. A conclusão pode ser teste condicionado, não contrato imediato.",
+          "roteiro_video": "Nesta aula, vamos trabalhar simulação eua com critérios de decisão próprios. Use caso com requisitos de integração e revisão de contrato, sem assumir autonomia do contato. Confirme fuso por data e evidência de aceite. A conclusão pode ser teste condicionado, não contrato imediato. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Simulação EUA com critérios de decisão próprios” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use caso com requisitos de integração e revisão de contrato, sem assumir autonomia do contato. Confirme fuso por data e evidência de aceite. A conclusão pode ser teste condicionado, não contrato imediato.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Simulação Índia com cenário independente",
+          "tipo": "texto",
+          "conteudo": "Use caso com revisão operacional, faturamento e preferência de idioma a esclarecer. Não prometer tributação, suporte local ou treinamento sem confirmação. Combine participantes e próximo passo compatível com as dependências.",
+          "roteiro_video": "Nesta aula, vamos trabalhar simulação índia com cenário independente. Use caso com revisão operacional, faturamento e preferência de idioma a esclarecer. Não prometer tributação, suporte local ou treinamento sem confirmação. Combine participantes e próximo passo compatível com as dependências. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Simulação Índia com cenário independente” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use caso com revisão operacional, faturamento e preferência de idioma a esclarecer. Não prometer tributação, suporte local ou treinamento sem confirmação. Combine participantes e próximo passo compatível com as dependências.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Handoff internacional e comparação crítica dos casos",
+          "tipo": "texto",
+          "conteudo": "Registre mercado, idioma acordado, moeda, data/fuso, papéis, limites e pendências. Explique o que mudou entre cenários e por quê. Localização é ajuste de contexto, não substituição de nomes.",
+          "roteiro_video": "Nesta aula, vamos trabalhar handoff internacional e comparação crítica dos casos. Registre mercado, idioma acordado, moeda, data/fuso, papéis, limites e pendências. Explique o que mudou entre cenários e por quê. Localização é ajuste de contexto, não substituição de nomes. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Handoff internacional e comparação crítica dos casos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre mercado, idioma acordado, moeda, data/fuso, papéis, limites e pendências. Explique o que mudou entre cenários e por quê. Localização é ajuste de contexto, não substituição de nomes.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Uma empresa brasileira quer vender o mesmo serviço a Ohio e Pune. A oferta ainda não confirma suporte local, moeda de cobrança ou impostos. Um convite foi marcado como 10h sem data e fuso; o vendedor presume inglês e WhatsApp para todos. O comprador americano pede revisão técnica; o indiano pede envolver contas e operação."
+  },
+  "projeto": {
+    "instrucoes": "Prepare dois briefings independentes, convites completos e matriz de pendências de oferta, contratação e comunicação. Explique por que simples conversão de moeda não basta.",
+    "gabarito": "Confirme elegibilidade, capacidade de entrega e termos antes da proposta. Use data e fuso por cidade, verificando conversão no calendário. Pergunte idioma e canal e envolva os revisores específicos. Não invente suporte, imposto, prazo ou condição internacional de pagamento."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "22-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Preparação para vendas internacionais”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Estude setor, processo e condições de atendimento, não traços atribuídos a nacionalidades. Dados agregados orientam perguntas e não descrevem cada comprador. Confirme idioma, preferência e critério com a pessoa.",
+          "Antes de prospectar, confirme se a oferta pode ser contratada, entregue e apoiada naquele mercado. Idioma, moeda e suporte são dependências reais. Não presumir elegibilidade ou pagamento internacional pela existência de um site.",
+          "Pergunte formato e idioma preferidos quando relevante e use linguagem clara. Não avaliar inteligência por sotaque. Ofereça resumo escrito e confirme entendimento sem infantilizar o interlocutor.",
+          "Confira população, período, moeda e definição antes de comparar mercados. Uma taxa de varejo não descreve todo B2B. Fonte local ajuda contexto, mas não elimina a investigação da conta específica."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "22-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Atuação com clientes nos EUA”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Investigue usuário, aprovador, compras e revisão técnica conforme a organização. Não presumir decisão individual rápida ou processo único nos EUA. Confirme o que cada pessoa precisa avaliar e formalizar.",
+          "Use identificação, contexto verdadeiro e pedido claro, com revisão das regras do canal. E-mail comercial B2B não deve ser tratado como automaticamente isento de exigências. Telefone e SMS exigem análise própria.",
+          "Confirme cidade, data e fuso no convite; não converter usando apenas uma diferença fixa. Horário de verão pode alterar a relação com Brasil e Índia. Peça aceite do horário convertido.",
+          "Regras podem variar por canal, estado e contexto, inclusive gravação. O vendedor não deve escolher uma regra geral conveniente. Use procedimento revisado para o público e a ação concretos."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "22-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Atuação com clientes na Índia”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Organizações na Índia variam em porte, setor, idioma e processo de compras. Confirme unidades e responsabilidades. Não transformar um caso de Pune ou Bengaluru em descrição de todas as empresas indianas.",
+          "Inglês pode ser adequado para um participante e não para todo o grupo. Pergunte necessidade de idioma e formato sem prometer suporte inexistente. Não confundir cortesia ou silêncio com concordância.",
+          "Confirme data, horário em IST e participantes necessários, usando calendário com fuso. A diferença de meia hora pode causar erro em conversão manual. Disponibilidade precisa ser acordada, não presumida.",
+          "Verifique as disposições aplicáveis e respectivas entradas em vigor, além de telecomunicações e política da plataforma. Não afirmar que uma norma foi integralmente implementada só por ter sido publicada."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "22-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Laboratório internacional”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Explicite moeda, período, escopo, suporte e condições de impostos a confirmar pela equipe responsável. Não converter preço sem revisar custos e termos. Taxa de câmbio é informação datada, não fixa.",
+          "Use caso com requisitos de integração e revisão de contrato, sem assumir autonomia do contato. Confirme fuso por data e evidência de aceite. A conclusão pode ser teste condicionado, não contrato imediato.",
+          "Use caso com revisão operacional, faturamento e preferência de idioma a esclarecer. Não prometer tributação, suporte local ou treinamento sem confirmação. Combine participantes e próximo passo compatível com as dependências.",
+          "Registre mercado, idioma acordado, moeda, data/fuso, papéis, limites e pendências. Explique o que mudou entre cenários e por quê. Localização é ajuste de contexto, não substituição de nomes."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "22-FINAL",
+        "pergunta": "Prepare dois briefings independentes, convites completos e matriz de pendências de oferta, contratação e comunicação. Explique por que simples conversão de moeda não basta.",
+        "resposta_modelo": "Confirme elegibilidade, capacidade de entrega e termos antes da proposta. Use data e fuso por cidade, verificando conversão no calendário. Pergunte idioma e canal e envolva os revisores específicos. Não invente suporte, imposto, prazo ou condição internacional de pagamento.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

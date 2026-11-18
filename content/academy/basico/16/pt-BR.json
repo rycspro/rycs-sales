@@ -1,0 +1,609 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-16",
+  "course_number": 16,
+  "locale": "pt-BR",
+  "titulo": "BDR — Contas Grandes",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Profissional",
+  "carga_horaria_planejada_h": 8,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Estratégia de contas grandes",
+      "titulo_original_pt": "Estratégia de contas grandes",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Diferenças de complexidade em contas maiores",
+          "tipo": "texto",
+          "conteudo": "Contas grandes podem ter várias unidades, dependências e critérios de aprovação. Complexidade não é sinônimo de ticket alto. Mapeie decisões e capacidade de atendimento antes de investir esforço desproporcional.",
+          "roteiro_video": "Nesta aula, vamos trabalhar diferenças de complexidade em contas maiores. Contas grandes podem ter várias unidades, dependências e critérios de aprovação. Complexidade não é sinônimo de ticket alto. Mapeie decisões e capacidade de atendimento antes de investir esforço desproporcional. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Diferenças de complexidade em contas maiores” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Contas grandes podem ter várias unidades, dependências e critérios de aprovação. Complexidade não é sinônimo de ticket alto. Mapeie decisões e capacidade de atendimento antes de investir esforço desproporcional.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Selecionar contas com critérios explícitos",
+          "tipo": "texto",
+          "conteudo": "Defina fit obrigatório, potencial investigável e custo de abordagem. Não escolher apenas logotipos conhecidos. Uma conta prestigiosa que exige recurso inexistente pode ser inadequada para a oferta atual.",
+          "roteiro_video": "Nesta aula, vamos trabalhar selecionar contas com critérios explícitos. Defina fit obrigatório, potencial investigável e custo de abordagem. Não escolher apenas logotipos conhecidos. Uma conta prestigiosa que exige recurso inexistente pode ser inadequada para a oferta atual. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Selecionar contas com critérios explícitos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina fit obrigatório, potencial investigável e custo de abordagem. Não escolher apenas logotipos conhecidos. Uma conta prestigiosa que exige recurso inexistente pode ser inadequada para a oferta atual.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Pesquisar estrutura e iniciativas permitidas",
+          "tipo": "texto",
+          "conteudo": "Use fontes profissionais permitidas e diferencie anúncio de projeto aprovado. Registre data e alcance da informação. Uma iniciativa corporativa não prova que toda unidade tenha orçamento ou responsabilidade equivalente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar pesquisar estrutura e iniciativas permitidas. Use fontes profissionais permitidas e diferencie anúncio de projeto aprovado. Registre data e alcance da informação. Uma iniciativa corporativa não prova que toda unidade tenha orçamento ou responsabilidade equivalente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Pesquisar estrutura e iniciativas permitidas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use fontes profissionais permitidas e diferencie anúncio de projeto aprovado. Registre data e alcance da informação. Uma iniciativa corporativa não prova que toda unidade tenha orçamento ou responsabilidade equivalente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Hipóteses comerciais e limites de inferência",
+          "tipo": "texto",
+          "conteudo": "Escreva hipótese, evidência, alternativas e pergunta de verificação. Não montar um dossiê que transforma inferência em fato. A pesquisa deve permitir descartar a tese quando o comprador corrige o contexto.",
+          "roteiro_video": "Nesta aula, vamos trabalhar hipóteses comerciais e limites de inferência. Escreva hipótese, evidência, alternativas e pergunta de verificação. Não montar um dossiê que transforma inferência em fato. A pesquisa deve permitir descartar a tese quando o comprador corrige o contexto. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Hipóteses comerciais e limites de inferência” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escreva hipótese, evidência, alternativas e pergunta de verificação. Não montar um dossiê que transforma inferência em fato. A pesquisa deve permitir descartar a tese quando o comprador corrige o contexto.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.5",
+          "titulo": "Definir prioridade e esforço de pesquisa",
+          "tipo": "texto",
+          "conteudo": "Defina limite de esforço e critério de reavaliação por conta. Muitas horas pesquisadas não justificam insistência após falta de fit. Compare qualidade das informações obtidas, não apenas quantidade de páginas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar definir prioridade e esforço de pesquisa. Defina limite de esforço e critério de reavaliação por conta. Muitas horas pesquisadas não justificam insistência após falta de fit. Compare qualidade das informações obtidas, não apenas quantidade de páginas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Definir prioridade e esforço de pesquisa” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina limite de esforço e critério de reavaliação por conta. Muitas horas pesquisadas não justificam insistência após falta de fit. Compare qualidade das informações obtidas, não apenas quantidade de páginas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.6",
+          "titulo": "Construir um plano de conta revisável",
+          "tipo": "texto",
+          "conteudo": "Organize objetivo, fontes, papéis, critérios, hipóteses, restrições e próximos passos. Cada lacuna precisa de caminho possível de investigação. Plano de conta não é previsão de compra garantida.",
+          "roteiro_video": "Nesta aula, vamos trabalhar construir um plano de conta revisável. Organize objetivo, fontes, papéis, critérios, hipóteses, restrições e próximos passos. Cada lacuna precisa de caminho possível de investigação. Plano de conta não é previsão de compra garantida. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Construir um plano de conta revisável” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Organize objetivo, fontes, papéis, critérios, hipóteses, restrições e próximos passos. Cada lacuna precisa de caminho possível de investigação. Plano de conta não é previsão de compra garantida.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Partes interessadas e acesso",
+      "titulo_original_pt": "Partes interessadas e acesso",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Mapear usuários, influenciadores e aprovadores",
+          "tipo": "texto",
+          "conteudo": "Confirme quem usa, influencia, avalia tecnicamente e aprova. Influência varia por decisão; não atribua poder por título isolado. Preserve o papel de intermediários sem tentar contorná-los com informação falsa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar mapear usuários, influenciadores e aprovadores. Confirme quem usa, influencia, avalia tecnicamente e aprova. Influência varia por decisão; não atribua poder por título isolado. Preserve o papel de intermediários sem tentar contorná-los com informação falsa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Mapear usuários, influenciadores e aprovadores” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confirme quem usa, influencia, avalia tecnicamente e aprova. Influência varia por decisão; não atribua poder por título isolado. Preserve o papel de intermediários sem tentar contorná-los com informação falsa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Investigar compras e critérios técnicos",
+          "tipo": "texto",
+          "conteudo": "Investigue requisitos de cadastro, segurança, capacidade e contratação no momento apropriado. Não prometer conformidade sem documentação. Um patrocinador comercial não substitui aprovação técnica ou processo de compras.",
+          "roteiro_video": "Nesta aula, vamos trabalhar investigar compras e critérios técnicos. Investigue requisitos de cadastro, segurança, capacidade e contratação no momento apropriado. Não prometer conformidade sem documentação. Um patrocinador comercial não substitui aprovação técnica ou processo de compras. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Investigar compras e critérios técnicos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Investigue requisitos de cadastro, segurança, capacidade e contratação no momento apropriado. Não prometer conformidade sem documentação. Um patrocinador comercial não substitui aprovação técnica ou processo de compras.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Construir relações sem manipular intermediários",
+          "tipo": "texto",
+          "conteudo": "Peça orientação sobre o processo e explique relevância sem fingir vínculo anterior. Relação profissional exige confiança de todos os envolvidos. Não oferecer vantagem indevida para conseguir acesso ou informação interna.",
+          "roteiro_video": "Nesta aula, vamos trabalhar construir relações sem manipular intermediários. Peça orientação sobre o processo e explique relevância sem fingir vínculo anterior. Relação profissional exige confiança de todos os envolvidos. Não oferecer vantagem indevida para conseguir acesso ou informação interna. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Construir relações sem manipular intermediários” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Peça orientação sobre o processo e explique relevância sem fingir vínculo anterior. Relação profissional exige confiança de todos os envolvidos. Não oferecer vantagem indevida para conseguir acesso ou informação interna.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Contato multilateral com contexto consistente",
+          "tipo": "texto",
+          "conteudo": "Conversar com vários participantes requer contexto consistente e coordenação, não bombardear a organização. Registre quem sabe de quê e preferências. Não usar uma recusa individual como motivo para enganar outro contato.",
+          "roteiro_video": "Nesta aula, vamos trabalhar contato multilateral com contexto consistente. Conversar com vários participantes requer contexto consistente e coordenação, não bombardear a organização. Registre quem sabe de quê e preferências. Não usar uma recusa individual como motivo para enganar outro contato. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Contato multilateral com contexto consistente” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conversar com vários participantes requer contexto consistente e coordenação, não bombardear a organização. Registre quem sabe de quê e preferências. Não usar uma recusa individual como motivo para enganar outro contato.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Reconhecer conflito de interesse e impedimentos",
+          "tipo": "texto",
+          "conteudo": "Identifique impedimentos, confidencialidade e conflito de interesse e encaminhe à função responsável. Não pedir documento interno não autorizado. Ganhar acesso não torna legítimo qualquer uso posterior da informação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar reconhecer conflito de interesse e impedimentos. Identifique impedimentos, confidencialidade e conflito de interesse e encaminhe à função responsável. Não pedir documento interno não autorizado. Ganhar acesso não torna legítimo qualquer uso posterior da informação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Reconhecer conflito de interesse e impedimentos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Identifique impedimentos, confidencialidade e conflito de interesse e encaminhe à função responsável. Não pedir documento interno não autorizado. Ganhar acesso não torna legítimo qualquer uso posterior da informação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.6",
+          "titulo": "Documentar papéis e incertezas",
+          "tipo": "texto",
+          "conteudo": "Cada papel deve ter fonte, data e nível de confirmação. Um contato pode deixar a empresa; mantenha atualização. Apoio presumido não deve aparecer como aprovação no plano de conta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar documentar papéis e incertezas. Cada papel deve ter fonte, data e nível de confirmação. Um contato pode deixar a empresa; mantenha atualização. Apoio presumido não deve aparecer como aprovação no plano de conta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Documentar papéis e incertezas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Cada papel deve ter fonte, data e nível de confirmação. Um contato pode deixar a empresa; mantenha atualização. Apoio presumido não deve aparecer como aprovação no plano de conta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Desenvolvimento da oportunidade",
+      "titulo_original_pt": "Desenvolvimento da oportunidade",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Criar motivo verificável para conversar",
+          "tipo": "texto",
+          "conteudo": "Relacione uma iniciativa confirmada a uma pergunta sobre tarefa relevante. Evite afirmar conhecimento da operação interna a partir de notícia. O objetivo inicial é verificar contexto, não anunciar diagnóstico completo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar criar motivo verificável para conversar. Relacione uma iniciativa confirmada a uma pergunta sobre tarefa relevante. Evite afirmar conhecimento da operação interna a partir de notícia. O objetivo inicial é verificar contexto, não anunciar diagnóstico completo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Criar motivo verificável para conversar” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Relacione uma iniciativa confirmada a uma pergunta sobre tarefa relevante. Evite afirmar conhecimento da operação interna a partir de notícia. O objetivo inicial é verificar contexto, não anunciar diagnóstico completo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Descobrir problemas entre áreas",
+          "tipo": "texto",
+          "conteudo": "Investigue como uma passagem entre áreas produz trabalho ou risco. Uma área pode perceber benefício e outra receber custo. Registre ambas antes de propor mudança ou estimar retorno.",
+          "roteiro_video": "Nesta aula, vamos trabalhar descobrir problemas entre áreas. Investigue como uma passagem entre áreas produz trabalho ou risco. Uma área pode perceber benefício e outra receber custo. Registre ambas antes de propor mudança ou estimar retorno. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Descobrir problemas entre áreas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Investigue como uma passagem entre áreas produz trabalho ou risco. Uma área pode perceber benefício e outra receber custo. Registre ambas antes de propor mudança ou estimar retorno.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Adaptar mensagens sem contradizer o escopo",
+          "tipo": "texto",
+          "conteudo": "Adapte evidência e linguagem ao critério do participante, mantendo oferta e limites iguais. Não vender integração a TI e simplicidade sem integração à operação como se fossem o mesmo escopo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar adaptar mensagens sem contradizer o escopo. Adapte evidência e linguagem ao critério do participante, mantendo oferta e limites iguais. Não vender integração a TI e simplicidade sem integração à operação como se fossem o mesmo escopo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Adaptar mensagens sem contradizer o escopo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Adapte evidência e linguagem ao critério do participante, mantendo oferta e limites iguais. Não vender integração a TI e simplicidade sem integração à operação como se fossem o mesmo escopo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Qualificar iniciativa, recursos e momento",
+          "tipo": "texto",
+          "conteudo": "Verifique existência do projeto, recursos, responsável e momento separadamente. Uma prioridade pública não garante compra. Lacunas precisam de investigação e podem justificar reduzir esforço ou arquivar a conta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar qualificar iniciativa, recursos e momento. Verifique existência do projeto, recursos, responsável e momento separadamente. Uma prioridade pública não garante compra. Lacunas precisam de investigação e podem justificar reduzir esforço ou arquivar a conta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Qualificar iniciativa, recursos e momento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Verifique existência do projeto, recursos, responsável e momento separadamente. Uma prioridade pública não garante compra. Lacunas precisam de investigação e podem justificar reduzir esforço ou arquivar a conta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Organizar reuniões com propósito e fuso",
+          "tipo": "texto",
+          "conteudo": "Confirme pauta, papéis, idioma, fuso e informação prévia necessária. Convidar muitos executivos não melhora automaticamente a reunião. Cada participante deve ter motivo ligado à decisão ou à investigação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar organizar reuniões com propósito e fuso. Confirme pauta, papéis, idioma, fuso e informação prévia necessária. Convidar muitos executivos não melhora automaticamente a reunião. Cada participante deve ter motivo ligado à decisão ou à investigação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Organizar reuniões com propósito e fuso” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confirme pauta, papéis, idioma, fuso e informação prévia necessária. Convidar muitos executivos não melhora automaticamente a reunião. Cada participante deve ter motivo ligado à decisão ou à investigação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.6",
+          "titulo": "Handoff de conta com evidência pertinente",
+          "tipo": "texto",
+          "conteudo": "Entregue mapa de papéis, diagnóstico, documentos autorizados, limites e pendências. Não transformar hipótese de influenciador em compromisso corporativo. Indique a unidade e o alcance de cada informação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar handoff de conta com evidência pertinente. Entregue mapa de papéis, diagnóstico, documentos autorizados, limites e pendências. Não transformar hipótese de influenciador em compromisso corporativo. Indique a unidade e o alcance de cada informação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Handoff de conta com evidência pertinente” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Entregue mapa de papéis, diagnóstico, documentos autorizados, limites e pendências. Não transformar hipótese de influenciador em compromisso corporativo. Indique a unidade e o alcance de cada informação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Execução e avaliação",
+      "titulo_original_pt": "Execução e avaliação",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Cadência por conta com interrupção definida",
+          "tipo": "texto",
+          "conteudo": "Coordene ações por conta e participante com motivo e parada definidos. Métrica individual de tentativas pode ocultar excesso coletivo. Interrompa ações incompatíveis com restrições e mudanças de contexto.",
+          "roteiro_video": "Nesta aula, vamos trabalhar cadência por conta com interrupção definida. Coordene ações por conta e participante com motivo e parada definidos. Métrica individual de tentativas pode ocultar excesso coletivo. Interrompa ações incompatíveis com restrições e mudanças de contexto. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Cadência por conta com interrupção definida” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Coordene ações por conta e participante com motivo e parada definidos. Métrica individual de tentativas pode ocultar excesso coletivo. Interrompa ações incompatíveis com restrições e mudanças de contexto.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Métricas de cobertura e avanço com denominador",
+          "tipo": "texto",
+          "conteudo": "Cobertura mede papéis relevantes compreendidos, não quantidade de nomes coletados. Avanço exige mudança verificável de informação ou decisão. Não contar contatos repetidos como nova cobertura de conta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar métricas de cobertura e avanço com denominador. Cobertura mede papéis relevantes compreendidos, não quantidade de nomes coletados. Avanço exige mudança verificável de informação ou decisão. Não contar contatos repetidos como nova cobertura de conta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Métricas de cobertura e avanço com denominador” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Cobertura mede papéis relevantes compreendidos, não quantidade de nomes coletados. Avanço exige mudança verificável de informação ou decisão. Não contar contatos repetidos como nova cobertura de conta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Revisão de perdas e ausência de resposta",
+          "tipo": "texto",
+          "conteudo": "Separe motivo confirmado de hipótese e falta de resposta. Silêncio não prova preço alto ou concorrente vencedor. Revise fit, relevância, canal e processo sem inventar a causa da perda.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão de perdas e ausência de resposta. Separe motivo confirmado de hipótese e falta de resposta. Silêncio não prova preço alto ou concorrente vencedor. Revise fit, relevância, canal e processo sem inventar a causa da perda. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão de perdas e ausência de resposta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe motivo confirmado de hipótese e falta de resposta. Silêncio não prova preço alto ou concorrente vencedor. Revise fit, relevância, canal e processo sem inventar a causa da perda.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Atualização do plano de conta e fontes",
+          "tipo": "texto",
+          "conteudo": "Marque alterações de fonte, papel e condição, mantendo histórico útil. Uma informação nova pode reduzir prioridade. Não conservar tese antiga só porque a equipe já investiu esforço nela.",
+          "roteiro_video": "Nesta aula, vamos trabalhar atualização do plano de conta e fontes. Marque alterações de fonte, papel e condição, mantendo histórico útil. Uma informação nova pode reduzir prioridade. Não conservar tese antiga só porque a equipe já investiu esforço nela. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Atualização do plano de conta e fontes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Marque alterações de fonte, papel e condição, mantendo histórico útil. Uma informação nova pode reduzir prioridade. Não conservar tese antiga só porque a equipe já investiu esforço nela.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.5",
+          "titulo": "Simulação de comitê com IA e rubrica",
+          "tipo": "texto",
+          "conteudo": "Distribua critérios entre operação, segurança e compras. O aluno deve investigar dependências e reconhecer veto não resolvido. Concordância de um ator não deve produzir aprovação automática de todos.",
+          "roteiro_video": "Nesta aula, vamos trabalhar simulação de comitê com ia e rubrica. Distribua critérios entre operação, segurança e compras. O aluno deve investigar dependências e reconhecer veto não resolvido. Concordância de um ator não deve produzir aprovação automática de todos. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Simulação de comitê com IA e rubrica” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Distribua critérios entre operação, segurança e compras. O aluno deve investigar dependências e reconhecer veto não resolvido. Concordância de um ator não deve produzir aprovação automática de todos.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.6",
+          "titulo": "Prova teórica e defesa do plano de conta",
+          "tipo": "texto",
+          "conteudo": "Defenda seleção, evidências, prioridades e ações, incluindo critério de abandono. A prova profissional exige 40 questões; a prática avalia raciocínio e conduta, sem garantir acesso ou contrato com grandes empresas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar prova teórica e defesa do plano de conta. Defenda seleção, evidências, prioridades e ações, incluindo critério de abandono. A prova profissional exige 40 questões; a prática avalia raciocínio e conduta, sem garantir acesso ou contrato com grandes empresas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Prova teórica e defesa do plano de conta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defenda seleção, evidências, prioridades e ações, incluindo critério de abandono. A prova profissional exige 40 questões; a prática avalia raciocínio e conduta, sem garantir acesso ou contrato com grandes empresas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A Rede Farol tem seis unidades. Operação quer padronizar registros; TI exige teste de acesso; compras pede cadastro; finanças não aprovou recursos. O patrocinador aceita uma apresentação, mas não assina contratos. Um anúncio público de expansão foi registrado incorretamente como orçamento confirmado."
+  },
+  "projeto": {
+    "instrucoes": "Entregue plano de conta, mapa de quatro papéis, hipótese com fonte e cinco ações coordenadas; apresente condição de reduzir prioridade ou encerrar.",
+    "gabarito": "Corrija orçamento para desconhecido. Confirme capacidade multiunidade e requisitos antes de vender piloto. Coordene operação, TI, compras e finanças com propósito distinto; não multiplicar contatos sem contexto. Se requisito obrigatório não for atendido, reduza esforço ou encerre a oferta incompatível."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "16-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Estratégia de contas grandes”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Contas grandes podem ter várias unidades, dependências e critérios de aprovação. Complexidade não é sinônimo de ticket alto. Mapeie decisões e capacidade de atendimento antes de investir esforço desproporcional.",
+          "Defina fit obrigatório, potencial investigável e custo de abordagem. Não escolher apenas logotipos conhecidos. Uma conta prestigiosa que exige recurso inexistente pode ser inadequada para a oferta atual.",
+          "Use fontes profissionais permitidas e diferencie anúncio de projeto aprovado. Registre data e alcance da informação. Uma iniciativa corporativa não prova que toda unidade tenha orçamento ou responsabilidade equivalente.",
+          "Escreva hipótese, evidência, alternativas e pergunta de verificação. Não montar um dossiê que transforma inferência em fato. A pesquisa deve permitir descartar a tese quando o comprador corrige o contexto.",
+          "Defina limite de esforço e critério de reavaliação por conta. Muitas horas pesquisadas não justificam insistência após falta de fit. Compare qualidade das informações obtidas, não apenas quantidade de páginas.",
+          "Organize objetivo, fontes, papéis, critérios, hipóteses, restrições e próximos passos. Cada lacuna precisa de caminho possível de investigação. Plano de conta não é previsão de compra garantida."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "16-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Partes interessadas e acesso”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Confirme quem usa, influencia, avalia tecnicamente e aprova. Influência varia por decisão; não atribua poder por título isolado. Preserve o papel de intermediários sem tentar contorná-los com informação falsa.",
+          "Investigue requisitos de cadastro, segurança, capacidade e contratação no momento apropriado. Não prometer conformidade sem documentação. Um patrocinador comercial não substitui aprovação técnica ou processo de compras.",
+          "Peça orientação sobre o processo e explique relevância sem fingir vínculo anterior. Relação profissional exige confiança de todos os envolvidos. Não oferecer vantagem indevida para conseguir acesso ou informação interna.",
+          "Conversar com vários participantes requer contexto consistente e coordenação, não bombardear a organização. Registre quem sabe de quê e preferências. Não usar uma recusa individual como motivo para enganar outro contato.",
+          "Identifique impedimentos, confidencialidade e conflito de interesse e encaminhe à função responsável. Não pedir documento interno não autorizado. Ganhar acesso não torna legítimo qualquer uso posterior da informação.",
+          "Cada papel deve ter fonte, data e nível de confirmação. Um contato pode deixar a empresa; mantenha atualização. Apoio presumido não deve aparecer como aprovação no plano de conta."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "16-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Desenvolvimento da oportunidade”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Relacione uma iniciativa confirmada a uma pergunta sobre tarefa relevante. Evite afirmar conhecimento da operação interna a partir de notícia. O objetivo inicial é verificar contexto, não anunciar diagnóstico completo.",
+          "Investigue como uma passagem entre áreas produz trabalho ou risco. Uma área pode perceber benefício e outra receber custo. Registre ambas antes de propor mudança ou estimar retorno.",
+          "Adapte evidência e linguagem ao critério do participante, mantendo oferta e limites iguais. Não vender integração a TI e simplicidade sem integração à operação como se fossem o mesmo escopo.",
+          "Verifique existência do projeto, recursos, responsável e momento separadamente. Uma prioridade pública não garante compra. Lacunas precisam de investigação e podem justificar reduzir esforço ou arquivar a conta.",
+          "Confirme pauta, papéis, idioma, fuso e informação prévia necessária. Convidar muitos executivos não melhora automaticamente a reunião. Cada participante deve ter motivo ligado à decisão ou à investigação.",
+          "Entregue mapa de papéis, diagnóstico, documentos autorizados, limites e pendências. Não transformar hipótese de influenciador em compromisso corporativo. Indique a unidade e o alcance de cada informação."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "16-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Execução e avaliação”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Coordene ações por conta e participante com motivo e parada definidos. Métrica individual de tentativas pode ocultar excesso coletivo. Interrompa ações incompatíveis com restrições e mudanças de contexto.",
+          "Cobertura mede papéis relevantes compreendidos, não quantidade de nomes coletados. Avanço exige mudança verificável de informação ou decisão. Não contar contatos repetidos como nova cobertura de conta.",
+          "Separe motivo confirmado de hipótese e falta de resposta. Silêncio não prova preço alto ou concorrente vencedor. Revise fit, relevância, canal e processo sem inventar a causa da perda.",
+          "Marque alterações de fonte, papel e condição, mantendo histórico útil. Uma informação nova pode reduzir prioridade. Não conservar tese antiga só porque a equipe já investiu esforço nela.",
+          "Distribua critérios entre operação, segurança e compras. O aluno deve investigar dependências e reconhecer veto não resolvido. Concordância de um ator não deve produzir aprovação automática de todos.",
+          "Defenda seleção, evidências, prioridades e ações, incluindo critério de abandono. A prova profissional exige 40 questões; a prática avalia raciocínio e conduta, sem garantir acesso ou contrato com grandes empresas."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "16-FINAL",
+        "pergunta": "Entregue plano de conta, mapa de quatro papéis, hipótese com fonte e cinco ações coordenadas; apresente condição de reduzir prioridade ou encerrar.",
+        "resposta_modelo": "Corrija orçamento para desconhecido. Confirme capacidade multiunidade e requisitos antes de vender piloto. Coordene operação, TI, compras e finanças com propósito distinto; não multiplicar contatos sem contexto. Se requisito obrigatório não for atendido, reduza esforço ou encerre a oferta incompatível.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

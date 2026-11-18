@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-22",
+  "course_number": 22,
+  "locale": "en-IN",
+  "titulo": "Selling to the US and India",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Research without stereotypes",
+      "titulo_original_pt": "Preparação para vendas internacionais",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Research without stereotypes",
+          "tipo": "texto",
+          "conteudo": "Research industry, workflow and service conditions rather than national stereotypes. Aggregate data informs questions, not individual assumptions. Confirm language, preferences and criteria with the buyer.",
+          "roteiro_video": "In this lesson we explore research without stereotypes. Research industry, workflow and service conditions rather than national stereotypes. Aggregate data informs questions, not individual assumptions. Confirm language, preferences and criteria with the buyer. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Research without stereotypes” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Research industry, workflow and service conditions rather than national stereotypes. Aggregate data informs questions, not individual assumptions. Confirm language, preferences and criteria with the buyer.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Cross-border capability",
+          "tipo": "texto",
+          "conteudo": "Verify contracting, delivery and support capability before prospecting. Language, currency and service are real dependencies. A website does not establish international eligibility or payment availability.",
+          "roteiro_video": "In this lesson we explore cross-border capability. Verify contracting, delivery and support capability before prospecting. Language, currency and service are real dependencies. A website does not establish international eligibility or payment availability. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Cross-border capability” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Verify contracting, delivery and support capability before prospecting. Language, currency and service are real dependencies. A website does not establish international eligibility or payment availability.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Language and accessibility",
+          "tipo": "texto",
+          "conteudo": "Ask relevant language and format preferences and use clear wording. Accent is not intelligence. Offer a written summary and verify understanding without patronising the buyer.",
+          "roteiro_video": "In this lesson we explore language and accessibility. Ask relevant language and format preferences and use clear wording. Accent is not intelligence. Offer a written summary and verify understanding without patronising the buyer. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Language and accessibility” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask relevant language and format preferences and use clear wording. Accent is not intelligence. Offer a written summary and verify understanding without patronising the buyer.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Comparing local sources",
+          "tipo": "texto",
+          "conteudo": "Check population, period, currency and definitions before comparing markets. Retail statistics do not describe all B2B. Local sources inform context but do not replace account discovery.",
+          "roteiro_video": "In this lesson we explore comparing local sources. Check population, period, currency and definitions before comparing markets. Retail statistics do not describe all B2B. Local sources inform context but do not replace account discovery. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Comparing local sources” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Check population, period, currency and definitions before comparing markets. Retail statistics do not describe all B2B. Local sources inform context but do not replace account discovery.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: US buying roles",
+      "titulo_original_pt": "Atuação com clientes nos EUA",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "US buying roles",
+          "tipo": "texto",
+          "conteudo": "Explore users, approvers, procurement and technical review in the actual organisation. Do not assume universally fast individual decisions in the US. Confirm each participant's responsibilities.",
+          "roteiro_video": "In this lesson we explore us buying roles. Explore users, approvers, procurement and technical review in the actual organisation. Do not assume universally fast individual decisions in the US. Confirm each participant's responsibilities. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “US buying roles” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore users, approvers, procurement and technical review in the actual organisation. Do not assume universally fast individual decisions in the US. Confirm each participant's responsibilities.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Truthful US messaging",
+          "tipo": "texto",
+          "conteudo": "Use identity, truthful context and a clear request under channel review. B2B commercial email is not automatically exempt from requirements. Phone and SMS need separate analysis.",
+          "roteiro_video": "In this lesson we explore truthful us messaging. Use identity, truthful context and a clear request under channel review. B2B commercial email is not automatically exempt from requirements. Phone and SMS need separate analysis. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Truthful US messaging” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use identity, truthful context and a clear request under channel review. B2B commercial email is not automatically exempt from requirements. Phone and SMS need separate analysis.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "US time zones",
+          "tipo": "texto",
+          "conteudo": "Confirm city, date and time zone in the invitation rather than using a fixed offset. Daylight saving can change differences with Brazil and India. Obtain acceptance of the converted time.",
+          "roteiro_video": "In this lesson we explore us time zones. Confirm city, date and time zone in the invitation rather than using a fixed offset. Daylight saving can change differences with Brazil and India. Obtain acceptance of the converted time. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “US time zones” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Confirm city, date and time zone in the invitation rather than using a fixed offset. Daylight saving can change differences with Brazil and India. Obtain acceptance of the converted time.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "US privacy and channels",
+          "tipo": "texto",
+          "conteudo": "Rules can vary by channel, state and context, including recording. Sellers should not pick a convenient general rule. Use a reviewed procedure for the actual audience and action.",
+          "roteiro_video": "In this lesson we explore us privacy and channels. Rules can vary by channel, state and context, including recording. Sellers should not pick a convenient general rule. Use a reviewed procedure for the actual audience and action. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “US privacy and channels” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Rules can vary by channel, state and context, including recording. Sellers should not pick a convenient general rule. Use a reviewed procedure for the actual audience and action.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Indian buying contexts",
+      "titulo_original_pt": "Atuação com clientes na Índia",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Indian buying contexts",
+          "tipo": "texto",
+          "conteudo": "Indian organisations vary by size, industry, language and purchasing process. Confirm sites and responsibilities. One Pune or Bengaluru case does not represent all Indian businesses.",
+          "roteiro_video": "In this lesson we explore indian buying contexts. Indian organisations vary by size, industry, language and purchasing process. Confirm sites and responsibilities. One Pune or Bengaluru case does not represent all Indian businesses. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Indian buying contexts” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Indian organisations vary by size, industry, language and purchasing process. Confirm sites and responsibilities. One Pune or Bengaluru case does not represent all Indian businesses.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Preferred language",
+          "tipo": "texto",
+          "conteudo": "English may suit one participant but not the whole group. Ask about language and format without promising unsupported service. Politeness or silence is not agreement.",
+          "roteiro_video": "In this lesson we explore preferred language. English may suit one participant but not the whole group. Ask about language and format without promising unsupported service. Politeness or silence is not agreement. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Preferred language” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "English may suit one participant but not the whole group. Ask about language and format without promising unsupported service. Politeness or silence is not agreement.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "IST and decision participants",
+          "tipo": "texto",
+          "conteudo": "Confirm date, IST time and needed participants using a time-zone-aware calendar. Half-hour offsets can cause manual conversion errors. Availability must be agreed rather than presumed.",
+          "roteiro_video": "In this lesson we explore ist and decision participants. Confirm date, IST time and needed participants using a time-zone-aware calendar. Half-hour offsets can cause manual conversion errors. Availability must be agreed rather than presumed. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “IST and decision participants” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Confirm date, IST time and needed participants using a time-zone-aware calendar. Half-hour offsets can cause manual conversion errors. Availability must be agreed rather than presumed.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Indian privacy and channel review",
+          "tipo": "texto",
+          "conteudo": "Verify applicable provisions and commencement dates alongside telecommunications and platform rules. Publication alone does not establish that every provision is fully in force.",
+          "roteiro_video": "In this lesson we explore indian privacy and channel review. Verify applicable provisions and commencement dates alongside telecommunications and platform rules. Publication alone does not establish that every provision is fully in force. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Indian privacy and channel review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Verify applicable provisions and commencement dates alongside telecommunications and platform rules. Publication alone does not establish that every provision is fully in force.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: International proposal basis",
+      "titulo_original_pt": "Laboratório internacional",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "International proposal basis",
+          "tipo": "texto",
+          "conteudo": "Specify currency, term, scope, support and tax matters for responsible confirmation. Do not convert price without reviewing costs and terms. Exchange rates are dated information, not constants.",
+          "roteiro_video": "In this lesson we explore international proposal basis. Specify currency, term, scope, support and tax matters for responsible confirmation. Do not convert price without reviewing costs and terms. Exchange rates are dated information, not constants. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “International proposal basis” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Specify currency, term, scope, support and tax matters for responsible confirmation. Do not convert price without reviewing costs and terms. Exchange rates are dated information, not constants.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "US scenario practice",
+          "tipo": "texto",
+          "conteudo": "Practise integration and contract-review requirements without assuming contact authority. Confirm dated time zones and acceptance evidence. A conditional test may be the right outcome.",
+          "roteiro_video": "In this lesson we explore us scenario practice. Practise integration and contract-review requirements without assuming contact authority. Confirm dated time zones and acceptance evidence. A conditional test may be the right outcome. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “US scenario practice” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Practise integration and contract-review requirements without assuming contact authority. Confirm dated time zones and acceptance evidence. A conditional test may be the right outcome.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "India scenario practice",
+          "tipo": "texto",
+          "conteudo": "Practise operational review, invoicing and language preferences requiring clarification. Do not promise tax treatment, local support or training without confirmation. Align next steps with dependencies.",
+          "roteiro_video": "In this lesson we explore india scenario practice. Practise operational review, invoicing and language preferences requiring clarification. Do not promise tax treatment, local support or training without confirmation. Align next steps with dependencies. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “India scenario practice” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Practise operational review, invoicing and language preferences requiring clarification. Do not promise tax treatment, local support or training without confirmation. Align next steps with dependencies.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "International handoff",
+          "tipo": "texto",
+          "conteudo": "Record market, agreed language, currency, date/time zone, roles, limits and gaps. Explain differences between scenarios. Localisation adapts context rather than merely replacing names.",
+          "roteiro_video": "In this lesson we explore international handoff. Record market, agreed language, currency, date/time zone, roles, limits and gaps. Explain differences between scenarios. Localisation adapts context rather than merely replacing names. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “International handoff” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record market, agreed language, currency, date/time zone, roles, limits and gaps. Explain differences between scenarios. Localisation adapts context rather than merely replacing names.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A supplier wants to sell one service to Ohio and Pune without confirmed local support, billing currency or tax treatment. An invitation says 10:00 without date or zone. The seller assumes English and WhatsApp for everyone. Buyers require different reviewers.\n\nBuild a Pune scenario with an operations supervisor, accounts review and Asia/Kolkata scheduling. The buyer requests English text but asks about training-language options. No local support or tax arrangement is yet confirmed."
+  },
+  "projeto": {
+    "instrucoes": "Prepare two independent briefs, complete invitations and an offer/contracting/communication issue matrix. Explain why currency conversion alone is insufficient.",
+    "gabarito": "Confirm eligibility, delivery capability and terms before proposing. Use dated city-based time zones and verify conversion. Ask language/channel preferences and involve the specific reviewers. Invent no support, tax, timing or international payment conditions."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "22-M1",
+        "pergunta": "How would you apply “Module 1: Research without stereotypes” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Research industry, workflow and service conditions rather than national stereotypes. Aggregate data informs questions, not individual assumptions. Confirm language, preferences and criteria with the buyer.",
+          "Verify contracting, delivery and support capability before prospecting. Language, currency and service are real dependencies. A website does not establish international eligibility or payment availability.",
+          "Ask relevant language and format preferences and use clear wording. Accent is not intelligence. Offer a written summary and verify understanding without patronising the buyer.",
+          "Check population, period, currency and definitions before comparing markets. Retail statistics do not describe all B2B. Local sources inform context but do not replace account discovery."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "22-M2",
+        "pergunta": "How would you apply “Module 2: US buying roles” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Explore users, approvers, procurement and technical review in the actual organisation. Do not assume universally fast individual decisions in the US. Confirm each participant's responsibilities.",
+          "Use identity, truthful context and a clear request under channel review. B2B commercial email is not automatically exempt from requirements. Phone and SMS need separate analysis.",
+          "Confirm city, date and time zone in the invitation rather than using a fixed offset. Daylight saving can change differences with Brazil and India. Obtain acceptance of the converted time.",
+          "Rules can vary by channel, state and context, including recording. Sellers should not pick a convenient general rule. Use a reviewed procedure for the actual audience and action."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "22-M3",
+        "pergunta": "How would you apply “Module 3: Indian buying contexts” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Indian organisations vary by size, industry, language and purchasing process. Confirm sites and responsibilities. One Pune or Bengaluru case does not represent all Indian businesses.",
+          "English may suit one participant but not the whole group. Ask about language and format without promising unsupported service. Politeness or silence is not agreement.",
+          "Confirm date, IST time and needed participants using a time-zone-aware calendar. Half-hour offsets can cause manual conversion errors. Availability must be agreed rather than presumed.",
+          "Verify applicable provisions and commencement dates alongside telecommunications and platform rules. Publication alone does not establish that every provision is fully in force."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "22-M4",
+        "pergunta": "How would you apply “Module 4: International proposal basis” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Specify currency, term, scope, support and tax matters for responsible confirmation. Do not convert price without reviewing costs and terms. Exchange rates are dated information, not constants.",
+          "Practise integration and contract-review requirements without assuming contact authority. Confirm dated time zones and acceptance evidence. A conditional test may be the right outcome.",
+          "Practise operational review, invoicing and language preferences requiring clarification. Do not promise tax treatment, local support or training without confirmation. Align next steps with dependencies.",
+          "Record market, agreed language, currency, date/time zone, roles, limits and gaps. Explain differences between scenarios. Localisation adapts context rather than merely replacing names."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "22-FINAL",
+        "pergunta": "Prepare two independent briefs, complete invitations and an offer/contracting/communication issue matrix. Explain why currency conversion alone is insufficient.",
+        "resposta_modelo": "Confirm eligibility, delivery capability and terms before proposing. Use dated city-based time zones and verify conversion. Ask language/channel preferences and involve the specific reviewers. Invent no support, tax, timing or international payment conditions.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

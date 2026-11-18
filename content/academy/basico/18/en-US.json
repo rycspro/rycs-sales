@@ -1,0 +1,609 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-18",
+  "course_number": 18,
+  "locale": "en-US",
+  "titulo": "Sales Management",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 8,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Objectives and constraints",
+      "titulo_original_pt": "Diagnóstico e planejamento comercial",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Objectives and constraints",
+          "tipo": "texto",
+          "conteudo": "Translate objectives into observable outcomes with capacity, timing and constraints. Targets without assumptions can distort behaviour. Diagnose quality losses before demanding more activity.",
+          "roteiro_video": "In this lesson we explore objectives and constraints. Translate objectives into observable outcomes with capacity, timing and constraints. Targets without assumptions can distort behaviour. Diagnose quality losses before demanding more activity. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Objectives and constraints” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Translate objectives into observable outcomes with capacity, timing and constraints. Targets without assumptions can distort behaviour. Diagnose quality losses before demanding more activity.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Pipeline stage criteria",
+          "tipo": "texto",
+          "conteudo": "Define each stage's entry, exit and evidence. Feeling-based stages weaken forecasts and coaching. Sample records to check consistent application.",
+          "roteiro_video": "In this lesson we explore pipeline stage criteria. Define each stage's entry, exit and evidence. Feeling-based stages weaken forecasts and coaching. Sample records to check consistent application. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Pipeline stage criteria” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define each stage's entry, exit and evidence. Feeling-based stages weaken forecasts and coaching. Sample records to check consistent application.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Team capacity",
+          "tipo": "texto",
+          "conteudo": "Estimate research, contact, records, meetings and learning time. Raw volume alone should not determine workload. Include complexity and dependencies and update estimates with observations.",
+          "roteiro_video": "In this lesson we explore team capacity. Estimate research, contact, records, meetings and learning time. Raw volume alone should not determine workload. Include complexity and dependencies and update estimates with observations. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Team capacity” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Estimate research, contact, records, meetings and learning time. Raw volume alone should not determine workload. Include complexity and dependencies and update estimates with observations.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Targets and assumptions",
+          "tipo": "texto",
+          "conteudo": "Build targets from capacity and comparable historical conversions, including uncertainty. External averages are not individual obligations. A planning hypothesis is not a revenue promise.",
+          "roteiro_video": "In this lesson we explore targets and assumptions. Build targets from capacity and comparable historical conversions, including uncertainty. External averages are not individual obligations. A planning hypothesis is not a revenue promise. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Targets and assumptions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Build targets from capacity and comparable historical conversions, including uncertainty. External averages are not individual obligations. A planning hypothesis is not a revenue promise.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.5",
+          "titulo": "Territories and allocation",
+          "tipo": "texto",
+          "conteudo": "Use transparent allocation and review criteria such as capacity and portfolio characteristics. Document justified exceptions. Avoid rewarding raw volume across incomparable territories.",
+          "roteiro_video": "In this lesson we explore territories and allocation. Use transparent allocation and review criteria such as capacity and portfolio characteristics. Document justified exceptions. Avoid rewarding raw volume across incomparable territories. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Territories and allocation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use transparent allocation and review criteria such as capacity and portfolio characteristics. Document justified exceptions. Avoid rewarding raw volume across incomparable territories.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.6",
+          "titulo": "An improvement plan",
+          "tipo": "texto",
+          "conteudo": "Define observed problem, hypothesis, action, owner, timing and effect measure, including stop/review criteria. Too many unprioritised actions obscure learning.",
+          "roteiro_video": "In this lesson we explore an improvement plan. Define observed problem, hypothesis, action, owner, timing and effect measure, including stop/review criteria. Too many unprioritised actions obscure learning. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “An improvement plan” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define observed problem, hypothesis, action, owner, timing and effect measure, including stop/review criteria. Too many unprioritised actions obscure learning.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Metric definitions",
+      "titulo_original_pt": "Gestão de indicadores",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Metric definitions",
+          "tipo": "texto",
+          "conteudo": "Document numerator, denominator, window, eligibility and duplicates. Without a dictionary, identical labels may describe different measures. Fix definitions before interpreting change.",
+          "roteiro_video": "In this lesson we explore metric definitions. Document numerator, denominator, window, eligibility and duplicates. Without a dictionary, identical labels may describe different measures. Fix definitions before interpreting change. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Metric definitions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Document numerator, denominator, window, eligibility and duplicates. Without a dictionary, identical labels may describe different measures. Fix definitions before interpreting change.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Activity, quality and outcome",
+          "tipo": "texto",
+          "conteudo": "Attempts measure activity, fit and records reflect quality, and revenue is a later outcome. One metric encourages shortcuts. Review the set and unintended consequences.",
+          "roteiro_video": "In this lesson we explore activity, quality and outcome. Attempts measure activity, fit and records reflect quality, and revenue is a later outcome. One metric encourages shortcuts. Review the set and unintended consequences. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Activity, quality and outcome” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Attempts measure activity, fit and records reflect quality, and revenue is a later outcome. One metric encourages shortcuts. Review the set and unintended consequences.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Cohorts and cycle time",
+          "tipo": "texto",
+          "conteudo": "Compare similarly originated opportunities with equivalent maturation. Mixing old and new deals distorts conversion. Explain still-open cases before reporting average cycle time.",
+          "roteiro_video": "In this lesson we explore cohorts and cycle time. Compare similarly originated opportunities with equivalent maturation. Mixing old and new deals distorts conversion. Explain still-open cases before reporting average cycle time. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Cohorts and cycle time” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare similarly originated opportunities with equivalent maturation. Mixing old and new deals distorts conversion. Explain still-open cases before reporting average cycle time.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Forecast uncertainty",
+          "tipo": "texto",
+          "conteudo": "Forecasts combine current information and assumptions, not certainty. Separate base, conservative and favourable scenarios with conditions. Arbitrary stage probabilities do not replace evidence and revisable judgement.",
+          "roteiro_video": "In this lesson we explore forecast uncertainty. Forecasts combine current information and assumptions, not certainty. Separate base, conservative and favourable scenarios with conditions. Arbitrary stage probabilities do not replace evidence and revisable judgement. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Forecast uncertainty” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Forecasts combine current information and assumptions, not certainty. Separate base, conservative and favourable scenarios with conditions. Arbitrary stage probabilities do not replace evidence and revisable judgement.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Perverse incentives",
+          "tipo": "texto",
+          "conteudo": "Examine what targets reward: poor-fit meetings, duplicate records or delayed losses. Fix criteria and supervision. Do not assume individual bad faith where design encourages distortion.",
+          "roteiro_video": "In this lesson we explore perverse incentives. Examine what targets reward: poor-fit meetings, duplicate records or delayed losses. Fix criteria and supervision. Do not assume individual bad faith where design encourages distortion. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Perverse incentives” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Examine what targets reward: poor-fit meetings, duplicate records or delayed losses. Fix criteria and supervision. Do not assume individual bad faith where design encourages distortion.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.6",
+          "titulo": "Data integrity reviews",
+          "tipo": "texto",
+          "conteudo": "Sample records for source, consistency and currency. Correct with traceability. Do not silently rewrite history to improve reports; document methodological changes and their effects.",
+          "roteiro_video": "In this lesson we explore data integrity reviews. Sample records for source, consistency and currency. Correct with traceability. Do not silently rewrite history to improve reports; document methodological changes and their effects. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Data integrity reviews” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Sample records for source, consistency and currency. Correct with traceability. Do not silently rewrite history to improve reports; document methodological changes and their effects.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Evidence-based feedback",
+      "titulo_original_pt": "Desenvolvimento da equipe",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Evidence-based feedback",
+          "tipo": "texto",
+          "conteudo": "Describe observed behaviour, effect and a trainable alternative. Avoid personal labels and assumed intent. Use authorised or fictional excerpts and invite the rep's interpretation.",
+          "roteiro_video": "In this lesson we explore evidence-based feedback. Describe observed behaviour, effect and a trainable alternative. Avoid personal labels and assumed intent. Use authorised or fictional excerpts and invite the rep's interpretation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Evidence-based feedback” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Describe observed behaviour, effect and a trainable alternative. Avoid personal labels and assumed intent. Use authorised or fictional excerpts and invite the rep's interpretation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "One-skill coaching",
+          "tipo": "texto",
+          "conteudo": "Choose one skill, demonstrate, practise and reassess against the same criterion. Ten simultaneous corrections dilute focus. Test transfer to a new situation, not memorised repetition.",
+          "roteiro_video": "In this lesson we explore one-skill coaching. Choose one skill, demonstrate, practise and reassess against the same criterion. Ten simultaneous corrections dilute focus. Test transfer to a new situation, not memorised repetition. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “One-skill coaching” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Choose one skill, demonstrate, practise and reassess against the same criterion. Ten simultaneous corrections dilute focus. Test transfer to a new situation, not memorised repetition.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Rubric calibration",
+          "tipo": "texto",
+          "conteudo": "Have two evaluators score the same case and discuss evidence behind differences. Do not merely force agreement. Refine ambiguous anchors and monitor consistency without false precision.",
+          "roteiro_video": "In this lesson we explore rubric calibration. Have two evaluators score the same case and discuss evidence behind differences. Do not merely force agreement. Refine ambiguous anchors and monitor consistency without false precision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Rubric calibration” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Have two evaluators score the same case and discuss evidence behind differences. Do not merely force agreement. Refine ambiguous anchors and monitor consistency without false precision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Training and routines",
+          "tipo": "texto",
+          "conteudo": "Connect training to observed execution gaps and provide practice. Not every problem is a skill deficit; process, tools and offer design may constrain performance.",
+          "roteiro_video": "In this lesson we explore training and routines. Connect training to observed execution gaps and provide practice. Not every problem is a skill deficit; process, tools and offer design may constrain performance. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Training and routines” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Connect training to observed execution gaps and provide practice. Not every problem is a skill deficit; process, tools and offer design may constrain performance.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Learning from errors",
+          "tipo": "texto",
+          "conteudo": "Distinguish misunderstanding, process failure and deliberate conduct through fair investigation. Punishing disclosure can hide problems. Accountability should not encourage defensive falsification.",
+          "roteiro_video": "In this lesson we explore learning from errors. Distinguish misunderstanding, process failure and deliberate conduct through fair investigation. Punishing disclosure can hide problems. Accountability should not encourage defensive falsification. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Learning from errors” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Distinguish misunderstanding, process failure and deliberate conduct through fair investigation. Punishing disclosure can hide problems. Accountability should not encourage defensive falsification.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.6",
+          "titulo": "Escalation and privacy",
+          "tipo": "texto",
+          "conteudo": "Define owners for security, data, contract and people issues. Managers should not improvise every decision. Share only necessary information and preserve responsible review procedures.",
+          "roteiro_video": "In this lesson we explore escalation and privacy. Define owners for security, data, contract and people issues. Managers should not improvise every decision. Share only necessary information and preserve responsible review procedures. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Escalation and privacy” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define owners for security, data, contract and people issues. Managers should not improvise every decision. Share only necessary information and preserve responsible review procedures.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Purposeful one-to-ones",
+      "titulo_original_pt": "Ritmo de gestão e projeto",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Purposeful one-to-ones",
+          "tipo": "texto",
+          "conteudo": "Discuss context, obstacles, evidence and development with room for the rep's perspective. Avoid turning every meeting into metric pressure. Record and revisit agreed actions.",
+          "roteiro_video": "In this lesson we explore purposeful one-to-ones. Discuss context, obstacles, evidence and development with room for the rep's perspective. Avoid turning every meeting into metric pressure. Record and revisit agreed actions. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Purposeful one-to-ones” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Discuss context, obstacles, evidence and development with room for the rep's perspective. Avoid turning every meeting into metric pressure. Record and revisit agreed actions.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Decision-focused pipeline review",
+          "tipo": "texto",
+          "conteudo": "Discuss changes, gaps and justified next action. Reading every row without decisions wastes time. Reclassify opportunities lacking a viable path rather than defend optimism.",
+          "roteiro_video": "In this lesson we explore decision-focused pipeline review. Discuss changes, gaps and justified next action. Reading every row without decisions wastes time. Reclassify opportunities lacking a viable path rather than defend optimism. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Decision-focused pipeline review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Discuss changes, gaps and justified next action. Reading every row without decisions wastes time. Reclassify opportunities lacking a viable path rather than defend optimism.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Controlled experiments",
+          "tipo": "texto",
+          "conteudo": "Define hypothesis, comparison, duration and measure before changing routines. Check quality and conduct effects. Small or inconclusive results must not become a winning-method story.",
+          "roteiro_video": "In this lesson we explore controlled experiments. Define hypothesis, comparison, duration and measure before changing routines. Check quality and conduct effects. Small or inconclusive results must not become a winning-method story. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Controlled experiments” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define hypothesis, comparison, duration and measure before changing routines. Check quality and conduct effects. Small or inconclusive results must not become a winning-method story.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Loss reviews",
+          "tipo": "texto",
+          "conteudo": "Combine records and buyer feedback where available, preserving unknowns. Not every loss is price-driven. Seek a testable improvement rather than someone to blame.",
+          "roteiro_video": "In this lesson we explore loss reviews. Combine records and buyer feedback where available, preserving unknowns. Not every loss is price-driven. Seek a testable improvement rather than someone to blame. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Loss reviews” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Combine records and buyer feedback where available, preserving unknowns. Not every loss is price-driven. Seek a testable improvement rather than someone to blame.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.5",
+          "titulo": "A 30-day management plan",
+          "tipo": "texto",
+          "conteudo": "Choose a few priorities with weekly actions, owners and review criteria. Exercise data are fictional. Do not guarantee growth from a plan or small sample.",
+          "roteiro_video": "In this lesson we explore a 30-day management plan. Choose a few priorities with weekly actions, owners and review criteria. Exercise data are fictional. Do not guarantee growth from a plan or small sample. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A 30-day management plan” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Choose a few priorities with weekly actions, owners and review criteria. Exercise data are fictional. Do not guarantee growth from a plan or small sample.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.6",
+          "titulo": "Defending the management plan",
+          "tipo": "texto",
+          "conteudo": "Present diagnosis, rejected alternatives, assumptions and risks. Human review should test coherence and unintended effects. A complete table does not prove operational feasibility.",
+          "roteiro_video": "In this lesson we explore defending the management plan. Present diagnosis, rejected alternatives, assumptions and risks. Human review should test coherence and unintended effects. A complete table does not prove operational feasibility. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Defending the management plan” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Present diagnosis, rejected alternatives, assumptions and risks. Human review should test coherence and unintended effects. A complete table does not prove operational feasibility.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A fictional team logged 100 scheduled meetings, 60 held and 30 meeting quality criteria within the same set. The manager rewards only scheduling and some records are duplicates. Four reps have different portfolios and complexity. Forecasts treat every proposal as guaranteed revenue.\n\nA US sales manager coordinates remote account executives and an SDR team across time zones. Compare eligible cohorts and workloads before ranking individuals. Procurement reviews create dependencies outside the rep's direct control."
+  },
+  "projeto": {
+    "instrucoes": "Fix definitions, calculate attendance and quality, propose one-skill coaching and a 30-day plan with hypothesis, measure and review condition.",
+    "gabarito": "Before deduplication, stated-set attendance is 60%, quality among held meetings 50%, and quality among bookings 30%. Recalculate after correction. Add quality to incentives, preserve forecast uncertainty and avoid assuming the target caused every issue."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "18-M1",
+        "pergunta": "How would you apply “Module 1: Objectives and constraints” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Translate objectives into observable outcomes with capacity, timing and constraints. Targets without assumptions can distort behaviour. Diagnose quality losses before demanding more activity.",
+          "Define each stage's entry, exit and evidence. Feeling-based stages weaken forecasts and coaching. Sample records to check consistent application.",
+          "Estimate research, contact, records, meetings and learning time. Raw volume alone should not determine workload. Include complexity and dependencies and update estimates with observations.",
+          "Build targets from capacity and comparable historical conversions, including uncertainty. External averages are not individual obligations. A planning hypothesis is not a revenue promise.",
+          "Use transparent allocation and review criteria such as capacity and portfolio characteristics. Document justified exceptions. Avoid rewarding raw volume across incomparable territories.",
+          "Define observed problem, hypothesis, action, owner, timing and effect measure, including stop/review criteria. Too many unprioritised actions obscure learning."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "18-M2",
+        "pergunta": "How would you apply “Module 2: Metric definitions” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Document numerator, denominator, window, eligibility and duplicates. Without a dictionary, identical labels may describe different measures. Fix definitions before interpreting change.",
+          "Attempts measure activity, fit and records reflect quality, and revenue is a later outcome. One metric encourages shortcuts. Review the set and unintended consequences.",
+          "Compare similarly originated opportunities with equivalent maturation. Mixing old and new deals distorts conversion. Explain still-open cases before reporting average cycle time.",
+          "Forecasts combine current information and assumptions, not certainty. Separate base, conservative and favourable scenarios with conditions. Arbitrary stage probabilities do not replace evidence and revisable judgement.",
+          "Examine what targets reward: poor-fit meetings, duplicate records or delayed losses. Fix criteria and supervision. Do not assume individual bad faith where design encourages distortion.",
+          "Sample records for source, consistency and currency. Correct with traceability. Do not silently rewrite history to improve reports; document methodological changes and their effects."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "18-M3",
+        "pergunta": "How would you apply “Module 3: Evidence-based feedback” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Describe observed behaviour, effect and a trainable alternative. Avoid personal labels and assumed intent. Use authorised or fictional excerpts and invite the rep's interpretation.",
+          "Choose one skill, demonstrate, practise and reassess against the same criterion. Ten simultaneous corrections dilute focus. Test transfer to a new situation, not memorised repetition.",
+          "Have two evaluators score the same case and discuss evidence behind differences. Do not merely force agreement. Refine ambiguous anchors and monitor consistency without false precision.",
+          "Connect training to observed execution gaps and provide practice. Not every problem is a skill deficit; process, tools and offer design may constrain performance.",
+          "Distinguish misunderstanding, process failure and deliberate conduct through fair investigation. Punishing disclosure can hide problems. Accountability should not encourage defensive falsification.",
+          "Define owners for security, data, contract and people issues. Managers should not improvise every decision. Share only necessary information and preserve responsible review procedures."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "18-M4",
+        "pergunta": "How would you apply “Module 4: Purposeful one-to-ones” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Discuss context, obstacles, evidence and development with room for the rep's perspective. Avoid turning every meeting into metric pressure. Record and revisit agreed actions.",
+          "Discuss changes, gaps and justified next action. Reading every row without decisions wastes time. Reclassify opportunities lacking a viable path rather than defend optimism.",
+          "Define hypothesis, comparison, duration and measure before changing routines. Check quality and conduct effects. Small or inconclusive results must not become a winning-method story.",
+          "Combine records and buyer feedback where available, preserving unknowns. Not every loss is price-driven. Seek a testable improvement rather than someone to blame.",
+          "Choose a few priorities with weekly actions, owners and review criteria. Exercise data are fictional. Do not guarantee growth from a plan or small sample.",
+          "Present diagnosis, rejected alternatives, assumptions and risks. Human review should test coherence and unintended effects. A complete table does not prove operational feasibility."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "18-FINAL",
+        "pergunta": "Fix definitions, calculate attendance and quality, propose one-skill coaching and a 30-day plan with hypothesis, measure and review condition.",
+        "resposta_modelo": "Before deduplication, stated-set attendance is 60%, quality among held meetings 50%, and quality among bookings 30%. Recalculate after correction. Add quality to incentives, preserve forecast uncertainty and avoid assuming the target caused every issue.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

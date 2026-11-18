@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-14",
+  "course_number": 14,
+  "locale": "pt-BR",
+  "titulo": "Challenger 3 — Assumir o Controle",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Parte da Avançada",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Controle responsável do processo",
+      "titulo_original_pt": "Controle responsável do processo",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Diferenciar condução, pressão e coerção",
+          "tipo": "texto",
+          "conteudo": "Conduzir é organizar escolhas e informações com consentimento. Pressão pode restringir reflexão; coerção impõe ameaça. Não confundir assumir controle do processo com controlar a decisão do comprador.",
+          "roteiro_video": "Nesta aula, vamos trabalhar diferenciar condução, pressão e coerção. Conduzir é organizar escolhas e informações com consentimento. Pressão pode restringir reflexão; coerção impõe ameaça. Não confundir assumir controle do processo com controlar a decisão do comprador. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Diferenciar condução, pressão e coerção” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conduzir é organizar escolhas e informações com consentimento. Pressão pode restringir reflexão; coerção impõe ameaça. Não confundir assumir controle do processo com controlar a decisão do comprador.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Definir agenda com concordância do comprador",
+          "tipo": "texto",
+          "conteudo": "Proponha objetivo, tempo e decisões esperadas e permita ajuste. Agenda aceita não autoriza ignorar nova preocupação. Revise o plano quando surge informação que muda a prioridade da conversa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar definir agenda com concordância do comprador. Proponha objetivo, tempo e decisões esperadas e permita ajuste. Agenda aceita não autoriza ignorar nova preocupação. Revise o plano quando surge informação que muda a prioridade da conversa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Definir agenda com concordância do comprador” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Proponha objetivo, tempo e decisões esperadas e permita ajuste. Agenda aceita não autoriza ignorar nova preocupação. Revise o plano quando surge informação que muda a prioridade da conversa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Estabelecer limites e autonomia comercial",
+          "tipo": "texto",
+          "conteudo": "Declare limites de preço, prazo e escopo que pode negociar. Consulta interna não é aprovação. Não aceitar uma condição fora de alçada só para manter aparência de controle.",
+          "roteiro_video": "Nesta aula, vamos trabalhar estabelecer limites e autonomia comercial. Declare limites de preço, prazo e escopo que pode negociar. Consulta interna não é aprovação. Não aceitar uma condição fora de alçada só para manter aparência de controle. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Estabelecer limites e autonomia comercial” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Declare limites de preço, prazo e escopo que pode negociar. Consulta interna não é aprovação. Não aceitar uma condição fora de alçada só para manter aparência de controle.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Reconhecer quando interromper a negociação",
+          "tipo": "texto",
+          "conteudo": "Interrompa quando faltam condições obrigatórias, há recusa ou a conversa exige decisão fora de competência. Pausa com motivo e responsável é profissional. Não prolongar negociação inviável para evitar registrar perda.",
+          "roteiro_video": "Nesta aula, vamos trabalhar reconhecer quando interromper a negociação. Interrompa quando faltam condições obrigatórias, há recusa ou a conversa exige decisão fora de competência. Pausa com motivo e responsável é profissional. Não prolongar negociação inviável para evitar registrar perda. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Reconhecer quando interromper a negociação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Interrompa quando faltam condições obrigatórias, há recusa ou a conversa exige decisão fora de competência. Pausa com motivo e responsável é profissional. Não prolongar negociação inviável para evitar registrar perda.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Conversas difíceis",
+      "titulo_original_pt": "Conversas difíceis",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Discutir investimento sem desviar da dúvida",
+          "tipo": "texto",
+          "conteudo": "Responda à preocupação econômica com escopo comparável e premissas claras. Não desviar preço para discurso motivacional. Se não há recursos viáveis, reconheça a restrição sem prometer retorno garantido.",
+          "roteiro_video": "Nesta aula, vamos trabalhar discutir investimento sem desviar da dúvida. Responda à preocupação econômica com escopo comparável e premissas claras. Não desviar preço para discurso motivacional. Se não há recursos viáveis, reconheça a restrição sem prometer retorno garantido. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Discutir investimento sem desviar da dúvida” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Responda à preocupação econômica com escopo comparável e premissas claras. Não desviar preço para discurso motivacional. Se não há recursos viáveis, reconheça a restrição sem prometer retorno garantido.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Discordar com evidência e respeito",
+          "tipo": "texto",
+          "conteudo": "Explique o ponto divergente, a evidência e o limite da sua conclusão. Convide correção. Discordar do comprador não exige constrangê-lo nem transformar uma hipótese comercial em autoridade incontestável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar discordar com evidência e respeito. Explique o ponto divergente, a evidência e o limite da sua conclusão. Convide correção. Discordar do comprador não exige constrangê-lo nem transformar uma hipótese comercial em autoridade incontestável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Discordar com evidência e respeito” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Explique o ponto divergente, a evidência e o limite da sua conclusão. Convide correção. Discordar do comprador não exige constrangê-lo nem transformar uma hipótese comercial em autoridade incontestável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Tratar indefinição sem fabricar urgência",
+          "tipo": "texto",
+          "conteudo": "Identifique informação ou decisão pendente e quem pode resolvê-la. Prazo só deve ser comunicado quando real e relevante. Não usar promoção fictícia ou medo de perda para forçar definição.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tratar indefinição sem fabricar urgência. Identifique informação ou decisão pendente e quem pode resolvê-la. Prazo só deve ser comunicado quando real e relevante. Não usar promoção fictícia ou medo de perda para forçar definição. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tratar indefinição sem fabricar urgência” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Identifique informação ou decisão pendente e quem pode resolvê-la. Prazo só deve ser comunicado quando real e relevante. Não usar promoção fictícia ou medo de perda para forçar definição.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Negociar compromissos recíprocos possíveis",
+          "tipo": "texto",
+          "conteudo": "Combine ações possíveis de ambos os lados, com responsável e condição. Reciprocidade não é punição por hesitação. Se uma parte não pode cumprir, renegocie ou suspenda sem esconder o efeito.",
+          "roteiro_video": "Nesta aula, vamos trabalhar negociar compromissos recíprocos possíveis. Combine ações possíveis de ambos os lados, com responsável e condição. Reciprocidade não é punição por hesitação. Se uma parte não pode cumprir, renegocie ou suspenda sem esconder o efeito. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Negociar compromissos recíprocos possíveis” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Combine ações possíveis de ambos os lados, com responsável e condição. Reciprocidade não é punição por hesitação. Se uma parte não pode cumprir, renegocie ou suspenda sem esconder o efeito.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Plano de decisão",
+      "titulo_original_pt": "Plano de decisão",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Mapear etapas e dependências",
+          "tipo": "texto",
+          "conteudo": "Ordene teste, revisão, aprovação e formalização conforme o processo real. Uma etapa dependente não começa validamente só porque foi marcada no calendário. Identifique caminho crítico e alternativas autorizadas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar mapear etapas e dependências. Ordene teste, revisão, aprovação e formalização conforme o processo real. Uma etapa dependente não começa validamente só porque foi marcada no calendário. Identifique caminho crítico e alternativas autorizadas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Mapear etapas e dependências” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Ordene teste, revisão, aprovação e formalização conforme o processo real. Uma etapa dependente não começa validamente só porque foi marcada no calendário. Identifique caminho crítico e alternativas autorizadas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Responsáveis, critérios e condições de avanço",
+          "tipo": "texto",
+          "conteudo": "Cada etapa precisa de saída verificável e pessoa responsável. Reunião é atividade, não necessariamente decisão. Especifique qual evidência autoriza avanço e o que acontece se a condição não for atendida.",
+          "roteiro_video": "Nesta aula, vamos trabalhar responsáveis, critérios e condições de avanço. Cada etapa precisa de saída verificável e pessoa responsável. Reunião é atividade, não necessariamente decisão. Especifique qual evidência autoriza avanço e o que acontece se a condição não for atendida. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Responsáveis, critérios e condições de avanço” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Cada etapa precisa de saída verificável e pessoa responsável. Reunião é atividade, não necessariamente decisão. Especifique qual evidência autoriza avanço e o que acontece se a condição não for atendida.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Revisar riscos e lacunas de informação",
+          "tipo": "texto",
+          "conteudo": "Liste risco, evidência, impacto possível, mitigação e responsável. Não atribua probabilidade inventada. Risco não resolvido deve permanecer visível no acordo e não desaparecer do resumo para facilitar fechamento.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisar riscos e lacunas de informação. Liste risco, evidência, impacto possível, mitigação e responsável. Não atribua probabilidade inventada. Risco não resolvido deve permanecer visível no acordo e não desaparecer do resumo para facilitar fechamento. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisar riscos e lacunas de informação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Liste risco, evidência, impacto possível, mitigação e responsável. Não atribua probabilidade inventada. Risco não resolvido deve permanecer visível no acordo e não desaparecer do resumo para facilitar fechamento.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Reconhecer ausência de prioridade ou aderência",
+          "tipo": "texto",
+          "conteudo": "Distinguir projeto adiado de oferta incompatível evita cadências sem sentido. Pergunte se existe condição legítima de retomada; sem ela, registre encerramento. Não confundir falta de pressão com falta de profissionalismo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar reconhecer ausência de prioridade ou aderência. Distinguir projeto adiado de oferta incompatível evita cadências sem sentido. Pergunte se existe condição legítima de retomada; sem ela, registre encerramento. Não confundir falta de pressão com falta de profissionalismo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Reconhecer ausência de prioridade ou aderência” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Distinguir projeto adiado de oferta incompatível evita cadências sem sentido. Pergunte se existe condição legítima de retomada; sem ela, registre encerramento. Não confundir falta de pressão com falta de profissionalismo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Avaliação avançada",
+      "titulo_original_pt": "Avaliação avançada",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Estudo de caso integrado: ensinar, adaptar e conduzir",
+          "tipo": "texto",
+          "conteudo": "Integre perspectiva verificável, adaptação por papel e plano de decisão. Uma boa tese não compensa promessa falsa na negociação. Avalie o conjunto e registre onde uma hipótese foi revisada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar estudo de caso integrado: ensinar, adaptar e conduzir. Integre perspectiva verificável, adaptação por papel e plano de decisão. Uma boa tese não compensa promessa falsa na negociação. Avalie o conjunto e registre onde uma hipótese foi revisada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Estudo de caso integrado: ensinar, adaptar e conduzir” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Integre perspectiva verificável, adaptação por papel e plano de decisão. Uma boa tese não compensa promessa falsa na negociação. Avalie o conjunto e registre onde uma hipótese foi revisada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Simulação com vários participantes",
+          "tipo": "texto",
+          "conteudo": "Use participantes com critérios distintos e informação distribuída. O ator não deve entregar tudo sem pergunta. O aluno precisa reconhecer conflito e organizar verificação, sem fabricar consenso ou aprovação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar simulação com vários participantes. Use participantes com critérios distintos e informação distribuída. O ator não deve entregar tudo sem pergunta. O aluno precisa reconhecer conflito e organizar verificação, sem fabricar consenso ou aprovação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Simulação com vários participantes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use participantes com critérios distintos e informação distribuída. O ator não deve entregar tudo sem pergunta. O aluno precisa reconhecer conflito e organizar verificação, sem fabricar consenso ou aprovação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Registro e defesa do plano de decisão",
+          "tipo": "texto",
+          "conteudo": "Explique por que cada etapa existe, qual dependência resolve e qual saída produz. Um plano bonito sem responsáveis não é executável. Inclua a possibilidade de encerrar após um teste negativo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar registro e defesa do plano de decisão. Explique por que cada etapa existe, qual dependência resolve e qual saída produz. Um plano bonito sem responsáveis não é executável. Inclua a possibilidade de encerrar após um teste negativo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Registro e defesa do plano de decisão” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Explique por que cada etapa existe, qual dependência resolve e qual saída produz. Um plano bonito sem responsáveis não é executável. Inclua a possibilidade de encerrar após um teste negativo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Revisão humana da evidência e plano de melhoria",
+          "tipo": "texto",
+          "conteudo": "A revisão humana verifica evidência, consistência e falhas críticas, além da nota. Feedback deve indicar comportamento a treinar e nova oportunidade de demonstração. Parte da trilha não equivale à certificação avançada integral.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão humana da evidência e plano de melhoria. A revisão humana verifica evidência, consistência e falhas críticas, além da nota. Feedback deve indicar comportamento a treinar e nova oportunidade de demonstração. Parte da trilha não equivale à certificação avançada integral. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão humana da evidência e plano de melhoria” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "A revisão humana verifica evidência, consistência e falhas críticas, além da nota. Feedback deve indicar comportamento a treinar e nova oportunidade de demonstração. Parte da trilha não equivale à certificação avançada integral.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A conta Atlas pede assinatura amanhã, mas TI ainda não verificou acesso e o aprovador econômico está ausente. O vendedor não tem alçada para desconto e inventou que o preço dobra sexta. A oferta não possui essa condição. O comprador pergunta se pode decidir após a revisão técnica."
+  },
+  "projeto": {
+    "instrucoes": "Corrija a informação falsa e construa plano de decisão com etapas, responsáveis, condições de avanço e motivo para interromper ou adiar.",
+    "gabarito": "Retire explicitamente a falsa duplicação de preço. Sequencie revisão técnica, análise de escopo, aprovação econômica e formalização conforme processo real. Prazo depende dessas condições. Sem aprovação ou fit, adie ou encerre; não use pressão para substituir evidência."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "14-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Controle responsável do processo”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Conduzir é organizar escolhas e informações com consentimento. Pressão pode restringir reflexão; coerção impõe ameaça. Não confundir assumir controle do processo com controlar a decisão do comprador.",
+          "Proponha objetivo, tempo e decisões esperadas e permita ajuste. Agenda aceita não autoriza ignorar nova preocupação. Revise o plano quando surge informação que muda a prioridade da conversa.",
+          "Declare limites de preço, prazo e escopo que pode negociar. Consulta interna não é aprovação. Não aceitar uma condição fora de alçada só para manter aparência de controle.",
+          "Interrompa quando faltam condições obrigatórias, há recusa ou a conversa exige decisão fora de competência. Pausa com motivo e responsável é profissional. Não prolongar negociação inviável para evitar registrar perda."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "14-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Conversas difíceis”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Responda à preocupação econômica com escopo comparável e premissas claras. Não desviar preço para discurso motivacional. Se não há recursos viáveis, reconheça a restrição sem prometer retorno garantido.",
+          "Explique o ponto divergente, a evidência e o limite da sua conclusão. Convide correção. Discordar do comprador não exige constrangê-lo nem transformar uma hipótese comercial em autoridade incontestável.",
+          "Identifique informação ou decisão pendente e quem pode resolvê-la. Prazo só deve ser comunicado quando real e relevante. Não usar promoção fictícia ou medo de perda para forçar definição.",
+          "Combine ações possíveis de ambos os lados, com responsável e condição. Reciprocidade não é punição por hesitação. Se uma parte não pode cumprir, renegocie ou suspenda sem esconder o efeito."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "14-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Plano de decisão”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Ordene teste, revisão, aprovação e formalização conforme o processo real. Uma etapa dependente não começa validamente só porque foi marcada no calendário. Identifique caminho crítico e alternativas autorizadas.",
+          "Cada etapa precisa de saída verificável e pessoa responsável. Reunião é atividade, não necessariamente decisão. Especifique qual evidência autoriza avanço e o que acontece se a condição não for atendida.",
+          "Liste risco, evidência, impacto possível, mitigação e responsável. Não atribua probabilidade inventada. Risco não resolvido deve permanecer visível no acordo e não desaparecer do resumo para facilitar fechamento.",
+          "Distinguir projeto adiado de oferta incompatível evita cadências sem sentido. Pergunte se existe condição legítima de retomada; sem ela, registre encerramento. Não confundir falta de pressão com falta de profissionalismo."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "14-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Avaliação avançada”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Integre perspectiva verificável, adaptação por papel e plano de decisão. Uma boa tese não compensa promessa falsa na negociação. Avalie o conjunto e registre onde uma hipótese foi revisada.",
+          "Use participantes com critérios distintos e informação distribuída. O ator não deve entregar tudo sem pergunta. O aluno precisa reconhecer conflito e organizar verificação, sem fabricar consenso ou aprovação.",
+          "Explique por que cada etapa existe, qual dependência resolve e qual saída produz. Um plano bonito sem responsáveis não é executável. Inclua a possibilidade de encerrar após um teste negativo.",
+          "A revisão humana verifica evidência, consistência e falhas críticas, além da nota. Feedback deve indicar comportamento a treinar e nova oportunidade de demonstração. Parte da trilha não equivale à certificação avançada integral."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "14-FINAL",
+        "pergunta": "Corrija a informação falsa e construa plano de decisão com etapas, responsáveis, condições de avanço e motivo para interromper ou adiar.",
+        "resposta_modelo": "Retire explicitamente a falsa duplicação de preço. Sequencie revisão técnica, análise de escopo, aprovação econômica e formalização conforme processo real. Prazo depende dessas condições. Sem aprovação ou fit, adie ou encerre; não use pressão para substituir evidência.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

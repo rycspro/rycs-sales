@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-13",
+  "course_number": 13,
+  "locale": "pt-BR",
+  "titulo": "Challenger 2 — Adaptar",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Parte da Avançada",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Compreender os participantes",
+      "titulo_original_pt": "Compreender os participantes",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Usuários, avaliadores, patrocinadores e aprovadores",
+          "tipo": "texto",
+          "conteudo": "Mapeie usuário, avaliador, patrocinador e aprovador pela responsabilidade efetiva. Patrocínio não equivale a assinatura. Uma pessoa pode ter vários papéis; confirme sem descartar participantes com menor título formal.",
+          "roteiro_video": "Nesta aula, vamos trabalhar usuários, avaliadores, patrocinadores e aprovadores. Mapeie usuário, avaliador, patrocinador e aprovador pela responsabilidade efetiva. Patrocínio não equivale a assinatura. Uma pessoa pode ter vários papéis; confirme sem descartar participantes com menor título formal. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Usuários, avaliadores, patrocinadores e aprovadores” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mapeie usuário, avaliador, patrocinador e aprovador pela responsabilidade efetiva. Patrocínio não equivale a assinatura. Uma pessoa pode ter vários papéis; confirme sem descartar participantes com menor título formal.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Mapear objetivos sem usar estereótipos",
+          "tipo": "texto",
+          "conteudo": "Pergunte qual decisão cada participante precisa tomar e como avaliará sucesso. Não presumir prioridades por cargo, idade ou país. Registre a resposta em termos observáveis e peça confirmação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar mapear objetivos sem usar estereótipos. Pergunte qual decisão cada participante precisa tomar e como avaliará sucesso. Não presumir prioridades por cargo, idade ou país. Registre a resposta em termos observáveis e peça confirmação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Mapear objetivos sem usar estereótipos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte qual decisão cada participante precisa tomar e como avaliará sucesso. Não presumir prioridades por cargo, idade ou país. Registre a resposta em termos observáveis e peça confirmação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Investigar critérios e conflitos de prioridade",
+          "tipo": "texto",
+          "conteudo": "Exponha critérios que competem, como rapidez e validação técnica. Não prometer satisfazer simultaneamente condições incompatíveis. Facilite uma escolha de trade-offs com as pessoas que possuem responsabilidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar investigar critérios e conflitos de prioridade. Exponha critérios que competem, como rapidez e validação técnica. Não prometer satisfazer simultaneamente condições incompatíveis. Facilite uma escolha de trade-offs com as pessoas que possuem responsabilidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Investigar critérios e conflitos de prioridade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Exponha critérios que competem, como rapidez e validação técnica. Não prometer satisfazer simultaneamente condições incompatíveis. Facilite uma escolha de trade-offs com as pessoas que possuem responsabilidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Confirmar o processo de decisão",
+          "tipo": "texto",
+          "conteudo": "Investigue sequência, veto, consulta e formalização. Organograma não revela todo o processo. Pergunte o que acontece depois do teste e quem precisa receber informação para avaliar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar confirmar o processo de decisão. Investigue sequência, veto, consulta e formalização. Organograma não revela todo o processo. Pergunte o que acontece depois do teste e quem precisa receber informação para avaliar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Confirmar o processo de decisão” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Investigue sequência, veto, consulta e formalização. Organograma não revela todo o processo. Pergunte o que acontece depois do teste e quem precisa receber informação para avaliar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Adaptar a mensagem",
+      "titulo_original_pt": "Adaptar a mensagem",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Traduzir o mesmo problema para funções distintas",
+          "tipo": "texto",
+          "conteudo": "Preserve fatos e adapte a consequência relevante: retrabalho operacional, custo de esforço ou controle de acesso. Não contar versões contraditórias do escopo para agradar cada área.",
+          "roteiro_video": "Nesta aula, vamos trabalhar traduzir o mesmo problema para funções distintas. Preserve fatos e adapte a consequência relevante: retrabalho operacional, custo de esforço ou controle de acesso. Não contar versões contraditórias do escopo para agradar cada área. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Traduzir o mesmo problema para funções distintas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Preserve fatos e adapte a consequência relevante: retrabalho operacional, custo de esforço ou controle de acesso. Não contar versões contraditórias do escopo para agradar cada área.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Escolher detalhe técnico e linguagem acessível",
+          "tipo": "texto",
+          "conteudo": "Comece pelo critério do participante e ofereça detalhe progressivo. Explicar simples não é omitir limite. Se uma pergunta excede sua competência, envolva o responsável técnico sem improvisar garantia.",
+          "roteiro_video": "Nesta aula, vamos trabalhar escolher detalhe técnico e linguagem acessível. Comece pelo critério do participante e ofereça detalhe progressivo. Explicar simples não é omitir limite. Se uma pergunta excede sua competência, envolva o responsável técnico sem improvisar garantia. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Escolher detalhe técnico e linguagem acessível” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Comece pelo critério do participante e ofereça detalhe progressivo. Explicar simples não é omitir limite. Se uma pergunta excede sua competência, envolva o responsável técnico sem improvisar garantia.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Ajustar evidência ao critério de cada participante",
+          "tipo": "texto",
+          "conteudo": "Operação pode precisar de teste de tarefa; segurança, documentação; finanças, premissas de custo. Confirme a exigência real. Uma evidência convincente para uma função pode não resolver a dúvida de outra.",
+          "roteiro_video": "Nesta aula, vamos trabalhar ajustar evidência ao critério de cada participante. Operação pode precisar de teste de tarefa; segurança, documentação; finanças, premissas de custo. Confirme a exigência real. Uma evidência convincente para uma função pode não resolver a dúvida de outra. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Ajustar evidência ao critério de cada participante” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Operação pode precisar de teste de tarefa; segurança, documentação; finanças, premissas de custo. Confirme a exigência real. Uma evidência convincente para uma função pode não resolver a dúvida de outra.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Manter consistência entre conversas",
+          "tipo": "texto",
+          "conteudo": "Mantenha um resumo comum de escopo, limites e pendências. Atualizações devem chegar aos participantes pertinentes. Não deixar uma promessa antiga circular após mudança de condição ou capacidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar manter consistência entre conversas. Mantenha um resumo comum de escopo, limites e pendências. Atualizações devem chegar aos participantes pertinentes. Não deixar uma promessa antiga circular após mudança de condição ou capacidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Manter consistência entre conversas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mantenha um resumo comum de escopo, limites e pendências. Atualizações devem chegar aos participantes pertinentes. Não deixar uma promessa antiga circular após mudança de condição ou capacidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Alinhamento entre áreas",
+      "titulo_original_pt": "Alinhamento entre áreas",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Identificar dependências de implantação",
+          "tipo": "texto",
+          "conteudo": "Liste acesso, dados, responsáveis e aprovação necessários para entregar. Dependência do comprador precisa ser explícita. Prazo só é plausível quando as condições que o sustentam estão disponíveis.",
+          "roteiro_video": "Nesta aula, vamos trabalhar identificar dependências de implantação. Liste acesso, dados, responsáveis e aprovação necessários para entregar. Dependência do comprador precisa ser explícita. Prazo só é plausível quando as condições que o sustentam estão disponíveis. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Identificar dependências de implantação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Liste acesso, dados, responsáveis e aprovação necessários para entregar. Dependência do comprador precisa ser explícita. Prazo só é plausível quando as condições que o sustentam estão disponíveis.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Facilitar uma discussão de critérios",
+          "tipo": "texto",
+          "conteudo": "Peça que cada área explicite requisito e motivo, depois compare sobreposições e conflitos. Não fazer votação informal sobre condição obrigatória de segurança ou autorização. Registre decisões e pendências.",
+          "roteiro_video": "Nesta aula, vamos trabalhar facilitar uma discussão de critérios. Peça que cada área explicite requisito e motivo, depois compare sobreposições e conflitos. Não fazer votação informal sobre condição obrigatória de segurança ou autorização. Registre decisões e pendências. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Facilitar uma discussão de critérios” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Peça que cada área explicite requisito e motivo, depois compare sobreposições e conflitos. Não fazer votação informal sobre condição obrigatória de segurança ou autorização. Registre decisões e pendências.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Registrar desacordos e lacunas sem ocultá-los",
+          "tipo": "texto",
+          "conteudo": "Descreva quem diverge, sobre qual condição e qual informação ajudaria a resolver. Não resumir divergência como resistência pessoal. Um patrocinador entusiasmado não elimina um requisito ainda não atendido.",
+          "roteiro_video": "Nesta aula, vamos trabalhar registrar desacordos e lacunas sem ocultá-los. Descreva quem diverge, sobre qual condição e qual informação ajudaria a resolver. Não resumir divergência como resistência pessoal. Um patrocinador entusiasmado não elimina um requisito ainda não atendido. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Registrar desacordos e lacunas sem ocultá-los” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Descreva quem diverge, sobre qual condição e qual informação ajudaria a resolver. Não resumir divergência como resistência pessoal. Um patrocinador entusiasmado não elimina um requisito ainda não atendido.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Construir um resumo comum revisável",
+          "tipo": "texto",
+          "conteudo": "Produza uma versão curta com fatos, critérios por área, limites, acordos e dúvidas. Peça revisão aos envolvidos. O resumo serve para corrigir entendimento, não para fabricar consenso por silêncio.",
+          "roteiro_video": "Nesta aula, vamos trabalhar construir um resumo comum revisável. Produza uma versão curta com fatos, critérios por área, limites, acordos e dúvidas. Peça revisão aos envolvidos. O resumo serve para corrigir entendimento, não para fabricar consenso por silêncio. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Construir um resumo comum revisável” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Produza uma versão curta com fatos, critérios por área, limites, acordos e dúvidas. Peça revisão aos envolvidos. O resumo serve para corrigir entendimento, não para fabricar consenso por silêncio.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Laboratório de adaptação",
+      "titulo_original_pt": "Laboratório de adaptação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Três apresentações para o mesmo caso",
+          "tipo": "texto",
+          "conteudo": "Prepare três versões com os mesmos fatos e profundidades diferentes. Compare o que muda na linguagem e o que permanece no compromisso. Não transformar adaptação em três ofertas incompatíveis.",
+          "roteiro_video": "Nesta aula, vamos trabalhar três apresentações para o mesmo caso. Prepare três versões com os mesmos fatos e profundidades diferentes. Compare o que muda na linguagem e o que permanece no compromisso. Não transformar adaptação em três ofertas incompatíveis. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Três apresentações para o mesmo caso” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Prepare três versões com os mesmos fatos e profundidades diferentes. Compare o que muda na linguagem e o que permanece no compromisso. Não transformar adaptação em três ofertas incompatíveis.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Reunião com critérios conflitantes",
+          "tipo": "texto",
+          "conteudo": "Na reunião, esclareça dependências antes de tentar fechar. Se rapidez exige retirar um requisito obrigatório, registre a incompatibilidade. Conduza para uma decisão viável ou para adiamento, sem ocultar o conflito.",
+          "roteiro_video": "Nesta aula, vamos trabalhar reunião com critérios conflitantes. Na reunião, esclareça dependências antes de tentar fechar. Se rapidez exige retirar um requisito obrigatório, registre a incompatibilidade. Conduza para uma decisão viável ou para adiamento, sem ocultar o conflito. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Reunião com critérios conflitantes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Na reunião, esclareça dependências antes de tentar fechar. Se rapidez exige retirar um requisito obrigatório, registre a incompatibilidade. Conduza para uma decisão viável ou para adiamento, sem ocultar o conflito.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Revisão de mensagens por participantes",
+          "tipo": "texto",
+          "conteudo": "Peça a cada papel que confirme o que entendeu e que dúvida permanece. Avalie clareza pelo entendimento demonstrado, não por elogio. Corrija mensagem quando diferentes pessoas inferem escopos distintos.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão de mensagens por participantes. Peça a cada papel que confirme o que entendeu e que dúvida permanece. Avalie clareza pelo entendimento demonstrado, não por elogio. Corrija mensagem quando diferentes pessoas inferem escopos distintos. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão de mensagens por participantes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Peça a cada papel que confirme o que entendeu e que dúvida permanece. Avalie clareza pelo entendimento demonstrado, não por elogio. Corrija mensagem quando diferentes pessoas inferem escopos distintos.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Projeto: mapa de partes interessadas e plano de conversa",
+          "tipo": "texto",
+          "conteudo": "Entregue mapa de papéis com evidências, critérios, lacunas e plano de conversa. Identifique uma hipótese que precisa de confirmação. Não preencher influência ou apoio com suposição baseada em cargo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar projeto: mapa de partes interessadas e plano de conversa. Entregue mapa de papéis com evidências, critérios, lacunas e plano de conversa. Identifique uma hipótese que precisa de confirmação. Não preencher influência ou apoio com suposição baseada em cargo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Projeto: mapa de partes interessadas e plano de conversa” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Entregue mapa de papéis com evidências, critérios, lacunas e plano de conversa. Identifique uma hipótese que precisa de confirmação. Não preencher influência ou apoio com suposição baseada em cargo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Na conta Atlas, operação quer menos retrabalho, finanças quer custo previsível e TI exige controle de acesso. O vendedor prometeu integração a TI, mas disse à operação que não haveria mudança no processo. A oferta permite exportar arquivo, não integração automática. Não existe consenso sobre implantação."
+  },
+  "projeto": {
+    "instrucoes": "Prepare três apresentações de 90 segundos com fatos consistentes, mapa de papéis e resumo de conflitos; proponha reunião de critérios em vez de anunciar consenso.",
+    "gabarito": "Corrija a integração prometida e explique exportação com limites. Operação avalia trabalho adicional; TI avalia acesso e arquivo; finanças compara custo total e esforço. Registre falta de acordo e envolva responsáveis. Adaptação muda ênfase, não capacidade vendida."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "13-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Compreender os participantes”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Mapeie usuário, avaliador, patrocinador e aprovador pela responsabilidade efetiva. Patrocínio não equivale a assinatura. Uma pessoa pode ter vários papéis; confirme sem descartar participantes com menor título formal.",
+          "Pergunte qual decisão cada participante precisa tomar e como avaliará sucesso. Não presumir prioridades por cargo, idade ou país. Registre a resposta em termos observáveis e peça confirmação.",
+          "Exponha critérios que competem, como rapidez e validação técnica. Não prometer satisfazer simultaneamente condições incompatíveis. Facilite uma escolha de trade-offs com as pessoas que possuem responsabilidade.",
+          "Investigue sequência, veto, consulta e formalização. Organograma não revela todo o processo. Pergunte o que acontece depois do teste e quem precisa receber informação para avaliar."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "13-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Adaptar a mensagem”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Preserve fatos e adapte a consequência relevante: retrabalho operacional, custo de esforço ou controle de acesso. Não contar versões contraditórias do escopo para agradar cada área.",
+          "Comece pelo critério do participante e ofereça detalhe progressivo. Explicar simples não é omitir limite. Se uma pergunta excede sua competência, envolva o responsável técnico sem improvisar garantia.",
+          "Operação pode precisar de teste de tarefa; segurança, documentação; finanças, premissas de custo. Confirme a exigência real. Uma evidência convincente para uma função pode não resolver a dúvida de outra.",
+          "Mantenha um resumo comum de escopo, limites e pendências. Atualizações devem chegar aos participantes pertinentes. Não deixar uma promessa antiga circular após mudança de condição ou capacidade."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "13-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Alinhamento entre áreas”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Liste acesso, dados, responsáveis e aprovação necessários para entregar. Dependência do comprador precisa ser explícita. Prazo só é plausível quando as condições que o sustentam estão disponíveis.",
+          "Peça que cada área explicite requisito e motivo, depois compare sobreposições e conflitos. Não fazer votação informal sobre condição obrigatória de segurança ou autorização. Registre decisões e pendências.",
+          "Descreva quem diverge, sobre qual condição e qual informação ajudaria a resolver. Não resumir divergência como resistência pessoal. Um patrocinador entusiasmado não elimina um requisito ainda não atendido.",
+          "Produza uma versão curta com fatos, critérios por área, limites, acordos e dúvidas. Peça revisão aos envolvidos. O resumo serve para corrigir entendimento, não para fabricar consenso por silêncio."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "13-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Laboratório de adaptação”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Prepare três versões com os mesmos fatos e profundidades diferentes. Compare o que muda na linguagem e o que permanece no compromisso. Não transformar adaptação em três ofertas incompatíveis.",
+          "Na reunião, esclareça dependências antes de tentar fechar. Se rapidez exige retirar um requisito obrigatório, registre a incompatibilidade. Conduza para uma decisão viável ou para adiamento, sem ocultar o conflito.",
+          "Peça a cada papel que confirme o que entendeu e que dúvida permanece. Avalie clareza pelo entendimento demonstrado, não por elogio. Corrija mensagem quando diferentes pessoas inferem escopos distintos.",
+          "Entregue mapa de papéis com evidências, critérios, lacunas e plano de conversa. Identifique uma hipótese que precisa de confirmação. Não preencher influência ou apoio com suposição baseada em cargo."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "13-FINAL",
+        "pergunta": "Prepare três apresentações de 90 segundos com fatos consistentes, mapa de papéis e resumo de conflitos; proponha reunião de critérios em vez de anunciar consenso.",
+        "resposta_modelo": "Corrija a integração prometida e explique exportação com limites. Operação avalia trabalho adicional; TI avalia acesso e arquivo; finanças compara custo total e esforço. Registre falta de acordo e envolva responsáveis. Adaptação muda ênfase, não capacidade vendida.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

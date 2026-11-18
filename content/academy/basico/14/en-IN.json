@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-14",
+  "course_number": 14,
+  "locale": "en-IN",
+  "titulo": "Challenger 3 — Take Control",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Parte da Avançada",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Guidance, pressure and coercion",
+      "titulo_original_pt": "Controle responsável do processo",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Guidance, pressure and coercion",
+          "tipo": "texto",
+          "conteudo": "Guidance organises choices and information with agreement. Pressure can restrict reflection; coercion introduces threats. Managing the process is not controlling the buyer's decision.",
+          "roteiro_video": "In this lesson we explore guidance, pressure and coercion. Guidance organises choices and information with agreement. Pressure can restrict reflection; coercion introduces threats. Managing the process is not controlling the buyer's decision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Guidance, pressure and coercion” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Guidance organises choices and information with agreement. Pressure can restrict reflection; coercion introduces threats. Managing the process is not controlling the buyer's decision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "An agreed agenda",
+          "tipo": "texto",
+          "conteudo": "Propose purpose, timing and expected decisions while allowing changes. An agreed agenda does not justify ignoring new concerns. Revise it when relevant information changes priorities.",
+          "roteiro_video": "In this lesson we explore an agreed agenda. Propose purpose, timing and expected decisions while allowing changes. An agreed agenda does not justify ignoring new concerns. Revise it when relevant information changes priorities. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “An agreed agenda” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Propose purpose, timing and expected decisions while allowing changes. An agreed agenda does not justify ignoring new concerns. Revise it when relevant information changes priorities.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Commercial authority",
+          "tipo": "texto",
+          "conteudo": "State the price, timing and scope boundaries you can negotiate. Internal consultation is not approval. Do not accept unauthorised terms to appear in control.",
+          "roteiro_video": "In this lesson we explore commercial authority. State the price, timing and scope boundaries you can negotiate. Internal consultation is not approval. Do not accept unauthorised terms to appear in control. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Commercial authority” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "State the price, timing and scope boundaries you can negotiate. Internal consultation is not approval. Do not accept unauthorised terms to appear in control.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "When to pause",
+          "tipo": "texto",
+          "conteudo": "Pause for missing mandatory conditions, refusal or decisions beyond competence. A reasoned pause with ownership is professional. Do not prolong an infeasible negotiation to avoid recording loss.",
+          "roteiro_video": "In this lesson we explore when to pause. Pause for missing mandatory conditions, refusal or decisions beyond competence. A reasoned pause with ownership is professional. Do not prolong an infeasible negotiation to avoid recording loss. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “When to pause” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Pause for missing mandatory conditions, refusal or decisions beyond competence. A reasoned pause with ownership is professional. Do not prolong an infeasible negotiation to avoid recording loss.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Investment discussions",
+      "titulo_original_pt": "Conversas difíceis",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Investment discussions",
+          "tipo": "texto",
+          "conteudo": "Address economic concerns with comparable scope and clear assumptions. Do not replace a price answer with motivational language. Recognise funding constraints without guaranteed-return claims.",
+          "roteiro_video": "In this lesson we explore investment discussions. Address economic concerns with comparable scope and clear assumptions. Do not replace a price answer with motivational language. Recognise funding constraints without guaranteed-return claims. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Investment discussions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Address economic concerns with comparable scope and clear assumptions. Do not replace a price answer with motivational language. Recognise funding constraints without guaranteed-return claims.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Respectful disagreement",
+          "tipo": "texto",
+          "conteudo": "Explain the disagreement, evidence and inference limit, inviting correction. Disagreement does not require embarrassment or treating a commercial hypothesis as unquestionable authority.",
+          "roteiro_video": "In this lesson we explore respectful disagreement. Explain the disagreement, evidence and inference limit, inviting correction. Disagreement does not require embarrassment or treating a commercial hypothesis as unquestionable authority. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Respectful disagreement” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explain the disagreement, evidence and inference limit, inviting correction. Disagreement does not require embarrassment or treating a commercial hypothesis as unquestionable authority.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Uncertainty without false urgency",
+          "tipo": "texto",
+          "conteudo": "Identify the missing information or decision and its owner. Communicate only real relevant deadlines. Do not use fictional promotions or fear of loss to force resolution.",
+          "roteiro_video": "In this lesson we explore uncertainty without false urgency. Identify the missing information or decision and its owner. Communicate only real relevant deadlines. Do not use fictional promotions or fear of loss to force resolution. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Uncertainty without false urgency” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Identify the missing information or decision and its owner. Communicate only real relevant deadlines. Do not use fictional promotions or fear of loss to force resolution.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Reciprocal commitments",
+          "tipo": "texto",
+          "conteudo": "Agree feasible actions on both sides with ownership and conditions. Reciprocity is not punishment for hesitation. Renegotiate or pause when a party cannot perform.",
+          "roteiro_video": "In this lesson we explore reciprocal commitments. Agree feasible actions on both sides with ownership and conditions. Reciprocity is not punishment for hesitation. Renegotiate or pause when a party cannot perform. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Reciprocal commitments” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Agree feasible actions on both sides with ownership and conditions. Reciprocity is not punishment for hesitation. Renegotiate or pause when a party cannot perform.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Decision dependencies",
+      "titulo_original_pt": "Plano de decisão",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Decision dependencies",
+          "tipo": "texto",
+          "conteudo": "Sequence testing, review, approval and agreement according to the actual process. Scheduling alone does not satisfy dependencies. Identify the critical path and authorised alternatives.",
+          "roteiro_video": "In this lesson we explore decision dependencies. Sequence testing, review, approval and agreement according to the actual process. Scheduling alone does not satisfy dependencies. Identify the critical path and authorised alternatives. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Decision dependencies” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Sequence testing, review, approval and agreement according to the actual process. Scheduling alone does not satisfy dependencies. Identify the critical path and authorised alternatives.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Owners and stage conditions",
+          "tipo": "texto",
+          "conteudo": "Each stage needs a verifiable output and owner. A meeting is an activity, not necessarily a decision. Specify advancement evidence and what happens if conditions fail.",
+          "roteiro_video": "In this lesson we explore owners and stage conditions. Each stage needs a verifiable output and owner. A meeting is an activity, not necessarily a decision. Specify advancement evidence and what happens if conditions fail. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Owners and stage conditions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Each stage needs a verifiable output and owner. A meeting is an activity, not necessarily a decision. Specify advancement evidence and what happens if conditions fail.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Risk review",
+          "tipo": "texto",
+          "conteudo": "Record risk, evidence, possible impact, mitigation and owner. Do not invent probabilities. Unresolved risks remain visible rather than disappearing from a closing summary.",
+          "roteiro_video": "In this lesson we explore risk review. Record risk, evidence, possible impact, mitigation and owner. Do not invent probabilities. Unresolved risks remain visible rather than disappearing from a closing summary. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Risk review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record risk, evidence, possible impact, mitigation and owner. Do not invent probabilities. Unresolved risks remain visible rather than disappearing from a closing summary.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "No priority or fit",
+          "tipo": "texto",
+          "conteudo": "Distinguish deferral from mismatch to avoid pointless follow-up. Ask about a legitimate resumption condition; otherwise close. Lack of pressure is not lack of professionalism.",
+          "roteiro_video": "In this lesson we explore no priority or fit. Distinguish deferral from mismatch to avoid pointless follow-up. Ask about a legitimate resumption condition; otherwise close. Lack of pressure is not lack of professionalism. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “No priority or fit” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Distinguish deferral from mismatch to avoid pointless follow-up. Ask about a legitimate resumption condition; otherwise close. Lack of pressure is not lack of professionalism.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Integrated advanced case",
+      "titulo_original_pt": "Avaliação avançada",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Integrated advanced case",
+          "tipo": "texto",
+          "conteudo": "Integrate a testable perspective, role-specific communication and decision plan. A good thesis cannot compensate for a false promise. Review the whole case and record revised hypotheses.",
+          "roteiro_video": "In this lesson we explore integrated advanced case. Integrate a testable perspective, role-specific communication and decision plan. A good thesis cannot compensate for a false promise. Review the whole case and record revised hypotheses. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Integrated advanced case” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Integrate a testable perspective, role-specific communication and decision plan. A good thesis cannot compensate for a false promise. Review the whole case and record revised hypotheses.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "A multi-party simulation",
+          "tipo": "texto",
+          "conteudo": "Use participants with different criteria and distributed information. Actors should not reveal everything unprompted. The learner must recognise conflict and organise verification without inventing consensus.",
+          "roteiro_video": "In this lesson we explore a multi-party simulation. Use participants with different criteria and distributed information. Actors should not reveal everything unprompted. The learner must recognise conflict and organise verification without inventing consensus. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A multi-party simulation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use participants with different criteria and distributed information. Actors should not reveal everything unprompted. The learner must recognise conflict and organise verification without inventing consensus.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Defending the decision plan",
+          "tipo": "texto",
+          "conteudo": "Explain each stage's purpose, dependency and output. A polished plan without owners is not executable. Include closure after a negative test.",
+          "roteiro_video": "In this lesson we explore defending the decision plan. Explain each stage's purpose, dependency and output. A polished plan without owners is not executable. Include closure after a negative test. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Defending the decision plan” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explain each stage's purpose, dependency and output. A polished plan without owners is not executable. Include closure after a negative test.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Human review and improvement",
+          "tipo": "texto",
+          "conteudo": "Human review checks evidence, consistency and critical failures beyond the score. Feedback specifies a behaviour to practise and reassess. One pathway component is not the full advanced certification.",
+          "roteiro_video": "In this lesson we explore human review and improvement. Human review checks evidence, consistency and critical failures beyond the score. Feedback specifies a behaviour to practise and reassess. One pathway component is not the full advanced certification. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Human review and improvement” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Human review checks evidence, consistency and critical failures beyond the score. Feedback specifies a behaviour to practise and reassess. One pathway component is not the full advanced certification.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Atlas is asked to sign tomorrow while IT access review and the economic approver remain unavailable. The seller lacks discount authority and invented a Friday price doubling. No such term exists. The buyer asks to decide after technical review.\n\nAn Indian enterprise buyer needs regional operational review and central finance approval. The seller may arrange a review meeting but cannot infer approval from a sponsor's polite agreement to discuss."
+  },
+  "projeto": {
+    "instrucoes": "Correct the false claim and build a decision plan with stages, owners, advancement evidence and reasons to stop or defer.",
+    "gabarito": "Explicitly withdraw the false price-doubling claim. Sequence technical review, scope review, funding approval and formal agreement under the real process. Timing depends on those conditions. Defer or close when approval or fit is absent."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "14-M1",
+        "pergunta": "How would you apply “Module 1: Guidance, pressure and coercion” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Guidance organises choices and information with agreement. Pressure can restrict reflection; coercion introduces threats. Managing the process is not controlling the buyer's decision.",
+          "Propose purpose, timing and expected decisions while allowing changes. An agreed agenda does not justify ignoring new concerns. Revise it when relevant information changes priorities.",
+          "State the price, timing and scope boundaries you can negotiate. Internal consultation is not approval. Do not accept unauthorised terms to appear in control.",
+          "Pause for missing mandatory conditions, refusal or decisions beyond competence. A reasoned pause with ownership is professional. Do not prolong an infeasible negotiation to avoid recording loss."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "14-M2",
+        "pergunta": "How would you apply “Module 2: Investment discussions” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Address economic concerns with comparable scope and clear assumptions. Do not replace a price answer with motivational language. Recognise funding constraints without guaranteed-return claims.",
+          "Explain the disagreement, evidence and inference limit, inviting correction. Disagreement does not require embarrassment or treating a commercial hypothesis as unquestionable authority.",
+          "Identify the missing information or decision and its owner. Communicate only real relevant deadlines. Do not use fictional promotions or fear of loss to force resolution.",
+          "Agree feasible actions on both sides with ownership and conditions. Reciprocity is not punishment for hesitation. Renegotiate or pause when a party cannot perform."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "14-M3",
+        "pergunta": "How would you apply “Module 3: Decision dependencies” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Sequence testing, review, approval and agreement according to the actual process. Scheduling alone does not satisfy dependencies. Identify the critical path and authorised alternatives.",
+          "Each stage needs a verifiable output and owner. A meeting is an activity, not necessarily a decision. Specify advancement evidence and what happens if conditions fail.",
+          "Record risk, evidence, possible impact, mitigation and owner. Do not invent probabilities. Unresolved risks remain visible rather than disappearing from a closing summary.",
+          "Distinguish deferral from mismatch to avoid pointless follow-up. Ask about a legitimate resumption condition; otherwise close. Lack of pressure is not lack of professionalism."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "14-M4",
+        "pergunta": "How would you apply “Module 4: Integrated advanced case” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Integrate a testable perspective, role-specific communication and decision plan. A good thesis cannot compensate for a false promise. Review the whole case and record revised hypotheses.",
+          "Use participants with different criteria and distributed information. Actors should not reveal everything unprompted. The learner must recognise conflict and organise verification without inventing consensus.",
+          "Explain each stage's purpose, dependency and output. A polished plan without owners is not executable. Include closure after a negative test.",
+          "Human review checks evidence, consistency and critical failures beyond the score. Feedback specifies a behaviour to practise and reassess. One pathway component is not the full advanced certification."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "14-FINAL",
+        "pergunta": "Correct the false claim and build a decision plan with stages, owners, advancement evidence and reasons to stop or defer.",
+        "resposta_modelo": "Explicitly withdraw the false price-doubling claim. Sequence technical review, scope review, funding approval and formal agreement under the real process. Timing depends on those conditions. Defer or close when approval or fit is absent.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

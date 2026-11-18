@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-23",
+  "course_number": 23,
+  "locale": "pt-BR",
+  "titulo": "Vendas para Saúde, Educação e Infoprodutos",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Limites de atuação em setores sensíveis",
+      "titulo_original_pt": "Limites de atuação em setores sensíveis",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Separar atividade comercial de orientação clínica",
+          "tipo": "texto",
+          "conteudo": "O profissional comercial explica oferta e processo; não diagnostica, prescreve ou promete resultado clínico. Dúvida sobre saúde deve ser encaminhada ao profissional habilitado. Este curso não habilita atendimento clínico.",
+          "roteiro_video": "Nesta aula, vamos trabalhar separar atividade comercial de orientação clínica. O profissional comercial explica oferta e processo; não diagnostica, prescreve ou promete resultado clínico. Dúvida sobre saúde deve ser encaminhada ao profissional habilitado. Este curso não habilita atendimento clínico. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Separar atividade comercial de orientação clínica” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "O profissional comercial explica oferta e processo; não diagnostica, prescreve ou promete resultado clínico. Dúvida sobre saúde deve ser encaminhada ao profissional habilitado. Este curso não habilita atendimento clínico.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Qualificação comercial sem coletar dados de saúde",
+          "tipo": "texto",
+          "conteudo": "Para vender uma solução administrativa, investigue tarefas e requisitos com dados sintéticos. Não pedir lista de pacientes, exames ou diagnósticos para demonstrar utilidade. Dados sensíveis exigem análise específica fora da qualificação genérica.",
+          "roteiro_video": "Nesta aula, vamos trabalhar qualificação comercial sem coletar dados de saúde. Para vender uma solução administrativa, investigue tarefas e requisitos com dados sintéticos. Não pedir lista de pacientes, exames ou diagnósticos para demonstrar utilidade. Dados sensíveis exigem análise específica fora da qualificação genérica. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Qualificação comercial sem coletar dados de saúde” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Para vender uma solução administrativa, investigue tarefas e requisitos com dados sintéticos. Não pedir lista de pacientes, exames ou diagnósticos para demonstrar utilidade. Dados sensíveis exigem análise específica fora da qualificação genérica.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Educação: escopo, público e condições da oferta",
+          "tipo": "texto",
+          "conteudo": "Explique público, pré-requisitos, conteúdo, apoio e critério de conclusão. Não confundir certificado de curso com licença profissional ou credencial reconhecida sem base. Aprendizagem depende de participação e contexto.",
+          "roteiro_video": "Nesta aula, vamos trabalhar educação: escopo, público e condições da oferta. Explique público, pré-requisitos, conteúdo, apoio e critério de conclusão. Não confundir certificado de curso com licença profissional ou credencial reconhecida sem base. Aprendizagem depende de participação e contexto. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Educação: escopo, público e condições da oferta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Explique público, pré-requisitos, conteúdo, apoio e critério de conclusão. Não confundir certificado de curso com licença profissional ou credencial reconhecida sem base. Aprendizagem depende de participação e contexto.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Infoprodutos: prova, entrega e limites de promessa",
+          "tipo": "texto",
+          "conteudo": "Informe o que é entregue, acesso, suporte e limites. Não garantir renda, emprego ou resultado por comprar material. Um depoimento individual não representa a experiência provável de todos.",
+          "roteiro_video": "Nesta aula, vamos trabalhar infoprodutos: prova, entrega e limites de promessa. Informe o que é entregue, acesso, suporte e limites. Não garantir renda, emprego ou resultado por comprar material. Um depoimento individual não representa a experiência provável de todos. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Infoprodutos: prova, entrega e limites de promessa” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Informe o que é entregue, acesso, suporte e limites. Não garantir renda, emprego ou resultado por comprar material. Um depoimento individual não representa a experiência provável de todos.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Comunicação e alegações",
+      "titulo_original_pt": "Comunicação e alegações",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Diferenciar benefício, hipótese e evidência",
+          "tipo": "texto",
+          "conteudo": "Identifique a mensagem explícita e o que a peça pode sugerir implicitamente. Evidência precisa corresponder à oferta e ao efeito alegado. Imagem de jaleco não substitui suporte científico apropriado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar diferenciar benefício, hipótese e evidência. Identifique a mensagem explícita e o que a peça pode sugerir implicitamente. Evidência precisa corresponder à oferta e ao efeito alegado. Imagem de jaleco não substitui suporte científico apropriado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Diferenciar benefício, hipótese e evidência” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Identifique a mensagem explícita e o que a peça pode sugerir implicitamente. Evidência precisa corresponder à oferta e ao efeito alegado. Imagem de jaleco não substitui suporte científico apropriado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Não garantir cura, desempenho acadêmico ou renda",
+          "tipo": "texto",
+          "conteudo": "Remova garantia de cura, aprovação acadêmica ou renda e explique o resultado educacional ou operacional controlável. Acrescentar um aviso pequeno não corrige necessariamente a promessa principal enganosa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar não garantir cura, desempenho acadêmico ou renda. Remova garantia de cura, aprovação acadêmica ou renda e explique o resultado educacional ou operacional controlável. Acrescentar um aviso pequeno não corrige necessariamente a promessa principal enganosa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Não garantir cura, desempenho acadêmico ou renda” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Remova garantia de cura, aprovação acadêmica ou renda e explique o resultado educacional ou operacional controlável. Acrescentar um aviso pequeno não corrige necessariamente a promessa principal enganosa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Depoimentos, imagens e autorização de uso",
+          "tipo": "texto",
+          "conteudo": "Verifique autorização, contexto e fidelidade do relato antes de usar. Não recortar uma fala para ampliar resultado nem expor informação sensível. Regras setoriais e locais podem exigir revisão adicional.",
+          "roteiro_video": "Nesta aula, vamos trabalhar depoimentos, imagens e autorização de uso. Verifique autorização, contexto e fidelidade do relato antes de usar. Não recortar uma fala para ampliar resultado nem expor informação sensível. Regras setoriais e locais podem exigir revisão adicional. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Depoimentos, imagens e autorização de uso” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Verifique autorização, contexto e fidelidade do relato antes de usar. Não recortar uma fala para ampliar resultado nem expor informação sensível. Regras setoriais e locais podem exigir revisão adicional.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Revisão profissional e jurídica antes da divulgação",
+          "tipo": "texto",
+          "conteudo": "Encaminhe alegação, fonte, público, canal e peça completa ao revisor habilitado. Revisar só uma frase pode ignorar o efeito do conjunto. Não publicar alegação ainda pendente de suporte ou aprovação aplicável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão profissional e jurídica antes da divulgação. Encaminhe alegação, fonte, público, canal e peça completa ao revisor habilitado. Revisar só uma frase pode ignorar o efeito do conjunto. Não publicar alegação ainda pendente de suporte ou aprovação aplicável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão profissional e jurídica antes da divulgação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Encaminhe alegação, fonte, público, canal e peça completa ao revisor habilitado. Revisar só uma frase pode ignorar o efeito do conjunto. Não publicar alegação ainda pendente de suporte ou aprovação aplicável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Descoberta e proposta por setor",
+      "titulo_original_pt": "Descoberta e proposta por setor",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Saúde: conversar sobre operação sem dados de pacientes",
+          "tipo": "texto",
+          "conteudo": "Pergunte como agendamento, acesso e passagem administrativa funcionam sem revelar pacientes. Demonstre com registros sintéticos. Benefício operacional não permite afirmar melhora clínica ou redução garantida de risco médico.",
+          "roteiro_video": "Nesta aula, vamos trabalhar saúde: conversar sobre operação sem dados de pacientes. Pergunte como agendamento, acesso e passagem administrativa funcionam sem revelar pacientes. Demonstre com registros sintéticos. Benefício operacional não permite afirmar melhora clínica ou redução garantida de risco médico. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Saúde: conversar sobre operação sem dados de pacientes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte como agendamento, acesso e passagem administrativa funcionam sem revelar pacientes. Demonstre com registros sintéticos. Benefício operacional não permite afirmar melhora clínica ou redução garantida de risco médico.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Educação: investigar aderência sem garantir resultado",
+          "tipo": "texto",
+          "conteudo": "Investigue objetivo de aprendizagem, base prévia, tempo e recursos disponíveis. Se pré-requisito não é atendido, proponha preparação ou outra oferta adequada. Não vender dificuldade como prova de que o curso garante transformação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar educação: investigar aderência sem garantir resultado. Investigue objetivo de aprendizagem, base prévia, tempo e recursos disponíveis. Se pré-requisito não é atendido, proponha preparação ou outra oferta adequada. Não vender dificuldade como prova de que o curso garante transformação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Educação: investigar aderência sem garantir resultado” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Investigue objetivo de aprendizagem, base prévia, tempo e recursos disponíveis. Se pré-requisito não é atendido, proponha preparação ou outra oferta adequada. Não vender dificuldade como prova de que o curso garante transformação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Infoprodutos: conteúdo, suporte e pré-requisitos",
+          "tipo": "texto",
+          "conteudo": "Distingua conteúdo gravado, acompanhamento e serviço personalizado. Informe ferramentas ou esforço necessários e limites de acesso. Não insinuar consultoria individual quando a entrega é apenas material padronizado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar infoprodutos: conteúdo, suporte e pré-requisitos. Distingua conteúdo gravado, acompanhamento e serviço personalizado. Informe ferramentas ou esforço necessários e limites de acesso. Não insinuar consultoria individual quando a entrega é apenas material padronizado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Infoprodutos: conteúdo, suporte e pré-requisitos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Distingua conteúdo gravado, acompanhamento e serviço personalizado. Informe ferramentas ou esforço necessários e limites de acesso. Não insinuar consultoria individual quando a entrega é apenas material padronizado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Explicar preço, prazo, exclusões e condições",
+          "tipo": "texto",
+          "conteudo": "Mostre preço e obrigações com base comparável e condições verificadas. Reembolso, renovação e acesso não devem ser inventados. Encaminhe dúvidas contratuais para o procedimento responsável antes do compromisso.",
+          "roteiro_video": "Nesta aula, vamos trabalhar explicar preço, prazo, exclusões e condições. Mostre preço e obrigações com base comparável e condições verificadas. Reembolso, renovação e acesso não devem ser inventados. Encaminhe dúvidas contratuais para o procedimento responsável antes do compromisso. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Explicar preço, prazo, exclusões e condições” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mostre preço e obrigações com base comparável e condições verificadas. Reembolso, renovação e acesso não devem ser inventados. Encaminhe dúvidas contratuais para o procedimento responsável antes do compromisso.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Laboratórios e revisão",
+      "titulo_original_pt": "Laboratórios e revisão",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Cenário fictício de gestão de clínica sem pacientes",
+          "tipo": "texto",
+          "conteudo": "Avalie uma proposta que pede dados de pacientes para testar agenda. Substitua por dados sintéticos e verifique requisitos com responsáveis. Não usar privacidade como obstáculo a contornar para acelerar demonstração.",
+          "roteiro_video": "Nesta aula, vamos trabalhar cenário fictício de gestão de clínica sem pacientes. Avalie uma proposta que pede dados de pacientes para testar agenda. Substitua por dados sintéticos e verifique requisitos com responsáveis. Não usar privacidade como obstáculo a contornar para acelerar demonstração. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Cenário fictício de gestão de clínica sem pacientes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Avalie uma proposta que pede dados de pacientes para testar agenda. Substitua por dados sintéticos e verifique requisitos com responsáveis. Não usar privacidade como obstáculo a contornar para acelerar demonstração.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Cenário fictício de formação educacional",
+          "tipo": "texto",
+          "conteudo": "Compare objetivo do aluno com pré-requisito e entrega documentada. Uma promessa de aprovação exige correção quando não há base. Registre lacuna de aderência e recomende caminho sem garantia de resultado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar cenário fictício de formação educacional. Compare objetivo do aluno com pré-requisito e entrega documentada. Uma promessa de aprovação exige correção quando não há base. Registre lacuna de aderência e recomende caminho sem garantia de resultado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Cenário fictício de formação educacional” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Compare objetivo do aluno com pré-requisito e entrega documentada. Uma promessa de aprovação exige correção quando não há base. Registre lacuna de aderência e recomende caminho sem garantia de resultado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Cenário fictício de produto digital com alegação inadequada",
+          "tipo": "texto",
+          "conteudo": "Uma peça promete renda com um roteiro de vendas. Reescreva em termos de habilidade ensinada e prática oferecida. Não manter o mesmo efeito implícito por imagens ou testemunhos que contradizem o texto.",
+          "roteiro_video": "Nesta aula, vamos trabalhar cenário fictício de produto digital com alegação inadequada. Uma peça promete renda com um roteiro de vendas. Reescreva em termos de habilidade ensinada e prática oferecida. Não manter o mesmo efeito implícito por imagens ou testemunhos que contradizem o texto. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Cenário fictício de produto digital com alegação inadequada” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Uma peça promete renda com um roteiro de vendas. Reescreva em termos de habilidade ensinada e prática oferecida. Não manter o mesmo efeito implícito por imagens ou testemunhos que contradizem o texto.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Identificar riscos e encaminhar a revisão habilitada",
+          "tipo": "texto",
+          "conteudo": "Classifique risco clínico, dado sensível, alegação sem prova e condição contratual incerta. Defina ação e profissional responsável. Conclusão do curso não equivale a parecer jurídico nem autorização setorial de publicidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar identificar riscos e encaminhar a revisão habilitada. Classifique risco clínico, dado sensível, alegação sem prova e condição contratual incerta. Defina ação e profissional responsável. Conclusão do curso não equivale a parecer jurídico nem autorização setorial de publicidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Identificar riscos e encaminhar a revisão habilitada” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Classifique risco clínico, dado sensível, alegação sem prova e condição contratual incerta. Defina ação e profissional responsável. Conclusão do curso não equivale a parecer jurídico nem autorização setorial de publicidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Três anúncios fictícios estão em revisão: software de agenda promete curar ansiedade; curso promete aprovação em qualquer prova; infoproduto promete renda mensal garantida. A clínica oferece uma lista real de pacientes para demonstração, mas o exercício pode usar dados sintéticos. Não há autorização para depoimentos."
+  },
+  "projeto": {
+    "instrucoes": "Reescreva as três ofertas, crie demonstração administrativa sintética e prepare ficha de revisão com alegação, evidência, público, canal e responsável.",
+    "gabarito": "Agenda organiza horários, não oferece cura. Curso ensina competências e informa critérios, sem garantir aprovação externa. Infoproduto descreve conteúdo e suporte, sem renda garantida. Recuse dados de pacientes para o treino, use sintéticos e mantenha revisão habilitada pendente antes de publicação."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "23-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Limites de atuação em setores sensíveis”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "O profissional comercial explica oferta e processo; não diagnostica, prescreve ou promete resultado clínico. Dúvida sobre saúde deve ser encaminhada ao profissional habilitado. Este curso não habilita atendimento clínico.",
+          "Para vender uma solução administrativa, investigue tarefas e requisitos com dados sintéticos. Não pedir lista de pacientes, exames ou diagnósticos para demonstrar utilidade. Dados sensíveis exigem análise específica fora da qualificação genérica.",
+          "Explique público, pré-requisitos, conteúdo, apoio e critério de conclusão. Não confundir certificado de curso com licença profissional ou credencial reconhecida sem base. Aprendizagem depende de participação e contexto.",
+          "Informe o que é entregue, acesso, suporte e limites. Não garantir renda, emprego ou resultado por comprar material. Um depoimento individual não representa a experiência provável de todos."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "23-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Comunicação e alegações”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Identifique a mensagem explícita e o que a peça pode sugerir implicitamente. Evidência precisa corresponder à oferta e ao efeito alegado. Imagem de jaleco não substitui suporte científico apropriado.",
+          "Remova garantia de cura, aprovação acadêmica ou renda e explique o resultado educacional ou operacional controlável. Acrescentar um aviso pequeno não corrige necessariamente a promessa principal enganosa.",
+          "Verifique autorização, contexto e fidelidade do relato antes de usar. Não recortar uma fala para ampliar resultado nem expor informação sensível. Regras setoriais e locais podem exigir revisão adicional.",
+          "Encaminhe alegação, fonte, público, canal e peça completa ao revisor habilitado. Revisar só uma frase pode ignorar o efeito do conjunto. Não publicar alegação ainda pendente de suporte ou aprovação aplicável."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "23-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Descoberta e proposta por setor”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Pergunte como agendamento, acesso e passagem administrativa funcionam sem revelar pacientes. Demonstre com registros sintéticos. Benefício operacional não permite afirmar melhora clínica ou redução garantida de risco médico.",
+          "Investigue objetivo de aprendizagem, base prévia, tempo e recursos disponíveis. Se pré-requisito não é atendido, proponha preparação ou outra oferta adequada. Não vender dificuldade como prova de que o curso garante transformação.",
+          "Distingua conteúdo gravado, acompanhamento e serviço personalizado. Informe ferramentas ou esforço necessários e limites de acesso. Não insinuar consultoria individual quando a entrega é apenas material padronizado.",
+          "Mostre preço e obrigações com base comparável e condições verificadas. Reembolso, renovação e acesso não devem ser inventados. Encaminhe dúvidas contratuais para o procedimento responsável antes do compromisso."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "23-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Laboratórios e revisão”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Avalie uma proposta que pede dados de pacientes para testar agenda. Substitua por dados sintéticos e verifique requisitos com responsáveis. Não usar privacidade como obstáculo a contornar para acelerar demonstração.",
+          "Compare objetivo do aluno com pré-requisito e entrega documentada. Uma promessa de aprovação exige correção quando não há base. Registre lacuna de aderência e recomende caminho sem garantia de resultado.",
+          "Uma peça promete renda com um roteiro de vendas. Reescreva em termos de habilidade ensinada e prática oferecida. Não manter o mesmo efeito implícito por imagens ou testemunhos que contradizem o texto.",
+          "Classifique risco clínico, dado sensível, alegação sem prova e condição contratual incerta. Defina ação e profissional responsável. Conclusão do curso não equivale a parecer jurídico nem autorização setorial de publicidade."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "23-FINAL",
+        "pergunta": "Reescreva as três ofertas, crie demonstração administrativa sintética e prepare ficha de revisão com alegação, evidência, público, canal e responsável.",
+        "resposta_modelo": "Agenda organiza horários, não oferece cura. Curso ensina competências e informa critérios, sem garantir aprovação externa. Infoproduto descreve conteúdo e suporte, sem renda garantida. Recuse dados de pacientes para o treino, use sintéticos e mantenha revisão habilitada pendente antes de publicação.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

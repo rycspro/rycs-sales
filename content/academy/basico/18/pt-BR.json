@@ -1,0 +1,609 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-18",
+  "course_number": 18,
+  "locale": "pt-BR",
+  "titulo": "Gerente Comercial",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 8,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Diagnóstico e planejamento comercial",
+      "titulo_original_pt": "Diagnóstico e planejamento comercial",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Entender objetivo, capacidade e restrições",
+          "tipo": "texto",
+          "conteudo": "Traduza objetivo em resultado verificável e considere capacidade, prazo e restrições. Meta sem premissa pode incentivar distorção. Antes de exigir mais atividade, investigue onde o processo perde qualidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar entender objetivo, capacidade e restrições. Traduza objetivo em resultado verificável e considere capacidade, prazo e restrições. Meta sem premissa pode incentivar distorção. Antes de exigir mais atividade, investigue onde o processo perde qualidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Entender objetivo, capacidade e restrições” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Traduza objetivo em resultado verificável e considere capacidade, prazo e restrições. Meta sem premissa pode incentivar distorção. Antes de exigir mais atividade, investigue onde o processo perde qualidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Definir etapas e critérios do funil",
+          "tipo": "texto",
+          "conteudo": "Defina entrada, saída e evidência de cada etapa. Um estágio baseado apenas em sensação prejudica forecast e coaching. Faça revisão amostral dos registros para verificar aplicação consistente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar definir etapas e critérios do funil. Defina entrada, saída e evidência de cada etapa. Um estágio baseado apenas em sensação prejudica forecast e coaching. Faça revisão amostral dos registros para verificar aplicação consistente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Definir etapas e critérios do funil” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina entrada, saída e evidência de cada etapa. Um estágio baseado apenas em sensação prejudica forecast e coaching. Faça revisão amostral dos registros para verificar aplicação consistente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Planejar recursos e carga da equipe",
+          "tipo": "texto",
+          "conteudo": "Estime tempo de pesquisa, contato, registro, reuniões e aprendizagem. Não distribuir carga só por volume bruto. Considere complexidade e dependências e revise a estimativa com dados observados.",
+          "roteiro_video": "Nesta aula, vamos trabalhar planejar recursos e carga da equipe. Estime tempo de pesquisa, contato, registro, reuniões e aprendizagem. Não distribuir carga só por volume bruto. Considere complexidade e dependências e revise a estimativa com dados observados. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Planejar recursos e carga da equipe” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Estime tempo de pesquisa, contato, registro, reuniões e aprendizagem. Não distribuir carga só por volume bruto. Considere complexidade e dependências e revise a estimativa com dados observados.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Metas com premissas, não promessas",
+          "tipo": "texto",
+          "conteudo": "Construa metas a partir de capacidade e conversões históricas comparáveis, com incerteza. Não aplicar média externa como obrigação individual. Uma hipótese de planejamento não é promessa de receita.",
+          "roteiro_video": "Nesta aula, vamos trabalhar metas com premissas, não promessas. Construa metas a partir de capacidade e conversões históricas comparáveis, com incerteza. Não aplicar média externa como obrigação individual. Uma hipótese de planejamento não é promessa de receita. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Metas com premissas, não promessas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Construa metas a partir de capacidade e conversões históricas comparáveis, com incerteza. Não aplicar média externa como obrigação individual. Uma hipótese de planejamento não é promessa de receita.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.5",
+          "titulo": "Território, carteira e distribuição transparente",
+          "tipo": "texto",
+          "conteudo": "Use critérios transparentes de distribuição e revisão, como capacidade e características da carteira. Registre exceções justificadas. Não premiar apenas volume de uma carteira com condições muito diferentes.",
+          "roteiro_video": "Nesta aula, vamos trabalhar território, carteira e distribuição transparente. Use critérios transparentes de distribuição e revisão, como capacidade e características da carteira. Registre exceções justificadas. Não premiar apenas volume de uma carteira com condições muito diferentes. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Território, carteira e distribuição transparente” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use critérios transparentes de distribuição e revisão, como capacidade e características da carteira. Registre exceções justificadas. Não premiar apenas volume de uma carteira com condições muito diferentes.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.6",
+          "titulo": "Plano de ação e hipóteses de melhoria",
+          "tipo": "texto",
+          "conteudo": "Defina problema observado, hipótese, ação, dono, prazo e medida de efeito. Inclua critério de parar ou revisar. Um plano com muitas ações sem prioridade dificulta aprender o que funcionou.",
+          "roteiro_video": "Nesta aula, vamos trabalhar plano de ação e hipóteses de melhoria. Defina problema observado, hipótese, ação, dono, prazo e medida de efeito. Inclua critério de parar ou revisar. Um plano com muitas ações sem prioridade dificulta aprender o que funcionou. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Plano de ação e hipóteses de melhoria” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina problema observado, hipótese, ação, dono, prazo e medida de efeito. Inclua critério de parar ou revisar. Um plano com muitas ações sem prioridade dificulta aprender o que funcionou.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Gestão de indicadores",
+      "titulo_original_pt": "Gestão de indicadores",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Definir métricas, denominadores e períodos",
+          "tipo": "texto",
+          "conteudo": "Documente numerador, denominador, janela, elegibilidade e tratamento de duplicidades. Um painel sem dicionário pode comparar números diferentes com mesmo nome. Corrija definição antes de interpretar variação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar definir métricas, denominadores e períodos. Documente numerador, denominador, janela, elegibilidade e tratamento de duplicidades. Um painel sem dicionário pode comparar números diferentes com mesmo nome. Corrija definição antes de interpretar variação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Definir métricas, denominadores e períodos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Documente numerador, denominador, janela, elegibilidade e tratamento de duplicidades. Um painel sem dicionário pode comparar números diferentes com mesmo nome. Corrija definição antes de interpretar variação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Diferenciar atividade, qualidade e resultado",
+          "tipo": "texto",
+          "conteudo": "Tentativas medem esforço; aderência e registros medem aspectos de qualidade; receita é resultado posterior. Uma única métrica incentiva atalhos. Leia o conjunto e procure efeitos não desejados.",
+          "roteiro_video": "Nesta aula, vamos trabalhar diferenciar atividade, qualidade e resultado. Tentativas medem esforço; aderência e registros medem aspectos de qualidade; receita é resultado posterior. Uma única métrica incentiva atalhos. Leia o conjunto e procure efeitos não desejados. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Diferenciar atividade, qualidade e resultado” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Tentativas medem esforço; aderência e registros medem aspectos de qualidade; receita é resultado posterior. Uma única métrica incentiva atalhos. Leia o conjunto e procure efeitos não desejados.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Ler coortes e tempos de ciclo",
+          "tipo": "texto",
+          "conteudo": "Compare oportunidades originadas em período semelhante com tempo de maturação equivalente. Misturar negócios antigos e novos pode distorcer conversão. Explique censura de casos ainda abertos antes de calcular tempo médio.",
+          "roteiro_video": "Nesta aula, vamos trabalhar ler coortes e tempos de ciclo. Compare oportunidades originadas em período semelhante com tempo de maturação equivalente. Misturar negócios antigos e novos pode distorcer conversão. Explique censura de casos ainda abertos antes de calcular tempo médio. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Ler coortes e tempos de ciclo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Compare oportunidades originadas em período semelhante com tempo de maturação equivalente. Misturar negócios antigos e novos pode distorcer conversão. Explique censura de casos ainda abertos antes de calcular tempo médio.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Forecast como estimativa com incerteza",
+          "tipo": "texto",
+          "conteudo": "Previsão combina informação atual e premissas, não certeza. Separe cenário base, conservador e favorável e descreva condições. Probabilidade arbitrária por estágio não substitui histórico e julgamento revisável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar forecast como estimativa com incerteza. Previsão combina informação atual e premissas, não certeza. Separe cenário base, conservador e favorável e descreva condições. Probabilidade arbitrária por estágio não substitui histórico e julgamento revisável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Forecast como estimativa com incerteza” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Previsão combina informação atual e premissas, não certeza. Separe cenário base, conservador e favorável e descreva condições. Probabilidade arbitrária por estágio não substitui histórico e julgamento revisável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Identificar vieses e incentivos perversos",
+          "tipo": "texto",
+          "conteudo": "Analise o que uma meta torna atraente: reuniões sem fit, registros duplicados ou adiamento de perdas. Corrija critérios e supervisão. Não presumir má-fé individual quando o desenho incentiva distorção.",
+          "roteiro_video": "Nesta aula, vamos trabalhar identificar vieses e incentivos perversos. Analise o que uma meta torna atraente: reuniões sem fit, registros duplicados ou adiamento de perdas. Corrija critérios e supervisão. Não presumir má-fé individual quando o desenho incentiva distorção. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Identificar vieses e incentivos perversos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Analise o que uma meta torna atraente: reuniões sem fit, registros duplicados ou adiamento de perdas. Corrija critérios e supervisão. Não presumir má-fé individual quando o desenho incentiva distorção.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.6",
+          "titulo": "Revisão de dados e integridade dos registros",
+          "tipo": "texto",
+          "conteudo": "Selecione amostra e confira fonte, consistência e atualização. Corrija erros com rastreabilidade. Não editar o passado silenciosamente para melhorar relatório; se houver mudança metodológica, documente o efeito.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão de dados e integridade dos registros. Selecione amostra e confira fonte, consistência e atualização. Corrija erros com rastreabilidade. Não editar o passado silenciosamente para melhorar relatório; se houver mudança metodológica, documente o efeito. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão de dados e integridade dos registros” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Selecione amostra e confira fonte, consistência e atualização. Corrija erros com rastreabilidade. Não editar o passado silenciosamente para melhorar relatório; se houver mudança metodológica, documente o efeito.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Desenvolvimento da equipe",
+      "titulo_original_pt": "Desenvolvimento da equipe",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Observação e feedback com evidências",
+          "tipo": "texto",
+          "conteudo": "Descreva comportamento observado, efeito e alternativa treinável. Evite rótulos pessoais e leitura de intenção. Use trecho autorizado ou fictício e peça ao profissional sua interpretação antes de orientar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar observação e feedback com evidências. Descreva comportamento observado, efeito e alternativa treinável. Evite rótulos pessoais e leitura de intenção. Use trecho autorizado ou fictício e peça ao profissional sua interpretação antes de orientar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Observação e feedback com evidências” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Descreva comportamento observado, efeito e alternativa treinável. Evite rótulos pessoais e leitura de intenção. Use trecho autorizado ou fictício e peça ao profissional sua interpretação antes de orientar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Coaching de uma habilidade por vez",
+          "tipo": "texto",
+          "conteudo": "Escolha uma habilidade, demonstre, pratique e reavalie no mesmo critério. Cobrir dez falhas ao mesmo tempo reduz foco. Defina transferência para uma situação nova, não só repetição do exemplo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar coaching de uma habilidade por vez. Escolha uma habilidade, demonstre, pratique e reavalie no mesmo critério. Cobrir dez falhas ao mesmo tempo reduz foco. Defina transferência para uma situação nova, não só repetição do exemplo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Coaching de uma habilidade por vez” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escolha uma habilidade, demonstre, pratique e reavalie no mesmo critério. Cobrir dez falhas ao mesmo tempo reduz foco. Defina transferência para uma situação nova, não só repetição do exemplo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Calibrar rubricas e avaliações",
+          "tipo": "texto",
+          "conteudo": "Dois avaliadores devem pontuar o mesmo caso e discutir evidências das diferenças. Não ajustar nota apenas para concordar. Revise âncoras ambíguas e acompanhe consistência sem fingir precisão absoluta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar calibrar rubricas e avaliações. Dois avaliadores devem pontuar o mesmo caso e discutir evidências das diferenças. Não ajustar nota apenas para concordar. Revise âncoras ambíguas e acompanhe consistência sem fingir precisão absoluta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Calibrar rubricas e avaliações” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Dois avaliadores devem pontuar o mesmo caso e discutir evidências das diferenças. Não ajustar nota apenas para concordar. Revise âncoras ambíguas e acompanhe consistência sem fingir precisão absoluta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Treinamento e adaptação de rotinas",
+          "tipo": "texto",
+          "conteudo": "Relacione treinamento a uma falha de execução observada e ofereça oportunidade de prática. Nem todo problema é falta de habilidade; processo, ferramenta e oferta também podem limitar desempenho.",
+          "roteiro_video": "Nesta aula, vamos trabalhar treinamento e adaptação de rotinas. Relacione treinamento a uma falha de execução observada e ofereça oportunidade de prática. Nem todo problema é falta de habilidade; processo, ferramenta e oferta também podem limitar desempenho. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Treinamento e adaptação de rotinas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Relacione treinamento a uma falha de execução observada e ofereça oportunidade de prática. Nem todo problema é falta de habilidade; processo, ferramenta e oferta também podem limitar desempenho.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Tratar erros sem incentivar ocultação",
+          "tipo": "texto",
+          "conteudo": "Diferencie erro de entendimento, falha de processo e conduta deliberada com investigação justa. Ambiente que pune relato pode ocultar problema. Corrigir exige responsabilidade sem incentivar falsificação defensiva.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tratar erros sem incentivar ocultação. Diferencie erro de entendimento, falha de processo e conduta deliberada com investigação justa. Ambiente que pune relato pode ocultar problema. Corrigir exige responsabilidade sem incentivar falsificação defensiva. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tratar erros sem incentivar ocultação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Diferencie erro de entendimento, falha de processo e conduta deliberada com investigação justa. Ambiente que pune relato pode ocultar problema. Corrigir exige responsabilidade sem incentivar falsificação defensiva.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.6",
+          "titulo": "Conduta, privacidade e escalonamento",
+          "tipo": "texto",
+          "conteudo": "Defina quem decide questões de segurança, dados, contrato e pessoas. Gestor não deve resolver tudo por improvisação. Compartilhe o mínimo necessário e preserve o processo responsável de apuração.",
+          "roteiro_video": "Nesta aula, vamos trabalhar conduta, privacidade e escalonamento. Defina quem decide questões de segurança, dados, contrato e pessoas. Gestor não deve resolver tudo por improvisação. Compartilhe o mínimo necessário e preserve o processo responsável de apuração. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Conduta, privacidade e escalonamento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina quem decide questões de segurança, dados, contrato e pessoas. Gestor não deve resolver tudo por improvisação. Compartilhe o mínimo necessário e preserve o processo responsável de apuração.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Ritmo de gestão e projeto",
+      "titulo_original_pt": "Ritmo de gestão e projeto",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Reunião individual com propósito",
+          "tipo": "texto",
+          "conteudo": "Use pauta de contexto, obstáculos, evidência e desenvolvimento, com espaço para o profissional. Não transformar toda conversa em cobrança de número. Registre ação combinada e retome o compromisso depois.",
+          "roteiro_video": "Nesta aula, vamos trabalhar reunião individual com propósito. Use pauta de contexto, obstáculos, evidência e desenvolvimento, com espaço para o profissional. Não transformar toda conversa em cobrança de número. Registre ação combinada e retome o compromisso depois. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Reunião individual com propósito” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use pauta de contexto, obstáculos, evidência e desenvolvimento, com espaço para o profissional. Não transformar toda conversa em cobrança de número. Registre ação combinada e retome o compromisso depois.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Revisão de pipeline orientada a decisões",
+          "tipo": "texto",
+          "conteudo": "Discuta o que mudou, o que falta e qual ação é justificável. Ler linha por linha sem decisão consome tempo. Uma oportunidade sem caminho viável deve ser reclassificada, não defendida por otimismo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão de pipeline orientada a decisões. Discuta o que mudou, o que falta e qual ação é justificável. Ler linha por linha sem decisão consome tempo. Uma oportunidade sem caminho viável deve ser reclassificada, não defendida por otimismo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão de pipeline orientada a decisões” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Discuta o que mudou, o que falta e qual ação é justificável. Ler linha por linha sem decisão consome tempo. Uma oportunidade sem caminho viável deve ser reclassificada, não defendida por otimismo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Experimentos comerciais com critérios de parada",
+          "tipo": "texto",
+          "conteudo": "Defina hipótese, comparação, duração e medida antes de alterar a rotina. Verifique efeitos em qualidade e conduta. Resultado pequeno ou inconclusivo não deve virar narrativa de método vencedor.",
+          "roteiro_video": "Nesta aula, vamos trabalhar experimentos comerciais com critérios de parada. Defina hipótese, comparação, duração e medida antes de alterar a rotina. Verifique efeitos em qualidade e conduta. Resultado pequeno ou inconclusivo não deve virar narrativa de método vencedor. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Experimentos comerciais com critérios de parada” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina hipótese, comparação, duração e medida antes de alterar a rotina. Verifique efeitos em qualidade e conduta. Resultado pequeno ou inconclusivo não deve virar narrativa de método vencedor.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Revisão de perdas e aprendizados",
+          "tipo": "texto",
+          "conteudo": "Combine registros e relato do comprador quando disponível; mantenha desconhecido quando faltar evidência. Não atribuir toda perda ao preço. Busque uma mudança testável, não uma pessoa para culpar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão de perdas e aprendizados. Combine registros e relato do comprador quando disponível; mantenha desconhecido quando faltar evidência. Não atribuir toda perda ao preço. Busque uma mudança testável, não uma pessoa para culpar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão de perdas e aprendizados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Combine registros e relato do comprador quando disponível; mantenha desconhecido quando faltar evidência. Não atribuir toda perda ao preço. Busque uma mudança testável, não uma pessoa para culpar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.5",
+          "titulo": "Plano de gestão de 30 dias com dados fictícios",
+          "tipo": "texto",
+          "conteudo": "Escolha poucas prioridades com ações semanais, responsáveis e critérios de revisão. Dados do exercício são fictícios. Não projetar crescimento garantido a partir de um plano ou de uma amostra pequena.",
+          "roteiro_video": "Nesta aula, vamos trabalhar plano de gestão de 30 dias com dados fictícios. Escolha poucas prioridades com ações semanais, responsáveis e critérios de revisão. Dados do exercício são fictícios. Não projetar crescimento garantido a partir de um plano ou de uma amostra pequena. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Plano de gestão de 30 dias com dados fictícios” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escolha poucas prioridades com ações semanais, responsáveis e critérios de revisão. Dados do exercício são fictícios. Não projetar crescimento garantido a partir de um plano ou de uma amostra pequena.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.6",
+          "titulo": "Apresentação e revisão humana do projeto",
+          "tipo": "texto",
+          "conteudo": "Apresente diagnóstico, alternativas descartadas, premissas e riscos do plano. A revisão humana deve testar coerência e efeitos não desejados. Uma tabela completa não prova viabilidade de execução.",
+          "roteiro_video": "Nesta aula, vamos trabalhar apresentação e revisão humana do projeto. Apresente diagnóstico, alternativas descartadas, premissas e riscos do plano. A revisão humana deve testar coerência e efeitos não desejados. Uma tabela completa não prova viabilidade de execução. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Apresentação e revisão humana do projeto” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Apresente diagnóstico, alternativas descartadas, premissas e riscos do plano. A revisão humana deve testar coerência e efeitos não desejados. Uma tabela completa não prova viabilidade de execução.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 20,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A equipe fictícia registrou 100 reuniões agendadas, 60 realizadas e 30 que atenderam ao critério de qualidade no mesmo conjunto. O gestor premia só agendamento e alguns registros estão duplicados. Há quatro profissionais, mas carteiras e complexidade diferem. O forecast trata toda proposta enviada como venda garantida."
+  },
+  "projeto": {
+    "instrucoes": "Corrija definições, calcule comparecimento e qualidade, proponha coaching de uma habilidade e plano de 30 dias com hipótese, medida e critério de revisão.",
+    "gabarito": "Antes de deduplicar, taxas do conjunto informado são 60% de comparecimento e 50% de qualidade entre realizadas; qualidade sobre agendadas é 30%. Recalcule após corrigir dados. Redesenhe incentivo com qualidade, preserve incerteza do forecast e não atribua causalidade automática à meta."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "18-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Diagnóstico e planejamento comercial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Traduza objetivo em resultado verificável e considere capacidade, prazo e restrições. Meta sem premissa pode incentivar distorção. Antes de exigir mais atividade, investigue onde o processo perde qualidade.",
+          "Defina entrada, saída e evidência de cada etapa. Um estágio baseado apenas em sensação prejudica forecast e coaching. Faça revisão amostral dos registros para verificar aplicação consistente.",
+          "Estime tempo de pesquisa, contato, registro, reuniões e aprendizagem. Não distribuir carga só por volume bruto. Considere complexidade e dependências e revise a estimativa com dados observados.",
+          "Construa metas a partir de capacidade e conversões históricas comparáveis, com incerteza. Não aplicar média externa como obrigação individual. Uma hipótese de planejamento não é promessa de receita.",
+          "Use critérios transparentes de distribuição e revisão, como capacidade e características da carteira. Registre exceções justificadas. Não premiar apenas volume de uma carteira com condições muito diferentes.",
+          "Defina problema observado, hipótese, ação, dono, prazo e medida de efeito. Inclua critério de parar ou revisar. Um plano com muitas ações sem prioridade dificulta aprender o que funcionou."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "18-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Gestão de indicadores”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Documente numerador, denominador, janela, elegibilidade e tratamento de duplicidades. Um painel sem dicionário pode comparar números diferentes com mesmo nome. Corrija definição antes de interpretar variação.",
+          "Tentativas medem esforço; aderência e registros medem aspectos de qualidade; receita é resultado posterior. Uma única métrica incentiva atalhos. Leia o conjunto e procure efeitos não desejados.",
+          "Compare oportunidades originadas em período semelhante com tempo de maturação equivalente. Misturar negócios antigos e novos pode distorcer conversão. Explique censura de casos ainda abertos antes de calcular tempo médio.",
+          "Previsão combina informação atual e premissas, não certeza. Separe cenário base, conservador e favorável e descreva condições. Probabilidade arbitrária por estágio não substitui histórico e julgamento revisável.",
+          "Analise o que uma meta torna atraente: reuniões sem fit, registros duplicados ou adiamento de perdas. Corrija critérios e supervisão. Não presumir má-fé individual quando o desenho incentiva distorção.",
+          "Selecione amostra e confira fonte, consistência e atualização. Corrija erros com rastreabilidade. Não editar o passado silenciosamente para melhorar relatório; se houver mudança metodológica, documente o efeito."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "18-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Desenvolvimento da equipe”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Descreva comportamento observado, efeito e alternativa treinável. Evite rótulos pessoais e leitura de intenção. Use trecho autorizado ou fictício e peça ao profissional sua interpretação antes de orientar.",
+          "Escolha uma habilidade, demonstre, pratique e reavalie no mesmo critério. Cobrir dez falhas ao mesmo tempo reduz foco. Defina transferência para uma situação nova, não só repetição do exemplo.",
+          "Dois avaliadores devem pontuar o mesmo caso e discutir evidências das diferenças. Não ajustar nota apenas para concordar. Revise âncoras ambíguas e acompanhe consistência sem fingir precisão absoluta.",
+          "Relacione treinamento a uma falha de execução observada e ofereça oportunidade de prática. Nem todo problema é falta de habilidade; processo, ferramenta e oferta também podem limitar desempenho.",
+          "Diferencie erro de entendimento, falha de processo e conduta deliberada com investigação justa. Ambiente que pune relato pode ocultar problema. Corrigir exige responsabilidade sem incentivar falsificação defensiva.",
+          "Defina quem decide questões de segurança, dados, contrato e pessoas. Gestor não deve resolver tudo por improvisação. Compartilhe o mínimo necessário e preserve o processo responsável de apuração."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "18-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Ritmo de gestão e projeto”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Use pauta de contexto, obstáculos, evidência e desenvolvimento, com espaço para o profissional. Não transformar toda conversa em cobrança de número. Registre ação combinada e retome o compromisso depois.",
+          "Discuta o que mudou, o que falta e qual ação é justificável. Ler linha por linha sem decisão consome tempo. Uma oportunidade sem caminho viável deve ser reclassificada, não defendida por otimismo.",
+          "Defina hipótese, comparação, duração e medida antes de alterar a rotina. Verifique efeitos em qualidade e conduta. Resultado pequeno ou inconclusivo não deve virar narrativa de método vencedor.",
+          "Combine registros e relato do comprador quando disponível; mantenha desconhecido quando faltar evidência. Não atribuir toda perda ao preço. Busque uma mudança testável, não uma pessoa para culpar.",
+          "Escolha poucas prioridades com ações semanais, responsáveis e critérios de revisão. Dados do exercício são fictícios. Não projetar crescimento garantido a partir de um plano ou de uma amostra pequena.",
+          "Apresente diagnóstico, alternativas descartadas, premissas e riscos do plano. A revisão humana deve testar coerência e efeitos não desejados. Uma tabela completa não prova viabilidade de execução."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "18-FINAL",
+        "pergunta": "Corrija definições, calcule comparecimento e qualidade, proponha coaching de uma habilidade e plano de 30 dias com hipótese, medida e critério de revisão.",
+        "resposta_modelo": "Antes de deduplicar, taxas do conjunto informado são 60% de comparecimento e 50% de qualidade entre realizadas; qualidade sobre agendadas é 30%. Recalcule após corrigir dados. Redesenhe incentivo com qualidade, preserve incerteza do forecast e não atribua causalidade automática à meta.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

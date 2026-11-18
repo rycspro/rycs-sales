@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-21",
+  "course_number": 21,
+  "locale": "en-IN",
+  "titulo": "Ethics, LGPD and Responsible Contact",
+  "nivel_original": "Todos",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 3,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Identity and transparency",
+      "titulo_original_pt": "Ética e responsabilidade comercial",
+      "duracaoMin_planejada": 45,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Identity and transparency",
+          "tipo": "texto",
+          "conteudo": "Identify representation, purpose and commercial nature. Recipients should understand why they are contacted. Do not simulate mandatory service, debt collection or a prior relationship to get attention.",
+          "roteiro_video": "In this lesson we explore identity and transparency. Identify representation, purpose and commercial nature. Recipients should understand why they are contacted. Do not simulate mandatory service, debt collection or a prior relationship to get attention. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Identity and transparency” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Identify representation, purpose and commercial nature. Recipients should understand why they are contacted. Do not simulate mandatory service, debt collection or a prior relationship to get attention.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 12,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Truth and promise limits",
+          "tipo": "texto",
+          "conteudo": "Distinguish verified facts, hypotheses and authorised commitments. Do not guarantee income, sales, cures or effects outside control. Omitting material limits can also mislead buyers.",
+          "roteiro_video": "In this lesson we explore truth and promise limits. Distinguish verified facts, hypotheses and authorised commitments. Do not guarantee income, sales, cures or effects outside control. Omitting material limits can also mislead buyers. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Truth and promise limits” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Distinguish verified facts, hypotheses and authorised commitments. Do not guarantee income, sales, cures or effects outside control. Omitting material limits can also mislead buyers.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Refusal and vulnerability",
+          "tipo": "texto",
+          "conteudo": "Respect refusal and do not exploit fear, personal urgency or difficulty understanding. Clarify or stop when someone cannot understand the offer. Vulnerability is not a pressure opportunity.",
+          "roteiro_video": "In this lesson we explore refusal and vulnerability. Respect refusal and do not exploit fear, personal urgency or difficulty understanding. Clarify or stop when someone cannot understand the offer. Vulnerability is not a pressure opportunity. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Refusal and vulnerability” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Respect refusal and do not exploit fear, personal urgency or difficulty understanding. Clarify or stop when someone cannot understand the offer. Vulnerability is not a pressure opportunity.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Who decides legal questions",
+          "tipo": "texto",
+          "conteudo": "Sellers follow approved procedures and route questions to legal or privacy owners. Do not choose a legal basis for convenience. Record uncertainty rather than invent permission to continue.",
+          "roteiro_video": "In this lesson we explore who decides legal questions. Sellers follow approved procedures and route questions to legal or privacy owners. Do not choose a legal basis for convenience. Record uncertainty rather than invent permission to continue. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Who decides legal questions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Sellers follow approved procedures and route questions to legal or privacy owners. Do not choose a legal basis for convenience. Record uncertainty rather than invent permission to continue.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Personal and sensitive data",
+      "titulo_original_pt": "Princípios de proteção de dados",
+      "duracaoMin_planejada": 45,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Personal and sensitive data",
+          "tipo": "texto",
+          "conteudo": "Recognise information relating to people and categories requiring special care. Context may identify someone without a name. Do not collect health, identity documents or personal-life details for generic qualification.",
+          "roteiro_video": "In this lesson we explore personal and sensitive data. Recognise information relating to people and categories requiring special care. Context may identify someone without a name. Do not collect health, identity documents or personal-life details for generic qualification. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Personal and sensitive data” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Recognise information relating to people and categories requiring special care. Context may identify someone without a name. Do not collect health, identity documents or personal-life details for generic qualification.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 12,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Purpose and minimisation",
+          "tipo": "texto",
+          "conteudo": "Define the task and fields genuinely needed for it. More data is not automatically better qualification. Question collection and retention of fields that do not support a legitimate decision.",
+          "roteiro_video": "In this lesson we explore purpose and minimisation. Define the task and fields genuinely needed for it. More data is not automatically better qualification. Question collection and retention of fields that do not support a legitimate decision. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Purpose and minimisation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define the task and fields genuinely needed for it. More data is not automatically better qualification. Question collection and retention of fields that do not support a legitimate decision.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Legal basis review",
+          "tipo": "texto",
+          "conteudo": "The organisation evaluates applicable grounds and documents accountable decisions. Consent is not the only possible basis, and legitimate interest is not blanket permission. Training does not replace case-specific review.",
+          "roteiro_video": "In this lesson we explore legal basis review. The organisation evaluates applicable grounds and documents accountable decisions. Consent is not the only possible basis, and legitimate interest is not blanket permission. Training does not replace case-specific review. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Legal basis review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "The organisation evaluates applicable grounds and documents accountable decisions. Consent is not the only possible basis, and legitimate interest is not blanket permission. Training does not replace case-specific review.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Public data reuse",
+          "tipo": "texto",
+          "conteudo": "Public availability does not remove purpose, necessity or rights. Moving information to another context changes expectations and risks. Check provenance and approved procedure before reuse.",
+          "roteiro_video": "In this lesson we explore public data reuse. Public availability does not remove purpose, necessity or rights. Moving information to another context changes expectations and risks. Check provenance and approved procedure before reuse. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Public data reuse” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Public availability does not remove purpose, necessity or rights. Moving information to another context changes expectations and risks. Check provenance and approved procedure before reuse.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Opt-out and suppression",
+      "titulo_original_pt": "Contato e direitos",
+      "duracaoMin_planejada": 45,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Opt-out and suppression",
+          "tipo": "texto",
+          "conteudo": "Stop preferences must reach relevant systems and owners. A reviewed policy may require minimal suppression records; do not erase restrictions and accidentally restart contact.",
+          "roteiro_video": "In this lesson we explore opt-out and suppression. Stop preferences must reach relevant systems and owners. A reviewed policy may require minimal suppression records; do not erase restrictions and accidentally restart contact. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Opt-out and suppression” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Stop preferences must reach relevant systems and owners. A reviewed policy may require minimal suppression records; do not erase restrictions and accidentally restart contact.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 12,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Data-rights requests",
+          "tipo": "texto",
+          "conteudo": "Acknowledge, record through the authorised route and refer to the owner. Avoid excessive identity requests or unverified promises of immediate outcomes. Handling should not create new exposure.",
+          "roteiro_video": "In this lesson we explore data-rights requests. Acknowledge, record through the authorised route and refer to the owner. Avoid excessive identity requests or unverified promises of immediate outcomes. Handling should not create new exposure. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Data-rights requests” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Acknowledge, record through the authorised route and refer to the owner. Avoid excessive identity requests or unverified promises of immediate outcomes. Handling should not create new exposure.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Retention and deletion",
+          "tipo": "texto",
+          "conteudo": "Retention depends on purpose and applicable obligations under responsible review. Archiving an opportunity alone does not determine deletion. Document referral without improvised legal conclusions.",
+          "roteiro_video": "In this lesson we explore retention and deletion. Retention depends on purpose and applicable obligations under responsible review. Archiving an opportunity alone does not determine deletion. Document referral without improvised legal conclusions. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Retention and deletion” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Retention depends on purpose and applicable obligations under responsible review. Archiving an opportunity alone does not determine deletion. Document referral without improvised legal conclusions.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Channel-specific rules",
+          "tipo": "texto",
+          "conteudo": "Privacy, telecommunications, consumer rules and channel policies may overlap. One permission does not settle the others. Verify territorial scope and effective provisions before outreach or automation.",
+          "roteiro_video": "In this lesson we explore channel-specific rules. Privacy, telecommunications, consumer rules and channel policies may overlap. One permission does not settle the others. Verify territorial scope and effective provisions before outreach or automation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Channel-specific rules” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Privacy, telecommunications, consumer rules and channel policies may overlap. One permission does not settle the others. Verify territorial scope and effective provisions before outreach or automation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Access and sharing",
+      "titulo_original_pt": "Segurança e avaliação de conduta",
+      "duracaoMin_planejada": 45,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Access and sharing",
+          "tipo": "texto",
+          "conteudo": "Use individual accounts and necessary access under policy. Do not share databases in public chats or unapproved tools. Exports need purpose and control, not merely technical convenience.",
+          "roteiro_video": "In this lesson we explore access and sharing. Use individual accounts and necessary access under policy. Do not share databases in public chats or unapproved tools. Exports need purpose and control, not merely technical convenience. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Access and sharing” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use individual accounts and necessary access under policy. Do not share databases in public chats or unapproved tools. Exports need purpose and control, not merely technical convenience.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 12,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Recordings and evidence",
+          "tipo": "texto",
+          "conteudo": "Before recording or sharing, verify applicable procedure, purpose and access. Do not assume one universal rule by country or channel. Evidence should be proportionate and relevant.",
+          "roteiro_video": "In this lesson we explore recordings and evidence. Before recording or sharing, verify applicable procedure, purpose and access. Do not assume one universal rule by country or channel. Evidence should be proportionate and relevant. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Recordings and evidence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Before recording or sharing, verify applicable procedure, purpose and access. Do not assume one universal rule by country or channel. Evidence should be proportionate and relevant.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Incident escalation",
+          "tipo": "texto",
+          "conteudo": "On suspected exposure or unauthorised access, stop further sharing and use the incident route. Preserve useful evidence without spreading content. Do not invent legal deadlines or uninvestigated conclusions.",
+          "roteiro_video": "In this lesson we explore incident escalation. On suspected exposure or unauthorised access, stop further sharing and use the incident route. Preserve useful evidence without spreading content. Do not invent legal deadlines or uninvestigated conclusions. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Incident escalation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "On suspected exposure or unauthorised access, stop further sharing and use the incident route. Preserve useful evidence without spreading content. Do not invent legal deadlines or uninvestigated conclusions.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Ethical decision cases",
+          "tipo": "texto",
+          "conteudo": "Classify facts, risks, immediate action and competent owner. Correct action may suspend sending for internal review. Qualified legal review remains required; an automated quiz does not establish it.",
+          "roteiro_video": "In this lesson we explore ethical decision cases. Classify facts, risks, immediate action and competent owner. Correct action may suspend sending for internal review. Qualified legal review remains required; an automated quiz does not establish it. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Ethical decision cases” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Classify facts, risks, immediate action and competent owner. Correct action may suspend sending for internal review. Qualified legal review remains required; an automated quiz does not establish it.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 11,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A team has an old name-and-phone list with no documented purpose. One contact requests no further outreach and access to their data. A seller exports it to a personal account and adds health information from a conversation. No commercial use is authorised.\n\nAn Indian scenario requires checking DPDP provisions and commencement, applicable telecom requirements and channel policy. Do not use a published rule as proof that every requirement has the same effective date."
+  },
+  "projeto": {
+    "instrucoes": "Classify five risks, specify immediate action and owner for each and draft an initial response without inventing legal conclusions or deadlines.",
+    "gabarito": "Pause list use pending purpose/procedure review. Record the stop preference, route access request, contain sharing and engage privacy/security owners. Do not exploit health data. Acknowledge the request without claiming deletion already occurred."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "21-M1",
+        "pergunta": "How would you apply “Module 1: Identity and transparency” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Identify representation, purpose and commercial nature. Recipients should understand why they are contacted. Do not simulate mandatory service, debt collection or a prior relationship to get attention.",
+          "Distinguish verified facts, hypotheses and authorised commitments. Do not guarantee income, sales, cures or effects outside control. Omitting material limits can also mislead buyers.",
+          "Respect refusal and do not exploit fear, personal urgency or difficulty understanding. Clarify or stop when someone cannot understand the offer. Vulnerability is not a pressure opportunity.",
+          "Sellers follow approved procedures and route questions to legal or privacy owners. Do not choose a legal basis for convenience. Record uncertainty rather than invent permission to continue."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "21-M2",
+        "pergunta": "How would you apply “Module 2: Personal and sensitive data” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Recognise information relating to people and categories requiring special care. Context may identify someone without a name. Do not collect health, identity documents or personal-life details for generic qualification.",
+          "Define the task and fields genuinely needed for it. More data is not automatically better qualification. Question collection and retention of fields that do not support a legitimate decision.",
+          "The organisation evaluates applicable grounds and documents accountable decisions. Consent is not the only possible basis, and legitimate interest is not blanket permission. Training does not replace case-specific review.",
+          "Public availability does not remove purpose, necessity or rights. Moving information to another context changes expectations and risks. Check provenance and approved procedure before reuse."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "21-M3",
+        "pergunta": "How would you apply “Module 3: Opt-out and suppression” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Stop preferences must reach relevant systems and owners. A reviewed policy may require minimal suppression records; do not erase restrictions and accidentally restart contact.",
+          "Acknowledge, record through the authorised route and refer to the owner. Avoid excessive identity requests or unverified promises of immediate outcomes. Handling should not create new exposure.",
+          "Retention depends on purpose and applicable obligations under responsible review. Archiving an opportunity alone does not determine deletion. Document referral without improvised legal conclusions.",
+          "Privacy, telecommunications, consumer rules and channel policies may overlap. One permission does not settle the others. Verify territorial scope and effective provisions before outreach or automation."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "21-M4",
+        "pergunta": "How would you apply “Module 4: Access and sharing” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Use individual accounts and necessary access under policy. Do not share databases in public chats or unapproved tools. Exports need purpose and control, not merely technical convenience.",
+          "Before recording or sharing, verify applicable procedure, purpose and access. Do not assume one universal rule by country or channel. Evidence should be proportionate and relevant.",
+          "On suspected exposure or unauthorised access, stop further sharing and use the incident route. Preserve useful evidence without spreading content. Do not invent legal deadlines or uninvestigated conclusions.",
+          "Classify facts, risks, immediate action and competent owner. Correct action may suspend sending for internal review. Qualified legal review remains required; an automated quiz does not establish it."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "21-FINAL",
+        "pergunta": "Classify five risks, specify immediate action and owner for each and draft an initial response without inventing legal conclusions or deadlines.",
+        "resposta_modelo": "Pause list use pending purpose/procedure review. Record the stop preference, route access request, contain sharing and engage privacy/security owners. Do not exploit health data. Acknowledge the request without claiming deletion already occurred.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

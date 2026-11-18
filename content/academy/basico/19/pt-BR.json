@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-19",
+  "course_number": 19,
+  "locale": "pt-BR",
+  "titulo": "CRM, Rotina e Métricas",
+  "nivel_original": "Iniciante a intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Fundamentos do registro comercial",
+      "titulo_original_pt": "Fundamentos do registro comercial",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Conta, contato, oportunidade e atividade",
+          "tipo": "texto",
+          "conteudo": "Conta representa organização; contato, pessoa; oportunidade, processo comercial; atividade, evento. Misturar entidades gera duplicidade e contagem errada. Relacione registros sem transformar cada tentativa em nova oportunidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar conta, contato, oportunidade e atividade. Conta representa organização; contato, pessoa; oportunidade, processo comercial; atividade, evento. Misturar entidades gera duplicidade e contagem errada. Relacione registros sem transformar cada tentativa em nova oportunidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Conta, contato, oportunidade e atividade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conta representa organização; contato, pessoa; oportunidade, processo comercial; atividade, evento. Misturar entidades gera duplicidade e contagem errada. Relacione registros sem transformar cada tentativa em nova oportunidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Etapas do funil e critérios de entrada",
+          "tipo": "texto",
+          "conteudo": "Defina evidência mínima de cada estágio e condição de saída. Trocar etiqueta sem nova informação não é avanço. O registro precisa permitir a outra pessoa reconstruir por que a classificação ocorreu.",
+          "roteiro_video": "Nesta aula, vamos trabalhar etapas do funil e critérios de entrada. Defina evidência mínima de cada estágio e condição de saída. Trocar etiqueta sem nova informação não é avanço. O registro precisa permitir a outra pessoa reconstruir por que a classificação ocorreu. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Etapas do funil e critérios de entrada” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina evidência mínima de cada estágio e condição de saída. Trocar etiqueta sem nova informação não é avanço. O registro precisa permitir a outra pessoa reconstruir por que a classificação ocorreu.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Qualidade mínima e campos necessários",
+          "tipo": "texto",
+          "conteudo": "Campos obrigatórios precisam apoiar decisão real. Vazio, zero e desconhecido têm significados distintos. Não preencher dado inventado para passar validação; corrija o fluxo que exige certeza inexistente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar qualidade mínima e campos necessários. Campos obrigatórios precisam apoiar decisão real. Vazio, zero e desconhecido têm significados distintos. Não preencher dado inventado para passar validação; corrija o fluxo que exige certeza inexistente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Qualidade mínima e campos necessários” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Campos obrigatórios precisam apoiar decisão real. Vazio, zero e desconhecido têm significados distintos. Não preencher dado inventado para passar validação; corrija o fluxo que exige certeza inexistente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Origem dos dados e controle de acesso",
+          "tipo": "texto",
+          "conteudo": "Registre origem e limite de uso das informações e restrinja acesso por necessidade. Exportação para planilha pessoal pode perder controle. Não usar dados de uma finalidade em outra por conveniência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar origem dos dados e controle de acesso. Registre origem e limite de uso das informações e restrinja acesso por necessidade. Exportação para planilha pessoal pode perder controle. Não usar dados de uma finalidade em outra por conveniência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Origem dos dados e controle de acesso” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre origem e limite de uso das informações e restrinja acesso por necessidade. Exportação para planilha pessoal pode perder controle. Não usar dados de uma finalidade em outra por conveniência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Rotina e continuidade",
+      "titulo_original_pt": "Rotina e continuidade",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Tarefas com objetivo, responsável e condição",
+          "tipo": "texto",
+          "conteudo": "Uma tarefa útil tem ação, responsável, data/condição e propósito. Lembrete não autoriza contato. Antes de executar, consulte preferência atual e verifique se outra pessoa já resolveu a pendência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tarefas com objetivo, responsável e condição. Uma tarefa útil tem ação, responsável, data/condição e propósito. Lembrete não autoriza contato. Antes de executar, consulte preferência atual e verifique se outra pessoa já resolveu a pendência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tarefas com objetivo, responsável e condição” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Uma tarefa útil tem ação, responsável, data/condição e propósito. Lembrete não autoriza contato. Antes de executar, consulte preferência atual e verifique se outra pessoa já resolveu a pendência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Histórico factual e passagem entre pessoas",
+          "tipo": "texto",
+          "conteudo": "Separe fala do cliente, observação e inferência. Talvez avaliar não é compra prevista. Preserve contexto suficiente para continuidade, sem guardar conversas inteiras quando um resumo proporcional resolve.",
+          "roteiro_video": "Nesta aula, vamos trabalhar histórico factual e passagem entre pessoas. Separe fala do cliente, observação e inferência. Talvez avaliar não é compra prevista. Preserve contexto suficiente para continuidade, sem guardar conversas inteiras quando um resumo proporcional resolve. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Histórico factual e passagem entre pessoas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe fala do cliente, observação e inferência. Talvez avaliar não é compra prevista. Preserve contexto suficiente para continuidade, sem guardar conversas inteiras quando um resumo proporcional resolve.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Duplicidades e correções rastreáveis",
+          "tipo": "texto",
+          "conteudo": "Verifique identidade antes de consolidar e preserve preferências mais restritivas até esclarecer conflito. Correção precisa de histórico. Não apagar atividade legítima só para limpar uma taxa desfavorável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar duplicidades e correções rastreáveis. Verifique identidade antes de consolidar e preserve preferências mais restritivas até esclarecer conflito. Correção precisa de histórico. Não apagar atividade legítima só para limpar uma taxa desfavorável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Duplicidades e correções rastreáveis” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Verifique identidade antes de consolidar e preserve preferências mais restritivas até esclarecer conflito. Correção precisa de histórico. Não apagar atividade legítima só para limpar uma taxa desfavorável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Encerramento, retenção e preferências",
+          "tipo": "texto",
+          "conteudo": "Encerrar oportunidade atualiza o processo comercial; retenção e eliminação seguem regras próprias. Não apagar obrigação de supressão ao arquivar. Encaminhe pedido sobre dados ao responsável competente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar encerramento, retenção e preferências. Encerrar oportunidade atualiza o processo comercial; retenção e eliminação seguem regras próprias. Não apagar obrigação de supressão ao arquivar. Encaminhe pedido sobre dados ao responsável competente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Encerramento, retenção e preferências” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Encerrar oportunidade atualiza o processo comercial; retenção e eliminação seguem regras próprias. Não apagar obrigação de supressão ao arquivar. Encaminhe pedido sobre dados ao responsável competente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Métricas que orientam decisões",
+      "titulo_original_pt": "Métricas que orientam decisões",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Contagens, taxas e denominadores",
+          "tipo": "texto",
+          "conteudo": "Taxa exige numerador, denominador e período coerentes. Cinco vendas não informam conversão sem conhecer a base elegível. Defina unidade: pessoas, contas, oportunidades e atividades não são intercambiáveis.",
+          "roteiro_video": "Nesta aula, vamos trabalhar contagens, taxas e denominadores. Taxa exige numerador, denominador e período coerentes. Cinco vendas não informam conversão sem conhecer a base elegível. Defina unidade: pessoas, contas, oportunidades e atividades não são intercambiáveis. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Contagens, taxas e denominadores” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Taxa exige numerador, denominador e período coerentes. Cinco vendas não informam conversão sem conhecer a base elegível. Defina unidade: pessoas, contas, oportunidades e atividades não são intercambiáveis.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Conversão por etapa e período",
+          "tipo": "texto",
+          "conteudo": "Acompanhe uma coorte entre etapas, evitando dividir resultados de negócios antigos por entradas novas. Casos ainda abertos precisam de tratamento explícito. Uma queda pode refletir mudança de mix, não pior execução.",
+          "roteiro_video": "Nesta aula, vamos trabalhar conversão por etapa e período. Acompanhe uma coorte entre etapas, evitando dividir resultados de negócios antigos por entradas novas. Casos ainda abertos precisam de tratamento explícito. Uma queda pode refletir mudança de mix, não pior execução. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Conversão por etapa e período” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Acompanhe uma coorte entre etapas, evitando dividir resultados de negócios antigos por entradas novas. Casos ainda abertos precisam de tratamento explícito. Uma queda pode refletir mudança de mix, não pior execução.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Comparecimento e qualidade de oportunidade",
+          "tipo": "texto",
+          "conteudo": "Compare reuniões realizadas com agendamentos elegíveis e avalie aderência separadamente. Uma reunião ocorrida pode não cumprir critério de qualidade. Defina como cancelamentos e reagendamentos entram no denominador.",
+          "roteiro_video": "Nesta aula, vamos trabalhar comparecimento e qualidade de oportunidade. Compare reuniões realizadas com agendamentos elegíveis e avalie aderência separadamente. Uma reunião ocorrida pode não cumprir critério de qualidade. Defina como cancelamentos e reagendamentos entram no denominador. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Comparecimento e qualidade de oportunidade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Compare reuniões realizadas com agendamentos elegíveis e avalie aderência separadamente. Uma reunião ocorrida pode não cumprir critério de qualidade. Defina como cancelamentos e reagendamentos entram no denominador.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Tempo de ciclo e dados incompletos",
+          "tipo": "texto",
+          "conteudo": "Defina eventos inicial/final e examine distribuição, não só média. Casos longos e ainda abertos alteram interpretação. Não usar ciclo de contratos concluídos para prometer prazo de um caso novo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tempo de ciclo e dados incompletos. Defina eventos inicial/final e examine distribuição, não só média. Casos longos e ainda abertos alteram interpretação. Não usar ciclo de contratos concluídos para prometer prazo de um caso novo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tempo de ciclo e dados incompletos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina eventos inicial/final e examine distribuição, não só média. Casos longos e ainda abertos alteram interpretação. Não usar ciclo de contratos concluídos para prometer prazo de um caso novo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Laboratório de CRM",
+      "titulo_original_pt": "Laboratório de CRM",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Organizar um conjunto fictício de registros",
+          "tipo": "texto",
+          "conteudo": "Padronize campos, identifique duplicatas possíveis e mantenha lacunas. Documente cada transformação e preserve a entrada original para revisão. Uma base visualmente limpa pode continuar conceitualmente errada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar organizar um conjunto fictício de registros. Padronize campos, identifique duplicatas possíveis e mantenha lacunas. Documente cada transformação e preserve a entrada original para revisão. Uma base visualmente limpa pode continuar conceitualmente errada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Organizar um conjunto fictício de registros” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Padronize campos, identifique duplicatas possíveis e mantenha lacunas. Documente cada transformação e preserve a entrada original para revisão. Uma base visualmente limpa pode continuar conceitualmente errada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Encontrar inconsistências sem inventar dados",
+          "tipo": "texto",
+          "conteudo": "Procure datas incompatíveis, estágio sem evidência e unidades misturadas. Confirme antes de corrigir. Não inferir data de fechamento a partir de última atividade só porque falta um campo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar encontrar inconsistências sem inventar dados. Procure datas incompatíveis, estágio sem evidência e unidades misturadas. Confirme antes de corrigir. Não inferir data de fechamento a partir de última atividade só porque falta um campo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Encontrar inconsistências sem inventar dados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Procure datas incompatíveis, estágio sem evidência e unidades misturadas. Confirme antes de corrigir. Não inferir data de fechamento a partir de última atividade só porque falta um campo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Construir um painel simples e explicar limites",
+          "tipo": "texto",
+          "conteudo": "Escolha indicadores ligados a decisões e mostre definições e atualização. Inclua volume e qualidade, sem rankings descontextualizados. Um gráfico deve ajudar a formular pergunta, não esconder incerteza com precisão visual.",
+          "roteiro_video": "Nesta aula, vamos trabalhar construir um painel simples e explicar limites. Escolha indicadores ligados a decisões e mostre definições e atualização. Inclua volume e qualidade, sem rankings descontextualizados. Um gráfico deve ajudar a formular pergunta, não esconder incerteza com precisão visual. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Construir um painel simples e explicar limites” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escolha indicadores ligados a decisões e mostre definições e atualização. Inclua volume e qualidade, sem rankings descontextualizados. Um gráfico deve ajudar a formular pergunta, não esconder incerteza com precisão visual.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Definir uma mudança de rotina e verificá-la",
+          "tipo": "texto",
+          "conteudo": "Escolha falha observada, ajuste pequeno e medida de verificação. Compare períodos ou grupos com condições descritas. Não concluir efeito causal de uma melhora isolada sem considerar mudanças simultâneas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar definir uma mudança de rotina e verificá-la. Escolha falha observada, ajuste pequeno e medida de verificação. Compare períodos ou grupos com condições descritas. Não concluir efeito causal de uma melhora isolada sem considerar mudanças simultâneas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Definir uma mudança de rotina e verificá-la” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escolha falha observada, ajuste pequeno e medida de verificação. Compare períodos ou grupos com condições descritas. Não concluir efeito causal de uma melhora isolada sem considerar mudanças simultâneas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A base fictícia tem 20 oportunidades: oito encerradas com ganho, quatro com perda e oito ainda abertas. Há 30 atividades, mas cinco são repetições do mesmo registro. Duas oportunidades têm data final anterior à inicial. Uma linha vazia de orçamento foi convertida para zero sem confirmação."
+  },
+  "projeto": {
+    "instrucoes": "Crie dicionário mínimo de dados, marque inconsistências, calcule taxas com denominadores explícitos e proponha uma rotina que evite repetir o erro.",
+    "gabarito": "Ganho entre encerradas=8/12=66,67%; ganho entre todas=8/20=40%, respondendo perguntas diferentes. Oito abertas não são perdas. Cinco repetições exigem verificação antes da consolidação. Corrija datas por fonte e orçamento para desconhecido; não inventar valores."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "19-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Fundamentos do registro comercial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Conta representa organização; contato, pessoa; oportunidade, processo comercial; atividade, evento. Misturar entidades gera duplicidade e contagem errada. Relacione registros sem transformar cada tentativa em nova oportunidade.",
+          "Defina evidência mínima de cada estágio e condição de saída. Trocar etiqueta sem nova informação não é avanço. O registro precisa permitir a outra pessoa reconstruir por que a classificação ocorreu.",
+          "Campos obrigatórios precisam apoiar decisão real. Vazio, zero e desconhecido têm significados distintos. Não preencher dado inventado para passar validação; corrija o fluxo que exige certeza inexistente.",
+          "Registre origem e limite de uso das informações e restrinja acesso por necessidade. Exportação para planilha pessoal pode perder controle. Não usar dados de uma finalidade em outra por conveniência."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "19-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Rotina e continuidade”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Uma tarefa útil tem ação, responsável, data/condição e propósito. Lembrete não autoriza contato. Antes de executar, consulte preferência atual e verifique se outra pessoa já resolveu a pendência.",
+          "Separe fala do cliente, observação e inferência. Talvez avaliar não é compra prevista. Preserve contexto suficiente para continuidade, sem guardar conversas inteiras quando um resumo proporcional resolve.",
+          "Verifique identidade antes de consolidar e preserve preferências mais restritivas até esclarecer conflito. Correção precisa de histórico. Não apagar atividade legítima só para limpar uma taxa desfavorável.",
+          "Encerrar oportunidade atualiza o processo comercial; retenção e eliminação seguem regras próprias. Não apagar obrigação de supressão ao arquivar. Encaminhe pedido sobre dados ao responsável competente."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "19-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Métricas que orientam decisões”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Taxa exige numerador, denominador e período coerentes. Cinco vendas não informam conversão sem conhecer a base elegível. Defina unidade: pessoas, contas, oportunidades e atividades não são intercambiáveis.",
+          "Acompanhe uma coorte entre etapas, evitando dividir resultados de negócios antigos por entradas novas. Casos ainda abertos precisam de tratamento explícito. Uma queda pode refletir mudança de mix, não pior execução.",
+          "Compare reuniões realizadas com agendamentos elegíveis e avalie aderência separadamente. Uma reunião ocorrida pode não cumprir critério de qualidade. Defina como cancelamentos e reagendamentos entram no denominador.",
+          "Defina eventos inicial/final e examine distribuição, não só média. Casos longos e ainda abertos alteram interpretação. Não usar ciclo de contratos concluídos para prometer prazo de um caso novo."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "19-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Laboratório de CRM”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Padronize campos, identifique duplicatas possíveis e mantenha lacunas. Documente cada transformação e preserve a entrada original para revisão. Uma base visualmente limpa pode continuar conceitualmente errada.",
+          "Procure datas incompatíveis, estágio sem evidência e unidades misturadas. Confirme antes de corrigir. Não inferir data de fechamento a partir de última atividade só porque falta um campo.",
+          "Escolha indicadores ligados a decisões e mostre definições e atualização. Inclua volume e qualidade, sem rankings descontextualizados. Um gráfico deve ajudar a formular pergunta, não esconder incerteza com precisão visual.",
+          "Escolha falha observada, ajuste pequeno e medida de verificação. Compare períodos ou grupos com condições descritas. Não concluir efeito causal de uma melhora isolada sem considerar mudanças simultâneas."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "19-FINAL",
+        "pergunta": "Crie dicionário mínimo de dados, marque inconsistências, calcule taxas com denominadores explícitos e proponha uma rotina que evite repetir o erro.",
+        "resposta_modelo": "Ganho entre encerradas=8/12=66,67%; ganho entre todas=8/20=40%, respondendo perguntas diferentes. Oito abertas não são perdas. Cinco repetições exigem verificação antes da consolidação. Corrija datas por fonte e orçamento para desconhecido; não inventar valores.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

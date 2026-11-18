@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-11",
+  "course_number": 11,
+  "locale": "en-US",
+  "titulo": "Presentations and Proposals",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: The presentation's decision",
+      "titulo_original_pt": "Apresentações comerciais",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "The presentation's decision",
+          "tipo": "texto",
+          "conteudo": "Define what the buyer needs to evaluate at the end. Showing every feature adds information without purpose. Connect problem, criterion, demonstration and unresolved question.",
+          "roteiro_video": "In this lesson we explore the presentation's decision. Define what the buyer needs to evaluate at the end. Showing every feature adds information without purpose. Connect problem, criterion, demonstration and unresolved question. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “The presentation's decision” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define what the buyer needs to evaluate at the end. Showing every feature adds information without purpose. Connect problem, criterion, demonstration and unresolved question.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Adapting to the buyer",
+          "tipo": "texto",
+          "conteudo": "Adapt language and detail to confirmed roles and preferences. Do not assume finance only wants price or operations only features. Ask what each participant needs to verify.",
+          "roteiro_video": "In this lesson we explore adapting to the buyer. Adapt language and detail to confirmed roles and preferences. Do not assume finance only wants price or operations only features. Ask what each participant needs to verify. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Adapting to the buyer” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Adapt language and detail to confirmed roles and preferences. Do not assume finance only wants price or operations only features. Ask what each participant needs to verify.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "A problem-led narrative",
+          "tipo": "texto",
+          "conteudo": "Show situation, confirmed difficulty, proposed alternative and available evidence. Do not invent dramatic losses. The buyer should be able to challenge the problem-solution connection.",
+          "roteiro_video": "In this lesson we explore a problem-led narrative. Show situation, confirmed difficulty, proposed alternative and available evidence. Do not invent dramatic losses. The buyer should be able to challenge the problem-solution connection. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A problem-led narrative” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Show situation, confirmed difficulty, proposed alternative and available evidence. Do not invent dramatic losses. The buyer should be able to challenge the problem-solution connection.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Avoiding generic decks",
+          "tipo": "texto",
+          "conteudo": "Remove content irrelevant to the meeting criterion. Use appropriate examples with permission when real. Personalisation means selecting the right argument and demo, not replacing a logo.",
+          "roteiro_video": "In this lesson we explore avoiding generic decks. Remove content irrelevant to the meeting criterion. Use appropriate examples with permission when real. Personalisation means selecting the right argument and demo, not replacing a logo. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Avoiding generic decks” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Remove content irrelevant to the meeting criterion. Use appropriate examples with permission when real. Personalisation means selecting the right argument and demo, not replacing a logo.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Features and criteria",
+      "titulo_original_pt": "Demonstração de valor",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Features and criteria",
+          "tipo": "texto",
+          "conteudo": "A feature describes operation; a criterion states what the buyer must verify. Map them and mark uncovered requirements. Do not hide gaps behind broad benefits.",
+          "roteiro_video": "In this lesson we explore features and criteria. A feature describes operation; a criterion states what the buyer must verify. Map them and mark uncovered requirements. Do not hide gaps behind broad benefits. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Features and criteria” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A feature describes operation; a criterion states what the buyer must verify. Map them and mark uncovered requirements. Do not hide gaps behind broad benefits.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Scenario demonstration",
+          "tipo": "texto",
+          "conteudo": "Use fictional inputs, observable steps and an expected result. State test conditions. A successful demo does not prove untested scale, integrations or adoption.",
+          "roteiro_video": "In this lesson we explore scenario demonstration. Use fictional inputs, observable steps and an expected result. State test conditions. A successful demo does not prove untested scale, integrations or adoption. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Scenario demonstration” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use fictional inputs, observable steps and an expected result. State test conditions. A successful demo does not prove untested scale, integrations or adoption.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Evidence and uncertainty",
+          "tipo": "texto",
+          "conteudo": "Match claims to available evidence and inference limits. Show calculations for hypothetical figures. Do not present forecasts, testimonials or prototypes as guaranteed performance.",
+          "roteiro_video": "In this lesson we explore evidence and uncertainty. Match claims to available evidence and inference limits. Show calculations for hypothetical figures. Do not present forecasts, testimonials or prototypes as guaranteed performance. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Evidence and uncertainty” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Match claims to available evidence and inference limits. Show calculations for hypothetical figures. Do not present forecasts, testimonials or prototypes as guaranteed performance.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Fair comparison",
+          "tipo": "texto",
+          "conteudo": "Compare equivalent term, scope, users and obligations. Mark unknown competitor terms rather than assume disadvantages. Include switching costs and retaining the current process.",
+          "roteiro_video": "In this lesson we explore fair comparison. Compare equivalent term, scope, users and obligations. Mark unknown competitor terms rather than assume disadvantages. Include switching costs and retaining the current process. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Fair comparison” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare equivalent term, scope, users and obligations. Mark unknown competitor terms rather than assume disadvantages. Include switching costs and retaining the current process.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Proposal responsibilities",
+      "titulo_original_pt": "Proposta comercial e escopo",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Proposal responsibilities",
+          "tipo": "texto",
+          "conteudo": "Specify deliverables, exclusions, dependencies, owners and acceptance. A broad activity such as consulting does not define delivery. Readers should know what they receive and must supply.",
+          "roteiro_video": "In this lesson we explore proposal responsibilities. Specify deliverables, exclusions, dependencies, owners and acceptance. A broad activity such as consulting does not define delivery. Readers should know what they receive and must supply. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Proposal responsibilities” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Specify deliverables, exclusions, dependencies, owners and acceptance. A broad activity such as consulting does not define delivery. Readers should know what they receive and must supply.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Price and conditions",
+          "tipo": "texto",
+          "conteudo": "State currency, period, recurrence, included scope and conditions needing confirmation. Do not invent tax or renewal treatment. An initial price excluding mandatory costs can distort comparison.",
+          "roteiro_video": "In this lesson we explore price and conditions. State currency, period, recurrence, included scope and conditions needing confirmation. Do not invent tax or renewal treatment. An initial price excluding mandatory costs can distort comparison. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Price and conditions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "State currency, period, recurrence, included scope and conditions needing confirmation. Do not invent tax or renewal treatment. An initial price excluding mandatory costs can distort comparison.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Return estimates",
+          "tipo": "texto",
+          "conteudo": "Separate possible benefits from implementation and ongoing costs. Use scenarios and assumptions; freed hours are not automatically cash. Avoid counting the same benefit twice.",
+          "roteiro_video": "In this lesson we explore return estimates. Separate possible benefits from implementation and ongoing costs. Use scenarios and assumptions; freed hours are not automatically cash. Avoid counting the same benefit twice. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Return estimates” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Separate possible benefits from implementation and ongoing costs. Use scenarios and assumptions; freed hours are not automatically cash. Avoid counting the same benefit twice.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Internal approval",
+          "tipo": "texto",
+          "conteudo": "Verify technical capacity, commercial authority and applicable review before committing. Focus review on actual changes and risks. Silence from an owner is not assumed approval.",
+          "roteiro_video": "In this lesson we explore internal approval. Verify technical capacity, commercial authority and applicable review before committing. Focus review on actual changes and risks. Silence from an owner is not assumed approval. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Internal approval” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Verify technical capacity, commercial authority and applicable review before committing. Focus review on actual changes and risks. Silence from an owner is not assumed approval.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Presenting the proposal",
+      "titulo_original_pt": "Apresentação e revisão da proposta",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Presenting the proposal",
+          "tipo": "texto",
+          "conteudo": "Revisit criteria, explain choices and limits and invite questions. Avoid reading the whole document without interaction. Record unresolved issues and the person responsible for verified answers.",
+          "roteiro_video": "In this lesson we explore presenting the proposal. Revisit criteria, explain choices and limits and invite questions. Avoid reading the whole document without interaction. Record unresolved issues and the person responsible for verified answers. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Presenting the proposal” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Revisit criteria, explain choices and limits and invite questions. Avoid reading the whole document without interaction. Record unresolved issues and the person responsible for verified answers.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Change requests",
+          "tipo": "texto",
+          "conteudo": "Describe the requested change and its effect on effort, timing, price and acceptance. Do not accept extra scope informally. Small wording changes can create substantial obligations.",
+          "roteiro_video": "In this lesson we explore change requests. Describe the requested change and its effect on effort, timing, price and acceptance. Do not accept extra scope informally. Small wording changes can create substantial obligations. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Change requests” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Describe the requested change and its effect on effort, timing, price and acceptance. Do not accept extra scope informally. Small wording changes can create substantial obligations.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "A reviewable next step",
+          "tipo": "texto",
+          "conteudo": "Define what will be reviewed, by whom and with which information. A date without ownership does not organise a decision. Respect closure rather than forcing an artificial meeting.",
+          "roteiro_video": "In this lesson we explore a reviewable next step. Define what will be reviewed, by whom and with which information. A date without ownership does not organise a decision. Respect closure rather than forcing an artificial meeting. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A reviewable next step” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Define what will be reviewed, by whom and with which information. A date without ownership does not organise a decision. Respect closure rather than forcing an artificial meeting.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Proposal workshop",
+          "tipo": "texto",
+          "conteudo": "Review for unsupported claims, uncovered requirements and ambiguous conditions. Produce a revised version with reasons. Quality means enabling an informed decision rather than merely sounding persuasive.",
+          "roteiro_video": "In this lesson we explore proposal workshop. Review for unsupported claims, uncovered requirements and ambiguous conditions. Produce a revised version with reasons. Quality means enabling an informed decision rather than merely sounding persuasive. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Proposal workshop” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Review for unsupported claims, uncovered requirements and ambiguous conditions. Produce a revised version with reasons. Quality means enabling an informed decision rather than merely sounding persuasive.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Clear Form proposes analysis of five workflows and one report within four weeks after synthetic inputs are available. Implementation is excluded. A slide promises complete implementation in one week and guaranteed return. The buyer asks who reviews the report and what happens if inputs are missing.\n\nA US professional-services buyer requests an SOW with acceptance criteria, named reviewers and separate implementation pricing. USD pricing, recurring terms and taxes must be confirmed rather than inferred from a slide."
+  },
+  "projeto": {
+    "instrucoes": "Rewrite the presentation and proposal, build a requirement/deliverable/evidence/limit matrix and define a next step resolving contradictions.",
+    "gabarito": "Remove the one-week implementation and guaranteed-return claims. Preserve the input-dependent four-week analysis and report, explicitly excluding implementation. Define reviewer, acceptance and missing-input procedure without inventing prices or clauses."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "11-M1",
+        "pergunta": "How would you apply “Module 1: The presentation's decision” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Define what the buyer needs to evaluate at the end. Showing every feature adds information without purpose. Connect problem, criterion, demonstration and unresolved question.",
+          "Adapt language and detail to confirmed roles and preferences. Do not assume finance only wants price or operations only features. Ask what each participant needs to verify.",
+          "Show situation, confirmed difficulty, proposed alternative and available evidence. Do not invent dramatic losses. The buyer should be able to challenge the problem-solution connection.",
+          "Remove content irrelevant to the meeting criterion. Use appropriate examples with permission when real. Personalisation means selecting the right argument and demo, not replacing a logo."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "11-M2",
+        "pergunta": "How would you apply “Module 2: Features and criteria” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "A feature describes operation; a criterion states what the buyer must verify. Map them and mark uncovered requirements. Do not hide gaps behind broad benefits.",
+          "Use fictional inputs, observable steps and an expected result. State test conditions. A successful demo does not prove untested scale, integrations or adoption.",
+          "Match claims to available evidence and inference limits. Show calculations for hypothetical figures. Do not present forecasts, testimonials or prototypes as guaranteed performance.",
+          "Compare equivalent term, scope, users and obligations. Mark unknown competitor terms rather than assume disadvantages. Include switching costs and retaining the current process."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "11-M3",
+        "pergunta": "How would you apply “Module 3: Proposal responsibilities” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Specify deliverables, exclusions, dependencies, owners and acceptance. A broad activity such as consulting does not define delivery. Readers should know what they receive and must supply.",
+          "State currency, period, recurrence, included scope and conditions needing confirmation. Do not invent tax or renewal treatment. An initial price excluding mandatory costs can distort comparison.",
+          "Separate possible benefits from implementation and ongoing costs. Use scenarios and assumptions; freed hours are not automatically cash. Avoid counting the same benefit twice.",
+          "Verify technical capacity, commercial authority and applicable review before committing. Focus review on actual changes and risks. Silence from an owner is not assumed approval."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "11-M4",
+        "pergunta": "How would you apply “Module 4: Presenting the proposal” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Revisit criteria, explain choices and limits and invite questions. Avoid reading the whole document without interaction. Record unresolved issues and the person responsible for verified answers.",
+          "Describe the requested change and its effect on effort, timing, price and acceptance. Do not accept extra scope informally. Small wording changes can create substantial obligations.",
+          "Define what will be reviewed, by whom and with which information. A date without ownership does not organise a decision. Respect closure rather than forcing an artificial meeting.",
+          "Review for unsupported claims, uncovered requirements and ambiguous conditions. Produce a revised version with reasons. Quality means enabling an informed decision rather than merely sounding persuasive."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "11-FINAL",
+        "pergunta": "Rewrite the presentation and proposal, build a requirement/deliverable/evidence/limit matrix and define a next step resolving contradictions.",
+        "resposta_modelo": "Remove the one-week implementation and guaranteed-return claims. Preserve the input-dependent four-week analysis and report, explicitly excluding implementation. Define reviewer, acceptance and missing-input procedure without inventing prices or clauses.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

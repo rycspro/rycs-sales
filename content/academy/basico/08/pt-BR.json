@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-08",
+  "course_number": 8,
+  "locale": "pt-BR",
+  "titulo": "Descoberta e Venda Consultiva",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Mentalidade consultiva",
+      "titulo_original_pt": "Mentalidade consultiva",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "O que caracteriza uma venda consultiva",
+          "tipo": "texto",
+          "conteudo": "Venda consultiva começa pela compreensão da situação e pelo direito de concluir que a oferta não serve. O diagnóstico organiza uma decisão; não deve produzir medo para tornar a compra inevitável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar o que caracteriza uma venda consultiva. Venda consultiva começa pela compreensão da situação e pelo direito de concluir que a oferta não serve. O diagnóstico organiza uma decisão; não deve produzir medo para tornar a compra inevitável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “O que caracteriza uma venda consultiva” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Venda consultiva começa pela compreensão da situação e pelo direito de concluir que a oferta não serve. O diagnóstico organiza uma decisão; não deve produzir medo para tornar a compra inevitável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Produto versus solução",
+          "tipo": "texto",
+          "conteudo": "Produto descreve capacidade; solução exige correspondência entre capacidade, problema e implantação. Um recurso disponível pode não resolver a causa. Demonstre a ligação e verifique dependências antes de recomendar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar produto versus solução. Produto descreve capacidade; solução exige correspondência entre capacidade, problema e implantação. Um recurso disponível pode não resolver a causa. Demonstre a ligação e verifique dependências antes de recomendar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Produto versus solução” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Produto descreve capacidade; solução exige correspondência entre capacidade, problema e implantação. Um recurso disponível pode não resolver a causa. Demonstre a ligação e verifique dependências antes de recomendar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Diagnóstico antes da proposta",
+          "tipo": "texto",
+          "conteudo": "Uma proposta precoce pode cristalizar escopo errado. Confirme tarefa, dificuldade, impacto, participantes e critério de sucesso. Não precisa saber tudo, mas precisa tornar lacunas relevantes visíveis antes do compromisso.",
+          "roteiro_video": "Nesta aula, vamos trabalhar diagnóstico antes da proposta. Uma proposta precoce pode cristalizar escopo errado. Confirme tarefa, dificuldade, impacto, participantes e critério de sucesso. Não precisa saber tudo, mas precisa tornar lacunas relevantes visíveis antes do compromisso. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Diagnóstico antes da proposta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Uma proposta precoce pode cristalizar escopo errado. Confirme tarefa, dificuldade, impacto, participantes e critério de sucesso. Não precisa saber tudo, mas precisa tornar lacunas relevantes visíveis antes do compromisso.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Credibilidade e confiança",
+          "tipo": "texto",
+          "conteudo": "Credibilidade cresce quando informação, capacidade e compromisso coincidem. Dizer preciso verificar protege uma dúvida legítima. Demonstração, fonte e limite são mais úteis que superlativos sem possibilidade de conferência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar credibilidade e confiança. Credibilidade cresce quando informação, capacidade e compromisso coincidem. Dizer preciso verificar protege uma dúvida legítima. Demonstração, fonte e limite são mais úteis que superlativos sem possibilidade de conferência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Credibilidade e confiança” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Credibilidade cresce quando informação, capacidade e compromisso coincidem. Dizer preciso verificar protege uma dúvida legítima. Demonstração, fonte e limite são mais úteis que superlativos sem possibilidade de conferência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Técnicas de investigação",
+      "titulo_original_pt": "Técnicas de investigação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Fundamentos do SPIN Selling",
+          "tipo": "texto",
+          "conteudo": "SPIN organiza situação, problema, implicação e necessidade de solução. Não é sequência rígida nem licença para ampliar ansiedade. Use respostas para escolher a próxima pergunta e confirme interpretações.",
+          "roteiro_video": "Nesta aula, vamos trabalhar fundamentos do spin selling. SPIN organiza situação, problema, implicação e necessidade de solução. Não é sequência rígida nem licença para ampliar ansiedade. Use respostas para escolher a próxima pergunta e confirme interpretações. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Fundamentos do SPIN Selling” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "SPIN organiza situação, problema, implicação e necessidade de solução. Não é sequência rígida nem licença para ampliar ansiedade. Use respostas para escolher a próxima pergunta e confirme interpretações.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Perguntas de situação",
+          "tipo": "texto",
+          "conteudo": "Pergunte apenas contexto necessário que ainda não está disponível de forma confiável. Repetir dados básicos já fornecidos aumenta esforço. Explique por que a informação ajuda a entender o processo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar perguntas de situação. Pergunte apenas contexto necessário que ainda não está disponível de forma confiável. Repetir dados básicos já fornecidos aumenta esforço. Explique por que a informação ajuda a entender o processo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Perguntas de situação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte apenas contexto necessário que ainda não está disponível de forma confiável. Repetir dados básicos já fornecidos aumenta esforço. Explique por que a informação ajuda a entender o processo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Perguntas de problema",
+          "tipo": "texto",
+          "conteudo": "Peça exemplo recente de dificuldade, frequência conhecida e quem é afetado. Não sugerir que todo processo diferente do seu é defeituoso. O comprador pode estar satisfeito e sem motivo para mudar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar perguntas de problema. Peça exemplo recente de dificuldade, frequência conhecida e quem é afetado. Não sugerir que todo processo diferente do seu é defeituoso. O comprador pode estar satisfeito e sem motivo para mudar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Perguntas de problema” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Peça exemplo recente de dificuldade, frequência conhecida e quem é afetado. Não sugerir que todo processo diferente do seu é defeituoso. O comprador pode estar satisfeito e sem motivo para mudar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Perguntas de implicação e necessidade de solução",
+          "tipo": "texto",
+          "conteudo": "Explore consequências reconhecidas pelo comprador e o que uma melhora permitiria. Não invente perda financeira. Uma pergunta útil testa relevância e tamanho da mudança sem transformar possibilidade em certeza.",
+          "roteiro_video": "Nesta aula, vamos trabalhar perguntas de implicação e necessidade de solução. Explore consequências reconhecidas pelo comprador e o que uma melhora permitiria. Não invente perda financeira. Uma pergunta útil testa relevância e tamanho da mudança sem transformar possibilidade em certeza. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Perguntas de implicação e necessidade de solução” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Explore consequências reconhecidas pelo comprador e o que uma melhora permitiria. Não invente perda financeira. Uma pergunta útil testa relevância e tamanho da mudança sem transformar possibilidade em certeza.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Diagnóstico comercial",
+      "titulo_original_pt": "Diagnóstico comercial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Como identificar problemas prioritários",
+          "tipo": "texto",
+          "conteudo": "Compare frequência, impacto, dependências e importância atribuída pelo comprador. A dor mais dramática não é sempre a prioridade. Registre critérios e desacordos entre participantes antes de recomendar ordem.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como identificar problemas prioritários. Compare frequência, impacto, dependências e importância atribuída pelo comprador. A dor mais dramática não é sempre a prioridade. Registre critérios e desacordos entre participantes antes de recomendar ordem. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como identificar problemas prioritários” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Compare frequência, impacto, dependências e importância atribuída pelo comprador. A dor mais dramática não é sempre a prioridade. Registre critérios e desacordos entre participantes antes de recomendar ordem.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Impactos operacionais e financeiros",
+          "tipo": "texto",
+          "conteudo": "Calcule com unidade, período e premissas. Horas liberadas não são automaticamente redução de despesa. Diferencie capacidade potencial, custo evitado e receita, evitando somar benefícios que representam o mesmo efeito.",
+          "roteiro_video": "Nesta aula, vamos trabalhar impactos operacionais e financeiros. Calcule com unidade, período e premissas. Horas liberadas não são automaticamente redução de despesa. Diferencie capacidade potencial, custo evitado e receita, evitando somar benefícios que representam o mesmo efeito. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Impactos operacionais e financeiros” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Calcule com unidade, período e premissas. Horas liberadas não são automaticamente redução de despesa. Diferencie capacidade potencial, custo evitado e receita, evitando somar benefícios que representam o mesmo efeito.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Critérios de decisão e partes interessadas",
+          "tipo": "texto",
+          "conteudo": "Pergunte como alternativas serão avaliadas e quem verifica cada condição. Segurança, adoção e prazo podem competir com preço. Não inferir critério pela função sem confirmar com a pessoa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar critérios de decisão e partes interessadas. Pergunte como alternativas serão avaliadas e quem verifica cada condição. Segurança, adoção e prazo podem competir com preço. Não inferir critério pela função sem confirmar com a pessoa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Critérios de decisão e partes interessadas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte como alternativas serão avaliadas e quem verifica cada condição. Segurança, adoção e prazo podem competir com preço. Não inferir critério pela função sem confirmar com a pessoa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Como resumir o diagnóstico e validar entendimento",
+          "tipo": "texto",
+          "conteudo": "Resuma fatos, hipótese causal, impacto conhecido e lacunas; peça correção. Validação não exige concordância com a oferta. Uma correção do comprador melhora o diagnóstico e deve atualizar o registro.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como resumir o diagnóstico e validar entendimento. Resuma fatos, hipótese causal, impacto conhecido e lacunas; peça correção. Validação não exige concordância com a oferta. Uma correção do comprador melhora o diagnóstico e deve atualizar o registro. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como resumir o diagnóstico e validar entendimento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Resuma fatos, hipótese causal, impacto conhecido e lacunas; peça correção. Validação não exige concordância com a oferta. Uma correção do comprador melhora o diagnóstico e deve atualizar o registro.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Próximos passos",
+      "titulo_original_pt": "Próximos passos",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Transformando informações em recomendações",
+          "tipo": "texto",
+          "conteudo": "Relacione cada recomendação a uma necessidade confirmada e a uma capacidade disponível. Inclua alternativa de não mudar e condições de teste. Não recomendar recurso só porque ele é novo ou mais caro.",
+          "roteiro_video": "Nesta aula, vamos trabalhar transformando informações em recomendações. Relacione cada recomendação a uma necessidade confirmada e a uma capacidade disponível. Inclua alternativa de não mudar e condições de teste. Não recomendar recurso só porque ele é novo ou mais caro. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Transformando informações em recomendações” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Relacione cada recomendação a uma necessidade confirmada e a uma capacidade disponível. Inclua alternativa de não mudar e condições de teste. Não recomendar recurso só porque ele é novo ou mais caro.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Como relacionar benefícios aos problemas encontrados",
+          "tipo": "texto",
+          "conteudo": "Use uma cadeia explícita: recurso, mudança no trabalho, benefício possível, evidência e limite. Se uma ligação não está demonstrada, indique hipótese. Não usar depoimento como garantia individual de resultado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como relacionar benefícios aos problemas encontrados. Use uma cadeia explícita: recurso, mudança no trabalho, benefício possível, evidência e limite. Se uma ligação não está demonstrada, indique hipótese. Não usar depoimento como garantia individual de resultado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como relacionar benefícios aos problemas encontrados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use uma cadeia explícita: recurso, mudança no trabalho, benefício possível, evidência e limite. Se uma ligação não está demonstrada, indique hipótese. Não usar depoimento como garantia individual de resultado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Organização de próximos passos",
+          "tipo": "texto",
+          "conteudo": "Defina ação, responsável, condição/data e resultado esperado. Se a próxima ação depende de acesso ou aprovação, registre isso. Próximo passo aceito não equivale a decisão final de compra.",
+          "roteiro_video": "Nesta aula, vamos trabalhar organização de próximos passos. Defina ação, responsável, condição/data e resultado esperado. Se a próxima ação depende de acesso ou aprovação, registre isso. Próximo passo aceito não equivale a decisão final de compra. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Organização de próximos passos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina ação, responsável, condição/data e resultado esperado. Se a próxima ação depende de acesso ou aprovação, registre isso. Próximo passo aceito não equivale a decisão final de compra.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Registro de descoberta no CRM",
+          "tipo": "texto",
+          "conteudo": "Registre palavras relevantes do comprador sem coletar detalhes desnecessários. Separe certeza e hipótese e preserve pendências. O histórico deve permitir continuidade e correção, não construir uma narrativa artificial de fechamento.",
+          "roteiro_video": "Nesta aula, vamos trabalhar registro de descoberta no crm. Registre palavras relevantes do comprador sem coletar detalhes desnecessários. Separe certeza e hipótese e preserve pendências. O histórico deve permitir continuidade e correção, não construir uma narrativa artificial de fechamento. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Registro de descoberta no CRM” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre palavras relevantes do comprador sem coletar detalhes desnecessários. Separe certeza e hipótese e preserve pendências. O histórico deve permitir continuidade e correção, não construir uma narrativa artificial de fechamento.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A Entrega Clara relata dez conferências repetidas por semana, de 12 minutos cada, em quatro semanas de exemplo. A gestora atribui custo de esforço de R$ 40 por hora, mas não haverá redução de equipe. A oferta exige treinamento e não integra o sistema antigo. A causa das repetições ainda não foi confirmada."
+  },
+  "projeto": {
+    "instrucoes": "Conduza descoberta com perguntas de situação, problema, implicação e utilidade; calcule esforço, separe valor potencial de caixa e proponha teste que discrimine duas causas.",
+    "gabarito": "10×12×4=480 minutos=8 horas. No exemplo brasileiro, 8×40=R$ 320 de esforço, não economia realizada. Verifique causa e adoção; inclua treinamento e ausência de integração. Teste com registros sintéticos e valide o resumo com a gestora."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "08-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Mentalidade consultiva”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Venda consultiva começa pela compreensão da situação e pelo direito de concluir que a oferta não serve. O diagnóstico organiza uma decisão; não deve produzir medo para tornar a compra inevitável.",
+          "Produto descreve capacidade; solução exige correspondência entre capacidade, problema e implantação. Um recurso disponível pode não resolver a causa. Demonstre a ligação e verifique dependências antes de recomendar.",
+          "Uma proposta precoce pode cristalizar escopo errado. Confirme tarefa, dificuldade, impacto, participantes e critério de sucesso. Não precisa saber tudo, mas precisa tornar lacunas relevantes visíveis antes do compromisso.",
+          "Credibilidade cresce quando informação, capacidade e compromisso coincidem. Dizer preciso verificar protege uma dúvida legítima. Demonstração, fonte e limite são mais úteis que superlativos sem possibilidade de conferência."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "08-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Técnicas de investigação”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "SPIN organiza situação, problema, implicação e necessidade de solução. Não é sequência rígida nem licença para ampliar ansiedade. Use respostas para escolher a próxima pergunta e confirme interpretações.",
+          "Pergunte apenas contexto necessário que ainda não está disponível de forma confiável. Repetir dados básicos já fornecidos aumenta esforço. Explique por que a informação ajuda a entender o processo.",
+          "Peça exemplo recente de dificuldade, frequência conhecida e quem é afetado. Não sugerir que todo processo diferente do seu é defeituoso. O comprador pode estar satisfeito e sem motivo para mudar.",
+          "Explore consequências reconhecidas pelo comprador e o que uma melhora permitiria. Não invente perda financeira. Uma pergunta útil testa relevância e tamanho da mudança sem transformar possibilidade em certeza."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "08-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Diagnóstico comercial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Compare frequência, impacto, dependências e importância atribuída pelo comprador. A dor mais dramática não é sempre a prioridade. Registre critérios e desacordos entre participantes antes de recomendar ordem.",
+          "Calcule com unidade, período e premissas. Horas liberadas não são automaticamente redução de despesa. Diferencie capacidade potencial, custo evitado e receita, evitando somar benefícios que representam o mesmo efeito.",
+          "Pergunte como alternativas serão avaliadas e quem verifica cada condição. Segurança, adoção e prazo podem competir com preço. Não inferir critério pela função sem confirmar com a pessoa.",
+          "Resuma fatos, hipótese causal, impacto conhecido e lacunas; peça correção. Validação não exige concordância com a oferta. Uma correção do comprador melhora o diagnóstico e deve atualizar o registro."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "08-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Próximos passos”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Relacione cada recomendação a uma necessidade confirmada e a uma capacidade disponível. Inclua alternativa de não mudar e condições de teste. Não recomendar recurso só porque ele é novo ou mais caro.",
+          "Use uma cadeia explícita: recurso, mudança no trabalho, benefício possível, evidência e limite. Se uma ligação não está demonstrada, indique hipótese. Não usar depoimento como garantia individual de resultado.",
+          "Defina ação, responsável, condição/data e resultado esperado. Se a próxima ação depende de acesso ou aprovação, registre isso. Próximo passo aceito não equivale a decisão final de compra.",
+          "Registre palavras relevantes do comprador sem coletar detalhes desnecessários. Separe certeza e hipótese e preserve pendências. O histórico deve permitir continuidade e correção, não construir uma narrativa artificial de fechamento."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "08-FINAL",
+        "pergunta": "Conduza descoberta com perguntas de situação, problema, implicação e utilidade; calcule esforço, separe valor potencial de caixa e proponha teste que discrimine duas causas.",
+        "resposta_modelo": "10×12×4=480 minutos=8 horas. No exemplo brasileiro, 8×40=R$ 320 de esforço, não economia realizada. Verifique causa e adoção; inclua treinamento e ausência de integração. Teste com registros sintéticos e valide o resumo com a gestora.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

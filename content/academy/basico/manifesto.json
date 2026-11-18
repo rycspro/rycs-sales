@@ -1,0 +1,321 @@
+{
+  "edicao": "basica",
+  "total_cursos": 24,
+  "total_horas_planejadas": 134,
+  "total_aulas": 436,
+  "cursos": [
+    {
+      "id": 1,
+      "titulo": "Fundamentos de Vendas",
+      "horas_planejadas": 3,
+      "aulas": 17,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "01"
+    },
+    {
+      "id": 2,
+      "titulo": "SDR",
+      "horas_planejadas": 8,
+      "aulas": 24,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "02"
+    },
+    {
+      "id": 3,
+      "titulo": "Cold Call na Prática",
+      "horas_planejadas": 8,
+      "aulas": 24,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "03"
+    },
+    {
+      "id": 4,
+      "titulo": "WhatsApp Comercial",
+      "horas_planejadas": 6,
+      "aulas": 21,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "04"
+    },
+    {
+      "id": 5,
+      "titulo": "Prospecção por E-mail e LinkedIn",
+      "horas_planejadas": 5,
+      "aulas": 18,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "05"
+    },
+    {
+      "id": 6,
+      "titulo": "Vendas por Instagram e Redes Sociais",
+      "horas_planejadas": 5,
+      "aulas": 18,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "06"
+    },
+    {
+      "id": 7,
+      "titulo": "Lista, ICP e Qualificação",
+      "horas_planejadas": 4,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "07"
+    },
+    {
+      "id": 8,
+      "titulo": "Descoberta e Venda Consultiva",
+      "horas_planejadas": 6,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "08"
+    },
+    {
+      "id": 9,
+      "titulo": "Objeções",
+      "horas_planejadas": 5,
+      "aulas": 18,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "09"
+    },
+    {
+      "id": 10,
+      "titulo": "Follow-up e Retomada",
+      "horas_planejadas": 4,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "10"
+    },
+    {
+      "id": 11,
+      "titulo": "Apresentação e Proposta",
+      "horas_planejadas": 5,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "11"
+    },
+    {
+      "id": 12,
+      "titulo": "Challenger 1 — Ensinar",
+      "horas_planejadas": 6,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "12"
+    },
+    {
+      "id": 13,
+      "titulo": "Challenger 2 — Adaptar",
+      "horas_planejadas": 6,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "13"
+    },
+    {
+      "id": 14,
+      "titulo": "Challenger 3 — Assumir o Controle",
+      "horas_planejadas": 6,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "14"
+    },
+    {
+      "id": 15,
+      "titulo": "Closer",
+      "horas_planejadas": 8,
+      "aulas": 24,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "15"
+    },
+    {
+      "id": 16,
+      "titulo": "BDR — Contas Grandes",
+      "horas_planejadas": 8,
+      "aulas": 24,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "16"
+    },
+    {
+      "id": 17,
+      "titulo": "Porta a Porta",
+      "horas_planejadas": 5,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "17"
+    },
+    {
+      "id": 18,
+      "titulo": "Gerente Comercial",
+      "horas_planejadas": 8,
+      "aulas": 24,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "18"
+    },
+    {
+      "id": 19,
+      "titulo": "CRM, Rotina e Métricas",
+      "horas_planejadas": 4,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "19"
+    },
+    {
+      "id": 20,
+      "titulo": "IA para Vendedores",
+      "horas_planejadas": 4,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "20"
+    },
+    {
+      "id": 21,
+      "titulo": "Ética, LGPD e Contato Responsável",
+      "horas_planejadas": 3,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "21"
+    },
+    {
+      "id": 22,
+      "titulo": "Vender para EUA e Índia",
+      "horas_planejadas": 6,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "22"
+    },
+    {
+      "id": 23,
+      "titulo": "Vendas para Saúde, Educação e Infoprodutos",
+      "horas_planejadas": 5,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "23"
+    },
+    {
+      "id": 24,
+      "titulo": "Vendas B2B de Serviços",
+      "horas_planejadas": 6,
+      "aulas": 16,
+      "status": "basico_escrito",
+      "locales": [
+        "pt-BR",
+        "en-US",
+        "en-IN"
+      ],
+      "pasta": "24"
+    }
+  ],
+  "publicado": false
+}

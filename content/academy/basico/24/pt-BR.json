@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-24",
+  "course_number": 24,
+  "locale": "pt-BR",
+  "titulo": "Vendas B2B de Serviços",
+  "nivel_original": "Intermediário a avançado",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Diagnóstico de serviços B2B",
+      "titulo_original_pt": "Diagnóstico de serviços B2B",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Entender tarefa, processo e resultado desejado",
+          "tipo": "texto",
+          "conteudo": "Comece pelo trabalho que o cliente quer realizar e pelo resultado que consegue observar. Pedido de consultoria é amplo. Investigue processo atual, dificuldade e critério antes de definir esforço ou preço.",
+          "roteiro_video": "Nesta aula, vamos trabalhar entender tarefa, processo e resultado desejado. Comece pelo trabalho que o cliente quer realizar e pelo resultado que consegue observar. Pedido de consultoria é amplo. Investigue processo atual, dificuldade e critério antes de definir esforço ou preço. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Entender tarefa, processo e resultado desejado” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Comece pelo trabalho que o cliente quer realizar e pelo resultado que consegue observar. Pedido de consultoria é amplo. Investigue processo atual, dificuldade e critério antes de definir esforço ou preço.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Mapear responsáveis e dependências",
+          "tipo": "texto",
+          "conteudo": "Identifique quem fornece dados, decide, executa e aceita a entrega. Dependência não confirmada pode inviabilizar prazo. Não assumir disponibilidade da equipe do cliente apenas porque houve interesse na proposta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar mapear responsáveis e dependências. Identifique quem fornece dados, decide, executa e aceita a entrega. Dependência não confirmada pode inviabilizar prazo. Não assumir disponibilidade da equipe do cliente apenas porque houve interesse na proposta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Mapear responsáveis e dependências” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Identifique quem fornece dados, decide, executa e aceita a entrega. Dependência não confirmada pode inviabilizar prazo. Não assumir disponibilidade da equipe do cliente apenas porque houve interesse na proposta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Investigar escopo sem prometer execução",
+          "tipo": "texto",
+          "conteudo": "Esclareça volume, formato, abrangência e restrições antes de prometer execução. Pergunta de diagnóstico não é aceite de escopo. Registre itens a verificar pela equipe técnica responsável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar investigar escopo sem prometer execução. Esclareça volume, formato, abrangência e restrições antes de prometer execução. Pergunta de diagnóstico não é aceite de escopo. Registre itens a verificar pela equipe técnica responsável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Investigar escopo sem prometer execução” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Esclareça volume, formato, abrangência e restrições antes de prometer execução. Pergunta de diagnóstico não é aceite de escopo. Registre itens a verificar pela equipe técnica responsável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Registrar critério de sucesso e lacunas",
+          "tipo": "texto",
+          "conteudo": "Defina condição observável de entrega e separe resultado econômico dependente do cliente. Se o critério é vago, negocie definição antes de contratar. Liste o que ainda não pode ser estimado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar registrar critério de sucesso e lacunas. Defina condição observável de entrega e separe resultado econômico dependente do cliente. Se o critério é vago, negocie definição antes de contratar. Liste o que ainda não pode ser estimado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Registrar critério de sucesso e lacunas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina condição observável de entrega e separe resultado econômico dependente do cliente. Se o critério é vago, negocie definição antes de contratar. Liste o que ainda não pode ser estimado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Desenho da proposta de serviço",
+      "titulo_original_pt": "Desenho da proposta de serviço",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Entregáveis, exclusões e premissas",
+          "tipo": "texto",
+          "conteudo": "Descreva artefato, quantidade, qualidade esperada e exclusões. Reuniões são atividades, não necessariamente entregáveis suficientes. O comprador precisa entender o que estará disponível ao fim do serviço.",
+          "roteiro_video": "Nesta aula, vamos trabalhar entregáveis, exclusões e premissas. Descreva artefato, quantidade, qualidade esperada e exclusões. Reuniões são atividades, não necessariamente entregáveis suficientes. O comprador precisa entender o que estará disponível ao fim do serviço. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Entregáveis, exclusões e premissas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Descreva artefato, quantidade, qualidade esperada e exclusões. Reuniões são atividades, não necessariamente entregáveis suficientes. O comprador precisa entender o que estará disponível ao fim do serviço.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Responsabilidades do cliente e do fornecedor",
+          "tipo": "texto",
+          "conteudo": "Explicite obrigações do fornecedor e do cliente, inclusive acesso e revisão. Não atribuir ao cliente uma responsabilidade omitida após a venda. Dependências devem aparecer no cronograma e no aceite.",
+          "roteiro_video": "Nesta aula, vamos trabalhar responsabilidades do cliente e do fornecedor. Explicite obrigações do fornecedor e do cliente, inclusive acesso e revisão. Não atribuir ao cliente uma responsabilidade omitida após a venda. Dependências devem aparecer no cronograma e no aceite. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Responsabilidades do cliente e do fornecedor” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Explicite obrigações do fornecedor e do cliente, inclusive acesso e revisão. Não atribuir ao cliente uma responsabilidade omitida após a venda. Dependências devem aparecer no cronograma e no aceite.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Critérios de aceite verificáveis",
+          "tipo": "texto",
+          "conteudo": "Defina como verificar entrega com exemplos, responsáveis e processo de correção. Critério não pode mudar unilateralmente no final. Aceite de relatório não comprova crescimento de receita decorrente do serviço.",
+          "roteiro_video": "Nesta aula, vamos trabalhar critérios de aceite verificáveis. Defina como verificar entrega com exemplos, responsáveis e processo de correção. Critério não pode mudar unilateralmente no final. Aceite de relatório não comprova crescimento de receita decorrente do serviço. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Critérios de aceite verificáveis” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina como verificar entrega com exemplos, responsáveis e processo de correção. Critério não pode mudar unilateralmente no final. Aceite de relatório não comprova crescimento de receita decorrente do serviço.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Estimativa de esforço, prazo e preço sob autorização",
+          "tipo": "texto",
+          "conteudo": "Estime por tarefas e premissas, incluindo coordenação e revisão. Informe incerteza e limites da alçada. Um número preciso sem diagnóstico pode ser menos confiável que faixa fundamentada a confirmar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar estimativa de esforço, prazo e preço sob autorização. Estime por tarefas e premissas, incluindo coordenação e revisão. Informe incerteza e limites da alçada. Um número preciso sem diagnóstico pode ser menos confiável que faixa fundamentada a confirmar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Estimativa de esforço, prazo e preço sob autorização” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Estime por tarefas e premissas, incluindo coordenação e revisão. Informe incerteza e limites da alçada. Um número preciso sem diagnóstico pode ser menos confiável que faixa fundamentada a confirmar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Negociação e contratação",
+      "titulo_original_pt": "Negociação e contratação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Comparar propostas pelo mesmo escopo",
+          "tipo": "texto",
+          "conteudo": "Compare entregáveis, profundidade, revisões, acesso e responsabilidades no mesmo período. Proposta barata pode excluir uma tarefa essencial. Não afirmar inferioridade concorrente sem informação verificável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar comparar propostas pelo mesmo escopo. Compare entregáveis, profundidade, revisões, acesso e responsabilidades no mesmo período. Proposta barata pode excluir uma tarefa essencial. Não afirmar inferioridade concorrente sem informação verificável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Comparar propostas pelo mesmo escopo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Compare entregáveis, profundidade, revisões, acesso e responsabilidades no mesmo período. Proposta barata pode excluir uma tarefa essencial. Não afirmar inferioridade concorrente sem informação verificável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Tratar risco e incerteza de implantação",
+          "tipo": "texto",
+          "conteudo": "Registre dependências, impacto possível e ação de mitigação com responsável. Não converter risco em desculpa genérica nem escondê-lo. Prazo deve ser revisto quando uma condição essencial muda.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tratar risco e incerteza de implantação. Registre dependências, impacto possível e ação de mitigação com responsável. Não converter risco em desculpa genérica nem escondê-lo. Prazo deve ser revisto quando uma condição essencial muda. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tratar risco e incerteza de implantação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre dependências, impacto possível e ação de mitigação com responsável. Não converter risco em desculpa genérica nem escondê-lo. Prazo deve ser revisto quando uma condição essencial muda.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Pedidos de alteração e efeitos no acordo",
+          "tipo": "texto",
+          "conteudo": "Pedido adicional precisa de descrição, impacto e aceite autorizado antes da execução correspondente. Diferencie correção de erro de ampliação de escopo. Uma conversa informal não resolve automaticamente preço e prazo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar pedidos de alteração e efeitos no acordo. Pedido adicional precisa de descrição, impacto e aceite autorizado antes da execução correspondente. Diferencie correção de erro de ampliação de escopo. Uma conversa informal não resolve automaticamente preço e prazo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Pedidos de alteração e efeitos no acordo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pedido adicional precisa de descrição, impacto e aceite autorizado antes da execução correspondente. Diferencie correção de erro de ampliação de escopo. Uma conversa informal não resolve automaticamente preço e prazo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Revisão comercial, técnica e jurídica responsável",
+          "tipo": "texto",
+          "conteudo": "Alinhe proposta comercial com capacidade técnica e condições jurídicas aplicáveis. Mantenha versão única aceita. Se uma cláusula é incerta, encaminhe; não interpretar com confiança apenas para evitar atraso.",
+          "roteiro_video": "Nesta aula, vamos trabalhar revisão comercial, técnica e jurídica responsável. Alinhe proposta comercial com capacidade técnica e condições jurídicas aplicáveis. Mantenha versão única aceita. Se uma cláusula é incerta, encaminhe; não interpretar com confiança apenas para evitar atraso. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Revisão comercial, técnica e jurídica responsável” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Alinhe proposta comercial com capacidade técnica e condições jurídicas aplicáveis. Mantenha versão única aceita. Se uma cláusula é incerta, encaminhe; não interpretar com confiança apenas para evitar atraso.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Entrega e expansão responsável",
+      "titulo_original_pt": "Entrega e expansão responsável",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Handoff de projeto e condições vendidas",
+          "tipo": "texto",
+          "conteudo": "Entregue problema, escopo, premissas, aceite, responsáveis e compromissos relevantes. A equipe precisa conhecer também exclusões e dúvidas abertas. Não fazer a implantação descobrir o que foi vendido pelo cliente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar handoff de projeto e condições vendidas. Entregue problema, escopo, premissas, aceite, responsáveis e compromissos relevantes. A equipe precisa conhecer também exclusões e dúvidas abertas. Não fazer a implantação descobrir o que foi vendido pelo cliente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Handoff de projeto e condições vendidas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Entregue problema, escopo, premissas, aceite, responsáveis e compromissos relevantes. A equipe precisa conhecer também exclusões e dúvidas abertas. Não fazer a implantação descobrir o que foi vendido pelo cliente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Acompanhar aceite e encaminhar problemas",
+          "tipo": "texto",
+          "conteudo": "Compare entrega ao critério acordado e registre divergência com evidência. Defina responsável e próximo passo de correção. Não declarar aceite por ausência de resposta sem base contratual e procedimento aplicável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar acompanhar aceite e encaminhar problemas. Compare entrega ao critério acordado e registre divergência com evidência. Defina responsável e próximo passo de correção. Não declarar aceite por ausência de resposta sem base contratual e procedimento aplicável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Acompanhar aceite e encaminhar problemas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Compare entrega ao critério acordado e registre divergência com evidência. Defina responsável e próximo passo de correção. Não declarar aceite por ausência de resposta sem base contratual e procedimento aplicável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Renovação e expansão com necessidade confirmada",
+          "tipo": "texto",
+          "conteudo": "Investigue necessidade nova e resultado observado antes de propor ampliação. Renovação não deve esconder falha da entrega atual. Apresente escopo e condições atualizados sem prometer resultado futuro garantido.",
+          "roteiro_video": "Nesta aula, vamos trabalhar renovação e expansão com necessidade confirmada. Investigue necessidade nova e resultado observado antes de propor ampliação. Renovação não deve esconder falha da entrega atual. Apresente escopo e condições atualizados sem prometer resultado futuro garantido. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Renovação e expansão com necessidade confirmada” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Investigue necessidade nova e resultado observado antes de propor ampliação. Renovação não deve esconder falha da entrega atual. Apresente escopo e condições atualizados sem prometer resultado futuro garantido.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Projeto: diagnóstico, proposta e plano de entrega",
+          "tipo": "texto",
+          "conteudo": "Conecte diagnóstico, proposta e plano de entrega com os mesmos fatos. Revise uma mudança de escopo e seu efeito. A avaliação deve verificar executabilidade, clareza e limites, além de persuasão.",
+          "roteiro_video": "Nesta aula, vamos trabalhar projeto: diagnóstico, proposta e plano de entrega. Conecte diagnóstico, proposta e plano de entrega com os mesmos fatos. Revise uma mudança de escopo e seu efeito. A avaliação deve verificar executabilidade, clareza e limites, além de persuasão. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Projeto: diagnóstico, proposta e plano de entrega” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Conecte diagnóstico, proposta e plano de entrega com os mesmos fatos. Revise uma mudança de escopo e seu efeito. A avaliação deve verificar executabilidade, clareza e limites, além de persuasão.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A Oficina de Processos oferece diagnóstico de quatro fluxos e relatório em três semanas após receber entradas. Exclui implantação. Durante a proposta, o cliente pede treinamento e integração sem mudar preço ou prazo. Não há critério de aceite nem responsável por entregar dados. O comercial prometeu início imediato."
+  },
+  "projeto": {
+    "instrucoes": "Produza diagnóstico, proposta de escopo e plano de entrega; trate o pedido adicional como mudança a avaliar, com efeito em prazo, responsabilidade e preço.",
+    "gabarito": "Mantenha diagnóstico de quatro fluxos e relatório como base, com início condicionado às entradas. Defina responsável e aceite. Treinamento e integração exigem avaliação e aprovação próprias; não são correção automática de erro nem entrega já vendida. Corrija o início imediato prometido."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "24-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Diagnóstico de serviços B2B”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Comece pelo trabalho que o cliente quer realizar e pelo resultado que consegue observar. Pedido de consultoria é amplo. Investigue processo atual, dificuldade e critério antes de definir esforço ou preço.",
+          "Identifique quem fornece dados, decide, executa e aceita a entrega. Dependência não confirmada pode inviabilizar prazo. Não assumir disponibilidade da equipe do cliente apenas porque houve interesse na proposta.",
+          "Esclareça volume, formato, abrangência e restrições antes de prometer execução. Pergunta de diagnóstico não é aceite de escopo. Registre itens a verificar pela equipe técnica responsável.",
+          "Defina condição observável de entrega e separe resultado econômico dependente do cliente. Se o critério é vago, negocie definição antes de contratar. Liste o que ainda não pode ser estimado."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "24-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Desenho da proposta de serviço”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Descreva artefato, quantidade, qualidade esperada e exclusões. Reuniões são atividades, não necessariamente entregáveis suficientes. O comprador precisa entender o que estará disponível ao fim do serviço.",
+          "Explicite obrigações do fornecedor e do cliente, inclusive acesso e revisão. Não atribuir ao cliente uma responsabilidade omitida após a venda. Dependências devem aparecer no cronograma e no aceite.",
+          "Defina como verificar entrega com exemplos, responsáveis e processo de correção. Critério não pode mudar unilateralmente no final. Aceite de relatório não comprova crescimento de receita decorrente do serviço.",
+          "Estime por tarefas e premissas, incluindo coordenação e revisão. Informe incerteza e limites da alçada. Um número preciso sem diagnóstico pode ser menos confiável que faixa fundamentada a confirmar."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "24-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Negociação e contratação”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Compare entregáveis, profundidade, revisões, acesso e responsabilidades no mesmo período. Proposta barata pode excluir uma tarefa essencial. Não afirmar inferioridade concorrente sem informação verificável.",
+          "Registre dependências, impacto possível e ação de mitigação com responsável. Não converter risco em desculpa genérica nem escondê-lo. Prazo deve ser revisto quando uma condição essencial muda.",
+          "Pedido adicional precisa de descrição, impacto e aceite autorizado antes da execução correspondente. Diferencie correção de erro de ampliação de escopo. Uma conversa informal não resolve automaticamente preço e prazo.",
+          "Alinhe proposta comercial com capacidade técnica e condições jurídicas aplicáveis. Mantenha versão única aceita. Se uma cláusula é incerta, encaminhe; não interpretar com confiança apenas para evitar atraso."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "24-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Entrega e expansão responsável”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Entregue problema, escopo, premissas, aceite, responsáveis e compromissos relevantes. A equipe precisa conhecer também exclusões e dúvidas abertas. Não fazer a implantação descobrir o que foi vendido pelo cliente.",
+          "Compare entrega ao critério acordado e registre divergência com evidência. Defina responsável e próximo passo de correção. Não declarar aceite por ausência de resposta sem base contratual e procedimento aplicável.",
+          "Investigue necessidade nova e resultado observado antes de propor ampliação. Renovação não deve esconder falha da entrega atual. Apresente escopo e condições atualizados sem prometer resultado futuro garantido.",
+          "Conecte diagnóstico, proposta e plano de entrega com os mesmos fatos. Revise uma mudança de escopo e seu efeito. A avaliação deve verificar executabilidade, clareza e limites, além de persuasão."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "24-FINAL",
+        "pergunta": "Produza diagnóstico, proposta de escopo e plano de entrega; trate o pedido adicional como mudança a avaliar, com efeito em prazo, responsabilidade e preço.",
+        "resposta_modelo": "Mantenha diagnóstico de quatro fluxos e relatório como base, com início condicionado às entradas. Defina responsável e aceite. Treinamento e integração exigem avaliação e aprovação próprias; não são correção automática de erro nem entrega já vendida. Corrija o início imediato prometido.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

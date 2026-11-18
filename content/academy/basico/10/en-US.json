@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-10",
+  "course_number": 10,
+  "locale": "en-US",
+  "titulo": "Follow-up and Re-engagement",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Why follow-up exists",
+      "titulo_original_pt": "O papel do follow-up",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Why follow-up exists",
+          "tipo": "texto",
+          "conteudo": "Follow-up coordinates a pending decision or agreed deliverable. Define the reason first. Reminding someone about requested information differs from demanding a reply without context.",
+          "roteiro_video": "In this lesson we explore why follow-up exists. Follow-up coordinates a pending decision or agreed deliverable. Define the reason first. Reminding someone about requested information differs from demanding a reply without context. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Why follow-up exists” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Follow-up coordinates a pending decision or agreed deliverable. Define the reason first. Reminding someone about requested information differs from demanding a reply without context.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Follow-up and insistence",
+          "tipo": "texto",
+          "conteudo": "Follow-up respects agreement, relevance and preference; insistence ignores them. Attempt count creates no entitlement to a reply. Define stopping conditions before scheduling a sequence.",
+          "roteiro_video": "In this lesson we explore follow-up and insistence. Follow-up respects agreement, relevance and preference; insistence ignores them. Attempt count creates no entitlement to a reply. Define stopping conditions before scheduling a sequence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Follow-up and insistence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Follow-up respects agreement, relevance and preference; insistence ignores them. Attempt count creates no entitlement to a reply. Define stopping conditions before scheduling a sequence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Interest signals",
+          "tipo": "texto",
+          "conteudo": "Specific requests and accepted steps are more informative than reads or likes. Silence has many causes. Do not increase deal confidence merely because a message was opened.",
+          "roteiro_video": "In this lesson we explore interest signals. Specific requests and accepted steps are more informative than reads or likes. Silence has many causes. Do not increase deal confidence merely because a message was opened. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Interest signals” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Specific requests and accepted steps are more informative than reads or likes. Silence has many causes. Do not increase deal confidence merely because a message was opened.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "When to stop",
+          "tipo": "texto",
+          "conteudo": "Refusal, mismatch, incorrect data or ended purpose requires review or stopping. Do not wait for a fixed sequence limit after a stop request. Synchronise restrictions across owners.",
+          "roteiro_video": "In this lesson we explore when to stop. Refusal, mismatch, incorrect data or ended purpose requires review or stopping. Do not wait for a fixed sequence limit after a stop request. Synchronise restrictions across owners. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “When to stop” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Refusal, mismatch, incorrect data or ended purpose requires review or stopping. Do not wait for a fixed sequence limit after a stop request. Synchronise restrictions across owners.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: One objective per contact",
+      "titulo_original_pt": "Planejamento de cadências",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "One objective per contact",
+          "tipo": "texto",
+          "conteudo": "Choose to clarify a gap, deliver something or agree a decision. Without purpose, a message becomes vague pressure. Explain buyer usefulness and permit closure.",
+          "roteiro_video": "In this lesson we explore one objective per contact. Choose to clarify a gap, deliver something or agree a decision. Without purpose, a message becomes vague pressure. Explain buyer usefulness and permit closure. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “One objective per contact” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Choose to clarify a gap, deliver something or agree a decision. Without purpose, a message becomes vague pressure. Explain buyer usefulness and permit closure.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "An initial sequence",
+          "tipo": "texto",
+          "conteudo": "Design condition-based branches: no reply, question, acceptance and refusal. Each needs a different action. Do not send a scheduled message after the situation changes.",
+          "roteiro_video": "In this lesson we explore an initial sequence. Design condition-based branches: no reply, question, acceptance and refusal. Each needs a different action. Do not send a scheduled message after the situation changes. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “An initial sequence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Design condition-based branches: no reply, question, acceptance and refusal. Each needs a different action. Do not send a scheduled message after the situation changes.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "After meetings and proposals",
+          "tipo": "texto",
+          "conteudo": "Restate the agreement, outstanding issue and owner, inviting correction. Sending a proposal does not confirm reading. Avoid introducing undisclosed terms in a follow-up summary.",
+          "roteiro_video": "In this lesson we explore after meetings and proposals. Restate the agreement, outstanding issue and owner, inviting correction. Sending a proposal does not confirm reading. Avoid introducing undisclosed terms in a follow-up summary. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “After meetings and proposals” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Restate the agreement, outstanding issue and owner, inviting correction. Sending a proposal does not confirm reading. Avoid introducing undisclosed terms in a follow-up summary.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Intervals and opt-out",
+          "tipo": "texto",
+          "conteudo": "Use agreed timing and approved policy rather than a universal frequency. Stopping must reach automations and other sellers. A temporary pause needs a clear resumption condition.",
+          "roteiro_video": "In this lesson we explore intervals and opt-out. Use agreed timing and approved policy rather than a universal frequency. Stopping must reach automations and other sellers. A temporary pause needs a clear resumption condition. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Intervals and opt-out” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use agreed timing and approved policy rather than a universal frequency. Stopping must reach automations and other sellers. A temporary pause needs a clear resumption condition.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Contextual re-engagement",
+      "titulo_original_pt": "Comunicação de retomada",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Contextual re-engagement",
+          "tipo": "texto",
+          "conteudo": "Refer to the earlier topic and agreement and check continued relevance. Elapsed time alone creates no urgency. A genuine offer change may justify review under a valid contact process.",
+          "roteiro_video": "In this lesson we explore contextual re-engagement. Refer to the earlier topic and agreement and check continued relevance. Elapsed time alone creates no urgency. A genuine offer change may justify review under a valid contact process. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Contextual re-engagement” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Refer to the earlier topic and agreement and check continued relevance. Elapsed time alone creates no urgency. A genuine offer change may justify review under a valid contact process.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Adding useful information",
+          "tipo": "texto",
+          "conteudo": "Add an answer, requested comparison or scope clarification. New material is not automatically useful. Do not use content to avoid answering the original question.",
+          "roteiro_video": "In this lesson we explore adding useful information. Add an answer, requested comparison or scope clarification. New material is not automatically useful. Do not use content to avoid answering the original question. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Adding useful information” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Add an answer, requested comparison or scope clarification. New material is not automatically useful. Do not use content to avoid answering the original question.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "An unanswered proposal",
+          "tipo": "texto",
+          "conteudo": "Where contact is authorised, check delivery and unresolved questions. No reply does not establish a price objection. Offer closure or an agreed follow-up.",
+          "roteiro_video": "In this lesson we explore an unanswered proposal. Where contact is authorised, check delivery and unresolved questions. No reply does not establish a price objection. Offer closure or an agreed follow-up. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “An unanswered proposal” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Where contact is authorised, check delivery and unresolved questions. No reply does not establish a price objection. Offer closure or an agreed follow-up.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Deferrals",
+          "tipo": "texto",
+          "conteudo": "Record the stated reason and resumption condition without converting possibility into commitment. Respect a buyer who does not want scheduled follow-up. Seller deadlines are not buyer deadlines.",
+          "roteiro_video": "In this lesson we explore deferrals. Record the stated reason and resumption condition without converting possibility into commitment. Respect a buyer who does not want scheduled follow-up. Seller deadlines are not buyer deadlines. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Deferrals” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record the stated reason and resumption condition without converting possibility into commitment. Respect a buyer who does not want scheduled follow-up. Seller deadlines are not buyer deadlines.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: CRM reminders",
+      "titulo_original_pt": "Automação e indicadores",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "CRM reminders",
+          "tipo": "texto",
+          "conteudo": "A task needs owner, purpose, date/condition and agreement source. A reminder does not authorise contact. Recheck preferences, stage and ownership before acting.",
+          "roteiro_video": "In this lesson we explore crm reminders. A task needs owner, purpose, date/condition and agreement source. A reminder does not authorise contact. Recheck preferences, stage and ownership before acting. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “CRM reminders” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A task needs owner, purpose, date/condition and agreement source. A reminder does not authorise contact. Recheck preferences, stage and ownership before acting.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Personalised automation",
+          "tipo": "texto",
+          "conteudo": "Automate clear rules with review, cancellation and exceptions. Do not infer intent from isolated words. A meaningful human response should pause the flow and guide continuation.",
+          "roteiro_video": "In this lesson we explore personalised automation. Automate clear rules with review, cancellation and exceptions. Do not infer intent from isolated words. A meaningful human response should pause the flow and guide continuation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Personalised automation” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Automate clear rules with review, cancellation and exceptions. Do not infer intent from isolated words. A meaningful human response should pause the flow and guide continuation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Continuity measures",
+          "tipo": "texto",
+          "conteudo": "Measure agreed progress, relevant replies and closures by cohort, alongside volume. Correct closure may lower an apparent rate while improving quality. Do not hide refusals to flatter metrics.",
+          "roteiro_video": "In this lesson we explore continuity measures. Measure agreed progress, relevant replies and closures by cohort, alongside volume. Correct closure may lower an apparent rate while improving quality. Do not hide refusals to flatter metrics. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Continuity measures” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Measure agreed progress, relevant replies and closures by cohort, alongside volume. Correct closure may lower an apparent rate while improving quality. Do not hide refusals to flatter metrics.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Closing and archiving",
+          "tipo": "texto",
+          "conteudo": "Record reason, final condition and restrictions. Archiving does not automatically mean deleting every record; follow responsible retention and rights procedures. Do not reopen merely to generate activity.",
+          "roteiro_video": "In this lesson we explore closing and archiving. Record reason, final condition and restrictions. Archiving does not automatically mean deleting every record; follow responsible retention and rights procedures. Do not reopen merely to generate activity. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Closing and archiving” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record reason, final condition and restrictions. Archiving does not automatically mean deleting every record; follow responsible retention and rights procedures. Do not reopen merely to generate activity.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Bridge Services sent a requested proposal. The contact agreed follow-up after Friday's internal meeting, but automation scheduled daily messages. On Thursday the buyer asked for a pause until further notice. Another rep prepared a call. No genuine proposal expiry exists.\n\nA Chicago buyer needs procurement feedback after a dated internal review. A calendar invitation must use America/Chicago for that date. Do not treat a seller's month-end forecast deadline as the buyer's deadline."
+  },
+  "projeto": {
+    "instrucoes": "Create three sequences: new interest, pending proposal and permitted re-engagement. Correct this case with purpose, conditions and stopping rules for each step.",
+    "gabarito": "Pause automation and update relevant owners. The later request changes the earlier follow-up agreement; Friday is no longer assumed permission. Do not invent expiry. Sequences require valid conditions and stop for refusal, mismatch or ended purpose."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "10-M1",
+        "pergunta": "How would you apply “Module 1: Why follow-up exists” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Follow-up coordinates a pending decision or agreed deliverable. Define the reason first. Reminding someone about requested information differs from demanding a reply without context.",
+          "Follow-up respects agreement, relevance and preference; insistence ignores them. Attempt count creates no entitlement to a reply. Define stopping conditions before scheduling a sequence.",
+          "Specific requests and accepted steps are more informative than reads or likes. Silence has many causes. Do not increase deal confidence merely because a message was opened.",
+          "Refusal, mismatch, incorrect data or ended purpose requires review or stopping. Do not wait for a fixed sequence limit after a stop request. Synchronise restrictions across owners."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "10-M2",
+        "pergunta": "How would you apply “Module 2: One objective per contact” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Choose to clarify a gap, deliver something or agree a decision. Without purpose, a message becomes vague pressure. Explain buyer usefulness and permit closure.",
+          "Design condition-based branches: no reply, question, acceptance and refusal. Each needs a different action. Do not send a scheduled message after the situation changes.",
+          "Restate the agreement, outstanding issue and owner, inviting correction. Sending a proposal does not confirm reading. Avoid introducing undisclosed terms in a follow-up summary.",
+          "Use agreed timing and approved policy rather than a universal frequency. Stopping must reach automations and other sellers. A temporary pause needs a clear resumption condition."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "10-M3",
+        "pergunta": "How would you apply “Module 3: Contextual re-engagement” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Refer to the earlier topic and agreement and check continued relevance. Elapsed time alone creates no urgency. A genuine offer change may justify review under a valid contact process.",
+          "Add an answer, requested comparison or scope clarification. New material is not automatically useful. Do not use content to avoid answering the original question.",
+          "Where contact is authorised, check delivery and unresolved questions. No reply does not establish a price objection. Offer closure or an agreed follow-up.",
+          "Record the stated reason and resumption condition without converting possibility into commitment. Respect a buyer who does not want scheduled follow-up. Seller deadlines are not buyer deadlines."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "10-M4",
+        "pergunta": "How would you apply “Module 4: CRM reminders” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "A task needs owner, purpose, date/condition and agreement source. A reminder does not authorise contact. Recheck preferences, stage and ownership before acting.",
+          "Automate clear rules with review, cancellation and exceptions. Do not infer intent from isolated words. A meaningful human response should pause the flow and guide continuation.",
+          "Measure agreed progress, relevant replies and closures by cohort, alongside volume. Correct closure may lower an apparent rate while improving quality. Do not hide refusals to flatter metrics.",
+          "Record reason, final condition and restrictions. Archiving does not automatically mean deleting every record; follow responsible retention and rights procedures. Do not reopen merely to generate activity."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "10-FINAL",
+        "pergunta": "Create three sequences: new interest, pending proposal and permitted re-engagement. Correct this case with purpose, conditions and stopping rules for each step.",
+        "resposta_modelo": "Pause automation and update relevant owners. The later request changes the earlier follow-up agreement; Friday is no longer assumed permission. Do not invent expiry. Sequences require valid conditions and stop for refusal, mismatch or ended purpose.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

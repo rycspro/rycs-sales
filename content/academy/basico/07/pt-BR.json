@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-07",
+  "course_number": 7,
+  "locale": "pt-BR",
+  "titulo": "Lista, ICP e Qualificação",
+  "nivel_original": "Iniciante a intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Perfil do cliente ideal",
+      "titulo_original_pt": "Perfil do cliente ideal",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "O que é ICP",
+          "tipo": "texto",
+          "conteudo": "ICP é hipótese de conta atendível e beneficiável pela oferta. Defina requisitos, exclusões e sinais verificáveis. A definição deve permitir rejeitar uma conta atrativa que exige capacidade inexistente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar o que é icp. ICP é hipótese de conta atendível e beneficiável pela oferta. Defina requisitos, exclusões e sinais verificáveis. A definição deve permitir rejeitar uma conta atrativa que exige capacidade inexistente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “O que é ICP” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "ICP é hipótese de conta atendível e beneficiável pela oferta. Defina requisitos, exclusões e sinais verificáveis. A definição deve permitir rejeitar uma conta atrativa que exige capacidade inexistente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "ICP versus persona",
+          "tipo": "texto",
+          "conteudo": "ICP descreve organização; persona descreve contexto de um papel. Não confundir setor com cargo. Uma mesma conta pode exigir conversa com usuários, avaliadores técnicos e aprovadores diferentes.",
+          "roteiro_video": "Nesta aula, vamos trabalhar icp versus persona. ICP descreve organização; persona descreve contexto de um papel. Não confundir setor com cargo. Uma mesma conta pode exigir conversa com usuários, avaliadores técnicos e aprovadores diferentes. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “ICP versus persona” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "ICP descreve organização; persona descreve contexto de um papel. Não confundir setor com cargo. Uma mesma conta pode exigir conversa com usuários, avaliadores técnicos e aprovadores diferentes.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Segmentação por setor, porte e localização",
+          "tipo": "texto",
+          "conteudo": "Use setor, porte operacional e região apenas quando afetam capacidade ou necessidade. Recortes arbitrários podem excluir contas adequadas. Especifique por que cada variável muda a decisão comercial.",
+          "roteiro_video": "Nesta aula, vamos trabalhar segmentação por setor, porte e localização. Use setor, porte operacional e região apenas quando afetam capacidade ou necessidade. Recortes arbitrários podem excluir contas adequadas. Especifique por que cada variável muda a decisão comercial. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Segmentação por setor, porte e localização” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use setor, porte operacional e região apenas quando afetam capacidade ou necessidade. Recortes arbitrários podem excluir contas adequadas. Especifique por que cada variável muda a decisão comercial.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Como identificar sinais de aderência comercial",
+          "tipo": "texto",
+          "conteudo": "Classifique sinal como confirmado, indireto ou desconhecido. Anúncio de expansão é indireto para necessidade de sistema. Não somar vários sinais fracos como se fossem confirmação de orçamento.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como identificar sinais de aderência comercial. Classifique sinal como confirmado, indireto ou desconhecido. Anúncio de expansão é indireto para necessidade de sistema. Não somar vários sinais fracos como se fossem confirmação de orçamento. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como identificar sinais de aderência comercial” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Classifique sinal como confirmado, indireto ou desconhecido. Anúncio de expansão é indireto para necessidade de sistema. Não somar vários sinais fracos como se fossem confirmação de orçamento.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Construção de listas",
+      "titulo_original_pt": "Construção de listas",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Fontes de pesquisa e limites legais",
+          "tipo": "texto",
+          "conteudo": "Defina fontes aprovadas, finalidade e restrições antes da coleta. Não extrair conteúdo por meios proibidos. Se a informação pode ser obtida por pergunta pertinente, evite coleta pessoal excessiva.",
+          "roteiro_video": "Nesta aula, vamos trabalhar fontes de pesquisa e limites legais. Defina fontes aprovadas, finalidade e restrições antes da coleta. Não extrair conteúdo por meios proibidos. Se a informação pode ser obtida por pergunta pertinente, evite coleta pessoal excessiva. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Fontes de pesquisa e limites legais” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina fontes aprovadas, finalidade e restrições antes da coleta. Não extrair conteúdo por meios proibidos. Se a informação pode ser obtida por pergunta pertinente, evite coleta pessoal excessiva.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Informações essenciais de uma conta",
+          "tipo": "texto",
+          "conteudo": "Registre identificador, critérios de fit, origem/data, restrições e próxima ação. Campos opcionais precisam de finalidade. Não exigir informação pessoal que não altera a decisão da etapa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar informações essenciais de uma conta. Registre identificador, critérios de fit, origem/data, restrições e próxima ação. Campos opcionais precisam de finalidade. Não exigir informação pessoal que não altera a decisão da etapa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Informações essenciais de uma conta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre identificador, critérios de fit, origem/data, restrições e próxima ação. Campos opcionais precisam de finalidade. Não exigir informação pessoal que não altera a decisão da etapa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Padronização e atualização de registros",
+          "tipo": "texto",
+          "conteudo": "Padronize unidades, nomes de campos e estados sem apagar o dado de origem. Vazio, zero e não aplicável são diferentes. Defina como atualizar e quem resolve conflito de informação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar padronização e atualização de registros. Padronize unidades, nomes de campos e estados sem apagar o dado de origem. Vazio, zero e não aplicável são diferentes. Defina como atualizar e quem resolve conflito de informação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Padronização e atualização de registros” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Padronize unidades, nomes de campos e estados sem apagar o dado de origem. Vazio, zero e não aplicável são diferentes. Defina como atualizar e quem resolve conflito de informação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Duplicidades e qualidade da base",
+          "tipo": "texto",
+          "conteudo": "Use critérios de identidade antes de unir registros. Mesmo nome não prova mesma empresa; mesmo domínio pode conter unidades distintas. Preserve histórico e preferências ao consolidar pelo processo autorizado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar duplicidades e qualidade da base. Use critérios de identidade antes de unir registros. Mesmo nome não prova mesma empresa; mesmo domínio pode conter unidades distintas. Preserve histórico e preferências ao consolidar pelo processo autorizado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Duplicidades e qualidade da base” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use critérios de identidade antes de unir registros. Mesmo nome não prova mesma empresa; mesmo domínio pode conter unidades distintas. Preserve histórico e preferências ao consolidar pelo processo autorizado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Qualificação de oportunidades",
+      "titulo_original_pt": "Qualificação de oportunidades",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Lead, prospect e oportunidade",
+          "tipo": "texto",
+          "conteudo": "Defina os termos no processo local. Um contato encontrado não é automaticamente oportunidade. Cada etapa deve exigir informação ou aceite novo, não apenas troca de etiqueta no CRM.",
+          "roteiro_video": "Nesta aula, vamos trabalhar lead, prospect e oportunidade. Defina os termos no processo local. Um contato encontrado não é automaticamente oportunidade. Cada etapa deve exigir informação ou aceite novo, não apenas troca de etiqueta no CRM. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Lead, prospect e oportunidade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina os termos no processo local. Um contato encontrado não é automaticamente oportunidade. Cada etapa deve exigir informação ou aceite novo, não apenas troca de etiqueta no CRM.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "BANT, CHAMP e modelos de qualificação",
+          "tipo": "texto",
+          "conteudo": "BANT prioriza recursos, autoridade, necessidade e tempo; CHAMP começa por desafios e considera autoridade, dinheiro e prioridade. Modelos orientam perguntas e não substituem critério da empresa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar bant, champ e modelos de qualificação. BANT prioriza recursos, autoridade, necessidade e tempo; CHAMP começa por desafios e considera autoridade, dinheiro e prioridade. Modelos orientam perguntas e não substituem critério da empresa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “BANT, CHAMP e modelos de qualificação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "BANT prioriza recursos, autoridade, necessidade e tempo; CHAMP começa por desafios e considera autoridade, dinheiro e prioridade. Modelos orientam perguntas e não substituem critério da empresa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Identificação de problemas e prioridades",
+          "tipo": "texto",
+          "conteudo": "Dificuldade existente não significa projeto prioritário. Pergunte o que compete por atenção, o que motivaria mudança e quem avalia. Registre adiamento verdadeiro em vez de fabricar urgência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar identificação de problemas e prioridades. Dificuldade existente não significa projeto prioritário. Pergunte o que compete por atenção, o que motivaria mudança e quem avalia. Registre adiamento verdadeiro em vez de fabricar urgência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Identificação de problemas e prioridades” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Dificuldade existente não significa projeto prioritário. Pergunte o que compete por atenção, o que motivaria mudança e quem avalia. Registre adiamento verdadeiro em vez de fabricar urgência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Sistemas de classificação e pontuação",
+          "tipo": "texto",
+          "conteudo": "Separe requisitos eliminatórios de pontos de prioridade. Uma pontuação alta não compensa incompatibilidade obrigatória ou recusa. Pesos são hipóteses a revisar contra resultados, não fatos científicos universais.",
+          "roteiro_video": "Nesta aula, vamos trabalhar sistemas de classificação e pontuação. Separe requisitos eliminatórios de pontos de prioridade. Uma pontuação alta não compensa incompatibilidade obrigatória ou recusa. Pesos são hipóteses a revisar contra resultados, não fatos científicos universais. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Sistemas de classificação e pontuação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe requisitos eliminatórios de pontos de prioridade. Uma pontuação alta não compensa incompatibilidade obrigatória ou recusa. Pesos são hipóteses a revisar contra resultados, não fatos científicos universais.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Entrega e controle",
+      "titulo_original_pt": "Entrega e controle",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Como documentar dados e fontes",
+          "tipo": "texto",
+          "conteudo": "Cada afirmação relevante precisa de procedência e data. Informe se veio de relato, documento ou inferência. Fonte antiga pode continuar útil como histórico, mas exige confirmação para decisão atual.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como documentar dados e fontes. Cada afirmação relevante precisa de procedência e data. Informe se veio de relato, documento ou inferência. Fonte antiga pode continuar útil como histórico, mas exige confirmação para decisão atual. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como documentar dados e fontes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Cada afirmação relevante precisa de procedência e data. Informe se veio de relato, documento ou inferência. Fonte antiga pode continuar útil como histórico, mas exige confirmação para decisão atual.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Lead aceito versus lead rejeitado",
+          "tipo": "texto",
+          "conteudo": "Aceitação compara evidência aos critérios pactuados. Rejeição deve ter motivo classificável e possibilidade de correção factual. Não mudar critérios retroativamente apenas para melhorar indicadores.",
+          "roteiro_video": "Nesta aula, vamos trabalhar lead aceito versus lead rejeitado. Aceitação compara evidência aos critérios pactuados. Rejeição deve ter motivo classificável e possibilidade de correção factual. Não mudar critérios retroativamente apenas para melhorar indicadores. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Lead aceito versus lead rejeitado” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Aceitação compara evidência aos critérios pactuados. Rejeição deve ter motivo classificável e possibilidade de correção factual. Não mudar critérios retroativamente apenas para melhorar indicadores.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Critérios de uma oportunidade válida",
+          "tipo": "texto",
+          "conteudo": "Combine aderência, problema e próximo passo conforme regra local. Lacuna pode significar investigação, não aprovação ou descarte automático. Descreva o fundamento da classificação para revisão por outra pessoa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar critérios de uma oportunidade válida. Combine aderência, problema e próximo passo conforme regra local. Lacuna pode significar investigação, não aprovação ou descarte automático. Descreva o fundamento da classificação para revisão por outra pessoa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Critérios de uma oportunidade válida” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Combine aderência, problema e próximo passo conforme regra local. Lacuna pode significar investigação, não aprovação ou descarte automático. Descreva o fundamento da classificação para revisão por outra pessoa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Como reportar problemas e corrigir inconsistências",
+          "tipo": "texto",
+          "conteudo": "Corrija com origem e histórico, sem preencher informação desconhecida por palpite. Quando fontes divergem, registre conflito e confirme com responsável. Um relatório útil explica impacto e ação corretiva.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como reportar problemas e corrigir inconsistências. Corrija com origem e histórico, sem preencher informação desconhecida por palpite. Quando fontes divergem, registre conflito e confirme com responsável. Um relatório útil explica impacto e ação corretiva. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como reportar problemas e corrigir inconsistências” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Corrija com origem e histórico, sem preencher informação desconhecida por palpite. Quando fontes divergem, registre conflito e confirme com responsável. Um relatório útil explica impacto e ação corretiva.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A oferta atende uma unidade, até cinco usuários e região definida. A lista contém 30 contas fictícias: dez atendem aos requisitos conhecidos; seis exigem múltiplas unidades; quatro estão fora da região; cinco têm campo essencial desconhecido; três pediram não contato; duas são duplicatas identificadas de contas já listadas."
+  },
+  "projeto": {
+    "instrucoes": "Classifique as 30 linhas, selecione dez para investigação inicial com justificativa, registre cinco lacunas e descreva a consolidação das duas duplicatas sem perder restrições.",
+    "gabarito": "Dez têm aderência inicial, não compra confirmada. Seis e quatro ficam fora do escopo; cinco exigem verificação; três ficam suprimidas. Duplicatas não criam novas contas e precisam preservar histórico. Nenhuma pontuação compensa recusa ou requisito obrigatório ausente."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "07-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Perfil do cliente ideal”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "ICP é hipótese de conta atendível e beneficiável pela oferta. Defina requisitos, exclusões e sinais verificáveis. A definição deve permitir rejeitar uma conta atrativa que exige capacidade inexistente.",
+          "ICP descreve organização; persona descreve contexto de um papel. Não confundir setor com cargo. Uma mesma conta pode exigir conversa com usuários, avaliadores técnicos e aprovadores diferentes.",
+          "Use setor, porte operacional e região apenas quando afetam capacidade ou necessidade. Recortes arbitrários podem excluir contas adequadas. Especifique por que cada variável muda a decisão comercial.",
+          "Classifique sinal como confirmado, indireto ou desconhecido. Anúncio de expansão é indireto para necessidade de sistema. Não somar vários sinais fracos como se fossem confirmação de orçamento."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "07-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Construção de listas”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Defina fontes aprovadas, finalidade e restrições antes da coleta. Não extrair conteúdo por meios proibidos. Se a informação pode ser obtida por pergunta pertinente, evite coleta pessoal excessiva.",
+          "Registre identificador, critérios de fit, origem/data, restrições e próxima ação. Campos opcionais precisam de finalidade. Não exigir informação pessoal que não altera a decisão da etapa.",
+          "Padronize unidades, nomes de campos e estados sem apagar o dado de origem. Vazio, zero e não aplicável são diferentes. Defina como atualizar e quem resolve conflito de informação.",
+          "Use critérios de identidade antes de unir registros. Mesmo nome não prova mesma empresa; mesmo domínio pode conter unidades distintas. Preserve histórico e preferências ao consolidar pelo processo autorizado."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "07-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Qualificação de oportunidades”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Defina os termos no processo local. Um contato encontrado não é automaticamente oportunidade. Cada etapa deve exigir informação ou aceite novo, não apenas troca de etiqueta no CRM.",
+          "BANT prioriza recursos, autoridade, necessidade e tempo; CHAMP começa por desafios e considera autoridade, dinheiro e prioridade. Modelos orientam perguntas e não substituem critério da empresa.",
+          "Dificuldade existente não significa projeto prioritário. Pergunte o que compete por atenção, o que motivaria mudança e quem avalia. Registre adiamento verdadeiro em vez de fabricar urgência.",
+          "Separe requisitos eliminatórios de pontos de prioridade. Uma pontuação alta não compensa incompatibilidade obrigatória ou recusa. Pesos são hipóteses a revisar contra resultados, não fatos científicos universais."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "07-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Entrega e controle”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Cada afirmação relevante precisa de procedência e data. Informe se veio de relato, documento ou inferência. Fonte antiga pode continuar útil como histórico, mas exige confirmação para decisão atual.",
+          "Aceitação compara evidência aos critérios pactuados. Rejeição deve ter motivo classificável e possibilidade de correção factual. Não mudar critérios retroativamente apenas para melhorar indicadores.",
+          "Combine aderência, problema e próximo passo conforme regra local. Lacuna pode significar investigação, não aprovação ou descarte automático. Descreva o fundamento da classificação para revisão por outra pessoa.",
+          "Corrija com origem e histórico, sem preencher informação desconhecida por palpite. Quando fontes divergem, registre conflito e confirme com responsável. Um relatório útil explica impacto e ação corretiva."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "07-FINAL",
+        "pergunta": "Classifique as 30 linhas, selecione dez para investigação inicial com justificativa, registre cinco lacunas e descreva a consolidação das duas duplicatas sem perder restrições.",
+        "resposta_modelo": "Dez têm aderência inicial, não compra confirmada. Seis e quatro ficam fora do escopo; cinco exigem verificação; três ficam suprimidas. Duplicatas não criam novas contas e precisam preservar histórico. Nenhuma pontuação compensa recusa ou requisito obrigatório ausente.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

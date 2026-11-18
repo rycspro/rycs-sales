@@ -1,0 +1,495 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-06",
+  "course_number": 6,
+  "locale": "pt-BR",
+  "titulo": "Vendas por Instagram e Redes Sociais",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Fundamentos de social selling",
+      "titulo_original_pt": "Fundamentos de social selling",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "O que diferencia social selling de spam",
+          "tipo": "texto",
+          "conteudo": "Relacionamento começa com contribuição pertinente e identidade clara. Copiar a mesma oferta em comentários não demonstra interesse no contexto. Curtida é interação, não consentimento para uma campanha.",
+          "roteiro_video": "Nesta aula, vamos trabalhar o que diferencia social selling de spam. Relacionamento começa com contribuição pertinente e identidade clara. Copiar a mesma oferta em comentários não demonstra interesse no contexto. Curtida é interação, não consentimento para uma campanha. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “O que diferencia social selling de spam” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Relacionamento começa com contribuição pertinente e identidade clara. Copiar a mesma oferta em comentários não demonstra interesse no contexto. Curtida é interação, não consentimento para uma campanha.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Jornada de compra nas redes sociais",
+          "tipo": "texto",
+          "conteudo": "A pessoa pode descobrir, pesquisar, comparar e decidir em canais diferentes. Não presumir que seguidor está pronto para comprar. Identifique qual pergunta ou tarefa a interação realmente expressa.",
+          "roteiro_video": "Nesta aula, vamos trabalhar jornada de compra nas redes sociais. A pessoa pode descobrir, pesquisar, comparar e decidir em canais diferentes. Não presumir que seguidor está pronto para comprar. Identifique qual pergunta ou tarefa a interação realmente expressa. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Jornada de compra nas redes sociais” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "A pessoa pode descobrir, pesquisar, comparar e decidir em canais diferentes. Não presumir que seguidor está pronto para comprar. Identifique qual pergunta ou tarefa a interação realmente expressa.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Credibilidade e posicionamento profissional",
+          "tipo": "texto",
+          "conteudo": "Mostre o problema que ajuda a investigar, limites da oferta e experiência comprovável. Não invente resultados, clientes ou títulos. Conteúdo consistente facilita compreensão, mas não garante alcance nem vendas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar credibilidade e posicionamento profissional. Mostre o problema que ajuda a investigar, limites da oferta e experiência comprovável. Não invente resultados, clientes ou títulos. Conteúdo consistente facilita compreensão, mas não garante alcance nem vendas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Credibilidade e posicionamento profissional” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mostre o problema que ajuda a investigar, limites da oferta e experiência comprovável. Não invente resultados, clientes ou títulos. Conteúdo consistente facilita compreensão, mas não garante alcance nem vendas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Identificação de oportunidades em perfis comerciais",
+          "tipo": "texto",
+          "conteudo": "Observe informações profissionais relevantes e diferencie ausência de informação de falha operacional. Um perfil desatualizado não prova perda de receita. Use a observação como pergunta, sem diagnóstico público constrangedor.",
+          "roteiro_video": "Nesta aula, vamos trabalhar identificação de oportunidades em perfis comerciais. Observe informações profissionais relevantes e diferencie ausência de informação de falha operacional. Um perfil desatualizado não prova perda de receita. Use a observação como pergunta, sem diagnóstico público constrangedor. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Identificação de oportunidades em perfis comerciais” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Observe informações profissionais relevantes e diferencie ausência de informação de falha operacional. Um perfil desatualizado não prova perda de receita. Use a observação como pergunta, sem diagnóstico público constrangedor.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Instagram comercial",
+      "titulo_original_pt": "Instagram comercial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Como analisar um perfil empresarial",
+          "tipo": "texto",
+          "conteudo": "Avalie identidade, oferta, caminho de contato e clareza para o público pretendido. Não julgue qualidade só por seguidores. Registre evidências visíveis e hipóteses que exigem confirmação privada apropriada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como analisar um perfil empresarial. Avalie identidade, oferta, caminho de contato e clareza para o público pretendido. Não julgue qualidade só por seguidores. Registre evidências visíveis e hipóteses que exigem confirmação privada apropriada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como analisar um perfil empresarial” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Avalie identidade, oferta, caminho de contato e clareza para o público pretendido. Não julgue qualidade só por seguidores. Registre evidências visíveis e hipóteses que exigem confirmação privada apropriada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Identificação de possíveis necessidades",
+          "tipo": "texto",
+          "conteudo": "Uma dúvida frequente em comentários pode sugerir lacuna informativa, mas não mede demanda total. Agrupe perguntas por tema e proponha verificar o processo antes de vender uma solução.",
+          "roteiro_video": "Nesta aula, vamos trabalhar identificação de possíveis necessidades. Uma dúvida frequente em comentários pode sugerir lacuna informativa, mas não mede demanda total. Agrupe perguntas por tema e proponha verificar o processo antes de vender uma solução. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Identificação de possíveis necessidades” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Uma dúvida frequente em comentários pode sugerir lacuna informativa, mas não mede demanda total. Agrupe perguntas por tema e proponha verificar o processo antes de vender uma solução.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Abordagens por mensagens diretas",
+          "tipo": "texto",
+          "conteudo": "Explique quem é, por que o assunto pode ser relevante e qual pequeno próximo passo propõe. Não usar intimidade falsa. Respeite as regras do canal e qualquer pedido de interrupção.",
+          "roteiro_video": "Nesta aula, vamos trabalhar abordagens por mensagens diretas. Explique quem é, por que o assunto pode ser relevante e qual pequeno próximo passo propõe. Não usar intimidade falsa. Respeite as regras do canal e qualquer pedido de interrupção. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Abordagens por mensagens diretas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Explique quem é, por que o assunto pode ser relevante e qual pequeno próximo passo propõe. Não usar intimidade falsa. Respeite as regras do canal e qualquer pedido de interrupção.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Como responder a interações espontâneas",
+          "tipo": "texto",
+          "conteudo": "Responda ao que a pessoa perguntou, sem presumir permissão para mudar de finalidade ou canal. Se precisar de informação adicional, explique por quê. Não expor dados privados numa resposta pública.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como responder a interações espontâneas. Responda ao que a pessoa perguntou, sem presumir permissão para mudar de finalidade ou canal. Se precisar de informação adicional, explique por quê. Não expor dados privados numa resposta pública. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como responder a interações espontâneas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Responda ao que a pessoa perguntou, sem presumir permissão para mudar de finalidade ou canal. Se precisar de informação adicional, explique por quê. Não expor dados privados numa resposta pública.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Comunicação por Stories e conteúdos relevantes",
+          "tipo": "texto",
+          "conteudo": "Desenvolva uma ideia por peça, com exemplo identificado e próximo passo coerente. Use legenda e texto legível. Enquete não é pesquisa representativa nem prova de preferência de todo mercado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar comunicação por stories e conteúdos relevantes. Desenvolva uma ideia por peça, com exemplo identificado e próximo passo coerente. Use legenda e texto legível. Enquete não é pesquisa representativa nem prova de preferência de todo mercado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Comunicação por Stories e conteúdos relevantes” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Desenvolva uma ideia por peça, com exemplo identificado e próximo passo coerente. Use legenda e texto legível. Enquete não é pesquisa representativa nem prova de preferência de todo mercado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Outras redes e relacionamento",
+      "titulo_original_pt": "Outras redes e relacionamento",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Facebook e comunidades temáticas",
+          "tipo": "texto",
+          "conteudo": "Leia regras e contribua antes de propor contato comercial onde permitido. Participação em grupo não autoriza extrair números. Não abordar membros como se houvesse endosso do administrador.",
+          "roteiro_video": "Nesta aula, vamos trabalhar facebook e comunidades temáticas. Leia regras e contribua antes de propor contato comercial onde permitido. Participação em grupo não autoriza extrair números. Não abordar membros como se houvesse endosso do administrador. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Facebook e comunidades temáticas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Leia regras e contribua antes de propor contato comercial onde permitido. Participação em grupo não autoriza extrair números. Não abordar membros como se houvesse endosso do administrador.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "LinkedIn como ambiente de relacionamento",
+          "tipo": "texto",
+          "conteudo": "Interaja com o argumento profissional e faça perguntas pertinentes. Comentário não precisa virar convite de venda. Quando houver interesse comercial explícito, combine continuidade sem automatizar contatos indiscriminados.",
+          "roteiro_video": "Nesta aula, vamos trabalhar linkedin como ambiente de relacionamento. Interaja com o argumento profissional e faça perguntas pertinentes. Comentário não precisa virar convite de venda. Quando houver interesse comercial explícito, combine continuidade sem automatizar contatos indiscriminados. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “LinkedIn como ambiente de relacionamento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Interaja com o argumento profissional e faça perguntas pertinentes. Comentário não precisa virar convite de venda. Quando houver interesse comercial explícito, combine continuidade sem automatizar contatos indiscriminados.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Comentários profissionais e conversas públicas",
+          "tipo": "texto",
+          "conteudo": "Discorde da ideia com evidência e linguagem respeitosa. Não revelar negociação, contrato ou dado de cliente para ganhar debate. Se o tema exige informação privada, proponha canal adequado sem pressionar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar comentários profissionais e conversas públicas. Discorde da ideia com evidência e linguagem respeitosa. Não revelar negociação, contrato ou dado de cliente para ganhar debate. Se o tema exige informação privada, proponha canal adequado sem pressionar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Comentários profissionais e conversas públicas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Discorde da ideia com evidência e linguagem respeitosa. Não revelar negociação, contrato ou dado de cliente para ganhar debate. Se o tema exige informação privada, proponha canal adequado sem pressionar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Conteúdo educativo como apoio comercial",
+          "tipo": "texto",
+          "conteudo": "Crie material que ajude a executar uma tarefa e explicite suas condições. Um tutorial não deve esconder limitações comerciais relevantes. Fontes e exemplos precisam permitir distinguir fato de ilustração.",
+          "roteiro_video": "Nesta aula, vamos trabalhar conteúdo educativo como apoio comercial. Crie material que ajude a executar uma tarefa e explicite suas condições. Um tutorial não deve esconder limitações comerciais relevantes. Fontes e exemplos precisam permitir distinguir fato de ilustração. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Conteúdo educativo como apoio comercial” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Crie material que ajude a executar uma tarefa e explicite suas condições. Um tutorial não deve esconder limitações comerciais relevantes. Fontes e exemplos precisam permitir distinguir fato de ilustração.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Transição de uma conversa social para uma reunião",
+          "tipo": "texto",
+          "conteudo": "Convide quando houver assunto que justifique conversa e aceite do interessado. Especifique pauta e participante pertinente. Curtida, visualização e resposta a enquete não substituem acordo de reunião.",
+          "roteiro_video": "Nesta aula, vamos trabalhar transição de uma conversa social para uma reunião. Convide quando houver assunto que justifique conversa e aceite do interessado. Especifique pauta e participante pertinente. Curtida, visualização e resposta a enquete não substituem acordo de reunião. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Transição de uma conversa social para uma reunião” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Convide quando houver assunto que justifique conversa e aceite do interessado. Especifique pauta e participante pertinente. Curtida, visualização e resposta a enquete não substituem acordo de reunião.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Conversão e mensuração",
+      "titulo_original_pt": "Conversão e mensuração",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Qualificação de interessados",
+          "tipo": "texto",
+          "conteudo": "Pergunte qual tarefa a pessoa quer resolver e que limites possui. Separe curiosidade, busca de suporte e avaliação comercial. Não recusar atendimento útil porque a pessoa ainda não é oportunidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar qualificação de interessados. Pergunte qual tarefa a pessoa quer resolver e que limites possui. Separe curiosidade, busca de suporte e avaliação comercial. Não recusar atendimento útil porque a pessoa ainda não é oportunidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Qualificação de interessados” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte qual tarefa a pessoa quer resolver e que limites possui. Separe curiosidade, busca de suporte e avaliação comercial. Não recusar atendimento útil porque a pessoa ainda não é oportunidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Acompanhamento de oportunidades",
+          "tipo": "texto",
+          "conteudo": "Registre origem, tema, fatos e próximo passo com acesso adequado. Não copiar dados pessoais públicos sem necessidade. Atualize quando o interesse muda, sem manter uma oportunidade artificialmente aberta.",
+          "roteiro_video": "Nesta aula, vamos trabalhar acompanhamento de oportunidades. Registre origem, tema, fatos e próximo passo com acesso adequado. Não copiar dados pessoais públicos sem necessidade. Atualize quando o interesse muda, sem manter uma oportunidade artificialmente aberta. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Acompanhamento de oportunidades” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre origem, tema, fatos e próximo passo com acesso adequado. Não copiar dados pessoais públicos sem necessidade. Atualize quando o interesse muda, sem manter uma oportunidade artificialmente aberta.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Indicadores de conversão por canal",
+          "tipo": "texto",
+          "conteudo": "Defina denominador: visitantes, interações, conversas ou interessados qualificados. Taxas com denominadores diferentes não são comparáveis. Atribuição de último clique pode esconder outros contatos na jornada.",
+          "roteiro_video": "Nesta aula, vamos trabalhar indicadores de conversão por canal. Defina denominador: visitantes, interações, conversas ou interessados qualificados. Taxas com denominadores diferentes não são comparáveis. Atribuição de último clique pode esconder outros contatos na jornada. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Indicadores de conversão por canal” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Defina denominador: visitantes, interações, conversas ou interessados qualificados. Taxas com denominadores diferentes não são comparáveis. Atribuição de último clique pode esconder outros contatos na jornada.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Cuidados com reputação e privacidade",
+          "tipo": "texto",
+          "conteudo": "Corrija informação errada com clareza e encaminhe reclamação ao responsável. Não discutir dados do cliente publicamente. Remover exposição indevida exige procedimento; não amplifique o problema repostando a captura.",
+          "roteiro_video": "Nesta aula, vamos trabalhar cuidados com reputação e privacidade. Corrija informação errada com clareza e encaminhe reclamação ao responsável. Não discutir dados do cliente publicamente. Remover exposição indevida exige procedimento; não amplifique o problema repostando a captura. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Cuidados com reputação e privacidade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Corrija informação errada com clareza e encaminhe reclamação ao responsável. Não discutir dados do cliente publicamente. Remover exposição indevida exige procedimento; não amplifique o problema repostando a captura.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A Papel Vivo publica modelos de organização de pedidos. Uma postagem recebeu 200 visualizações, 20 interações e quatro perguntas sobre aplicação; só duas pessoas pediram demonstração. O vendedor chamou todas as 20 de oportunidades e copiou perfis para uma lista externa. Não há autorização para usar imagens de clientes."
+  },
+  "projeto": {
+    "instrucoes": "Crie plano de social selling com dez ideias de conteúdo, três respostas a interações e critérios para convidar à reunião; explique os denominadores e corrija o registro.",
+    "gabarito": "Interações/visualizações=10%; pedidos de demonstração/visualizações=1%, sem inferência causal. Não são 20 oportunidades. Separe dúvida, suporte e avaliação. As ideias devem ensinar tarefas reais sem expor clientes. Respeite regras do grupo e não exporte dados por conveniência."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "06-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Fundamentos de social selling”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Relacionamento começa com contribuição pertinente e identidade clara. Copiar a mesma oferta em comentários não demonstra interesse no contexto. Curtida é interação, não consentimento para uma campanha.",
+          "A pessoa pode descobrir, pesquisar, comparar e decidir em canais diferentes. Não presumir que seguidor está pronto para comprar. Identifique qual pergunta ou tarefa a interação realmente expressa.",
+          "Mostre o problema que ajuda a investigar, limites da oferta e experiência comprovável. Não invente resultados, clientes ou títulos. Conteúdo consistente facilita compreensão, mas não garante alcance nem vendas.",
+          "Observe informações profissionais relevantes e diferencie ausência de informação de falha operacional. Um perfil desatualizado não prova perda de receita. Use a observação como pergunta, sem diagnóstico público constrangedor."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "06-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Instagram comercial”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Avalie identidade, oferta, caminho de contato e clareza para o público pretendido. Não julgue qualidade só por seguidores. Registre evidências visíveis e hipóteses que exigem confirmação privada apropriada.",
+          "Uma dúvida frequente em comentários pode sugerir lacuna informativa, mas não mede demanda total. Agrupe perguntas por tema e proponha verificar o processo antes de vender uma solução.",
+          "Explique quem é, por que o assunto pode ser relevante e qual pequeno próximo passo propõe. Não usar intimidade falsa. Respeite as regras do canal e qualquer pedido de interrupção.",
+          "Responda ao que a pessoa perguntou, sem presumir permissão para mudar de finalidade ou canal. Se precisar de informação adicional, explique por quê. Não expor dados privados numa resposta pública.",
+          "Desenvolva uma ideia por peça, com exemplo identificado e próximo passo coerente. Use legenda e texto legível. Enquete não é pesquisa representativa nem prova de preferência de todo mercado."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "06-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Outras redes e relacionamento”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Leia regras e contribua antes de propor contato comercial onde permitido. Participação em grupo não autoriza extrair números. Não abordar membros como se houvesse endosso do administrador.",
+          "Interaja com o argumento profissional e faça perguntas pertinentes. Comentário não precisa virar convite de venda. Quando houver interesse comercial explícito, combine continuidade sem automatizar contatos indiscriminados.",
+          "Discorde da ideia com evidência e linguagem respeitosa. Não revelar negociação, contrato ou dado de cliente para ganhar debate. Se o tema exige informação privada, proponha canal adequado sem pressionar.",
+          "Crie material que ajude a executar uma tarefa e explicite suas condições. Um tutorial não deve esconder limitações comerciais relevantes. Fontes e exemplos precisam permitir distinguir fato de ilustração.",
+          "Convide quando houver assunto que justifique conversa e aceite do interessado. Especifique pauta e participante pertinente. Curtida, visualização e resposta a enquete não substituem acordo de reunião."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "06-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Conversão e mensuração”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Pergunte qual tarefa a pessoa quer resolver e que limites possui. Separe curiosidade, busca de suporte e avaliação comercial. Não recusar atendimento útil porque a pessoa ainda não é oportunidade.",
+          "Registre origem, tema, fatos e próximo passo com acesso adequado. Não copiar dados pessoais públicos sem necessidade. Atualize quando o interesse muda, sem manter uma oportunidade artificialmente aberta.",
+          "Defina denominador: visitantes, interações, conversas ou interessados qualificados. Taxas com denominadores diferentes não são comparáveis. Atribuição de último clique pode esconder outros contatos na jornada.",
+          "Corrija informação errada com clareza e encaminhe reclamação ao responsável. Não discutir dados do cliente publicamente. Remover exposição indevida exige procedimento; não amplifique o problema repostando a captura."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "06-FINAL",
+        "pergunta": "Crie plano de social selling com dez ideias de conteúdo, três respostas a interações e critérios para convidar à reunião; explique os denominadores e corrija o registro.",
+        "resposta_modelo": "Interações/visualizações=10%; pedidos de demonstração/visualizações=1%, sem inferência causal. Não são 20 oportunidades. Separe dúvida, suporte e avaliação. As ideias devem ensinar tarefas reais sem expor clientes. Respeite regras do grupo e não exporte dados por conveniência.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

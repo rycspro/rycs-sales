@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "status": "catalogo_recuperado_material_didatico_pendente",
+  "status": "material_em_producao_primeiro_curso_escrito_para_revisao",
   "source_conversation_id": "6afcea2a-9558-83e9-a6be-da76a9a26384",
   "total_hours": 134,
   "courses": [
@@ -30,6 +30,6 @@
     {"id":24,"name":"Vendas B2B de Serviços","level":"Intermediário a avançado","hours":6,"certification":"Conclusão"}
   ],
   "professional_assessment": {"course_ids":[2,3,4,15,16],"questions_per_course":40,"minimum_correct":32,"ai_practical_required":true},
-  "missing_source": "Resposta curricular truncada durante o curso 11; partes 1 a 4 não anexadas. Recuperar módulos e aulas restantes antes de produzir material que preserve a grade.",
-  "review_status": {"instructional_content":"não produzido","legal":"pendente de profissional habilitado","english_us":"pendente","english_india":"pendente","recording":"não iniciada"}
+  "missing_source": "Grade 1–10 recuperada; 11 parcial. Usuário autorizou desenvolver a grade ausente 11–24. Ver grade-editorial-24-cursos.json para origem por módulo.",
+  "review_status": {"instructional_content":"Curso 1: primeira versão escrita PT/EN-US/EN-IN; cursos 2–24: grade disponível, conteúdo pendente. Ver producao.json.","legal":"pendente de profissional habilitado","english_us":"primeira versão do curso 1; revisão nativa pendente","english_india":"primeira versão do curso 1; revisão nativa/local pendente","recording":"não iniciada"}
 }

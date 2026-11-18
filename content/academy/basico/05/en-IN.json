@@ -1,0 +1,495 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-05",
+  "course_number": 5,
+  "locale": "en-IN",
+  "titulo": "Email and LinkedIn Prospecting",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Email or LinkedIn",
+      "titulo_original_pt": "Prospecção multicanal",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Email or LinkedIn",
+          "tipo": "texto",
+          "conteudo": "Select channels by work context, preference and approved procedure. Email supports a structured message; a professional connection can supply context. Neither creates fit for an irrelevant offer.",
+          "roteiro_video": "In this lesson we explore email or linkedin. Select channels by work context, preference and approved procedure. Email supports a structured message; a professional connection can supply context. Neither creates fit for an irrelevant offer. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Email or LinkedIn” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Select channels by work context, preference and approved procedure. Email supports a structured message; a professional connection can supply context. Neither creates fit for an irrelevant offer.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Accounts and decision roles",
+          "tipo": "texto",
+          "conteudo": "Research the company and task-related responsibility. Apparent seniority does not establish authority. Record users, evaluators and approvers, with unknown roles explicit.",
+          "roteiro_video": "In this lesson we explore accounts and decision roles. Research the company and task-related responsibility. Apparent seniority does not establish authority. Record users, evaluators and approvers, with unknown roles explicit. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Accounts and decision roles” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Research the company and task-related responsibility. Apparent seniority does not establish authority. Record users, evaluators and approvers, with unknown roles explicit.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "A reason to contact",
+          "tipo": "texto",
+          "conteudo": "A useful reason links a verified fact to a need hypothesis. Hiring may justify a workflow question but does not prove budget. Avoid generic praise disguised as personalisation.",
+          "roteiro_video": "In this lesson we explore a reason to contact. A useful reason links a verified fact to a need hypothesis. Hiring may justify a workflow question but does not prove budget. Avoid generic praise disguised as personalisation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A reason to contact” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A useful reason links a verified fact to a need hypothesis. Hiring may justify a workflow question but does not prove budget. Avoid generic praise disguised as personalisation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "List provenance",
+          "tipo": "texto",
+          "conteudo": "Record source, date, purpose and contact restrictions. A purchased list does not establish appropriate use. Deduplicate and check suppression records before an approved sequence.",
+          "roteiro_video": "In this lesson we explore list provenance. Record source, date, purpose and contact restrictions. A purchased list does not establish appropriate use. Deduplicate and check suppression records before an approved sequence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “List provenance” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record source, date, purpose and contact restrictions. A purchased list does not establish appropriate use. Deduplicate and check suppression records before an approved sequence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Cold email structure",
+      "titulo_original_pt": "E-mails comerciais",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Cold email structure",
+          "tipo": "texto",
+          "conteudo": "A truthful subject, identity, context, hypothesis and small request should form a coherent message. Avoid unexplained attachments and never simulate a reply to a nonexistent conversation.",
+          "roteiro_video": "In this lesson we explore cold email structure. A truthful subject, identity, context, hypothesis and small request should form a coherent message. Avoid unexplained attachments and never simulate a reply to a nonexistent conversation. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Cold email structure” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A truthful subject, identity, context, hypothesis and small request should form a coherent message. Avoid unexplained attachments and never simulate a reply to a nonexistent conversation.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Truthful subject lines",
+          "tipo": "texto",
+          "conteudo": "A subject should predict actual content. False reply prefixes, payment notices or confirmed-meeting claims misrepresent the message. Evaluate understanding, not only opens.",
+          "roteiro_video": "In this lesson we explore truthful subject lines. A subject should predict actual content. False reply prefixes, payment notices or confirmed-meeting claims misrepresent the message. Evaluate understanding, not only opens. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Truthful subject lines” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A subject should predict actual content. False reply prefixes, payment notices or confirmed-meeting claims misrepresent the message. Evaluate understanding, not only opens.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Relevance and value",
+          "tipo": "texto",
+          "conteudo": "Connect a specific observation to conditional utility. Keep one main hypothesis. Another market's statistic may frame a question but cannot predict the recipient's results.",
+          "roteiro_video": "In this lesson we explore relevance and value. Connect a specific observation to conditional utility. Keep one main hypothesis. Another market's statistic may frame a question but cannot predict the recipient's results. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Relevance and value” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Connect a specific observation to conditional utility. Keep one main hypothesis. Another market's statistic may frame a question but cannot predict the recipient's results.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "A simple call to action",
+          "tipo": "texto",
+          "conteudo": "Ask for a small coherent decision, such as relevance or the appropriate owner. Competing requests complicate replies. Do not demand a meeting before explaining its purpose.",
+          "roteiro_video": "In this lesson we explore a simple call to action. Ask for a small coherent decision, such as relevance or the appropriate owner. Competing requests complicate replies. Do not demand a meeting before explaining its purpose. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A simple call to action” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask for a small coherent decision, such as relevance or the appropriate owner. Competing requests complicate replies. Do not demand a meeting before explaining its purpose.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Deliverability",
+          "tipo": "texto",
+          "conteudo": "Authentication, reputation, list quality and expectations affect delivery; technical owners verify provider requirements. Do not evade blocks with new domains. Opens do not prove human reading or interest.",
+          "roteiro_video": "In this lesson we explore deliverability. Authentication, reputation, list quality and expectations affect delivery; technical owners verify provider requirements. Do not evade blocks with new domains. Opens do not prove human reading or interest. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Deliverability” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Authentication, reputation, list quality and expectations affect delivery; technical owners verify provider requirements. Do not evade blocks with new domains. Opens do not prove human reading or interest.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Professional profile",
+      "titulo_original_pt": "LinkedIn comercial",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Professional profile",
+          "tipo": "texto",
+          "conteudo": "Describe role and offer with verifiable examples and no invented credentials. Make representation clear. Do not publish client logos or testimonials without applicable permission.",
+          "roteiro_video": "In this lesson we explore professional profile. Describe role and offer with verifiable examples and no invented credentials. Make representation clear. Do not publish client logos or testimonials without applicable permission. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Professional profile” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Describe role and offer with verifiable examples and no invented credentials. Make representation clear. Do not publish client logos or testimonials without applicable permission.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Account research",
+          "tipo": "texto",
+          "conteudo": "Use permitted tools and interpret context. Avoid prohibited bots or scraping extensions. A role change requires updating records rather than assuming continued authority.",
+          "roteiro_video": "In this lesson we explore account research. Use permitted tools and interpret context. Avoid prohibited bots or scraping extensions. A role change requires updating records rather than assuming continued authority. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Account research” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Use permitted tools and interpret context. Avoid prohibited bots or scraping extensions. A role change requires updating records rather than assuming continued authority.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Connection invitations",
+          "tipo": "texto",
+          "conteudo": "Explain genuine context and allow refusal. Accepting a connection does not authorise an unrelated external campaign. Avoid turning every invitation into a lengthy unsolicited proposal.",
+          "roteiro_video": "In this lesson we explore connection invitations. Explain genuine context and allow refusal. Accepting a connection does not authorise an unrelated external campaign. Avoid turning every invitation into a lengthy unsolicited proposal. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Connection invitations” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explain genuine context and allow refusal. Accepting a connection does not authorise an unrelated external campaign. Avoid turning every invitation into a lengthy unsolicited proposal.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "After connecting",
+          "tipo": "texto",
+          "conteudo": "Follow a connection with a relevant topic rather than an automatic pressure sequence. Use the actual reply to determine the next message, including closure.",
+          "roteiro_video": "In this lesson we explore after connecting. Follow a connection with a relevant topic rather than an automatic pressure sequence. Use the actual reply to determine the next message, including closure. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “After connecting” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Follow a connection with a relevant topic rather than an automatic pressure sequence. Use the actual reply to determine the next message, including closure.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Content relationships",
+          "tipo": "texto",
+          "conteudo": "Contribute information relevant to the public topic without hijacking it. Repeated engagement does not establish buying intent. Clearly distinguish education from a commercial proposal.",
+          "roteiro_video": "In this lesson we explore content relationships. Contribute information relevant to the public topic without hijacking it. Repeated engagement does not establish buying intent. Clearly distinguish education from a commercial proposal. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Content relationships” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Contribute information relevant to the public topic without hijacking it. Repeated engagement does not establish buying intent. Clearly distinguish education from a commercial proposal.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Multichannel sequences",
+      "titulo_original_pt": "Cadência e análise",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Multichannel sequences",
+          "tipo": "texto",
+          "conteudo": "Maintain shared history so channels do not repeat questions or evade refusal. Each step needs purpose, conditions and stopping rules. Reassess relevance when new information arrives.",
+          "roteiro_video": "In this lesson we explore multichannel sequences. Maintain shared history so channels do not repeat questions or evade refusal. Each step needs purpose, conditions and stopping rules. Reassess relevance when new information arrives. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Multichannel sequences” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Maintain shared history so channels do not repeat questions or evade refusal. Each step needs purpose, conditions and stopping rules. Reassess relevance when new information arrives.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Intervals and contact limits",
+          "tipo": "texto",
+          "conteudo": "Set limits from policy, context and preference; there is no universal attempt count. Record agreed timing. Refusal or mismatch ends the sequence regardless of its scheduled stage.",
+          "roteiro_video": "In this lesson we explore intervals and contact limits. Set limits from policy, context and preference; there is no universal attempt count. Record agreed timing. Refusal or mismatch ends the sequence regardless of its scheduled stage. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Intervals and contact limits” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Set limits from policy, context and preference; there is no universal attempt count. Record agreed timing. Refusal or mismatch ends the sequence regardless of its scheduled stage.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Reply and meeting measures",
+          "tipo": "texto",
+          "conteudo": "Count eligible recipients, relevant replies and meetings by cohort. A negative reply is a reply, not an opportunity. Examine reply content before celebrating a higher total rate.",
+          "roteiro_video": "In this lesson we explore reply and meeting measures. Count eligible recipients, relevant replies and meetings by cohort. A negative reply is a reply, not an opportunity. Examine reply content before celebrating a higher total rate. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Reply and meeting measures” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Count eligible recipients, relevant replies and meetings by cohort. A negative reply is a reply, not an opportunity. Examine reply content before celebrating a higher total rate.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "A/B experiments",
+          "tipo": "texto",
+          "conteudo": "Change one variable, keep groups comparable and define the metric beforehand. Do not infer causality from a small difference without analysis. Preferences and stop requests still apply during experiments.",
+          "roteiro_video": "In this lesson we explore a/b experiments. Change one variable, keep groups comparable and define the metric beforehand. Do not infer causality from a small difference without analysis. Preferences and stop requests still apply during experiments. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A/B experiments” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Change one variable, keep groups comparable and define the metric beforehand. Do not infer causality from a small difference without analysis. Preferences and stop requests still apply during experiments.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "North Services announced expansion. Clear Team offers sales-process organisation but does not know whether the expansion creates a need. Of 80 fictional eligible recipients, 12 replied: four refusals, five information requests and three meeting requests. One subject falsely says RE: our meeting.\n\nA Chennai professional-services firm has announced a new office. Operations wants a workflow example; accounts needs billing details if a project advances. No buying timeline is confirmed and the preferred initial format is a short written note."
+  },
+  "projeto": {
+    "instrucoes": "Write five emails with distinct purposes, three professional-network messages and a fictional ten-day sequence with stopping rules; calculate replies and meeting requests separately.",
+    "gabarito": "Remove the false prior relationship. Reply rate is 12/80=15%; meeting requests are 3/80=3.75%, not held meetings. Remove refusals. Use distinct purposes: relevance, clarification, requested material, next-step confirmation and appropriate closure."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "05-M1",
+        "pergunta": "How would you apply “Module 1: Email or LinkedIn” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Select channels by work context, preference and approved procedure. Email supports a structured message; a professional connection can supply context. Neither creates fit for an irrelevant offer.",
+          "Research the company and task-related responsibility. Apparent seniority does not establish authority. Record users, evaluators and approvers, with unknown roles explicit.",
+          "A useful reason links a verified fact to a need hypothesis. Hiring may justify a workflow question but does not prove budget. Avoid generic praise disguised as personalisation.",
+          "Record source, date, purpose and contact restrictions. A purchased list does not establish appropriate use. Deduplicate and check suppression records before an approved sequence."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "05-M2",
+        "pergunta": "How would you apply “Module 2: Cold email structure” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "A truthful subject, identity, context, hypothesis and small request should form a coherent message. Avoid unexplained attachments and never simulate a reply to a nonexistent conversation.",
+          "A subject should predict actual content. False reply prefixes, payment notices or confirmed-meeting claims misrepresent the message. Evaluate understanding, not only opens.",
+          "Connect a specific observation to conditional utility. Keep one main hypothesis. Another market's statistic may frame a question but cannot predict the recipient's results.",
+          "Ask for a small coherent decision, such as relevance or the appropriate owner. Competing requests complicate replies. Do not demand a meeting before explaining its purpose.",
+          "Authentication, reputation, list quality and expectations affect delivery; technical owners verify provider requirements. Do not evade blocks with new domains. Opens do not prove human reading or interest."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "05-M3",
+        "pergunta": "How would you apply “Module 3: Professional profile” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Describe role and offer with verifiable examples and no invented credentials. Make representation clear. Do not publish client logos or testimonials without applicable permission.",
+          "Use permitted tools and interpret context. Avoid prohibited bots or scraping extensions. A role change requires updating records rather than assuming continued authority.",
+          "Explain genuine context and allow refusal. Accepting a connection does not authorise an unrelated external campaign. Avoid turning every invitation into a lengthy unsolicited proposal.",
+          "Follow a connection with a relevant topic rather than an automatic pressure sequence. Use the actual reply to determine the next message, including closure.",
+          "Contribute information relevant to the public topic without hijacking it. Repeated engagement does not establish buying intent. Clearly distinguish education from a commercial proposal."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "05-M4",
+        "pergunta": "How would you apply “Module 4: Multichannel sequences” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Maintain shared history so channels do not repeat questions or evade refusal. Each step needs purpose, conditions and stopping rules. Reassess relevance when new information arrives.",
+          "Set limits from policy, context and preference; there is no universal attempt count. Record agreed timing. Refusal or mismatch ends the sequence regardless of its scheduled stage.",
+          "Count eligible recipients, relevant replies and meetings by cohort. A negative reply is a reply, not an opportunity. Examine reply content before celebrating a higher total rate.",
+          "Change one variable, keep groups comparable and define the metric beforehand. Do not infer causality from a small difference without analysis. Preferences and stop requests still apply during experiments."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "05-FINAL",
+        "pergunta": "Write five emails with distinct purposes, three professional-network messages and a fictional ten-day sequence with stopping rules; calculate replies and meeting requests separately.",
+        "resposta_modelo": "Remove the false prior relationship. Reply rate is 12/80=15%; meeting requests are 3/80=3.75%, not held meetings. Remove refusals. Use distinct purposes: relevance, clarification, requested material, next-step confirmation and appropriate closure.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

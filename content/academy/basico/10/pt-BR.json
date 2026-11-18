@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-10",
+  "course_number": 10,
+  "locale": "pt-BR",
+  "titulo": "Follow-up e Retomada",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 4,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "O papel do follow-up",
+      "titulo_original_pt": "O papel do follow-up",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Por que oportunidades precisam de acompanhamento",
+          "tipo": "texto",
+          "conteudo": "Acompanhamento coordena uma decisão pendente ou entrega combinada. Defina o motivo antes da mensagem. Lembrar um documento solicitado é diferente de exigir resposta a uma proposta sem contexto.",
+          "roteiro_video": "Nesta aula, vamos trabalhar por que oportunidades precisam de acompanhamento. Acompanhamento coordena uma decisão pendente ou entrega combinada. Defina o motivo antes da mensagem. Lembrar um documento solicitado é diferente de exigir resposta a uma proposta sem contexto. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Por que oportunidades precisam de acompanhamento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Acompanhamento coordena uma decisão pendente ou entrega combinada. Defina o motivo antes da mensagem. Lembrar um documento solicitado é diferente de exigir resposta a uma proposta sem contexto.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Diferenças entre follow-up e insistência",
+          "tipo": "texto",
+          "conteudo": "Acompanhamento considera acordo, relevância e preferência; insistência ignora esses limites. Quantidade de tentativas não cria direito a resposta. Registre condição de interrupção antes de programar a sequência.",
+          "roteiro_video": "Nesta aula, vamos trabalhar diferenças entre follow-up e insistência. Acompanhamento considera acordo, relevância e preferência; insistência ignora esses limites. Quantidade de tentativas não cria direito a resposta. Registre condição de interrupção antes de programar a sequência. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Diferenças entre follow-up e insistência” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Acompanhamento considera acordo, relevância e preferência; insistência ignora esses limites. Quantidade de tentativas não cria direito a resposta. Registre condição de interrupção antes de programar a sequência.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Como interpretar sinais de interesse",
+          "tipo": "texto",
+          "conteudo": "Pedido específico e próximo passo aceito são sinais mais informativos que leitura ou curtida. Silêncio possui múltiplas causas. Não elevar probabilidade de venda só porque alguém abriu uma mensagem.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como interpretar sinais de interesse. Pedido específico e próximo passo aceito são sinais mais informativos que leitura ou curtida. Silêncio possui múltiplas causas. Não elevar probabilidade de venda só porque alguém abriu uma mensagem. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como interpretar sinais de interesse” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pedido específico e próximo passo aceito são sinais mais informativos que leitura ou curtida. Silêncio possui múltiplas causas. Não elevar probabilidade de venda só porque alguém abriu uma mensagem.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Quando não continuar o contato",
+          "tipo": "texto",
+          "conteudo": "Recusa, incompatibilidade, dado incorreto ou finalidade encerrada exigem revisão ou parada. Não terminar a cadência apenas por número fixo e ignorar um pedido anterior. Sincronize a restrição entre responsáveis.",
+          "roteiro_video": "Nesta aula, vamos trabalhar quando não continuar o contato. Recusa, incompatibilidade, dado incorreto ou finalidade encerrada exigem revisão ou parada. Não terminar a cadência apenas por número fixo e ignorar um pedido anterior. Sincronize a restrição entre responsáveis. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Quando não continuar o contato” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Recusa, incompatibilidade, dado incorreto ou finalidade encerrada exigem revisão ou parada. Não terminar a cadência apenas por número fixo e ignorar um pedido anterior. Sincronize a restrição entre responsáveis.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Planejamento de cadências",
+      "titulo_original_pt": "Planejamento de cadências",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Como definir o objetivo de cada interação",
+          "tipo": "texto",
+          "conteudo": "Escolha esclarecer uma lacuna, entregar algo ou combinar decisão. Mensagem sem objetivo vira cobrança vaga. Diga por que o próximo passo ajuda o comprador e permita recusar continuidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como definir o objetivo de cada interação. Escolha esclarecer uma lacuna, entregar algo ou combinar decisão. Mensagem sem objetivo vira cobrança vaga. Diga por que o próximo passo ajuda o comprador e permita recusar continuidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como definir o objetivo de cada interação” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Escolha esclarecer uma lacuna, entregar algo ou combinar decisão. Mensagem sem objetivo vira cobrança vaga. Diga por que o próximo passo ajuda o comprador e permita recusar continuidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Sequência inicial de acompanhamento",
+          "tipo": "texto",
+          "conteudo": "Desenhe contatos por condição, não apenas por calendário: sem resposta, resposta com dúvida, aceite, recusa. Cada ramo deve ter ação distinta. Não enviar uma mensagem prevista depois que a situação mudou.",
+          "roteiro_video": "Nesta aula, vamos trabalhar sequência inicial de acompanhamento. Desenhe contatos por condição, não apenas por calendário: sem resposta, resposta com dúvida, aceite, recusa. Cada ramo deve ter ação distinta. Não enviar uma mensagem prevista depois que a situação mudou. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Sequência inicial de acompanhamento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Desenhe contatos por condição, não apenas por calendário: sem resposta, resposta com dúvida, aceite, recusa. Cada ramo deve ter ação distinta. Não enviar uma mensagem prevista depois que a situação mudou.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Follow-up após reuniões e propostas",
+          "tipo": "texto",
+          "conteudo": "Retome o que foi acordado, destaque pendência e responsável e peça correção do resumo. Uma proposta enviada não confirma leitura. Evite acrescentar condições que não foram discutidas.",
+          "roteiro_video": "Nesta aula, vamos trabalhar follow-up após reuniões e propostas. Retome o que foi acordado, destaque pendência e responsável e peça correção do resumo. Uma proposta enviada não confirma leitura. Evite acrescentar condições que não foram discutidas. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Follow-up após reuniões e propostas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Retome o que foi acordado, destaque pendência e responsável e peça correção do resumo. Uma proposta enviada não confirma leitura. Evite acrescentar condições que não foram discutidas.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Cadências com intervalos razoáveis e opt-out",
+          "tipo": "texto",
+          "conteudo": "Use retorno combinado e política aprovada, sem prescrever frequência universal. Interrupção deve alcançar automações e outros vendedores. Uma pausa temporária precisa de condição clara, não de reinício arbitrário.",
+          "roteiro_video": "Nesta aula, vamos trabalhar cadências com intervalos razoáveis e opt-out. Use retorno combinado e política aprovada, sem prescrever frequência universal. Interrupção deve alcançar automações e outros vendedores. Uma pausa temporária precisa de condição clara, não de reinício arbitrário. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Cadências com intervalos razoáveis e opt-out” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use retorno combinado e política aprovada, sem prescrever frequência universal. Interrupção deve alcançar automações e outros vendedores. Uma pausa temporária precisa de condição clara, não de reinício arbitrário.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Comunicação de retomada",
+      "titulo_original_pt": "Comunicação de retomada",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Mensagens com contexto relevante",
+          "tipo": "texto",
+          "conteudo": "Comece pelo assunto e compromisso anteriores, verificando se continuam relevantes. Não afirmar urgência por tempo passado. Uma mudança real na oferta pode justificar avaliação, sob procedimento de contato válido.",
+          "roteiro_video": "Nesta aula, vamos trabalhar mensagens com contexto relevante. Comece pelo assunto e compromisso anteriores, verificando se continuam relevantes. Não afirmar urgência por tempo passado. Uma mudança real na oferta pode justificar avaliação, sob procedimento de contato válido. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Mensagens com contexto relevante” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Comece pelo assunto e compromisso anteriores, verificando se continuam relevantes. Não afirmar urgência por tempo passado. Uma mudança real na oferta pode justificar avaliação, sob procedimento de contato válido.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Como acrescentar valor em cada contato",
+          "tipo": "texto",
+          "conteudo": "Acrescente resposta a uma dúvida, comparação solicitada ou esclarecimento de escopo. Material novo não é automaticamente útil. Não enviar conteúdo para esconder a ausência de resposta à pergunta original.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como acrescentar valor em cada contato. Acrescente resposta a uma dúvida, comparação solicitada ou esclarecimento de escopo. Material novo não é automaticamente útil. Não enviar conteúdo para esconder a ausência de resposta à pergunta original. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como acrescentar valor em cada contato” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Acrescente resposta a uma dúvida, comparação solicitada ou esclarecimento de escopo. Material novo não é automaticamente útil. Não enviar conteúdo para esconder a ausência de resposta à pergunta original.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Retomada de propostas sem resposta",
+          "tipo": "texto",
+          "conteudo": "Verifique se o documento chegou e se existe dúvida, quando o contato estiver autorizado. Não presumir que ausência de resposta significa objeção de preço. Ofereça encerramento ou retorno combinado.",
+          "roteiro_video": "Nesta aula, vamos trabalhar retomada de propostas sem resposta. Verifique se o documento chegou e se existe dúvida, quando o contato estiver autorizado. Não presumir que ausência de resposta significa objeção de preço. Ofereça encerramento ou retorno combinado. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Retomada de propostas sem resposta” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Verifique se o documento chegou e se existe dúvida, quando o contato estiver autorizado. Não presumir que ausência de resposta significa objeção de preço. Ofereça encerramento ou retorno combinado.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Tratamento de adiamentos",
+          "tipo": "texto",
+          "conteudo": "Registre motivo declarado e condição de retomada sem converter possibilidade em compromisso. Quando o comprador não quer marcar retorno, respeite. Datas internas do vendedor não são prazos do cliente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tratamento de adiamentos. Registre motivo declarado e condição de retomada sem converter possibilidade em compromisso. Quando o comprador não quer marcar retorno, respeite. Datas internas do vendedor não são prazos do cliente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tratamento de adiamentos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre motivo declarado e condição de retomada sem converter possibilidade em compromisso. Quando o comprador não quer marcar retorno, respeite. Datas internas do vendedor não são prazos do cliente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Automação e indicadores",
+      "titulo_original_pt": "Automação e indicadores",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Tarefas e lembretes no CRM",
+          "tipo": "texto",
+          "conteudo": "Tarefa precisa de responsável, propósito, data/condição e fonte do acordo. Um lembrete não autoriza contato. Antes de executar, confira mudanças de preferência, etapa e proprietário do registro.",
+          "roteiro_video": "Nesta aula, vamos trabalhar tarefas e lembretes no crm. Tarefa precisa de responsável, propósito, data/condição e fonte do acordo. Um lembrete não autoriza contato. Antes de executar, confira mudanças de preferência, etapa e proprietário do registro. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Tarefas e lembretes no CRM” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Tarefa precisa de responsável, propósito, data/condição e fonte do acordo. Um lembrete não autoriza contato. Antes de executar, confira mudanças de preferência, etapa e proprietário do registro.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Personalização de automações",
+          "tipo": "texto",
+          "conteudo": "Automatize uma regra clara com revisão, cancelamento e exceções. Não automatize julgamento de interesse por palavra solta. Resposta humana relevante deve pausar o fluxo e orientar a continuidade.",
+          "roteiro_video": "Nesta aula, vamos trabalhar personalização de automações. Automatize uma regra clara com revisão, cancelamento e exceções. Não automatize julgamento de interesse por palavra solta. Resposta humana relevante deve pausar o fluxo e orientar a continuidade. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Personalização de automações” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Automatize uma regra clara com revisão, cancelamento e exceções. Não automatize julgamento de interesse por palavra solta. Resposta humana relevante deve pausar o fluxo e orientar a continuidade.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Métricas de resposta e continuidade",
+          "tipo": "texto",
+          "conteudo": "Meça avanço acordado, respostas relevantes e encerramentos por coorte, além de volume. Encerrar corretamente pode reduzir taxa aparente e melhorar qualidade. Não esconder recusas para manter indicador favorável.",
+          "roteiro_video": "Nesta aula, vamos trabalhar métricas de resposta e continuidade. Meça avanço acordado, respostas relevantes e encerramentos por coorte, além de volume. Encerrar corretamente pode reduzir taxa aparente e melhorar qualidade. Não esconder recusas para manter indicador favorável. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Métricas de resposta e continuidade” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Meça avanço acordado, respostas relevantes e encerramentos por coorte, além de volume. Encerrar corretamente pode reduzir taxa aparente e melhorar qualidade. Não esconder recusas para manter indicador favorável.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Encerramento e arquivamento de oportunidades",
+          "tipo": "texto",
+          "conteudo": "Registre motivo, última condição e restrições; arquivar não significa eliminar todo dado automaticamente. Siga retenção e direitos pelo processo responsável. Não reabrir oportunidade apenas para gerar tarefa comercial.",
+          "roteiro_video": "Nesta aula, vamos trabalhar encerramento e arquivamento de oportunidades. Registre motivo, última condição e restrições; arquivar não significa eliminar todo dado automaticamente. Siga retenção e direitos pelo processo responsável. Não reabrir oportunidade apenas para gerar tarefa comercial. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Encerramento e arquivamento de oportunidades” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre motivo, última condição e restrições; arquivar não significa eliminar todo dado automaticamente. Siga retenção e direitos pelo processo responsável. Não reabrir oportunidade apenas para gerar tarefa comercial.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A Ponte Serviços enviou proposta solicitada. O contato combinou retorno depois da reunião interna de sexta, mas uma automação programou mensagens diárias. Na quinta, pediu pausa até novo aviso. Outro vendedor não viu a preferência e preparou ligação. A proposta não tem prazo real de expiração."
+  },
+  "projeto": {
+    "instrucoes": "Crie três cadências: novo interessado, proposta pendente e retomada permitida. Corrija este caso e escreva objetivo, condição e parada para cada etapa.",
+    "gabarito": "Pause automação e informe os responsáveis pelo processo autorizado. A solicitação posterior altera o retorno anterior; não manter sexta como autorização. Não invente expiração. As cadências só continuam com condição válida e terminam por recusa, falta de fit ou encerramento da finalidade."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "10-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “O papel do follow-up”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Acompanhamento coordena uma decisão pendente ou entrega combinada. Defina o motivo antes da mensagem. Lembrar um documento solicitado é diferente de exigir resposta a uma proposta sem contexto.",
+          "Acompanhamento considera acordo, relevância e preferência; insistência ignora esses limites. Quantidade de tentativas não cria direito a resposta. Registre condição de interrupção antes de programar a sequência.",
+          "Pedido específico e próximo passo aceito são sinais mais informativos que leitura ou curtida. Silêncio possui múltiplas causas. Não elevar probabilidade de venda só porque alguém abriu uma mensagem.",
+          "Recusa, incompatibilidade, dado incorreto ou finalidade encerrada exigem revisão ou parada. Não terminar a cadência apenas por número fixo e ignorar um pedido anterior. Sincronize a restrição entre responsáveis."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "10-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Planejamento de cadências”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Escolha esclarecer uma lacuna, entregar algo ou combinar decisão. Mensagem sem objetivo vira cobrança vaga. Diga por que o próximo passo ajuda o comprador e permita recusar continuidade.",
+          "Desenhe contatos por condição, não apenas por calendário: sem resposta, resposta com dúvida, aceite, recusa. Cada ramo deve ter ação distinta. Não enviar uma mensagem prevista depois que a situação mudou.",
+          "Retome o que foi acordado, destaque pendência e responsável e peça correção do resumo. Uma proposta enviada não confirma leitura. Evite acrescentar condições que não foram discutidas.",
+          "Use retorno combinado e política aprovada, sem prescrever frequência universal. Interrupção deve alcançar automações e outros vendedores. Uma pausa temporária precisa de condição clara, não de reinício arbitrário."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "10-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Comunicação de retomada”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Comece pelo assunto e compromisso anteriores, verificando se continuam relevantes. Não afirmar urgência por tempo passado. Uma mudança real na oferta pode justificar avaliação, sob procedimento de contato válido.",
+          "Acrescente resposta a uma dúvida, comparação solicitada ou esclarecimento de escopo. Material novo não é automaticamente útil. Não enviar conteúdo para esconder a ausência de resposta à pergunta original.",
+          "Verifique se o documento chegou e se existe dúvida, quando o contato estiver autorizado. Não presumir que ausência de resposta significa objeção de preço. Ofereça encerramento ou retorno combinado.",
+          "Registre motivo declarado e condição de retomada sem converter possibilidade em compromisso. Quando o comprador não quer marcar retorno, respeite. Datas internas do vendedor não são prazos do cliente."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "10-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Automação e indicadores”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Tarefa precisa de responsável, propósito, data/condição e fonte do acordo. Um lembrete não autoriza contato. Antes de executar, confira mudanças de preferência, etapa e proprietário do registro.",
+          "Automatize uma regra clara com revisão, cancelamento e exceções. Não automatize julgamento de interesse por palavra solta. Resposta humana relevante deve pausar o fluxo e orientar a continuidade.",
+          "Meça avanço acordado, respostas relevantes e encerramentos por coorte, além de volume. Encerrar corretamente pode reduzir taxa aparente e melhorar qualidade. Não esconder recusas para manter indicador favorável.",
+          "Registre motivo, última condição e restrições; arquivar não significa eliminar todo dado automaticamente. Siga retenção e direitos pelo processo responsável. Não reabrir oportunidade apenas para gerar tarefa comercial."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "10-FINAL",
+        "pergunta": "Crie três cadências: novo interessado, proposta pendente e retomada permitida. Corrija este caso e escreva objetivo, condição e parada para cada etapa.",
+        "resposta_modelo": "Pause automação e informe os responsáveis pelo processo autorizado. A solicitação posterior altera o retorno anterior; não manter sexta como autorização. Não invente expiração. As cadências só continuam com condição válida e terminam por recusa, falta de fit ou encerramento da finalidade.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

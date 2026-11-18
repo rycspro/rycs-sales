@@ -1,0 +1,552 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-04",
+  "course_number": 4,
+  "locale": "pt-BR",
+  "titulo": "WhatsApp Comercial",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Profissional",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Carga preservada da grade; esta edição enxuta não comprova esse tempo de estudo. Validar e aprofundar antes de certificar horas.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Fundamentos do atendimento",
+      "titulo_original_pt": "Fundamentos do atendimento",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "O WhatsApp como canal de vendas e relacionamento",
+          "tipo": "texto",
+          "conteudo": "Mensagem comercial compete com conversas pessoais; relevância e permissão importam. Defina se a conversa esclarece dúvida, qualifica ou combina ação. Não usar confirmação de leitura como prova de interesse.",
+          "roteiro_video": "Nesta aula, vamos trabalhar o whatsapp como canal de vendas e relacionamento. Mensagem comercial compete com conversas pessoais; relevância e permissão importam. Defina se a conversa esclarece dúvida, qualifica ou combina ação. Não usar confirmação de leitura como prova de interesse. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “O WhatsApp como canal de vendas e relacionamento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Mensagem comercial compete com conversas pessoais; relevância e permissão importam. Defina se a conversa esclarece dúvida, qualifica ou combina ação. Não usar confirmação de leitura como prova de interesse.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Diferenças entre atendimento receptivo e ativo",
+          "tipo": "texto",
+          "conteudo": "No receptivo, responda ao pedido efetivamente feito. No ativo, confira a condição de contato e o contexto permitido. Uma interação de suporte não autoriza automaticamente outra finalidade comercial.",
+          "roteiro_video": "Nesta aula, vamos trabalhar diferenças entre atendimento receptivo e ativo. No receptivo, responda ao pedido efetivamente feito. No ativo, confira a condição de contato e o contexto permitido. Uma interação de suporte não autoriza automaticamente outra finalidade comercial. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Diferenças entre atendimento receptivo e ativo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "No receptivo, responda ao pedido efetivamente feito. No ativo, confira a condição de contato e o contexto permitido. Uma interação de suporte não autoriza automaticamente outra finalidade comercial.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Perfil profissional e identidade comercial",
+          "tipo": "texto",
+          "conteudo": "Perfil e apresentação devem tornar a empresa identificável e consistente. Não usar logo de terceiro ou aparência de suporte oficial sem autorização. Informações de atendimento precisam corresponder à operação real.",
+          "roteiro_video": "Nesta aula, vamos trabalhar perfil profissional e identidade comercial. Perfil e apresentação devem tornar a empresa identificável e consistente. Não usar logo de terceiro ou aparência de suporte oficial sem autorização. Informações de atendimento precisam corresponder à operação real. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Perfil profissional e identidade comercial” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Perfil e apresentação devem tornar a empresa identificável e consistente. Não usar logo de terceiro ou aparência de suporte oficial sem autorização. Informações de atendimento precisam corresponder à operação real.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Consentimento, preferências e limites de contato",
+          "tipo": "texto",
+          "conteudo": "Registre a origem do aceite aplicável ao canal e respeite a interrupção. Preferência por e-mail não é preferência por WhatsApp. Política da plataforma e análise de dados são verificações diferentes.",
+          "roteiro_video": "Nesta aula, vamos trabalhar consentimento, preferências e limites de contato. Registre a origem do aceite aplicável ao canal e respeite a interrupção. Preferência por e-mail não é preferência por WhatsApp. Política da plataforma e análise de dados são verificações diferentes. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Consentimento, preferências e limites de contato” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Registre a origem do aceite aplicável ao canal e respeite a interrupção. Preferência por e-mail não é preferência por WhatsApp. Política da plataforma e análise de dados são verificações diferentes.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Conversas que geram interesse",
+      "titulo_original_pt": "Conversas que geram interesse",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Primeira mensagem: identificação, contexto e objetivo",
+          "tipo": "texto",
+          "conteudo": "Use nome, empresa, origem verdadeira e uma pergunta. Dividir uma mensagem em dez notificações aumenta interrupção. Dê contexto suficiente para a pessoa entender e decidir se quer continuar.",
+          "roteiro_video": "Nesta aula, vamos trabalhar primeira mensagem: identificação, contexto e objetivo. Use nome, empresa, origem verdadeira e uma pergunta. Dividir uma mensagem em dez notificações aumenta interrupção. Dê contexto suficiente para a pessoa entender e decidir se quer continuar. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Primeira mensagem: identificação, contexto e objetivo” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use nome, empresa, origem verdadeira e uma pergunta. Dividir uma mensagem em dez notificações aumenta interrupção. Dê contexto suficiente para a pessoa entender e decidir se quer continuar.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Personalização sem mensagens excessivamente longas",
+          "tipo": "texto",
+          "conteudo": "Cite um fato profissional pertinente e deixe a mensagem legível em poucos blocos. Personalização deve facilitar entendimento, não demonstrar vigilância. Revise nomes e detalhes antes de enviar um modelo.",
+          "roteiro_video": "Nesta aula, vamos trabalhar personalização sem mensagens excessivamente longas. Cite um fato profissional pertinente e deixe a mensagem legível em poucos blocos. Personalização deve facilitar entendimento, não demonstrar vigilância. Revise nomes e detalhes antes de enviar um modelo. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Personalização sem mensagens excessivamente longas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Cite um fato profissional pertinente e deixe a mensagem legível em poucos blocos. Personalização deve facilitar entendimento, não demonstrar vigilância. Revise nomes e detalhes antes de enviar um modelo.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Perguntas de qualificação por texto",
+          "tipo": "texto",
+          "conteudo": "Faça uma pergunta por vez e resuma respostas ambíguas. Não enviar formulário extenso no primeiro contato. Marque necessidade, participantes e momento conforme forem confirmados, mantendo lacunas visíveis.",
+          "roteiro_video": "Nesta aula, vamos trabalhar perguntas de qualificação por texto. Faça uma pergunta por vez e resuma respostas ambíguas. Não enviar formulário extenso no primeiro contato. Marque necessidade, participantes e momento conforme forem confirmados, mantendo lacunas visíveis. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Perguntas de qualificação por texto” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Faça uma pergunta por vez e resuma respostas ambíguas. Não enviar formulário extenso no primeiro contato. Marque necessidade, participantes e momento conforme forem confirmados, mantendo lacunas visíveis.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Uso de áudio, vídeo e arquivos",
+          "tipo": "texto",
+          "conteudo": "Pergunte preferência antes de áudio longo ou arquivo pesado. Explique conteúdo e finalidade do anexo; ofereça resumo em texto. Não enviar dados de terceiros nem links encurtados sem contexto.",
+          "roteiro_video": "Nesta aula, vamos trabalhar uso de áudio, vídeo e arquivos. Pergunte preferência antes de áudio longo ou arquivo pesado. Explique conteúdo e finalidade do anexo; ofereça resumo em texto. Não enviar dados de terceiros nem links encurtados sem contexto. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Uso de áudio, vídeo e arquivos” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Pergunte preferência antes de áudio longo ou arquivo pesado. Explique conteúdo e finalidade do anexo; ofereça resumo em texto. Não enviar dados de terceiros nem links encurtados sem contexto.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.5",
+          "titulo": "Como apresentar uma solução sem excesso de informações",
+          "tipo": "texto",
+          "conteudo": "Responda à necessidade confirmada com uma função relevante, limite e próximo passo. Catálogo inteiro pode dificultar a decisão. Se preço depende de escopo, explique a dependência sem inventar uma cotação.",
+          "roteiro_video": "Nesta aula, vamos trabalhar como apresentar uma solução sem excesso de informações. Responda à necessidade confirmada com uma função relevante, limite e próximo passo. Catálogo inteiro pode dificultar a decisão. Se preço depende de escopo, explique a dependência sem inventar uma cotação. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Como apresentar uma solução sem excesso de informações” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Responda à necessidade confirmada com uma função relevante, limite e próximo passo. Catálogo inteiro pode dificultar a decisão. Se preço depende de escopo, explique a dependência sem inventar uma cotação.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Fluxos comerciais",
+      "titulo_original_pt": "Fluxos comerciais",
+      "duracaoMin_planejada": 120,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Atendimento de leads vindos de anúncios",
+          "tipo": "texto",
+          "conteudo": "Preserve a oferta vista no anúncio e verifique o pedido real. Se o anúncio criou expectativa errada, esclareça e encaminhe correção. Não culpar o interessado por interpretar uma promessa ambígua.",
+          "roteiro_video": "Nesta aula, vamos trabalhar atendimento de leads vindos de anúncios. Preserve a oferta vista no anúncio e verifique o pedido real. Se o anúncio criou expectativa errada, esclareça e encaminhe correção. Não culpar o interessado por interpretar uma promessa ambígua. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Atendimento de leads vindos de anúncios” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Preserve a oferta vista no anúncio e verifique o pedido real. Se o anúncio criou expectativa errada, esclareça e encaminhe correção. Não culpar o interessado por interpretar uma promessa ambígua.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Atendimento a indicações",
+          "tipo": "texto",
+          "conteudo": "Diferencie apresentação voluntária de entrega de uma lista de números. Confirme como a pessoa pediu contato. Não afirmar endosso, relação ou permissão que o indicador não forneceu.",
+          "roteiro_video": "Nesta aula, vamos trabalhar atendimento a indicações. Diferencie apresentação voluntária de entrega de uma lista de números. Confirme como a pessoa pediu contato. Não afirmar endosso, relação ou permissão que o indicador não forneceu. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Atendimento a indicações” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Diferencie apresentação voluntária de entrega de uma lista de números. Confirme como a pessoa pediu contato. Não afirmar endosso, relação ou permissão que o indicador não forneceu.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 17,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Reativação de contatos com base legal adequada",
+          "tipo": "texto",
+          "conteudo": "Histórico antigo não é autorização eterna. Verifique finalidade, restrições, atualidade e procedimento aprovado antes da retomada. Um pedido anterior de interrupção deve ser encontrado antes de qualquer envio.",
+          "roteiro_video": "Nesta aula, vamos trabalhar reativação de contatos com base legal adequada. Histórico antigo não é autorização eterna. Verifique finalidade, restrições, atualidade e procedimento aprovado antes da retomada. Um pedido anterior de interrupção deve ser encontrado antes de qualquer envio. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Reativação de contatos com base legal adequada” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Histórico antigo não é autorização eterna. Verifique finalidade, restrições, atualidade e procedimento aprovado antes da retomada. Um pedido anterior de interrupção deve ser encontrado antes de qualquer envio.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 17,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Follow-up e cadência de mensagens",
+          "tipo": "texto",
+          "conteudo": "Cada mensagem precisa de motivo e critério de interrupção. Combine retorno quando possível; silêncio não justifica insistência indefinida. Controle frequência da equipe inteira, não apenas de um vendedor.",
+          "roteiro_video": "Nesta aula, vamos trabalhar follow-up e cadência de mensagens. Cada mensagem precisa de motivo e critério de interrupção. Combine retorno quando possível; silêncio não justifica insistência indefinida. Controle frequência da equipe inteira, não apenas de um vendedor. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Follow-up e cadência de mensagens” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Cada mensagem precisa de motivo e critério de interrupção. Combine retorno quando possível; silêncio não justifica insistência indefinida. Controle frequência da equipe inteira, não apenas de um vendedor.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 17,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.5",
+          "titulo": "Agendamento de reuniões e confirmações",
+          "tipo": "texto",
+          "conteudo": "Confirme data, fuso, participantes, finalidade e acesso em uma mensagem clara. Uma resposta positiva ao assunto não confirma automaticamente o horário. Registre aceite específico e atualização de reagendamento.",
+          "roteiro_video": "Nesta aula, vamos trabalhar agendamento de reuniões e confirmações. Confirme data, fuso, participantes, finalidade e acesso em uma mensagem clara. Uma resposta positiva ao assunto não confirma automaticamente o horário. Registre aceite específico e atualização de reagendamento. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Agendamento de reuniões e confirmações” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Confirme data, fuso, participantes, finalidade e acesso em uma mensagem clara. Uma resposta positiva ao assunto não confirma automaticamente o horário. Registre aceite específico e atualização de reagendamento.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 17,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.6",
+          "titulo": "Recuperação de conversas interrompidas",
+          "tipo": "texto",
+          "conteudo": "Retome pelo último ponto relevante, sem interpretar ausência como descaso. Uma mensagem pode oferecer continuidade ou encerramento. Não criar cobrança emocional nem comunicar urgência inexistente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar recuperação de conversas interrompidas. Retome pelo último ponto relevante, sem interpretar ausência como descaso. Uma mensagem pode oferecer continuidade ou encerramento. Não criar cobrança emocional nem comunicar urgência inexistente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Recuperação de conversas interrompidas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Retome pelo último ponto relevante, sem interpretar ausência como descaso. Uma mensagem pode oferecer continuidade ou encerramento. Não criar cobrança emocional nem comunicar urgência inexistente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 17,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.7",
+          "titulo": "Uso adequado de modelos e automações permitidas",
+          "tipo": "texto",
+          "conteudo": "Modelos devem refletir contexto e regras atuais do canal. Automação precisa de condição de entrada, saída por recusa e encaminhamento humano. Não configurar envios que continuem após resposta relevante ou bloqueio.",
+          "roteiro_video": "Nesta aula, vamos trabalhar uso adequado de modelos e automações permitidas. Modelos devem refletir contexto e regras atuais do canal. Automação precisa de condição de entrada, saída por recusa e encaminhamento humano. Não configurar envios que continuem após resposta relevante ou bloqueio. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Uso adequado de modelos e automações permitidas” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Modelos devem refletir contexto e regras atuais do canal. Automação precisa de condição de entrada, saída por recusa e encaminhamento humano. Não configurar envios que continuem após resposta relevante ou bloqueio.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 17,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Operação profissional",
+      "titulo_original_pt": "Operação profissional",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "WhatsApp Business: etiquetas e recursos de organização",
+          "tipo": "texto",
+          "conteudo": "Etiqueta representa estado operacional, não julgamento pessoal. Use poucos estados definidos, como aguardando informação e retorno combinado. Mudar etiqueta não comprova ação; registre a atividade separadamente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar whatsapp business: etiquetas e recursos de organização. Etiqueta representa estado operacional, não julgamento pessoal. Use poucos estados definidos, como aguardando informação e retorno combinado. Mudar etiqueta não comprova ação; registre a atividade separadamente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “WhatsApp Business: etiquetas e recursos de organização” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Etiqueta representa estado operacional, não julgamento pessoal. Use poucos estados definidos, como aguardando informação e retorno combinado. Mudar etiqueta não comprova ação; registre a atividade separadamente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "CRM e histórico comercial",
+          "tipo": "texto",
+          "conteudo": "Transfira contexto necessário e preferências ao CRM autorizado. Resuma fatos e lacunas sem exportar todo o chat por conveniência. Reconcilie responsáveis para não haver duas pessoas respondendo contraditoriamente.",
+          "roteiro_video": "Nesta aula, vamos trabalhar crm e histórico comercial. Transfira contexto necessário e preferências ao CRM autorizado. Resuma fatos e lacunas sem exportar todo o chat por conveniência. Reconcilie responsáveis para não haver duas pessoas respondendo contraditoriamente. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “CRM e histórico comercial” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Transfira contexto necessário e preferências ao CRM autorizado. Resuma fatos e lacunas sem exportar todo o chat por conveniência. Reconcilie responsáveis para não haver duas pessoas respondendo contraditoriamente.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Métricas de resposta, qualificação e agendamento",
+          "tipo": "texto",
+          "conteudo": "Separe entrega, leitura, resposta, resposta relevante e agendamento. Defina contatos únicos e período. Uma melhora de resposta pode vir de dúvidas causadas por mensagem ruim; leia qualidade além da contagem.",
+          "roteiro_video": "Nesta aula, vamos trabalhar métricas de resposta, qualificação e agendamento. Separe entrega, leitura, resposta, resposta relevante e agendamento. Defina contatos únicos e período. Uma melhora de resposta pode vir de dúvidas causadas por mensagem ruim; leia qualidade além da contagem. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Métricas de resposta, qualificação e agendamento” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Separe entrega, leitura, resposta, resposta relevante e agendamento. Defina contatos únicos e período. Uma melhora de resposta pode vir de dúvidas causadas por mensagem ruim; leia qualidade além da contagem.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Boas práticas de privacidade e segurança",
+          "tipo": "texto",
+          "conteudo": "Proteja contas, acessos e dispositivos conforme a política da empresa. Não pedir código de autenticação do cliente nem compartilhar telas com dados alheios. Encaminhe incidentes sem redistribuir o material exposto.",
+          "roteiro_video": "Nesta aula, vamos trabalhar boas práticas de privacidade e segurança. Proteja contas, acessos e dispositivos conforme a política da empresa. Não pedir código de autenticação do cliente nem compartilhar telas com dados alheios. Encaminhe incidentes sem redistribuir o material exposto. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Boas práticas de privacidade e segurança” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Proteja contas, acessos e dispositivos conforme a política da empresa. Não pedir código de autenticação do cliente nem compartilhar telas com dados alheios. Encaminhe incidentes sem redistribuir o material exposto.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.5",
+          "titulo": "Registro de comprovações na RYCS",
+          "tipo": "texto",
+          "conteudo": "Use somente comprovações pertinentes e autorizadas, preservando contexto necessário. Mensagem enviada não prova reunião realizada. Oculte dados não necessários conforme procedimento, sem alterar o significado do evento.",
+          "roteiro_video": "Nesta aula, vamos trabalhar registro de comprovações na rycs. Use somente comprovações pertinentes e autorizadas, preservando contexto necessário. Mensagem enviada não prova reunião realizada. Oculte dados não necessários conforme procedimento, sem alterar o significado do evento. Pause e aplique esse princípio ao caso do curso. Explique qual informação sustenta sua decisão e o que ainda precisa ser confirmado.",
+          "exercicio": {
+            "instrucoes": [
+              "Aplique “Registro de comprovações na RYCS” ao caso fictício do curso.",
+              "Escreva uma ação adequada, um erro a evitar e uma informação ainda desconhecida.",
+              "Justifique com o princípio desta aula; não invente fatos do cliente."
+            ],
+            "gabarito": "Use somente comprovações pertinentes e autorizadas, preservando contexto necessário. Mensagem enviada não prova reunião realizada. Oculte dados não necessários conforme procedimento, sem alterar o significado do evento.",
+            "justificativa": "A resposta deve seguir o princípio, preservar os fatos do caso e reconhecer lacunas. Outras formulações são válidas quando justificadas; não há obrigação de repetir as palavras do modelo."
+          },
+          "duracaoMin_planejada": 18,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "A Atende Agenda recebeu um formulário pedindo informações sobre marcação de reuniões por WhatsApp. A pessoa pergunta preço e prazo, prefere texto e não forneceu dados para migração. A oferta inclui configuração de duas agendas e não inclui importar histórico. O vendedor preparou seis áudios e prometeu implantação amanhã."
+  },
+  "projeto": {
+    "instrucoes": "Reescreva a conversa em seis turnos, explique escopo e dependências e desenhe um fluxo com saída por dúvida, aceite, silêncio e recusa.",
+    "gabarito": "Comece pelo pedido e responda por texto. Preço e prazo só podem refletir oferta confirmada. Explique exclusão de histórico e necessidade de acesso; não sustente amanhã. Cada ramo tem ação pertinente; recusa encerra o fluxo e silêncio não prova interesse."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "04-M1",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Fundamentos do atendimento”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Mensagem comercial compete com conversas pessoais; relevância e permissão importam. Defina se a conversa esclarece dúvida, qualifica ou combina ação. Não usar confirmação de leitura como prova de interesse.",
+          "No receptivo, responda ao pedido efetivamente feito. No ativo, confira a condição de contato e o contexto permitido. Uma interação de suporte não autoriza automaticamente outra finalidade comercial.",
+          "Perfil e apresentação devem tornar a empresa identificável e consistente. Não usar logo de terceiro ou aparência de suporte oficial sem autorização. Informações de atendimento precisam corresponder à operação real.",
+          "Registre a origem do aceite aplicável ao canal e respeite a interrupção. Preferência por e-mail não é preferência por WhatsApp. Política da plataforma e análise de dados são verificações diferentes."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "04-M2",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Conversas que geram interesse”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Use nome, empresa, origem verdadeira e uma pergunta. Dividir uma mensagem em dez notificações aumenta interrupção. Dê contexto suficiente para a pessoa entender e decidir se quer continuar.",
+          "Cite um fato profissional pertinente e deixe a mensagem legível em poucos blocos. Personalização deve facilitar entendimento, não demonstrar vigilância. Revise nomes e detalhes antes de enviar um modelo.",
+          "Faça uma pergunta por vez e resuma respostas ambíguas. Não enviar formulário extenso no primeiro contato. Marque necessidade, participantes e momento conforme forem confirmados, mantendo lacunas visíveis.",
+          "Pergunte preferência antes de áudio longo ou arquivo pesado. Explique conteúdo e finalidade do anexo; ofereça resumo em texto. Não enviar dados de terceiros nem links encurtados sem contexto.",
+          "Responda à necessidade confirmada com uma função relevante, limite e próximo passo. Catálogo inteiro pode dificultar a decisão. Se preço depende de escopo, explique a dependência sem inventar uma cotação."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "04-M3",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Fluxos comerciais”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Preserve a oferta vista no anúncio e verifique o pedido real. Se o anúncio criou expectativa errada, esclareça e encaminhe correção. Não culpar o interessado por interpretar uma promessa ambígua.",
+          "Diferencie apresentação voluntária de entrega de uma lista de números. Confirme como a pessoa pediu contato. Não afirmar endosso, relação ou permissão que o indicador não forneceu.",
+          "Histórico antigo não é autorização eterna. Verifique finalidade, restrições, atualidade e procedimento aprovado antes da retomada. Um pedido anterior de interrupção deve ser encontrado antes de qualquer envio.",
+          "Cada mensagem precisa de motivo e critério de interrupção. Combine retorno quando possível; silêncio não justifica insistência indefinida. Controle frequência da equipe inteira, não apenas de um vendedor.",
+          "Confirme data, fuso, participantes, finalidade e acesso em uma mensagem clara. Uma resposta positiva ao assunto não confirma automaticamente o horário. Registre aceite específico e atualização de reagendamento.",
+          "Retome pelo último ponto relevante, sem interpretar ausência como descaso. Uma mensagem pode oferecer continuidade ou encerramento. Não criar cobrança emocional nem comunicar urgência inexistente.",
+          "Modelos devem refletir contexto e regras atuais do canal. Automação precisa de condição de entrada, saída por recusa e encaminhamento humano. Não configurar envios que continuem após resposta relevante ou bloqueio."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "04-M4",
+        "pergunta": "No caso do curso, como você aplicaria o módulo “Operação profissional”? Apresente uma decisão, a evidência disponível e uma lacuna.",
+        "criterios_correcao": [
+          "Etiqueta representa estado operacional, não julgamento pessoal. Use poucos estados definidos, como aguardando informação e retorno combinado. Mudar etiqueta não comprova ação; registre a atividade separadamente.",
+          "Transfira contexto necessário e preferências ao CRM autorizado. Resuma fatos e lacunas sem exportar todo o chat por conveniência. Reconcilie responsáveis para não haver duas pessoas respondendo contraditoriamente.",
+          "Separe entrega, leitura, resposta, resposta relevante e agendamento. Defina contatos únicos e período. Uma melhora de resposta pode vir de dúvidas causadas por mensagem ruim; leia qualidade além da contagem.",
+          "Proteja contas, acessos e dispositivos conforme a política da empresa. Não pedir código de autenticação do cliente nem compartilhar telas com dados alheios. Encaminhe incidentes sem redistribuir o material exposto.",
+          "Use somente comprovações pertinentes e autorizadas, preservando contexto necessário. Mensagem enviada não prova reunião realizada. Oculte dados não necessários conforme procedimento, sem alterar o significado do evento."
+        ],
+        "pontos": 20,
+        "justificativa": "Avaliar coerência com o módulo e fidelidade ao caso. Não pontuar certeza inventada ou ação fora da autorização."
+      },
+      {
+        "id": "04-FINAL",
+        "pergunta": "Reescreva a conversa em seis turnos, explique escopo e dependências e desenhe um fluxo com saída por dúvida, aceite, silêncio e recusa.",
+        "resposta_modelo": "Comece pelo pedido e responda por texto. Preço e prazo só podem refletir oferta confirmada. Explique exclusão de histórico e necessidade de acesso; não sustente amanhã. Cada ramo tem ação pertinente; recusa encerra o fluxo e silêncio não prova interesse.",
+        "pontos": 20,
+        "justificativa": "O projeto integra os módulos; avaliar a decisão e seus limites, não apenas a fluência da apresentação."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Interprete o cliente do caso fictício. Revele somente fatos fornecidos quando perguntado; para lacunas, diga que precisa verificar. Não ensine nem atribua nota durante o diálogo. Depois de três turnos, apresente uma dúvida sobre prazo ou escopo; na segunda rodada, peça encerramento do contato.",
+    "instrucao_avaliador": "Use somente a transcrição e a rubrica. Cite evidências, indique lacunas e peça revisão humana quando a nota for incerta. Não emitir certificado ou aprovar contratação.",
+    "rubrica": [
+      {
+        "criterio": "Identificação e clareza",
+        "pontos": 20
+      },
+      {
+        "criterio": "Investigação e escuta",
+        "pontos": 20
+      },
+      {
+        "criterio": "Aplicação do conteúdo e aderência",
+        "pontos": 20
+      },
+      {
+        "criterio": "Próximo passo e registro",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ética e privacidade",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "nao_aplicavel",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-13",
+  "course_number": 13,
+  "locale": "en-US",
+  "titulo": "Challenger 2 — Tailor",
+  "nivel_original": "Avançado",
+  "certificacao_planejada": "Parte da Avançada",
+  "carga_horaria_planejada_h": 6,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Buying participants",
+      "titulo_original_pt": "Compreender os participantes",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Buying participants",
+          "tipo": "texto",
+          "conteudo": "Map users, evaluators, sponsors and approvers by actual responsibility. Sponsorship is not signing authority. People may hold several roles; do not dismiss less senior titles.",
+          "roteiro_video": "In this lesson we explore buying participants. Map users, evaluators, sponsors and approvers by actual responsibility. Sponsorship is not signing authority. People may hold several roles; do not dismiss less senior titles. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Buying participants” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Map users, evaluators, sponsors and approvers by actual responsibility. Sponsorship is not signing authority. People may hold several roles; do not dismiss less senior titles.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Goals without stereotypes",
+          "tipo": "texto",
+          "conteudo": "Ask what decision each participant must make and how success is assessed. Do not infer priorities from title, age or country. Record observable criteria and confirm them.",
+          "roteiro_video": "In this lesson we explore goals without stereotypes. Ask what decision each participant must make and how success is assessed. Do not infer priorities from title, age or country. Record observable criteria and confirm them. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Goals without stereotypes” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask what decision each participant must make and how success is assessed. Do not infer priorities from title, age or country. Record observable criteria and confirm them.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Conflicting priorities",
+          "tipo": "texto",
+          "conteudo": "Surface competing criteria such as speed and technical validation. Do not promise incompatible conditions simultaneously. Facilitate trade-off decisions with accountable participants.",
+          "roteiro_video": "In this lesson we explore conflicting priorities. Surface competing criteria such as speed and technical validation. Do not promise incompatible conditions simultaneously. Facilitate trade-off decisions with accountable participants. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Conflicting priorities” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Surface competing criteria such as speed and technical validation. Do not promise incompatible conditions simultaneously. Facilitate trade-off decisions with accountable participants.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Decision process",
+          "tipo": "texto",
+          "conteudo": "Explore sequence, vetoes, consultation and formal agreement. An organisation chart does not reveal the whole process. Ask what follows the test and who needs information.",
+          "roteiro_video": "In this lesson we explore decision process. Explore sequence, vetoes, consultation and formal agreement. An organisation chart does not reveal the whole process. Ask what follows the test and who needs information. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Decision process” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore sequence, vetoes, consultation and formal agreement. An organisation chart does not reveal the whole process. Ask what follows the test and who needs information.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: One problem, different roles",
+      "titulo_original_pt": "Adaptar a mensagem",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "One problem, different roles",
+          "tipo": "texto",
+          "conteudo": "Preserve facts while adapting relevant consequences: operational rework, effort cost or access control. Do not tell contradictory scope stories to please different functions.",
+          "roteiro_video": "In this lesson we explore one problem, different roles. Preserve facts while adapting relevant consequences: operational rework, effort cost or access control. Do not tell contradictory scope stories to please different functions. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “One problem, different roles” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Preserve facts while adapting relevant consequences: operational rework, effort cost or access control. Do not tell contradictory scope stories to please different functions.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "Technical depth",
+          "tipo": "texto",
+          "conteudo": "Start with the participant's criterion and offer progressive detail. Simplicity does not mean omitting limits. Bring in a technical owner rather than invent a guarantee.",
+          "roteiro_video": "In this lesson we explore technical depth. Start with the participant's criterion and offer progressive detail. Simplicity does not mean omitting limits. Bring in a technical owner rather than invent a guarantee. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Technical depth” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Start with the participant's criterion and offer progressive detail. Simplicity does not mean omitting limits. Bring in a technical owner rather than invent a guarantee.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Matching evidence",
+          "tipo": "texto",
+          "conteudo": "Operations may need a workflow test, security documentation and finance cost assumptions. Confirm actual requirements. Evidence useful to one role may not answer another's concern.",
+          "roteiro_video": "In this lesson we explore matching evidence. Operations may need a workflow test, security documentation and finance cost assumptions. Confirm actual requirements. Evidence useful to one role may not answer another's concern. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Matching evidence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Operations may need a workflow test, security documentation and finance cost assumptions. Confirm actual requirements. Evidence useful to one role may not answer another's concern.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Consistency across conversations",
+          "tipo": "texto",
+          "conteudo": "Maintain a shared summary of scope, limits and open issues. Relevant participants need updates. Do not let outdated commitments circulate after conditions change.",
+          "roteiro_video": "In this lesson we explore consistency across conversations. Maintain a shared summary of scope, limits and open issues. Relevant participants need updates. Do not let outdated commitments circulate after conditions change. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Consistency across conversations” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Maintain a shared summary of scope, limits and open issues. Relevant participants need updates. Do not let outdated commitments circulate after conditions change.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Implementation dependencies",
+      "titulo_original_pt": "Alinhamento entre áreas",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Implementation dependencies",
+          "tipo": "texto",
+          "conteudo": "List access, data, owners and approvals needed for delivery. Buyer dependencies must be explicit. Timing is plausible only when supporting conditions are available.",
+          "roteiro_video": "In this lesson we explore implementation dependencies. List access, data, owners and approvals needed for delivery. Buyer dependencies must be explicit. Timing is plausible only when supporting conditions are available. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Implementation dependencies” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "List access, data, owners and approvals needed for delivery. Buyer dependencies must be explicit. Timing is plausible only when supporting conditions are available.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "A criteria discussion",
+          "tipo": "texto",
+          "conteudo": "Ask each function for requirements and reasons, then compare overlaps and conflicts. Mandatory safety or authority conditions are not resolved by an informal vote. Record decisions and gaps.",
+          "roteiro_video": "In this lesson we explore a criteria discussion. Ask each function for requirements and reasons, then compare overlaps and conflicts. Mandatory safety or authority conditions are not resolved by an informal vote. Record decisions and gaps. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A criteria discussion” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask each function for requirements and reasons, then compare overlaps and conflicts. Mandatory safety or authority conditions are not resolved by an informal vote. Record decisions and gaps.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Recording disagreement",
+          "tipo": "texto",
+          "conteudo": "Record who disagrees, on what condition and what information could resolve it. Avoid labelling disagreement as personal resistance. Sponsor enthusiasm does not remove an unmet requirement.",
+          "roteiro_video": "In this lesson we explore recording disagreement. Record who disagrees, on what condition and what information could resolve it. Avoid labelling disagreement as personal resistance. Sponsor enthusiasm does not remove an unmet requirement. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Recording disagreement” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Record who disagrees, on what condition and what information could resolve it. Avoid labelling disagreement as personal resistance. Sponsor enthusiasm does not remove an unmet requirement.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "A shared summary",
+          "tipo": "texto",
+          "conteudo": "Produce a short record of facts, role-specific criteria, limits, agreements and questions. Invite review. A summary corrects understanding rather than manufacturing consensus from silence.",
+          "roteiro_video": "In this lesson we explore a shared summary. Produce a short record of facts, role-specific criteria, limits, agreements and questions. Invite review. A summary corrects understanding rather than manufacturing consensus from silence. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “A shared summary” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Produce a short record of facts, role-specific criteria, limits, agreements and questions. Invite review. A summary corrects understanding rather than manufacturing consensus from silence.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Three presentations",
+      "titulo_original_pt": "Laboratório de adaptação",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Three presentations",
+          "tipo": "texto",
+          "conteudo": "Prepare three versions using identical facts at different depths. Compare changing language with unchanged commitments. Adaptation must not create three incompatible offers.",
+          "roteiro_video": "In this lesson we explore three presentations. Prepare three versions using identical facts at different depths. Compare changing language with unchanged commitments. Adaptation must not create three incompatible offers. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Three presentations” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Prepare three versions using identical facts at different depths. Compare changing language with unchanged commitments. Adaptation must not create three incompatible offers.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Conflicting meeting criteria",
+          "tipo": "texto",
+          "conteudo": "Clarify dependencies before seeking agreement. If speed requires dropping a mandatory criterion, record the incompatibility. Move toward a feasible decision or deferral without hiding conflict.",
+          "roteiro_video": "In this lesson we explore conflicting meeting criteria. Clarify dependencies before seeking agreement. If speed requires dropping a mandatory criterion, record the incompatibility. Move toward a feasible decision or deferral without hiding conflict. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Conflicting meeting criteria” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Clarify dependencies before seeking agreement. If speed requires dropping a mandatory criterion, record the incompatibility. Move toward a feasible decision or deferral without hiding conflict.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Participant review",
+          "tipo": "texto",
+          "conteudo": "Ask each role to explain understanding and remaining questions. Assess demonstrated understanding rather than praise. Revise messages when participants infer different scopes.",
+          "roteiro_video": "In this lesson we explore participant review. Ask each role to explain understanding and remaining questions. Assess demonstrated understanding rather than praise. Revise messages when participants infer different scopes. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Participant review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Ask each role to explain understanding and remaining questions. Assess demonstrated understanding rather than praise. Revise messages when participants infer different scopes.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Stakeholder project",
+          "tipo": "texto",
+          "conteudo": "Deliver a role map with evidence, criteria, gaps and conversation plan. Identify an unconfirmed hypothesis. Do not infer influence or support merely from a title.",
+          "roteiro_video": "In this lesson we explore stakeholder project. Deliver a role map with evidence, criteria, gaps and conversation plan. Identify an unconfirmed hypothesis. Do not infer influence or support merely from a title. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Stakeholder project” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Deliver a role map with evidence, criteria, gaps and conversation plan. Identify an unconfirmed hypothesis. Do not infer influence or support merely from a title.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "At Atlas, operations wants less rework, finance predictable cost and IT access control. The rep promised integration to IT but told operations no workflow change was needed. The offer exports files, not automatic integration. Implementation agreement is absent.\n\nA US buyer includes an outside IT managed-service provider and a finance approver who has not attended the demo. The sponsor cannot waive security review or approve an annual commitment alone."
+  },
+  "projeto": {
+    "instrucoes": "Prepare three 90-second presentations with consistent facts, a role map and conflict summary; propose a criteria discussion rather than announce consensus.",
+    "gabarito": "Correct the integration promise and explain export limits. Operations checks added work, IT access and file handling, finance total cost and effort. Record missing agreement and involve owners. Adaptation changes emphasis, not capability."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "13-M1",
+        "pergunta": "How would you apply “Module 1: Buying participants” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Map users, evaluators, sponsors and approvers by actual responsibility. Sponsorship is not signing authority. People may hold several roles; do not dismiss less senior titles.",
+          "Ask what decision each participant must make and how success is assessed. Do not infer priorities from title, age or country. Record observable criteria and confirm them.",
+          "Surface competing criteria such as speed and technical validation. Do not promise incompatible conditions simultaneously. Facilitate trade-off decisions with accountable participants.",
+          "Explore sequence, vetoes, consultation and formal agreement. An organisation chart does not reveal the whole process. Ask what follows the test and who needs information."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "13-M2",
+        "pergunta": "How would you apply “Module 2: One problem, different roles” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Preserve facts while adapting relevant consequences: operational rework, effort cost or access control. Do not tell contradictory scope stories to please different functions.",
+          "Start with the participant's criterion and offer progressive detail. Simplicity does not mean omitting limits. Bring in a technical owner rather than invent a guarantee.",
+          "Operations may need a workflow test, security documentation and finance cost assumptions. Confirm actual requirements. Evidence useful to one role may not answer another's concern.",
+          "Maintain a shared summary of scope, limits and open issues. Relevant participants need updates. Do not let outdated commitments circulate after conditions change."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "13-M3",
+        "pergunta": "How would you apply “Module 3: Implementation dependencies” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "List access, data, owners and approvals needed for delivery. Buyer dependencies must be explicit. Timing is plausible only when supporting conditions are available.",
+          "Ask each function for requirements and reasons, then compare overlaps and conflicts. Mandatory safety or authority conditions are not resolved by an informal vote. Record decisions and gaps.",
+          "Record who disagrees, on what condition and what information could resolve it. Avoid labelling disagreement as personal resistance. Sponsor enthusiasm does not remove an unmet requirement.",
+          "Produce a short record of facts, role-specific criteria, limits, agreements and questions. Invite review. A summary corrects understanding rather than manufacturing consensus from silence."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "13-M4",
+        "pergunta": "How would you apply “Module 4: Three presentations” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Prepare three versions using identical facts at different depths. Compare changing language with unchanged commitments. Adaptation must not create three incompatible offers.",
+          "Clarify dependencies before seeking agreement. If speed requires dropping a mandatory criterion, record the incompatibility. Move toward a feasible decision or deferral without hiding conflict.",
+          "Ask each role to explain understanding and remaining questions. Assess demonstrated understanding rather than praise. Revise messages when participants infer different scopes.",
+          "Deliver a role map with evidence, criteria, gaps and conversation plan. Identify an unconfirmed hypothesis. Do not infer influence or support merely from a title."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "13-FINAL",
+        "pergunta": "Prepare three 90-second presentations with consistent facts, a role map and conflict summary; propose a criteria discussion rather than announce consensus.",
+        "resposta_modelo": "Correct the integration promise and explain export limits. Operations checks added work, IT access and file handling, finance total cost and effort. Record missing agreement and involve owners. Adaptation changes emphasis, not capability.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

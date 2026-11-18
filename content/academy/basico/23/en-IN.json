@@ -1,0 +1,457 @@
+{
+  "schema_version": "2.0-basico",
+  "id": "sales-academy-134h-23",
+  "course_number": 23,
+  "locale": "en-IN",
+  "titulo": "Selling in Healthcare, Education and Digital Products",
+  "nivel_original": "Intermediário",
+  "certificacao_planejada": "Conclusão",
+  "carga_horaria_planejada_h": 5,
+  "edicao": "basica_completa_para_revisao",
+  "nota_carga": "Planned curriculum hours are preserved; this concise edition does not establish actual study time. Validate and expand before certifying hours.",
+  "modulos": [
+    {
+      "id": "1",
+      "titulo": "Module 1: Commercial and clinical boundaries",
+      "titulo_original_pt": "Limites de atuação em setores sensíveis",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "1.1",
+          "titulo": "Commercial and clinical boundaries",
+          "tipo": "texto",
+          "conteudo": "Sales professionals explain offers and processes, not diagnoses, prescriptions or clinical outcomes. Route health questions to qualified professionals. This course does not qualify anyone for clinical care.",
+          "roteiro_video": "In this lesson we explore commercial and clinical boundaries. Sales professionals explain offers and processes, not diagnoses, prescriptions or clinical outcomes. Route health questions to qualified professionals. This course does not qualify anyone for clinical care. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Commercial and clinical boundaries” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Sales professionals explain offers and processes, not diagnoses, prescriptions or clinical outcomes. Route health questions to qualified professionals. This course does not qualify anyone for clinical care.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.2",
+          "titulo": "Qualification without health data",
+          "tipo": "texto",
+          "conteudo": "For administrative solutions, explore tasks and requirements with synthetic data. Do not request patient lists, tests or diagnoses to demonstrate utility. Sensitive data requires separate specific review.",
+          "roteiro_video": "In this lesson we explore qualification without health data. For administrative solutions, explore tasks and requirements with synthetic data. Do not request patient lists, tests or diagnoses to demonstrate utility. Sensitive data requires separate specific review. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Qualification without health data” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "For administrative solutions, explore tasks and requirements with synthetic data. Do not request patient lists, tests or diagnoses to demonstrate utility. Sensitive data requires separate specific review.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.3",
+          "titulo": "Educational offer scope",
+          "tipo": "texto",
+          "conteudo": "Explain audience, prerequisites, content, support and completion criteria. Do not confuse a course certificate with professional licensing or recognised credentials without basis. Learning depends on participation and context.",
+          "roteiro_video": "In this lesson we explore educational offer scope. Explain audience, prerequisites, content, support and completion criteria. Do not confuse a course certificate with professional licensing or recognised credentials without basis. Learning depends on participation and context. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Educational offer scope” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explain audience, prerequisites, content, support and completion criteria. Do not confuse a course certificate with professional licensing or recognised credentials without basis. Learning depends on participation and context.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "1.4",
+          "titulo": "Digital-product promises",
+          "tipo": "texto",
+          "conteudo": "State deliverables, access, support and limits. Do not guarantee income, employment or outcomes from purchasing material. An individual testimonial does not establish typical experience.",
+          "roteiro_video": "In this lesson we explore digital-product promises. State deliverables, access, support and limits. Do not guarantee income, employment or outcomes from purchasing material. An individual testimonial does not establish typical experience. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Digital-product promises” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "State deliverables, access, support and limits. Do not guarantee income, employment or outcomes from purchasing material. An individual testimonial does not establish typical experience.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Module 2: Claim and evidence",
+      "titulo_original_pt": "Comunicação e alegações",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "2.1",
+          "titulo": "Claim and evidence",
+          "tipo": "texto",
+          "conteudo": "Identify explicit claims and implied messages. Evidence must match the offer and asserted effect. Medical imagery does not substitute for appropriate scientific support.",
+          "roteiro_video": "In this lesson we explore claim and evidence. Identify explicit claims and implied messages. Evidence must match the offer and asserted effect. Medical imagery does not substitute for appropriate scientific support. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Claim and evidence” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Identify explicit claims and implied messages. Evidence must match the offer and asserted effect. Medical imagery does not substitute for appropriate scientific support.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.2",
+          "titulo": "No guaranteed outcomes",
+          "tipo": "texto",
+          "conteudo": "Remove guaranteed cures, academic outcomes or income and explain controllable educational or operational deliverables. A small disclaimer does not necessarily fix a misleading headline claim.",
+          "roteiro_video": "In this lesson we explore no guaranteed outcomes. Remove guaranteed cures, academic outcomes or income and explain controllable educational or operational deliverables. A small disclaimer does not necessarily fix a misleading headline claim. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “No guaranteed outcomes” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Remove guaranteed cures, academic outcomes or income and explain controllable educational or operational deliverables. A small disclaimer does not necessarily fix a misleading headline claim.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.3",
+          "titulo": "Testimonials and images",
+          "tipo": "texto",
+          "conteudo": "Verify permission, context and fidelity before using testimonials. Do not edit statements to exaggerate outcomes or expose sensitive information. Sector and local rules may need additional review.",
+          "roteiro_video": "In this lesson we explore testimonials and images. Verify permission, context and fidelity before using testimonials. Do not edit statements to exaggerate outcomes or expose sensitive information. Sector and local rules may need additional review. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Testimonials and images” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Verify permission, context and fidelity before using testimonials. Do not edit statements to exaggerate outcomes or expose sensitive information. Sector and local rules may need additional review.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "2.4",
+          "titulo": "Professional and legal review",
+          "tipo": "texto",
+          "conteudo": "Give qualified reviewers the claim, source, audience, channel and complete material. A single sentence may miss the overall message. Do not publish unsupported or unreviewed claims.",
+          "roteiro_video": "In this lesson we explore professional and legal review. Give qualified reviewers the claim, source, audience, channel and complete material. A single sentence may miss the overall message. Do not publish unsupported or unreviewed claims. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Professional and legal review” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Give qualified reviewers the claim, source, audience, channel and complete material. A single sentence may miss the overall message. Do not publish unsupported or unreviewed claims.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Module 3: Clinic operations discovery",
+      "titulo_original_pt": "Descoberta e proposta por setor",
+      "duracaoMin_planejada": 90,
+      "aulas": [
+        {
+          "id": "3.1",
+          "titulo": "Clinic operations discovery",
+          "tipo": "texto",
+          "conteudo": "Explore scheduling, access and administrative handoffs without patient disclosure. Demonstrate with synthetic records. Operational utility does not establish clinical improvement or guaranteed medical-risk reduction.",
+          "roteiro_video": "In this lesson we explore clinic operations discovery. Explore scheduling, access and administrative handoffs without patient disclosure. Demonstrate with synthetic records. Operational utility does not establish clinical improvement or guaranteed medical-risk reduction. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Clinic operations discovery” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore scheduling, access and administrative handoffs without patient disclosure. Demonstrate with synthetic records. Operational utility does not establish clinical improvement or guaranteed medical-risk reduction.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.2",
+          "titulo": "Educational fit",
+          "tipo": "texto",
+          "conteudo": "Explore learning goals, prior knowledge, time and resources. If prerequisites are missing, suggest preparation or a suitable alternative. Difficulty does not justify a transformation guarantee.",
+          "roteiro_video": "In this lesson we explore educational fit. Explore learning goals, prior knowledge, time and resources. If prerequisites are missing, suggest preparation or a suitable alternative. Difficulty does not justify a transformation guarantee. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Educational fit” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Explore learning goals, prior knowledge, time and resources. If prerequisites are missing, suggest preparation or a suitable alternative. Difficulty does not justify a transformation guarantee.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 23,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.3",
+          "titulo": "Digital product prerequisites",
+          "tipo": "texto",
+          "conteudo": "Distinguish recorded content, coaching and personalised service. Explain required tools, effort and access limits. Do not imply individual consulting where only standard material is supplied.",
+          "roteiro_video": "In this lesson we explore digital product prerequisites. Distinguish recorded content, coaching and personalised service. Explain required tools, effort and access limits. Do not imply individual consulting where only standard material is supplied. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Digital product prerequisites” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Distinguish recorded content, coaching and personalised service. Explain required tools, effort and access limits. Do not imply individual consulting where only standard material is supplied.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "3.4",
+          "titulo": "Price, term and exclusions",
+          "tipo": "texto",
+          "conteudo": "Present price and obligations on a comparable verified basis. Do not invent refund, renewal or access terms. Route contractual uncertainty through the responsible process before commitment.",
+          "roteiro_video": "In this lesson we explore price, term and exclusions. Present price and obligations on a comparable verified basis. Do not invent refund, renewal or access terms. Route contractual uncertainty through the responsible process before commitment. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Price, term and exclusions” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Present price and obligations on a comparable verified basis. Do not invent refund, renewal or access terms. Route contractual uncertainty through the responsible process before commitment.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 22,
+          "status": "basico_para_revisao"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titulo": "Module 4: Clinic administration case",
+      "titulo_original_pt": "Laboratórios e revisão",
+      "duracaoMin_planejada": 60,
+      "aulas": [
+        {
+          "id": "4.1",
+          "titulo": "Clinic administration case",
+          "tipo": "texto",
+          "conteudo": "Review a proposal requesting patient data to test scheduling. Use synthetic records and verify requirements with owners. Privacy is not an obstacle to bypass for a faster demonstration.",
+          "roteiro_video": "In this lesson we explore clinic administration case. Review a proposal requesting patient data to test scheduling. Use synthetic records and verify requirements with owners. Privacy is not an obstacle to bypass for a faster demonstration. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Clinic administration case” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Review a proposal requesting patient data to test scheduling. Use synthetic records and verify requirements with owners. Privacy is not an obstacle to bypass for a faster demonstration.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.2",
+          "titulo": "Education case",
+          "tipo": "texto",
+          "conteudo": "Compare learner goals with prerequisites and documented delivery. Correct unsupported pass guarantees. Record fit gaps and recommend a path without guaranteed outcomes.",
+          "roteiro_video": "In this lesson we explore education case. Compare learner goals with prerequisites and documented delivery. Correct unsupported pass guarantees. Record fit gaps and recommend a path without guaranteed outcomes. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Education case” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Compare learner goals with prerequisites and documented delivery. Correct unsupported pass guarantees. Record fit gaps and recommend a path without guaranteed outcomes.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.3",
+          "titulo": "Misleading digital claim case",
+          "tipo": "texto",
+          "conteudo": "A campaign promises income from a sales script. Rewrite it around taught skills and practice. Do not preserve the same implication through contradictory images or testimonials.",
+          "roteiro_video": "In this lesson we explore misleading digital claim case. A campaign promises income from a sales script. Rewrite it around taught skills and practice. Do not preserve the same implication through contradictory images or testimonials. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Misleading digital claim case” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "A campaign promises income from a sales script. Rewrite it around taught skills and practice. Do not preserve the same implication through contradictory images or testimonials.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        },
+        {
+          "id": "4.4",
+          "titulo": "Risk and review routing",
+          "tipo": "texto",
+          "conteudo": "Classify clinical risk, sensitive data, unsupported claims and uncertain terms. Assign actions and qualified owners. Course completion is not legal advice or sector advertising approval.",
+          "roteiro_video": "In this lesson we explore risk and review routing. Classify clinical risk, sensitive data, unsupported claims and uncertain terms. Assign actions and qualified owners. Course completion is not legal advice or sector advertising approval. Pause and apply this principle to the course case. Explain what supports your decision and what still needs verification.",
+          "exercicio": {
+            "instrucoes": [
+              "Apply “Risk and review routing” to the fictional course case.",
+              "Write one appropriate action, one mistake to avoid and one remaining unknown.",
+              "Justify using this lesson; do not invent buyer facts."
+            ],
+            "gabarito": "Classify clinical risk, sensitive data, unsupported claims and uncertain terms. Assign actions and qualified owners. Course completion is not legal advice or sector advertising approval.",
+            "justificativa": "The response must follow the principle, preserve case facts and recognise gaps. Justified alternatives are acceptable; exact wording is not required."
+          },
+          "duracaoMin_planejada": 15,
+          "status": "basico_para_revisao"
+        }
+      ]
+    }
+  ],
+  "caso": {
+    "natureza": "ficticio / fictional",
+    "texto": "Three fictional ads await review: scheduling software promises to cure anxiety, a course guarantees passing every exam, and a digital product guarantees monthly income. A clinic offers patient records for a demo that can use synthetic data. Testimonials lack permission.\n\nAn Indian training-and-clinic scenario needs separate reviews of administrative scope, personal-data handling, advertised educational credentials and local claims rules. Accounts and professional reviewers participate; no patient data is needed for the exercise."
+  },
+  "projeto": {
+    "instrucoes": "Rewrite all three offers, design a synthetic administrative demo and prepare a claim/evidence/audience/channel/reviewer sheet.",
+    "gabarito": "Scheduling organises appointments, not cures. Education teaches skills with stated criteria, not guaranteed external passes. Digital products describe content/support, not income guarantees. Use synthetic data and retain qualified review before publication."
+  },
+  "avaliacao_basica": {
+    "tipo": "discursiva_com_rubrica",
+    "questoes": [
+      {
+        "id": "23-M1",
+        "pergunta": "How would you apply “Module 1: Commercial and clinical boundaries” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Sales professionals explain offers and processes, not diagnoses, prescriptions or clinical outcomes. Route health questions to qualified professionals. This course does not qualify anyone for clinical care.",
+          "For administrative solutions, explore tasks and requirements with synthetic data. Do not request patient lists, tests or diagnoses to demonstrate utility. Sensitive data requires separate specific review.",
+          "Explain audience, prerequisites, content, support and completion criteria. Do not confuse a course certificate with professional licensing or recognised credentials without basis. Learning depends on participation and context.",
+          "State deliverables, access, support and limits. Do not guarantee income, employment or outcomes from purchasing material. An individual testimonial does not establish typical experience."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "23-M2",
+        "pergunta": "How would you apply “Module 2: Claim and evidence” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Identify explicit claims and implied messages. Evidence must match the offer and asserted effect. Medical imagery does not substitute for appropriate scientific support.",
+          "Remove guaranteed cures, academic outcomes or income and explain controllable educational or operational deliverables. A small disclaimer does not necessarily fix a misleading headline claim.",
+          "Verify permission, context and fidelity before using testimonials. Do not edit statements to exaggerate outcomes or expose sensitive information. Sector and local rules may need additional review.",
+          "Give qualified reviewers the claim, source, audience, channel and complete material. A single sentence may miss the overall message. Do not publish unsupported or unreviewed claims."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "23-M3",
+        "pergunta": "How would you apply “Module 3: Clinic operations discovery” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Explore scheduling, access and administrative handoffs without patient disclosure. Demonstrate with synthetic records. Operational utility does not establish clinical improvement or guaranteed medical-risk reduction.",
+          "Explore learning goals, prior knowledge, time and resources. If prerequisites are missing, suggest preparation or a suitable alternative. Difficulty does not justify a transformation guarantee.",
+          "Distinguish recorded content, coaching and personalised service. Explain required tools, effort and access limits. Do not imply individual consulting where only standard material is supplied.",
+          "Present price and obligations on a comparable verified basis. Do not invent refund, renewal or access terms. Route contractual uncertainty through the responsible process before commitment."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "23-M4",
+        "pergunta": "How would you apply “Module 4: Clinic administration case” to the course case? Give one decision, supporting evidence and an unknown.",
+        "criterios_correcao": [
+          "Review a proposal requesting patient data to test scheduling. Use synthetic records and verify requirements with owners. Privacy is not an obstacle to bypass for a faster demonstration.",
+          "Compare learner goals with prerequisites and documented delivery. Correct unsupported pass guarantees. Record fit gaps and recommend a path without guaranteed outcomes.",
+          "A campaign promises income from a sales script. Rewrite it around taught skills and practice. Do not preserve the same implication through contradictory images or testimonials.",
+          "Classify clinical risk, sensitive data, unsupported claims and uncertain terms. Assign actions and qualified owners. Course completion is not legal advice or sector advertising approval."
+        ],
+        "pontos": 20,
+        "justificativa": "Assess consistency with the module and case. Do not reward invented certainty or unauthorised action."
+      },
+      {
+        "id": "23-FINAL",
+        "pergunta": "Rewrite all three offers, design a synthetic administrative demo and prepare a claim/evidence/audience/channel/reviewer sheet.",
+        "resposta_modelo": "Scheduling organises appointments, not cures. Education teaches skills with stated criteria, not guaranteed external passes. Digital products describe content/support, not income guarantees. Use synthetic data and retain qualified review before publication.",
+        "pontos": 20,
+        "justificativa": "The project integrates the modules; assess the decision and its limits, not merely presentation fluency."
+      }
+    ],
+    "total_pontos": 100,
+    "minimo_sugerido": 80,
+    "observacao": "Não substitui banco profissional de 40 questões / Does not replace a 40-question professional bank"
+  },
+  "simulacao": {
+    "status": "roteiro_para_pratica; integracao_ia_pendente",
+    "instrucao_ator": "Play the fictional buyer. Reveal supplied facts when asked; say you need to verify unknowns. Do not teach or score during dialogue. After three turns raise a timing or scope concern; in a second round request closure.",
+    "instrucao_avaliador": "Use only the transcript and rubric. Cite evidence, identify gaps and request human review for uncertain scores. Do not issue certificates or approve contracts.",
+    "rubrica": [
+      {
+        "criterio": "Identity and clarity",
+        "pontos": 20
+      },
+      {
+        "criterio": "Discovery and listening",
+        "pontos": 20
+      },
+      {
+        "criterio": "Content application and fit",
+        "pontos": 20
+      },
+      {
+        "criterio": "Next step and record",
+        "pontos": 20
+      },
+      {
+        "criterio": "Ethics and privacy",
+        "pontos": 20
+      }
+    ],
+    "ancoras": {
+      "0": "Ausente ou contradiz o caso / Absent or contradicts the case",
+      "10": "Parcial, com lacunas / Partial, with gaps",
+      "20": "Demonstrado com evidência / Demonstrated with evidence"
+    },
+    "falhas_criticas": [
+      "Promessa de resultado garantido / Guaranteed outcomes",
+      "Falsificação / Fabrication",
+      "Insistência após recusa / Evading refusal",
+      "Exposição indevida de dados / Improper data disclosure"
+    ]
+  },
+  "revisoes": {
+    "pedagogica": "pendente",
+    "juridica_privacidade": "pendente",
+    "ingles_local": "pendente",
+    "gravacao": "pendente",
+    "publicacao": "nao_realizada"
+  },
+  "proximas_etapas": [
+    "Aprofundamento / Expansion",
+    "Fontes e estatísticas por curso / Course-specific research",
+    "Banco profissional de 40 questões quando aplicável / Professional question bank where applicable",
+    "Revisão humana / Human review",
+    "Integração e gravação / Integration and recording"
+  ]
+}

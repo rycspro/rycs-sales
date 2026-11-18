@@ -4,6 +4,7 @@
 // partir daí a plataforma edita pelo painel e nada aqui depende de deploy.
 
 import { randomBytes } from "crypto";
+import { importarAcademyBasico } from "./academyBasico.js";
 import { validarEdicaoCurso } from "../../shared/academy/validacao.js";
 import { CATALOGO_PLANEJADO } from "../../shared/academy/planejado.js";
 import db, { uid, agora } from "../db.js";
@@ -35,7 +36,10 @@ export function semearCatalogo() {
   })();
   const existentes = new Set(db.prepare("SELECT slug FROM courses").all().map((c) => c.slug));
   const novos = [...CATALOGO_INICIAL, ...CATALOGO_PLANEJADO].filter((c) => !existentes.has(c.slug));
-  if (!novos.length) return 0;
+  if (!novos.length) {
+    importarAcademyBasico(db, uid, agora);
+    return 0;
+  }
 
   const base = db.prepare("SELECT COALESCE(MAX(ordem), -1) o FROM courses").get().o;
   novos.forEach((curso, i) => {
@@ -43,6 +47,7 @@ export function semearCatalogo() {
   });
 
   console.log(`[academy] ${novos.length} curso(s) incluído(s): ${novos.map((c) => c.slug).join(", ")}`);
+  importarAcademyBasico(db, uid, agora);
   return novos.length;
 }
 
@@ -300,7 +305,7 @@ export function progressoDoCurso({ courseId, sellerId }) {
     percentual: total ? Math.round((feitas.length / total) * 100) : 0,
     aulasConcluidas: feitas,
     proximaAula: proxima,
-    liberouProva: total > 0 && feitas.length >= total,
+    liberouProva: total > 0 && feitas.length >= total && db.prepare("SELECT COUNT(*) n FROM course_questions WHERE courseId = ?").get(courseId).n > 0,
   };
 }
 
