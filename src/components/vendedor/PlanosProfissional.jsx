@@ -239,7 +239,7 @@ export default function PlanosProfissional({ aviso }) {
                 </div>
 
                 <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 9 }}>
-                  {INCLUI[chave].map((i) => (
+                  {(INCLUI[chave] || p.beneficios || []).map((i) => (
                     <li key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: ehAtual ? "#fff" : "var(--text-2, var(--ink))", textAlign: "left" }}>
                       <Check size={15} color={ehAtual ? "#fff" : "var(--brand)"} strokeWidth={2.4} style={{ flexShrink: 0, marginTop: 1 }} /> {i}
                     </li>
