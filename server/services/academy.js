@@ -4,6 +4,7 @@
 // partir daí a plataforma edita pelo painel e nada aqui depende de deploy.
 
 import { randomBytes } from "crypto";
+import { CATALOGO_PLANEJADO } from "../../shared/academy/planejado.js";
 import db, { uid, agora } from "../db.js";
 import { CATALOGO_INICIAL, gerarCapa, NIVEIS_CURSO } from "../../shared/academy/catalogo.js";
 
@@ -19,15 +20,15 @@ const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; 
 // sobrescrever apagaria esse trabalho.
 export function semearCatalogo() {
   const existentes = new Set(db.prepare("SELECT slug FROM courses").all().map((c) => c.slug));
-  const novos = CATALOGO_INICIAL.filter((c) => !existentes.has(c.slug));
+  const novos = [...CATALOGO_INICIAL, ...CATALOGO_PLANEJADO].filter((c) => !existentes.has(c.slug));
   if (!novos.length) return 0;
 
   const base = db.prepare("SELECT COALESCE(MAX(ordem), -1) o FROM courses").get().o;
   novos.forEach((curso, i) => {
-    criarCurso({ ...curso, ordem: base + 1 + i, status: "publicado", criadoPor: "sistema" });
+    criarCurso({ ...curso, ordem: base + 1 + i, status: curso.status || "publicado", criadoPor: "sistema" });
   });
 
-  console.log(`[academy] ${novos.length} curso(s) publicado(s): ${novos.map((c) => c.slug).join(", ")}`);
+  console.log(`[academy] ${novos.length} curso(s) incluído(s): ${novos.map((c) => c.slug).join(", ")}`);
   return novos.length;
 }
 
