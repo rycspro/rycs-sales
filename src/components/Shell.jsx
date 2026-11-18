@@ -23,7 +23,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     return () => { document.body.style.overflow = anterior; document.removeEventListener("keydown", onKey); };
   }, [menuMobile]);
   const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
-  const fimKeys = new Set(["configuracoes", "outros"]);
+  const fimKeys = new Set(["outros"]);
   const fimItems = rawItems.filter((item) => fimKeys.has(item.key));
   const allItems = fimItems.length
     ? [...rawItems.filter((item) => !fimKeys.has(item.key)), ...fimItems]

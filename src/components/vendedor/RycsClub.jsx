@@ -46,7 +46,7 @@ function Banner({ nivel, imagens }) {
     <div className="vx-card" style={{ padding: 0, overflow: "hidden", display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 0, border: "1px solid var(--border)" }}>
       <div style={{ padding: "26px 26px 24px" }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 11px", borderRadius: 999, background: "#EAF4FF", color: AZUL, fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
-          <Trophy size={14} /> RYCS Club
+          <Trophy size={14} /> Jornada
         </div>
         <h1 className="vx-disp" style={{ fontSize: 26, lineHeight: 1.15, margin: "0 0 10px", letterSpacing: -0.5 }}>Sua evolução merece reconhecimento.</h1>
         <p style={{ margin: 0, color: "var(--muted)", fontSize: 14, lineHeight: 1.5, maxWidth: 460 }}>

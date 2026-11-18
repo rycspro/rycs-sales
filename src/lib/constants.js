@@ -43,17 +43,18 @@ export const MOTIVO_COR = {
 export const NAV = {
   vendedor: [
     { key: "painel", label: "Painel", Icon: BarChart3 },
+    { key: "club", label: "Jornada", Icon: Trophy },
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { section: "Desenvolvimento" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
-    { key: "testes", label: "Testes e Avaliações", Icon: ClipboardList },
-    { key: "club", label: "RYCS Club", Icon: Trophy },
+    { key: "testes", label: "Skill Lab", Icon: ClipboardList },
     { section: "Financeiro" },
     { key: "carteira", label: "Carteira", Icon: Wallet },
-    { key: "planos", label: "Planos", Icon: Crown },
+    { key: "indicar", label: "Indicar", Icon: Gift },
     { section: "Minha conta" },
     { key: "perfil", label: "Meu Perfil", Icon: UserIcon },
-    { key: "indicar", label: "Indicar", Icon: Gift },
+    { key: "configuracoes", label: "Configurações", Icon: Settings },
+    { key: "planos", label: "Planos", Icon: Crown },
   ],
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },
