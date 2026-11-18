@@ -275,7 +275,7 @@ export default function Carteira({ eu, db, aviso, recarregar, setAba }) {
               {oculto ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, margin: "8px 0 2px", fontVariantNumeric: "tabular-nums" }}>{fmt(disponivel)}</div>
+          <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, margin: "8px 0 2px", fontVariantNumeric: "tabular-nums", fontFamily: "'Michroma', 'General Sans', sans-serif" }}>{fmt(disponivel)}</div>
           <div style={{ fontSize: 12.5, opacity: 0.85 }}>{moeda} · atualizado em tempo real</div>
         </div>
         <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -300,7 +300,7 @@ export default function Carteira({ eu, db, aviso, recarregar, setAba }) {
               <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>{label}</span>
               <Tooltip texto={dica} />
             </div>
-            <div style={{ fontSize: 21, fontWeight: 800, color: "var(--ink)", letterSpacing: -0.5, fontVariantNumeric: "tabular-nums" }}>{fmt(valor)}</div>
+            <div style={{ fontSize: 21, fontWeight: 800, color: "var(--ink)", letterSpacing: -0.5, fontVariantNumeric: "tabular-nums", fontFamily: "'Michroma', 'General Sans', sans-serif" }}>{fmt(valor)}</div>
           </div>
         ))}
         <div className="vx-card" style={{ padding: 16 }}>
@@ -309,7 +309,7 @@ export default function Carteira({ eu, db, aviso, recarregar, setAba }) {
             <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>Ações aprovadas</span>
             <Tooltip texto="Quantidade de ações suas que já foram aprovadas e geraram ganhos." />
           </div>
-          <div style={{ fontSize: 21, fontWeight: 800, color: "var(--ink)", letterSpacing: -0.5 }}>{aprovadas.length}</div>
+          <div style={{ fontSize: 21, fontWeight: 800, color: "var(--ink)", letterSpacing: -0.5, fontFamily: "'Michroma', 'General Sans', sans-serif" }}>{aprovadas.length}</div>
         </div>
       </div>
 
