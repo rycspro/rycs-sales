@@ -13,6 +13,8 @@ import RiasecInteresses from "./RiasecInteresses.jsx";
 import ComunicacaoProfissional from "./ComunicacaoProfissional.jsx";
 import OrganizacaoProdutividade from "./OrganizacaoProdutividade.jsx";
 import JulgamentoSituacional from "./JulgamentoSituacional.jsx";
+import RaciocinioLogico from "./RaciocinioLogico.jsx";
+import ResolucaoProblemas from "./ResolucaoProblemas.jsx";
 
 // Azul institucional White Editorial (mesmo dos fluxos de cadastro/onboarding).
 const AZUL = "#318CE7";
@@ -87,12 +89,13 @@ const CATALOGO = [
   // ---- Competências profissionais ----
   {
     id: "raciocinio", categoria: "competencias", Icon: Puzzle,
-    nome: "Raciocínio lógico e analítico",
-    descricao: "Exercite a análise de padrões, dados e relações lógicas.",
-    objetivo: "Avaliar sua capacidade de raciocinar sobre informações e padrões.",
-    avalia: "Lógica, análise de dados e resolução estruturada.",
-    instrucoes: "", privacidade: "Indicador de competência, visível para empresas apenas se você autorizar.",
-    perguntas: "", tempo: "", publicado: false,
+    nome: "Raciocínio Lógico e Analítico",
+    descricao: "Resolva desafios de números, padrões, dedução e interpretação de informações.",
+    objetivo: "Avaliar seu desempenho em problemas de lógica, números, dedução e interpretação.",
+    avalia: "Quatro competências: raciocínio numérico, padrões e sequências, dedução lógica e interpretação analítica.",
+    instrucoes: "Leia cada questão e selecione a alternativa correta. Você pode revisar antes de finalizar.",
+    privacidade: "Desempenho nestas questões, privado por padrão. Visível para empresas só com sua autorização; não altera score, ranking ou campanhas.",
+    perguntas: "20 questões", tempo: "15 a 20 min", publicado: true, rl: true,
   },
   {
     id: "comunicacao", categoria: "competencias", Icon: MessageSquare,
@@ -106,12 +109,13 @@ const CATALOGO = [
   },
   {
     id: "resolucao-problemas", categoria: "competencias", Icon: Lightbulb,
-    nome: "Resolução de problemas",
-    descricao: "Mostre como você aborda obstáculos e encontra saídas.",
-    objetivo: "Avaliar sua forma de estruturar e resolver problemas reais.",
-    avalia: "Diagnóstico, geração de alternativas e decisão.",
-    instrucoes: "", privacidade: "Indicador de competência, visível para empresas apenas se você autorizar.",
-    perguntas: "", tempo: "", publicado: false,
+    nome: "Resolução de Problemas",
+    descricao: "Avalie como você identifica problemas, analisa alternativas e toma decisões em situações profissionais.",
+    objetivo: "Avaliar seu desempenho em situações que exigem análise, decisões e identificação de soluções.",
+    avalia: "Cinco competências: identificação de problemas, análise de causas, tomada de decisão, priorização e avaliação de soluções.",
+    instrucoes: "Leia cada situação e escolha a ação mais adequada. O gabarito só aparece ao concluir. Você pode pausar e continuar.",
+    privacidade: "Desempenho nestes cenários, privado por padrão. Visível para empresas só com sua autorização; não é certificação e não altera score, ranking ou campanhas.",
+    perguntas: "20 situações", tempo: "15 a 20 min", publicado: true, rp: true,
   },
   {
     id: "organizacao", categoria: "competencias", Icon: ListChecks,
@@ -140,7 +144,7 @@ const CATALOGO = [
 //   concluido    → já realizada (hoje, só o DISC, via dados existentes)
 //   andamento    → iniciada e não concluída (reservado para o futuro)
 //   disponivel   → publicada e ainda não iniciada
-function estadoDe(item, discV2, big5, auto, ie, ri, cp, op, ju) {
+function estadoDe(item, discV2, big5, auto, ie, ri, cp, op, ju, rl, rp) {
   if (!item.publicado) return "indisponivel";
   if (item.v2) {
     if (discV2 && discV2.disponivel === false) return "indisponivel";
@@ -201,6 +205,20 @@ function estadoDe(item, discV2, big5, auto, ie, ri, cp, op, ju) {
     if (st === "andamento") return "andamento";
     return "disponivel";
   }
+  if (item.rl) {
+    if (!rl || rl.disponivel === false) return "indisponivel";
+    const st = rl?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
+  if (item.rp) {
+    if (!rp || rp.disponivel === false) return "indisponivel";
+    const st = rp?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
   return "disponivel";
 }
 
@@ -221,6 +239,8 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const [cp, setCp] = useState(null);
   const [op, setOp] = useState(null);
   const [ju, setJu] = useState(null);
+  const [rl, setRl] = useState(null);
+  const [rp, setRp] = useState(null);
 
   const carregarDisc = () => api("/disc/avaliacao").then((r) => { if (r && !r.error) setDiscV2(r); });
   const carregarBig5 = () => api("/big-five").then((r) => { if (r && !r.error) setBig5(r); });
@@ -230,11 +250,13 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const carregarCp = () => api("/comunicacao").then((r) => { if (r && !r.error) setCp(r); });
   const carregarOp = () => api("/organizacao").then((r) => { if (r && !r.error) setOp(r); });
   const carregarJu = () => api("/julgamento").then((r) => { if (r && !r.error) setJu(r); });
-  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); carregarCp(); carregarOp(); carregarJu(); }, []);
+  const carregarRl = () => api("/raciocinio").then((r) => { if (r && !r.error) setRl(r); });
+  const carregarRp = () => api("/resolucao").then((r) => { if (r && !r.error) setRp(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); carregarCp(); carregarOp(); carregarJu(); carregarRl(); carregarRp(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri, cp, op, ju) })),
-    [discV2, big5, auto, ie, ri, cp, op, ju]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri, cp, op, ju, rl, rp) })),
+    [discV2, big5, auto, ie, ri, cp, op, ju, rl, rp]
   );
 
   const total = comEstado.length;
@@ -250,6 +272,8 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
     else if (item.cp && item.estado !== "indisponivel") setVista({ tipo: "comunicacao" });
     else if (item.op && item.estado !== "indisponivel") setVista({ tipo: "organizacao" });
     else if (item.ju && item.estado !== "indisponivel") setVista({ tipo: "julgamento" });
+    else if (item.rl && item.estado !== "indisponivel") setVista({ tipo: "raciocinio" });
+    else if (item.rp && item.estado !== "indisponivel") setVista({ tipo: "resolucao" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
@@ -323,6 +347,24 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
         aviso={aviso}
         recarregar={() => { carregarJu(); recarregar?.(); }}
         onVoltar={() => { carregarJu(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "raciocinio") {
+    return (
+      <RaciocinioLogico
+        aviso={aviso}
+        recarregar={() => { carregarRl(); recarregar?.(); }}
+        onVoltar={() => { carregarRl(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "resolucao") {
+    return (
+      <ResolucaoProblemas
+        aviso={aviso}
+        recarregar={() => { carregarRp(); recarregar?.(); }}
+        onVoltar={() => { carregarRp(); setVista({ tipo: "catalogo" }); }}
       />
     );
   }

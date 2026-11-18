@@ -2344,6 +2344,54 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_julgamento_assessments_seller ON julgamento_assessments(sellerId, iniciadoEm DESC);
 `);
 
+// Avaliação Raciocínio Lógico e Analítico (autoral, com gabarito). Gabarito só
+// no servidor (shared/raciocinioLogico.js). Compartilhamento privado por padrão.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS raciocinio_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    idioma TEXT DEFAULT '',
+    chave TEXT DEFAULT '',
+    algoritmo TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_raciocinio_assessments_seller_versao ON raciocinio_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_raciocinio_assessments_seller ON raciocinio_assessments(sellerId, iniciadoEm DESC);
+`);
+
+// Avaliação Resolução de Problemas (situacional autoral, com gabarito). Gabarito
+// só no servidor (shared/resolucaoProblemas.js). Compartilhamento privado por padrão.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS resolucao_assessments (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    idioma TEXT DEFAULT '',
+    chave TEXT DEFAULT '',
+    algoritmo TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'andamento',
+    respostas TEXT DEFAULT '{}',
+    progresso INTEGER DEFAULT 0,
+    resultado TEXT DEFAULT '{}',
+    compartilharEmpresas INTEGER DEFAULT 0,
+    iniciadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    concluidoEm INTEGER,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_resolucao_assessments_seller_versao ON resolucao_assessments(sellerId, versao);
+  CREATE INDEX IF NOT EXISTS idx_resolucao_assessments_seller ON resolucao_assessments(sellerId, iniciadoEm DESC);
+`);
+
 
 export default db;
 export { uid, agora };
