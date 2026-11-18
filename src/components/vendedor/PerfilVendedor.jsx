@@ -5,6 +5,7 @@ import { dataCurta } from "../../lib/utils.js";
 import { Medidor } from "../ui.jsx";
 import OnbPerfil from "./OnbPerfil.jsx";
 import VerificarWhatsapp from "./VerificarWhatsapp.jsx";
+import FichaProfissional from "../empresa/FichaProfissional.jsx";
 import { LIMITES, GUIA_FOTO, exemploEnquadramento } from "../../../shared/fotoPerfil.js";
 import CropperFoto from "./CropperFoto.jsx";
 import MultiSelect from "../ui/MultiSelect.jsx";
@@ -115,9 +116,23 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
   const [fotoAmpliada, setFotoAmpliada] = useState(false); // "Ver foto" em tamanho grande
   const [cropperAberto, setCropperAberto] = useState(false); // "Editar foto" — enquadramento
   const [enviandoCv, setEnviandoCv] = useState(false);     // upload do currículo em arquivo
+  // "Ver Perfil": pré-visualiza o próprio perfil na MESMA ficha que as empresas
+  // veem (modal), buscando o perfil enriquecido em /professionals/me.
+  const [previewPerfil, setPreviewPerfil] = useState(null);
+  const [carregandoPreview, setCarregandoPreview] = useState(false);
   const arquivo = useRef(null);
   const cvInput = useRef(null);
   const [certificados, setCertificados] = useState([]);
+
+  // Abre a ficha como a empresa a vê. Busca o perfil enriquecido do próprio
+  // profissional e o entrega à MESMA FichaProfissional usada no lado da empresa.
+  const verComoEmpresa = async () => {
+    setCarregandoPreview(true);
+    const r = await api("/professionals/me");
+    setCarregandoPreview(false);
+    if (!r || r.error) { aviso?.(r?.error || "Não foi possível carregar a pré-visualização do perfil."); return; }
+    setPreviewPerfil(r);
+  };
 
   // Os certificados que o profissional tirou na Academy fazem parte do
   // currículo comercial dele — é o que a empresa lê antes de convidar.
@@ -351,9 +366,13 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             )}
             {secao === "curriculo" && (
               <button className="vx-btn vx-btn-sm" onClick={() => setEditando(!editando)}>
-                {editando ? <><Eye size={13} /> Ver Perfil</> : <><Pencil size={13} /> Editar perfil</>}
+                {editando ? <><CheckCircle2 size={13} /> Concluir edição</> : <><Pencil size={13} /> Editar perfil</>}
               </button>
             )}
+            {/* Abre a MESMA ficha que as empresas veem do profissional. */}
+            <button className="vx-btn vx-btn-sm" onClick={verComoEmpresa} disabled={carregandoPreview}>
+              <Eye size={13} /> {carregandoPreview ? "Abrindo…" : "Ver Perfil"}
+            </button>
           </div>
         </div>
 
@@ -445,6 +464,11 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
             </div>
           </div>
         </div>
+      )}
+
+      {/* "Ver Perfil": a MESMA ficha que as empresas veem do profissional. */}
+      {previewPerfil && (
+        <FichaProfissional p={previewPerfil} onFechar={() => setPreviewPerfil(null)} />
       )}
 
       {/* Resultado da verificação de foto. Aparece com os critérios, não só

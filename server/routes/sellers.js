@@ -113,6 +113,56 @@ router.get("/professionals/active", (req, res) => {
   }));
 });
 
+// Pré-visualização do próprio perfil como as empresas o veem (a MESMA ficha de
+// /professionals/active, para um único profissional: o dono logado). Reaproveita
+// a mesma montagem/score, sem os campos específicos de uma empresa (métricas de
+// tarefas, parceria, observação interna), que dependem de um companyId e não
+// existem numa prévia neutra. É o perfil "público" que qualquer empresa vê antes
+// de interagir. Não expõe xpRespostas/disc crus (iguais à rota de empresa).
+router.get("/professionals/me", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const sellerId = req.user.entityId;
+  if (!sellerId) return res.status(403).json({ error: "Perfil profissional não encontrado" });
+
+  const s = getProfissionaisBase().find((r) => r.id === sellerId);
+  if (!s) return res.status(404).json({ error: "Profissional não encontrado" });
+
+  const certificacoes = db.prepare("SELECT sellerId, funcao, nivel, percentual FROM certifications WHERE sellerId = ?").all(sellerId);
+  // Canais de contato próprios (não vêm na base compartilhada): é o próprio dono
+  // vendo o perfil, então exibi-los aqui não expõe dado de terceiro.
+  const contato = db.prepare("SELECT whats, email FROM sellers WHERE id = ?").get(sellerId) || {};
+  let perfilComercial = {}; try { perfilComercial = JSON.parse(s.perfilComercial || "{}"); } catch {}
+  const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
+  let xp = {}, disc = {};
+  try { xp = JSON.parse(s.xpRespostas || "{}"); } catch {}
+  try { disc = JSON.parse(s.disc || "{}"); } catch {}
+  const { positivos: pontosPositivos, negativos: pontosNegativos } = pontosVendedor(xp, disc);
+
+  res.json({
+    ...s, perfilComercial,
+    whats: contato.whats || null, email: contato.email || null,
+    xpRespostas: undefined, disc: undefined,
+    scoreDetalhe: detalharScore(xp, disc),
+    scoreExplicacao: explicacaoScore(xp, disc),
+    pontosPositivos, pontosNegativos,
+    foto: s.temFoto ? `/api/sellers/${s.id}/foto` : null,
+    temFoto: undefined,
+    curriculo: s.temCurriculo ? `/api/sellers/${s.id}/curriculo` : null,
+    temCurriculo: undefined,
+    segmentos: lista(s.segmentos), modalidades: lista(s.modalidades), skills: lista(s.skills),
+    certificacoes,
+    // Sem contexto de empresa: campanhas/métricas específicas ficam neutras.
+    campanhas: [],
+    campanhasAtivas: 0,
+    tarefasRealizadas: 0, tarefasAprovadas: 0, tarefasRecusadas: 0, taxaAprovacao: 0,
+    ganhosTotais: 0, reunioesGeradas: 0, visitas: 0, vendas: 0,
+    resultadosGerados: 0, leadsGerados: 0,
+    observacaoInterna: "",
+    parceria: null,
+    ehPreviaPropria: true,
+  });
+});
+
 // Foto do profissional — retorna a data URI como imagem real com cache de 1h
 router.get("/sellers/:id/foto", (req, res) => {
   const row = db.prepare("SELECT foto FROM sellers WHERE id = ?").get(req.params.id);
