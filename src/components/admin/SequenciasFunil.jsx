@@ -314,6 +314,8 @@ export default function SequenciasFunil({ aviso }) {
         </div>
       </div>
 
+      <Destinatarios lista={destinatarios} />
+
       <div className="vx-card" style={{ padding: 18, marginBottom: 14 }}>
         <div className="vx-row" style={{ marginBottom: 10, gap: 10, flexWrap: "wrap" }}>
           <div className="vx-disp" style={{ fontSize: 15 }}>Prévia dos e-mails</div>
@@ -350,8 +352,6 @@ export default function SequenciasFunil({ aviso }) {
           </div>
         )}
       </div>
-
-      <Destinatarios lista={destinatarios} />
 
       {dados.ultimos.length > 0 && (
         <div className="vx-card" style={{ padding: 18 }}>
