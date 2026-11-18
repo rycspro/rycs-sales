@@ -64,6 +64,9 @@ const ORIENTACOES = [
 /* ─── CSS scoped ─── */
 const css = `
 .sa-wrap{max-width:880px;margin:0 auto}
+/* Embutido no "Meu Perfil": o painel já centraliza e dá a largura, então aqui
+   o conteúdo encosta à esquerda (sem a margem/indentação do onboarding). */
+.sa-wrap--perfil{max-width:none;margin:0}
 .sa-hero-card{display:flex;align-items:center;gap:20px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px}
 .sa-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex:none;background:var(--surface-1);display:grid;place-items:center;color:var(--muted);overflow:hidden}
 .sa-avatar img{width:100%;height:100%;object-fit:cover}
@@ -353,7 +356,7 @@ export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false, apenas
   return (
     <>
       <style>{css}</style>
-      <div className="sa-wrap">
+      <div className={"sa-wrap" + (modoPerfil ? " sa-wrap--perfil" : "")}>
         {/* Header */}
         <div className="vx-onb-eyebrow" style={{ marginBottom: 6 }}>
           {apenasPrivacidade ? "Configurações" : modoPerfil ? "Apresentação e personalidade" : "Passo 1 de 3 — Sua Apresentação"}
@@ -657,7 +660,7 @@ export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false, apenas
           </>)}
 
           {apenasPrivacidade && (
-            <div className="sa-section" style={{ maxWidth: 560, margin: "0 auto" }}>
+            <div className="sa-section" style={{ maxWidth: 560, margin: modoPerfil ? "0" : "0 auto" }}>
               <div className="sa-section-head">
                 <Eye size={20} />
                 <h3>Privacidade</h3>
@@ -685,9 +688,9 @@ export default function OnbPerfil({ aviso, aoAvancar, modoPerfil = false, apenas
           )}
 
           {/* Botão principal */}
-          <div style={{ marginTop: 24, textAlign: "center" }}>
+          <div style={{ marginTop: 24, textAlign: modoPerfil ? "left" : "center" }}>
             <button type="submit" className="vx-btn vx-btn-primary vx-btn-block vx-onb-btn" disabled={salvando}
-              style={{ maxWidth: 420, margin: "0 auto" }}>
+              style={{ maxWidth: 420, margin: modoPerfil ? "0" : "0 auto" }}>
               {salvando ? "Salvando..." : apenasPrivacidade ? "Salvar privacidade" : modoPerfil ? "Salvar apresentação" : <>Continuar para os testes <ArrowRight size={16} /></>}
             </button>
             <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
