@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  Building2, Globe2, MapPin, Briefcase, Target, ChevronRight, ArrowLeft,
-  Wallet, CheckCircle2, Clock, Flag, Search, SlidersHorizontal, X,
+  Building2, Globe2, MapPin, Briefcase, Target, ChevronRight, ArrowLeft, ArrowRight,
+  Wallet, CheckCircle2, Clock, Flag, Search, SlidersHorizontal, X, Coins, ChevronDown, Check, ArrowDownUp,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -462,84 +463,238 @@ function DetalheCampanha({ item, candidatar, candidatando, abrirCampanha, onVolt
 // ─────────────────────────────────────────────────────────────────────────
 // Barra de filtros (F4): busca, país, função, ordenação + "mais filtros"
 // (moeda, tipo de pagamento, remuneração mínima). Chips removíveis e "limpar".
-function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMaisFiltros, limpar, total }) {
-  const selStyle = { fontSize: 13, padding: "7px 10px" };
-  const ativos = [];
-  if (filtros.busca) ativos.push(["busca", `"${filtros.busca}"`]);
-  if (filtros.pais) ativos.push(["pais", nomePais(filtros.pais)]);
-  if (filtros.funcao) ativos.push(["funcao", (FUNCOES[filtros.funcao]?.nome || filtros.funcao)]);
-  if (filtros.moeda) ativos.push(["moeda", filtros.moeda]);
-  if (filtros.pagamento) ativos.push(["pagamento", filtros.pagamento === "tarefa" ? "Por tarefa" : "Comissão"]);
-  if (filtros.remMin) ativos.push(["remMin", `≥ ${filtros.remMin}`]);
+const AZUL_FILTRO = "#318CE7";
+
+// Popover compacto ancorado a um botão. Renderiza via portal (não é cortado por
+// overflow do card), fecha ao clicar fora ou com Esc, e é acessível por teclado.
+function PopoverFiltro({ Icon, rotulo, valorLabel, largura = 240, children }) {
+  const [aberto, setAberto] = useState(false);
+  const btnRef = useRef(null), popRef = useRef(null);
+  const [pos, setPos] = useState(null);
+  const ativo = !!valorLabel;
+
+  useEffect(() => {
+    if (!aberto) return;
+    const recalcular = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const w = Math.min(largura, window.innerWidth - 20);
+      let left = r.left;
+      if (left + w > window.innerWidth - 10) left = Math.max(10, window.innerWidth - w - 10);
+      setPos({ left, top: r.bottom + 6, width: w });
+    };
+    recalcular();
+    popRef.current?.querySelector("input,button")?.focus();
+    const fora = (e) => { if (!popRef.current?.contains(e.target) && !btnRef.current?.contains(e.target)) setAberto(false); };
+    const esc = (e) => { if (e.key === "Escape") { setAberto(false); btnRef.current?.focus(); } };
+    document.addEventListener("pointerdown", fora);
+    document.addEventListener("keydown", esc);
+    window.addEventListener("resize", recalcular);
+    window.addEventListener("scroll", recalcular, true);
+    return () => {
+      document.removeEventListener("pointerdown", fora);
+      document.removeEventListener("keydown", esc);
+      window.removeEventListener("resize", recalcular);
+      window.removeEventListener("scroll", recalcular, true);
+    };
+  }, [aberto, largura]);
 
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ position: "relative", flex: "1 1 180px", minWidth: 150 }}>
-          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
-          <input className="vx-input" value={filtros.busca} onChange={(e) => setFiltro("busca", e.target.value)}
-            placeholder="Buscar empresa ou campanha" aria-label="Buscar"
-            style={{ paddingLeft: 30, fontSize: 13 }} />
+    <>
+      <button ref={btnRef} type="button" aria-haspopup="menu" aria-expanded={aberto}
+        onClick={() => setAberto((a) => !a)}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 13px", borderRadius: 8, cursor: "pointer",
+          fontSize: 12.5, fontWeight: ativo ? 600 : 500, fontFamily: "inherit", whiteSpace: "nowrap",
+          border: `1px solid ${ativo ? AZUL_FILTRO : "var(--border)"}`,
+          background: ativo ? "#EAF4FF" : "#fff", color: ativo ? AZUL_FILTRO : "var(--ink)", transition: "border-color .15s, background .15s",
+        }}>
+        <Icon size={15} /> {valorLabel || rotulo}
+        <ChevronDown size={14} style={{ transition: "transform .2s", transform: aberto ? "rotate(180deg)" : "none", opacity: 0.7 }} />
+      </button>
+      {aberto && pos && createPortal(
+        <div ref={popRef} role="menu" style={{
+          position: "fixed", left: pos.left, top: pos.top, width: pos.width, zIndex: 1300,
+          background: "var(--surface-solid, #fff)", border: "1px solid var(--border)", borderRadius: 12,
+          boxShadow: "0 10px 34px rgba(20,30,45,.16)", overflow: "hidden",
+        }}>
+          {children(() => setAberto(false))}
+        </div>, document.body)}
+    </>
+  );
+}
+
+// Lista de opções (seleção única) com busca interna quando a lista é longa.
+function ListaOpcoes({ opcoes, valor, onEscolher, buscavel }) {
+  const [q, setQ] = useState("");
+  const visiveis = buscavel && q ? opcoes.filter((o) => String(o.label).toLowerCase().includes(q.toLowerCase())) : opcoes;
+  const item = (sel, label, flag, onClick, key) => (
+    <button key={key} type="button" role="menuitemradio" aria-checked={sel} onClick={onClick}
+      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: "none", background: sel ? "#EAF4FF" : "transparent",
+        padding: "9px 12px", fontSize: 13, fontFamily: "inherit", cursor: "pointer", color: sel ? AZUL_FILTRO : "var(--ink)", fontWeight: sel ? 600 : 400 }}
+      onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "var(--surface-2)"; }}
+      onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}>
+      {flag && <span aria-hidden="true">{flag}</span>}
+      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+      {sel && <Check size={15} />}
+    </button>
+  );
+  return (
+    <>
+      {buscavel && opcoes.length > 7 && (
+        <div style={{ padding: 8, borderBottom: "1px solid var(--border)" }}>
+          <input className="vx-input" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar…" style={{ height: 34, fontSize: 13 }} />
         </div>
-        {opcoes.paises.length > 1 && (
-          <select className="vx-input" style={selStyle} value={filtros.pais} onChange={(e) => setFiltro("pais", e.target.value)} aria-label="País">
-            <option value="">País</option>
-            {opcoes.paises.map((p) => <option key={p} value={p}>{nomePais(p)}</option>)}
-          </select>
+      )}
+      <div style={{ maxHeight: 260, overflowY: "auto", padding: "4px 0" }}>
+        {item(!valor, "Todas", null, () => onEscolher(""), "__todas")}
+        {visiveis.map((o) => item(valor === o.value, o.label, o.flag, () => onEscolher(o.value), o.value))}
+        {visiveis.length === 0 && <div className="vx-mut" style={{ padding: "10px 12px", fontSize: 12.5 }}>Nada encontrado.</div>}
+      </div>
+    </>
+  );
+}
+
+function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMaisFiltros, limpar, total }) {
+  // Debounce da busca textual: o input é local e só propaga ao filtro após uma
+  // pausa, evitando refiltrar a cada tecla.
+  const [buscaLocal, setBuscaLocal] = useState(filtros.busca);
+  useEffect(() => { setBuscaLocal(filtros.busca); }, [filtros.busca]);
+  useEffect(() => {
+    const t = setTimeout(() => { if (buscaLocal !== filtros.busca) setFiltro("busca", buscaLocal); }, 280);
+    return () => clearTimeout(t);
+  }, [buscaLocal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const opcoesPais = opcoes.paises.map((p) => ({ value: p, label: nomePais(p), flag: bandeiraPais(p) }));
+  const opcoesFuncao = opcoes.funcoes.map((f) => ({ value: f, label: FUNCOES[f]?.nome || f }));
+  const opcoesMoeda = opcoes.moedas.map((m) => ({ value: m, label: m }));
+  const opcoesPagamento = [{ value: "tarefa", label: "Por tarefa" }, { value: "comissao", label: "Comissão" }];
+
+  // Filtros ativos (para contador, chips e "limpar").
+  const ativos = [];
+  if (filtros.pais) ativos.push(["pais", nomePais(filtros.pais)]);
+  if (!empresa && filtros.funcao) ativos.push(["funcao", FUNCOES[filtros.funcao]?.nome || filtros.funcao]);
+  if (!empresa && filtros.pagamento) ativos.push(["pagamento", filtros.pagamento === "tarefa" ? "Por tarefa" : "Comissão"]);
+  if (filtros.moeda) ativos.push(["moeda", filtros.moeda]);
+  if (!empresa && filtros.remMin) ativos.push(["remMin", `≥ ${filtros.remMin}`]);
+
+  const ordenarLabel = { recentes: "Mais recentes", remuneracao: "Maior remuneração" }[filtros.ordenar] || "Mais recentes";
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      {/* Linha 1 — pesquisa */}
+      <div style={{ display: "flex", alignItems: "center", gap: 0, height: 44, border: "1px solid #E2E8F0", borderRadius: 10, background: "#fff", overflow: "hidden", marginBottom: 10 }}>
+        <Search size={16} style={{ margin: "0 8px 0 12px", color: "var(--muted)", flexShrink: 0 }} />
+        <input value={buscaLocal} onChange={(e) => setBuscaLocal(e.target.value)} aria-label="Buscar"
+          placeholder="Cargo, empresa ou campanha"
+          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, height: "100%", padding: 0, fontFamily: "inherit" }} />
+        {buscaLocal && (
+          <button type="button" aria-label="Limpar busca" onClick={() => setBuscaLocal("")}
+            style={{ border: "none", background: "transparent", color: "var(--muted)", cursor: "pointer", padding: "0 6px", display: "grid", placeItems: "center" }}><X size={15} /></button>
         )}
-        {!empresa && opcoes.funcoes.length > 1 && (
-          <select className="vx-input" style={selStyle} value={filtros.funcao} onChange={(e) => setFiltro("funcao", e.target.value)} aria-label="Função">
-            <option value="">Função</option>
-            {opcoes.funcoes.map((f) => <option key={f} value={f}>{FUNCOES[f]?.nome || f}</option>)}
-          </select>
-        )}
-        {!empresa && (
-          <select className="vx-input" style={selStyle} value={filtros.ordenar} onChange={(e) => setFiltro("ordenar", e.target.value)} aria-label="Ordenar">
-            <option value="recentes">Mais recentes</option>
-            <option value="remuneracao">Maior remuneração</option>
-          </select>
-        )}
-        <button type="button" className="vx-btn vx-btn-sm" onClick={() => setMaisFiltros((v) => !v)} aria-expanded={maisFiltros}>
-          <SlidersHorizontal size={13} /> Mais filtros
+        <button type="button" aria-label="Buscar" onClick={() => setFiltro("busca", buscaLocal)}
+          style={{ width: 44, height: 44, border: "none", background: AZUL_FILTRO, color: "#fff", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
+          <ArrowRight size={18} />
         </button>
-        {ativos.length > 0 && (
-          <button type="button" className="vx-btn vx-btn-sm" onClick={limpar}>Limpar</button>
-        )}
-        <span className="vx-mono" style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>{total} resultado{total === 1 ? "" : "s"}</span>
       </div>
 
-      {maisFiltros && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          {opcoes.moedas.length > 1 && (
-            <select className="vx-input" style={selStyle} value={filtros.moeda} onChange={(e) => setFiltro("moeda", e.target.value)} aria-label="Moeda">
-              <option value="">Moeda</option>
-              {opcoes.moedas.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          )}
+      {/* Linha 2 — botões de filtro (largura do conteúdo, não esticam) */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+        {!empresa && opcoesFuncao.length > 0 && (
+          <PopoverFiltro Icon={Briefcase} rotulo="Função" largura={240}
+            valorLabel={filtros.funcao ? (FUNCOES[filtros.funcao]?.nome || filtros.funcao) : null}>
+            {(fechar) => <ListaOpcoes opcoes={opcoesFuncao} valor={filtros.funcao} buscavel onEscolher={(v) => { setFiltro("funcao", v); fechar(); }} />}
+          </PopoverFiltro>
+        )}
+        {opcoesPais.length > 0 && (
+          <PopoverFiltro Icon={MapPin} rotulo="Localização" largura={260}
+            valorLabel={filtros.pais ? nomePais(filtros.pais) : null}>
+            {(fechar) => <ListaOpcoes opcoes={opcoesPais} valor={filtros.pais} buscavel onEscolher={(v) => { setFiltro("pais", v); fechar(); }} />}
+          </PopoverFiltro>
+        )}
+        {!empresa && (
+          <PopoverFiltro Icon={Wallet} rotulo="Pagamento" largura={200}
+            valorLabel={filtros.pagamento ? (filtros.pagamento === "tarefa" ? "Por tarefa" : "Comissão") : null}>
+            {(fechar) => <ListaOpcoes opcoes={opcoesPagamento} valor={filtros.pagamento} onEscolher={(v) => { setFiltro("pagamento", v); fechar(); }} />}
+          </PopoverFiltro>
+        )}
+        {opcoesMoeda.length > 0 && (
+          <PopoverFiltro Icon={Coins} rotulo="Moeda" largura={180}
+            valorLabel={filtros.moeda || null}>
+            {(fechar) => <ListaOpcoes opcoes={opcoesMoeda} valor={filtros.moeda} onEscolher={(v) => { setFiltro("moeda", v); fechar(); }} />}
+          </PopoverFiltro>
+        )}
+      </div>
+
+      {/* Linha 3 — ações secundárias */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        {!empresa && (
+          <button type="button" onClick={() => setMaisFiltros((v) => !v)} aria-expanded={maisFiltros}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 34, padding: "0 11px", borderRadius: 8, cursor: "pointer", fontSize: 12.5, fontFamily: "inherit",
+              border: "1px solid var(--border)", background: maisFiltros ? "var(--surface-2)" : "#fff", color: "var(--ink)" }}>
+            <SlidersHorizontal size={14} /> Filtros avançados
+            {ativos.length > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 999, background: AZUL_FILTRO, color: "#fff", display: "grid", placeItems: "center" }}>{ativos.length}</span>}
+          </button>
+        )}
+        {ativos.length > 0 && (
+          <button type="button" onClick={limpar} className="vx-btn vx-btn-ghost vx-btn-sm" style={{ gap: 5 }}><X size={13} /> Limpar filtros</button>
+        )}
+        <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10 }}>
+          <span className="vx-mono" style={{ fontSize: 12.5, color: "var(--muted)" }}>{total} resultado{total === 1 ? "" : "s"}</span>
           {!empresa && (
-            <select className="vx-input" style={selStyle} value={filtros.pagamento} onChange={(e) => setFiltro("pagamento", e.target.value)} aria-label="Tipo de pagamento">
-              <option value="">Tipo de pagamento</option>
-              <option value="tarefa">Por tarefa</option>
-              <option value="comissao">Comissão</option>
-            </select>
+            <PopoverFiltro Icon={ArrowDownUp} rotulo={ordenarLabel} valorLabel={null} largura={190}>
+              {(fechar) => <ListaOpcoesSimples opcoes={[{ value: "recentes", label: "Mais recentes" }, { value: "remuneracao", label: "Maior remuneração" }]} valor={filtros.ordenar} onEscolher={(v) => { setFiltro("ordenar", v || "recentes"); fechar(); }} />}
+            </PopoverFiltro>
           )}
-          {!empresa && (
-            <input className="vx-input" type="number" min="0" style={{ ...selStyle, width: 150 }} value={filtros.remMin}
-              onChange={(e) => setFiltro("remMin", e.target.value)} placeholder="Remuneração mín." aria-label="Remuneração mínima" />
-          )}
+        </span>
+      </div>
+
+      {/* Filtros avançados */}
+      {maisFiltros && !empresa && (
+        <div style={{ marginTop: 12, padding: 14, border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface-2)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 12 }}>
+            <label>
+              <div className="vx-label">Remuneração mínima por tarefa</div>
+              <input className="vx-input vx-mono" type="number" min="0" value={filtros.remMin}
+                onChange={(e) => setFiltro("remMin", e.target.value)} placeholder="0" aria-label="Remuneração mínima" />
+            </label>
+          </div>
+          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10 }}>
+            Os filtros refletem apenas o que as campanhas publicadas informam. Mais critérios (idioma, experiência, modalidade) entram conforme as campanhas passam a registrá-los.
+          </div>
         </div>
       )}
 
+      {/* Seleções ativas (compacto) */}
       {ativos.length > 0 && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
           {ativos.map(([k, label]) => (
-            <button key={k} type="button" className="vx-chip" onClick={() => setFiltro(k, "")}
-              style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, borderColor: "var(--brand)", color: "var(--brand)" }}>
+            <button key={k} type="button" onClick={() => setFiltro(k, "")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "4px 9px", borderRadius: 999, cursor: "pointer",
+                border: `1px solid ${AZUL_FILTRO}`, background: "#EAF4FF", color: AZUL_FILTRO, fontFamily: "inherit" }}>
               {label} <X size={12} />
             </button>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Lista simples sem busca (ex.: ordenação).
+function ListaOpcoesSimples({ opcoes, valor, onEscolher }) {
+  return (
+    <div style={{ padding: "4px 0" }}>
+      {opcoes.map((o) => {
+        const sel = valor === o.value;
+        return (
+          <button key={o.value} type="button" role="menuitemradio" aria-checked={sel} onClick={() => onEscolher(o.value)}
+            style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: "none", background: sel ? "#EAF4FF" : "transparent",
+              padding: "9px 12px", fontSize: 13, fontFamily: "inherit", cursor: "pointer", color: sel ? AZUL_FILTRO : "var(--ink)", fontWeight: sel ? 600 : 400 }}>
+            <span style={{ flex: 1 }}>{o.label}</span>{sel && <Check size={15} />}
+          </button>
+        );
+      })}
     </div>
   );
 }
