@@ -105,7 +105,7 @@ export default function VerificarWhatsapp({ eu, up, aviso }) {
 
   return (
     <div className="vx-card" style={{ padding: 16, marginTop: 12 }}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: "rgba(37,211,102,.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <IconeWhatsapp size={22} />
         </div>
@@ -119,11 +119,10 @@ export default function VerificarWhatsapp({ eu, up, aviso }) {
 
           {!disponivel && <p className="vx-mut" style={{ fontSize: 12.5, margin: 0 }}>A verificação pelo WhatsApp ainda não está disponível. Tente mais tarde.</p>}
         </div>
-      </div>
 
-      {/* Ações no rodapé do card, alinhadas à esquerda (fora da indentação do ícone) */}
-      {(status.numero || erro) && (
-        <div style={{ marginTop: 14 }}>
+        {/* Ação no canto direito do card */}
+        {(status.numero || erro) && (
+          <div style={{ marginLeft: "auto", flexShrink: 0 }}>
           {status.numero && status.recebimento && !status.recebida && !pendente && (
             <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" style={{ minHeight: 44 }} onClick={iniciarRecebida} disabled={ocupado}>
               {ocupado ? "Preparando…" : "Verificar pelo WhatsApp"}
@@ -171,8 +170,9 @@ export default function VerificarWhatsapp({ eu, up, aviso }) {
           )}
 
           {erro && <p role="alert" style={{ color: "var(--danger)", fontSize: 12.5, margin: "8px 0 0" }}>{erro}</p>}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
