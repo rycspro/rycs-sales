@@ -12,6 +12,7 @@ import InteligenciaEmocional from "./InteligenciaEmocional.jsx";
 import RiasecInteresses from "./RiasecInteresses.jsx";
 import ComunicacaoProfissional from "./ComunicacaoProfissional.jsx";
 import OrganizacaoProdutividade from "./OrganizacaoProdutividade.jsx";
+import JulgamentoSituacional from "./JulgamentoSituacional.jsx";
 
 // Azul institucional White Editorial (mesmo dos fluxos de cadastro/onboarding).
 const AZUL = "#318CE7";
@@ -95,12 +96,13 @@ const CATALOGO = [
   },
   {
     id: "comunicacao", categoria: "competencias", Icon: MessageSquare,
-    nome: "Comunicação profissional",
-    descricao: "Avalie clareza, escuta e condução em contextos comerciais.",
-    objetivo: "Medir a qualidade da sua comunicação em situações de trabalho.",
-    avalia: "Clareza, escuta ativa, adequação de tom e condução de conversas.",
-    instrucoes: "", privacidade: "Indicador de competência, visível para empresas apenas se você autorizar.",
-    perguntas: "", tempo: "", publicado: false,
+    nome: "Comunicação Profissional",
+    descricao: "Avalie como você identifica boas práticas de comunicação em situações reais de trabalho.",
+    objetivo: "Avaliar seu desempenho ao reconhecer estratégias de comunicação claras, respeitosas e eficazes em cenários de trabalho.",
+    avalia: "Cinco competências: clareza e objetividade, escuta ativa, comunicação escrita, feedback e alinhamento, e comunicação em situações difíceis.",
+    instrucoes: "Leia cada situação e escolha a alternativa mais adequada. O gabarito só aparece ao concluir. Você pode pausar e continuar.",
+    privacidade: "Desempenho nestes cenários, privado por padrão. Visível para empresas só com sua autorização; não é certificação e não altera score, ranking ou campanhas.",
+    perguntas: "20 questões", tempo: "12 a 18 min", publicado: true, cp: true,
   },
   {
     id: "resolucao-problemas", categoria: "competencias", Icon: Lightbulb,
@@ -123,12 +125,13 @@ const CATALOGO = [
   },
   {
     id: "julgamento", categoria: "competencias", Icon: Scale,
-    nome: "Julgamento situacional",
-    descricao: "Decida diante de cenários profissionais realistas.",
-    objetivo: "Avaliar como você agiria em situações comerciais concretas.",
-    avalia: "Tomada de decisão aplicada a cenários do dia a dia.",
-    instrucoes: "", privacidade: "Indicador de competência, visível para empresas apenas se você autorizar.",
-    perguntas: "", tempo: "", publicado: false,
+    nome: "Julgamento Situacional Profissional",
+    descricao: "Explore decisões profissionais relacionadas à ética, responsabilidade, colaboração e situações de pressão.",
+    objetivo: "Avaliar seu desempenho ao reconhecer condutas adequadas em situações de ética, responsabilidade, colaboração, autonomia e pressão.",
+    avalia: "Cinco competências: ética e integridade, responsabilidade profissional, colaboração, autonomia e iniciativa, e julgamento sob pressão.",
+    instrucoes: "Leia cada situação e escolha a atitude mais adequada. O gabarito só aparece ao concluir. Você pode pausar e continuar.",
+    privacidade: "Desempenho nestes cenários, privado por padrão. Visível para empresas só com sua autorização; não comprova caráter, não é certificação e não altera score, ranking ou campanhas.",
+    perguntas: "25 situações", tempo: "15 a 20 min", publicado: true, ju: true,
   },
 ];
 
@@ -137,7 +140,7 @@ const CATALOGO = [
 //   concluido    → já realizada (hoje, só o DISC, via dados existentes)
 //   andamento    → iniciada e não concluída (reservado para o futuro)
 //   disponivel   → publicada e ainda não iniciada
-function estadoDe(item, discV2, big5, auto, ie, ri, cp, op) {
+function estadoDe(item, discV2, big5, auto, ie, ri, cp, op, ju) {
   if (!item.publicado) return "indisponivel";
   if (item.v2) {
     if (discV2 && discV2.disponivel === false) return "indisponivel";
@@ -191,6 +194,13 @@ function estadoDe(item, discV2, big5, auto, ie, ri, cp, op) {
     if (st === "andamento") return "andamento";
     return "disponivel";
   }
+  if (item.ju) {
+    if (!ju || ju.disponivel === false) return "indisponivel";
+    const st = ju?.tentativa?.status;
+    if (st === "concluido") return "concluido";
+    if (st === "andamento") return "andamento";
+    return "disponivel";
+  }
   return "disponivel";
 }
 
@@ -210,6 +220,7 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const [ri, setRi] = useState(null);
   const [cp, setCp] = useState(null);
   const [op, setOp] = useState(null);
+  const [ju, setJu] = useState(null);
 
   const carregarDisc = () => api("/disc/avaliacao").then((r) => { if (r && !r.error) setDiscV2(r); });
   const carregarBig5 = () => api("/big-five").then((r) => { if (r && !r.error) setBig5(r); });
@@ -218,11 +229,12 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
   const carregarRi = () => api("/riasec").then((r) => { if (r && !r.error) setRi(r); });
   const carregarCp = () => api("/comunicacao").then((r) => { if (r && !r.error) setCp(r); });
   const carregarOp = () => api("/organizacao").then((r) => { if (r && !r.error) setOp(r); });
-  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); carregarCp(); carregarOp(); }, []);
+  const carregarJu = () => api("/julgamento").then((r) => { if (r && !r.error) setJu(r); });
+  useEffect(() => { carregarDisc(); carregarBig5(); carregarAuto(); carregarIe(); carregarRi(); carregarCp(); carregarOp(); carregarJu(); }, []);
 
   const comEstado = useMemo(
-    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri, cp, op) })),
-    [discV2, big5, auto, ie, ri, cp, op]
+    () => CATALOGO.map((a) => ({ ...a, estado: estadoDe(a, discV2, big5, auto, ie, ri, cp, op, ju) })),
+    [discV2, big5, auto, ie, ri, cp, op, ju]
   );
 
   const total = comEstado.length;
@@ -237,6 +249,7 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
     else if (item.ri && item.estado !== "indisponivel") setVista({ tipo: "riasec" });
     else if (item.cp && item.estado !== "indisponivel") setVista({ tipo: "comunicacao" });
     else if (item.op && item.estado !== "indisponivel") setVista({ tipo: "organizacao" });
+    else if (item.ju && item.estado !== "indisponivel") setVista({ tipo: "julgamento" });
     else setVista({ tipo: "detalhe", id: item.id });
   };
 
@@ -301,6 +314,15 @@ export default function TestesAvaliacoes({ eu, aviso, recarregar }) {
         aviso={aviso}
         recarregar={() => { carregarOp(); recarregar?.(); }}
         onVoltar={() => { carregarOp(); setVista({ tipo: "catalogo" }); }}
+      />
+    );
+  }
+  if (vista.tipo === "julgamento") {
+    return (
+      <JulgamentoSituacional
+        aviso={aviso}
+        recarregar={() => { carregarJu(); recarregar?.(); }}
+        onVoltar={() => { carregarJu(); setVista({ tipo: "catalogo" }); }}
       />
     );
   }
