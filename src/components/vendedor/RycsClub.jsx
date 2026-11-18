@@ -96,27 +96,104 @@ function NivelResumo({ nivel }) {
   );
 }
 
+// Mistura dois hex (t de 0 a 1) — gera realces/sombras metálicas por nível.
+function mixHex(a, b, t) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return "#" + pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, "0")).join("");
+}
+
+// Brasão de patente 3D (escudo vertical, metálico) — distinto das medalhas
+// circulares das conquistas. Ornamentos crescem com o nível. É o fallback
+// enquanto os assets 3D definitivos (WebP/AVIF) não chegam ao slot de imagem.
+const ROMANO = ["I", "II", "III", "IV", "V", "VI"];
+function BrasaoNivel({ faixa, indice, atingido, size = 58 }) {
+  const cor = faixa.cor;
+  const claro = mixHex(cor, "#ffffff", 0.52);
+  const escuro = mixHex(cor, "#0b1020", 0.42);
+  const uid = `br-${faixa.chave}`;
+  const h = Math.round((size * 72) / 60);
+  return (
+    <svg viewBox="0 0 60 72" width={size} height={h} role="img" aria-label={`Brasão ${faixa.nome}`}
+      style={{ display: "block", filter: atingido ? "drop-shadow(0 3px 5px rgba(0,0,0,.18))" : "saturate(.82) brightness(.98)" }}>
+      <defs>
+        <linearGradient id={`${uid}-f`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={claro} /><stop offset=".48" stopColor={cor} /><stop offset="1" stopColor={escuro} />
+        </linearGradient>
+        <linearGradient id={`${uid}-s`} x1="0" y1="0" x2="1" y2=".85">
+          <stop offset="0" stopColor="#fff" stopOpacity=".6" /><stop offset=".45" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* escudo */}
+      <path d="M30 3 L55 11 V33 C55 51 44 62 30 69 C16 62 5 51 5 33 V11 Z" fill={`url(#${uid}-f)`} stroke={escuro} strokeWidth="1.4" />
+      {/* bisel interno */}
+      <path d="M30 10 L48.5 16 V33 C48.5 46 40 54 30 59 C20 54 11.5 46 11.5 33 V16 Z" fill="none" stroke={claro} strokeWidth="1" opacity=".55" />
+      {/* reflexo */}
+      <path d="M30 3 L55 11 V33 C55 51 44 62 30 69 C16 62 5 51 5 33 V11 Z" fill={`url(#${uid}-s)`} />
+      {/* rebites (Bronze+) */}
+      {indice >= 1 && [[14, 20], [46, 20], [14, 40], [46, 40]].map(([x, y], k) => <circle key={k} cx={x} cy={y} r="1.7" fill={claro} opacity=".9" />)}
+      {/* ponta ornamental (Prata+) */}
+      {indice >= 2 && <path d="M30 13 L33 19 L30 25 L27 19 Z" fill={claro} opacity=".75" />}
+      {/* broche central (Ouro+) */}
+      {indice >= 3 && <><circle cx="30" cy="35" r="7.5" fill={mixHex(cor, "#ffffff", 0.22)} stroke={escuro} strokeWidth="1" /><circle cx="27.5" cy="32.5" r="2" fill="#fff" opacity=".85" /></>}
+      {/* cristais azulados (Platina) */}
+      {indice === 4 && <><path d="M30 31 l2.6 4 -2.6 4 -2.6 -4 Z" fill="#DCEBFF" /><path d="M21 35 l1.8 2.6 -1.8 2.6 -1.8 -2.6 Z M39 35 l1.8 2.6 -1.8 2.6 -1.8 -2.6 Z" fill="#BFE0FF" opacity=".95" /></>}
+      {/* coroa + cristais roxos (Elite) */}
+      {indice >= 5 && <>
+        <path d="M17 10 L21 3 L30 7 L39 3 L43 10 Z" fill={mixHex("#C79A2B", "#ffffff", 0.22)} stroke="#8a6a18" strokeWidth=".8" />
+        <circle cx="21" cy="4" r="1.3" fill="#fff" /><circle cx="30" cy="6.5" r="1.3" fill="#fff" /><circle cx="39" cy="4" r="1.3" fill="#fff" />
+        <path d="M30 31 l3 4 -3 5 -3 -5 Z" fill="#B794F6" /><path d="M30 32.5 l1.5 2.6 -1.5 2.8 -1.5 -2.8 Z" fill="#E9D8FD" />
+      </>}
+      {/* número da patente (faixa inferior) */}
+      <text x="30" y="52" textAnchor="middle" fontSize="10.5" fontWeight="800" fill="#fff" opacity=".92">{ROMANO[indice]}</text>
+    </svg>
+  );
+}
+
 function Jornada({ nivel, imagens }) {
+  const refAtual = useRef(null);
+  useEffect(() => { refAtual.current?.scrollIntoView?.({ inline: "center", block: "nearest", behavior: "smooth" }); }, [nivel.numero]);
   return (
     <div className="vx-card" style={{ padding: 22 }}>
+      <style>{`
+        .rk-journey{display:flex;gap:12px;overflow-x:auto;padding:6px 2px 12px;scrollbar-width:thin}
+        .rk-node{flex:0 0 120px;position:relative;text-align:center;padding:16px 10px;border-radius:16px;border:1.5px solid var(--border);background:var(--surface);transition:transform .2s ease-out,box-shadow .2s ease-out}
+        .rk-node .rk-emblema{transition:transform .25s ease-out,filter .25s ease-out;transform-style:preserve-3d}
+        .rk-node[data-atual="1"]{border-color:#318CE7;box-shadow:0 0 0 3px rgba(49,140,231,.15)}
+        .rk-conn{position:absolute;top:36px;left:-7px;width:7px;height:2px;border-radius:2px}
+        @media (hover:hover){
+          .rk-node:hover{transform:translateY(-4px);box-shadow:0 12px 24px rgba(15,23,42,.13)}
+          .rk-node:hover .rk-emblema{transform:perspective(520px) rotateX(9deg) rotateY(-7deg) scale(1.07)}
+        }
+        @media (prefers-reduced-motion:reduce){.rk-node,.rk-node .rk-emblema{transition:none}.rk-node:hover{transform:none}.rk-node:hover .rk-emblema{transform:none}}
+      `}</style>
       <Eyebrow>Jornada de níveis</Eyebrow>
-      <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, scrollbarWidth: "thin" }}>
+      <div style={{ fontSize: 12.5, color: "var(--muted)", margin: "-4px 0 14px" }}>Suas patentes na RYCS — cada nível é um brasão conquistado.</div>
+      <div className="rk-journey">
         {FAIXAS.map((f, i) => {
           const atingido = nivel.numero >= i + 1;
           const atual = nivel.numero === i + 1;
           const img = imagens?.[`nivel:${f.chave}`];
           return (
-            <div key={f.chave} style={{
-              flex: "0 0 112px", textAlign: "center", padding: "14px 10px", borderRadius: 14,
-              border: `1.5px solid ${atual ? f.cor : "var(--border)"}`, background: atual ? f.cor + "0F" : "var(--surface)",
-              opacity: atingido ? 1 : 0.65,
-            }}>
-              <div style={{ width: 56, height: 56, margin: "0 auto 8px", borderRadius: 12, display: "grid", placeItems: "center", background: f.cor + "1A", color: f.cor, position: "relative", overflow: "hidden" }}>
-                {img ? <img src={img} alt={f.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : atingido ? <Medal size={28} /> : <Lock size={22} />}
+            <div key={f.chave} ref={atual ? refAtual : null} className="rk-node" data-atual={atual ? "1" : "0"} style={{ opacity: atingido ? 1 : 0.92 }}>
+              {i > 0 && <span className="rk-conn" style={{ background: atingido ? f.cor : "var(--border)" }} />}
+              <div className="rk-emblema" style={{ width: 58, margin: "0 auto 10px" }}>
+                {img
+                  ? <img src={img} alt={f.nome} style={{ width: 58, display: "block", margin: "0 auto", filter: atingido ? undefined : "saturate(.82) brightness(.98)" }} />
+                  : <BrasaoNivel faixa={f} indice={i} atingido={atingido} size={58} />}
               </div>
+              {!atingido && <span style={{ position: "absolute", top: 12, right: 12, color: "var(--muted-2)" }} title="Bloqueado"><Lock size={12} /></span>}
               <div style={{ fontSize: 13, fontWeight: 700, color: atingido ? "var(--ink)" : "var(--muted)" }}>{f.nome}</div>
               <div style={{ fontSize: 11, color: "var(--muted)" }}>{nfmt(f.min)} XP</div>
+              {atual && nivel.proximo && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ height: 5, borderRadius: 999, background: "var(--surface-2)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${nivel.progresso}%`, background: "#318CE7", borderRadius: 999 }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>{nivel.progresso}%</div>
+                </div>
+              )}
+              {atual && !nivel.proximo && <div style={{ fontSize: 10.5, fontWeight: 700, color: f.cor, marginTop: 6 }}>Patente máxima</div>}
             </div>
           );
         })}
