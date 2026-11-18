@@ -198,8 +198,8 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
   const abas = [
     { id: "empresas", label: "Empresas", Icon: Building2, count: empresas.length },
-    { id: "nacionais", label: "Campanhas nacionais", Icon: Flag, count: nacionais.length },
-    { id: "internacionais", label: "Campanhas internacionais", Icon: Globe2, count: internacionais.length },
+    { id: "nacionais", label: "Oportunidades nacionais", Icon: Flag, count: nacionais.length },
+    { id: "internacionais", label: "Oportunidades internacionais", Icon: Globe2, count: internacionais.length },
   ];
 
   return (
