@@ -53,9 +53,7 @@ function Banner({ nivel, imagens }) {
           Complete missões, alcance novos níveis e desbloqueie conquistas e recompensas exclusivas na RYCS.
         </p>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 9, marginTop: 18, padding: "8px 14px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)" }}>
-          <span style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: nivel.cor + "1A", color: nivel.cor }}>
-            <Medal size={17} />
-          </span>
+          <BrasaoNivel faixa={FAIXAS[nivel.numero - 1]} indice={nivel.numero - 1} atingido size={30} />
           <div style={{ lineHeight: 1.1 }}>
             <div style={{ fontSize: 11, color: "var(--muted)" }}>Seu nível</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{nivel.nome} · {nfmt(nivel.xp)} XP</div>
@@ -77,9 +75,7 @@ function NivelResumo({ nivel }) {
     <div className="vx-card" style={{ padding: 22 }}>
       <Eyebrow>Seu nível</Eyebrow>
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-        <span style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: nivel.cor + "1A", color: nivel.cor, flexShrink: 0 }}>
-          <Medal size={28} />
-        </span>
+        <BrasaoNivel faixa={FAIXAS[nivel.numero - 1]} indice={nivel.numero - 1} atingido size={50} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: "var(--ink)", letterSpacing: -0.4 }}>{nivel.nome}</div>
           <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Nível {nivel.numero} de {FAIXAS.length} · {nfmt(nivel.xp)} XP</div>
