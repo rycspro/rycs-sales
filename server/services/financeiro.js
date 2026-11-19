@@ -57,27 +57,13 @@ export function liquidarSubmissao({ companyId, sellerId, submissionId, bruto, ta
   db.prepare("UPDATE companies SET saldo = saldo - ?, saldoReservado = MAX(0, saldoReservado - ?) WHERE id = ?")
     .run(valorDebito, valorDebito, companyId);
 
-  // Empresas com ciclo de pagamento (diaFechamento + diaPagamento): o valor
-  // aprovado fica em `pendente` até o dia de repasse. A `dataLiberacao` marca
-  // quando o admin pode liberar para `disponivel` via /ciclo/liberar.
-  const ciclo = db.prepare("SELECT diaFechamento, diaPagamento FROM companies WHERE id = ?").get(companyId);
-  if (ciclo?.diaFechamento && ciclo?.diaPagamento) {
-    const agora = new Date();
-    const diaAtual = agora.getDate();
-    // Se ainda não passou o fechamento do mês atual, o repasse é dia 15 do próximo mês.
-    // Se já passou, é dia 15 do mês seguinte ao próximo.
-    let anoRepasse = agora.getFullYear();
-    let mesRepasse = agora.getMonth() + 1 + (diaAtual <= ciclo.diaFechamento ? 1 : 2);
-    if (mesRepasse > 12) { mesRepasse -= 12; anoRepasse++; }
-    const dataLiberacao = new Date(anoRepasse, mesRepasse - 1, ciclo.diaPagamento).getTime();
-    db.prepare("UPDATE submissions SET dataLiberacao = ? WHERE id = ?").run(dataLiberacao, submissionId);
-    // Dinheiro permanece em `pendente` — não move para `disponivel` ainda.
-    // (pendente já foi adicionado quando a ação foi submetida; apenas confirma que
-    //  a liquidação da empresa ocorreu e o repasse está agendado.)
-  } else {
-    db.prepare("UPDATE sellers SET disponivel = disponivel + ?, pendente = MAX(0, pendente - ?) WHERE id = ?")
-      .run(dinheiro(liquido), dinheiro(liquido), sellerId);
-  }
+  // Toda empresa é pré-paga (o pós-pago saiu da plataforma): quando a tarefa
+  // é liberada, o dinheiro já saiu do caixa dela e vai direto para o saldo
+  // disponível do profissional. Antes, empresas que tinham ficado com dia de
+  // fechamento/pagamento do pós-pago seguravam esse valor em "em análise" até
+  // o dia do repasse, e o profissional não conseguia sacar.
+  db.prepare("UPDATE sellers SET disponivel = disponivel + ?, pendente = MAX(0, pendente - ?) WHERE id = ?")
+    .run(dinheiro(liquido), dinheiro(liquido), sellerId);
 
   registrar({ companyId, sellerId, submissionId, tipo: "liquidacao", valor: -valorDebito, idempotencyKey: submissionId, dados: { bruto: valorBruto, taxa: dinheiro(taxa), liquido: dinheiro(liquido) } });
 }
@@ -105,6 +91,30 @@ export function liberarCicloEmpresa(companyId) {
   });
   tx();
   return { liberadas: pendentes.length, valorTotal: dinheiro(total) };
+}
+
+// Solta, uma vez, o que ficou retido pelo ciclo do antigo pós-pago: tarefas
+// liberadas cujo valor ainda espera o dia do repasse. Idempotente — a mesma
+// transação que credita limpa a data, então rodar de novo não credita nada.
+export function liberarRetidosPorCiclo() {
+  const pendentes = db.prepare(`
+    SELECT id, sellerId, liquido FROM submissions
+    WHERE status = 'liberado' AND dataLiberacao IS NOT NULL
+  `).all();
+  let total = 0, liberadas = 0;
+  db.transaction(() => {
+    for (const s of pendentes) {
+      const limpou = db.prepare("UPDATE submissions SET dataLiberacao = NULL WHERE id = ? AND dataLiberacao IS NOT NULL").run(s.id).changes;
+      if (!limpou) continue;
+      const liq = dinheiro(s.liquido || 0);
+      if (liq > 0) {
+        db.prepare("UPDATE sellers SET disponivel = disponivel + ?, pendente = MAX(0, pendente - ?) WHERE id = ?").run(liq, liq, s.sellerId);
+        registrar({ sellerId: s.sellerId, submissionId: s.id, tipo: "liberacao_ciclo", valor: liq, idempotencyKey: `ciclo:${s.id}`, dados: { motivo: "fim do ciclo do pós-pago" } });
+      }
+      total += liq; liberadas++;
+    }
+  })();
+  return { liberadas, valorTotal: dinheiro(total) };
 }
 
 export function registrarMovimento({ companyId = null, sellerId = null, submissionId = null, tipo, valor, idempotencyKey, dados }) {

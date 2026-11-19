@@ -75,6 +75,7 @@ import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvi
 // camada de providers. Trocar de fornecedor é trocar esta linha.
 import "./services/audit/providers/anthropic.js";
 import { semearPoliticasPadrao, iniciarWorker, capacidadesDisponiveis } from "./services/audit/index.js";
+import { liberarRetidosPorCiclo } from "./services/financeiro.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -373,6 +374,13 @@ if (isProd) {
     if (!process.env[v]) console.warn(`[env] ${v} não configurada — recursos que dependem dela vão falhar.`);
   }
 }
+
+// Uma vez por subida, idempotente: solta para o saldo disponível o que o ciclo
+// do antigo pós-pago deixou retido em "em análise".
+try {
+  const ciclo = liberarRetidosPorCiclo();
+  if (ciclo.liberadas) console.log(`[ciclo] ${ciclo.liberadas} tarefa(s) retidas liberadas para saque: R$ ${ciclo.valorTotal.toFixed(2)}`);
+} catch (e) { console.error("[ciclo] falha ao liberar valores retidos:", e.message); }
 
 app.listen(PORT, () => {
   console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);

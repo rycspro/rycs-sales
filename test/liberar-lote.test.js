@@ -4,6 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import Database from "better-sqlite3";
+import { spawn } from "node:child_process";
 import { subirServidor, cliente, assinar } from "./apoio/servidor.js";
 
 const admin = assinar({ id: "u-admin", role: "admin", entityId: "admin" });
@@ -134,4 +135,44 @@ test("histórico: cada lote vira uma linha, com quem liberou; antigos sem lote s
   assert.equal(antigo.profissional, "Bruno");
   assert.equal(antigo.quantidade, 3);
   assert.equal(antigo.liquido, 12);
+});
+
+test("empresa com ciclo do antigo pós-pago: liberação cai no disponível e retidos saem uma vez", async (t) => {
+  const { base, dbPath } = await subirServidor(t);
+  const { db, criar } = preparar(dbPath);
+  t.after(() => db.close());
+  db.prepare("UPDATE companies SET diaFechamento = 30, diaPagamento = 15 WHERE id = 'e1'").run();
+  db.prepare("UPDATE sellers SET pendente = 12 WHERE id = 's1'").run();
+  criar("c1", "s1");
+
+  const r = await cliente(base)("/submissions/liberar-lote", { cookie: admin, body: { sellerId: "s1", ids: ["c1"] } });
+  assert.equal(r.status, 200);
+  assert.equal(disponivel(db, "s1"), 4, "vai direto para o disponível, sem esperar o dia do repasse");
+  assert.equal(db.prepare("SELECT dataLiberacao FROM submissions WHERE id = 'c1'").get().dataLiberacao, null);
+
+  // Valores que ficaram retidos antes da correção (dataLiberacao no futuro).
+  const futuro = Date.now() + 30 * 86_400_000;
+  for (const id of ["r1", "r2"]) {
+    db.prepare("INSERT INTO submissions (id, sellerId, companyId, tipo, valor, liquido, status, dataLiberacao, criadoEm) VALUES (?, 's2', 'e1', 'visita', 5, 4, 'liberado', ?, ?)").run(id, futuro, Date.now());
+  }
+  db.prepare("UPDATE sellers SET pendente = 8 WHERE id = 's2'").run();
+
+  const rodar = () => new Promise((ok, falha) => {
+    const filho = spawn(process.execPath, ["--input-type=module", "-e",
+      "const f = await import(process.cwd() + '/server/services/financeiro.js'); console.log(JSON.stringify(f.liberarRetidosPorCiclo()));"],
+      { env: { ...process.env, DB_PATH: dbPath, NODE_ENV: "test" }, stdio: ["ignore", "pipe", "pipe"] });
+    let out = "";
+    filho.stdout.on("data", (d) => { out += d; });
+    filho.on("exit", (code) => code === 0 ? ok(JSON.parse(out.trim().split("\n").pop())) : falha(new Error(`saiu com ${code}`)));
+  });
+  let primeira;
+  for (let i = 0; i < 5 && !primeira; i++) primeira = await rodar().catch(() => null); // Node 24 local aborta às vezes
+  assert.deepEqual(primeira, { liberadas: 2, valorTotal: 8 });
+  const s2 = db.prepare("SELECT disponivel, pendente FROM sellers WHERE id = 's2'").get();
+  assert.deepEqual(s2, { disponivel: 8, pendente: 0 });
+
+  let segunda;
+  for (let i = 0; i < 5 && !segunda; i++) segunda = await rodar().catch(() => null);
+  assert.deepEqual(segunda, { liberadas: 0, valorTotal: 0 }, "rodar de novo não credita");
+  assert.equal(db.prepare("SELECT disponivel FROM sellers WHERE id = 's2'").get().disponivel, 8);
 });
