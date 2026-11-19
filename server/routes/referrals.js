@@ -4,10 +4,35 @@ import { resumoAfiliado, listarAfiliadosAdmin } from "../services/afiliados.js";
 import { RECOMPENSAS, GATILHOS } from "../../shared/indicacoes.js";
 import {
   resumoParceiro, listarParceiros, ativarParceiro, atualizarParceiro, liberarERepassar, ErroParceria,
+  registrarPedidoParceria, listarPedidosParceria, atualizarPedidoParceria,
 } from "../services/parceriaCanal.js";
 import { PCT_FECHAMENTO, PCT_USO, NIVEIS_CANAL } from "../../shared/parceriaCanal.js";
+import { PLANOS, ORDEM_PLANOS } from "../../shared/planos.js";
 
 const router = Router();
+
+// Formulário de rycs.pro/parceiros: visitante sem conta. Montado antes do
+// authMiddleware (server/index.js), com limite de tentativas.
+export const parceriaPublico = Router();
+// Regras do programa para a página pública: planos pagos, níveis e
+// percentuais vêm de shared/, nunca fixados na página.
+parceriaPublico.get("/parceiros/programa", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=300");
+  res.json({
+    planos: ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({ chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate })),
+    niveis: NIVEIS_CANAL.map(({ nome, min, pct }) => ({ nome, min, pct })),
+    fechamento: PCT_FECHAMENTO,
+    uso: PCT_USO,
+  });
+});
+parceriaPublico.post("/parceiros/inscricao", (req, res) => {
+  try { res.json(registrarPedidoParceria(req.body || {})); }
+  catch (e) {
+    if (e instanceof ErroParceria) return res.status(e.status).json({ error: e.message });
+    console.error("[canal] inscrição:", e.message);
+    res.status(500).json({ error: "Não foi possível enviar agora. Tente de novo em alguns minutos." });
+  }
+});
 
 router.get("/referrals", (req, res) => {
   const resumo = resumoDoUsuario(req.user.id);
@@ -52,12 +77,18 @@ const responderErro = (res, e) => {
 
 router.get("/admin/parceiros-canal", (req, res) => {
   if (!soAdmin(req, res)) return;
-  res.json({ parceiros: listarParceiros(), padrao: { fechamento: PCT_FECHAMENTO, uso: PCT_USO, niveis: NIVEIS_CANAL } });
+  res.json({ parceiros: listarParceiros(), pedidos: listarPedidosParceria(), padrao: { fechamento: PCT_FECHAMENTO, uso: PCT_USO, niveis: NIVEIS_CANAL } });
 });
 
 router.post("/admin/parceiros-canal", (req, res) => {
   if (!soAdmin(req, res)) return;
   try { res.json(ativarParceiro({ ...(req.body || {}), adminId: req.user.id })); }
+  catch (e) { responderErro(res, e); }
+});
+
+router.patch("/admin/parceiros-canal/pedidos/:id", (req, res) => {
+  if (!soAdmin(req, res)) return;
+  try { res.json(atualizarPedidoParceria(req.params.id, req.body?.status)); }
   catch (e) { responderErro(res, e); }
 });
 

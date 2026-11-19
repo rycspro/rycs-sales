@@ -25,7 +25,7 @@ import uploadsRoutes from "./routes/uploads.js";
 import paymentRoutes from "./routes/payments.js";
 import academyRoutes from "./routes/academy.js";
 import subscriptionRoutes from "./routes/subscriptions.js";
-import referralRoutes from "./routes/referrals.js";
+import referralRoutes, { parceriaPublico } from "./routes/referrals.js";
 import depositRoutes from "./routes/deposits.js";
 import leadRoutes from "./routes/leads.js";
 import triagemRoutes from "./routes/triagem.js";
@@ -189,6 +189,7 @@ app.use("/api/auth/forgot-password", authLimiter);
 app.use("/api/auth/reset-password", authLimiter);
 app.use("/api/auth/change-password", authLimiter);
 app.use("/api/onboarding/convites", authLimiter);
+app.use("/api/parceiros/inscricao", authLimiter);
 app.use("/api", apiLimiter);
 
 // --- Routes ---
@@ -208,6 +209,8 @@ app.use("/api", materiaisPublico);
 app.use("/api", webhooksPublico);
 // Passos da jornada antes do cadastro (visita, formulário): visitante sem conta.
 app.use("/api", jornadaPublico);
+// Formulário de rycs.pro/parceiros: visitante sem conta.
+app.use("/api", parceriaPublico);
 // Descadastro dos e-mails de sequência: link do rodapé, sem login.
 app.use("/api", sequenciasPublico);
 

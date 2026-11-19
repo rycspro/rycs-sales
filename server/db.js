@@ -2562,6 +2562,27 @@ db.exec(`
 adicionarColuna("affiliate_commissions", "tipo", "TEXT DEFAULT ''");
 adicionarColuna("affiliate_commissions", "referencia", "TEXT DEFAULT ''");
 db.exec("CREATE INDEX IF NOT EXISTS idx_affiliate_comm_status_lib ON affiliate_commissions(status, disponivelEm)");
+// Pedidos de parceria vindos de rycs.pro/parceiros (visitante sem conta).
+// status: novo | aprovado | arquivado. Aprovar = o admin ativou o parceiro.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS channel_partner_requests (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    email TEXT NOT NULL,
+    whats TEXT DEFAULT '',
+    cidade TEXT DEFAULT '',
+    base INTEGER,
+    segmento TEXT DEFAULT '',
+    mensagem TEXT DEFAULT '',
+    visitanteId TEXT DEFAULT '',
+    origem TEXT DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'novo',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_partner_requests_status ON channel_partner_requests(status, criadoEm DESC);
+  CREATE INDEX IF NOT EXISTS idx_partner_requests_email ON channel_partner_requests(email);
+`);
 
 
 export default db;

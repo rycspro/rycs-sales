@@ -57,6 +57,21 @@ export default function ParceirosCanalAdmin({ aviso }) {
     carregar();
   };
 
+  const arquivarPedido = async (pedido, status) => {
+    const r = await apiPatch(`/admin/parceiros-canal/pedidos/${pedido.id}`, { status });
+    if (!r || r.error) return aviso(r?.error || "Não foi possível atualizar o pedido.");
+    aviso(status === "arquivado" ? "Pedido arquivado." : "Pedido reaberto.");
+    carregar();
+  };
+
+  const usarPedido = (pedido) => {
+    setForm({ ...FORM_INICIAL, email: pedido.email, observacao: pedido.base ? `${pedido.base} contatos na base` : "" });
+    document.getElementById("canal-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const pedidos = dados?.pedidos || [];
+  const novos = pedidos.filter((x) => x.status === "novo").length;
+
   const liberar = async () => {
     setLiberando(true);
     const r = await api("/admin/parceiros-canal/liberar", {});
@@ -111,6 +126,48 @@ export default function ParceirosCanalAdmin({ aviso }) {
           {form.email && <button className="vx-btn" onClick={() => setForm(FORM_INICIAL)}>Limpar</button>}
         </div>
       </div>
+
+      <h3 className="vx-disp" style={{ fontSize: 16, margin: "0 0 4px" }}>
+        Pedidos de parceria {novos > 0 && <span className="vx-chip" style={{ marginLeft: 6, color: "var(--brand)", background: "var(--brand-50)" }}>{novos} novo{novos === 1 ? "" : "s"}</span>}
+      </h3>
+      <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 12px" }}>Cadastros feitos em rycs.pro/parceiros. Para ativar, a pessoa precisa ter conta de profissional com o mesmo e-mail.</p>
+      {dados !== null && !pedidos.length ? (
+        <div className="vx-card" style={{ padding: 20, marginBottom: 24 }}>
+          <div className="vx-mut" style={{ fontSize: 13 }}>Nenhum pedido ainda. Divulgue rycs.pro/parceiros para receber cadastros.</div>
+        </div>
+      ) : pedidos.length > 0 && (
+        <div style={{ display: "grid", gap: 10, marginBottom: 24 }}>
+          {pedidos.map((pd) => (
+            <div key={pd.id} className="vx-card" style={{ padding: 16, opacity: pd.status === "novo" ? 1 : 0.7 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0 }}>
+                  <b>{pd.nome}</b>
+                  <span className="vx-mut" style={{ fontSize: 12 }}> · {dataCurta(pd.criadoEm)}{pd.cidade ? ` · ${pd.cidade}` : ""}</span>
+                  <div style={{ fontSize: 13, marginTop: 2, wordBreak: "break-word" }}>
+                    {pd.email} · <a href={`https://wa.me/${pd.whats.length <= 11 ? "55" : ""}${pd.whats}`} target="_blank" rel="noreferrer">{pd.whats}</a>
+                  </div>
+                  <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>
+                    {pd.base != null ? `${pd.base.toLocaleString("pt-BR")} contatos na base` : "Base não informada"}{pd.segmento ? ` · ${pd.segmento}` : ""}
+                  </div>
+                  {pd.mensagem && <div style={{ fontSize: 13, marginTop: 6, color: "var(--ink-2)" }}>{pd.mensagem}</div>}
+                </div>
+                <div style={{ display: "flex", gap: 6, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 600, borderRadius: 20, padding: "4px 10px", background: "var(--surface-2)", color: pd.conta === "vendedor" ? "var(--green-700)" : "var(--muted)" }}>
+                    {pd.conta === "vendedor" ? "Tem conta de profissional" : pd.conta ? "Conta de outro tipo" : "Ainda sem conta"}
+                  </span>
+                  {pd.status === "novo" && <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => usarPedido(pd)}><Handshake size={13} /> Ativar</button>}
+                  {pd.status === "aprovado" && <span style={{ fontSize: 11.5, fontWeight: 600, borderRadius: 20, padding: "4px 10px", background: "var(--green-100)", color: "var(--green-700)" }}>Ativado</span>}
+                  {pd.status !== "aprovado" && (
+                    <button className="vx-btn vx-btn-sm" onClick={() => arquivarPedido(pd, pd.status === "novo" ? "arquivado" : "novo")}>
+                      {pd.status === "novo" ? "Arquivar" : "Reabrir"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
         <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Parceiros</h3>

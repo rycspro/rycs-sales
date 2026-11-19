@@ -156,3 +156,63 @@ test("Canal: webhook → comissão → estorno → liberação → uso", async (
   r = await req("/parceiro-canal/resumo", { cookie: parceiro });
   assert.equal(r.corpo.ativo, false);
 });
+
+// ─────────────────────────── Página pública ──────────────────────────────
+test("Canal: rycs.pro/parceiros — programa público, cadastro e pedido no admin", async (t) => {
+  const { base, dbPath } = await subirServidor(t);
+  const db = new Database(dbPath);
+  t.after(() => db.close());
+  const agora = Date.now();
+  db.prepare("INSERT INTO users (id, email, senha, role, entityId, criadoEm) VALUES ('u-adm', 'adm@teste.invalid', 'x', 'admin', 'adm', ?)").run(agora);
+  db.prepare("INSERT INTO sellers (id, nome, email, whats, disponivel, criadoEm) VALUES ('s-n', 'Nova Parceira', 'nova@teste.invalid', '11922223333', 0, ?)").run(agora);
+  db.prepare("INSERT INTO users (id, email, senha, role, entityId, criadoEm) VALUES ('u-n', 'nova@teste.invalid', 'x', 'vendedor', 's-n', ?)").run(agora);
+
+  const req = cliente(base);
+  const admin = assinar({ id: "u-adm", role: "admin", entityId: "adm" });
+  const pedidos = () => db.prepare("SELECT * FROM channel_partner_requests ORDER BY criadoEm").all();
+
+  // Regras do programa sem login, vindas de shared/.
+  let r = await req("/parceiros/programa");
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.corpo.planos.map((p) => [p.nome, p.preco]), [["Start", 399], ["Growth", 799], ["Scale", 1499], ["Premium", 3000]]);
+  assert.deepEqual(r.corpo.niveis.map((n) => n.nome), ["Partner", "Partner Pro", "Partner Ultra"]);
+  assert.deepEqual([r.corpo.fechamento, r.corpo.uso], [50, 10]);
+
+  // Validação.
+  r = await req("/parceiros/inscricao", { body: { nome: "Nova", email: "invalido", whats: "11922223333" } });
+  assert.equal(r.status, 400);
+  r = await req("/parceiros/inscricao", { body: { nome: "Nova", email: "nova@teste.invalid", whats: "123" } });
+  assert.equal(r.status, 400);
+  // Robô (campo escondido preenchido): responde ok e não guarda nada.
+  r = await req("/parceiros/inscricao", { body: { nome: "Bot", email: "bot@teste.invalid", whats: "11900000000", site: "http://spam" } });
+  assert.equal(r.status, 200);
+  assert.equal(pedidos().length, 0);
+
+  // Cadastro de verdade, sem login; o mesmo e-mail de novo não duplica.
+  r = await req("/parceiros/inscricao", { body: { nome: "Nova Parceira", email: "Nova@teste.invalid", whats: "(11) 92222-3333", base: "3.000", segmento: "clínicas" } });
+  assert.equal(r.status, 200, JSON.stringify(r.corpo));
+  r = await req("/parceiros/inscricao", { body: { nome: "Nova Parceira", email: "nova@teste.invalid", whats: "11922223333", base: "3500" } });
+  assert.equal(r.status, 200);
+  let ps = pedidos();
+  assert.equal(ps.length, 1, "mesmo e-mail não duplica o pedido");
+  assert.deepEqual([ps[0].email, ps[0].whats, ps[0].base, ps[0].status], ["nova@teste.invalid", "11922223333", 3500, "novo"]);
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM notifications WHERE userId = 'u-adm' AND titulo = 'Novo pedido de parceria'").get().n, 1, "admin avisado uma vez");
+
+  // Admin vê o pedido, sabendo que a pessoa já tem conta de profissional.
+  r = await req("/admin/parceiros-canal", { cookie: admin });
+  assert.equal(r.corpo.pedidos.length, 1);
+  assert.equal(r.corpo.pedidos[0].conta, "vendedor");
+
+  // Ativar o parceiro aprova o pedido.
+  r = await req("/admin/parceiros-canal", { cookie: admin, body: { email: "nova@teste.invalid" } });
+  assert.equal(r.status, 200);
+  assert.equal(pedidos()[0].status, "aprovado");
+
+  // Arquivar/reabrir só aceita os estados permitidos.
+  r = await req(`/admin/parceiros-canal/pedidos/${ps[0].id}`, { cookie: admin, method: "PATCH", body: { status: "apagado" } });
+  assert.equal(r.status, 400);
+  r = await req(`/admin/parceiros-canal/pedidos/${ps[0].id}`, { cookie: admin, method: "PATCH", body: { status: "arquivado" } });
+  assert.equal(r.status, 200);
+  r = await req(`/admin/parceiros-canal/pedidos/${ps[0].id}`, { method: "PATCH", body: { status: "arquivado" } });
+  assert.equal(r.status, 401, "admin exige login");
+});

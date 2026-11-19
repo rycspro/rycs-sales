@@ -350,6 +350,7 @@ export function ativarParceiro({ email, observacao = "", adminId = null, ...rest
       .run(uid(), user.id, pcts.pctFechamento ?? null, pcts.pctRecorrencia ?? null, pcts.pctUso ?? null, String(observacao).slice(0, 500), adminId, agora(), agora());
   }
   codigoDoUsuario(user.id); // garante o código/link de indicação
+  db.prepare("UPDATE channel_partner_requests SET status = 'aprovado', atualizadoEm = ? WHERE lower(email) = ? AND status = 'novo'").run(agora(), e);
   notificar(user.id, "indicacao", "Você agora é Parceiro de Canal da RYCS",
     "As empresas que você trouxer passam a render fechamento, recorrência mensal e uso. Acompanhe em Indicar.");
   return listarParceiros().find((p) => p.userId === user.id);
@@ -369,4 +370,76 @@ export function atualizarParceiro(id, b = {}) {
       b.observacao === undefined ? p.observacao : String(b.observacao).slice(0, 500),
       agora(), id);
   return listarParceiros().find((x) => x.id === id);
+}
+
+// ─────────────────────────── Pedidos de parceria ────────────────────────
+// Formulário público de rycs.pro/parceiros. Guarda o pedido e avisa os
+// admins; quem ativa o parceiro continua sendo o admin (precisa de conta de
+// profissional para receber as comissões).
+
+const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const texto = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+
+export function registrarPedidoParceria(b = {}) {
+  // Campo escondido: gente não preenche, robô preenche. Responde ok e descarta.
+  if (texto(b.site, 200)) return { ok: true };
+
+  const nome = texto(b.nome, 120);
+  const email = texto(b.email, 160).toLowerCase();
+  const whats = String(b.whats ?? "").replace(/\D/g, "").slice(0, 15);
+  const cidade = texto(b.cidade, 120);
+  const segmento = texto(b.segmento, 160);
+  const mensagem = String(b.mensagem ?? "").trim().slice(0, 1000);
+  const baseNum = b.base === "" || b.base === null || b.base === undefined ? null : Math.trunc(Number(String(b.base).replace(/\D/g, "")));
+
+  if (nome.length < 2) throw new ErroParceria(400, "Informe seu nome.");
+  if (!EMAIL_OK.test(email)) throw new ErroParceria(400, "Informe um e-mail válido.");
+  if (whats.length < 10 || whats.length > 13) throw new ErroParceria(400, "Informe o WhatsApp com DDD.");
+  if (baseNum !== null && (!Number.isFinite(baseNum) || baseNum < 0 || baseNum > 10000000))
+    throw new ErroParceria(400, "Informe quantos contatos você tem, só com números.");
+
+  let origem = "{}";
+  try { origem = JSON.stringify(b.origem && typeof b.origem === "object" ? b.origem : {}).slice(0, 2000); } catch { origem = "{}"; }
+  const visitanteId = /^[A-Za-z0-9_-]{8,64}$/.test(String(b.visitanteId || "")) ? String(b.visitanteId) : "";
+
+  // Mesmo e-mail com pedido em aberto: atualiza em vez de duplicar, e só
+  // avisa o admin de novo se o anterior tem mais de um dia.
+  const aberto = db.prepare("SELECT * FROM channel_partner_requests WHERE email = ? AND status = 'novo' ORDER BY criadoEm DESC LIMIT 1").get(email);
+  if (aberto) {
+    db.prepare(`UPDATE channel_partner_requests SET nome = ?, whats = ?, cidade = ?, base = ?, segmento = ?, mensagem = ?, atualizadoEm = ? WHERE id = ?`)
+      .run(nome, whats, cidade, baseNum, segmento, mensagem, agora(), aberto.id);
+    if (agora() - (aberto.atualizadoEm || aberto.criadoEm) < 86400000) return { ok: true };
+  } else {
+    db.prepare(`INSERT INTO channel_partner_requests (id, nome, email, whats, cidade, base, segmento, mensagem, visitanteId, origem, status, criadoEm, atualizadoEm)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'novo', ?, ?)`)
+      .run(uid(), nome, email, whats, cidade, baseNum, segmento, mensagem, visitanteId, origem, agora(), agora());
+  }
+
+  const base = baseNum !== null ? ` · ${baseNum.toLocaleString("pt-BR")} contatos na base` : "";
+  for (const admin of db.prepare("SELECT id FROM users WHERE role = 'admin'").all()) {
+    notificar(admin.id, "indicacao", "Novo pedido de parceria",
+      `${nome} quer ser parceiro de canal${base}. Contato: ${email} · ${whats}. Veja em Parceiros de canal.`);
+  }
+  return { ok: true };
+}
+
+export function listarPedidosParceria() {
+  return db.prepare(`
+    SELECT r.*, (SELECT u.role FROM users u WHERE lower(u.email) = r.email LIMIT 1) AS papelConta
+    FROM channel_partner_requests r
+    ORDER BY CASE r.status WHEN 'novo' THEN 0 ELSE 1 END, r.criadoEm DESC
+    LIMIT 300
+  `).all().map((r) => ({
+    id: r.id, nome: r.nome, email: r.email, whats: r.whats, cidade: r.cidade, base: r.base,
+    segmento: r.segmento, mensagem: r.mensagem, status: r.status, criadoEm: r.criadoEm,
+    // Se já existe conta com o e-mail e de que tipo: é o que decide se dá para ativar.
+    conta: r.papelConta || null,
+  }));
+}
+
+export function atualizarPedidoParceria(id, status) {
+  if (!["novo", "arquivado"].includes(status)) throw new ErroParceria(400, "Status inválido.");
+  const ok = db.prepare("UPDATE channel_partner_requests SET status = ?, atualizadoEm = ? WHERE id = ?").run(status, agora(), id).changes;
+  if (!ok) throw new ErroParceria(404, "Pedido não encontrado.");
+  return { ok: true };
 }

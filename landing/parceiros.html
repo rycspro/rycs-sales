@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seja Parceiro RYCS — Sua carteira de clientes rende todo mês</title>
+  <meta name="description" content="Indique a RYCS para as empresas que você já conhece e ganhe 50% da primeira mensalidade de cada uma, até 30% de todas as mensalidades seguintes e 10% do uso da plataforma.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.rycs.pro/parceiros">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.rycs.pro/parceiros">
+  <meta property="og:title" content="Seja Parceiro RYCS — Sua carteira de clientes rende todo mês">
+  <meta property="og:description" content="50% da primeira mensalidade, até 30% de todas as seguintes e 10% do uso, enquanto a empresa for cliente.">
+  <meta property="og:image" content="https://www.rycs.pro/logo-rycs-sales-machine.png">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="RYCS Sales Machine">
+  <meta name="twitter:card" content="summary">
+
+  <meta name="theme-color" content="#070B14">
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-rycs.png">
+  <link rel="apple-touch-icon" href="/favicon-rycs.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Mesmos tokens da home (index.html): o site é um só. */
+    :root {
+      --bg: #08090c;
+      --bg-soft: #0d1119;
+      --surface: rgba(17, 22, 33, .82);
+      --surface-2: rgba(26, 34, 50, .76);
+      --border: rgba(166, 189, 230, .13);
+      --border-strong: rgba(166, 189, 230, .23);
+      --ink: #f4f7ff;
+      --ink-2: #bdc8dc;
+      --muted: #8592a9;
+      --muted-2: #5f6b80;
+      --brand: #5f8fff;
+      --brand-600: #82a7ff;
+      --brand-50: rgba(95, 143, 255, .11);
+      --brand-100: rgba(95, 143, 255, .25);
+      --cyan: #55d8ff;
+      --gold: #ffc56b;
+      --gold-50: rgba(255, 197, 107, .10);
+      --ok: #5ee3a1;
+      --erro: #ff8a7a;
+      --radius: 22px;
+      color-scheme: dark;
+    }
+
+    html { scroll-behavior: smooth; background: var(--bg); overflow-x: hidden; }
+    body {
+      position: relative; overflow-x: hidden;
+      font-family: 'Inter', system-ui, sans-serif; color: var(--ink); line-height: 1.65;
+      background:
+        radial-gradient(900px 620px at 50% 4%, rgba(72, 120, 255, .18), transparent 68%),
+        radial-gradient(760px 520px at 93% 40%, rgba(58, 107, 235, .09), transparent 70%),
+        var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: -1; opacity: .14; pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: linear-gradient(to bottom, #000, transparent 58%);
+    }
+    [hidden] { display: none !important; }
+    img { max-width: 100%; height: auto; }
+    a { color: var(--brand-600); text-decoration: none; }
+    ::selection { background: var(--brand); color: #07101f; }
+    :focus-visible { outline: 2px solid var(--brand-600); outline-offset: 4px; }
+
+    .container { width: min(100%, 1120px); margin: 0 auto; padding-inline: 30px; }
+    .disp { font-family: 'Space Grotesk', 'Inter', sans-serif; letter-spacing: -.035em; }
+    .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+
+    /* Navegação (igual à home) */
+    nav { position: fixed; inset: 0 0 auto; z-index: 100; padding-top: 16px; pointer-events: none; }
+    nav .inner { height: 64px; padding: 0 12px 0 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      border: 1px solid var(--border); border-radius: 18px; background: rgba(8, 10, 15, .74); box-shadow: 0 16px 50px rgba(0,0,0,.24);
+      backdrop-filter: blur(22px) saturate(1.5); pointer-events: auto; }
+    .logo { display: inline-flex; align-items: center; }
+    .logo img { height: 34px; width: auto; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-links a:not(.btn) { padding: 8px 11px; color: var(--muted); font-size: 13.5px; font-weight: 500; border-radius: 9px; transition: color .2s, background .2s; }
+    .nav-links a:not(.btn):hover { color: var(--ink); background: rgba(255,255,255,.04); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 11px 22px; border-radius: 11px; font: inherit; font-weight: 650; font-size: 14px; border: 1px solid transparent; cursor: pointer; transition: transform .2s, background .2s, box-shadow .2s, border-color .2s; }
+    .btn-primary { background: linear-gradient(135deg, #f8fbff, #cad9ff); color: #0a1426; border-color: rgba(255,255,255,.8); box-shadow: 0 10px 34px -12px rgba(95,143,255,.75); }
+    .btn-primary:hover { transform: translateY(-2px); background: #fff; }
+    .btn-primary[disabled] { opacity: .6; cursor: wait; transform: none; }
+    .btn-outline { background: rgba(255,255,255,.025); color: var(--ink); border-color: var(--border-strong); }
+    .btn-outline:hover { transform: translateY(-2px); background: rgba(255,255,255,.065); }
+    .btn-lg { padding: 15px 30px; font-size: 15px; border-radius: 13px; }
+    .btn-nav { padding: 9px 16px; font-size: 12.5px; }
+
+    /* Abertura */
+    .hero { padding: 168px 0 72px; text-align: center; }
+    .label { display: inline-flex; align-items: center; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--brand-100); background: var(--brand-50);
+      font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #a8c0ff; margin-bottom: 18px; }
+    .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(38px, 6.2vw, 72px); font-weight: 650; line-height: 1.02; letter-spacing: -.045em; max-width: 900px; margin: 0 auto 22px; text-wrap: balance; }
+    .hero h1 span { background: linear-gradient(120deg, #fff 10%, #9db9ff 55%, var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero p { font-size: 17.5px; color: var(--ink-2); max-width: 640px; margin: 0 auto 30px; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .termos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 56px auto 0; max-width: 920px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+    .termos div { padding: 22px 20px; display: grid; gap: 4px; text-align: left; }
+    .termos div + div { border-left: 1px solid var(--border); }
+    .termos b { font-family: 'IBM Plex Mono', monospace; font-size: clamp(28px, 4vw, 40px); font-weight: 600; letter-spacing: -.04em; color: #fff; line-height: 1.1; }
+    .termos span { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+
+    section { padding: 84px 0; }
+    .sec-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(30px, 4.2vw, 46px); font-weight: 650; letter-spacing: -.04em; line-height: 1.08; margin-bottom: 14px; text-wrap: balance; max-width: 760px; }
+    .sec-desc { font-size: 16px; color: var(--ink-2); max-width: 640px; line-height: 1.75; }
+    .sec-head { margin-bottom: 36px; }
+
+    /* Como ganha */
+    .ganhos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .ganho { padding: 26px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 18px; align-items: baseline; }
+    .ganho .fig { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; color: var(--brand-600); letter-spacing: -.03em; }
+    .ganho h3 { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    .ganho p { color: var(--muted); font-size: 14.5px; line-height: 1.65; }
+
+    /* Níveis */
+    .niveis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .nivel { padding: 26px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); display: grid; gap: 6px; }
+    .nivel .nome { font-weight: 650; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+    .nivel .pct { font-family: 'IBM Plex Mono', monospace; font-size: 46px; font-weight: 600; letter-spacing: -.05em; line-height: 1.05; }
+    .nivel .pct small { font-size: 15px; color: var(--muted); letter-spacing: 0; font-weight: 500; margin-left: 4px; }
+    .nivel .faixa { color: var(--muted); font-size: 14px; }
+    .nivel.topo { border-color: rgba(255,197,107,.45); background: linear-gradient(var(--gold-50), var(--gold-50)), var(--surface); }
+    .nivel.topo .pct { color: var(--gold); }
+    .pill { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; background: var(--gold-50); color: var(--gold); }
+    .nota { color: var(--muted); font-size: 14px; margin-top: 16px; max-width: 720px; }
+
+    /* Tabela por plano */
+    .tabela { overflow-x: auto; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+    table { border-collapse: collapse; width: 100%; min-width: 680px; font-size: 15px; }
+    th, td { padding: 14px 18px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    thead th { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: rgba(255,255,255,.02); line-height: 1.4; vertical-align: bottom; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+    td:first-child { font-family: 'Inter', sans-serif; font-weight: 600; color: var(--ink); }
+    td.hl { color: var(--brand-600); font-weight: 600; }
+
+    /* Simulador */
+    .sim { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+    .painel { padding: 26px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); display: grid; gap: 24px; }
+    .campo { display: grid; gap: 8px; }
+    .campo > label, .campo > .rot { font-weight: 600; font-size: 15px; }
+    .dica { color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+    .entrada { font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: 17px; color: var(--ink); background: rgba(255,255,255,.035); border: 1px solid var(--border-strong); border-radius: 11px; padding: 10px 13px; min-height: 48px; width: 100%; }
+    .entrada:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-100); }
+    .conv-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .num-wrap { position: relative; width: 150px; }
+    .num-wrap .entrada { font-size: 26px; font-weight: 600; padding-right: 40px; min-height: 58px; border: 2px solid var(--brand); }
+    .num-wrap span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-family: 'IBM Plex Mono', monospace; font-size: 20px; color: var(--muted); pointer-events: none; }
+    .conv-eq { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: var(--brand-600); }
+    input[type=range] { width: 100%; accent-color: var(--brand); min-height: 32px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { font: inherit; font-size: 13.5px; font-weight: 500; min-height: 44px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--border-strong); background: rgba(255,255,255,.03); color: var(--ink-2); cursor: pointer; }
+    .chip[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #07101f; font-weight: 650; }
+    .mix { display: grid; gap: 10px; }
+    .mix-row { display: grid; grid-template-columns: 100px minmax(0, 1fr) 52px; gap: 12px; align-items: center; }
+    .mix-row label { font-size: 14.5px; font-weight: 500; }
+    .mix-row label span { display: block; color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 400; }
+    .mix-row output { font-family: 'IBM Plex Mono', monospace; text-align: right; font-size: 14.5px; color: var(--ink-2); }
+
+    .resultado { padding: 26px; border-radius: 20px; border: 1px solid var(--brand-100); background: linear-gradient(160deg, rgba(57,96,214,.22), rgba(17,22,33,.9) 60%); display: grid; gap: 18px; position: sticky; top: 100px; }
+    .r-label { font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #a8c0ff; }
+    .r-grande { font-family: 'IBM Plex Mono', monospace; font-size: clamp(36px, 5vw, 50px); font-weight: 600; letter-spacing: -.045em; line-height: 1.05; color: #fff; }
+    .r-sub { color: var(--muted); font-size: 14px; }
+    .r-conta { font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; line-height: 1.6; color: var(--ink); background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; }
+    .r-nivel { font-size: 14px; color: var(--muted); }
+    .r-nivel b { color: #fff; }
+    .r-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+    .r-grid div { padding: 13px 0; border-bottom: 1px solid var(--border); display: grid; gap: 2px; }
+    .r-grid div:nth-child(odd) { padding-right: 14px; }
+    .r-grid div:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--border); }
+    .r-grid dt { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+    .r-grid dd { font-family: 'IBM Plex Mono', monospace; font-size: 19px; font-weight: 600; color: #fff; }
+    .aviso { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+
+    /* Regras */
+    .regras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; list-style: none; }
+    .regras li { padding: 18px 0; border-top: 1px solid var(--border); display: grid; gap: 4px; }
+    .regras b { font-weight: 600; }
+    .regras span { color: var(--muted); font-size: 14.5px; }
+
+    /* Cadastro */
+    .cadastro { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 40px; align-items: start; }
+    .passos { list-style: none; display: grid; gap: 16px; margin-top: 26px; counter-reset: p; }
+    .passos li { counter-increment: p; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; }
+    .passos li::before { content: counter(p); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; color: var(--brand-600); border: 1px solid var(--brand-100); background: var(--brand-50); }
+    .passos b { display: block; font-weight: 600; }
+    .passos span { color: var(--muted); font-size: 14.5px; }
+    form.form { padding: 28px; border: 1px solid var(--border-strong); border-radius: 22px; background: var(--surface); display: grid; gap: 16px; }
+    .linha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .form label { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+    .form label small { font-weight: 400; color: var(--muted); }
+    .form .entrada { font-family: 'Inter', sans-serif; font-size: 15px; }
+    textarea.entrada { min-height: 92px; resize: vertical; }
+    .escondido { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .msg-erro { color: var(--erro); font-size: 14px; }
+    .msg-erro:empty { display: none; }
+    .lgpd { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+    .sucesso { padding: 32px 28px; border: 1px solid rgba(94,227,161,.35); border-radius: 22px; background: linear-gradient(160deg, rgba(94,227,161,.08), var(--surface) 60%); display: grid; gap: 14px; }
+    .sucesso h3 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; letter-spacing: -.03em; }
+    .sucesso p { color: var(--ink-2); }
+    .sucesso .btn { justify-self: start; }
+
+    footer { border-top: 1px solid var(--border); padding: 40px 0 34px; background: rgba(5,7,10,.5); color: var(--muted-2); font-size: 12.5px; }
+    footer .container { display: flex; gap: 18px 30px; justify-content: space-between; flex-wrap: wrap; align-items: center; }
+    footer a { color: var(--ink-2); }
+    .link-cookies { background: none; border: 0; padding: 0; min-height: 44px; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+
+    .cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60; max-width: 560px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 48px rgba(0,0,0,.45); }
+    .cookies[hidden] { display: none; }
+    .cookies p { flex: 1 1 260px; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+    .cookies-acoes { display: flex; gap: 8px; }
+
+    @media (max-width: 900px) {
+      .container { padding-inline: 22px; }
+      .nav-links a:not(.btn) { display: none; }
+      .ganhos, .regras, .cadastro, .sim { grid-template-columns: minmax(0, 1fr); }
+      .niveis { grid-template-columns: minmax(0, 1fr); }
+      .resultado { position: static; }
+    }
+    @media (max-width: 620px) {
+      .container { padding-inline: 16px; }
+      nav { padding-top: 10px; }
+      nav .inner { height: 58px; border-radius: 15px; padding-inline: 10px; }
+      .logo img { height: 22px; }
+      .btn-nav { padding: 8px 10px; font-size: 11.5px; }
+      .hero { padding: 128px 0 56px; }
+      .hero p { font-size: 15.5px; }
+      .hero-actions .btn { width: 100%; }
+      .termos { grid-template-columns: minmax(0, 1fr); }
+      .termos div + div { border-left: 0; border-top: 1px solid var(--border); }
+      section { padding: 64px 0; }
+      .ganho { grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 22px; }
+      .painel, .resultado, form.form { padding: 20px; }
+      .linha { grid-template-columns: minmax(0, 1fr); }
+      .r-grid { grid-template-columns: minmax(0, 1fr); }
+      .r-grid div:nth-child(odd), .r-grid div:nth-child(even) { padding: 11px 0; border-left: 0; }
+      .mix-row { grid-template-columns: 84px minmax(0, 1fr) 46px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container inner">
+      <a href="/" class="logo"><img src="logo-rycs-horizontal.png" alt="RYCS Sales Machine" width="840" height="102"></a>
+      <div class="nav-links">
+        <a href="#como-ganha">Como você ganha</a>
+        <a href="#simulador">Simulador</a>
+        <a href="#cadastro" class="btn btn-primary btn-nav">Quero ser parceiro</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <span class="label">Programa de parceiros</span>
+      <h1>Sua carteira de clientes rende <span>todo mês</span></h1>
+      <p>Indique a RYCS para as empresas que você já conhece. Você ganha no fechamento de cada uma e recebe uma parte de tudo que ela paga à plataforma, mês após mês, enquanto continuar cliente.</p>
+      <div class="hero-actions">
+        <a href="#cadastro" class="btn btn-primary btn-lg">Quero ser parceiro</a>
+        <a href="#simulador" class="btn btn-outline btn-lg">Simular meus ganhos</a>
+      </div>
+      <div class="termos">
+        <div><b data-pct="fechamento">50%</b><span>da primeira mensalidade de cada empresa, no fechamento</span></div>
+        <div><b data-pct="topo">até 30%</b><span>de cada mensalidade seguinte, todo mês</span></div>
+        <div><b data-pct="uso">10%</b><span>da taxa que a RYCS cobra sobre o uso das campanhas</span></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="como-ganha">
+      <div class="container">
+        <div class="sec-head">
+          <span class="label">Como você ganha</span>
+          <h2 class="sec-title">Você traz a empresa. A RYCS cuida do resto.</h2>
+          <p class="sec-desc">A RYCS conecta empresas a profissionais de vendas e cobra uma mensalidade pelo plano. Cada empresa que assinar pelo seu link entra na sua carteira e passa a render para você.</p>
+        </div>
+        <div class="ganhos">
+          <article class="ganho"><span class="fig">Sua</span><div><h3>A carteira é sua</h3><p>A empresa que assina pelo seu link ou código fica vinculada a você. Ninguém troca esse vínculo depois.</p></div></article>
+          <article class="ganho"><span class="fig" data-pct="fechamento">50%</span><div><h3>Ganho no fechamento</h3><p>Metade da primeira mensalidade paga por cada empresa que você trouxer. Em plano anual ou semestral, vale sobre um mês.</p></div></article>
+          <article class="ganho"><span class="fig" data-pct="faixa">20–30%</span><div><h3>Recorrência mensal</h3><p>Uma parte de cada mensalidade a partir do segundo mês, enquanto a empresa pagar. O percentual sobe com o tamanho da carteira.</p></div></article>
+          <article class="ganho"><span class="fig" data-pct="uso">10%</span><div><h3>Participação no uso</h3><p>A RYCS cobra uma taxa sobre o que cada empresa movimenta em campanhas com vendedores. Você fica com 10% dessa taxa.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="niveis" style="padding-top:0">
+      <div class="container">
+        <div class="sec-head">
+          <span class="label">Níveis</span>
+          <h2 class="sec-title">Quanto maior a carteira, maior a recorrência</h2>
+          <p class="sec-desc">O nível conta as empresas da sua carteira com plano pago ativo. Ao subir de nível, o novo percentual vale para a carteira inteira nas mensalidades seguintes.</p>
+        </div>
+        <div class="niveis" id="niveis-lista"></div>
+      </div>
+    </section>
+
+    <section id="por-plano" style="padding-top:0">
+      <div class="container">
+        <div class="sec-head">
+          <span class="label">Por empresa</span>
+          <h2 class="sec-title">Quanto rende cada empresa fechada</h2>
+          <p class="sec-desc">Preços dos planos mensais da RYCS. Em plano com desconto, a conta é sobre o valor efetivamente pago.</p>
+        </div>
+        <div class="tabela">
+          <table>
+            <thead><tr id="por-plano-cab"></tr></thead>
+            <tbody id="por-plano-corpo"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="simulador" style="padding-top:0">
+      <div class="container">
+        <div class="sec-head">
+          <span class="label">Simulador</span>
+          <h2 class="sec-title">Quanto a sua base pode render</h2>
+          <p class="sec-desc">Coloque o tamanho da sua base e quanto dela você acredita que vai fechar. Preços e percentuais são os da RYCS; o resto é a sua estimativa.</p>
+        </div>
+        <div class="sim">
+          <form class="painel" id="simForm" novalidate>
+            <div class="campo">
+              <label for="base">Quantos contatos ou clientes você tem?</label>
+              <input class="entrada" type="text" id="base" value="3.000" inputmode="numeric" autocomplete="off">
+            </div>
+            <div class="campo">
+              <label for="convNum">Quantos % da sua base você acha que vão fechar?</label>
+              <div class="conv-row">
+                <div class="num-wrap"><input class="entrada" type="text" id="convNum" value="3" inputmode="decimal" autocomplete="off" aria-describedby="convDica"><span aria-hidden="true">%</span></div>
+                <output class="conv-eq" id="convEq" for="convNum base">= 90 empresas</output>
+              </div>
+              <input type="range" id="conv" min="0.5" max="15" step="0.5" value="3" aria-label="Ajustar a porcentagem de fechamento">
+              <div class="chips" role="group" aria-label="Cenários de fechamento">
+                <button type="button" class="chip" data-conv="1">Cauteloso 1%</button>
+                <button type="button" class="chip" data-conv="3">Moderado 3%</button>
+                <button type="button" class="chip" data-conv="5">Bom 5%</button>
+                <button type="button" class="chip" data-conv="10">Forte 10%</button>
+              </div>
+              <p class="dica" id="convDica">De cada 100 contatos, quantos assinam um plano pago. Pode usar vírgula: 2,5.</p>
+            </div>
+            <div class="campo">
+              <span class="rot" id="mixRot">Plano que as empresas assinam</span>
+              <div class="mix" id="mix" role="group" aria-labelledby="mixRot"></div>
+              <p class="dica">Quanto de cada plano tem na carteira. Os pesos viram porcentagens que somam 100%. Mensalidade média: <b id="ticket">R$ 399,00</b></p>
+            </div>
+            <div class="campo">
+              <label for="mov">Movimentação média por empresa, por mês (R$)</label>
+              <input class="entrada" type="text" id="mov" value="0" inputmode="numeric" autocomplete="off">
+              <p class="dica">Opcional. Quanto cada empresa coloca em campanhas com vendedores. Em 0, a conta usa só as mensalidades.</p>
+            </div>
+          </form>
+
+          <div class="resultado" aria-live="polite">
+            <span class="r-label">Com a carteira formada</span>
+            <div><div class="r-grande" id="rMensal">R$ 0</div><div class="r-sub">por mês para você</div></div>
+            <p class="r-conta" id="rConta"></p>
+            <span class="r-nivel">Nível: <b id="rNivel">Partner · 20%</b></span>
+            <dl class="r-grid">
+              <div><dt>Empresas pagantes</dt><dd id="rEmp">0</dd></div>
+              <div><dt>Mensalidades da carteira</dt><dd id="rMrr">R$ 0</dd></div>
+              <div><dt>Ganho no fechamento (uma vez)</dt><dd id="rFech">R$ 0</dd></div>
+              <div><dt>Recorrência por mês</dt><dd id="rRec">R$ 0</dd></div>
+              <div><dt>Participação no uso, por mês</dt><dd id="rUso">R$ 0</dd></div>
+              <div><dt>Primeiro ano completo</dt><dd id="rAno">R$ 0</dd></div>
+            </dl>
+            <p class="aviso">Simulação, não promessa de resultado. Considera a carteira toda fechada e pagando, sem cancelamentos. Primeiro ano = fechamento + 11 meses de recorrência + 12 meses de uso.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="regras" style="padding-top:0">
+      <div class="container">
+        <div class="sec-head">
+          <span class="label">Regras</span>
+          <h2 class="sec-title">Claras para os dois lados</h2>
+        </div>
+        <ul class="regras">
+          <li><b>Ganha sobre pagamento confirmado</b><span>Cadastro sozinho não gera comissão. Conta quando a empresa paga o plano.</span></li>
+          <li><b>Cancelou ou estornou, não conta</b><span>Mensalidade não paga ou devolvida não gera comissão.</span></li>
+          <li><b>Só empresa nova na RYCS</b><span>Quem já era cliente antes do seu vínculo não entra na carteira.</span></li>
+          <li><b>Vale o primeiro vínculo</b><span>A empresa fica com quem a trouxe primeiro, pelo link ou código.</span></li>
+          <li><b>Pagamento por Pix</b><span>Cada comissão é liberada no 1º dia do mês seguinte ao pagamento da empresa e vai para a sua chave Pix.</span></li>
+          <li><b>Parceria comercial</b><span>Contrato de parceria, sem vínculo societário nem trabalhista e sem exclusividade.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="cadastro" style="padding-top:0">
+      <div class="container cadastro">
+        <div>
+          <span class="label">Cadastro</span>
+          <h2 class="sec-title">Quero ser parceiro</h2>
+          <p class="sec-desc">Deixe seus dados. A equipe RYCS fala com você para alinhar a parceria.</p>
+          <ol class="passos">
+            <li><div><b>Você se cadastra aqui</b><span>Leva menos de um minuto.</span></div></li>
+            <li><div><b>A RYCS fala com você</b><span>Pelo WhatsApp, para fechar o contrato de parceria.</span></div></li>
+            <li><div><b>Você cria sua conta</b><span>Conta de profissional na RYCS, com o mesmo e-mail. É por ela que você acompanha a carteira e recebe por Pix.</span></div></li>
+            <li><div><b>Recebe seu link e começa</b><span>Cada empresa que assinar pelo seu link entra na sua carteira.</span></div></li>
+          </ol>
+        </div>
+
+        <div>
+          <form class="form" id="formParceiro" novalidate>
+            <div class="linha">
+              <label>Nome
+                <input class="entrada" id="f-nome" name="nome" autocomplete="name" required maxlength="120">
+              </label>
+              <label>WhatsApp com DDD
+                <input class="entrada" id="f-whats" name="whats" autocomplete="tel" inputmode="tel" required placeholder="(11) 99999-9999" maxlength="20">
+              </label>
+            </div>
+            <label>E-mail
+              <input class="entrada" id="f-email" name="email" type="email" autocomplete="email" required maxlength="160">
+            </label>
+            <div class="linha">
+              <label>Contatos na sua base <small>(opcional)</small>
+                <input class="entrada" id="f-base" name="base" inputmode="numeric" placeholder="Ex.: 3000" maxlength="10">
+              </label>
+              <label>Cidade <small>(opcional)</small>
+                <input class="entrada" id="f-cidade" name="cidade" autocomplete="address-level2" maxlength="120">
+              </label>
+            </div>
+            <label>Segmento dos seus clientes <small>(opcional)</small>
+              <input class="entrada" id="f-segmento" name="segmento" placeholder="Ex.: clínicas, lojas, indústrias" maxlength="160">
+            </label>
+            <label>Quer contar algo? <small>(opcional)</small>
+              <textarea class="entrada" id="f-mensagem" name="mensagem" maxlength="1000"></textarea>
+            </label>
+            <label class="escondido" aria-hidden="true">Não preencha
+              <input id="f-site" name="site" tabindex="-1" autocomplete="off">
+            </label>
+            <p class="msg-erro" id="f-erro" role="alert"></p>
+            <button type="submit" class="btn btn-primary btn-lg" id="f-enviar">Quero ser parceiro</button>
+            <p class="lgpd">Usamos estes dados só para falar com você sobre a parceria.</p>
+          </form>
+
+          <div class="sucesso" id="sucesso" hidden tabindex="-1">
+            <h3>Recebemos seu cadastro</h3>
+            <p>A equipe RYCS vai falar com você pelo WhatsApp para fechar a parceria. Para adiantar, crie sua conta de profissional com o mesmo e-mail: é por ela que você vai acompanhar a carteira e receber as comissões.</p>
+            <a href="https://app.rycs.pro/cadastro/profissional" class="btn btn-primary">Criar minha conta</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <span>© 2026 RYCS Sales Machine · RYCS SALES MACHINE INOVA SIMPLES (I.S.) · CNPJ 69.802.687/0001-85</span>
+      <span><a href="/">Página inicial</a> · <a href="https://app.rycs.pro/entrar">Entrar</a> · contato@rycs.pro · <button type="button" class="link-cookies" id="preferencias-cookies">Preferências de cookies</button></span>
+    </div>
+  </footer>
+
+  <div class="cookies" id="aviso-cookies" role="region" aria-label="Aviso de cookies" hidden>
+    <p>Usamos cookies para saber de qual anúncio cada cadastro veio e melhorar nossas campanhas na Meta (Facebook e Instagram). Recusar não muda nada no uso da plataforma.</p>
+    <div class="cookies-acoes">
+      <button type="button" class="btn btn-outline" data-cookies="recusado">Recusar</button>
+      <button type="button" class="btn btn-primary" data-cookies="aceito">Aceitar</button>
+    </div>
+  </div>
+
+  <script>
+    // API: produção, ou ?api=http://localhost:PORTA quando a página roda local.
+    window.RYCS_API = (function () {
+      try {
+        var q = new URLSearchParams(location.search).get("api");
+        if (q && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(q)) return q;
+      } catch (e) {}
+      return "https://app.rycs.pro";
+    })();
+  </script>
+
+  <script>
+    // Simulador e tabelas. Os valores abaixo só servem até a API responder:
+    // planos, níveis e percentuais vêm de /api/parceiros/programa (shared/ do app).
+    (function () {
+      var P = {
+        planos: [
+          { chave: "starter", nome: "Start", preco: 399, takeRate: 0.20 },
+          { chave: "growth", nome: "Growth", preco: 799, takeRate: 0.15 },
+          { chave: "scale", nome: "Scale", preco: 1499, takeRate: 0.10 },
+          { chave: "enterprise", nome: "Premium", preco: 3000, takeRate: 0.05 }
+        ],
+        niveis: [
+          { nome: "Partner", min: 0, pct: 20 },
+          { nome: "Partner Pro", min: 25, pct: 25 },
+          { nome: "Partner Ultra", min: 100, pct: 30 }
+        ],
+        fechamento: 50,
+        uso: 10
+      };
+      var pesos = {};
+
+      var brl0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+      var brl2 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var int0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+      var $ = function (id) { return document.getElementById(id); };
+      var pctF = function (x) { return String(Math.round(x * 10) / 10).replace(".", ",") + "%"; };
+      var inteiro = function (v) { var n = parseInt(String(v).replace(/\D/g, ""), 10); return isFinite(n) ? n : 0; };
+      var faixa = function (n, i) { var prox = P.niveis[i + 1]; var min = Math.max(1, n.min); return prox ? min + " a " + (prox.min - 1) + " empresas pagantes" : min + " ou mais empresas pagantes"; };
+
+      function montar() {
+        var topo = P.niveis[P.niveis.length - 1];
+        document.querySelectorAll('[data-pct="fechamento"]').forEach(function (el) { el.textContent = P.fechamento + "%"; });
+        document.querySelectorAll('[data-pct="uso"]').forEach(function (el) { el.textContent = P.uso + "%"; });
+        document.querySelectorAll('[data-pct="topo"]').forEach(function (el) { el.textContent = "até " + topo.pct + "%"; });
+        document.querySelectorAll('[data-pct="faixa"]').forEach(function (el) { el.textContent = P.niveis[0].pct + "–" + topo.pct + "%"; });
+
+        $("niveis-lista").innerHTML = P.niveis.map(function (n, i) {
+          var ehTopo = i === P.niveis.length - 1;
+          return '<div class="nivel' + (ehTopo ? " topo" : "") + '"><span class="nome">' + n.nome + (ehTopo ? ' <span class="pill">topo</span>' : "") + '</span>' +
+            '<span class="pct">' + n.pct + '%<small>ao mês</small></span><span class="faixa">' + faixa(n, i) + "</span></div>";
+        }).join("");
+
+        $("por-plano-cab").innerHTML = '<th scope="col">Plano</th><th scope="col">Mensalidade</th><th scope="col">No fechamento<br>(' + P.fechamento + '%)</th>' +
+          P.niveis.map(function (n) { return '<th scope="col">Por mês<br>' + n.nome + " " + n.pct + "%</th>"; }).join("");
+        $("por-plano-corpo").innerHTML = P.planos.map(function (p) {
+          return "<tr><td>" + p.nome + "</td><td>" + brl2.format(p.preco) + '</td><td class="hl">' + brl2.format(p.preco * P.fechamento / 100) + "</td>" +
+            P.niveis.map(function (n) { return "<td>" + brl2.format(p.preco * n.pct / 100) + "</td>"; }).join("") + "</tr>";
+        }).join("");
+
+        P.planos.forEach(function (p, i) { if (!(p.chave in pesos)) pesos[p.chave] = i === 0 ? 100 : 0; });
+        $("mix").innerHTML = P.planos.map(function (p) {
+          return '<div class="mix-row"><label for="mix-' + p.chave + '">' + p.nome + "<span>" + brl0.format(p.preco) + "/mês</span></label>" +
+            '<input type="range" id="mix-' + p.chave + '" min="0" max="100" step="5" value="' + pesos[p.chave] + '">' +
+            '<output id="mixOut-' + p.chave + '" for="mix-' + p.chave + '">0%</output></div>';
+        }).join("");
+        calc();
+      }
+
+      function nivelDe(n) { var a = P.niveis[0]; P.niveis.forEach(function (x) { if (n >= x.min) a = x; }); return a; }
+
+      function calc() {
+        var base = Math.min(inteiro($("base").value), 10000000);
+        var conv = parseFloat(String($("convNum").value).replace(",", "."));
+        if (!isFinite(conv) || conv < 0) conv = 0;
+        conv = Math.min(conv, 100);
+        $("conv").value = Math.min(15, Math.max(0.5, conv));
+        var mov = Math.min(inteiro($("mov").value), 100000000);
+
+        P.planos.forEach(function (p) { var el = $("mix-" + p.chave); if (el) pesos[p.chave] = Number(el.value) || 0; });
+        var soma = P.planos.reduce(function (a, p) { return a + pesos[p.chave]; }, 0);
+        var ticket = 0, taxaPorEmpresa = 0;
+        P.planos.forEach(function (p, i) {
+          var share = soma > 0 ? pesos[p.chave] / soma : (i === 0 ? 1 : 0);
+          ticket += share * p.preco;
+          taxaPorEmpresa += share * p.takeRate * mov;
+          var out = $("mixOut-" + p.chave); if (out) out.value = Math.round(share * 100) + "%";
+        });
+
+        var n = Math.round(base * conv / 100);
+        var mrr = n * ticket;
+        var lvl = nivelDe(n);
+        var fech = mrr * P.fechamento / 100;
+        var rec = mrr * lvl.pct / 100;
+        var uso = n * taxaPorEmpresa * P.uso / 100;
+
+        $("convEq").value = "= " + int0.format(n) + (n === 1 ? " empresa" : " empresas");
+        $("ticket").textContent = brl2.format(ticket);
+        $("rEmp").textContent = int0.format(n);
+        $("rNivel").textContent = lvl.nome + " · " + lvl.pct + "%";
+        $("rMrr").textContent = brl0.format(mrr);
+        $("rFech").textContent = brl0.format(fech);
+        $("rRec").textContent = brl0.format(rec);
+        $("rUso").textContent = brl0.format(uso);
+        $("rMensal").textContent = brl0.format(rec + uso);
+        $("rAno").textContent = brl0.format(fech + 11 * rec + 12 * uso);
+        $("rConta").textContent = int0.format(base) + " contatos × " + pctF(conv) + " = " + int0.format(n) + " empresas × " + brl2.format(ticket) +
+          " = " + brl0.format(mrr) + " em mensalidades × " + lvl.pct + "% (" + lvl.nome + ") = " + brl0.format(rec) + " por mês" +
+          (uso > 0 ? " + " + brl0.format(uso) + " de uso" : "");
+        document.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", String(parseFloat(c.dataset.conv) === conv)); });
+      }
+
+      document.querySelectorAll(".chip").forEach(function (c) {
+        c.addEventListener("click", function () { $("convNum").value = c.dataset.conv.replace(".", ","); calc(); });
+      });
+      $("simForm").addEventListener("input", function (e) {
+        if (e.target.id === "conv") $("convNum").value = String(e.target.value).replace(".", ",");
+        calc();
+      });
+      $("simForm").addEventListener("submit", function (e) { e.preventDefault(); });
+      $("base").addEventListener("blur", function () { this.value = int0.format(inteiro(this.value)); });
+      $("mov").addEventListener("blur", function () { this.value = int0.format(inteiro(this.value)); });
+
+      montar();
+      fetch(window.RYCS_API + "/api/parceiros/programa").then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+        if (!d || !Array.isArray(d.planos) || !d.planos.length || !Array.isArray(d.niveis) || !d.niveis.length) return;
+        P = d;
+        montar();
+      }).catch(function () {});
+    })();
+  </script>
+
+  <script>
+    // Formulário de cadastro → app.rycs.pro/api/parceiros/inscricao.
+    (function () {
+      var form = document.getElementById("formParceiro");
+      var erro = document.getElementById("f-erro");
+      var botao = document.getElementById("f-enviar");
+      var whats = document.getElementById("f-whats");
+      function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+      whats.addEventListener("input", function () {
+        var d = whats.value.replace(/\D/g, "").slice(0, 11);
+        whats.value = d.length > 6 ? "(" + d.slice(0, 2) + ") " + d.slice(2, d.length - 4) + "-" + d.slice(-4) : d.length > 2 ? "(" + d.slice(0, 2) + ") " + d.slice(2) : d;
+      });
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        erro.textContent = "";
+        var dados = {
+          nome: form.nome.value.trim(), email: form.email.value.trim(), whats: form.whats.value,
+          base: form.base.value.replace(/\D/g, ""), cidade: form.cidade.value.trim(), segmento: form.segmento.value.trim(),
+          mensagem: form.mensagem.value.trim(), site: form.site.value, visitanteId: ler("rycs_vid") || ""
+        };
+        try { dados.origem = JSON.parse(ler("rycs_origem") || "{}"); } catch (x) { dados.origem = {}; }
+        if (dados.nome.length < 2) { erro.textContent = "Informe seu nome."; form.nome.focus(); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(dados.email)) { erro.textContent = "Informe um e-mail válido."; form.email.focus(); return; }
+        var d = dados.whats.replace(/\D/g, "");
+        if (d.length < 10 || d.length > 13) { erro.textContent = "Informe o WhatsApp com DDD."; form.whats.focus(); return; }
+
+        botao.disabled = true;
+        botao.textContent = "Enviando…";
+        fetch(window.RYCS_API + "/api/parceiros/inscricao", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados)
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (corpo) { return { ok: r.ok, corpo: corpo }; });
+        }).then(function (r) {
+          if (!r.ok) throw new Error(r.corpo && r.corpo.error ? r.corpo.error : "Não foi possível enviar agora. Tente de novo em alguns minutos.");
+          form.hidden = true;
+          var ok = document.getElementById("sucesso");
+          ok.hidden = false;
+          ok.focus();
+          if (window.fbq) window.fbq("track", "Lead", { content_name: "parceiro" });
+        }).catch(function (x) {
+          erro.textContent = x && x.message && x.message !== "Failed to fetch" ? x.message : "Não conseguimos enviar agora. Tente de novo ou escreva para contato@rycs.pro.";
+          botao.disabled = false;
+          botao.textContent = "Quero ser parceiro";
+        });
+      });
+    })();
+  </script>
+
+  <script>
+    // Pixel da Meta (RYCS Plataforma), só depois do aceite de cookies — igual à home.
+    (function () {
+      var PIXEL = "1690802939434598";
+      var aviso = document.getElementById("aviso-cookies");
+      function escolha() { var m = document.cookie.match(/(?:^|; )rycs_consentimento=([^;]*)/); return m ? m[1] : ""; }
+      function carregarPixel() {
+        if (window.fbq || escolha() !== "aceito") return;
+        !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = "2.0"; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+        fbq("init", PIXEL);
+        fbq("track", "PageView");
+      }
+      aviso.addEventListener("click", function (e) {
+        var valor = e.target.getAttribute && e.target.getAttribute("data-cookies");
+        if (valor !== "aceito" && valor !== "recusado") return;
+        var dominio = /rycs\.pro$/.test(location.hostname) ? "; domain=.rycs.pro" : "";
+        var seguro = location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = "rycs_consentimento=" + valor + "; path=/; max-age=31536000; SameSite=Lax" + dominio + seguro;
+        aviso.hidden = true;
+        carregarPixel();
+      });
+      document.getElementById("preferencias-cookies").addEventListener("click", function () { aviso.hidden = false; });
+      if (escolha()) carregarPixel(); else aviso.hidden = false;
+    })();
+  </script>
+
+  <script>
+    // Jornada desde o anúncio (igual à home): origem do primeiro clique, visita
+    // registrada e id do visitante nos links do app.
+    (function () {
+      var API = window.RYCS_API + "/api/jornada/evento";
+      var CAMPOS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid", "gclid"];
+      function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+      function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+      var vid = ler("rycs_vid");
+      if (!vid || !/^[A-Za-z0-9_-]{8,64}$/.test(vid)) {
+        vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+        gravar("rycs_vid", vid);
+      }
+      var params = new URLSearchParams(location.search);
+      var origem = {};
+      CAMPOS.forEach(function (c) { if (params.get(c)) origem[c] = params.get(c).slice(0, c === "fbclid" || c === "gclid" ? 500 : 120); });
+      if (Object.keys(origem).length && !ler("rycs_origem")) {
+        origem.landing = location.pathname;
+        gravar("rycs_origem", JSON.stringify(origem));
+      }
+      try { origem = JSON.parse(ler("rycs_origem") || "{}"); } catch (e) { origem = {}; }
+      if (!Object.keys(origem).length && document.referrer) {
+        try { var ref = new URL(document.referrer).hostname; if (ref && !/rycs\.pro$/.test(ref)) origem = { referrer: ref }; } catch (e) {}
+      }
+      fetch(API, {
+        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ visitanteId: vid, evento: "visita", origem: origem })
+      }).catch(function () {});
+      document.querySelectorAll('a[href^="https://app.rycs.pro"]').forEach(function (a) {
+        var url = new URL(a.href);
+        url.searchParams.set("vid", vid);
+        CAMPOS.forEach(function (c) { if (origem[c]) url.searchParams.set(c, origem[c]); });
+        a.href = url.toString();
+      });
+    })();
+  </script>
+</body>
+</html>
