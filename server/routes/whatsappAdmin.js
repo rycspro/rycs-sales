@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as wa from "../services/whatsappDisparo.js";
+import { metricasWhatsapp } from "../services/whatsappMetricas.js";
 
 const router = Router();
 
@@ -28,12 +29,16 @@ const freios = () => ({
   horario: wa.HORARIO, bloqueioRecente: wa.bloqueioRecente(),
 });
 
-// GET /api/admin/whatsapp — configuração, públicos e histórico
+// GET /api/admin/whatsapp — configuração, públicos, histórico e desempenho.
+// O desempenho vem junto para atualizar sozinho enquanto um disparo corre.
 router.get("/admin/whatsapp", requireAdmin, (req, res) => {
+  let metricas = null;
+  try { metricas = metricasWhatsapp(); } catch (e) { console.error("[whatsapp] métricas:", e?.message); }
   res.json({
+    metricas,
     configurado: wa.envioConfigurado(),
     faltando: wa.faltandoConfig(),
-    publicos: Object.entries(wa.PUBLICOS).map(([key, p]) => ({ key, label: p.label })),
+    publicos: Object.entries(wa.PUBLICOS).map(([key, p]) => ({ key, label: p.label, pendencias: !!p.comPendencias })),
     disparos: wa.listarDisparos(),
     freios: freios(),
   });
@@ -65,7 +70,8 @@ router.post("/admin/whatsapp/teste", requireAdmin, exigirConfig, async (req, res
     if (!tpl.suportado) return res.status(400).json({ error: tpl.motivo });
     const erro = wa.validarVariaveis(tpl, variaveis);
     if (erro) return res.status(400).json({ error: erro });
-    const componentes = wa.montarComponentes(tpl, variaveis, String(nomeTeste || "").trim() || "Teste");
+    // No teste não há vendedor: as pendências vão marcadas como exemplo.
+    const componentes = wa.montarComponentes(tpl, variaveis, String(nomeTeste || "").trim() || "Teste", "foto de perfil e cidade (exemplo)");
     const wamid = await wa.enviarTemplate({ numero, tpl, componentes });
     res.json({ ok: true, wamid });
   } catch (e) { erroMeta(res, e); }

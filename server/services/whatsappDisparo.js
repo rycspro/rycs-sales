@@ -11,6 +11,7 @@
 
 import db, { uid, agora } from "../db.js";
 import { graph, ErroMeta } from "./meta.js";
+import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
 import "./whatsapp.js"; // garante a tabela whatsapp_status usada nos relatórios
 
 const TOKEN = () => process.env.WHATSAPP_TOKEN || "";
@@ -93,24 +94,52 @@ const normalizar = (t) => semAcento(t).trim().toLowerCase().replace(/[.!]+$/, ""
 const PALAVRAS_SAIR = new Set(["stop", "stop messages", "parar", "parar mensagens", "sair", "cancelar",
   "descadastrar", "nao quero receber", "nao quero mais receber", "unsubscribe", "agora nao", "not now"].map(normalizar));
 
-// Exceção: "Agora não" da reativação de empresas (payload "reativacao:agora_nao:…")
-// é só uma resposta, não um pedido para sair.
+// Mensagem recebida que pede para sair. Exceção: "Agora não" da reativação de
+// empresas (payload "reativacao:agora_nao:…") é só uma resposta, não um pedido para sair.
+export function pedidoDeSaida({ tipo, texto, payload }) {
+  if (!["text", "button", "interactive"].includes(tipo) || String(texto || "").length > 40) return false;
+  if (String(payload || "").startsWith("reativacao:") && !String(payload).startsWith("reativacao:parar")) return false;
+  return PALAVRAS_SAIR.has(normalizar(texto));
+}
+
 export function descadastrados() {
-  const rows = db.prepare(`SELECT de, texto, json_extract(dados, '$.button.payload') AS payload FROM whatsapp_mensagens
+  const rows = db.prepare(`SELECT de, tipo, texto, json_extract(dados, '$.button.payload') AS payload FROM whatsapp_mensagens
     WHERE tipo IN ('text','button','interactive') AND length(texto) <= 40`).all();
   const s = new Set();
-  for (const r of rows) {
-    if (String(r.payload || "").startsWith("reativacao:") && !String(r.payload).startsWith("reativacao:parar")) continue;
-    if (PALAVRAS_SAIR.has(normalizar(r.texto))) for (const x of variacoes(String(r.de))) s.add(x);
-  }
+  for (const r of rows) if (pedidoDeSaida(r)) for (const x of variacoes(String(r.de))) s.add(x);
   return s;
 }
 
 // ── Público ───────────────────────────────────────────────────────────
 
+// `ddi` limita ao país do número; `filtro` olha a linha do vendedor;
+// `comPendencias` libera a variável "pendências do perfil".
+// Inativado (perfil incompleto) não é ativo: a mensagem de aceite diz "sua conta está ativa".
 export const PUBLICOS = {
-  ativos: { label: "Vendedores ativos", where: "status = 'aprovado'" },
+  ativos: { label: "Vendedores ativos", where: "status = 'aprovado' AND inativoEm IS NULL" },
+  perfil_incompleto: {
+    label: "Perfil incompleto (Brasil)",
+    where: "status = 'aprovado' AND COALESCE(NULLIF(pais, ''), 'Brasil') = 'Brasil'",
+    ddi: "55",
+    filtro: (s) => pendenciasPerfil(s).length > 0,
+    comPendencias: true,
+  },
 };
+
+// Campos que a regra de perfil completo lê. A foto vem só como "tem ou não tem",
+// para não carregar a imagem inteira de cada vendedor.
+const CAMPOS_PERFIL_SQL = `CASE WHEN TRIM(COALESCE(foto, '')) <> '' THEN 'sim' ELSE '' END AS foto,
+  titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills`;
+const sqlPerfil = db.prepare(`SELECT ${CAMPOS_PERFIL_SQL} FROM sellers WHERE id = ?`);
+
+// "foto de perfil, cidade e habilidades (skills)": o que falta no perfil, do
+// jeito que entra na variável do template. Mesma regra dos e-mails.
+export function textoPendencias(s) {
+  const itens = pendenciasPerfil(s).map((l) => l.toLowerCase());
+  return itens.length > 1 ? `${itens.slice(0, -1).join(", ")} e ${itens.at(-1)}` : itens[0] || "";
+}
+
+const usaPendencias = (variaveis) => Array.isArray(variaveis) && variaveis.some((v) => v?.origem === "pendencias");
 
 const primeiroNome = (nome) => {
   const p = String(nome || "").trim().split(/\s+/)[0] || "";
@@ -125,7 +154,8 @@ const sqlRecebidos = db.prepare(`SELECT DISTINCT e.numero FROM whatsapp_envios e
 export function destinatarios(publico, { template } = {}) {
   const p = PUBLICOS[publico];
   if (!p) return null;
-  const rows = db.prepare(`SELECT id, nome, whats, pais FROM sellers WHERE ${p.where} ORDER BY criadoEm`).all();
+  const rows = db.prepare(`SELECT id, nome, whats, pais, ${CAMPOS_PERFIL_SQL} FROM sellers WHERE ${p.where} ORDER BY criadoEm`).all()
+    .filter((s) => !p.filtro || p.filtro(s));
   const sair = descadastrados();
   const recebidos = new Set(template ? sqlRecebidos.all(template).map((r) => r.numero) : []);
   const vistos = new Set();
@@ -133,7 +163,7 @@ export function destinatarios(publico, { template } = {}) {
   let semNumero = 0, optOut = 0, duplicados = 0, jaReceberam = 0;
   for (const s of rows) {
     const numero = numeroWhatsapp(s.whats, s.pais);
-    if (!numero) { semNumero++; continue; }
+    if (!numero || (p.ddi && !numero.startsWith(p.ddi))) { semNumero++; continue; }
     if (variacoes(numero).some((x) => sair.has(x))) { optOut++; continue; }
     if (vistos.has(numero)) { duplicados++; continue; }
     vistos.add(numero);
@@ -234,22 +264,23 @@ export async function listarTemplates() {
 }
 
 // Uma escolha por variável, na ordem do template: { origem: "nome" } usa o
-// primeiro nome do vendedor; { origem: "fixo", texto } usa o mesmo texto para todos.
+// primeiro nome do vendedor; { origem: "pendencias" } o que falta no perfil de
+// cada um; { origem: "fixo", texto } usa o mesmo texto para todos.
 export function validarVariaveis(tpl, variaveis) {
   if (!Array.isArray(variaveis) || variaveis.length !== tpl.variaveis.length) return "Preencha todas as variáveis do template.";
   for (const v of variaveis) {
-    if (v?.origem === "nome") continue;
+    if (v?.origem === "nome" || v?.origem === "pendencias") continue;
     if (v?.origem !== "fixo" || !String(v.texto || "").trim()) return "Preencha todas as variáveis do template.";
     if (String(v.texto).length > 300) return "Texto da variável muito longo.";
   }
   return "";
 }
 
-export function montarComponentes(tpl, variaveis, nome) {
+export function montarComponentes(tpl, variaveis, nome, pendencias = "") {
   if (!tpl.variaveis.length) return [];
   const parametros = tpl.variaveis.map((ph, i) => {
     const v = variaveis[i] || {};
-    const text = v.origem === "nome" ? String(nome || "").trim() : String(v.texto || "").trim();
+    const text = String((v.origem === "nome" ? nome : v.origem === "pendencias" ? pendencias : v.texto) || "").trim();
     return tpl.formato === "NAMED" ? { type: "text", parameter_name: ph, text } : { type: "text", text };
   });
   return [{ type: "body", parameters: parametros }];
@@ -282,6 +313,8 @@ export const disparoEmAndamento = () => db.prepare("SELECT id FROM whatsapp_disp
 // `limite` é o tamanho da rodada: começar pequeno e olhar bloqueios antes de ampliar.
 export function criarDisparo({ adminId, tpl, variaveis, publico, limite = LOTE_PADRAO }) {
   if (bloqueioRecente()) throw new Error("A Meta avisou nas últimas 24h que está limitando o número por bloqueios. Espere antes de disparar de novo.");
+  if (usaPendencias(variaveis) && !PUBLICOS[publico]?.comPendencias)
+    throw new Error(`A variável de pendências só funciona com o público "${PUBLICOS.perfil_incompleto.label}".`);
   const tamanho = Math.trunc(Number(limite));
   if (!(tamanho >= 1 && tamanho <= LOTE_MAXIMO)) throw new Error(`Escolha de 1 a ${LOTE_MAXIMO} pessoas por rodada.`);
   const vagas = vagas24h();
@@ -327,6 +360,7 @@ export async function processarDisparo(id, { pausaMs = 250, relogio = Date.now }
     if (!disp || disp.status !== "enviando") return;
     const tpl = JSON.parse(disp.templateDados);
     const variaveis = JSON.parse(disp.variaveis || "[]");
+    const comPendencias = usaPendencias(variaveis);
     const marcar = db.prepare("UPDATE whatsapp_envios SET status = ?, wamid = ?, erro = ?, enviadoEm = ? WHERE id = ?");
     const fila = db.prepare("SELECT * FROM whatsapp_envios WHERE disparoId = ? AND status = 'fila' ORDER BY rowid").all(id);
     let fatal = freio(id, relogio());
@@ -337,7 +371,15 @@ export async function processarDisparo(id, { pausaMs = 250, relogio = Date.now }
       // A cada 10 envios confere se a Meta reclamou ou se as falhas passaram do limite.
       if (tentados && tentados % 10 === 0 && (fatal = freio(id, relogio()))) break;
       tentados++;
-      const componentes = montarComponentes(tpl, variaveis, e.nome);
+      // Pendências lidas na hora do envio: quem completou o perfil enquanto
+      // esperava na fila não recebe aviso de algo que já resolveu.
+      let pendencias = "";
+      if (comPendencias) {
+        const perfil = e.sellerId ? sqlPerfil.get(e.sellerId) : null;
+        pendencias = perfil ? textoPendencias(perfil) : "";
+        if (!pendencias) { marcar.run("falhou", "", "Perfil completo antes do envio", agora(), e.id); continue; }
+      }
+      const componentes = montarComponentes(tpl, variaveis, e.nome, pendencias);
       if (componentes[0]?.parameters.some((p) => !p.text)) { marcar.run("falhou", "", "Vendedor sem nome cadastrado", agora(), e.id); continue; }
       for (let tentativa = 1; ; tentativa++) {
         try {

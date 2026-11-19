@@ -69,6 +69,54 @@ test("público de ativos: só aprovados, sem duplicados, sem número inválido e
   assert.equal(wa.destinatarios("inexistente"), null);
 });
 
+const PERFIL_OK = { foto: "data:x", titulo: "SDR", bio: "Vendo por telefone.", disponibilidade: "manhã", cidade: "Sorocaba",
+  segmentos: '["saas"]', modalidades: '["remoto"]', skills: '["prospecção"]' };
+const preencherPerfil = (id, campos) => {
+  const cols = Object.keys(campos);
+  db.prepare(`UPDATE sellers SET ${cols.map((c) => `${c} = ?`).join(", ")} WHERE id = ?`).run(...cols.map((c) => campos[c]), id);
+};
+
+test("pendências do perfil: texto da variável segue a regra dos e-mails", () => {
+  assert.equal(wa.textoPendencias({ ...PERFIL_OK, cidade: "", segmentos: "[]" }), "cidade e segmentos de atuação");
+  assert.equal(wa.textoPendencias({ ...PERFIL_OK, bio: " " }), "descrição pessoal (bio)");
+  assert.equal(wa.textoPendencias(PERFIL_OK), "");
+});
+
+test("público de perfil incompleto: só Brasil, só com pendência, inativado entra e sai dos ativos", async () => {
+  vendedor("s8", "Bia Inativa", "(51) 95555-4444");
+  db.prepare("UPDATE sellers SET inativoEm = ?, inativoMotivo = 'perfil_incompleto' WHERE id = 's8'").run(ts);
+  vendedor("s9", "Caio Completo", "(61) 94444-3333");
+  preencherPerfil("s9", PERFIL_OK);
+  db.prepare("UPDATE sellers SET inativoEm = ? WHERE id = 's9'").run(ts); // fora dos ativos para não mexer nos outros testes
+
+  assert.ok(!wa.destinatarios("ativos").lista.some((p) => p.sellerId === "s8"), "conta inativada não recebe 'sua conta está ativa'");
+  const d = wa.destinatarios("perfil_incompleto");
+  assert.deepEqual(d.lista.map((p) => p.sellerId), ["s1", "s8"], "Ravi (Índia), Caio (perfil completo) e Em Triagem ficam de fora");
+  assert.deepEqual({ semNumero: d.semNumero, descadastrados: d.descadastrados, duplicados: d.duplicados }, { semNumero: 1, descadastrados: 2, duplicados: 1 });
+
+  const tpl = wa.resumirTemplate({ name: "rycs_conta_pendente", language: "pt_BR", category: "UTILITY", status: "APPROVED", components: [
+    { type: "BODY", text: "Olá, {{1}}. Sua conta na RYCS tem itens pendentes.\n\nFalta: {{2}}.\n\nÉ isso que a empresa vê antes de aceitar você numa campanha. Leva poucos minutos." },
+    { type: "FOOTER", text: "RYCS · Responda SAIR para parar os avisos" },
+    { type: "BUTTONS", buttons: [{ type: "URL", text: "Resolver pendências", url: "https://app.rycs.pro/plataforma?aba=perfil" }, { type: "QUICK_REPLY", text: "Parar mensagens" }] },
+  ] });
+  assert.equal(tpl.suportado, true, "link fixo e resposta rápida já dá para enviar");
+  const vars = [{ origem: "nome" }, { origem: "pendencias" }];
+  assert.equal(wa.validarVariaveis(tpl, vars), "");
+  assert.throws(() => wa.criarDisparo({ adminId: "admin", tpl, variaveis: vars, publico: "ativos" }), /só funciona com o público/);
+
+  chamadas = [];
+  responder = () => ({ messages: [{ id: `wamid.p${chamadas.length}` }] });
+  const disp = wa.criarDisparo({ adminId: "admin", tpl, variaveis: vars, publico: "perfil_incompleto" });
+  preencherPerfil("s8", PERFIL_OK); // Bia completou o perfil enquanto esperava na fila
+  await wa.processarDisparo(disp.id, { pausaMs: 0, relogio: NO_HORARIO });
+
+  assert.equal(chamadas.length, 1);
+  assert.deepEqual(chamadas[0].corpo.template.components[0].parameters.map((p) => p.text), ["Ana",
+    "foto de perfil, título profissional, descrição pessoal (bio), disponibilidade, cidade, segmentos de atuação, modalidades de trabalho e habilidades (skills)"]);
+  assert.deepEqual(db.prepare("SELECT sellerId, status, erro FROM whatsapp_envios WHERE disparoId = ? ORDER BY rowid").all(disp.id),
+    [{ sellerId: "s1", status: "enviado", erro: "" }, { sellerId: "s8", status: "falhou", erro: "Perfil completo antes do envio" }]);
+});
+
 const TEMPLATE = {
   name: "aviso_vendedores", language: "pt_BR", category: "MARKETING", status: "APPROVED",
   components: [

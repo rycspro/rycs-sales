@@ -3,6 +3,7 @@ import { MessageSquare, Plus, Send, AlertTriangle, RefreshCw } from "lucide-reac
 import { api } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import ModeloCodigoWhatsapp from "./ModeloCodigoWhatsapp.jsx";
+import MetricasWhatsapp from "./MetricasWhatsapp.jsx";
 
 const STATUS = {
   enviando: { txt: "Enviando", color: "var(--brand)" },
@@ -65,6 +66,8 @@ export default function DisparoWhatsapp({ aviso }) {
       )}
 
       <ModeloCodigoWhatsapp aviso={aviso} />
+
+      <MetricasWhatsapp m={info?.metricas} />
 
       {!info ? (
         <div className="vx-card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Carregando...</div>
@@ -144,7 +147,9 @@ function preencher(texto, tpl, variaveis) {
   return String(texto || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (m, ph) => {
     const v = variaveis[tpl.variaveis.indexOf(ph)];
     if (!v) return m;
-    return v.origem === "nome" ? "‹primeiro nome›" : (v.texto || m);
+    if (v.origem === "nome") return "‹primeiro nome›";
+    if (v.origem === "pendencias") return "‹o que falta no perfil›";
+    return v.texto || m;
   });
 }
 
@@ -178,6 +183,10 @@ function NovoDisparo({ aviso, publicos, onVoltar, onConcluir }) {
 
   const revisar = async () => {
     if (variaveis.some((v) => v.origem === "fixo" && !v.texto.trim())) return aviso("Preencha o texto das variáveis fixas.");
+    if (variaveis.some((v) => v.origem === "pendencias") && !publicos.find((p) => p.key === publico)?.pendencias) {
+      const nomes = publicos.filter((p) => p.pendencias).map((p) => p.label).join(", ");
+      return aviso(`A variável de pendências só funciona com o público ${nomes}.`);
+    }
     const r = await api("/admin/whatsapp/preview", { publico, template: tpl.nome });
     if (r?.error) return aviso(r.error);
     setPreview(r);
@@ -262,6 +271,7 @@ function NovoDisparo({ aviso, publicos, onVoltar, onConcluir }) {
                   <label className="vx-label" htmlFor={`wa-var-${i}`}>Variável {`{{${ph}}}`}</label>
                   <select id={`wa-var-${i}`} className="vx-input" value={variaveis[i].origem} onChange={(e) => mudarVar(i, "origem", e.target.value)} style={{ minHeight: 44 }}>
                     <option value="nome">Primeiro nome do vendedor</option>
+                    <option value="pendencias">O que falta no perfil de cada um</option>
                     <option value="fixo">Texto fixo</option>
                   </select>
                 </div>
