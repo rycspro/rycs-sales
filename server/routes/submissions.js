@@ -10,7 +10,7 @@ import { qualificarIndicacao } from "../services/indicacoes.js";
 import { reservarParaSubmissao, cancelarReserva, liquidarSubmissao, posicaoEmpresa } from "../services/financeiro.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { dadosAgendamentoCorrespondemAoLead } from "../../shared/agendamento.js";
-import { calcularValorTarefa } from "../../shared/valorTarefa.js";
+import { calcularValorTarefa, valoresDaLiberacao } from "../../shared/valorTarefa.js";
 import { avaliarRegras } from "../../shared/aprovacoes.js";
 import { registrarEventoAuditoria, registrarEvidencias, verificarTrilhaAuditoria, resumoEvidencias } from "../services/auditTrail.js";
 import { solicitar as solicitarAuditoria } from "../services/audit/index.js";
@@ -288,63 +288,131 @@ router.post("/submissions/:id/contestar", (req, res) => {
 // Liberar uma ação move dinheiro: debita o caixa da empresa, credita o
 // vendedor e registra o take rate. Tudo numa transação, no servidor — o
 // cliente não envia valores, apenas o id da ação.
+//
+// A conferência do status mora dentro da transação: é ela que impede que a
+// mesma ação seja creditada duas vezes, seja por clique repetido, seja por
+// liberação individual e em lote ao mesmo tempo.
+class ErroLiberacao extends Error {
+  constructor(status, message) { super(message); this.status = status; }
+}
+
+const STATUS_LIBERAVEIS = ["ia_aprovado", "conferido", "revisao"];
+
+const liberarSubmissao = db.transaction((submissionId, actorId) => {
+  const sub = db.prepare("SELECT * FROM submissions WHERE id = ?").get(submissionId);
+  if (!sub) throw new ErroLiberacao(404, "Ação não encontrada");
+  if (sub.status === "liberado") throw new ErroLiberacao(409, "Ação já liberada");
+  if (!STATUS_LIBERAVEIS.includes(sub.status))
+    throw new ErroLiberacao(400, "Ação não está pronta para liberação");
+
+  const empresa = db.prepare("SELECT saldo, assinatura FROM companies WHERE id = ?").get(sub.companyId);
+  if (!empresa) throw new ErroLiberacao(404, "Empresa não encontrada");
+
+  // O take rate vem do plano contratado — é o que torna a assinatura
+  // vantajosa para quem opera volume.
+  const { bruto, taxa, liquido, totalDebito } = valoresDaLiberacao(sub, empresa.assinatura);
+  if (bruto <= 0) throw new ErroLiberacao(400, "Valor da ação inválido");
+  const posicao = posicaoEmpresa(sub.companyId);
+  if (posicao.saldo < bruto || posicao.reservado < bruto)
+    throw new ErroLiberacao(400, "Reserva financeira da ação não está disponível");
+  if (posicao.saldo < totalDebito || posicao.reservado < totalDebito)
+    throw new ErroLiberacao(400, "Reserva financeira da ação e da taxa não está disponível");
+
+  const mudou = db.prepare(`UPDATE submissions SET status = 'liberado', liquido = ?
+    WHERE id = ? AND status IN (${STATUS_LIBERAVEIS.map(() => "?").join(",")})`)
+    .run(liquido, sub.id, ...STATUS_LIBERAVEIS).changes;
+  if (!mudou) throw new ErroLiberacao(409, "Ação já liberada");
+
+  liquidarSubmissao({ companyId: sub.companyId, sellerId: sub.sellerId, submissionId: sub.id, bruto, taxa, liquido, totalDebito });
+  db.prepare(`INSERT INTO platform_earnings (id, submissionId, companyId, sellerId, bruto, taxa, liquido, criadoEm)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(uid(), sub.id, sub.companyId, sub.sellerId, bruto, taxa, liquido, agora());
+  registrarEventoAuditoria({
+    submissionId: sub.id, tipo: "liberacao", actorId, actorRole: "admin",
+    statusAnterior: sub.status, statusNovo: "liberado",
+    motivoCodigo: "repasse_plataforma",
+    dados: { bruto, taxa, liquido, totalDebito },
+  });
+  if (sub.campaignId) {
+    registrarEventoCampanha({ companyId: sub.companyId, campaignId: sub.campaignId, tipo: "TASK_APPROVED", actorId, actorRole: "admin", sellerId: sub.sellerId, submissionId: sub.id, source: "USER", dados: { bruto, liquido } });
+    registrarEventoCampanha({ companyId: sub.companyId, campaignId: sub.campaignId, tipo: "PAYMENT_RELEASED", actorId, actorRole: "admin", sellerId: sub.sellerId, submissionId: sub.id, source: "SYSTEM", dados: { bruto, taxa, liquido, totalDebito } });
+  }
+  return { sub, bruto, taxa, liquido, totalDebito };
+});
+
+// Avisos e recálculos ficam fora da transação: só rodam depois que o
+// dinheiro já se moveu, e uma vez por profissional, não por tarefa.
+function aposLiberar({ sellerId, companyIds, liquido, quantidade, tipo }) {
+  const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sellerId);
+  const titulo = quantidade > 1 ? `${quantidade} ações aprovadas` : "Ação aprovada";
+  if (sellerUser) notificar(sellerUser.id, "submissao", titulo, `R$ ${liquido.toFixed(2)} liberados para saque.`);
+  const seller = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(sellerId);
+  if (seller) emailStatusAcao(seller.nome, seller.email, quantidade > 1 ? `${quantidade} tarefas` : tipo, "liberado");
+  recalcularScore(sellerId);
+  for (const companyId of companyIds) recalcularCompanyScore(companyId);
+  // Primeira ação aprovada é o gatilho da recompensa de quem indicou.
+  if (sellerUser) qualificarIndicacao(sellerUser.id);
+}
+
 router.post("/submissions/:id/liberar", (req, res) => {
   if (req.user.role !== "admin")
     return res.status(403).json({ error: "Apenas a plataforma pode liberar" });
 
-  const sub = db.prepare("SELECT * FROM submissions WHERE id = ?").get(req.params.id);
-  if (!sub) return res.status(404).json({ error: "Ação não encontrada" });
-  if (sub.status === "liberado") return res.status(409).json({ error: "Ação já liberada" });
-  if (!["ia_aprovado", "conferido", "revisao"].includes(sub.status))
-    return res.status(400).json({ error: "Ação não está pronta para liberação" });
-
-  const empresa = db.prepare("SELECT saldo, assinatura FROM companies WHERE id = ?").get(sub.companyId);
-  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
-
-  const bruto = +(sub.valor || 0).toFixed(2);
-  if (bruto <= 0) return res.status(400).json({ error: "Valor da ação inválido" });
-  const posicao = posicaoEmpresa(sub.companyId);
-  if (posicao.saldo < bruto || posicao.reservado < bruto)
-    return res.status(400).json({ error: "Reserva financeira da ação não está disponível" });
-
-  // O take rate vem do plano contratado — é o que torna a assinatura
-  // vantajosa para quem opera volume.
-  const novoModelo = sub.liquido != null;
-  const calculo = calcularValorTarefa(bruto, empresa.assinatura);
-  const taxa = novoModelo ? +(bruto - Number(sub.liquido)).toFixed(2) : calculo.taxa;
-  const liquido = novoModelo ? Number(sub.liquido) : bruto;
-  const totalDebito = novoModelo ? bruto : +(bruto + taxa).toFixed(2);
-  if (posicao.saldo < totalDebito || posicao.reservado < totalDebito)
-    return res.status(400).json({ error: "Reserva financeira da ação e da taxa não está disponível" });
-
-  db.transaction(() => {
-    db.prepare("UPDATE submissions SET status = 'liberado', liquido = ? WHERE id = ?").run(liquido, sub.id);
-    liquidarSubmissao({ companyId: sub.companyId, sellerId: sub.sellerId, submissionId: sub.id, bruto, taxa, liquido, totalDebito });
-    db.prepare(`INSERT INTO platform_earnings (id, submissionId, companyId, sellerId, bruto, taxa, liquido, criadoEm)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
-      .run(uid(), sub.id, sub.companyId, sub.sellerId, bruto, taxa, liquido, agora());
-    registrarEventoAuditoria({
-      submissionId: sub.id, tipo: "liberacao", actorId: req.user.id, actorRole: "admin",
-      statusAnterior: sub.status, statusNovo: "liberado",
-      motivoCodigo: "repasse_plataforma",
-      dados: { bruto, taxa, liquido, totalDebito },
-    });
-    if (sub.campaignId) {
-      registrarEventoCampanha({ companyId: sub.companyId, campaignId: sub.campaignId, tipo: "TASK_APPROVED", actorId: req.user.id, actorRole: "admin", sellerId: sub.sellerId, submissionId: sub.id, source: "USER", dados: { bruto, liquido } });
-      registrarEventoCampanha({ companyId: sub.companyId, campaignId: sub.campaignId, tipo: "PAYMENT_RELEASED", actorId: req.user.id, actorRole: "admin", sellerId: sub.sellerId, submissionId: sub.id, source: "SYSTEM", dados: { bruto, taxa, liquido, totalDebito } });
-    }
-  })();
-
-  const sellerUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sub.sellerId);
-  if (sellerUser) notificar(sellerUser.id, "submissao", "Ação aprovada", `R$ ${liquido.toFixed(2)} liberados para saque.`);
-  const seller = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(sub.sellerId);
-  if (seller) emailStatusAcao(seller.nome, seller.email, sub.tipo, "liberado");
-  recalcularScore(sub.sellerId);
-  recalcularCompanyScore(sub.companyId);
-  // Primeira ação aprovada é o gatilho da recompensa de quem indicou.
-  if (sellerUser) qualificarIndicacao(sellerUser.id);
-
+  let r;
+  try { r = liberarSubmissao(req.params.id, req.user.id); }
+  catch (err) {
+    if (err instanceof ErroLiberacao) return res.status(err.status).json({ error: err.message });
+    throw err;
+  }
+  const { sub, bruto, taxa, liquido, totalDebito } = r;
+  aposLiberar({ sellerId: sub.sellerId, companyIds: [sub.companyId], liquido, quantidade: 1, tipo: sub.tipo });
   res.json({ ok: true, bruto, taxa, liquido, totalDebito });
+});
+
+// Libera de uma vez as tarefas confirmadas de um profissional. Tudo ou nada:
+// se uma delas não puder ser liberada, nenhuma é. Tarefas que já estavam
+// liberadas são puladas sem crédito, então repetir o pedido não paga de novo.
+router.post("/submissions/liberar-lote", (req, res) => {
+  if (req.user.role !== "admin")
+    return res.status(403).json({ error: "Apenas a plataforma pode liberar" });
+
+  const { sellerId, ids } = req.body || {};
+  if (!sellerId || !Array.isArray(ids) || !ids.length)
+    return res.status(400).json({ error: "Informe o profissional e as tarefas" });
+  const unicos = [...new Set(ids.map(String))];
+  if (unicos.length > 500) return res.status(400).json({ error: "Lote grande demais (máximo de 500 tarefas)" });
+
+  let resultado;
+  try {
+    resultado = db.transaction(() => {
+      const feitas = [];
+      let jaLiberadas = 0;
+      for (const id of unicos) {
+        const sub = db.prepare("SELECT id, sellerId, status FROM submissions WHERE id = ?").get(id);
+        if (!sub) throw new ErroLiberacao(404, "Ação não encontrada");
+        if (sub.sellerId !== sellerId) throw new ErroLiberacao(400, "Há tarefas de outro profissional no lote");
+        if (sub.status === "liberado") { jaLiberadas++; continue; }
+        feitas.push(liberarSubmissao(id, req.user.id));
+      }
+      return { feitas, jaLiberadas };
+    })();
+  } catch (err) {
+    if (err instanceof ErroLiberacao) return res.status(err.status).json({ error: err.message });
+    throw err;
+  }
+
+  const soma = (campo) => Math.round(resultado.feitas.reduce((t, f) => t + f[campo], 0) * 100) / 100;
+  const total = { bruto: soma("bruto"), taxa: soma("taxa"), liquido: soma("liquido"), totalDebito: soma("totalDebito") };
+  if (resultado.feitas.length) {
+    aposLiberar({
+      sellerId,
+      companyIds: [...new Set(resultado.feitas.map((f) => f.sub.companyId))],
+      liquido: total.liquido,
+      quantidade: resultado.feitas.length,
+      tipo: resultado.feitas[0].sub.tipo,
+    });
+  }
+  res.json({ ok: true, liberadas: resultado.feitas.length, jaLiberadas: resultado.jaLiberadas, ...total });
 });
 
 // Trilha de auditoria de uma ação: quem decidiu o quê, quando, com qual regra
