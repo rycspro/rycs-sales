@@ -1,5 +1,6 @@
 import { Router } from "express";
 import db from "../db.js";
+import { enderecoMidia } from "../../shared/midia.js";
 import { BETA_DEFAULT_BALANCE, ajustarSaldoBeta, isBetaEnvironment, resetBetaEnvironment } from "../services/betaEnvironment.js";
 import { avaliarProfissional, estadoGamificacao } from "../services/gamificacao.js";
 
@@ -25,8 +26,32 @@ function parseSeller(row) {
 // pode guardar a imagem em cache sem mostrar uma logo antiga.
 export function urlDaLogo(id, logo) {
   if (!logo || !String(logo).startsWith("data:")) return logo || "";
-  const versao = `${logo.length.toString(36)}${logo.slice(-10).replace(/[^A-Za-z0-9]/g, "")}`;
-  return `/api/companies/${id}/logo?v=${versao}`;
+  return enderecoMidia(`/api/companies/${id}/logo`, logo);
+}
+
+// Foto e vídeo de prova (ex.: foto da visita tirada na hora) ficam embutidos
+// na prova. O admin recebe todas as tarefas da plataforma, então isso fazia o
+// /state dele carregar dezenas de megabytes. Cada arquivo vira um endereço
+// que aponta para o mesmo lugar dentro da prova.
+export function provaSemArquivos(id, prova) {
+  const andar = (v, caminho) => {
+    if (typeof v === "string")
+      return v.startsWith("data:") ? enderecoMidia(`/api/submissions/${id}/midia`, v, { c: caminho.join(".") }) : v;
+    if (Array.isArray(v)) return v.map((x, i) => andar(x, [...caminho, i]));
+    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, andar(x, [...caminho, k])]));
+    return v;
+  };
+  return andar(prova, []);
+}
+
+// Mesmo caso para anexo de chat (até 5MB cada): o arquivo vai por endereço.
+export function mensagemSemArquivo(m) {
+  if (!m?.anexo || !m.anexo.includes("data:")) return m;
+  try {
+    const anexo = JSON.parse(m.anexo);
+    if (typeof anexo?.dados !== "string" || !anexo.dados.startsWith("data:")) return m;
+    return { ...m, anexo: JSON.stringify({ ...anexo, dados: enderecoMidia(`/api/messages/${m.id}/anexo`, anexo.dados) }) };
+  } catch { return m; }
 }
 
 function parseCompany(row, preloadedDims) {
@@ -45,7 +70,8 @@ function parseCompany(row, preloadedDims) {
 }
 
 function parseSub(row) {
-  return { ...row, prova: JSON.parse(row.prova || "{}"), arquivos: JSON.parse(row.arquivos || "[]") };
+  const prova = JSON.parse(row.prova || "{}");
+  return { ...row, prova: row.prova?.includes("data:") ? provaSemArquivos(row.id, prova) : prova, arquivos: JSON.parse(row.arquivos || "[]") };
 }
 
 function parseCampaign(row) {
@@ -174,7 +200,7 @@ export function getFullState() {
   const companies = db.prepare("SELECT * FROM companies").all().map((row) => parseCompany(row, dimsByCompany[row.id]));
   const submissions = db.prepare("SELECT * FROM submissions ORDER BY criadoEm DESC").all().map(parseSub);
   const withdrawals = db.prepare("SELECT * FROM withdrawals ORDER BY criadoEm DESC").all();
-  const messages = db.prepare("SELECT * FROM messages ORDER BY ts ASC").all();
+  const messages = db.prepare("SELECT * FROM messages ORDER BY ts ASC").all().map(mensagemSemArquivo);
   const campaigns = db.prepare("SELECT * FROM campaigns ORDER BY criadoEm DESC").all().map(parseCampaign);
   const leads = db.prepare("SELECT * FROM leads ORDER BY atualizadoEm DESC").all();
   const campaignApps = db.prepare("SELECT * FROM campaign_applications").all();
@@ -216,7 +242,7 @@ function getEmpresaState(entityId) {
     .map((a) => ({ sellerId: a.sellerId, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null }));
 
   // inclui também sellers que têm mensagens com esta empresa
-  const messages = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(meuId);
+  const messages = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(meuId).map(mensagemSemArquivo);
   messages.forEach((m) => { if (m.sellerId) idsCandidatos.add(m.sellerId); });
 
   const sellerIds = [...idsCandidatos];
@@ -263,7 +289,7 @@ function getVendedorState(entityId) {
 
   const submissions = db.prepare("SELECT * FROM submissions WHERE sellerId = ? ORDER BY criadoEm DESC").all(meuId).map(parseSub);
   const withdrawals = db.prepare("SELECT * FROM withdrawals WHERE sellerId = ? ORDER BY criadoEm DESC").all(meuId);
-  const messages = db.prepare("SELECT * FROM messages WHERE sellerId = ? ORDER BY ts ASC").all(meuId);
+  const messages = db.prepare("SELECT * FROM messages WHERE sellerId = ? ORDER BY ts ASC").all(meuId).map(mensagemSemArquivo);
   const leads = db.prepare("SELECT * FROM leads WHERE sellerId = ? ORDER BY atualizadoEm DESC").all(meuId);
 
   let campaigns = [];
