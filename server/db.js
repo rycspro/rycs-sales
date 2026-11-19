@@ -1052,6 +1052,9 @@ adicionarColuna("submissions", "reviewedBy", "TEXT");
 adicionarColuna("submissions", "reviewedEm", "INTEGER");
 adicionarColuna("submissions", "reviewChecklist", "TEXT DEFAULT '[]'");
 adicionarColuna("submissions", "statusCliente", "TEXT DEFAULT 'aguardando'");
+// Liberações feitas juntas pela tela Liberar compartilham o mesmo lote, para
+// o histórico mostrar cada clique como uma linha só.
+adicionarColuna("platform_earnings", "loteId", "TEXT");
 adicionarColuna("lead_events", "submissionId", "TEXT");
 adicionarColuna("course_progress", "quizScore", "INTEGER");
 adicionarColuna("course_progress", "quizAnswers", "TEXT DEFAULT '[]'");

@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { api } from "../../lib/api.js";
-import { money } from "../../lib/utils.js";
+import { money, dataCurta } from "../../lib/utils.js";
 import { valoresDaLiberacao } from "../../../shared/valorTarefa.js";
 import { Vazio } from "../ui.jsx";
 import CardEnvio from "../CardEnvio.jsx";
@@ -13,6 +13,13 @@ import CardEnvio from "../CardEnvio.jsx";
 export default function LiberarAdmin({ db, paraLiberar, aviso, recarregar }) {
   const [aberto, setAberto] = useState({});
   const [liberando, setLiberando] = useState(null);
+  const [historico, setHistorico] = useState(null);
+
+  const carregarHistorico = useCallback(async () => {
+    const r = await api("/admin/liberacoes?limite=50");
+    setHistorico(r?.error ? [] : r?.liberacoes || []);
+  }, []);
+  useEffect(() => { carregarHistorico(); }, [carregarHistorico]);
 
   const grupos = useMemo(() => {
     const porSeller = new Map();
@@ -43,7 +50,7 @@ export default function LiberarAdmin({ db, paraLiberar, aviso, recarregar }) {
     try {
       const r = await api("/submissions/liberar-lote", { sellerId: g.sellerId, ids: g.subs.map((x) => x.sub.id) });
       if (r?.error) return aviso(r.error);
-      await recarregar();
+      await Promise.all([recarregar(), carregarHistorico()]);
       aviso(r.liberadas
         ? `${money(r.liquido)} liberados para ${g.nome} (${r.liberadas} ${r.liberadas === 1 ? "tarefa" : "tarefas"}).`
         : "Essas tarefas já tinham sido liberadas. Nada foi creditado de novo.");
@@ -52,11 +59,11 @@ export default function LiberarAdmin({ db, paraLiberar, aviso, recarregar }) {
     }
   };
 
-  if (!grupos.length)
-    return <Vazio titulo="Nada para liberar" texto="Ações aprovadas pela IA ou conferidas pela empresa chegam aqui para o repasse final." />;
-
   return (
-    <div className="vx-grid">
+    <div className="vx-fade">
+      {!grupos.length
+        ? <Vazio titulo="Nada para liberar" texto="Ações aprovadas pela IA ou conferidas pela empresa chegam aqui para o repasse final." />
+        : <div className="vx-grid">
       {grupos.map((g) => {
         const qtd = g.subs.length;
         const expandido = !!aberto[g.sellerId];
@@ -107,6 +114,43 @@ export default function LiberarAdmin({ db, paraLiberar, aviso, recarregar }) {
           </div>
         );
       })}
+        </div>}
+
+      <Historico itens={historico} />
     </div>
+  );
+}
+
+// Cada liberação já feita, a mais recente primeiro. Os números vêm do
+// servidor (platform_earnings), não de conta feita na tela.
+function Historico({ itens }) {
+  return (
+    <section style={{ marginTop: 28 }} aria-labelledby="hist-liberacoes">
+      <h3 id="hist-liberacoes" style={{ fontSize: 15, margin: "0 0 4px" }}>Histórico de liberações</h3>
+      <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 12 }}>O que já foi liberado para saque, do mais recente para o mais antigo.</div>
+      {itens === null
+        ? <div className="vx-mut" style={{ fontSize: 13 }}>Carregando…</div>
+        : !itens.length
+          ? <div className="vx-mut" style={{ fontSize: 13 }}>Nenhuma liberação registrada ainda.</div>
+          : <div className="vx-card" style={{ padding: 0, overflow: "hidden" }}>
+            {itens.map((h, i) => (
+              <div key={h.id} className="vx-row" style={{ padding: "12px 16px", gap: 12, flexWrap: "wrap", borderTop: i ? "1px solid var(--border-strong)" : "none" }}>
+                <div style={{ minWidth: 0 }}>
+                  <b style={{ fontSize: 14 }}>{h.profissional}</b>
+                  <div className="vx-mut" style={{ fontSize: 12 }}>
+                    {h.quantidade} {h.quantidade === 1 ? "tarefa" : "tarefas"}
+                    {h.empresas.length ? ` · ${h.empresas.join(", ")}` : ""}
+                    {` · ${dataCurta(h.criadoEm)}`}
+                    {h.liberadoPor ? ` · por ${h.liberadoPor}` : ""}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", marginLeft: "auto" }}>
+                  <div className="vx-mono" style={{ fontSize: 14, color: "var(--brand)", fontWeight: 600 }}>{money(h.liquido)}</div>
+                  <div className="vx-mut vx-mono" style={{ fontSize: 11 }}>taxas {money(h.taxa)}</div>
+                </div>
+              </div>
+            ))}
+          </div>}
+    </section>
   );
 }

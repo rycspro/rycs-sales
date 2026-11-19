@@ -298,7 +298,7 @@ class ErroLiberacao extends Error {
 
 const STATUS_LIBERAVEIS = ["ia_aprovado", "conferido", "revisao"];
 
-const liberarSubmissao = db.transaction((submissionId, actorId) => {
+const liberarSubmissao = db.transaction((submissionId, actorId, loteId = null) => {
   const sub = db.prepare("SELECT * FROM submissions WHERE id = ?").get(submissionId);
   if (!sub) throw new ErroLiberacao(404, "Ação não encontrada");
   if (sub.status === "liberado") throw new ErroLiberacao(409, "Ação já liberada");
@@ -324,9 +324,9 @@ const liberarSubmissao = db.transaction((submissionId, actorId) => {
   if (!mudou) throw new ErroLiberacao(409, "Ação já liberada");
 
   liquidarSubmissao({ companyId: sub.companyId, sellerId: sub.sellerId, submissionId: sub.id, bruto, taxa, liquido, totalDebito });
-  db.prepare(`INSERT INTO platform_earnings (id, submissionId, companyId, sellerId, bruto, taxa, liquido, criadoEm)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
-    .run(uid(), sub.id, sub.companyId, sub.sellerId, bruto, taxa, liquido, agora());
+  db.prepare(`INSERT INTO platform_earnings (id, submissionId, companyId, sellerId, bruto, taxa, liquido, loteId, criadoEm)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(uid(), sub.id, sub.companyId, sub.sellerId, bruto, taxa, liquido, loteId, agora());
   registrarEventoAuditoria({
     submissionId: sub.id, tipo: "liberacao", actorId, actorRole: "admin",
     statusAnterior: sub.status, statusNovo: "liberado",
@@ -359,7 +359,7 @@ router.post("/submissions/:id/liberar", (req, res) => {
     return res.status(403).json({ error: "Apenas a plataforma pode liberar" });
 
   let r;
-  try { r = liberarSubmissao(req.params.id, req.user.id); }
+  try { r = liberarSubmissao(req.params.id, req.user.id, uid()); }
   catch (err) {
     if (err instanceof ErroLiberacao) return res.status(err.status).json({ error: err.message });
     throw err;
@@ -384,6 +384,7 @@ router.post("/submissions/liberar-lote", (req, res) => {
 
   let resultado;
   try {
+    const loteId = uid();
     resultado = db.transaction(() => {
       const feitas = [];
       let jaLiberadas = 0;
@@ -392,7 +393,7 @@ router.post("/submissions/liberar-lote", (req, res) => {
         if (!sub) throw new ErroLiberacao(404, "Ação não encontrada");
         if (sub.sellerId !== sellerId) throw new ErroLiberacao(400, "Há tarefas de outro profissional no lote");
         if (sub.status === "liberado") { jaLiberadas++; continue; }
-        feitas.push(liberarSubmissao(id, req.user.id));
+        feitas.push(liberarSubmissao(id, req.user.id, loteId));
       }
       return { feitas, jaLiberadas };
     })();
@@ -413,6 +414,56 @@ router.post("/submissions/liberar-lote", (req, res) => {
     });
   }
   res.json({ ok: true, liberadas: resultado.feitas.length, jaLiberadas: resultado.jaLiberadas, ...total });
+});
+
+// Histórico da tela Liberar: cada clique vira uma linha, com profissional,
+// quantidade, valores e quem liberou. Sai de platform_earnings, que já guarda
+// uma linha por tarefa liberada. Liberações de antes do lote existir (sem
+// loteId) são agrupadas por profissional quando saíram com menos de um minuto
+// de diferença.
+router.get("/admin/liberacoes", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+  const limite = Math.min(200, Math.max(1, Number(req.query.limite) || 50));
+
+  const linhas = db.prepare(`
+    SELECT pe.submissionId, pe.sellerId, pe.companyId, pe.bruto, pe.taxa, pe.liquido, pe.loteId, pe.criadoEm,
+           v.nome AS profissional, c.nome AS empresa,
+           (SELECT u.email FROM submission_events ev LEFT JOIN users u ON u.id = ev.atorId
+             WHERE ev.submissionId = pe.submissionId AND ev.tipo = 'liberacao'
+             ORDER BY ev.criadoEm DESC LIMIT 1) AS liberadoPor
+    FROM platform_earnings pe
+    LEFT JOIN sellers v ON v.id = pe.sellerId
+    LEFT JOIN companies c ON c.id = pe.companyId
+    ORDER BY pe.criadoEm DESC
+    LIMIT 3000
+  `).all();
+
+  const grupos = [];
+  const porLote = new Map();
+  let anterior = null;
+  for (const l of linhas) {
+    let g = l.loteId ? porLote.get(l.loteId) : null;
+    if (!g && !l.loteId && anterior && !anterior.loteId && anterior.sellerId === l.sellerId && anterior.ultimo - l.criadoEm < 60_000) g = anterior;
+    if (!g) {
+      g = { id: l.loteId || `avulso:${l.submissionId}`, loteId: l.loteId, sellerId: l.sellerId, profissional: l.profissional || "Profissional",
+        empresas: new Set(), quantidade: 0, bruto: 0, taxa: 0, liquido: 0, criadoEm: l.criadoEm, ultimo: l.criadoEm, liberadoPor: l.liberadoPor || null };
+      grupos.push(g);
+      if (l.loteId) porLote.set(l.loteId, g);
+    }
+    g.quantidade++;
+    g.bruto += l.bruto; g.taxa += l.taxa; g.liquido += l.liquido;
+    if (l.empresa) g.empresas.add(l.empresa);
+    g.ultimo = Math.min(g.ultimo, l.criadoEm);
+    if (!g.liberadoPor && l.liberadoPor) g.liberadoPor = l.liberadoPor;
+    anterior = g;
+  }
+
+  const r2 = (v) => Math.round(v * 100) / 100;
+  res.json({
+    liberacoes: grupos.slice(0, limite).map(({ empresas, ultimo, ...g }) => ({
+      ...g, empresas: [...empresas], bruto: r2(g.bruto), taxa: r2(g.taxa), liquido: r2(g.liquido),
+    })),
+  });
 });
 
 // Trilha de auditoria de uma ação: quem decidiu o quê, quando, com qual regra

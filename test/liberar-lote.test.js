@@ -100,3 +100,38 @@ test("lote: tarefa já liberada é pulada, e lote inválido não libera nada", a
   assert.equal(disponivel(db, "s1"), 8);
   assert.equal(ganhos(db), 2);
 });
+
+test("histórico: cada lote vira uma linha, com quem liberou; antigos sem lote se agrupam", async (t) => {
+  const { base, dbPath } = await subirServidor(t);
+  const { db, criar } = preparar(dbPath);
+  t.after(() => db.close());
+  db.prepare("INSERT INTO users (id, email, senha, role, entityId, criadoEm) VALUES ('u-admin', 'admin@teste.dev', 'x', 'admin', 'admin', ?)").run(Date.now());
+  const req = cliente(base);
+
+  // Liberações de antes do lote existir: sem loteId, mesmo profissional, segundos de diferença.
+  const t0 = Date.now() - 86_400_000;
+  for (const [i, dt] of [[1, 0], [2, 5_000], [3, 9_000]])
+    db.prepare("INSERT INTO platform_earnings (id, submissionId, companyId, sellerId, bruto, taxa, liquido, criadoEm) VALUES (?, ?, 'e1', 's2', 5, 1, 4, ?)").run(`pe${i}`, `antiga${i}`, t0 + dt);
+
+  ["h1", "h2", "h3"].forEach((id) => criar(id, "s1"));
+  assert.equal((await req("/submissions/liberar-lote", { cookie: admin, body: { sellerId: "s1", ids: ["h1", "h2", "h3"] } })).status, 200);
+  // Repetir não cria linha nova no histórico.
+  await req("/submissions/liberar-lote", { cookie: admin, body: { sellerId: "s1", ids: ["h1", "h2", "h3"] } });
+
+  const vend = assinar({ id: "u-s1", role: "vendedor", entityId: "s1" });
+  assert.equal((await req("/admin/liberacoes", { cookie: vend })).status, 403);
+
+  const r = await req("/admin/liberacoes", { cookie: admin });
+  assert.equal(r.status, 200);
+  const [lote, antigo] = r.corpo.liberacoes;
+  assert.equal(r.corpo.liberacoes.length, 2);
+  assert.equal(lote.profissional, "Ana");
+  assert.equal(lote.quantidade, 3);
+  assert.equal(lote.liquido, 12);
+  assert.equal(lote.taxa, 3);
+  assert.equal(lote.liberadoPor, "admin@teste.dev");
+  assert.deepEqual(lote.empresas, ["Emp"]);
+  assert.equal(antigo.profissional, "Bruno");
+  assert.equal(antigo.quantidade, 3);
+  assert.equal(antigo.liquido, 12);
+});
