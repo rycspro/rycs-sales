@@ -4,6 +4,11 @@ import { api } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import ModeloCodigoWhatsapp from "./ModeloCodigoWhatsapp.jsx";
 import MetricasWhatsapp from "./MetricasWhatsapp.jsx";
+import MensagensWhatsapp from "./MensagensWhatsapp.jsx";
+import CustosWhatsapp from "./CustosWhatsapp.jsx";
+import ContaWhatsapp from "./ContaWhatsapp.jsx";
+
+const ABAS = [["disparos", "Disparos e desempenho"], ["mensagens", "Mensagens enviadas"], ["custos", "Custos e cliques"], ["conta", "Conta e configurações"]];
 
 const STATUS = {
   enviando: { txt: "Enviando", color: "var(--brand)" },
@@ -14,6 +19,7 @@ const STATUS = {
 
 export default function DisparoWhatsapp({ aviso }) {
   const [tela, setTela] = useState("lista");
+  const [aba, setAba] = useState("disparos");
   const [info, setInfo] = useState(null);
 
   const carregar = useCallback(() => api("/admin/whatsapp").then((r) => { if (r && !r.error) setInfo(r); }), []);
@@ -22,10 +28,10 @@ export default function DisparoWhatsapp({ aviso }) {
   // Enquanto houver disparo em andamento, atualiza os números sozinho.
   const andamento = info?.disparos?.some((d) => d.status === "enviando");
   useEffect(() => {
-    if (!andamento || tela !== "lista") return;
+    if (!andamento || tela !== "lista" || aba !== "disparos") return;
     const t = setInterval(carregar, 5000);
     return () => clearInterval(t);
-  }, [andamento, tela, carregar]);
+  }, [andamento, tela, aba, carregar]);
 
   if (tela === "novo") {
     return <NovoDisparo aviso={aviso} publicos={info?.publicos || []} onVoltar={() => setTela("lista")} onConcluir={() => { setTela("lista"); carregar(); }} />;
@@ -65,6 +71,15 @@ export default function DisparoWhatsapp({ aviso }) {
         </div>
       )}
 
+      <div className="vx-seg vx-subnav" style={{ marginBottom: 16 }}>
+        {ABAS.map(([k, l]) => <button key={k} type="button" data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>{l}</button>)}
+      </div>
+
+      {aba === "mensagens" && <MensagensWhatsapp aviso={aviso} disparos={info?.disparos || []} />}
+      {aba === "custos" && <CustosWhatsapp aviso={aviso} />}
+      {aba === "conta" && <ContaWhatsapp aviso={aviso} />}
+
+      {aba === "disparos" && <>
       <ModeloCodigoWhatsapp aviso={aviso} />
 
       <MetricasWhatsapp m={info?.metricas} />
@@ -80,6 +95,7 @@ export default function DisparoWhatsapp({ aviso }) {
       ) : (
         <Historico disparos={info.disparos} aviso={aviso} />
       )}
+      </>}
     </div>
   );
 }

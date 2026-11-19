@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as wa from "../services/whatsappDisparo.js";
-import { metricasWhatsapp } from "../services/whatsappMetricas.js";
+import { metricasWhatsapp, detalheMensagens } from "../services/whatsappMetricas.js";
+import * as conta from "../services/whatsappConta.js";
 
 const router = Router();
 
@@ -96,6 +97,42 @@ router.post("/admin/whatsapp/disparar", requireAdmin, exigirConfig, async (req, 
   } catch (e) {
     if (e?.codigo !== undefined || e?.status) return erroMeta(res, e);
     res.status(400).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/whatsapp/mensagens — cada mensagem enviada, em detalhe
+router.get("/admin/whatsapp/mensagens", requireAdmin, (req, res) => {
+  res.json(detalheMensagens({ disparoId: String(req.query.disparo || ""), busca: String(req.query.busca || ""), limite: req.query.limite }));
+});
+
+// GET /api/admin/whatsapp/conta — número, conta, perfil, modelos, apps e links da Meta
+router.get("/admin/whatsapp/conta", requireAdmin, exigirConfig, async (req, res) => {
+  const [base, modelos] = await Promise.all([conta.contaWhatsapp(), conta.tentar(conta.modelosMeta)]);
+  res.json({ ...base, modelos, freios: freios() });
+});
+
+// GET /api/admin/whatsapp/custos?dias=30 — custos por categoria e desempenho por modelo
+router.get("/admin/whatsapp/custos", requireAdmin, exigirConfig, async (req, res) => {
+  const dias = [7, 30, 90].includes(Number(req.query.dias)) ? Number(req.query.dias) : 30;
+  const [custos, cobranca, modelos] = await Promise.all([
+    conta.tentar(() => conta.custosWhatsapp(dias)), conta.tentar(conta.cobrancaWhatsapp), conta.tentar(conta.modelosMeta),
+  ]);
+  const estatisticas = req.query.estatisticas === "0" ? null
+    : modelos.ok ? await conta.tentar(() => conta.estatisticasModelos(dias, modelos.dados.filter((m) => m.status === "APPROVED")))
+      : { ok: false, erro: modelos.erro };
+  res.json({ dias, custos, cobranca, estatisticas, links: conta.linksMeta() });
+});
+
+// POST /api/admin/whatsapp/estatisticas/ligar — liga as estatísticas de modelos na Meta
+router.post("/admin/whatsapp/estatisticas/ligar", requireAdmin, exigirConfig, async (req, res) => {
+  try { res.json(await conta.ligarEstatisticas()); } catch (e) { erroMeta(res, e); }
+});
+
+// POST /api/admin/whatsapp/perfil — atualiza o perfil público do número
+router.post("/admin/whatsapp/perfil", requireAdmin, exigirConfig, async (req, res) => {
+  try { res.json(await conta.salvarPerfil(req.body || {})); } catch (e) {
+    if (e?.validacao) return res.status(400).json({ error: e.message });
+    erroMeta(res, e);
   }
 });
 

@@ -7,6 +7,7 @@
 
 import db from "../db.js";
 import { pedidoDeSaida, variacoes, bloqueioRecente } from "./whatsappDisparo.js";
+import { MODELOS_WHATSAPP as MODELOS_REATIVACAO } from "../../shared/reativacaoEmpresas.js";
 
 const taxa = (parte, todo) => (todo > 0 ? Math.round((parte / todo) * 1000) / 10 : null);
 const JANELA_RESPOSTA_MS = 3 * 24 * 60 * 60 * 1000;
@@ -129,4 +130,95 @@ export function metricasWhatsapp() {
     bloqueioRecente: bloqueioRecente(),
     errosMaisComuns: [...erros].map(([erro, n]) => ({ erro, n })).sort((a, b) => b.n - a.n).slice(0, 5),
   };
+}
+
+// ── Cada mensagem, em detalhe ─────────────────────────────────────────────
+// O texto exato que saiu (modelo + valores das variáveis), o caminho na Meta
+// (enviada, entregue, lida, falhou), se a Meta cobrou e em que categoria, e o
+// que a pessoa respondeu depois.
+
+const preencher = (texto, nomes, valores) => String(texto || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (m, ph) => {
+  const v = valores[nomes.indexOf(ph)];
+  return v == null || v === "" ? m : String(v);
+});
+
+// Valores das variáveis: os registrados no envio ou, em envio antigo, o que dá
+// para refazer (nome e texto fixo). Pendências antigas não foram guardadas.
+function valoresDoEnvio(e, variaveis) {
+  try { const p = JSON.parse(e.parametros || "null"); if (Array.isArray(p)) return p; } catch { /* envio antigo */ }
+  return variaveis.map((v) => (v?.origem === "nome" ? e.nome : v?.origem === "fixo" ? v.texto : null));
+}
+
+const sqlAvisos = db.prepare(`SELECT status, COALESCE(ocorreuEm, recebidoEm) AS em, erro,
+    json_extract(dados, '$.pricing.billable') AS cobrada, json_extract(dados, '$.pricing.category') AS categoria,
+    json_extract(dados, '$.pricing.type') AS tipo
+  FROM whatsapp_status WHERE wamid = ? ORDER BY em`);
+
+function caminhoNaMeta(wamid) {
+  if (!wamid) return { avisos: [], cobranca: null };
+  const avisos = sqlAvisos.all(wamid);
+  const comPreco = avisos.find((a) => a.cobrada != null || a.categoria);
+  return {
+    avisos: avisos.map((a) => ({ status: a.status, em: a.em, erro: a.erro || "" })),
+    cobranca: comPreco ? { cobrada: comPreco.cobrada == null ? null : !!comPreco.cobrada, categoria: comPreco.categoria || "", tipo: comPreco.tipo || "" } : null,
+  };
+}
+
+function respostasA(numero, wamid, enviadoEm) {
+  if (!numero || !enviadoEm) return [];
+  const vs = variacoes(String(numero));
+  return db.prepare(`SELECT tipo, texto, respondendoA, COALESCE(enviadoEm, recebidoEm) AS em, json_extract(dados, '$.button.payload') AS payload
+      FROM whatsapp_mensagens WHERE de IN (${vs.map(() => "?").join(",")}) AND COALESCE(enviadoEm, recebidoEm) >= ?
+      ORDER BY em LIMIT 20`).all(...vs, enviadoEm)
+    .filter((r) => (wamid && r.respondendoA === wamid) || r.em <= enviadoEm + JANELA_RESPOSTA_MS)
+    .slice(0, 5)
+    .map((r) => ({ tipo: r.tipo, texto: r.texto || "", em: r.em, saida: pedidoDeSaida(r) }));
+}
+
+export function detalheMensagens({ disparoId = "", busca = "", limite = 100 } = {}) {
+  const lim = Math.min(Math.max(Math.trunc(Number(limite)) || 100, 1), 500);
+  const like = `%${String(busca || "").trim()}%`;
+  const doAdmin = db.prepare(`SELECT e.id, e.disparoId, e.nome, e.numero, e.wamid, e.status, e.erro, e.enviadoEm, e.parametros,
+      d.template, d.idioma, d.templateDados, d.variaveis, d.publico, d.criadoEm
+    FROM whatsapp_envios e JOIN whatsapp_disparos d ON d.id = e.disparoId
+    WHERE (? = '' OR e.disparoId = ?) AND (e.nome LIKE ? OR e.numero LIKE ?)
+    ORDER BY COALESCE(e.enviadoEm, d.criadoEm) DESC, e.rowid DESC LIMIT ?`).all(disparoId, disparoId, like, like, lim)
+    .map((e) => {
+      let tpl = {};
+      let variaveis = [];
+      try { tpl = JSON.parse(e.templateDados || "{}"); variaveis = JSON.parse(e.variaveis || "[]"); } catch { /* registro antigo */ }
+      const valores = valoresDoEnvio(e, variaveis);
+      const nomes = tpl.variaveis || [];
+      return {
+        id: e.id, origem: "Disparo do admin", disparoId: e.disparoId, publico: e.publico, modelo: e.template, idioma: e.idioma,
+        nome: e.nome, numero: e.numero, wamid: e.wamid, status: e.status, erro: e.erro, enviadoEm: e.enviadoEm || null,
+        mensagem: {
+          cabecalho: tpl.cabecalho || "", corpo: preencher(tpl.corpo, nomes, valores), rodape: tpl.rodape || "",
+          botoes: tpl.botoes || [], completa: nomes.every((_, i) => valores[i] != null && valores[i] !== ""),
+        },
+        ...caminhoNaMeta(e.wamid),
+        respostas: respostasA(e.numero, e.wamid, e.enviadoEm),
+      };
+    });
+
+  let daReativacao = [];
+  if (!disparoId && existe("reativacao_whatsapp")) {
+    daReativacao = db.prepare(`SELECT w.id, w.dia, w.modelo, w.numero, w.wamid, w.status, w.erro, w.enviadoEm, COALESCE(c.nome, '') AS nome
+        FROM reativacao_whatsapp w LEFT JOIN companies c ON c.id = w.companyId
+        WHERE w.status IN ('enviado', 'falhou') AND (COALESCE(c.nome, '') LIKE ? OR w.numero LIKE ?)
+        ORDER BY w.enviadoEm DESC LIMIT ?`).all(like, like, lim)
+      .map((w) => {
+        const m = MODELOS_REATIVACAO[w.dia] || {};
+        return {
+          id: w.id, origem: "Reativação de empresas", disparoId: "", publico: "Empresas paradas", modelo: w.modelo, idioma: "pt_BR",
+          nome: w.nome, numero: w.numero, wamid: w.wamid, status: w.status, erro: w.erro, enviadoEm: w.enviadoEm || null,
+          // As variáveis da reativação não ficam registradas: o texto vai como está no modelo.
+          mensagem: { cabecalho: "", corpo: m.corpo || "", rodape: "", botoes: (m.botoes || []).map((b) => ({ tipo: b.tipo, texto: b.texto })), completa: false },
+          ...caminhoNaMeta(w.wamid),
+          respostas: respostasA(w.numero, w.wamid, w.enviadoEm),
+        };
+      });
+  }
+
+  return [...doAdmin, ...daReativacao].sort((a, b) => (b.enviadoEm || 0) - (a.enviadoEm || 0)).slice(0, lim);
 }

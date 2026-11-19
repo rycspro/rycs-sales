@@ -54,6 +54,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_whatsapp_envios_disparo ON whatsapp_envios(disparoId, status);
   CREATE INDEX IF NOT EXISTS idx_whatsapp_envios_wamid ON whatsapp_envios(wamid);
 `);
+// Valores exatos das variáveis de cada envio, para o admin ver a mensagem como saiu.
+if (!db.prepare("PRAGMA table_info(whatsapp_envios)").all().some((c) => c.name === "parametros"))
+  db.exec("ALTER TABLE whatsapp_envios ADD COLUMN parametros TEXT DEFAULT ''");
 
 // ── Números ───────────────────────────────────────────────────────────
 
@@ -362,6 +365,7 @@ export async function processarDisparo(id, { pausaMs = 250, relogio = Date.now }
     const variaveis = JSON.parse(disp.variaveis || "[]");
     const comPendencias = usaPendencias(variaveis);
     const marcar = db.prepare("UPDATE whatsapp_envios SET status = ?, wamid = ?, erro = ?, enviadoEm = ? WHERE id = ?");
+    const guardarParametros = db.prepare("UPDATE whatsapp_envios SET parametros = ? WHERE id = ?");
     const fila = db.prepare("SELECT * FROM whatsapp_envios WHERE disparoId = ? AND status = 'fila' ORDER BY rowid").all(id);
     let fatal = freio(id, relogio());
     let tentados = 0;
@@ -380,6 +384,7 @@ export async function processarDisparo(id, { pausaMs = 250, relogio = Date.now }
         if (!pendencias) { marcar.run("falhou", "", "Perfil completo antes do envio", agora(), e.id); continue; }
       }
       const componentes = montarComponentes(tpl, variaveis, e.nome, pendencias);
+      guardarParametros.run(JSON.stringify((componentes[0]?.parameters || []).map((p) => p.text)), e.id);
       if (componentes[0]?.parameters.some((p) => !p.text)) { marcar.run("falhou", "", "Vendedor sem nome cadastrado", agora(), e.id); continue; }
       for (let tentativa = 1; ; tentativa++) {
         try {
