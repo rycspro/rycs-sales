@@ -1258,6 +1258,10 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_idempotency
     ON submissions(sellerId, idempotencyKey) WHERE idempotencyKey IS NOT NULL;
   CREATE INDEX IF NOT EXISTS idx_submissions_lead ON submissions(leadId);
+  -- Contagens por profissional e status (gamificação, painel) sem tocar na
+  -- tabela: status e criadoEm ficam gravados depois da prova, que pode ter
+  -- fotos de MBs, e ler esses campos pela tabela percorria a foto inteira.
+  CREATE INDEX IF NOT EXISTS idx_submissions_seller_status ON submissions(sellerId, status, criadoEm, id, valor, liquido);
   CREATE INDEX IF NOT EXISTS idx_submission_evidence_submission ON submission_evidence(submissionId);
   CREATE INDEX IF NOT EXISTS idx_submission_events_submission ON submission_events(submissionId, sequencia);
   CREATE UNIQUE INDEX IF NOT EXISTS idx_lead_events_submission
