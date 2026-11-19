@@ -413,9 +413,15 @@ router.post("/admin/withdrawals/:id/estornar", authMiddleware, async (req, res) 
 // saque registrado aqui, com o mesmo valor. Uma chave de API vazada não
 // consegue tirar dinheiro: o Pix dela não tem saque correspondente.
 // ---------------------------------------------------------------------------
+//
+// O token é opcional aqui (o Asaas também o trata como opcional nesta tela, e
+// não mostra o token já salvo do webhook para ser copiado). Esta rota não move
+// dinheiro nem grava nada: só responde se a transferência corresponde a um
+// saque nosso, então uma chamada forjada não ganha nada. Se vier um token,
+// ele precisa ser o certo.
 router.post("/payments/validar-saque", (req, res) => {
   const token = req.headers["asaas-access-token"];
-  if (!process.env.ASAAS_WEBHOOK_TOKEN || token !== process.env.ASAAS_WEBHOOK_TOKEN)
+  if (token && token !== process.env.ASAAS_WEBHOOK_TOKEN)
     return res.status(401).json({ error: "Token inválido" });
 
   const { type, transfer } = req.body || {};
