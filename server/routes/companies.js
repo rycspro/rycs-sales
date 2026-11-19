@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { enviarDataUri } from "../services/midia.js";
 import db, { uid, agora } from "../db.js";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
@@ -450,19 +451,7 @@ router.patch("/company/approval-rules", (req, res) => {
 // versão (?v=), então o cache pode ser longo.
 router.get("/companies/:id/logo", (req, res) => {
   const row = db.prepare("SELECT logo FROM companies WHERE id = ?").get(req.params.id);
-  const match = String(row?.logo || "").match(/^data:([^;,]+);base64,(.+)$/);
-  if (!match) return res.status(404).end();
-  const buf = Buffer.from(match[2], "base64");
-  res.set({
-    "Content-Type": match[1],
-    "Cache-Control": req.query.v ? "private, max-age=31536000, immutable" : "private, max-age=300",
-    "Content-Length": buf.length,
-    // SVG servido do nosso domínio: sem isto, abrir a imagem direto rodaria
-    // qualquer script embutido nela.
-    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
-    "X-Content-Type-Options": "nosniff",
-  });
-  res.end(buf);
+  enviarDataUri(req, res, row?.logo);
 });
 
 router.post("/companies/:id/logo", (req, res) => {

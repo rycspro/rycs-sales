@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { tipoMidia } from "../../../shared/midia.js";
 import { RefreshCw, Filter, Eye, X, CheckSquare, Square, Minus, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { Vazio, Medidor } from "../ui.jsx";
 import { money, dataCurta } from "../../lib/utils.js";
@@ -241,8 +242,8 @@ function ModalDetalhes({ sub, seller, camp, emp, setAba, onFechar }) {
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", marginBottom: 10 }}>Evidências</div>
               {evidencias.map((ev, i) => {
                 const val = String(ev.valor || "");
-                const isImg = val.startsWith("data:image");
-                const isVid = val.startsWith("data:video");
+                const isImg = tipoMidia(val) === "image";
+                const isVid = tipoMidia(val) === "video";
                 const isLink = /^https?:\/\//i.test(val);
                 return (
                   <div key={i} style={{ marginBottom: 12 }}>

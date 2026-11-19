@@ -1,6 +1,8 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { empresaLiberada } from "../services/acessoEmpresa.js";
+import { enviarDataUri } from "../services/midia.js";
+import { mensagemSemArquivo } from "./state.js";
 
 const router = Router();
 
@@ -28,7 +30,20 @@ router.get("/messages", (req, res) => {
   } else {
     rows = [];
   }
-  res.json(rows);
+  res.json(rows.map(mensagemSemArquivo));
+});
+
+// Anexo de chat que o /state e o GET /messages entregam como endereço. Só
+// quem está na conversa (e o admin) pode abrir.
+router.get("/messages/:id/anexo", (req, res) => {
+  const m = db.prepare("SELECT companyId, sellerId, anexo FROM messages WHERE id = ?").get(req.params.id);
+  if (!m) return res.status(404).end();
+  const { role, entityId } = req.user;
+  const pode = role === "admin" || (role === "empresa" && entityId === m.companyId) || (role === "vendedor" && entityId === m.sellerId);
+  if (!pode) return res.status(403).end();
+  let dados = null;
+  try { dados = JSON.parse(m.anexo || "{}")?.dados; } catch { dados = null; }
+  enviarDataUri(req, res, dados);
 });
 
 router.post("/messages", (req, res) => {

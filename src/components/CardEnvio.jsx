@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { tipoMidia } from "../../shared/midia.js";
 import { ChevronDown } from "lucide-react";
 import { ACOES, CAMPOS, STATUS, MOTIVO_COR } from "../lib/constants.js";
 import { money, dataCurta } from "../lib/utils.js";
@@ -82,8 +83,8 @@ export default function CardEnvio({ sub, db, extra }) {
               <div style={{ fontWeight: 700, fontSize: 11, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-3)" }}>Evidências</div>
               {sub.prova.evidencias.map((ev, i) => {
                 const val = String(ev.valor || "");
-                const isDataImg = val.startsWith("data:image");
-                const isDataVid = val.startsWith("data:video");
+                const isDataImg = tipoMidia(val) === "image";
+                const isDataVid = tipoMidia(val) === "video";
                 const isLink = /^https?:\/\//i.test(val);
                 return (
                   <div key={i} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)" }}>

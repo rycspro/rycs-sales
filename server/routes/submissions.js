@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { enviarDataUri } from "../services/midia.js";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { recalcularScore } from "../services/score.js";
@@ -414,6 +415,20 @@ router.post("/submissions/liberar-lote", (req, res) => {
     });
   }
   res.json({ ok: true, liberadas: resultado.feitas.length, jaLiberadas: resultado.jaLiberadas, ...total });
+});
+
+// Arquivo de prova (foto/vídeo) que o /state entrega como endereço. Pode ver
+// quem pode ver a tarefa: o admin, a empresa dona e o profissional que enviou.
+router.get("/submissions/:id/midia", (req, res) => {
+  const sub = db.prepare("SELECT sellerId, companyId, prova FROM submissions WHERE id = ?").get(req.params.id);
+  if (!sub) return res.status(404).end();
+  const { role, entityId } = req.user;
+  const pode = role === "admin" || (role === "empresa" && entityId === sub.companyId) || (role === "vendedor" && entityId === sub.sellerId);
+  if (!pode) return res.status(403).end();
+  let valor;
+  try { valor = String(req.query.c || "").split(".").reduce((o, k) => (o == null ? o : o[k]), JSON.parse(sub.prova || "{}")); }
+  catch { valor = null; }
+  enviarDataUri(req, res, typeof valor === "string" ? valor : null);
 });
 
 // Histórico da tela Liberar: cada clique vira uma linha, com profissional,
