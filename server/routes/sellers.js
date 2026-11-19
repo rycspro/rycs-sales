@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { enviarDataUri } from "../services/midia.js";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
@@ -220,6 +221,16 @@ router.get("/sellers/:id/curriculo", (req, res) => {
 // Só o dono mexe no próprio currículo. PDF ou Word, até ~8MB (mesma regra do
 // cadastro em auth.js).
 const CURRICULO_TIPOS = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+
+// Vídeo de apresentação do profissional, que o /state entrega como endereço.
+// Mesma regra do currículo: empresa, admin e o próprio profissional.
+router.get("/sellers/:id/video-apresentacao", (req, res) => {
+  const papel = req.user?.role;
+  if (!["empresa", "admin"].includes(papel) && req.user?.entityId !== req.params.id)
+    return res.status(403).json({ error: "Sem permissão" });
+  const row = db.prepare("SELECT videoApresentacao FROM sellers WHERE id = ?").get(req.params.id);
+  enviarDataUri(req, res, row?.videoApresentacao);
+});
 
 router.post("/sellers/:id/curriculo", (req, res) => {
   if (req.user.role !== "vendedor" || req.user.entityId !== req.params.id)
