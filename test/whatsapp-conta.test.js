@@ -68,6 +68,16 @@ test("campo que a versão da API não tem não derruba a leitura do número", as
   const r = await conta.lerCampos("PN1", ["quality_rating", "messaging_limit_tier", "verified_name"]);
   assert.deepEqual(r, { quality_rating: "GREEN", verified_name: "v_verified_name" });
   assert.equal(chamadas.length, 4, "uma tentativa com todos e depois um por um");
+
+  // Campo que a Meta só libera para provedores (erro 10) também não derruba o resto.
+  responder = (u) => {
+    const campos = u.searchParams.get("fields").split(",");
+    if (campos.includes("primary_funding_id")) return { error: { code: 10, message: "requires Business Solution Provider" } };
+    return Object.fromEntries(campos.map((c) => [c, `v_${c}`]));
+  };
+  assert.deepEqual(await conta.lerCampos("WABA1", ["currency", "primary_funding_id"]), { currency: "v_currency" });
+  responder = () => ({ error: { code: 10, message: "sem permissão" } });
+  await assert.rejects(conta.lerCampos("WABA1", ["currency", "primary_funding_id"]), /sem permissão/, "se nada vier, mostra o erro da Meta");
 });
 
 test("custos e estatísticas pedem à Meta o período e os modelos certos", async () => {

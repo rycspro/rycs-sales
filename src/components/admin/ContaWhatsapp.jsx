@@ -23,17 +23,29 @@ function Linha({ rotulo, children }) {
   );
 }
 
+const ENTIDADE = { PHONE_NUMBER: "Número", WABA: "Conta do WhatsApp", BUSINESS: "Negócio", APP: "App" };
+// Erros de ligação (SIP) são do recurso de chamadas: não afetam o envio de mensagens.
+const deLigacao = (x) => /SIP|calling/i.test(`${x.error_description} ${x.possible_solution}`);
+
 function Saude({ h }) {
   if (!h) return "—";
-  const problemas = (h.entities || []).flatMap((e) => (e.errors || []).map((x) => ({ ...x, tipo: e.entity_type })));
+  const ents = h.entities || [];
+  const motivos = ents.flatMap((e) => (e.additional_info || []).map((t) => ({ tipo: e.entity_type, t })));
+  const problemas = ents.flatMap((e) => (e.errors || []).map((x) => ({ ...x, tipo: e.entity_type })));
+  const mensagens = problemas.filter((p) => !deLigacao(p));
+  const ligacoes = problemas.filter(deLigacao);
   return (
     <>
       <Selo par={PODE_ENVIAR[h.can_send_message] || [r(h.can_send_message), "var(--muted)"]} />
-      {problemas.map((p, i) => (
-        <div key={i} style={{ fontSize: 12, marginTop: 4, lineHeight: 1.5 }}>
-          <b>{p.tipo}</b>: {p.error_description}{p.possible_solution ? <span className="vx-mut"> · Como resolver: {p.possible_solution}</span> : null}
+      {motivos.map((m, i) => (
+        <div key={`m${i}`} style={{ fontSize: 12, marginTop: 4, lineHeight: 1.5 }}><b>{ENTIDADE[m.tipo] || m.tipo}</b>: {m.t}</div>
+      ))}
+      {mensagens.map((p, i) => (
+        <div key={`e${i}`} style={{ fontSize: 12, marginTop: 4, lineHeight: 1.5 }}>
+          <b>{ENTIDADE[p.tipo] || p.tipo}</b>: {p.error_description}{p.possible_solution ? <span className="vx-mut"> · Como resolver: {p.possible_solution}</span> : null}
         </div>
       ))}
+      {ligacoes.length > 0 && <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>Ligações pelo WhatsApp não configuradas (não afeta mensagens).</div>}
     </>
   );
 }
@@ -67,7 +79,10 @@ export default function ContaWhatsapp({ aviso }) {
       <Cartao titulo="Número" extra={<button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44, marginLeft: "auto" }} onClick={() => { setD(null); carregar(); }}>Atualizar</button>}>
         {!n ? <ErroMeta erro={d.numero.erro} /> : (<>
           <Linha rotulo="Número">{n.display_phone_number || "—"}</Linha>
-          <Linha rotulo="Nome exibido">{n.verified_name || "—"} <span className="vx-mut">({r(n.name_status)})</span></Linha>
+          <Linha rotulo="Nome exibido">{n.verified_name || "—"} <span className="vx-mut">({r(n.name_status)})</span>
+            {n.name_status && n.name_status !== "APPROVED" && (
+              <div style={{ fontSize: 12, marginTop: 4, color: "var(--amber)" }}>A Meta ainda não aprovou o nome exibido. Enquanto isso, o limite de envio não sobe.</div>
+            )}</Linha>
           <Linha rotulo="Pode enviar agora?"><Saude h={n.health_status} /></Linha>
           <Linha rotulo="Qualidade do número"><Selo par={QUALIDADE[n.quality_rating || ""] || [r(n.quality_rating), "var(--muted)"]} />
             <span className="vx-mut" style={{ fontSize: 12 }}> · cai quando muita gente bloqueia ou denuncia</span></Linha>

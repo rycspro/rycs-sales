@@ -38,6 +38,7 @@ export default function CustosWhatsapp({ aviso }) {
   const c = d?.custos?.ok ? d.custos.dados : null;
   const e = d?.estatisticas;
   const linkCobranca = d?.links?.[0]?.url;
+  const insights = d?.cobranca?.ok ? d.cobranca.dados.is_enabled_for_insights : undefined;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -121,7 +122,14 @@ export default function CustosWhatsapp({ aviso }) {
                   <p className="vx-mut" style={{ fontSize: 12.5, lineHeight: 1.5 }}>Se as estatísticas de modelos estiverem desligadas na conta, ligue aqui. Os números começam a contar a partir daí.</p>
                   <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={ligar} disabled={ligando}>{ligando ? "Ligando…" : "Ligar estatísticas dos modelos"}</button>
                 </div>
-              ) : e.dados.length === 0 ? <p className="vx-mut" style={{ fontSize: 12.5, marginTop: 10 }}>A Meta ainda não registrou envios de modelos neste período.</p> : (
+              ) : e.dados.length === 0 ? (
+                <div style={{ marginTop: 10 }}>
+                  {insights === false
+                    ? <p style={{ fontSize: 12.5, lineHeight: 1.5, margin: "0 0 8px" }}><b>As estatísticas de modelos estão desligadas na conta.</b> Sem elas a Meta não conta entregas, leituras, cliques e custo por modelo.</p>
+                    : <p className="vx-mut" style={{ fontSize: 12.5, lineHeight: 1.5, margin: "0 0 8px" }}>A Meta não devolveu números por modelo neste período. Se as estatísticas de modelos estiverem desligadas na conta, ligue aqui.</p>}
+                  {insights !== true && <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={ligar} disabled={ligando}>{ligando ? "Ligando…" : "Ligar estatísticas dos modelos"}</button>}
+                </div>
+              ) : (
                 <div style={{ overflowX: "auto", marginTop: 14 }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
                     <thead><tr style={{ textAlign: "right", color: "var(--muted)" }}>

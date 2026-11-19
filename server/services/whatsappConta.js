@@ -20,12 +20,13 @@ const descrever = (e) => `${e?.codigo ? `${e.codigo} ` : ""}${e?.message || "Fal
 export const tentar = async (f) => { try { return { ok: true, dados: await f() }; } catch (e) { return { ok: false, erro: descrever(e) }; } };
 
 // Lê campos de um objeto da Meta. Se algum não existir nesta versão da API
-// (erro 100), tenta um por um e devolve os que vieram.
+// (erro 100) ou for restrito (erro 10/200, como os que a Meta só libera para
+// provedores), tenta um por um e devolve os que vieram.
 export async function lerCampos(id, campos) {
   try {
     return await graph(`/${id}`, { token: TOKEN(), params: { fields: campos.join(",") } });
   } catch (e) {
-    if (e?.codigo !== 100) throw e;
+    if (![10, 100, 200].includes(e?.codigo) || campos.length < 2) throw e;
     const r = {};
     for (const c of campos) {
       try { Object.assign(r, await graph(`/${id}`, { token: TOKEN(), params: { fields: c } })); } catch { /* campo indisponível */ }
@@ -198,5 +199,5 @@ export async function salvarPerfil(dados) {
 
 // Quem paga e em que moeda: ownership_type SELF = o próprio negócio da RYCS.
 export async function cobrancaWhatsapp() {
-  return lerCampos(CONTA_ID(), ["currency", "ownership_type", "primary_funding_id", "timezone_id"]);
+  return lerCampos(CONTA_ID(), ["currency", "ownership_type", "primary_funding_id", "timezone_id", "is_enabled_for_insights"]);
 }
