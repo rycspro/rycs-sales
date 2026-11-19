@@ -71,6 +71,13 @@ export default function App() {
     ? { ...seed(), role: "empresa", companyId: PREVIA_QUALIFICACAO.id, companies: [PREVIA_QUALIFICACAO], leads: PREVIA_LEADS, campaigns: [{ id: "camp-preview", companyId: PREVIA_QUALIFICACAO.id, titulo: "Piloto Nexo CRM", descricao: "Campanha de validação", produto: PREVIA_QUALIFICACAO.produto, publico: PREVIA_QUALIFICACAO.icp, objetivo: "Gerar reuniões qualificadas", regiao: "Brasil", funcao: "sdr", vagas: 3, orcamento: 5000, reservado: 1450, status: "rascunho", prazoHoras: 48, limitePorProfissional: 10, aceitaLeadProprio: true, exigeCertificacao: true, tarefas: { agendamento: 80, realizada: 140 }, evidencias: {}, criteriosAprovacao: {}, treinamento: PREVIA_QUALIFICACAO.curso }] }
     : seed());
   const [loaded, setLoaded] = useState(false);
+  // Os painéis só aparecem depois da primeira resposta do /state. Antes disso
+  // eles desenhavam o banco vazio do seed, e o admin abria com tudo zerado
+  // até os dados chegarem. "erro" só vale para a primeira carga: se uma
+  // atualização periódica falhar, os dados que já estão na tela ficam.
+  const [carga, setCarga] = useState(previaQualificacao ? "ok" : "carregando");
+  const cargaRef = useRef(previaQualificacao ? "ok" : "carregando");
+  const marcarCarga = useCallback((v) => { cargaRef.current = v; setCarga(v); }, []);
   const [user, setUser] = useState(() => previaQualificacao ? { role: "empresa", email: "preview@local" } : null);
   const [toast, setToast] = useState("");
   const [environment, setEnvironment] = useState("production");
@@ -112,6 +119,7 @@ export default function App() {
       setUser(null);
       setOnb(null);
       setDb(seed());
+      marcarCarga("carregando");
       return;
     }
     setOnb(r && !r.error ? r : { erro: r?.error || "Não foi possível carregar o seu cadastro." });
@@ -149,6 +157,8 @@ export default function App() {
     if (!state?.sellers) {
       // Sem dados ainda: fixa o papel para a interface conseguir renderizar.
       setDb((d) => ({ ...d, role: u.role }));
+      if (cargaRef.current !== "ok")
+        marcarCarga(state?.error === "ONBOARDING_PENDENTE" ? "ok" : "erro");
       return;
     }
     // Define a moeda da UI a partir da empresa — faz toda chamada money()
@@ -168,7 +178,8 @@ export default function App() {
       sellerId: u.role === "vendedor" ? u.entityId : state.sellers.find((s) => s.status === "aprovado")?.id || null,
       companyId,
     }));
-  }, []);
+    marcarCarga("ok");
+  }, [marcarCarga]);
 
   useEffect(() => { api("/environment").then((r) => { if (r?.environment) setEnvironment(r.environment); }); }, []);
 
@@ -255,6 +266,7 @@ export default function App() {
     setUser(null);
     setOnb(null);
     setDb(seed());
+    marcarCarga("carregando");
     // Sai para a tela de login limpa (idioma → tipo → credenciais), em vez de
     // ficar preso na URL de onboarding da empresa.
     if (!window.location.pathname.replace(/\/+$/, "").match(/^\/?(entrar|login)?$/i)) {
@@ -374,12 +386,26 @@ export default function App() {
       <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "outros"}>
         <ErrorBoundary>
           <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
+            {carga === "carregando" && (
+              <div className="vx-onb-estado vx-fade" role="status" aria-live="polite">
+                <div className="vx-spinner" style={{ marginBottom: 12 }} />
+                Carregando seus dados…
+              </div>
+            )}
+            {carga === "erro" && (
+              <div className="vx-onb-estado vx-fade" role="alert">
+                <p style={{ margin: "0 0 14px", color: "var(--ink)" }}>Não foi possível carregar os dados agora.</p>
+                <button className="vx-btn vx-btn-primary" style={{ minHeight: 44 }} onClick={() => { marcarCarga("carregando"); carregarState(); }}>Tentar de novo</button>
+              </div>
+            )}
+            {carga === "ok" && <>
             {role === "vendedor" && <Vendedor {...ctx} aba={aba} setAba={setAba} />}
             {role === "empresa" && <>
               {bannerOnb && aba === "inicio" && <BannerOnboarding onb={onb} />}
               <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />
             </>}
             {role === "admin" && <Admin {...ctx} aba={aba} />}
+            </>}
           </Suspense>
         </ErrorBoundary>
       </Shell>
