@@ -446,6 +446,25 @@ router.patch("/company/approval-rules", (req, res) => {
 
 // Logo da empresa. Passa pela mesma verificação técnica da foto de perfil:
 // formato, peso, resolução e enquadramento — nada de conteúdo.
+// Serve a logo guardada como data URI. A URL que o /state entrega leva a
+// versão (?v=), então o cache pode ser longo.
+router.get("/companies/:id/logo", (req, res) => {
+  const row = db.prepare("SELECT logo FROM companies WHERE id = ?").get(req.params.id);
+  const match = String(row?.logo || "").match(/^data:([^;,]+);base64,(.+)$/);
+  if (!match) return res.status(404).end();
+  const buf = Buffer.from(match[2], "base64");
+  res.set({
+    "Content-Type": match[1],
+    "Cache-Control": req.query.v ? "private, max-age=31536000, immutable" : "private, max-age=300",
+    "Content-Length": buf.length,
+    // SVG servido do nosso domínio: sem isto, abrir a imagem direto rodaria
+    // qualquer script embutido nela.
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    "X-Content-Type-Options": "nosniff",
+  });
+  res.end(buf);
+});
+
 router.post("/companies/:id/logo", (req, res) => {
   const { role, entityId } = req.user;
   if (role !== "admin" && entityId !== req.params.id)

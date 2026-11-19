@@ -1,6 +1,7 @@
 import { Router } from "express";
 import db, { agora } from "../db.js";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
+import { urlDaLogo } from "./state.js";
 import { calcularDisc, PERGUNTAS_DISC, PERGUNTAS_EXPERIENCIA, perguntasDiscPublicas, perguntasXpPublicas } from "../../shared/discQuiz.js";
 import { calcular } from "../services/triagem.js";
 import { perguntasPublicas, CATEGORIAS, FAIXAS, TOTAL_PERGUNTAS } from "../../shared/triagem.js";
@@ -310,7 +311,7 @@ router.get("/onboarding-pro/oportunidades", (req, res) => {
         id: c.companyId,
         nome: c.empresaNome,
         cor: c.empresaCor || "#2563EB",
-        logo: c.empresaLogo || "",
+        logo: urlDaLogo(c.companyId, c.empresaLogo),
         produto: c.empresaProduto,
         icp: c.empresaIcp,
         campanhas: [],
