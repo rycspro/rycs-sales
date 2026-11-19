@@ -77,6 +77,7 @@ import "./services/audit/providers/anthropic.js";
 import { semearPoliticasPadrao, iniciarWorker, capacidadesDisponiveis } from "./services/audit/index.js";
 import { liberarRetidosPorCiclo } from "./services/financeiro.js";
 import { iniciarSaquesParados } from "./routes/payments.js";
+import { iniciarLiberacaoComissoesCanal } from "./services/parceriaCanal.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -392,6 +393,7 @@ app.listen(PORT, () => {
   iniciarLeadsRycs();
   iniciarSequenciasEmail();
   iniciarSaquesParados();
+  iniciarLiberacaoComissoesCanal();
   iniciarReativacao();
   retomarDisparosWhatsapp();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,

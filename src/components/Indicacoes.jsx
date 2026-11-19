@@ -6,6 +6,7 @@ import {
 import { api } from "../lib/api.js";
 import { money, dataCurta } from "../lib/utils.js";
 import { ROTAS } from "../lib/rotas.js";
+import ParceriaCanal from "./ParceriaCanal.jsx";
 
 const AZUL = "#318CE7";
 const PAPEL = { empresa: "Empresa", vendedor: "Profissional" };
@@ -72,11 +73,13 @@ function Medalhao({ cor, estado, numero, src, nome }) {
 export default function Indicacoes({ aviso }) {
   const [dados, setDados] = useState(null);
   const [afil, setAfil] = useState(null);
+  const [canal, setCanal] = useState(null);
   const [fHist, setFHist] = useState("todas"); // todas | pagas | pendentes
 
   useEffect(() => {
     api("/referrals").then((r) => { if (r && !r.error) setDados(r); });
     api("/afiliados/resumo").then((r) => { if (r && !r.error) setAfil(r); });
+    api("/parceiro-canal/resumo").then((r) => { if (r && !r.error) setCanal(r); });
   }, []);
 
   const copiar = async (texto, oque) => {
@@ -133,7 +136,7 @@ export default function Indicacoes({ aviso }) {
               Compartilhe a RYCS, conquiste clientes e desbloqueie novas recompensas.
             </p>
 
-            {afil && (
+            {afil && !canal?.ativo && (
               <div style={{ marginTop: 20 }}>
                 <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 12 }}>
                   <div>
@@ -183,8 +186,10 @@ export default function Indicacoes({ aviso }) {
         </div>
       </div>
 
+      {canal?.ativo && <ParceriaCanal p={canal} aviso={aviso} />}
+
       {/* 2. Jornada visual de níveis */}
-      {trilha.length > 0 && (
+      {trilha.length > 0 && !canal?.ativo && (
         <div className="vx-card" style={{ padding: 20, marginBottom: 18 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
             <div className="vx-eyebrow" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><TrendingUp size={14} /> Jornada de níveis</div>

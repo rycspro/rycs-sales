@@ -10,6 +10,7 @@ import { recalcularCompanyScore } from "../services/companyScore.js";
 import { auditar, statusDoVeredito } from "../services/auditoria.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
 import { reservarParaSubmissao, cancelarReserva, liquidarSubmissao, posicaoEmpresa } from "../services/financeiro.js";
+import { comissionarUso } from "../services/parceriaCanal.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { dadosAgendamentoCorrespondemAoLead } from "../../shared/agendamento.js";
 import { calcularValorTarefa, valoresDaLiberacao } from "../../shared/valorTarefa.js";
@@ -326,6 +327,10 @@ const liberarSubmissao = db.transaction((submissionId, actorId, loteId = null) =
   if (!mudou) throw new ErroLiberacao(409, "Ação já liberada");
 
   liquidarSubmissao({ companyId: sub.companyId, sellerId: sub.sellerId, submissionId: sub.id, bruto, taxa, liquido, totalDebito });
+  // Parte da taxa vai para o parceiro de canal que trouxe a empresa. Falha
+  // aqui não pode desfazer o pagamento do profissional.
+  try { comissionarUso({ companyId: sub.companyId, submissionId: sub.id, taxa }); }
+  catch (e) { console.error("[canal] comissão de uso:", sub.id, e.message); }
   db.prepare(`INSERT INTO platform_earnings (id, submissionId, companyId, sellerId, bruto, taxa, liquido, loteId, criadoEm)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(uid(), sub.id, sub.companyId, sub.sellerId, bruto, taxa, liquido, loteId, agora());

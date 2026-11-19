@@ -87,6 +87,9 @@ export function qualificarIndicacao(userIdDoIndicado, plano = null) {
 
   // Regra nova: só a empresa indicada gera percentual de mensalidade.
   if (ref.papelIndicado !== "empresa" || ref.pagamentoEm) return null;
+  // Parceiro de canal ativo ganha pela regra da parceria (fechamento +
+  // recorrência), constituída no webhook da cobrança — não pelos 30% daqui.
+  if (db.prepare("SELECT 1 FROM channel_partners WHERE userId = ? AND status = 'ativo'").get(indicador.id)) return null;
   const valor = valorPrimeiraMensalidade(plano ? planoDe(plano)?.preco : 0);
   if (!(valor > 0)) return null;
   db.transaction(() => {

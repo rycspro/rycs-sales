@@ -2537,6 +2537,32 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_affiliate_comm_events ON affiliate_commission_events(commissionId, criadoEm DESC);
 `);
 
+// Parceria de Canal (shared/parceriaCanal.js) — profissional que traz uma
+// carteira de empresas e ganha fechamento + recorrência + uso enquanto elas
+// pagam. Aditivo: só quem o admin ativa aqui sai da regra comum de indicação.
+// Percentual NULL = padrão de shared/parceriaCanal.js.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS channel_partners (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ativo',
+    pctFechamento REAL,
+    pctRecorrencia REAL,
+    pctUso REAL,
+    observacao TEXT DEFAULT '',
+    ativadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER,
+    FOREIGN KEY (userId) REFERENCES users(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_channel_partners_user ON channel_partners(userId);
+`);
+// Comissões da parceria usam affiliate_commissions (policy = 'canal-v1').
+// tipo: fechamento | recorrencia | uso; referencia: cobrança ou ação de origem.
+adicionarColuna("affiliate_commissions", "tipo", "TEXT DEFAULT ''");
+adicionarColuna("affiliate_commissions", "referencia", "TEXT DEFAULT ''");
+db.exec("CREATE INDEX IF NOT EXISTS idx_affiliate_comm_status_lib ON affiliate_commissions(status, disponivelEm)");
+
 
 export default db;
 export { uid, agora };

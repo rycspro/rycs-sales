@@ -6,7 +6,8 @@ import { asaas, asaasAtivo, asaasMotivoDesligado, AsaasError, garantirCliente } 
 import { ativarAssinatura, marcarInadimplencia, ativarPixAutomatico, encerrarPixAutomatico, ehAtivacaoPixAutomatico } from "./subscriptions.js";
 import { registrarMovimento } from "../services/financeiro.js";
 import { emailComprovantePagamento } from "../services/email.js";
-import { DESTAQUES } from "../../shared/planos.js";
+import { DESTAQUES, TAXA_ATIVACAO_PIX_AUTOMATICO } from "../../shared/planos.js";
+import { comissionarMensalidade, estornarCobrancaCanal } from "../services/parceriaCanal.js";
 import { isBetaEnvironment } from "../services/betaEnvironment.js";
 import { saqueMinimoPara, decidirSaque, avaliarTransferencia } from "../../shared/saque.js";
 import { limite, horasSaque } from "../../shared/planosProfissional.js";
@@ -520,6 +521,11 @@ router.post("/payments/webhook", (req, res) => {
     } else if (payment?.subscription) {
       marcarInadimplencia(payment.subscription, `${event}${payment?.status ? ` (${payment.status})` : ""}`);
     }
+    // Cobrança devolvida não gera comissão de parceria.
+    if ((event === "PAYMENT_REFUNDED" || event === "PAYMENT_CHARGEBACK_REQUESTED") && payment?.id) {
+      try { estornarCobrancaCanal({ provider: "asaas", paymentId: payment.id, motivo: event }); }
+      catch (e) { console.error("[canal] estorno:", payment.id, e.message); }
+    }
   } else if (event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED" && authorization?.id) {
     // Confere na API antes de ativar; erro aqui não derruba o webhook.
     ativarPixAutomatico(authorization.id).catch((e) => console.warn("[webhook] Pix Automático:", e.message));
@@ -538,6 +544,18 @@ router.post("/payments/webhook", (req, res) => {
 
   res.json({ ok: true });
 });
+
+// Mensalidade paga por empresa da carteira de um parceiro de canal. Nunca
+// derruba o webhook: o plano já foi ativado, a comissão é consequência.
+function comissaoCanalDaCobranca(sub, payment) {
+  if (!sub?.companyId || !payment?.id) return;
+  try {
+    comissionarMensalidade({
+      companyId: sub.companyId, subscriptionId: sub.id, ciclo: sub.ciclo || "MENSAL",
+      valor: Number(payment.value) || 0, provider: "asaas", paymentId: payment.id,
+    });
+  } catch (e) { console.error("[canal] comissão da cobrança:", payment.id, e.message); }
+}
 
 function creditarDeposito(payment) {
   if (!payment) return;
@@ -567,6 +585,7 @@ function creditarDeposito(payment) {
   // Cobrança de assinatura de plano não é aporte de caixa: ativa o plano e para aqui.
   if (payment.subscription) {
     ativarAssinatura(payment.subscription);
+    comissaoCanalDaCobranca(db.prepare("SELECT * FROM subscriptions WHERE asaasId = ?").get(payment.subscription), payment);
     return;
   }
   // externalReference guarda o id interno; asaasCustomerId cobre cobranças
@@ -582,6 +601,9 @@ function creditarDeposito(payment) {
   const ativacao = ehAtivacaoPixAutomatico(payment, empresa.id);
   if (ativacao) {
     if (ativacao.asaasAutorizacaoId) ativarPixAutomatico(ativacao.asaasAutorizacaoId).catch((e) => console.warn("[webhook] Pix Automático:", e.message));
+    // Débito mensal do Pix Automático é mensalidade; o Pix de ativação
+    // (valor simbólico) não é.
+    if (Number(payment.value) > TAXA_ATIVACAO_PIX_AUTOMATICO) comissaoCanalDaCobranca(ativacao, payment);
     return;
   }
 
