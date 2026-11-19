@@ -15,6 +15,7 @@ import ConvitesOnboarding from "./ConvitesOnboarding.jsx";
 import JornadaAdmin from "./JornadaAdmin.jsx";
 import VouchersAdmin from "./VouchersAdmin.jsx";
 import LiberarAdmin from "./LiberarAdmin.jsx";
+import PlanosAdmin from "./PlanosAdmin.jsx";
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
@@ -83,6 +84,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   if (aba === "dashboard") return <DashboardAdmin db={db} />;
   if (aba === "profissionais") return <ProfissionaisAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "empresas") return <EmpresasAdmin db={db} up={up} aviso={aviso} />;
+  if (aba === "planos") return <PlanosAdmin db={db} aviso={aviso} />;
   if (aba === "cobranca") return <AssinaturasAdmin />;
   if (aba === "vouchers") return <VouchersAdmin aviso={aviso} />;
   if (aba === "depositos") return <DepositosAdmin aviso={aviso} recarregar={recarregar} />;

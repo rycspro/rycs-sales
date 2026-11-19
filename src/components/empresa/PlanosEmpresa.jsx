@@ -159,6 +159,13 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
     await Promise.all([carregar(), recarregar?.()]);
   };
 
+  // Enterprise não tem checkout: o clique avisa o time RYCS, que monta a
+  // proposta e manda o link de pagamento.
+  const falarEnterprise = async () => {
+    const r = await api("/enterprise/interesse", {});
+    aviso(r?.message || r?.error || "Não foi possível enviar agora. Tente de novo.");
+  };
+
   const abrirPortal = async () => {
     const r = await api("/subscription/stripe/portal", { retorno: window.location.pathname });
     if (r?.url) window.location.href = r.url;
@@ -222,6 +229,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
               planoAtualChave={planoEfetivo}
               moeda={emp?.moeda || "BRL"}
               onUsarGratis={usarGratis}
+              onEnterprise={empresaInternacional ? undefined : falarEnterprise}
               onContratar={(chave, cicloEscolhido) => {
                 const p = planos.find((x) => x.chave === chave);
                 if (p) abrirModal(p, cicloEscolhido);

@@ -8,7 +8,7 @@ import Shell from "./components/Shell.jsx";
 import Login from "./components/Login.jsx";
 import LoginPlataforma from "./components/LoginPlataforma.jsx";
 const CadastroProfissional = lazy(() => import("./components/auth/CadastroProfissional.jsx"));
-import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding, limparConviteOnboarding } from "./lib/rotas.js";
+import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding, limparConviteOnboarding, guardarProposta, lerProposta } from "./lib/rotas.js";
 import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
 import EntradaEmpresa from "./components/auth/EntradaEmpresa.jsx";
 import ConfirmarEmail from "./components/auth/ConfirmarEmail.jsx";
@@ -16,6 +16,7 @@ const LandingPage = lazy(() => import("./components/LandingPage.jsx"));
 const Vendedor = lazy(() => import("./components/vendedor/index.jsx"));
 const Empresa = lazy(() => import("./components/empresa/index.jsx"));
 const Admin = lazy(() => import("./components/admin/index.jsx"));
+const PropostaPlano = lazy(() => import("./components/empresa/PropostaPlano.jsx"));
 import Notificacoes from "./components/Notificacoes.jsx";
 import BannerOnboarding from "./components/empresa/BannerOnboarding.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -99,6 +100,9 @@ export default function App() {
   // no caminho.
   useEffect(() => { if (rota.tipo === "trial" && rota.token) guardarConvite(rota.token); }, [rota]);
   useEffect(() => { if (rota.tipo === "convite-onboarding" && rota.token) guardarConviteOnboarding(rota.token); }, [rota]);
+  // Proposta Enterprise: guardada pelo mesmo motivo — quem abre sem estar
+  // logado entra ou cria a conta antes, e a URL se perde no caminho.
+  useEffect(() => { if (rota.tipo === "proposta" && rota.token) guardarProposta(rota.token); }, [rota]);
 
   // Onboarding da empresa: o servidor diz se está concluído e em qual etapa.
   // null = ainda consultando; { erro } = falhou e a tela oferece tentar de novo.
@@ -400,6 +404,10 @@ export default function App() {
             {role === "empresa" && <>
               {bannerOnb && aba === "inicio" && <BannerOnboarding onb={onb} />}
               <Empresa {...ctx} aba={aba} setAba={setAba} acesso={acesso} consultarAcesso={consultarAcesso} />
+              {(rota.tipo === "proposta" || lerProposta()) && (
+                <PropostaPlano token={rota.tipo === "proposta" ? rota.token : null} aviso={aviso}
+                  aoConcluir={() => { recarregar(); consultarAcesso(); }} />
+              )}
             </>}
             {role === "admin" && <Admin {...ctx} aba={aba} />}
             </>}

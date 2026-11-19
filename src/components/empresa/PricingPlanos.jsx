@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Star, Gift, Sparkles } from "lucide-react";
+import { Check, Star, Gift, Sparkles, Crown } from "lucide-react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
-import { CICLOS, mensalidadeNoCiclo, descontoDoCiclo, PLANOS } from "../../../shared/planos.js";
+import { CICLOS, mensalidadeNoCiclo, descontoDoCiclo, PLANOS, PLANO_ENTERPRISE } from "../../../shared/planos.js";
 
 // Ciclos oferecidos na vitrine, em ordem de compromisso crescente. O desconto
 // de cada um mora em shared/planos.js — aqui só exibimos.
@@ -19,7 +19,12 @@ const pct = (d) => Math.round(d * 100);
 // Tailwind/shadcn), do bloco de pricing com alternância mensal/semestral/anual,
 // card "Popular" em destaque, preço animado e confete ao escolher um ciclo com
 // desconto.
-export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, planoAtualChave, moeda = "BRL" }) {
+//
+// onEnterprise: quando vem, mostra o card Enterprise (sob consulta) no fim,
+// com a ação que quem usa a vitrine define (empresa: falar com a RYCS; admin:
+// criar proposta). somenteLeitura: a vitrine como a empresa vê, sem botões de
+// contratar — é o modo do painel administrativo.
+export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, planoAtualChave, moeda = "BRL", onEnterprise, rotuloEnterprise = "Falar com a RYCS", somenteLeitura = false }) {
   const fmtCurrency = String(moeda).toUpperCase();
   // BRL usa pt-BR pra ficar "R$ 399,00". Todas as outras moedas usam en-US,
   // que mostra prefixos distintos (MX$, A$, C$, HK$, CN¥, ₹...), em vez do
@@ -37,7 +42,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
   // Plano gratuito: sem mensalidade, exibido como faixa larga acima dos ciclos.
   // Sem assinatura paga, a empresa está no Free por padrão.
   const free = PLANOS.free;
-  const noFree = !planoAtualChave || planoAtualChave === "free";
+  const noFree = !somenteLeitura && (!planoAtualChave || planoAtualChave === "free");
 
   const alternar = (novoCiclo) => {
     setCiclo(novoCiclo);
@@ -98,7 +103,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
         </ul>
 
         {/* Camada 3 — ação */}
-        <button
+        {!somenteLeitura && <button
           type="button"
           disabled={noFree}
           onClick={() => onUsarGratis?.()}
@@ -112,7 +117,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
           }}
         >
           {noFree ? "Plano atual" : "Usar plano grátis"}
-        </button>
+        </button>}
       </div>
 
       {/* Alternância mensal / semestral / anual */}
@@ -240,6 +245,7 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
                 ))}
               </ul>
 
+              {!somenteLeitura && <>
               <div style={{ borderTop: ehAtual ? "1px solid rgba(255,255,255,.25)" : "1px solid var(--border)", margin: "18px 0 14px" }} />
 
               <button
@@ -251,10 +257,48 @@ export default function PricingPlanos({ plans = [], onContratar, onUsarGratis, p
               >
                 {ehAtual ? "Plano atual" : temPlanoAtivo ? "Trocar para este plano" : temTrial ? "Iniciar período grátis" : "Contratar"}
               </button>
+              </>}
             </motion.article>
           );
         })}
       </div>
+
+      {/* Enterprise — sob consulta, sem preço na vitrine. Mesma faixa larga do
+          plano gratuito, em 3 camadas. */}
+      {onEnterprise && (
+        <div
+          className="vx-free-banner"
+          style={{
+            display: "grid", gridTemplateColumns: "minmax(140px, 190px) 1fr auto",
+            alignItems: "center", gap: 24, padding: "20px 24px", marginTop: 20,
+            borderRadius: "var(--radius-lg, 16px)", border: "2px solid var(--brand)",
+            background: "var(--bg-card, #fff)", boxShadow: "var(--shadow-card)", color: "var(--ink)",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, borderRight: "1px solid var(--border)", paddingRight: 20 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: "var(--brand)", letterSpacing: ".04em", textTransform: "uppercase" }}>
+              <Crown size={15} strokeWidth={2.4} aria-hidden="true" /> {PLANO_ENTERPRISE.nome}
+            </span>
+            <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1.1 }}>Sob consulta</span>
+          </div>
+
+          <div>
+            <p style={{ margin: "0 0 10px", fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{PLANO_ENTERPRISE.frase}</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "8px 20px" }}>
+              {PLANO_ENTERPRISE.inclui.map((i) => (
+                <li key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 500 }}>
+                  <Check size={15} color="var(--brand)" strokeWidth={2.6} style={{ flexShrink: 0 }} /> {i}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <button type="button" className="vx-btn vx-btn-primary" onClick={onEnterprise}
+            style={{ fontWeight: 700, whiteSpace: "nowrap", minWidth: 150, minHeight: 44 }}>
+            {rotuloEnterprise}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
