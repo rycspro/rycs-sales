@@ -177,3 +177,17 @@ export function impactoNoRoi({ tarefas, metaAgendadas, ticketMedio, conversao, c
     custoPorVenda: vendas > 0 ? arredondar(investimento / vendas) : null,
   };
 }
+
+// Quanto uma tarefa confirmada move na liberação. Usado pelo servidor (que
+// move o dinheiro) e pela tela Liberar (que mostra o total antes do clique),
+// para os dois nunca divergirem. Tarefas novas já guardam o líquido; as
+// antigas cobram a taxa do plano por cima do valor.
+export function valoresDaLiberacao(sub, plano) {
+  const bruto = Math.round((Number(sub?.valor) || 0) * 100) / 100;
+  if (sub?.liquido != null) {
+    const liquido = Number(sub.liquido);
+    return { bruto, taxa: Math.round((bruto - liquido) * 100) / 100, liquido, totalDebito: bruto };
+  }
+  const { taxa } = calcularValorTarefa(bruto, plano);
+  return { bruto, taxa, liquido: bruto, totalDebito: Math.round((bruto + taxa) * 100) / 100 };
+}

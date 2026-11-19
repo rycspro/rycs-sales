@@ -1,8 +1,6 @@
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
-import { takeRateDoPlano } from "../../../shared/planos.js";
 import { Vazio } from "../ui.jsx";
-import CardEnvio from "../CardEnvio.jsx";
 import DashboardAdmin from "./DashboardAdmin.jsx";
 import ProfissionaisAdmin from "./ProfissionaisAdmin.jsx";
 import EmpresasAdmin from "./EmpresasAdmin.jsx";
@@ -16,6 +14,7 @@ import DisparoWhatsapp from "./DisparoWhatsapp.jsx";
 import ConvitesOnboarding from "./ConvitesOnboarding.jsx";
 import JornadaAdmin from "./JornadaAdmin.jsx";
 import VouchersAdmin from "./VouchersAdmin.jsx";
+import LiberarAdmin from "./LiberarAdmin.jsx";
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
@@ -33,15 +32,6 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
     apiPatch(`/sellers/${s.id}`, { status: st });
     up((d) => ({ sellers: d.sellers.map((x) => x.id === s.id ? { ...x, status: st } : x) }));
     aviso(st === "aprovado" ? `${s.nome} aprovado.` : "Cadastro recusado.");
-  };
-
-  // O servidor faz a conta e move o dinheiro numa transação; aqui só
-  // disparamos e recarregamos o estado real.
-  const liberar = async (sub) => {
-    const r = await api(`/submissions/${sub.id}/liberar`, {});
-    if (r?.error) return aviso(r.error);
-    await recarregar();
-    aviso(`${money(r.liquido)} liberados para saque.`);
   };
 
   // O servidor credita o "sacado" e guarda a transição de estado; tentar
@@ -133,18 +123,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
           </div>
         ))}</div>)}
 
-      {aba === "liberar" && (!paraLiberar.length
-        ? <Vazio titulo="Nada para liberar" texto="Ações aprovadas pela IA ou conferidas pela empresa chegam aqui para o repasse final." />
-        : <div className="vx-grid">{paraLiberar.map((sub) => (
-          <CardEnvio key={sub.id} sub={sub} db={db} extra={
-            <div style={{ marginTop: 12 }}>
-              <div className="vx-mut vx-mono" style={{ fontSize: 11.5, marginBottom: 8 }}>
-                profissional {money(sub.valor)} · taxa da empresa {money(sub.valor * takeRateDoPlano(db.companies.find((c) => c.id === sub.companyId)?.assinatura))}
-              </div>
-              <button className="vx-btn vx-btn-primary vx-btn-sm vx-btn-block" onClick={() => liberar(sub)}>Liberar para saque</button>
-            </div>
-          } />
-        ))}</div>)}
+      {aba === "liberar" && <LiberarAdmin db={db} paraLiberar={paraLiberar} aviso={aviso} recarregar={recarregar} />}
 
       {aba === "saques" && (!saques.length
         ? <Vazio titulo="Sem saques na fila" texto="Solicitações de PIX dos vendedores aparecem aqui para pagamento." />
