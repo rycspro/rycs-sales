@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { Copy, Link2, X, FileText } from "lucide-react";
-import { api } from "../../lib/api.js";
+import { api, apiPut } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
-import { PLANOS, ORDEM_PLANOS, CICLOS, precoCheioNoCiclo, mesesDoCiclo, PROPOSTA_VALIDADE_DIAS } from "../../../shared/planos.js";
+import { PLANOS, ORDEM_PLANOS, CICLOS, precoCheioNoCiclo, mesesDoCiclo, PROPOSTA_VALIDADE_DIAS, FORMAS_PROPOSTA } from "../../../shared/planos.js";
 import PricingPlanos from "../empresa/PricingPlanos.jsx";
 
 // Planos, na visão da plataforma.
 //
 // Em cima, a vitrine exatamente como a empresa vê (sem os botões de
 // contratar). Embaixo, as propostas Enterprise: a RYCS combina com uma empresa
-// o plano-base, o ciclo, o valor e as condições, e manda um link. A empresa
-// abre o link logada, aceita as condições e paga com Pix.
+// o plano-base, o ciclo, o valor, a forma de pagamento e as condições, e manda
+// um link. A empresa abre o link logada, aceita as condições e paga.
 
 const PLANOS_VITRINE = ORDEM_PLANOS.filter((k) => PLANOS[k]?.preco > 0).map((k) => ({ chave: k, ...PLANOS[k] }));
 const CICLO_ROTULO = { MENSAL: "Mensal", SEMESTRAL: "Semestral", ANUAL: "Anual" };
+// Rótulo curto da forma de pagamento, para a lista e os resumos.
+const FORMA_CURTA = { PIX: "Pix", CREDIT_CARD: "cartão", AMBOS: "Pix ou cartão" };
 
 const ESTADOS = {
   aberta: ["Aberta", "muted"],
@@ -39,7 +41,7 @@ const MODELO_CONDICOES = [
 const FORM_INICIAL = {
   cliente: "", companyId: "", planoBase: "growth", ciclo: CICLOS.SEMESTRAL,
   desconto: "0", valorFinal: "", nicho: "", territorio: "", condicoes: "",
-  validadeDias: String(PROPOSTA_VALIDADE_DIAS),
+  validadeDias: String(PROPOSTA_VALIDADE_DIAS), formaPagamento: "PIX",
 };
 
 const arred2 = (n) => Math.round(Number(n) * 100) / 100;
@@ -51,6 +53,8 @@ export default function PlanosAdmin({ db, aviso }) {
   const [enviando, setEnviando] = useState(false);
   const [link, setLink] = useState(null);
   const [aberta, setAberta] = useState(null);
+  // Proposta em edição (null = criando uma nova).
+  const [editando, setEditando] = useState(null);
   const formRef = useRef(null);
 
   const carregar = () => api("/admin/propostas").then((r) => setPropostas(r?.propostas || []));
@@ -58,11 +62,31 @@ export default function PlanosAdmin({ db, aviso }) {
 
   const empresas = [...(db?.companies || [])].sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
 
+  const rolarParaForm = () => setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+
   const novaProposta = () => {
     const cheio = precoCheioNoCiclo(FORM_INICIAL.planoBase, FORM_INICIAL.ciclo);
     setForm({ ...FORM_INICIAL, valorFinal: String(cheio) });
+    setEditando(null);
     setLink(null);
-    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    rolarParaForm();
+  };
+
+  // Editar abre o mesmo formulário já preenchido. A validade vira "dias a
+  // partir de hoje": o que resta, ou o padrão se já expirou.
+  const editar = (p) => {
+    const base = precoCheioNoCiclo(p.planoBase, p.ciclo);
+    const restam = Math.ceil((p.expiraEm - Date.now()) / 86400000);
+    setForm({
+      cliente: p.cliente, companyId: p.companyId || "", planoBase: p.planoBase, ciclo: p.ciclo,
+      desconto: base > 0 ? String(arred2((1 - p.valorFinal / base) * 100)) : "0",
+      valorFinal: String(p.valorFinal), nicho: p.nicho || "", territorio: p.territorio || "",
+      condicoes: p.condicoes || "", formaPagamento: p.formaPagamento || "PIX",
+      validadeDias: String(restam > 0 ? Math.min(restam, 90) : PROPOSTA_VALIDADE_DIAS),
+    });
+    setEditando(p);
+    setLink(null);
+    rolarParaForm();
   };
 
   // Desconto e valor final andam juntos: mexer num recalcula o outro, sobre o
@@ -87,8 +111,10 @@ export default function PlanosAdmin({ db, aviso }) {
 
   const gerar = async (e) => {
     e.preventDefault();
+    if (editando?.aceitoEm && !window.confirm(
+      `${editando.cliente} já aceitou esta proposta. Se você mudar valor, plano, ciclo, nicho, território, condições ou a empresa, ela vai precisar aceitar de novo, e uma cobrança já gerada é cancelada. Salvar?`)) return;
     setEnviando(true);
-    const r = await api("/admin/propostas", {
+    const corpo = {
       cliente: form.cliente,
       companyId: form.companyId || undefined,
       planoBase: form.planoBase,
@@ -97,11 +123,18 @@ export default function PlanosAdmin({ db, aviso }) {
       nicho: form.nicho,
       territorio: form.territorio,
       condicoes: form.condicoes,
+      formaPagamento: form.formaPagamento,
       validadeDias: Number(form.validadeDias) || PROPOSTA_VALIDADE_DIAS,
-    });
+    };
+    const r = editando ? await apiPut(`/admin/propostas/${editando.id}`, corpo) : await api("/admin/propostas", corpo);
     setEnviando(false);
-    if (!r || r.error) return aviso(r?.error || "Não foi possível gerar a proposta.");
-    setLink(r);
+    if (!r || r.error) return aviso(r?.error || (editando ? "Não foi possível salvar a proposta." : "Não foi possível gerar a proposta."));
+    if (editando) {
+      aviso(r.aceiteReiniciado
+        ? "Proposta atualizada. O link continua o mesmo, e a empresa vai precisar aceitar de novo."
+        : "Proposta atualizada. O link continua o mesmo.");
+      setEditando(null);
+    } else setLink(r);
     setForm(null);
     carregar();
   };
@@ -148,7 +181,7 @@ export default function PlanosAdmin({ db, aviso }) {
           </div>
           <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10, lineHeight: 1.6 }}>
             {link.aviso} {PLANOS[link.planoBase]?.nome} {CICLO_ROTULO[link.ciclo]?.toLowerCase()} por {money(link.valorFinal)}, válido até {dataDia(link.expiraEm)}.
-            A empresa entra com a conta dela, lê as condições, marca que aceita e paga com Pix.
+            A empresa entra com a conta dela, lê as condições, marca que aceita e paga com {FORMA_CURTA[link.formaPagamento] || "Pix"}.
           </div>
         </div>
       )}
@@ -157,10 +190,10 @@ export default function PlanosAdmin({ db, aviso }) {
         <form onSubmit={gerar} className="vx-card" style={{ padding: 20, marginTop: 24 }}>
           <div className="vx-row" style={{ marginBottom: 14 }}>
             <div>
-              <div className="vx-eyebrow">Proposta Enterprise</div>
-              <div className="vx-disp" style={{ fontSize: 17, marginTop: 2 }}>Valor e condições</div>
+              <div className="vx-eyebrow">Proposta Enterprise{editando ? ` · ${editando.cliente}` : ""}</div>
+              <div className="vx-disp" style={{ fontSize: 17, marginTop: 2 }}>{editando ? "Editar proposta" : "Valor e condições"}</div>
             </div>
-            <button type="button" className="vx-btn vx-btn-ghost" aria-label="Fechar proposta" onClick={() => setForm(null)} style={{ minHeight: 44, minWidth: 44 }}><X size={16} /></button>
+            <button type="button" className="vx-btn vx-btn-ghost" aria-label="Fechar proposta" onClick={() => { setForm(null); setEditando(null); }} style={{ minHeight: 44, minWidth: 44 }}><X size={16} /></button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12 }}>
@@ -195,7 +228,7 @@ export default function PlanosAdmin({ db, aviso }) {
               <div>
                 <div className="vx-label">Equivale a</div>
                 <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700 }}>{money(Number.isFinite(valorFinalNum) ? valorFinalNum / meses : 0)}/mês</div>
-                <div className="vx-mut" style={{ fontSize: 11.5 }}>cobrado a cada {meses} {meses > 1 ? "meses" : "mês"}, com Pix</div>
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>cobrado a cada {meses} {meses > 1 ? "meses" : "mês"}, com {FORMA_CURTA[form.formaPagamento]}</div>
               </div>
             </div>
           </div>
@@ -205,7 +238,11 @@ export default function PlanosAdmin({ db, aviso }) {
               <input className="vx-input" value={form.nicho} onChange={(e) => mudar("nicho", e.target.value)} placeholder="Ex.: plano de saúde" /></label>
             <label><div className="vx-label">Território</div>
               <input className="vx-input" value={form.territorio} onChange={(e) => mudar("territorio", e.target.value)} placeholder="Ex.: nacional" /></label>
-            <label><div className="vx-label">Link vale por (dias)</div>
+            <label><div className="vx-label">Forma de pagamento</div>
+              <select className="vx-input" value={form.formaPagamento} onChange={(e) => mudar("formaPagamento", e.target.value)}>
+                {Object.entries(FORMAS_PROPOSTA).map(([k, rotulo]) => <option key={k} value={k}>{rotulo}</option>)}
+              </select></label>
+            <label><div className="vx-label">{editando ? "Link vale por (dias, a partir de hoje)" : "Link vale por (dias)"}</div>
               <input className="vx-input vx-mono" inputMode="numeric" value={form.validadeDias} onChange={(e) => mudar("validadeDias", e.target.value.replace(/\D/g, "").slice(0, 2))} /></label>
           </div>
 
@@ -221,11 +258,12 @@ export default function PlanosAdmin({ db, aviso }) {
           </label>
 
           <div className="vx-mut" style={{ fontSize: 12, margin: "10px 0 14px", lineHeight: 1.6 }}>
-            Depois de gerada, a proposta não muda: para ajustar, cancele e gere outra. A assinatura renova pelo mesmo valor a cada ciclo até ser cancelada.
+            Dá para editar a proposta até ela ser paga, e o link continua o mesmo. Se você mudar valor ou condições depois que a empresa aceitou, ela aceita de novo. A assinatura renova pelo mesmo valor a cada ciclo até ser cancelada.
           </div>
 
           <button type="submit" className="vx-btn vx-btn-primary" disabled={enviando} style={{ minHeight: 44 }}>
-            <Link2 size={14} /> {enviando ? "Gerando…" : `Gerar link de ${money(Number.isFinite(valorFinalNum) ? valorFinalNum : 0)}`}
+            <Link2 size={14} /> {enviando ? (editando ? "Salvando…" : "Gerando…")
+              : editando ? "Salvar alterações" : `Gerar link de ${money(Number.isFinite(valorFinalNum) ? valorFinalNum : 0)}`}
           </button>
         </form>
       )}
@@ -265,7 +303,7 @@ export default function PlanosAdmin({ db, aviso }) {
                             <div className="vx-mut" style={{ whiteSpace: "pre-wrap", fontSize: 12, lineHeight: 1.6, marginTop: 6, maxWidth: 420 }}>{p.condicoes}</div>
                           )}
                         </td>
-                        <td style={celula}>{p.planoNome} · {CICLO_ROTULO[p.ciclo]?.toLowerCase()}</td>
+                        <td style={celula}>{p.planoNome} · {CICLO_ROTULO[p.ciclo]?.toLowerCase()}<div className="vx-mut" style={{ fontSize: 11.5 }}>{FORMA_CURTA[p.formaPagamento] || "Pix"}</div></td>
                         <td className="vx-mono" style={{ ...celula, textAlign: "right", whiteSpace: "nowrap" }}>
                           {money(p.valorFinal)}
                           {p.valorOriginal > p.valorFinal && <div className="vx-mut" style={{ fontSize: 11, textDecoration: "line-through" }}>{money(p.valorOriginal)}</div>}
@@ -274,11 +312,15 @@ export default function PlanosAdmin({ db, aviso }) {
                         <td style={celula}>
                           <span className={`vx-badge vx-badge-${tom}`}>{rotulo}</span>
                           {p.aceitoEm && <div className="vx-mut" style={{ fontSize: 11, marginTop: 3 }}>aceita em {dataDia(p.aceitoEm)}</div>}
+                          {p.editadoEm && <div className="vx-mut" style={{ fontSize: 11, marginTop: 3 }}>editada em {dataDia(p.editadoEm)}</div>}
                         </td>
                         <td style={celula}>{dataDia(p.expiraEm)}</td>
                         <td style={celula}>
                           {!["paga", "cancelada"].includes(p.estado) && (
-                            <button type="button" className="vx-btn vx-btn-sm" onClick={() => cancelar(p)}>Cancelar</button>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              <button type="button" className="vx-btn vx-btn-sm" onClick={() => editar(p)}>Editar</button>
+                              <button type="button" className="vx-btn vx-btn-sm" onClick={() => cancelar(p)}>Cancelar</button>
+                            </div>
                           )}
                         </td>
                       </tr>

@@ -6,14 +6,11 @@ import { PLANOS, ORDEM_PLANOS, CICLOS, valorCobradoNoCiclo } from "../../../shar
 import confetti from "canvas-confetti";
 import PricingPlanos from "./PricingPlanos.jsx";
 import CheckoutStripe from "./CheckoutStripe.jsx";
-import HoloCard from "../HoloCard.jsx";
+import FormularioCartao, { CARTAO_VAZIO, TITULAR_VAZIO, erroDoCartao } from "./FormularioCartao.jsx";
 
 const PLANOS_ESTATICOS = ORDEM_PLANOS.filter((k) => PLANOS[k].preco > 0).map((k) => ({
   chave: k, nome: PLANOS[k].nome, preco: PLANOS[k].preco, takeRate: PLANOS[k].takeRate, inclui: PLANOS[k].inclui, trial: PLANOS[k].trial,
 }));
-
-const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
-const mascaraCartao = (v) => SO_DIGITOS(v).slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 
 export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
   const empresaInternacional = !!emp?.moeda && String(emp.moeda).toUpperCase() !== "BRL";
@@ -25,8 +22,8 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
   const [desconto, setDesconto] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [forma, setForma] = useState("");
-  const [cartao, setCartao] = useState({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
-  const [titular, setTitular] = useState({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
+  const [cartao, setCartao] = useState(CARTAO_VAZIO);
+  const [titular, setTitular] = useState(TITULAR_VAZIO);
   const [salvarCartao, setSalvarCartao] = useState(false);
   const [cartoesSalvos, setCartoesSalvos] = useState([]);
   const [cardSalvoId, setCardSalvoId] = useState(null); // cartão salvo selecionado
@@ -100,8 +97,8 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
     setEmbutido(null);
     setCardSalvoId(null);
     setSalvarCartao(false);
-    setCartao({ nome: "", numero: "", validadeMes: "", validadeAno: "", cvv: "" });
-    setTitular({ nome: "", email: "", documento: "", cep: "", numero: "", telefone: "" });
+    setCartao(CARTAO_VAZIO);
+    setTitular(TITULAR_VAZIO);
   };
 
   const [voucherStatus, setVoucherStatus] = useState(""); // "ok" | "erro" | "validando" | ""
@@ -127,10 +124,8 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
     }
     const ehCartao = forma === "CREDIT_CARD";
     if (ehCartao && !cardSalvoId) {
-      if (!cartao.nome || !cartao.numero || !cartao.validadeMes || !cartao.validadeAno || !cartao.cvv)
-        return aviso("Preencha todos os dados do cartão.");
-      if (![11, 14].includes(SO_DIGITOS(titular.documento).length)) return aviso("Informe o CPF ou CNPJ do titular do cartão.");
-      if (!titular.cep || !titular.numero) return aviso("Informe CEP e número do endereço de cobrança.");
+      const falta = erroDoCartao(cartao, titular);
+      if (falta) return aviso(falta);
     }
     setProcessando(true);
     const r = await api("/subscription", {
@@ -430,64 +425,7 @@ export default function PlanosEmpresa({ emp, aviso, recarregar, onCancelar }) {
                     )}
 
                     {!cardSalvoId && (<>
-                    <div style={{ margin: "4px auto 16px", maxWidth: 320 }}>
-                      <HoloCard
-                        holder={cartao.nome || "RYCS"}
-                        number={cartao.numero || "0000000000000000"}
-                        expires={cartao.validadeMes && cartao.validadeAno ? `${String(cartao.validadeMes).padStart(2, "0")}/${String(cartao.validadeAno).slice(-2)}` : "••/••"}
-                        cvv="•••"
-                        tier="Crédito"
-                      />
-                    </div>
-                    <label><div className="vx-label">Nome impresso no cartão</div>
-                      <input className="vx-input" value={cartao.nome}
-                        onChange={(e) => setCartao({ ...cartao, nome: e.target.value })} autoComplete="cc-name" /></label>
-
-                    <label style={{ display: "block", marginTop: 10 }}><div className="vx-label">Número do cartão</div>
-                      <input className="vx-input vx-mono" inputMode="numeric" value={mascaraCartao(cartao.numero)}
-                        onChange={(e) => setCartao({ ...cartao, numero: SO_DIGITOS(e.target.value) })}
-                        placeholder="0000 0000 0000 0000" autoComplete="cc-number" /></label>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
-                      <label><div className="vx-label">Mês</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" maxLength={2} placeholder="12"
-                          value={cartao.validadeMes}
-                          onChange={(e) => setCartao({ ...cartao, validadeMes: SO_DIGITOS(e.target.value).slice(0, 2) })} /></label>
-                      <label><div className="vx-label">Ano</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="2030"
-                          value={cartao.validadeAno}
-                          onChange={(e) => setCartao({ ...cartao, validadeAno: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-                      <label><div className="vx-label">CVV</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" maxLength={4} placeholder="123"
-                          type="password" value={cartao.cvv}
-                          onChange={(e) => setCartao({ ...cartao, cvv: SO_DIGITOS(e.target.value).slice(0, 4) })} /></label>
-                    </div>
-
-                    <div className="vx-eyebrow" style={{ margin: "16px 0 10px" }}>Endereço de cobrança</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      <label><div className="vx-label">CEP</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" value={titular.cep}
-                          onChange={(e) => setTitular({ ...titular, cep: SO_DIGITOS(e.target.value).slice(0, 8) })} /></label>
-                      <label><div className="vx-label">Número</div>
-                        <input className="vx-input" value={titular.numero}
-                          onChange={(e) => setTitular({ ...titular, numero: e.target.value })} /></label>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
-                      <label><div className="vx-label">CPF ou CNPJ do titular</div>
-                        <input className="vx-input vx-mono" inputMode="numeric" value={titular.documento}
-                          onChange={(e) => setTitular({ ...titular, documento: SO_DIGITOS(e.target.value).slice(0, 14) })} /></label>
-                      <label><div className="vx-label">E-mail do titular</div>
-                        <input className="vx-input" type="email" value={titular.email}
-                          onChange={(e) => setTitular({ ...titular, email: e.target.value })} /></label>
-                      <label><div className="vx-label">Telefone</div>
-                        <input className="vx-input vx-mono" inputMode="tel" value={titular.telefone}
-                          onChange={(e) => setTitular({ ...titular, telefone: e.target.value })} placeholder="(11) 99999-0000" /></label>
-                    </div>
-
-                    <div className="vx-mut" style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
-                      <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                      Os dados do cartão vão direto ao processador de pagamento. A RYCS não guarda o número nem o CVV.
-                    </div>
+                    <FormularioCartao cartao={cartao} setCartao={setCartao} titular={titular} setTitular={setTitular} />
 
                     <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, cursor: "pointer", fontSize: 12.5 }}>
                       <input type="checkbox" checked={salvarCartao} onChange={(e) => setSalvarCartao(e.target.checked)} />

@@ -6,7 +6,7 @@ import { notificar } from "./notifications.js";
 import { asaas, asaasAtivo, AsaasError, garantirCliente } from "../services/asaas.js";
 import { cancelarAssinaturaStripe, encerrarCheckoutPendente } from "../services/stripe.js";
 import { acessoDaEmpresa, primeiraCobranca, primeiroDebitoPixAutomatico } from "../../shared/assinatura.js";
-import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO, CICLOS, valorCobradoNoCiclo, normalizarCiclo, mesesDoCiclo, precoCheioNoCiclo, PROPOSTA_VALIDADE_DIAS } from "../../shared/planos.js";
+import { PLANOS, ORDEM_PLANOS, planoDe, TAXA_ATIVACAO_PIX_AUTOMATICO, CICLOS, valorCobradoNoCiclo, normalizarCiclo, mesesDoCiclo, precoCheioNoCiclo, PROPOSTA_VALIDADE_DIAS, FORMAS_PROPOSTA, formasAceitasNaProposta } from "../../shared/planos.js";
 import { emailComprovantePagamento } from "../services/email.js";
 
 // Mapa do ciclo RYCS para o ciclo cobrado pelo Asaas, e rótulo em português.
@@ -406,65 +406,123 @@ function propostaUtilizavel(token, companyId) {
   return { ok: true, proposta: p, estado };
 }
 
+// Lê e confere os dados da proposta (criação e edição usam a mesma regra).
+function lerDadosProposta(b = {}) {
+  const dados = {
+    cliente: String(b.cliente || "").trim().slice(0, 120),
+    planoBase: String(b.planoBase || "").trim(),
+    ciclo: normalizarCiclo(b.ciclo),
+    valorFinal: arred2(b.valorFinal),
+    nicho: String(b.nicho || "").trim().slice(0, 120),
+    territorio: String(b.territorio || "").trim().slice(0, 120),
+    condicoes: String(b.condicoes || "").trim().slice(0, 6000),
+    companyId: String(b.companyId || "").trim() || null,
+    dias: Math.max(1, Math.min(90, Number(b.validadeDias) || PROPOSTA_VALIDADE_DIAS)),
+    formaPagamento: String(b.formaPagamento || "PIX").toUpperCase(),
+  };
+  if (!dados.cliente) return { erro: [400, "Informe o nome do cliente."] };
+  if (!PLANOS_BASE_PROPOSTA.includes(dados.planoBase)) return { erro: [400, "Escolha o plano-base da proposta."] };
+  if (!Number.isFinite(dados.valorFinal) || dados.valorFinal < MINIMO_PROPOSTA)
+    return { erro: [400, `O valor da proposta precisa ser de pelo menos R$ ${MINIMO_PROPOSTA},00.`] };
+  if (!dados.condicoes) return { erro: [400, "Escreva as condições da proposta."] };
+  if (!FORMAS_PROPOSTA[dados.formaPagamento]) return { erro: [400, "Escolha a forma de pagamento: Pix, cartão ou as duas."] };
+  if (dados.companyId && !db.prepare("SELECT 1 FROM companies WHERE id = ?").get(dados.companyId))
+    return { erro: [404, "Empresa não encontrada."] };
+  dados.valorOriginal = precoCheioNoCiclo(dados.planoBase, dados.ciclo);
+  return { dados };
+}
+
+// Cobranças geradas e ainda não pagas de uma proposta são canceladas no
+// gateway antes de a proposta mudar ou fechar — senão o Pix ou o cartão antigo
+// ativaria o plano com o valor velho. Falso se o gateway não confirmou.
+async function cancelarCobrancasDaProposta(propostaId) {
+  const pendentes = db.prepare("SELECT * FROM subscriptions WHERE propostaId = ? AND status = 'pendente'").all(propostaId);
+  for (const sub of pendentes) {
+    if (sub.asaasId && asaasAtivo()) {
+      try { await asaas(`/subscriptions/${sub.asaasId}`, { method: "DELETE" }); }
+      catch (e) { if (e.status !== 404) return false; }
+    }
+  }
+  db.prepare("UPDATE subscriptions SET status = 'cancelada', atualizadoEm = ? WHERE propostaId = ? AND status = 'pendente'").run(agora(), propostaId);
+  return true;
+}
+
 router.post("/admin/propostas", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
-  const b = req.body || {};
-  const cliente = String(b.cliente || "").trim().slice(0, 120);
-  const planoBase = String(b.planoBase || "").trim();
-  const ciclo = normalizarCiclo(b.ciclo);
-  const valorFinal = arred2(b.valorFinal);
-  const nicho = String(b.nicho || "").trim().slice(0, 120);
-  const territorio = String(b.territorio || "").trim().slice(0, 120);
-  const condicoes = String(b.condicoes || "").trim().slice(0, 6000);
-  const companyId = String(b.companyId || "").trim() || null;
-  const dias = Math.max(1, Math.min(90, Number(b.validadeDias) || PROPOSTA_VALIDADE_DIAS));
-
-  if (!cliente) return res.status(400).json({ error: "Informe o nome do cliente." });
-  if (!PLANOS_BASE_PROPOSTA.includes(planoBase)) return res.status(400).json({ error: "Escolha o plano-base da proposta." });
-  if (!Number.isFinite(valorFinal) || valorFinal < MINIMO_PROPOSTA)
-    return res.status(400).json({ error: `O valor da proposta precisa ser de pelo menos R$ ${MINIMO_PROPOSTA},00.` });
-  if (!condicoes) return res.status(400).json({ error: "Escreva as condições da proposta." });
-  if (companyId && !db.prepare("SELECT 1 FROM companies WHERE id = ?").get(companyId))
-    return res.status(404).json({ error: "Empresa não encontrada." });
+  const { erro, dados: d } = lerDadosProposta(req.body);
+  if (erro) return res.status(erro[0]).json({ error: erro[1] });
 
   const token = randomBytes(32).toString("hex");
   const id = uid();
   const criadoEm = agora();
-  const expiraEm = criadoEm + dias * 86400000;
-  const valorOriginal = precoCheioNoCiclo(planoBase, ciclo);
+  const expiraEm = criadoEm + d.dias * 86400000;
 
   db.prepare(`INSERT INTO propostas_plano
-    (id, tokenHash, cliente, companyId, planoBase, ciclo, valorOriginal, valorFinal, nicho, territorio, condicoes, status, criadoPor, criadoEm, expiraEm)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberta', ?, ?, ?)`)
-    .run(id, hashDoToken(token), cliente, companyId, planoBase, ciclo, valorOriginal, valorFinal, nicho, territorio, condicoes, req.user.id, criadoEm, expiraEm);
+    (id, tokenHash, cliente, companyId, planoBase, ciclo, valorOriginal, valorFinal, nicho, territorio, condicoes, formaPagamento, status, criadoPor, criadoEm, expiraEm)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberta', ?, ?, ?)`)
+    .run(id, hashDoToken(token), d.cliente, d.companyId, d.planoBase, d.ciclo, d.valorOriginal, d.valorFinal, d.nicho, d.territorio, d.condicoes, d.formaPagamento, req.user.id, criadoEm, expiraEm);
 
-  console.log(`[proposta] criada por ${req.user.id} — ${cliente}, ${planoBase} ${ciclo}, R$ ${valorFinal}`);
+  console.log(`[proposta] criada por ${req.user.id} — ${d.cliente}, ${d.planoBase} ${d.ciclo}, R$ ${d.valorFinal}`);
 
   const base = String(process.env.FRONTEND_URL || "").replace(/\/$/, "");
   res.status(201).json({
-    id, cliente, planoBase, ciclo, valorOriginal, valorFinal, expiraEm,
+    id, cliente: d.cliente, planoBase: d.planoBase, ciclo: d.ciclo, valorOriginal: d.valorOriginal,
+    valorFinal: d.valorFinal, formaPagamento: d.formaPagamento, expiraEm,
     // Mostrado uma vez só, como o convite de trial.
     url: `${base}/proposta/${token}`,
     aviso: "Copie agora: este link não pode ser exibido de novo.",
   });
 });
 
+// Editar mantém o mesmo link. Enquanto não for paga, tudo pode mudar. Se mudou
+// o que a empresa aceita (plano, ciclo, valor, nicho, território, condições)
+// ou a empresa da proposta, o aceite anterior deixa de valer: ela lê e aceita
+// de novo. Cobrança já gerada com os dados antigos é cancelada no gateway.
+router.put("/admin/propostas/:id", async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+  const p = db.prepare("SELECT * FROM propostas_plano WHERE id = ?").get(req.params.id);
+  const estado = estadoDaProposta(p);
+  if (estado === "inexistente") return res.status(404).json({ error: "Proposta não encontrada." });
+  if (estado === "paga") return res.status(409).json({ error: "Esta proposta já foi paga e não pode mais ser editada." });
+  if (estado === "cancelada") return res.status(409).json({ error: "Esta proposta foi cancelada. Gere uma nova." });
+
+  const { erro, dados: d } = lerDadosProposta(req.body);
+  if (erro) return res.status(erro[0]).json({ error: erro[1] });
+
+  const mudouTermos = hashDaProposta(d) !== hashDaProposta(p) || (d.companyId || null) !== (p.companyId || null);
+  const mudouForma = d.formaPagamento !== (p.formaPagamento || "PIX");
+  if ((mudouTermos || mudouForma) && !(await cancelarCobrancasDaProposta(p.id)))
+    return res.status(502).json({ error: "Não foi possível cancelar a cobrança já gerada. Tente de novo." });
+
+  const t = agora();
+  db.prepare(`UPDATE propostas_plano SET cliente = ?, companyId = ?, planoBase = ?, ciclo = ?, valorOriginal = ?, valorFinal = ?,
+      nicho = ?, territorio = ?, condicoes = ?, formaPagamento = ?, expiraEm = ?, editadoEm = ?
+    WHERE id = ?`)
+    .run(d.cliente, d.companyId, d.planoBase, d.ciclo, d.valorOriginal, d.valorFinal, d.nicho, d.territorio, d.condicoes,
+      d.formaPagamento, t + d.dias * 86400000, t, p.id);
+  const aceiteReiniciado = mudouTermos && !!p.aceitoEm;
+  if (mudouTermos) db.prepare("UPDATE propostas_plano SET aceitoEm = NULL, aceitoPor = NULL, aceiteHash = NULL WHERE id = ?").run(p.id);
+
+  console.log(`[proposta] editada por ${req.user.id} — ${d.cliente}${aceiteReiniciado ? " (aceite reiniciado)" : ""}`);
+  res.json({ ok: true, id: p.id, aceiteReiniciado });
+});
+
 router.get("/admin/propostas", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
   const propostas = db.prepare("SELECT * FROM propostas_plano ORDER BY criadoEm DESC LIMIT 100").all().map((p) => ({
-    id: p.id, cliente: p.cliente,
+    id: p.id, cliente: p.cliente, companyId: p.companyId || null,
     empresa: p.companyId ? db.prepare("SELECT nome FROM companies WHERE id = ?").get(p.companyId)?.nome || null : null,
     planoBase: p.planoBase, planoNome: planoDe(p.planoBase).nome, ciclo: p.ciclo,
     valorOriginal: p.valorOriginal, valorFinal: p.valorFinal,
-    nicho: p.nicho, territorio: p.territorio, condicoes: p.condicoes,
-    criadoEm: p.criadoEm, expiraEm: p.expiraEm, aceitoEm: p.aceitoEm,
+    nicho: p.nicho, territorio: p.territorio, condicoes: p.condicoes, formaPagamento: p.formaPagamento || "PIX",
+    criadoEm: p.criadoEm, expiraEm: p.expiraEm, aceitoEm: p.aceitoEm, editadoEm: p.editadoEm || null,
     estado: estadoDaProposta(p),
   }));
   res.json({ propostas });
 });
 
-// Cancelar fecha o link. Se havia um Pix gerado e ainda não pago, ele também
-// é cancelado no gateway — senão o QR antigo continuaria ativando o plano.
+// Cancelar fecha o link. Se havia cobrança gerada e ainda não paga, ela também
+// é cancelada no gateway — senão o Pix antigo continuaria ativando o plano.
 router.post("/admin/propostas/:id/cancelar", async (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
   const p = db.prepare("SELECT * FROM propostas_plano WHERE id = ?").get(req.params.id);
@@ -472,19 +530,9 @@ router.post("/admin/propostas/:id/cancelar", async (req, res) => {
   if (estado === "inexistente") return res.status(404).json({ error: "Proposta não encontrada." });
   if (estado === "paga") return res.status(409).json({ error: "Esta proposta já foi paga. Para encerrar, cancele a assinatura da empresa." });
 
-  const pendentes = db.prepare("SELECT * FROM subscriptions WHERE propostaId = ? AND status = 'pendente'").all(p.id);
-  for (const sub of pendentes) {
-    if (sub.asaasId && asaasAtivo()) {
-      try { await asaas(`/subscriptions/${sub.asaasId}`, { method: "DELETE" }); }
-      catch (e) {
-        if (e.status !== 404) return res.status(502).json({ error: "Não foi possível cancelar o Pix já gerado. Tente de novo." });
-      }
-    }
-  }
-  db.transaction(() => {
-    db.prepare("UPDATE propostas_plano SET status = 'cancelada' WHERE id = ?").run(p.id);
-    db.prepare("UPDATE subscriptions SET status = 'cancelada', atualizadoEm = ? WHERE propostaId = ? AND status = 'pendente'").run(agora(), p.id);
-  })();
+  if (!(await cancelarCobrancasDaProposta(p.id)))
+    return res.status(502).json({ error: "Não foi possível cancelar o Pix já gerado. Tente de novo." });
+  db.prepare("UPDATE propostas_plano SET status = 'cancelada' WHERE id = ?").run(p.id);
   res.json({ ok: true });
 });
 
@@ -503,6 +551,7 @@ router.get("/proposta/:token", (req, res) => {
     valorOriginal: p.valorOriginal, valorFinal: p.valorFinal,
     desconto: Math.max(0, arred2(p.valorOriginal - p.valorFinal)),
     nicho: p.nicho, territorio: p.territorio, condicoes: p.condicoes,
+    formasPagamento: formasAceitasNaProposta(p.formaPagamento),
     expiraEm: p.expiraEm, aceitoEm: p.aceitoEm, estado: uso.estado,
     // Sem CPF/CNPJ não há cliente no gateway: a tela pede ali mesmo.
     precisaDocumento: !db.prepare("SELECT documento FROM companies WHERE id = ?").get(req.user.entityId)?.documento,
@@ -598,7 +647,9 @@ router.post("/subscription", async (req, res) => {
     if (!uso.ok) return res.status(uso.status).json({ error: uso.error });
     if (req.body.aceiteCondicoes !== true)
       return res.status(400).json({ error: "Leia e aceite as condições da proposta para continuar." });
-    if (formaSolicitada !== "PIX") return res.status(400).json({ error: "A proposta é paga com Pix." });
+    // A forma de pagamento é a que a RYCS definiu na proposta.
+    if (!formasAceitasNaProposta(uso.proposta.formaPagamento).includes(formaSolicitada))
+      return res.status(400).json({ error: `Esta proposta é paga com ${FORMAS_PROPOSTA[uso.proposta.formaPagamento] || "Pix"}.` });
     proposta = uso.proposta;
     // Aceitar prende a proposta a esta empresa. A condição no WHERE faz isso
     // valer mesmo com duas empresas abrindo o mesmo link ao mesmo tempo.
@@ -607,9 +658,10 @@ router.post("/subscription", async (req, res) => {
       WHERE id = ? AND status = 'aberta' AND (companyId IS NULL OR companyId = ?)`)
       .run(entityId, agora(), req.user.id, hashDaProposta(proposta), proposta.id, entityId);
     if (marca.changes === 0) return res.status(409).json({ error: "Esta proposta não está mais disponível para esta empresa." });
-    // CPF/CNPJ informado na tela da proposta vale como documento da empresa
-    // quando ela ainda não tem um — mesmo critério do checkout do onboarding.
-    const doc = normalizarDocumento(req.body?.documento);
+    // CPF/CNPJ informado na tela da proposta (ou o do titular do cartão) vale
+    // como documento da empresa quando ela ainda não tem um — mesmo critério
+    // do checkout do onboarding.
+    const doc = normalizarDocumento(req.body?.documento || req.body?.titular?.documento);
     if (doc) db.prepare("UPDATE companies SET documento = ? WHERE id = ? AND (documento IS NULL OR documento = '')").run(doc, entityId);
   }
 
@@ -648,9 +700,12 @@ router.post("/subscription", async (req, res) => {
   }
 
   if (credito && !tentativaCredito && chave !== "free") {
+    // Mesma origem: um cartão já cadastrado pelo checkout normal não serve
+    // para a proposta (valores diferentes), e vice-versa.
     const existente = db.prepare(`SELECT * FROM subscriptions WHERE companyId = ? AND plano = ? AND ciclo = ?
       AND formaPagamento = 'CREDIT_CARD' AND asaasId IS NOT NULL AND status IN ('pendente', 'trial', 'ativa')
-      ORDER BY criadoEm DESC LIMIT 1`).get(entityId, chave, ciclo);
+      AND COALESCE(propostaId, '') = ?
+      ORDER BY criadoEm DESC LIMIT 1`).get(entityId, chave, ciclo, proposta?.id || "");
     if (existente) {
       const onboarding = doOnboarding ? concluirEtapaOnboarding(entityId, "plano") : null;
       return res.json({

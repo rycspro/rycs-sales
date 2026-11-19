@@ -1,25 +1,31 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, CheckCircle, Crown, Loader, QrCode, X } from "lucide-react";
+import { Check, CheckCircle, CreditCard, Crown, Loader, QrCode, X } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { lerProposta, limparProposta } from "../../lib/rotas.js";
+import FormularioCartao, { CARTAO_VAZIO, TITULAR_VAZIO, erroDoCartao } from "./FormularioCartao.jsx";
 
 // Proposta Enterprise aberta pelo link que a RYCS mandou (/proposta/<token>).
 //
 // Tudo o que a empresa vai pagar e aceitar fica numa tela só: plano-base,
 // ciclo, valor, desconto, nicho, território e as condições por extenso. O
 // botão de pagar só libera depois do "li e aceito" — o servidor também exige
-// o aceite e grava quem aceitou e quando. Pagamento em Pix; o plano é
-// liberado quando o gateway confirmar.
+// o aceite e grava quem aceitou e quando. A forma de pagamento (Pix, cartão
+// ou as duas) é a que a RYCS definiu na proposta; o plano é liberado quando o
+// gateway confirmar.
 
 const CICLO_ROTULO = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" };
 const SO_DIGITOS = (v) => String(v).replace(/\D/g, "");
+const ROTULO_FORMA = { PIX: "Pix", CREDIT_CARD: "Cartão de crédito" };
 
 export default function PropostaPlano({ token: tokenDaRota, aviso, aoConcluir }) {
   const [token] = useState(() => tokenDaRota || lerProposta());
   const [proposta, setProposta] = useState(null);
   const [aceite, setAceite] = useState(false);
   const [documento, setDocumento] = useState("");
+  const [forma, setForma] = useState("PIX");
+  const [cartao, setCartao] = useState(CARTAO_VAZIO);
+  const [titular, setTitular] = useState(TITULAR_VAZIO);
   const [pagando, setPagando] = useState(false);
   const [pix, setPix] = useState(null);
   const [pago, setPago] = useState(false);
@@ -32,8 +38,10 @@ export default function PropostaPlano({ token: tokenDaRota, aviso, aoConcluir })
 
   useEffect(() => {
     if (!token) return;
-    api(`/proposta/${encodeURIComponent(token)}`).then((r) =>
-      setProposta(r && !r.error ? r : { error: r?.error || "Não foi possível abrir a proposta agora." }));
+    api(`/proposta/${encodeURIComponent(token)}`).then((r) => {
+      if (r && !r.error) setForma(r.formasPagamento?.[0] || "PIX");
+      setProposta(r && !r.error ? r : { error: r?.error || "Não foi possível abrir a proposta agora." });
+    });
   }, [token]);
 
   // Pix gerado: confere a cada 5 s se a assinatura da proposta já ativou.
@@ -60,17 +68,26 @@ export default function PropostaPlano({ token: tokenDaRota, aviso, aoConcluir })
 
   const pagar = async () => {
     if (!aceite) return;
+    const ehCartao = forma === "CREDIT_CARD";
+    const falta = ehCartao ? erroDoCartao(cartao, titular) : "";
+    if (falta) return setErro(falta);
     setErro("");
     setPagando(true);
     const r = await api("/subscription", {
       proposta: token,
       aceiteCondicoes: true,
-      formaPagamento: "PIX",
-      documento: proposta?.precisaDocumento ? documento : undefined,
+      formaPagamento: forma,
+      documento: proposta?.precisaDocumento && !ehCartao ? documento : undefined,
+      cartao: ehCartao ? cartao : undefined,
+      titular: ehCartao ? titular : undefined,
     });
     setPagando(false);
+    // O CVV não fica na tela depois de enviado, deu certo ou não.
+    if (ehCartao) setCartao((c) => ({ ...c, cvv: "" }));
     if (!r || r.error) return setErro(r?.error || "Sem resposta do servidor. Verifique a conexão e tente de novo.");
     if (r.jaPago) { setPago(true); aoConcluir?.(); return; }
+    // Cartão em análise no gateway: espera a confirmação como no Pix.
+    if (ehCartao) { setPix({ subscriptionId: r.subscriptionId, cartao: true }); return; }
     if (r.pixCopiaECola || r.pixQrCodeBase64) { setPix(r); return; }
     if (r.invoiceUrl) {
       // Sem QR, mas com fatura: abrir a fatura é o caminho de pagamento.
@@ -116,8 +133,8 @@ export default function PropostaPlano({ token: tokenDaRota, aviso, aoConcluir })
 
   if (pix) return folha(
     <div style={{ textAlign: "center", padding: "10px 4px" }}>
-      <QrCode size={30} color="var(--brand)" aria-hidden="true" />
-      <h2 style={{ margin: "12px 0 4px", fontSize: 20 }}>Pague com Pix para ativar</h2>
+      {pix.cartao ? <CreditCard size={30} color="var(--brand)" aria-hidden="true" /> : <QrCode size={30} color="var(--brand)" aria-hidden="true" />}
+      <h2 style={{ margin: "12px 0 4px", fontSize: 20 }}>{pix.cartao ? "Pagamento com cartão em análise" : "Pague com Pix para ativar"}</h2>
       <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 16px" }}>
         {money(proposta.valorFinal)}. {pix.fatura ? "Abrimos a fatura numa nova aba para você pagar. " : ""}O plano é liberado assim que o pagamento for confirmado.
       </p>
@@ -140,7 +157,10 @@ export default function PropostaPlano({ token: tokenDaRota, aviso, aoConcluir })
   const p = proposta;
   const ciclo = CICLO_ROTULO[p.ciclo] || "mensal";
   const pctDesconto = p.valorOriginal > 0 && p.desconto > 0 ? Math.round((p.desconto / p.valorOriginal) * 100) : 0;
-  const docOk = !p.precisaDocumento || [11, 14].includes(SO_DIGITOS(documento).length);
+  const formas = p.formasPagamento?.length ? p.formasPagamento : ["PIX"];
+  const ehCartao = forma === "CREDIT_CARD";
+  // No cartão, o CPF/CNPJ do titular já vai no formulário do cartão.
+  const docOk = !p.precisaDocumento || ehCartao || [11, 14].includes(SO_DIGITOS(documento).length);
 
   return folha(
     <>
@@ -199,7 +219,39 @@ export default function PropostaPlano({ token: tokenDaRota, aviso, aoConcluir })
         Proposta válida até {new Date(p.expiraEm).toLocaleDateString("pt-BR")}.
       </div>
 
-      {p.precisaDocumento && (
+      <div className="vx-eyebrow" style={{ marginBottom: 8 }}>Forma de pagamento</div>
+      {formas.length > 1 ? (
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }} role="group" aria-label="Forma de pagamento">
+          {formas.map((f) => {
+            const on = forma === f;
+            return (
+              <button key={f} type="button" aria-pressed={on} onClick={() => { setForma(f); setErro(""); }}
+                style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minHeight: 44,
+                  padding: "10px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+                  fontSize: 13, fontWeight: on ? 600 : 400,
+                  border: `1.5px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand-50)" : "var(--surface)",
+                  color: on ? "var(--brand)" : "var(--ink)",
+                }}>
+                {f === "PIX" ? <QrCode size={15} aria-hidden="true" /> : <CreditCard size={15} aria-hidden="true" />} {ROTULO_FORMA[f]}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, marginBottom: 14 }}>
+          {ehCartao ? <CreditCard size={15} color="var(--brand)" aria-hidden="true" /> : <QrCode size={15} color="var(--brand)" aria-hidden="true" />} {ROTULO_FORMA[forma]}
+        </div>
+      )}
+
+      {ehCartao && (
+        <div style={{ marginBottom: 12 }}>
+          <FormularioCartao cartao={cartao} setCartao={setCartao} titular={titular} setTitular={setTitular} />
+        </div>
+      )}
+
+      {p.precisaDocumento && !ehCartao && (
         <label style={{ display: "block", marginBottom: 12 }}>
           <div className="vx-label">CPF ou CNPJ da empresa</div>
           <input className="vx-input vx-mono" inputMode="numeric" value={documento}
@@ -221,7 +273,11 @@ export default function PropostaPlano({ token: tokenDaRota, aviso, aoConcluir })
 
       <button className="vx-btn vx-btn-primary vx-btn-block" style={{ marginTop: 6, minHeight: 44 }}
         disabled={!aceite || !docOk || pagando} onClick={pagar}>
-        {pagando ? <><Loader size={15} /> Gerando o Pix…</> : <><QrCode size={15} /> Pagar com Pix {money(p.valorFinal)}</>}
+        {pagando
+          ? <><Loader size={15} /> {ehCartao ? "Processando…" : "Gerando o Pix…"}</>
+          : ehCartao
+            ? <><CreditCard size={15} /> Pagar com cartão {money(p.valorFinal)}</>
+            : <><QrCode size={15} /> Pagar com Pix {money(p.valorFinal)}</>}
       </button>
       <p className="vx-chart-source">
         Nenhuma cobrança é feita sem esta confirmação. O plano é liberado quando o pagamento for confirmado.

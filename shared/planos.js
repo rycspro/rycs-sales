@@ -172,6 +172,16 @@ export const PLANO_ENTERPRISE = {
 // Proposta Enterprise: quanto tempo o link vale, se o admin não disser outro.
 export const PROPOSTA_VALIDADE_DIAS = 15;
 
+// Como a empresa paga a proposta — escolhido pela RYCS ao criar o link.
+// AMBOS deixa a empresa escolher na hora de pagar.
+export const FORMAS_PROPOSTA = {
+  PIX: "Pix",
+  CREDIT_CARD: "Cartão de crédito",
+  AMBOS: "Pix ou cartão (a empresa escolhe)",
+};
+export const formasAceitasNaProposta = (forma) =>
+  forma === "AMBOS" ? ["PIX", "CREDIT_CARD"] : [FORMAS_PROPOSTA[forma] ? forma : "PIX"];
+
 export const PLANO_PADRAO = "free";
 
 export const planoDe = (chave) => PLANOS[chave] || PLANOS[PLANO_PADRAO];

@@ -9,9 +9,9 @@ import { subirServidor, assinar } from "./apoio/servidor.js";
 
 test("propostas Enterprise: admin cria, empresa vê e aceita, cancelamento fecha o link", async (t) => {
   const { base, dbPath } = await subirServidor(t);
-  const req = async (path, { body, cookie } = {}) => {
+  const req = async (path, { body, cookie, method } = {}) => {
     const r = await fetch(base + path, {
-      method: body ? "POST" : "GET",
+      method: method || (body ? "POST" : "GET"),
       headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(cookie ? { Cookie: cookie } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -93,6 +93,29 @@ test("propostas Enterprise: admin cria, empresa vê e aceita, cancelamento fecha
   r = await req("/admin/propostas", { cookie: admin });
   assert.equal(r.corpo.propostas.length, 2);
   assert.equal(r.corpo.propostas.find((p) => p.id === idA).estado, "aceita");
+
+  // Edição: só o admin, mesmo link. Mudar só o nome e a validade mantém o
+  // aceite; mudar o valor zera o aceite e a empresa aceita de novo.
+  const editar = (extra, cookie = admin) => req(`/admin/propostas/${idA}`, { cookie, method: "PUT", body: proposta({ companyId: "emp-a", ...extra }) });
+  r = await editar({}, empA);
+  assert.equal(r.status, 403);
+  r = await editar({ valorFinal: 2 });
+  assert.equal(r.status, 400);
+  r = await editar({ cliente: "Cliente A (renomeado)", validadeDias: 30 });
+  assert.equal(r.status, 200);
+  assert.equal(r.corpo.aceiteReiniciado, false);
+  assert.ok(db.prepare("SELECT aceitoEm FROM propostas_plano WHERE id = ?").get(idA).aceitoEm, "aceite mantido");
+  r = await editar({ valorFinal: 2000 });
+  assert.equal(r.status, 200);
+  assert.equal(r.corpo.aceiteReiniciado, true);
+  const editada = db.prepare("SELECT * FROM propostas_plano WHERE id = ?").get(idA);
+  assert.equal(editada.aceitoEm, null);
+  assert.equal(editada.aceiteHash, null);
+  assert.ok(editada.editadoEm);
+  r = await req(`/proposta/${tokenA}`, { cookie: empA });
+  assert.equal(r.status, 200, "o link continua o mesmo");
+  assert.equal(r.corpo.valorFinal, 2000);
+  assert.equal(r.corpo.desconto, 2794);
   r = await req(`/admin/propostas/${idA}/cancelar`, { cookie: empA, body: {} });
   assert.equal(r.status, 403);
   r = await req(`/admin/propostas/${idA}/cancelar`, { cookie: admin, body: {} });
@@ -101,6 +124,30 @@ test("propostas Enterprise: admin cria, empresa vê e aceita, cancelamento fecha
   assert.equal(r.status, 410);
   r = await req("/subscription", { cookie: empA, body: { proposta: tokenA, aceiteCondicoes: true, formaPagamento: "PIX" } });
   assert.equal(r.status, 410);
+  r = await editar({});
+  assert.equal(r.status, 409, "cancelada não se edita");
+
+  // Forma de pagamento definida pela RYCS na proposta.
+  r = await req("/admin/propostas", { cookie: admin, body: proposta({ formaPagamento: "BOLETO" }) });
+  assert.equal(r.status, 400);
+  r = await req("/admin/propostas", { cookie: admin, body: proposta({ companyId: "emp-b", formaPagamento: "CREDIT_CARD" }) });
+  assert.equal(r.status, 201);
+  assert.equal(r.corpo.formaPagamento, "CREDIT_CARD");
+  const tokenCartao = r.corpo.url.split("/proposta/")[1];
+  r = await req(`/proposta/${tokenCartao}`, { cookie: empB });
+  assert.deepEqual(r.corpo.formasPagamento, ["CREDIT_CARD"]);
+  r = await req("/subscription", { cookie: empB, body: { proposta: tokenCartao, aceiteCondicoes: true, formaPagamento: "PIX" } });
+  assert.equal(r.status, 400, "proposta só no cartão não aceita Pix");
+  r = await req("/subscription", { cookie: empB, body: { proposta: tokenCartao, aceiteCondicoes: true, formaPagamento: "CREDIT_CARD" } });
+  assert.equal(r.status, 503, "cartão aceito; sem gateway no teste, para antes de cobrar");
+
+  r = await req("/admin/propostas", { cookie: admin, body: proposta({ formaPagamento: "AMBOS" }) });
+  const tokenAmbos = r.corpo.url.split("/proposta/")[1];
+  r = await req(`/proposta/${tokenAmbos}`, { cookie: empA });
+  assert.deepEqual(r.corpo.formasPagamento, ["PIX", "CREDIT_CARD"]);
+  r = await req("/admin/propostas", { cookie: admin });
+  assert.equal(r.corpo.propostas.find((p) => p.cliente === "Cliente A" && p.formaPagamento === "AMBOS")?.formaPagamento, "AMBOS");
+  assert.equal(r.corpo.propostas.find((p) => p.id === idA).formaPagamento, "PIX", "sem escolha, a proposta é Pix");
 
   // "Falar com a RYCS" no card Enterprise: só empresa.
   r = await req("/enterprise/interesse", { cookie: empA, body: {} });

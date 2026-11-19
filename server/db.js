@@ -1142,8 +1142,9 @@ adicionarColuna("subscriptions", "propostaId", "TEXT");
 // Propostas Enterprise: plano-base, ciclo, valor e condições combinados com
 // uma empresa, pagos por um link. Mesmo cuidado do convite de trial: o token
 // não é guardado, só o hash — o link vale um desconto e é credencial.
-// A proposta não se edita depois de criada: para mudar, cancela e gera outra.
-// Assim o que a empresa aceitou é exatamente o que está gravado aqui.
+// A proposta pode ser editada até ser paga (mesmo link). Se o que a empresa
+// aceita mudar, o aceite é zerado e ela aceita de novo — assim o aceite
+// gravado é sempre o do texto e dos valores que estão aqui.
 db.exec(`
   CREATE TABLE IF NOT EXISTS propostas_plano (
     id TEXT PRIMARY KEY,
@@ -1167,6 +1168,10 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_subscriptions_proposta ON subscriptions(propostaId);
 `);
+// Forma de pagamento da proposta: PIX | CREDIT_CARD | AMBOS. As propostas
+// criadas antes desta coluna eram só Pix.
+adicionarColuna("propostas_plano", "formaPagamento", "TEXT DEFAULT 'PIX'");
+adicionarColuna("propostas_plano", "editadoEm", "INTEGER");
 
 // Lista de contatos por campanha
 db.prepare(`
