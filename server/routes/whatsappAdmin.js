@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as wa from "../services/whatsappDisparo.js";
 import { metricasWhatsapp, detalheMensagens } from "../services/whatsappMetricas.js";
 import * as conta from "../services/whatsappConta.js";
+import * as conversas from "../services/whatsappConversas.js";
 
 const router = Router();
 
@@ -35,8 +36,11 @@ const freios = () => ({
 router.get("/admin/whatsapp", requireAdmin, (req, res) => {
   let metricas = null;
   try { metricas = metricasWhatsapp(); } catch (e) { console.error("[whatsapp] métricas:", e?.message); }
+  let naoLidas = 0;
+  try { naoLidas = conversas.listarConversas().reduce((s, c) => s + c.naoLidas, 0); } catch (e) { console.error("[whatsapp] conversas:", e?.message); }
   res.json({
     metricas,
+    naoLidas,
     configurado: wa.envioConfigurado(),
     faltando: wa.faltandoConfig(),
     publicos: Object.entries(wa.PUBLICOS).map(([key, p]) => ({ key, label: p.label, pendencias: !!p.comPendencias })),
@@ -98,6 +102,32 @@ router.post("/admin/whatsapp/disparar", requireAdmin, exigirConfig, async (req, 
     if (e?.codigo !== undefined || e?.status) return erroMeta(res, e);
     res.status(400).json({ error: e.message });
   }
+});
+
+// GET /api/admin/whatsapp/conversas — caixa de entrada do número oficial
+router.get("/admin/whatsapp/conversas", requireAdmin, (req, res) => {
+  const lista = conversas.listarConversas({ filtro: req.query.filtro === "todas" ? "todas" : "respostas", busca: String(req.query.busca || "") });
+  res.json({ conversas: lista.slice(0, 300), naoLidas: lista.reduce((s, c) => s + c.naoLidas, 0) });
+});
+
+// GET /api/admin/whatsapp/conversas/:numero — histórico completo (marca como lida)
+router.get("/admin/whatsapp/conversas/:numero", requireAdmin, (req, res) => {
+  const c = conversas.abrirConversa(req.params.numero);
+  if (!c) return res.status(400).json({ error: "Número inválido." });
+  res.json(c);
+});
+
+const erroConversa = (res, e) => (e?.validacao ? res.status(400).json({ error: e.message }) : erroMeta(res, e));
+
+// POST /api/admin/whatsapp/conversas/:numero/responder — texto livre (janela de 24h)
+router.post("/admin/whatsapp/conversas/:numero/responder", requireAdmin, exigirConfig, async (req, res) => {
+  try { res.json(await conversas.responder(req.params.numero, req.body?.texto, { adminId: req.user.id })); } catch (e) { erroConversa(res, e); }
+});
+
+// POST /api/admin/whatsapp/conversas/:numero/modelo — modelo aprovado para uma pessoa
+router.post("/admin/whatsapp/conversas/:numero/modelo", requireAdmin, exigirConfig, async (req, res) => {
+  const { template, idioma, variaveis } = req.body || {};
+  try { res.json(await conversas.enviarModelo(req.params.numero, { template, idioma, variaveis }, { adminId: req.user.id })); } catch (e) { erroConversa(res, e); }
 });
 
 // GET /api/admin/whatsapp/mensagens — cada mensagem enviada, em detalhe

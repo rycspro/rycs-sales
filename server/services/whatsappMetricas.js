@@ -149,6 +149,28 @@ function valoresDoEnvio(e, variaveis) {
   return variaveis.map((v) => (v?.origem === "nome" ? e.nome : v?.origem === "fixo" ? v.texto : null));
 }
 
+// Texto de uma mensagem de disparo do admin (linha de whatsapp_envios com os
+// dados do disparo: templateDados, variaveis, parametros, nome).
+export function mensagemDoDisparo(e) {
+  let tpl = {};
+  let variaveis = [];
+  try { tpl = JSON.parse(e.templateDados || "{}"); variaveis = JSON.parse(e.variaveis || "[]"); } catch { /* registro antigo */ }
+  const valores = valoresDoEnvio(e, variaveis);
+  const nomes = tpl.variaveis || [];
+  return {
+    cabecalho: tpl.cabecalho || "", corpo: preencher(tpl.corpo, nomes, valores), rodape: tpl.rodape || "",
+    botoes: tpl.botoes || [], completa: nomes.every((_, i) => valores[i] != null && valores[i] !== ""),
+  };
+}
+
+// Texto da reativação de empresas: as variáveis não ficam registradas, vai o modelo.
+export function mensagemDaReativacao(dia) {
+  const m = MODELOS_REATIVACAO[dia] || {};
+  return { cabecalho: "", corpo: m.corpo || "", rodape: "", botoes: (m.botoes || []).map((b) => ({ tipo: b.tipo, texto: b.texto })), completa: false };
+}
+
+export const tabelaExiste = existe;
+
 const sqlAvisos = db.prepare(`SELECT status, COALESCE(ocorreuEm, recebidoEm) AS em, erro,
     json_extract(dados, '$.pricing.billable') AS cobrada, json_extract(dados, '$.pricing.category') AS categoria,
     json_extract(dados, '$.pricing.type') AS tipo
@@ -183,23 +205,13 @@ export function detalheMensagens({ disparoId = "", busca = "", limite = 100 } = 
     FROM whatsapp_envios e JOIN whatsapp_disparos d ON d.id = e.disparoId
     WHERE (? = '' OR e.disparoId = ?) AND (e.nome LIKE ? OR e.numero LIKE ?)
     ORDER BY COALESCE(e.enviadoEm, d.criadoEm) DESC, e.rowid DESC LIMIT ?`).all(disparoId, disparoId, like, like, lim)
-    .map((e) => {
-      let tpl = {};
-      let variaveis = [];
-      try { tpl = JSON.parse(e.templateDados || "{}"); variaveis = JSON.parse(e.variaveis || "[]"); } catch { /* registro antigo */ }
-      const valores = valoresDoEnvio(e, variaveis);
-      const nomes = tpl.variaveis || [];
-      return {
-        id: e.id, origem: "Disparo do admin", disparoId: e.disparoId, publico: e.publico, modelo: e.template, idioma: e.idioma,
-        nome: e.nome, numero: e.numero, wamid: e.wamid, status: e.status, erro: e.erro, enviadoEm: e.enviadoEm || null,
-        mensagem: {
-          cabecalho: tpl.cabecalho || "", corpo: preencher(tpl.corpo, nomes, valores), rodape: tpl.rodape || "",
-          botoes: tpl.botoes || [], completa: nomes.every((_, i) => valores[i] != null && valores[i] !== ""),
-        },
-        ...caminhoNaMeta(e.wamid),
-        respostas: respostasA(e.numero, e.wamid, e.enviadoEm),
-      };
-    });
+    .map((e) => ({
+      id: e.id, origem: "Disparo do admin", disparoId: e.disparoId, publico: e.publico, modelo: e.template, idioma: e.idioma,
+      nome: e.nome, numero: e.numero, wamid: e.wamid, status: e.status, erro: e.erro, enviadoEm: e.enviadoEm || null,
+      mensagem: mensagemDoDisparo(e),
+      ...caminhoNaMeta(e.wamid),
+      respostas: respostasA(e.numero, e.wamid, e.enviadoEm),
+    }));
 
   let daReativacao = [];
   if (!disparoId && existe("reativacao_whatsapp")) {
@@ -207,17 +219,13 @@ export function detalheMensagens({ disparoId = "", busca = "", limite = 100 } = 
         FROM reativacao_whatsapp w LEFT JOIN companies c ON c.id = w.companyId
         WHERE w.status IN ('enviado', 'falhou') AND (COALESCE(c.nome, '') LIKE ? OR w.numero LIKE ?)
         ORDER BY w.enviadoEm DESC LIMIT ?`).all(like, like, lim)
-      .map((w) => {
-        const m = MODELOS_REATIVACAO[w.dia] || {};
-        return {
-          id: w.id, origem: "Reativação de empresas", disparoId: "", publico: "Empresas paradas", modelo: w.modelo, idioma: "pt_BR",
-          nome: w.nome, numero: w.numero, wamid: w.wamid, status: w.status, erro: w.erro, enviadoEm: w.enviadoEm || null,
-          // As variáveis da reativação não ficam registradas: o texto vai como está no modelo.
-          mensagem: { cabecalho: "", corpo: m.corpo || "", rodape: "", botoes: (m.botoes || []).map((b) => ({ tipo: b.tipo, texto: b.texto })), completa: false },
-          ...caminhoNaMeta(w.wamid),
-          respostas: respostasA(w.numero, w.wamid, w.enviadoEm),
-        };
-      });
+      .map((w) => ({
+        id: w.id, origem: "Reativação de empresas", disparoId: "", publico: "Empresas paradas", modelo: w.modelo, idioma: "pt_BR",
+        nome: w.nome, numero: w.numero, wamid: w.wamid, status: w.status, erro: w.erro, enviadoEm: w.enviadoEm || null,
+        mensagem: mensagemDaReativacao(w.dia),
+        ...caminhoNaMeta(w.wamid),
+        respostas: respostasA(w.numero, w.wamid, w.enviadoEm),
+      }));
   }
 
   return [...doAdmin, ...daReativacao].sort((a, b) => (b.enviadoEm || 0) - (a.enviadoEm || 0)).slice(0, lim);

@@ -54,6 +54,31 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_whatsapp_envios_disparo ON whatsapp_envios(disparoId, status);
   CREATE INDEX IF NOT EXISTS idx_whatsapp_envios_wamid ON whatsapp_envios(wamid);
 `);
+// Mensagens avulsas (respostas do admin, modelo mandado numa conversa, respostas
+// automáticas): ficam aqui para aparecerem no histórico das conversas.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS whatsapp_saidas (
+    id TEXT PRIMARY KEY,
+    numero TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    texto TEXT NOT NULL DEFAULT '',
+    modelo TEXT DEFAULT '',
+    origem TEXT DEFAULT '',
+    adminId TEXT DEFAULT '',
+    wamid TEXT DEFAULT '',
+    enviadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_whatsapp_saidas_numero ON whatsapp_saidas(numero, enviadoEm);
+`);
+const sqlSaida = db.prepare(`INSERT INTO whatsapp_saidas (id, numero, tipo, texto, modelo, origem, adminId, wamid, enviadoEm)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+export function registrarSaida({ numero, tipo, texto = "", modelo = "", origem = "", adminId = "", wamid = "" }) {
+  const id = uid();
+  const em = Date.now();
+  sqlSaida.run(id, String(numero), tipo, String(texto), modelo, origem, adminId, wamid, em);
+  return { id, enviadoEm: em };
+}
+
 // Valores exatos das variáveis de cada envio, para o admin ver a mensagem como saiu.
 if (!db.prepare("PRAGMA table_info(whatsapp_envios)").all().some((c) => c.name === "parametros"))
   db.exec("ALTER TABLE whatsapp_envios ADD COLUMN parametros TEXT DEFAULT ''");
@@ -299,10 +324,13 @@ export async function enviarTemplate({ numero, tpl, componentes }) {
 }
 
 // Texto livre: só vale dentro da janela de 24h aberta por uma mensagem da pessoa.
-export async function enviarTexto({ numero, texto }) {
+// Fica registrado para aparecer no histórico da conversa.
+export async function enviarTexto({ numero, texto, origem = "Resposta automática", adminId = "" }) {
   const corpo = { messaging_product: "whatsapp", recipient_type: "individual", to: numero, type: "text", text: { body: texto } };
   const r = await graph(`/${NUMERO_ID()}/messages`, { token: TOKEN(), metodo: "POST", dados: corpo });
-  return r.messages?.[0]?.id || "";
+  const wamid = r.messages?.[0]?.id || "";
+  registrarSaida({ numero, tipo: "texto", texto, origem, adminId, wamid });
+  return wamid;
 }
 
 // Erro da Meta que vale para tudo (token, conta, número limitado): parar de enviar.

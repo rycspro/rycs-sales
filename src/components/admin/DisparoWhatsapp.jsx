@@ -7,8 +7,9 @@ import MetricasWhatsapp from "./MetricasWhatsapp.jsx";
 import MensagensWhatsapp from "./MensagensWhatsapp.jsx";
 import CustosWhatsapp from "./CustosWhatsapp.jsx";
 import ContaWhatsapp from "./ContaWhatsapp.jsx";
+import ConversasWhatsapp from "./ConversasWhatsapp.jsx";
 
-const ABAS = [["disparos", "Disparos e desempenho"], ["mensagens", "Mensagens enviadas"], ["custos", "Custos e cliques"], ["conta", "Conta e configurações"]];
+const ABAS = [["disparos", "Disparos e desempenho"], ["conversas", "Conversas"], ["mensagens", "Mensagens enviadas"], ["custos", "Custos e cliques"], ["conta", "Conta e configurações"]];
 
 const STATUS = {
   enviando: { txt: "Enviando", color: "var(--brand)" },
@@ -21,8 +22,11 @@ export default function DisparoWhatsapp({ aviso }) {
   const [tela, setTela] = useState("lista");
   const [aba, setAba] = useState("disparos");
   const [info, setInfo] = useState(null);
+  const [naoLidas, setNaoLidas] = useState(0);
 
-  const carregar = useCallback(() => api("/admin/whatsapp").then((r) => { if (r && !r.error) setInfo(r); }), []);
+  const carregar = useCallback(() => api("/admin/whatsapp").then((r) => {
+    if (r && !r.error) { setInfo(r); setNaoLidas(r.naoLidas || 0); }
+  }), []);
   useEffect(() => { carregar(); }, [carregar]);
 
   // Enquanto houver disparo em andamento, atualiza os números sozinho.
@@ -72,9 +76,14 @@ export default function DisparoWhatsapp({ aviso }) {
       )}
 
       <div className="vx-seg vx-subnav" style={{ marginBottom: 16 }}>
-        {ABAS.map(([k, l]) => <button key={k} type="button" data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>{l}</button>)}
+        {ABAS.map(([k, l]) => (
+          <button key={k} type="button" data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>
+            {l}{k === "conversas" && naoLidas > 0 ? ` (${naoLidas})` : ""}
+          </button>
+        ))}
       </div>
 
+      {aba === "conversas" && <ConversasWhatsapp aviso={aviso} onLidas={setNaoLidas} />}
       {aba === "mensagens" && <MensagensWhatsapp aviso={aviso} disparos={info?.disparos || []} />}
       {aba === "custos" && <CustosWhatsapp aviso={aviso} />}
       {aba === "conta" && <ContaWhatsapp aviso={aviso} />}
