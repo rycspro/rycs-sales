@@ -145,7 +145,32 @@ export function valorCobradoNoCiclo(chave, ciclo = CICLOS.MENSAL) {
   return arred2(mensalidadeNoCiclo(chave, ciclo) * mesesDoCiclo(ciclo));
 }
 
+// Preço cheio do ciclo, sem desconto nenhum: mensalidade × meses. É a base das
+// propostas Enterprise ("Growth semestral = R$ 799 × 6 = R$ 4.794").
+export function precoCheioNoCiclo(chave, ciclo = CICLOS.MENSAL) {
+  return arred2(planoDe(chave).preco * mesesDoCiclo(ciclo));
+}
+
 export const ORDEM_PLANOS = ["free", "starter", "growth", "scale", "enterprise"];
+
+// Enterprise: exclusividade por nicho, sob consulta. Não tem preço na vitrine
+// nem checkout direto — cada contrato é negociado pela RYCS e vira uma
+// proposta com link de pagamento, criada no admin (valor, plano-base, ciclo e
+// condições). Fica fora de PLANOS de propósito: não é uma chave de assinatura.
+// Quem paga a proposta assina o plano-base dela, com o valor combinado.
+export const PLANO_ENTERPRISE = {
+  nome: "Enterprise",
+  frase: "Exclusividade no seu nicho, com valor e condições combinados com a RYCS.",
+  inclui: [
+    "Exclusividade no seu nicho e território",
+    "Valor e condições sob medida",
+    "Recursos do plano combinado na proposta",
+    "Atendimento direto com o time RYCS",
+  ],
+};
+
+// Proposta Enterprise: quanto tempo o link vale, se o admin não disser outro.
+export const PROPOSTA_VALIDADE_DIAS = 15;
 
 export const PLANO_PADRAO = "free";
 

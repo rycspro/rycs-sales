@@ -63,6 +63,7 @@ import jornadaRoutes, { jornadaPublico } from "./routes/jornada.js";
 import whatsappVerificacaoRoutes from "./routes/whatsappVerificacao.js";
 import sequenciasEmailRoutes, { sequenciasPublico } from "./routes/sequenciasEmail.js";
 import { iniciarSequenciasEmail } from "./services/sequenciasEmail.js";
+import { iniciarReativacao } from "./services/reativacaoEmpresas.js";
 import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
 import planosProfissionalRoutes from "./routes/planosProfissional.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
@@ -381,6 +382,7 @@ app.listen(PORT, () => {
   iniciarConversoesMeta();
   iniciarLeadsRycs();
   iniciarSequenciasEmail();
+  iniciarReativacao();
   retomarDisparosWhatsapp();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,
   // que usam um ElevenLabs falso e contam as chamadas).

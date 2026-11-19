@@ -47,6 +47,12 @@ export function resolver(caminho = typeof window !== "undefined" ? window.locati
     const token = bruto.slice("/trial/".length).split("/")[0];
     if (token) return { tipo: "trial", token };
   }
+  // Proposta Enterprise gerada no admin: /proposta/<token>. Mesmo cuidado com
+  // maiúsculas do convite de trial.
+  if (bruto.startsWith("/proposta/")) {
+    const token = bruto.slice("/proposta/".length).split("/")[0];
+    if (token) return { tipo: "proposta", token };
+  }
   // Convite de onboarding gerado no admin: /comecar/<token>. Mesmo cuidado
   // com maiúsculas do convite de trial.
   if (bruto.startsWith("/comecar/")) {
@@ -114,6 +120,22 @@ export function lerConvite() {
 
 export function limparConvite() {
   try { window.sessionStorage?.removeItem(CHAVE_CONVITE); } catch { /* nada a fazer */ }
+}
+
+// Proposta Enterprise: mesma razão do convite de trial — quem abre o link sem
+// estar logado entra ou cria a conta antes de ver a proposta.
+const CHAVE_PROPOSTA = "rycs-proposta";
+
+export function guardarProposta(token) {
+  try { window.sessionStorage?.setItem(CHAVE_PROPOSTA, token); } catch { /* sessão bloqueada */ }
+}
+
+export function lerProposta() {
+  try { return window.sessionStorage?.getItem(CHAVE_PROPOSTA) || null; } catch { return null; }
+}
+
+export function limparProposta() {
+  try { window.sessionStorage?.removeItem(CHAVE_PROPOSTA); } catch { /* nada a fazer */ }
 }
 
 // Convite de onboarding: mesma razão do convite de trial — precisa sobreviver

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import {
-  proximoEmailVendedor, proximoEmailEmpresa, montarTexto, idiomaDoPais, tetoDoDia, dentroDaJanela, CHAVES_TEXTOS, DIA,
+  proximoEmailVendedor, montarTexto, idiomaDoPais, tetoDoDia, dentroDaJanela, CHAVES_TEXTOS, DIA,
 } from "../shared/sequenciasEmail.js";
 import { valorPrimeiraMensalidade, blocosDeBonus, RECOMPENSAS } from "../shared/indicacoes.js";
 import { pendenciasPerfil } from "../shared/perfilVendedor.js";
@@ -60,18 +60,6 @@ test("conta antiga não recebe boas-vindas; parado 5 dias entra na repescagem", 
   assert.equal(proximo({ ...ctx, ultimaAtividade: T0 + 10 * DIA }, 15), "repescagem:precisa@2026-11-27");
 });
 
-test("empresa parada: um e-mail por dia durante 7 dias", () => {
-  const enviados = new Map();
-  const ctx = { ultimaAtividade: T0, enviados };
-  assert.equal(proximoEmailEmpresa(ctx, T0 + 4 * DIA), null);
-  for (let i = 0; i < 7; i++) {
-    const p = proximoEmailEmpresa(ctx, T0 + (5 + i) * DIA);
-    assert.equal(p.chave, `empresas_offline:d${i + 1}@2026-11-17`);
-    enviados.set(p.chave, T0);
-  }
-  assert.equal(proximoEmailEmpresa(ctx, T0 + 20 * DIA), null);
-});
-
 test("textos: todos em PT e EN, assunto com o nome, um botão e valores das regras", () => {
   for (const k of CHAVES_TEXTOS) {
     for (const lang of ["pt", "en"]) {
@@ -87,8 +75,6 @@ test("textos: todos em PT e EN, assunto com o nome, um botão e valores das regr
   const pl = montarTexto("graduacao:planos", "pt", { nome: "Ana" }).paragrafos.join(" ");
   assert.match(pl, /R\$ 47,90 por mês/);
   assert.ok(!pl.includes("NaN"));
-  const emp = montarTexto("empresas_offline:d3@2026-11-17", "pt", { nome: "Acme Ltda", empresa: "Acme Ltda" });
-  assert.match(emp.assunto, /^Acme Ltda,/);
   // Dado do usuário entra escapado no HTML.
   const x = montarTexto("onboarding:perfil_falta", "pt", { nome: "Zé", pendencias: ["<script>"] });
   assert.ok(!x.paragrafos.join("").includes("<script>"));

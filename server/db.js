@@ -1136,6 +1136,37 @@ adicionarColuna("subscriptions", "atualizadoEm", "INTEGER");
 adicionarColuna("subscriptions", "ciclo", "TEXT DEFAULT 'MENSAL'");
 adicionarColuna("subscriptions", "motivoCancelamento", "TEXT DEFAULT ''");
 adicionarColuna("subscriptions", "canceladoEm", "INTEGER");
+// Assinatura nascida de uma proposta Enterprise (propostas_plano.id).
+adicionarColuna("subscriptions", "propostaId", "TEXT");
+
+// Propostas Enterprise: plano-base, ciclo, valor e condições combinados com
+// uma empresa, pagos por um link. Mesmo cuidado do convite de trial: o token
+// não é guardado, só o hash — o link vale um desconto e é credencial.
+// A proposta não se edita depois de criada: para mudar, cancela e gera outra.
+// Assim o que a empresa aceitou é exatamente o que está gravado aqui.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS propostas_plano (
+    id TEXT PRIMARY KEY,
+    tokenHash TEXT UNIQUE NOT NULL,
+    cliente TEXT NOT NULL,             -- nome do cliente, para o admin reconhecer
+    companyId TEXT,                    -- vazio = a primeira empresa que aceitar fica com ela
+    planoBase TEXT NOT NULL,
+    ciclo TEXT NOT NULL,
+    valorOriginal REAL NOT NULL,       -- preço cheio do ciclo, sem desconto
+    valorFinal REAL NOT NULL,          -- o que a empresa paga por ciclo
+    nicho TEXT DEFAULT '',
+    territorio TEXT DEFAULT '',
+    condicoes TEXT NOT NULL,
+    status TEXT DEFAULT 'aberta',      -- aberta | cancelada
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    expiraEm INTEGER NOT NULL,
+    aceitoEm INTEGER,
+    aceitoPor TEXT,                    -- users.id de quem marcou "li e aceito"
+    aceiteHash TEXT                    -- hash do que foi aceito (valores + condições)
+  );
+  CREATE INDEX IF NOT EXISTS idx_subscriptions_proposta ON subscriptions(propostaId);
+`);
 
 // Lista de contatos por campanha
 db.prepare(`
@@ -2335,6 +2366,9 @@ adicionarColuna("sellers", "inativoEm", "INTEGER");
 adicionarColuna("sellers", "inativoMotivo", "TEXT DEFAULT ''");
 adicionarColuna("sellers", "bonusIndicacaoBlocos", "INTEGER DEFAULT 0");
 adicionarColuna("users", "ultimoAcessoEm", "INTEGER");
+// WhatsApp de marketing da empresa: aceite no cadastro e pedido para sair.
+adicionarColuna("companies", "whatsappMarketingEm", "INTEGER");
+adicionarColuna("companies", "whatsappMarketingSaiuEm", "INTEGER");
 // Indicações: 'v1' é a regra antiga (valor fixo no pagamento) e continua
 // valendo para quem já estava pendente. 'v2' paga a ativação da empresa e um
 // percentual da primeira mensalidade, cada um uma única vez.

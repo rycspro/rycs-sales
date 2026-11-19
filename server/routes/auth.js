@@ -208,6 +208,8 @@ router.post("/auth/register", async (req, res) => {
         INSERT INTO companies (id, nome, produto, ticket, icp, plano, destaque, saldo, vagas, cor, totalAportado, criadoEm, comissoes, curso, aportes, whatsapp, logo)
         VALUES (?, ?, ?, ?, ?, 'saldo', 0, 0, 10, '#2563EB', 0, ?, '{}', '[]', '[]', ?, ?)
       `).run(entityId, nomeClean, produto || "", ticket || "", icp || "", agora(), whatsEmpresa, logoEmpresa);
+      // Aceite explícito (caixa desmarcada por padrão) para novidades por WhatsApp.
+      if (req.body.whatsappMarketing === true) db.prepare("UPDATE companies SET whatsappMarketingEm = ? WHERE id = ?").run(agora(), entityId);
       db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
         userId, emailNorm, hash, role, entityId, 1, agora()
       );

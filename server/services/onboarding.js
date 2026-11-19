@@ -51,7 +51,7 @@ export function serializar(linha) {
   const etapas = normalizarEtapas(JSON.parse(linha.etapas || "{}"));
   const atual = etapaAtual(etapas);
   const caminho = linha.caminho || "guiado";
-  const empresa = db.prepare("SELECT whatsapp FROM companies WHERE id = ?").get(linha.companyId);
+  const empresa = db.prepare("SELECT whatsapp, whatsappMarketingEm FROM companies WHERE id = ?").get(linha.companyId);
   return {
     etapas,
     atual: atual?.chave || null,
@@ -65,6 +65,7 @@ export function serializar(linha) {
     trialDias: linha.trialDias || 0,
     origem: linha.origem,
     whatsapp: empresa?.whatsapp || "",
+    whatsappMarketing: !!empresa?.whatsappMarketingEm,
   };
 }
 

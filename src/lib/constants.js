@@ -102,6 +102,7 @@ export const NAV = {
     { key: "onboarding", label: "Links de onboarding", Icon: Link2 },
     { section: "Financeiro" },
     { key: "liberar", label: "Liberar", Icon: Banknote },
+    { key: "planos", label: "Planos", Icon: Crown },
     { key: "cobranca", label: "Cobrança", Icon: CreditCard },
     { key: "vouchers", label: "Vouchers", Icon: Ticket },
     { key: "depositos", label: "Depósitos", Icon: Banknote },

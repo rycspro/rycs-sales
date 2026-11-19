@@ -9,7 +9,8 @@
     "test": "node --test test/",
     "lint": "eslint server shared",
     "preview": "vite preview",
-    "server": "node server/index.js"
+    "server": "node server/index.js",
+    "reativacao:simular": "node --min-semi-space-size=256 --max-semi-space-size=256 server/scripts/reativacao-simular.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

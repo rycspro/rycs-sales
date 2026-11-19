@@ -1,7 +1,7 @@
 // Motor das sequências automáticas de e-mail (ver shared/sequenciasEmail.js).
 //
-// A cada 15 minutos: decide, para cada profissional e empresa, se cabe um
-// e-mail agora; respeita 1 por pessoa a cada 20h, a janela de horário, o teto
+// A cada 15 minutos: decide, para cada profissional, se cabe um e-mail agora
+// (empresas: ver reativacaoEmpresas.js); respeita 1 por pessoa a cada 20h, a janela de horário, o teto
 // diário de aquecimento do domínio e o descadastro. Também inativa (de forma
 // reversível) quem recebeu o aviso e não completou o perfil em 3 dias.
 import { createHmac, timingSafeEqual } from "crypto";
@@ -13,7 +13,7 @@ import { planoAtual } from "./planosProfissional.js";
 import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
 import {
   DIA, INTERVALO_MIN_POR_PESSOA, DIAS_PARA_INATIVAR, ORDEM_SEQUENCIAS, SEQUENCIAS,
-  tetoDoDia, dentroDaJanela, idiomaDoPais, proximoEmailVendedor, proximoEmailEmpresa, montarTexto,
+  tetoDoDia, dentroDaJanela, idiomaDoPais, proximoEmailVendedor, montarTexto,
 } from "../../shared/sequenciasEmail.js";
 
 db.exec(`
@@ -189,15 +189,9 @@ function avaliarTodos(agora) {
   for (const c of empresas) {
     const email = normEmail(c.email);
     if (!email) continue;
-    if (fora.has(email)) { lista.push({ tipo: "empresa", id: c.id, nome: c.nome, email, descadastrado: true, proximoPasso: null }); continue; }
-    const passo = proximoEmailEmpresa({
-      // Último uso real (não o lançamento): empresa já parada entra na hora.
-      ultimaAtividade: Math.max(c.ultimoAcessoEm || 0, c.criadoEm || 0),
-      enviados: enviados.get(`empresa:${c.id}`) || new Map(),
-    }, agora);
-    const espera = passo ? agora - (ultimoPorEmail.get(email) || 0) < INTERVALO_MIN_POR_PESSOA : false;
-    lista.push({ tipo: "empresa", id: c.id, userId: c.userId, nome: c.nome, empresa: c.empresa, email, idioma: idiomaDoPais(c.pais), ancora: 0,
-      descadastrado: false, espera, proximoPasso: passo ? { chave: passo.chave, seq: passo.seq } : null, ...(passo || {}) });
+    // A sequência das empresas agora é a reativação (services/reativacaoEmpresas.js).
+    // Aqui elas só aparecem no painel, com o histórico de envios.
+    lista.push({ tipo: "empresa", id: c.id, userId: c.userId, nome: c.nome, empresa: c.empresa, email, descadastrado: fora.has(email), proximoPasso: null });
   }
   return { lista, enviados };
 }

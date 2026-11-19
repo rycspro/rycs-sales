@@ -1,0 +1,164 @@
+{
+  "_leia": "Modelos de WhatsApp da reativação de empresas. NÃO foram enviados à Meta. Conta de modelos: 1116584101362389. Cada item é o corpo do POST /{waba_id}/message_templates. Gerado de shared/reativacaoEmpresas.js (MODELOS_WHATSAPP).",
+  "modelos": [
+    {
+      "name": "rycs_reativacao_d1",
+      "language": "pt_BR",
+      "category": "MARKETING",
+      "components": [
+        {
+          "type": "BODY",
+          "text": "Oi, {{1}}! Aqui é o Martin, da Rycs. A conta da {{2}} está sem nenhuma campanha rodando. Nossos vendedores estão prontos para prospectar e agendar reuniões para você, e você só paga pelo que acontecer.",
+          "example": {
+            "body_text": [
+              [
+                "Ana",
+                "Sua Empresa"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "FOOTER",
+          "text": "Rycs"
+        },
+        {
+          "type": "BUTTONS",
+          "buttons": [
+            {
+              "type": "URL",
+              "text": "Ativar campanha",
+              "url": "https://app.rycs.pro/{{1}}",
+              "example": [
+                "https://app.rycs.pro/?aba=campanhas&utm_source=whatsapp&utm_campaign=reativacao_empresas&utm_content=dia_1"
+              ]
+            },
+            {
+              "type": "QUICK_REPLY",
+              "text": "Parar mensagens"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "rycs_reativacao_d3",
+      "language": "pt_BR",
+      "category": "MARKETING",
+      "components": [
+        {
+          "type": "BODY",
+          "text": "Oi, {{1}}! Criar a primeira campanha na Rycs leva uns 5 minutos: você define o cliente ideal, escolhe a tarefa e publica. Hoje temos {{2}} vendedores disponíveis.",
+          "example": {
+            "body_text": [
+              [
+                "Ana",
+                "40"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "FOOTER",
+          "text": "Rycs"
+        },
+        {
+          "type": "BUTTONS",
+          "buttons": [
+            {
+              "type": "URL",
+              "text": "Criar campanha",
+              "url": "https://app.rycs.pro/{{1}}",
+              "example": [
+                "https://app.rycs.pro/?aba=campanhas&utm_source=whatsapp&utm_campaign=reativacao_empresas&utm_content=dia_3"
+              ]
+            },
+            {
+              "type": "QUICK_REPLY",
+              "text": "Parar mensagens"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "rycs_reativacao_d5",
+      "language": "pt_BR",
+      "category": "MARKETING",
+      "components": [
+        {
+          "type": "BODY",
+          "text": "Oi, {{1}}! Quer que eu configure a primeira campanha da {{2}} junto com você? São 15 minutos e você sai com os vendedores trabalhando.",
+          "example": {
+            "body_text": [
+              [
+                "Ana",
+                "Sua Empresa"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "FOOTER",
+          "text": "Rycs"
+        },
+        {
+          "type": "BUTTONS",
+          "buttons": [
+            {
+              "type": "QUICK_REPLY",
+              "text": "Quero agendar"
+            },
+            {
+              "type": "QUICK_REPLY",
+              "text": "Agora não"
+            },
+            {
+              "type": "QUICK_REPLY",
+              "text": "Parar mensagens"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "rycs_reativacao_d7",
+      "language": "pt_BR",
+      "category": "MARKETING",
+      "components": [
+        {
+          "type": "BODY",
+          "text": "Oi, {{1}}! Essa é minha última mensagem sobre isso. Se fizer sentido retomar, é só tocar no botão abaixo. Se não, tudo certo, sua conta continua lá.",
+          "example": {
+            "body_text": [
+              [
+                "Ana"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "FOOTER",
+          "text": "Rycs"
+        },
+        {
+          "type": "BUTTONS",
+          "buttons": [
+            {
+              "type": "URL",
+              "text": "Retomar agora",
+              "url": "https://app.rycs.pro/{{1}}",
+              "example": [
+                "https://app.rycs.pro/?aba=campanhas&utm_source=whatsapp&utm_campaign=reativacao_empresas&utm_content=dia_7"
+              ]
+            },
+            {
+              "type": "QUICK_REPLY",
+              "text": "Parar mensagens"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

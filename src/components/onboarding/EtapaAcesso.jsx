@@ -46,6 +46,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [whatsappMarketing, setWhatsappMarketing] = useState(false);
   const [pais, setPais] = useState("BR");
   const [nome, setNome] = useState("");
   // Logo fica só no navegador até o cadastro: { dataUri, mimetype }.
@@ -113,7 +114,7 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
       const r = await onRegister({
         role: "empresa", email: email.trim(), senha, whats: normalizarTelefoneIntl(pais, whatsapp) || whatsapp, pais, nome: nome.trim(),
         logo: { base64: logo.dataUri.split(",")[1], mimetype: logo.mimetype },
-        aceitouTermos: true, indicacao: indicacao || undefined,
+        aceitouTermos: true, indicacao: indicacao || undefined, whatsappMarketing,
         convite: conviteValido ? conviteToken : undefined,
       });
       setSalvando(false);
@@ -286,6 +287,11 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
                     <CampoTelefone id={`${id}-whatsapp`} pais={pais} value={whatsapp} invalido={!!erros.whatsapp}
                       onChange={(e) => { setWhatsapp(e.target.value); limparErro("whatsapp"); }} {...props("whatsapp")} />
                   </Campo>
+                  <label htmlFor={`${id}-whatsapp-mkt`} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, cursor: "pointer" }}>
+                    <input id={`${id}-whatsapp-mkt`} type="checkbox" checked={whatsappMarketing} onChange={(e) => setWhatsappMarketing(e.target.checked)}
+                      style={{ width: 20, height: 20, flexShrink: 0 }} />
+                    <span className="vx-onb-dica" style={{ margin: 0 }}>Quero receber novidades e dicas da RYCS pelo WhatsApp. Dá para parar quando quiser.</span>
+                  </label>
                   {indicacao && (
                     <Campo id={`${id}-indicacao`} label="Código de indicação">
                       <input id={`${id}-indicacao`} className="vx-input vx-mono" value={indicacao}

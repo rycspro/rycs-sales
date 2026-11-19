@@ -32,7 +32,7 @@ const QUANDO = {
 const quandoPasso = (k) => QUANDO[k] || (k.startsWith("empresas_offline:d") ? `Empresa sem atividade há ${4 + Number(k.split(":d")[1])} dias (1 e-mail por dia, 7 no total).` : "");
 const GRUPOS = [
   ["onboarding", "Onboarding · profissional"], ["indicacoes", "Indicações · profissional"], ["graduacao", "Graduação · profissional"],
-  ["repescagem", "Repescagem · profissional"], ["empresas_offline", "Empresas offline · empresa"],
+  ["repescagem", "Repescagem · profissional"],
 ];
 
 // Prévia que se ajusta à altura do e-mail (sem scripts: só lê a altura).
@@ -50,7 +50,7 @@ function contagemPorPasso(destinatarios) {
   const c = {};
   const soma = (k, campo) => { c[k] = c[k] || { recebeu: 0, falhou: 0, fila: 0, espera: 0 }; c[k][campo]++; };
   for (const d of destinatarios || []) {
-    for (const e of d.envios) soma(e.chave, e.status === "enviado" ? "recebeu" : "falhou");
+    for (const e of d.envios) if (e.status !== "pulado" && e.status !== "enviando") soma(e.chave, e.status === "enviado" ? "recebeu" : "falhou");
     if (d.proximo) soma(d.proximo.chave, d.proximo.status === "na_fila" ? "fila" : "espera");
   }
   return c;
@@ -112,7 +112,7 @@ function SequenciaCompleta({ chaves, idioma, contagem }) {
   });
 }
 
-const NOME_SEQ = { onboarding: "Onboarding", indicacoes: "Indicações", graduacao: "Graduação", repescagem: "Repescagem", empresas_offline: "Empresa parada" };
+const NOME_SEQ = { onboarding: "Onboarding", indicacoes: "Indicações", graduacao: "Graduação", repescagem: "Repescagem", empresas_offline: "Empresa parada (desligada)", reativacao_empresas: "Reativação de empresas" };
 // Fase da pessoa no funil: a do próximo e-mail ou, sem próximo, a do último recebido.
 function faseDe(d) {
   if (d.descadastrado) return "Descadastrado";
@@ -332,7 +332,148 @@ function Destinatarios({ lista }) {
   );
 }
 
-const nomePasso = (k) => NOMES_PASSO[k] || (k.startsWith("empresas_offline:d") ? `Empresa parada · dia ${k.split(":d")[1]}` : k);
+const nomePasso = (k) => NOMES_PASSO[k]
+  || (k.startsWith("empresas_offline:d") ? `Empresa parada · dia ${k.split(":d")[1]}` : "")
+  || (k.startsWith("reativacao_empresas:d") ? `Reativação · dia ${k.split(":d")[1]}` : k);
+
+const SEGMENTO = { nunca_ativou: "Nunca ativou", parou_de_usar: "Parou de usar" };
+const MOTIVO = {
+  reativada: "reativou", whatsapp_parar: "parou no WhatsApp", sem_canal: "sem canal", empresa_removida: "empresa removida",
+  sem_case: "sem case", sem_oferta: "sem oferta", sem_link_agenda: "sem link de agenda", sem_vendedores_ativos: "sem vendedores",
+  email_descadastrado: "descadastrou", email_bounce_ou_spam: "bounce ou spam", email_invalido: "e-mail inválido",
+  sem_aceite: "sem aceite", pediu_para_sair: "pediu para sair", numero_invalido: "número inválido",
+  modelo_nao_aprovado: "modelo não aprovado", whatsapp_nao_configurado: "WhatsApp não configurado",
+};
+const motivo = (m) => MOTIVO[m] || m;
+const TIPO_ACAO = { inscrever: "Entra hoje", passo: "Próximo dia", whatsapp: "WhatsApp à tarde", sair: "Sai", concluir: "Conclui" };
+
+// Reativação de empresas: estado, métricas, simulação do dia e teste interno.
+function ReativacaoEmpresas({ aviso }) {
+  const id = useId();
+  const [p, setP] = useState(null);
+  const [sim, setSim] = useState(null);
+  const [email, setEmail] = useState("");
+  const [numero, setNumero] = useState("");
+  const [testando, setTestando] = useState(false);
+  useEffect(() => { api("/admin/reativacao").then((r) => { if (r && !r.error) setP(r); }); }, []);
+  const simular = () => api("/admin/reativacao/simulacao").then((r) => { if (r && !r.error) setSim(r); else aviso(r?.error || "Falha na simulação."); });
+  const testar = async () => {
+    setTestando(true);
+    const r = await api("/admin/reativacao/teste", { email, numero });
+    setTestando(false);
+    if (!r || r.error) return aviso(r?.error || "Falha no teste.");
+    const ok = r.emails.filter((e) => e.ok).length + r.whatsapp.filter((w) => w.ok).length;
+    const pulados = [...r.emails, ...r.whatsapp].filter((x) => x.pulado).map((x) => `dia ${x.dia}: ${motivo(x.pulado)}`);
+    const erros = [...r.emails, ...r.whatsapp].filter((x) => x.erro).map((x) => x.erro);
+    aviso(`${ok} enviado(s).${pulados.length ? ` Pulados: ${pulados.join("; ")}.` : ""}${erros.length ? ` Erros: ${erros.join("; ")}` : ""}`);
+  };
+  if (!p) return null;
+  const { config: c, metricas: m, pendencias } = p;
+  const estado = !c.ligado ? "Desligada" : c.simulacao ? "Ligada em simulação (nada é enviado)" : "Ligada e enviando";
+  const porSegmento = {};
+  for (const l of m.inscricoes) {
+    const s = (porSegmento[l.segmento] = porSegmento[l.segmento] || { total: 0, ativa: 0, reativada: 0 });
+    s.total += l.n;
+    if (l.status === "ativa") s.ativa += l.n;
+    if (l.motivoSaida === "reativada") s.reativada += l.n;
+  }
+  const falta = [pendencias.caseDia4 && "case do dia 4", pendencias.ofertaDia6 && "oferta do dia 6", pendencias.linkAgendaDia5 && "link da agenda (dia 5)",
+    !c.temRemetente && "remetente", !c.temAviso && "aviso de \"Quero agendar\"", !c.whatsappConfigurado && "WhatsApp"].filter(Boolean);
+  const cel = { padding: "6px 8px", borderBottom: "1px solid var(--border)", textAlign: "left", fontSize: 12.5 };
+  const dias = [1, 2, 3, 4, 5, 6, 7];
+  const linhaEmail = (d) => m.email.find((x) => x.dia === d) || {};
+  const linhaWa = (d) => m.whatsapp.find((x) => x.dia === d) || {};
+  return (
+    <div className="vx-card" style={{ padding: 18, marginBottom: 14 }}>
+      <div className="vx-eyebrow">Empresas</div>
+      <div className="vx-disp" style={{ fontSize: 17, marginTop: 2 }}>Reativação de empresas offline</div>
+      <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.5 }}>
+        {estado}. 7 dias úteis: e-mail a partir das 9h e WhatsApp nos dias 1, 3, 5 e 7 a partir das 14h. Inativa há {c.diasInativo}+ dias; até {c.maxEmailsDia} e-mails por dia.
+        {falta.length > 0 && <> Faltando: {falta.join(", ")} (os passos que dependem disso ficam pulados).</>}
+      </div>
+
+      <div className="vx-grid vx-g2" style={{ marginTop: 14, gap: 10 }}>
+        {Object.entries(SEGMENTO).map(([k, nome]) => (
+          <div key={k} className="vx-card" style={{ padding: 12 }}>
+            <div className="vx-label">{nome}</div>
+            <div className="vx-mono" style={{ fontSize: 13, marginTop: 4 }}>
+              {porSegmento[k]?.total || 0} inscrita(s) · {porSegmento[k]?.ativa || 0} na sequência · {porSegmento[k]?.reativada || 0} reativada(s)
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ overflowX: "auto", marginTop: 14 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+          <thead><tr>{["Dia", "E-mails", "Abertura", "Clique", "Bounce/spam", "WhatsApp", "Entregues", "Lidos", "Reativou"].map((h) => <th key={h} scope="col" style={{ ...cel, fontWeight: 600 }}>{h}</th>)}</tr></thead>
+          <tbody>
+            {dias.map((d) => {
+              const e = linhaEmail(d); const w = linhaWa(d);
+              return (
+                <tr key={d}>
+                  <td style={cel}>{d}</td>
+                  <td style={cel} className="vx-mono">{e.enviados || 0}{e.pulados ? ` (+${e.pulados} pulados)` : ""}</td>
+                  <td style={cel} className="vx-mono">{e.taxaAbertura || 0}%</td>
+                  <td style={cel} className="vx-mono">{e.taxaClique || 0}%</td>
+                  <td style={cel} className="vx-mono">{(e.devolvidos || 0) + (e.spam || 0)}</td>
+                  <td style={cel} className="vx-mono">{[1, 3, 5, 7].includes(d) ? `${w.enviados || 0}${w.pulados ? ` (+${w.pulados} pulados)` : ""}` : "—"}</td>
+                  <td style={cel} className="vx-mono">{[1, 3, 5, 7].includes(d) ? w.entregues || 0 : "—"}</td>
+                  <td style={cel} className="vx-mono">{[1, 3, 5, 7].includes(d) ? w.lidos || 0 : "—"}</td>
+                  <td style={cel} className="vx-mono">{m.reativadas.porDia[d] || 0}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 8 }}>
+        Total: {m.totais.enviados} e-mail(s), abertura {m.totais.taxaAbertura}%, clique {m.totais.taxaClique}%. Reativadas: {m.totais.reativadas}
+        {" "}(e-mail {m.reativadas.porCanal.email}, WhatsApp {m.reativadas.porCanal.whatsapp}, sem contato {m.reativadas.porCanal.sem_contato}).
+        {m.respostas.length > 0 && <> Respostas no WhatsApp: {m.respostas.map((r) => `${r.acao.replace("_", " ")} ${r.n}`).join(", ")}.</>}
+      </div>
+
+      <div className="vx-row" style={{ marginTop: 16, gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={simular}>Simular hoje</button>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span className="vx-label" id={`${id}-e`}>E-mail de teste</span>
+          <input className="vx-input" type="email" aria-labelledby={`${id}-e`} value={email} onChange={(e) => setEmail(e.target.value)} style={{ minHeight: 44 }} />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span className="vx-label" id={`${id}-n`}>WhatsApp de teste (DDI + DDD)</span>
+          <input className="vx-input" type="tel" inputMode="numeric" aria-labelledby={`${id}-n`} value={numero} onChange={(e) => setNumero(e.target.value)} style={{ minHeight: 44 }} />
+        </label>
+        <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={testar} disabled={testando || (!email && !numero)}>{testando ? "Enviando…" : "Enviar teste"}</button>
+      </div>
+
+      {sim && (
+        <div style={{ marginTop: 14 }}>
+          <div className="vx-mut" style={{ fontSize: 12.5 }}>
+            {sim.diaUtil ? `Hoje (${sim.dia})` : `${sim.dia} não é dia útil`}: {sim.totais.inscrever} entram, {sim.totais.passos} seguem, {sim.totais.whatsapp} WhatsApp, {sim.totais.saidas} saem
+            {sim.totais.adiadasPeloTeto ? `, ${sim.totais.adiadasPeloTeto} ficam para amanhã pelo teto` : ""}.
+          </div>
+          {sim.linhas.length > 0 && (
+            <div style={{ overflowX: "auto", marginTop: 8 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+                <thead><tr>{["Empresa", "O que acontece", "Dia", "E-mail", "WhatsApp"].map((h) => <th key={h} scope="col" style={{ ...cel, fontWeight: 600 }}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {sim.linhas.slice(0, 100).map((l, i) => (
+                    <tr key={`${l.companyId}-${i}`}>
+                      <td style={cel}>{l.empresa}<div className="vx-mut" style={{ fontSize: 11.5 }}>{SEGMENTO[l.segmento] || ""}</div></td>
+                      <td style={cel}>{TIPO_ACAO[l.tipo] || l.tipo}{l.motivo ? ` (${motivo(l.motivo)})` : ""}</td>
+                      <td style={cel} className="vx-mono">{l.dia || "—"}</td>
+                      <td style={cel}>{!l.mensagemEmail ? "—" : l.mensagemEmail.pular ? `pula: ${motivo(l.mensagemEmail.pular)}` : `${l.mensagemEmail.assunto}${l.mensagemEmail.acimaDoTeto ? " (amanhã, teto)" : ""}`}</td>
+                      <td style={cel}>{!l.whatsapp ? "—" : l.whatsapp.pular ? `pula: ${motivo(l.whatsapp.pular)}` : `${l.whatsapp.modelo} às ${l.whatsapp.horario}`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Sequências automáticas do funil: números, prévia de cada e-mail e teste
 // enviado para o e-mail do próprio admin.
@@ -427,6 +568,8 @@ export default function SequenciasFunil({ aviso }) {
       </div>
 
       <Metricas m={metricas} ordem={[...Object.keys(NOMES_PASSO), ...chaves.filter((k) => !NOMES_PASSO[k])]} onSincronizar={sincronizar} sincronizando={sincronizando} />
+
+      <ReativacaoEmpresas aviso={aviso} />
 
       <Destinatarios lista={destinatarios} />
 
