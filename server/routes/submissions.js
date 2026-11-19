@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { enviarDataUri } from "../services/midia.js";
+import { repassarSaldoAutomatico } from "./payments.js";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
 import { recalcularScore } from "../services/score.js";
@@ -353,6 +354,15 @@ function aposLiberar({ sellerId, companyIds, liquido, quantidade, tipo }) {
   for (const companyId of companyIds) recalcularCompanyScore(companyId);
   // Primeira ação aprovada é o gatilho da recompensa de quem indicou.
   if (sellerUser) qualificarIndicacao(sellerUser.id);
+
+  // O dinheiro vai sozinho para a chave Pix do profissional, sem ele pedir
+  // saque. Roda depois da resposta, fora da transação da liberação.
+  repassarSaldoAutomatico(sellerId)
+    .then((r) => {
+      if (!r.enviado && r.motivo === "sem_pix" && sellerUser)
+        notificar(sellerUser.id, "saque", "Cadastre sua chave Pix", "Seu saldo está liberado. Cadastre a chave Pix na Carteira para receber automaticamente.");
+    })
+    .catch((err) => console.error("[repasse] automático falhou:", sellerId, err.message));
 }
 
 router.post("/submissions/:id/liberar", (req, res) => {

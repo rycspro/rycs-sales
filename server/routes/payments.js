@@ -127,48 +127,48 @@ router.post("/payments/deposit", authMiddleware, async (req, res) => {
 // ---------------------------------------------------------------------------
 // Saque do vendedor
 // ---------------------------------------------------------------------------
-router.post("/payments/withdraw", authMiddleware, async (req, res) => {
-  const { role, entityId } = req.user;
-  if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais podem sacar" });
-
-  const valor = Number(req.body?.valor);
-  const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(entityId);
-  if (!vendedor) return res.status(404).json({ error: "Profissional não encontrado" });
+// Núcleo do saque: reserva o saldo e cria o pedido numa transação, envia o Pix
+// e fecha (ou devolve) conforme a resposta do banco. Usado pelo pedido do
+// profissional e pelo repasse automático depois de uma liberação — as mesmas
+// travas valem para os dois. Devolve { status, corpo } no formato da rota.
+export async function sacar({ sellerId, valor, automatico = false }) {
+  const vendedor = db.prepare("SELECT * FROM sellers WHERE id = ?").get(sellerId);
+  if (!vendedor) return { status: 404, corpo: { error: "Profissional não encontrado" } };
   // Piso do saque: o plano pode baixar (limite "saqueMinimo"); pendente = piso de todos.
-  const plano = planoAtual(entityId).plano;
+  const plano = planoAtual(sellerId).plano;
   const minimo = saqueMinimoPara(limite(plano, "saqueMinimo"));
   if (!Number.isFinite(valor) || valor < minimo)
-    return res.status(400).json({ error: `Valor mínimo: R$ ${minimo.toFixed(2).replace(".", ",")}` });
-  if (!vendedor.pix) return res.status(400).json({ error: "Cadastre sua chave Pix antes de sacar" });
-  if (!vendedor.pixTipo) return res.status(400).json({ error: "Informe o tipo da sua chave Pix (CPF, celular, e-mail ou aleatória)" });
+    return { status: 400, corpo: { error: `Valor mínimo: R$ ${minimo.toFixed(2).replace(".", ",")}` } };
+  if (!vendedor.pix) return { status: 400, corpo: { error: "Cadastre sua chave Pix antes de sacar" } };
+  if (!vendedor.pixTipo) return { status: 400, corpo: { error: "Informe o tipo da sua chave Pix (CPF, celular, e-mail ou aleatória)" } };
 
   // Reserva o valor e cria o saque numa transação, para que dois pedidos
   // simultâneos não sacem o mesmo saldo duas vezes.
   const wId = uid();
   try {
     db.transaction(() => {
-      const atual = db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(entityId);
+      const atual = db.prepare("SELECT disponivel FROM sellers WHERE id = ?").get(sellerId);
       if (atual.disponivel < valor) throw new Error("SALDO_INSUFICIENTE");
-      db.prepare("UPDATE sellers SET disponivel = disponivel - ? WHERE id = ?").run(valor, entityId);
+      db.prepare("UPDATE sellers SET disponivel = disponivel - ? WHERE id = ?").run(valor, sellerId);
       // Prazo de processamento interno pelo plano ativo. Registra solicitação,
       // prazo previsto e status para acompanhamento/auditoria. O relógio conta a
       // partir daqui (solicitação válida). Não é o prazo de compensação bancária.
       const ts = agora();
       const processaAte = ts + horasSaque(plano) * 3600000;
       db.prepare("INSERT INTO withdrawals (id, sellerId, valor, pix, status, criadoEm, processaAte) VALUES (?, ?, ?, ?, 'solicitado', ?, ?)")
-        .run(wId, entityId, valor, vendedor.pix, ts, processaAte);
-      registrarMovimento({ sellerId: entityId, tipo: "saque_reservado", valor: -valor, idempotencyKey: wId });
+        .run(wId, sellerId, valor, vendedor.pix, ts, processaAte);
+      registrarMovimento({ sellerId, tipo: "saque_reservado", valor: -valor, idempotencyKey: wId, dados: automatico ? { automatico: true } : {} });
     })();
   } catch (e) {
-    if (e.message === "SALDO_INSUFICIENTE") return res.status(400).json({ error: "Saldo insuficiente" });
+    if (e.message === "SALDO_INSUFICIENTE") return { status: 400, corpo: { error: "Saldo insuficiente" } };
     throw e;
   }
 
   try {
     if (isBetaEnvironment()) {
       db.prepare("UPDATE withdrawals SET status = 'pago', asaasId = ? WHERE id = ?").run("BETA-SIMULADO", wId);
-      registrarMovimento({ sellerId: entityId, tipo: "beta_saque_simulado", valor: -valor, idempotencyKey: `${wId}-beta`, dados: { simulacao: true, semValorReal: true } });
-      return res.json({ id: wId, modo: "beta_simulado", message: "SIMULAÇÃO: saque Beta registrado como fictício, sem Pix real." });
+      registrarMovimento({ sellerId, tipo: "beta_saque_simulado", valor: -valor, idempotencyKey: `${wId}-beta`, dados: { simulacao: true, semValorReal: true } });
+      return { status: 200, corpo: { id: wId, modo: "beta_simulado", message: "SIMULAÇÃO: saque Beta registrado como fictício, sem Pix real." } };
     }
     const { modo, externoId, statusGateway } = await repassarParaVendedor({ vendedor, valor, referencia: vendedor.nome, saqueId: wId });
     if (externoId) db.prepare("UPDATE withdrawals SET asaasId = ? WHERE id = ?").run(externoId, wId);
@@ -182,26 +182,57 @@ router.post("/payments/withdraw", authMiddleware, async (req, res) => {
     if (externoId && desfecho === "pago") concluirSaque({ id: externoId });
     if (externoId && desfecho === "recusado") {
       devolverSaque({ id: externoId });
-      return res.status(502).json({ error: "O banco recusou a transferência. O valor voltou para o seu saldo." });
+      return { status: 502, corpo: { error: "O banco recusou a transferência. O valor voltou para o seu saldo." } };
     }
 
     const concluido = desfecho === "pago";
-    res.json({ id: wId, modo, status: concluido ? "pago" : "solicitado", message: modo === "manual"
+    return { status: 200, corpo: { id: wId, modo, status: concluido ? "pago" : "solicitado", message: modo === "manual"
       ? "Saque registrado para processamento manual."
       : concluido
         ? "Pix enviado. O valor já está na sua conta."
-        : "Transferência enviada. O Pix cai em instantes." });
+        : "Transferência enviada. O Pix cai em instantes." } };
   } catch (err) {
     // O gateway recusou: devolve o saldo em vez de deixar o dinheiro sumido.
     console.error("[asaas] saque:", err.message);
     db.transaction(() => {
-      db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(valor, entityId);
+      db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(valor, sellerId);
       db.prepare("UPDATE withdrawals SET status = 'falhou', falhaMotivo = ? WHERE id = ?").run(String(err.message).slice(0, 200), wId);
-      registrarMovimento({ sellerId: entityId, tipo: "saque_estornado", valor, idempotencyKey: wId });
+      registrarMovimento({ sellerId, tipo: "saque_estornado", valor, idempotencyKey: wId });
     })();
-    res.status(502).json({ error: "Não foi possível concluir o saque. O valor voltou para o seu saldo." });
+    return { status: 502, corpo: { error: "Não foi possível concluir o saque. O valor voltou para o seu saldo." } };
   }
+}
+
+router.post("/payments/withdraw", authMiddleware, async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais podem sacar" });
+  const { status, corpo } = await sacar({ sellerId: entityId, valor: Number(req.body?.valor) });
+  res.status(status).json(corpo);
 });
+
+// ---------------------------------------------------------------------------
+// Repasse automático
+//
+// O profissional não precisa pedir saque: assim que a plataforma libera
+// tarefas (ou ele cadastra a chave Pix), todo o saldo disponível vai por Pix
+// para a chave dele, pelo mesmo caminho do saque — validação do Asaas,
+// devolução se falhar e conferência dos parados em 5 minutos. Sem chave Pix,
+// abaixo do mínimo ou sem gateway, o saldo fica guardado e nada é enviado.
+// ---------------------------------------------------------------------------
+export async function repassarSaldoAutomatico(sellerId) {
+  const s = db.prepare("SELECT disponivel, pix, pixTipo FROM sellers WHERE id = ?").get(sellerId);
+  if (!s) return { enviado: false, motivo: "sem_profissional" };
+  if (!s.pix || !s.pixTipo) return { enviado: false, motivo: "sem_pix" };
+  if (!isBetaEnvironment() && !asaasAtivo()) return { enviado: false, motivo: "sem_gateway" };
+  const valor = Math.floor((Number(s.disponivel) || 0) * 100) / 100;
+  const minimo = saqueMinimoPara(limite(planoAtual(sellerId).plano, "saqueMinimo"));
+  if (valor < minimo) return { enviado: false, motivo: "abaixo_do_minimo" };
+  const { status, corpo } = await sacar({ sellerId, valor, automatico: true });
+  if (status !== 200) return { enviado: false, motivo: corpo.error };
+  const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sellerId);
+  if (user) notificar(user.id, "saque", "Pix a caminho", `R$ ${valor.toFixed(2)} enviados para a sua chave Pix, sem precisar pedir saque.`);
+  return { enviado: true, valor, saqueId: corpo.id };
+}
 
 // ---------------------------------------------------------------------------
 // Conferência de um saque parado
