@@ -18,9 +18,21 @@ function parseSeller(row) {
   };
 }
 
+// A logo é guardada como data URI (até centenas de KB). Mandá-la inline no
+// /state fazia a resposta de todo mundo pesar meio megabyte e ser recarregada
+// a cada ação, o que deixava o site inteiro lento. Vai por URL, como a foto do
+// profissional; a versão no fim muda quando a logo muda, então o navegador
+// pode guardar a imagem em cache sem mostrar uma logo antiga.
+export function urlDaLogo(id, logo) {
+  if (!logo || !String(logo).startsWith("data:")) return logo || "";
+  const versao = `${logo.length.toString(36)}${logo.slice(-10).replace(/[^A-Za-z0-9]/g, "")}`;
+  return `/api/companies/${id}/logo?v=${versao}`;
+}
+
 function parseCompany(row, preloadedDims) {
   return {
     ...row,
+    logo: urlDaLogo(row.id, row.logo),
     scoreDimensions: preloadedDims || {},
     destaque: !!row.destaque,
     visivel: row.visivel == null ? true : !!row.visivel,
@@ -50,6 +62,21 @@ function parseCampaign(row) {
     exigeCertificacao: !!row.exigeCertificacao,
   };
 }
+
+// Foto, foto original e currículo são base64 de até 8MB e o /state só manda a
+// URL deles. Ler essas colunas para depois jogar fora travava o servidor (o
+// SQLite é síncrono) a cada carregamento do admin. Aqui só se pergunta se
+// existem.
+const PESADAS_SELLER = ["foto", "fotoOriginal", "curriculo"];
+const colunasSeller = () => db.prepare("PRAGMA table_info(sellers)").all()
+  .map((c) => c.name)
+  .map((n) => PESADAS_SELLER.includes(n) ? `(${n} IS NOT NULL AND ${n} != '') AS ${n}` : n)
+  .join(", ");
+let SELECT_SELLER;
+export const selectSellers = (where = "") => {
+  SELECT_SELLER ||= `SELECT ${colunasSeller()} FROM sellers`;
+  return `${SELECT_SELLER} ${where}`;
+};
 
 function buildSellersWithRelations(sellers) {
   const ids = sellers.map((s) => s.id);
@@ -83,24 +110,34 @@ function buildSellersWithRelations(sellers) {
         WHERE c.funcao != ''
       `).all();
 
+  // Agrupa uma vez por profissional em vez de varrer as listas inteiras para
+  // cada um (com a base toda no admin, isso era quadrático).
+  const agrupar = (linhas) => {
+    const m = new Map();
+    for (const l of linhas) { const a = m.get(l.sellerId); if (a) a.push(l); else m.set(l.sellerId, [l]); }
+    return (id) => m.get(id) || [];
+  };
+  const appsDe = agrupar(apps), progressDe = agrupar(progress), scoresDe = agrupar(scores);
+  const certsDe = agrupar(certifications), certsCursoDe = agrupar(courseCertifications);
+
   return sellers.map((s) => {
     const aplicacoes = {};
-    apps.filter((a) => a.sellerId === s.id).forEach((a) => { aplicacoes[a.companyId] = a.status; });
+    appsDe(s.id).forEach((a) => { aplicacoes[a.companyId] = a.status; });
 
     const curso = {};
-    progress.filter((p) => p.sellerId === s.id).forEach((p) => {
+    progressDe(s.id).forEach((p) => {
       const val = JSON.parse(p.moduleIds || "[]");
       curso[p.companyId] = val;
     });
 
     const scoreDimensions = {};
-    scores.filter((sc) => sc.sellerId === s.id).forEach((sc) => {
+    scoresDe(s.id).forEach((sc) => {
       if (!scoreDimensions[sc.role]) scoreDimensions[sc.role] = {};
       scoreDimensions[sc.role][sc.dimension] = sc.valor;
     });
 
     const aplicacoesDetalhe = {};
-    apps.filter((a) => a.sellerId === s.id).forEach((a) => {
+    appsDe(s.id).forEach((a) => {
       aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: JSON.parse(a.criterios || "[]"), quizScore: a.quizScore, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null, campanhasAuto: a.campanhasAuto };
     });
     const parsed = parseSeller(s);
@@ -118,15 +155,15 @@ function buildSellersWithRelations(sellers) {
     return {
       ...parsed, aplicacoes, aplicacoesDetalhe, curso, scoreDimensions,
       certificacoes: [
-        ...certifications.filter((c) => c.sellerId === s.id),
-        ...courseCertifications.filter((c) => c.sellerId === s.id).map((c) => ({ ...c, nivel: "course" })),
+        ...certsDe(s.id),
+        ...certsCursoDe(s.id).map((c) => ({ ...c, nivel: "course" })),
       ],
     };
   });
 }
 
 export function getFullState() {
-  const sellers = buildSellersWithRelations(db.prepare("SELECT * FROM sellers").all());
+  const sellers = buildSellersWithRelations(db.prepare(selectSellers()).all());
 
   const allDims = db.prepare("SELECT companyId, dimension, valor FROM company_score_dimensions").all();
   const dimsByCompany = {};
@@ -142,8 +179,10 @@ export function getFullState() {
   const leads = db.prepare("SELECT * FROM leads ORDER BY atualizadoEm DESC").all();
   const campaignApps = db.prepare("SELECT * FROM campaign_applications").all();
 
+  const appsPorCampanha = new Map();
+  for (const a of campaignApps) { const l = appsPorCampanha.get(a.campaignId); if (l) l.push(a); else appsPorCampanha.set(a.campaignId, [a]); }
   campaigns.forEach((c) => {
-    c.candidaturas = campaignApps.filter((a) => a.campaignId === c.id);
+    c.candidaturas = appsPorCampanha.get(c.id) || [];
   });
 
   return { sellers, companies, submissions, withdrawals, messages, campaigns, leads };
@@ -183,7 +222,7 @@ function getEmpresaState(entityId) {
   const sellerIds = [...idsCandidatos];
   let sellers = [];
   if (sellerIds.length) {
-    const raw = db.prepare(`SELECT * FROM sellers WHERE id IN (${sellerIds.map(() => "?").join(",")})`)
+    const raw = db.prepare(selectSellers(`WHERE id IN (${sellerIds.map(() => "?").join(",")})`))
       .all(...sellerIds);
     sellers = buildSellersWithRelations(raw);
   }
@@ -198,7 +237,7 @@ function getEmpresaState(entityId) {
 
 function getVendedorState(entityId) {
   const meuId = entityId;
-  const rawSeller = db.prepare("SELECT * FROM sellers WHERE id = ?").all(meuId);
+  const rawSeller = db.prepare(selectSellers("WHERE id = ?")).all(meuId);
   const sellers = buildSellersWithRelations(rawSeller);
   const meuVendedor = sellers[0];
   // Sem etapa de aprovação: todo profissional vê as empresas ativas e as
