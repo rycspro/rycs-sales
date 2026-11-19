@@ -76,6 +76,7 @@ import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvi
 import "./services/audit/providers/anthropic.js";
 import { semearPoliticasPadrao, iniciarWorker, capacidadesDisponiveis } from "./services/audit/index.js";
 import { liberarRetidosPorCiclo } from "./services/financeiro.js";
+import { iniciarSaquesParados } from "./routes/payments.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -390,6 +391,7 @@ app.listen(PORT, () => {
   iniciarConversoesMeta();
   iniciarLeadsRycs();
   iniciarSequenciasEmail();
+  iniciarSaquesParados();
   iniciarReativacao();
   retomarDisparosWhatsapp();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,

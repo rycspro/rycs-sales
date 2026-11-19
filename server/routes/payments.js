@@ -601,20 +601,77 @@ function concluirSaque(transfer) {
   if (user) notificar(user.id, "saque", `Saque de R$ ${w.valor.toFixed(2)} foi pago!`);
 }
 
-function devolverSaque(transfer) {
+function devolverSaque(transfer, motivo = "Transferência recusada pelo banco") {
   if (!transfer?.id) return;
   const w = db.prepare("SELECT * FROM withdrawals WHERE asaasId = ?").get(transfer.id);
   if (!w || w.status !== "solicitado") return;
 
   db.transaction(() => {
     db.prepare("UPDATE withdrawals SET status = 'falhou', falhaMotivo = ? WHERE id = ?")
-      .run("Transferência recusada pelo banco", w.id);
+      .run(motivo, w.id);
     db.prepare("UPDATE sellers SET disponivel = disponivel + ? WHERE id = ?").run(w.valor, w.sellerId);
     registrarMovimento({ sellerId: w.sellerId, tipo: "saque_estornado", valor: w.valor, idempotencyKey: w.id });
   })();
 
   const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(w.sellerId);
   if (user) notificar(user.id, "saque", "Saque não concluído", "O valor voltou para o seu saldo. Confira sua chave Pix.");
+}
+
+// ---------------------------------------------------------------------------
+// Saque parado
+//
+// Um saque não pode ficar preso: em até 5 minutos ele termina pago ou com o
+// valor de volta no saldo, para o profissional pedir de novo. A cada minuto,
+// os saques em "solicitado" há mais de 5 minutos são conferidos no banco —
+// a mesma decisão do "Conferir no banco" do admin, sem ninguém clicar:
+//   - Pix concluído → pago;
+//   - recusado → valor volta ao saldo;
+//   - ainda processando → tenta cancelar no banco e só devolve se o
+//     cancelamento passar. Se o banco não deixar cancelar, o Pix pode estar
+//     a caminho: devolver agora pagaria duas vezes, então ele espera.
+// ---------------------------------------------------------------------------
+export const SAQUE_PARADO_MS = 5 * 60 * 1000;
+
+export async function resolverSaquesParados(agoraMs = Date.now()) {
+  const r = { verificados: 0, pagos: 0, devolvidos: 0, aguardando: 0 };
+  if (!asaasAtivo()) return r;
+  const parados = db.prepare(`SELECT * FROM withdrawals
+    WHERE status = 'solicitado' AND asaasId IS NOT NULL AND asaasId != '' AND asaasId != 'BETA-SIMULADO' AND criadoEm <= ?`)
+    .all(agoraMs - SAQUE_PARADO_MS);
+  for (const w of parados) {
+    r.verificados++;
+    let transfer;
+    try { transfer = await asaas(`/transfers/${w.asaasId}`); }
+    catch (err) { r.aguardando++; console.warn("[saque] não foi possível consultar o banco:", w.id, err.message); continue; }
+    const desfecho = decidirSaque(transfer?.status);
+    if (desfecho === "pago") { concluirSaque({ id: w.asaasId }); r.pagos++; continue; }
+    if (desfecho === "recusado") { devolverSaque({ id: w.asaasId }); r.devolvidos++; continue; }
+    try {
+      await asaas(`/transfers/${w.asaasId}`, { method: "DELETE" });
+      devolverSaque({ id: w.asaasId }, "Não concluído em 5 minutos; cancelado no banco e devolvido ao saldo");
+      r.devolvidos++;
+    } catch (err) {
+      r.aguardando++;
+      console.warn("[saque] parado e o banco não deixou cancelar; aguardando:", w.id, err.message);
+    }
+  }
+  return r;
+}
+
+let rodandoSaques = false;
+export function iniciarSaquesParados() {
+  const intervalo = process.env.NODE_ENV === "test" && Number(process.env.SAQUES_PARADOS_INTERVALO_MS) > 0
+    ? Number(process.env.SAQUES_PARADOS_INTERVALO_MS) : 60 * 1000;
+  const rodar = async () => {
+    if (rodandoSaques) return;
+    rodandoSaques = true;
+    try {
+      const r = await resolverSaquesParados();
+      if (r.verificados) console.log(`[saque] parados conferidos: ${JSON.stringify(r)}`);
+    } catch (err) { console.error("[saque] falha ao conferir saques parados:", err.message); }
+    finally { rodandoSaques = false; }
+  };
+  setInterval(rodar, intervalo).unref?.();
 }
 
 // O tipo declarado pelo vendedor manda. A dedução automática é só palpite
