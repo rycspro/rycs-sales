@@ -251,7 +251,7 @@ export default function App() {
     const r = await api("/auth/register", { ...dados, ...dadosRastreio() });
     if (r?.error) { if (!silencioso) setToast(r.error); return { ok: false, error: r.error, campo: r.campo }; }
     if (r?.id) {
-      cadastroConcluido(r.role);
+      cadastroConcluido(r.role, dados);
       const entrar = async () => {
         // Limpa a URL de cadastro/onboarding para não sobreviver a um F5.
         window.history.replaceState({}, "", "/");

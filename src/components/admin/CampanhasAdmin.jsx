@@ -48,6 +48,7 @@ const quando = (ms) => (ms ? new Date(ms).toLocaleString("pt-BR", { day: "2-digi
 function StatusRastreio({ rastreio, gastoMeta, onSincronizar, sincronizando }) {
   const eventos = Object.entries(rastreio.eventos || {}).sort((a, b) => b[1].enviados - a[1].enviados);
   const lf = rastreio.leadsFormulario || {};
+  const q = rastreio.qualidade;
   return (
     <div className="vx-card" style={{ padding: 16, marginBottom: 16 }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>Rastreamento</div>
@@ -56,6 +57,8 @@ function StatusRastreio({ rastreio, gastoMeta, onSincronizar, sincronizando }) {
         {rastreio.capiAtiva
           ? <Status ok>API de Conversões ativa: cadastros e marcos também saem pelo servidor.</Status>
           : <Status aviso>API de Conversões desligada: falta o secret <code>META_CAPI_TOKEN</code> e um deploy.</Status>}
+        <Status ok>Correspondência avançada no pixel e no servidor: e-mail, telefone, nome, cidade, UF, país, nascimento e gênero (em hash), mais o ID do visitante da RYCS, que liga anúncio, landing, cadastro e conta.</Status>
+        {q?.erro && <Status aviso>Não foi possível ler a qualidade da correspondência na Meta: {q.erro}. O usuário do sistema do <code>META_ADS_TOKEN</code> precisa ter o pixel RYCS Plataforma atribuído.</Status>}
         {gastoMeta.status === "ok" && <Status ok>Gasto, impressões e cliques vêm da conta de anúncios RYCS SALES MACHINE.</Status>}
         {gastoMeta.status === "sem_token" && <Status>Gasto da Meta não conectado: crie o secret <code>META_ADS_TOKEN</code> para ver gasto e custo por conta.</Status>}
         {gastoMeta.status === "erro" && <Status aviso>Não foi possível buscar o gasto na Meta: {gastoMeta.erro}</Status>}
@@ -74,6 +77,16 @@ function StatusRastreio({ rastreio, gastoMeta, onSincronizar, sincronizando }) {
           {eventos.map(([nome, e]) => (
             <span key={nome} className={`vx-badge ${e.erros ? "vx-badge-amber" : "vx-badge-muted"}`}>
               {nome} · {num(e.enviados)}{e.erros ? ` · ${num(e.erros)} com erro` : ""}
+            </span>
+          ))}
+        </div>
+      )}
+      {q?.eventos?.length > 0 && (
+        <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <span className="vx-mut" style={{ fontSize: 12, alignSelf: "center" }}>Qualidade da correspondência na Meta (nota de 0 a 10):</span>
+          {q.eventos.map((e) => (
+            <span key={e.evento} className={`vx-badge ${e.nota < 6 ? "vx-badge-amber" : "vx-badge-muted"}`}>
+              {e.evento} · {e.nota.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
             </span>
           ))}
         </div>

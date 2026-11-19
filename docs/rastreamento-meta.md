@@ -7,11 +7,13 @@ Pixel: **RYCS Plataforma** (`1690802939434598`), no Business "Rycs Sales Machine
 | Camada | Onde | O quê |
 | --- | --- | --- |
 | Aviso de cookies (LGPD) | landing e app | Sem "Aceitar", nada vai para a Meta. A escolha fica no cookie `rycs_consentimento` em `.rycs.pro` e vale nos dois domínios. Na landing, "Preferências de cookies" no rodapé reabre o aviso. |
-| Pixel (navegador) | `landing/index.html`, `src/lib/rastreio.js` | PageView, ViewContent (abriu o cadastro), EtapaCadastro (passou de etapa) e CompleteRegistration (conta criada). |
-| API de Conversões (servidor) | `server/services/metaConversoes.js` | O mesmo CompleteRegistration, com o mesmo `event_id` (a Meta junta os dois), e dados de correspondência em SHA-256: e-mail, telefone, nome, cidade, UF, país, nascimento, gênero, IP, navegador, `fbp` e `fbc`. |
+| Pixel (navegador) | `landing/index.html`, `src/lib/rastreio.js` | PageView, ViewContent (abriu o cadastro), EtapaCadastro (passou de etapa) e CompleteRegistration (conta criada). Todo evento leva o ID do visitante da RYCS (`external_id`, em SHA-256); no cadastro entram também e-mail, telefone, nome, cidade, UF, país, nascimento e gênero. |
+| API de Conversões (servidor) | `server/services/metaConversoes.js` | ViewContent e EtapaCadastro (uma vez por visitante e etapa) e CompleteRegistration, com o mesmo `event_id` do pixel (a Meta junta os dois), e dados de correspondência em SHA-256: e-mail, telefone, nome, cidade, UF, país, nascimento, gênero, ID do visitante e da conta, IP, navegador, `fbp` e `fbc`. |
 | Eventos de qualidade (servidor) | mesma rotina, a cada 10 min | Profissional: EmailConfirmado, PerfilCompleto, SubmitApplication (candidatura), AprovadoEmCampanha. Empresa: EmailConfirmado, PlanoEscolhido, CampanhaPublicada, Purchase (1º depósito confirmado, com o valor real). |
 
-`content_category` diferencia `profissional` de `empresa` em todos os eventos. Os dados de correspondência ficam guardados por 30 dias e depois são apagados.
+`content_category` diferencia `profissional` de `empresa` em todos os eventos.
+
+**Correspondência avançada.** O ID do visitante (`rycs_vid`, o mesmo da landing ao app) vai como `external_id` em todos os eventos, do pixel e do servidor; depois do cadastro, o servidor manda também o ID da conta. É isso que liga, na Meta, o clique no anúncio, a landing, cada etapa do cadastro, a conta criada e os marcos depois dela. A correspondência avançada automática do pixel também está ligada no Gerenciador de Eventos (desde 2026-11-19). A normalização (e-mail, telefone com DDI, nome sem acento…) fica em `shared/metaPixel.js`, igual para o navegador e o servidor. Os dados de correspondência ficam guardados por 30 dias e depois são apagados.
 
 ## Ativar a API de Conversões
 
@@ -29,7 +31,7 @@ Admin → **Campanhas** mostra o histórico de cada campanha, separado em **camp
 - o que as contas fizeram depois (profissional: e-mail, perfil, candidatura, aprovação; empresa: e-mail, plano, campanha publicada, depósito com valor por moeda);
 - país das contas (Índia x Brasil, empresas do mundo todo);
 - histórico por dia (visitas, contas e gasto) de todas as campanhas ou da campanha aberta;
-- saúde do rastreamento: pixel, API de Conversões e eventos enviados à Meta (com erros, se houver).
+- saúde do rastreamento: pixel, API de Conversões, eventos enviados à Meta (com erros, se houver) e a nota de qualidade da correspondência que a Meta dá a cada evento (0 a 10). A nota usa o `META_ADS_TOKEN`: o usuário do sistema precisa ter o pixel **RYCS Plataforma** atribuído (Configurações do negócio → Usuários do sistema → Atribuir ativos → Conjuntos de dados/Pixels).
 
 O tipo de cada campanha sai dos dados (qual cadastro as pessoas abriram e criaram). Enquanto não há dados, vale o nome: use "PROF" ou "EMP" no nome da campanha.
 

@@ -45,6 +45,8 @@ test("dados de correspondência: normalizados como a Meta pede e em SHA-256", ()
   assert.equal(capi.normalizarTelefone("+55 11 98888-7777"), "5511988887777");
   assert.equal(capi.dadosCorrespondencia({ genero: "nao-binario", nascimento: "1990-05-10" }).ge, undefined);
   assert.deepEqual(capi.dadosCorrespondencia({ nascimento: "1990-05-10" }).db, [sha("19900510")]);
+  // Conta e visitante juntos: a Meta liga os passos de antes do cadastro à conta.
+  assert.deepEqual(capi.dadosCorrespondencia({ userId: "u1", visitanteId: "visitante-9" }).external_id, [sha("u1"), sha("visitante-9")]);
 });
 
 test("origem guarda o fbclid inteiro (até 500), os outros campos seguem curtos", () => {
@@ -86,6 +88,7 @@ test("cadastro com aceite: CompleteRegistration com o event_id do navegador, uma
   assert.equal(ev.user_data.client_ip_address, "200.10.20.30");
   assert.equal(ev.user_data.client_user_agent, "Mozilla/5.0 (Teste)");
   assert.equal(ev.user_data.fbp, "fb.1.1700000000000.123456789");
+  assert.deepEqual(ev.user_data.external_id, [sha("u-emp"), sha("visitante-123")]);
   // Sem cookie _fbc: montado com o fbclid do primeiro toque e a hora da visita.
   assert.equal(ev.user_data.fbc, `fb.1.${t - 60_000}.${fbclid}`);
 
@@ -109,4 +112,35 @@ test("marcos depois do cadastro viram eventos de qualidade, sem repetir", async 
 
   await capi.rodadaQualidade();
   assert.equal(enviados.length, 3);
+});
+
+test("passos do cadastro (ViewContent, EtapaCadastro) saem pelo servidor com o event_id do pixel, uma vez por visitante", async () => {
+  const antes = enviados.length;
+  const passo = (extra) => ({ visitanteId: "visitante-456", papel: "vendedor", origem: {}, ...extra });
+  capi.registrarPassoMeta(pedido({}), passo({ evento: "cadastro_aberto", meta: { eventId: "evento-passo-0", consentimento: false } }));
+  capi.registrarPassoMeta(pedido({}), passo({ evento: "cadastro_aberto" }));
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(enviados.length, antes, "sem aceite de cookies ou sem event_id nada sai");
+
+  capi.registrarPassoMeta(pedido({}), passo({ evento: "cadastro_aberto", meta: { eventId: "evento-passo-1", consentimento: true, fbp: "fb.1.1700000000000.987654321" } }));
+  await esperarEnvios(antes + 1);
+  const [vc] = enviados.at(-1).corpo.data;
+  assert.equal(vc.event_name, "ViewContent");
+  assert.equal(vc.event_id, "evento-passo-1");
+  assert.equal(vc.custom_data.content_category, "profissional");
+  assert.deepEqual(vc.user_data.external_id, [sha("visitante-456")]);
+  assert.equal(vc.user_data.fbp, "fb.1.1700000000000.987654321");
+  assert.equal(vc.user_data.em, undefined, "antes da conta não há e-mail");
+
+  capi.registrarPassoMeta(pedido({}), passo({ evento: "cadastro_etapa", etapa: "pessoal", meta: { eventId: "evento-passo-2", consentimento: true } }));
+  capi.registrarPassoMeta(pedido({}), passo({ evento: "cadastro_etapa", etapa: "profissional", meta: { eventId: "evento-passo-3", consentimento: true } }));
+  await esperarEnvios(antes + 3);
+  const etapas = enviados.slice(antes + 1).map((e) => e.corpo.data[0]);
+  assert.deepEqual(etapas.map((e) => [e.event_name, e.custom_data.etapa]).sort(), [["EtapaCadastro", "pessoal"], ["EtapaCadastro", "profissional"]]);
+
+  // Abrir de novo ou repetir a etapa não manda outra vez.
+  capi.registrarPassoMeta(pedido({}), passo({ evento: "cadastro_aberto", meta: { eventId: "evento-passo-4", consentimento: true } }));
+  capi.registrarPassoMeta(pedido({}), passo({ evento: "cadastro_etapa", etapa: "pessoal", meta: { eventId: "evento-passo-5", consentimento: true } }));
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(enviados.length, antes + 3);
 });

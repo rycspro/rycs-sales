@@ -594,8 +594,20 @@
       function carregarPixel() {
         if (window.fbq || escolha() !== "aceito") return;
         !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = "2.0"; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
-        fbq("init", PIXEL);
-        fbq("track", "PageView");
+        // Correspondência avançada: o id do visitante (o mesmo que segue para o
+        // app) vai em SHA-256 como external_id, e a Meta liga landing e cadastro.
+        idVisitanteHash().then(function (id) {
+          fbq("init", PIXEL, id ? { external_id: id } : {});
+          fbq("track", "PageView");
+        });
+      }
+      function idVisitanteHash() {
+        var vid = null;
+        try { vid = localStorage.getItem("rycs_vid"); } catch (e) {}
+        if (!vid || !window.crypto || !crypto.subtle || !window.TextEncoder) return Promise.resolve(vid);
+        return crypto.subtle.digest("SHA-256", new TextEncoder().encode(vid)).then(function (b) {
+          return Array.prototype.map.call(new Uint8Array(b), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+        }, function () { return vid; });
       }
       aviso.addEventListener("click", function (e) {
         var valor = e.target.getAttribute && e.target.getAttribute("data-cookies");

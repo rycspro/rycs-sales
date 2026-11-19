@@ -88,7 +88,7 @@ export default function EntradaEmpresa() {
       else setErroGeral(r?.error || "Não foi possível criar a conta. Tente de novo.");
       return;
     }
-    cadastroConcluido("empresa");
+    cadastroConcluido("empresa", { email: email.trim().toLowerCase(), pais });
     // Conta criada: entra direto na plataforma; a confirmação de e-mail fica para depois.
     if (r.autenticado) { window.location.href = "/"; return; }
     setModo("link-enviado");

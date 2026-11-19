@@ -18,7 +18,9 @@ import { createHash, randomUUID } from "crypto";
 import db, { agora } from "../db.js";
 import { urlApp } from "./email.js";
 import { jornadasVendedores, jornadasEmpresas } from "./jornada.js";
-import { META_PIXEL_ID, COOKIE_CONSENTIMENTO, CONSENTIU, CATEGORIA_META } from "../../shared/metaPixel.js";
+import { META_PIXEL_ID, COOKIE_CONSENTIMENTO, CONSENTIU, CATEGORIA_META, camposCorrespondencia } from "../../shared/metaPixel.js";
+
+export { normalizarTelefone } from "../../shared/metaPixel.js";
 
 const DIA = 24 * 60 * 60 * 1000;
 // A Meta recusa evento de site com mais de 7 dias.
@@ -71,50 +73,14 @@ export const capiAtiva = () => !!process.env.META_CAPI_TOKEN;
 
 const json = (texto) => { try { return JSON.parse(texto || "{}") || {}; } catch { return {}; } };
 const sha = (v) => createHash("sha256").update(v).digest("hex");
-const letras = (v) => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "");
-
-// Telefone com DDI, só dígitos. Número brasileiro sem DDI ganha o 55.
-export function normalizarTelefone(valor, pais = "BR") {
-  let d = String(valor ?? "").replace(/\D/g, "");
-  if (String(pais || "BR").toUpperCase() === "BR" && (d.length === 10 || d.length === 11)) d = `55${d}`;
-  return d.length >= 8 && d.length <= 15 ? d : "";
-}
-
-// AAAAMMDD, a partir de "AAAA-MM-DD" ou "DD/MM/AAAA".
-function normalizarNascimento(valor) {
-  const v = String(valor ?? "").trim();
-  let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[1]}${m[2]}${m[3]}`;
-  m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  return m ? `${m[3]}${m[2]}${m[1]}` : "";
-}
-
-function normalizarGenero(valor) {
-  const v = letras(valor);
-  if (v.startsWith("fem")) return "f";
-  if (v.startsWith("masc")) return "m";
-  return "";
-}
+const ID_VISITANTE = /^[A-Za-z0-9_-]{8,64}$/;
 
 // Dados de correspondência no formato da Meta: normalizados e em SHA-256.
-export function dadosCorrespondencia({ email, telefone, nome, cidade, estado, pais, nascimento, genero, userId } = {}) {
-  const ud = {};
-  const incluir = (chave, valor) => { if (valor) ud[chave] = [sha(valor)]; };
-  incluir("em", String(email ?? "").trim().toLowerCase());
-  incluir("ph", normalizarTelefone(telefone, pais));
-  const partes = String(nome ?? "").trim().split(/\s+/).filter(Boolean);
-  if (partes.length) incluir("fn", letras(partes[0]));
-  if (partes.length > 1) incluir("ln", letras(partes.at(-1)));
-  // O cadastro manda "Cidade, UF" no Brasil.
-  incluir("ct", letras(String(cidade ?? "").split(",")[0]));
-  const uf = letras(estado);
-  if (uf.length === 2) incluir("st", uf);
-  const p = letras(pais);
-  if (p.length === 2) incluir("country", p);
-  incluir("db", normalizarNascimento(nascimento));
-  incluir("ge", normalizarGenero(genero));
-  incluir("external_id", userId ? String(userId) : "");
-  return ud;
+// external_id leva o id da conta e o do visitante: a Meta liga os passos de
+// antes do cadastro (ViewContent, EtapaCadastro) à conta criada.
+export function dadosCorrespondencia({ userId, visitanteId, ...dados } = {}) {
+  const campos = camposCorrespondencia({ ...dados, idsExternos: [userId, visitanteId] });
+  return Object.fromEntries(Object.entries(campos).map(([k, v]) => [k, (Array.isArray(v) ? v : [v]).map(sha)]));
 }
 
 export function montarEvento({ nome, eventId, tempoMs, dados, customData }) {
@@ -144,22 +110,23 @@ async function postar(evento) {
 }
 
 // Cada evento sai uma vez por usuário; falha é tentada de novo na próxima rodada.
-async function enviarUmaVez(contato, nome, { eventId, tempoMs, customData }) {
+// `chave` separa eventos de mesmo nome (EtapaCadastro:contato, :perfil…).
+async function enviarUmaVez(contato, nome, { eventId, tempoMs, customData, chave = nome }) {
   if (!capiAtiva()) return false;
-  const ant = db.prepare("SELECT eventId, status, tentativas FROM meta_eventos WHERE userId = ? AND evento = ?").get(contato.userId, nome);
+  const ant = db.prepare("SELECT eventId, status, tentativas FROM meta_eventos WHERE userId = ? AND evento = ?").get(contato.userId, chave);
   if (ant && (ant.status !== "erro" || ant.tentativas >= MAX_TENTATIVAS)) return false;
   const id = ant?.eventId || eventId || randomUUID();
   const tentativas = (ant?.tentativas || 0) + 1;
   db.prepare(`INSERT INTO meta_eventos (userId, evento, eventId, status, tentativas, atualizadoEm) VALUES (?, ?, ?, 'enviando', ?, ?)
     ON CONFLICT(userId, evento) DO UPDATE SET status = 'enviando', tentativas = excluded.tentativas, atualizadoEm = excluded.atualizadoEm`)
-    .run(contato.userId, nome, id, tentativas, agora());
+    .run(contato.userId, chave, id, tentativas, agora());
   try {
     await postar(montarEvento({ nome, eventId: id, tempoMs, dados: contato.dados, customData }));
-    db.prepare("UPDATE meta_eventos SET status = 'enviado', erro = '', atualizadoEm = ? WHERE userId = ? AND evento = ?").run(agora(), contato.userId, nome);
+    db.prepare("UPDATE meta_eventos SET status = 'enviado', erro = '', atualizadoEm = ? WHERE userId = ? AND evento = ?").run(agora(), contato.userId, chave);
     return true;
   } catch (e) {
     db.prepare("UPDATE meta_eventos SET status = 'erro', erro = ?, atualizadoEm = ? WHERE userId = ? AND evento = ?")
-      .run(String(e?.message || e).slice(0, 300), agora(), contato.userId, nome);
+      .run(String(e?.message || e).slice(0, 300), agora(), contato.userId, chave);
     console.error(`[meta-capi] ${nome}:`, e?.message);
     return false;
   }
@@ -169,41 +136,79 @@ const cookieFb = (v) => (typeof v === "string" && COOKIE_FB.test(v) ? v : "");
 
 // Sem o cookie _fbc (o visitante só aceitou cookies depois do clique), monta o
 // fbc a partir do fbclid guardado no primeiro toque.
-function fbcDoClique(user) {
-  const fbclid = json(user.origem).fbclid;
+function fbcDoClique(origem, visitanteId, padraoMs) {
+  const fbclid = json(typeof origem === "string" ? origem : JSON.stringify(origem || {})).fbclid;
   if (!fbclid) return "";
-  const v = user.visitanteId && db.prepare("SELECT primeiroEm FROM jornada_visitantes WHERE visitanteId = ?").get(user.visitanteId);
-  return cookieFb(`fb.1.${v?.primeiroEm || user.criadoEm}.${fbclid}`);
+  const v = visitanteId && db.prepare("SELECT primeiroEm FROM jornada_visitantes WHERE visitanteId = ?").get(visitanteId);
+  return cookieFb(`fb.1.${v?.primeiroEm || padraoMs}.${fbclid}`);
+}
+
+const metaDoCorpo = (corpo) => (corpo?.meta && typeof corpo.meta === "object" ? corpo.meta : {});
+const consentiu = (req, meta) => meta.consentimento === true || req.cookies?.[COOKIE_CONSENTIMENTO] === CONSENTIU;
+const urlCadastro = (papel) => `${urlApp()}/cadastro/${papel === "vendedor" ? "profissional" : "empresa"}`;
+
+// O que o navegador traz para a correspondência: IP, navegador e cookies da Meta.
+function sinaisNavegador(req, meta, fbcReserva = "") {
+  const fbp = cookieFb(meta.fbp) || cookieFb(req.cookies?._fbp);
+  const fbc = cookieFb(meta.fbc) || cookieFb(req.cookies?._fbc) || fbcReserva;
+  const ip = String(req.ip || "").replace(/^::ffff:/, "");
+  const ua = String(req.get?.("user-agent") || "").slice(0, 500);
+  return {
+    ...(ip && { client_ip_address: ip }),
+    ...(ua && { client_user_agent: ua }),
+    ...(fbp && { fbp }),
+    ...(fbc && { fbc }),
+  };
+}
+
+// Passos antes da conta (abriu o cadastro, passou de etapa): saem também pelo
+// servidor, com o mesmo event_id do pixel, uma vez por visitante e passo.
+const PASSOS_META = { cadastro_aberto: "ViewContent", cadastro_etapa: "EtapaCadastro" };
+
+export function registrarPassoMeta(req, corpo = {}) {
+  try {
+    const nome = PASSOS_META[corpo.evento];
+    const categoria = CATEGORIA_META[corpo.papel];
+    const meta = metaDoCorpo(corpo);
+    const visitanteId = String(corpo.visitanteId || "");
+    if (!capiAtiva() || !nome || !categoria || !ID_VISITANTE.test(visitanteId) || !ID_EVENTO.test(String(meta.eventId || "")) || !consentiu(req, meta)) return;
+    const etapa = nome === "EtapaCadastro" ? String(corpo.etapa || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40) : "";
+    if (nome === "EtapaCadastro" && !etapa) return;
+    const userData = {
+      ...dadosCorrespondencia({ visitanteId }),
+      ...sinaisNavegador(req, meta, fbcDoClique(corpo.origem, visitanteId, agora())),
+    };
+    const customData = nome === "ViewContent"
+      ? { content_name: `Cadastro ${categoria}`, content_category: categoria }
+      : { content_category: categoria, etapa };
+    enviarUmaVez({ userId: `v:${visitanteId}`, dados: { userData, url: urlCadastro(corpo.papel) } }, nome, {
+      eventId: meta.eventId, tempoMs: agora(), customData, chave: etapa ? `${nome}:${etapa}` : nome,
+    }).catch(() => null);
+  } catch (e) {
+    console.error("[meta-capi] passo:", e?.message);
+  }
 }
 
 // Chamado logo depois de criar a conta (e de vincularVisitante).
 export function registrarCadastroMeta(req, userId, papel) {
   try {
     const corpo = req.body || {};
-    const meta = corpo.meta && typeof corpo.meta === "object" ? corpo.meta : {};
-    const consentiu = meta.consentimento === true || req.cookies?.[COOKIE_CONSENTIMENTO] === CONSENTIU;
+    const meta = metaDoCorpo(corpo);
     // Sem token nada sai, então nada é guardado.
-    if (!capiAtiva() || !consentiu || !CATEGORIA_META[papel]) return;
+    if (!capiAtiva() || !consentiu(req, meta) || !CATEGORIA_META[papel]) return;
     const user = db.prepare("SELECT entityId, origem, visitanteId, criadoEm FROM users WHERE id = ?").get(userId);
     if (!user) return;
 
-    const fbp = cookieFb(meta.fbp) || cookieFb(req.cookies?._fbp);
-    const fbc = cookieFb(meta.fbc) || cookieFb(req.cookies?._fbc) || fbcDoClique(user);
-    const ip = String(req.ip || "").replace(/^::ffff:/, "");
-    const ua = String(req.get?.("user-agent") || "").slice(0, 500);
     const pessoa = papel === "vendedor";
     const userData = {
       ...dadosCorrespondencia({
-        email: corpo.email, telefone: corpo.whats, pais: corpo.pais || "BR", userId,
+        email: corpo.email, telefone: corpo.whats, pais: corpo.pais || "BR", userId, visitanteId: user.visitanteId,
         nome: pessoa ? corpo.nome : "", cidade: pessoa ? corpo.cidade : "", estado: pessoa ? corpo.estado : "",
         nascimento: pessoa ? corpo.dataNascimento : "", genero: pessoa ? corpo.genero : "",
       }),
-      ...(ip && { client_ip_address: ip }),
-      ...(ua && { client_user_agent: ua }),
-      ...(fbp && { fbp }),
-      ...(fbc && { fbc }),
+      ...sinaisNavegador(req, meta, fbcDoClique(user.origem, user.visitanteId, user.criadoEm)),
     };
-    const dados = { userData, url: `${urlApp()}/cadastro/${pessoa ? "profissional" : "empresa"}` };
+    const dados = { userData, url: urlCadastro(papel) };
     db.prepare("INSERT OR IGNORE INTO meta_contatos (userId, papel, entityId, dados, criadoEm) VALUES (?, ?, ?, ?, ?)")
       .run(userId, papel, user.entityId, JSON.stringify(dados), agora());
 
@@ -232,6 +237,7 @@ export async function rodadaQualidade(t = agora()) {
   ocupado = true;
   try {
     db.prepare("DELETE FROM meta_contatos WHERE criadoEm < ?").run(t - RETENCAO);
+    db.prepare("DELETE FROM meta_eventos WHERE userId LIKE 'v:%' AND atualizadoEm < ?").run(t - RETENCAO);
     const contatos = db.prepare("SELECT * FROM meta_contatos").all();
     if (!contatos.length) return;
     const desde = Math.min(...contatos.map((c) => c.criadoEm)) - DIA;

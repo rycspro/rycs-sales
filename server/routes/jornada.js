@@ -2,6 +2,7 @@ import { Router } from "express";
 import { registrarEventoPublico, relatorioJornada } from "../services/jornada.js";
 import { relatorioCampanhas } from "../services/campanhasAdmin.js";
 import { leadsRycs, sincronizarLeadsRycs } from "../services/metaLeadsRycs.js";
+import { registrarPassoMeta } from "../services/metaConversoes.js";
 
 // Sem cookie: o visitante ainda não tem conta (landing, cadastro).
 export const jornadaPublico = Router();
@@ -9,6 +10,8 @@ export const jornadaPublico = Router();
 jornadaPublico.post("/jornada/evento", (req, res) => {
   const r = registrarEventoPublico(req.body || {});
   if (r.error) return res.status(400).json(r);
+  // Passos do cadastro também vão à Meta pelo servidor (só com aceite de cookies).
+  registrarPassoMeta(req, req.body || {});
   res.json(r);
 });
 

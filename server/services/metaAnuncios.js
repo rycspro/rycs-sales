@@ -7,7 +7,7 @@
 
 import { GRAPH } from "./meta.js";
 import { chaveDia } from "../../shared/campanhas.js";
-import { META_AD_ACCOUNT_ID } from "../../shared/metaPixel.js";
+import { META_AD_ACCOUNT_ID, META_PIXEL_ID } from "../../shared/metaPixel.js";
 
 export const anunciosConectados = () => !!process.env.META_ADS_TOKEN;
 
@@ -55,5 +55,34 @@ export async function gastosMeta({ desde, ate }) {
     gastosDia: dias.map((l) => ({ campanha: l.campaign_name, dia: l.date_start, gasto: Number(l.spend) || 0 })),
   };
   cache.set(chave, { em: Date.now(), dados });
+  return dados;
+}
+
+// Nota (0 a 10) que a Meta dá à correspondência de cada evento do pixel: quanto
+// maior, mais conversões ela consegue ligar ao anúncio. Precisa do pixel
+// atribuído ao usuário do sistema do META_ADS_TOKEN. Erro também fica em cache,
+// para não insistir a cada abertura da aba.
+export async function qualidadeCorrespondencia() {
+  if (!anunciosConectados()) return null;
+  const salvo = cache.get("qualidade");
+  if (salvo && Date.now() - salvo.em < CACHE_MS) return salvo.dados;
+  let dados;
+  try {
+    const url = new URL(`${GRAPH()}/dataset_quality`);
+    url.searchParams.set("dataset_id", process.env.META_PIXEL_ID || META_PIXEL_ID);
+    url.searchParams.set("fields", "web{event_name,event_match_quality{composite_score}}");
+    url.searchParams.set("access_token", process.env.META_ADS_TOKEN);
+    const r = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    const corpo = await r.json().catch(() => ({}));
+    if (!r.ok || corpo.error) throw new Error(corpo.error?.message || `HTTP ${r.status}`);
+    const eventos = (corpo.web || [])
+      .map((e) => ({ evento: e.event_name, nota: Number(e.event_match_quality?.composite_score) }))
+      .filter((e) => e.evento && Number.isFinite(e.nota))
+      .sort((a, b) => b.nota - a.nota);
+    dados = { eventos, erro: "" };
+  } catch (e) {
+    dados = { eventos: [], erro: String(e?.message || e).slice(0, 200) };
+  }
+  cache.set("qualidade", { em: Date.now(), dados });
   return dados;
 }

@@ -8,7 +8,7 @@ import { agruparCampanhas } from "../../shared/campanhas.js";
 import { META_PIXEL_ID } from "../../shared/metaPixel.js";
 import { jornadasVendedores, jornadasEmpresas } from "./jornada.js";
 import { capiAtiva } from "./metaConversoes.js";
-import { anunciosConectados, gastosMeta } from "./metaAnuncios.js";
+import { anunciosConectados, gastosMeta, qualidadeCorrespondencia } from "./metaAnuncios.js";
 import { leadsRycs, statusLeadsRycs } from "./metaLeadsRycs.js";
 
 const DIA = 24 * 60 * 60 * 1000;
@@ -27,9 +27,11 @@ function depositosPorEmpresa() {
 function statusRastreio(desde) {
   const eventos = {};
   for (const l of db.prepare("SELECT evento, status, COUNT(*) AS n FROM meta_eventos WHERE atualizadoEm >= ? GROUP BY evento, status").all(desde)) {
-    eventos[l.evento] ||= { enviados: 0, erros: 0 };
-    if (l.status === "enviado") eventos[l.evento].enviados += l.n;
-    else if (l.status === "erro") eventos[l.evento].erros += l.n;
+    // "EtapaCadastro:pessoal" conta como EtapaCadastro.
+    const nome = l.evento.split(":")[0];
+    eventos[nome] ||= { enviados: 0, erros: 0 };
+    if (l.status === "enviado") eventos[nome].enviados += l.n;
+    else if (l.status === "erro") eventos[nome].erros += l.n;
   }
   const ultimoErro = db.prepare("SELECT evento, erro, atualizadoEm FROM meta_eventos WHERE status = 'erro' ORDER BY atualizadoEm DESC LIMIT 1").get() || null;
   return { pixelId: META_PIXEL_ID, capiAtiva: capiAtiva(), anunciosConectados: anunciosConectados(), eventos, ultimoErro };
@@ -65,6 +67,6 @@ export async function relatorioCampanhas({ tipo = "vendedor", dias = 30, origem 
   return {
     ...agruparCampanhas({ tipo, visitantes, contas, gastos: dadosGasto?.gastos, gastosDia: dadosGasto?.gastosDia, leads }),
     gastoMeta: gasto,
-    rastreio: { ...statusRastreio(desde), leadsFormulario: statusLeadsRycs() },
+    rastreio: { ...statusRastreio(desde), leadsFormulario: statusLeadsRycs(), qualidade: await qualidadeCorrespondencia() },
   };
 }
