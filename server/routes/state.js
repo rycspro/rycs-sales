@@ -25,6 +25,46 @@ function parseSeller(row) {
 // a cada ação, o que deixava o site inteiro lento. Vai por URL, como a foto do
 // profissional; a versão no fim muda quando a logo muda, então o navegador
 // pode guardar a imagem em cache sem mostrar uma logo antiga.
+// Colunas que guardam arquivo (data URI) não são lidas na consulta do
+// /state: o SQLite devolve só o tamanho (octet_length não lê o conteúdo) e o
+// valor, se for pequeno. O que é grande vira versão leve uma vez só e fica em
+// memória, validada pelo tamanho — prova e anexo não mudam depois de gravados,
+// e se a logo mudar o tamanho muda junto.
+const LIMITE_LEVE = 16 * 1024;
+const colunasLeves = {};
+function selectLeve(tabela, pesadas, where = "") {
+  colunasLeves[tabela] ||= db.prepare(`PRAGMA table_info(${tabela})`).all().map((c) => c.name)
+    .map((n) => pesadas.includes(n)
+      ? `CASE WHEN octet_length(${n}) > ${LIMITE_LEVE} THEN NULL ELSE ${n} END AS ${n}, octet_length(${n}) AS ${n}__bytes`
+      : n)
+    .join(", ");
+  return `SELECT ${colunasLeves[tabela]} FROM ${tabela} ${where}`;
+}
+
+const cacheLeve = new Map();
+function leve(chave, bytes, calcular) {
+  const hit = cacheLeve.get(chave);
+  if (hit && hit.bytes === bytes) return hit.valor;
+  const valor = calcular();
+  if (cacheLeve.size > 20_000) cacheLeve.clear();
+  cacheLeve.set(chave, { bytes, valor });
+  return valor;
+}
+
+// Devolve a linha com a coluna resolvida: o valor pequeno como veio, ou a
+// versão leve do valor grande (lido do banco só quando não está em cache).
+function resolverPesada(tabela, row, coluna, transformar) {
+  const bytes = row[`${coluna}__bytes`];
+  delete row[`${coluna}__bytes`];
+  if (row[coluna] != null || !bytes) return transformar(row[coluna]);
+  return leve(`${tabela}:${coluna}:${row.id}`, bytes, () =>
+    transformar(db.prepare(`SELECT ${coluna} FROM ${tabela} WHERE id = ?`).get(row.id)?.[coluna]));
+}
+
+export const selectCompanies = (where) => selectLeve("companies", ["logo"], where);
+export const selectSubmissions = (where) => selectLeve("submissions", ["prova"], where);
+export const selectMessages = (where) => selectLeve("messages", ["anexo"], where);
+
 export function urlDaLogo(id, logo) {
   if (!logo || !String(logo).startsWith("data:")) return logo || "";
   return enderecoMidia(`/api/companies/${id}/logo`, logo);
@@ -56,9 +96,10 @@ export function mensagemSemArquivo(m) {
 }
 
 function parseCompany(row, preloadedDims) {
+  const logo = resolverPesada("companies", row, "logo", (v) => urlDaLogo(row.id, v));
   return {
     ...row,
-    logo: urlDaLogo(row.id, row.logo),
+    logo,
     scoreDimensions: preloadedDims || {},
     destaque: !!row.destaque,
     visivel: row.visivel == null ? true : !!row.visivel,
@@ -71,9 +112,17 @@ function parseCompany(row, preloadedDims) {
 }
 
 function parseSub(row) {
-  const prova = JSON.parse(row.prova || "{}");
-  return { ...row, prova: row.prova?.includes("data:") ? provaSemArquivos(row.id, prova) : prova, arquivos: JSON.parse(row.arquivos || "[]") };
+  const prova = resolverPesada("submissions", row, "prova", (v) => {
+    const p = JSON.parse(v || "{}");
+    return v?.includes("data:") ? provaSemArquivos(row.id, p) : p;
+  });
+  return { ...row, prova, arquivos: JSON.parse(row.arquivos || "[]") };
 }
+
+const parseMensagem = (row) => {
+  const anexo = resolverPesada("messages", row, "anexo", (v) => mensagemSemArquivo({ id: row.id, anexo: v }).anexo);
+  return { ...row, anexo };
+};
 
 function parseCampaign(row) {
   return {
@@ -185,12 +234,14 @@ export function getFullState() {
     if (!dimsByCompany[d.companyId]) dimsByCompany[d.companyId] = {};
     dimsByCompany[d.companyId][d.dimension] = d.valor;
   });
-  const companies = db.prepare("SELECT * FROM companies").all().map((row) => parseCompany(row, dimsByCompany[row.id]));
-  const submissions = db.prepare("SELECT * FROM submissions ORDER BY criadoEm DESC").all().map(parseSub);
+  const companies = db.prepare(selectCompanies()).all().map((row) => parseCompany(row, dimsByCompany[row.id]));
+  const submissions = db.prepare(selectSubmissions("ORDER BY criadoEm DESC")).all().map(parseSub);
   const withdrawals = db.prepare("SELECT * FROM withdrawals ORDER BY criadoEm DESC").all();
-  const messages = db.prepare("SELECT * FROM messages ORDER BY ts ASC").all().map(mensagemSemArquivo);
+  // Nenhuma tela do admin usa mensagens nem leads; eram a maior parte do que
+  // sobrava no /state dele.
+  const messages = [];
   const campaigns = db.prepare("SELECT * FROM campaigns ORDER BY criadoEm DESC").all().map(parseCampaign);
-  const leads = db.prepare("SELECT * FROM leads ORDER BY atualizadoEm DESC").all();
+  const leads = [];
   const campaignApps = db.prepare("SELECT * FROM campaign_applications").all();
 
   const appsPorCampanha = new Map();
@@ -210,7 +261,7 @@ function getEmpresaState(entityId) {
   const dims = db.prepare("SELECT dimension, valor FROM company_score_dimensions WHERE companyId = ?").all(meuId);
   const dimMap = {};
   dims.forEach((d) => { dimMap[d.dimension] = d.valor; });
-  const companies = db.prepare("SELECT * FROM companies WHERE id = ?").all(meuId).map((row) => parseCompany(row, dimMap));
+  const companies = db.prepare(selectCompanies("WHERE id = ?")).all(meuId).map((row) => parseCompany(row, dimMap));
 
   const campaigns = db.prepare("SELECT * FROM campaigns WHERE companyId = ? ORDER BY criadoEm DESC").all(meuId).map(parseCampaign);
   const campIds = campaigns.map((c) => c.id);
@@ -230,7 +281,7 @@ function getEmpresaState(entityId) {
     .map((a) => ({ sellerId: a.sellerId, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null }));
 
   // inclui também sellers que têm mensagens com esta empresa
-  const messages = db.prepare("SELECT * FROM messages WHERE companyId = ? ORDER BY ts ASC").all(meuId).map(mensagemSemArquivo);
+  const messages = db.prepare(selectMessages("WHERE companyId = ? ORDER BY ts ASC")).all(meuId).map(parseMensagem);
   messages.forEach((m) => { if (m.sellerId) idsCandidatos.add(m.sellerId); });
 
   const sellerIds = [...idsCandidatos];
@@ -241,7 +292,7 @@ function getEmpresaState(entityId) {
     sellers = buildSellersWithRelations(raw);
   }
 
-  const submissions = db.prepare("SELECT * FROM submissions WHERE companyId = ? ORDER BY criadoEm DESC").all(meuId).map(parseSub);
+  const submissions = db.prepare(selectSubmissions("WHERE companyId = ? ORDER BY criadoEm DESC")).all(meuId).map(parseSub);
   const leads = db.prepare("SELECT * FROM leads WHERE companyId = ? ORDER BY atualizadoEm DESC").all(meuId);
 
   const campanhasAutoDefault = companies[0]?.campanhasAutoDefault ?? 0;
@@ -266,7 +317,7 @@ function getVendedorState(entityId) {
       if (!dimsByCompany[d.companyId]) dimsByCompany[d.companyId] = {};
       dimsByCompany[d.companyId][d.dimension] = d.valor;
     });
-    companies = db.prepare("SELECT * FROM companies WHERE visivel = 1").all().map((row) => parseCompany(row, dimsByCompany[row.id])).map((c) => ({
+    companies = db.prepare(selectCompanies("WHERE visivel = 1")).all().map((row) => parseCompany(row, dimsByCompany[row.id])).map((c) => ({
       ...c,
       qualificacao: {
         ...c.qualificacao,
@@ -275,9 +326,9 @@ function getVendedorState(entityId) {
     }));
   }
 
-  const submissions = db.prepare("SELECT * FROM submissions WHERE sellerId = ? ORDER BY criadoEm DESC").all(meuId).map(parseSub);
+  const submissions = db.prepare(selectSubmissions("WHERE sellerId = ? ORDER BY criadoEm DESC")).all(meuId).map(parseSub);
   const withdrawals = db.prepare("SELECT * FROM withdrawals WHERE sellerId = ? ORDER BY criadoEm DESC").all(meuId);
-  const messages = db.prepare("SELECT * FROM messages WHERE sellerId = ? ORDER BY ts ASC").all(meuId).map(mensagemSemArquivo);
+  const messages = db.prepare(selectMessages("WHERE sellerId = ? ORDER BY ts ASC")).all(meuId).map(parseMensagem);
   const leads = db.prepare("SELECT * FROM leads WHERE sellerId = ? ORDER BY atualizadoEm DESC").all(meuId);
 
   let campaigns = [];
@@ -318,19 +369,22 @@ function getVendedorState(entityId) {
 function getFilteredState(user) {
   const { role, entityId } = user;
 
-  try {
-    if (role === "empresa") return getEmpresaState(entityId);
-    if (role === "vendedor") return getVendedorState(entityId);
-  } catch (err) {
-    console.error(`[state] erro em get${role}State(${entityId}):`, err.message);
-    return getFullState();
-  }
-
-  return getFullState();
+  // Se o estado de uma empresa ou profissional falhar, a resposta é um erro
+  // (a tela oferece tentar de novo). Antes caía no estado completo, que é o
+  // banco de todas as empresas e profissionais.
+  if (role === "empresa") return getEmpresaState(entityId);
+  if (role === "vendedor") return getVendedorState(entityId);
+  if (role === "admin") return getFullState();
+  const erro = new Error("Papel sem estado"); erro.status = 403; throw erro;
 }
 
 router.get("/state", (req, res) => {
-  const state = getFilteredState(req.user);
+  let state;
+  try { state = getFilteredState(req.user); }
+  catch (err) {
+    console.error(`[state] erro para ${req.user.role} ${req.user.entityId}:`, err.message);
+    return res.status(err.status || 500).json({ error: "Não foi possível carregar os dados." });
+  }
   const notifs = db.prepare("SELECT * FROM notifications WHERE userId = ? ORDER BY criadoEm DESC LIMIT 50").all(req.user.id);
   state.notifications = notifs;
   res.json(state);

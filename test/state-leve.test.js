@@ -97,11 +97,23 @@ test("/state manda foto de prova e anexo de chat por endereço, e só quem pode 
     assert.match(sub.prova.evidencias[0].valor, /^\/api\/submissions\/sub1\/midia\?c=evidencias\.0\.valor&t=image&v=\w+$/, quem);
     assert.equal(sub.prova.evidencias[1].valor, "https://exemplo.com", "link continua link");
     assert.equal(sub.prova.evidencias[0].metadata.latitude, -23.5, "metadados ficam");
+    urlFoto = sub.prova.evidencias[0].valor;
+    if (quem === "admin") {
+      assert.deepEqual(r.corpo.messages, [], "admin não recebe mensagens (nenhuma tela usa)");
+      assert.deepEqual(r.corpo.leads, [], "admin não recebe leads (nenhuma tela usa)");
+      continue;
+    }
     const anexo = JSON.parse(r.corpo.messages.find((m) => m.id === "m1").anexo);
     assert.equal(anexo.tipo, "audio");
     assert.match(anexo.dados, /^\/api\/messages\/m1\/anexo\?t=audio&v=\w+$/, quem);
-    urlFoto = sub.prova.evidencias[0].valor; urlAudio = anexo.dados;
+    urlAudio = anexo.dados;
   }
+
+  // Segunda leitura vem do cache e tem de ser idêntica à primeira.
+  const de1 = (await req("/state", { cookie: ck.empresa })).corpo;
+  const de2 = (await req("/state", { cookie: ck.empresa })).corpo;
+  assert.deepEqual(de2.submissions, de1.submissions);
+  assert.deepEqual(de2.messages, de1.messages);
 
   for (const quem of ["admin", "empresa", "vendedor"]) {
     const r = await abrir(urlFoto, ck[quem]);
@@ -124,4 +136,17 @@ test("/state manda foto de prova e anexo de chat por endereço, e só quem pode 
   // GET /messages também entrega o anexo por endereço.
   const msgs = await req("/messages", { cookie: ck.empresa });
   assert.ok(!JSON.stringify(msgs.corpo).includes("base64,"));
+});
+
+test("/state de empresa que falha devolve erro, nunca o banco inteiro", async (t) => {
+  const { base, dbPath } = await subirServidor(t);
+  const db = new Database(dbPath);
+  t.after(() => db.close());
+  db.prepare("INSERT INTO companies (id, nome, produto, whatsapp, saldo, aportes, visivel, criadoEm) VALUES ('e2', 'Outra', 'X', '1', 999, '[]', 1, ?)").run(Date.now());
+  // comissoes inválido faz o JSON.parse do estado da empresa falhar.
+  db.prepare("INSERT INTO companies (id, nome, produto, whatsapp, saldo, aportes, comissoes, visivel, criadoEm) VALUES ('e1', 'Emp', 'X', '1', 0, '[]', '{quebrado', 1, ?)").run(Date.now());
+  const r = await cliente(base)("/state", { cookie: assinar({ id: "u-e1", role: "empresa", entityId: "e1" }) });
+  assert.equal(r.status, 500);
+  assert.ok(!JSON.stringify(r.corpo).includes("Outra"), "não vaza dados de outra empresa");
+  assert.equal(r.corpo.error, "Não foi possível carregar os dados.");
 });
