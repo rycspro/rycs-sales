@@ -10,6 +10,7 @@
 
 import db, { agora, uid } from "../db.js";
 import { CONQUISTAS, CONQUISTA_POR_ID, nivelPorXp, XP_POR_TAREFA_ADICIONAL } from "../../shared/gamificacao.js";
+import { selectSellers } from "./sellerLeve.js";
 
 const n = (v) => Number(v) || 0;
 
@@ -22,7 +23,7 @@ function contarConcluidas(tabela, sellerId) {
 
 // Métricas reais do profissional — a base de tudo. Uma leitura só, sem efeitos.
 export function metricas(sellerId) {
-  const seller = db.prepare("SELECT * FROM sellers WHERE id = ?").get(sellerId);
+  const seller = db.prepare(selectSellers("WHERE id = ?")).get(sellerId);
   if (!seller) return null;
 
   let pc = {};

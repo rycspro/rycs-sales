@@ -15,7 +15,7 @@ test("/state manda logo, foto e currículo por URL, e a logo é servida com cach
   t.after(() => db.close());
   const agora = Date.now();
   db.prepare("INSERT INTO companies (id, nome, produto, whatsapp, saldo, aportes, logo, visivel, criadoEm) VALUES ('e1', 'Emp', 'X', '1', 0, '[]', ?, 1, ?)").run(logo, agora);
-  db.prepare("INSERT INTO sellers (id, nome, email, whats, foto, curriculo, criadoEm) VALUES ('s1', 'Ana', 'a@t.dev', '1', ?, ?, ?)").run(logo, `data:application/pdf;base64,${"B".repeat(200_000)}`, agora);
+  db.prepare("INSERT INTO sellers (id, nome, email, whats, foto, curriculo, videoApresentacao, criadoEm) VALUES ('s1', 'Ana', 'a@t.dev', '1', ?, ?, ?, ?)").run(logo, `data:application/pdf;base64,${"B".repeat(200_000)}`, `data:video/mp4;base64,${Buffer.from("video-da-ana").toString("base64")}${"C".repeat(300_000)}`, agora);
   db.prepare("INSERT INTO sellers (id, nome, email, whats, criadoEm) VALUES ('s2', 'Bia', 'b@t.dev', '1', ?)").run(agora);
   const req = cliente(base);
 
@@ -34,6 +34,8 @@ test("/state manda logo, foto e currículo por URL, e a logo é servida com cach
     assert.equal(ana.foto, "/api/sellers/s1/foto", quem);
     if (quem === "admin") {
       assert.equal(ana.curriculo, "/api/sellers/s1/curriculo");
+      assert.equal(ana.videoApresentacao, "/api/sellers/s1/video-apresentacao");
+      assert.equal(r.corpo.sellers.find((s) => s.id === "s2").videoApresentacao, "", "sem vídeo continua vazio");
       assert.equal(r.corpo.sellers.find((s) => s.id === "s2").foto, null, "sem foto continua sem foto");
     }
   }
@@ -48,6 +50,13 @@ test("/state manda logo, foto e currículo por URL, e a logo é servida com cach
   assert.match(img.headers.get("content-security-policy"), /sandbox/);
   const bytes = Buffer.from(await img.arrayBuffer());
   assert.deepEqual(bytes.subarray(0, PNG.length), PNG);
+
+  // Vídeo de apresentação servido à parte, com pedido parcial (Safari).
+  const video = await fetch(base + "/sellers/s1/video-apresentacao", { headers: { Cookie: assinar({ id: "u-a", role: "admin", entityId: "admin" }), Range: "bytes=0-11" } });
+  assert.equal(video.status, 206);
+  assert.equal(video.headers.get("content-type"), "video/mp4");
+  assert.equal(Buffer.from(await video.arrayBuffer()).toString(), "video-da-ana");
+  assert.equal((await fetch(base + "/sellers/s1/video-apresentacao", { headers: { Cookie: assinar({ id: "u-s2", role: "vendedor", entityId: "s2" }) } })).status, 403);
 
   // Logo nova muda a URL, para o cache não mostrar a antiga.
   db.prepare("UPDATE companies SET logo = ? WHERE id = 'e1'").run(logo + "QUJD");

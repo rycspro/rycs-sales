@@ -1,5 +1,6 @@
 import { Router } from "express";
 import db from "../db.js";
+import { selectSellers } from "../services/sellerLeve.js";
 import { enderecoMidia } from "../../shared/midia.js";
 import { BETA_DEFAULT_BALANCE, ajustarSaldoBeta, isBetaEnvironment, resetBetaEnvironment } from "../services/betaEnvironment.js";
 import { avaliarProfissional, estadoGamificacao } from "../services/gamificacao.js";
@@ -89,21 +90,6 @@ function parseCampaign(row) {
   };
 }
 
-// Foto, foto original e currículo são base64 de até 8MB e o /state só manda a
-// URL deles. Ler essas colunas para depois jogar fora travava o servidor (o
-// SQLite é síncrono) a cada carregamento do admin. Aqui só se pergunta se
-// existem.
-const PESADAS_SELLER = ["foto", "fotoOriginal", "curriculo"];
-const colunasSeller = () => db.prepare("PRAGMA table_info(sellers)").all()
-  .map((c) => c.name)
-  .map((n) => PESADAS_SELLER.includes(n) ? `(${n} IS NOT NULL AND ${n} != '') AS ${n}` : n)
-  .join(", ");
-let SELECT_SELLER;
-export const selectSellers = (where = "") => {
-  SELECT_SELLER ||= `SELECT ${colunasSeller()} FROM sellers`;
-  return `${SELECT_SELLER} ${where}`;
-};
-
 function buildSellersWithRelations(sellers) {
   const ids = sellers.map((s) => s.id);
   const usarFiltro = ids.length < 200 && ids.length > 0;
@@ -178,6 +164,8 @@ function buildSellersWithRelations(sellers) {
     // igual à foto — quem precisa do arquivo abre /api/sellers/:id/curriculo.
     const temCurriculo = !!(parsed.curriculo);
     parsed.curriculo = temCurriculo ? `/api/sellers/${s.id}/curriculo` : null;
+    // Vídeo de apresentação (MP4 em data URI, já houve de 14MB): mesmo caso.
+    parsed.videoApresentacao = parsed.videoApresentacao ? `/api/sellers/${s.id}/video-apresentacao` : "";
     return {
       ...parsed, aplicacoes, aplicacoesDetalhe, curso, scoreDimensions,
       certificacoes: [
