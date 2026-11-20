@@ -78,6 +78,8 @@ import { semearPoliticasPadrao, iniciarWorker, capacidadesDisponiveis } from "./
 import { liberarRetidosPorCiclo } from "./services/financeiro.js";
 import { iniciarSaquesParados } from "./routes/payments.js";
 import { iniciarLiberacaoComissoesCanal } from "./services/parceriaCanal.js";
+import colaboradoresRoutes from "./routes/colaboradores.js";
+import { iniciarColaboradores } from "./services/colaboradores.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -267,6 +269,7 @@ app.use("/api", authMiddleware, planosProfissionalRoutes);
 app.use("/api", authMiddleware, stripeRoutes);
 app.use("/api", authMiddleware, materiaisRoutes);
 app.use("/api", authMiddleware, academyEmpresaRoutes);
+app.use("/api", authMiddleware, colaboradoresRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {
@@ -397,6 +400,7 @@ app.listen(PORT, () => {
   iniciarSequenciasEmail();
   iniciarSaquesParados();
   iniciarLiberacaoComissoesCanal();
+  iniciarColaboradores();
   iniciarReativacao();
   retomarDisparosWhatsapp();
   // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,

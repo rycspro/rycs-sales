@@ -321,6 +321,13 @@ export default function App() {
     window.history.replaceState({}, "", window.location.pathname + (q ? `?${q}` : ""));
   }, [role]);
 
+  // Colaborador interno (admin liga por usuário): mostra o item no menu.
+  const [colaborador, setColaborador] = useState(false);
+  useEffect(() => {
+    if (role !== "vendedor" || !user?.id) { setColaborador(false); return; }
+    api("/colaborador/eu").then((r) => setColaborador(!!r?.colaborador));
+  }, [role, user?.id]);
+
   if (!loaded) return <div className="vx-app" style={{ minHeight: "100dvh" }}><style>{CSS}</style></div>;
 
   const entrarComoAdmin = async (u) => { setUser(u); userRef.current = u; await carregarState(u); };
@@ -387,7 +394,7 @@ export default function App() {
     <div className="vx-app">
       <style>{CSS}</style>
 
-      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "outros"}>
+      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} colaborador={colaborador} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "outros"}>
         <ErrorBoundary>
           <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
             {carga === "carregando" && (

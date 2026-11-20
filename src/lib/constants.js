@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -51,6 +51,8 @@ export const NAV = {
     { section: "Financeiro" },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "indicar", label: "Indicar", Icon: Gift },
+    // Só aparece para quem o admin marcou como colaborador interno (Shell filtra).
+    { key: "colaborador", label: "Colaborador RYCS", Icon: BriefcaseBusiness },
     { section: "Minha conta" },
     { key: "planos", label: "Planos", Icon: Crown },
     { key: "perfil", label: "Meu Perfil", Icon: UserIcon },
@@ -99,6 +101,7 @@ export const NAV = {
     { key: "profissionais", label: "Profissionais", Icon: UserCheck },
     { key: "empresas", label: "Empresas", Icon: Building2 },
     { key: "parceiros", label: "Parceiros de canal", Icon: Handshake },
+    { key: "colaboradores", label: "Colaboradores", Icon: BriefcaseBusiness },
     { key: "triagem", label: "Triagem", Icon: ShieldCheck },
     { key: "onboarding", label: "Links de onboarding", Icon: Link2 },
     { section: "Financeiro" },

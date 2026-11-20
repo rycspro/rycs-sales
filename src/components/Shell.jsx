@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { LogOut, ChevronDown, ChevronUp, Building2, X } from "lucide-react";
 import { NAV, MOBILE_NAV } from "../lib/constants.js";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
-export default function Shell({ user, entity, role, active, onSelect, counts, beta, onLogout, children, fullBleed, settingsLayout }) {
+export default function Shell({ user, entity, role, active, onSelect, counts, beta, colaborador, onLogout, children, fullBleed, settingsLayout }) {
   const [gruposAbertos, setGruposAbertos] = useState({});
   const [menuMobile, setMenuMobile] = useState(false);
   // Ao navegar para outra página, fecha os submenus abertos manualmente — só o
@@ -22,7 +22,7 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     document.addEventListener("keydown", onKey);
     return () => { document.body.style.overflow = anterior; document.removeEventListener("keydown", onKey); };
   }, [menuMobile]);
-  const rawItems = (NAV[role] || []).filter((item) => !item.key || item.key !== "beta" || beta);
+  const rawItems = (NAV[role] || []).filter((item) => !item.key || (item.key !== "beta" || beta) && (item.key !== "colaborador" || colaborador));
   const fimKeys = new Set(["outros"]);
   const fimItems = rawItems.filter((item) => fimKeys.has(item.key));
   const allItems = fimItems.length
