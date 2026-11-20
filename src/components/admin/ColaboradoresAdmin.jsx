@@ -6,10 +6,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, apiPatch, apiPut, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Vazio } from "../ui.jsx";
-import { ALVO, SITUACAO, TENDENCIA, Num, PainelResumo, ListaDias, TabelaExtrato } from "../colaborador/comum.jsx";
+import { ALVO, SITUACAO, TENDENCIA, Num, PainelResumo, ListaDias, TabelaExtrato, DiasPrevistos } from "../colaborador/comum.jsx";
+import FormAtivacao from "../colaborador/FormAtivacao.jsx";
 import {
   DIAS_SEMANA, formatarCents, dataBRFormatada, TIPOS_LANCAMENTO, NATUREZAS, VINCULOS, REGIMES, TIPOS_AUSENCIA, TIPOS_PROVA,
-  CAMPOS_CONTRATO, presencaPadrao, reducoes as listarReducoes,
+  CAMPOS_CONTRATO, reducoes as listarReducoes,
 } from "../../../shared/colaboradores.js";
 
 const hoje = () => new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);
@@ -182,89 +183,34 @@ function Novo({ aviso, pronto }) {
   const [busca, setBusca] = useState("");
   const [usuarios, setUsuarios] = useState([]);
   const [u, setU] = useState(null);
-  const [f, setF] = useState({ nome: "", cpf: "", funcao: "", vinculo: "clt", regime: "presencial", dataInicio: hoje(), jornadaHoras: "44", dias: [1, 2, 3, 4, 5] });
-  const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const procurar = async (e) => {
     e.preventDefault();
     const r = await api(`/admin/colaboradores-usuarios?email=${encodeURIComponent(busca)}`);
     setUsuarios(r?.usuarios || []);
     if (!r?.usuarios?.length) aviso("Nenhum usuário com esse e-mail.");
   };
-  const escolher = (x) => { setU(x); setF((y) => ({ ...y, nome: x.nomeProfissional || y.nome, cpf: x.documento || y.cpf })); };
-  const salvar = async (e) => {
-    e.preventDefault();
-    const r = await api("/admin/colaboradores", {
-      userId: u.id, nome: f.nome, cpf: f.cpf, funcao: f.funcao, vinculo: f.vinculo, regime: f.vinculo === "clt" ? f.regime : "",
-      dataInicio: f.dataInicio, jornadaHoras: f.jornadaHoras, regra: { diasPrevistos: f.dias, medirPresenca: presencaPadrao(f.vinculo, f.regime) },
-    });
-    if (r?.error) return aviso(r.error);
-    aviso(r.contrato?.erro ? `Colaborador ativado. ${r.contrato.erro}` : "Colaborador ativado e contrato enviado para assinatura.");
-    pronto(r.colaborador.id);
-  };
   return (
     <div className="vx-card" style={{ padding: 18, maxWidth: 640 }}>
-      <form onSubmit={procurar} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <label className="vx-label" htmlFor="col-busca">E-mail da conta na plataforma</label>
-          <input id="col-busca" className="vx-input" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome@exemplo.com" style={ALVO} />
-        </div>
-        <button className="vx-btn vx-btn-sm" style={ALVO} disabled={busca.trim().length < 3}>Procurar</button>
-      </form>
+      {!u && (
+        <form onSubmit={procurar} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <label className="vx-label" htmlFor="col-busca">E-mail da conta na plataforma</label>
+            <input id="col-busca" className="vx-input" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome@exemplo.com" style={ALVO} />
+          </div>
+          <button className="vx-btn vx-btn-sm" style={ALVO} disabled={busca.trim().length < 3}>Procurar</button>
+        </form>
+      )}
       {usuarios.length > 0 && !u && (
         <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0" }}>{usuarios.map((x) => (
           <li key={x.id} style={{ marginBottom: 6 }}>
-            <button type="button" className="vx-btn vx-btn-sm" style={{ ...ALVO, width: "100%", justifyContent: "flex-start" }} disabled={x.jaColaborador} onClick={() => escolher(x)}>
+            <button type="button" className="vx-btn vx-btn-sm" style={{ ...ALVO, width: "100%", justifyContent: "flex-start" }} disabled={x.jaColaborador} onClick={() => setU(x)}>
               {x.email} · {x.role}{x.jaColaborador ? " · já é colaborador" : ""}
             </button>
           </li>
         ))}</ul>
       )}
-      {u && (
-        <form onSubmit={salvar} style={{ marginTop: 16 }}>
-          <p className="vx-mut" style={{ fontSize: 13 }}>Conta: <b>{u.email}</b> <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setU(null)}>Trocar</button></p>
-          <div className="vx-g2" style={{ gap: 12 }}>
-            <Campo id="n-nome" label="Nome completo"><input id="n-nome" className="vx-input" required value={f.nome} onChange={(e) => set("nome", e.target.value)} style={ALVO} /></Campo>
-            <Campo id="n-cpf" label="CPF"><input id="n-cpf" className="vx-input" inputMode="numeric" value={f.cpf} onChange={(e) => set("cpf", e.target.value)} style={ALVO} /></Campo>
-            <Campo id="n-funcao" label="Função (cargo)"><input id="n-funcao" className="vx-input" value={f.funcao} onChange={(e) => set("funcao", e.target.value)} style={ALVO} /></Campo>
-            <Campo id="n-vinculo" label="Tipo de vínculo">
-              <select id="n-vinculo" className="vx-input" value={f.vinculo} onChange={(e) => set("vinculo", e.target.value)} style={ALVO}>
-                {Object.entries(VINCULOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-            </Campo>
-            {f.vinculo === "clt" && (
-              <Campo id="n-regime" label="Regime de trabalho" ajuda="Vai para o contrato. Defina com o advogado.">
-                <select id="n-regime" className="vx-input" value={f.regime} onChange={(e) => set("regime", e.target.value)} style={ALVO}>
-                  {Object.entries(REGIMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </Campo>
-            )}
-            <Campo id="n-inicio" label="Data real de início do trabalho" ajuda="O vínculo vale desde o primeiro dia trabalhado, não da assinatura.">
-              <input id="n-inicio" type="date" className="vx-input" required value={f.dataInicio} onChange={(e) => set("dataInicio", e.target.value)} style={ALVO} />
-            </Campo>
-            <Campo id="n-jornada" label="Jornada (horas por semana)"><input id="n-jornada" className="vx-input" inputMode="decimal" value={f.jornadaHoras} onChange={(e) => set("jornadaHoras", e.target.value)} style={ALVO} /></Campo>
-          </div>
-          <DiasPrevistos valor={f.dias} onChange={(d) => set("dias", d)} />
-          {f.vinculo !== "clt" && <div className="vx-notice vx-notice-amber" style={{ margin: "8px 0" }}>Sem vínculo empregatício: presença, faltas e meta diária ficam desligadas por padrão (seção 13.1). Ligue só depois de falar com o advogado.</div>}
-          <button className="vx-btn vx-btn-primary" style={{ ...ALVO, marginTop: 8 }}>Ativar colaborador</button>
-        </form>
-      )}
+      {u && <FormAtivacao usuario={u} aviso={aviso} pronto={pronto} cancelar={() => setU(null)} />}
     </div>
-  );
-}
-
-function DiasPrevistos({ valor, onChange }) {
-  const alternar = (d) => onChange(valor.includes(d) ? valor.filter((x) => x !== d) : [...valor, d].sort());
-  return (
-    <fieldset style={{ border: 0, padding: 0, margin: "4px 0 10px" }}>
-      <legend className="vx-label">Dias de trabalho previstos</legend>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {DIAS_SEMANA.map((nome, i) => (
-          <label key={i} className="vx-chip" style={{ display: "inline-flex", minHeight: 44, cursor: "pointer", gap: 6 }}>
-            <input type="checkbox" checked={valor.includes(i)} onChange={() => alternar(i)} /> {nome}
-          </label>
-        ))}
-      </div>
-    </fieldset>
   );
 }
 
@@ -366,7 +312,7 @@ function RegraForm({ d, aviso, recarregar }) {
     return {
       ...base,
       fixoCents: reaisParaCents(_fixo), tetoMensalCents: reaisParaCents(_teto),
-      variavel: { ...base.variavel, cadastroCents: reaisParaCents(_cad), tarefaCents: reaisParaCents(_tar), diariaCents: reaisParaCents(_dia), empresaPagante: { ...base.variavel.empresaPagante, valorCents: reaisParaCents(_emp), percentual: Number(base.variavel.empresaPagante.percentual) || 0, meses: Number(base.variavel.empresaPagante.meses) || 1 } },
+      variavel: { ...base.variavel, cadastroCents: reaisParaCents(_cad), tarefaCents: reaisParaCents(_tar), diariaCents: reaisParaCents(_dia), garantiaDias: Math.max(0, Number(base.variavel.garantiaDias) || 0), empresaPagante: { ...base.variavel.empresaPagante, valorCents: reaisParaCents(_emp), percentual: Number(base.variavel.empresaPagante.percentual) || 0, meses: Number(base.variavel.empresaPagante.meses) || 1 } },
       alertaDiasSemAtividade: Number(base.alertaDiasSemAtividade) || 3,
       diaTrabalhado: { ...base.diaTrabalhado, minimo: Number(base.diaTrabalhado.minimo) || 1 },
       meta: { ...base.meta, quantidade: base.meta.quantidade === "" || base.meta.quantidade == null ? null : Number(base.meta.quantidade) },
@@ -428,6 +374,7 @@ function RegraForm({ d, aviso, recarregar }) {
             ? <Campo id="r-epv" label="Valor por empresa (R$)"><input id="r-epv" className="vx-input" inputMode="decimal" value={r._emp} onChange={(e) => s("_emp", e.target.value)} style={ALVO} /></Campo>
             : <Campo id="r-epp" label="Percentual (%)"><input id="r-epp" className="vx-input" inputMode="decimal" value={ep.percentual} onChange={(e) => setEp("percentual", e.target.value)} style={ALVO} /></Campo>}
           <Campo id="r-epmes" label="Vale por quantos meses" ajuda="1 = só a primeira cobrança"><input id="r-epmes" className="vx-input" inputMode="numeric" value={ep.meses} onChange={(e) => setEp("meses", e.target.value)} style={ALVO} /></Campo>
+          <Campo id="r-gar" label="Prazo de garantia (dias)" ajuda="Cancelamento depois disso não estorna o que já foi lançado"><input id="r-gar" className="vx-input" inputMode="numeric" value={r.variavel.garantiaDias ?? 30} onChange={(e) => setVar("garantiaDias", e.target.value)} style={ALVO} /></Campo>
         </div>
         {c.vinculo !== "clt" && (
           <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
@@ -534,11 +481,14 @@ function ContratosAdmin({ d, aviso, recarregar }) {
             <div>
               <b>{k.tipo === "aditivo" ? "Aditivo" : "Contrato"}</b> · {k.titulo}
               <div className="vx-mut" style={{ fontSize: 12 }}>
-                {k.status === "assinado" ? `Assinado em ${dataCurta(k.assinadoEm)} · IP ${k.ip}` : k.status === "cancelado" ? "Substituído" : "Aguardando assinatura"} · modelo v{k.modeloVersao} · regra v{k.regraVersao}
+                {k.status === "assinado" ? `Assinado em ${dataCurta(k.assinadoEm)}${k.ip ? ` · IP ${k.ip}` : ""}` : k.status === "cancelado" ? "Substituído" : "Aguardando assinatura"} · {k.provedor === "zapsign" ? "ZapSign" : "código por e-mail"} · modelo v{k.modeloVersao} · regra v{k.regraVersao}
               </div>
               <div className="vx-mut vx-mono" style={{ fontSize: 11 }}>SHA-256 {k.hash.slice(0, 16)}…</div>
             </div>
-            <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores/${c.id}/contratos/${k.id}/documento`)}>Abrir / PDF</button>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {k.temPdf ? <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores/${c.id}/contratos/${k.id}/pdf`)}>PDF assinado</button> : null}
+              <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores/${c.id}/contratos/${k.id}/documento`)}>Texto / imprimir</button>
+            </div>
           </div>
         ))}</div>
       )}
@@ -608,6 +558,10 @@ function ExtratoAdmin({ d, mes, setMes, aviso, recarregar }) {
       <div style={{ maxWidth: 200, marginBottom: 12 }}>
         <label className="vx-label" htmlFor="x-mes">Mês</label>
         <input id="x-mes" type="month" className="vx-input" value={mes} onChange={(e) => setMes(e.target.value)} style={ALVO} />
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores-fechamento.html?mes=${mes}&colaboradorId=${d.colaborador.id}`)}>PDF do mês desta pessoa</button>
+        <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores-fechamento.csv?mes=${mes}&colaboradorId=${d.colaborador.id}`)}>CSV do mês desta pessoa</button>
       </div>
       <TabelaExtrato ex={d.extrato} />
       <form onSubmit={ajustar} className="vx-card" style={{ padding: 16, marginTop: 14 }}>
@@ -872,6 +826,75 @@ function Fechamento({ aviso }) {
 
 // ───────────────────────────── Configuração ─────────────────────────────
 
+function PadroesAvisos({ d, aviso, recarregar }) {
+  const p0 = d.padroes || {};
+  const [p, setP] = useState({
+    diasPrevistos: p0.diasPrevistos || [1, 2, 3, 4, 5], horario: p0.horario || { inicio: "08:00", fim: "18:00" },
+    diaTrabalhado: p0.diaTrabalhado || { criterio: "envio", minimo: 1 }, alertaDiasSemAtividade: p0.alertaDiasSemAtividade ?? 3,
+    pesos: p0.pesos || { meta: 40, aprovacao: 30, presenca: 30 }, registroAtividade: !!p0.registroAtividade,
+    meta: { periodo: p0.meta?.periodo || "dia" }, garantiaDias: p0.garantiaDias ?? 30,
+  });
+  const [a, setA] = useState(d.avisos);
+  const salvarP = async (e) => {
+    e.preventDefault();
+    const r = await apiPut("/admin/colaboradores-config/padroes", { padroes: p });
+    if (r?.error) return aviso(r.error);
+    aviso("Padrões salvos. Valem para os próximos colaboradores; quem já existe não muda.");
+    recarregar();
+  };
+  const salvarA = async (e) => {
+    e.preventDefault();
+    const r = await apiPut("/admin/colaboradores-config/avisos", { avisos: a });
+    if (r?.error) return aviso(r.error);
+    aviso("Avisos salvos.");
+    recarregar();
+  };
+  return (
+    <>
+      <form onSubmit={salvarP} className="vx-card" style={{ padding: 18, marginBottom: 16 }} aria-labelledby="cfg-pad">
+        <h3 id="cfg-pad" className="vx-disp" style={{ fontSize: 15, marginTop: 0 }}>Padrões para novos colaboradores</h3>
+        <p className="vx-mut" style={{ fontSize: 12.5 }}>Preenchem a regra de quem for ativado daqui em diante. Cada pessoa pode ser ajustada depois na própria ficha.</p>
+        <DiasPrevistos valor={p.diasPrevistos} onChange={(v) => setP({ ...p, diasPrevistos: v })} />
+        <div className="vx-g3" style={{ gap: 12 }}>
+          <Campo id="p-hi" label="Início do horário"><input id="p-hi" type="time" className="vx-input" value={p.horario.inicio} onChange={(e) => setP({ ...p, horario: { ...p.horario, inicio: e.target.value } })} style={ALVO} /></Campo>
+          <Campo id="p-hf" label="Fim do horário"><input id="p-hf" type="time" className="vx-input" value={p.horario.fim} onChange={(e) => setP({ ...p, horario: { ...p.horario, fim: e.target.value } })} style={ALVO} /></Campo>
+          <Campo id="p-crit" label="Dia trabalhado é quando há">
+            <select id="p-crit" className="vx-input" value={p.diaTrabalhado.criterio} onChange={(e) => setP({ ...p, diaTrabalhado: { ...p.diaTrabalhado, criterio: e.target.value } })} style={ALVO}>
+              <option value="envio">Tarefa enviada com prova</option><option value="aprovada">Tarefa aprovada</option><option value="registro">Registro "Comecei o dia"</option>
+            </select>
+          </Campo>
+          <Campo id="p-min" label="Mínimo por dia"><input id="p-min" className="vx-input" inputMode="numeric" value={p.diaTrabalhado.minimo} onChange={(e) => setP({ ...p, diaTrabalhado: { ...p.diaTrabalhado, minimo: e.target.value } })} style={ALVO} /></Campo>
+          <Campo id="p-al" label="Alertar após quantos dias sem atividade"><input id="p-al" className="vx-input" inputMode="numeric" value={p.alertaDiasSemAtividade} onChange={(e) => setP({ ...p, alertaDiasSemAtividade: e.target.value })} style={ALVO} /></Campo>
+          <Campo id="p-mp" label="Meta por">
+            <select id="p-mp" className="vx-input" value={p.meta.periodo} onChange={(e) => setP({ ...p, meta: { periodo: e.target.value } })} style={ALVO}><option value="dia">Dia</option><option value="semana">Semana</option></select>
+          </Campo>
+          <Campo id="p-gar" label="Prazo de garantia do estorno (dias)"><input id="p-gar" className="vx-input" inputMode="numeric" value={p.garantiaDias} onChange={(e) => setP({ ...p, garantiaDias: e.target.value })} style={ALVO} /></Campo>
+          {[["meta", "Peso da meta"], ["aprovacao", "Peso da aprovação"], ["presenca", "Peso da presença"]].map(([k, t]) => (
+            <Campo key={k} id={`p-p-${k}`} label={t}><input id={`p-p-${k}`} className="vx-input" inputMode="numeric" value={p.pesos[k]} onChange={(e) => setP({ ...p, pesos: { ...p.pesos, [k]: e.target.value } })} style={ALVO} /></Campo>
+          ))}
+        </div>
+        <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
+          <input type="checkbox" checked={p.registroAtividade} onChange={(e) => setP({ ...p, registroAtividade: e.target.checked })} /> Mostrar "Comecei o dia" e "Encerrei o dia" por padrão
+        </label>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" style={ALVO}>Salvar padrões</button>
+      </form>
+
+      <form onSubmit={salvarA} className="vx-card" style={{ padding: 18, marginBottom: 16 }} aria-labelledby="cfg-av">
+        <h3 id="cfg-av" className="vx-disp" style={{ fontSize: 15, marginTop: 0 }}>Avisos e relatórios</h3>
+        {[["relatorioEmail", "Enviar por e-mail o relatório semanal e o mensal"], ["lembreteEmail", "Mandar também por e-mail o lembrete de dia sem envio ao colaborador"], ["alertaEmail", "Mandar e-mail na hora quando surgir um alerta (além do painel)"]].map(([k, t]) => (
+          <label key={k} style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
+            <input type="checkbox" checked={!!a[k]} onChange={(e) => setA({ ...a, [k]: e.target.checked })} /> {t}
+          </label>
+        ))}
+        <Campo id="av-dest" label="Quem recebe (e-mails separados por vírgula)" ajuda="Vazio = todos os administradores da plataforma.">
+          <input id="av-dest" className="vx-input" value={a.destinatarios} onChange={(e) => setA({ ...a, destinatarios: e.target.value })} style={ALVO} />
+        </Campo>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" style={ALVO}>Salvar avisos</button>
+      </form>
+    </>
+  );
+}
+
 function Config({ aviso }) {
   const [d, setD] = useState(null);
   const [m, setM] = useState({ tipo: "contrato", vinculo: "clt", titulo: "", texto: "" });
@@ -912,6 +935,7 @@ function Config({ aviso }) {
   if (!d) return <div className="vx-spinner" />;
   return (
     <>
+      <PadroesAvisos key={JSON.stringify([d.padroes, d.avisos])} d={d} aviso={aviso} recarregar={carregar} />
       <section className="vx-card" style={{ padding: 18, marginBottom: 16 }} aria-labelledby="cfg-mod">
         <h3 id="cfg-mod" className="vx-disp" style={{ fontSize: 15, marginTop: 0 }}>Modelos de contrato e aditivo</h3>
         <p className="vx-mut" style={{ fontSize: 12.5 }}>Cole o texto aprovado pelo advogado. Use os campos entre chaves, que o sistema preenche: {Object.entries(CAMPOS_CONTRATO).map(([k, v]) => <span key={k}><code>{`{{${k}}}`}</code> ({v}) </span>)}</p>

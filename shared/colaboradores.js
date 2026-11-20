@@ -62,6 +62,8 @@ export function regraPadrao({ vinculo = "clt", regime = "presencial", hoje } = {
       empresaPagante: { modo: "fixo", valorCents: 0, percentual: 0, meses: 1 },
       tarefaCents: 0,
       diariaCents: 0,
+      // Estorno de cadastro ou empresa só desconta dentro deste prazo (seção 4.2).
+      garantiaDias: 30,
     },
     tetoMensalCents: 0,
     permiteSaque: false,
@@ -74,6 +76,15 @@ export function regraPadrao({ vinculo = "clt", regime = "presencial", hoje } = {
     registroAtividade: false,
     pesos: { meta: 40, aprovacao: 30, presenca: 30 },
   };
+}
+
+// Campos que o admin pode definir como padrão para novos colaboradores.
+export const CAMPOS_PADRAO = ["diasPrevistos", "horario", "diaTrabalhado", "alertaDiasSemAtividade", "pesos", "registroAtividade", "meta"];
+export function aplicarPadroes(regra, padroes = {}) {
+  const out = { ...regra };
+  for (const k of CAMPOS_PADRAO) if (padroes[k] !== undefined && padroes[k] !== null) out[k] = typeof padroes[k] === "object" && !Array.isArray(padroes[k]) ? { ...regra[k], ...padroes[k] } : padroes[k];
+  if (padroes.garantiaDias !== undefined) out.variavel = { ...regra.variavel, garantiaDias: Number(padroes.garantiaDias) || 0 };
+  return out;
 }
 
 // Junta a regra salva com o padrão, para regras antigas ganharem campos novos.

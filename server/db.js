@@ -2832,6 +2832,11 @@ db.exec(`
     atualizadoEm INTEGER
   );
 `);
+// Assinatura por provedor externo (ZapSign), quando configurado.
+adicionarColuna("colab_contratos", "provedor", "TEXT DEFAULT 'email'");
+adicionarColuna("colab_contratos", "provedorToken", "TEXT");
+adicionarColuna("colab_contratos", "signUrl", "TEXT");
+adicionarColuna("colab_contratos", "arquivoAssinado", "TEXT");
 
 
 export default db;
