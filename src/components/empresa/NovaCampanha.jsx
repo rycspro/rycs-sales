@@ -3,6 +3,8 @@ import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
 import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw } from "lucide-react";
 import { api } from "../../lib/api.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
+import { nomeAssistente } from "../../../shared/jarvas.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
@@ -69,6 +71,8 @@ function CampoOrcamento({ value, onChange }) {
 const ICONES_OBJETIVO = { leads: Target, reunioes: CalendarCheck, visitas: MapPin, vendas: BadgeDollarSign, completa: Workflow };
 
 export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarComIA = false }) {
+  const { locale } = useI18n();
+  const nome = nomeAssistente(locale);
   const [passo, setPasso] = useState(0);
   const [objetivo, setObjetivo] = useState(null);
   const [campanha, setCampanha] = useState(null);
@@ -231,15 +235,15 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Nova campanha</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
             {iniciarComIA
-              ? "Converse com o Jarvas, seu assessor de vendas: ele pergunta, calcula o retorno e monta a campanha para você revisar."
+              ? `Converse com o ${nome}, seu assessor de vendas: ele pergunta, calcula o retorno e monta a campanha para você revisar.`
               : "Escolha o objetivo da campanha e monte cada detalhe do seu jeito."}
           </p>
 
-          {/* Jarvas — conversa assistida por voz (somente no fluxo com IA) */}
+          {/* Rico — conversa assistida por voz (somente no fluxo com IA) */}
           {iniciarComIA && (
             <div className="vx-card" style={{ padding: 20, marginTop: 4, borderColor: "var(--brand-200, var(--brand-100))", background: "linear-gradient(135deg, var(--brand-50) 0%, var(--indigo-50, var(--brand-50)) 100%)", borderWidth: 1.5 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
-                <b style={{ fontSize: 15 }}>Jarvas</b>
+                <b style={{ fontSize: 15 }}>{nome}</b>
                 <span className="vx-badge vx-badge-brand" style={{ fontSize: 11 }}>IA · Recomendado</span>
               </div>
               <ConversaJarvas emp={emp} onCampanha={receberCampanhaDoJarvas} />
@@ -341,7 +345,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <label><div className="vx-label">% de comissão por venda <span className="vx-mut" style={{fontSize:11}}>(opcional)</span></div>
                 <div style={{position:"relative"}}><input className="vx-input vx-mono" type="number" min="0" max="100" step="0.5" value={campanha.percentualComissao||0} onChange={(e)=>set("percentualComissao",Number(e.target.value))} /><span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",color:"var(--muted)",fontSize:13}}>%</span></div>
               </label>
-              <label><div className="vx-label">Assistente Jarvas <span className="vx-mut" style={{fontSize:11}}>(opcional)</span></div>
+              <label><div className="vx-label">Assistente {nome} <span className="vx-mut" style={{fontSize:11}}>(opcional)</span></div>
                 <select className="vx-input" value={campanha.modoJarvas||""} onChange={(e)=>set("modoJarvas",e.target.value)}>
                   <option value="">Comportamento atual</option>
                   <option value="voz">Voz (mãos livres)</option>

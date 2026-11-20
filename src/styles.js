@@ -212,7 +212,7 @@ html.dark .vx-bottomnav{background:var(--glass-strong);border-top-color:var(--gl
 .vx-subnav{max-width:100%;flex-wrap:wrap;overflow-x:hidden}
 .vx-ai-trigger{display:none!important}
 .vx-ai-panel{display:none!important}
-/* Jarvis / Brain premium */
+/* Rico / Brain premium */
 .vx-jarvis-btn{background:var(--grad-ai);border-color:transparent;color:#fff;border-radius:var(--radius-pill);box-shadow:0 4px 20px -6px rgba(67,56,202,.5)}
 .vx-jarvis-btn:hover{filter:brightness(1.12);border-color:transparent;color:#fff}
 .vx-jarvis-pulse{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;animation:vxpulse 2s cubic-bezier(.4,0,.6,1) infinite}
@@ -502,7 +502,7 @@ html.dark .vx-stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.24);border-color:var(
 .vx-empresa-icp{margin-top:12px}
 .vx-empresa-icp p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
 
-/* ── Jarvis / Modo de Gravação premium ─────────────────────────────────── */
+/* ── Rico / Modo de Gravação premium ─────────────────────────────────── */
 .vx-jarvis-ring{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;position:relative;cursor:pointer;transition:.2s}
 .vx-jarvis-ring::before{content:"";position:absolute;inset:-4px;border-radius:50%;background:var(--grad-ai);opacity:.18;transition:opacity .3s}
 .vx-jarvis-ring:hover::before{opacity:.32}

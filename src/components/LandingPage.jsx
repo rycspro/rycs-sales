@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { ArrowRight, ChevronDown, MessageCircle, Sparkles } from "lucide-react";
 import { navegar } from "../lib/rotas.js";
 import { PLANOS, ORDEM_PLANOS } from "../../shared/planos.js";
+import { useI18n } from "../lib/i18n.jsx";
+import { nomeAssistente } from "../../shared/jarvas.js";
 
 const ABAS = ["empresa", "profissional"];
 
@@ -18,13 +20,13 @@ const conteudo = {
       { valor: "5 min", label: "Para criar campanha" },
     ],
     passos: [
-      { n: "1", t: "Crie sua campanha com IA", d: "Descreva seu produto e deixe o Jarvas estruturar objetivo, região, público e remuneração em minutos." },
+      { n: "1", t: "Crie sua campanha com IA", d: "Descreva seu produto e deixe o {assistente} estruturar objetivo, região, público e remuneração em minutos." },
       { n: "2", t: "Vendedores se candidatam", d: "Profissionais qualificados da rede RYCS se inscrevem. Você escolhe quem entra na sua campanha." },
       { n: "3", t: "Acompanhe em tempo real", d: "Veja leads, visitas e fechamentos acontecendo. Score e histórico de cada vendedor na tela." },
       { n: "4", t: "Pague por resultado", d: "Aprove as comissões no painel. O sistema processa e transfere automaticamente para o vendedor." },
     ],
     beneficios: [
-      { icone: "🎯", t: "Campanha com IA", d: "O Jarvas estrutura toda a campanha por voz ou texto. Objetivo, região, público e vagas definidos em minutos." },
+      { icone: "🎯", t: "Campanha com IA", d: "O {assistente} estrutura toda a campanha por voz ou texto. Objetivo, região, público e vagas definidos em minutos." },
       { icone: "💰", t: "Pague só por resultado", d: "Sem CLT, sem custo fixo. Você define a comissão e paga apenas quando a venda acontece." },
       { icone: "📊", t: "Gestão completa", d: "Acompanhe candidaturas, pontuação dos vendedores, saldo e histórico de pagamentos em um só lugar." },
       { icone: "🏆", t: "Vendedores com score", d: "Contrate quem já provou resultado. Cada profissional tem histórico e pontuação verificados." },
@@ -198,6 +200,8 @@ function FaqSection({ aba }) {
 }
 
 export default function LandingPage() {
+  const { locale } = useI18n();
+  const nome = nomeAssistente(locale);
   const [aba, setAba] = useState("empresa");
   const [email, setEmail] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -321,7 +325,7 @@ export default function LandingPage() {
             <div key={b.t} style={st.card}>
               <span style={st.cardIcon}>{b.icone}</span>
               <h3 style={st.cardTitle}>{b.t}</h3>
-              <p style={st.cardDesc}>{b.d}</p>
+              <p style={st.cardDesc}>{b.d.replace("{assistente}", nome)}</p>
             </div>
           ))}
         </div>
@@ -336,7 +340,7 @@ export default function LandingPage() {
               <div style={st.stepNum}>{p.n}</div>
               <div>
                 <h3 style={st.stepTitle}>{p.t}</h3>
-                <p style={st.stepDesc}>{p.d}</p>
+                <p style={st.stepDesc}>{p.d.replace("{assistente}", nome)}</p>
               </div>
             </div>
           ))}

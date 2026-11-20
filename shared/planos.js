@@ -96,7 +96,7 @@ export const PLANOS = {
       "Profissionais ilimitados",
       "Taxa por movimentações de 5%",
       "Campanhas com IA",
-      "Assistente inteligente Jarvis",
+      "Assistente inteligente Rico",
       "Destaque na vitrine",
       "Suporte prioritário",
       "Painel operacional completo",

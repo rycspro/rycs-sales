@@ -1667,7 +1667,7 @@ adicionarColuna("sellers", "disc", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "discRespostas", "TEXT DEFAULT '{}'");
 adicionarColuna("sellers", "xpRespostas", "TEXT DEFAULT '{}'");
 
-// Features: pipeline, geolocalização, comissionamento, campos personalizados, Jarvas
+// Features: pipeline, geolocalização, comissionamento, campos personalizados, Rico
 adicionarColuna("campaigns", "cidade", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "estado", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "estado", "TEXT DEFAULT ''");

@@ -1,6 +1,6 @@
 // Leitura de um pedido de campanha escrito em português: objetivo, região e
 // público. Usada pelo motor interno da campanha assistida
-// (server/services/campanhaAssistida.js) e pelo Jarvas (shared/jarvas.js).
+// (server/services/campanhaAssistida.js) e pelo Rico (shared/jarvas.js).
 // Determinística: o mesmo texto dá sempre a mesma leitura.
 
 // Palavras que revelam a intenção. A ordem importa: a primeira que casar vence,

@@ -3,6 +3,8 @@ import { ArrowLeft, Check, AlertTriangle, Sparkles, Pencil, Mic } from "lucide-r
 import { api } from "../../lib/api.js";
 import { FASES_IA, PARTES_IA, VARIAVEIS_IA, parteCompleta } from "../../../shared/onboarding.js";
 import ThinkingOrb from "../ThinkingOrb.jsx";
+import { useI18n } from "../../lib/i18n.jsx";
+import { nomeAssistente } from "../../../shared/jarvas.js";
 
 // Etapa 4: a IA monta script, funil de WhatsApp e follow-ups (4a) e o dono
 // revisa e aprova (4b). O servidor processa em segundo plano; a tela só
@@ -233,6 +235,8 @@ function Aprovacao({ geracao, setGeracao, aoAtualizar, aoAvancar, aoVoltar }) {
 }
 
 export default function EtapaIA({ estado, aoAtualizar, aoAvancar, aoVoltar }) {
+  const { locale } = useI18n();
+  const nome = nomeAssistente(locale);
   const [dados, setDados] = useState(null); // { disponivel, geracao }
   const [erroCarga, setErroCarga] = useState("");
   const [revisando, setRevisando] = useState(false);
@@ -316,17 +320,17 @@ export default function EtapaIA({ estado, aoAtualizar, aoAvancar, aoVoltar }) {
         <div className="vx-jarvis-ring" style={{ width: 120, height: 120, margin: "0 auto 18px" }}>
           <ThinkingOrb state="idle" size={100} decorativo />
         </div>
-        <h2 className="vx-disp vx-onb-card-titulo">Jarvas, sua IA de vendas</h2>
+        <h2 className="vx-disp vx-onb-card-titulo">{nome}, sua IA de vendas</h2>
         <p className="vx-mut vx-onb-card-apoio" style={{ maxWidth: 420, margin: "0 auto 20px" }}>
-          O Jarvas vai criar o script de vendas, funil de WhatsApp e follow-ups com base no perfil da sua empresa.
+          O {nome} vai criar o script de vendas, funil de WhatsApp e follow-ups com base no perfil da sua empresa.
         </p>
         {msgErro}
         <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 52, gap: 8 }}
           onClick={async () => { const r = await acao("/onboarding/ia/gerar"); if (r) setGeracao(r.geracao); }}>
-          <Sparkles size={16} /> Gerar estratégias com o Jarvas
+          <Sparkles size={16} /> Gerar estratégias com o {nome}
         </button>
         <p className="vx-onb-dica" style={{ marginTop: 14 }}>
-          <Mic size={13} style={{ verticalAlign: -2 }} /> O Jarvas usa inteligência artificial com voz — depois de gerar, você pode conversar com ele nas campanhas.
+          <Mic size={13} style={{ verticalAlign: -2 }} /> O {nome} usa inteligência artificial com voz — depois de gerar, você pode conversar com ele nas campanhas.
         </p>
       </div>
     </div>

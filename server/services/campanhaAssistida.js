@@ -13,7 +13,7 @@ import { detectarObjetivo, extrairRegiao, extrairPublico } from "../../shared/in
 // a empresa revisa campo a campo antes de qualquer coisa ir ao ar.
 
 // Leitura do texto (objetivo, região, público): shared/interpretacaoCampanha.js,
-// a mesma que o Jarvas usa na tela.
+// a mesma que o Rico usa na tela.
 export { detectarObjetivo };
 
 // Motor interno. Determinístico: o mesmo texto produz sempre a mesma campanha.

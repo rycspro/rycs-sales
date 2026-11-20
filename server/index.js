@@ -399,7 +399,7 @@ app.listen(PORT, () => {
   iniciarLiberacaoComissoesCanal();
   iniciarReativacao();
   retomarDisparosWhatsapp();
-  // Frases fixas do Jarvas gravadas uma vez no disco (não roda nos testes,
+  // Frases fixas do Rico gravadas uma vez no disco (não roda nos testes,
   // que usam um ElevenLabs falso e contam as chamadas).
   if (process.env.NODE_ENV !== "test") aquecerVozJarvas().catch((e) => console.warn("[jarvas] aquecimento:", e.message));
 });
