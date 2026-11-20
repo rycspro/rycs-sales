@@ -8,6 +8,13 @@ import { avaliarProfissional, estadoGamificacao } from "../services/gamificacao.
 const router = Router();
 
 const lista = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } };
+// JSON de uma coluna sem derrubar o /state: um registro com valor quebrado
+// (texto inválido ou "null") vira o padrão em vez de virar erro 500 para todo
+// mundo que carrega aquele registro.
+const json = (v, padrao) => {
+  if (v == null || v === "") return padrao;
+  try { return JSON.parse(v) ?? padrao; } catch { return padrao; }
+};
 
 function parseSeller(row) {
   return {
@@ -103,20 +110,20 @@ function parseCompany(row, preloadedDims) {
     scoreDimensions: preloadedDims || {},
     destaque: !!row.destaque,
     visivel: row.visivel == null ? true : !!row.visivel,
-    comissoes: JSON.parse(row.comissoes || "{}"),
-    curso: JSON.parse(row.curso || "[]"),
-    qualificacao: JSON.parse(row.qualificacao || "{}"),
-    materiais: JSON.parse(row.materiais || "[]"),
-    aportes: JSON.parse(row.aportes || "[]"),
+    comissoes: json(row.comissoes, {}),
+    curso: json(row.curso, []),
+    qualificacao: json(row.qualificacao, {}),
+    materiais: json(row.materiais, []),
+    aportes: json(row.aportes, []),
   };
 }
 
 function parseSub(row) {
   const prova = resolverPesada("submissions", row, "prova", (v) => {
-    const p = JSON.parse(v || "{}");
+    const p = json(v, {});
     return v?.includes("data:") ? provaSemArquivos(row.id, p) : p;
   });
-  return { ...row, prova, arquivos: JSON.parse(row.arquivos || "[]") };
+  return { ...row, prova, arquivos: json(row.arquivos, []) };
 }
 
 const parseMensagem = (row) => {
@@ -127,13 +134,13 @@ const parseMensagem = (row) => {
 function parseCampaign(row) {
   return {
     ...row,
-    comissoes: JSON.parse(row.comissoes || "{}"),
-    treinamento: JSON.parse(row.treinamento || "[]"),
-    tarefas: JSON.parse(row.tarefas || "{}"),
-    evidencias: JSON.parse(row.evidencias || "{}"),
-    criteriosAprovacao: JSON.parse(row.criteriosAprovacao || "{}"),
-    quiz: JSON.parse(row.quiz || "[]"),
-    etapasPipeline: (() => { try { return JSON.parse(row.etapasPipeline || "[]"); } catch { return []; } })(),
+    comissoes: json(row.comissoes, {}),
+    treinamento: json(row.treinamento, []),
+    tarefas: json(row.tarefas, {}),
+    evidencias: json(row.evidencias, {}),
+    criteriosAprovacao: json(row.criteriosAprovacao, {}),
+    quiz: json(row.quiz, []),
+    etapasPipeline: json(row.etapasPipeline, []),
     aceitaLeadProprio: !!row.aceitaLeadProprio,
     exigeCertificacao: !!row.exigeCertificacao,
   };
@@ -187,7 +194,7 @@ function buildSellersWithRelations(sellers) {
 
     const curso = {};
     progressDe(s.id).forEach((p) => {
-      const val = JSON.parse(p.moduleIds || "[]");
+      const val = json(p.moduleIds, []);
       curso[p.companyId] = val;
     });
 
@@ -199,7 +206,7 @@ function buildSellersWithRelations(sellers) {
 
     const aplicacoesDetalhe = {};
     appsDe(s.id).forEach((a) => {
-      aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: JSON.parse(a.criterios || "[]"), quizScore: a.quizScore, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null, campanhasAuto: a.campanhasAuto };
+      aplicacoesDetalhe[a.companyId] = { status: a.status, criterios: json(a.criterios, []), quizScore: a.quizScore, mensagem: a.mensagem || "", criadoEm: a.criadoEm || null, campanhasAuto: a.campanhasAuto };
     });
     const parsed = parseSeller(s);
     const temFoto = !!(parsed.foto);
@@ -301,6 +308,14 @@ function getEmpresaState(entityId) {
 }
 
 function getVendedorState(entityId) {
+  // `etapa` diz no erro qual parte falhou (sem dado nenhum), para achar a
+  // causa sem precisar abrir o servidor.
+  let etapa = "perfil";
+  try { return montarVendedorState(entityId, (e) => { etapa = e; }); }
+  catch (err) { err.etapa = etapa; throw err; }
+}
+
+function montarVendedorState(entityId, marcar) {
   const meuId = entityId;
   const rawSeller = db.prepare(selectSellers("WHERE id = ?")).all(meuId);
   const sellers = buildSellersWithRelations(rawSeller);
@@ -310,6 +325,7 @@ function getVendedorState(entityId) {
   const oportunidadesLiberadas = true;
 
   let companies = [];
+  marcar("empresas");
   if (oportunidadesLiberadas) {
     const allDims = db.prepare("SELECT companyId, dimension, valor FROM company_score_dimensions").all();
     const dimsByCompany = {};
@@ -321,17 +337,22 @@ function getVendedorState(entityId) {
       ...c,
       qualificacao: {
         ...c.qualificacao,
-        questoes: (c.qualificacao?.questoes || []).map(({ correta, ...q }) => q),
+        questoes: (Array.isArray(c.qualificacao?.questoes) ? c.qualificacao.questoes : []).filter((q) => q && typeof q === "object").map(({ correta, ...q }) => q),
       },
     }));
   }
 
+  marcar("tarefas");
   const submissions = db.prepare(selectSubmissions("WHERE sellerId = ? ORDER BY criadoEm DESC")).all(meuId).map(parseSub);
+  marcar("saques");
   const withdrawals = db.prepare("SELECT * FROM withdrawals WHERE sellerId = ? ORDER BY criadoEm DESC").all(meuId);
+  marcar("mensagens");
   const messages = db.prepare(selectMessages("WHERE sellerId = ? ORDER BY ts ASC")).all(meuId).map(parseMensagem);
+  marcar("leads");
   const leads = db.prepare("SELECT * FROM leads WHERE sellerId = ? ORDER BY atualizadoEm DESC").all(meuId);
 
   let campaigns = [];
+  marcar("campanhas");
   if (oportunidadesLiberadas) {
     // Esconde também as campanhas de empresas marcadas como invisíveis.
     campaigns = db.prepare("SELECT * FROM campaigns WHERE status = 'ativa' AND companyId IN (SELECT id FROM companies WHERE visivel = 1) ORDER BY criadoEm DESC").all().map(parseCampaign);
@@ -350,7 +371,7 @@ function getVendedorState(entityId) {
       return {
         ...c,
         candidaturas: campaignApps.filter((a) => a.campaignId === c.id),
-        quiz: c.quiz.map(({ correta, ...q }) => q),
+        quiz: (Array.isArray(c.quiz) ? c.quiz : []).filter((q) => q && typeof q === "object").map(({ correta, ...q }) => q),
         quizAprovado: melhor ? !!melhor.aprovado : false,
         quizScore: melhor?.score ?? null,
       };
@@ -382,8 +403,8 @@ router.get("/state", (req, res) => {
   let state;
   try { state = getFilteredState(req.user); }
   catch (err) {
-    console.error(`[state] erro para ${req.user.role} ${req.user.entityId}:`, err.message);
-    return res.status(err.status || 500).json({ error: "Não foi possível carregar os dados." });
+    console.error(`[state] erro para ${req.user.role} ${req.user.entityId} (${err.etapa || "-"}):`, err.stack || err.message);
+    return res.status(err.status || 500).json({ error: "Não foi possível carregar os dados.", etapa: err.etapa });
   }
   const notifs = db.prepare("SELECT * FROM notifications WHERE userId = ? ORDER BY criadoEm DESC LIMIT 50").all(req.user.id);
   state.notifications = notifs;
