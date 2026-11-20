@@ -2836,6 +2836,34 @@ db.exec(`
 // de verificação impresso no documento assinado.
 adicionarColuna("colab_contratos", "nomeDigitado", "TEXT");
 adicionarColuna("colab_contratos", "codigoVerificacao", "TEXT");
+// Organograma: áreas (Marketing, Administrativo…) e cargos dentro delas.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS colab_areas (
+    id TEXT PRIMARY KEY,
+    chave TEXT,
+    nome TEXT NOT NULL,
+    icone TEXT DEFAULT '',
+    ordem INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS colab_cargos (
+    id TEXT PRIMARY KEY,
+    areaId TEXT NOT NULL,
+    chave TEXT,
+    nome TEXT NOT NULL,
+    vinculo TEXT NOT NULL DEFAULT 'clt',
+    regime TEXT DEFAULT 'presencial',
+    jornadaHoras REAL DEFAULT 40,
+    regra TEXT DEFAULT '{}',
+    tarefas TEXT DEFAULT '[]',
+    ordem INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (areaId) REFERENCES colab_areas(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_colab_cargos_area ON colab_cargos(areaId, ordem);
+`);
+adicionarColuna("colaboradores", "cargoId", "TEXT");
+adicionarColuna("colaboradores", "dados", "TEXT DEFAULT '{}'");
 
 
 export default db;

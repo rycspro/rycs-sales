@@ -17,7 +17,28 @@ export const TERMO_SECOES = [
   { titulo: "Base legal", texto: "O tratamento desses dados tem como base o seu contrato (LGPD, art. 7º, V). Este aceite registra que você leu e está ciente do que é medido." },
 ];
 
-export const VINCULOS = { clt: "Empregatício (CLT)", outro: "Sem vínculo empregatício" };
+export const VINCULOS = {
+  clt: "Empregado CLT",
+  formacao: "Em formação (CLT)",
+  aprendiz: "Aprendiz (Lei 10.097)",
+  estagio: "Estagiário (Lei 11.788)",
+  outro: "Autônomo (sem vínculo)",
+};
+// Quem tem vínculo de emprego: fixo e variável vão para a folha.
+export const ehEmpregado = (v) => v === "clt" || v === "formacao" || v === "aprendiz";
+// Jornada e horário padrão de cada tipo de vínculo.
+export const JORNADA_PADRAO = {
+  clt: { jornadaHoras: 40, horario: { inicio: "08:00", fim: "17:00" } },
+  formacao: { jornadaHoras: 40, horario: { inicio: "08:00", fim: "17:00" } },
+  aprendiz: { jornadaHoras: 30, horario: { inicio: "09:00", fim: "15:00" } },
+  estagio: { jornadaHoras: 30, horario: { inicio: "09:00", fim: "15:00" } },
+  outro: { jornadaHoras: 0, horario: { inicio: "08:00", fim: "18:00" } },
+};
+// Dados extras que cada tipo de contrato exige.
+export const DADOS_EXIGIDOS = {
+  aprendiz: { dataNascimento: "Data de nascimento", entidadeFormadora: "Entidade formadora (SENAI, SENAC…)", cursoAprendizagem: "Curso de aprendizagem", dataFim: "Término do contrato", cargaTeorica: "Carga teórica (ex.: 4 h por semana)" },
+  estagio: { instituicaoEnsino: "Instituição de ensino", curso: "Curso", dataFim: "Término do estágio" },
+};
 export const REGIMES = {
   presencial: "Presencial",
   teletrabalho_jornada: "Teletrabalho por jornada",
@@ -49,7 +70,7 @@ export const SEMANAS_CALIBRACAO = 4;
 // Quem não é CLT, ou é CLT em teletrabalho por produção, não tem presença
 // medida por padrão (seções 13.1 e 13.13).
 export function presencaPadrao(vinculo, regime) {
-  if (vinculo !== "clt") return false;
+  if (vinculo === "outro") return false;
   return regime !== "teletrabalho_producao";
 }
 
@@ -355,9 +376,14 @@ export const CAMPOS_CONTRATO = {
   nome: "Nome completo", cpf: "CPF", funcao: "Função (cargo)", vinculo: "Tipo de vínculo", regime: "Regime de trabalho",
   dataInicio: "Data de início", jornada: "Jornada (horas por semana)", diasPrevistos: "Dias de trabalho", horario: "Horário",
   fixo: "Fixo por mês", variavel: "Regras do variável", teto: "Teto mensal do variável", dataEmissao: "Data de emissão",
+  area: "Área", fimExperiencia: "Fim da experiência (90 dias)",
+  empresaNome: "Razão social da empresa", empresaCnpj: "CNPJ da empresa", empresaEndereco: "Endereço da empresa",
+  empresaRepresentante: "Representante da empresa", empresaCidade: "Cidade da empresa",
+  dataNascimento: "Data de nascimento", entidadeFormadora: "Entidade formadora", cursoAprendizagem: "Curso de aprendizagem",
+  dataFim: "Término do contrato", cargaTeorica: "Carga teórica", instituicaoEnsino: "Instituição de ensino", curso: "Curso",
 };
 
-export function camposDoContrato(colab, regra, hoje) {
+export function camposDoContrato(colab, regra, hoje, { empresa = {}, area = "", dados = {} } = {}) {
   const r = normalizarRegra(regra);
   const dias = r.diasPrevistos.slice().sort().map((d) => DIAS_SEMANA[d]).join(", ");
   return {
@@ -374,7 +400,32 @@ export function camposDoContrato(colab, regra, hoje) {
     variavel: descreverVariavel(r),
     teto: r.tetoMensalCents > 0 ? reais(r.tetoMensalCents) : "Sem teto",
     dataEmissao: dataBRFormatada(hoje),
+    area: area || "",
+    fimExperiencia: colab.dataInicio ? dataBRFormatada(somarDias(colab.dataInicio, 89)) : "",
+    empresaNome: empresa.nome || "", empresaCnpj: empresa.cnpj || "", empresaEndereco: empresa.endereco || "",
+    empresaRepresentante: empresa.representante || "", empresaCidade: empresa.cidade || "",
+    dataNascimento: dados.dataNascimento ? dataBRFormatada(dados.dataNascimento) : "",
+    entidadeFormadora: dados.entidadeFormadora || "", cursoAprendizagem: dados.cursoAprendizagem || "",
+    dataFim: dados.dataFim ? dataBRFormatada(dados.dataFim) : "", cargaTeorica: dados.cargaTeorica || "",
+    instituicaoEnsino: dados.instituicaoEnsino || "", curso: dados.curso || "",
   };
+}
+
+// Confere os dados extras do aprendiz e do estagiário (idade, prazo máximo).
+export function validarDadosVinculo(vinculo, dataInicio, dados = {}) {
+  const exig = DADOS_EXIGIDOS[vinculo];
+  if (!exig) return null;
+  const faltando = Object.entries(exig).filter(([k]) => !String(dados[k] || "").trim()).map(([, rot]) => rot);
+  if (faltando.length) return `Preencha: ${faltando.join(", ")}.`;
+  if (dados.dataFim <= dataInicio) return "O término precisa ser depois do início.";
+  if (dados.dataFim > somarDias(dataInicio, 730)) return "O contrato não pode passar de 2 anos.";
+  if (vinculo === "aprendiz") {
+    const [a, m, d] = dados.dataNascimento.split("-").map(Number);
+    const [ai, mi, di] = dataInicio.split("-").map(Number);
+    const idade = ai - a - (mi < m || (mi === m && di < d) ? 1 : 0);
+    if (idade < 14 || idade > 24) return `Aprendiz precisa ter entre 14 e 24 anos no início (tem ${idade}).`;
+  }
+  return null;
 }
 
 // Só troca {{campo}} pelo valor. A IA não redige cláusula (seção 9).

@@ -21,7 +21,9 @@ import {
   fimDoDiaTs, inicioDoDiaTs, feriadosNacionais, foraDaJornada, calcularDias, calcularPainel, tendencia, ausenciasSeguidas,
   sugerirMeta, calibracaoTerminou, camposDoContrato, preencherContrato, mudouContrato, formatarCents, TIPOS_LANCAMENTO,
   NATUREZAS, VINCULOS, REGIMES, TERMO_VERSAO, dataBRFormatada, formatarCpf, minutoBR, reducoes, aplicarPadroes,
+  ehEmpregado, JORNADA_PADRAO, validarDadosVinculo,
 } from "../../shared/colaboradores.js";
+import { AREAS_EXEMPLO, CARGOS_EXEMPLO, MODELOS_REFERENCIA, NATUREZAS_PADRAO } from "../../shared/colaboradoresModelos.js";
 
 const MODELO_IA = process.env.COLAB_IA_MODELO || "claude-sonnet-5-5";
 const MAX_ARQUIVO = 8 * 1024 * 1024;
@@ -64,9 +66,12 @@ function emailsAdmins() {
 }
 
 export function naturezas() {
-  const padrao = Object.fromEntries(Object.keys(TIPOS_LANCAMENTO).map((t) => [t, "a_classificar"]));
-  return { fixo: "a_classificar", ...padrao, ...lerConfig("naturezas", {}) };
+  return { ...NATUREZAS_PADRAO, ...lerConfig("naturezas", {}) };
 }
+
+// Dados da empresa que entram nos contratos (razão social, CNPJ…).
+export const empresa = () => lerConfig("empresa", {});
+export const empresaCompleta = () => { const e = empresa(); return !!(e.nome && e.cnpj && e.endereco && e.representante && e.cidade); };
 
 // ───────────────────────────── Colaborador e regra ─────────────────────────────
 
@@ -104,7 +109,7 @@ function inserirRegra(colab, regra, autor, vigenciaInicio, motivo) {
 
 // ───────────────────────────── Ativação ─────────────────────────────
 
-export function ativarColaborador({ userId, nome, cpf, funcao, vinculo, regime, dataInicio, jornadaHoras, regra }, autor) {
+export function ativarColaborador({ userId, nome, cpf, funcao, vinculo, regime, dataInicio, jornadaHoras, regra, extras = {} }, autor) {
   const u = db.prepare("SELECT id FROM users WHERE id = ?").get(userId);
   if (!u) throw new ErroColab("Usuário não encontrado.", 404);
   if (colaboradorPorUsuario(userId)) throw new ErroColab("Este usuário já é colaborador interno.", 409);
@@ -112,11 +117,12 @@ export function ativarColaborador({ userId, nome, cpf, funcao, vinculo, regime, 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataInicio || "")) throw new ErroColab("Informe a data real de início do trabalho.");
   const id = uid();
   const v = VINCULOS[vinculo] ? vinculo : "clt";
-  const rg = REGIMES[regime] ? regime : v === "clt" ? "presencial" : "";
+  const rg = REGIMES[regime] ? regime : v !== "outro" ? "presencial" : "";
   db.transaction(() => {
     db.prepare(`INSERT INTO colaboradores (id, userId, nome, cpf, funcao, vinculo, regime, dataInicio, jornadaHoras, status, criadoPor, criadoEm, atualizadoEm)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ativo', ?, ?, ?)`)
       .run(id, userId, nome.trim(), String(cpf || "").replace(/\D/g, ""), (funcao || "").trim(), v, rg, dataInicio, Number(jornadaHoras) || 0, autor, agora(), agora());
+    if (extras.cargoId || extras.dados) db.prepare("UPDATE colaboradores SET cargoId = ?, dados = ? WHERE id = ?").run(extras.cargoId || null, JSON.stringify(extras.dados || {}), id);
     const colab = colaboradorPorId(id);
     const base = aplicarPadroes(regraPadrao({ vinculo: v, regime: rg, hoje: hojeBR() }), padroes());
     inserirRegra(colab, { ...base, ...(regra || {}), meta: { ...base.meta, ...(regra?.meta || {}), calibracaoDesde: hojeBR() } }, autor, dataInicio, "Ativação");
@@ -150,7 +156,7 @@ export function atualizarCadastro(colab, campos, autor) {
 export function salvarRegra(colab, regraNova, { autor, vigenciaInicio, motivo, confirmarReducao }) {
   const atual = regraDe(colab);
   const nova = normalizarRegra(regraNova, colab);
-  const reduz = colab.vinculo === "clt" ? reducoes(atual, nova) : [];
+  const reduz = ehEmpregado(colab.vinculo) ? reducoes(atual, nova) : [];
   if (reduz.length && !confirmarReducao) {
     const e = new ErroColab("Esta alteração reduz valores de um empregado.", 409);
     e.reducoes = reduz;
@@ -251,9 +257,11 @@ const modeloAtivo = (tipo, vinculo) =>
 
 export function gerarContrato(colab, tipo, autor) {
   const modelo = modeloAtivo(tipo, colab.vinculo);
-  if (!modelo) throw new ErroColab(`Ainda não há modelo de ${tipo} para "${VINCULOS[colab.vinculo]}". Cadastre o modelo aprovado pelo advogado.`);
+  if (!modelo) throw new ErroColab(`Ainda não há modelo de ${tipo} para "${VINCULOS[colab.vinculo]}". Cadastre em Configuração.`);
   const regra = regraDe(colab);
-  const { texto, faltando } = preencherContrato(modelo.texto, camposDoContrato(colab, regra, hojeBR()));
+  const area = colab.cargoId ? db.prepare("SELECT a.nome FROM colab_cargos c JOIN colab_areas a ON a.id = c.areaId WHERE c.id = ?").get(colab.cargoId)?.nome : "";
+  const { texto, faltando } = preencherContrato(modelo.texto, camposDoContrato(colab, regra, hojeBR(), { empresa: empresa(), area: area || colab.funcao, dados: json(colab.dados) }));
+  if (faltando.some((k) => k.startsWith("empresa"))) throw new ErroColab("Preencha os dados da empresa (razão social, CNPJ, endereço, representante e cidade) para gerar o contrato.");
   if (faltando.length) throw new ErroColab(`Faltam dados para preencher o ${tipo}: ${faltando.join(", ")}.`);
   // Um pendente do mesmo tipo é substituído pelo novo (fica cancelado no histórico).
   db.prepare("UPDATE colab_contratos SET status = 'cancelado' WHERE colaboradorId = ? AND tipo = ? AND status = 'pendente'").run(colab.id, tipo);
@@ -842,7 +850,7 @@ export function extrato(colab, mes) {
     tetoCents: teto, variavelDevidoCents: teto ? Math.min(variavel, teto) : variavel,
     excedenteCents: teto && variavel > teto ? variavel - teto : 0,
     previstas, previstoCents: previstas.reduce((s, p) => s + p.valorCents, 0),
-    pagamento: colab.vinculo === "clt" ? "folha" : regra.permiteSaque ? "saque" : "fechamento",
+    pagamento: ehEmpregado(colab.vinculo) ? "folha" : regra.permiteSaque ? "saque" : "fechamento",
   };
 }
 
@@ -1091,7 +1099,7 @@ async function avisosDoColaborador(colab, hoje, agoraTs) {
 
   // Envios fora da jornada (13.13): informativo, pode ser hora extra.
   const fora = db.prepare("SELECT COUNT(*) AS n FROM colab_ocorrencias WHERE colaboradorId = ? AND foraJornada = 1 AND enviadoEm >= ?").get(colab.id, inicioDoDiaTs(somarDias(seg, -7)))?.n || 0;
-  if (fora >= 3 && colab.vinculo === "clt" && colab.regime !== "teletrabalho_producao")
+  if (fora >= 3 && ehEmpregado(colab.vinculo) && colab.regime !== "teletrabalho_producao")
     registrarAviso({ colab, destino: "admin", tipo: "fora_jornada", titulo: `${colab.nome}: envios fora da jornada`,
       texto: `${fora} envios fora do horário ou em dia não previsto na última semana. Pode ser hora extra: informe o contador.`, chave: `fora_jornada:${colab.id}:${seg}`, dados: { envios: fora } });
 }
@@ -1137,7 +1145,158 @@ export async function processarColaboradores(agoraTs = agora()) {
   await rodar(`relatorio:mes:${mesRef}`, "mes", mesRef, `${mesRef}-01`, ultimoDiaDoMes(mesRef), `Colaboradores: resumo de ${mesRef}`);
 }
 
+// ───────────────────────────── Organograma: áreas e cargos ─────────────────────────────
+
+// Cadastra os modelos de contrato de referência e as áreas e cargos de
+// exemplo, só se ainda não existirem. Nunca sobrescreve o que o admin editou.
+export function semearExemplos() {
+  db.transaction(() => {
+    for (const m of MODELOS_REFERENCIA) {
+      const ja = db.prepare("SELECT 1 FROM colab_contrato_modelos WHERE tipo = ? AND vinculo = ?").get(m.tipo, m.vinculo);
+      if (!ja) db.prepare("INSERT INTO colab_contrato_modelos (id, tipo, vinculo, titulo, versao, texto, ativo, criadoPor, criadoEm) VALUES (?, ?, ?, ?, 1, ?, 1, 'sistema', ?)")
+        .run(uid(), m.tipo, m.vinculo, m.titulo, m.texto, agora());
+    }
+    if (lerConfig("semeado:areas", null)) return;
+    AREAS_EXEMPLO.forEach((a, i) => {
+      const areaId = uid();
+      db.prepare("INSERT INTO colab_areas (id, chave, nome, icone, ordem, criadoEm) VALUES (?, ?, ?, ?, ?, ?)").run(areaId, a.chave, a.nome, a.icone, i, agora());
+      a.cargos.forEach((c, j) => inserirCargo({ areaId, ...c, ordem: j }));
+    });
+    gravarConfig("semeado:areas", { em: agora() });
+  })();
+}
+
+function inserirCargo({ areaId, chave = null, nome, vinculo = "clt", tarefas = [], ordem = 0, jornadaHoras, regra }) {
+  const v = VINCULOS[vinculo] ? vinculo : "clt";
+  const j = JORNADA_PADRAO[v];
+  const id = uid();
+  db.prepare("INSERT INTO colab_cargos (id, areaId, chave, nome, vinculo, regime, jornadaHoras, regra, tarefas, ordem, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .run(id, areaId, chave, nome.trim(), v, v === "outro" ? "" : "presencial", jornadaHoras ?? j.jornadaHoras,
+      JSON.stringify(regra || { diasPrevistos: [1, 2, 3, 4, 5], horario: j.horario }), JSON.stringify(tarefas), ordem, agora());
+  return id;
+}
+
+const linhaCargo = (c) => c && ({ ...c, regra: json(c.regra), tarefas: json(c.tarefas, []) });
+export const cargoPorId = (id) => linhaCargo(db.prepare("SELECT * FROM colab_cargos WHERE id = ?").get(id));
+
+export function organograma(hoje = hojeBR()) {
+  semearExemplos();
+  const mes = hoje.slice(0, 7);
+  const pessoas = db.prepare("SELECT * FROM colaboradores ORDER BY nome").all().map((c) => {
+    const p = c.status === "ativo" ? painelDe(c, `${mes}-01`, hoje, hoje) : null;
+    const a = acesso(c);
+    return {
+      id: c.id, nome: c.nome, cargoId: c.cargoId, funcao: c.funcao, vinculo: c.vinculo, status: c.status,
+      nota: p?.nota ?? null, alertas: p?.alertas?.length || 0, contratoAssinado: a.contratoAssinado, termoAceito: a.termoAceito,
+      avisos: db.prepare("SELECT COUNT(*) AS n FROM colab_avisos WHERE destino = 'admin' AND colaboradorId = ? AND resolvidoEm IS NULL").get(c.id).n,
+    };
+  });
+  const cargos = db.prepare("SELECT * FROM colab_cargos ORDER BY ordem, criadoEm").all().map(linhaCargo);
+  const areas = db.prepare("SELECT * FROM colab_areas ORDER BY ordem, criadoEm").all().map((a) => ({
+    ...a,
+    cargos: cargos.filter((c) => c.areaId === a.id).map((c) => ({ ...c, pessoas: pessoas.filter((p) => p.cargoId === c.id && p.status === "ativo") })),
+  }));
+  return {
+    areas,
+    semCargo: pessoas.filter((p) => p.status === "ativo" && !cargos.some((c) => c.id === p.cargoId)),
+    encerrados: pessoas.filter((p) => p.status !== "ativo"),
+    exemplos: CARGOS_EXEMPLO.map(({ chave, nome, vinculo, area, tarefas }) => ({ chave, nome, vinculo, area, tarefas: tarefas.length })),
+    empresa: empresa(),
+    empresaCompleta: empresaCompleta(),
+  };
+}
+
+export function criarArea({ nome }, autor) {
+  if (!nome?.trim()) throw new ErroColab("Dê um nome à área.");
+  const id = uid();
+  const ordem = (db.prepare("SELECT MAX(ordem) AS m FROM colab_areas").get()?.m ?? -1) + 1;
+  db.prepare("INSERT INTO colab_areas (id, nome, icone, ordem, criadoEm) VALUES (?, ?, '', ?, ?)").run(id, nome.trim(), ordem, agora());
+  auditar(autor, "criar_area", null, "area", id, { nome });
+  return id;
+}
+export function editarArea(id, { nome }, autor) {
+  if (!nome?.trim()) throw new ErroColab("Dê um nome à área.");
+  db.prepare("UPDATE colab_areas SET nome = ? WHERE id = ?").run(nome.trim(), id);
+  auditar(autor, "editar_area", null, "area", id, { nome });
+}
+export function removerArea(id, autor) {
+  const ocupado = db.prepare("SELECT COUNT(*) AS n FROM colaboradores c JOIN colab_cargos g ON g.id = c.cargoId WHERE g.areaId = ? AND c.status = 'ativo'").get(id).n;
+  if (ocupado) throw new ErroColab("Há pessoas nesta área. Mova-as para outro cargo antes de remover.", 409);
+  db.transaction(() => {
+    db.prepare("DELETE FROM colab_cargos WHERE areaId = ?").run(id);
+    db.prepare("DELETE FROM colab_areas WHERE id = ?").run(id);
+  })();
+  auditar(autor, "remover_area", null, "area", id);
+}
+
+export function criarCargo({ areaId, nome, vinculo, exemplo }, autor) {
+  if (!db.prepare("SELECT 1 FROM colab_areas WHERE id = ?").get(areaId)) throw new ErroColab("Área não encontrada.", 404);
+  const ex = exemplo ? CARGOS_EXEMPLO.find((c) => c.chave === exemplo) : null;
+  const n = (nome || ex?.nome || "").trim();
+  if (!n) throw new ErroColab("Dê um nome ao cargo.");
+  const ordem = (db.prepare("SELECT MAX(ordem) AS m FROM colab_cargos WHERE areaId = ?").get(areaId)?.m ?? -1) + 1;
+  const id = inserirCargo({ areaId, nome: n, vinculo: vinculo || ex?.vinculo || "clt", tarefas: ex?.tarefas || [], ordem });
+  auditar(autor, "criar_cargo", null, "cargo", id, { nome: n, exemplo });
+  return id;
+}
+export function editarCargo(id, campos, autor) {
+  const c = cargoPorId(id);
+  if (!c) throw new ErroColab("Cargo não encontrado.", 404);
+  const ocupado = db.prepare("SELECT COUNT(*) AS n FROM colaboradores WHERE cargoId = ? AND status = 'ativo'").get(id).n;
+  const vinculo = campos.vinculo && VINCULOS[campos.vinculo] ? campos.vinculo : c.vinculo;
+  if (vinculo !== c.vinculo && ocupado) throw new ErroColab("Não dá para mudar o tipo de contrato de um cargo com pessoas. Crie outro cargo.", 409);
+  const regra = { ...c.regra };
+  if (Array.isArray(campos.diasPrevistos)) regra.diasPrevistos = campos.diasPrevistos.map(Number).filter((d) => d >= 0 && d <= 6);
+  if (campos.horario && /^\d{2}:\d{2}$/.test(campos.horario.inicio || "") && /^\d{2}:\d{2}$/.test(campos.horario.fim || "")) regra.horario = campos.horario;
+  const tarefas = Array.isArray(campos.tarefas)
+    ? campos.tarefas.filter((t) => t?.titulo?.trim()).slice(0, 20).map((t) => ({ titulo: t.titulo.trim().slice(0, 140), descricao: String(t.descricao || "").slice(0, 500), tipoProva: ["link", "arquivo", "texto"].includes(t.tipoProva) ? t.tipoProva : "texto", recorrencia: ["unica", "diaria", "semanal"].includes(t.recorrencia) ? t.recorrencia : "diaria" }))
+    : c.tarefas;
+  const nome = campos.nome?.trim() || c.nome;
+  db.prepare("UPDATE colab_cargos SET nome = ?, vinculo = ?, jornadaHoras = ?, regra = ?, tarefas = ? WHERE id = ?")
+    .run(nome, vinculo, campos.jornadaHoras != null ? Number(campos.jornadaHoras) || 0 : c.jornadaHoras, JSON.stringify(regra), JSON.stringify(tarefas), id);
+  // A função das pessoas acompanha o nome do cargo (tarefas por função usam esse nome).
+  if (nome !== c.nome) db.prepare("UPDATE colaboradores SET funcao = ? WHERE cargoId = ?").run(nome, id);
+  auditar(autor, "editar_cargo", null, "cargo", id, campos);
+}
+export function removerCargo(id, autor) {
+  const ocupado = db.prepare("SELECT COUNT(*) AS n FROM colaboradores WHERE cargoId = ? AND status = 'ativo'").get(id).n;
+  if (ocupado) throw new ErroColab("Há pessoas neste cargo. Mova-as antes de remover.", 409);
+  db.prepare("DELETE FROM colab_cargos WHERE id = ?").run(id);
+  auditar(autor, "remover_cargo", null, "cargo", id);
+}
+
+export function moverParaCargo(colab, cargoId, autor) {
+  const c = cargoPorId(cargoId);
+  if (!c) throw new ErroColab("Cargo não encontrado.", 404);
+  if (c.vinculo !== colab.vinculo) throw new ErroColab("Este cargo usa outro tipo de contrato. Para mudar o contrato, encerre o vínculo e adicione a pessoa de novo.", 409);
+  db.prepare("UPDATE colaboradores SET cargoId = ?, funcao = ?, atualizadoEm = ? WHERE id = ?").run(c.id, c.nome, agora(), colab.id);
+  auditar(autor, "mover_cargo", colab.id, "cargo", c.id, { de: colab.cargoId });
+}
+
+// Cadastro rápido: a pessoa entra num cargo e herda tipo de contrato,
+// jornada, dias, horário e tarefas. Só o salário é por pessoa.
+export function adicionarNoCargo({ userId, cargoId, nome, cpf, dataInicio, fixoCents, dados = {} }, autor) {
+  const cargo = cargoPorId(cargoId);
+  if (!cargo) throw new ErroColab("Cargo não encontrado.", 404);
+  const erro = validarDadosVinculo(cargo.vinculo, dataInicio, dados);
+  if (erro) throw new ErroColab(erro);
+  const limpos = Object.fromEntries(Object.entries(dados || {}).filter(([, v]) => v != null && v !== "").map(([k, v]) => [k, String(v).slice(0, 200)]));
+  const r = ativarColaborador({
+    userId, nome, cpf, funcao: cargo.nome, vinculo: cargo.vinculo, regime: cargo.regime, dataInicio, jornadaHoras: cargo.jornadaHoras,
+    regra: { ...cargo.regra, fixoCents: Math.max(0, Math.round(Number(fixoCents) || 0)), medirPresenca: cargo.vinculo !== "outro" },
+    extras: { cargoId: cargo.id, dados: limpos },
+  }, autor);
+  // Tarefas do cargo viram tarefas da pessoa (dá para arquivar depois).
+  for (const t of cargo.tarefas) {
+    try {
+      salvarTarefa({ ...t, atribuicao: "pessoa", alvo: r.colaborador.id, prazoData: t.recorrencia === "unica" ? somarDias(dataInicio > hojeBR() ? dataInicio : hojeBR(), 7) : null, aprovacao: "manual" }, autor);
+    } catch (e) { console.error("[colab] tarefa do cargo:", e.message); }
+  }
+  return r;
+}
+
 export function iniciarColaboradores() {
+  try { semearExemplos(); } catch (e) { console.error("[colab] exemplos:", e.message); }
   const tick = () => processarColaboradores().catch((e) => console.error("[colab] rotina:", e.message));
   setTimeout(tick, 30 * 1000).unref?.();
   setInterval(tick, 60 * 60 * 1000).unref?.();
