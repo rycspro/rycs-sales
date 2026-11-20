@@ -143,10 +143,38 @@ test("/state de empresa que falha devolve erro, nunca o banco inteiro", async (t
   const db = new Database(dbPath);
   t.after(() => db.close());
   db.prepare("INSERT INTO companies (id, nome, produto, whatsapp, saldo, aportes, visivel, criadoEm) VALUES ('e2', 'Outra', 'X', '1', 999, '[]', 1, ?)").run(Date.now());
-  // comissoes inválido faz o JSON.parse do estado da empresa falhar.
+  // comissoes inválido não derruba mais o estado: vira o padrão.
   db.prepare("INSERT INTO companies (id, nome, produto, whatsapp, saldo, aportes, comissoes, visivel, criadoEm) VALUES ('e1', 'Emp', 'X', '1', 0, '[]', '{quebrado', 1, ?)").run(Date.now());
-  const r = await cliente(base)("/state", { cookie: assinar({ id: "u-e1", role: "empresa", entityId: "e1" }) });
+  const pedir = () => cliente(base)("/state", { cookie: assinar({ id: "u-e1", role: "empresa", entityId: "e1" }) });
+  const ok = await pedir();
+  assert.equal(ok.status, 200);
+  assert.deepEqual(ok.corpo.companies[0].comissoes, {});
+  assert.ok(!JSON.stringify(ok.corpo).includes("Outra"), "não vaza dados de outra empresa");
+  // Uma falha de verdade (tabela sumiu) continua sendo erro, sem o banco inteiro.
+  db.exec("DROP TABLE company_score_dimensions");
+  const r = await pedir();
   assert.equal(r.status, 500);
   assert.ok(!JSON.stringify(r.corpo).includes("Outra"), "não vaza dados de outra empresa");
   assert.equal(r.corpo.error, "Não foi possível carregar os dados.");
+});
+
+test("/state do profissional não cai por uma empresa ou campanha com dado quebrado", async (t) => {
+  const { base, dbPath } = await subirServidor(t);
+  const db = new Database(dbPath);
+  t.after(() => db.close());
+  const agora = Date.now();
+  db.prepare("INSERT INTO sellers (id, nome, email, whats, criadoEm) VALUES ('s1', 'Ana', 'a@t.dev', '1', ?)").run(agora);
+  db.prepare("INSERT INTO companies (id, nome, produto, whatsapp, saldo, aportes, comissoes, curso, qualificacao, visivel, criadoEm) VALUES ('e1', 'Emp', 'X', '1', 0, 'null', '{quebrado', 'null', '{\"questoes\":\"x\"}', 1, ?)").run(agora);
+  db.prepare("INSERT INTO companies (id, nome, produto, whatsapp, saldo, aportes, qualificacao, visivel, criadoEm) VALUES ('e2', 'Boa', 'X', '1', 0, '[]', '{\"questoes\":[null,{\"p\":\"?\",\"correta\":1}]}', 1, ?)").run(agora);
+  db.prepare("INSERT INTO campaigns (id, companyId, titulo, status, quiz, treinamento, criadoEm) VALUES ('c1', 'e1', 'Camp', 'ativa', 'null', '{quebrado', ?)").run(agora);
+  const r = await cliente(base)("/state", { cookie: assinar({ id: "u-s1", role: "vendedor", entityId: "s1" }) });
+  assert.equal(r.status, 200);
+  const e1 = r.corpo.companies.find((c) => c.id === "e1");
+  assert.deepEqual(e1.qualificacao.questoes, []);
+  assert.deepEqual(e1.aportes, []);
+  const e2 = r.corpo.companies.find((c) => c.id === "e2");
+  assert.deepEqual(e2.qualificacao.questoes, [{ p: "?" }], "a resposta certa não vai para o profissional");
+  const c1 = r.corpo.campaigns.find((c) => c.id === "c1");
+  assert.deepEqual(c1.quiz, []);
+  assert.deepEqual(c1.treinamento, []);
 });
