@@ -7,7 +7,7 @@ import { api, apiPatch, apiPut, apiDelete, API_URL } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import { Vazio } from "../ui.jsx";
 import { ALVO, SITUACAO, TENDENCIA, Num, PainelResumo, ListaDias, TabelaExtrato, DiasPrevistos } from "../colaborador/comum.jsx";
-import FormAtivacao from "../colaborador/FormAtivacao.jsx";
+import Organograma, { DadosEmpresa } from "../colaborador/Organograma.jsx";
 import {
   DIAS_SEMANA, formatarCents, dataBRFormatada, TIPOS_LANCAMENTO, NATUREZAS, VINCULOS, REGIMES, TIPOS_AUSENCIA, TIPOS_PROVA,
   CAMPOS_CONTRATO, reducoes as listarReducoes,
@@ -62,78 +62,12 @@ export default function ColaboradoresAdmin({ aviso }) {
     <div className="vx-fade">
       <h2 className="vx-disp" style={{ fontSize: 20, margin: "0 0 6px" }}>Colaboradores internos</h2>
       <p className="vx-mut" style={{ margin: "0 0 14px", fontSize: 13 }}>Quem trabalha para a própria RYCS. A IA acompanha e alerta; quem decide pagamento e vínculo é você.</p>
-      <Abas rotulo="Seções de colaboradores" valor={aba} onChange={setAba} itens={[["equipe", "Equipe"], ["tarefas", `Tarefas${dados?.fila ? ` (${dados.fila})` : ""}`], ["fechamento", "Fechamento"], ["config", "Configuração"], ["novo", "Adicionar"]]} />
-      {aba === "equipe" && <Equipe dados={dados} abrir={setAberto} aviso={aviso} recarregar={carregar} />}
+      <Abas rotulo="Seções de colaboradores" valor={aba} onChange={setAba} itens={[["equipe", "Equipe"], ["tarefas", `Tarefas${dados?.fila ? ` (${dados.fila})` : ""}`], ["fechamento", "Fechamento"], ["config", "Configuração"]]} />
+      {aba === "equipe" && <><Organograma aviso={aviso} abrirPessoa={setAberto} />{dados && <AvisosAdmin avisos={dados.avisos} aviso={aviso} recarregar={carregar} />}</>}
       {aba === "tarefas" && <Tarefas aviso={aviso} recarregar={carregar} />}
       {aba === "fechamento" && <Fechamento aviso={aviso} />}
       {aba === "config" && <Config aviso={aviso} />}
-      {aba === "novo" && <Novo aviso={aviso} pronto={(id) => { carregar(); setAberto(id); }} />}
     </div>
-  );
-}
-
-// ───────────────────────────── Equipe ─────────────────────────────
-
-function Equipe({ dados, abrir, aviso, recarregar }) {
-  const [ordem, setOrdem] = useState("nota");
-  const [filtro, setFiltro] = useState("ativos");
-  const lista = useMemo(() => {
-    let l = (dados?.colaboradores || []).slice();
-    if (filtro === "ativos") l = l.filter((c) => c.status === "ativo");
-    if (filtro === "alerta") l = l.filter((c) => c.alertas.length || c.avisosAbertos);
-    if (filtro === "abaixo") l = l.filter((c) => c.nota != null && c.nota < 60);
-    if (filtro === "encerrados") l = l.filter((c) => c.status === "encerrado");
-    const v = (c) => ordem === "nota" ? (c.nota ?? -1) : ordem === "presenca" ? (c.presenca ?? -1) : ordem === "saldo" ? c.saldoMesCents : 0;
-    return ordem === "nome" ? l.sort((a, b) => a.nome.localeCompare(b.nome)) : l.sort((a, b) => v(b) - v(a));
-  }, [dados, ordem, filtro]);
-
-  if (!dados) return <div className="vx-spinner" />;
-  return (
-    <>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-        <div style={{ minWidth: 180 }}>
-          <label className="vx-label" htmlFor="col-ordem">Ordenar por</label>
-          <select id="col-ordem" className="vx-input" value={ordem} onChange={(e) => setOrdem(e.target.value)} style={ALVO}>
-            <option value="nota">Produtividade</option><option value="presenca">Presença</option><option value="saldo">Saldo do mês</option><option value="nome">Nome</option>
-          </select>
-        </div>
-        <div style={{ minWidth: 180 }}>
-          <label className="vx-label" htmlFor="col-filtro">Mostrar</label>
-          <select id="col-filtro" className="vx-input" value={filtro} onChange={(e) => setFiltro(e.target.value)} style={ALVO}>
-            <option value="ativos">Ativos</option><option value="alerta">Com alerta</option><option value="abaixo">Abaixo do esperado</option><option value="encerrados">Vínculo encerrado</option><option value="todos">Todos</option>
-          </select>
-        </div>
-      </div>
-
-      {!lista.length
-        ? <Vazio titulo="Ninguém aqui ainda" texto="Use a aba Adicionar para marcar um usuário como colaborador interno." />
-        : <div className="vx-g3" style={{ gap: 12 }}>{lista.map((c) => (
-          <button key={c.id} type="button" className="vx-card" onClick={() => abrir(c.id)} style={{ padding: 16, textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit", minHeight: 44 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <div>
-                <b>{c.nome}</b>
-                <div className="vx-mut" style={{ fontSize: 12 }}>{c.funcao || "Sem função"} · {VINCULOS[c.vinculo]}</div>
-              </div>
-              <div className="vx-disp vx-mono" style={{ fontSize: 24, color: c.nota == null ? "var(--muted)" : c.nota >= 85 ? "var(--brand)" : c.nota >= 60 ? "var(--ink)" : "var(--red)" }}>{c.nota ?? "—"}</div>
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "8px 0" }}>
-              {c.status === "encerrado" && <span className="vx-badge vx-badge-muted">Encerrado</span>}
-              {!c.contratoAssinado && c.status === "ativo" && <span className="vx-badge vx-badge-amber">Contrato pendente</span>}
-              {c.contratoAssinado && !c.termoAceito && <span className="vx-badge vx-badge-amber">Termo pendente</span>}
-              {c.metaStatus === "calibrando" && <span className="vx-badge vx-badge-indigo">Medindo a meta</span>}
-              {c.faixa && <span className="vx-badge vx-badge-muted">{c.faixa}</span>}
-            </div>
-            <div className="vx-mut" style={{ fontSize: 12.5, lineHeight: 1.6 }}>
-              {c.medirPresenca ? <>Presença no mês: <b>{c.presenca ?? "—"}{c.presenca != null && "%"}</b>{c.ausentes ? ` · ${c.ausentes} dia(s) sem atividade` : ""}<br /></> : <>Presença não medida (mede entregas)<br /></>}
-              Tarefas feitas: <b>{c.feitas}</b>{c.meta ? ` de ${c.meta}` : ""} · Tendência: {TENDENCIA[c.tendencia]}<br />
-              Variável do mês: <b>{formatarCents(c.saldoMesCents)}</b>
-            </div>
-            {(c.alertas.length > 0 || c.avisosAbertos > 0) && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 6 }}>{c.alertas.length + c.avisosAbertos} alerta(s)</div>}
-          </button>
-        ))}</div>}
-
-      <AvisosAdmin avisos={dados.avisos} aviso={aviso} recarregar={recarregar} />
-    </>
   );
 }
 
@@ -174,43 +108,6 @@ function AvisosAdmin({ avisos = [], aviso, recarregar }) {
         </div>
       ))}</div>
     </section>
-  );
-}
-
-// ───────────────────────────── Adicionar ─────────────────────────────
-
-function Novo({ aviso, pronto }) {
-  const [busca, setBusca] = useState("");
-  const [usuarios, setUsuarios] = useState([]);
-  const [u, setU] = useState(null);
-  const procurar = async (e) => {
-    e.preventDefault();
-    const r = await api(`/admin/colaboradores-usuarios?email=${encodeURIComponent(busca)}`);
-    setUsuarios(r?.usuarios || []);
-    if (!r?.usuarios?.length) aviso("Nenhum usuário com esse e-mail.");
-  };
-  return (
-    <div className="vx-card" style={{ padding: 18, maxWidth: 640 }}>
-      {!u && (
-        <form onSubmit={procurar} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <label className="vx-label" htmlFor="col-busca">E-mail da conta na plataforma</label>
-            <input id="col-busca" className="vx-input" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome@exemplo.com" style={ALVO} />
-          </div>
-          <button className="vx-btn vx-btn-sm" style={ALVO} disabled={busca.trim().length < 3}>Procurar</button>
-        </form>
-      )}
-      {usuarios.length > 0 && !u && (
-        <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0" }}>{usuarios.map((x) => (
-          <li key={x.id} style={{ marginBottom: 6 }}>
-            <button type="button" className="vx-btn vx-btn-sm" style={{ ...ALVO, width: "100%", justifyContent: "flex-start" }} disabled={x.jaColaborador} onClick={() => setU(x)}>
-              {x.email} · {x.role}{x.jaColaborador ? " · já é colaborador" : ""}
-            </button>
-          </li>
-        ))}</ul>
-      )}
-      {u && <FormAtivacao usuario={u} aviso={aviso} pronto={pronto} cancelar={() => setU(null)} />}
-    </div>
   );
 }
 
@@ -297,7 +194,7 @@ function PainelAdmin({ d, aviso, recarregar }) {
 
 function RegraForm({ d, aviso, recarregar }) {
   const c = d.colaborador;
-  const [cad, setCad] = useState({ nome: c.nome, cpf: c.cpf, funcao: c.funcao, regime: c.regime || "", jornadaHoras: String(c.jornadaHoras || ""), dataInicio: c.dataInicio });
+  const [cad, setCad] = useState({ nome: c.nome, cpf: c.cpf, funcao: c.funcao, regime: c.regime || "", jornadaHoras: String(c.jornadaHoras || ""), dataInicio: c.dataInicio, cargoId: c.cargoId || "" });
   const [r, setR] = useState(() => ({
     ...d.regra,
     _fixo: centsParaReais(d.regra.fixoCents), _cad: centsParaReais(d.regra.variavel.cadastroCents), _tar: centsParaReais(d.regra.variavel.tarefaCents),
@@ -323,9 +220,9 @@ function RegraForm({ d, aviso, recarregar }) {
     e.preventDefault();
     const regra = montar();
     let confirmarReducao = false;
-    const red = c.vinculo === "clt" ? listarReducoes(d.regra, regra) : [];
+    const red = ["clt", "formacao", "aprendiz"].includes(c.vinculo) ? listarReducoes(d.regra, regra) : [];
     if (red.length) {
-      confirmarReducao = window.confirm(`Atenção: esta alteração reduz ${red.join(", ")}.\n\nAlteração que prejudica o empregado não vale nem com o aceite dele (art. 468 da CLT). Recomendação: fale com o contador antes de enviar.\n\nSalvar mesmo assim?`);
+      confirmarReducao = window.confirm(`Atenção: esta alteração reduz ${red.join(", ")}.\n\nAlteração que prejudica o empregado não vale nem com o aceite dele (art. 468 da CLT) e pode ser revertida na Justiça do Trabalho.\n\nSalvar mesmo assim?`);
       if (!confirmarReducao) return;
     }
     const resp = await apiPut(`/admin/colaboradores/${c.id}/regra`, { regra, vigenciaInicio: vig, motivo, confirmarReducao });
@@ -376,18 +273,18 @@ function RegraForm({ d, aviso, recarregar }) {
           <Campo id="r-epmes" label="Vale por quantos meses" ajuda="1 = só a primeira cobrança"><input id="r-epmes" className="vx-input" inputMode="numeric" value={ep.meses} onChange={(e) => setEp("meses", e.target.value)} style={ALVO} /></Campo>
           <Campo id="r-gar" label="Prazo de garantia (dias)" ajuda="Cancelamento depois disso não estorna o que já foi lançado"><input id="r-gar" className="vx-input" inputMode="numeric" value={r.variavel.garantiaDias ?? 30} onChange={(e) => setVar("garantiaDias", e.target.value)} style={ALVO} /></Campo>
         </div>
-        {c.vinculo !== "clt" && (
+        {(c.vinculo === "outro" || c.vinculo === "estagio") && (
           <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
             <input type="checkbox" checked={!!r.permiteSaque} onChange={(e) => s("permiteSaque", e.target.checked)} /> No fechamento, o variável aprovado vai para o saldo e sai pelo saque (Pix)
           </label>
         )}
-        {c.vinculo === "clt" && <p className="vx-mut" style={{ fontSize: 12.5 }}>Empregado: fixo e variável vão para o fechamento e são pagos pela folha. Nada sai pelo saque da plataforma.</p>}
+        {["clt", "formacao", "aprendiz"].includes(c.vinculo) && <p className="vx-mut" style={{ fontSize: 12.5 }}>Empregado: fixo e variável vão para o fechamento e são pagos pela folha. Nada sai pelo saque da plataforma.</p>}
 
         <h3 className="vx-disp" style={{ fontSize: 15 }}>Presença, meta e avisos</h3>
         <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
           <input type="checkbox" checked={!!r.medirPresenca} onChange={(e) => s("medirPresenca", e.target.checked)} /> Medir presença e faltas
         </label>
-        {r.medirPresenca && c.vinculo !== "clt" && <div className="vx-notice vx-notice-amber" style={{ marginBottom: 8 }}>Cobrar presença de quem não é empregado é o que a Justiça do Trabalho usa para reconhecer vínculo. Ligue só depois de falar com o advogado.</div>}
+        {r.medirPresenca && c.vinculo === "outro" && <div className="vx-notice vx-notice-amber" style={{ marginBottom: 8 }}>Cobrar presença de autônomo é o que a Justiça do Trabalho usa para reconhecer vínculo de emprego. Para autônomo, o mais seguro é medir só as entregas.</div>}
         <DiasPrevistos valor={r.diasPrevistos} onChange={(v) => s("diasPrevistos", v)} />
         <div className="vx-g3" style={{ gap: 12 }}>
           <Campo id="r-hi" label="Início do horário"><input id="r-hi" type="time" className="vx-input" value={r.horario.inicio} onChange={(e) => s("horario", { ...r.horario, inicio: e.target.value })} style={ALVO} /></Campo>
@@ -432,8 +329,13 @@ function RegraForm({ d, aviso, recarregar }) {
         <div className="vx-g3" style={{ gap: 12 }}>
           <Campo id="c-nome" label="Nome completo"><input id="c-nome" className="vx-input" value={cad.nome} onChange={(e) => setCad({ ...cad, nome: e.target.value })} style={ALVO} /></Campo>
           <Campo id="c-cpf" label="CPF"><input id="c-cpf" className="vx-input" inputMode="numeric" value={cad.cpf} onChange={(e) => setCad({ ...cad, cpf: e.target.value })} style={ALVO} /></Campo>
-          <Campo id="c-func" label="Função"><input id="c-func" className="vx-input" value={cad.funcao} onChange={(e) => setCad({ ...cad, funcao: e.target.value })} style={ALVO} /></Campo>
-          {c.vinculo === "clt" && (
+          <Campo id="c-cargo" label="Cargo" ajuda="Só cargos com o mesmo tipo de contrato.">
+            <select id="c-cargo" className="vx-input" value={cad.cargoId} onChange={(e) => setCad({ ...cad, cargoId: e.target.value })} style={ALVO}>
+              <option value="">Sem cargo</option>
+              {(d.cargos || []).filter((k) => k.vinculo === c.vinculo).map((k) => <option key={k.id} value={k.id}>{k.area} · {k.nome}</option>)}
+            </select>
+          </Campo>
+          {c.vinculo !== "outro" && (
             <Campo id="c-reg" label="Regime">
               <select id="c-reg" className="vx-input" value={cad.regime} onChange={(e) => setCad({ ...cad, regime: e.target.value })} style={ALVO}>
                 {Object.entries(REGIMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -474,7 +376,7 @@ function ContratosAdmin({ d, aviso, recarregar }) {
         <button className="vx-btn vx-btn-primary vx-btn-sm" style={ALVO} onClick={() => gerar("contrato")}>Gerar contrato do modelo</button>
         {d.acesso.contratoAssinado && <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => gerar("aditivo")}>Gerar aditivo</button>}
       </div>
-      <p className="vx-mut" style={{ fontSize: 12.5 }}>O texto vem do modelo aprovado pelo advogado (aba Configuração). O sistema só preenche os campos. A assinatura é feita na própria plataforma (nome digitado + código por e-mail). Sem contrato assinado, a pessoa não vê as tarefas.</p>
+      <p className="vx-mut" style={{ fontSize: 12.5 }}>O texto vem do modelo do tipo de contrato (aba Configuração) e o sistema só preenche os campos. A assinatura é feita na própria plataforma (nome digitado + código por e-mail). Sem contrato assinado, a pessoa não vê as tarefas.</p>
       <VerificarCodigo aviso={aviso} />
       {!d.contratos.length ? <Vazio titulo="Nenhum documento" texto="Cadastre o modelo do vínculo em Configuração e gere o contrato." /> : (
         <div className="vx-grid">{d.contratos.map((k) => (
@@ -932,7 +834,7 @@ function Config({ aviso }) {
   useEffect(() => { carregar(); }, [carregar]);
   const salvarModelo = async (e) => {
     e.preventDefault();
-    if (!window.confirm("Confirma que este texto foi escrito ou aprovado pelo advogado? O sistema só preenche os campos.")) return;
+    if (!window.confirm("Salvar como nova versão do modelo? Os contratos já assinados não mudam; os próximos usam este texto.")) return;
     const r = await api("/admin/colaboradores-config/modelos", m);
     if (r?.error) return aviso(r.error);
     aviso(`Modelo salvo (versão ${r.versao}).`);
@@ -959,10 +861,11 @@ function Config({ aviso }) {
   if (!d) return <div className="vx-spinner" />;
   return (
     <>
+      <DadosEmpresa inicial={d.empresa} aviso={aviso} pronto={carregar} />
       <PadroesAvisos key={JSON.stringify([d.padroes, d.avisos])} d={d} aviso={aviso} recarregar={carregar} />
       <section className="vx-card" style={{ padding: 18, marginBottom: 16 }} aria-labelledby="cfg-mod">
         <h3 id="cfg-mod" className="vx-disp" style={{ fontSize: 15, marginTop: 0 }}>Modelos de contrato e aditivo</h3>
-        <p className="vx-mut" style={{ fontSize: 12.5 }}>Cole o texto aprovado pelo advogado. Use os campos entre chaves, que o sistema preenche: {Object.entries(CAMPOS_CONTRATO).map(([k, v]) => <span key={k}><code>{`{{${k}}}`}</code> ({v}) </span>)}</p>
+        <p className="vx-mut" style={{ fontSize: 12.5 }}>Já vêm modelos de referência para cada tipo de contrato, no formato usado no mercado. Para mudar, salve uma nova versão. Campos entre chaves, que o sistema preenche: {Object.entries(CAMPOS_CONTRATO).map(([k, v]) => <span key={k}><code>{`{{${k}}}`}</code> ({v}) </span>)}</p>
         {d.modelos.length > 0 && (
           <ul style={{ paddingLeft: 18, fontSize: 13 }}>{d.modelos.map((x) => <li key={x.id}>{x.tipo === "aditivo" ? "Aditivo" : "Contrato"} · {VINCULOS[x.vinculo]} · v{x.versao} · {x.titulo} {x.ativo ? <span className="vx-badge vx-badge-brand">Em uso</span> : <span className="vx-mut">(anterior)</span>}</li>)}</ul>
         )}
@@ -998,8 +901,8 @@ function Config({ aviso }) {
       </section>
 
       <section className="vx-card" style={{ padding: 18 }} aria-labelledby="cfg-nat">
-        <h3 id="cfg-nat" className="vx-disp" style={{ fontSize: 15, marginTop: 0 }}>Natureza de cada valor (definida pelo contador)</h3>
-        <p className="vx-mut" style={{ fontSize: 12.5 }}>Comissão integra o salário; prêmio, ajuda de custo e diária, em regra, não. Quem classifica é o contador; a plataforma só guarda e usa na exportação.</p>
+        <h3 id="cfg-nat" className="vx-disp" style={{ fontSize: 15, marginTop: 0 }}>Como cada valor sai na exportação para a folha</h3>
+        <p className="vx-mut" style={{ fontSize: 12.5 }}>Já vem preenchido: salário, comissão para valores por cadastro, empresa e tarefa (integram o salário, CLT art. 457) e vale-transporte para a diária de transporte. Mude só se precisar.</p>
         <div className="vx-g3" style={{ gap: 12 }}>
           {[["fixo", "Fixo por mês"], ...Object.entries(TIPOS_LANCAMENTO).filter(([k]) => k !== "estorno")].map(([k, t]) => (
             <Campo key={k} id={`nat-${k}`} label={t}>

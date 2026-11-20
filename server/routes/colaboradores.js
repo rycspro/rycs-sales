@@ -176,7 +176,35 @@ router.get("/admin/colaboradores-usuarios", soAdmin, h((req, res) => {
 router.post("/admin/colaboradores", soAdmin, h((req, res) => {
   const b = req.body || {};
   if (b.cpf && !cpfValido(b.cpf)) return res.status(400).json({ error: "CPF inválido." });
+  if (b.cargoId) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(b.dataInicio || "")) return res.status(400).json({ error: "Informe a data em que a pessoa começou a trabalhar." });
+    return res.json(C.adicionarNoCargo(b, req.user.id));
+  }
   res.json(C.ativarColaborador(b, req.user.id));
+}));
+
+// Organograma em cards: áreas, cargos e pessoas.
+router.get("/admin/colaboradores-organograma", soAdmin, h((req, res) => res.json(C.organograma())));
+router.post("/admin/colaboradores-areas", soAdmin, h((req, res) => res.json({ id: C.criarArea(req.body || {}, req.user.id) })));
+router.patch("/admin/colaboradores-areas/:aid", soAdmin, h((req, res) => { C.editarArea(req.params.aid, req.body || {}, req.user.id); res.json({ ok: true }); }));
+router.delete("/admin/colaboradores-areas/:aid", soAdmin, h((req, res) => { C.removerArea(req.params.aid, req.user.id); res.json({ ok: true }); }));
+router.post("/admin/colaboradores-cargos", soAdmin, h((req, res) => res.json({ id: C.criarCargo(req.body || {}, req.user.id) })));
+router.patch("/admin/colaboradores-cargos/:cid", soAdmin, h((req, res) => { C.editarCargo(req.params.cid, req.body || {}, req.user.id); res.json({ ok: true }); }));
+router.delete("/admin/colaboradores-cargos/:cid", soAdmin, h((req, res) => { C.removerCargo(req.params.cid, req.user.id); res.json({ ok: true }); }));
+
+router.put("/admin/colaboradores-config/empresa", soAdmin, h((req, res) => {
+  const b = req.body?.empresa || {};
+  const e = Object.fromEntries(["nome", "cnpj", "endereco", "representante", "cidade"].map((k) => [k, String(b[k] || "").trim().slice(0, 200)]));
+  C.gravarConfig("empresa", e);
+  C.auditar(req.user.id, "dados_empresa", null, "config", "empresa", e);
+  // Quem entrou antes dos dados da empresa e ficou sem contrato recebe agora.
+  let gerados = 0;
+  if (C.empresaCompleta()) {
+    for (const c of db.prepare("SELECT * FROM colaboradores WHERE status = 'ativo' AND NOT EXISTS (SELECT 1 FROM colab_contratos k WHERE k.colaboradorId = colaboradores.id AND k.tipo = 'contrato' AND k.status IN ('pendente','assinado'))").all()) {
+      try { C.gerarContrato(c, "contrato", req.user.id); gerados++; } catch (err) { console.error("[colab] contrato pendente:", err.message); }
+    }
+  }
+  res.json({ empresa: C.empresa(), completa: C.empresaCompleta(), contratosGerados: gerados });
 }));
 
 const carregar = (req, res, next) => {
@@ -192,6 +220,7 @@ router.get("/admin/colaboradores/:id", soAdmin, carregar, h((req, res) => {
   const { inicio, fim } = periodo(req);
   res.json({
     colaborador: { ...c, email: db.prepare("SELECT email FROM users WHERE id = ?").get(c.userId)?.email },
+    cargos: db.prepare("SELECT c.id, c.nome, c.vinculo, a.nome AS area FROM colab_cargos c JOIN colab_areas a ON a.id = c.areaId ORDER BY a.ordem, c.ordem").all(),
     acesso: C.acesso(c),
     regra: C.regraDe(c),
     versaoRegra: C.versaoRegra(c),
@@ -211,6 +240,7 @@ router.get("/admin/colaboradores/:id", soAdmin, carregar, h((req, res) => {
 
 router.patch("/admin/colaboradores/:id", soAdmin, carregar, h((req, res) => {
   if (req.body?.cpf && !cpfValido(req.body.cpf)) return res.status(400).json({ error: "CPF inválido." });
+  if (req.body?.cargoId && req.body.cargoId !== req.colab.cargoId) C.moverParaCargo(req.colab, req.body.cargoId, req.user.id);
   res.json({ colaborador: C.atualizarCadastro(req.colab, req.body || {}, req.user.id) });
 }));
 
@@ -286,6 +316,7 @@ router.post("/admin/colaboradores-avisos/:aid/resolver", soAdmin, h((req, res) =
 router.get("/admin/colaboradores-config", soAdmin, h((req, res) => {
   const ano = Number(hoje().slice(0, 4));
   res.json({
+    empresa: C.empresa(),
     padroes: C.padroes(),
     avisos: C.configAvisos(),
     modelos: C.modelos(),

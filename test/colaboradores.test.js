@@ -98,3 +98,36 @@ test('auxiliares', () => {
   assert.equal(tendencia(80, 78), 'estavel');
   assert.ok(feriadosNacionais(2026).some((f) => f.data === '2026-04-03'));
 });
+
+import { MODELOS_REFERENCIA, AREAS_EXEMPLO } from '../shared/colaboradoresModelos.js';
+import { CAMPOS_CONTRATO, validarDadosVinculo, ehEmpregado, VINCULOS } from '../shared/colaboradores.js';
+
+test('todo campo dos modelos de contrato existe e é preenchido pelo sistema', () => {
+  const empresa = { nome: 'RYCS Ltda', cnpj: '00.000.000/0001-00', endereco: 'Rua A, 1', representante: 'Fulano, sócio', cidade: 'São Paulo/SP' };
+  const dados = { dataNascimento: '2006-05-10', entidadeFormadora: 'SENAC', cursoAprendizagem: 'Assistente administrativo', dataFim: '2027-11-01', cargaTeorica: '4 h por semana', instituicaoEnsino: 'Escola X', curso: 'Administração' };
+  for (const m of MODELOS_REFERENCIA) {
+    for (const [, k] of m.texto.matchAll(/\{\{\s*([a-zA-Z]+)\s*\}\}/g)) assert.ok(CAMPOS_CONTRATO[k], `${m.vinculo}/${m.tipo}: campo {{${k}}} desconhecido`);
+    const colab = { nome: 'Pessoa Teste', cpf: '52998224725', funcao: 'Social media', vinculo: m.vinculo, regime: 'presencial', dataInicio: '2026-11-02', jornadaHoras: 40 };
+    const r = regraPadrao({ vinculo: m.vinculo });
+    const { faltando } = preencherContrato(m.texto, camposDoContrato(colab, { ...r, fixoCents: 180000 }, '2026-11-20', { empresa, area: 'Marketing', dados }));
+    assert.deepEqual(faltando, [], `${m.vinculo}/${m.tipo}`);
+  }
+  assert.ok(MODELOS_REFERENCIA.some((m) => m.vinculo === 'formacao' && /não se confunde com o contrato de aprendizagem/.test(m.texto)));
+});
+
+test('aprendiz e estágio: dados obrigatórios, idade e prazo máximo', () => {
+  const ok = { dataNascimento: '2006-05-10', entidadeFormadora: 'SENAI', cursoAprendizagem: 'X', dataFim: '2027-11-01', cargaTeorica: '4h' };
+  assert.equal(validarDadosVinculo('aprendiz', '2026-11-02', ok), null);
+  assert.match(validarDadosVinculo('aprendiz', '2026-11-02', { ...ok, entidadeFormadora: '' }), /Entidade formadora/);
+  assert.match(validarDadosVinculo('aprendiz', '2026-11-02', { ...ok, dataNascimento: '1990-01-01' }), /entre 14 e 24/);
+  assert.match(validarDadosVinculo('aprendiz', '2026-11-02', { ...ok, dataFim: '2029-01-01' }), /2 anos/);
+  assert.equal(validarDadosVinculo('formacao', '2026-11-02', {}), null);
+  assert.equal(ehEmpregado('formacao'), true);
+  assert.equal(ehEmpregado('estagio'), false);
+  assert.equal(presencaPadrao('estagio', 'presencial'), true);
+});
+
+test('áreas de exemplo trazem cargos com tipo de contrato válido', () => {
+  assert.deepEqual(AREAS_EXEMPLO.map((a) => a.nome), ['Marketing', 'Administrativo', 'Financeiro e contábil', 'Comercial']);
+  for (const a of AREAS_EXEMPLO) for (const c of a.cargos) assert.ok(VINCULOS[c.vinculo], c.nome);
+});
