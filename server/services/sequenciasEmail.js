@@ -47,9 +47,9 @@ const SEGREDO = process.env.JWT_SECRET || "salesmachine-dev-secret-change-in-pro
 export const sequenciasLigadas = () => process.env.SEQUENCIAS_EMAIL !== "off" && process.env.NODE_ENV !== "test";
 const MAX_POR_RODADA = 40;
 // Resend: no máximo ~2 envios por segundo por conta.
-const PAUSA_ENTRE_ENVIOS_MS = 600;
-const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
-const limiteDeTaxa = (erro) => /too many requests|rate limit/i.test(String(erro || ""));
+export const PAUSA_ENTRE_ENVIOS_MS = 600;
+export const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+export const limiteDeTaxa = (erro) => /too many requests|rate limit/i.test(String(erro || ""));
 
 // Início das sequências: fixado na primeira subida. Âncora de quem já tinha
 // conta (não recebe boas-vindas atrasadas) e base do aquecimento do domínio.
@@ -69,15 +69,16 @@ export function validarDescadastro(email, token) {
   const b = Buffer.from(String(token || ""));
   return a.length === b.length && timingSafeEqual(a, b);
 }
-export function linkDescadastro(email) {
+// `idioma` "en" abre a página de descadastro em inglês (Índia e demais países).
+export function linkDescadastro(email, idioma = "pt") {
   const e = Buffer.from(normEmail(email)).toString("base64url");
-  return `${urlApp()}/api/email/descadastro?e=${e}&t=${tokenDescadastro(email)}`;
+  return `${urlApp()}/api/email/descadastro?e=${e}&t=${tokenDescadastro(email)}${idioma === "en" ? "&l=en" : ""}`;
 }
 export const emailDoParametro = (e) => { try { return normEmail(Buffer.from(String(e || ""), "base64url").toString("utf8")); } catch { return ""; } };
 export function descadastrar(email) {
   db.prepare("INSERT OR IGNORE INTO email_descadastros (email, em) VALUES (?, ?)").run(normEmail(email), Date.now());
 }
-const descadastrados = () => new Set(db.prepare("SELECT email FROM email_descadastros").all().map((r) => r.email));
+export const descadastrados = () => new Set(db.prepare("SELECT email FROM email_descadastros").all().map((r) => r.email));
 
 // ─── Perfil: reativação e bônus ────────────────────────────────────────────
 const SELECT_PERFIL = "SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills, perfilCompletoEm, inativoEm FROM sellers";
@@ -214,7 +215,7 @@ export function montarEmail(c, gerais) {
   };
   const t = montarTexto(c.chave, c.idioma, dados);
   if (!t) return null;
-  const descadastro = linkDescadastro(c.email);
+  const descadastro = linkDescadastro(c.email, c.idioma);
   const link = `${urlApp()}/?aba=${encodeURIComponent(t.aba)}&utm_source=email&utm_medium=sequencia&utm_campaign=${encodeURIComponent(c.chave.split("@")[0])}`;
   const html = layoutSequencia({ ...t, link, descadastro, preheader: t.paragrafos[0]?.replace(/<[^>]+>/g, "") });
   const text = [t.titulo, "", ...t.paragrafos.map((p) => p.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&")), "", `${t.botao}: ${link}`, "", `${t.textoDescadastro}: ${descadastro}`].join("\n");

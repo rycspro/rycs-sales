@@ -1,6 +1,9 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
-import { sendEmail, emailFotoPendente } from "../services/email.js";
+import { sendEmail, emailFotoPendente, layoutSequencia, urlApp } from "../services/email.js";
+import { numeroWhatsapp } from "../services/whatsappDisparo.js";
+import { linkDescadastro, descadastrados, esperar, limiteDeTaxa, PAUSA_ENTRE_ENVIOS_MS } from "../services/sequenciasEmail.js";
+import { TEXTO_DESCADASTRO } from "../../shared/sequenciasEmail.js";
 import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -17,6 +20,121 @@ db.exec(`CREATE TABLE IF NOT EXISTS email_dispatches (
   resendId TEXT,
   criadoEm INTEGER NOT NULL
 )`);
+
+// Cada envio dos disparos para leads: guarda quem já recebeu cada assunto,
+// para o próximo lote continuar de onde parou.
+db.exec(`CREATE TABLE IF NOT EXISTS email_dispatch_envios (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  dispatchId INTEGER NOT NULL,
+  publico TEXT NOT NULL,
+  assunto TEXT NOT NULL,
+  email TEXT NOT NULL,
+  status TEXT NOT NULL,
+  resendId TEXT,
+  erro TEXT,
+  enviadoEm INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_dispatch_envios_pub ON email_dispatch_envios (publico, assunto);`);
+// Lote que estava enviando quando o servidor reiniciou: o resto sai no próximo clique.
+db.prepare("UPDATE email_dispatches SET status = 'interrompido' WHERE status = 'enviando'").run();
+
+// ── Leads dos formulários da Meta ─────────────────────────────────────
+// Quem preencheu um formulário de anúncio da RYCS. Vai em inglês, com link de
+// descadastro, em lotes (aquecimento do domínio) e com pausa entre envios.
+export const PUBLICOS_LEADS = {
+  leads_india: { label: "Leads da Meta (Índia)", ddi: "91", paises: ["in", "india"] },
+};
+const LOTE_PADRAO = 200;
+const LOTE_MAXIMO = 1000;
+const loteValido = (n) => Math.min(LOTE_MAXIMO, Math.max(1, Math.floor(Number(n) || LOTE_PADRAO)));
+const ehEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const semAcento = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+// Leads do país (pelo telefone ou pelo país do formulário) com e-mail válido.
+// Fica de fora quem já tem conta (mesmo e-mail), quem se descadastrou e quem
+// já recebeu um disparo deste público com o mesmo assunto.
+export function leadsDoPublico(publico, assunto = "") {
+  const p = PUBLICOS_LEADS[publico];
+  if (!p) return null;
+  if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rycs_leads_meta'").get()) return { pendentes: [], jaReceberam: 0 };
+  const comConta = new Set(db.prepare("SELECT lower(email) AS e FROM users WHERE email IS NOT NULL").all().map((u) => u.e));
+  const fora = descadastrados();
+  const recebidos = new Set(db.prepare("SELECT email FROM email_dispatch_envios WHERE publico = ? AND assunto = ? AND status = 'enviado'")
+    .all(publico, String(assunto).trim()).map((r) => r.email));
+  const vistos = new Set();
+  const pendentes = [];
+  let jaReceberam = 0;
+  for (const l of db.prepare("SELECT nome, lower(trim(email)) AS email, telefone, pais FROM rycs_leads_meta ORDER BY criadoEm").all()) {
+    if (!ehEmail(l.email) || vistos.has(l.email)) continue;
+    const doPais = numeroWhatsapp(l.telefone, l.pais).startsWith(p.ddi) || p.paises.includes(semAcento(l.pais).trim().toLowerCase());
+    if (!doPais) continue;
+    vistos.add(l.email);
+    if (comConta.has(l.email) || fora.has(l.email)) continue;
+    if (recebidos.has(l.email)) { jaReceberam++; continue; }
+    pendentes.push({ email: l.email, nome: l.nome });
+  }
+  return { pendentes, jaReceberam };
+}
+
+// Primeiro nome para {{nome}}; nome todo em maiúsculas/minúsculas vira "Rahul".
+function primeiroNome(nome) {
+  const n = String(nome || "").trim().split(/\s+/)[0] || "";
+  if (!n || (n !== n.toUpperCase() && n !== n.toLowerCase())) return n;
+  return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
+}
+
+// E-mail em inglês para um lead: layout das sequências (logo, um botão,
+// rodapé com descadastro), versão texto e descadastro em um clique.
+export function emailParaLead({ assunto, preheader, conteudo, cta, botao, nome, email, publico }) {
+  const trocar = (t) => String(t || "").replace(/\{\{\s*nome\s*\}\}/gi, primeiroNome(nome) || "there");
+  const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const titulo = trocar(assunto).trim();
+  const corpo = trocar(conteudo).trim();
+  const paragrafos = corpo.split(/\n{2,}/).map((t) => esc(t.trim()).replace(/\n/g, "<br>")).filter(Boolean);
+  const textoBotao = String(botao || "").trim() || "Get started";
+  const link = String(cta || "").trim() || `${urlApp()}/?utm_source=email&utm_medium=disparo&utm_campaign=${publico}`;
+  const descadastro = linkDescadastro(email, "en");
+  const html = layoutSequencia({
+    titulo, paragrafos, botao: textoBotao, link, rodape: "The RYCS team",
+    descadastro, textoDescadastro: TEXTO_DESCADASTRO.en, preheader: trocar(preheader).trim(),
+  });
+  const text = [titulo, "", corpo, "", `${textoBotao}: ${link}`, "", `${TEXTO_DESCADASTRO.en}: ${descadastro}`].join("\n");
+  return {
+    assunto: titulo, html, text,
+    headers: { "List-Unsubscribe": `<${descadastro}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+  };
+}
+
+// Envia o lote em segundo plano e vai atualizando o histórico do disparo.
+let loteLeadsEmAndamento = false;
+export async function enviarLoteLeads({ dispatchId, publico, lote, dados }) {
+  let enviados = 0, falhas = 0, falhasSeguidas = 0, ultimoId = null;
+  const assunto = String(dados.assunto).trim();
+  try {
+    for (const d of lote) {
+      const m = emailParaLead({ ...dados, ...d, publico });
+      let r;
+      for (let tentativa = 0; tentativa < 4; tentativa++) {
+        await esperar(PAUSA_ENTRE_ENVIOS_MS * (tentativa === 0 ? 1 : 3 * tentativa));
+        r = await sendEmail(d.email, m.assunto, m.html, { text: m.text, headers: m.headers });
+        if (r?.ok || !limiteDeTaxa(r?.error)) break;
+      }
+      const ok = !!r?.ok;
+      db.prepare("INSERT INTO email_dispatch_envios (dispatchId, publico, assunto, email, status, resendId, erro, enviadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        .run(dispatchId, publico, assunto, d.email, ok ? "enviado" : "falhou", r?.id || null, ok ? null : String(r?.error || "").slice(0, 300), Date.now());
+      if (ok) { enviados++; falhasSeguidas = 0; if (r.id) ultimoId = r.id; }
+      else { falhas++; falhasSeguidas++; }
+      db.prepare("UPDATE email_dispatches SET quantidade = ? WHERE id = ?").run(enviados, dispatchId);
+      // Muitas falhas seguidas (cota do Resend, domínio): para e deixa o resto para depois.
+      if (falhasSeguidas >= 10) break;
+    }
+  } finally {
+    const status = falhas === 0 ? "enviado" : enviados === 0 ? "falhou" : "parcial";
+    db.prepare("UPDATE email_dispatches SET quantidade = ?, status = ?, resendId = ? WHERE id = ?").run(enviados, status, ultimoId, dispatchId);
+    loteLeadsEmAndamento = false;
+  }
+  return { enviados, falhas };
+}
 
 function requireAdmin(req, res, next) {
   if (req.user?.role !== "admin") return res.status(403).json({ error: "Acesso restrito ao administrador." });
@@ -49,15 +167,29 @@ router.get("/admin/emails", requireAdmin, (req, res) => {
 
 // POST /api/admin/emails/preview — retorna quantidade de destinatários
 router.post("/admin/emails/preview", requireAdmin, (req, res) => {
-  const { publico, emailsCustom } = req.body;
+  const { publico, emailsCustom, assunto, lote } = req.body;
+  if (PUBLICOS_LEADS[publico]) {
+    const { pendentes, jaReceberam } = leadsDoPublico(publico, assunto);
+    return res.json({
+      quantidade: Math.min(loteValido(lote), pendentes.length), pendentes: pendentes.length, jaReceberam,
+      publicoLabel: PUBLICOS_LEADS[publico].label, idioma: "en", emAndamento: loteLeadsEmAndamento,
+    });
+  }
   const { emails, label } = getDestinatarios(publico, emailsCustom);
   res.json({ quantidade: emails.length, publicoLabel: label });
 });
 
 // POST /api/admin/emails/teste — envia e-mail de teste
 router.post("/admin/emails/teste", requireAdmin, async (req, res) => {
-  const { para, assunto, preheader, conteudo, cta } = req.body;
+  const { para, assunto, preheader, conteudo, cta, botao, publico } = req.body;
   if (!para || !assunto || !conteudo) return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+
+  if (PUBLICOS_LEADS[publico]) {
+    const m = emailParaLead({ assunto, preheader, conteudo, cta, botao, nome: "", email: para, publico });
+    const r = await sendEmail(para, `[TEST] ${m.assunto}`, m.html, { text: m.text, headers: m.headers });
+    if (!r.ok) return res.status(500).json({ error: r.error || "Falha ao enviar." });
+    return res.json({ ok: true });
+  }
 
   const html = buildHtml({ assunto, preheader, conteudo, cta, teste: true });
   const r = await sendEmail(para, `[TESTE] ${assunto}`, html);
@@ -67,8 +199,28 @@ router.post("/admin/emails/teste", requireAdmin, async (req, res) => {
 
 // POST /api/admin/emails/disparar — disparo real
 router.post("/admin/emails/disparar", requireAdmin, async (req, res) => {
-  const { publico, emailsCustom, assunto, preheader, conteudo, cta } = req.body;
+  const { publico, emailsCustom, assunto, preheader, conteudo, cta, botao, lote } = req.body;
   if (!assunto || !conteudo) return res.status(400).json({ error: "Assunto e conteúdo são obrigatórios." });
+
+  if (PUBLICOS_LEADS[publico]) {
+    if (loteLeadsEmAndamento) return res.status(409).json({ error: "Já há um lote sendo enviado. Aguarde terminar." });
+    const { pendentes } = leadsDoPublico(publico, assunto);
+    const escolhidos = pendentes.slice(0, loteValido(lote));
+    if (!escolhidos.length) return res.status(400).json({ error: "Nenhum lead pendente para este assunto." });
+    loteLeadsEmAndamento = true;
+    const criadoEm = Date.now();
+    const label = `${PUBLICOS_LEADS[publico].label} · lote de ${escolhidos.length}`;
+    const assuntoLimpo = String(assunto).trim();
+    const info = db.prepare(
+      "INSERT INTO email_dispatches (adminId, assunto, publico, quantidade, status, resendId, criadoEm) VALUES (?, ?, ?, 0, 'enviando', NULL, ?)"
+    ).run(req.user.id, assuntoLimpo, label, criadoEm);
+    enviarLoteLeads({ dispatchId: info.lastInsertRowid, publico, lote: escolhidos, dados: { assunto: assuntoLimpo, preheader, conteudo, cta, botao } })
+      .catch((err) => console.error("[EMAIL] Lote de leads:", err.message));
+    return res.json({
+      ok: true, quantidade: escolhidos.length, emAndamento: true, status: "enviando",
+      registro: { id: info.lastInsertRowid, assunto: assuntoLimpo, publico: label, quantidade: 0, status: "enviando", criadoEm },
+    });
+  }
 
   const { emails, label } = getDestinatarios(publico, emailsCustom);
   if (!emails.length) return res.status(400).json({ error: "Nenhum destinatário encontrado." });

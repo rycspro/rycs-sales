@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, Plus, Send, Eye, Users, Building2, UserCheck, X, CheckCircle, AlertTriangle, Sparkles, FileText, GitBranch } from "lucide-react";
+import { Mail, Plus, Send, Eye, Users, Building2, UserCheck, X, CheckCircle, AlertTriangle, Sparkles, FileText, GitBranch, Globe } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { dataCurta } from "../../lib/utils.js";
 import SequenciasFunil from "./SequenciasFunil.jsx";
@@ -9,6 +9,8 @@ const STATUS_LABEL = {
   enviado: { txt: "Enviado", color: "#22A06B" },
   falhou: { txt: "Falhou", color: "var(--red)" },
   parcial: { txt: "Parcial", color: "var(--amber)" },
+  enviando: { txt: "Enviando", color: "var(--brand)" },
+  interrompido: { txt: "Interrompido", color: "var(--amber)" },
 };
 
 export default function CentralEmails({ aviso }) {
@@ -436,6 +438,8 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
   const [preheader, setPreheader] = useState("");
   const [conteudo, setConteudo] = useState("");
   const [cta, setCta] = useState("");
+  const [botao, setBotao] = useState("Get started");
+  const [lote, setLote] = useState(200);
   const [emailTeste, setEmailTeste] = useState("");
   const [enviandoTeste, setEnviandoTeste] = useState(false);
   const [enviando, setEnviando] = useState(false);
@@ -448,10 +452,13 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
     { key: "empresas", label: "Somente empresas", Icon: Building2 },
     { key: "profissionais", label: "Somente profissionais", Icon: UserCheck },
     { key: "custom", label: "E-mails específicos", Icon: Mail },
+    { key: "leads_india", label: "Leads da Meta (Índia)", Icon: Globe },
   ];
+  // Leads da Meta: e-mail em inglês, com descadastro, enviado em lotes.
+  const ehLeads = publico === "leads_india";
 
   const carregarPreview = async () => {
-    const r = await api("/admin/emails/preview", { publico, emailsCustom });
+    const r = await api("/admin/emails/preview", { publico, emailsCustom, assunto, lote });
     if (r?.error) { aviso(r.error); return; }
     setPreviewInfo(r);
     setPasso(3);
@@ -460,7 +467,7 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
   const enviarTeste = async () => {
     if (!emailTeste) { aviso("Informe um e-mail de teste."); return; }
     setEnviandoTeste(true);
-    const r = await api("/admin/emails/teste", { para: emailTeste, assunto, preheader, conteudo, cta });
+    const r = await api("/admin/emails/teste", { para: emailTeste, assunto, preheader, conteudo, cta, botao, publico });
     setEnviandoTeste(false);
     if (r?.error) aviso(r.error);
     else aviso("E-mail de teste enviado. Não iniciou sequência.");
@@ -469,10 +476,12 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
   const enviar = async () => {
     if (!confirmado) { aviso("Confirme o envio."); return; }
     setEnviando(true);
-    const r = await api("/admin/emails/disparar", { publico, emailsCustom, assunto, preheader, conteudo, cta });
+    const r = await api("/admin/emails/disparar", { publico, emailsCustom, assunto, preheader, conteudo, cta, botao, lote });
     setEnviando(false);
     if (r?.error) { aviso(r.error); return; }
-    aviso(`Disparo enviado para ${r.quantidade} destinatário(s).`);
+    aviso(r.emAndamento
+      ? `Lote de ${r.quantidade} e-mail(s) em envio. Acompanhe no histórico.`
+      : `Disparo enviado para ${r.quantidade} destinatário(s).`);
     onConcluir(r.registro);
   };
 
@@ -505,6 +514,16 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
               <textarea className="vx-input" rows={4} value={emailsCustom} onChange={(e) => setEmailsCustom(e.target.value)} placeholder="email1@example.com, email2@example.com" />
             </div>
           )}
+          {ehLeads && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 13, fontSize: 13, lineHeight: 1.6, marginBottom: 12 }}>
+                Escreva em <b>inglês</b>. Quem já tem conta na RYCS ou se descadastrou fica de fora, e o e-mail leva o link de descadastro.
+                Use <b>{"{{nome}}"}</b> para o primeiro nome do lead. O envio sai em lotes: quem já recebeu este assunto é pulado no próximo lote.
+              </div>
+              <label className="vx-label" htmlFor="lote-leads">Máximo de e-mails neste lote</label>
+              <input id="lote-leads" className="vx-input" type="number" min={1} max={1000} value={lote} onChange={(e) => setLote(e.target.value)} style={{ maxWidth: 160 }} />
+            </div>
+          )}
           <button className="vx-btn vx-btn-primary" onClick={() => setPasso(2)}>Próximo →</button>
         </div>
       )}
@@ -529,6 +548,12 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
               <label className="vx-label">Link/CTA (opcional)</label>
               <input className="vx-input" value={cta} onChange={(e) => setCta(e.target.value)} placeholder="https://..." />
             </div>
+            {ehLeads && (
+              <div>
+                <label className="vx-label" htmlFor="botao-leads">Texto do botão</label>
+                <input id="botao-leads" className="vx-input" value={botao} onChange={(e) => setBotao(e.target.value)} placeholder="Get started" />
+              </div>
+            )}
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
             <button className="vx-btn vx-btn-sm" onClick={() => setPasso(1)}>← Voltar</button>
@@ -559,13 +584,13 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
                 {preheader && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{preheader}</div>}
                 <hr style={{ margin: "12px 0", border: 0, borderTop: "1px solid #e5e7eb" }} />
                 <div style={{ fontSize: 13.5, lineHeight: 1.65, whiteSpace: "pre-wrap", color: "#1f2937" }}>{conteudo}</div>
-                {cta && (
+                {(cta || ehLeads) && (
                   <div style={{ textAlign: "center", margin: "18px 0 10px" }}>
-                    <span style={{ background: "#2563EB", color: "#fff", padding: "10px 24px", borderRadius: 8, fontWeight: 600, fontSize: 13, display: "inline-block" }}>Acessar</span>
+                    <span style={{ background: "#2563EB", color: "#fff", padding: "10px 24px", borderRadius: 8, fontWeight: 600, fontSize: 13, display: "inline-block" }}>{ehLeads ? (botao || "Get started") : "Acessar"}</span>
                   </div>
                 )}
                 <hr style={{ margin: "12px 0", border: 0, borderTop: "1px solid #e5e7eb" }} />
-                <div style={{ color: "#9ca3af", fontSize: 11, textAlign: "center" }}>Equipe Hicks Pro</div>
+                <div style={{ color: "#9ca3af", fontSize: 11, textAlign: "center" }}>{ehLeads ? "The RYCS team · Don't want these emails? Unsubscribe" : "Equipe Hicks Pro"}</div>
               </div>
             </div>
 
@@ -592,6 +617,13 @@ function NovoDisparo({ aviso, onConcluir, onVoltar }) {
                   <div style={{ fontSize: 10.5, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>Destinatários</div>
                   <div style={{ fontWeight: 700, fontSize: 20, color: "var(--brand)" }}>{previewInfo.quantidade}</div>
                 </div>
+              </div>
+            )}
+            {previewInfo?.pendentes != null && (
+              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14, lineHeight: 1.6 }}>
+                Leads ainda sem este e-mail: <b>{previewInfo.pendentes}</b> · já receberam este assunto: <b>{previewInfo.jaReceberam}</b>.
+                {previewInfo.pendentes > previewInfo.quantidade && " O resto sai nos próximos lotes."}
+                {previewInfo.emAndamento && <div style={{ color: "var(--amber)", fontWeight: 600 }}>Há um lote sendo enviado agora. Espere ele terminar.</div>}
               </div>
             )}
             <div style={{ background: "var(--amber-50)", border: "1px solid var(--amber-100)", borderRadius: 10, padding: 13, marginBottom: 14, fontSize: 13 }}>

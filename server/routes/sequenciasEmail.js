@@ -11,7 +11,7 @@ import { assinaturaResendValida, registrarEventoResend, sincronizarStatusResend,
 // "cancelar inscrição" do Gmail (POST one-click, RFC 8058).
 export const sequenciasPublico = Router();
 
-const pagina = (titulo, corpo, form = "") => `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+const pagina = (titulo, corpo, form = "", lang = "pt-BR") => `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>${titulo}</title>
 <style>body{font-family:system-ui,sans-serif;background:#f5f7fb;color:#111827;margin:0;padding:48px 16px}
 main{max-width:440px;margin:0 auto;background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -20,22 +20,40 @@ button{min-height:44px;padding:0 22px;border:0;border-radius:10px;background:#25
 button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}</style></head>
 <body><main><h1>${titulo}</h1><p>${corpo}</p>${form}</main></body></html>`;
 
+// Textos da página; `l=en` no link (e-mails em inglês) abre em inglês.
+const TEXTOS_DESCADASTRO = {
+  pt: {
+    lang: "pt-BR",
+    invalido: ["Link inválido", "Este link de descadastro não é válido. Use o link do e-mail mais recente."],
+    confirmar: ["Parar de receber e-mails", "Você não vai mais receber os e-mails de acompanhamento da RYCS. E-mails de segurança da conta e de pagamentos continuam chegando.", "Confirmar descadastro"],
+    pronto: ["Pronto", "Você não vai mais receber os e-mails de acompanhamento da RYCS."],
+  },
+  en: {
+    lang: "en",
+    invalido: ["Invalid link", "This unsubscribe link is not valid. Please use the link from the most recent email."],
+    confirmar: ["Stop receiving emails", "You will no longer receive RYCS updates by email. Account security and payment emails will still be sent.", "Confirm unsubscribe"],
+    pronto: ["Done", "You will no longer receive RYCS updates by email."],
+  },
+};
+const textosDescadastro = (req) => TEXTOS_DESCADASTRO[req.query.l === "en" ? "en" : "pt"];
+
 sequenciasPublico.get("/email/descadastro", (req, res) => {
+  const t = textosDescadastro(req);
   const email = emailDoParametro(req.query.e);
   if (!email || !validarDescadastro(email, req.query.t)) {
-    return res.status(400).send(pagina("Link inválido", "Este link de descadastro não é válido. Use o link do e-mail mais recente."));
+    return res.status(400).send(pagina(t.invalido[0], t.invalido[1], "", t.lang));
   }
-  const acao = `/api/email/descadastro?e=${encodeURIComponent(req.query.e)}&t=${encodeURIComponent(req.query.t)}`;
-  res.send(pagina("Parar de receber e-mails",
-    "Você não vai mais receber os e-mails de acompanhamento da RYCS. E-mails de segurança da conta e de pagamentos continuam chegando.",
-    `<form method="post" action="${acao}"><button type="submit">Confirmar descadastro</button></form>`));
+  const acao = `/api/email/descadastro?e=${encodeURIComponent(req.query.e)}&t=${encodeURIComponent(req.query.t)}${req.query.l === "en" ? "&l=en" : ""}`;
+  res.send(pagina(t.confirmar[0], t.confirmar[1],
+    `<form method="post" action="${acao}"><button type="submit">${t.confirmar[2]}</button></form>`, t.lang));
 });
 
 sequenciasPublico.post("/email/descadastro", (req, res) => {
+  const t = textosDescadastro(req);
   const email = emailDoParametro(req.query.e);
-  if (!email || !validarDescadastro(email, req.query.t)) return res.status(400).send(pagina("Link inválido", "Este link de descadastro não é válido."));
+  if (!email || !validarDescadastro(email, req.query.t)) return res.status(400).send(pagina(t.invalido[0], t.invalido[1], "", t.lang));
   descadastrar(email);
-  res.send(pagina("Pronto", "Você não vai mais receber os e-mails de acompanhamento da RYCS."));
+  res.send(pagina(t.pronto[0], t.pronto[1], "", t.lang));
 });
 
 // Eventos do Resend (entregue, aberto, clicado, devolvido, spam). Assinado
