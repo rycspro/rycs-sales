@@ -85,7 +85,7 @@ if (!db.prepare("PRAGMA table_info(whatsapp_envios)").all().some((c) => c.name =
 
 // ── Números ───────────────────────────────────────────────────────────
 
-const DDI = { brasil: "55", india: "91", "estados unidos": "1", eua: "1", usa: "1", "reino unido": "44", portugal: "351" };
+const DDI = { brasil: "55", br: "55", india: "91", in: "91", "estados unidos": "1", eua: "1", usa: "1", us: "1", "reino unido": "44", uk: "44", gb: "44", portugal: "351", pt: "351" };
 const semAcento = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 // Número no formato que a Cloud API espera (só dígitos, com DDI). Vazio quando
@@ -152,7 +152,22 @@ export const PUBLICOS = {
     filtro: (s) => pendenciasPerfil(s).length > 0,
     comPendencias: true,
   },
+  // Quem preencheu um formulário de anúncio da RYCS na Meta e deixou telefone da
+  // Índia. Quem já tem conta na plataforma (mesmo e-mail) fica de fora.
+  leads_india: { label: "Leads dos formulários da Meta (Índia)", fonte: "leads", ddi: "91" },
 };
+
+// Linhas de cada público: profissionais (padrão) ou leads dos formulários da Meta.
+function linhasDoPublico(p) {
+  if (p.fonte !== "leads") {
+    return db.prepare(`SELECT id, nome, whats, pais, ${CAMPOS_PERFIL_SQL} FROM sellers WHERE ${p.where} ORDER BY criadoEm`).all();
+  }
+  if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rycs_leads_meta'").get()) return [];
+  const comConta = new Set(db.prepare("SELECT lower(email) AS e FROM users WHERE email IS NOT NULL").all().map((u) => u.e));
+  return db.prepare("SELECT leadgenId, nome, telefone AS whats, pais, lower(email) AS email FROM rycs_leads_meta ORDER BY criadoEm").all()
+    .filter((l) => !l.email || !comConta.has(l.email))
+    .map((l) => ({ id: null, nome: l.nome, whats: l.whats, pais: l.pais }));
+}
 
 // Campos que a regra de perfil completo lê. A foto vem só como "tem ou não tem",
 // para não carregar a imagem inteira de cada vendedor.
@@ -182,8 +197,7 @@ const sqlRecebidos = db.prepare(`SELECT DISTINCT e.numero FROM whatsapp_envios e
 export function destinatarios(publico, { template } = {}) {
   const p = PUBLICOS[publico];
   if (!p) return null;
-  const rows = db.prepare(`SELECT id, nome, whats, pais, ${CAMPOS_PERFIL_SQL} FROM sellers WHERE ${p.where} ORDER BY criadoEm`).all()
-    .filter((s) => !p.filtro || p.filtro(s));
+  const rows = linhasDoPublico(p).filter((s) => !p.filtro || p.filtro(s));
   const sair = descadastrados();
   const recebidos = new Set(template ? sqlRecebidos.all(template).map((r) => r.numero) : []);
   const vistos = new Set();

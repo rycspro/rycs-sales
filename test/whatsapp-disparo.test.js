@@ -251,6 +251,22 @@ test("muitas falhas param o disparo para proteger a conta", async () => {
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM whatsapp_envios WHERE disparoId = ? AND erro = 'Disparo interrompido'").get(d.id).n, d.lista.length - 20);
 });
 
+test("público de leads da Índia: só telefone +91, sem quem já tem conta, com o primeiro nome", () => {
+  db.exec(`CREATE TABLE IF NOT EXISTS rycs_leads_meta (leadgenId TEXT PRIMARY KEY, nome TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
+    telefone TEXT NOT NULL DEFAULT '', pais TEXT NOT NULL DEFAULT '', criadoEm INTEGER NOT NULL)`);
+  const lead = db.prepare("INSERT INTO rycs_leads_meta (leadgenId, nome, email, telefone, pais, criadoEm) VALUES (?, ?, ?, ?, ?, ?)");
+  lead.run("l1", "rahul sharma", "rahul@x.invalid", "+919876500001", "IN", ts + 1);
+  lead.run("l2", "Priya K", "priya@x.invalid", "98765 00002", "India", ts + 2);
+  lead.run("l3", "Joana", "joana@x.invalid", "+5511988887777", "BR", ts + 3);
+  lead.run("l4", "Amit Já Cadastrado", "amit@x.invalid", "+919876500004", "IN", ts + 4);
+  db.prepare("INSERT INTO users (id, email, senha, role, criadoEm) VALUES ('u-amit', 'amit@x.invalid', 'x', 'vendedor', ?)").run(ts);
+
+  const d = wa.destinatarios("leads_india");
+  assert.deepEqual(d.lista.map((p) => [p.numero, p.nome, p.sellerId]), [["919876500001", "Rahul", null], ["919876500002", "Priya", null]]);
+  assert.equal(d.semNumero, 1, "o lead do Brasil não é deste público");
+  assert.equal(d.total, 3, "quem já tem conta nem entra na conta");
+});
+
 // Por último: o aviso de bloqueio trava novos disparos por 24h.
 test("aviso de bloqueios da Meta (131048) para o disparo e trava novos por 24h", async () => {
   const tpl = wa.resumirTemplate({ ...TEMPLATE, name: "aviso_bloqueio" });
