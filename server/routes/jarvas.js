@@ -5,7 +5,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { paraFala, frasesFixas } from "../../shared/jarvas.js";
 
-// Voz do Jarvas (ElevenLabs).
+// Voz do Rico (ElevenLabs).
 //
 // A chave fica só aqui (ELEVENLABS_API_KEY); a tela manda o texto e recebe o
 // áudio. Sem chave, ou se o ElevenLabs falhar, a resposta diz `fallback` e a
@@ -56,7 +56,7 @@ async function vozId() {
   try {
     const r = await fetch(`${BASE}/v1/voices`, { headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY }, signal: AbortSignal.timeout(8000) });
     const { voices = [] } = r.ok ? await r.json() : {};
-    // O Jarvas é masculino: primeiro voz masculina em português, depois
+    // O Rico é masculino: primeiro voz masculina em português, depois
     // qualquer voz masculina da conta.
     const pt = (v) => /portugu|brazil|brasil|pt-br/i.test(JSON.stringify(v.labels || {}) + (v.name || ""));
     const masculina = (v) => /\bmale\b|masculin/i.test(v.labels?.gender || "");

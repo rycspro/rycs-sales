@@ -1,4 +1,4 @@
-// Jarvas: o assistente que monta a campanha conversando.
+// Rico: o assistente que monta a campanha conversando.
 //
 // Roda inteiro dentro da RYCS, sem provedor externo. Três partes:
 //
@@ -285,10 +285,10 @@ export function interpretarResposta(texto, campo, r = {}, emp = {}) {
 // Ajuste depois do resumo: tudo o que a frase disser, por nome ou não.
 export const interpretarAjuste = (texto) => interpretar(texto, null);
 
-// O microfone ouve o próprio Jarvas falando. Se o que foi ouvido é quase
+// O microfone ouve o próprio Rico falando. Se o que foi ouvido é quase
 // tudo palavra da fala dele, é eco, não a pessoa.
 export function pareceEco(ouvido, falado, limiar = 0.6) {
-  // Eco repete a fala do Jarvas NA ORDEM; uma resposta pode repetir palavras
+  // Eco repete a fala do Rico NA ORDEM; uma resposta pode repetir palavras
   // da pergunta ("quero 3 profissionais" depois de "Quantos profissionais?")
   // sem ser eco. Por isso a comparação é por pares de palavras seguidas.
   // Números sem separador ("15.000" = "15000") e a fala também na forma
@@ -305,14 +305,14 @@ export function pareceEco(ouvido, falado, limiar = 0.6) {
 }
 
 // A frase parou numa palavra de ligação ("e…", "para…", "tipo…"): a pessoa
-// ainda vai continuar, então o Jarvas espera mais antes de responder.
+// ainda vai continuar, então o Rico espera mais antes de responder.
 export const fraseIncompleta = (texto) =>
   /\b(e|de|da|do|das|dos|para|pra|com|que|o|a|os|as|um|uma|mais|em|no|na|tipo|entao|ne|ah|eh|hum|uhm|mas|ou|porque|se)$/.test(sem(texto).trim().replace(/[.,!?]+$/, ""));
 
 // ---------------------------------------------------------------------------
 // 2. Condução
 //
-// Com ticket, o Jarvas conduz pelo retorno, como num funil de verdade:
+// Com ticket, o Rico conduz pelo retorno, como num funil de verdade:
 // conversão ("de cada 10 reuniões, quantas viram venda?") → mostra quanto
 // isso dá em vendas → retorno desejado → só então o custo por tarefa → meta
 // do mês e o resultado do mês. Sem ticket ou sem conversão, não há como
@@ -341,7 +341,7 @@ export function proximoCampo(r) {
 }
 
 // Pergunta: { texto, chips: [{ rotulo, patch?, seguir? }] }. Chip com patch
-// aplica o valor direto; com `seguir`, o Jarvas responde com essa frase.
+// aplica o valor direto; com `seguir`, o Rico responde com essa frase.
 export function perguntar(campo, r, emp = {}) {
   const obj = OBJETIVOS[r.objetivo];
   const p = principalDe(r);
@@ -579,8 +579,17 @@ export function resumo(r) {
   return linhas;
 }
 
-export function saudacao(emp = {}) {
-  return "Oi, sou o Jarvas. Vamos montar sua campanha.";
+// Nome do assistente por idioma (antes se chamava Rico). Em português e em
+// espanhol ele é o Rico: soa natural na voz, é apelido comum de Ricardo e
+// lembra "rico". Nos demais idiomas é o Rick: em inglês "Rico" lembra a lei
+// RICO e "Rich" soa como adjetivo. O idioma vem do seletor (src/lib/i18n.jsx).
+const NOME_POR_IDIOMA = { pt: "Rico", es: "Rico" };
+export function nomeAssistente(locale = "pt-BR") {
+  return NOME_POR_IDIOMA[String(locale || "pt-BR").split("-")[0].toLowerCase()] || "Rick";
+}
+
+export function saudacao(emp = {}, nome = nomeAssistente()) {
+  return `Oi, sou o ${nome}. Vamos montar sua campanha.`;
 }
 
 // Fim da conversa: a frase que convida a revisar e montar.
@@ -645,14 +654,14 @@ export function frasesFixas() {
 }
 
 // A frase já responde a pergunta em aberto ("3", "sim", "Sorocaba")? Então
-// o Jarvas não precisa esperar a pausa longa para responder.
+// o Rico não precisa esperar a pausa longa para responder.
 export function respostaCompleta(texto, campo, r = {}, emp = {}) {
   if (!campo || fraseIncompleta(texto)) return false;
   if (campo === "ajuste") return confirmaMontagem(texto) || Object.keys(interpretarResposta(texto, campo, r, emp)).length > 0;
   return interpretarResposta(texto, campo, r, emp)[campo] != null;
 }
 
-// Tira do começo do que foi ouvido o pedaço que é eco da fala do Jarvas
+// Tira do começo do que foi ouvido o pedaço que é eco da fala do Rico
 // (quando a pessoa começa a falar por cima, o reconhecimento junta os dois).
 export function semEco(ouvido, falado) {
   const norm = (w) => sem(w).replace(/(\d)[.,](?=\d)/g, "$1").replace(/[^a-z0-9]/g, "");

@@ -1,8 +1,9 @@
 import test from "node:test";
+import { nomeAssistente, saudacao as saudacaoAssistente } from "../shared/jarvas.js";
 import assert from "node:assert/strict";
 import { numeroDe, taxaDe, multiploDe, interpretar, interpretarAjuste, interpretarResposta, proximoCampo, perguntar, reagir, resumo, calcularTarefasJarvas, paraFala, confirmaMontagem, pareceEco, segmentosDeFala, frasesFixas, fraseIncompleta, aplicar, tituloPadrao, respostaCompleta, semEco } from "../shared/jarvas.js";
 
-// Jarvas (shared/jarvas.js): entende português do dia a dia, pula o que já
+// Rico (shared/jarvas.js): entende português do dia a dia, pula o que já
 // sabe e reage com conta de verdade, sem provedor externo.
 
 test("números em algarismo, abreviados e por extenso", () => {
@@ -129,7 +130,7 @@ test("voz por frase: fixas gravadas uma vez, só a frase com número da empresa 
   assert.deepEqual(segmentosDeFala("Então 10 reuniões viram R$ 15.000 em vendas. Quer quantas vezes de retorno?"),
     ["Então 10 reuniões viram R$ 15.000 em vendas.", "Quer quantas vezes de retorno?"]);
   const fixas = frasesFixas();
-  for (const f of ["Confirma?", "Mantenho?", "Quantos profissionais?", "Quer quantas vezes de retorno?", "Oi, sou o Jarvas.", "Posso montar?"])
+  for (const f of ["Confirma?", "Mantenho?", "Quantos profissionais?", "Quer quantas vezes de retorno?", "Oi, sou o Rico.", "Posso montar?"])
     assert.ok(fixas.includes(f), f);
   assert.ok(!fixas.some((f) => /R\$|\d{3}/.test(f)), "nenhuma frase fixa tem valor de empresa");
   // As fixas são gravadas uma única vez (TTS), então o custo é o total de
@@ -149,7 +150,7 @@ test("frases que gastam crédito: curtas e só com número", () => {
 });
 
 test("conversa sem cortes: eco com números e frase incompleta", () => {
-  // O reconhecimento escreve o eco do Jarvas com números e "reais" do jeito falado.
+  // O reconhecimento escreve o eco do Rico com números e "reais" do jeito falado.
   assert.ok(pareceEco("10 reuniões 15000 reais", "10 reuniões: R$ 15.000.", 0.3));
   assert.ok(!pareceEco("três de cada dez", "10 reuniões: R$ 15.000.", 0.3));
   assert.ok(fraseIncompleta("quero agendar reuniões com"));
@@ -190,4 +191,14 @@ test("responde logo quando a resposta já está completa", () => {
 test("fala por cima: tira o eco do começo do que foi ouvido", () => {
   assert.equal(semEco("quer quantas vezes de retorno cinco vezes", "Quer quantas vezes de retorno?"), "cinco vezes");
   assert.equal(semEco("cinco vezes", "Quer quantas vezes de retorno?"), "cinco vezes");
+});
+
+test("nome do assistente por idioma: Rico em português e espanhol, Rick nos demais", () => {
+  assert.equal(nomeAssistente("pt-BR"), "Rico");
+  assert.equal(nomeAssistente("es"), "Rico");
+  assert.equal(nomeAssistente("en"), "Rick");
+  assert.equal(nomeAssistente("fr"), "Rick");
+  assert.equal(nomeAssistente(), "Rico");
+  assert.equal(saudacaoAssistente(), "Oi, sou o Rico. Vamos montar sua campanha.");
+  assert.equal(saudacaoAssistente({}, nomeAssistente("en")), "Oi, sou o Rick. Vamos montar sua campanha.");
 });

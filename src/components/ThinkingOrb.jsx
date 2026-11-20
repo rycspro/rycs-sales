@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 
-// Orb do Jarvas. Uso: <ThinkingOrb state="speaking" size={184} nivel={ref} />
+// Orb do Rico. Uso: <ThinkingOrb state="speaking" size={184} nivel={ref} />
 //
 // Design escolhido pelo dono (adaptado do loader "joao-canais" do Uiverse):
 // um disco escuro com um anel de luz azul girando por dentro, feito de
 // sombras internas que mudam de tom enquanto giram. Nada no centro (pedido
 // do dono).
 //
-// `nivel` é um ref com o volume do momento (0 a 1): a voz do Jarvas ou o
+// `nivel` é um ref com o volume do momento (0 a 1): a voz do Rico ou o
 // microfone. O orb lê esse valor a cada quadro e o anel pulsa e brilha no
 // ritmo do som, sem re-renderizar o React.
 //
@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react";
 // - idle:       devagar
 // - connecting: giro do design original
 // - thinking:   mais rápido
-// - speaking:   reage ao volume da voz do Jarvas
+// - speaking:   reage ao volume da voz do Rico
 // - listening:  reage ao volume do microfone, tom mais claro
 //
 // Medidas proporcionais ao tamanho (o design original tem 180px). Cores do

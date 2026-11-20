@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { subirServidor, assinar } from "./apoio/servidor.js";
 
-// Voz do Jarvas (server/routes/jarvas.js) contra um ElevenLabs falso local
+// Voz do Rico (server/routes/jarvas.js) contra um ElevenLabs falso local
 // (ELEVENLABS_BASE_URL só vale com NODE_ENV=test).
 
 const empresa = assinar({ id: "u-voz", role: "empresa", entityId: "emp-voz" });

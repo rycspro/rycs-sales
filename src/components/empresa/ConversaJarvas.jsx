@@ -2,24 +2,25 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Check, Keyboard, Mic, Pause, RotateCcw, Send, Volume2, VolumeX } from "lucide-react";
 import ThinkingOrb from "../ThinkingOrb.jsx";
 import { API_URL } from "../../lib/api.js";
+import { useI18n } from "../../lib/i18n.jsx";
 import { montarCampanha } from "../../../shared/objetivosCampanha.js";
 import {
   interpretarResposta, proximoCampo, perguntar, pedirDeNovo, reagir, saudacao, resumo,
   calcularTarefasJarvas, FECHAMENTO, confirmaMontagem, paraFala, pareceEco, segmentosDeFala, fraseIncompleta,
-  aplicar, tituloPadrao, respostaCompleta, semEco,
+  aplicar, tituloPadrao, respostaCompleta, semEco, nomeAssistente,
 } from "../../../shared/jarvas.js";
 
-// Conversa assistida por voz com o Jarvas, sem botão de falar.
+// Conversa assistida por voz com o Rico, sem botão de falar.
 //
 // Um toque no orb abre a conversa (o navegador exige um gesto para liberar o
 // som e o microfone). Daí em diante é mãos livres, como numa ligação:
 // - o microfone fica aberto o tempo todo, sem pausa, nos dois sentidos;
-// - a pessoa começa a falar por cima e o Jarvas para na hora: um detector de
+// - a pessoa começa a falar por cima e o Rico para na hora: um detector de
 //   fala simultânea compara, a cada quadro, o volume do microfone com o da
 //   voz dele (e aprende quanto da voz dele vaza de volta para o microfone);
-// - se o Jarvas já ia responder e a pessoa continua falando, ele desiste da
+// - se o Rico já ia responder e a pessoa continua falando, ele desiste da
 //   resposta e junta tudo o que ela disse numa vez só;
-// - quando a pessoa termina, o Jarvas responde sem esperar clique nenhum;
+// - quando a pessoa termina, o Rico responde sem esperar clique nenhum;
 // - o que o reconhecimento transcreve da própria voz dele é descartado (eco).
 // Um novo toque no orb pausa e retoma. Sem microfone, a mesma conversa segue
 // digitando.
@@ -33,7 +34,7 @@ import {
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 // Ritmo da conversa. Calibrado para não atropelar ninguém: a pessoa termina
-// a frase, e o Jarvas só para de falar quando alguém realmente fala por cima.
+// a frase, e o Rico só para de falar quando alguém realmente fala por cima.
 const PAUSA_FIM_FALA = 600;         // buffer fim: 600ms silêncio encerra a vez da pessoa
 const PAUSA_FIM_PARCIAL = 900;      // idem, quando a última parte ainda não é final
 const PAUSA_EXTRA_INCOMPLETA = 600; // frase parada em "e…", "para…": espera mais
@@ -46,9 +47,9 @@ const CARENCIA_POS_FALA = 0;       // sem carência pós-fala: usuário pode fal
 
 const ESTADO_ORB = { parado: "idle", conectando: "connecting", falando: "speaking", ouvindo: "listening", pensando: "thinking", pausado: "idle", montando: "thinking" };
 const STATUS = {
-  parado: "Toque no orbe para conversar com o Jarvas",
+  parado: "Toque no orbe para conversar com o {nome}",
   conectando: "Conectando…",
-  falando: "Jarvas falando · pode interromper",
+  falando: "{nome} falando · pode interromper",
   ouvindo: "Ouvindo…",
   pensando: "Pensando…",
   pausado: "Pausado · toque no orbe para continuar",
@@ -57,6 +58,8 @@ const STATUS = {
 
 export default function ConversaJarvas({ emp, onCampanha }) {
   const id = useId();
+  const { locale } = useI18n();
+  const nome = nomeAssistente(locale);
   const [fase, setFase] = useState("parado");
   const [legenda, setLegenda] = useState({ palavras: [], ate: 0 });
   const [anuncio, setAnuncio] = useState("");
@@ -82,8 +85,8 @@ export default function ConversaJarvas({ emp, onCampanha }) {
   const rec = useRef(null);
   const escutando = useRef(false);  // a escuta contínua deve ficar ligada
   const interromper = useRef(null);
-  const falaAtual = useRef("");     // o que o Jarvas está dizendo (para filtrar eco)
-  const fimDaFala = useRef(0);      // quando o Jarvas terminou de falar
+  const falaAtual = useRef("");     // o que o Rico está dizendo (para filtrar eco)
+  const fimDaFala = useRef(0);      // quando o Rico terminou de falar
   const duplex = useRef({ vazamento: 0.6, piso: 0.01, acima: 0, inicio: 0 }); // detector de fala simultânea
   const respostaId = useRef(0);     // resposta em preparo (cancelada se a pessoa continuar falando)
   const ultimoDito = useRef("");    // o que a pessoa disse na última vez
@@ -119,7 +122,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
   }, []);
 
   // A cada quadro: volume para o orb e detector de fala simultânea.
-  // Enquanto o Jarvas fala, o microfone capta um pouco da voz dele (vazamento
+  // Enquanto o Rico fala, o microfone capta um pouco da voz dele (vazamento
   // da caixa de som). O detector aprende essa proporção e, quando o microfone
   // fica acima dela por FALA_SIMULTANEA_MS, é a pessoa falando: ele para.
   useEffect(() => {
@@ -158,7 +161,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     return () => cancelAnimationFrame(q);
   }, []);
 
-  // A pessoa começou a falar: o Jarvas para de falar ou desiste da resposta
+  // A pessoa começou a falar: o Rico para de falar ou desiste da resposta
   // que estava preparando (e o que ela disse antes se junta ao que vem agora).
   const interromperPorFala = () => {
     const f = faseRef.current;
@@ -171,7 +174,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
     }
   };
 
-  const primeiraFala = () => `${saudacao(emp)} ${perguntar("objetivo", {}, emp).texto}`;
+  const primeiraFala = () => `${saudacao(emp, nome)} ${perguntar("objetivo", {}, emp).texto}`;
 
   // ---- som ---------------------------------------------------------------
 
@@ -330,7 +333,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       const recente = Date.now() - fimDaFala.current < CARENCIA_POS_FALA;
       let palavras = (dito.match(/\S+/g) || []).length;
 
-      // O microfone ouviu o próprio Jarvas (enquanto ele fala ou logo depois).
+      // O microfone ouviu o próprio Rico (enquanto ele fala ou logo depois).
       // Se o SR capturou eco + resposta juntos ("quantos profissionais três"),
       // semEco preserva o que é da pessoa ("três") em vez de descartar tudo.
       if ((f === "falando" || recente) && pareceEco(dito, falaAtual.current, ECO_FALANDO)) {
@@ -348,14 +351,14 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       }
       if (f === "pausado" || f === "montando") return;
       // Pelo texto também: palavras que não são eco, enquanto ele fala, param o
-      // Jarvas (o detector de volume costuma chegar antes).
+      // Rico (o detector de volume costuma chegar antes).
       if (f === "falando") { if (palavras < PALAVRAS_PARA_INTERROMPER) return; interromperPorFala(); }
       // Ele ia responder e a pessoa continuou falando: junta e segue ouvindo.
       if (f === "pensando") interromperPorFala();
       if (faseRef.current !== "ouvindo") mudarFase("ouvindo");
       setOuvido(`${vez.current.final} ${vez.current.parcial}`.trim());
       clearTimeout(v.timer);
-      // Resposta completa ("3", "sim", "Sorocaba"): o Jarvas responde logo.
+      // Resposta completa ("3", "sim", "Sorocaba"): o Rico responde logo.
       // Frase longa ou parada no meio: espera a pessoa terminar.
       const espera = !v.parcial && respostaCompleta(dito, campo.current, respostas.current, emp)
         ? PAUSA_RESPOSTA_COMPLETA
@@ -548,12 +551,12 @@ export default function ConversaJarvas({ emp, onCampanha }) {
       `}</style>
 
       <button type="button" className="cj-orb" onClick={tocarOrb} disabled={fase === "montando"}
-        aria-label={fase === "parado" ? "Começar a conversa com o Jarvas" : fase === "pausado" ? "Continuar a conversa" : "Pausar a conversa"}>
+        aria-label={fase === "parado" ? `Começar a conversa com o ${nome}` : fase === "pausado" ? "Continuar a conversa" : "Pausar a conversa"}>
         <ThinkingOrb state={ESTADO_ORB[fase]} size={tamanho} nivel={nivel} decorativo />
       </button>
-      <p className="cj-status" aria-hidden="true">{modoTexto && fase === "ouvindo" ? "Sua vez · escreva abaixo" : STATUS[fase]}</p>
+      <p className="cj-status" aria-hidden="true">{modoTexto && fase === "ouvindo" ? "Sua vez · escreva abaixo" : STATUS[fase].replace("{nome}", nome)}</p>
 
-      {/* Indicador visual de microfone — aparece quando o Jarvas está ouvindo */}
+      {/* Indicador visual de microfone — aparece quando o Rico está ouvindo */}
       {fase === "ouvindo" && !modoTexto && (
         <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--brand)" }}>
           <Mic size={12} />
@@ -602,7 +605,7 @@ export default function ConversaJarvas({ emp, onCampanha }) {
 
       {modoTexto && ativo && (
         <form className="cj-texto" onSubmit={enviarTexto}>
-          <label htmlFor={`${id}-txt`} className="vx-sr">Responder ao Jarvas por escrito</label>
+          <label htmlFor={`${id}-txt`} className="vx-sr">Responder ao {nome} por escrito</label>
           <input id={`${id}-txt`} ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} autoComplete="off"
             placeholder={campo.current === "ajuste" ? "Peça uma mudança ou diga \"pode montar\"" : "Escreva sua resposta…"} />
           <button type="submit" className="cj-enviar" aria-label="Enviar" disabled={!texto.trim()}><Send size={17} /></button>
