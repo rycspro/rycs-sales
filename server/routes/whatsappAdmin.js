@@ -153,6 +153,23 @@ router.get("/admin/whatsapp/custos", requireAdmin, exigirConfig, async (req, res
   res.json({ dias, custos, cobranca, estatisticas, links: conta.linksMeta() });
 });
 
+// GET /api/admin/whatsapp/saldo — gastos do WhatsApp, saldo estimado e conta de anúncios
+router.get("/admin/whatsapp/saldo", requireAdmin, exigirConfig, async (req, res) => {
+  res.json(await conta.saldoMeta());
+});
+
+// POST /api/admin/whatsapp/recargas — registra uma recarga feita na Meta
+router.post("/admin/whatsapp/recargas", requireAdmin, (req, res) => {
+  try { res.json(conta.registrarRecarga(req.body || {}, req.user.id)); } catch (e) {
+    res.status(e?.validacao ? 400 : 500).json({ error: e?.message || "Falha ao registrar." });
+  }
+});
+
+// DELETE /api/admin/whatsapp/recargas/:id — apaga uma recarga lançada errada
+router.delete("/admin/whatsapp/recargas/:id", requireAdmin, (req, res) => {
+  res.json({ ok: conta.apagarRecarga(req.params.id) > 0 });
+});
+
 // POST /api/admin/whatsapp/estatisticas/ligar — liga as estatísticas de modelos na Meta
 router.post("/admin/whatsapp/estatisticas/ligar", requireAdmin, exigirConfig, async (req, res) => {
   try { res.json(await conta.ligarEstatisticas()); } catch (e) { erroMeta(res, e); }

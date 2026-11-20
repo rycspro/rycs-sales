@@ -122,3 +122,35 @@ test("links do painel da Meta usam o negócio, a conta e o app da RYCS", () => {
   assert.ok(links.some((l) => l.url.includes("/apps/APP1/")));
   assert.ok(links.every((l) => l.url.startsWith("https://")));
 });
+
+test("gastos do WhatsApp: hoje, 7 dias, mês e desde a recarga", () => {
+  const agoraMs = Date.UTC(2026, 10, 20, 15, 0);
+  const dias = [
+    { dia: "2026-11-20", custo: 0.5 }, { dia: "2026-11-19", custo: 1.61 }, { dia: "2026-11-14", custo: 2 }, { dia: "2026-10-31", custo: 9 },
+  ];
+  assert.deepEqual(conta.resumirGastos(dias, { agoraMs, desdeMs: Date.UTC(2026, 10, 19, 22, 0) }),
+    { hoje: 0.5, seteDias: 4.11, mes: 4.11, desdeRecarga: 2.11 });
+});
+
+test("saldo estimado: recargas registradas menos o gasto que a Meta informa desde a primeira", async () => {
+  assert.throws(() => conta.registrarRecarga({ valor: "0" }), /valor/);
+  assert.throws(() => conta.registrarRecarga({ valor: "10", em: "2999-01-01" }), /Data/);
+  const hoje = new Date().toISOString().slice(0, 10);
+  const { id } = conta.registrarRecarga({ valor: "10,00", em: hoje, observacao: "Pix" }, "adm");
+  assert.deepEqual(conta.listarRecargas().map((r) => [r.valor, r.observacao]), [[10, "Pix"]]);
+
+  chamadas = [];
+  const inicioHoje = Math.floor(Date.parse(`${hoje}T00:00:00Z`) / 1000);
+  responder = (u) => (u.searchParams.get("fields")?.startsWith("pricing_analytics")
+    ? { pricing_analytics: { data: [{ data_points: [{ start: inicioHoje, volume: 46, cost: 1.61, pricing_category: "UTILITY", pricing_type: "REGULAR" }] }] } }
+    : { currency: "BRL", ownership_type: "SELF" });
+  const s = await conta.saldoMeta();
+  assert.equal(s.moeda, "BRL");
+  assert.equal(s.whatsapp.hoje, 1.61);
+  assert.equal(s.totalRecargas, 10);
+  assert.equal(s.saldoEstimado, 8.39);
+  assert.equal(s.anuncios.ok, false, "sem META_ADS_TOKEN a conta de anúncios avisa em vez de inventar");
+
+  assert.equal(conta.apagarRecarga(id), 1);
+  assert.equal((await conta.saldoMeta()).saldoEstimado, null, "sem recarga registrada não há saldo estimado");
+});

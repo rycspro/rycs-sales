@@ -8,8 +8,9 @@ import MensagensWhatsapp from "./MensagensWhatsapp.jsx";
 import CustosWhatsapp from "./CustosWhatsapp.jsx";
 import ContaWhatsapp from "./ContaWhatsapp.jsx";
 import ConversasWhatsapp from "./ConversasWhatsapp.jsx";
+import SaldoWhatsapp from "./SaldoWhatsapp.jsx";
 
-const ABAS = [["disparos", "Disparos e desempenho"], ["conversas", "Conversas"], ["mensagens", "Mensagens enviadas"], ["custos", "Custos e cliques"], ["conta", "Conta e configurações"]];
+const ABAS = [["disparos", "Disparos e desempenho"], ["conversas", "Conversas"], ["mensagens", "Mensagens enviadas"], ["saldo", "Saldo"], ["custos", "Custos e cliques"], ["conta", "Conta e configurações"]];
 
 const STATUS = {
   enviando: { txt: "Enviando", color: "var(--brand)" },
@@ -85,6 +86,7 @@ export default function DisparoWhatsapp({ aviso }) {
 
       {aba === "conversas" && <ConversasWhatsapp aviso={aviso} onLidas={setNaoLidas} />}
       {aba === "mensagens" && <MensagensWhatsapp aviso={aviso} disparos={info?.disparos || []} />}
+      {aba === "saldo" && <SaldoWhatsapp aviso={aviso} />}
       {aba === "custos" && <CustosWhatsapp aviso={aviso} />}
       {aba === "conta" && <ContaWhatsapp aviso={aviso} />}
 
