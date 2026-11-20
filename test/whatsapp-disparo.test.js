@@ -259,12 +259,25 @@ test("público de leads da Índia: só telefone +91, sem quem já tem conta, com
   lead.run("l2", "Priya K", "priya@x.invalid", "98765 00002", "India", ts + 2);
   lead.run("l3", "Joana", "joana@x.invalid", "+5511988887777", "BR", ts + 3);
   lead.run("l4", "Amit Já Cadastrado", "amit@x.invalid", "+919876500004", "IN", ts + 4);
+  lead.run("l5", "Neha", "neha@x.invalid", "919876500005", "", ts + 5); // formulário sem país: 91 + 10 dígitos é Índia
+  lead.run("l6", "Sem DDI", "semddi@x.invalid", "9876500006", "", ts + 6); // sem DDI nem país: não arrisca
   db.prepare("INSERT INTO users (id, email, senha, role, criadoEm) VALUES ('u-amit', 'amit@x.invalid', 'x', 'vendedor', ?)").run(ts);
 
   const d = wa.destinatarios("leads_india");
-  assert.deepEqual(d.lista.map((p) => [p.numero, p.nome, p.sellerId]), [["919876500001", "Rahul", null], ["919876500002", "Priya", null]]);
-  assert.equal(d.semNumero, 1, "o lead do Brasil não é deste público");
-  assert.equal(d.total, 3, "quem já tem conta nem entra na conta");
+  assert.deepEqual(d.lista.map((p) => [p.numero, p.nome, p.sellerId]),
+    [["919876500001", "Rahul", null], ["919876500002", "Priya", null], ["919876500005", "Neha", null]]);
+  assert.equal(d.semNumero, 2, "o lead do Brasil e o sem DDI não são deste público");
+  assert.equal(d.total, 5, "quem já tem conta nem entra na conta");
+});
+
+test("formulário com o telefone numa pergunta própria (whatsapp_number) vira telefone do lead", async () => {
+  const { lerCamposLead, telefoneDosOutros } = await import("../shared/campanhas.js");
+  const l = lerCamposLead([{ name: "full_name", values: ["Ravi Kumar"] }, { name: "email", values: ["Ravi@X.invalid"] },
+    { name: "whatsapp_number", values: ["+91 98765 43210"] }]);
+  assert.deepEqual({ nome: l.nome, email: l.email, telefone: l.telefone }, { nome: "Ravi Kumar", email: "ravi@x.invalid", telefone: "+91 98765 43210" });
+  assert.equal(lerCamposLead([{ name: "phone_number", values: ["+5511999990000"] }, { name: "whatsapp_number", values: ["+91 98765 43210"] }]).telefone,
+    "+5511999990000", "o campo padrão de telefone tem prioridade");
+  assert.equal(telefoneDosOutros({ qual_seu_cargo: "SDR 1234567890" }), "", "pergunta que não é de telefone não conta");
 });
 
 // Por último: o aviso de bloqueio trava novos disparos por 24h.

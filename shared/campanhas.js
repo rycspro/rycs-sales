@@ -165,6 +165,14 @@ export function agruparCampanhas({ tipo, visitantes = [], contas = [], gastos = 
 // field_data de um lead do formulário instantâneo → { nome, email, telefone, cidade, pais, outros }.
 // Os nomes padrão da Meta vêm em inglês; perguntas próprias ficam em `outros`.
 const PADRAO = { full_name: "nome", email: "email", phone_number: "telefone", city: "cidade", country: "pais" };
+
+// Telefone pedido numa pergunta personalizada (ex.: "whatsapp_number") quando o
+// formulário não usa o campo padrão de telefone.
+export function telefoneDosOutros(outros = {}) {
+  const k = Object.keys(outros || {}).find((n) => /whats|phone|telefone|celular|mobile/i.test(n) && String(outros[n]).replace(/\D/g, "").length >= 8);
+  return k ? String(outros[k]) : "";
+}
+
 export function lerCamposLead(fieldData = []) {
   const lido = { nome: "", email: "", telefone: "", cidade: "", pais: "", outros: {} };
   let primeiro = "", ultimo = "";
@@ -178,6 +186,7 @@ export function lerCamposLead(fieldData = []) {
     else lido.outros[nome.slice(0, 80)] = valor;
   }
   if (!lido.nome) lido.nome = [primeiro, ultimo].filter(Boolean).join(" ");
+  if (!lido.telefone) lido.telefone = telefoneDosOutros(lido.outros);
   lido.email = lido.email.toLowerCase();
   return lido;
 }

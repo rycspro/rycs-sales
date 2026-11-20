@@ -166,7 +166,8 @@ function linhasDoPublico(p) {
   const comConta = new Set(db.prepare("SELECT lower(email) AS e FROM users WHERE email IS NOT NULL").all().map((u) => u.e));
   return db.prepare("SELECT leadgenId, nome, telefone AS whats, pais, lower(email) AS email FROM rycs_leads_meta ORDER BY criadoEm").all()
     .filter((l) => !l.email || !comConta.has(l.email))
-    .map((l) => ({ id: null, nome: l.nome, whats: l.whats, pais: l.pais }));
+    // Formulário sem país: número com 91 na frente e 10 dígitos depois é da Índia.
+    .map((l) => ({ id: null, nome: l.nome, whats: l.whats, pais: l.pais || (/^91\d{10}$/.test(String(l.whats).replace(/\D/g, "")) ? "India" : "") }));
 }
 
 // Campos que a regra de perfil completo lê. A foto vem só como "tem ou não tem",

@@ -12,7 +12,7 @@
 // pages_show_list, pages_read_engagement e pages_manage_ads.
 
 import db, { agora } from "../db.js";
-import { lerCamposLead, chaveTelefone } from "../../shared/campanhas.js";
+import { lerCamposLead, chaveTelefone, telefoneDosOutros } from "../../shared/campanhas.js";
 import { META_PAGE_ID } from "../../shared/metaPixel.js";
 import { lerGraph, anunciosConectados } from "./metaAnuncios.js";
 
@@ -50,6 +50,13 @@ db.exec(`
     importados INTEGER NOT NULL DEFAULT 0
   );
 `);
+
+// Leads já importados com o telefone numa pergunta personalizada (ex.:
+// "whatsapp_number"): preenche o campo telefone, que estava vazio.
+for (const l of db.prepare("SELECT leadgenId, outros FROM rycs_leads_meta WHERE telefone = ''").all()) {
+  const t = telefoneDosOutros(json(l.outros));
+  if (t) db.prepare("UPDATE rycs_leads_meta SET telefone = ? WHERE leadgenId = ? AND telefone = ''").run(t.slice(0, 300), l.leadgenId);
+}
 
 const paginaId = () => String(process.env.META_PAGE_ID || META_PAGE_ID);
 
