@@ -474,25 +474,49 @@ function ContratosAdmin({ d, aviso, recarregar }) {
         <button className="vx-btn vx-btn-primary vx-btn-sm" style={ALVO} onClick={() => gerar("contrato")}>Gerar contrato do modelo</button>
         {d.acesso.contratoAssinado && <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => gerar("aditivo")}>Gerar aditivo</button>}
       </div>
-      <p className="vx-mut" style={{ fontSize: 12.5 }}>O texto vem do modelo aprovado pelo advogado (aba Configuração). O sistema só preenche os campos. Sem contrato assinado, a pessoa não vê as tarefas.</p>
+      <p className="vx-mut" style={{ fontSize: 12.5 }}>O texto vem do modelo aprovado pelo advogado (aba Configuração). O sistema só preenche os campos. A assinatura é feita na própria plataforma (nome digitado + código por e-mail). Sem contrato assinado, a pessoa não vê as tarefas.</p>
+      <VerificarCodigo aviso={aviso} />
       {!d.contratos.length ? <Vazio titulo="Nenhum documento" texto="Cadastre o modelo do vínculo em Configuração e gere o contrato." /> : (
         <div className="vx-grid">{d.contratos.map((k) => (
           <div key={k.id} className="vx-card" style={{ padding: 14, display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
             <div>
               <b>{k.tipo === "aditivo" ? "Aditivo" : "Contrato"}</b> · {k.titulo}
               <div className="vx-mut" style={{ fontSize: 12 }}>
-                {k.status === "assinado" ? `Assinado em ${dataCurta(k.assinadoEm)}${k.ip ? ` · IP ${k.ip}` : ""}` : k.status === "cancelado" ? "Substituído" : "Aguardando assinatura"} · {k.provedor === "zapsign" ? "ZapSign" : "código por e-mail"} · modelo v{k.modeloVersao} · regra v{k.regraVersao}
+                {k.status === "assinado" ? `Assinado em ${dataCurta(k.assinadoEm)}${k.ip ? ` · IP ${k.ip}` : ""}` : k.status === "cancelado" ? "Substituído" : "Aguardando assinatura"} · modelo v{k.modeloVersao} · regra v{k.regraVersao}
+                {k.codigoVerificacao && <> · <span className="vx-mono">{k.codigoVerificacao}</span></>}
               </div>
               <div className="vx-mut vx-mono" style={{ fontSize: 11 }}>SHA-256 {k.hash.slice(0, 16)}…</div>
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {k.temPdf ? <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores/${c.id}/contratos/${k.id}/pdf`)}>PDF assinado</button> : null}
-              <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores/${c.id}/contratos/${k.id}/documento`)}>Texto / imprimir</button>
-            </div>
+            <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/admin/colaboradores/${c.id}/contratos/${k.id}/documento`)}>Abrir / salvar em PDF</button>
           </div>
         ))}</div>
       )}
     </>
+  );
+}
+
+function VerificarCodigo({ aviso }) {
+  const [cod, setCod] = useState("");
+  const [r, setR] = useState(null);
+  const verificar = async (e) => {
+    e.preventDefault();
+    const x = await api(`/admin/colaboradores-verificar/${encodeURIComponent(cod.trim())}`);
+    if (x?.error) return aviso(x.error);
+    setR(x);
+  };
+  return (
+    <form onSubmit={verificar} className="vx-card" style={{ padding: 14, marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <label className="vx-label" htmlFor="verif-cod">Conferir código de verificação de um documento</label>
+          <input id="verif-cod" className="vx-input vx-mono" value={cod} onChange={(e) => { setCod(e.target.value); setR(null); }} placeholder="RYCS-0000-0000-0000" style={ALVO} />
+        </div>
+        <button className="vx-btn vx-btn-sm" style={ALVO} disabled={cod.trim().length < 8}>Conferir</button>
+      </div>
+      {r && <div role="status" style={{ marginTop: 8, fontSize: 13, color: r.valido ? "var(--brand)" : "var(--red)" }}>
+        {r.valido ? `Válido: ${r.documento.tipo === "aditivo" ? "aditivo" : "contrato"} de ${r.documento.nome}, assinado em ${dataCurta(r.documento.assinadoEm)} (modelo v${r.documento.modeloVersao}).` : "Nenhum documento assinado com esse código."}
+      </div>}
+    </form>
   );
 }
 
