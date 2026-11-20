@@ -82,6 +82,9 @@ export function registrarSaida({ numero, tipo, texto = "", modelo = "", origem =
 // Valores exatos das variáveis de cada envio, para o admin ver a mensagem como saiu.
 if (!db.prepare("PRAGMA table_info(whatsapp_envios)").all().some((c) => c.name === "parametros"))
   db.exec("ALTER TABLE whatsapp_envios ADD COLUMN parametros TEXT DEFAULT ''");
+// Exceção pedida pelo admin para um disparo só: envia fora das 8h–20h de quem recebe.
+if (!db.prepare("PRAGMA table_info(whatsapp_disparos)").all().some((c) => c.name === "ignorarHorario"))
+  db.exec("ALTER TABLE whatsapp_disparos ADD COLUMN ignorarHorario INTEGER DEFAULT 0");
 
 // ── Números ───────────────────────────────────────────────────────────
 
@@ -414,7 +417,7 @@ export async function processarDisparo(id, { pausaMs = 250, relogio = Date.now }
     let tentados = 0;
 
     for (const e of fatal ? [] : fila) {
-      if (!dentroDoHorario(e.numero, relogio())) continue;
+      if (!disp.ignorarHorario && !dentroDoHorario(e.numero, relogio())) continue;
       // A cada 10 envios confere se a Meta reclamou ou se as falhas passaram do limite.
       if (tentados && tentados % 10 === 0 && (fatal = freio(id, relogio()))) break;
       tentados++;
@@ -457,6 +460,19 @@ export async function processarDisparo(id, { pausaMs = 250, relogio = Date.now }
   } finally {
     processando.delete(id);
   }
+}
+
+// O admin libera um disparo que está esperando o horário: a fila dele sai agora.
+// Os outros freios (bloqueio da Meta, falhas, quem pediu para sair) continuam.
+export async function liberarHorario(id, opcoes) {
+  const disp = db.prepare("SELECT status FROM whatsapp_disparos WHERE id = ?").get(String(id));
+  if (!disp) throw Object.assign(new Error("Disparo não encontrado."), { validacao: true });
+  if (disp.status !== "enviando") throw Object.assign(new Error("Este disparo já terminou."), { validacao: true });
+  db.prepare("UPDATE whatsapp_disparos SET ignorarHorario = 1 WHERE id = ?").run(String(id));
+  clearTimeout(aguardando.get(id));
+  aguardando.delete(id);
+  processarDisparo(id, opcoes).catch(() => null);
+  return { ok: true };
 }
 
 // Disparos que ficaram no meio (o servidor reiniciou) continuam de onde pararam.

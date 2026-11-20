@@ -183,6 +183,13 @@ router.post("/admin/whatsapp/perfil", requireAdmin, exigirConfig, async (req, re
   }
 });
 
+// POST /api/admin/whatsapp/disparos/:id/liberar-horario — envia agora, fora das 8h–20h
+router.post("/admin/whatsapp/disparos/:id/liberar-horario", requireAdmin, exigirConfig, async (req, res) => {
+  try { res.json(await wa.liberarHorario(req.params.id)); } catch (e) {
+    res.status(e?.validacao ? 400 : 500).json({ error: e?.message || "Falha ao liberar." });
+  }
+});
+
 // GET /api/admin/whatsapp/disparos/:id/falhas
 router.get("/admin/whatsapp/disparos/:id/falhas", requireAdmin, (req, res) => {
   res.json(wa.falhasDoDisparo(req.params.id));

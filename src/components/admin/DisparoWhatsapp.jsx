@@ -104,7 +104,7 @@ export default function DisparoWhatsapp({ aviso }) {
           <div style={{ color: "var(--muted)", fontSize: 13 }}>Use "Novo disparo" para enviar um template aos vendedores.</div>
         </div>
       ) : (
-        <Historico disparos={info.disparos} aviso={aviso} />
+        <Historico disparos={info.disparos} aviso={aviso} onMudou={carregar} />
       )}
       </>}
     </div>
@@ -113,9 +113,18 @@ export default function DisparoWhatsapp({ aviso }) {
 
 const COLUNAS = "minmax(160px,1fr) 130px 64px 70px 74px 56px 60px 90px 90px";
 
-function Historico({ disparos, aviso }) {
+function Historico({ disparos, aviso, onMudou }) {
   const [aberto, setAberto] = useState(null);
   const [falhas, setFalhas] = useState([]);
+
+  // Exceção para um disparo só: a fila sai agora, fora das 8h–20h de quem recebe.
+  const liberar = async (d) => {
+    if (!window.confirm("Enviar agora, fora do horário de quem recebe? Mensagem fora de hora aumenta bloqueios e denúncias. Os outros freios continuam valendo.")) return;
+    const r = await api(`/admin/whatsapp/disparos/${d.id}/liberar-horario`, {});
+    if (r?.error) return aviso(r.error);
+    aviso("Liberado: a fila deste disparo está saindo agora.");
+    onMudou?.();
+  };
 
   const abrir = async (d) => {
     if (aberto === d.id) return setAberto(null);
@@ -151,6 +160,12 @@ function Historico({ disparos, aviso }) {
                 <span style={{ color: "var(--muted)", fontSize: 11.5 }}>{dataCurta(d.criadoEm)}</span>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: st.color }}>{st.txt}</span>
               </div>
+              {d.status === "enviando" && d.aguardandoHorario && (
+                <div style={{ padding: "0 16px 12px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
+                  <span className="vx-mut">Esperando das 8h às 20h no horário de quem recebe.</span>
+                  <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 36 }} onClick={() => liberar(d)}>Enviar agora</button>
+                </div>
+              )}
               {d.erro && <div style={{ padding: "0 16px 12px", fontSize: 12, color: "var(--red)" }}>Interrompido: {d.erro}</div>}
               {aberto === d.id && (
                 <div style={{ padding: "0 16px 14px" }}>

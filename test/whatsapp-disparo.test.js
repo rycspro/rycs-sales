@@ -236,6 +236,22 @@ test("fora das 8h às 20h no horário de quem recebe, a fila espera", async () =
   assert.equal(fim.aguardandoHorario, false);
 });
 
+test("liberar o horário de um disparo: a fila dele sai fora das 8h–20h, os outros continuam esperando", async () => {
+  const tpl = wa.resumirTemplate({ ...TEMPLATE, name: "aviso_liberado" });
+  chamadas = [];
+  sucesso();
+  const d = wa.criarDisparo({ adminId: "admin", tpl, variaveis: VARS, publico: "ativos", limite: 2 });
+  await wa.processarDisparo(d.id, { pausaMs: 0, relogio: FORA_DO_HORARIO });
+  assert.equal(chamadas.length, 0, "fora do horário, espera");
+
+  await wa.liberarHorario(d.id, { pausaMs: 0, relogio: FORA_DO_HORARIO });
+  for (let i = 0; i < 50 && wa.listarDisparos().find((x) => x.id === d.id).status === "enviando"; i++) await new Promise((r) => setTimeout(r, 10));
+  assert.equal(chamadas.length, 2, "liberado, sai mesmo fora do horário");
+  assert.equal(wa.listarDisparos().find((x) => x.id === d.id).status, "concluido");
+  await assert.rejects(wa.liberarHorario(d.id), /já terminou/);
+  await assert.rejects(wa.liberarHorario("nao-existe"), /não encontrado/);
+});
+
 test("muitas falhas param o disparo para proteger a conta", async () => {
   for (let i = 1; i <= 25; i++) vendedor(`t${i}`, `Teste ${i}`, `11 9${String(i).padStart(8, "0")}`);
   const tpl = wa.resumirTemplate({ ...TEMPLATE, name: "aviso_taxa" });
