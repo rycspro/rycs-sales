@@ -5,8 +5,9 @@
 > **Decisões aprovadas pelo dono em 19/11/2026:**
 > - Seção 2.4: o variável de empregado vai para o fechamento e é pago na folha, nunca pelo saque da plataforma.
 > - Seção 4.1: prova pode ser aprovada automaticamente, por regra escolhida pelo admin por tipo de tarefa, com reversão até o fechamento do mês. A IA nunca recusa.
+> - Seção 2.1: confirmado que o fixo é o salário de quem tem vínculo empregatício.
 >
-> As sugestões da seção 13 ainda aguardam decisão.
+> - Seção 13: todas as sugestões (13.1 a 13.13) aprovadas. As que tocam lei trabalhista (13.1, 13.5, 13.7, 13.8 e 13.13) ainda passam pelo advogado ou pelo contador antes de serem implementadas.
 
 ### 1. Objetivo, escopo e ativação
 **Objetivo.** A RYCS tem pessoas trabalhando para ela mesma (família e equipe), sem registro do que cada uma faz. Esta função dá a cada colaborador um ambiente com contrato, tarefas, provas, produtividade e extrato do mês, e dá ao admin a visão de todos sem precisar fiscalizar ninguém.
@@ -149,9 +150,9 @@ Objetivo: o fundador saber, sem precisar fiscalizar, quanto cada colaborador pro
 
 ---
 
-## 13. Sugestões a decidir (revisão de 19/11/2026)
+## 13. Sugestões aprovadas (19/11/2026)
 
-Propostas, em ordem de importância. Nenhuma vale até o dono aprovar. As que tocam lei trabalhista passam antes pelo contador ou pelo advogado.
+Todas aprovadas pelo dono em 19/11/2026. As que tocam lei trabalhista (13.1, 13.5, 13.7, 13.8 e 13.13) passam pelo advogado ou pelo contador antes de serem implementadas.
 
 ### 13.1 Quem não é CLT: medir entrega, não presença
 - Para colaborador sem vínculo empregatício (autônomo, MEI, diarista), presença, faltas e meta diária vêm DESLIGADAS por padrão. O painel dele mede entregas e provas.
@@ -199,6 +200,28 @@ Propostas, em ordem de importância. Nenhuma vale até o dono aprovar. As que to
 ### 13.10 "Registro de atividade" não é ponto
 - Se alguém trabalha presencialmente em coisas que não viram tarefa na plataforma, a regra dele pode incluir botões "Comecei o dia" e "Encerrei o dia", apertados pelo próprio colaborador, sem localização e sem foto.
 - A tela chama isso de "registro de atividade", nunca de "ponto". O controle de ponto legal (obrigatório para empresa com mais de 20 empregados, art. 74 da CLT) segue com sistema próprio quando chegar a hora.
+
+*Sugestões 13.11 a 13.13 acrescentadas na segunda revisão de 19/11/2026.*
+
+### 13.11 A meta começa medindo, sem chute
+- Hoje ninguém sabe o nível de produtividade de cada colaborador, então não há base para fixar meta no primeiro dia. Proposta: as primeiras 4 semanas de cada pessoa são de calibração. O painel mostra tudo o que mede, mas sem "abaixo da meta".
+- No fim da calibração, o sistema mostra a média real dessas semanas e sugere uma meta a partir dela. O admin aprova, muda ou recusa. Nenhuma meta passa a valer sem essa aprovação.
+- O alerta de dias sem atividade (seção 10) já vale durante a calibração.
+- Motivo: meta inventada gera alerta falso logo no começo, e a pessoa deixa de confiar no painel.
+
+### 13.12 O primeiro aviso vai para o próprio colaborador
+- Quando falta atividade num dia previsto, o primeiro aviso vai para o colaborador, na manhã seguinte, no ambiente dele e por e-mail, em tom de lembrete: "ontem não houve envio; se foi folga ou atestado, registre aqui".
+- O admin só recebe alerta quando a falta continua até o limite da regra da pessoa (ex.: 3 dias seguidos) ou quando a produtividade cai por duas semanas seguidas.
+- O relatório semanal ao admin abre com uma linha por pessoa ("em dia" ou o que mudou). O detalhe fica no painel.
+- Nenhum aviso sai para o colaborador fora da jornada combinada nem em dia de folga.
+- Motivo: o dono não quer ser o chefe que cobra. A própria pessoa resolve a maior parte dos casos (inclusive registrando a ausência justificada da seção 13.2) e o admin só vê o que precisa de decisão dele.
+
+### 13.13 Regime de trabalho e horário no contrato
+- O cadastro de quem é CLT ganha o campo "regime": presencial, teletrabalho por jornada ou teletrabalho por produção ou tarefa. O campo vai para o contrato, porque o teletrabalho precisa constar expressamente nele (art. 75-C da CLT).
+- O regime muda o que o painel mede. No teletrabalho por produção ou tarefa não há controle de jornada (art. 62, III, e art. 75-B, §3º, da CLT), e o painel mede entregas, como na seção 13.1. Nos outros regimes entram presença e dias previstos.
+- Se houver envios frequentes fora da jornada combinada (noite, fim de semana, feriado), o admin recebe um aviso informativo: pode ser hora extra, e o contador precisa saber. O sistema não desconta nem bloqueia nada.
+- Motivo: os registros com data e hora da plataforma podem servir de prova de jornada numa ação trabalhista, para qualquer um dos lados. É melhor o regime estar claro desde o contrato e o excesso aparecer para o admin na hora, e não anos depois.
+- O regime de cada pessoa se decide com o advogado.
 
 ---
 
