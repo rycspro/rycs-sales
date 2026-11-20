@@ -78,7 +78,7 @@ import { semearPoliticasPadrao, iniciarWorker, capacidadesDisponiveis } from "./
 import { liberarRetidosPorCiclo } from "./services/financeiro.js";
 import { iniciarSaquesParados } from "./routes/payments.js";
 import { iniciarLiberacaoComissoesCanal } from "./services/parceriaCanal.js";
-import colaboradoresRoutes, { colaboradoresPublico } from "./routes/colaboradores.js";
+import colaboradoresRoutes from "./routes/colaboradores.js";
 import { iniciarColaboradores } from "./services/colaboradores.js";
 
 const app = express();
@@ -215,8 +215,6 @@ app.use("/api", jornadaPublico);
 app.use("/api", parceriaPublico);
 // Descadastro dos e-mails de sequência: link do rodapé, sem login.
 app.use("/api", sequenciasPublico);
-// Webhook da ZapSign (contratos de colaboradores internos) — sem login.
-app.use("/api", colaboradoresPublico);
 
 // Bloqueia ações de escrita para empresas "livre" com onboarding incompleto.
 app.use("/api", authMiddleware, onboardingGuard);

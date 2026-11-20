@@ -16,7 +16,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import db, { uid, agora } from "../db.js";
 import { sendEmail } from "./email.js";
 import { salvar, lerBuffer } from "./arquivos.js";
-import * as Z from "./zapsign.js";
 import {
   normalizarRegra, regraPadrao, dataBR, mesBR, somarDias, segundaDaSemana, ultimoDiaDoMes, mesSeguinte, mesAnterior,
   fimDoDiaTs, inicioDoDiaTs, feriadosNacionais, foraDaJornada, calcularDias, calcularPainel, tendencia, ausenciasSeguidas,
@@ -271,7 +270,7 @@ export function gerarContrato(colab, tipo, autor) {
 }
 
 export function contratos(colab) {
-  return db.prepare("SELECT id, tipo, titulo, status, modeloVersao, regraVersao, hash, assinadoEm, ip, criadoEm, provedor, (arquivoAssinado IS NOT NULL) AS temPdf FROM colab_contratos WHERE colaboradorId = ? ORDER BY criadoEm DESC").all(colab.id);
+  return db.prepare("SELECT id, tipo, titulo, status, modeloVersao, regraVersao, hash, assinadoEm, ip, criadoEm, codigoVerificacao FROM colab_contratos WHERE colaboradorId = ? ORDER BY criadoEm DESC").all(colab.id);
 }
 export const contratoAssinado = (colab) =>
   !!db.prepare("SELECT 1 FROM colab_contratos WHERE colaboradorId = ? AND tipo = 'contrato' AND status = 'assinado'").get(colab.id);
@@ -294,9 +293,25 @@ export async function enviarCodigo(colab, contratoId) {
   return { enviadoPara: u.email.replace(/^(.{2}).*(@.*)$/, "$1***$2") };
 }
 
-export function assinar(colab, contratoId, codigo, { ip, userAgent }) {
+const semAcento = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+
+// Código curto que identifica a assinatura e aparece no documento. Permite
+// conferir depois, no admin, que aquele documento foi assinado na plataforma.
+export const codigoDeVerificacao = (c, assinadoEm) => {
+  const h = sha256(`${c.id}:${c.hash}:${assinadoEm}`).slice(0, 12).toUpperCase();
+  return `RYCS-${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}`;
+};
+
+export function verificarCodigo(codigo) {
+  const c = db.prepare("SELECT c.id, c.tipo, c.titulo, c.status, c.hash, c.assinadoEm, c.modeloVersao, k.nome FROM colab_contratos c JOIN colaboradores k ON k.id = c.colaboradorId WHERE c.codigoVerificacao = ?")
+    .get(String(codigo || "").trim().toUpperCase());
+  return c || null;
+}
+
+export function assinar(colab, contratoId, codigo, { ip, userAgent, nomeDigitado }) {
   const c = contratoCompleto(colab, contratoId);
   if (!c || c.status !== "pendente") throw new ErroColab("Documento não está pendente de assinatura.", 404);
+  if (semAcento(nomeDigitado) !== semAcento(colab.nome)) throw new ErroColab(`Digite o seu nome completo exatamente como está no documento: ${colab.nome}.`);
   if (!c.codigoHash || !c.codigoExpira || c.codigoExpira < agora()) throw new ErroColab("Código expirado. Peça um novo.");
   if ((c.codigoTentativas || 0) >= 5) throw new ErroColab("Muitas tentativas. Peça um novo código.");
   if (sha256(`${c.id}:${String(codigo || "").trim()}`) !== c.codigoHash) {
@@ -304,65 +319,17 @@ export function assinar(colab, contratoId, codigo, { ip, userAgent }) {
     throw new ErroColab("Código incorreto.");
   }
   if (sha256(c.texto) !== c.hash) throw new ErroColab("O texto do documento não confere com o original. Fale com o administrador.", 409);
-  db.prepare("UPDATE colab_contratos SET status = 'assinado', assinadoEm = ?, ip = ?, userAgent = ?, codigoHash = NULL WHERE id = ?")
-    .run(agora(), ip || "", String(userAgent || "").slice(0, 300), c.id);
-  auditar(colab.userId, "assinar_" + c.tipo, colab.id, "contrato", c.id, { hash: c.hash, ip });
+  const em = agora();
+  const verif = codigoDeVerificacao(c, em);
+  db.prepare("UPDATE colab_contratos SET status = 'assinado', assinadoEm = ?, ip = ?, userAgent = ?, codigoHash = NULL, nomeDigitado = ?, codigoVerificacao = ? WHERE id = ?")
+    .run(em, ip || "", String(userAgent || "").slice(0, 300), String(nomeDigitado).trim().slice(0, 200), verif, c.id);
+  auditar(colab.userId, "assinar_" + c.tipo, colab.id, "contrato", c.id, { hash: c.hash, ip, codigoVerificacao: verif });
   return contratoCompleto(colab, c.id);
-}
-
-// ───────────────────────────── ZapSign ─────────────────────────────
-
-export const provedorAssinatura = () => (Z.zapsignAtivo() ? "zapsign" : "email");
-
-export async function linkZapsign(colab, contratoId) {
-  if (!Z.zapsignAtivo()) throw new ErroColab("A assinatura pela ZapSign não está configurada.");
-  const c = contratoCompleto(colab, contratoId);
-  if (!c || c.status !== "pendente") throw new ErroColab("Documento não está pendente de assinatura.", 404);
-  if (c.provedor === "zapsign" && c.signUrl) return { signUrl: c.signUrl };
-  if (sha256(c.texto) !== c.hash) throw new ErroColab("O texto do documento não confere com o original. Fale com o administrador.", 409);
-  const u = db.prepare("SELECT email FROM users WHERE id = ?").get(colab.userId);
-  if (!u?.email) throw new ErroColab("Sua conta não tem e-mail cadastrado.");
-  const doc = await Z.criarDocumento({ nome: c.titulo || "Contrato", texto: c.texto, idExterno: c.id, signatario: { nome: colab.nome, email: u.email } });
-  db.prepare("UPDATE colab_contratos SET provedor = 'zapsign', provedorToken = ?, signUrl = ? WHERE id = ?").run(doc.token, doc.signUrl, c.id);
-  auditar(colab.userId, "zapsign_criar", colab.id, "contrato", c.id, { token: doc.token });
-  return { signUrl: doc.signUrl };
-}
-
-// Confirma na própria ZapSign (não confia no corpo do webhook) e, se o
-// documento estiver assinado, guarda o PDF e marca o contrato como assinado.
-export async function confirmarZapsign(token) {
-  if (!Z.zapsignAtivo() || !token) return false;
-  const c = db.prepare("SELECT * FROM colab_contratos WHERE provedorToken = ?").get(String(token));
-  if (!c || c.status !== "pendente") return false;
-  const doc = await Z.consultarDocumento(token);
-  if (doc.status !== "signed" || (doc.idExterno && doc.idExterno !== c.id)) return false;
-  let chave = null;
-  if (doc.arquivoAssinado) {
-    const buf = await Z.baixar(doc.arquivoAssinado);
-    chave = `colaboradores/${c.colaboradorId}/contratos/${c.id}.pdf`;
-    await salvar(chave, Readable.from(buf), { contentType: "application/pdf", maxBytes: 30 * 1024 * 1024 });
-  }
-  db.prepare("UPDATE colab_contratos SET status = 'assinado', assinadoEm = ?, ip = ?, arquivoAssinado = ? WHERE id = ? AND status = 'pendente'")
-    .run(doc.assinadoEm || agora(), doc.ip || "", chave, c.id);
-  auditar(null, "zapsign_assinado", c.colaboradorId, "contrato", c.id, { token, hash: c.hash });
-  return true;
-}
-
-async function sincronizarZapsign() {
-  if (!Z.zapsignAtivo()) return;
-  const pendentes = db.prepare("SELECT provedorToken FROM colab_contratos WHERE status = 'pendente' AND provedor = 'zapsign' AND provedorToken IS NOT NULL").all();
-  for (const p of pendentes) await confirmarZapsign(p.provedorToken).catch((e) => console.error("[colab] zapsign:", e.message));
-}
-
-export async function pdfAssinado(colab, contratoId) {
-  const c = contratoCompleto(colab, contratoId);
-  if (!c?.arquivoAssinado) return null;
-  return lerBuffer(c.arquivoAssinado, 30 * 1024 * 1024);
 }
 
 export function documentoHtml(colab, c) {
   const rodape = c.status === "assinado"
-    ? `Assinado eletronicamente por ${escapar(colab.nome)} em ${new Date(c.assinadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}, ${c.provedor === "zapsign" ? "pela ZapSign (o PDF assinado com a trilha da ZapSign está guardado na plataforma)" : "com código enviado ao e-mail cadastrado"}. IP ${escapar(c.ip || "—")}.`
+    ? `Assinado eletronicamente na plataforma RYCS por ${escapar(colab.nome)} (nome digitado: "${escapar(c.nomeDigitado || colab.nome)}") em ${new Date(c.assinadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}, com código de confirmação enviado ao e-mail cadastrado. IP ${escapar(c.ip || "—")}.<br><b>Código de verificação: ${escapar(c.codigoVerificacao || "—")}</b>`
     : "Documento ainda não assinado.";
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapar(c.titulo)}</title>
 <style>body{font:15px/1.6 Georgia,serif;color:#111;background:#fff;max-width:760px;margin:32px auto;padding:0 16px}h1{font-size:20px}pre{white-space:pre-wrap;font:inherit}footer{margin-top:32px;border-top:1px solid #999;padding-top:12px;font:12px/1.5 system-ui,sans-serif;color:#333}@media print{button{display:none}}</style></head>
@@ -1140,7 +1107,6 @@ function sincronizarTudo(colab, hoje) {
 export async function processarColaboradores(agoraTs = agora()) {
   const hoje = dataBR(agoraTs);
   gerarOcorrencias(hoje);
-  await sincronizarZapsign();
   const manha = minutoBR(agoraTs) >= 7 * 60;
   for (const colab of ativos()) {
     try {

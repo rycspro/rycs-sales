@@ -32,7 +32,7 @@ export default function AreaColaborador({ aviso }) {
 
   if (!acesso.contratoAssinado && !acesso.encerrado) {
     return contratoPendente
-      ? <Assinatura doc={contratoPendente} provedor={eu.assinatura} aviso={aviso} pronto={carregar} titulo="Seu contrato" intro="Antes de começar, leia e assine o seu contrato. Enquanto ele não estiver assinado, as tarefas ficam fechadas." />
+      ? <Assinatura doc={contratoPendente} nomeCompleto={eu.colaborador.nome} aviso={aviso} pronto={carregar} titulo="Seu contrato" intro="Antes de começar, leia e assine o seu contrato. Enquanto ele não estiver assinado, as tarefas ficam fechadas." />
       : <Vazio titulo="Contrato em preparação" texto="O seu contrato ainda está sendo preparado. Quando ficar pronto, ele aparece aqui para você ler e assinar, e você recebe um e-mail." />;
   }
   if (!acesso.termoAceito && !acesso.encerrado) return <Termo eu={eu} aviso={aviso} pronto={carregar} />;
@@ -41,24 +41,12 @@ export default function AreaColaborador({ aviso }) {
 
 // ───────────────────────────── Contrato e termo ─────────────────────────────
 
-function Assinatura({ doc, provedor, aviso, pronto, titulo, intro }) {
-  const [abriuZap, setAbriuZap] = useState(false);
-  const assinarZapsign = async () => {
-    // Abre a aba antes da chamada para o navegador não bloquear o pop-up.
-    const janela = window.open("", "_blank");
-    if (janela) janela.opener = null;
-    const r = await api(`/colaborador/contratos/${doc.id}/zapsign`, {});
-    if (r?.error) { janela?.close(); return aviso(r.error); }
-    if (janela) janela.location.href = r.signUrl; else window.location.href = r.signUrl;
-    setAbriuZap(true);
-  };
-  const conferir = async () => {
-    const r = await api(`/colaborador/contratos/${doc.id}/conferir`, {});
-    if (r?.error) return aviso(r.error);
-    if (r.status === "assinado") { aviso("Documento assinado."); pronto(); } else aviso("A assinatura ainda não chegou. Se você já assinou, espere um minuto e tente de novo.");
-  };
+// Assinatura própria da plataforma: leitura, nome completo digitado e código
+// de 6 dígitos enviado ao e-mail da conta. Sem serviço externo.
+function Assinatura({ doc, nomeCompleto, aviso, pronto, titulo, intro }) {
   const [texto, setTexto] = useState(null);
   const [codigo, setCodigo] = useState("");
+  const [nome, setNome] = useState("");
   const [enviado, setEnviado] = useState(null);
   const [lido, setLido] = useState(false);
   useEffect(() => { api(`/colaborador/contratos/${doc.id}`).then((r) => setTexto(r?.texto || "")); }, [doc.id]);
@@ -70,7 +58,7 @@ function Assinatura({ doc, provedor, aviso, pronto, titulo, intro }) {
   };
   const assinar = async (e) => {
     e.preventDefault();
-    const r = await api(`/colaborador/contratos/${doc.id}/assinar`, { codigo });
+    const r = await api(`/colaborador/contratos/${doc.id}/assinar`, { codigo, nome });
     if (r?.error) return aviso(r.error);
     aviso("Documento assinado.");
     pronto();
@@ -82,28 +70,29 @@ function Assinatura({ doc, provedor, aviso, pronto, titulo, intro }) {
       <div className="vx-card" style={{ padding: 18, maxHeight: "55vh", overflowY: "auto", whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.6 }} tabIndex={0} aria-label="Texto do documento">
         {texto == null ? <div className="vx-spinner" /> : <><b>{doc.titulo}</b>{"\n\n"}{texto}</>}
       </div>
-      <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ ...ALVO, marginTop: 8 }} onClick={() => abrir(`/colaborador/contratos/${doc.id}/documento`)}>Abrir em PDF</button>
+      <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ ...ALVO, marginTop: 8 }} onClick={() => abrir(`/colaborador/contratos/${doc.id}/documento`)}>Abrir para salvar em PDF</button>
       <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44, margin: "8px 0" }}>
         <input type="checkbox" checked={lido} onChange={(e) => setLido(e.target.checked)} /> Li o documento inteiro e concordo com ele
       </label>
-      {provedor === "zapsign" ? (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="vx-btn vx-btn-primary" style={ALVO} disabled={!lido} onClick={assinarZapsign}>Assinar pela ZapSign</button>
-          {abriuZap && <button className="vx-btn" style={ALVO} onClick={conferir}>Já assinei</button>}
-        </div>
-      ) : !enviado ? (
+      {!enviado ? (
         <button className="vx-btn vx-btn-primary" style={ALVO} disabled={!lido} onClick={pedirCodigo}>Receber código de assinatura por e-mail</button>
       ) : (
-        <form onSubmit={assinar} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-          <div style={{ width: 180 }}>
-            <label className="vx-label" htmlFor="ass-cod">Código de 6 dígitos</label>
-            <input id="ass-cod" className="vx-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={codigo} onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))} style={ALVO} />
+        <form onSubmit={assinar}>
+          <div style={{ marginBottom: 10 }}>
+            <label className="vx-label" htmlFor="ass-nome">Digite seu nome completo para assinar</label>
+            <input id="ass-nome" className="vx-input" autoComplete="name" value={nome} onChange={(e) => setNome(e.target.value)} placeholder={nomeCompleto} style={ALVO} />
           </div>
-          <button className="vx-btn vx-btn-primary" style={ALVO} disabled={codigo.length !== 6 || !lido}>Assinar</button>
-          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={ALVO} onClick={pedirCodigo}>Enviar outro código</button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div style={{ width: 180 }}>
+              <label className="vx-label" htmlFor="ass-cod">Código de 6 dígitos</label>
+              <input id="ass-cod" className="vx-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={codigo} onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))} style={ALVO} />
+            </div>
+            <button className="vx-btn vx-btn-primary" style={ALVO} disabled={codigo.length !== 6 || !lido || nome.trim().length < 3}>Assinar</button>
+            <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={ALVO} onClick={pedirCodigo}>Enviar outro código</button>
+          </div>
         </form>
       )}
-      <p className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>{provedor === "zapsign" ? "A assinatura é feita na ZapSign, que gera o PDF assinado; ele fica guardado aqui nos seus documentos." : "Ficam registrados a data e a hora, o IP, a versão do modelo e uma impressão digital (SHA-256) do texto, que prova que ele não foi alterado depois."}</p>
+      <p className="vx-mut" style={{ fontSize: 12, marginTop: 10 }}>A assinatura é feita aqui mesmo, na plataforma. Ficam registrados o nome que você digitou, a data e a hora, o IP, a versão do modelo e uma impressão digital (SHA-256) do texto, que prova que ele não foi alterado depois. O documento assinado recebe um código de verificação.</p>
     </div>
   );
 }
@@ -146,7 +135,7 @@ function Area({ eu, aviso, recarregar, aditivo }) {
   const lembretes = (eu.avisos || []).filter((a) => !a.lidoEm).slice(0, 3);
   const marcarLido = async (a) => { await api(`/colaborador/avisos/${a.id}/lido`, {}); recarregar(); };
 
-  if (assinando && aditivo) return <Assinatura doc={aditivo} provedor={eu.assinatura} aviso={aviso} pronto={() => { setAssinando(false); recarregar(); }} titulo="Aditivo ao contrato" intro="Houve mudança de valores, dias ou horário. Leia o aditivo e aceite para registrar a mudança." />;
+  if (assinando && aditivo) return <Assinatura doc={aditivo} nomeCompleto={eu.colaborador.nome} aviso={aviso} pronto={() => { setAssinando(false); recarregar(); }} titulo="Aditivo ao contrato" intro="Houve mudança de valores, dias ou horário. Leia o aditivo e aceite para registrar a mudança." />;
 
   const abas = encerrado
     ? [["documentos", "Documentos"], ["painel", "Meu painel"], ["extrato", "Extrato"]]
@@ -451,11 +440,8 @@ function Documentos({ eu }) {
       <h3 className="vx-disp" style={{ fontSize: 15 }}>Contrato e aditivos</h3>
       <div className="vx-grid" style={{ marginBottom: 16 }}>{eu.contratos.filter((c) => c.status !== "cancelado").map((c) => (
         <div key={c.id} className="vx-card" style={{ padding: 12, display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center", fontSize: 13 }}>
-          <span><b>{c.tipo === "aditivo" ? "Aditivo" : "Contrato"}</b> · {c.status === "assinado" ? `assinado em ${dataCurta(c.assinadoEm)}` : "aguardando assinatura"}</span>
-          <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {c.temPdf ? <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/colaborador/contratos/${c.id}/pdf`)}>PDF assinado</button> : null}
-            <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/colaborador/contratos/${c.id}/documento`)}>Texto do contrato</button>
-          </span>
+          <span><b>{c.tipo === "aditivo" ? "Aditivo" : "Contrato"}</b> · {c.status === "assinado" ? `assinado em ${dataCurta(c.assinadoEm)}` : "aguardando assinatura"}{c.codigoVerificacao ? <> · <span className="vx-mono">{c.codigoVerificacao}</span></> : null}</span>
+          <button className="vx-btn vx-btn-sm" style={ALVO} onClick={() => abrir(`/colaborador/contratos/${c.id}/documento`)}>Abrir / salvar em PDF</button>
         </div>
       ))}</div>
       <h3 className="vx-disp" style={{ fontSize: 15 }}>Relatórios</h3>

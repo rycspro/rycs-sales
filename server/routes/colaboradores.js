@@ -9,15 +9,6 @@ import {
 } from "../../shared/colaboradores.js";
 
 const router = Router();
-
-// Webhook da ZapSign (sem login). Só usa o token do documento: o status é
-// conferido direto na API da ZapSign antes de marcar como assinado.
-export const colaboradoresPublico = Router();
-colaboradoresPublico.post("/webhooks/zapsign", async (req, res) => {
-  res.json({ ok: true });
-  const token = req.body?.token || req.body?.doc?.token;
-  C.confirmarZapsign(token).catch((e) => console.error("[colab] webhook zapsign:", e.message));
-});
 const hoje = () => dataBR(Date.now());
 // trust proxy está ligado no index: req.ip já é o IP real, sem confiar em cabeçalho do cliente.
 const ip = (req) => req.ip || "";
@@ -66,7 +57,6 @@ router.get("/colaborador/eu", h((req, res) => {
     acesso: C.acesso(colab),
     termo: { versao: TERMO_VERSAO, secoes: TERMO_SECOES },
     contratos: C.contratos(colab),
-    assinatura: C.provedorAssinatura(),
     regra: {
       diasPrevistos: regra.diasPrevistos, horario: regra.horario, meta: regra.meta, medirPresenca: regra.medirPresenca,
       registroAtividade: regra.registroAtividade, diaTrabalhado: regra.diaTrabalhado, alertaDiasSemAtividade: regra.alertaDiasSemAtividade,
@@ -102,29 +92,9 @@ router.post("/colaborador/contratos/:id/codigo", eu(false), h(async (req, res) =
   res.json(await C.enviarCodigo(req.colab, req.params.id));
 }));
 
-router.post("/colaborador/contratos/:id/zapsign", eu(false), h(async (req, res) => {
-  if (req.colab.status !== "ativo") return res.status(403).json({ error: "Seu vínculo foi encerrado." });
-  res.json(await C.linkZapsign(req.colab, req.params.id));
-}));
-
-router.post("/colaborador/contratos/:id/conferir", eu(false), h(async (req, res) => {
-  const c = C.contratoCompleto(req.colab, req.params.id);
-  if (c?.provedor === "zapsign" && c.status === "pendente") await C.confirmarZapsign(c.provedorToken);
-  res.json({ acesso: C.acesso(req.colab), status: C.contratoCompleto(req.colab, req.params.id)?.status });
-}));
-
-const enviarPdf = async (res, colab, id) => {
-  const buf = await C.pdfAssinado(colab, id);
-  if (!buf) return res.status(404).json({ error: "PDF assinado não disponível." });
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `inline; filename="contrato-${id.slice(0, 8)}.pdf"`);
-  res.send(buf);
-};
-router.get("/colaborador/contratos/:id/pdf", eu(false), h((req, res) => enviarPdf(res, req.colab, req.params.id)));
-
 router.post("/colaborador/contratos/:id/assinar", eu(false), h((req, res) => {
   if (req.colab.status !== "ativo") return res.status(403).json({ error: "Seu vínculo foi encerrado." });
-  const c = C.assinar(req.colab, req.params.id, req.body?.codigo, { ip: ip(req), userAgent: req.headers["user-agent"] });
+  const c = C.assinar(req.colab, req.params.id, req.body?.codigo, { ip: ip(req), userAgent: req.headers["user-agent"], nomeDigitado: req.body?.nome });
   res.json({ ok: true, status: c.status, acesso: C.acesso(req.colab) });
 }));
 
@@ -278,7 +248,11 @@ router.get("/admin/colaboradores/:id/contratos/:cid/documento", soAdmin, carrega
   res.type("html").send(C.documentoHtml(req.colab, c));
 }));
 
-router.get("/admin/colaboradores/:id/contratos/:cid/pdf", soAdmin, carregar, h((req, res) => enviarPdf(res, req.colab, req.params.cid)));
+// Confere um código de verificação impresso num documento assinado.
+router.get("/admin/colaboradores-verificar/:codigo", soAdmin, h((req, res) => {
+  const c = C.verificarCodigo(req.params.codigo);
+  res.json(c ? { valido: true, documento: c } : { valido: false });
+}));
 
 router.post("/admin/colaboradores/:id/encerrar", soAdmin, carregar, h((req, res) => {
   res.json({ colaborador: C.encerrarVinculo(req.colab, req.body || {}, req.user.id) });
