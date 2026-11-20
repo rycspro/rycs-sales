@@ -50,7 +50,7 @@ export function linksMeta() {
   const n = NEGOCIO_ID();
   const app = APP_ID();
   return [
-    { rotulo: "Cobrança e forma de pagamento (Configurações do negócio)", url: `https://business.facebook.com/latest/settings/?business_id=${n}` },
+    { rotulo: "Saldo e recargas do WhatsApp (Central de cobrança)", url: `https://business.facebook.com/billing_hub/accounts/details/?business_id=${n}&asset_id=${CONTA_ID()}&account_type=whatsapp-business-account` },
     { rotulo: "Modelos de mensagem (WhatsApp Manager)", url: `https://business.facebook.com/wa/manage/message-templates/?waba_id=${CONTA_ID()}&business_id=${n}` },
     { rotulo: "Contas e números do WhatsApp", url: `https://business.facebook.com/latest/settings/whatsapp_business_presence/?business_id=${n}` },
     { rotulo: "Usuários do sistema (token do servidor)", url: `https://business.facebook.com/latest/settings/system_users/?business_id=${n}` },
@@ -206,10 +206,14 @@ export async function cobrancaWhatsapp() {
 }
 
 // ── Saldo e gastos ────────────────────────────────────────────────────────
-// A Meta não informa o saldo do WhatsApp pela API (o dado de pagamento da conta
-// só é liberado para provedores). O admin registra as recargas que fez, e o
-// saldo estimado é: recargas − gasto que a Meta informa desde a primeira recarga.
-// A conta de anúncios, essa sim, a API mostra (com o META_ADS_TOKEN).
+// A conta de mensagens não informa o saldo (o dado de pagamento dela só é
+// liberado para provedores). Mas a Meta cobra o WhatsApp por uma conta de
+// pagamento própria, "PMA - <conta de mensagens>", que aparece entre as contas
+// de anúncios. Os créditos (Pix) do WhatsApp entram nela, e o saldo vem no texto
+// da forma de pagamento ("Saldo disponível (R$5,60 BRL)"). Se o token do servidor
+// não alcançar essa conta, o saldo é estimado: recargas registradas − gasto que a
+// Meta informa desde a primeira recarga.
+// A conta de anúncios principal é outra e tem saldo separado (META_ADS_TOKEN).
 
 
 db.exec(`
@@ -268,13 +272,46 @@ async function contaDeAnuncios() {
   });
 }
 
+// "Saldo disponível (R$1.234,56 BRL)" → 1234.56. Sem número, null.
+export function valorExibido(texto) {
+  const s = String(texto || "");
+  const m = (s.includes("(") ? s.slice(s.indexOf("(")) : s).match(/\d[\d.,]*/);
+  if (!m) return null;
+  let n = m[0].replace(/[.,]$/, "");
+  if (n.includes(",")) n = n.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(n)) n = n.replace(/\./g, "");
+  const v = Number(n);
+  return Number.isFinite(v) ? v : null;
+}
+
+const PAGAMENTO_ID = () => String(process.env.WHATSAPP_PAYMENT_ACCOUNT_ID || "1801961761062505").replace(/^act_/, "");
+
+// Tenta com o token de anúncios e depois com o do WhatsApp: vale o que tiver
+// acesso à conta de pagamento.
+async function contaPagamentoWhatsapp() {
+  const tokens = [...new Set([process.env.META_ADS_TOKEN, TOKEN()].filter(Boolean))];
+  if (!tokens.length) return { ok: false, erro: "Sem token da Meta no servidor." };
+  let erro = "";
+  for (const token of tokens) {
+    try {
+      const r = await lerGraph(`/act_${PAGAMENTO_ID()}`, { fields: "name,currency,account_status,is_prepay_account,funding_source_details" }, { token });
+      const formaPagamento = r.funding_source_details?.display_string || "";
+      return { ok: true, dados: {
+        id: PAGAMENTO_ID(), nome: r.name || "", moeda: r.currency || "", status: STATUS_CONTA_ANUNCIOS[r.account_status] || String(r.account_status ?? ""),
+        prePaga: !!r.is_prepay_account, formaPagamento, saldoDisponivel: valorExibido(formaPagamento),
+      } };
+    } catch (e) { erro = descrever(e); }
+  }
+  return { ok: false, erro };
+}
+
 export async function saldoMeta({ agoraMs = Date.now() } = {}) {
   const recargas = listarRecargas();
   const primeira = recargas.length ? Math.min(...recargas.map((r) => r.em)) : null;
   // Do começo do mês (ou da primeira recarga, se for antes) até agora; a Meta guarda 90 dias.
   const inicioMes = Date.UTC(new Date(agoraMs).getUTCFullYear(), new Date(agoraMs).getUTCMonth(), 1);
   const desde = Math.max(Math.min(inicioMes, primeira ?? inicioMes, agoraMs - 6 * 86400000), agoraMs - 89 * 86400000);
-  const [custos, cobranca, anuncios] = await Promise.all([
+  const [custos, cobranca, anuncios, pagamento] = await Promise.all([
     tentar(async () => {
       const campo = `pricing_analytics.start(${Math.floor(desde / 1000)}).end(${Math.floor(agoraMs / 1000)}).granularity(DAILY).dimensions(["PRICING_CATEGORY","PRICING_TYPE"])`;
       const r = await graph(`/${CONTA_ID()}`, { token: TOKEN(), params: { fields: campo } });
@@ -282,6 +319,7 @@ export async function saldoMeta({ agoraMs = Date.now() } = {}) {
     }),
     tentar(cobrancaWhatsapp),
     contaDeAnuncios(),
+    contaPagamentoWhatsapp(),
   ]);
   const totalRecargas = Math.round(recargas.reduce((s, r) => s + r.valor, 0) * 100) / 100;
   const gastos = custos.ok ? resumirGastos(custos.dados.dias, { agoraMs, desdeMs: primeira }) : null;
@@ -290,6 +328,6 @@ export async function saldoMeta({ agoraMs = Date.now() } = {}) {
     whatsapp: custos.ok ? { ok: true, ...gastos, dias: custos.dados.dias.slice(0, 31) } : { ok: false, erro: custos.erro },
     recargas, totalRecargas,
     saldoEstimado: recargas.length && gastos ? Math.round((totalRecargas - gastos.desdeRecarga) * 100) / 100 : null,
-    anuncios, links: linksMeta(),
+    pagamento, anuncios, links: linksMeta(),
   };
 }

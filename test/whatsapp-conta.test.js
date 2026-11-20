@@ -24,6 +24,14 @@ meta.usarFetch(async (url, opcoes = {}) => {
   const r = responder(new URL(url), opcoes);
   return { ok: !r.error, status: r.error ? 400 : 200, json: async () => r };
 });
+// lerGraph (contas de anúncios e de pagamento) usa o fetch global: nunca vai à rede no teste.
+let responderGraph = () => ({ error: { message: "sem acesso" } });
+const fetchOriginal = globalThis.fetch;
+globalThis.fetch = async (url) => {
+  const r = responderGraph(new URL(url));
+  return { ok: !r.error, status: r.error ? 400 : 200, json: async () => r };
+};
+test.after(() => { globalThis.fetch = fetchOriginal; });
 
 test("custos da Meta: total, por categoria (cobradas x grátis) e por dia", () => {
   const dia1 = Date.UTC(2026, 10, 18) / 1000;
@@ -150,7 +158,46 @@ test("saldo estimado: recargas registradas menos o gasto que a Meta informa desd
   assert.equal(s.totalRecargas, 10);
   assert.equal(s.saldoEstimado, 8.39);
   assert.equal(s.anuncios.ok, false, "sem META_ADS_TOKEN a conta de anúncios avisa em vez de inventar");
+  assert.equal(s.pagamento.ok, false, "sem acesso à conta de pagamento, fica o saldo estimado");
 
   assert.equal(conta.apagarRecarga(id), 1);
   assert.equal((await conta.saldoMeta()).saldoEstimado, null, "sem recarga registrada não há saldo estimado");
+});
+
+test("valor do texto da Meta: \"Saldo disponível (R$1.234,56 BRL)\"", () => {
+  assert.equal(conta.valorExibido("Saldo disponível (R$5,60 BRL)"), 5.6);
+  assert.equal(conta.valorExibido("Saldo disponível (R$1.234,56 BRL)"), 1234.56);
+  assert.equal(conta.valorExibido("Saldo disponível (R$ 0,04 BRL)"), 0.04);
+  assert.equal(conta.valorExibido("Available balance ($12.50 USD)"), 12.5);
+  assert.equal(conta.valorExibido("Pix"), null);
+  assert.equal(conta.valorExibido(""), null);
+});
+
+test("saldo real: lê a conta de pagamento do WhatsApp e tenta o outro token se o primeiro não alcança", async () => {
+  process.env.META_ADS_TOKEN = "ads";
+  const pedidos = [];
+  responderGraph = (u) => {
+    pedidos.push([u.pathname.split("/").pop(), u.searchParams.get("access_token")]);
+    if (u.pathname.endsWith("/act_1801961761062505")) {
+      return u.searchParams.get("access_token") === "ads"
+        ? { error: { message: "Unsupported get request" } }
+        : { name: "PMA - 1116584101362389: Rycs Sales Machine", currency: "BRL", account_status: 1, is_prepay_account: true,
+            funding_source_details: { display_string: "Saldo disponível (R$5,69 BRL)" } };
+    }
+    return { name: "RYCS SALES MACHINE", currency: "BRL", account_status: 1, balance: "4", amount_spent: "4778", is_prepay_account: true };
+  };
+  responder = (u) => (u.searchParams.get("fields")?.startsWith("pricing_analytics") ? { pricing_analytics: { data: [] } } : { currency: "BRL" });
+  try {
+    const s = await conta.saldoMeta();
+    assert.deepEqual(s.pagamento, { ok: true, dados: {
+      id: "1801961761062505", nome: "PMA - 1116584101362389: Rycs Sales Machine", moeda: "BRL", status: "Ativa", prePaga: true,
+      formaPagamento: "Saldo disponível (R$5,69 BRL)", saldoDisponivel: 5.69,
+    } });
+    assert.deepEqual(pedidos.filter(([c]) => c === "act_1801961761062505").map(([, t]) => t), ["ads", "tok"]);
+    assert.equal(s.anuncios.ok, true, "a conta de anúncios principal continua à parte");
+    assert.ok(s.links[0].url.includes("billing_hub") && s.links[0].url.includes("asset_id=WABA1"));
+  } finally {
+    delete process.env.META_ADS_TOKEN;
+    responderGraph = () => ({ error: { message: "sem acesso" } });
+  }
 });

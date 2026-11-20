@@ -2,9 +2,9 @@ import { useEffect, useId, useState } from "react";
 import { api, apiDelete } from "../../lib/api.js";
 import { valor, caixa, ErroMeta } from "./whatsappFormato.jsx";
 
-// Saldo e gastos na Meta. O gasto do WhatsApp e a conta de anúncios vêm da
-// própria Meta. O saldo do WhatsApp a Meta não informa pela API: aqui ele é
-// estimado com as recargas que o admin registra menos o gasto desde a primeira.
+// Saldo e gastos na Meta. O saldo do WhatsApp vem da conta de pagamento dele na
+// Meta ("PMA - …"), separada da conta de anúncios. Se o servidor não conseguir
+// ler essa conta, o saldo é estimado: recargas registradas menos o gasto.
 
 const SALDO_BAIXO = 5;
 const hojeISO = () => new Date().toISOString().slice(0, 10);
@@ -41,7 +41,10 @@ export default function SaldoWhatsapp({ aviso }) {
 
   const moeda = d.moeda || "BRL";
   const w = d.whatsapp;
-  const baixo = d.saldoEstimado != null && d.saldoEstimado < SALDO_BAIXO;
+  const p = d.pagamento;
+  const real = !!p?.ok && p.dados.saldoDisponivel != null;
+  const saldo = real ? p.dados.saldoDisponivel : d.saldoEstimado;
+  const baixo = saldo != null && saldo < SALDO_BAIXO;
   const a = d.anuncios;
   const linkCobranca = d.links?.[0]?.url;
 
@@ -54,11 +57,13 @@ export default function SaldoWhatsapp({ aviso }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 10, marginTop: 14 }}>
           <div style={{ ...caixa, borderColor: baixo ? "var(--red)" : "var(--border)" }}>
-            <div className="vx-mut" style={{ fontSize: 12 }}>Saldo estimado</div>
+            <div className="vx-mut" style={{ fontSize: 12 }}>{real ? "Saldo disponível" : "Saldo estimado"}</div>
             <div style={{ fontSize: 24, fontWeight: 800, marginTop: 2, fontVariantNumeric: "tabular-nums", color: baixo ? "var(--red)" : "var(--ink)" }}>
-              {d.saldoEstimado == null ? "—" : valor(d.saldoEstimado, moeda)}
+              {saldo == null ? "—" : valor(saldo, real ? p.dados.moeda || moeda : moeda)}
             </div>
-            <div className="vx-mut" style={{ fontSize: 11.5 }}>{d.recargas.length ? `${valor(d.totalRecargas, moeda)} em recargas` : "registre uma recarga abaixo"}</div>
+            <div className="vx-mut" style={{ fontSize: 11.5 }}>
+              {real ? "direto da Meta" : d.recargas.length ? `${valor(d.totalRecargas, moeda)} em recargas` : "registre uma recarga abaixo"}
+            </div>
           </div>
           {[["Gasto hoje", w.ok ? w.hoje : null], ["Últimos 7 dias", w.ok ? w.seteDias : null], ["Este mês", w.ok ? w.mes : null]].map(([r, v]) => (
             <div key={r} style={caixa}>
@@ -70,17 +75,30 @@ export default function SaldoWhatsapp({ aviso }) {
         {baixo && (
           <div role="alert" style={{ marginTop: 12, padding: 12, borderRadius: 10, border: "1px solid var(--red)", fontSize: 12.5, lineHeight: 1.6 }}>
             <b>Saldo baixo.</b> Se acabar, a Meta recusa os envios e o disparo para na primeira recusa.
-            {linkCobranca ? <> Recarregue em <a href={linkCobranca} target="_blank" rel="noreferrer">Configurações do negócio → Cobrança e pagamentos</a> e registre a recarga aqui.</> : null}
+            {linkCobranca ? <> Recarregue na <a href={linkCobranca} target="_blank" rel="noreferrer">Central de cobrança da Meta, conta do WhatsApp</a>{real ? "." : " e registre a recarga aqui."}</> : null}
           </div>
         )}
         {!w.ok && <div style={{ marginTop: 10 }}><ErroMeta erro={w.erro} /></div>}
-        <p className="vx-mut" style={{ fontSize: 12.5, margin: "12px 0 0", lineHeight: 1.55 }}>
-          A Meta não informa o saldo do WhatsApp pela API. O saldo estimado é a soma das recargas registradas aqui menos o gasto que a
-          Meta informa desde o dia da primeira recarga. A Meta fecha o gasto por dia, então o de hoje pode aparecer com atraso. O valor exato fica em
-          {linkCobranca ? <> <a href={linkCobranca} target="_blank" rel="noreferrer">Cobrança e pagamentos</a>.</> : " Cobrança e pagamentos, no painel da Meta."}
-        </p>
+        {real ? (
+          <p className="vx-mut" style={{ fontSize: 12.5, margin: "12px 0 0", lineHeight: 1.55 }}>
+            O saldo vem da conta de pagamento do WhatsApp na Meta ({p.dados.nome || p.dados.id}), onde caem as recargas.
+            Ela é separada da conta de anúncios. A Meta fecha o gasto por dia, então o de hoje pode aparecer com atraso.
+            {linkCobranca ? <> Recargas e forma de pagamento: <a href={linkCobranca} target="_blank" rel="noreferrer">Central de cobrança</a>.</> : null}
+          </p>
+        ) : (
+          <>
+            {p?.ok
+              ? <p className="vx-mut" style={{ fontSize: 12.5, margin: "12px 0 0" }}>Forma de pagamento na Meta: {p.dados.formaPagamento || "a Meta não informou"}</p>
+              : p?.erro ? <div style={{ marginTop: 10 }}><ErroMeta erro={`Não deu para ler o saldo na conta de pagamento do WhatsApp: ${p.erro}`} /></div> : null}
+            <p className="vx-mut" style={{ fontSize: 12.5, margin: "12px 0 0", lineHeight: 1.55 }}>
+              Sem o saldo direto da Meta, o saldo estimado é a soma das recargas registradas aqui menos o gasto que a
+              Meta informa desde o dia da primeira recarga. A Meta fecha o gasto por dia, então o de hoje pode aparecer com atraso. O valor exato fica na
+              {linkCobranca ? <> <a href={linkCobranca} target="_blank" rel="noreferrer">Central de cobrança</a>.</> : " Central de cobrança da Meta."}
+            </p>
+          </>
+        )}
 
-        <form onSubmit={registrar} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 10, marginTop: 14, alignItems: "end" }}>
+        {!real && <form onSubmit={registrar} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 10, marginTop: 14, alignItems: "end" }}>
           <div>
             <label className="vx-label" htmlFor={`${id}-v`}>Valor da recarga ({moeda})</label>
             <input id={`${id}-v`} className="vx-input" inputMode="decimal" value={valorRec} onChange={(e) => setValorRec(e.target.value)} placeholder="10,00" style={{ minHeight: 44 }} />
@@ -94,8 +112,8 @@ export default function SaldoWhatsapp({ aviso }) {
             <input id={`${id}-o`} className="vx-input" maxLength={200} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Pix, cartão…" style={{ minHeight: 44 }} />
           </div>
           <button type="submit" className="vx-btn vx-btn-primary" disabled={salvando || !valorRec} style={{ minHeight: 44 }}>{salvando ? "Salvando…" : "Registrar recarga"}</button>
-        </form>
-        {d.recargas.length > 0 && (
+        </form>}
+        {!real && d.recargas.length > 0 && (
           <div style={{ marginTop: 12, fontSize: 13 }}>
             {d.recargas.map((r) => (
               <div key={r.id} className="vx-row" style={{ gap: 10, padding: "6px 0", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
