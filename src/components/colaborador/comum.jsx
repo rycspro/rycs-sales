@@ -81,3 +81,19 @@ export function TabelaExtrato({ ex }) {
     </>
   );
 }
+
+export function DiasPrevistos({ valor, onChange }) {
+  const alternar = (d) => onChange(valor.includes(d) ? valor.filter((x) => x !== d) : [...valor, d].sort());
+  return (
+    <fieldset style={{ border: 0, padding: 0, margin: "4px 0 10px" }}>
+      <legend className="vx-label">Dias de trabalho previstos</legend>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {DIAS_SEMANA.map((nome, i) => (
+          <label key={i} className="vx-chip" style={{ display: "inline-flex", minHeight: 44, cursor: "pointer", gap: 6 }}>
+            <input type="checkbox" checked={valor.includes(i)} onChange={() => alternar(i)} /> {nome}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}

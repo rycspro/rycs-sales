@@ -9,6 +9,15 @@ import {
 } from "../../shared/colaboradores.js";
 
 const router = Router();
+
+// Webhook da ZapSign (sem login). Só usa o token do documento: o status é
+// conferido direto na API da ZapSign antes de marcar como assinado.
+export const colaboradoresPublico = Router();
+colaboradoresPublico.post("/webhooks/zapsign", async (req, res) => {
+  res.json({ ok: true });
+  const token = req.body?.token || req.body?.doc?.token;
+  C.confirmarZapsign(token).catch((e) => console.error("[colab] webhook zapsign:", e.message));
+});
 const hoje = () => dataBR(Date.now());
 // trust proxy está ligado no index: req.ip já é o IP real, sem confiar em cabeçalho do cliente.
 const ip = (req) => req.ip || "";
@@ -57,6 +66,7 @@ router.get("/colaborador/eu", h((req, res) => {
     acesso: C.acesso(colab),
     termo: { versao: TERMO_VERSAO, secoes: TERMO_SECOES },
     contratos: C.contratos(colab),
+    assinatura: C.provedorAssinatura(),
     regra: {
       diasPrevistos: regra.diasPrevistos, horario: regra.horario, meta: regra.meta, medirPresenca: regra.medirPresenca,
       registroAtividade: regra.registroAtividade, diaTrabalhado: regra.diaTrabalhado, alertaDiasSemAtividade: regra.alertaDiasSemAtividade,
@@ -91,6 +101,26 @@ router.post("/colaborador/contratos/:id/codigo", eu(false), h(async (req, res) =
   if (req.colab.status !== "ativo") return res.status(403).json({ error: "Seu vínculo foi encerrado." });
   res.json(await C.enviarCodigo(req.colab, req.params.id));
 }));
+
+router.post("/colaborador/contratos/:id/zapsign", eu(false), h(async (req, res) => {
+  if (req.colab.status !== "ativo") return res.status(403).json({ error: "Seu vínculo foi encerrado." });
+  res.json(await C.linkZapsign(req.colab, req.params.id));
+}));
+
+router.post("/colaborador/contratos/:id/conferir", eu(false), h(async (req, res) => {
+  const c = C.contratoCompleto(req.colab, req.params.id);
+  if (c?.provedor === "zapsign" && c.status === "pendente") await C.confirmarZapsign(c.provedorToken);
+  res.json({ acesso: C.acesso(req.colab), status: C.contratoCompleto(req.colab, req.params.id)?.status });
+}));
+
+const enviarPdf = async (res, colab, id) => {
+  const buf = await C.pdfAssinado(colab, id);
+  if (!buf) return res.status(404).json({ error: "PDF assinado não disponível." });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `inline; filename="contrato-${id.slice(0, 8)}.pdf"`);
+  res.send(buf);
+};
+router.get("/colaborador/contratos/:id/pdf", eu(false), h((req, res) => enviarPdf(res, req.colab, req.params.id)));
 
 router.post("/colaborador/contratos/:id/assinar", eu(false), h((req, res) => {
   if (req.colab.status !== "ativo") return res.status(403).json({ error: "Seu vínculo foi encerrado." });
@@ -248,6 +278,8 @@ router.get("/admin/colaboradores/:id/contratos/:cid/documento", soAdmin, carrega
   res.type("html").send(C.documentoHtml(req.colab, c));
 }));
 
+router.get("/admin/colaboradores/:id/contratos/:cid/pdf", soAdmin, carregar, h((req, res) => enviarPdf(res, req.colab, req.params.cid)));
+
 router.post("/admin/colaboradores/:id/encerrar", soAdmin, carregar, h((req, res) => {
   res.json({ colaborador: C.encerrarVinculo(req.colab, req.body || {}, req.user.id) });
 }));
@@ -280,6 +312,8 @@ router.post("/admin/colaboradores-avisos/:aid/resolver", soAdmin, h((req, res) =
 router.get("/admin/colaboradores-config", soAdmin, h((req, res) => {
   const ano = Number(hoje().slice(0, 4));
   res.json({
+    padroes: C.padroes(),
+    avisos: C.configAvisos(),
     modelos: C.modelos(),
     feriadosNacionais: [...feriadosNacionais(ano), ...feriadosNacionais(ano + 1)],
     feriados: C.feriadosCadastrados(),
@@ -302,6 +336,43 @@ router.delete("/admin/colaboradores-config/feriados/:fid", soAdmin, h((req, res)
   db.prepare("DELETE FROM colab_feriados WHERE id = ?").run(req.params.fid);
   C.auditar(req.user.id, "remover_feriado", null, "feriado", req.params.fid);
   res.json({ ok: true });
+}));
+
+// Padrões para novos colaboradores (não muda quem já existe).
+router.put("/admin/colaboradores-config/padroes", soAdmin, h((req, res) => {
+  const b = req.body?.padroes || {};
+  const limpo = {};
+  if (Array.isArray(b.diasPrevistos)) limpo.diasPrevistos = b.diasPrevistos.map(Number).filter((d) => d >= 0 && d <= 6);
+  if (b.horario && /^\d{2}:\d{2}$/.test(b.horario.inicio || "") && /^\d{2}:\d{2}$/.test(b.horario.fim || "")) limpo.horario = { inicio: b.horario.inicio, fim: b.horario.fim };
+  if (b.diaTrabalhado && ["envio", "aprovada", "registro"].includes(b.diaTrabalhado.criterio)) limpo.diaTrabalhado = { criterio: b.diaTrabalhado.criterio, minimo: Math.max(1, Number(b.diaTrabalhado.minimo) || 1) };
+  if (b.alertaDiasSemAtividade != null) limpo.alertaDiasSemAtividade = Math.max(1, Number(b.alertaDiasSemAtividade) || 3);
+  if (b.pesos) limpo.pesos = { meta: Number(b.pesos.meta) || 0, aprovacao: Number(b.pesos.aprovacao) || 0, presenca: Number(b.pesos.presenca) || 0 };
+  if (b.registroAtividade != null) limpo.registroAtividade = !!b.registroAtividade;
+  if (b.meta && ["dia", "semana"].includes(b.meta.periodo)) limpo.meta = { periodo: b.meta.periodo };
+  if (b.garantiaDias != null) limpo.garantiaDias = Math.max(0, Number(b.garantiaDias) || 0);
+  C.gravarConfig("padroes", limpo);
+  C.auditar(req.user.id, "padroes", null, "config", "padroes", limpo);
+  res.json({ padroes: C.padroes() });
+}));
+
+// Avisos e relatórios: e-mail do relatório, destinatários, lembrete e alerta imediato.
+router.put("/admin/colaboradores-config/avisos", soAdmin, h((req, res) => {
+  const b = req.body?.avisos || {};
+  const limpo = {
+    relatorioEmail: !!b.relatorioEmail, lembreteEmail: !!b.lembreteEmail, alertaEmail: !!b.alertaEmail,
+    destinatarios: String(b.destinatarios || "").slice(0, 500),
+  };
+  C.gravarConfig("avisos", limpo);
+  C.auditar(req.user.id, "config_avisos", null, "config", "avisos", limpo);
+  res.json({ avisos: C.configAvisos() });
+}));
+
+// Chave "Colaborador interno" na ficha do profissional (seção 1).
+router.get("/admin/colaboradores-por-profissional/:sellerId", soAdmin, h((req, res) => {
+  const u = db.prepare("SELECT id, email FROM users WHERE role = 'vendedor' AND entityId = ?").get(req.params.sellerId);
+  if (!u) return res.json({ usuario: null, colaborador: null });
+  const c = C.colaboradorPorUsuario(u.id);
+  res.json({ usuario: u, colaborador: c ? { id: c.id, status: c.status, funcao: c.funcao, vinculo: c.vinculo, ...C.acesso(c) } : null });
 }));
 
 router.put("/admin/colaboradores-config/naturezas", soAdmin, h((req, res) => {
@@ -342,9 +413,10 @@ router.get("/admin/colaboradores-fechamento", soAdmin, h((req, res) => res.json(
 router.post("/admin/colaboradores-fechamento", soAdmin, h((req, res) => res.json(C.fecharMes(req.body?.mes, req.user.id))));
 router.get("/admin/colaboradores-fechamento.csv", soAdmin, h((req, res) => {
   const mes = mesQuery(req);
+  const cid = req.query.colaboradorId ? String(req.query.colaboradorId) : null;
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="fechamento-colaboradores-${mes}.csv"`);
-  res.send(C.fechamentoCsv(mes));
+  res.setHeader("Content-Disposition", `attachment; filename="fechamento-colaboradores-${mes}${cid ? "-" + cid.slice(0, 8) : ""}.csv"`);
+  res.send(C.fechamentoCsv(mes, cid));
 }));
 router.get("/admin/colaboradores-fechamento.html", soAdmin, h((req, res) => {
   res.type("html").send(C.fechamentoHtml(mesQuery(req), req.query.colaboradorId || null));

@@ -16,11 +16,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import db, { uid, agora } from "../db.js";
 import { sendEmail } from "./email.js";
 import { salvar, lerBuffer } from "./arquivos.js";
+import * as Z from "./zapsign.js";
 import {
   normalizarRegra, regraPadrao, dataBR, mesBR, somarDias, segundaDaSemana, ultimoDiaDoMes, mesSeguinte, mesAnterior,
   fimDoDiaTs, inicioDoDiaTs, feriadosNacionais, foraDaJornada, calcularDias, calcularPainel, tendencia, ausenciasSeguidas,
   sugerirMeta, calibracaoTerminou, camposDoContrato, preencherContrato, mudouContrato, formatarCents, TIPOS_LANCAMENTO,
-  NATUREZAS, VINCULOS, REGIMES, TERMO_VERSAO, dataBRFormatada, formatarCpf, minutoBR, reducoes,
+  NATUREZAS, VINCULOS, REGIMES, TERMO_VERSAO, dataBRFormatada, formatarCpf, minutoBR, reducoes, aplicarPadroes,
 } from "../../shared/colaboradores.js";
 
 const MODELO_IA = process.env.COLAB_IA_MODELO || "claude-sonnet-5-5";
@@ -50,6 +51,17 @@ export function lerConfig(chave, padrao) {
 export function gravarConfig(chave, valor) {
   db.prepare("INSERT INTO colab_config (chave, valor, atualizadoEm) VALUES (?, ?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor, atualizadoEm = excluded.atualizadoEm")
     .run(chave, JSON.stringify(valor), agora());
+}
+
+export function padroes() { return lerConfig("padroes", {}); }
+export function configAvisos() {
+  return { relatorioEmail: true, destinatarios: "", lembreteEmail: true, alertaEmail: false, ...lerConfig("avisos", {}) };
+}
+function emailsAdmins() {
+  const cfg = configAvisos();
+  const lista = String(cfg.destinatarios || "").split(/[,;\s]+/).map((e) => e.trim()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
+  if (lista.length) return lista;
+  return db.prepare("SELECT email FROM users WHERE role = 'admin' AND email IS NOT NULL").all().map((a) => a.email);
 }
 
 export function naturezas() {
@@ -107,7 +119,7 @@ export function ativarColaborador({ userId, nome, cpf, funcao, vinculo, regime, 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ativo', ?, ?, ?)`)
       .run(id, userId, nome.trim(), String(cpf || "").replace(/\D/g, ""), (funcao || "").trim(), v, rg, dataInicio, Number(jornadaHoras) || 0, autor, agora(), agora());
     const colab = colaboradorPorId(id);
-    const base = regraPadrao({ vinculo: v, regime: rg, hoje: hojeBR() });
+    const base = aplicarPadroes(regraPadrao({ vinculo: v, regime: rg, hoje: hojeBR() }), padroes());
     inserirRegra(colab, { ...base, ...(regra || {}), meta: { ...base.meta, ...(regra?.meta || {}), calibracaoDesde: hojeBR() } }, autor, dataInicio, "Ativação");
     auditar(autor, "ativar", id, "colaborador", id, { vinculo: v, regime: rg, dataInicio });
   })();
@@ -259,7 +271,7 @@ export function gerarContrato(colab, tipo, autor) {
 }
 
 export function contratos(colab) {
-  return db.prepare("SELECT id, tipo, titulo, status, modeloVersao, regraVersao, hash, assinadoEm, ip, criadoEm FROM colab_contratos WHERE colaboradorId = ? ORDER BY criadoEm DESC").all(colab.id);
+  return db.prepare("SELECT id, tipo, titulo, status, modeloVersao, regraVersao, hash, assinadoEm, ip, criadoEm, provedor, (arquivoAssinado IS NOT NULL) AS temPdf FROM colab_contratos WHERE colaboradorId = ? ORDER BY criadoEm DESC").all(colab.id);
 }
 export const contratoAssinado = (colab) =>
   !!db.prepare("SELECT 1 FROM colab_contratos WHERE colaboradorId = ? AND tipo = 'contrato' AND status = 'assinado'").get(colab.id);
@@ -298,9 +310,59 @@ export function assinar(colab, contratoId, codigo, { ip, userAgent }) {
   return contratoCompleto(colab, c.id);
 }
 
+// ───────────────────────────── ZapSign ─────────────────────────────
+
+export const provedorAssinatura = () => (Z.zapsignAtivo() ? "zapsign" : "email");
+
+export async function linkZapsign(colab, contratoId) {
+  if (!Z.zapsignAtivo()) throw new ErroColab("A assinatura pela ZapSign não está configurada.");
+  const c = contratoCompleto(colab, contratoId);
+  if (!c || c.status !== "pendente") throw new ErroColab("Documento não está pendente de assinatura.", 404);
+  if (c.provedor === "zapsign" && c.signUrl) return { signUrl: c.signUrl };
+  if (sha256(c.texto) !== c.hash) throw new ErroColab("O texto do documento não confere com o original. Fale com o administrador.", 409);
+  const u = db.prepare("SELECT email FROM users WHERE id = ?").get(colab.userId);
+  if (!u?.email) throw new ErroColab("Sua conta não tem e-mail cadastrado.");
+  const doc = await Z.criarDocumento({ nome: c.titulo || "Contrato", texto: c.texto, idExterno: c.id, signatario: { nome: colab.nome, email: u.email } });
+  db.prepare("UPDATE colab_contratos SET provedor = 'zapsign', provedorToken = ?, signUrl = ? WHERE id = ?").run(doc.token, doc.signUrl, c.id);
+  auditar(colab.userId, "zapsign_criar", colab.id, "contrato", c.id, { token: doc.token });
+  return { signUrl: doc.signUrl };
+}
+
+// Confirma na própria ZapSign (não confia no corpo do webhook) e, se o
+// documento estiver assinado, guarda o PDF e marca o contrato como assinado.
+export async function confirmarZapsign(token) {
+  if (!Z.zapsignAtivo() || !token) return false;
+  const c = db.prepare("SELECT * FROM colab_contratos WHERE provedorToken = ?").get(String(token));
+  if (!c || c.status !== "pendente") return false;
+  const doc = await Z.consultarDocumento(token);
+  if (doc.status !== "signed" || (doc.idExterno && doc.idExterno !== c.id)) return false;
+  let chave = null;
+  if (doc.arquivoAssinado) {
+    const buf = await Z.baixar(doc.arquivoAssinado);
+    chave = `colaboradores/${c.colaboradorId}/contratos/${c.id}.pdf`;
+    await salvar(chave, Readable.from(buf), { contentType: "application/pdf", maxBytes: 30 * 1024 * 1024 });
+  }
+  db.prepare("UPDATE colab_contratos SET status = 'assinado', assinadoEm = ?, ip = ?, arquivoAssinado = ? WHERE id = ? AND status = 'pendente'")
+    .run(doc.assinadoEm || agora(), doc.ip || "", chave, c.id);
+  auditar(null, "zapsign_assinado", c.colaboradorId, "contrato", c.id, { token, hash: c.hash });
+  return true;
+}
+
+async function sincronizarZapsign() {
+  if (!Z.zapsignAtivo()) return;
+  const pendentes = db.prepare("SELECT provedorToken FROM colab_contratos WHERE status = 'pendente' AND provedor = 'zapsign' AND provedorToken IS NOT NULL").all();
+  for (const p of pendentes) await confirmarZapsign(p.provedorToken).catch((e) => console.error("[colab] zapsign:", e.message));
+}
+
+export async function pdfAssinado(colab, contratoId) {
+  const c = contratoCompleto(colab, contratoId);
+  if (!c?.arquivoAssinado) return null;
+  return lerBuffer(c.arquivoAssinado, 30 * 1024 * 1024);
+}
+
 export function documentoHtml(colab, c) {
   const rodape = c.status === "assinado"
-    ? `Assinado eletronicamente por ${escapar(colab.nome)} em ${new Date(c.assinadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}, com código enviado ao e-mail cadastrado. IP ${escapar(c.ip)}.`
+    ? `Assinado eletronicamente por ${escapar(colab.nome)} em ${new Date(c.assinadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}, ${c.provedor === "zapsign" ? "pela ZapSign (o PDF assinado com a trilha da ZapSign está guardado na plataforma)" : "com código enviado ao e-mail cadastrado"}. IP ${escapar(c.ip || "—")}.`
     : "Documento ainda não assinado.";
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapar(c.titulo)}</title>
 <style>body{font:15px/1.6 Georgia,serif;color:#111;background:#fff;max-width:760px;margin:32px auto;padding:0 16px}h1{font-size:20px}pre{white-space:pre-wrap;font:inherit}footer{margin-top:32px;border-top:1px solid #999;padding-top:12px;font:12px/1.5 system-ui,sans-serif;color:#333}@media print{button{display:none}}</style></head>
@@ -343,7 +405,11 @@ function notificar(colab, titulo, corpo) {
 function registrarAviso({ colab, destino, tipo, titulo, texto, chave, dados = {} }) {
   const r = db.prepare("INSERT OR IGNORE INTO colab_avisos (id, colaboradorId, destino, tipo, titulo, texto, dados, chave, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
     .run(uid(), colab?.id || null, destino, tipo, titulo, texto || "", JSON.stringify(dados), chave, agora());
-  return r.changes > 0;
+  const novo = r.changes > 0;
+  // Alerta por e-mail na hora, só se o admin ligou em Configuração.
+  if (novo && destino === "admin" && configAvisos().alertaEmail)
+    for (const e of emailsAdmins()) sendEmail(e, titulo, `<p>${escapar(texto)}</p><p>Detalhes no admin, em Colaboradores.</p>`).catch(() => {});
+  return novo;
 }
 
 export function avisos(destino, colabId, { abertos = true, limite = 100 } = {}) {
@@ -724,17 +790,32 @@ function sincronizarCadastros(colab) {
   const r0 = regraDe(colab);
   const tsInicio = inicioDoDiaTs(colab.dataInicio);
   const cpf = String(colab.cpf || "");
-  const rows = db.prepare(`SELECT r.id, r.status, r.qualificadoEm, r.criadoEm, s.documento FROM referrals r
+  const fone = telefoneDe(colab);
+  const rows = db.prepare(`SELECT r.id, r.status, r.qualificadoEm, r.criadoEm, s.documento, s.whats FROM referrals r
     LEFT JOIN users u ON u.id = r.indicadoUserId LEFT JOIN sellers s ON s.id = u.entityId AND u.role = 'vendedor'
     WHERE r.indicadorUserId = ? AND r.criadoEm >= ?`).all(colab.userId, tsInicio);
   for (const r of rows) {
     const regra = regraDe(colab, dataBR(r.criadoEm));
     const valido = regra.variavel.cadastroCriterio === "cadastro" ? true : !!r.qualificadoEm;
-    const proprio = cpf && String(r.documento || "").replace(/\D/g, "") === cpf;
-    const devido = valido && !proprio && !["cancelado", "estornado", "fraude"].includes(r.status) ? regra.variavel.cadastroCents : 0;
+    // Não conta cadastro com o CPF ou o telefone do próprio colaborador (4.2).
+    const proprio = (cpf && String(r.documento || "").replace(/\D/g, "") === cpf) || (fone && ultimos(r.whats) === fone);
+    const cancelado = ["cancelado", "estornado", "fraude"].includes(r.status);
+    if (cancelado && foraDaGarantia(colab, regra, r.qualificadoEm || r.criadoEm, "cadastro", r.id)) continue;
+    const devido = valido && !proprio && !cancelado ? regra.variavel.cadastroCents : 0;
     if (devido || r0.variavel.cadastroCents || jaLancado(colab, "cadastro", r.id))
       reconciliar({ colab, origemTipo: "cadastro", origemId: r.id, devidoCents: devido, descricao: "Cadastro trazido por indicação" });
   }
+}
+
+const ultimos = (t) => { const d = String(t || "").replace(/\D/g, ""); return d.length >= 10 ? d.slice(-10) : ""; };
+function telefoneDe(colab) {
+  const u = db.prepare("SELECT s.whats FROM users u LEFT JOIN sellers s ON s.id = u.entityId AND u.role = 'vendedor' WHERE u.id = ?").get(colab.userId);
+  return ultimos(u?.whats);
+}
+// Passado o prazo de garantia, um cancelamento não estorna o que já foi lançado.
+function foraDaGarantia(colab, regra, desdeTs, tipo, id) {
+  const dias = Number(regra.variavel.garantiaDias);
+  return jaLancado(colab, tipo, id) && dias >= 0 && agora() > Number(desdeTs) + dias * 86400000;
 }
 
 const jaLancado = (colab, tipo, id) => !!db.prepare("SELECT 1 FROM colab_lancamentos WHERE colaboradorId = ? AND origemTipo = ? AND origemId = ?").get(colab.id, tipo, String(id));
@@ -752,7 +833,9 @@ function sincronizarEmpresas(colab) {
     const meses = Math.max(1, Number(e.meses) || 1);
     const dentro = meses === 1 ? primeiraPorEmpresa[r.companyId] === r.id : r.criadoEm < (r.atribuidaEm || r.criadoEm) + meses * 30 * 86400000;
     // Só BRL: valor em outra moeda não se soma ao extrato em reais.
-    const valido = dentro && r.moeda === "BRL" && !["cancelada", "estornada"].includes(r.status);
+    const cancelada = ["cancelada", "estornada"].includes(r.status);
+    if (cancelada && foraDaGarantia(colab, regra, r.criadoEm, "empresa_pagante", r.id)) continue;
+    const valido = dentro && r.moeda === "BRL" && !cancelada;
     const devido = !valido ? 0 : e.modo === "percentual" ? Math.round((Number(r.baseCents) || 0) * (Number(e.percentual) || 0) / 100) : Number(e.valorCents) || 0;
     if (devido || jaLancado(colab, "empresa_pagante", r.id))
       reconciliar({ colab, origemTipo: "empresa_pagante", origemId: r.id, devidoCents: devido, descricao: `Empresa pagante: ${r.empresa || "empresa"}` });
@@ -868,8 +951,9 @@ export function fecharMes(mes, autor) {
 }
 
 const centsBR = (c) => (Number(c || 0) / 100).toFixed(2).replace(".", ",");
-export function fechamentoCsv(mes) {
+export function fechamentoCsv(mes, colaboradorId = null) {
   const f = previaFechamento(mes);
+  if (colaboradorId) f.pessoas = f.pessoas.filter((p) => p.colaboradorId === colaboradorId);
   const linhas = [["mes", "colaborador", "cpf", "funcao", "vinculo", "regime", "data", "tipo", "natureza", "descricao", "valor_reais"].join(";")];
   const cel = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   for (const p of f.pessoas) {
@@ -981,8 +1065,8 @@ export const relatoriosDe = (colab) => db.prepare("SELECT id, periodo, referenci
   .map((r) => ({ ...r, dados: json(r.dados) }));
 
 async function enviarRelatorioAdmins(titulo, itens) {
-  if (!itens.length) return;
-  const admins = db.prepare("SELECT email FROM users WHERE role = 'admin' AND email IS NOT NULL").all();
+  if (!itens.length || !configAvisos().relatorioEmail) return;
+  const admins = emailsAdmins().map((email) => ({ email }));
   // Uma linha por pessoa no topo ("em dia" ou o que mudou), detalhe no painel (13.12).
   const linhas = itens.map(({ colab, p, resumo }) => `<li><b>${escapar(colab.nome)}</b> — ${p.alertas.length ? escapar(p.alertas.map((a) => a.texto).join(" ")) : "em dia"}<br><span style="color:#555">${escapar(resumo)}</span></li>`).join("");
   const html = `<p>${escapar(titulo)}</p><ul>${linhas}</ul><p>O detalhe de cada pessoa está no admin, em Colaboradores. A IA só resume: nenhuma decisão foi tomada sobre pagamento ou vínculo.</p>`;
@@ -1020,7 +1104,7 @@ async function avisosDoColaborador(colab, hoje, agoraTs) {
       const datas = pendentes.map((d) => dataBRFormatada(d.data)).join(", ");
       notificar(colab, "Dia sem envio", `Não houve envio em ${datas}. Se foi folga ou atestado, registre a ausência.`);
       const u = db.prepare("SELECT email FROM users WHERE id = ?").get(colab.userId);
-      if (u?.email) await sendEmail(u.email, "Lembrete: dia sem envio na plataforma",
+      if (u?.email && configAvisos().lembreteEmail) await sendEmail(u.email, "Lembrete: dia sem envio na plataforma",
         `<p>Olá, ${escapar(colab.nome.split(" ")[0])}.</p><p>Não encontramos envio em ${escapar(datas)}. Se foi folga, férias ou atestado, registre a ausência na área <b>Colaborador RYCS</b>; assim o dia não conta como falta.</p><p>Se você trabalhou e algo não apareceu, conteste o dia por lá.</p>`).catch(() => {});
     }
   }
@@ -1056,6 +1140,7 @@ function sincronizarTudo(colab, hoje) {
 export async function processarColaboradores(agoraTs = agora()) {
   const hoje = dataBR(agoraTs);
   gerarOcorrencias(hoje);
+  await sincronizarZapsign();
   const manha = minutoBR(agoraTs) >= 7 * 60;
   for (const colab of ativos()) {
     try {

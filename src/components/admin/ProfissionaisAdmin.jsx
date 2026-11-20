@@ -3,6 +3,7 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { money, dataCurta } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
 import { DossieProfissional } from "./Dossie.jsx";
+import ChaveColaborador from "../colaborador/ChaveColaborador.jsx";
 import { api } from "../../lib/api.js";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", "sem-exp": "Iniciante", bdr: "BDR", pap: "PAP" };
@@ -130,6 +131,8 @@ export default function ProfissionaisAdmin({ db, up, aviso }) {
                   <div style={{ marginTop: 12 }}>
                     <span className="vx-mut" style={{ fontSize: 12.5 }}>Total de submissões: {s.subs} · Aprovadas: {s.liberados} · Taxa: {s.subs > 0 ? Math.round((s.liberados / s.subs) * 100) : 0}%</span>
                   </div>
+
+                  <ChaveColaborador sellerId={s.id} nome={s.nome} documento={s.documento} aviso={aviso} />
 
                   <DossieProfissional sellerId={s.id} />
 
