@@ -2584,6 +2584,255 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_partner_requests_email ON channel_partner_requests(email);
 `);
 
+// Colaboradores internos (docs/colaboradores/SPEC.md e shared/colaboradores.js).
+// Só tabelas novas. Lançamentos não se editam nem se apagam: correção é um
+// novo lançamento (ajuste ou estorno), com chave única para não duplicar.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS colaboradores (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    cpf TEXT DEFAULT '',
+    funcao TEXT DEFAULT '',
+    vinculo TEXT NOT NULL DEFAULT 'clt',
+    regime TEXT DEFAULT 'presencial',
+    dataInicio TEXT NOT NULL,
+    jornadaHoras REAL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'ativo',
+    dataSaida TEXT,
+    motivoSaida TEXT DEFAULT '',
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER,
+    FOREIGN KEY (userId) REFERENCES users(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_user ON colaboradores(userId);
+
+  CREATE TABLE IF NOT EXISTS colab_regras (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    versao INTEGER NOT NULL,
+    regra TEXT NOT NULL,
+    vigenciaInicio TEXT NOT NULL,
+    motivo TEXT DEFAULT '',
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_regras_versao ON colab_regras(colaboradorId, versao);
+
+  CREATE TABLE IF NOT EXISTS colab_contrato_modelos (
+    id TEXT PRIMARY KEY,
+    tipo TEXT NOT NULL DEFAULT 'contrato',
+    vinculo TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    versao INTEGER NOT NULL,
+    texto TEXT NOT NULL,
+    ativo INTEGER NOT NULL DEFAULT 1,
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS colab_contratos (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    tipo TEXT NOT NULL DEFAULT 'contrato',
+    modeloId TEXT,
+    modeloVersao INTEGER,
+    regraVersao INTEGER,
+    titulo TEXT DEFAULT '',
+    texto TEXT NOT NULL,
+    hash TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pendente',
+    codigoHash TEXT,
+    codigoExpira INTEGER,
+    codigoTentativas INTEGER DEFAULT 0,
+    assinadoEm INTEGER,
+    ip TEXT,
+    userAgent TEXT,
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_colab_contratos ON colab_contratos(colaboradorId, criadoEm DESC);
+
+  CREATE TABLE IF NOT EXISTS colab_termo_aceites (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    versao TEXT NOT NULL,
+    ip TEXT,
+    userAgent TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_termo ON colab_termo_aceites(colaboradorId, versao);
+
+  CREATE TABLE IF NOT EXISTS colab_tarefas (
+    id TEXT PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    atribuicao TEXT NOT NULL DEFAULT 'pessoa',
+    alvo TEXT DEFAULT '',
+    prazoData TEXT,
+    recorrencia TEXT NOT NULL DEFAULT 'unica',
+    valorCents INTEGER,
+    tipoProva TEXT NOT NULL DEFAULT 'texto',
+    aprovacao TEXT NOT NULL DEFAULT 'manual',
+    contaMeta INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL DEFAULT 'ativa',
+    sugeridaPorIA INTEGER DEFAULT 0,
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS colab_ocorrencias (
+    id TEXT PRIMARY KEY,
+    tarefaId TEXT NOT NULL,
+    colaboradorId TEXT,
+    chave TEXT NOT NULL,
+    dataRef TEXT NOT NULL,
+    prazoEm INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'aberta',
+    prova TEXT DEFAULT '{}',
+    provaHash TEXT,
+    repetida INTEGER DEFAULT 0,
+    checagens TEXT DEFAULT '{}',
+    observacaoIA TEXT DEFAULT '',
+    enviadoEm INTEGER,
+    foraJornada INTEGER DEFAULT 0,
+    autoAprovada INTEGER DEFAULT 0,
+    conferidaAdmin INTEGER DEFAULT 0,
+    motivo TEXT DEFAULT '',
+    revisadoPor TEXT,
+    revisadoEm INTEGER,
+    reservadaEm INTEGER,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (tarefaId) REFERENCES colab_tarefas(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_ocor_chave ON colab_ocorrencias(chave);
+  CREATE INDEX IF NOT EXISTS idx_colab_ocor_colab ON colab_ocorrencias(colaboradorId, dataRef);
+  CREATE INDEX IF NOT EXISTS idx_colab_ocor_hash ON colab_ocorrencias(provaHash);
+
+  CREATE TABLE IF NOT EXISTS colab_lancamentos (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    mes TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    origemTipo TEXT NOT NULL,
+    origemId TEXT NOT NULL,
+    valorCents INTEGER NOT NULL,
+    descricao TEXT DEFAULT '',
+    motivo TEXT DEFAULT '',
+    autor TEXT,
+    chave TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_lanc_chave ON colab_lancamentos(chave);
+  CREATE INDEX IF NOT EXISTS idx_colab_lanc_mes ON colab_lancamentos(colaboradorId, mes);
+  CREATE INDEX IF NOT EXISTS idx_colab_lanc_origem ON colab_lancamentos(colaboradorId, origemTipo, origemId);
+
+  CREATE TABLE IF NOT EXISTS colab_fechamentos (
+    id TEXT PRIMARY KEY,
+    mes TEXT NOT NULL,
+    fechadoPor TEXT,
+    fechadoEm INTEGER NOT NULL,
+    resumo TEXT DEFAULT '{}'
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_fech_mes ON colab_fechamentos(mes);
+
+  CREATE TABLE IF NOT EXISTS colab_ausencias (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    dataInicio TEXT NOT NULL,
+    dataFim TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pedida',
+    observacao TEXT DEFAULT '',
+    pedidoPor TEXT,
+    decididoPor TEXT,
+    decididoEm INTEGER,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_colab_aus ON colab_ausencias(colaboradorId, dataInicio);
+
+  CREATE TABLE IF NOT EXISTS colab_feriados (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_feriados ON colab_feriados(data);
+
+  CREATE TABLE IF NOT EXISTS colab_registros (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    data TEXT NOT NULL,
+    em INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_colab_reg ON colab_registros(colaboradorId, data);
+
+  CREATE TABLE IF NOT EXISTS colab_avisos (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT,
+    destino TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    texto TEXT DEFAULT '',
+    dados TEXT DEFAULT '{}',
+    chave TEXT NOT NULL,
+    lidoEm INTEGER,
+    resolvidoEm INTEGER,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_avisos_chave ON colab_avisos(chave);
+  CREATE INDEX IF NOT EXISTS idx_colab_avisos ON colab_avisos(destino, colaboradorId, criadoEm DESC);
+
+  CREATE TABLE IF NOT EXISTS colab_contestacoes (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    alvoTipo TEXT NOT NULL,
+    alvoId TEXT NOT NULL,
+    texto TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'aberta',
+    resposta TEXT DEFAULT '',
+    decididoPor TEXT,
+    decididoEm INTEGER,
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS colab_relatorios (
+    id TEXT PRIMARY KEY,
+    colaboradorId TEXT NOT NULL,
+    periodo TEXT NOT NULL,
+    referencia TEXT NOT NULL,
+    inicio TEXT NOT NULL,
+    fim TEXT NOT NULL,
+    dados TEXT DEFAULT '{}',
+    resumo TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_colab_rel ON colab_relatorios(colaboradorId, periodo, referencia);
+
+  CREATE TABLE IF NOT EXISTS colab_auditoria (
+    id TEXT PRIMARY KEY,
+    autorId TEXT,
+    acao TEXT NOT NULL,
+    colaboradorId TEXT,
+    alvoTipo TEXT DEFAULT '',
+    alvoId TEXT DEFAULT '',
+    dados TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_colab_audit ON colab_auditoria(colaboradorId, criadoEm DESC);
+
+  CREATE TABLE IF NOT EXISTS colab_config (
+    chave TEXT PRIMARY KEY,
+    valor TEXT NOT NULL,
+    atualizadoEm INTEGER
+  );
+`);
+
 
 export default db;
 export { uid, agora };

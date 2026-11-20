@@ -18,6 +18,8 @@ import VouchersAdmin from "./VouchersAdmin.jsx";
 import LiberarAdmin from "./LiberarAdmin.jsx";
 import PlanosAdmin from "./PlanosAdmin.jsx";
 import ParceirosCanalAdmin from "./ParceirosCanalAdmin.jsx";
+import { lazy, Suspense } from "react";
+const ColaboradoresAdmin = lazy(() => import("./ColaboradoresAdmin.jsx"));
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
@@ -88,6 +90,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   if (aba === "empresas") return <EmpresasAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "planos") return <PlanosAdmin db={db} aviso={aviso} />;
   if (aba === "parceiros") return <ParceirosCanalAdmin aviso={aviso} />;
+  if (aba === "colaboradores") return <Suspense fallback={<div className="vx-spinner" />}><ColaboradoresAdmin aviso={aviso} /></Suspense>;
   if (aba === "cobranca") return <AssinaturasAdmin />;
   if (aba === "vouchers") return <VouchersAdmin aviso={aviso} />;
   if (aba === "depositos") return <DepositosAdmin aviso={aviso} recarregar={recarregar} />;
