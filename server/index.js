@@ -10,6 +10,7 @@ import db from "./db.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { onboardingGuard } from "./middleware/onboardingGuard.js";
 import { ACOES, CAMPOS, SISTEMA_AUDITOR } from "../shared/acoes.js";
+import agendaRoutes, { agendaPublica } from "./routes/agendaComercial.js";
 import authRoutes from "./routes/auth.js";
 import stateRoutes from "./routes/state.js";
 import sellersRoutes from "./routes/sellers.js";
@@ -203,6 +204,7 @@ app.use("/api", authRoutes);
 app.use("/api", paymentRoutes);
 // Consulta do convite de onboarding: quem abre o link ainda não tem conta.
 app.use("/api", onboardingPublico);
+app.use("/api", agendaPublica);
 // Webhook e retorno do login da Meta: chegam sem cookie de sessão.
 app.use("/api", metaPublico);
 // Webhook do Stripe (pagamento internacional): também chega sem cookie.
@@ -272,6 +274,7 @@ app.use("/api", authMiddleware, stripeRoutes);
 app.use("/api", authMiddleware, materiaisRoutes);
 app.use("/api", authMiddleware, academyEmpresaRoutes);
 app.use("/api", authMiddleware, colaboradoresRoutes);
+app.use("/api", authMiddleware, agendaRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

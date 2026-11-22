@@ -1,0 +1,379 @@
+// Agenda comercial interna da RYCS (admin e closers liberados).
+// Closer: publica horários, vê só as próprias reuniões e as respostas do quiz,
+// cancela ou registra o resultado. Admin: libera/revoga closers, vê todas as
+// reuniões, quem atende cada uma e os resultados.
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarClock, CalendarCheck2, CalendarX2, Clock, RefreshCw, UserX, Users, MessageCircle, Phone, Mail, AlertTriangle } from "lucide-react";
+import { api } from "../../lib/api.js";
+import { Stat } from "../ui.jsx";
+import { DIMENSOES_QUIZ, ETAPAS_QUIZ, DURACOES_AGENDA } from "../../../shared/quizDiagnostico.js";
+import "./AgendaComercial.css";
+
+const fuso = (() => {
+  try { return new Intl.DateTimeFormat("pt-BR", { timeZoneName: "long" }).formatToParts(new Date()).find((p) => p.type === "timeZoneName")?.value; } catch { return ""; }
+})() || Intl.DateTimeFormat().resolvedOptions().timeZone;
+const dois = (n) => String(n).padStart(2, "0");
+const chaveDia = (ts) => { const d = new Date(ts); return `${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}`; };
+const hora = (ts) => new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const dia = (ts) => new Date(ts).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" });
+const diaLongo = (ts) => new Date(ts).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+const STATUS = {
+  agendada: { txt: "Agendada", tone: "brand" },
+  cancelada: { txt: "Cancelada", tone: "muted" },
+  realizada: { txt: "Realizada", tone: "indigo" },
+  nao_compareceu: { txt: "Não compareceu", tone: "red" },
+};
+const ORIGEM = (o = {}) => [o.utm_source, o.utm_campaign, o.utm_content].filter(Boolean).join(" · ") || (o.fbclid ? "Anúncio da Meta" : o.referrer || "");
+// Número com DDI: o que veio sem (10–11 dígitos) é brasileiro.
+const comDdi = (tel) => { const d = String(tel || "").replace(/\D/g, ""); return d.length <= 11 ? `55${d}` : d; };
+const telefoneLegivel = (tel) => {
+  const d = String(tel || "").replace(/\D/g, "");
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return tel;
+};
+const whatsapp = (tel) => (String(tel || "").replace(/\D/g, "") ? `https://wa.me/${comDdi(tel)}` : null);
+
+export default function AgendaComercial() {
+  const [dados, setDados] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [aba, setAba] = useState("proximas");
+
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    const r = await api("/agenda-comercial");
+    setCarregando(false);
+    if (!r || r.error) { setErro(r?.error || "Não foi possível carregar a agenda. Verifique a conexão e tente de novo."); return; }
+    setErro("");
+    setDados(r);
+  }, []);
+  useEffect(() => { carregar(); }, [carregar]);
+
+  async function executar(caminho, corpo, mensagem) {
+    if (ocupado) return null;
+    setOcupado(true); setErro(""); setSucesso("");
+    const r = await api(`/agenda-comercial${caminho}`, corpo);
+    setOcupado(false);
+    if (!r || r.error) { setErro(r?.error || "Não foi possível salvar. Tente de novo."); return null; }
+    setSucesso(typeof mensagem === "function" ? mensagem(r) : mensagem);
+    await carregar();
+    return r;
+  }
+
+  const agora = Date.now();
+  const grupos = useMemo(() => {
+    const lista = dados?.reunioes || [];
+    return {
+      proximas: lista.filter((r) => r.status === "agendada" && r.fim > agora).sort((a, b) => a.inicio - b.inicio),
+      registrar: lista.filter((r) => r.status === "agendada" && r.fim <= agora).sort((a, b) => b.inicio - a.inicio),
+      historico: lista.filter((r) => r.status !== "agendada").sort((a, b) => b.inicio - a.inicio),
+    };
+  }, [dados, agora]);
+
+  if (!dados) {
+    return (
+      <div className="vx-fade ag-pagina">
+        <Cabecalho onAtualizar={carregar} carregando={carregando} />
+        {carregando ? <div className="vx-card ag-vazio" role="status">Carregando agenda…</div>
+          : <div className="vx-card ag-vazio" role="alert"><p>{erro}</p><button className="vx-btn vx-btn-primary" onClick={carregar}>Tentar de novo</button></div>}
+      </div>
+    );
+  }
+
+  const livres = dados.horarios;
+  const abas = [
+    ["proximas", `Próximas (${grupos.proximas.length})`],
+    ["registrar", `A registrar (${grupos.registrar.length})`],
+    ["livres", `Horários livres (${livres.length})`],
+    ["historico", `Histórico (${grupos.historico.length})`],
+  ];
+
+  return (
+    <div className="vx-fade ag-pagina">
+      <Cabecalho onAtualizar={carregar} carregando={carregando} admin={dados.admin} />
+      {erro && <p className="vx-notice ag-alerta" role="alert">{erro}</p>}
+      {sucesso && <p className="vx-notice ag-ok" role="status">{sucesso}</p>}
+      {!livres.filter((h) => h.inicio > agora + 3600000).length && (
+        <p className="vx-notice ag-alerta-amber" role="status"><AlertTriangle size={16} aria-hidden="true" />
+          {dados.admin ? "Nenhum horário livre publicado: quem concluir o quiz em /diagnostico não consegue agendar." : "Você não tem horários livres publicados. Abra horários para receber reuniões."}
+        </p>
+      )}
+
+      <div className="ag-stats">
+        <Stat label="Próximas reuniões" value={grupos.proximas.length} Icon={CalendarClock} />
+        <Stat label="A registrar" value={grupos.registrar.length} Icon={Clock} />
+        <Stat label="Realizadas" value={dados.reunioes.filter((r) => r.status === "realizada").length} Icon={CalendarCheck2} />
+        <Stat label="Não compareceu" value={dados.reunioes.filter((r) => r.status === "nao_compareceu").length} Icon={UserX} />
+        <Stat label="Canceladas" value={dados.reunioes.filter((r) => r.status === "cancelada").length} Icon={CalendarX2} />
+        <Stat label="Horários livres" value={livres.length} Icon={Users} />
+      </div>
+
+      {dados.admin && <Resultados dados={dados} />}
+      {dados.admin && <Closers closers={dados.closers} reunioes={dados.reunioes} ocupado={ocupado}
+        onAlterar={(c, ativo) => executar("/closers", { userId: c.id, ativo },
+          (r) => ativo ? `${c.nome} pode usar a agenda.` : `Acesso de ${c.nome} revogado.${r.reunioesFuturas ? ` Ainda há ${r.reunioesFuturas} reunião(ões) futura(s) com esse closer: cancele ou combine com a empresa.` : ""}`)} />}
+
+      <PublicarHorarios admin={dados.admin} closers={(dados.closers || []).filter((c) => c.ativo)} ocupado={ocupado}
+        onPublicar={(corpo) => executar("/horarios", corpo, (r) => {
+          const extras = [r.ocupados && `${r.ocupados} já ocupado(s)`, r.passados && `${r.passados} em menos de 1 hora`].filter(Boolean);
+          return `${r.criados} horário(s) publicado(s) no quiz.${extras.length ? ` Pulados: ${extras.join(" e ")}.` : ""}`;
+        })} />
+
+      <div className="vx-seg ag-abas" role="tablist" aria-label="Visão da agenda">
+        {abas.map(([k, txt]) => <button key={k} type="button" role="tab" aria-selected={aba === k} data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>{txt}</button>)}
+      </div>
+
+      <div role="tabpanel">
+        {aba === "livres" ? <HorariosLivres horarios={livres} admin={dados.admin} ocupado={ocupado}
+          onRetirar={(h) => executar(`/horarios/${h.id}/retirar`, {}, "Horário retirado do quiz.")} />
+          : <ListaReunioes lista={grupos[aba]} admin={dados.admin} ocupado={ocupado}
+            vazio={{ proximas: "Nenhuma reunião marcada pela frente.", registrar: "Nada para registrar: todas as reuniões passadas já têm resultado.", historico: "Nenhuma reunião encerrada ainda." }[aba]}
+            onStatus={(r, status, reabrir) => executar(`/reunioes/${r.id}/status`, { status, reabrir },
+              (res) => status === "cancelada" ? (res.reaberto ? "Reunião cancelada. O horário voltou para o quiz." : "Reunião cancelada. O horário saiu da agenda.") : "Resultado registrado.")} />}
+      </div>
+    </div>
+  );
+}
+
+function Cabecalho({ onAtualizar, carregando, admin }) {
+  return (
+    <div className="ag-cabecalho">
+      <div>
+        <h2 className="vx-disp">Agenda comercial</h2>
+        <p className="vx-mut">{admin ? "Reuniões das empresas que concluíram o quiz, de todos os closers." : "Suas reuniões com as empresas que concluíram o quiz."} Horários em {fuso}.</p>
+      </div>
+      <button type="button" className="vx-btn vx-btn-ghost" onClick={onAtualizar} disabled={carregando}><RefreshCw size={15} aria-hidden="true" /> {carregando ? "Atualizando…" : "Atualizar"}</button>
+    </div>
+  );
+}
+
+function Resultados({ dados }) {
+  const porCloser = new Map();
+  for (const r of dados.reunioes) {
+    const linha = porCloser.get(r.closerId) || { nome: r.closer, ativo: r.closerAtivo, agendada: 0, realizada: 0, nao_compareceu: 0, cancelada: 0 };
+    linha[r.status] = (linha[r.status] || 0) + 1;
+    porCloser.set(r.closerId, linha);
+  }
+  const porCampanha = new Map();
+  for (const r of dados.reunioes) {
+    const chave = r.origem?.utm_campaign || (r.origem?.fbclid ? "Meta (sem utm_campaign)" : "Sem campanha identificada");
+    const linha = porCampanha.get(chave) || { total: 0, realizada: 0 };
+    linha.total++; if (r.status === "realizada") linha.realizada++;
+    porCampanha.set(chave, linha);
+  }
+  if (!dados.reunioes.length) return null;
+  return (
+    <details className="vx-card ag-bloco">
+      <summary>Resultados por closer e por campanha</summary>
+      <div className="vx-table-wrap">
+        <table className="vx-table ag-tabela">
+          <thead><tr><th>Closer</th><th>Agendadas</th><th>Realizadas</th><th>Não compareceu</th><th>Canceladas</th></tr></thead>
+          <tbody>{[...porCloser.values()].map((l) => (
+            <tr key={l.nome}><td>{l.nome}{!l.ativo && <span className="vx-badge vx-badge-muted ag-ml">sem acesso</span>}</td><td>{l.agendada}</td><td>{l.realizada}</td><td>{l.nao_compareceu}</td><td>{l.cancelada}</td></tr>
+          ))}</tbody>
+        </table>
+      </div>
+      <div className="vx-table-wrap">
+        <table className="vx-table ag-tabela">
+          <thead><tr><th>Campanha (utm_campaign)</th><th>Reuniões</th><th>Realizadas</th></tr></thead>
+          <tbody>{[...porCampanha.entries()].map(([c, l]) => <tr key={c}><td>{c}</td><td>{l.total}</td><td>{l.realizada}</td></tr>)}</tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
+function Closers({ closers, reunioes, ocupado, onAlterar }) {
+  const [busca, setBusca] = useState("");
+  const ativos = closers.filter((c) => c.ativo);
+  // Abre sozinho só quando ninguém tem acesso; depois, quem decide é o admin.
+  const [aberto, setAberto] = useState(() => !closers.some((c) => c.ativo));
+  const termo = busca.trim().toLowerCase();
+  const lista = termo ? closers.filter((c) => c.nome.toLowerCase().includes(termo)) : closers.filter((c) => c.ativo || c.perfil === "closer");
+  const futuras = (id) => reunioes.filter((r) => r.closerId === id && r.status === "agendada" && r.fim > Date.now()).length;
+  return (
+    <details className="vx-card ag-bloco" open={aberto} onToggle={(e) => setAberto(e.currentTarget.open)}>
+      <summary>Closers com acesso à agenda ({ativos.length})</summary>
+      <p className="vx-mut ag-texto">Libere só quem atende as empresas da RYCS. Revogar tira os horários livres do quiz e o acesso do closer; as reuniões continuam aqui para você.</p>
+      <label className="vx-label" htmlFor="ag-busca">Buscar profissional aprovado</label>
+      <input id="ag-busca" className="vx-input ag-busca" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome do profissional" />
+      {!termo && <p className="vx-mut ag-texto">Mostrando quem tem acesso e os profissionais com perfil Closer. Busque pelo nome para liberar outro perfil.</p>}
+      <ul className="ag-closers">
+        {lista.slice(0, 60).map((c) => (
+          <li key={c.id}>
+            <div>
+              <strong>{c.nome}</strong>
+              <span className="vx-mut">{c.perfil ? c.perfil.toUpperCase() : "—"}{c.status !== "aprovado" && " · não aprovado"}{futuras(c.id) ? ` · ${futuras(c.id)} reunião(ões) futura(s)` : ""}</span>
+            </div>
+            {c.ativo
+              ? <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={ocupado} onClick={() => onAlterar(c, false)}>Revogar acesso</button>
+              : <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" disabled={ocupado || c.status !== "aprovado"} onClick={() => onAlterar(c, true)}>Liberar</button>}
+          </li>
+        ))}
+        {!lista.length && <li className="vx-mut">Nenhum profissional encontrado.</li>}
+      </ul>
+    </details>
+  );
+}
+
+function PublicarHorarios({ admin, closers, ocupado, onPublicar }) {
+  const hoje = chaveDia(Date.now());
+  const [form, setForm] = useState({ closerId: "", data: hoje, das: "", ate: "", duracao: 30 });
+  const [erroLocal, setErroLocal] = useState("");
+  const mudar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: campo === "duracao" ? Number(e.target.value) : e.target.value }));
+  async function enviar(e) {
+    e.preventDefault();
+    setErroLocal("");
+    if (admin && !form.closerId) return setErroLocal("Escolha o closer.");
+    if (!form.data || !form.das) return setErroLocal("Informe o dia e o horário de início.");
+    const inicio = new Date(`${form.data}T${form.das}`).getTime();
+    const fim = form.ate ? new Date(`${form.data}T${form.ate}`).getTime() : undefined;
+    if (fim != null && fim <= inicio) return setErroLocal("O horário final precisa ser depois do inicial.");
+    const ok = await onPublicar({ inicio, ...(fim != null && { fim }), duracao: form.duracao, ...(admin && { closerId: form.closerId }) });
+    if (ok) setForm((f) => ({ ...f, das: "", ate: "" }));
+  }
+  return (
+    <form className="vx-card ag-bloco ag-publicar" onSubmit={enviar} noValidate>
+      <h3>Abrir horários para o quiz</h3>
+      <p className="vx-mut ag-texto">Preencha “até” para abrir vários horários seguidos (ex.: das 9h às 12h, de 30 em 30 minutos). Deixe vazio para abrir um só. Horários que batem com outro seu são pulados.</p>
+      <div className="ag-campos">
+        {admin && (
+          <div><label className="vx-label" htmlFor="ag-closer">Closer</label>
+            <select id="ag-closer" className="vx-input" value={form.closerId} onChange={mudar("closerId")}>
+              <option value="">{closers.length ? "Escolha" : "Libere um closer primeiro"}</option>
+              {closers.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select></div>
+        )}
+        <div><label className="vx-label" htmlFor="ag-data">Dia</label><input id="ag-data" className="vx-input" type="date" min={hoje} value={form.data} onChange={mudar("data")} /></div>
+        <div><label className="vx-label" htmlFor="ag-das">Das</label><input id="ag-das" className="vx-input" type="time" step={300} value={form.das} onChange={mudar("das")} /></div>
+        <div><label className="vx-label" htmlFor="ag-ate">Até (opcional)</label><input id="ag-ate" className="vx-input" type="time" step={300} value={form.ate} onChange={mudar("ate")} /></div>
+        <div><label className="vx-label" htmlFor="ag-duracao">Duração de cada reunião</label>
+          <select id="ag-duracao" className="vx-input" value={form.duracao} onChange={mudar("duracao")}>
+            {DURACOES_AGENDA.map((n) => <option key={n} value={n}>{n} minutos</option>)}
+          </select></div>
+        <button type="submit" className="vx-btn vx-btn-primary" disabled={ocupado}>Publicar</button>
+      </div>
+      {erroLocal && <p className="ag-erro" role="alert">{erroLocal}</p>}
+    </form>
+  );
+}
+
+function HorariosLivres({ horarios, admin, ocupado, onRetirar }) {
+  if (!horarios.length) return <div className="vx-card ag-vazio">Nenhum horário livre. Use “Abrir horários” acima.</div>;
+  const porDia = new Map();
+  for (const h of horarios) { const k = chaveDia(h.inicio); porDia.set(k, [...(porDia.get(k) || []), h]); }
+  return [...porDia.values()].map((lista) => (
+    <section key={chaveDia(lista[0].inicio)} className="ag-dia">
+      <h4>{diaLongo(lista[0].inicio)}</h4>
+      <ul className="ag-slots">
+        {lista.map((h) => (
+          <li key={h.id} className="vx-card">
+            <span><strong>{hora(h.inicio)}–{hora(h.fim)}</strong>{admin && <span className="vx-mut"> · {h.closer}</span>}</span>
+            <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={ocupado} onClick={() => onRetirar(h)} aria-label={`Retirar horário das ${hora(h.inicio)} de ${diaLongo(h.inicio)}`}>Retirar</button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ));
+}
+
+function ListaReunioes({ lista, admin, ocupado, vazio, onStatus }) {
+  if (!lista.length) return <div className="vx-card ag-vazio">{vazio}</div>;
+  return lista.map((r) => <Reuniao key={r.id} r={r} admin={admin} ocupado={ocupado} onStatus={onStatus} />);
+}
+
+function Nivel({ n }) {
+  if (!n) return null;
+  const tom = n >= 4 ? "forte" : n === 3 ? "medio" : "fraco";
+  return (
+    <span className={`ag-nivel ag-nivel-${tom}`} aria-label={`Sinal ${n} de 5`} title={`Sinal ${n} de 5 (escala da planilha de qualificação)`}>
+      {[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= n ? "on" : ""} />)}
+    </span>
+  );
+}
+
+function Reuniao({ r, admin, ocupado, onStatus }) {
+  const [cancelando, setCancelando] = useState(false);
+  const [reabrir, setReabrir] = useState(false);
+  const porId = Object.fromEntries((r.respostas || []).map((x) => [x.id, x]));
+  const segmento = porId.segmento?.resposta;
+  const status = STATUS[r.status] || STATUS.agendada;
+  const comecou = r.inicio <= Date.now();
+  const wa = whatsapp(r.telefone);
+  const origem = ORIGEM(r.origem);
+  return (
+    <article className="vx-card ag-reuniao">
+      <header>
+        <div>
+          <span className="ag-quando">{dia(r.inicio)} · {hora(r.inicio)}–{hora(r.fim)}</span>
+          <h3>{r.empresa}</h3>
+          <div className="ag-tags">
+            <span className={`vx-badge vx-badge-${status.tone}`}>{status.txt}</span>
+            {segmento && <span className="vx-badge vx-badge-muted">{segmento}</span>}
+            {admin && <span className="vx-badge vx-badge-muted">Closer: {r.closer}</span>}
+            {admin && !r.closerAtivo && r.status === "agendada" && <span className="vx-badge vx-badge-amber">Closer sem acesso</span>}
+          </div>
+        </div>
+      </header>
+      <div className="ag-contato">
+        <span><strong>{r.nome}</strong></span>
+        {wa && <a href={wa} target="_blank" rel="noreferrer"><MessageCircle size={15} aria-hidden="true" /> WhatsApp {telefoneLegivel(r.telefone)}</a>}
+        <a href={`tel:+${comDdi(r.telefone)}`}><Phone size={15} aria-hidden="true" /> Ligar</a>
+        <a href={`mailto:${r.email}`}><Mail size={15} aria-hidden="true" /> {r.email}</a>
+      </div>
+      {origem && <p className="vx-mut ag-origem">Origem: {origem}</p>}
+
+      <div className="ag-leitura">
+        {DIMENSOES_QUIZ.map((d) => {
+          const itens = d.perguntas.map((id) => porId[id]).filter(Boolean);
+          if (!itens.length) return null;
+          return (
+            <div key={d.chave} className="ag-dimensao">
+              <h4>{d.titulo}</h4>
+              {itens.map((x) => <p key={x.id}><Nivel n={x.nivel} /><span>{x.resposta}</span></p>)}
+            </div>
+          );
+        })}
+      </div>
+
+      <details className="ag-respostas">
+        <summary>Todas as respostas do quiz ({(r.respostas || []).length})</summary>
+        {ETAPAS_QUIZ.map((e) => {
+          const itens = (r.respostas || []).filter((x) => x.etapa === e.chave);
+          if (!itens.length) return null;
+          return (
+            <dl key={e.chave}>
+              <h5>{e.titulo}</h5>
+              {itens.map((x) => <div key={x.id}><dt>{x.criterio} — {x.pergunta}</dt><dd><Nivel n={x.nivel} /> {x.resposta}</dd></div>)}
+            </dl>
+          );
+        })}
+        <p className="vx-mut ag-texto">Texto exatamente como a empresa leu{r.quizVersao ? ` (versão ${r.quizVersao} do quiz)` : ""}. Recebida em {new Date(r.criadoEm).toLocaleString("pt-BR")}.</p>
+      </details>
+
+      {r.status === "agendada" && !cancelando && (
+        <div className="ag-acoes">
+          <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" disabled={ocupado || !comecou} onClick={() => onStatus(r, "realizada")}>Realizada</button>
+          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={ocupado || !comecou} onClick={() => onStatus(r, "nao_compareceu")}>Não compareceu</button>
+          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={ocupado} onClick={() => setCancelando(true)}>Cancelar reunião</button>
+          {!comecou && <span className="vx-mut ag-dica">O resultado é registrado depois do horário.</span>}
+        </div>
+      )}
+      {cancelando && (
+        <div className="ag-cancelar" role="group" aria-label="Cancelar reunião">
+          <p>Cancelar a conversa com <strong>{r.empresa}</strong>? Avise {r.nome} pelo WhatsApp ou e-mail: a plataforma não envia aviso. A reunião fica no histórico.</p>
+          {r.inicio > Date.now() + 3600000 && (
+            <label className="ag-check"><input type="checkbox" checked={reabrir} onChange={(e) => setReabrir(e.target.checked)} /> Devolver o horário ao quiz para outra empresa</label>
+          )}
+          <div className="ag-acoes">
+            <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" disabled={ocupado} onClick={async () => { await onStatus(r, "cancelada", reabrir); setCancelando(false); }}>Confirmar cancelamento</button>
+            <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setCancelando(false)}>Voltar</button>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}

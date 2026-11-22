@@ -189,6 +189,27 @@ export function registrarPassoMeta(req, corpo = {}) {
   }
 }
 
+// Conversa agendada pelo quiz das empresas (app.rycs.pro/diagnostico):
+// evento padrão Schedule, com o mesmo event_id do pixel. Sai uma vez por
+// reunião e só depois de a reserva estar gravada.
+export function registrarAgendamentoMeta(req, reunioId, contato = {}) {
+  try {
+    const corpo = req.body || {};
+    const meta = metaDoCorpo(corpo);
+    if (!capiAtiva() || !consentiu(req, meta) || !ID_EVENTO.test(String(meta.eventId || ""))) return;
+    const visitanteId = ID_VISITANTE.test(String(corpo.visitanteId || "")) ? corpo.visitanteId : "";
+    const userData = {
+      ...dadosCorrespondencia({ visitanteId, email: contato.email, telefone: contato.telefone, nome: contato.nome, pais: "BR" }),
+      ...sinaisNavegador(req, meta, fbcDoClique(corpo.origem, visitanteId, agora())),
+    };
+    enviarUmaVez({ userId: `agenda:${reunioId}`, dados: { userData, url: `${urlApp()}/diagnostico` } }, "Schedule", {
+      eventId: meta.eventId, tempoMs: agora(), customData: { content_name: "Diagnóstico comercial", content_category: "empresa" },
+    }).catch(() => null);
+  } catch (e) {
+    console.error("[meta-capi] agendamento:", e?.message);
+  }
+}
+
 // Chamado logo depois de criar a conta (e de vincularVisitante).
 export function registrarCadastroMeta(req, userId, papel) {
   try {

@@ -19,6 +19,7 @@ const AcademyCatalogo = lazy(() => import("./AcademyCatalogo.jsx"));
 const Academy = lazy(() => import("./Academy.jsx"));
 const Indicacoes = lazy(() => import("../Indicacoes.jsx"));
 const PlanosProfissional = lazy(() => import("./PlanosProfissional.jsx"));
+const AgendaComercial = lazy(() => import("../agenda/AgendaComercial.jsx"));
 const AreaColaborador = lazy(() => import("../colaborador/AreaColaborador.jsx"));
 
 const ESPERA = <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
@@ -40,6 +41,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
     if (aba !== "oportunidades") { setAbertaId(null); setCampanhaAbertaId(null); }
   }, [aba]);
   // A área do colaborador interno não depende do perfil de profissional.
+  if (aba === "agenda-comercial") return <Suspense fallback={ESPERA}><AgendaComercial /></Suspense>;
   if (aba === "colaborador") return <Suspense fallback={ESPERA}><AreaColaborador aviso={aviso} /></Suspense>;
   if (!eu) {
     if (db.sellers.length === 0)

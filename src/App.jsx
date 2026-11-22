@@ -18,6 +18,7 @@ const Vendedor = lazy(() => import("./components/vendedor/index.jsx"));
 const Empresa = lazy(() => import("./components/empresa/index.jsx"));
 const Admin = lazy(() => import("./components/admin/index.jsx"));
 const PropostaPlano = lazy(() => import("./components/empresa/PropostaPlano.jsx"));
+const DiagnosticoEmpresa = lazy(() => import("./components/diagnostico/DiagnosticoEmpresa.jsx"));
 import Notificacoes from "./components/Notificacoes.jsx";
 import BannerOnboarding from "./components/empresa/BannerOnboarding.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -327,6 +328,16 @@ export default function App() {
     if (role !== "vendedor" || !user?.id) { setColaborador(false); return; }
     api("/colaborador/eu").then((r) => setColaborador(!!r?.colaborador));
   }, [role, user?.id]);
+
+  // Quiz dos anúncios: não depende de sessão, então abre sem esperar o login.
+  if (rota.tipo === "diagnostico") return (
+    <div className="vx-app">
+      <style>{CSS}</style>
+      {environment === "beta" && <div className="vx-beta-login-badge">AMBIENTE BETA — DADOS FICTÍCIOS</div>}
+      <Suspense fallback={<div className="vx-onb-estado" role="status">Carregando…</div>}><DiagnosticoEmpresa /></Suspense>
+      <AvisoCookies />
+    </div>
+  );
 
   if (!loaded) return <div className="vx-app" style={{ minHeight: "100dvh" }}><style>{CSS}</style></div>;
 

@@ -160,6 +160,34 @@ export function cadastroConcluido(papel, dados = {}) {
   idCadastro = null;
 }
 
+// ── Quiz das empresas (/diagnostico) ───────────────────────────────────
+// ViewContent ao abrir, QuizConcluido ao terminar as perguntas e Schedule só
+// depois de a reserva estar gravada. O Schedule também sai pelo servidor com
+// o mesmo event_id (dadosAgendamento vai no corpo da reserva).
+const DIAGNOSTICO = { content_name: "Diagnóstico comercial", content_category: "empresa" };
+
+export function eventoDiagnostico(nome, extra = {}) {
+  if (!pixelPronto) return;
+  const dados = { ...DIAGNOSTICO, ...extra };
+  if (nome === "ViewContent") fbq("track", nome, dados, { eventID: novoId() });
+  else fbq("trackCustom", nome, dados, { eventID: novoId() });
+}
+
+export const dadosAgendamento = () => ({
+  visitanteId: visitanteId(),
+  origem: origemSalva(),
+  meta: { eventId: novoId(), ...sinaisMeta() },
+});
+
+export function agendamentoConcluido(eventID, { email, telefone, nome } = {}) {
+  if (!pixelPronto || !eventID) return;
+  const campos = camposCorrespondencia({ email, telefone, nome, pais: "BR" });
+  pixelPronto = pixelPronto
+    .then(externalId)
+    .then((id) => { window.fbq?.("init", META_PIXEL_ID, { ...campos, external_id: id }); });
+  fbq("track", "Schedule", DIAGNOSTICO, { eventID });
+}
+
 export function rastrear(evento, { papel = "", etapa = "" } = {}) {
   const eventId = eventoMeta(evento, papel, etapa);
   fetch(`${API_URL}/api/jornada/evento`, {

@@ -1,0 +1,63 @@
+/* Agenda comercial interna. Tokens de src/styles.js. */
+.ag-pagina{max-width:1040px;display:grid;gap:16px;min-width:0}
+.ag-cabecalho{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.ag-cabecalho h2{margin:0 0 4px}
+.ag-cabecalho p{margin:0;font-size:13.5px}
+.ag-cabecalho .vx-btn,.ag-acoes .vx-btn,.ag-closers .vx-btn,.ag-slots .vx-btn,.ag-publicar .vx-btn{min-height:44px;display:inline-flex;align-items:center;gap:6px}
+.ag-alerta{background:var(--red-50);color:var(--red);margin:0}
+.ag-ok{background:var(--green-50);color:var(--green-700);margin:0}
+.ag-alerta-amber{display:flex;align-items:center;gap:8px;margin:0;background:var(--amber-50);color:var(--amber)}
+.ag-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ag-bloco{padding:16px 18px;min-width:0}
+.ag-bloco>summary{cursor:pointer;font-weight:600;min-height:32px;display:list-item}
+.ag-bloco h3{margin:0 0 4px;font-size:16px}
+.ag-texto{font-size:13px;line-height:1.5;margin:8px 0 12px}
+.ag-tabela{margin-top:12px;font-size:13px}
+.ag-ml{margin-left:6px}
+.ag-busca{max-width:360px}
+.ag-closers{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.ag-closers li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.ag-closers li>div{display:grid;gap:2px;min-width:0}
+.ag-closers span{font-size:12.5px}
+.ag-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
+.ag-campos .vx-input{min-height:44px}
+.ag-erro{color:var(--red);font-size:13px;margin:10px 0 0}
+.ag-abas{max-width:100%}
+.ag-abas button{min-height:40px;font-size:13px;padding:8px 14px}
+.ag-abas button:focus-visible,.ag-reuniao a:focus-visible,.ag-bloco summary:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.ag-vazio{padding:22px;text-align:center;color:var(--muted);font-size:14px}
+.ag-vazio p{margin:0 0 12px}
+.ag-dia h4{margin:8px 0;font-size:14px}
+.ag-dia h4::first-letter{text-transform:uppercase}
+.ag-slots{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ag-slots li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 8px 8px 14px}
+.ag-reuniao{padding:18px;margin-bottom:12px;min-width:0}
+.ag-reuniao header h3{margin:2px 0 8px;font-size:18px}
+.ag-quando{font-size:13px;font-weight:600;color:var(--brand);text-transform:capitalize}
+.ag-tags{display:flex;flex-wrap:wrap;gap:6px}
+.ag-contato{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:14px 0 4px;font-size:14px}
+.ag-contato a{display:inline-flex;align-items:center;gap:5px;min-height:36px;color:var(--brand);font-weight:600;text-decoration:none;overflow-wrap:anywhere}
+.ag-contato a:hover{text-decoration:underline}
+.ag-origem{font-size:12.5px;margin:4px 0 0}
+.ag-leitura{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0}
+.ag-dimensao{padding:12px;border-radius:var(--radius-sm);background:var(--surface-2)}
+.ag-dimensao h4{margin:0 0 6px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ag-dimensao p{display:flex;gap:8px;align-items:baseline;margin:4px 0 0;font-size:13.5px;line-height:1.4}
+.ag-nivel{display:inline-flex;gap:2px;flex:0 0 auto;transform:translateY(-1px)}
+.ag-nivel i{width:6px;height:6px;border-radius:50%;background:var(--border-strong)}
+.ag-nivel-forte i.on{background:var(--green)}
+.ag-nivel-medio i.on{background:var(--amber)}
+.ag-nivel-fraco i.on{background:var(--red)}
+.ag-nivel-sem{font-size:11px;color:var(--muted)}
+.ag-respostas summary{cursor:pointer;font-weight:600;font-size:14px;min-height:36px;display:list-item}
+.ag-respostas dl{margin:10px 0 0}
+.ag-respostas h5{margin:12px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--brand)}
+.ag-respostas dl>div{padding:8px 0;border-bottom:1px solid var(--border)}
+.ag-respostas dt{font-size:12.5px;color:var(--muted)}
+.ag-respostas dd{margin:3px 0 0;font-size:14px;font-weight:500}
+.ag-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+.ag-dica{font-size:12.5px}
+.ag-cancelar{margin-top:14px;padding:14px;border-radius:var(--radius-sm);background:var(--red-50)}
+.ag-cancelar p{margin:0 0 8px;font-size:13.5px;line-height:1.5}
+.ag-check{display:flex;gap:8px;align-items:center;font-size:13.5px;min-height:44px}
+.ag-check input{width:20px;height:20px}

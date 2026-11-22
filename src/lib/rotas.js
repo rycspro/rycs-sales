@@ -18,6 +18,8 @@ export const ROTAS = {
   trial: "/trial",
   onboarding: "/onboarding",
   comecar: "/comecar",
+  // Quiz das empresas que vêm dos anúncios, com agendamento da conversa.
+  diagnostico: "/diagnostico",
 };
 
 // Endereços alternativos que as pessoas digitam ou que ficam em links antigos.
@@ -31,6 +33,9 @@ const APELIDOS = new Map([
   ["/cadastrar", ROTAS.escolha],
   ["/entrar", ROTAS.login],
   ["/login", ROTAS.login],
+  ["/quiz", ROTAS.diagnostico],
+  ["/agendar", ROTAS.diagnostico],
+  ["/conversa", ROTAS.diagnostico],
 ]);
 
 function normalizar(caminho) {
@@ -63,6 +68,7 @@ export function resolver(caminho = typeof window !== "undefined" ? window.locati
   if (p === ROTAS.onboarding || p.startsWith(`${ROTAS.onboarding}/`))
     return { tipo: "onboarding", etapa: p.slice(ROTAS.onboarding.length + 1).split("/")[0] || null };
   if (p.startsWith("/plataforma")) return { tipo: "plataforma" };
+  if (p === ROTAS.diagnostico) return { tipo: "diagnostico" };
   if (p === ROTAS.cadastroVendedor) return { tipo: "cadastro", role: "vendedor" };
   if (p === ROTAS.cadastroEmpresa) return { tipo: "cadastro", role: "empresa" };
   if (p === ROTAS.escolha) return { tipo: "login" };

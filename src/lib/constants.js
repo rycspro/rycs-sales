@@ -51,6 +51,8 @@ export const NAV = {
     { section: "Financeiro" },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "indicar", label: "Indicar", Icon: Gift },
+    // Só aparece para closer liberado pelo admin na agenda comercial (Shell filtra).
+    { key: "agenda-comercial", label: "Agenda RYCS", Icon: Clock },
     // Só aparece para quem o admin marcou como colaborador interno (Shell filtra).
     { key: "colaborador", label: "Colaborador RYCS", Icon: BriefcaseBusiness },
     { section: "Minha conta" },
@@ -101,6 +103,7 @@ export const NAV = {
     { key: "profissionais", label: "Profissionais", Icon: UserCheck },
     { key: "empresas", label: "Empresas", Icon: Building2 },
     { key: "parceiros", label: "Parceiros de canal", Icon: Handshake },
+    { key: "agenda-comercial", label: "Agenda comercial", Icon: Clock },
     { key: "colaboradores", label: "Colaboradores", Icon: BriefcaseBusiness },
     { key: "triagem", label: "Triagem", Icon: ShieldCheck },
     { key: "onboarding", label: "Links de onboarding", Icon: Link2 },

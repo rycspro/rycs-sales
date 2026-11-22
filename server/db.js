@@ -1,3 +1,4 @@
+import { criarSchemaAgenda } from "./services/agendaComercial.js";
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
@@ -2865,6 +2866,8 @@ db.exec(`
 adicionarColuna("colaboradores", "cargoId", "TEXT");
 adicionarColuna("colaboradores", "dados", "TEXT DEFAULT '{}'");
 
+
+criarSchemaAgenda(db);
 
 export default db;
 export { uid, agora };
