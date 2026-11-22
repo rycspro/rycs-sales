@@ -92,7 +92,24 @@ export function criarSchemaAgenda(db) {
       atualizadoEm INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_precadastro_data ON empresas_precadastro(criadoEm);
+    -- Disponibilidade semanal (ex.: seg a sex, 8h às 20h): gera os horários
+    -- sozinha para as próximas semanas. Uma regra por pessoa.
+    CREATE TABLE IF NOT EXISTS agenda_disponibilidade (
+      id TEXT PRIMARY KEY,
+      closerId TEXT NOT NULL UNIQUE REFERENCES users(id),
+      dias TEXT NOT NULL,
+      inicioMin INTEGER NOT NULL,
+      fimMin INTEGER NOT NULL,
+      duracao INTEGER NOT NULL,
+      ativo INTEGER NOT NULL DEFAULT 1,
+      criadoEm INTEGER NOT NULL,
+      atualizadoEm INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS agenda_config (chave TEXT PRIMARY KEY, valor TEXT NOT NULL);
   `);
+  const colunasHorario = new Set(db.prepare("PRAGMA table_info(agenda_horarios)").all().map((c) => c.name));
+  if (!colunasHorario.has("regraId")) db.exec("ALTER TABLE agenda_horarios ADD COLUMN regraId TEXT NOT NULL DEFAULT ''");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_agenda_horarios_regra ON agenda_horarios(regraId, closerId, inicio)");
 }
 
 export class ErroAgenda extends Error {
@@ -103,12 +120,33 @@ const json = (texto, padrao) => { try { return JSON.parse(texto); } catch { retu
 const hashToken = (token) => createHash("sha256").update(String(token)).digest("hex");
 const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
 
+// Horário de Brasília: UTC−3 o ano todo (sem horário de verão desde 2019).
+// O servidor roda em UTC; a disponibilidade é pensada no relógio de Brasília.
+const FUSO_MS = 3 * 60 * 60 * 1000;
+const DIAS_GERADOS = 14;
+const spParaUtc = (y, m, d, minutos) => Date.UTC(y, m, d, 0, minutos) + FUSO_MS;
+function diasSP(t, n) {
+  const hoje = new Date(t - FUSO_MS);
+  return Array.from({ length: n }, (_, k) => {
+    const d = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate() + k));
+    return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), dow: d.getUTCDay() };
+  });
+}
+const paraMinutos = (hhmm) => {
+  const m = /^(\d{2}):(\d{2})$/.exec(String(hhmm || ""));
+  return m && Number(m[1]) < 24 && Number(m[2]) < 60 ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+const paraHora = (min) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
 export function criarAgenda(db, agora = Date.now) {
-  // Closer liberado = acesso ativo + conta de profissional aprovada.
-  const SQL_LIBERADO = `SELECT u.id FROM agenda_closers a
-    JOIN users u ON u.id = a.userId JOIN sellers s ON s.id = u.entityId
-    WHERE a.userId = ? AND a.ativo = 1 AND u.role = 'vendedor' AND s.status = 'aprovado'`;
-  const liberado = (id) => !!db.prepare(SQL_LIBERADO).get(id);
+  // Atende a agenda: o admin (agenda da "Equipe RYCS") ou o profissional
+  // aprovado com acesso liberado pelo admin.
+  const JUNTA_ATENDENTE = `JOIN users u ON u.id = h.closerId
+    LEFT JOIN agenda_closers a ON a.userId = h.closerId LEFT JOIN sellers s ON s.id = u.entityId`;
+  const PODE_ATENDER = "(u.role = 'admin' OR (u.role = 'vendedor' AND a.ativo = 1 AND s.status = 'aprovado'))";
+  const NOME_ATENDENTE = "COALESCE(s.nome, 'Equipe RYCS')";
+  const liberado = (id) => !!db.prepare(`SELECT u.id FROM users u LEFT JOIN agenda_closers a ON a.userId = u.id
+    LEFT JOIN sellers s ON s.id = u.entityId WHERE u.id = ? AND ${PODE_ATENDER}`).get(id);
   const reservaAtiva = "EXISTS (SELECT 1 FROM agenda_reunioes r WHERE r.horarioId = h.id AND r.status <> 'cancelada')";
 
   function acesso(user) {
@@ -174,11 +212,8 @@ export function criarAgenda(db, agora = Date.now) {
   // closers diferentes viram um só; quem atende é decidido na reserva.
   function horariosPublicos() {
     const t = agora();
-    return db.prepare(`SELECT DISTINCT h.inicio, h.fim FROM agenda_horarios h
-      JOIN agenda_closers a ON a.userId = h.closerId AND a.ativo = 1
-      JOIN users u ON u.id = h.closerId AND u.role = 'vendedor'
-      JOIN sellers s ON s.id = u.entityId AND s.status = 'aprovado'
-      WHERE h.ativo = 1 AND h.inicio >= ? AND h.inicio <= ? AND NOT ${reservaAtiva}
+    return db.prepare(`SELECT DISTINCT h.inicio, h.fim FROM agenda_horarios h ${JUNTA_ATENDENTE}
+      WHERE h.ativo = 1 AND ${PODE_ATENDER} AND h.inicio >= ? AND h.inicio <= ? AND NOT ${reservaAtiva}
       ORDER BY h.inicio, h.fim LIMIT 400`).all(t + ANTECEDENCIA, t + HORIZONTE_PUBLICO);
   }
 
@@ -195,7 +230,7 @@ export function criarAgenda(db, agora = Date.now) {
     if (digitos.length < 10 || digitos.length > 15) falhar(400, "Informe o WhatsApp com DDD.");
     const respostas = registrarRespostas(body.respostas);
     if (!respostas) falhar(400, "Responda todas as perguntas do quiz antes de continuar.");
-    if (body.aceite !== true) falhar(400, "Confirme o uso dos dados para a conversa.");
+    if (body.aceite !== true) falhar(400, "Confirme o uso dos dados para a reunião.");
     return {
       empresa, nome, email, telefone, respostas,
       origem: JSON.stringify(limparOrigem(body.origem)),
@@ -248,17 +283,14 @@ export function criarAgenda(db, agora = Date.now) {
       if (inicio < t + ANTECEDENCIA) falhar(409, "Esse horário não está mais disponível. Escolha outro.", "HORARIO_INDISPONIVEL");
       const duplicada = db.prepare(`SELECT 1 FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId
         WHERE r.email = ? AND r.status = 'agendada' AND h.fim > ?`).get(email, t);
-      if (duplicada) falhar(409, "Já existe uma conversa marcada para este e-mail. Para mudar o horário, fale com a RYCS.", "EMAIL_COM_REUNIAO");
+      if (duplicada) falhar(409, "Já existe uma reunião marcada para este e-mail. Para mudar o horário, fale com a RYCS.", "EMAIL_COM_REUNIAO");
       // Entre os closers livres nesse horário, atende quem tem menos
       // reuniões futuras — a fila se distribui sozinha.
-      const livre = db.prepare(`SELECT h.id, h.closerId, s.nome,
+      const livre = db.prepare(`SELECT h.id, h.closerId, ${NOME_ATENDENTE} AS nome,
           (SELECT COUNT(*) FROM agenda_reunioes r2 JOIN agenda_horarios h2 ON h2.id = r2.horarioId
             WHERE h2.closerId = h.closerId AND r2.status = 'agendada' AND h2.fim > ?) AS carga
-        FROM agenda_horarios h
-        JOIN agenda_closers a ON a.userId = h.closerId AND a.ativo = 1
-        JOIN users u ON u.id = h.closerId AND u.role = 'vendedor'
-        JOIN sellers s ON s.id = u.entityId AND s.status = 'aprovado'
-        WHERE h.ativo = 1 AND h.inicio = ? AND h.fim = ? AND NOT ${reservaAtiva}
+        FROM agenda_horarios h ${JUNTA_ATENDENTE}
+        WHERE h.ativo = 1 AND ${PODE_ATENDER} AND h.inicio = ? AND h.fim = ? AND NOT ${reservaAtiva}
         ORDER BY carga, h.id LIMIT 1`).get(t, inicio, fim);
       if (!livre) falhar(409, "Esse horário acabou de ser reservado. Escolha outro.", "HORARIO_INDISPONIVEL");
       const id = randomUUID();
@@ -278,7 +310,7 @@ export function criarAgenda(db, agora = Date.now) {
     const p = lerPrecadastro(body.id, body.token);
     if (p.reuniaoId) {
       const r = db.prepare("SELECT r.id, r.status, h.inicio, h.fim FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId WHERE r.id = ?").get(p.reuniaoId);
-      if (r && r.status === "agendada") falhar(409, "Sua conversa já está agendada. Para mudar o horário, fale com a RYCS.", "EMAIL_COM_REUNIAO");
+      if (r && r.status === "agendada") falhar(409, "Sua reunião já está agendada. Para mudar o horário, fale com a RYCS.", "EMAIL_COM_REUNIAO");
     }
     if (verificacao.disponivel && !verificacao.verificado) falhar(409, "Confirme seu WhatsApp antes de agendar.", "WHATSAPP_NAO_VERIFICADO");
     const numero = verificacao.verificado ? verificacao.numero : "";
@@ -302,21 +334,24 @@ export function criarAgenda(db, agora = Date.now) {
     const filtro = admin ? "" : " AND h.closerId = ?";
     const args = admin ? [] : [user.id];
 
-    const horarios = db.prepare(`SELECT h.id, h.closerId, h.inicio, h.fim, s.nome AS closer
-      FROM agenda_horarios h JOIN users u ON u.id = h.closerId JOIN sellers s ON s.id = u.entityId
+    const horarios = db.prepare(`SELECT h.id, h.closerId, h.inicio, h.fim, h.regraId, ${NOME_ATENDENTE} AS closer
+      FROM agenda_horarios h ${JUNTA_ATENDENTE}
       WHERE h.ativo = 1 AND h.fim > ? AND NOT ${reservaAtiva}${filtro}
       ORDER BY h.inicio LIMIT 1000`).all(t, ...args);
 
     const reunioes = db.prepare(`SELECT r.id, r.horarioId, r.empresa, r.nome, r.email, r.telefone, r.respostas, r.status,
-        r.quizVersao, r.origem, r.whatsVerificado, r.resultadoVenda, r.criadoEm, r.atualizadoEm, h.inicio, h.fim, h.closerId, s.nome AS closer,
-        COALESCE(a.ativo, 0) AS closerAtivo
-      FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId
-      JOIN users u ON u.id = h.closerId JOIN sellers s ON s.id = u.entityId
-      LEFT JOIN agenda_closers a ON a.userId = h.closerId
+        r.quizVersao, r.origem, r.whatsVerificado, r.resultadoVenda, r.criadoEm, r.atualizadoEm, h.inicio, h.fim, h.closerId, ${NOME_ATENDENTE} AS closer,
+        CASE WHEN ${PODE_ATENDER} THEN 1 ELSE 0 END AS closerAtivo
+      FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId ${JUNTA_ATENDENTE}
       WHERE 1 = 1${filtro} ORDER BY h.inicio DESC LIMIT 1000`).all(...args)
       .map((r) => ({ ...r, closerAtivo: !!r.closerAtivo, whatsVerificado: !!r.whatsVerificado, respostas: json(r.respostas, []), origem: json(r.origem, {}) }));
 
-    if (!admin) return { admin, horarios, reunioes };
+    const disponibilidade = db.prepare(`SELECT d.closerId, d.dias, d.inicioMin, d.fimMin, d.duracao, d.ativo, ${NOME_ATENDENTE} AS closer
+      FROM agenda_disponibilidade d JOIN users u ON u.id = d.closerId LEFT JOIN sellers s ON s.id = u.entityId
+      WHERE 1 = 1${admin ? "" : " AND d.closerId = ?"} ORDER BY d.ativo DESC, closer`).all(...args)
+      .map((d) => ({ closerId: d.closerId, closer: d.closer, ativo: !!d.ativo, dias: json(d.dias, []), inicio: paraHora(d.inicioMin), fim: paraHora(d.fimMin), duracao: d.duracao }));
+
+    if (!admin) return { admin, eu: user.id, horarios, reunioes, disponibilidade };
 
     // Admin: quem pode atender (aprovados) + quem já teve acesso.
     const closers = db.prepare(`SELECT u.id, s.nome, s.perfil, s.status, COALESCE(a.ativo, 0) AS ativo
@@ -328,7 +363,7 @@ export function criarAgenda(db, agora = Date.now) {
     const precadastros = db.prepare(`SELECT id, empresa, nome, email, telefone, respostas, origem, criadoEm
       FROM empresas_precadastro WHERE reuniaoId = '' ORDER BY criadoEm DESC LIMIT 500`).all()
       .map((p) => ({ ...p, respostas: json(p.respostas, []), origem: json(p.origem, {}) }));
-    return { admin, horarios, reunioes, closers, precadastros, aprendizado: aprendizado() };
+    return { admin, eu: user.id, horarios, reunioes, disponibilidade, closers, precadastros, aprendizado: aprendizado() };
   }
 
   // Para cada resposta do quiz atual: quantas empresas a escolheram e quantas
@@ -371,6 +406,114 @@ export function criarAgenda(db, agora = Date.now) {
     }).immediate();
   }
 
+  // Gera os horários das regras semanais para os próximos 14 dias. Pula o
+  // que já existe (inclusive horário que alguém retirou de propósito) e o
+  // que bate com outro compromisso da mesma pessoa.
+  function gerarDisponibilidade() {
+    const t = agora();
+    const regras = db.prepare("SELECT * FROM agenda_disponibilidade WHERE ativo = 1").all();
+    const existe = db.prepare("SELECT 1 FROM agenda_horarios WHERE closerId = ? AND inicio = ? AND regraId = ?");
+    const conflito = db.prepare(`SELECT 1 FROM agenda_horarios h WHERE h.closerId = ? AND h.inicio < ? AND h.fim > ? AND (h.ativo = 1 OR ${reservaAtiva})`);
+    const inserir = db.prepare("INSERT INTO agenda_horarios (id, closerId, inicio, fim, regraId) VALUES (?, ?, ?, ?, ?)");
+    let criados = 0;
+    db.transaction(() => {
+      for (const r of regras) {
+        if (!liberado(r.closerId)) continue;
+        const dias = new Set(json(r.dias, []));
+        for (const dia of diasSP(t, DIAS_GERADOS)) {
+          if (!dias.has(dia.dow)) continue;
+          for (let m = r.inicioMin; m + r.duracao <= r.fimMin; m += r.duracao) {
+            const ini = spParaUtc(dia.y, dia.m, dia.d, m);
+            const fim = ini + r.duracao * MIN;
+            if (ini < t + ANTECEDENCIA || existe.get(r.closerId, ini, r.id) || conflito.get(r.closerId, fim, ini)) continue;
+            inserir.run(randomUUID(), r.closerId, ini, fim, r.id);
+            criados++;
+          }
+        }
+      }
+    }).immediate();
+    return criados;
+  }
+
+  // Horários futuros ainda livres criados por uma regra (somem quando a regra muda).
+  const limparGerados = (regraId) => db.prepare(`DELETE FROM agenda_horarios WHERE regraId = ? AND inicio > ?
+    AND NOT EXISTS (SELECT 1 FROM agenda_reunioes r WHERE r.horarioId = agenda_horarios.id)`).run(regraId, agora());
+
+  function salvarDisponibilidade(user, { closerId = user?.id, dias, inicio, fim, duracao } = {}) {
+    exigirDono(user, closerId);
+    if (!liberado(closerId)) falhar(400, "Esta pessoa não está com o acesso à agenda ativo.");
+    const lista = Array.isArray(dias) ? [...new Set(dias)].filter((d) => Number.isInteger(d) && d >= 0 && d <= 6).sort() : [];
+    const ini = paraMinutos(inicio), fimMin = paraMinutos(fim);
+    if (!lista.length) falhar(400, "Escolha ao menos um dia da semana.");
+    if (!DURACOES.includes(duracao)) falhar(400, "Escolha uma duração válida.");
+    if (ini == null || fimMin == null || fimMin - ini < duracao) falhar(400, "O horário final precisa caber ao menos uma reunião depois do inicial.");
+    const t = agora();
+    const regraId = db.transaction(() => {
+      const atual = db.prepare("SELECT id FROM agenda_disponibilidade WHERE closerId = ?").get(closerId);
+      const id = atual?.id || randomUUID();
+      if (atual) {
+        db.prepare("UPDATE agenda_disponibilidade SET dias = ?, inicioMin = ?, fimMin = ?, duracao = ?, ativo = 1, atualizadoEm = ? WHERE id = ?")
+          .run(JSON.stringify(lista), ini, fimMin, duracao, t, id);
+        limparGerados(id);
+      } else {
+        db.prepare("INSERT INTO agenda_disponibilidade (id, closerId, dias, inicioMin, fimMin, duracao, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+          .run(id, closerId, JSON.stringify(lista), ini, fimMin, duracao, t, t);
+      }
+      return id;
+    }).immediate();
+    return { ok: true, regraId, criados: gerarDisponibilidade() };
+  }
+
+  function desativarDisponibilidade(user, closerId = user?.id) {
+    exigirDono(user, closerId);
+    const regra = db.prepare("SELECT id FROM agenda_disponibilidade WHERE closerId = ?").get(closerId);
+    if (!regra) falhar(404, "Não há disponibilidade semanal para desativar.");
+    db.transaction(() => {
+      db.prepare("UPDATE agenda_disponibilidade SET ativo = 0, atualizadoEm = ? WHERE id = ?").run(agora(), regra.id);
+      limparGerados(regra.id);
+    }).immediate();
+    return { ok: true };
+  }
+
+  // Uma vez só: a conta da plataforma ganha agenda de seg a sex, 8h às 20h,
+  // reuniões de 30 min. Depois disso, quem manda é o painel.
+  function garantirAgendaPadrao(emailAdmin = "") {
+    if (db.prepare("SELECT 1 FROM agenda_config WHERE chave = 'agendaPadrao'").get()) return null;
+    const admin = db.prepare("SELECT id FROM users WHERE role = 'admin' ORDER BY (lower(email) = ?) DESC, criadoEm LIMIT 1").get(String(emailAdmin).toLowerCase());
+    if (!admin) return null;
+    const t = agora();
+    db.transaction(() => {
+      if (!db.prepare("SELECT 1 FROM agenda_disponibilidade").get()) {
+        db.prepare("INSERT INTO agenda_disponibilidade (id, closerId, dias, inicioMin, fimMin, duracao, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+          .run(randomUUID(), admin.id, JSON.stringify([1, 2, 3, 4, 5]), 8 * 60, 20 * 60, 30, t, t);
+      }
+      db.prepare("INSERT INTO agenda_config (chave, valor) VALUES ('agendaPadrao', ?)").run(String(t));
+    }).immediate();
+    return admin.id;
+  }
+
+  // Admin passa a reunião para outro profissional (ou para a própria agenda).
+  // O horário antigo volta a ficar livre para outra empresa.
+  function transferir(user, reuniaoId, closerId) {
+    if (user?.role !== "admin") falhar(403, "Apenas administradores transferem reuniões.");
+    if (typeof closerId !== "string" || !liberado(closerId)) falhar(400, "Escolha alguém com acesso ativo à agenda.");
+    return db.transaction(() => {
+      const r = db.prepare("SELECT r.id, r.status, h.closerId, h.inicio, h.fim FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId WHERE r.id = ?").get(reuniaoId);
+      if (!r) falhar(404, "Reunião não encontrada.");
+      if (r.status !== "agendada" || r.fim <= agora()) falhar(409, "Só dá para transferir reuniões futuras agendadas.");
+      if (r.closerId === closerId) falhar(400, "A reunião já está com essa pessoa.");
+      let destino = db.prepare(`SELECT h.id FROM agenda_horarios h WHERE h.closerId = ? AND h.inicio = ? AND h.fim = ? AND h.ativo = 1 AND NOT ${reservaAtiva}`).get(closerId, r.inicio, r.fim);
+      if (!destino) {
+        if (db.prepare(`SELECT 1 FROM agenda_horarios h WHERE h.closerId = ? AND h.inicio < ? AND h.fim > ? AND (h.ativo = 1 OR ${reservaAtiva})`).get(closerId, r.fim, r.inicio))
+          falhar(409, "Essa pessoa já tem outro compromisso nesse horário.");
+        destino = { id: randomUUID() };
+        db.prepare("INSERT INTO agenda_horarios (id, closerId, inicio, fim) VALUES (?, ?, ?, ?)").run(destino.id, closerId, r.inicio, r.fim);
+      }
+      db.prepare("UPDATE agenda_reunioes SET horarioId = ?, atualizadoEm = ?, atualizadoPor = ? WHERE id = ?").run(destino.id, agora(), user.id, reuniaoId);
+      return { ok: true };
+    }).immediate();
+  }
+
   function retirar(user, id) {
     return db.transaction(() => {
       const h = db.prepare("SELECT * FROM agenda_horarios WHERE id = ?").get(id);
@@ -404,5 +547,8 @@ export function criarAgenda(db, agora = Date.now) {
     }).immediate();
   }
 
-  return { acesso, liberar, publicar, horariosPublicos, salvarPrecadastro, lerPrecadastro, reservar, reservarPrecadastro, painel, retirar, status, resultadoVenda, aprendizado };
+  return {
+    acesso, liberar, publicar, horariosPublicos, salvarPrecadastro, lerPrecadastro, reservar, reservarPrecadastro, painel, retirar, status,
+    resultadoVenda, aprendizado, gerarDisponibilidade, salvarDisponibilidade, desativarDisponibilidade, garantirAgendaPadrao, transferir,
+  };
 }

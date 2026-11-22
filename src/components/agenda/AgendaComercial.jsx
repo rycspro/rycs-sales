@@ -84,6 +84,11 @@ export default function AgendaComercial() {
   }
 
   const livres = dados.horarios;
+  // Quem pode receber horários e reuniões: a agenda do próprio admin (Equipe
+  // RYCS) e os closers liberados.
+  const atendentes = dados.admin
+    ? [{ id: dados.eu, nome: "Minha agenda (Equipe RYCS)" }, ...(dados.closers || []).filter((c) => c.ativo)]
+    : [{ id: dados.eu, nome: "Minha agenda" }];
   const abas = [
     ["proximas", `Próximas (${grupos.proximas.length})`],
     ["registrar", `A registrar (${grupos.registrar.length})`],
@@ -118,7 +123,11 @@ export default function AgendaComercial() {
         onAlterar={(c, ativo) => executar("/closers", { userId: c.id, ativo },
           (r) => ativo ? `${c.nome} pode usar a agenda.` : `Acesso de ${c.nome} revogado.${r.reunioesFuturas ? ` Ainda há ${r.reunioesFuturas} reunião(ões) futura(s) com esse closer: cancele ou combine com a empresa.` : ""}`)} />}
 
-      <PublicarHorarios admin={dados.admin} closers={(dados.closers || []).filter((c) => c.ativo)} ocupado={ocupado}
+      <Disponibilidade admin={dados.admin} eu={dados.eu} atendentes={atendentes} regras={dados.disponibilidade || []} ocupado={ocupado}
+        onSalvar={(corpo) => executar("/disponibilidade", corpo, (r) => `Disponibilidade salva. ${r.criados} horário(s) livre(s) gerado(s) para as próximas 2 semanas.`)}
+        onDesativar={(closerId) => executar("/disponibilidade/desativar", { closerId }, "Disponibilidade semanal desativada. Os horários livres dela saíram do quiz.")} />
+
+      <PublicarHorarios admin={dados.admin} closers={atendentes} padrao={dados.eu} ocupado={ocupado}
         onPublicar={(corpo) => executar("/horarios", corpo, (r) => {
           const extras = [r.ocupados && `${r.ocupados} já ocupado(s)`, r.passados && `${r.passados} em menos de 1 hora`].filter(Boolean);
           return `${r.criados} horário(s) publicado(s) no quiz.${extras.length ? ` Pulados: ${extras.join(" e ")}.` : ""}`;
@@ -136,6 +145,8 @@ export default function AgendaComercial() {
           : <ListaReunioes lista={grupos[aba]} admin={dados.admin} ocupado={ocupado}
             vazio={{ proximas: "Nenhuma reunião marcada pela frente.", registrar: "Nada para registrar: todas as reuniões passadas já têm resultado.", historico: "Nenhuma reunião encerrada ainda." }[aba]}
             onResultado={(r, resultado) => executar(`/reunioes/${r.id}/resultado`, { resultado }, "Resultado da venda registrado.")}
+            atendentes={atendentes}
+            onTransferir={(r, closerId) => executar(`/reunioes/${r.id}/transferir`, { closerId }, "Reunião transferida. O horário anterior voltou a ficar livre.")}
             onStatus={(r, status, reabrir) => executar(`/reunioes/${r.id}/status`, { status, reabrir },
               (res) => status === "cancelada" ? (res.reaberto ? "Reunião cancelada. O horário voltou para o quiz." : "Reunião cancelada. O horário saiu da agenda.") : "Resultado registrado.")} />}
       </div>
@@ -224,9 +235,67 @@ function Closers({ closers, reunioes, ocupado, onAlterar }) {
   );
 }
 
-function PublicarHorarios({ admin, closers, ocupado, onPublicar }) {
+const DIAS_SEMANA = [["Seg", 1], ["Ter", 2], ["Qua", 3], ["Qui", 4], ["Sex", 5], ["Sáb", 6], ["Dom", 0]];
+const descreverDias = (dias) => {
+  const d = [...dias].sort();
+  if (d.join() === "1,2,3,4,5") return "Seg a sex";
+  if (d.length === 7) return "Todos os dias";
+  return DIAS_SEMANA.filter(([, n]) => d.includes(n)).map(([t]) => t).join(", ");
+};
+
+// Disponibilidade semanal: os horários livres se renovam sozinhos (próximas
+// 2 semanas, horário de Brasília). A empresa não vê quem atende.
+function Disponibilidade({ admin, eu, atendentes, regras, ocupado, onSalvar, onDesativar }) {
+  const [closerId, setCloserId] = useState(eu);
+  const formDe = (id) => {
+    const r = regras.find((x) => x.closerId === id && x.ativo);
+    return { dias: r?.dias || [1, 2, 3, 4, 5], inicio: r?.inicio || "08:00", fim: r?.fim || "20:00", duracao: r?.duracao || 30 };
+  };
+  const [form, setForm] = useState(() => formDe(eu));
+  useEffect(() => { setForm(formDe(closerId)); }, [closerId, regras]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ativas = regras.filter((r) => r.ativo);
+  const alternarDia = (n) => setForm((f) => ({ ...f, dias: f.dias.includes(n) ? f.dias.filter((d) => d !== n) : [...f.dias, n] }));
+  return (
+    <form className="vx-card ag-bloco" onSubmit={(e) => { e.preventDefault(); onSalvar({ closerId, ...form }); }} noValidate>
+      <h3>Disponibilidade semanal</h3>
+      <p className="vx-mut ag-texto">Os horários livres são gerados sozinhos para as próximas 2 semanas, no horário de Brasília. A empresa vê só “um especialista da RYCS”; vocês redistribuem as reuniões depois, se precisar.</p>
+      {ativas.length > 0 && (
+        <ul className="ag-regras">
+          {ativas.map((r) => (
+            <li key={r.closerId}>
+              <span><strong>{r.closerId === eu ? (admin ? "Minha agenda (Equipe RYCS)" : "Minha agenda") : r.closer}</strong> · {descreverDias(r.dias)}, {r.inicio} às {r.fim}, reuniões de {r.duracao} min</span>
+              <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={ocupado} onClick={() => onDesativar(r.closerId)}>Desativar</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="ag-campos">
+        {admin && (
+          <div><label className="vx-label" htmlFor="ag-disp-pessoa">Agenda de</label>
+            <select id="ag-disp-pessoa" className="vx-input" value={closerId} onChange={(e) => setCloserId(e.target.value)}>
+              {atendentes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select></div>
+        )}
+        <div><label className="vx-label" htmlFor="ag-disp-das">Das</label><input id="ag-disp-das" className="vx-input" type="time" step={900} value={form.inicio} onChange={(e) => setForm((f) => ({ ...f, inicio: e.target.value }))} /></div>
+        <div><label className="vx-label" htmlFor="ag-disp-ate">Até</label><input id="ag-disp-ate" className="vx-input" type="time" step={900} value={form.fim} onChange={(e) => setForm((f) => ({ ...f, fim: e.target.value }))} /></div>
+        <div><label className="vx-label" htmlFor="ag-disp-duracao">Cada reunião</label>
+          <select id="ag-disp-duracao" className="vx-input" value={form.duracao} onChange={(e) => setForm((f) => ({ ...f, duracao: Number(e.target.value) }))}>
+            {DURACOES_AGENDA.map((n) => <option key={n} value={n}>{n} minutos</option>)}
+          </select></div>
+      </div>
+      <div className="ag-dias" role="group" aria-label="Dias da semana">
+        {DIAS_SEMANA.map(([t, n]) => (
+          <button key={n} type="button" aria-pressed={form.dias.includes(n)} className={`vx-btn vx-btn-sm ${form.dias.includes(n) ? "vx-btn-primary" : "vx-btn-ghost"}`} onClick={() => alternarDia(n)}>{t}</button>
+        ))}
+      </div>
+      <button type="submit" className="vx-btn vx-btn-primary ag-salvar" disabled={ocupado}>Salvar disponibilidade</button>
+    </form>
+  );
+}
+
+function PublicarHorarios({ admin, closers, padrao, ocupado, onPublicar }) {
   const hoje = chaveDia(Date.now());
-  const [form, setForm] = useState({ closerId: "", data: hoje, das: "", ate: "", duracao: 30 });
+  const [form, setForm] = useState({ closerId: padrao || "", data: hoje, das: "", ate: "", duracao: 30 });
   const [erroLocal, setErroLocal] = useState("");
   const mudar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: campo === "duracao" ? Number(e.target.value) : e.target.value }));
   async function enviar(e) {
@@ -242,13 +311,12 @@ function PublicarHorarios({ admin, closers, ocupado, onPublicar }) {
   }
   return (
     <form className="vx-card ag-bloco ag-publicar" onSubmit={enviar} noValidate>
-      <h3>Abrir horários para o quiz</h3>
-      <p className="vx-mut ag-texto">Preencha “até” para abrir vários horários seguidos (ex.: das 9h às 12h, de 30 em 30 minutos). Deixe vazio para abrir um só. Horários que batem com outro seu são pulados.</p>
+      <h3>Abrir horários avulsos</h3>
+      <p className="vx-mut ag-texto">Para um dia fora da disponibilidade semanal. Preencha “até” para abrir vários horários seguidos; deixe vazio para abrir um só. Horários que batem com outro compromisso são pulados.</p>
       <div className="ag-campos">
         {admin && (
-          <div><label className="vx-label" htmlFor="ag-closer">Closer</label>
+          <div><label className="vx-label" htmlFor="ag-closer">Agenda de</label>
             <select id="ag-closer" className="vx-input" value={form.closerId} onChange={mudar("closerId")}>
-              <option value="">{closers.length ? "Escolha" : "Libere um closer primeiro"}</option>
               {closers.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
             </select></div>
         )}
@@ -285,9 +353,9 @@ function HorariosLivres({ horarios, admin, ocupado, onRetirar }) {
   ));
 }
 
-function ListaReunioes({ lista, admin, ocupado, vazio, onStatus, onResultado }) {
+function ListaReunioes({ lista, admin, ocupado, vazio, onStatus, onResultado, atendentes, onTransferir }) {
   if (!lista.length) return <div className="vx-card ag-vazio">{vazio}</div>;
-  return lista.map((r) => <Reuniao key={r.id} r={r} admin={admin} ocupado={ocupado} onStatus={onStatus} onResultado={onResultado} />);
+  return lista.map((r) => <Reuniao key={r.id} r={r} admin={admin} ocupado={ocupado} onStatus={onStatus} onResultado={onResultado} atendentes={atendentes} onTransferir={onTransferir} />);
 }
 
 const RESULTADOS = [["fechou", "Venda fechada"], ["negociando", "Em negociação"], ["nao_fechou", "Não fechou"]];
@@ -405,7 +473,24 @@ function LeituraRespostas({ respostas = [], quizVersao, criadoEm }) {
   );
 }
 
-function Reuniao({ r, admin, ocupado, onStatus, onResultado }) {
+// Admin passa a reunião para outro profissional (rodízio por trás do quiz).
+function Transferir({ r, atendentes, ocupado, onTransferir }) {
+  const opcoes = atendentes.filter((c) => c.id !== r.closerId);
+  const [destino, setDestino] = useState("");
+  if (!opcoes.length) return null;
+  return (
+    <div className="ag-acoes ag-transferir">
+      <label className="vx-label" htmlFor={`ag-tr-${r.id}`}>Transferir para</label>
+      <select id={`ag-tr-${r.id}`} className="vx-input" value={destino} onChange={(e) => setDestino(e.target.value)}>
+        <option value="">Escolha quem atende</option>
+        {opcoes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+      </select>
+      <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={ocupado || !destino} onClick={() => onTransferir(r, destino)}>Transferir</button>
+    </div>
+  );
+}
+
+function Reuniao({ r, admin, ocupado, onStatus, onResultado, atendentes = [], onTransferir }) {
   const [cancelando, setCancelando] = useState(false);
   const [reabrir, setReabrir] = useState(false);
   const porId = Object.fromEntries((r.respostas || []).map((x) => [x.id, x]));
@@ -449,6 +534,7 @@ function Reuniao({ r, admin, ocupado, onStatus, onResultado }) {
           ))}
         </div>
       )}
+      {admin && r.status === "agendada" && r.fim > Date.now() && !cancelando && <Transferir r={r} atendentes={atendentes} ocupado={ocupado} onTransferir={onTransferir} />}
       {r.status === "agendada" && !cancelando && (
         <div className="ag-acoes">
           <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" disabled={ocupado || !comecou} onClick={() => onStatus(r, "realizada")}>Realizada</button>

@@ -12,12 +12,12 @@ const respostasValidas = () => Object.fromEntries(PERGUNTAS_QUIZ.map((p) => [p.i
 function contexto(t) {
   const db = new Database(":memory:");
   db.exec(`PRAGMA foreign_keys = ON;
-    CREATE TABLE users (id TEXT PRIMARY KEY, role TEXT, entityId TEXT);
+    CREATE TABLE users (id TEXT PRIMARY KEY, role TEXT, entityId TEXT, email TEXT, criadoEm INTEGER DEFAULT 0);
     CREATE TABLE sellers (id TEXT PRIMARY KEY, nome TEXT, status TEXT, perfil TEXT);
     INSERT INTO sellers VALUES ('s1','Carla Closer','aprovado','closer'), ('s2','Gabi Closer','aprovado','closer'),
       ('s3','Eva SDR','aprovado','sdr'), ('s4','Pendente','triagem','closer');
-    INSERT INTO users VALUES ('c1','vendedor','s1'), ('c2','vendedor','s2'), ('sdr','vendedor','s3'),
-      ('pend','vendedor','s4'), ('admin','admin',NULL), ('emp','empresa','e1');`);
+    INSERT INTO users (id, role, entityId, email) VALUES ('c1','vendedor','s1','c1@t'), ('c2','vendedor','s2','c2@t'), ('sdr','vendedor','s3','sdr@t'),
+      ('pend','vendedor','s4','pend@t'), ('admin','admin',NULL,'admin@rycs.test'), ('emp','empresa','e1','emp@t');`);
   criarSchemaAgenda(db);
   let relogio = AGORA;
   const agenda = criarAgenda(db, () => relogio);
@@ -143,9 +143,9 @@ test("dados inválidos, respostas incompletas e e-mail com conversa futura são 
   abrir();
   abrir(c1, AGORA + 3 * HORA);
   const incompleto = respostasValidas();
-  delete incompleto.investimento;
+  delete incompleto.ticket;
   assert.throws(() => reservar(undefined, undefined, { respostas: incompleto }), status(400));
-  assert.throws(() => reservar(undefined, undefined, { respostas: { ...respostasValidas(), investimento: "inventada" } }), status(400));
+  assert.throws(() => reservar(undefined, undefined, { respostas: { ...respostasValidas(), ticket: "inventada" } }), status(400));
   assert.throws(() => reservar(undefined, "sem-arroba"), status(400));
   assert.throws(() => reservar(undefined, undefined, { telefone: "1234" }), status(400));
   assert.throws(() => reservar(undefined, undefined, { aceite: false }), status(400));
@@ -211,4 +211,51 @@ test("resultado da venda só depois de realizada e alimenta o aprendizado por re
   const primeira = a.perguntas[0].opcoes[0];
   assert.deepEqual([primeira.total, primeira.agendaram, primeira.compareceram, primeira.fecharam], [2, 1, 1, 1]);
   assert.equal(a.perguntas[0].opcoes[1].total, 0);
+});
+
+// AGORA = sexta-feira, 15/01/2027, 05:00 em Brasília (08:00 UTC).
+test("agenda padrão da plataforma: seg a sex, 8h às 20h no horário de Brasília, gerada uma vez", (t) => {
+  const { agenda } = contexto(t);
+  assert.equal(agenda.garantirAgendaPadrao("admin@rycs.test"), "admin");
+  assert.equal(agenda.gerarDisponibilidade(), 240); // 10 dias úteis em 14 dias × 24 reuniões de 30 min
+  assert.equal(agenda.gerarDisponibilidade(), 0);
+  assert.equal(agenda.garantirAgendaPadrao("admin@rycs.test"), null);
+  const publicos = agenda.horariosPublicos();
+  assert.equal(publicos.length, 240);
+  assert.equal(new Date(publicos[0].inicio).toISOString(), "2027-01-15T11:00:00.000Z"); // 8h em Brasília
+  assert.equal(new Date(publicos.at(-1).inicio).toISOString(), "2027-01-28T22:30:00.000Z"); // 19h30 da quinta
+  const fimDeSemana = publicos.filter((h) => [0, 6].includes(new Date(h.inicio - 3 * HORA).getUTCDay()));
+  assert.equal(fimDeSemana.length, 0);
+});
+
+test("admin atende como Equipe RYCS e transfere a reunião; o horário dele volta a ficar livre", (t) => {
+  const { agenda, admin, c1, c2, abrir, reservar } = contexto(t);
+  agenda.publicar(admin, { closerId: "admin", inicio: AGORA + 2 * HORA, duracao: 30 });
+  const r = reservar();
+  assert.equal(agenda.painel(admin).reunioes[0].closer, "Equipe RYCS");
+  assert.throws(() => agenda.transferir(c1, r.id, "c1"), status(403));
+  assert.throws(() => agenda.transferir(admin, r.id, "sdr"), status(400));
+  abrir(c2);
+  reservar(undefined, "outra@empresa.test");
+  assert.throws(() => agenda.transferir(admin, r.id, "c2"), status(409));
+  assert.deepEqual(agenda.transferir(admin, r.id, "c1"), { ok: true });
+  assert.equal(agenda.painel(c1).reunioes[0].id, r.id);
+  assert.equal(agenda.horariosPublicos().length, 1);
+  assert.throws(() => agenda.transferir(admin, r.id, "c1"), status(400));
+});
+
+test("closer define a própria disponibilidade semanal; mudar ou desativar limpa só os horários livres", (t) => {
+  const { agenda, c1, c2, reservar } = contexto(t);
+  assert.throws(() => agenda.salvarDisponibilidade(c1, { closerId: "c2", dias: [1], inicio: "09:00", fim: "10:00", duracao: 30 }), status(403));
+  assert.throws(() => agenda.salvarDisponibilidade(c1, { dias: [], inicio: "09:00", fim: "10:00", duracao: 30 }), status(400));
+  assert.throws(() => agenda.salvarDisponibilidade(c1, { dias: [1], inicio: "10:00", fim: "10:15", duracao: 30 }), status(400));
+  assert.equal(agenda.salvarDisponibilidade(c1, { dias: [1], inicio: "09:00", fim: "10:00", duracao: 30 }).criados, 4); // 2 segundas × 2
+  const segunda = agenda.horariosPublicos()[0];
+  reservar(segunda.inicio);
+  assert.equal(agenda.salvarDisponibilidade(c1, { dias: [2], inicio: "14:00", fim: "15:00", duracao: 60 }).criados, 2);
+  assert.equal(agenda.painel(c1).horarios.length, 2); // só as terças; a reunião da segunda continua
+  assert.equal(agenda.painel(c1).reunioes.length, 1);
+  agenda.desativarDisponibilidade(c1);
+  assert.equal(agenda.horariosPublicos().length, 0);
+  assert.equal(agenda.painel(c2).disponibilidade.length, 0);
 });
