@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarClock, CalendarCheck2, CalendarX2, Clock, RefreshCw, UserX, Users, MessageCircle, Phone, Mail, AlertTriangle, Trophy } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { Stat } from "../ui.jsx";
-import { DIMENSOES_QUIZ, ETAPAS_QUIZ, DURACOES_AGENDA } from "../../../shared/quizDiagnostico.js";
+import { DIMENSOES_QUIZ, ETAPAS_QUIZ, DURACOES_AGENDA, INTERVALOS_AGENDA } from "../../../shared/quizDiagnostico.js";
 import "./AgendaComercial.css";
 
 const fuso = (() => {
@@ -249,7 +249,7 @@ function Disponibilidade({ admin, eu, atendentes, regras, ocupado, onSalvar, onD
   const [closerId, setCloserId] = useState(eu);
   const formDe = (id) => {
     const r = regras.find((x) => x.closerId === id && x.ativo);
-    return { dias: r?.dias || [1, 2, 3, 4, 5], inicio: r?.inicio || "08:00", fim: r?.fim || "20:00", duracao: r?.duracao || 30 };
+    return { dias: r?.dias || [1, 2, 3, 4, 5], inicio: r?.inicio || "08:00", fim: r?.fim || "20:00", duracao: r?.duracao || 30, intervalo: r?.intervalo || 60 };
   };
   const [form, setForm] = useState(() => formDe(eu));
   useEffect(() => { setForm(formDe(closerId)); }, [closerId, regras]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -263,7 +263,7 @@ function Disponibilidade({ admin, eu, atendentes, regras, ocupado, onSalvar, onD
         <ul className="ag-regras">
           {ativas.map((r) => (
             <li key={r.closerId}>
-              <span><strong>{r.closerId === eu ? (admin ? "Minha agenda (Equipe RYCS)" : "Minha agenda") : r.closer}</strong> · {descreverDias(r.dias)}, {r.inicio} às {r.fim}, reuniões de {r.duracao} min</span>
+              <span><strong>{r.closerId === eu ? (admin ? "Minha agenda (Equipe RYCS)" : "Minha agenda") : r.closer}</strong> · {descreverDias(r.dias)}, {r.inicio} às {r.fim}, reuniões de {r.duracao} min{r.intervalo > r.duracao ? `, começando a cada ${r.intervalo % 60 ? `${r.intervalo} min` : `${r.intervalo / 60} h`}` : ""}</span>
               <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={ocupado} onClick={() => onDesativar(r.closerId)}>Desativar</button>
             </li>
           ))}
@@ -279,8 +279,13 @@ function Disponibilidade({ admin, eu, atendentes, regras, ocupado, onSalvar, onD
         <div><label className="vx-label" htmlFor="ag-disp-das">Das</label><input id="ag-disp-das" className="vx-input" type="time" step={900} value={form.inicio} onChange={(e) => setForm((f) => ({ ...f, inicio: e.target.value }))} /></div>
         <div><label className="vx-label" htmlFor="ag-disp-ate">Até</label><input id="ag-disp-ate" className="vx-input" type="time" step={900} value={form.fim} onChange={(e) => setForm((f) => ({ ...f, fim: e.target.value }))} /></div>
         <div><label className="vx-label" htmlFor="ag-disp-duracao">Cada reunião</label>
-          <select id="ag-disp-duracao" className="vx-input" value={form.duracao} onChange={(e) => setForm((f) => ({ ...f, duracao: Number(e.target.value) }))}>
+          <select id="ag-disp-duracao" className="vx-input" value={form.duracao} onChange={(e) => setForm((f) => ({ ...f, duracao: Number(e.target.value), intervalo: Math.max(f.intervalo, Number(e.target.value)) }))}>
             {DURACOES_AGENDA.map((n) => <option key={n} value={n}>{n} minutos</option>)}
+          </select></div>
+        <div><label className="vx-label" htmlFor="ag-disp-intervalo">Começa a cada</label>
+          <select id="ag-disp-intervalo" className="vx-input" value={form.intervalo} onChange={(e) => setForm((f) => ({ ...f, intervalo: Number(e.target.value) }))}>
+            {[...new Set([form.duracao, ...INTERVALOS_AGENDA])].filter((n) => n >= form.duracao).sort((a, b) => a - b)
+              .map((n) => <option key={n} value={n}>{n % 60 ? `${n} minutos` : n === 60 ? "1 hora" : `${n / 60} horas`}</option>)}
           </select></div>
       </div>
       <div className="ag-dias" role="group" aria-label="Dias da semana">
@@ -521,6 +526,12 @@ function Reuniao({ r, admin, ocupado, onStatus, onResultado, atendentes = [], on
         <a href={`mailto:${r.email}`}><Mail size={15} aria-hidden="true" /> {r.email}</a>
       </div>
       {origem && <p className="vx-mut ag-origem">Origem: {origem}</p>}
+      {r.lembretes && (
+        <p className="vx-mut ag-origem">
+          Confirmação e lembretes (e-mail e WhatsApp): {r.lembretes.enviados} enviado(s) · {r.lembretes.programados} programado(s)
+          {r.lembretes.naoEnviados ? ` · ${r.lembretes.naoEnviados} não enviado(s)` : ""}
+        </p>
+      )}
 
       <LeituraRespostas respostas={r.respostas} quizVersao={r.quizVersao} criadoEm={r.criadoEm} />
 

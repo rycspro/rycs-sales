@@ -136,9 +136,11 @@
 /* ── Horários ─────────────────────────────────────────────────────── */
 .dg-fuso{display:flex;align-items:center;gap:6px}
 .dg-fuso svg{color:var(--brand)}
-.dg-dias{display:flex;gap:8px;margin:0 -2px 14px;padding:2px 2px 8px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.dg-dias{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin:0 0 10px}
+.dg-dia-escolhido{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.dg-dia-escolhido .dg-subtitulo{margin:0}
 .dg-dia,.dg-hora{appearance:none;font:inherit;color:var(--ink);background:var(--surface-solid);border:1.5px solid var(--border-strong);border-radius:var(--radius-md);cursor:pointer;transition:border-color .15s,background .15s,color .15s,transform .15s}
-.dg-dia{flex:0 0 auto;min-width:86px;min-height:76px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;scroll-snap-align:start}
+.dg-dia{min-height:84px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;animation:dg-card-entra .4s cubic-bezier(.16,1,.3,1) both}
 .dg-dia small{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:capitalize}
 .dg-dia strong{font-size:16px}
 .dg-dia span{font-size:11px;color:var(--muted)}

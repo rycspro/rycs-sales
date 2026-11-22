@@ -7,6 +7,7 @@ import db, { ADMIN_EMAIL } from "../db.js";
 import { criarAgenda, ErroAgenda } from "../services/agendaComercial.js";
 import { registrarAgendamentoMeta } from "../services/metaConversoes.js";
 import { whatsappEmpresaVerificado } from "../services/whatsappVerificacao.js";
+import { agendarLembretes, cancelarLembretes, processarLembretes, resumoLembretes, iniciarLembretes } from "../services/lembretesReuniao.js";
 
 const agenda = criarAgenda(db);
 export const agendaPublica = Router();
@@ -27,6 +28,8 @@ function renovarAgenda() {
 }
 setTimeout(renovarAgenda, 3000).unref?.();
 setInterval(renovarAgenda, 60 * 60 * 1000).unref?.();
+// Confirmação e lembretes (e-mail + WhatsApp oficial) das reuniões marcadas.
+iniciarLembretes();
 
 const responder = (fn) => (req, res) => {
   try {
@@ -52,6 +55,9 @@ agendaPublica.post("/agenda-publica/reservas", semCache, limite(20), responder((
   const v = whatsappEmpresaVerificado(p.id);
   const reserva = agenda.reservarPrecadastro(req.body || {}, { disponivel: false, verificado: !!v, numero: v?.numero });
   registrarAgendamentoMeta(req, reserva.id, { email: p.email, telefone: v ? v.numero : p.telefone, nome: p.nome });
+  // A confirmação sai já; os lembretes ficam na fila até a hora deles.
+  try { agendarLembretes(reserva.id); } catch (e) { console.error("[agenda] lembretes:", e?.message); }
+  processarLembretes().catch(() => null);
   // Quem atende não aparece para a empresa: a equipe distribui por trás.
   return { id: reserva.id, inicio: reserva.inicio, fim: reserva.fim };
 }));
@@ -62,6 +68,8 @@ router.get("/agenda-comercial/acesso", (req, res) => {
 router.get("/agenda-comercial", semCache, responder((req) => {
   const p = agenda.painel(req.user);
   if (p.precadastros) p.precadastros = p.precadastros.map((x) => ({ ...x, whatsapp: whatsappEmpresaVerificado(x.id) }));
+  const lembretes = resumoLembretes(p.reunioes.map((r) => r.id));
+  p.reunioes = p.reunioes.map((r) => ({ ...r, lembretes: lembretes[r.id] || null }));
   return p;
 }));
 router.post("/agenda-comercial/closers", responder((req) => agenda.liberar(req.user, req.body?.userId, req.body?.ativo)));
@@ -71,6 +79,10 @@ router.post("/agenda-comercial/disponibilidade", responder((req) => agenda.salva
 router.post("/agenda-comercial/disponibilidade/desativar", responder((req) => agenda.desativarDisponibilidade(req.user, req.body?.closerId)));
 router.post("/agenda-comercial/reunioes/:id/transferir", responder((req) => agenda.transferir(req.user, req.params.id, req.body?.closerId)));
 router.post("/agenda-comercial/reunioes/:id/resultado", responder((req) => agenda.resultadoVenda(req.user, req.params.id, req.body?.resultado)));
-router.post("/agenda-comercial/reunioes/:id/status", responder((req) => agenda.status(req.user, req.params.id, req.body?.status, { reabrir: req.body?.reabrir === true })));
+router.post("/agenda-comercial/reunioes/:id/status", responder((req) => {
+  const r = agenda.status(req.user, req.params.id, req.body?.status, { reabrir: req.body?.reabrir === true });
+  cancelarLembretes(req.params.id, `reunião ${req.body?.status}`);
+  return r;
+}));
 
 export default router;

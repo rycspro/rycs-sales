@@ -17,6 +17,8 @@
 export const QUIZ_VERSAO = "2026-11-22-v3";
 // Durações que o closer pode escolher ao abrir horários (minutos).
 export const DURACOES_AGENDA = [15, 20, 30, 45, 60];
+// De quanto em quanto tempo começa uma reunião na disponibilidade semanal.
+export const INTERVALOS_AGENDA = [30, 60, 90, 120];
 
 // Elementos 3D (Fluent Emoji 3D, MIT), versão fixa no CDN.
 export const icone3d = (codigo) => `https://cdn.jsdelivr.net/npm/@lobehub/fluent-emoji-3d@1.1.0/assets/${codigo}.webp`;

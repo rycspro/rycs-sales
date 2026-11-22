@@ -214,16 +214,18 @@ test("resultado da venda só depois de realizada e alimenta o aprendizado por re
 });
 
 // AGORA = sexta-feira, 15/01/2027, 05:00 em Brasília (08:00 UTC).
-test("agenda padrão da plataforma: seg a sex, 8h às 20h no horário de Brasília, gerada uma vez", (t) => {
+test("agenda padrão da plataforma: seg a sex, de hora em hora das 8h às 19h (Brasília), gerada uma vez", (t) => {
   const { agenda } = contexto(t);
   assert.equal(agenda.garantirAgendaPadrao("admin@rycs.test"), "admin");
-  assert.equal(agenda.gerarDisponibilidade(), 240); // 10 dias úteis em 14 dias × 24 reuniões de 30 min
+  assert.equal(agenda.gerarDisponibilidade(), 120); // 10 dias úteis em 14 dias × 12 reuniões (8h a 19h)
   assert.equal(agenda.gerarDisponibilidade(), 0);
   assert.equal(agenda.garantirAgendaPadrao("admin@rycs.test"), null);
   const publicos = agenda.horariosPublicos();
-  assert.equal(publicos.length, 240);
+  assert.equal(publicos.length, 120);
   assert.equal(new Date(publicos[0].inicio).toISOString(), "2027-01-15T11:00:00.000Z"); // 8h em Brasília
-  assert.equal(new Date(publicos.at(-1).inicio).toISOString(), "2027-01-28T22:30:00.000Z"); // 19h30 da quinta
+  assert.equal(new Date(publicos[1].inicio).toISOString(), "2027-01-15T12:00:00.000Z"); // 9h
+  assert.equal(publicos[0].fim - publicos[0].inicio, 30 * MIN);
+  assert.equal(new Date(publicos.at(-1).inicio).toISOString(), "2027-01-28T22:00:00.000Z"); // 19h da quinta
   const fimDeSemana = publicos.filter((h) => [0, 6].includes(new Date(h.inicio - 3 * HORA).getUTCDay()));
   assert.equal(fimDeSemana.length, 0);
 });
@@ -258,4 +260,20 @@ test("closer define a própria disponibilidade semanal; mudar ou desativar limpa
   agenda.desativarDisponibilidade(c1);
   assert.equal(agenda.horariosPublicos().length, 0);
   assert.equal(agenda.painel(c2).disponibilidade.length, 0);
+});
+
+test("agenda padrão antiga, de meia em meia hora, vira de hora em hora sem mexer em reunião marcada", (t) => {
+  const { db, agenda, reservar } = contexto(t);
+  db.prepare("INSERT INTO agenda_disponibilidade (id, closerId, dias, inicioMin, fimMin, duracao, criadoEm, atualizadoEm) VALUES ('antiga', 'admin', '[1,2,3,4,5]', 480, 1200, 30, 0, 0)").run();
+  db.prepare("INSERT INTO agenda_config (chave, valor) VALUES ('agendaPadrao', '0')").run();
+  assert.equal(agenda.gerarDisponibilidade(), 240);
+  const meiaHora = agenda.horariosPublicos()[1]; // 8h30
+  reservar(meiaHora.inicio);
+  assert.equal(agenda.garantirAgendaPadrao("admin@rycs.test"), null);
+  // Os livres de meia hora saíram; os de hora em hora entram (8h–8h30 não colide com a reunião das 8h30).
+  assert.equal(agenda.gerarDisponibilidade(), 120);
+  const publicos = agenda.horariosPublicos();
+  assert.equal(publicos.length, 120);
+  assert.ok(publicos.every((h) => new Date(h.inicio).getUTCMinutes() === 0));
+  assert.equal(agenda.painel({ id: "admin", role: "admin" }).reunioes.length, 1);
 });

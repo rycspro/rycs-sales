@@ -561,16 +561,18 @@ function Horarios({ tituloProps, selecionado, onEscolher, onSeguir }) {
     return [...mapa.entries()].map(([chave, itens]) => ({ chave, itens }));
   }, [estado.lista]);
 
-  // Mantém a escolha só se o horário continuar livre na lista nova.
+  // Dois passos: primeiro o dia, depois o horário. Mantém a escolha só se o
+  // horário continuar livre na lista nova.
   useEffect(() => {
     if (estado.carregando) return;
     const aindaLivre = selecionado && estado.lista.some((h) => h.inicio === selecionado.inicio && h.fim === selecionado.fim);
     if (selecionado && !aindaLivre) onEscolher(null);
-    const diaValido = dias.some((d) => d.chave === dia);
-    if (!diaValido) setDia(aindaLivre ? chaveDia(selecionado.inicio) : dias[0]?.chave ?? null);
+    if (aindaLivre) setDia(chaveDia(selecionado.inicio));
+    else if (dia && !dias.some((d) => d.chave === dia)) setDia(null);
   }, [estado, dias]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const doDia = dias.find((d) => d.chave === dia)?.itens || [];
+  const escolherDia = (chave) => { setDia(chave); onEscolher(null); };
   return (
     <>
       <p className="dg-kicker">Agendar reunião</p>
@@ -603,21 +605,30 @@ function Horarios({ tituloProps, selecionado, onEscolher, onSeguir }) {
         </div>
       )}
 
-      {!estado.carregando && !estado.erro && dias.length > 0 && (
+      {!estado.carregando && !estado.erro && dias.length > 0 && !dia && (
         <>
-          <h2 className="dg-subtitulo" id="dg-dias">Dia</h2>
+          <h2 className="dg-subtitulo" id="dg-dias">Escolha o dia</h2>
           <div className="dg-dias" role="group" aria-labelledby="dg-dias">
             {dias.map((d) => {
               const r = rotuloDia(d.itens[0].inicio);
               return (
-                <button key={d.chave} type="button" aria-pressed={dia === d.chave} className={`dg-dia${dia === d.chave ? " is-marcada" : ""}`}
-                  onClick={() => setDia(d.chave)} aria-label={`${diaLongo(d.itens[0].inicio)}, ${d.itens.length} ${d.itens.length === 1 ? "horário" : "horários"}`}>
+                <button key={d.chave} type="button" className="dg-dia" onClick={() => escolherDia(d.chave)}
+                  aria-label={`${diaLongo(d.itens[0].inicio)}, ${d.itens.length} ${d.itens.length === 1 ? "horário livre" : "horários livres"}`}>
                   <small>{r.topo}</small><strong>{r.data}</strong><span>{d.itens.length} {d.itens.length === 1 ? "horário" : "horários"}</span>
                 </button>
               );
             })}
           </div>
-          <h2 className="dg-subtitulo" id="dg-horas">{dia ? diaLongo(doDia[0]?.inicio) : "Horário"}</h2>
+          <button type="button" className="dg-link" onClick={carregar}><RefreshCw size={14} aria-hidden="true" /> Atualizar horários</button>
+        </>
+      )}
+
+      {!estado.carregando && !estado.erro && dia && (
+        <>
+          <div className="dg-dia-escolhido">
+            <h2 className="dg-subtitulo" id="dg-horas">{diaLongo(doDia[0]?.inicio)}</h2>
+            <button type="button" className="dg-link" onClick={() => escolherDia(null)}>Trocar dia</button>
+          </div>
           <div className="dg-horas" role="group" aria-labelledby="dg-horas">
             {doDia.map((h) => {
               const marcado = selecionado?.inicio === h.inicio && selecionado?.fim === h.fim;
@@ -630,10 +641,9 @@ function Horarios({ tituloProps, selecionado, onEscolher, onSeguir }) {
             })}
           </div>
           <div className="dg-rodape-pergunta">
-            <button type="button" className="vx-btn vx-btn-primary dg-cta" disabled={!selecionado} onClick={onSeguir}>
-              {selecionado ? `Continuar · ${rotuloDia(selecionado.inicio).topo}, ${rotuloDia(selecionado.inicio).data} às ${hora(selecionado.inicio)}` : "Escolha um horário"} <ArrowRight size={18} aria-hidden="true" />
+            <button type="button" className={`vx-btn vx-btn-primary dg-cta${selecionado ? " dg-cta-pulso" : ""}`} disabled={!selecionado} onClick={onSeguir}>
+              {selecionado ? `Continuar · ${hora(selecionado.inicio)}` : "Escolha um horário"} <ArrowRight size={18} aria-hidden="true" />
             </button>
-            <button type="button" className="dg-link" onClick={carregar}><RefreshCw size={14} aria-hidden="true" /> Atualizar horários</button>
           </div>
         </>
       )}

@@ -13,7 +13,7 @@
 // - As respostas ficam gravadas com o texto lido pela empresa.
 // - Cancelar preserva a reunião; revogar o closer preserva o histórico.
 import { randomUUID, randomBytes, createHash, timingSafeEqual } from "node:crypto";
-import { registrarRespostas, QUIZ_VERSAO, DURACOES_AGENDA as DURACOES, PERGUNTAS_QUIZ } from "../../shared/quizDiagnostico.js";
+import { registrarRespostas, QUIZ_VERSAO, DURACOES_AGENDA as DURACOES, INTERVALOS_AGENDA as INTERVALOS, PERGUNTAS_QUIZ } from "../../shared/quizDiagnostico.js";
 import { limparOrigem } from "../../shared/jornada.js";
 
 const MIN = 60_000;
@@ -107,6 +107,9 @@ export function criarSchemaAgenda(db) {
     );
     CREATE TABLE IF NOT EXISTS agenda_config (chave TEXT PRIMARY KEY, valor TEXT NOT NULL);
   `);
+  // De quanto em quanto tempo começa uma reunião (0 = colado, igual à duração).
+  const colunasRegra = new Set(db.prepare("PRAGMA table_info(agenda_disponibilidade)").all().map((c) => c.name));
+  if (!colunasRegra.has("intervalo")) db.exec("ALTER TABLE agenda_disponibilidade ADD COLUMN intervalo INTEGER NOT NULL DEFAULT 0");
   const colunasHorario = new Set(db.prepare("PRAGMA table_info(agenda_horarios)").all().map((c) => c.name));
   if (!colunasHorario.has("regraId")) db.exec("ALTER TABLE agenda_horarios ADD COLUMN regraId TEXT NOT NULL DEFAULT ''");
   db.exec("CREATE INDEX IF NOT EXISTS idx_agenda_horarios_regra ON agenda_horarios(regraId, closerId, inicio)");
@@ -346,10 +349,10 @@ export function criarAgenda(db, agora = Date.now) {
       WHERE 1 = 1${filtro} ORDER BY h.inicio DESC LIMIT 1000`).all(...args)
       .map((r) => ({ ...r, closerAtivo: !!r.closerAtivo, whatsVerificado: !!r.whatsVerificado, respostas: json(r.respostas, []), origem: json(r.origem, {}) }));
 
-    const disponibilidade = db.prepare(`SELECT d.closerId, d.dias, d.inicioMin, d.fimMin, d.duracao, d.ativo, ${NOME_ATENDENTE} AS closer
+    const disponibilidade = db.prepare(`SELECT d.closerId, d.dias, d.inicioMin, d.fimMin, d.duracao, d.intervalo, d.ativo, ${NOME_ATENDENTE} AS closer
       FROM agenda_disponibilidade d JOIN users u ON u.id = d.closerId LEFT JOIN sellers s ON s.id = u.entityId
       WHERE 1 = 1${admin ? "" : " AND d.closerId = ?"} ORDER BY d.ativo DESC, closer`).all(...args)
-      .map((d) => ({ closerId: d.closerId, closer: d.closer, ativo: !!d.ativo, dias: json(d.dias, []), inicio: paraHora(d.inicioMin), fim: paraHora(d.fimMin), duracao: d.duracao }));
+      .map((d) => ({ closerId: d.closerId, closer: d.closer, ativo: !!d.ativo, dias: json(d.dias, []), inicio: paraHora(d.inicioMin), fim: paraHora(d.fimMin), duracao: d.duracao, intervalo: d.intervalo || d.duracao }));
 
     if (!admin) return { admin, eu: user.id, horarios, reunioes, disponibilidade };
 
@@ -422,7 +425,7 @@ export function criarAgenda(db, agora = Date.now) {
         const dias = new Set(json(r.dias, []));
         for (const dia of diasSP(t, DIAS_GERADOS)) {
           if (!dias.has(dia.dow)) continue;
-          for (let m = r.inicioMin; m + r.duracao <= r.fimMin; m += r.duracao) {
+          for (let m = r.inicioMin; m + r.duracao <= r.fimMin; m += r.intervalo || r.duracao) {
             const ini = spParaUtc(dia.y, dia.m, dia.d, m);
             const fim = ini + r.duracao * MIN;
             if (ini < t + ANTECEDENCIA || existe.get(r.closerId, ini, r.id) || conflito.get(r.closerId, fim, ini)) continue;
@@ -439,25 +442,26 @@ export function criarAgenda(db, agora = Date.now) {
   const limparGerados = (regraId) => db.prepare(`DELETE FROM agenda_horarios WHERE regraId = ? AND inicio > ?
     AND NOT EXISTS (SELECT 1 FROM agenda_reunioes r WHERE r.horarioId = agenda_horarios.id)`).run(regraId, agora());
 
-  function salvarDisponibilidade(user, { closerId = user?.id, dias, inicio, fim, duracao } = {}) {
+  function salvarDisponibilidade(user, { closerId = user?.id, dias, inicio, fim, duracao, intervalo = duracao } = {}) {
     exigirDono(user, closerId);
     if (!liberado(closerId)) falhar(400, "Esta pessoa não está com o acesso à agenda ativo.");
     const lista = Array.isArray(dias) ? [...new Set(dias)].filter((d) => Number.isInteger(d) && d >= 0 && d <= 6).sort() : [];
     const ini = paraMinutos(inicio), fimMin = paraMinutos(fim);
     if (!lista.length) falhar(400, "Escolha ao menos um dia da semana.");
     if (!DURACOES.includes(duracao)) falhar(400, "Escolha uma duração válida.");
+    if (intervalo !== duracao && (!INTERVALOS.includes(intervalo) || intervalo < duracao)) falhar(400, "O intervalo entre reuniões precisa ser maior ou igual à duração.");
     if (ini == null || fimMin == null || fimMin - ini < duracao) falhar(400, "O horário final precisa caber ao menos uma reunião depois do inicial.");
     const t = agora();
     const regraId = db.transaction(() => {
       const atual = db.prepare("SELECT id FROM agenda_disponibilidade WHERE closerId = ?").get(closerId);
       const id = atual?.id || randomUUID();
       if (atual) {
-        db.prepare("UPDATE agenda_disponibilidade SET dias = ?, inicioMin = ?, fimMin = ?, duracao = ?, ativo = 1, atualizadoEm = ? WHERE id = ?")
-          .run(JSON.stringify(lista), ini, fimMin, duracao, t, id);
+        db.prepare("UPDATE agenda_disponibilidade SET dias = ?, inicioMin = ?, fimMin = ?, duracao = ?, intervalo = ?, ativo = 1, atualizadoEm = ? WHERE id = ?")
+          .run(JSON.stringify(lista), ini, fimMin, duracao, intervalo, t, id);
         limparGerados(id);
       } else {
-        db.prepare("INSERT INTO agenda_disponibilidade (id, closerId, dias, inicioMin, fimMin, duracao, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-          .run(id, closerId, JSON.stringify(lista), ini, fimMin, duracao, t, t);
+        db.prepare("INSERT INTO agenda_disponibilidade (id, closerId, dias, inicioMin, fimMin, duracao, intervalo, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+          .run(id, closerId, JSON.stringify(lista), ini, fimMin, duracao, intervalo, t, t);
       }
       return id;
     }).immediate();
@@ -476,20 +480,38 @@ export function criarAgenda(db, agora = Date.now) {
   }
 
   // Uma vez só: a conta da plataforma ganha agenda de seg a sex, 8h às 20h,
-  // reuniões de 30 min. Depois disso, quem manda é o painel.
+  // reuniões de 30 min começando de hora em hora (8h, 9h… 19h). Depois disso,
+  // quem manda é o painel.
   function garantirAgendaPadrao(emailAdmin = "") {
+    ajustarPadraoDeHoraEmHora();
     if (db.prepare("SELECT 1 FROM agenda_config WHERE chave = 'agendaPadrao'").get()) return null;
     const admin = db.prepare("SELECT id FROM users WHERE role = 'admin' ORDER BY (lower(email) = ?) DESC, criadoEm LIMIT 1").get(String(emailAdmin).toLowerCase());
     if (!admin) return null;
     const t = agora();
     db.transaction(() => {
       if (!db.prepare("SELECT 1 FROM agenda_disponibilidade").get()) {
-        db.prepare("INSERT INTO agenda_disponibilidade (id, closerId, dias, inicioMin, fimMin, duracao, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-          .run(randomUUID(), admin.id, JSON.stringify([1, 2, 3, 4, 5]), 8 * 60, 20 * 60, 30, t, t);
+        db.prepare("INSERT INTO agenda_disponibilidade (id, closerId, dias, inicioMin, fimMin, duracao, intervalo, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+          .run(randomUUID(), admin.id, JSON.stringify([1, 2, 3, 4, 5]), 8 * 60, 20 * 60, 30, 60, t, t);
       }
       db.prepare("INSERT INTO agenda_config (chave, valor) VALUES ('agendaPadrao', ?)").run(String(t));
     }).immediate();
     return admin.id;
+  }
+
+  // A primeira agenda padrão saiu de meia em meia hora. Uma vez só: se ela
+  // continua do jeito que foi criada, passa a ser de hora em hora. Horários
+  // livres de meia hora somem; reunião já marcada não muda.
+  function ajustarPadraoDeHoraEmHora() {
+    if (db.prepare("SELECT 1 FROM agenda_config WHERE chave = 'agendaPadraoHora'").get()) return;
+    db.transaction(() => {
+      const regra = db.prepare(`SELECT d.id FROM agenda_disponibilidade d JOIN users u ON u.id = d.closerId
+        WHERE u.role = 'admin' AND d.dias = '[1,2,3,4,5]' AND d.inicioMin = 480 AND d.fimMin = 1200 AND d.duracao = 30 AND d.intervalo IN (0, 30)`).get();
+      if (regra) {
+        db.prepare("UPDATE agenda_disponibilidade SET intervalo = 60, atualizadoEm = ? WHERE id = ?").run(agora(), regra.id);
+        limparGerados(regra.id);
+      }
+      db.prepare("INSERT INTO agenda_config (chave, valor) VALUES ('agendaPadraoHora', ?)").run(String(agora()));
+    }).immediate();
   }
 
   // Admin passa a reunião para outro profissional (ou para a própria agenda).
