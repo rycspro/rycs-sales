@@ -3,7 +3,7 @@
 // cancela ou registra o resultado. Admin: libera/revoga closers, vê todas as
 // reuniões, quem atende cada uma e os resultados.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarClock, CalendarCheck2, CalendarX2, Clock, RefreshCw, UserX, Users, MessageCircle, Phone, Mail, AlertTriangle } from "lucide-react";
+import { CalendarClock, CalendarCheck2, CalendarX2, Clock, RefreshCw, UserX, Users, MessageCircle, Phone, Mail, AlertTriangle, Trophy } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { Stat } from "../ui.jsx";
 import { DIMENSOES_QUIZ, ETAPAS_QUIZ, DURACOES_AGENDA } from "../../../shared/quizDiagnostico.js";
@@ -89,7 +89,7 @@ export default function AgendaComercial() {
     ["registrar", `A registrar (${grupos.registrar.length})`],
     ["livres", `Horários livres (${livres.length})`],
     ["historico", `Histórico (${grupos.historico.length})`],
-    ...(dados.admin ? [["precadastros", `Pré-cadastros sem reunião (${(dados.precadastros || []).length})`]] : []),
+    ...(dados.admin ? [["precadastros", `Pré-cadastros sem reunião (${(dados.precadastros || []).length})`], ["aprendizado", "Aprendizado do diagnóstico"]] : []),
   ];
 
   return (
@@ -110,6 +110,7 @@ export default function AgendaComercial() {
         <Stat label="Não compareceu" value={dados.reunioes.filter((r) => r.status === "nao_compareceu").length} Icon={UserX} />
         <Stat label="Canceladas" value={dados.reunioes.filter((r) => r.status === "cancelada").length} Icon={CalendarX2} />
         <Stat label="Horários livres" value={livres.length} Icon={Users} />
+        <Stat label="Vendas fechadas" value={dados.reunioes.filter((r) => r.resultadoVenda === "fechou").length} Icon={Trophy} />
       </div>
 
       {dados.admin && <Resultados dados={dados} />}
@@ -128,11 +129,13 @@ export default function AgendaComercial() {
       </div>
 
       <div role="tabpanel">
-        {aba === "precadastros" ? <ListaPrecadastros lista={dados.precadastros || []} />
+        {aba === "aprendizado" ? <Aprendizado dados={dados.aprendizado} />
+          : aba === "precadastros" ? <ListaPrecadastros lista={dados.precadastros || []} />
           : aba === "livres" ? <HorariosLivres horarios={livres} admin={dados.admin} ocupado={ocupado}
           onRetirar={(h) => executar(`/horarios/${h.id}/retirar`, {}, "Horário retirado do quiz.")} />
           : <ListaReunioes lista={grupos[aba]} admin={dados.admin} ocupado={ocupado}
             vazio={{ proximas: "Nenhuma reunião marcada pela frente.", registrar: "Nada para registrar: todas as reuniões passadas já têm resultado.", historico: "Nenhuma reunião encerrada ainda." }[aba]}
+            onResultado={(r, resultado) => executar(`/reunioes/${r.id}/resultado`, { resultado }, "Resultado da venda registrado.")}
             onStatus={(r, status, reabrir) => executar(`/reunioes/${r.id}/status`, { status, reabrir },
               (res) => status === "cancelada" ? (res.reaberto ? "Reunião cancelada. O horário voltou para o quiz." : "Reunião cancelada. O horário saiu da agenda.") : "Resultado registrado.")} />}
       </div>
@@ -282,9 +285,48 @@ function HorariosLivres({ horarios, admin, ocupado, onRetirar }) {
   ));
 }
 
-function ListaReunioes({ lista, admin, ocupado, vazio, onStatus }) {
+function ListaReunioes({ lista, admin, ocupado, vazio, onStatus, onResultado }) {
   if (!lista.length) return <div className="vx-card ag-vazio">{vazio}</div>;
-  return lista.map((r) => <Reuniao key={r.id} r={r} admin={admin} ocupado={ocupado} onStatus={onStatus} />);
+  return lista.map((r) => <Reuniao key={r.id} r={r} admin={admin} ocupado={ocupado} onStatus={onStatus} onResultado={onResultado} />);
+}
+
+const RESULTADOS = [["fechou", "Venda fechada"], ["negociando", "Em negociação"], ["nao_fechou", "Não fechou"]];
+const pct = (parte, total) => (total ? `${Math.round((parte / total) * 100)}%` : "—");
+
+// Cada resposta do diagnóstico cruzada com o que aconteceu depois. Com
+// volume, mostra quais respostas viram venda e quem priorizar.
+function Aprendizado({ dados }) {
+  if (!dados) return null;
+  return (
+    <div className="ag-aprendizado">
+      <div className="vx-card ag-bloco">
+        <h3>O que o diagnóstico está ensinando</h3>
+        <p className="vx-mut ag-texto">
+          {dados.diagnosticos} diagnóstico(s) com pré-cadastro nesta versão do quiz. Para cada resposta: quantas empresas a escolheram,
+          quantas agendaram, compareceram e fecharam (o closer registra a venda na reunião). São contagens reais, não previsão.
+          Com menos de 10 empresas numa resposta, a taxa ainda não diz muito.
+        </p>
+      </div>
+      {dados.perguntas.map((p) => (
+        <div key={p.id} className="vx-card ag-bloco">
+          <h4 className="ag-aprendizado-titulo">{p.titulo}</h4>
+          <div className="vx-table-wrap">
+            <table className="vx-table ag-tabela">
+              <thead><tr><th>Resposta</th><th>Empresas</th><th>Agendaram</th><th>Compareceram</th><th>Fecharam</th></tr></thead>
+              <tbody>{p.opcoes.map((o) => (
+                <tr key={o.id} className={o.total < 10 ? "ag-amostra-pequena" : ""}>
+                  <td>{o.texto}</td><td>{o.total}</td>
+                  <td>{o.agendaram} <span className="vx-mut">({pct(o.agendaram, o.total)})</span></td>
+                  <td>{o.compareceram} <span className="vx-mut">({pct(o.compareceram, o.total)})</span></td>
+                  <td><strong>{o.fecharam}</strong> <span className="vx-mut">({pct(o.fecharam, o.total)})</span></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // Empresas que fizeram o quiz e o pré-cadastro, mas não reservaram (sem
@@ -363,7 +405,7 @@ function LeituraRespostas({ respostas = [], quizVersao, criadoEm }) {
   );
 }
 
-function Reuniao({ r, admin, ocupado, onStatus }) {
+function Reuniao({ r, admin, ocupado, onStatus, onResultado }) {
   const [cancelando, setCancelando] = useState(false);
   const [reabrir, setReabrir] = useState(false);
   const porId = Object.fromEntries((r.respostas || []).map((x) => [x.id, x]));
@@ -397,6 +439,16 @@ function Reuniao({ r, admin, ocupado, onStatus }) {
 
       <LeituraRespostas respostas={r.respostas} quizVersao={r.quizVersao} criadoEm={r.criadoEm} />
 
+      {r.status === "realizada" && (
+        <div className="ag-acoes" role="group" aria-label="Resultado da venda">
+          <span className="ag-dica"><strong>Resultado da venda:</strong></span>
+          {RESULTADOS.map(([valor, txt]) => (
+            <button key={valor} type="button" aria-pressed={r.resultadoVenda === valor} disabled={ocupado}
+              className={`vx-btn vx-btn-sm ${r.resultadoVenda === valor ? "vx-btn-primary" : "vx-btn-ghost"}`}
+              onClick={() => onResultado(r, valor)}>{txt}</button>
+          ))}
+        </div>
+      )}
       {r.status === "agendada" && !cancelando && (
         <div className="ag-acoes">
           <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" disabled={ocupado || !comecou} onClick={() => onStatus(r, "realizada")}>Realizada</button>

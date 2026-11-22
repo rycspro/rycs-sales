@@ -74,7 +74,7 @@ test("endpoint público expõe só início e fim; reserva é única e grava o te
   const [reuniao] = agenda.painel(c1).reunioes;
   assert.equal(reuniao.respostas.length, PERGUNTAS_QUIZ.length);
   assert.equal(reuniao.respostas[1].pergunta, PERGUNTAS_QUIZ[1].titulo);
-  assert.equal(reuniao.respostas[1].resposta, PERGUNTAS_QUIZ[1].opcoes[0].texto);
+  assert.ok(reuniao.respostas[1].resposta.startsWith(PERGUNTAS_QUIZ[1].opcoes[0].texto));
   assert.equal(reuniao.quizVersao.length > 0, true);
   assert.equal(agenda.painel(c2).reunioes.length, 0);
   assert.throws(() => agenda.status(c2, r.id, "cancelada"), status(403));
@@ -143,9 +143,9 @@ test("dados inválidos, respostas incompletas e e-mail com conversa futura são 
   abrir();
   abrir(c1, AGORA + 3 * HORA);
   const incompleto = respostasValidas();
-  delete incompleto.verba;
+  delete incompleto.investimento;
   assert.throws(() => reservar(undefined, undefined, { respostas: incompleto }), status(400));
-  assert.throws(() => reservar(undefined, undefined, { respostas: { ...respostasValidas(), verba: "inventada" } }), status(400));
+  assert.throws(() => reservar(undefined, undefined, { respostas: { ...respostasValidas(), investimento: "inventada" } }), status(400));
   assert.throws(() => reservar(undefined, "sem-arroba"), status(400));
   assert.throws(() => reservar(undefined, undefined, { telefone: "1234" }), status(400));
   assert.throws(() => reservar(undefined, undefined, { aceite: false }), status(400));
@@ -191,4 +191,24 @@ test("sem verificação ligada no servidor, a reserva segue e fica marcada como 
   const [reuniao] = agenda.painel(c1).reunioes;
   assert.equal(reuniao.whatsVerificado, false);
   assert.equal(reuniao.telefone, "11988887777");
+});
+
+test("resultado da venda só depois de realizada e alimenta o aprendizado por resposta", (t) => {
+  const { agenda, admin, c1, c2, abrir, avancar } = contexto(t);
+  abrir();
+  const base = { nome: "Contato", telefone: "11988887777", aceite: true, respostas: respostasValidas() };
+  const p1 = agenda.salvarPrecadastro({ ...base, empresa: "Fecha", email: "fecha@empresa.test" });
+  agenda.salvarPrecadastro({ ...base, empresa: "Desistiu", email: "desistiu@empresa.test" });
+  const r = agenda.reservarPrecadastro({ ...p1, inicio: AGORA + 2 * HORA, fim: AGORA + 2 * HORA + 30 * MIN }, { disponivel: false });
+  assert.throws(() => agenda.resultadoVenda(c1, r.id, "fechou"), status(409));
+  avancar(3 * HORA);
+  agenda.status(c1, r.id, "realizada");
+  assert.throws(() => agenda.resultadoVenda(c2, r.id, "fechou"), status(403));
+  assert.throws(() => agenda.resultadoVenda(c1, r.id, "talvez"), status(400));
+  agenda.resultadoVenda(c1, r.id, "fechou");
+  const a = agenda.painel(admin).aprendizado;
+  assert.equal(a.diagnosticos, 2);
+  const primeira = a.perguntas[0].opcoes[0];
+  assert.deepEqual([primeira.total, primeira.agendaram, primeira.compareceram, primeira.fecharam], [2, 1, 1, 1]);
+  assert.equal(a.perguntas[0].opcoes[1].total, 0);
 });

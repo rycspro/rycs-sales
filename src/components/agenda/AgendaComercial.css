@@ -62,3 +62,6 @@
 .ag-cancelar p{margin:0 0 8px;font-size:13.5px;line-height:1.5}
 .ag-check{display:flex;gap:8px;align-items:center;font-size:13.5px;min-height:44px}
 .ag-check input{width:20px;height:20px}
+.ag-aprendizado{display:grid;gap:12px}
+.ag-aprendizado-titulo{margin:0;font-size:15px}
+.ag-amostra-pequena td{color:var(--muted)}

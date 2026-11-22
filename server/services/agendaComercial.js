@@ -13,7 +13,7 @@
 // - As respostas ficam gravadas com o texto lido pela empresa.
 // - Cancelar preserva a reunião; revogar o closer preserva o histórico.
 import { randomUUID, randomBytes, createHash, timingSafeEqual } from "node:crypto";
-import { registrarRespostas, QUIZ_VERSAO, DURACOES_AGENDA as DURACOES } from "../../shared/quizDiagnostico.js";
+import { registrarRespostas, QUIZ_VERSAO, DURACOES_AGENDA as DURACOES, PERGUNTAS_QUIZ } from "../../shared/quizDiagnostico.js";
 import { limparOrigem } from "../../shared/jornada.js";
 
 const MIN = 60_000;
@@ -67,6 +67,9 @@ export function criarSchemaAgenda(db) {
   adicionar("atualizadoPor", "TEXT NOT NULL DEFAULT ''");
   adicionar("precadastroId", "TEXT NOT NULL DEFAULT ''");
   adicionar("whatsVerificado", "INTEGER NOT NULL DEFAULT 0");
+  // Depois de realizada: fechou, não fechou ou em negociação. É o que ensina
+  // quais respostas do diagnóstico viram venda.
+  adicionar("resultadoVenda", "TEXT NOT NULL DEFAULT ''");
   db.exec("CREATE INDEX IF NOT EXISTS idx_agenda_reunioes_email ON agenda_reunioes(email, status)");
   // Pré-cadastro da empresa: nasce quando ela informa o contato depois do
   // quiz, antes de verificar o WhatsApp e de reservar. Fica guardado mesmo se
@@ -305,7 +308,7 @@ export function criarAgenda(db, agora = Date.now) {
       ORDER BY h.inicio LIMIT 1000`).all(t, ...args);
 
     const reunioes = db.prepare(`SELECT r.id, r.horarioId, r.empresa, r.nome, r.email, r.telefone, r.respostas, r.status,
-        r.quizVersao, r.origem, r.whatsVerificado, r.criadoEm, r.atualizadoEm, h.inicio, h.fim, h.closerId, s.nome AS closer,
+        r.quizVersao, r.origem, r.whatsVerificado, r.resultadoVenda, r.criadoEm, r.atualizadoEm, h.inicio, h.fim, h.closerId, s.nome AS closer,
         COALESCE(a.ativo, 0) AS closerAtivo
       FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId
       JOIN users u ON u.id = h.closerId JOIN sellers s ON s.id = u.entityId
@@ -325,7 +328,47 @@ export function criarAgenda(db, agora = Date.now) {
     const precadastros = db.prepare(`SELECT id, empresa, nome, email, telefone, respostas, origem, criadoEm
       FROM empresas_precadastro WHERE reuniaoId = '' ORDER BY criadoEm DESC LIMIT 500`).all()
       .map((p) => ({ ...p, respostas: json(p.respostas, []), origem: json(p.origem, {}) }));
-    return { admin, horarios, reunioes, closers, precadastros };
+    return { admin, horarios, reunioes, closers, precadastros, aprendizado: aprendizado() };
+  }
+
+  // Para cada resposta do quiz atual: quantas empresas a escolheram e quantas
+  // agendaram, compareceram e fecharam. Contagem real, sem previsão.
+  function aprendizado() {
+    const linhas = db.prepare(`SELECT p.respostas, p.reuniaoId, r.status, r.resultadoVenda
+      FROM empresas_precadastro p LEFT JOIN agenda_reunioes r ON r.id = p.reuniaoId
+      WHERE p.quizVersao = ?`).all(QUIZ_VERSAO);
+    const conta = new Map();
+    for (const l of linhas) {
+      for (const x of json(l.respostas, [])) {
+        const k = `${x.id}:${x.opcao}`;
+        const c = conta.get(k) || { total: 0, agendaram: 0, compareceram: 0, fecharam: 0 };
+        c.total++;
+        if (l.reuniaoId && l.status && l.status !== "cancelada") c.agendaram++;
+        if (l.status === "realizada") c.compareceram++;
+        if (l.resultadoVenda === "fechou") c.fecharam++;
+        conta.set(k, c);
+      }
+    }
+    return {
+      versao: QUIZ_VERSAO,
+      diagnosticos: linhas.length,
+      perguntas: PERGUNTAS_QUIZ.map((p) => ({
+        id: p.id, titulo: p.titulo,
+        opcoes: p.opcoes.map((o) => ({ id: o.id, texto: o.texto, ...(conta.get(`${p.id}:${o.id}`) || { total: 0, agendaram: 0, compareceram: 0, fecharam: 0 }) })),
+      })),
+    };
+  }
+
+  function resultadoVenda(user, id, resultado) {
+    if (!["fechou", "nao_fechou", "negociando"].includes(resultado)) falhar(400, "Resultado inválido.");
+    return db.transaction(() => {
+      const r = db.prepare("SELECT r.id, r.status, h.closerId FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId WHERE r.id = ?").get(id);
+      if (!r) falhar(404, "Reunião não encontrada.");
+      exigirDono(user, r.closerId);
+      if (r.status !== "realizada") falhar(409, "Registre a reunião como realizada antes do resultado da venda.");
+      db.prepare("UPDATE agenda_reunioes SET resultadoVenda = ?, atualizadoEm = ?, atualizadoPor = ? WHERE id = ?").run(resultado, agora(), user.id, id);
+      return { ok: true };
+    }).immediate();
   }
 
   function retirar(user, id) {
@@ -361,5 +404,5 @@ export function criarAgenda(db, agora = Date.now) {
     }).immediate();
   }
 
-  return { acesso, liberar, publicar, horariosPublicos, salvarPrecadastro, lerPrecadastro, reservar, reservarPrecadastro, painel, retirar, status };
+  return { acesso, liberar, publicar, horariosPublicos, salvarPrecadastro, lerPrecadastro, reservar, reservarPrecadastro, painel, retirar, status, resultadoVenda, aprendizado };
 }

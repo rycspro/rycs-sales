@@ -9,22 +9,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, CalendarPlus, Check, Clock, Copy, Globe, MessageCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { API_URL } from "../../lib/api.js";
 import { eventoDiagnostico, dadosAgendamento, agendamentoConcluido } from "../../lib/rastreio.js";
-import { PERGUNTAS_QUIZ, ETAPAS_QUIZ, COMO_ACONTECE } from "../../../shared/quizDiagnostico.js";
+import { PERGUNTAS_QUIZ, COMO_ACONTECE, fotoUnsplash } from "../../../shared/quizDiagnostico.js";
 import { formatarNumero } from "../../../shared/whatsappVerificacao.js";
 import "./DiagnosticoEmpresa.css";
 
 const TOTAL = PERGUNTAS_QUIZ.length;
-const CHAVE = "rycs-diagnostico-v1";
-const FOTO_INTRO = { src: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=70", alt: "Equipe conversando em volta de uma mesa de trabalho" };
-const FOTO_AGENDA = { src: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1200&q=70", alt: "Agenda de papel aberta com metas do mês e calendário" };
-const PASSOS = [...ETAPAS_QUIZ.map((e) => e.titulo), "Agendar"];
-const FASES_AGENDA = { resumo: 0.1, contato: 0.3, whatsapp: 0.5, horario: 0.7, confirmar: 0.9, agendado: 1 };
+const CHAVE = "rycs-diagnostico-v2";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// Depois do quiz, a barra fica perto do fim: falta só agendar.
+const FASES_FINAIS = { resumo: 0.95, contato: 0.96, whatsapp: 0.97, horario: 0.98, confirmar: 0.99, agendado: 1 };
 
 const perguntaPorId = Object.fromEntries(PERGUNTAS_QUIZ.map((p) => [p.id, p]));
 const textoDe = (respostas, id) => perguntaPorId[id]?.opcoes.find((o) => o.id === respostas[id]);
-const inicioEtapa = ETAPAS_QUIZ.map((e) => PERGUNTAS_QUIZ.findIndex((p) => p.etapa === e.chave));
-const tamanhoEtapa = ETAPAS_QUIZ.map((e) => PERGUNTAS_QUIZ.filter((p) => p.etapa === e.chave).length);
+
+// Barra que anda rápido no começo e desacelera perto do fim: a pessoa sente
+// que está quase acabando. O texto ao lado diz quantas perguntas faltam.
+const progressoQuiz = (posicao) => 0.12 + 0.83 * (1 - Math.pow(1 - posicao / TOTAL, 1.7));
+
+function preCarregar(pergunta) {
+  if (!pergunta || typeof Image === "undefined") return;
+  for (const o of pergunta.opcoes) { const img = new Image(); img.src = fotoUnsplash(o.foto); }
+}
 
 // ── Datas ──────────────────────────────────────────────────────────────
 const dois = (n) => String(n).padStart(2, "0");
@@ -83,28 +88,19 @@ function errosContato(c) {
 }
 
 // ── Personalização do resumo (só com o que a pessoa respondeu) ─────────
-const MERCADO = {
-  climatizacao: "empresas de climatização", turismo: "agências de turismo", educacao: "escolas e cursos",
-  estetica: "clínicas e espaços de estética", piscinas: "lojas de piscinas", distribuidora: "distribuidoras",
-  servicos: "empresas de serviços", varejo: "lojas", saude: "empresas de saúde", outro: "o seu mercado",
-};
 const ATIVIDADE = {
-  prospeccao: "prospectam novos clientes", atendimento: "respondem rápido quem chama a empresa",
-  agendamento: "qualificam contatos e marcam reuniões", acompanhamento: "acompanham orçamentos até o fechamento",
-  fechamento: "negociam e fecham vendas", visitas: "visitam clientes na sua região", "sem-trava": "ampliam o que já funciona nas suas vendas",
+  "poucos-clientes": "trazem clientes novos para a sua empresa",
+  "sem-resposta": "respondem rápido quem chama a sua empresa",
+  "orcamentos-parados": "acompanham cada orçamento até o fechamento",
+  "dono-sozinho": "assumem a rotina de vendas para você cuidar do negócio",
 };
 function pautaConversa(r) {
-  const itens = [`Como profissionais da RYCS ${ATIVIDADE[r.gargalo] || "reforçam suas vendas"} em ${MERCADO[r.segmento] || "o seu mercado"}.`];
-  const ticket = textoDe(r, "ticket");
-  itens.push(r.ticket && r.ticket !== "na-conversa"
-    ? `Quanto faz sentido pagar por resultado com vendas de ${ticket.texto.replace(/^De /, "").replace(/^Até/, "até").replace(/^Acima/, "acima")}.`
-    : "Quanto faz sentido pagar por resultado, a partir do valor médio das suas vendas.");
-  const inicio = textoDe(r, "inicio");
-  itens.push(r.inicio && r.inicio !== "nao-sei"
-    ? `Os próximos passos para a primeira campanha começar ${inicio.texto.toLowerCase()}.`
-    : "Os próximos passos e o prazo realista para a primeira campanha.");
+  const itens = [`Como profissionais da RYCS ${ATIVIDADE[r.dor] || "reforçam suas vendas"}.`];
+  itens.push("Quanto faz sentido investir por resultado, com base no seu faturamento e na verba que você indicou.");
+  const prazo = textoDe(r, "prazo");
+  itens.push(prazo && r.prazo !== "sem-prazo" ? `O plano para começar ${prazo.texto.toLowerCase()}.` : "O prazo realista para começar.");
   if (r.decisor === "socio") itens.push("Se quiser, traga seu sócio(a): a conversa fica completa para os dois.");
-  if (r.decisor === "recomendo" || r.decisor === "comite") itens.push("O que você precisa levar para quem aprova a contratação.");
+  if (r.decisor === "indico" || r.decisor === "diretoria") itens.push("O material para você levar a quem aprova.");
   return itens;
 }
 
@@ -177,14 +173,11 @@ export default function DiagnosticoEmpresa() {
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const pergunta = PERGUNTAS_QUIZ[indice];
-  const etapaAtual = fase === "quiz" ? ETAPAS_QUIZ.findIndex((e) => e.chave === pergunta.etapa) : fase === "intro" ? -1 : ETAPAS_QUIZ.length;
-
-  // Pré-carrega a foto da próxima etapa para a troca não piscar.
+  // Fotos da próxima pergunta já ficam no cache: a troca não pisca.
   useEffect(() => {
-    const proxima = ETAPAS_QUIZ[etapaAtual + 1]?.foto || FOTO_AGENDA.src;
-    const img = new Image();
-    img.src = proxima;
-  }, [etapaAtual]);
+    if (fase === "intro") preCarregar(PERGUNTAS_QUIZ[0]);
+    if (fase === "quiz") preCarregar(PERGUNTAS_QUIZ[indice + 1]);
+  }, [fase, indice]);
 
   const irPara = useCallback((novaFase, novoIndice) => {
     clearTimeout(timer.current);
@@ -256,24 +249,14 @@ export default function DiagnosticoEmpresa() {
   }
   const refazerContato = () => { setPrecadastro(null); setWhatsapp(null); irPara("contato"); };
 
-  // Progresso: posição real no quiz, por etapa.
-  const preenchimento = ETAPAS_QUIZ.map((_, k) => {
-    if (fase === "intro") return 0;
-    if (fase !== "quiz") return 1;
-    return Math.min(1, Math.max(0, (indice - inicioEtapa[k]) / tamanhoEtapa[k]));
-  }).concat(fase === "intro" || fase === "quiz" ? 0 : FASES_AGENDA[fase] ?? 0);
-  const percentual = Math.round(preenchimento.reduce((s, v) => s + v, 0) / PASSOS.length * 100);
-
-  const foto = fase === "intro" ? FOTO_INTRO
-    : fase === "quiz" ? { src: ETAPAS_QUIZ[etapaAtual].foto, alt: ETAPAS_QUIZ[etapaAtual].alt }
-    : FOTO_AGENDA;
-  const etapaInfo = fase === "intro"
-    ? { kicker: "Diagnóstico comercial", titulo: "Vendas por ação verificada", frase: "Escale vendas sem montar equipe." }
-    : fase === "quiz"
-      ? { kicker: `Etapa ${etapaAtual + 1} de ${PASSOS.length}`, titulo: ETAPAS_QUIZ[etapaAtual].titulo, frase: ETAPAS_QUIZ[etapaAtual].frase }
-      : fase === "agendado"
-        ? { kicker: "Tudo certo", titulo: "Conversa agendada", frase: "O especialista já tem suas respostas." }
-        : { kicker: `Etapa ${PASSOS.length} de ${PASSOS.length}`, titulo: "Agendar", frase: "Escolha quando conversar com um especialista." };
+  const posicao = fase === "quiz" ? indice + (escolhendo ? 1 : 0) : 0;
+  const progresso = fase === "intro" ? 0 : fase === "quiz" ? progressoQuiz(posicao) : FASES_FINAIS[fase] ?? 0.95;
+  const percentual = Math.round(progresso * 100);
+  const faltam = TOTAL - indice;
+  const statusTopo = fase === "intro" ? "7 perguntas · cerca de 1 minuto"
+    : fase === "quiz" ? (faltam === 1 ? "Última pergunta!" : faltam <= 3 ? `Quase lá: faltam ${faltam}` : `Faltam só ${faltam} perguntas`)
+    : fase === "agendado" ? "Agendamento confirmado"
+    : fase === "resumo" ? "Raio-X pronto" : "Último passo: agendar";
 
   const tituloProps = { ref: tituloRef, tabIndex: -1, className: "vx-disp dg-titulo" };
 
@@ -284,41 +267,18 @@ export default function DiagnosticoEmpresa() {
           {fase !== "intro" && fase !== "agendado"
             ? <button type="button" className="dg-voltar" onClick={voltar}><ArrowLeft size={18} aria-hidden="true" /><span>Voltar</span></button>
             : <img src="/logo-rycs-sm.png" alt="RYCS Sales Machine" className="dg-logo" onError={(e) => { e.currentTarget.hidden = true; }} />}
-          <span className="dg-topo-info" aria-live="polite">
-            {fase === "intro" ? "Cerca de 2 minutos"
-              : fase === "quiz" ? `Pergunta ${indice + 1} de ${TOTAL}`
-              : fase === "agendado" ? "Agendamento confirmado"
-              : "Último passo"}
-          </span>
+          <span className={`dg-topo-info${fase === "quiz" && faltam <= 3 ? " is-quase" : ""}`} aria-live="polite">{statusTopo}</span>
         </div>
-        <div className="dg-progresso" role="progressbar" aria-label="Progresso do diagnóstico" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentual} aria-valuetext={`${percentual}% concluído`}>
-          {PASSOS.map((nome, k) => (
-            <div key={nome} className={`dg-passo${k === etapaAtual ? " is-atual" : ""}${preenchimento[k] >= 1 ? " is-feito" : ""}`}>
-              <div className="dg-passo-trilho"><div className="dg-passo-barra" style={{ transform: `scaleX(${preenchimento[k]})` }} /></div>
-              <span className="dg-passo-nome">{preenchimento[k] >= 1 && <Check size={12} strokeWidth={3} aria-hidden="true" />}<span className="dg-passo-rotulo">{nome}</span></span>
-            </div>
-          ))}
-        </div>
+        {fase !== "intro" && (
+          <div className="dg-barra" role="progressbar" aria-label="Progresso do diagnóstico" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentual} aria-valuetext={`${percentual}% concluído`}>
+            <div className="dg-barra-trilho"><div className="dg-barra-cheia" style={{ transform: `scaleX(${progresso})` }} /></div>
+            <span className="dg-barra-valor">{percentual}%</span>
+          </div>
+        )}
       </header>
 
       <main className={`dg-corpo dg-fase-${fase}`}>
-        <aside className="dg-visual">
-          <img key={foto.src} src={foto.src} alt={foto.alt} className="dg-foto" onError={(e) => { e.currentTarget.hidden = true; }} />
-          <div className="dg-visual-texto">
-            <span className="dg-visual-kicker">{etapaInfo.kicker}</span>
-            <strong className="vx-disp">{etapaInfo.titulo}</strong>
-            <span className="dg-visual-frase">{etapaInfo.frase}</span>
-            {fase !== "intro" && (
-              <ol className="dg-visual-etapas" aria-hidden="true">
-                {PASSOS.map((nome, k) => (
-                  <li key={nome} className={preenchimento[k] >= 1 ? "is-feito" : k === etapaAtual ? "is-atual" : ""}>
-                    <span>{preenchimento[k] >= 1 ? <Check size={12} strokeWidth={3} /> : k + 1}</span>{nome}
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        </aside>
+        <BannerTech fase={fase} progresso={progresso} faltam={faltam} />
 
         <section className="dg-cartao" key={`${fase}-${fase === "quiz" ? indice : ""}`}>
           {fase === "intro" && <Intro tituloProps={tituloProps} temProgresso={Object.keys(respostas).length > 0}
@@ -357,62 +317,95 @@ export default function DiagnosticoEmpresa() {
   );
 }
 
+// Banner escuro, com grade e um gráfico de vendas que sobe junto com o
+// progresso. Ilustrativo: não mostra número nenhum.
+function BannerTech({ fase, progresso, faltam }) {
+  const texto = fase === "intro"
+    ? { kicker: "RYCS Sales Machine", titulo: "Raio-X de vendas", frase: "Profissionais de vendas pagos por ação verificada." }
+    : fase === "quiz"
+      ? { kicker: "Diagnóstico em andamento", titulo: faltam === 1 ? "Última pergunta" : `Faltam ${faltam}`, frase: "Cada resposta afina o seu plano de vendas." }
+      : fase === "agendado"
+        ? { kicker: "Tudo certo", titulo: "Conversa agendada", frase: "O especialista já tem o seu raio-X." }
+        : { kicker: "Raio-X concluído", titulo: "Agora, a conversa", frase: "Um especialista monta o plano com você." };
+  const desenho = fase === "intro" ? 1 : Math.max(0.15, progresso);
+  return (
+    <aside className="dg-banner" aria-label={`${texto.kicker}: ${texto.titulo}`}>
+      <svg className="dg-banner-grafico" viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="dg-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity=".45" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path className="dg-banner-area" d="M0 150 L40 138 L80 142 L120 118 L160 124 L200 96 L240 100 L280 70 L320 74 L360 38 L400 20 L400 160 L0 160 Z" fill="url(#dg-area)" style={{ clipPath: `inset(0 ${100 - desenho * 100}% 0 0)` }} />
+        <path className="dg-banner-linha" d="M0 150 L40 138 L80 142 L120 118 L160 124 L200 96 L240 100 L280 70 L320 74 L360 38 L400 20" style={{ clipPath: `inset(0 ${100 - desenho * 100}% 0 0)` }} />
+      </svg>
+      <div className="dg-banner-texto">
+        <span className="dg-banner-kicker"><span className="dg-banner-ponto" aria-hidden="true" />{texto.kicker}</span>
+        <strong className="vx-disp">{texto.titulo}</strong>
+        <span className="dg-banner-frase">{texto.frase}</span>
+        {fase === "intro" && (
+          <ul className="dg-banner-chips" aria-label="Como funciona">
+            <li>7 perguntas</li><li>Cerca de 1 minuto</li><li>Sem cadastro</li>
+          </ul>
+        )}
+      </div>
+    </aside>
+  );
+}
+
 function Intro({ tituloProps, onComecar, onRecomecar, temProgresso }) {
   return (
     <>
-      <span className="dg-selo">Diagnóstico comercial gratuito</span>
-      <h1 {...tituloProps}>Descubra como escalar as vendas da sua empresa sem montar equipe</h1>
-      <p className="dg-texto">
-        Responda perguntas rápidas sobre o momento das suas vendas e agende uma conversa com um especialista da RYCS.
-        Você vai entender como profissionais de vendas podem atuar para sua empresa, pagos por ação verificada.
-      </p>
+      <span className="dg-selo">Diagnóstico de vendas gratuito</span>
+      <h1 {...tituloProps}>Descubra o que está travando as vendas da sua empresa</h1>
+      <p className="dg-texto">7 perguntas de um toque. No fim, você agenda uma conversa com um especialista da RYCS para destravar as vendas sem montar equipe.</p>
       <div className="dg-rodape-pergunta">
-        <button type="button" className="vx-btn vx-btn-primary dg-cta" onClick={onComecar}>
-          {temProgresso ? "Continuar de onde parei" : "Começar o diagnóstico"} <ArrowRight size={18} aria-hidden="true" />
+        <button type="button" className="vx-btn vx-btn-primary dg-cta dg-cta-pulso" onClick={onComecar}>
+          {temProgresso ? "Continuar de onde parei" : "Começar agora"} <ArrowRight size={18} aria-hidden="true" />
         </button>
         {temProgresso && <button type="button" className="dg-link" onClick={onRecomecar}>Começar do zero</button>}
       </div>
-      <p className="dg-nota"><ShieldCheck size={15} aria-hidden="true" /> Sem cadastro. Os dados de contato só são pedidos no fim, para agendar.</p>
-      <h2 className="dg-subtitulo dg-como">Como funciona</h2>
-      <ol className="dg-roteiro">
-        <li><span aria-hidden="true">📝</span><div><strong>Responda o diagnóstico</strong><p>{TOTAL} perguntas de um toque, cerca de 2 minutos.</p></div></li>
-        <li><span aria-hidden="true">🔎</span><div><strong>Veja o resumo do seu momento</strong><p>Com o que vale aprofundar na conversa.</p></div></li>
-        <li><span aria-hidden="true">📅</span><div><strong>Escolha o horário</strong><p>A conversa entra direto na agenda de um especialista.</p></div></li>
-      </ol>
+      <p className="dg-nota"><ShieldCheck size={15} aria-hidden="true" /> Sem cadastro para começar. Seus dados só são pedidos no fim, para agendar.</p>
+      <div className="dg-previa" aria-hidden="true">
+        {PERGUNTAS_QUIZ[0].opcoes.map((o) => <img key={o.id} src={fotoUnsplash(o.foto, 240, 170)} alt="" loading="lazy" />)}
+      </div>
     </>
   );
 }
 
 function Pergunta({ tituloProps, pergunta, indice, selecionada, escolhendo, onEscolher, onContinuar }) {
   const idTitulo = `dg-pergunta-${pergunta.id}`;
-  const etapa = ETAPAS_QUIZ.find((e) => e.chave === pergunta.etapa);
-  const primeiraDaEtapa = PERGUNTAS_QUIZ.findIndex((p) => p.etapa === pergunta.etapa) === indice;
+  const algumEscolhido = !!escolhendo;
   return (
     <>
-      <p className="dg-kicker">
-        {primeiraDaEtapa && indice > 0 ? <><span className="dg-kicker-novo">Nova etapa</span> {etapa.titulo}</> : etapa.titulo}
-        <span aria-hidden="true"> · </span>{indice + 1} de {TOTAL}
-      </p>
+      <p className="dg-kicker">Pergunta {indice + 1} de {TOTAL}</p>
       <h1 {...tituloProps} id={idTitulo}>{pergunta.titulo}</h1>
       <p className="dg-texto">{pergunta.ajuda}</p>
-      <div role="group" aria-labelledby={idTitulo} className={`dg-opcoes${pergunta.colunas === 2 ? " dg-opcoes-2" : ""}`}>
+      <div role="group" aria-labelledby={idTitulo} className={`dg-cards${algumEscolhido ? " tem-escolha" : ""}`}>
         {pergunta.opcoes.map((o, k) => {
           const marcada = selecionada === o.id;
           return (
-            <button key={o.id} type="button" aria-pressed={marcada}
-              className={`dg-opcao${marcada ? " is-marcada" : ""}${escolhendo === o.id ? " is-escolhendo" : ""}`}
+            <button key={o.id} type="button" aria-pressed={marcada} style={{ "--ordem": k }}
+              className={`dg-card${marcada ? " is-marcada" : ""}${escolhendo === o.id ? " is-escolhendo" : ""}`}
               onClick={() => onEscolher(o.id)}>
-              <span className="dg-opcao-icone" aria-hidden="true">{o.icone}</span>
-              <span className="dg-opcao-texto">{o.texto}</span>
-              <span className="dg-opcao-marca" aria-hidden="true">{marcada ? <Check size={14} strokeWidth={3} /> : <kbd>{k === 9 ? 0 : k + 1}</kbd>}</span>
+              <img className="dg-card-foto" src={fotoUnsplash(o.foto)} alt="" loading="eager" decoding="async"
+                onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} />
+              <span className="dg-card-sombra" aria-hidden="true" />
+              <kbd className="dg-card-tecla" aria-hidden="true">{k + 1}</kbd>
+              <span className="dg-card-marca" aria-hidden="true">{marcada ? <Check size={16} strokeWidth={3} /> : <ArrowRight size={16} />}</span>
+              <span className="dg-card-textos">
+                <strong>{o.texto}</strong>
+                {o.detalhe && <small>{o.detalhe}</small>}
+              </span>
             </button>
           );
         })}
       </div>
       <div className="dg-rodape-pergunta">
         {selecionada && !escolhendo
-          ? <button type="button" className="vx-btn vx-btn-primary dg-cta" onClick={onContinuar}>{indice === TOTAL - 1 ? "Ver meu resumo" : "Continuar"} <ArrowRight size={18} aria-hidden="true" /></button>
-          : <p className="dg-dica" role="status">{escolhendo ? "Resposta registrada ✓" : "Toque na opção que mais combina com a sua empresa."}</p>}
+          ? <button type="button" className="vx-btn vx-btn-primary dg-cta" onClick={onContinuar}>{indice === TOTAL - 1 ? "Ver meu raio-X" : "Continuar"} <ArrowRight size={18} aria-hidden="true" /></button>
+          : <p className="dg-dica" role="status">{escolhendo ? "Boa! Indo para a próxima…" : "Toque no card que mais combina com a sua empresa."}</p>}
       </div>
     </>
   );
@@ -420,22 +413,25 @@ function Pergunta({ tituloProps, pergunta, indice, selecionada, escolhendo, onEs
 
 function Resumo({ tituloProps, respostas, onRever, onSeguir }) {
   const cartoes = [
-    ["Por que agora", "motivo"], ["Onde reforçar", "gargalo"], ["Prazo para contratar", "prazo"], ["Quem aprova", "decisor"],
+    ["O que trava", "dor"], ["Prazo", "prazo"], ["Faturamento", "faturamento"], ["Quem decide", "decisor"],
   ].map(([rotulo, id]) => ({ rotulo, opcao: textoDe(respostas, id) })).filter((c) => c.opcao);
   return (
     <>
-      <span className="dg-selo dg-selo-ok"><Check size={14} strokeWidth={3} aria-hidden="true" /> Diagnóstico respondido</span>
+      <span className="dg-selo dg-selo-ok"><Check size={14} strokeWidth={3} aria-hidden="true" /> Raio-X pronto</span>
       <h1 {...tituloProps}>Este é o retrato das suas vendas hoje</h1>
-      <p className="dg-texto">Com base no que você respondeu. O especialista recebe todas as respostas e chega à conversa preparado.</p>
+      <p className="dg-texto">O especialista recebe todas as respostas e chega à conversa preparado.</p>
       <ul className="dg-resumo">
         {cartoes.map((c) => (
-          <li key={c.rotulo}><span aria-hidden="true">{c.opcao.icone}</span><div><small>{c.rotulo}</small><strong>{c.opcao.texto}</strong></div></li>
+          <li key={c.rotulo}>
+            <img src={fotoUnsplash(c.opcao.foto, 160, 160)} alt="" />
+            <div><small>{c.rotulo}</small><strong>{c.opcao.texto}</strong></div>
+          </li>
         ))}
       </ul>
       <h2 className="dg-subtitulo">Na conversa, vamos falar sobre</h2>
       <ul className="dg-pauta">{pautaConversa(respostas).map((t) => <li key={t}><Check size={16} strokeWidth={2.5} aria-hidden="true" />{t}</li>)}</ul>
       <div className="dg-aviso"><Clock size={18} aria-hidden="true" /><p>{COMO_ACONTECE} A conversa não tem custo.</p></div>
-      <button type="button" className="vx-btn vx-btn-primary dg-cta" onClick={onSeguir}>Agendar minha conversa <ArrowRight size={18} aria-hidden="true" /></button>
+      <button type="button" className="vx-btn vx-btn-primary dg-cta dg-cta-pulso" onClick={onSeguir}>Agendar minha conversa <ArrowRight size={18} aria-hidden="true" /></button>
       <button type="button" className="dg-link" onClick={onRever}>Revisar minhas respostas</button>
     </>
   );

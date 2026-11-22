@@ -69,6 +69,7 @@ router.get("/agenda-comercial", semCache, responder((req) => {
 router.post("/agenda-comercial/closers", responder((req) => agenda.liberar(req.user, req.body?.userId, req.body?.ativo)));
 router.post("/agenda-comercial/horarios", responder((req) => agenda.publicar(req.user, req.body || {})));
 router.post("/agenda-comercial/horarios/:id/retirar", responder((req) => agenda.retirar(req.user, req.params.id)));
+router.post("/agenda-comercial/reunioes/:id/resultado", responder((req) => agenda.resultadoVenda(req.user, req.params.id, req.body?.resultado)));
 router.post("/agenda-comercial/reunioes/:id/status", responder((req) => agenda.status(req.user, req.params.id, req.body?.status, { reabrir: req.body?.reabrir === true })));
 
 export default router;
