@@ -27,7 +27,7 @@ const ORIGEM = (o = {}) => [o.utm_source, o.utm_campaign, o.utm_content].filter(
 // Número com DDI: o que veio sem (10–11 dígitos) é brasileiro.
 const comDdi = (tel) => { const d = String(tel || "").replace(/\D/g, ""); return d.length <= 11 ? `55${d}` : d; };
 const telefoneLegivel = (tel) => {
-  const d = String(tel || "").replace(/\D/g, "");
+  const d = String(tel || "").replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
   if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
   if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return tel;
@@ -89,6 +89,7 @@ export default function AgendaComercial() {
     ["registrar", `A registrar (${grupos.registrar.length})`],
     ["livres", `Horários livres (${livres.length})`],
     ["historico", `Histórico (${grupos.historico.length})`],
+    ...(dados.admin ? [["precadastros", `Pré-cadastros sem reunião (${(dados.precadastros || []).length})`]] : []),
   ];
 
   return (
@@ -127,7 +128,8 @@ export default function AgendaComercial() {
       </div>
 
       <div role="tabpanel">
-        {aba === "livres" ? <HorariosLivres horarios={livres} admin={dados.admin} ocupado={ocupado}
+        {aba === "precadastros" ? <ListaPrecadastros lista={dados.precadastros || []} />
+          : aba === "livres" ? <HorariosLivres horarios={livres} admin={dados.admin} ocupado={ocupado}
           onRetirar={(h) => executar(`/horarios/${h.id}/retirar`, {}, "Horário retirado do quiz.")} />
           : <ListaReunioes lista={grupos[aba]} admin={dados.admin} ocupado={ocupado}
             vazio={{ proximas: "Nenhuma reunião marcada pela frente.", registrar: "Nada para registrar: todas as reuniões passadas já têm resultado.", historico: "Nenhuma reunião encerrada ainda." }[aba]}
@@ -285,6 +287,36 @@ function ListaReunioes({ lista, admin, ocupado, vazio, onStatus }) {
   return lista.map((r) => <Reuniao key={r.id} r={r} admin={admin} ocupado={ocupado} onStatus={onStatus} />);
 }
 
+// Empresas que fizeram o quiz e o pré-cadastro, mas não reservaram (sem
+// horário livre, desistiram ou não confirmaram o WhatsApp).
+function ListaPrecadastros({ lista }) {
+  if (!lista.length) return <div className="vx-card ag-vazio">Nenhum pré-cadastro parado: todos viraram reunião.</div>;
+  return lista.map((p) => {
+    const tel = p.whatsapp?.numero ? `+${p.whatsapp.numero}` : p.telefone;
+    const wa = whatsapp(tel);
+    const segmento = p.respostas.find((x) => x.id === "segmento")?.resposta;
+    const origem = ORIGEM(p.origem);
+    return (
+      <article key={p.id} className="vx-card ag-reuniao">
+        <span className="ag-quando ag-quando-texto">Pré-cadastro em {new Date(p.criadoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</span>
+        <h3>{p.empresa}</h3>
+        <div className="ag-tags">
+          <span className="vx-badge vx-badge-muted">Sem reunião</span>
+          {segmento && <span className="vx-badge vx-badge-muted">{segmento}</span>}
+          {p.whatsapp ? <span className="vx-badge vx-badge-indigo">WhatsApp verificado</span> : <span className="vx-badge vx-badge-amber">WhatsApp não verificado</span>}
+        </div>
+        <div className="ag-contato">
+          <span><strong>{p.nome}</strong></span>
+          {wa && <a href={wa} target="_blank" rel="noreferrer"><MessageCircle size={15} aria-hidden="true" /> WhatsApp {telefoneLegivel(tel)}</a>}
+          <a href={`mailto:${p.email}`}><Mail size={15} aria-hidden="true" /> {p.email}</a>
+        </div>
+        {origem && <p className="vx-mut ag-origem">Origem: {origem}</p>}
+        <LeituraRespostas respostas={p.respostas} criadoEm={p.criadoEm} />
+      </article>
+    );
+  });
+}
+
 function Nivel({ n }) {
   if (!n) return null;
   const tom = n >= 4 ? "forte" : n === 3 ? "medio" : "fraco";
@@ -292,6 +324,42 @@ function Nivel({ n }) {
     <span className={`ag-nivel ag-nivel-${tom}`} aria-label={`Sinal ${n} de 5`} title={`Sinal ${n} de 5 (escala da planilha de qualificação)`}>
       {[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= n ? "on" : ""} />)}
     </span>
+  );
+}
+
+function LeituraRespostas({ respostas = [], quizVersao, criadoEm }) {
+  const porId = Object.fromEntries(respostas.map((x) => [x.id, x]));
+  const r = { respostas, quizVersao, criadoEm };
+  return (
+    <>
+      <div className="ag-leitura">
+        {DIMENSOES_QUIZ.map((d) => {
+          const itens = d.perguntas.map((id) => porId[id]).filter(Boolean);
+          if (!itens.length) return null;
+          return (
+            <div key={d.chave} className="ag-dimensao">
+              <h4>{d.titulo}</h4>
+              {itens.map((x) => <p key={x.id}><Nivel n={x.nivel} /><span>{x.resposta}</span></p>)}
+            </div>
+          );
+        })}
+      </div>
+
+      <details className="ag-respostas">
+        <summary>Todas as respostas do quiz ({r.respostas.length})</summary>
+        {ETAPAS_QUIZ.map((e) => {
+          const itens = r.respostas.filter((x) => x.etapa === e.chave);
+          if (!itens.length) return null;
+          return (
+            <dl key={e.chave}>
+              <h5>{e.titulo}</h5>
+              {itens.map((x) => <div key={x.id}><dt>{x.criterio} — {x.pergunta}</dt><dd><Nivel n={x.nivel} /> {x.resposta}</dd></div>)}
+            </dl>
+          );
+        })}
+        <p className="vx-mut ag-texto">Texto exatamente como a empresa leu{r.quizVersao ? ` (versão ${r.quizVersao} do quiz)` : ""}. Recebida em {new Date(r.criadoEm).toLocaleString("pt-BR")}.</p>
+      </details>
+    </>
   );
 }
 
@@ -315,6 +383,7 @@ function Reuniao({ r, admin, ocupado, onStatus }) {
             {segmento && <span className="vx-badge vx-badge-muted">{segmento}</span>}
             {admin && <span className="vx-badge vx-badge-muted">Closer: {r.closer}</span>}
             {admin && !r.closerAtivo && r.status === "agendada" && <span className="vx-badge vx-badge-amber">Closer sem acesso</span>}
+            {r.whatsVerificado ? <span className="vx-badge vx-badge-indigo">WhatsApp verificado</span> : <span className="vx-badge vx-badge-amber">WhatsApp não verificado</span>}
           </div>
         </div>
       </header>
@@ -326,33 +395,7 @@ function Reuniao({ r, admin, ocupado, onStatus }) {
       </div>
       {origem && <p className="vx-mut ag-origem">Origem: {origem}</p>}
 
-      <div className="ag-leitura">
-        {DIMENSOES_QUIZ.map((d) => {
-          const itens = d.perguntas.map((id) => porId[id]).filter(Boolean);
-          if (!itens.length) return null;
-          return (
-            <div key={d.chave} className="ag-dimensao">
-              <h4>{d.titulo}</h4>
-              {itens.map((x) => <p key={x.id}><Nivel n={x.nivel} /><span>{x.resposta}</span></p>)}
-            </div>
-          );
-        })}
-      </div>
-
-      <details className="ag-respostas">
-        <summary>Todas as respostas do quiz ({(r.respostas || []).length})</summary>
-        {ETAPAS_QUIZ.map((e) => {
-          const itens = (r.respostas || []).filter((x) => x.etapa === e.chave);
-          if (!itens.length) return null;
-          return (
-            <dl key={e.chave}>
-              <h5>{e.titulo}</h5>
-              {itens.map((x) => <div key={x.id}><dt>{x.criterio} — {x.pergunta}</dt><dd><Nivel n={x.nivel} /> {x.resposta}</dd></div>)}
-            </dl>
-          );
-        })}
-        <p className="vx-mut ag-texto">Texto exatamente como a empresa leu{r.quizVersao ? ` (versão ${r.quizVersao} do quiz)` : ""}. Recebida em {new Date(r.criadoEm).toLocaleString("pt-BR")}.</p>
-      </details>
+      <LeituraRespostas respostas={r.respostas} quizVersao={r.quizVersao} criadoEm={r.criadoEm} />
 
       {r.status === "agendada" && !cancelando && (
         <div className="ag-acoes">

@@ -153,3 +153,42 @@ test("dados inválidos, respostas incompletas e e-mail com conversa futura são 
   assert.throws(() => reservar(AGORA + 3 * HORA), status(409));
   assert.equal(registrarRespostas(null), null);
 });
+
+test("pré-cadastro: cria com token, atualiza o mesmo e recusa token errado", (t) => {
+  const { agenda } = contexto(t);
+  const dados = { empresa: "Empresa Pré", nome: "Contato", email: "pre@empresa.test", telefone: "11988887777", aceite: true, respostas: respostasValidas() };
+  const p = agenda.salvarPrecadastro(dados);
+  assert.ok(p.id && p.token.length >= 24);
+  assert.deepEqual(agenda.salvarPrecadastro({ ...dados, nome: "Contato Novo", id: p.id, token: p.token }), p);
+  assert.equal(agenda.lerPrecadastro(p.id, p.token).nome, "Contato Novo");
+  assert.throws(() => agenda.lerPrecadastro(p.id, "token-errado"), status(404));
+  assert.throws(() => agenda.salvarPrecadastro({ ...dados, respostas: {} }), status(400));
+});
+
+test("reserva pelo pré-cadastro exige WhatsApp confirmado e grava o número verificado", (t) => {
+  const { agenda, admin, c1, abrir } = contexto(t);
+  abrir();
+  const p = agenda.salvarPrecadastro({ empresa: "Empresa Pré", nome: "Contato", email: "pre@empresa.test", telefone: "11988887777", aceite: true, respostas: respostasValidas() });
+  const corpo = { ...p, inicio: AGORA + 2 * HORA, fim: AGORA + 2 * HORA + 30 * MIN };
+  assert.equal(agenda.painel(admin).precadastros.length, 1);
+  assert.throws(() => agenda.reservarPrecadastro(corpo, { disponivel: true, verificado: false }), (e) => e.codigo === "WHATSAPP_NAO_VERIFICADO");
+  assert.throws(() => agenda.reservarPrecadastro({ ...corpo, token: "x" }, { disponivel: true, verificado: true, numero: "5511977776666" }), status(404));
+  const r = agenda.reservarPrecadastro(corpo, { disponivel: true, verificado: true, numero: "5511977776666" });
+  const [reuniao] = agenda.painel(c1).reunioes;
+  assert.equal(reuniao.id, r.id);
+  assert.equal(reuniao.whatsVerificado, true);
+  assert.equal(reuniao.telefone, "+5511977776666");
+  assert.equal(agenda.painel(admin).precadastros.length, 0);
+  abrir(c1, AGORA + 3 * HORA);
+  assert.throws(() => agenda.reservarPrecadastro({ ...corpo, inicio: AGORA + 3 * HORA, fim: AGORA + 3 * HORA + 30 * MIN }, { disponivel: true, verificado: true, numero: "5511977776666" }), status(409));
+});
+
+test("sem verificação ligada no servidor, a reserva segue e fica marcada como não verificada", (t) => {
+  const { agenda, c1, abrir } = contexto(t);
+  abrir();
+  const p = agenda.salvarPrecadastro({ empresa: "Empresa Pré", nome: "Contato", email: "pre@empresa.test", telefone: "11988887777", aceite: true, respostas: respostasValidas() });
+  agenda.reservarPrecadastro({ ...p, inicio: AGORA + 2 * HORA, fim: AGORA + 2 * HORA + 30 * MIN }, { disponivel: false });
+  const [reuniao] = agenda.painel(c1).reunioes;
+  assert.equal(reuniao.whatsVerificado, false);
+  assert.equal(reuniao.telefone, "11988887777");
+});

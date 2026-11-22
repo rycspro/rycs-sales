@@ -161,7 +161,8 @@ export function cadastroConcluido(papel, dados = {}) {
 }
 
 // ── Quiz das empresas (/diagnostico) ───────────────────────────────────
-// ViewContent ao abrir, QuizConcluido ao terminar as perguntas e Schedule só
+// ViewContent ao abrir, QuizConcluido ao terminar as perguntas, Lead no
+// pré-cadastro (contato gravado) e Schedule só
 // depois de a reserva estar gravada. O Schedule também sai pelo servidor com
 // o mesmo event_id (dadosAgendamento vai no corpo da reserva).
 const DIAGNOSTICO = { content_name: "Diagnóstico comercial", content_category: "empresa" };
@@ -169,7 +170,7 @@ const DIAGNOSTICO = { content_name: "Diagnóstico comercial", content_category: 
 export function eventoDiagnostico(nome, extra = {}) {
   if (!pixelPronto) return;
   const dados = { ...DIAGNOSTICO, ...extra };
-  if (nome === "ViewContent") fbq("track", nome, dados, { eventID: novoId() });
+  if (nome === "ViewContent" || nome === "Lead") fbq("track", nome, dados, { eventID: novoId() });
   else fbq("trackCustom", nome, dados, { eventID: novoId() });
 }
 

@@ -136,7 +136,53 @@ db.exec(`
   )
 `);
 
-const configRecebimento = () => { const c = config(); return !!(c.token && c.numeroId); };
+export const configRecebimento = () => { const c = config(); return !!(c.token && c.numeroId); };
+
+// Empresas do quiz (/diagnostico) usam o mesmo caminho: mandam o código do
+// próprio WhatsApp. O número que chega pela API oficial vira o contato
+// verificado do pré-cadastro (corrige número digitado errado).
+db.exec(`
+  CREATE TABLE IF NOT EXISTS whatsapp_verificacoes_empresas (
+    precadastroId TEXT PRIMARY KEY,
+    codigo TEXT UNIQUE,
+    expiraEm INTEGER NOT NULL DEFAULT 0,
+    numero TEXT NOT NULL DEFAULT '',
+    verificadoEm INTEGER,
+    criadoEm INTEGER NOT NULL
+  )
+`);
+
+// Código único entre profissionais e empresas: o webhook acha o dono pelo código.
+function codigoRecebidaLivre() {
+  let codigo;
+  do codigo = String(randomInt(0, 10 ** CODIGO_TAMANHO)).padStart(CODIGO_TAMANHO, "0");
+  while (db.prepare("SELECT 1 FROM whatsapp_verificacoes_recebidas WHERE codigo = ? UNION SELECT 1 FROM whatsapp_verificacoes_empresas WHERE codigo = ?").get(codigo, codigo));
+  return codigo;
+}
+
+// Situação da verificação de uma empresa. `pedido` traz o link do WhatsApp com
+// o texto pronto; é renovado quando expira.
+export async function verificacaoEmpresa(precadastroId) {
+  const atual = db.prepare("SELECT * FROM whatsapp_verificacoes_empresas WHERE precadastroId = ?").get(precadastroId);
+  if (atual?.verificadoEm) return { disponivel: true, verificado: true, numero: atual.numero, verificadoEm: atual.verificadoEm };
+  if (!configRecebimento()) return { disponivel: false, verificado: false };
+  const numeroRycs = await numeroDaRycs();
+  if (!numeroRycs) return { disponivel: false, verificado: false };
+  const t = agora();
+  if (atual?.codigo && atual.expiraEm > t)
+    return { disponivel: true, verificado: false, pedido: pedidoRecebida(atual.codigo, numeroRycs, atual.expiraEm) };
+  const codigo = codigoRecebidaLivre();
+  db.prepare(`INSERT INTO whatsapp_verificacoes_empresas (precadastroId, codigo, expiraEm, criadoEm) VALUES (?, ?, ?, ?)
+    ON CONFLICT(precadastroId) DO UPDATE SET codigo = excluded.codigo, expiraEm = excluded.expiraEm`)
+    .run(precadastroId, codigo, t + VALIDADE_RECEBIDA_MS, t);
+  return { disponivel: true, verificado: false, pedido: pedidoRecebida(codigo, numeroRycs, t + VALIDADE_RECEBIDA_MS) };
+}
+
+// Só leitura (painel interno): número verificado ou nada.
+export function whatsappEmpresaVerificado(precadastroId) {
+  const v = db.prepare("SELECT numero, verificadoEm FROM whatsapp_verificacoes_empresas WHERE precadastroId = ? AND verificadoEm IS NOT NULL").get(precadastroId);
+  return v || null;
+}
 
 let numeroRycsCache = "";
 async function numeroDaRycs() {
@@ -175,9 +221,7 @@ export async function iniciarRecebida(sellerId) {
   if (atual && atual.numero === numero && atual.expiraEm > t)
     return { status: 200, corpo: pedidoRecebida(atual.codigo, numeroRycs, atual.expiraEm) };
 
-  let codigo;
-  do codigo = String(randomInt(0, 10 ** CODIGO_TAMANHO)).padStart(CODIGO_TAMANHO, "0");
-  while (db.prepare("SELECT 1 FROM whatsapp_verificacoes_recebidas WHERE codigo = ?").get(codigo));
+  const codigo = codigoRecebidaLivre();
   db.prepare(`INSERT INTO whatsapp_verificacoes_recebidas (sellerId, codigo, numero, expiraEm, criadoEm) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(sellerId) DO UPDATE SET codigo = excluded.codigo, numero = excluded.numero, expiraEm = excluded.expiraEm, criadoEm = excluded.criadoEm`)
     .run(sellerId, codigo, numero, t + VALIDADE_RECEBIDA_MS, t);
@@ -208,6 +252,18 @@ export async function verificarPorMensagens(corpo) {
         const codigo = extrairCodigo(m.text?.body || m.button?.text || "");
         if (!codigo || !m.from) continue;
         const p = db.prepare("SELECT * FROM whatsapp_verificacoes_recebidas WHERE codigo = ?").get(codigo);
+        const empresa = !p && db.prepare("SELECT * FROM whatsapp_verificacoes_empresas WHERE codigo = ?").get(codigo);
+        if (empresa) {
+          if (empresa.expiraEm <= agora()) {
+            await responder(m.from, "Este código expirou. Volte à página da RYCS e toque em confirmar o WhatsApp de novo.");
+            continue;
+          }
+          db.prepare("UPDATE whatsapp_verificacoes_empresas SET numero = ?, verificadoEm = ?, codigo = NULL WHERE precadastroId = ?")
+            .run(String(m.from).replace(/\D/g, ""), agora(), empresa.precadastroId);
+          verificados++;
+          await responder(m.from, "Pronto! Seu WhatsApp foi confirmado na RYCS. Volte à página para escolher o horário da sua conversa.");
+          continue;
+        }
         if (!p || p.expiraEm <= agora()) {
           await responder(m.from, "Este código de verificação expirou. Gere um novo no seu perfil da RYCS.");
           continue;

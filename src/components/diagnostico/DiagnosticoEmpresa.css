@@ -130,6 +130,17 @@
 .dg-esqueleto-horas span{height:58px}
 .dg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
+/* ── WhatsApp ─────────────────────────────────────────────────────── */
+.dg-whats{text-decoration:none}
+.dg-aguardando{display:flex;align-items:center;gap:10px;margin:14px 0 6px;font-size:14px;color:var(--ink-2)}
+.dg-pulso{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 var(--green-100);animation:dg-aguardo 1.6s ease-out infinite;flex:0 0 auto}
+.dg-manual{margin:12px 0 0;padding:12px 14px;border-radius:var(--radius-md);background:var(--surface-2);font-size:13.5px;line-height:1.5}
+.dg-manual summary{cursor:pointer;font-weight:600;min-height:32px;display:list-item}
+.dg-manual p{margin:8px 0}
+.dg-manual code{display:block;margin:0 0 10px;padding:10px;border-radius:var(--radius-sm);background:var(--surface-solid);border:1px solid var(--border-strong);font-size:13.5px;overflow-wrap:anywhere}
+.dg-manual .vx-btn{min-height:44px;display:inline-flex;align-items:center;gap:8px}
+.dg-verificado{color:var(--green-700);font-weight:700;font-size:12.5px}
+
 /* ── Confirmação ──────────────────────────────────────────────────── */
 .dg-confere{margin:0 0 16px;padding:4px 14px;border:1px solid var(--border-strong);border-radius:var(--radius-md)}
 .dg-confere>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
@@ -199,6 +210,7 @@
 @keyframes dg-girar{to{transform:rotate(360deg)}}
 @keyframes dg-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
 @keyframes dg-pulso{0%,100%{transform:none}50%{transform:scale(1.08)}}
+@keyframes dg-aguardo{0%{box-shadow:0 0 0 0 var(--green-100)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
 @media (prefers-reduced-motion:reduce){
   .dg-pagina *,.dg-pagina *::before,.dg-pagina *::after{animation:none!important;transition:none!important}
 }

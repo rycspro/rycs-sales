@@ -12,7 +12,7 @@
 // - O endpoint público só devolve início e fim; nunca contato nem respostas.
 // - As respostas ficam gravadas com o texto lido pela empresa.
 // - Cancelar preserva a reunião; revogar o closer preserva o histórico.
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomBytes, createHash, timingSafeEqual } from "node:crypto";
 import { registrarRespostas, QUIZ_VERSAO, DURACOES_AGENDA as DURACOES } from "../../shared/quizDiagnostico.js";
 import { limparOrigem } from "../../shared/jornada.js";
 
@@ -65,7 +65,31 @@ export function criarSchemaAgenda(db) {
   adicionar("origem", "TEXT NOT NULL DEFAULT '{}'");
   adicionar("visitanteId", "TEXT NOT NULL DEFAULT ''");
   adicionar("atualizadoPor", "TEXT NOT NULL DEFAULT ''");
+  adicionar("precadastroId", "TEXT NOT NULL DEFAULT ''");
+  adicionar("whatsVerificado", "INTEGER NOT NULL DEFAULT 0");
   db.exec("CREATE INDEX IF NOT EXISTS idx_agenda_reunioes_email ON agenda_reunioes(email, status)");
+  // Pré-cadastro da empresa: nasce quando ela informa o contato depois do
+  // quiz, antes de verificar o WhatsApp e de reservar. Fica guardado mesmo se
+  // ela não agendar, para a equipe retomar o contato. Só o navegador que criou
+  // tem o token (guardado em hash) para continuar.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS empresas_precadastro (
+      id TEXT PRIMARY KEY,
+      tokenHash TEXT NOT NULL,
+      empresa TEXT NOT NULL,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL,
+      telefone TEXT NOT NULL,
+      respostas TEXT NOT NULL,
+      quizVersao TEXT NOT NULL DEFAULT '',
+      origem TEXT NOT NULL DEFAULT '{}',
+      visitanteId TEXT NOT NULL DEFAULT '',
+      reuniaoId TEXT NOT NULL DEFAULT '',
+      criadoEm INTEGER NOT NULL,
+      atualizadoEm INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_precadastro_data ON empresas_precadastro(criadoEm);
+  `);
 }
 
 export class ErroAgenda extends Error {
@@ -73,6 +97,7 @@ export class ErroAgenda extends Error {
 }
 const falhar = (status, mensagem, codigo) => { throw new ErroAgenda(status, mensagem, codigo); };
 const json = (texto, padrao) => { try { return JSON.parse(texto); } catch { return padrao; } };
+const hashToken = (token) => createHash("sha256").update(String(token)).digest("hex");
 const primeiroNome = (nome) => String(nome || "").trim().split(/\s+/)[0] || "";
 
 export function criarAgenda(db, agora = Date.now) {
@@ -154,7 +179,8 @@ export function criarAgenda(db, agora = Date.now) {
       ORDER BY h.inicio, h.fim LIMIT 400`).all(t + ANTECEDENCIA, t + HORIZONTE_PUBLICO);
   }
 
-  function reservar(body = {}) {
+  // Contato + respostas + aceite, validados do mesmo jeito no pré-cadastro e na reserva.
+  function validarContato(body = {}) {
     const texto = (campo, max) => (typeof body[campo] === "string" ? body[campo].trim().replace(/\s+/g, " ") : "").slice(0, max);
     const empresa = texto("empresa", 160);
     const nome = texto("nome", 120);
@@ -165,12 +191,54 @@ export function criarAgenda(db, agora = Date.now) {
     if (!EMAIL.test(email)) falhar(400, "Informe um e-mail válido.");
     if (digitos.length < 10 || digitos.length > 15) falhar(400, "Informe o WhatsApp com DDD.");
     const respostas = registrarRespostas(body.respostas);
-    if (!respostas) falhar(400, "Responda todas as perguntas do quiz antes de agendar.");
+    if (!respostas) falhar(400, "Responda todas as perguntas do quiz antes de continuar.");
     if (body.aceite !== true) falhar(400, "Confirme o uso dos dados para a conversa.");
+    return {
+      empresa, nome, email, telefone, respostas,
+      origem: JSON.stringify(limparOrigem(body.origem)),
+      visitanteId: ID_VISITANTE.test(String(body.visitanteId || "")) ? body.visitanteId : "",
+    };
+  }
+
+  // Cria o pré-cadastro, ou atualiza o mesmo (id + token) se a pessoa voltou
+  // para corrigir os dados antes de agendar.
+  function salvarPrecadastro(body = {}) {
+    const c = validarContato(body);
+    const t = agora();
+    return db.transaction(() => {
+      if (typeof body.id === "string" && typeof body.token === "string") {
+        const atual = db.prepare("SELECT id, tokenHash, reuniaoId FROM empresas_precadastro WHERE id = ?").get(body.id);
+        if (atual && tokenConfere(atual.tokenHash, body.token) && !atual.reuniaoId) {
+          db.prepare(`UPDATE empresas_precadastro SET empresa = ?, nome = ?, email = ?, telefone = ?, respostas = ?, quizVersao = ?, atualizadoEm = ? WHERE id = ?`)
+            .run(c.empresa, c.nome, c.email, c.telefone, JSON.stringify(c.respostas), QUIZ_VERSAO, t, atual.id);
+          return { id: atual.id, token: body.token };
+        }
+      }
+      const id = randomUUID();
+      const token = randomBytes(24).toString("base64url");
+      db.prepare(`INSERT INTO empresas_precadastro (id, tokenHash, empresa, nome, email, telefone, respostas, quizVersao, origem, visitanteId, criadoEm, atualizadoEm)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(id, hashToken(token), c.empresa, c.nome, c.email, c.telefone, JSON.stringify(c.respostas), QUIZ_VERSAO, c.origem, c.visitanteId, t, t);
+      return { id, token };
+    }).immediate();
+  }
+
+  function tokenConfere(hash, token) {
+    const a = Buffer.from(hash, "hex"), b = Buffer.from(hashToken(token), "hex");
+    return a.length === b.length && timingSafeEqual(a, b);
+  }
+
+  function lerPrecadastro(id, token) {
+    const p = typeof id === "string" && typeof token === "string" && db.prepare("SELECT * FROM empresas_precadastro WHERE id = ?").get(id);
+    if (!p || !tokenConfere(p.tokenHash, token)) falhar(404, "Não encontramos seu pré-cadastro. Preencha os dados de novo.", "PRECADASTRO_INVALIDO");
+    return p;
+  }
+
+  // `confiavel` vem do servidor (pré-cadastro e WhatsApp verificado), nunca do corpo público.
+  function reservar(body = {}, confiavel = null) {
+    const { empresa, nome, email, telefone, respostas, origem, visitanteId } = confiavel?.contato || validarContato(body);
     const { inicio, fim } = body;
     if (!Number.isSafeInteger(inicio) || !Number.isSafeInteger(fim)) falhar(400, "Escolha um horário.");
-    const origem = JSON.stringify(limparOrigem(body.origem));
-    const visitanteId = ID_VISITANTE.test(String(body.visitanteId || "")) ? body.visitanteId : "";
 
     return db.transaction(() => {
       const t = agora();
@@ -191,11 +259,37 @@ export function criarAgenda(db, agora = Date.now) {
         ORDER BY carga, h.id LIMIT 1`).get(t, inicio, fim);
       if (!livre) falhar(409, "Esse horário acabou de ser reservado. Escolha outro.", "HORARIO_INDISPONIVEL");
       const id = randomUUID();
-      db.prepare(`INSERT INTO agenda_reunioes (id, horarioId, empresa, nome, email, telefone, respostas, quizVersao, origem, visitanteId, criadoEm, atualizadoEm)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .run(id, livre.id, empresa, nome, email, telefone, JSON.stringify(respostas), QUIZ_VERSAO, origem, visitanteId, t, t);
+      const precadastroId = confiavel?.precadastroId || "";
+      db.prepare(`INSERT INTO agenda_reunioes (id, horarioId, empresa, nome, email, telefone, respostas, quizVersao, origem, visitanteId, precadastroId, whatsVerificado, criadoEm, atualizadoEm)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(id, livre.id, empresa, nome, email, telefone, JSON.stringify(respostas), confiavel?.quizVersao || QUIZ_VERSAO, origem, visitanteId,
+          precadastroId, confiavel?.whatsVerificado ? 1 : 0, t, t);
+      if (precadastroId) db.prepare("UPDATE empresas_precadastro SET reuniaoId = ?, atualizadoEm = ? WHERE id = ?").run(id, t, precadastroId);
       return { id, inicio, fim, closer: primeiroNome(livre.nome) };
     }).immediate();
+  }
+
+  // Reserva de quem passou pelo pré-cadastro. `verificacao` diz se o WhatsApp
+  // foi confirmado; quando a verificação está ligada, ela é obrigatória.
+  function reservarPrecadastro(body = {}, verificacao = { disponivel: false }) {
+    const p = lerPrecadastro(body.id, body.token);
+    if (p.reuniaoId) {
+      const r = db.prepare("SELECT r.id, r.status, h.inicio, h.fim FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId WHERE r.id = ?").get(p.reuniaoId);
+      if (r && r.status === "agendada") falhar(409, "Sua conversa já está agendada. Para mudar o horário, fale com a RYCS.", "EMAIL_COM_REUNIAO");
+    }
+    if (verificacao.disponivel && !verificacao.verificado) falhar(409, "Confirme seu WhatsApp antes de agendar.", "WHATSAPP_NAO_VERIFICADO");
+    const numero = verificacao.verificado ? verificacao.numero : "";
+    return reservar(body, {
+      precadastroId: p.id,
+      whatsVerificado: !!numero,
+      quizVersao: p.quizVersao,
+      contato: {
+        empresa: p.empresa, nome: p.nome, email: p.email,
+        // O WhatsApp que mandou o código é o que vale para o closer.
+        telefone: numero ? `+${numero}` : p.telefone,
+        respostas: json(p.respostas, []), origem: p.origem, visitanteId: p.visitanteId,
+      },
+    });
   }
 
   function painel(user) {
@@ -211,13 +305,13 @@ export function criarAgenda(db, agora = Date.now) {
       ORDER BY h.inicio LIMIT 1000`).all(t, ...args);
 
     const reunioes = db.prepare(`SELECT r.id, r.horarioId, r.empresa, r.nome, r.email, r.telefone, r.respostas, r.status,
-        r.quizVersao, r.origem, r.criadoEm, r.atualizadoEm, h.inicio, h.fim, h.closerId, s.nome AS closer,
+        r.quizVersao, r.origem, r.whatsVerificado, r.criadoEm, r.atualizadoEm, h.inicio, h.fim, h.closerId, s.nome AS closer,
         COALESCE(a.ativo, 0) AS closerAtivo
       FROM agenda_reunioes r JOIN agenda_horarios h ON h.id = r.horarioId
       JOIN users u ON u.id = h.closerId JOIN sellers s ON s.id = u.entityId
       LEFT JOIN agenda_closers a ON a.userId = h.closerId
       WHERE 1 = 1${filtro} ORDER BY h.inicio DESC LIMIT 1000`).all(...args)
-      .map((r) => ({ ...r, closerAtivo: !!r.closerAtivo, respostas: json(r.respostas, []), origem: json(r.origem, {}) }));
+      .map((r) => ({ ...r, closerAtivo: !!r.closerAtivo, whatsVerificado: !!r.whatsVerificado, respostas: json(r.respostas, []), origem: json(r.origem, {}) }));
 
     if (!admin) return { admin, horarios, reunioes };
 
@@ -227,7 +321,11 @@ export function criarAgenda(db, agora = Date.now) {
       WHERE u.role = 'vendedor' AND (s.status = 'aprovado' OR a.userId IS NOT NULL)
       ORDER BY COALESCE(a.ativo, 0) DESC, CASE WHEN s.perfil = 'closer' THEN 0 ELSE 1 END, s.nome LIMIT 3000`).all()
       .map((c) => ({ ...c, ativo: !!c.ativo }));
-    return { admin, horarios, reunioes, closers };
+    // Pré-cadastros que ainda não viraram reunião: a equipe retoma o contato.
+    const precadastros = db.prepare(`SELECT id, empresa, nome, email, telefone, respostas, origem, criadoEm
+      FROM empresas_precadastro WHERE reuniaoId = '' ORDER BY criadoEm DESC LIMIT 500`).all()
+      .map((p) => ({ ...p, respostas: json(p.respostas, []), origem: json(p.origem, {}) }));
+    return { admin, horarios, reunioes, closers, precadastros };
   }
 
   function retirar(user, id) {
@@ -263,5 +361,5 @@ export function criarAgenda(db, agora = Date.now) {
     }).immediate();
   }
 
-  return { acesso, liberar, publicar, horariosPublicos, reservar, painel, retirar, status };
+  return { acesso, liberar, publicar, horariosPublicos, salvarPrecadastro, lerPrecadastro, reservar, reservarPrecadastro, painel, retirar, status };
 }

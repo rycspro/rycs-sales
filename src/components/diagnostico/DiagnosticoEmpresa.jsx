@@ -6,10 +6,11 @@
 // Honestidade: nada de depoimento, número de clientes, vaga limitada ou
 // contador. A confirmação só aparece depois de o servidor gravar a reserva.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarPlus, Check, Clock, Globe, RefreshCw, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarPlus, Check, Clock, Copy, Globe, MessageCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { API_URL } from "../../lib/api.js";
 import { eventoDiagnostico, dadosAgendamento, agendamentoConcluido } from "../../lib/rastreio.js";
 import { PERGUNTAS_QUIZ, ETAPAS_QUIZ, COMO_ACONTECE } from "../../../shared/quizDiagnostico.js";
+import { formatarNumero } from "../../../shared/whatsappVerificacao.js";
 import "./DiagnosticoEmpresa.css";
 
 const TOTAL = PERGUNTAS_QUIZ.length;
@@ -17,7 +18,7 @@ const CHAVE = "rycs-diagnostico-v1";
 const FOTO_INTRO = { src: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=70", alt: "Equipe conversando em volta de uma mesa de trabalho" };
 const FOTO_AGENDA = { src: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1200&q=70", alt: "Agenda de papel aberta com metas do mês e calendário" };
 const PASSOS = [...ETAPAS_QUIZ.map((e) => e.titulo), "Agendar"];
-const FASES_AGENDA = { resumo: 0.1, contato: 0.35, horario: 0.65, confirmar: 0.9, agendado: 1 };
+const FASES_AGENDA = { resumo: 0.1, contato: 0.3, whatsapp: 0.5, horario: 0.7, confirmar: 0.9, agendado: 1 };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const perguntaPorId = Object.fromEntries(PERGUNTAS_QUIZ.map((p) => [p.id, p]));
@@ -110,7 +111,7 @@ function pautaConversa(r) {
 // ── Estado salvo na aba (sobrevive a recarregar, some ao fechar) ───────
 const CONTATO_VAZIO = { empresa: "", nome: "", email: "", telefone: "" };
 function restaurar() {
-  const base = { fase: "intro", indice: 0, respostas: {}, contato: CONTATO_VAZIO, horario: null, agendado: null };
+  const base = { fase: "intro", indice: 0, respostas: {}, contato: CONTATO_VAZIO, horario: null, agendado: null, precadastro: null };
   try {
     const salvo = JSON.parse(sessionStorage.getItem(CHAVE) || "null");
     if (!salvo || typeof salvo !== "object") return base;
@@ -118,12 +119,16 @@ function restaurar() {
     const respostas = {};
     for (const p of PERGUNTAS_QUIZ) if (p.opcoes.some((o) => o.id === salvo.respostas?.[p.id])) respostas[p.id] = salvo.respostas[p.id];
     const completas = Object.keys(respostas).length === TOTAL;
-    const fase = ["intro", "quiz", "resumo", "contato", "horario"].includes(salvo.fase) ? salvo.fase : salvo.fase === "confirmar" ? "horario" : "intro";
+    const precadastro = typeof salvo.precadastro?.id === "string" && typeof salvo.precadastro?.token === "string" ? salvo.precadastro : null;
+    let fase = ["intro", "quiz", "resumo", "contato", "whatsapp", "horario"].includes(salvo.fase) ? salvo.fase : salvo.fase === "confirmar" ? "horario" : "intro";
+    // Sem pré-cadastro não há verificação nem reserva: volta para o contato.
+    if (!precadastro && (fase === "whatsapp" || fase === "horario")) fase = "contato";
     return {
       ...base, respostas,
       fase: !completas && fase !== "intro" && fase !== "quiz" ? "quiz" : fase,
       indice: Math.min(Math.max(0, Number(salvo.indice) || 0), TOTAL - 1),
       contato: { ...CONTATO_VAZIO, ...(salvo.contato || {}) },
+      precadastro,
     };
   } catch { return base; }
 }
@@ -153,6 +158,8 @@ export default function DiagnosticoEmpresa() {
   const [contato, setContato] = useState(inicial.contato);
   const [horario, setHorario] = useState(null);
   const [agendado, setAgendado] = useState(inicial.agendado);
+  const [precadastro, setPrecadastro] = useState(inicial.precadastro);
+  const [whatsapp, setWhatsapp] = useState(null);
   const [escolhendo, setEscolhendo] = useState(null);
   const tituloRef = useRef(null);
   const timer = useRef(null);
@@ -160,8 +167,8 @@ export default function DiagnosticoEmpresa() {
 
   useEffect(() => { eventoDiagnostico("ViewContent"); }, []);
   useEffect(() => {
-    guardar(agendado ? { agendado } : { fase, indice, respostas, contato });
-  }, [fase, indice, respostas, contato, agendado]);
+    guardar(agendado ? { agendado } : { fase, indice, respostas, contato, precadastro });
+  }, [fase, indice, respostas, contato, agendado, precadastro]);
   // A cada tela nova: topo da página e foco no título (leitor de tela lê a pergunta).
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: movimentoReduzido() ? "auto" : "smooth" });
@@ -209,7 +216,7 @@ export default function DiagnosticoEmpresa() {
     if (fase === "quiz") return indice === 0 ? irPara("intro") : irPara("quiz", indice - 1);
     if (fase === "resumo") return irPara("quiz", TOTAL - 1);
     if (fase === "contato") return irPara("resumo");
-    if (fase === "horario") return irPara("contato");
+    if (fase === "whatsapp" || fase === "horario") return irPara("contato");
     if (fase === "confirmar") return irPara("horario");
   }
 
@@ -231,6 +238,23 @@ export default function DiagnosticoEmpresa() {
     window.addEventListener("keydown", aoTeclar);
     return () => window.removeEventListener("keydown", aoTeclar);
   }, [fase, pergunta, escolher, respostas, avancar, indice]);
+
+  // Contato → pré-cadastro no servidor. Depois, WhatsApp (se a verificação
+  // estiver ligada) e horário.
+  async function salvarContato(dados) {
+    const { visitanteId, origem } = dadosAgendamento();
+    const r = await chamar("/agenda-publica/precadastro", { ...dados, respostas, aceite: true, visitanteId, origem, ...(precadastro || {}) });
+    if (!r.ok || !r.dados?.id) {
+      return r.status === 0 ? "Sem conexão. Confira a internet e tente de novo." : (r.dados?.error || "Não foi possível salvar seus dados. Tente de novo.");
+    }
+    if (!precadastro) eventoDiagnostico("Lead");
+    setContato(dados);
+    setPrecadastro({ id: r.dados.id, token: r.dados.token });
+    setWhatsapp(r.dados.whatsapp);
+    irPara(r.dados.whatsapp?.disponivel && !r.dados.whatsapp.verificado ? "whatsapp" : "horario");
+    return "";
+  }
+  const refazerContato = () => { setPrecadastro(null); setWhatsapp(null); irPara("contato"); };
 
   // Progresso: posição real no quiz, por etapa.
   const preenchimento = ETAPAS_QUIZ.map((_, k) => {
@@ -309,14 +333,18 @@ export default function DiagnosticoEmpresa() {
 
           {fase === "resumo" && <Resumo tituloProps={tituloProps} respostas={respostas} onRever={() => irPara("quiz", 0)} onSeguir={() => irPara("contato")} />}
 
-          {fase === "contato" && <Contato tituloProps={tituloProps} contato={contato} setContato={setContato} onSeguir={() => irPara("horario")} />}
+          {fase === "contato" && <Contato tituloProps={tituloProps} contato={contato} setContato={setContato} onSalvar={salvarContato} />}
+
+          {fase === "whatsapp" && precadastro && <VerificarWhatsapp tituloProps={tituloProps} precadastro={precadastro} telefone={contato.telefone}
+            whatsapp={whatsapp} setWhatsapp={setWhatsapp} onSeguir={() => irPara("horario")} onRefazer={refazerContato} />}
 
           {fase === "horario" && <Horarios tituloProps={tituloProps} selecionado={horario}
             onEscolher={setHorario} onSeguir={() => irPara("confirmar")} />}
 
           {fase === "confirmar" && horario && (
-            <Confirmar tituloProps={tituloProps} horario={horario} contato={contato} respostas={respostas}
+            <Confirmar tituloProps={tituloProps} horario={horario} contato={contato} precadastro={precadastro} whatsapp={whatsapp}
               onAlterarContato={() => irPara("contato")} onAlterarHorario={() => irPara("horario")}
+              onVerificar={() => irPara("whatsapp")} onRefazer={refazerContato}
               onIndisponivel={() => { setHorario(null); irPara("horario"); }}
               onAgendado={(ag) => { setAgendado(ag); irPara("agendado"); }} />
           )}
@@ -413,9 +441,11 @@ function Resumo({ tituloProps, respostas, onRever, onSeguir }) {
   );
 }
 
-function Contato({ tituloProps, contato, setContato, onSeguir }) {
+function Contato({ tituloProps, contato, setContato, onSalvar }) {
   const [tocado, setTocado] = useState({});
   const [tentou, setTentou] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [erroServidor, setErroServidor] = useState("");
   const erros = errosContato(contato);
   const mostrar = (campo) => (tentou || tocado[campo]) && erros[campo];
   const campos = [
@@ -424,22 +454,26 @@ function Contato({ tituloProps, contato, setContato, onSeguir }) {
     { campo: "email", rotulo: "E-mail", tipo: "email", auto: "email", max: 254, modo: "email" },
     { campo: "telefone", rotulo: "WhatsApp com DDD", tipo: "tel", auto: "tel-national", max: 16, modo: "tel", dica: "O especialista chama você por aqui." },
   ];
-  function enviar(e) {
+  async function enviar(e) {
     e.preventDefault();
+    if (salvando) return;
     setTentou(true);
     if (Object.keys(erros).length) {
       const id = campos.find((c) => erros[c.campo])?.campo;
       document.getElementById(`dg-${id}`)?.focus();
       return;
     }
-    setContato({ empresa: contato.empresa.trim(), nome: contato.nome.trim(), email: contato.email.trim(), telefone: contato.telefone });
-    onSeguir();
+    setSalvando(true);
+    setErroServidor("");
+    const erro = await onSalvar({ empresa: contato.empresa.trim(), nome: contato.nome.trim(), email: contato.email.trim(), telefone: contato.telefone });
+    setSalvando(false);
+    if (erro) setErroServidor(erro);
   }
   return (
     <>
       <p className="dg-kicker">Agendar · dados de contato</p>
-      <h1 {...tituloProps}>Para quem é a conversa?</h1>
-      <p className="dg-texto">O especialista usa estes dados para falar com você no horário escolhido.</p>
+      <h1 {...tituloProps}>Seu pré-cadastro na RYCS</h1>
+      <p className="dg-texto">Com estes dados o especialista prepara a conversa e fala com você no horário escolhido.</p>
       <form onSubmit={enviar} noValidate className="dg-form">
         {campos.map((c) => (
           <div key={c.campo} className="dg-campo">
@@ -454,9 +488,12 @@ function Contato({ tituloProps, contato, setContato, onSeguir }) {
               : c.dica && <span className="dg-campo-dica" id={`dg-${c.campo}-dica`}>{c.dica}</span>}
           </div>
         ))}
-        <button type="submit" className="vx-btn vx-btn-primary dg-cta">Ver horários disponíveis <ArrowRight size={18} aria-hidden="true" /></button>
+        {erroServidor && <p className="dg-alerta" role="alert">{erroServidor}</p>}
+        <button type="submit" className="vx-btn vx-btn-primary dg-cta" disabled={salvando} aria-busy={salvando}>
+          {salvando ? <><span className="dg-girando" aria-hidden="true" /> Salvando…</> : <>Continuar <ArrowRight size={18} aria-hidden="true" /></>}
+        </button>
       </form>
-      <p className="dg-nota"><ShieldCheck size={15} aria-hidden="true" /> Seus dados e respostas ficam só com a equipe da RYCS, para esta conversa. <a href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a></p>
+      <p className="dg-nota"><ShieldCheck size={15} aria-hidden="true" /> Ao continuar, você autoriza a RYCS a usar estes dados e as suas respostas para falar com você e preparar a conversa, conforme a <a href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a>.</p>
     </>
   );
 }
@@ -565,7 +602,8 @@ function Horarios({ tituloProps, selecionado, onEscolher, onSeguir }) {
   );
 }
 
-function Confirmar({ tituloProps, horario, contato, respostas, onAlterarContato, onAlterarHorario, onIndisponivel, onAgendado }) {
+function Confirmar({ tituloProps, horario, contato, precadastro, whatsapp, onAlterarContato, onAlterarHorario, onVerificar, onRefazer, onIndisponivel, onAgendado }) {
+  const telefone = whatsapp?.verificado && whatsapp.numero ? formatarNumero(whatsapp.numero) : contato.telefone;
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
   const enviandoRef = useRef(false);
@@ -575,16 +613,16 @@ function Confirmar({ tituloProps, horario, contato, respostas, onAlterarContato,
     setEnviando(true);
     setErro("");
     const rastreio = dadosAgendamento();
-    const r = await chamar("/agenda-publica/reservas", {
-      ...contato, inicio: horario.inicio, fim: horario.fim, respostas, aceite: true, ...rastreio,
-    });
+    const r = await chamar("/agenda-publica/reservas", { ...precadastro, inicio: horario.inicio, fim: horario.fim, ...rastreio });
     enviandoRef.current = false;
     setEnviando(false);
     if (r.ok && r.dados?.id) {
-      agendamentoConcluido(rastreio.meta.eventId, contato);
-      onAgendado({ ...r.dados, nome: contato.nome, empresa: contato.empresa, email: contato.email, telefone: contato.telefone });
+      agendamentoConcluido(rastreio.meta.eventId, { ...contato, telefone });
+      onAgendado({ ...r.dados, nome: contato.nome, empresa: contato.empresa, email: contato.email, telefone });
       return;
     }
+    if (r.dados?.codigo === "WHATSAPP_NAO_VERIFICADO") { onVerificar(); return; }
+    if (r.dados?.codigo === "PRECADASTRO_INVALIDO") { onRefazer(); return; }
     if (r.dados?.codigo === "HORARIO_INDISPONIVEL") {
       setErro(r.dados.error);
       setTimeout(onIndisponivel, 1800);
@@ -605,7 +643,7 @@ function Confirmar({ tituloProps, horario, contato, respostas, onAlterarContato,
         <div><dt>🏢 Empresa</dt><dd>{contato.empresa}</dd></div>
         <div><dt>👤 Contato</dt><dd>{contato.nome}</dd></div>
         <div><dt>✉️ E-mail</dt><dd>{contato.email}</dd></div>
-        <div><dt>📱 WhatsApp</dt><dd>{contato.telefone}</dd></div>
+        <div><dt>📱 WhatsApp</dt><dd>{telefone}{whatsapp?.verificado && <span className="dg-verificado"> ✓ confirmado</span>}</dd></div>
         <div className="dg-confere-acao"><button type="button" className="dg-link" onClick={onAlterarContato} disabled={enviando}>Alterar dados</button></div>
       </dl>
       <div className="dg-aviso"><Clock size={18} aria-hidden="true" /><p>{COMO_ACONTECE}</p></div>
@@ -613,7 +651,84 @@ function Confirmar({ tituloProps, horario, contato, respostas, onAlterarContato,
       <button type="button" className="vx-btn vx-btn-primary dg-cta" onClick={confirmar} disabled={enviando} aria-busy={enviando}>
         {enviando ? <><span className="dg-girando" aria-hidden="true" /> Confirmando…</> : <>Confirmar agendamento <Check size={18} strokeWidth={2.5} aria-hidden="true" /></>}
       </button>
-      <p className="dg-nota">Ao confirmar, você autoriza a RYCS a usar estes dados e as suas respostas para preparar e realizar a conversa, conforme a <a href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a>.</p>
+    </>
+  );
+}
+
+// Mesma verificação dos profissionais: a empresa manda uma mensagem pronta,
+// com código, para o WhatsApp oficial da RYCS. O webhook confirma e esta tela
+// percebe sozinha (consulta a cada 3 s e ao voltar para a aba).
+function VerificarWhatsapp({ tituloProps, precadastro, telefone, whatsapp, setWhatsapp, onSeguir, onRefazer }) {
+  const [erro, setErro] = useState("");
+  const [copiado, setCopiado] = useState(false);
+  const verificado = !!whatsapp?.verificado;
+  const pedido = whatsapp?.pedido;
+  const numeroRycs = pedido?.link?.match(/wa\.me\/(\d+)/)?.[1] || "";
+  // Callbacks do pai mudam a cada render; a consulta periódica não deve reiniciar por isso.
+  const seguirRef = useRef(onSeguir);
+  const refazerRef = useRef(onRefazer);
+  seguirRef.current = onSeguir;
+  refazerRef.current = onRefazer;
+
+  const consultar = useCallback(async () => {
+    const r = await chamar("/agenda-publica/precadastro/whatsapp", precadastro);
+    if (r.ok && r.dados?.whatsapp) { setWhatsapp(r.dados.whatsapp); setErro(""); return; }
+    if (r.dados?.codigo === "PRECADASTRO_INVALIDO") return refazerRef.current();
+    setErro(r.status === 0 ? "Sem conexão. Vamos tentar de novo em instantes." : (r.dados?.error || "Não foi possível consultar a confirmação."));
+  }, [precadastro, setWhatsapp]);
+
+  useEffect(() => {
+    if (!whatsapp) consultar();
+  }, [whatsapp, consultar]);
+  useEffect(() => {
+    if (verificado) {
+      const t = setTimeout(() => seguirRef.current(), 1600);
+      return () => clearTimeout(t);
+    }
+    const aoVoltar = () => { if (document.visibilityState === "visible") consultar(); };
+    const intervalo = setInterval(aoVoltar, 3000);
+    document.addEventListener("visibilitychange", aoVoltar);
+    window.addEventListener("focus", aoVoltar);
+    return () => { clearInterval(intervalo); document.removeEventListener("visibilitychange", aoVoltar); window.removeEventListener("focus", aoVoltar); };
+  }, [verificado, consultar]);
+
+  async function copiar() {
+    try { await navigator.clipboard.writeText(pedido.texto); setCopiado(true); setTimeout(() => setCopiado(false), 2500); } catch { /* sem área de transferência */ }
+  }
+
+  if (verificado) {
+    return (
+      <>
+        <div className="dg-sucesso-icone" aria-hidden="true"><Check size={34} strokeWidth={3} /></div>
+        <h1 {...tituloProps}>WhatsApp confirmado</h1>
+        <p className="dg-texto" role="status">Recebemos sua mensagem de {formatarNumero(whatsapp.numero)}. Agora é só escolher o horário.</p>
+        <button type="button" className="vx-btn vx-btn-primary dg-cta" onClick={onSeguir}>Escolher horário <ArrowRight size={18} aria-hidden="true" /></button>
+      </>
+    );
+  }
+  return (
+    <>
+      <p className="dg-kicker">Agendar · confirmar WhatsApp</p>
+      <h1 {...tituloProps}>Confirme seu WhatsApp</h1>
+      <p className="dg-texto">É por ele que o especialista vai falar com você. Toque no botão: o WhatsApp abre com uma mensagem pronta para a RYCS. É só enviar e voltar para esta página.</p>
+      {!pedido ? <p className="dg-dica" role="status">Preparando sua mensagem…</p> : (
+        <>
+          <a className="vx-btn vx-btn-primary dg-cta dg-whats" href={pedido.link} target="_blank" rel="noreferrer">
+            <MessageCircle size={20} aria-hidden="true" /> Abrir o WhatsApp e enviar
+          </a>
+          <div className="dg-aguardando" role="status" aria-live="polite">
+            <span className="dg-pulso" aria-hidden="true" /> Aguardando sua mensagem{telefone ? ` (de ${telefone})` : ""}…
+          </div>
+          <details className="dg-manual">
+            <summary>O botão não abriu o WhatsApp?</summary>
+            <p>Envie esta mensagem para o WhatsApp da RYCS{numeroRycs ? <> <strong>{formatarNumero(numeroRycs)}</strong></> : ""}, a partir do seu número:</p>
+            <code>{pedido.texto}</code>
+            <button type="button" className="vx-btn vx-btn-ghost" onClick={copiar}><Copy size={16} aria-hidden="true" /> {copiado ? "Copiado" : "Copiar mensagem"}</button>
+          </details>
+        </>
+      )}
+      {erro && <p className="dg-alerta" role="alert">{erro}</p>}
+      <p className="dg-nota"><ShieldCheck size={15} aria-hidden="true" /> A mensagem só confirma que o número é seu. A RYCS não acessa suas conversas.</p>
     </>
   );
 }

@@ -34,6 +34,7 @@
 .ag-reuniao{padding:18px;margin-bottom:12px;min-width:0}
 .ag-reuniao header h3{margin:2px 0 8px;font-size:18px}
 .ag-quando{font-size:13px;font-weight:600;color:var(--brand);text-transform:capitalize}
+.ag-quando-texto{text-transform:none}
 .ag-tags{display:flex;flex-wrap:wrap;gap:6px}
 .ag-contato{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:14px 0 4px;font-size:14px}
 .ag-contato a{display:inline-flex;align-items:center;gap:5px;min-height:36px;color:var(--brand);font-weight:600;text-decoration:none;overflow-wrap:anywhere}
