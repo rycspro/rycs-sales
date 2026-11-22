@@ -274,9 +274,11 @@ function TabelaCampanhas({ dados, abertos, alternar, selecionada }) {
 const csv = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 function baixarCsv(leads) {
-  const colunas = ["Data", "Nome", "E-mail", "Telefone", "Cidade", "País", "Campanha", "Conjunto", "Anúncio", "Formulário", "Criou conta", "Outras respostas"];
+  const colunas = ["Data", "Nome", "Empresa", "E-mail", "Telefone", "Cidade", "País", "Segmento", "Nota", "Classificação", "Campanha", "Conjunto", "Anúncio", "Formulário", "Criou conta", "Outras respostas"];
   const linhas = leads.map((l) => [
-    new Date(l.em).toLocaleString("pt-BR"), l.nome, l.email, l.telefone, l.cidade, l.pais, l.campanha, l.conjunto, l.anuncio, l.formulario,
+    new Date(l.em).toLocaleString("pt-BR"), l.nome, l.empresa, l.email, l.telefone, l.cidade, l.pais, l.qualificacao?.segmento,
+    l.qualificacao ? l.qualificacao.nota.toLocaleString("pt-BR", { minimumFractionDigits: 1 }) : "", l.qualificacao?.classificacao,
+    l.campanha, l.conjunto, l.anuncio, l.formulario,
     l.conta ? "sim" : "não", Object.entries(l.outros || {}).map(([k, v]) => `${k}: ${v}`).join(" | "),
   ].map(csv).join(";"));
   // BOM: o Excel abre acentos certo; ";" é o separador do Excel em português.
@@ -288,16 +290,36 @@ function baixarCsv(leads) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+// Nota (média dos 13 critérios do formulário de empresas) e classificação.
+const TOM_NOTA = { alta: "vx-badge-brand", media: "vx-badge-amber", baixa: "vx-badge-red" };
+
+function NotaLead({ q }) {
+  if (!q) return <span className="vx-mut">—</span>;
+  const titulo = q.criterios.map((c) => `${c.criterio}: ${c.resposta} (${c.nota})`).join("\n");
+  return (
+    <span title={titulo} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
+      <span style={{ fontWeight: 700, color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>
+        {q.nota.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}
+        {q.respondidas < q.total && <span className="vx-mut" style={{ fontWeight: 500, fontSize: 11 }}> · {q.respondidas}/{q.total}</span>}
+      </span>
+      <span className={`vx-badge ${TOM_NOTA[q.tom] || "vx-badge-muted"}`}>{q.classificacao}</span>
+    </span>
+  );
+}
+
 function ListaLeads({ leads, titulo }) {
   const id = useId();
   const [busca, setBusca] = useState("");
   const [semConta, setSemConta] = useState(false);
+  const [porNota, setPorNota] = useState(false);
   const [limite, setLimite] = useState(50);
+  const temNota = leads.some((l) => l.qualificacao);
   const lista = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    return leads.filter((l) => (!semConta || !l.conta) &&
-      (!termo || `${l.nome} ${l.email} ${l.telefone} ${l.cidade} ${l.anuncio} ${l.conjunto}`.toLowerCase().includes(termo)));
-  }, [leads, busca, semConta]);
+    const filtrados = leads.filter((l) => (!semConta || !l.conta) &&
+      (!termo || `${l.nome} ${l.empresa || ""} ${l.email} ${l.telefone} ${l.cidade} ${l.anuncio} ${l.conjunto}`.toLowerCase().includes(termo)));
+    return porNota ? [...filtrados].sort((a, b) => (b.qualificacao?.nota ?? -1) - (a.qualificacao?.nota ?? -1)) : filtrados;
+  }, [leads, busca, semConta, porNota]);
   if (!leads.length) return null;
   return (
     <div className="vx-card" style={{ padding: 0, overflow: "hidden", marginTop: 16 }}>
@@ -307,6 +329,11 @@ function ListaLeads({ leads, titulo }) {
           <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, color: "var(--ink-2)", minHeight: 36 }}>
             <input type="checkbox" checked={semConta} onChange={(e) => setSemConta(e.target.checked)} /> Só quem ainda não criou conta
           </label>
+          {temNota && (
+            <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, color: "var(--ink-2)", minHeight: 36 }}>
+              <input type="checkbox" checked={porNota} onChange={(e) => setPorNota(e.target.checked)} /> Maior nota primeiro
+            </label>
+          )}
           <label style={{ position: "relative", flex: "0 1 220px" }}>
             <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }} id={`${id}-b`}>Buscar lead</span>
             <Search size={14} color="var(--muted)" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} aria-hidden="true" />
@@ -318,13 +345,15 @@ function ListaLeads({ leads, titulo }) {
         </div>
       </div>
       <div style={{ overflowX: "auto" }}>
-        <div style={{ minWidth: 900 }}>
+        <div style={{ minWidth: temNota ? 1040 : 900 }}>
           {lista.slice(0, limite).map((l) => (
-            <div key={l.id} style={{ display: "grid", gridTemplateColumns: "110px minmax(160px,1.2fr) minmax(200px,1.4fr) minmax(220px,1.6fr) 120px", gap: 10, alignItems: "center", padding: "10px 14px", borderBottom: "1px solid var(--border)", fontSize: 12.5 }}>
+            <div key={l.id} style={{ display: "grid", gridTemplateColumns: `110px minmax(160px,1.2fr) minmax(200px,1.4fr) minmax(220px,1.6fr)${temNota ? " 140px" : ""} 120px`, gap: 10, alignItems: "center", padding: "10px 14px", borderBottom: "1px solid var(--border)", fontSize: 12.5 }}>
               <span className="vx-mut" style={{ fontVariantNumeric: "tabular-nums" }}>{quando(l.em)}</span>
               <span style={{ minWidth: 0 }}>
                 <span style={{ display: "block", fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.nome || "—"}</span>
-                <span className="vx-mut" style={{ fontSize: 11.5 }}>{[l.cidade, l.pais].filter(Boolean).join(" · ") || l.plataforma || ""}</span>
+                <span className="vx-mut" style={{ display: "block", fontSize: 11.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {[l.empresa, l.qualificacao?.segmento].filter(Boolean).join(" · ") || [l.cidade, l.pais].filter(Boolean).join(" · ") || l.plataforma || ""}
+                </span>
               </span>
               <span style={{ minWidth: 0, color: "var(--ink-2)" }}>
                 <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.email || "—"}</span>
@@ -333,6 +362,7 @@ function ListaLeads({ leads, titulo }) {
               <span className="vx-mut" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${l.campanha} › ${l.conjunto} › ${l.anuncio}`}>
                 {l.organico ? "Orgânico" : `${l.conjunto || "—"} › ${l.anuncio || "—"}`}
               </span>
+              {temNota && <NotaLead q={l.qualificacao} />}
               <span>{l.conta
                 ? <span className="vx-badge vx-badge-brand">Criou conta</span>
                 : <span className="vx-badge vx-badge-muted">Sem conta</span>}</span>

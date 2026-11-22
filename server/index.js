@@ -68,7 +68,7 @@ import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
 import planosProfissionalRoutes from "./routes/planosProfissional.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
 import { iniciarConversoesMeta } from "./services/metaConversoes.js";
-import { iniciarLeadsRycs } from "./services/metaLeadsRycs.js";
+import { iniciarLeadsRycs, formularioEmpresasMeta } from "./services/metaLeadsRycs.js";
 import { semearCatalogo, sincronizarCursoInterativo } from "./services/academy.js";
 import { garantirDadosCriticosProfissionalBeta, isBetaEnvironment, resetBetaEnvironment } from "./services/betaEnvironment.js";
 // O registro dos adapters acontece no import: cada arquivo se declara na
@@ -97,6 +97,8 @@ app.get("/api/health", (_, res) => {
   }
 });
 app.get("/api/environment", (_, res) => res.json({ environment: process.env.RYCS_ENVIRONMENT === "beta" ? "beta" : "production" }));
+// ID do formulário instantâneo de empresas na Página da RYCS, para ligar aos anúncios.
+app.get("/api/meta/formulario-empresas", (_, res) => res.json(formularioEmpresasMeta()));
 const isProd = process.env.NODE_ENV === "production";
 
 // A ausência da chave não pode derrubar todo o backend: o motor de auditoria

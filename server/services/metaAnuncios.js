@@ -32,6 +32,17 @@ export async function lerGraph(caminho, params = {}, { token = process.env.META_
   return linhas;
 }
 
+// POST na Graph API; o token vai no corpo, nunca na URL.
+export async function escreverGraph(caminho, params = {}, { token = process.env.META_ADS_TOKEN } = {}) {
+  const corpo = new URLSearchParams();
+  for (const [k, v] of Object.entries({ ...params, access_token: token }))
+    corpo.set(k, typeof v === "string" || typeof v === "number" ? String(v) : JSON.stringify(v));
+  const r = await fetch(`${GRAPH()}${caminho}`, { method: "POST", body: corpo, signal: AbortSignal.timeout(20_000) });
+  const resposta = await r.json().catch(() => ({}));
+  if (!r.ok || resposta.error) throw new Error(resposta.error?.error_user_msg || resposta.error?.message || `HTTP ${r.status}`);
+  return resposta;
+}
+
 const contaAnuncios = () => String(process.env.META_AD_ACCOUNT_ID || META_AD_ACCOUNT_ID).replace(/^act_/, "");
 const insights = (params) => lerGraph(`/act_${contaAnuncios()}/insights`, params);
 

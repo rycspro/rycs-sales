@@ -14,7 +14,8 @@
 import db, { agora } from "../db.js";
 import { lerCamposLead, chaveTelefone, telefoneDosOutros } from "../../shared/campanhas.js";
 import { META_PAGE_ID } from "../../shared/metaPixel.js";
-import { lerGraph, anunciosConectados } from "./metaAnuncios.js";
+import { qualificarLead, perguntasDoFormulario, FORMULARIO_EMPRESAS_NOME } from "../../shared/qualificacaoEmpresa.js";
+import { lerGraph, escreverGraph, anunciosConectados } from "./metaAnuncios.js";
 
 const CAMPOS_LEAD = "id,created_time,field_data,form_id,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,platform,is_organic";
 const json = (texto) => { try { return JSON.parse(texto || "{}") || {}; } catch { return {}; } };
@@ -145,17 +146,52 @@ export function leadsRycs({ desde = 0 } = {}) {
   const conta = contasConhecidas();
   return db.prepare("SELECT * FROM rycs_leads_meta WHERE criadoEm >= ? ORDER BY criadoEm DESC").all(desde).map((l) => {
     const c = conta(l);
+    const outros = json(l.outros);
     return {
       id: l.leadgenId, em: l.criadoEm, nome: l.nome, email: l.email, telefone: l.telefone, cidade: l.cidade, pais: l.pais,
+      empresa: String(outros.company_name || ""), qualificacao: qualificarLead(outros),
       campanha: l.campanha, conjunto: l.conjunto, anuncio: l.anuncio, formulario: l.formNome, plataforma: l.plataforma,
-      organico: !!l.organico, outros: json(l.outros), conta: !!c, contaPapel: c?.papel || "", contaEm: c?.em || null,
+      organico: !!l.organico, outros, conta: !!c, contaPapel: c?.papel || "", contaEm: c?.em || null,
     };
   });
 }
 
+// Formulário instantâneo das campanhas [EMP]: se ainda não existe na Página,
+// o servidor cria, com as perguntas de shared/qualificacaoEmpresa.js. Os leads
+// dele entram pela mesma importação de 10 em 10 minutos.
+let formularioEmpresas = { id: "", erro: "" };
+export const formularioEmpresasMeta = () => formularioEmpresas;
+
+export async function garantirFormularioEmpresas() {
+  if (!anunciosConectados()) return formularioEmpresas;
+  try {
+    const token = await tokenDaPagina();
+    const existentes = await lerGraph(`/${paginaId()}/leadgen_forms`, { fields: "id,name,status", limit: 100 }, { token });
+    const achado = existentes.find((f) => f.name === FORMULARIO_EMPRESAS_NOME && f.status === "ACTIVE");
+    const id = achado?.id || (await escreverGraph(`/${paginaId()}/leadgen_forms`, {
+      name: FORMULARIO_EMPRESAS_NOME,
+      locale: "PT_BR",
+      questions: perguntasDoFormulario(),
+      privacy_policy: { url: "https://rycs.pro/privacidade", link_text: "Política de privacidade da RYCS" },
+      context_card: { title: "Tenha o seu time de vendas", style: "PARAGRAPH_STYLE", content: ["Responda algumas perguntas rápidas sobre a sua empresa. A RYCS analisa e fala com você."] },
+      thank_you_page: { title: "Recebemos suas respostas", body: "A RYCS vai analisar e falar com você em breve.", button_type: "VIEW_WEBSITE", button_text: "Conhecer a RYCS", website_url: "https://app.rycs.pro/cadastro/empresa" },
+      follow_up_action_url: "https://app.rycs.pro/cadastro/empresa",
+    }, { token })).id;
+    formularioEmpresas = { id: String(id), erro: "" };
+    if (!achado) console.log(`[leads-rycs] formulário "${FORMULARIO_EMPRESAS_NOME}" criado na Meta: ${id}`);
+  } catch (e) {
+    formularioEmpresas = { id: "", erro: String(e?.message || e).slice(0, 300) };
+    console.error("[leads-rycs] formulário de empresas:", formularioEmpresas.erro);
+  }
+  return formularioEmpresas;
+}
+
 export function iniciarLeadsRycs() {
   if (!anunciosConectados()) return;
-  const tick = () => sincronizarLeadsRycs().catch(() => null);
+  const tick = async () => {
+    if (!formularioEmpresas.id) await garantirFormularioEmpresas();
+    await sincronizarLeadsRycs().catch(() => null);
+  };
   setTimeout(tick, 60 * 1000).unref?.();
   setInterval(tick, 10 * 60 * 1000).unref?.();
   console.log("[leads-rycs] importação dos formulários da RYCS ativa");
