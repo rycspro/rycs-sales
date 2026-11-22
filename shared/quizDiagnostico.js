@@ -154,12 +154,12 @@ export const PASSOS_QUIZ = [
   },
   {
     id: "contratar", tipo: "cards",
-    titulo: "Quando você pretende contratar seu time de vendas?",
+    titulo: "Se fizer sentido, quando você pretende contratar seu time de vendas?",
     ajuda: "Última pergunta!",
     campos: [{
-      id: "contratar", etapa: "decisao", criterio: "Disposição para fechar", titulo: "Quando você pretende contratar seu time de vendas?",
+      id: "contratar", etapa: "decisao", criterio: "Disposição para fechar", titulo: "Se fizer sentido, quando você pretende contratar seu time de vendas?",
       opcoes: [
-        { id: "na-reuniao", texto: "Na própria reunião", detalhe: "Fazendo sentido, já fecho", icone: "26a1", nivel: 5 },
+        { id: "na-reuniao", texto: "Fecho imediatamente", detalhe: "Já na reunião", icone: "26a1", nivel: 5 },
         { id: "7-dias", texto: "Em até 7 dias", detalhe: "Preciso de poucos dias", icone: "270d-fe0f", nivel: 4 },
         { id: "30-dias", texto: "Em até 30 dias", detalhe: "Tenho prioridades antes", icone: "1f4c6", nivel: 3 },
         { id: "pesquisando", texto: "Só estou pesquisando", detalhe: "Ainda comparando opções", icone: "1f50e", nivel: 1 },
