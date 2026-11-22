@@ -314,12 +314,8 @@ app.post("/api/analisar", authMiddleware, async (req, res) => {
   }
 });
 
-// Botão "Entrar no grupo de suporte" dos modelos de WhatsApp: a Meta não aceita
-// botão apontando direto para chat.whatsapp.com, então o botão leva para cá.
-const GRUPO_SUPORTE_URL = process.env.WHATSAPP_GROUP_URL || "https://chat.whatsapp.com/JwEOA8RTFrA5oHIpQaSvss";
-app.get("/grupo", (_, res) => res.redirect(302, GRUPO_SUPORTE_URL));
-
 // --- Serve frontend in production ---
+// Páginas avulsas (privacidade, termos, grupo...) ficam em public/<nome>/index.html.
 if (isProd) {
   const { dirname, join } = await import("path");
   const { fileURLToPath } = await import("url");
