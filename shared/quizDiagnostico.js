@@ -77,8 +77,8 @@ export const PASSOS_QUIZ = [
   },
   {
     id: "vendas", tipo: "seletores", icone: "1f4ca",
-    titulo: "Como estão suas vendas hoje?",
-    ajuda: "Escolha uma faixa em cada linha.",
+    titulo: "Quanto você ganha por venda hoje?",
+    ajuda: "Escolha o valor médio de cada venda e quantas vendas vocês fazem por mês.",
     campos: [
       {
         id: "ticket", etapa: "numeros", criterio: "Potencial financeiro · ticket médio", titulo: "Ticket médio (valor de cada venda)",
