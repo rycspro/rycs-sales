@@ -12,7 +12,8 @@ const HORA = 60 * MIN;
 const FUSO = "America/Sao_Paulo";
 
 // Modelos do WhatsApp. {{1}} nome, {{2}} data ou "em quanto tempo", {{3}} hora.
-// O corpo aqui é o mesmo cadastrado na Meta.
+// O corpo aqui é o mesmo cadastrado na Meta (conta de mensagens "Rycs Sales
+// Machine"); a Meta não aceita corpo que comece com variável.
 export const MODELOS_LEMBRETE = {
   confirmacao: {
     nome: "rycs_reuniao_confirmada",
@@ -21,12 +22,12 @@ export const MODELOS_LEMBRETE = {
   },
   lembrete: {
     nome: "rycs_reuniao_lembrete",
-    corpo: "{{1}}, passando para lembrar da sua reunião com a RYCS: {{2}}, às {{3}} (horário de Brasília).\n\nO especialista vai chamar você aqui no WhatsApp. Se não puder no horário, responda esta mensagem para remarcarmos.",
+    corpo: "Olá, {{1}}! Passando para lembrar da sua reunião com a RYCS: {{2}}, às {{3}} (horário de Brasília).\n\nO especialista vai chamar você aqui no WhatsApp. Se não puder no horário, responda esta mensagem para remarcarmos.",
     exemplo: ["Ana", "amanhã", "10:00"],
   },
   em_breve: {
     nome: "rycs_reuniao_em_breve",
-    corpo: "{{1}}, sua reunião com a RYCS começa em {{2}}, às {{3}} (horário de Brasília).\n\nDeixe o WhatsApp por perto: o especialista chama você por aqui.",
+    corpo: "Olá, {{1}}! Sua reunião com a RYCS começa em {{2}}, às {{3}} (horário de Brasília).\n\nDeixe o WhatsApp por perto: o especialista chama você por aqui.",
     exemplo: ["Ana", "1 hora", "10:00"],
   },
 };
