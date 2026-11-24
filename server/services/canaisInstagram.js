@@ -5,11 +5,12 @@
 // Ambiente: INSTAGRAM_APP_ID e INSTAGRAM_APP_SECRET (produto "Instagram" do
 // app da RYCS, "API com login do Instagram").
 
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import db, { agora } from "../db.js";
 import { graph, buscar, cifrar, decifrar, versaoGraph, ErroMeta } from "./meta.js";
 import { notificar } from "../routes/notifications.js";
 import {
-  conexaoPorId, salvarConexao, marcarErroConexao, encerrarConexao, registrarMensagem, conversaDoUsuario, erroCanal, ler,
+  conexaoPorId, salvarConexao, marcarErroConexao, encerrarConexao, apagarConexao, registrarMensagem, conversaDoUsuario, erroCanal, ler,
 } from "./canais.js";
 import { janelaAberta, bytes, LIMITE_TEXTO } from "../../shared/canais.js";
 
@@ -214,6 +215,37 @@ export async function responder(user, conversaId, { texto, comentarioId = "", pr
     if (e instanceof ErroMeta && e.codigo === 190) marcarErroConexao(c.id, e.message, { expirou: true });
     throw e;
   }
+}
+
+// ── Avisos obrigatórios da Meta: desautorização e exclusão de dados ────────
+
+// signed_request: assinatura e dados em base64url, HMAC com o segredo do produto.
+export function lerSignedRequest(valor, segredo = process.env.INSTAGRAM_APP_SECRET) {
+  const [ass, dados, resto] = String(valor || "").split(".");
+  if (!segredo || !ass || !dados || resto !== undefined) return null;
+  const esperado = createHmac("sha256", segredo).update(dados).digest();
+  const recebido = Buffer.from(ass, "base64url");
+  if (recebido.length !== esperado.length || !timingSafeEqual(recebido, esperado)) return null;
+  const d = ler(Buffer.from(dados, "base64url").toString("utf8"), null);
+  return d?.user_id && (!d.algorithm || String(d.algorithm).toUpperCase() === "HMAC-SHA256") ? { userId: String(d.user_id) } : null;
+}
+const conexoesDoPerfil = (userId) => db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'instagram' AND (externoId = ? OR contaId = ?)").all(userId, userId);
+
+// A pessoa removeu a RYCS no Instagram: o token some e nada novo entra.
+export function desautorizar(userId) {
+  const lista = conexoesDoPerfil(userId).filter((c) => c.status !== "desconectada");
+  for (const c of lista) {
+    encerrarConexao(c.id);
+    notificar(c.consentimentoUserId, "integracao", "Instagram desconectado", `A RYCS foi removida do Instagram @${c.nome}. Para voltar a receber directs e comentários, conecte de novo em Leads → Instagram.`);
+  }
+  return lista.length;
+}
+
+// Pedido de exclusão vindo da Meta: apaga a conexão com todo o histórico dela.
+export function excluirDados(userId) {
+  const lista = conexoesDoPerfil(userId);
+  for (const c of lista) apagarConexao(c.id);
+  return { codigo: `RYCS-IG-${randomBytes(6).toString("hex").toUpperCase()}`, apagadas: lista.length };
 }
 
 // ── Renovação do token (vale 60 dias) ─────────────────────────────────────

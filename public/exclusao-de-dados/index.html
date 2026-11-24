@@ -18,7 +18,7 @@ a{color:var(--brand)}nav{margin-top:20px;font-size:14px}nav a{margin-right:16px}
 <header><a href="https://rycs.pro"><img src="/logo-rycs.png" alt="RYCS"></a></header>
 <article>
 <h1>Exclusão de Dados</h1>
-<p class="muted">Última atualização: 11 de novembro de 2026</p>
+<p class="muted">Última atualização: 24 de novembro de 2026</p>
 
 <h2>Como pedir a exclusão</h2>
 <ol>
@@ -35,8 +35,25 @@ a{color:var(--brand)}nav{margin-top:20px;font-size:14px}nav a{margin-right:16px}
 </ol>
 <p>Ao remover, a RYCS deixa de receber novos dados e apaga os tokens de acesso. Para apagar também os dados já recebidos, faça o pedido pelo e-mail acima.</p>
 
+<h2>Remover a RYCS do seu Instagram</h2>
+<ol>
+<li>No Instagram, abra <b>Configurações → Permissões de sites → Apps e sites</b>.</li>
+<li>Selecione <b>RYCS</b> e toque em <b>Remover</b>.</li>
+</ol>
+<p>Ao remover, a RYCS deixa de receber directs e comentários e apaga o token de acesso. Se você pedir a exclusão dos dados por lá, o histórico daquele perfil na RYCS é apagado na hora e o Instagram mostra um código de confirmação.</p>
+<p id="codigo" role="status" hidden></p>
+
 <h2>Data Deletion (English)</h2>
-<p>To request deletion of your data, email <a href="mailto:rycs@rycs.pro?subject=Data%20deletion">rycs@rycs.pro</a> with the subject "Data deletion", using the email registered on RYCS or the details you submitted in the lead form. We confirm deletion within 15 days. You can also remove the RYCS app from your Facebook account under Settings → Business Integrations (or Apps and Websites).</p>
+<p>To request deletion of your data, email <a href="mailto:rycs@rycs.pro?subject=Data%20deletion">rycs@rycs.pro</a> with the subject "Data deletion", using the email registered on RYCS or the details you submitted in the lead form. We confirm deletion within 15 days. You can also remove the RYCS app from your Facebook account under Settings → Business Integrations (or Apps and Websites), or from Instagram under Settings → Website permissions → Apps and websites. Deletion requests made through Instagram erase that account's conversation history immediately.</p>
 </article>
 <nav><a href="/privacidade/">Política de Privacidade</a><a href="/termos/">Termos de Uso</a><a href="/exclusao-de-dados/">Exclusão de Dados</a></nav>
-</main></body></html>
+</main>
+<script>
+(function () {
+  var c = new URLSearchParams(location.search).get("codigo") || "";
+  if (!/^RYCS-IG-[A-F0-9]{12}$/.test(c)) return;
+  var p = document.getElementById("codigo");
+  p.textContent = "Exclusão concluída. Código de confirmação / Deletion completed, confirmation code: " + c;
+  p.hidden = false;
+})();
+</script></body></html>

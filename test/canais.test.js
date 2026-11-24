@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createHmac } from "node:crypto";
 import { medirConversa, criteriosInternos, placar, mesmoTelefone, janelaAberta } from "../shared/canais.js";
 
 const dir = mkdtempSync(join(tmpdir(), "rycs-canais-"));
@@ -228,4 +229,19 @@ test("auditoria da Claude: apontamento sem mensagem que existe é descartado", (
 test("mídia só é buscada em endereço da Meta", () => {
   assert.ok(wa.hostDaMeta("https://lookaside.fbsbx.com/x"));
   for (const u of ["http://lookaside.fbsbx.com/x", "https://fbsbx.com.evil.com/x", "https://169.254.169.254/x", "nada"]) assert.ok(!wa.hostDaMeta(u), u);
+});
+
+test("Meta: desautorizar e excluir dados só com assinatura válida", () => {
+  const assinar = (o, seg = "igseg") => { const d = Buffer.from(JSON.stringify(o)).toString("base64url"); return `${createHmac("sha256", seg).update(d).digest("base64url")}.${d}`; };
+  assert.deepEqual(ig.lerSignedRequest(assinar({ user_id: "178", algorithm: "HMAC-SHA256" })), { userId: "178" });
+  for (const x of [assinar({ user_id: "178" }, "errado"), "a.b", "", "x.y.z", assinar({ algorithm: "HMAC-SHA256" })]) assert.equal(ig.lerSignedRequest(x), null);
+  const c = canais.salvarConexao({ companyId: "c1", canal: "instagram", externoId: "690", contaId: "app690", nome: "outra", token: "t", userId: "u1" });
+  canais.registrarMensagem(c, { contato: "n1", externoId: "n1", direcao: "recebida", texto: "oi", em: T });
+  assert.equal(ig.desautorizar("app690"), 1);
+  assert.equal(canais.conexaoPorId(c.id).token, "");
+  assert.ok(db.prepare("SELECT 1 FROM canais_conversas WHERE conexaoId = ?").get(c.id), "desautorizar mantém o histórico da empresa");
+  const r = ig.excluirDados("690");
+  assert.match(r.codigo, /^RYCS-IG-[A-F0-9]{12}$/);
+  assert.equal(db.prepare("SELECT 1 FROM canais_conversas WHERE conexaoId = ?").get(c.id), undefined);
+  assert.ok(db.prepare("SELECT 1 FROM canais_conexoes WHERE externoId = '178'").get(), "não mexe em outro perfil");
 });

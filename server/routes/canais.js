@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, urlencoded } from "express";
 import jwt from "jsonwebtoken";
 import { randomBytes } from "crypto";
 import db from "../db.js";
@@ -38,6 +38,22 @@ canaisPublico.get("/instagram/callback", async (req, res) => {
     console.warn("[canais] instagram callback:", e?.message);
     voltar(e?.http === 409 ? "em_uso" : "erro");
   }
+});
+
+// Avisos obrigatórios da Meta, assinados com o segredo do produto Instagram.
+const formulario = urlencoded({ extended: false, limit: "20kb" });
+canaisPublico.post("/instagram/desautorizar", formulario, (req, res) => {
+  const d = ig.lerSignedRequest(req.body?.signed_request);
+  if (!d) return res.sendStatus(401);
+  ig.desautorizar(d.userId);
+  res.json({ ok: true });
+});
+canaisPublico.post("/instagram/excluir-dados", formulario, (req, res) => {
+  const d = ig.lerSignedRequest(req.body?.signed_request);
+  if (!d) return res.sendStatus(401);
+  const { codigo, apagadas } = ig.excluirDados(d.userId);
+  console.log(`[canais] exclusão pedida pela Meta: ${codigo} (${apagadas} conexão(ões))`);
+  res.json({ url: `${(process.env.PUBLIC_URL || process.env.FRONTEND_URL || "https://app.rycs.pro").replace(/\/+$/, "")}/exclusao-de-dados/?codigo=${codigo}`, confirmation_code: codigo });
 });
 
 // ── Autenticado ───────────────────────────────────────────────────────────
