@@ -3,7 +3,7 @@ import { enviarDataUri } from "../services/midia.js";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { avaliarFoto } from "../../shared/fotoPerfil.js";
-import { detalharScore, pontosVendedor, explicacaoScore, perfilCompleto } from "../../shared/perfilVendedor.js";
+import { detalharScore, pontosVendedor, explicacaoScore, perfilCompleto, COLUNAS_PERFIL } from "../../shared/perfilVendedor.js";
 import { aoAtualizarPerfil } from "../services/sequenciasEmail.js";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "./notifications.js";
@@ -17,7 +17,7 @@ const ADMIN_NOTIF_EMAIL = process.env.ADMIN_NOTIF_EMAIL || "contato@martinbusine
 const cadastroCompleto = perfilCompleto;
 
 function notificarCadastroCompleto(sellerId) {
-  const s = db.prepare("SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills, cadastroCompletadoNotificado FROM sellers WHERE id = ?").get(sellerId);
+  const s = db.prepare(`SELECT id, nome, email, foto, ${COLUNAS_PERFIL}, cadastroCompletadoNotificado FROM sellers WHERE id = ?`).get(sellerId);
   if (!s || !cadastroCompleto(s)) return;
   // Reativa conta inativada por perfil incompleto e conta o bônus de indicação.
   try { aoAtualizarPerfil(sellerId); } catch (e) { console.warn("[perfil] pós-completo:", e.message); }

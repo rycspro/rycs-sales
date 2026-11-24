@@ -108,6 +108,18 @@ test("indicação: 30% da primeira mensalidade, R$ 3 a cada 10 e perfil completo
   assert.ok(pendenciasPerfil({ foto: "", segmentos: "[]" }).includes("Foto de perfil"));
 });
 
+test("perfil completo: vale o que o cadastro salva em perfilComercial e não cobra o que nenhuma tela edita", () => {
+  const cadastro = { foto: "x", bio: "b", cidade: "c", titulo: "", modalidades: "[]", disponibilidade: "", segmentos: "[]", skills: "[]" };
+  const comercial = { disponibilidade: "integral", segmentos: ["saas"], habilidades: ["negociacao"] };
+  assert.deepEqual(pendenciasPerfil({ ...cadastro, perfilComercial: JSON.stringify(comercial) }), []);
+  assert.deepEqual(pendenciasPerfil({ ...cadastro, perfilComercial: comercial }), []);
+  // Resposta vazia continua pendente.
+  assert.deepEqual(pendenciasPerfil({ ...cadastro, perfilComercial: JSON.stringify({ ...comercial, disponibilidade: " ", habilidades: [] }) }), ["Disponibilidade", "Habilidades (Skills)"]);
+  for (const ruim of ["", "{", "null", "[]", null, undefined])
+    assert.deepEqual(pendenciasPerfil({ ...cadastro, perfilComercial: ruim }), ["Disponibilidade", "Segmentos de atuação", "Habilidades (Skills)"]);
+  assert.equal(pendenciasPerfil(null).length, 6);
+});
+
 test("rotas: descadastro só com token válido e painel só para admin", async (t) => {
   const { base: url } = await subirServidor(t);
   const req = cliente(url);

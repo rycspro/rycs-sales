@@ -10,7 +10,7 @@ import { sendEmail, layoutSequencia, urlApp } from "./email.js";
 import { notificar } from "../routes/notifications.js";
 import { codigoDoUsuario, qualificarIndicacaoProfissional } from "./indicacoes.js";
 import { planoAtual } from "./planosProfissional.js";
-import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
+import { pendenciasPerfil, COLUNAS_PERFIL } from "../../shared/perfilVendedor.js";
 import {
   DIA, INTERVALO_MIN_POR_PESSOA, ORDEM_SEQUENCIAS, SEQUENCIAS,
   tetoDoDia, dentroDaJanela, idiomaDoPais, proximoEmailVendedor, montarTexto,
@@ -81,7 +81,7 @@ export function descadastrar(email) {
 export const descadastrados = () => new Set(db.prepare("SELECT email FROM email_descadastros").all().map((r) => r.email));
 
 // ─── Perfil: reativação e bônus ────────────────────────────────────────────
-const SELECT_PERFIL = "SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills, perfilCompletoEm, inativoEm FROM sellers";
+const SELECT_PERFIL = `SELECT id, nome, email, foto, ${COLUNAS_PERFIL}, perfilCompletoEm, inativoEm FROM sellers`;
 
 // Chamado quando o perfil muda (e na rodada, para quem completou por outro caminho).
 export function aoAtualizarPerfil(sellerId) {
@@ -147,7 +147,7 @@ function avaliarTodos(agora) {
   const lista = [];
 
   const sellers = db.prepare(`
-    SELECT s.id, s.nome, s.email, s.pais, s.foto, s.titulo, s.bio, s.disponibilidade, s.cidade, s.segmentos, s.modalidades, s.skills,
+    SELECT s.id, s.nome, s.email, s.pais, s.foto, s.bio, s.disponibilidade, s.cidade, s.segmentos, s.skills, s.perfilComercial,
            s.criadoEm, s.inativoEm, u.id AS userId, u.ultimoAcessoEm,
            EXISTS (SELECT 1 FROM referrals r WHERE r.indicadorUserId = u.id) AS indicacaoUsada
     FROM sellers s JOIN users u ON u.entityId = s.id AND u.role = 'vendedor'

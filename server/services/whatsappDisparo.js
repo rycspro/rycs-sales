@@ -11,7 +11,7 @@
 
 import db, { uid, agora } from "../db.js";
 import { graph, ErroMeta } from "./meta.js";
-import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
+import { pendenciasPerfil, COLUNAS_PERFIL } from "../../shared/perfilVendedor.js";
 import "./whatsapp.js"; // garante a tabela whatsapp_status usada nos relatórios
 
 const TOKEN = () => process.env.WHATSAPP_TOKEN || "";
@@ -176,7 +176,7 @@ function linhasDoPublico(p) {
 // Campos que a regra de perfil completo lê. A foto vem só como "tem ou não tem",
 // para não carregar a imagem inteira de cada vendedor.
 const CAMPOS_PERFIL_SQL = `CASE WHEN TRIM(COALESCE(foto, '')) <> '' THEN 'sim' ELSE '' END AS foto,
-  titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills`;
+  ${COLUNAS_PERFIL}`;
 const sqlPerfil = db.prepare(`SELECT ${CAMPOS_PERFIL_SQL} FROM sellers WHERE id = ?`);
 
 // "foto de perfil, cidade e habilidades (skills)": o que falta no perfil, do

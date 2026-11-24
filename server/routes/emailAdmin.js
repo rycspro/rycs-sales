@@ -4,7 +4,7 @@ import { sendEmail, emailFotoPendente, layoutSequencia, urlApp } from "../servic
 import { numeroWhatsapp } from "../services/whatsappDisparo.js";
 import { linkDescadastro, descadastrados, esperar, limiteDeTaxa, PAUSA_ENTRE_ENVIOS_MS } from "../services/sequenciasEmail.js";
 import { TEXTO_DESCADASTRO } from "../../shared/sequenciasEmail.js";
-import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
+import { pendenciasPerfil, COLUNAS_PERFIL } from "../../shared/perfilVendedor.js";
 import Anthropic from "@anthropic-ai/sdk";
 
 const router = Router();
@@ -281,7 +281,7 @@ function buildHtml({ assunto, preheader, conteudo, cta, teste }) {
 // Disparo para todos os profissionais com cadastro incompleto (sem foto ou outros campos)
 router.post("/admin/emails/disparar-foto-pendente", requireAdmin, async (req, res) => {
   const profissionais = db.prepare(
-    "SELECT id, nome, email, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills FROM sellers WHERE status NOT IN ('excluido','bloqueado')"
+    `SELECT id, nome, email, foto, ${COLUNAS_PERFIL} FROM sellers WHERE status NOT IN ('excluido','bloqueado')`
   ).all();
 
   const incompletos = profissionais.filter((s) => {
@@ -308,7 +308,7 @@ router.post("/admin/emails/disparar-foto-pendente", requireAdmin, async (req, re
 // GET /api/admin/emails/foto-pendente/preview — quantos serão afetados
 router.get("/admin/emails/foto-pendente/preview", requireAdmin, (req, res) => {
   const profissionais = db.prepare(
-    "SELECT id, foto, titulo, bio, disponibilidade, cidade, segmentos, modalidades, skills FROM sellers WHERE status NOT IN ('excluido','bloqueado')"
+    `SELECT id, foto, ${COLUNAS_PERFIL} FROM sellers WHERE status NOT IN ('excluido','bloqueado')`
   ).all();
   const total = profissionais.filter((s) => pendenciasPerfil(s).length > 0).length;
   res.json({ total });

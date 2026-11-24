@@ -75,31 +75,37 @@ export function explicacaoScore(xp, disc) {
   return `A partir do que o profissional declarou no cadastro: ${partes.length ? partes.join("; ") : "informações equilibradas entre os critérios"}.`;
 }
 
-// Perfil completo do profissional: o que a RYCS exige para o perfil ser
-// aprovado e aparecer para as empresas. Fonte única para os avisos por e-mail,
-// para a inativação de perfil incompleto e para o disparo manual do admin.
+// Perfil completo do profissional. Fonte única para os avisos por e-mail e
+// WhatsApp, o bônus de indicação e o disparo manual do admin. Só entra aqui o que
+// o profissional consegue preencher no cadastro, em "Meu Perfil" ou na aba
+// "Apresentação". Parte do currículo fica em `perfilComercial` (`chave`); as
+// colunas próprias valem para perfis antigos.
 export const CAMPOS_PERFIL = [
   { campo: "foto", label: "Foto de perfil" },
-  { campo: "titulo", label: "Título profissional" },
   { campo: "bio", label: "Descrição pessoal (Bio)" },
-  { campo: "disponibilidade", label: "Disponibilidade" },
+  { campo: "disponibilidade", chave: "disponibilidade", label: "Disponibilidade" },
   { campo: "cidade", label: "Cidade" },
 ];
 export const CAMPOS_PERFIL_LISTA = [
-  { campo: "segmentos", label: "Segmentos de atuação" },
-  { campo: "modalidades", label: "Modalidades de trabalho" },
-  { campo: "skills", label: "Habilidades (Skills)" },
+  { campo: "segmentos", chave: "segmentos", label: "Segmentos de atuação" },
+  { campo: "skills", chave: "habilidades", label: "Habilidades (Skills)" },
 ];
+// Colunas de `sellers` que pendenciasPerfil precisa, além da foto.
+export const COLUNAS_PERFIL = "bio, disponibilidade, cidade, segmentos, skills, perfilComercial";
+
+const lerJson = (v, vazio) => {
+  if (typeof v !== "string") return v ?? vazio;
+  try { return JSON.parse(v || "null") ?? vazio; } catch { return vazio; }
+};
 
 export function pendenciasPerfil(s) {
+  const comercial = lerJson(s?.perfilComercial, {});
   const pendentes = [];
-  for (const { campo, label } of CAMPOS_PERFIL) {
-    if (!String(s?.[campo] ?? "").trim()) pendentes.push(label);
+  for (const { campo, chave, label } of CAMPOS_PERFIL) {
+    if (![s?.[campo], chave && comercial?.[chave]].some((v) => String(v ?? "").trim())) pendentes.push(label);
   }
-  for (const { campo, label } of CAMPOS_PERFIL_LISTA) {
-    let lista = s?.[campo];
-    if (typeof lista === "string") { try { lista = JSON.parse(lista || "[]"); } catch { lista = []; } }
-    if (!Array.isArray(lista) || !lista.length) pendentes.push(label);
+  for (const { campo, chave, label } of CAMPOS_PERFIL_LISTA) {
+    if (![lerJson(s?.[campo], []), comercial?.[chave]].some((v) => Array.isArray(v) && v.length)) pendentes.push(label);
   }
   return pendentes;
 }

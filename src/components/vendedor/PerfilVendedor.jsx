@@ -507,7 +507,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
         <div role="status" className="vx-card" style={{ padding: "12px 16px", marginTop: 12, borderColor: "var(--amber)" }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>Sua conta está inativa</div>
           <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 2, lineHeight: 1.5 }}>
-            O perfil ficou incompleto. Complete foto, título, descrição, disponibilidade, cidade, segmentos, modalidades e habilidades, e a conta volta na hora.
+            O perfil ficou incompleto. Complete foto, descrição, disponibilidade, cidade, segmentos e habilidades, e a conta volta na hora.
           </div>
         </div>
       )}

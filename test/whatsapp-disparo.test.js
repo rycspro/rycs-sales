@@ -112,7 +112,7 @@ test("público de perfil incompleto: só Brasil, só com pendência, inativado e
 
   assert.equal(chamadas.length, 1);
   assert.deepEqual(chamadas[0].corpo.template.components[0].parameters.map((p) => p.text), ["Ana",
-    "foto de perfil, título profissional, descrição pessoal (bio), disponibilidade, cidade, segmentos de atuação, modalidades de trabalho e habilidades (skills)"]);
+    "foto de perfil, descrição pessoal (bio), disponibilidade, cidade, segmentos de atuação e habilidades (skills)"]);
   assert.deepEqual(db.prepare("SELECT sellerId, status, erro FROM whatsapp_envios WHERE disparoId = ? ORDER BY rowid").all(disp.id),
     [{ sellerId: "s1", status: "enviado", erro: "" }, { sellerId: "s8", status: "falhou", erro: "Perfil completo antes do envio" }]);
   const enviados = JSON.parse(db.prepare("SELECT parametros FROM whatsapp_envios WHERE disparoId = ? AND sellerId = 's1'").get(disp.id).parametros);
