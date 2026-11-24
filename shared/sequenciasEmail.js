@@ -16,7 +16,6 @@ import { PLANOS_PROFISSIONAL } from "./planosProfissional.js";
 export const DIA = 24 * 60 * 60 * 1000;
 export const INTERVALO_MIN_POR_PESSOA = 20 * 60 * 60 * 1000;
 export const DIAS_INATIVIDADE = 5;
-export const DIAS_PARA_INATIVAR = 3;
 // Janela de envio no horário de Brasília (UTC-3).
 export const JANELA_ENVIO = { de: 9, ate: 20 };
 // Aquecimento: começa em 150/dia e sobe 50 por dia até o teto.
@@ -170,22 +169,23 @@ const TEXTOS = {
       botao: "See opportunities", aba: "oportunidades",
     }),
   },
+  // Lembrete de perfil. A chave guarda o nome antigo por causa do histórico de envios.
   "onboarding:aviso_inativacao": {
     pt: (d) => ({
-      assunto: `${d.n}, sua conta será desativada em ${DIAS_PARA_INATIVAR} dias`,
-      titulo: `Sua conta será desativada em ${DIAS_PARA_INATIVAR} dias`,
+      assunto: `${d.n}, complete seu perfil e apareça primeiro`,
+      titulo: "Complete seu perfil e apareça primeiro",
       paragrafos: [
         `Seu perfil continua incompleto. Falta: <b>${esc(d.pendencias.join(", "))}</b>.`,
-        `Se ele não for completado em ${DIAS_PARA_INATIVAR} dias, a conta fica inativa e você deixa de receber oportunidades. Nada é apagado: ao completar o perfil, ela volta na hora.`,
+        "Sua conta continua ativa. Na lista que as empresas veem, os perfis mais completos aparecem primeiro.",
       ],
       botao: "Completar meu perfil", aba: "perfil",
     }),
     en: (d) => ({
-      assunto: `${d.n}, your account will be deactivated in ${DIAS_PARA_INATIVAR} days`,
-      titulo: `Your account will be deactivated in ${DIAS_PARA_INATIVAR} days`,
+      assunto: `${d.n}, complete your profile and show up first`,
+      titulo: "Complete your profile and show up first",
       paragrafos: [
         `Your profile is still incomplete. Missing: <b>${esc(d.pendencias.join(", "))}</b>.`,
-        `If it is not completed within ${DIAS_PARA_INATIVAR} days, your account becomes inactive and you stop receiving opportunities. Nothing is deleted: complete your profile and it comes right back.`,
+        "Your account stays active. In the list companies see, the most complete profiles show up first.",
       ],
       botao: "Complete my profile", aba: "perfil",
     }),

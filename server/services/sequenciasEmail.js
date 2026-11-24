@@ -2,8 +2,8 @@
 //
 // A cada 15 minutos: decide, para cada profissional, se cabe um e-mail agora
 // (empresas: ver reativacaoEmpresas.js); respeita 1 por pessoa a cada 20h, a janela de horário, o teto
-// diário de aquecimento do domínio e o descadastro. Também inativa (de forma
-// reversível) quem recebeu o aviso e não completou o perfil em 3 dias.
+// diário de aquecimento do domínio e o descadastro. Perfil incompleto gera só
+// lembrete: a conta continua ativa e visível para as empresas.
 import { createHmac, timingSafeEqual } from "crypto";
 import db, { uid } from "../db.js";
 import { sendEmail, layoutSequencia, urlApp } from "./email.js";
@@ -12,7 +12,7 @@ import { codigoDoUsuario, qualificarIndicacaoProfissional } from "./indicacoes.j
 import { planoAtual } from "./planosProfissional.js";
 import { pendenciasPerfil } from "../../shared/perfilVendedor.js";
 import {
-  DIA, INTERVALO_MIN_POR_PESSOA, DIAS_PARA_INATIVAR, ORDEM_SEQUENCIAS, SEQUENCIAS,
+  DIA, INTERVALO_MIN_POR_PESSOA, ORDEM_SEQUENCIAS, SEQUENCIAS,
   tetoDoDia, dentroDaJanela, idiomaDoPais, proximoEmailVendedor, montarTexto,
 } from "../../shared/sequenciasEmail.js";
 
@@ -96,21 +96,21 @@ export function aoAtualizarPerfil(sellerId) {
   if (user) qualificarIndicacaoProfissional(user.id);
 }
 
-function inativarPerfisIncompletos(agora) {
-  const avisados = db.prepare(`
-    SELECT s.id, s.nome, s.email, s.foto, s.titulo, s.bio, s.disponibilidade, s.cidade, s.segmentos, s.modalidades, s.skills, e.enviadoEm
-    FROM email_sequencia_envios e JOIN sellers s ON s.id = e.destinatarioId
-    WHERE e.destinatarioTipo = 'vendedor' AND e.chave = 'onboarding:aviso_inativacao' AND e.status = 'enviado'
-      AND e.enviadoEm <= ? AND s.inativoEm IS NULL`).all(agora - DIAS_PARA_INATIVAR * DIA);
-  let n = 0;
-  for (const s of avisados) {
-    if (!pendenciasPerfil(s).length) { aoAtualizarPerfil(s.id); continue; }
-    db.prepare("UPDATE sellers SET inativoEm = ?, inativoMotivo = 'perfil_incompleto' WHERE id = ? AND inativoEm IS NULL").run(agora, s.id);
-    const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(s.id);
-    if (user) notificar(user.id, "conta", "Conta inativa", "Seu perfil ficou incompleto. Complete foto, descrição e dados e a conta volta na hora.");
-    n++;
-  }
-  return n;
+// Contas inativadas pela regra antiga de perfil incompleto, que cobrava campos
+// que o cadastro não preenche. A regra saiu; aqui essas contas voltam, sem aviso
+// nem e-mail. Roda a cada subida porque, se um deploy voltar para a versão antiga,
+// ela inativa de novo. Quem voltou (e quando tinha sido inativado) fica em
+// email_sequencia_config, para poder conferir ou desfazer.
+export function reativarInativadosPorPerfil(agora = Date.now()) {
+  return db.transaction(() => {
+    const contas = db.prepare("SELECT id, inativoEm FROM sellers WHERE inativoEm IS NOT NULL AND inativoMotivo = 'perfil_incompleto'").all();
+    if (!contas.length) return 0;
+    const reativar = db.prepare("UPDATE sellers SET inativoEm = NULL, inativoMotivo = '' WHERE id = ?");
+    for (const c of contas) reativar.run(c.id);
+    db.prepare("INSERT INTO email_sequencia_config (chave, valor) VALUES (?, ?)")
+      .run(`reativacao_perfil_incompleto:${agora}`, JSON.stringify(contas));
+    return contas.length;
+  })();
 }
 
 function registrarPerfisCompletos() {
@@ -240,13 +240,12 @@ export async function rodada(agora = Date.now(), { ignorarJanela = false, ignora
   rodando = true;
   try {
     registrarPerfisCompletos();
-    const inativados = inativarPerfisIncompletos(agora);
-    if (!ignorarJanela && !dentroDaJanela(agora)) return { inativados, enviados: 0, foraDaJanela: true };
+    if (!ignorarJanela && !dentroDaJanela(agora)) return { enviados: 0, foraDaJanela: true };
 
     const teto = tetoDoDia((agora - lancamento()) / DIA);
     // Disparo manual do admin pode passar do teto de aquecimento (pedido do dono).
     const restante = ignorarTeto ? MAX_POR_RODADA : Math.min(MAX_POR_RODADA, teto - enviadosHoje(agora));
-    if (restante <= 0) return { inativados, enviados: 0, tetoAtingido: true };
+    if (restante <= 0) return { enviados: 0, tetoAtingido: true };
 
     const gerais = dadosGerais(agora);
     let enviados = 0, falhas = 0;
@@ -270,7 +269,7 @@ export async function rodada(agora = Date.now(), { ignorarJanela = false, ignora
       if (ok) enviados++;
       else if (++falhas >= 3) break; // provedor com problema: para e tenta na próxima rodada
     }
-    return { inativados, enviados, falhas };
+    return { enviados, falhas };
   } finally {
     rodando = false;
   }
@@ -316,6 +315,10 @@ export function resumoSequencias(agora = Date.now()) {
 }
 
 export function iniciarSequenciasEmail() {
+  try {
+    const reativadas = reativarInativadosPorPerfil();
+    if (reativadas) console.log(`[sequencias] ${reativadas} conta(s) reativada(s): perfil incompleto não inativa mais.`);
+  } catch (e) { console.error("[sequencias] reativação:", e.message); }
   if (!sequenciasLigadas()) return;
   lancamento();
   const tick = () => rodada().catch((e) => console.error("[sequencias] rodada:", e.message));

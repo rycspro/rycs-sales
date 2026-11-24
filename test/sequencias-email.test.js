@@ -15,7 +15,7 @@ const base = (extra = {}) => ({
 });
 const proximo = (ctx, dias) => proximoEmailVendedor(ctx, T0 + dias * DIA)?.chave || null;
 
-test("onboarding: boas-vindas no dia 0, perfil no dia 1, oportunidade no 2 e aviso no 3", () => {
+test("onboarding: boas-vindas no dia 0, perfil no dia 1, oportunidade no 2 e lembrete no 3", () => {
   const enviados = new Map();
   const ctx = base({ enviados });
   assert.equal(proximo(ctx, 0), "onboarding:boas_vindas");
@@ -68,6 +68,11 @@ test("textos: todos em PT e EN, assunto com o nome, um botão e valores das regr
       assert.match(t.assunto, /Maria/);
       assert.ok(t.botao && t.aba);
     }
+  }
+  // O lembrete de perfil não ameaça mais desativar a conta.
+  for (const lang of ["pt", "en"]) {
+    const l = montarTexto("onboarding:aviso_inativacao", lang, { nome: "Ana", pendencias: ["Foto de perfil"] });
+    assert.doesNotMatch([l.assunto, l.titulo, ...l.paragrafos].join(" "), /desativad|inativa|deactivat|inactive/i);
   }
   const op = montarTexto("onboarding:oportunidade", "pt", { nome: "Ana", campanhasAtivas: 2 });
   assert.match(op.paragrafos.join(" "), /R\$ 1,50/);
