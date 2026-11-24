@@ -9,6 +9,7 @@ import {
   ImagePlus, Trash2, Eye, EyeOff,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
+import { prepararLogo, ACEITA_LOGO } from "../../lib/logo.js";
 import Indicacoes from "../Indicacoes.jsx";
 import { PAISES, paisPorCode, moedaDoPais } from "../../../shared/paises.js";
 
@@ -388,30 +389,21 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
 
   const enviarLogo = async (e) => {
     const arquivo = e.target.files?.[0];
-    if (!arquivo) return;
-    if (!["image/jpeg", "image/png"].includes(arquivo.type) || arquivo.size > 2 * 1024 * 1024) return aviso("Envie uma imagem JPG ou PNG de até 2 MB.");
-    setEnviandoLogo(true);
-    const reader = new FileReader();
-    reader.onerror = () => { setEnviandoLogo(false); aviso("Não foi possível ler a imagem."); };
-    reader.onload = async () => {
-      const dataUri = reader.result;
-      const img = new Image();
-      img.onerror = () => { setEnviandoLogo(false); aviso("Imagem inválida."); };
-      img.onload = async () => {
-        const r = await api(`/companies/${emp.id}/logo`, {
-          base64: dataUri.split(",")[1], mimetype: arquivo.type,
-          largura: img.width, altura: img.height,
-        });
-        setEnviandoLogo(false);
-        if (!r || r.error) return aviso(r?.error || "Não foi possível enviar o logo.");
-        setLogo(r.logo);
-        up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, logo: r.logo } : c) }));
-        aviso("Logo atualizado.");
-      };
-      img.src = dataUri;
-    };
-    reader.readAsDataURL(arquivo);
     e.target.value = "";
+    if (!arquivo) return;
+    setEnviandoLogo(true);
+    try {
+      const pronto = await prepararLogo(arquivo);
+      const r = await api(`/companies/${emp.id}/logo`, { base64: pronto.dataUri.split(",")[1], mimetype: pronto.mimetype });
+      if (!r || r.error) { aviso(r?.error || "Não foi possível enviar o logo."); return; }
+      setLogo(r.logo);
+      up((d) => ({ companies: d.companies.map((c) => c.id === emp.id ? { ...c, logo: r.logo } : c) }));
+      aviso("Logo atualizado.");
+    } catch (erro) {
+      aviso(erro?.message || "Não foi possível ler a imagem.");
+    } finally {
+      setEnviandoLogo(false);
+    }
   };
 
   const removerLogo = async () => {
@@ -553,7 +545,7 @@ export default function ConfiguracoesEmpresa({ emp, up, aviso, recarregar, db, s
             </div>
             {/* Logo upload inline no header */}
             <div style={{ flexShrink: 0, display: "flex", flexDirection: mobile ? "row" : "column", gap: mobile ? 8 : 4, justifyContent: mobile ? "flex-start" : "initial" }}>
-              <input ref={inputLogoRef} type="file" accept="image/jpeg,image/png" onChange={enviarLogo} style={{ display: "none" }} />
+              <input ref={inputLogoRef} type="file" accept={ACEITA_LOGO} aria-label="Escolher logo da empresa" onChange={enviarLogo} style={{ display: "none" }} />
               <button
                 onClick={() => inputLogoRef.current?.click()}
                 disabled={enviandoLogo}

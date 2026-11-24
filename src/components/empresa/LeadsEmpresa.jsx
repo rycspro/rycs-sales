@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleDollarSign, ContactRound, Download, FileSpreadsheet, Filter, Kanban, List, Megaphone, Percent, Sparkles, TrendingUp, Upload } from "lucide-react";
+import { CircleDollarSign, ContactRound, Download, FileSpreadsheet, Filter, Kanban, List, Megaphone, Percent, ReceiptText, Sparkles, TrendingUp, Upload } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money, dataCurta } from "../../lib/utils.js";
 import { ETAPAS, ORDEM_ETAPAS } from "../../../shared/pipeline.js";
@@ -8,7 +8,7 @@ import PipelineKanban from "./PipelineKanban.jsx";
 
 const CAMPOS = [["nome","Nome *"],["empresa","Empresa"],["cargo","Cargo"],["telefone","Telefone"],["email","E-mail"],["valorEstimado","Valor estimado"]];
 
-export default function LeadsEmpresa({ emp, db, aviso }) {
+export default function LeadsEmpresa({ emp, db, aviso, onGerarPedido }) {
   const locais = (db.leads || []).filter((l) => l.companyId === emp.id);
   const [leads, setLeads] = useState(locais), [etapa, setEtapa] = useState("");
   const [aberto, setAberto] = useState(false), [tabela, setTabela] = useState({ colunas: [], linhas: [] }), [mapa, setMapa] = useState({});
@@ -30,6 +30,14 @@ export default function LeadsEmpresa({ emp, db, aviso }) {
 
   const aplicarTabela = (t) => { setTabela(t); setMapa(sugerirMapeamento(t.colunas)); setRelatorio(null); setAberto(true); };
   const lerArquivo = async (file) => { try { aplicarTabela(await lerArquivoLeads(file)); } catch (e) { aviso(e.message); } };
+  const [gerando, setGerando] = useState("");
+  const gerarPedido = async (leadId) => {
+    setGerando(leadId);
+    const r = await api("/pedidos/gerar", { leadId });
+    setGerando("");
+    if (!r || r.error) return aviso(r?.error || "Não foi possível gerar o pedido.");
+    onGerarPedido?.(r.id);
+  };
   const baixarModelo = () => {
     const blob = new Blob(["nome;empresa;cargo;telefone;email;valorEstimado\n"], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "modelo-leads-rycs.csv"; a.click(); URL.revokeObjectURL(a.href);
@@ -97,7 +105,7 @@ export default function LeadsEmpresa({ emp, db, aviso }) {
         onLeadsAtualizado={carregar}
       />
     ) : (
-    <div className="vx-grid">{!visiveis.length&&<div className="vx-card" style={{padding:28,textAlign:"center"}}><TrendingUp size={26} color="var(--muted)"/><div className="vx-disp" style={{marginTop:8}}>Nenhum lead nesta etapa</div><div className="vx-mut" style={{fontSize:13,marginTop:4}}>Importe uma lista ou aguarde a execução das campanhas.</div></div>}{visiveis.map((l)=><div key={l.id} className="vx-card vx-row" style={{padding:14,borderLeft:`3px solid ${ETAPAS[l.etapa]?.cor||"var(--muted)"}`}}><div style={{minWidth:0}}><b>{l.nome}</b><div className="vx-mut" style={{fontSize:12}}>{l.empresa||"Empresa não informada"}{l.cargo?` · ${l.cargo}`:""}</div><div className="vx-mut" style={{fontSize:11.5,marginTop:3}}>Atualizado {dataCurta(l.atualizadoEm||l.criadoEm)}</div></div><div style={{textAlign:"right"}}><span className="vx-badge">{ETAPAS[l.etapa]?.nome||l.etapa}</span><div className="vx-mono" style={{fontSize:12,marginTop:5}}>{money(l.valorEstimado||0)}</div></div></div>)}</div>
+    <div className="vx-grid">{!visiveis.length&&<div className="vx-card" style={{padding:28,textAlign:"center"}}><TrendingUp size={26} color="var(--muted)"/><div className="vx-disp" style={{marginTop:8}}>Nenhum lead nesta etapa</div><div className="vx-mut" style={{fontSize:13,marginTop:4}}>Importe uma lista ou aguarde a execução das campanhas.</div></div>}{visiveis.map((l)=><div key={l.id} className="vx-card vx-row" style={{padding:14,borderLeft:`3px solid ${ETAPAS[l.etapa]?.cor||"var(--muted)"}`}}><div style={{minWidth:0}}><b>{l.nome}</b><div className="vx-mut" style={{fontSize:12}}>{l.empresa||"Empresa não informada"}{l.cargo?` · ${l.cargo}`:""}</div><div className="vx-mut" style={{fontSize:11.5,marginTop:3}}>Atualizado {dataCurta(l.atualizadoEm||l.criadoEm)}</div></div><div style={{textAlign:"right"}}><span className="vx-badge">{ETAPAS[l.etapa]?.nome||l.etapa}</span><div className="vx-mono" style={{fontSize:12,marginTop:5}}>{money(l.valorEstimado||0)}</div>{onGerarPedido&&<button type="button" className="vx-btn vx-btn-sm" style={{marginTop:6,minHeight:44}} disabled={gerando===l.id} onClick={()=>gerarPedido(l.id)}><ReceiptText size={13} aria-hidden="true"/> {gerando===l.id?"Gerando…":"Gerar pedido"}</button>}</div></div>)}</div>
     )}
     <div className="vx-notice" style={{marginTop:14}}><Sparkles size={13} style={{verticalAlign:-2,marginRight:6}}/>A Inteligência Artificial global usa o contexto desta tela e a Base de Conhecimento para sugerir abordagem e próximo passo sem inventar dados.</div>
   </div>;

@@ -3,6 +3,9 @@ import jwt from "jsonwebtoken";
 import { verificarPorMensagens } from "../services/whatsappVerificacao.js";
 import { processarRespostas as processarRespostasReativacao } from "../services/reativacaoEmpresas.js";
 import { randomBytes } from "crypto";
+import { separarAviso, receberAviso as receberAvisoWhatsapp } from "../services/canaisWhatsapp.js";
+import { receberAviso as receberAvisoInstagram } from "../services/canaisInstagram.js";
+import { receberAvisoGrupo } from "../services/grupoSuporte.js";
 import {
   metaConfigurada, urlLogin, concluirLogin, conexaoDe, resumoConexao, opcoesDisponiveis,
   configurar, desconectar, metricas, resumoLeads, assinaturaValida, processarAvisoWebhook, ErroMeta,
@@ -26,14 +29,28 @@ metaPublico.get("/webhooks/meta", (req, res) => {
   res.sendStatus(403);
 });
 
+// O Instagram pode assinar com o segredo do app da Meta ou com o do produto
+// Instagram: vale qualquer um dos dois.
+const assinado = (req) => {
+  const cabecalho = req.get("x-hub-signature-256");
+  return assinaturaValida(req.rawBody, cabecalho)
+    || (req.body?.object === "instagram" && !!process.env.INSTAGRAM_APP_SECRET && assinaturaValida(req.rawBody, cabecalho, process.env.INSTAGRAM_APP_SECRET));
+};
+const tratar = (nome, f) => { try { f(); } catch (e) { console.warn(`[meta] ${nome}:`, e?.message); } };
+
 metaPublico.post("/webhooks/meta", (req, res) => {
-  if (!assinaturaValida(req.rawBody, req.get("x-hub-signature-256"))) return res.sendStatus(401);
+  if (!assinado(req)) return res.sendStatus(401);
   // Responde já: a Meta reenvia se demorar. O processamento segue em seguida.
   res.sendStatus(200);
   setImmediate(() => {
-    processarAvisoWebhook(req.body).catch((e) => console.warn("[meta] webhook:", e.message));
-    verificarPorMensagens(req.body).catch((e) => console.warn("[meta] verificação whatsapp:", e.message));
-    processarRespostasReativacao(req.body).catch((e) => console.warn("[meta] reativação:", e.message));
+    if (req.body?.object === "instagram") return tratar("instagram", () => receberAvisoInstagram(req.body));
+    // Números das empresas e dos vendedores não passam pela caixa da RYCS.
+    const { rycs, clientes } = separarAviso(req.body);
+    if (clientes) tratar("canais", () => receberAvisoWhatsapp(clientes));
+    tratar("grupo de suporte", () => receberAvisoGrupo(rycs));
+    processarAvisoWebhook(rycs).catch((e) => console.warn("[meta] webhook:", e.message));
+    verificarPorMensagens(rycs).catch((e) => console.warn("[meta] verificação whatsapp:", e.message));
+    processarRespostasReativacao(rycs).catch((e) => console.warn("[meta] reativação:", e.message));
   });
 });
 

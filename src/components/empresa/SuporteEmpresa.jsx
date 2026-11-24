@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { api } from "../../lib/api.js";
 import {
   Plus, Search, BookOpen, Headset, Megaphone, Users, Wallet, GraduationCap,
   FolderOpen, Settings2, MessageCircle, Mail, X, Inbox, ChevronRight, Paperclip,
@@ -111,6 +112,9 @@ export default function SuporteEmpresa({ emp, aviso }) {
   const [busca, setBusca] = useState("");
   const [drawer, setDrawer] = useState(null); // { categoria } | null
   const [categoriaAberta, setCategoriaAberta] = useState(null);
+  // Grupo de suporte da empresa, liberado depois do pagamento do plano.
+  const [grupo, setGrupo] = useState(null);
+  useEffect(() => { api("/suporte/meu-grupo").then((r) => { if (r?.link) setGrupo(r); }); }, [emp?.id]);
   const refAjuda = useRef(null);
   const refAtendimento = useRef(null);
 
@@ -224,9 +228,12 @@ export default function SuporteEmpresa({ emp, aviso }) {
                 <div style={{ fontSize: 12, color: "#737373" }}>Atendimento em horário comercial.</div>
               </div>
             </div>
+            {grupo && (
+              <a href={grupo.link} target="_blank" rel="noreferrer" className="vx-btn vx-btn-sm vx-btn-primary" style={{ justifyContent: "center", minHeight: 44 }}>Entrar no grupo de suporte</a>
+            )}
             {WHATSAPP_SUPORTE ? (
               <a href={`https://wa.me/${WHATSAPP_SUPORTE.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="vx-btn vx-btn-sm" style={{ justifyContent: "center", background: AZUL, borderColor: AZUL, color: "#fff" }}>Conversar no WhatsApp</a>
-            ) : (
+            ) : !grupo && (
               <button type="button" className="vx-btn vx-btn-sm" disabled style={{ justifyContent: "center" }}>Número a configurar</button>
             )}
           </div>

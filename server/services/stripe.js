@@ -28,6 +28,7 @@ import { MOEDA_INTERNACIONAL, valorInternacionalNoCiclo } from "../../shared/pre
 import { normalizarMoeda, paraMenorUnidade, semCentavos, formatarMoeda } from "../../shared/moedas.js";
 import { registrarMovimento } from "./financeiro.js";
 import { qualificarIndicacao } from "./indicacoes.js";
+import { aoPagarPlano } from "./grupoSuporte.js";
 import { concluir as concluirEtapaOnboarding } from "./onboarding.js";
 
 const API = "https://api.stripe.com/v1";
@@ -337,6 +338,8 @@ function liberar(sub, { status, proximaCobranca = null, trialFim = null }) {
   })();
   try { concluirEtapaOnboarding(sub.companyId, "plano"); } catch { /* empresa fora do onboarding */ }
   if (jaEstava) return;
+  // Trial ainda não é pagamento: o grupo de suporte sai quando o plano é pago.
+  if (status === "ativa") aoPagarPlano(sub.companyId);
   const user = usuarioDaEmpresa(sub.companyId);
   if (!user) return;
   if (status === "trial") notificar(user.id, "assinatura", `Plano ${planoDe(sub.plano).nome} liberado`, "Seu período gratuito começou. A cobrança acontece no fim dele, no cartão cadastrado.");

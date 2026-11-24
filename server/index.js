@@ -11,6 +11,9 @@ import { authMiddleware } from "./middleware/auth.js";
 import { onboardingGuard } from "./middleware/onboardingGuard.js";
 import { ACOES, CAMPOS, SISTEMA_AUDITOR } from "../shared/acoes.js";
 import agendaRoutes, { agendaPublica } from "./routes/agendaComercial.js";
+import erpRoutes, { erpPublico } from "./routes/erp.js";
+import canaisRoutes, { canaisPublico } from "./routes/canais.js";
+import grupoSuporteRoutes, { grupoSuportePublico } from "./routes/grupoSuporte.js";
 import authRoutes from "./routes/auth.js";
 import stateRoutes from "./routes/state.js";
 import sellersRoutes from "./routes/sellers.js";
@@ -182,6 +185,9 @@ const authLimiter = rateLimit({
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,
+  // Os avisos da Meta vêm de poucos IPs e somam as conversas de todas as
+  // empresas: têm limite próprio, abaixo.
+  skip: (req) => req.path === "/webhooks/meta",
   message: { error: "Limite de requisições atingido." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -196,6 +202,7 @@ app.use("/api/auth/change-password", authLimiter);
 app.use("/api/onboarding/convites", authLimiter);
 app.use("/api/parceiros/inscricao", authLimiter);
 app.use("/api", apiLimiter);
+app.use("/api/webhooks/meta", rateLimit({ windowMs: 60 * 1000, max: 3000, standardHeaders: true, legacyHeaders: false }));
 
 // --- Routes ---
 app.use("/api", authRoutes);
@@ -205,6 +212,12 @@ app.use("/api", paymentRoutes);
 // Consulta do convite de onboarding: quem abre o link ainda não tem conta.
 app.use("/api", onboardingPublico);
 app.use("/api", agendaPublica);
+// Convite do grupo de suporte: aberto pelo botão do WhatsApp, sem sessão.
+app.use("/api", grupoSuportePublico);
+// Retorno do login do Instagram: chega sem cookie de sessão.
+app.use("/api", canaisPublico);
+// Retorno do login do Bling e entrada do ERP (auth = token na URL).
+app.use("/api", erpPublico);
 // Webhook e retorno do login da Meta: chegam sem cookie de sessão.
 app.use("/api", metaPublico);
 // Webhook do Stripe (pagamento internacional): também chega sem cookie.
@@ -275,6 +288,9 @@ app.use("/api", authMiddleware, materiaisRoutes);
 app.use("/api", authMiddleware, academyEmpresaRoutes);
 app.use("/api", authMiddleware, colaboradoresRoutes);
 app.use("/api", authMiddleware, agendaRoutes);
+app.use("/api", authMiddleware, grupoSuporteRoutes);
+app.use("/api", authMiddleware, canaisRoutes);
+app.use("/api", authMiddleware, erpRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

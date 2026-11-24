@@ -10,7 +10,8 @@ import MolduraOnboarding from "./MolduraOnboarding.jsx";
 import { api } from "../../lib/api.js";
 import { rastrear } from "../../lib/rastreio.js";
 import { parametro, limparConviteOnboarding, ROTAS, navegar } from "../../lib/rotas.js";
-import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
+import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboarding.js";
+import { prepararLogo, ACEITA_LOGO } from "../../lib/logo.js";
 
 // Etapa 1 do onboarding para quem ainda não tem conta: criar o acesso
 // (nome e logo da empresa, e-mail, senha e WhatsApp), entrar com uma conta existente ou recuperar a
@@ -18,13 +19,6 @@ import { ETAPAS, SENHA_MIN_EMPRESA, validarSenhaEmpresa, LOGO_MAX_BYTES, avaliar
 // travado no do convite.
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const lerArquivo = (arquivo) => new Promise((ok, falha) => {
-  const r = new FileReader();
-  r.onload = () => ok(String(r.result));
-  r.onerror = () => falha(r.error);
-  r.readAsDataURL(arquivo);
-});
 
 function Campo({ id, label, erro, dica, children }) {
   return (
@@ -95,12 +89,9 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
     if (!arquivo) return;
     limparErro("logo");
     try {
-      const svgTexto = arquivo.type === "image/svg+xml" ? await arquivo.text() : "";
-      const erro = avaliarLogo({ mimetype: arquivo.type, tamanhoBytes: arquivo.size, svgTexto });
-      if (erro) { setErros((e) => ({ ...e, logo: erro })); return; }
-      setLogo({ dataUri: await lerArquivo(arquivo), mimetype: arquivo.type });
-    } catch {
-      setErros((e) => ({ ...e, logo: "Não foi possível ler o arquivo. Tente outro." }));
+      setLogo(await prepararLogo(arquivo));
+    } catch (e) {
+      setErros((x) => ({ ...x, logo: e?.message || "Não foi possível ler o arquivo. Tente outro." }));
     }
   };
 
@@ -253,10 +244,10 @@ export default function EtapaAcesso({ onRegister, onLogin, conviteToken = null }
                           </button>
                         )}
                       </div>
-                      <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                      <input ref={inputLogo} type="file" hidden accept={ACEITA_LOGO}
                         onChange={(e) => escolherLogo(e.target.files?.[0])} />
                     </div>
-                    <div id={`${id}-logo-dica`} className="vx-onb-dica">Envie o <b>logo oficial da sua empresa</b> (não uma foto pessoal). PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
+                    <div id={`${id}-logo-dica`} className="vx-onb-dica">Envie o <b>logo oficial da sua empresa</b> (não uma foto pessoal). Qualquer formato de imagem e qualquer proporção: ajustamos o tamanho sozinhos. Fundo transparente (PNG ou SVG) fica melhor.</div>
                     {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
                   </div>
 

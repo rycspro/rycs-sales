@@ -1,9 +1,10 @@
 // Catálogo de integrações da Central de Integrações (Leads > Integrações).
 // Apenas metadados — a apresentação fica nos componentes.
 //
-// IMPORTANTE: somente a Meta Ads e o Webhook são reais. A Meta usa SEMPRE o
-// estado da conexão verdadeira (/meta/conexao) e o Webhook o de /webhooks/config.
-// As demais são "Em breve": catálogo preparado, sem conexão fictícia.
+// IMPORTANTE: são reais a Meta Ads (/meta/conexao), o Webhook
+// (/webhooks/config), WhatsApp e Instagram (/canais) e os ERPs (/erp): o status
+// vem SEMPRE dessas rotas. As demais são "Em breve": catálogo preparado, sem
+// conexão fictícia.
 //
 // O catálogo é organizado POR PAÍS (segue o idioma do login): ferramentas
 // globais aparecem em todos; cada país acrescenta as suas ferramentas locais.
@@ -15,6 +16,8 @@ export const CATEGORIAS = [
   { chave: "crm", rotulo: "CRM" },
   { chave: "formularios", rotulo: "Formulários" },
   { chave: "automacoes", rotulo: "Automações" },
+  { chave: "erp", rotulo: "ERP" },
+  { chave: "canais", rotulo: "Atendimento" },
 ];
 
 export const FILTROS = [
@@ -25,6 +28,8 @@ export const FILTROS = [
   { chave: "crm", rotulo: "CRM" },
   { chave: "formularios", rotulo: "Formulários" },
   { chave: "automacoes", rotulo: "Automações" },
+  { chave: "erp", rotulo: "ERP" },
+  { chave: "canais", rotulo: "Atendimento" },
 ];
 
 // Logotipo: `slug` = ícone oficial (Simple Icons, na cor da marca); senão
@@ -33,6 +38,9 @@ export const FILTROS = [
 export const FERRAMENTAS = {
   // ── Globais (todos os países) ─────────────────────────────────────────
   "meta":          { nome: "Meta Ads", tipo: "meta", categoria: "anuncios", slug: "meta", cor: "#0866FF", sigla: "M", descricao: "Receba automaticamente leads dos anúncios do Facebook e Instagram." },
+  "whatsapp":      { nome: "WhatsApp", tipo: "canal", canal: "whatsapp", categoria: "canais", slug: "whatsapp", cor: "#25D366", sigla: "W", descricao: "Atenda os leads pelo WhatsApp da empresa ou do profissional, com auditoria da IA." },
+  "instagram":     { nome: "Instagram", tipo: "canal", canal: "instagram", categoria: "canais", slug: "instagram", cor: "#E4405F", sigla: "I", descricao: "Receba directs e comentários do Instagram junto com os seus leads." },
+  "erp-generico":  { nome: "Outro ERP", tipo: "erp", provedor: "generico", categoria: "erp", slug: null, cor: "#4338CA", sigla: "ERP", descricao: "Conecte qualquer ERP: receba produtos e clientes e envie os pedidos aprovados." },
   "google-ads":    { nome: "Google Ads", categoria: "anuncios", slug: "googleads", cor: "#4285F4", sigla: "G", descricao: "Receba leads gerados pelos formulários dos seus anúncios." },
   "tiktok-ads":    { nome: "TikTok Ads", categoria: "anuncios", slug: "tiktok", cor: "#111111", sigla: "T", descricao: "Centralize contatos captados pelas campanhas do TikTok." },
   "linkedin-ads":  { nome: "LinkedIn Ads", categoria: "anuncios", dominio: "linkedin.com", cor: "#0A66C2", sigla: "in", descricao: "Receba leads dos formulários de campanhas profissionais." },
@@ -55,6 +63,9 @@ export const FERRAMENTAS = {
   "pipedrive":     { nome: "Pipedrive", categoria: "crm", dominio: "pipedrive.com", cor: "#1A1A1A", sigla: "P", descricao: "Conecte contatos e oportunidades do funil de vendas." },
 
   // ── Brasil ────────────────────────────────────────────────────────────
+  "bling":         { nome: "Bling", tipo: "erp", provedor: "bling", categoria: "erp", dominio: "bling.com.br", cor: "#33AD5C", sigla: "B", descricao: "Use o catálogo e os clientes do Bling e envie os pedidos aprovados." },
+  "tiny":          { nome: "Olist Tiny", tipo: "erp", provedor: "tiny", categoria: "erp", dominio: "tiny.com.br", cor: "#0B5FFF", sigla: "T", descricao: "Use o catálogo e os clientes do Tiny e envie os pedidos aprovados." },
+  "omie":          { nome: "Omie", tipo: "erp", provedor: "omie", categoria: "erp", dominio: "omie.com.br", cor: "#001E27", sigla: "O", descricao: "Use o catálogo e os clientes do Omie e envie os pedidos aprovados." },
   "rd-station":    { nome: "RD Station", categoria: "crm", dominio: "rdstation.com", cor: "#19B9A7", sigla: "RD", descricao: "Sincronize leads e informações comerciais." },
   "agendor":       { nome: "Agendor", categoria: "crm", dominio: "agendor.com.br", cor: "#2F80ED", sigla: "A", descricao: "Centralize contatos e oportunidades comerciais." },
 
@@ -140,7 +151,9 @@ export const PAISES = [
 // Monta a lista de integrações de um país (id → objeto, com o id embutido).
 export function integracoesDoPais(chave) {
   const pais = PAISES.find((p) => p.chave === chave) || PAISES[0];
-  return pais.ids.map((id) => ({ id, ...FERRAMENTAS[id] })).filter((x) => x.nome);
+  // Atendimento e ERP existem em todos os países; os ERPs brasileiros, só no Brasil.
+  const ids = ["whatsapp", "instagram", ...(pais.chave === "br" ? ["bling", "tiny", "omie"] : []), "erp-generico", ...pais.ids];
+  return ids.map((id) => ({ id, ...FERRAMENTAS[id] })).filter((x) => x.nome);
 }
 
 // País inicial a partir do idioma logado (localStorage do i18n); cai no Brasil.

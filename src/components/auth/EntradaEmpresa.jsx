@@ -7,7 +7,8 @@ import ComboSelect from "../ui/ComboSelect.jsx";
 import { api } from "../../lib/api.js";
 import { cadastroConcluido, dadosRastreio, rastrear } from "../../lib/rastreio.js";
 import { ROTAS, navegar } from "../../lib/rotas.js";
-import { SENHA_MIN_EMPRESA, validarSenhaEmpresa, LOGO_MAX_BYTES, avaliarLogo } from "../../../shared/onboarding.js";
+import { SENHA_MIN_EMPRESA, validarSenhaEmpresa } from "../../../shared/onboarding.js";
+import { prepararLogo, ACEITA_LOGO } from "../../lib/logo.js";
 import { useI18n } from "../../lib/i18n.jsx";
 import { PAISES, paisPadraoPorLocale, moedaDoPais } from "../../../shared/paises.js";
 
@@ -40,18 +41,9 @@ export default function EntradaEmpresa() {
     if (!arquivo) return;
     setErros((e) => { const { logo: _l, ...resto } = e; return resto; });
     try {
-      const svgTexto = arquivo.type === "image/svg+xml" ? await arquivo.text() : "";
-      const erro = avaliarLogo({ mimetype: arquivo.type, tamanhoBytes: arquivo.size, svgTexto });
-      if (erro) { setErros((e) => ({ ...e, logo: erro })); return; }
-      const dataUri = await new Promise((ok, falha) => {
-        const r = new FileReader();
-        r.onerror = () => falha(r.error);
-        r.onload = () => ok(String(r.result));
-        r.readAsDataURL(arquivo);
-      });
-      setLogo({ dataUri, mimetype: arquivo.type });
-    } catch {
-      setErros((e) => ({ ...e, logo: "Não foi possível ler o arquivo. Tente outro." }));
+      setLogo(await prepararLogo(arquivo));
+    } catch (e) {
+      setErros((x) => ({ ...x, logo: e?.message || "Não foi possível ler o arquivo. Tente outro." }));
     }
   };
 
@@ -168,10 +160,10 @@ export default function EntradaEmpresa() {
                   </button>
                 )}
               </div>
-              <input ref={inputLogo} type="file" hidden accept="image/png,image/svg+xml,image/jpeg,image/webp"
+              <input ref={inputLogo} type="file" hidden accept={ACEITA_LOGO}
                 onChange={(e) => escolherLogo(e.target.files?.[0])} />
             </div>
-            <div id={`${id}-logo-dica`} className="vx-onb-dica">Envie o <b>logo oficial da sua empresa</b> (não uma foto pessoal). PNG ou SVG, de preferência com fundo transparente. Até {Math.round(LOGO_MAX_BYTES / 1024 / 1024)} MB.</div>
+            <div id={`${id}-logo-dica`} className="vx-onb-dica">Envie o <b>logo oficial da sua empresa</b> (não uma foto pessoal). Qualquer formato de imagem e qualquer proporção: ajustamos o tamanho sozinhos. Fundo transparente (PNG ou SVG) fica melhor.</div>
             {erros.logo && <div id={`${id}-logo-erro`} className="vx-onb-erro" role="alert">{erros.logo}</div>}
           </div>
 

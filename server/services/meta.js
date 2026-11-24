@@ -103,6 +103,9 @@ export function assinaturaValida(corpoBruto, cabecalho, segredo = process.env.ME
 
 let _fetch = (...a) => fetch(...a);
 export function usarFetch(f) { _fetch = f; }
+// Chamada crua (formulário, download de mídia): passa pelo mesmo fetch dos testes.
+export const buscar = (...a) => _fetch(...a);
+export const versaoGraph = () => VERSAO();
 
 export class ErroMeta extends Error {
   constructor(msg, codigo, status) { super(msg); this.codigo = codigo; this.status = status; }

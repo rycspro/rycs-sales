@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X, Clock3, ArrowRight, Webhook, Code2, Copy, Check, RefreshCw, Power, ChevronDown } from "lucide-react";
 import { api } from "../../../lib/api.js";
 import IntegracaoMeta from "../IntegracaoMeta.jsx";
+import PainelErp from "./PainelErp.jsx";
 import { PAISES, FILTROS, STATUS, ORDEM_STATUS, statusMeta, rotuloCategoria, integracoesDoPais, paisDoIdioma } from "./catalogo.js";
 
 // ── Seletor de país (menu suspenso) ─────────────────────────────────────────
@@ -336,6 +337,8 @@ function Drawer({ item, statusChave, aviso, campanhas, onFechar }) {
             <IntegracaoMeta aviso={aviso} campanhas={campanhas} semCabecalho />
           ) : item.tipo === "webhook" ? (
             <PainelWebhook aviso={aviso} />
+          ) : item.tipo === "erp" ? (
+            <PainelErp provedor={item.provedor} aviso={aviso} />
           ) : (
             <div style={{ textAlign: "center", padding: "32px 8px" }}>
               <div style={{
@@ -357,9 +360,11 @@ function Drawer({ item, statusChave, aviso, campanhas, onFechar }) {
 }
 
 // ── Página: Central de Integrações ──────────────────────────────────────────
-export default function Integracoes({ aviso, campanhas = [] }) {
+export default function Integracoes({ aviso, campanhas = [], onAbrirCanal }) {
   const [conexao, setConexao] = useState(null);
   const [webhook, setWebhook] = useState(null);
+  const [canais, setCanais] = useState([]);
+  const [erp, setErp] = useState(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   // País do catálogo: começa no idioma logado; os botões no topo alternam.
@@ -376,11 +381,18 @@ export default function Integracoes({ aviso, campanhas = [] }) {
   useEffect(() => {
     api("/meta/conexao").then((c) => setConexao(c || { conectado: false })).catch(() => setConexao({ conectado: false }));
     api("/webhooks/config").then((w) => setWebhook(w || { ativado: false })).catch(() => setWebhook({ ativado: false }));
+    api("/canais").then((r) => setCanais(r?.conexoes || []));
+    api("/erp").then((r) => setErp(r && !r.error ? r : null));
   }, [aberto]);
 
   const statusDe = (item) => {
     if (item.tipo === "meta") return statusMeta(conexao);
     if (item.tipo === "webhook") return webhook?.ativado && webhook?.ativo ? "conectado" : "nao_conectado";
+    if (item.tipo === "canal") {
+      const minhas = canais.filter((c) => c.canal === item.canal);
+      return minhas.some((c) => c.status === "ativa") ? "conectado" : minhas.length ? "atencao" : "nao_conectado";
+    }
+    if (item.tipo === "erp") return erp?.conectado && erp.provedor === item.provedor ? (erp.status === "ativa" ? "conectado" : "atencao") : "nao_conectado";
     return "em_breve";
   };
 
@@ -391,7 +403,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
       const st = statusDe(item);
       if (filtro === "conectadas") return st === "conectado";
       if (filtro === "disponiveis") return item.tipo !== "em_breve";
-      if (["anuncios", "crm", "formularios", "automacoes"].includes(filtro)) return item.categoria === filtro;
+      if (["anuncios", "crm", "formularios", "automacoes", "erp", "canais"].includes(filtro)) return item.categoria === filtro;
       return true; // "todas"
     });
     // Ativas/conectáveis primeiro, "Em breve" por último (sort estável mantém a
@@ -400,7 +412,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
       .map((item, i) => ({ item, i, rank: ORDEM_STATUS[statusDe(item)] ?? 9 }))
       .sort((a, b) => a.rank - b.rank || a.i - b.i)
       .map((x) => x.item);
-  }, [busca, filtro, conexao, webhook, catalogo]);
+  }, [busca, filtro, conexao, webhook, canais, erp, catalogo]);
 
   const itemAberto = aberto ? catalogo.find((i) => i.id === aberto) : null;
 
@@ -411,7 +423,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
         <div style={{ minWidth: 0 }}>
           <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", margin: "0 0 5px", letterSpacing: "-.02em" }}>Integrações</h2>
           <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-            Conecte suas ferramentas e centralize automaticamente os leads para seus profissionais.
+            Conecte atendimento, anúncios e ERP e centralize automaticamente os leads para seus profissionais.
           </p>
         </div>
         <SeletorPais pais={pais} onEscolher={(c) => { setPais(c); setFiltro("todas"); }} />
@@ -457,7 +469,7 @@ export default function Integracoes({ aviso, campanhas = [] }) {
       ) : (
         <div className="vx-integra-grid">
           {lista.map((item) => (
-            <Card key={item.id} item={item} statusChave={statusDe(item)} onAbrir={(i) => setAberto(i.id)} />
+            <Card key={item.id} item={item} statusChave={statusDe(item)} onAbrir={(i) => (i.tipo === "canal" ? onAbrirCanal?.(i.canal) : setAberto(i.id))} />
           ))}
         </div>
       )}

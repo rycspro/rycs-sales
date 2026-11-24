@@ -6,7 +6,7 @@ import { randomBytes } from "crypto";
 import { camposPendentesEmpresa, STATUS_EMPRESA } from "../../shared/empresa.js";
 import { ACOES } from "../../shared/acoes.js";
 import { normalizarRegras, PADRAO, SEMPRE_MANUAL, VERSAO_REGRAS } from "../../shared/aprovacoes.js";
-import { avaliarFoto } from "../../shared/fotoPerfil.js";
+import { avaliarLogo } from "../../shared/onboarding.js";
 import { extratoEmpresa, posicaoEmpresa } from "../services/financeiro.js";
 import { emailStatusEmpresa } from "../services/email.js";
 import Anthropic from "@anthropic-ai/sdk";
@@ -445,8 +445,8 @@ router.patch("/company/approval-rules", (req, res) => {
   res.json({ regras });
 });
 
-// Logo da empresa. Passa pela mesma verificação técnica da foto de perfil:
-// formato, peso, resolução e enquadramento — nada de conteúdo.
+// Logo da empresa. Regra própria do logo (formato, 1 MB e SVG sem script): logo
+// costuma ser largo e pequeno, e a regra da foto de perfil o recusava.
 // Serve a logo guardada como data URI. A URL que o /state entrega leva a
 // versão (?v=), então o cache pode ser longo.
 router.get("/companies/:id/logo", (req, res) => {
@@ -459,17 +459,18 @@ router.post("/companies/:id/logo", (req, res) => {
   if (role !== "admin" && entityId !== req.params.id)
     return res.status(403).json({ error: "Sem permissão" });
 
-  const { base64, mimetype, largura, altura } = req.body || {};
-  if (!base64) return res.status(400).json({ error: "Envie a imagem" });
+  const mimetype = String(req.body?.mimetype || "");
+  const buffer = Buffer.from(String(req.body?.base64 || ""), "base64");
+  if (!buffer.length) return res.status(400).json({ error: "Envie a imagem" });
+  const erro = avaliarLogo({
+    mimetype, tamanhoBytes: buffer.length,
+    svgTexto: mimetype === "image/svg+xml" ? buffer.toString("utf8") : "",
+  });
+  if (erro) return res.status(422).json({ error: erro });
 
-  const tamanhoBytes = Math.round((String(base64).length * 3) / 4);
-  const avaliacao = avaliarFoto({ mimetype, tamanhoBytes, largura: Number(largura), altura: Number(altura) });
-  if (!avaliacao.aprovada)
-    return res.status(422).json({ error: "A imagem não passou na verificação.", avaliacao });
-
-  const dataUri = `data:${mimetype};base64,${base64}`;
+  const dataUri = `data:${mimetype};base64,${buffer.toString("base64")}`;
   db.prepare("UPDATE companies SET logo = ? WHERE id = ?").run(dataUri, req.params.id);
-  res.json({ ok: true, logo: dataUri, avaliacao });
+  res.json({ ok: true, logo: dataUri });
 });
 
 // ─── ADMIN: Criar empresa com login ───────────────────────────────────────────

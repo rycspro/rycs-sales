@@ -226,8 +226,27 @@ export function validarPerfilEmpresa(dados = {}) {
 
 // Logo: PNG ou SVG (de preferência com fundo transparente); JPG e WebP também
 // passam. Guardado como data URI, como o logo que a plataforma já usa.
+//
+// Dois limites: o arquivo que o dono escolhe pode ser bem maior e em outros
+// formatos (o navegador reduz, src/lib/logo.js); o que chega ao servidor e fica
+// guardado tem até 1 MB. Nenhuma exigência de proporção ou resolução.
 export const LOGO_MAX_BYTES = 1024 * 1024;
+export const LOGO_ORIGINAL_MAX_BYTES = 25 * 1024 * 1024;
 export const LOGO_TIPOS = ["image/png", "image/svg+xml", "image/jpeg", "image/webp"];
+const LOGO_EXTENSOES = {
+  png: "image/png", svg: "image/svg+xml", jpg: "image/jpeg", jpeg: "image/jpeg", jfif: "image/jpeg", webp: "image/webp",
+  gif: "image/gif", avif: "image/avif", bmp: "image/bmp", heic: "image/heic", heif: "image/heic", ico: "image/x-icon", tif: "image/tiff", tiff: "image/tiff",
+};
+
+// Tipo da imagem escolhida. O navegador às vezes manda o tipo vazio (HEIC, SVG
+// vindo de pasta de rede): aí vale a extensão. Vazio = não é imagem.
+export function tipoDoLogo(mimetype = "", nome = "") {
+  const t = String(mimetype).toLowerCase().split(";")[0].trim();
+  if (t === "image/jpg" || t === "image/pjpeg") return "image/jpeg";
+  if (t === "image/heif") return "image/heic";
+  if (t.startsWith("image/")) return t;
+  return LOGO_EXTENSOES[extensaoDe(nome)] || "";
+}
 
 export function avaliarLogo({ mimetype, tamanhoBytes, svgTexto = "" }) {
   if (!LOGO_TIPOS.includes(mimetype)) return "Use PNG ou SVG (JPG e WebP também funcionam).";

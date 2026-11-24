@@ -24,6 +24,8 @@ const ConfiguracoesEmpresa = lazy(() => import("./ConfiguracoesEmpresa.jsx"));
 const SuporteEmpresa = lazy(() => import("./SuporteEmpresa.jsx"));
 const LeadsEmpresa = lazy(() => import("./LeadsEmpresa.jsx"));
 const Integracoes = lazy(() => import("./integracoes/Integracoes.jsx"));
+const CaixaCanal = lazy(() => import("./leads/CaixaCanal.jsx"));
+const Pedidos = lazy(() => import("./Pedidos.jsx"));
 const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
 const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
 
@@ -70,6 +72,20 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       setTimeout(() => recarregar?.(), 4000);
     } else if (volta === "cancelado") aviso?.("Pagamento internacional não concluído.");
   }, []);
+
+  // Volta do login do Instagram (?instagram=) e do Bling (?erp=).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const instagram = q.get("instagram"), erp = q.get("erp");
+    if (!instagram && !erp) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    setAba?.(instagram ? "leads-instagram" : "integracoes");
+    const nome = instagram ? "Instagram" : "ERP";
+    const avisos = { conectado: `${nome} conectado.`, cancelado: `Conexão com o ${nome} cancelada.`, sessao: "A sessão de conexão expirou. Tente de novo.", em_uso: "Este Instagram já está conectado em outra empresa." };
+    aviso?.(avisos[instagram || erp] || `Não foi possível conectar o ${nome}. Tente de novo.`);
+  }, []);
+  const [pedidoAberto, setPedidoAberto] = useState("");
+  const abrirPedido = (id) => { setPedidoAberto(id); setAba?.("pedidos"); };
 
   const emp = db.companies.find((c) => c.id === db.companyId) || db.companies[0];
   const filtroAtual = filtros[aba] || null;
@@ -174,11 +190,23 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
       {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} onIrParaMateriais={() => setAba?.("materiais")} />}
+      {["leads-whatsapp", "leads-instagram", "leads", "pedidos"].includes(aba) &&
+        submenu([["leads-whatsapp", "WhatsApp"], ["leads-instagram", "Instagram"], ["leads", "Pipeline"], ["pedidos", "Pedidos"]], aba, (k) => setAba?.(k))}
+      {(aba === "leads-whatsapp" || aba === "leads-instagram") && (
+        <CaixaCanal key={aba} canal={aba === "leads-instagram" ? "instagram" : "whatsapp"} aviso={aviso}
+          time={(db.sellers || []).filter((s) => s.aplicacoes?.[emp.id] === "aprovado")}
+          campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
+          onGerarPedido={abrirPedido} onAbrirPipeline={() => setAba?.("leads")} />
+      )}
       {aba === "leads" && (
-        <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} />
+        <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} onGerarPedido={abrirPedido} />
+      )}
+      {aba === "pedidos" && (
+        <Pedidos aviso={aviso} abrirId={pedidoAberto} aoAbrir={() => setPedidoAberto("")} irParaIntegracoes={() => setAba?.("integracoes")} />
       )}
       {aba === "integracoes" && (
-        <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)} />
+        <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
+          onAbrirCanal={(canal) => setAba?.(`leads-${canal}`)} />
       )}
       {(aba === "planos" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}

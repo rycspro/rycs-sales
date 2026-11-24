@@ -14,6 +14,7 @@ const CICLO_ASAAS = { MENSAL: "MONTHLY", SEMESTRAL: "SEMIANNUALLY", ANUAL: "YEAR
 const CICLO_LABEL = { MENSAL: "mensal", SEMESTRAL: "semestral", ANUAL: "anual" };
 import { calcularVoucher, normalizarVoucher, validarVoucher } from "../services/vouchers.js";
 import { qualificarIndicacao } from "../services/indicacoes.js";
+import { aoPagarPlano } from "../services/grupoSuporte.js";
 import { trialDoOnboarding, concluir as concluirEtapaOnboarding } from "../services/onboarding.js";
 import { normalizarDocumento } from "../../shared/onboarding.js";
 import { TRIAL_SECRETO_DIAS, TRIAL_LINK_VALIDADE_DIAS, podeConcederTrialSecreto, podeResgatarConvite, estadoDoConvite, MOTIVOS_CONVITE } from "../../shared/trialSecreto.js";
@@ -1328,6 +1329,8 @@ export function ativarAssinatura(asaasSubscriptionId) {
     db.prepare("UPDATE companies SET assinatura = ? WHERE id = ?").run(sub.plano, sub.companyId);
     db.prepare("UPDATE voucher_redemptions SET status = 'confirmado', confirmadoEm = ? WHERE subscriptionId = ? AND status = 'reservado'").run(agora(),sub.id);
   })();
+  // Pagou o plano: entra na fila do grupo de suporte no WhatsApp.
+  aoPagarPlano(sub.companyId);
 
   const user = db.prepare("SELECT id, email FROM users WHERE entityId = ? AND role = 'empresa'").get(sub.companyId);
   if (user) {
