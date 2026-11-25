@@ -26,6 +26,7 @@ const LeadsEmpresa = lazy(() => import("./LeadsEmpresa.jsx"));
 const Integracoes = lazy(() => import("./integracoes/Integracoes.jsx"));
 const CaixaCanal = lazy(() => import("./leads/CaixaCanal.jsx"));
 const Pedidos = lazy(() => import("./Pedidos.jsx"));
+const LojaLeads = lazy(() => import("./LojaLeads.jsx"));
 const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
 const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
 
@@ -190,8 +191,8 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
       {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} onIrParaMateriais={() => setAba?.("materiais")} />}
-      {["leads-whatsapp", "leads-instagram", "leads", "pedidos"].includes(aba) &&
-        submenu([["leads-whatsapp", "WhatsApp"], ["leads-instagram", "Instagram"], ["leads", "Pipeline"], ["pedidos", "Pedidos"]], aba, (k) => setAba?.(k))}
+      {["leads", "pedidos"].includes(aba) &&
+        submenu([["leads", "Pipeline"], ["pedidos", "Pedidos"]], aba, (k) => setAba?.(k))}
       {(aba === "leads-whatsapp" || aba === "leads-instagram") && (
         <CaixaCanal key={aba} canal={aba === "leads-instagram" ? "instagram" : "whatsapp"} aviso={aviso}
           time={(db.sellers || []).filter((s) => s.aplicacoes?.[emp.id] === "aprovado")}
@@ -204,6 +205,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "pedidos" && (
         <Pedidos aviso={aviso} abrirId={pedidoAberto} aoAbrir={() => setPedidoAberto("")} irParaIntegracoes={() => setAba?.("integracoes")} />
       )}
+      {aba === "loja-leads" && <LojaLeads aviso={aviso} />}
       {aba === "integracoes" && (
         <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
           onAbrirCanal={(canal) => setAba?.(`leads-${canal}`)} />

@@ -112,6 +112,7 @@ function LeadCard({ lead, etapas, onMover, sellers = [] }) {
         {seller && <span className="vx-chip" style={{ fontSize: 11 }}><User size={10} /> {seller.nome}</span>}
         {lead.valorEstimado > 0 && <span className="vx-chip" style={{ fontSize: 11 }}><CircleDollarSign size={10} /> {money(lead.valorEstimado)}</span>}
         {lead.atualizadoEm && <span className="vx-chip" style={{ fontSize: 11 }}><Clock size={10} /> {dataCurta(lead.atualizadoEm)}</span>}
+        {lead.origem === "loja_leads" && <span className="vx-chip" style={{ fontSize: 10, background: "var(--brand-bg)", color: "var(--brand)" }}>Loja</span>}
       </div>
       {lead.proximaAcao && <div className="vx-mut" style={{ fontSize: 11, marginTop: 4 }}>→ {lead.proximaAcao}</div>}
       <div style={{ display: "flex", gap: 4, marginTop: 8, flexWrap: "wrap" }}>
@@ -132,6 +133,7 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
   const [editandoEtapas, setEditandoEtapas] = useState(false);
   const [filtroSeller, setFiltroSeller] = useState("");
   const [filtroEtapa, setFiltroEtapa] = useState("");
+  const [filtroOrigem, setFiltroOrigem] = useState("");
   const [modalFechamento, setModalFechamento] = useState(null);
 
   const etapas = useMemo(() => etapasDaCampanha(campanha), [campanha]);
@@ -139,8 +141,9 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
   const leadsFiltrados = useMemo(() => leads.filter((l) => {
     if (filtroSeller && l.sellerId !== filtroSeller) return false;
     if (filtroEtapa && l.etapa !== filtroEtapa) return false;
+    if (filtroOrigem && (l.origem || "proprio") !== filtroOrigem) return false;
     return true;
-  }), [leads, filtroSeller, filtroEtapa]);
+  }), [leads, filtroSeller, filtroEtapa, filtroOrigem]);
 
   const porEtapa = useMemo(() => {
     const m = {};
@@ -192,6 +195,12 @@ export default function PipelineKanban({ campanha, leads = [], sellers = [], avi
         <select className="vx-input" style={{ maxWidth: 160, fontSize: 12 }} value={filtroEtapa} onChange={(e) => setFiltroEtapa(e.target.value)}>
           <option value="">Todas as etapas</option>
           {etapas.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
+        </select>
+        <select className="vx-input" style={{ maxWidth: 160, fontSize: 12 }} value={filtroOrigem} onChange={(e) => setFiltroOrigem(e.target.value)}>
+          <option value="">Todas as origens</option>
+          <option value="proprio">Próprio</option>
+          <option value="empresa">Empresa</option>
+          <option value="loja_leads">Loja de Leads</option>
         </select>
       </div>
 

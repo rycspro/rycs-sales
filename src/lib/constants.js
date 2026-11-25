@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -45,6 +45,7 @@ export const NAV = {
     { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "club", label: "Jornada", Icon: Trophy },
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
+    { key: "loja-leads", label: "Loja de Leads", Icon: Store },
     { key: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
     { section: "Desenvolvimento" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
@@ -80,13 +81,16 @@ export const NAV = {
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
     { key: "leads", label: "Leads", Icon: Target, children: [
-      { key: "leads-whatsapp", label: "WhatsApp" },
-      { key: "leads-instagram", label: "Instagram" },
       { key: "leads", label: "Pipeline" },
       { key: "pedidos", label: "Pedidos" },
       { key: "integracoes", label: "Integrações" },
+      { key: "loja-leads", label: "Loja de Leads" },
     ] },
-    { key: "conversas", label: "Conversas", Icon: MessageSquare },
+    { key: "conversas", label: "Conversas", Icon: MessageSquare, children: [
+      { key: "conversas", label: "Chat Rycs" },
+      { key: "leads-whatsapp", label: "WhatsApp" },
+      { key: "leads-instagram", label: "Redes Sociais" },
+    ] },
     { section: "Sua Empresa" },
     { key: "materiais", label: "Materiais", Icon: FolderOpen },
     { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
@@ -123,6 +127,8 @@ export const NAV = {
     { key: "club", label: "RYCS Club", Icon: Trophy },
     { key: "emails", label: "E-mails", Icon: Mail },
     { key: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
+    { section: "Leads" },
+    { key: "loja-leads-admin", label: "Loja de Leads", Icon: Store },
     { section: "Sistema" },
     { key: "beta", label: "Ambiente Beta", Icon: RotateCcw },
   ],

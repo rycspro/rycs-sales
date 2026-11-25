@@ -22,6 +22,7 @@ const PlanosProfissional = lazy(() => import("./PlanosProfissional.jsx"));
 const AgendaComercial = lazy(() => import("../agenda/AgendaComercial.jsx"));
 const WhatsappVendedor = lazy(() => import("./WhatsappVendedor.jsx"));
 const AreaColaborador = lazy(() => import("../colaborador/AreaColaborador.jsx"));
+const LojaLeads = lazy(() => import("../empresa/LojaLeads.jsx"));
 
 const ESPERA = <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
 
@@ -107,6 +108,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
             navegar={navegar} tour={tour} limparTour={() => setTour(null)} />
         : <AcademyCatalogo eu={eu} aviso={aviso}
             navegar={navegar} tour={tour} limparTour={() => setTour(null)} />)}
+      {aba === "loja-leads" && <LojaLeads aviso={aviso} />}
       {aba === "whatsapp" && <WhatsappVendedor aviso={aviso} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} setAba={setAba} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}

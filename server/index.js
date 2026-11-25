@@ -70,6 +70,8 @@ import { iniciarSequenciasEmail } from "./services/sequenciasEmail.js";
 import { iniciarReativacao } from "./services/reativacaoEmpresas.js";
 import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
 import googleSheetsRoutes from "./routes/googleSheets.js";
+import { iniciarWorkerGoogleSheets } from "./services/googleSheets.js";
+import lojaLeadsRoutes from "./routes/lojaLeads.js";
 import planosProfissionalRoutes from "./routes/planosProfissional.js";
 import { iniciarWorkerMeta } from "./services/meta.js";
 import { iniciarConversoesMeta } from "./services/metaConversoes.js";
@@ -227,6 +229,7 @@ app.use("/api", stripePublico);
 app.use("/api", materiaisPublico);
 // Entrada de leads por webhook: sistemas externos chamam sem cookie (auth = token na URL).
 app.use("/api", webhooksPublico);
+// Callback do OAuth do Google Sheets: redireciona sem cookie de sessão.
 // Passos da jornada antes do cadastro (visita, formulário): visitante sem conta.
 app.use("/api", jornadaPublico);
 // Formulário de rycs.pro/parceiros: visitante sem conta.
@@ -284,6 +287,7 @@ app.use("/api", authMiddleware, jarvasRoutes);
 app.use("/api", authMiddleware, metaRoutes);
 app.use("/api", authMiddleware, webhooksRoutes);
 app.use("/api", authMiddleware, googleSheetsRoutes);
+app.use("/api", authMiddleware, lojaLeadsRoutes);
 app.use("/api", authMiddleware, planosProfissionalRoutes);
 app.use("/api", authMiddleware, stripeRoutes);
 app.use("/api", authMiddleware, materiaisRoutes);
@@ -426,6 +430,7 @@ app.listen(PORT, () => {
   iniciarLiberacaoComissoesCanal();
   iniciarColaboradores();
   iniciarReativacao();
+  iniciarWorkerGoogleSheets();
   retomarDisparosWhatsapp();
   // Frases fixas do Rico gravadas uma vez no disco (não roda nos testes,
   // que usam um ElevenLabs falso e contam as chamadas).

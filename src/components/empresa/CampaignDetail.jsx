@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, Award, BriefcaseBusiness, CalendarCheck, CheckCircle2, CircleDollarSign,
-  CirclePause, Clock3, Ellipsis, ListChecks, Pencil, RefreshCw, Settings, Target,
-  TrendingUp, Upload, UsersRound, X,
+  CirclePause, Clock3, Ellipsis, FolderOpen, Link2, ListChecks, Pencil, RefreshCw, Settings, Target,
+  TrendingUp, Unlink, Upload, UsersRound, X,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -162,6 +162,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
   const [profissionalAberto, setProfissionalAberto] = useState(null);
   const [dataDe, setDataDe] = useState(() => dataInput(Date.now() - 6 * 86400000));
   const [dataAte, setDataAte] = useState(() => dataInput(Date.now()));
+  const [vinculos, setVinculos] = useState([]);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, []);
 
@@ -177,6 +178,10 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     });
     return () => { ativo = false; };
   }, [campanha.id, periodo, dataDe, dataAte, recarregar]);
+
+  useEffect(() => {
+    api(`/loja-leads/vinculos/campanha/${campanha.id}`).then((r) => setVinculos(r?.vinculos || []));
+  }, [campanha.id, recarregar]);
 
   const tarefas = useMemo(() => (db.submissions || []).filter((s) => s.campaignId === campanha.id), [db.submissions, campanha.id]);
   const leads = useMemo(() => (db.leads || []).filter((l) => l.campaignId === campanha.id), [db.leads, campanha.id]);
@@ -266,6 +271,46 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
           <div className="vx-chart-source">Base: {dados.origem.investimento}.</div>
         </section>
       </div>
+      {vinculos.length > 0 && (
+        <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
+          <div className="vx-row" style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <Link2 size={16} style={{ color: "var(--brand)" }} />
+              <div>
+                <div className="vx-eyebrow">Loja de Leads</div>
+                <h3 className="vx-disp" style={{ fontSize: 15, margin: 0 }}>Listas vinculadas</h3>
+              </div>
+            </div>
+            <span className="vx-chip">{vinculos.length} lista(s)</span>
+          </div>
+          {vinculos.map((v) => (
+            <div key={v.id} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+              padding: "10px 0", borderTop: "1px solid var(--border)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+                <FolderOpen size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>{v.listaNome}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                    {v.pastaNome && `${v.pastaNome} · `}{v.modo === "automatica" ? "Automática" : "Pontual"} · {v.totalCopiados} contato(s) copiado(s)
+                  </div>
+                </div>
+              </div>
+              {v.modo === "automatica" && (
+                <button className="vx-btn vx-btn-sm" title="Sincronizar agora"
+                  onClick={async () => {
+                    const r = await api(`/loja-leads/sincronizar/${campanha.id}`, {});
+                    if (r?.error) return console.warn(r.error);
+                    setRecarregar((n) => n + 1);
+                  }} style={{ padding: 4 }}>
+                  <RefreshCw size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
       <AttentionNeeded alertas={dados.alertas} />
       <ActivityFeed eventos={dados.eventos} onRefresh={() => setRecarregar((n) => n + 1)} />
     </>}
