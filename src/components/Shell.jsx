@@ -47,9 +47,8 @@ export default function Shell({ user, entity, role, active, onSelect, counts, be
     if (role === "vendedor" && ["conta", "configuracoes", "perfil", "testes", "indicar", "planos", "suporte-conta"].includes(active)) return "conta";
     if (role === "empresa") {
       if (["conta", "configuracoes", "outros", "perfil", "carteira", "academy", "indicar", "suporte-conta", "pagamentos", "pagamentos-visibilidade"].includes(active)) return "outros";
-      if (active === "loja-leads") return "loja-leads";
       if (["leads-whatsapp", "leads-instagram"].includes(active)) return "conversas";
-      if (["leads", "pedidos", "integracoes", "materiais", "academy-empresa", "profissionais", "conferir-fila", "conferir-time"].includes(active)) return "campanhas";
+      if (["leads", "pedidos", "loja-leads", "integracoes", "materiais", "academy-empresa", "profissionais", "conferir-fila", "conferir-time"].includes(active)) return "campanhas";
       if (["campanhas-comissoes", "campanhas-tarefas", "pagamentos-campanhas"].includes(active)) return "campanhas";
     }
     return active;

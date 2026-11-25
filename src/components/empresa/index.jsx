@@ -191,8 +191,8 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
       {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} onIrParaMateriais={() => setAba?.("materiais")} />}
-      {["leads", "pedidos"].includes(aba) &&
-        submenu([["leads", "Pipeline"], ["pedidos", "Pedidos"]], aba, (k) => setAba?.(k))}
+      {["leads", "pedidos", "loja-leads"].includes(aba) &&
+        submenu([["leads", "Pipeline"], ["pedidos", "Pedidos"], ["loja-leads", "Loja de Leads"]], aba, (k) => setAba?.(k))}
       {(aba === "leads-whatsapp" || aba === "leads-instagram") && (
         <CaixaCanal key={aba} canal={aba === "leads-instagram" ? "instagram" : "whatsapp"} aviso={aviso}
           time={(db.sellers || []).filter((s) => s.aplicacoes?.[emp.id] === "aprovado")}

@@ -84,8 +84,8 @@ export const NAV = {
       { key: "leads", label: "Pipeline" },
       { key: "pedidos", label: "Pedidos" },
       { key: "integracoes", label: "Integrações" },
+      { key: "loja-leads", label: "Loja de Leads" },
     ] },
-    { key: "loja-leads", label: "Loja de Leads", Icon: Store },
     { key: "conversas", label: "Conversas", Icon: MessageSquare, children: [
       { key: "conversas", label: "Chat Rycs" },
       { key: "leads-whatsapp", label: "WhatsApp" },
