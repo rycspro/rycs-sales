@@ -3,6 +3,7 @@ import { Search, X, Clock3, ArrowRight, Webhook, Code2, Copy, Check, RefreshCw, 
 import { api } from "../../../lib/api.js";
 import IntegracaoMeta from "../IntegracaoMeta.jsx";
 import PainelErp from "./PainelErp.jsx";
+import PainelGoogleSheets from "./PainelGoogleSheets.jsx";
 import { PAISES, FILTROS, STATUS, ORDEM_STATUS, statusMeta, rotuloCategoria, integracoesDoPais, paisDoIdioma } from "./catalogo.js";
 
 // ── Seletor de país (menu suspenso) ─────────────────────────────────────────
@@ -339,6 +340,8 @@ function Drawer({ item, statusChave, aviso, campanhas, onFechar }) {
             <PainelWebhook aviso={aviso} />
           ) : item.tipo === "erp" ? (
             <PainelErp provedor={item.provedor} aviso={aviso} />
+          ) : item.tipo === "google-sheets" ? (
+            <PainelGoogleSheets aviso={aviso} />
           ) : (
             <div style={{ textAlign: "center", padding: "32px 8px" }}>
               <div style={{
@@ -393,6 +396,7 @@ export default function Integracoes({ aviso, campanhas = [], onAbrirCanal }) {
       return minhas.some((c) => c.status === "ativa") ? "conectado" : minhas.length ? "atencao" : "nao_conectado";
     }
     if (item.tipo === "erp") return erp?.conectado && erp.provedor === item.provedor ? (erp.status === "ativa" ? "conectado" : "atencao") : "nao_conectado";
+    if (item.tipo === "google-sheets") return "nao_conectado";
     return "em_breve";
   };
 
