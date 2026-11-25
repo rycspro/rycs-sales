@@ -60,14 +60,62 @@ const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos);
 const QTDS = [25, 50, 100, 250, 500, 1000];
 
 const SEGMENTOS = [
-  "Restaurantes", "Clínicas odontológicas", "Imobiliárias", "Academias",
-  "Escritórios", "Salões de beleza", "Comércios", "Tecnologia",
-  "Clínicas médicas", "Consultórios", "Farmácias", "Pet shops",
-  "Escolas e cursos", "Contabilidade", "Advocacia", "Arquitetura e engenharia",
-  "Agências de marketing", "Agências de viagens", "Hotéis e pousadas",
-  "Oficinas mecânicas", "Autopeças", "Construtoras", "Supermercados",
-  "Padarias e confeitarias", "Óticas", "Floriculturas", "Estúdios de fotografia",
-  "Academias de artes marciais", "Estúdios de pilates", "Clínicas veterinárias",
+  // Alimentação
+  "Restaurantes", "Lanchonetes e fast food", "Padarias e confeitarias", "Cafeterias",
+  "Pizzarias", "Hamburguerias", "Food trucks", "Buffets e eventos",
+  "Distribuidoras de bebidas", "Sorveterias e açaiterias", "Marmitarias",
+  "Bares e pubs", "Docerias e chocolaterias", "Supermercados", "Mercearias e minimercados",
+  // Saúde
+  "Clínicas médicas", "Clínicas odontológicas", "Consultórios", "Farmácias",
+  "Laboratórios e diagnósticos", "Clínicas de estética", "Fisioterapia",
+  "Psicólogos e terapeutas", "Nutricionistas", "Clínicas veterinárias",
+  "Pet shops", "Hospitais", "Óticas", "Fonoaudiólogos",
+  // Beleza e bem-estar
+  "Salões de beleza", "Barbearias", "Estúdios de pilates", "Academias",
+  "Academias de artes marciais", "Academias de dança", "Spas e day spas",
+  "Estúdios de tatuagem e piercing", "Clínicas de depilação",
+  "Estúdios de yoga", "Personal trainers",
+  // Serviços profissionais
+  "Advocacia", "Contabilidade", "Arquitetura e engenharia", "Consultoria empresarial",
+  "Agências de marketing", "Agências de publicidade", "Agências de viagens",
+  "Escritórios de design", "Estúdios de fotografia", "Produtoras de vídeo",
+  "Escritórios de advocacia", "Despachantes", "Corretores de seguros",
+  "Consultorias de RH", "Assessoria de imprensa",
+  // Comércio e varejo
+  "Comércios", "Lojas de roupas e moda", "Lojas de calçados", "Lojas de eletrônicos",
+  "Lojas de móveis", "Lojas de materiais de construção", "Papelarias",
+  "Lojas de presentes e decoração", "Floriculturas", "Joalherias e bijuterias",
+  "Sex shops", "Lojas de brinquedos", "Lojas de cosméticos",
+  "Lojas de artigos esportivos", "Lojas de informática",
+  // Imóveis e construção
+  "Imobiliárias", "Construtoras", "Incorporadoras", "Administradoras de condomínios",
+  "Escritórios de arquitetura", "Empresas de reforma", "Paisagismo e jardinagem",
+  "Vidraçarias", "Marmorarias", "Energia solar", "Serralheria",
+  // Automotivo
+  "Oficinas mecânicas", "Autopeças", "Concessionárias", "Lava rápido e estética automotiva",
+  "Funilaria e pintura", "Auto elétricas", "Borracharias e pneus",
+  "Locadoras de veículos", "Despachantes veiculares",
+  // Tecnologia e digital
+  "Tecnologia", "Empresas de software", "Agências digitais", "E-commerces",
+  "Startups", "Consultorias de TI", "Empresas de automação",
+  // Educação
+  "Escolas e cursos", "Escolas de idiomas", "Escolas particulares",
+  "Faculdades e universidades", "Cursos profissionalizantes", "Autoescolas",
+  "Escolas de música", "Cursos online e EAD", "Reforço escolar",
+  // Turismo e hospedagem
+  "Hotéis e pousadas", "Hostels", "Aluguel de temporada",
+  "Guias e operadoras de turismo", "Parques e atrações",
+  // Indústria e logística
+  "Indústrias", "Transportadoras", "Distribuidoras", "Gráficas",
+  "Metalúrgicas", "Fábricas de alimentos", "Embalagens",
+  // Financeiro
+  "Bancos e fintechs", "Corretoras de investimentos", "Consórcios",
+  "Cooperativas de crédito", "Factoring",
+  // Outros
+  "Escritórios", "Coworkings", "Lavanderias", "Funerárias",
+  "Organizadores de eventos", "DJs e bandas", "Chaveiros",
+  "Assistência técnica", "Empresas de limpeza", "Empresas de segurança",
+  "Igrejas e instituições religiosas", "ONGs e associações",
 ];
 
 const PAISES = ["Brasil", "Estados Unidos", "Portugal", "Índia", "Reino Unido", "Argentina", "Chile", "Colômbia", "México", "Paraguai", "Uruguai", "Alemanha", "Espanha", "França", "Itália", "Japão", "Canadá", "Austrália"];
@@ -140,13 +188,13 @@ function ComboBox({ value, onChange, options, placeholder, label }) {
         onFocus={() => setAberto(true)} />
       {aberto && filtradas.length > 0 && (
         <div className="ll-combo-list">
-          {filtradas.slice(0, 12).map((o) => (
+          {filtradas.slice(0, 20).map((o) => (
             <div key={o} className={`ll-combo-item ${o === value ? "ll-combo-sel" : ""}`}
               onMouseDown={(e) => { e.preventDefault(); selecionar(o); }}>
               {o}
             </div>
           ))}
-          {filtradas.length > 12 && <div className="ll-combo-item vx-mut" style={{ pointerEvents: "none", fontSize: 11.5 }}>+{filtradas.length - 12} resultados — refine a busca</div>}
+          {filtradas.length > 20 && <div className="ll-combo-item vx-mut" style={{ pointerEvents: "none", fontSize: 11.5 }}>+{filtradas.length - 20} resultados — refine a busca</div>}
         </div>
       )}
     </label>
@@ -466,7 +514,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
       <style>{`
         @media(max-width:1000px){ .ll-layout{grid-template-columns:1fr!important} .ll-summary{position:static!important} }
         @media(max-width:650px){ .ll-categories{grid-template-columns:repeat(2,1fr)!important} .ll-groups{grid-template-columns:1fr!important} }
-        .ll-combo-list{position:absolute;top:100%;left:0;right:0;z-index:50;max-height:220px;overflow-y:auto;background:var(--surface-solid,#fff);border:1px solid var(--border-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow-pop);margin-top:4px}
+        .ll-combo-list{position:absolute;top:100%;left:0;right:0;z-index:50;max-height:320px;overflow-y:auto;background:var(--surface-solid,#fff);border:1px solid var(--border-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow-pop);margin-top:4px}
         .ll-combo-item{padding:9px 12px;font-size:13px;cursor:pointer;transition:background .1s}
         .ll-combo-item:hover{background:var(--brand-50)}
         .ll-combo-sel{background:var(--brand-50);font-weight:600}
