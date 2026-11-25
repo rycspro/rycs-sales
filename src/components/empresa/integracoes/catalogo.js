@@ -2,9 +2,9 @@
 // Apenas metadados — a apresentação fica nos componentes.
 //
 // IMPORTANTE: são reais a Meta Ads (/meta/conexao), o Webhook
-// (/webhooks/config), WhatsApp e Instagram (/canais) e os ERPs (/erp): o status
-// vem SEMPRE dessas rotas. As demais são "Em breve": catálogo preparado, sem
-// conexão fictícia.
+// (/webhooks/config), WhatsApp e Instagram (/canais), os ERPs (/erp) e o
+// Google Sheets (/google-sheets): o status vem SEMPRE dessas rotas. As demais
+// são "Em breve": catálogo preparado, sem conexão fictícia.
 //
 // O catálogo é organizado POR PAÍS (segue o idioma do login): ferramentas
 // globais aparecem em todos; cada país acrescenta as suas ferramentas locais.
@@ -47,7 +47,7 @@ export const FERRAMENTAS = {
   "google-forms":  { nome: "Google Forms", categoria: "formularios", slug: "googleforms", cor: "#7248B9", sigla: "GF", descricao: "Receba respostas de formulários como novos leads." },
   "typeform":      { nome: "Typeform", categoria: "formularios", slug: "typeform", cor: "#262627", sigla: "Tf", descricao: "Transforme respostas de formulários em oportunidades." },
   "jotform":       { nome: "Jotform", categoria: "formularios", dominio: "jotform.com", cor: "#FF6100", sigla: "J", descricao: "Centralize os contatos enviados pelos seus formulários." },
-  "google-sheets": { nome: "Google Sheets", categoria: "formularios", slug: "googlesheets", cor: "#0F9D58", sigla: "GS", descricao: "Importe contatos e leads de planilhas." },
+  "google-sheets": { nome: "Google Sheets", tipo: "google-sheets", categoria: "formularios", slug: "googlesheets", cor: "#0F9D58", sigla: "GS", descricao: "Importe contatos e leads de planilhas." },
   "wordpress":     { nome: "WordPress", categoria: "formularios", slug: "wordpress", cor: "#21759B", sigla: "W", descricao: "Receba leads captados pelo seu site." },
   "webflow":       { nome: "Webflow", categoria: "formularios", slug: "webflow", cor: "#146EF5", sigla: "Wf", descricao: "Integre formulários e contatos do seu site." },
   "webhooks":      { nome: "Webhooks", tipo: "webhook", categoria: "automacoes", slug: null, cor: "#6366F1", sigla: "{}", descricao: "Receba leads de sistemas externos automaticamente." },
