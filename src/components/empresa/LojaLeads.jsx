@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Search, MapPin, Phone, Globe, Star, Plus, Loader2, ChevronRight,
   Building2, FolderOpen, List, Pencil, Trash2,
@@ -70,15 +70,88 @@ const SEGMENTOS = [
   "Academias de artes marciais", "Estúdios de pilates", "Clínicas veterinárias",
 ];
 
+const PAISES = ["Brasil", "Estados Unidos", "Portugal", "Índia", "Reino Unido", "Argentina", "Chile", "Colômbia", "México", "Paraguai", "Uruguai", "Alemanha", "Espanha", "França", "Itália", "Japão", "Canadá", "Austrália"];
+
 const ESTADOS_BR = [
-  "São Paulo, SP", "Rio de Janeiro, RJ", "Minas Gerais, MG", "Bahia, BA",
-  "Paraná, PR", "Rio Grande do Sul, RS", "Santa Catarina, SC", "Pernambuco, PE",
-  "Ceará, CE", "Goiás, GO", "Pará, PA", "Maranhão, MA", "Amazonas, AM",
-  "Espírito Santo, ES", "Mato Grosso, MT", "Mato Grosso do Sul, MS",
-  "Distrito Federal, DF", "Paraíba, PB", "Rio Grande do Norte, RN",
-  "Alagoas, AL", "Piauí, PI", "Sergipe, SE", "Rondônia, RO", "Tocantins, TO",
-  "Acre, AC", "Amapá, AP", "Roraima, RR",
+  "Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal",
+  "Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul",
+  "Minas Gerais", "Pará", "Paraíba", "Paraná", "Pernambuco", "Piauí",
+  "Rio de Janeiro", "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia",
+  "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins",
 ];
+
+const CIDADES_POR_ESTADO = {
+  "Acre": ["Rio Branco", "Cruzeiro do Sul", "Sena Madureira"],
+  "Alagoas": ["Maceió", "Arapiraca", "Palmeira dos Índios", "Rio Largo"],
+  "Amapá": ["Macapá", "Santana", "Laranjal do Jari"],
+  "Amazonas": ["Manaus", "Parintins", "Itacoatiara", "Manacapuru"],
+  "Bahia": ["Salvador", "Feira de Santana", "Vitória da Conquista", "Camaçari", "Ilhéus", "Itabuna", "Lauro de Freitas", "Juazeiro", "Barreiras"],
+  "Ceará": ["Fortaleza", "Caucaia", "Juazeiro do Norte", "Maracanaú", "Sobral", "Crato"],
+  "Distrito Federal": ["Brasília", "Taguatinga", "Ceilândia", "Águas Claras", "Samambaia"],
+  "Espírito Santo": ["Vitória", "Vila Velha", "Serra", "Cariacica", "Linhares", "Cachoeiro de Itapemirim"],
+  "Goiás": ["Goiânia", "Aparecida de Goiânia", "Anápolis", "Rio Verde", "Luziânia", "Águas Lindas de Goiás"],
+  "Maranhão": ["São Luís", "Imperatriz", "Timon", "Caxias", "Codó"],
+  "Mato Grosso": ["Cuiabá", "Várzea Grande", "Rondonópolis", "Sinop", "Tangará da Serra"],
+  "Mato Grosso do Sul": ["Campo Grande", "Dourados", "Três Lagoas", "Corumbá", "Ponta Porã"],
+  "Minas Gerais": ["Belo Horizonte", "Uberlândia", "Contagem", "Juiz de Fora", "Betim", "Montes Claros", "Ribeirão das Neves", "Uberaba", "Governador Valadares", "Ipatinga", "Poços de Caldas", "Sete Lagoas"],
+  "Pará": ["Belém", "Ananindeua", "Santarém", "Marabá", "Parauapebas", "Castanhal"],
+  "Paraíba": ["João Pessoa", "Campina Grande", "Santa Rita", "Patos", "Bayeux"],
+  "Paraná": ["Curitiba", "Londrina", "Maringá", "Ponta Grossa", "Cascavel", "São José dos Pinhais", "Foz do Iguaçu", "Colombo"],
+  "Pernambuco": ["Recife", "Jaboatão dos Guararapes", "Olinda", "Caruaru", "Petrolina", "Paulista", "Cabo de Santo Agostinho"],
+  "Piauí": ["Teresina", "Parnaíba", "Picos", "Piripiri", "Floriano"],
+  "Rio de Janeiro": ["Rio de Janeiro", "São Gonçalo", "Duque de Caxias", "Nova Iguaçu", "Niterói", "Belford Roxo", "Campos dos Goytacazes", "Petrópolis", "Volta Redonda", "Macaé"],
+  "Rio Grande do Norte": ["Natal", "Mossoró", "Parnamirim", "São Gonçalo do Amarante", "Macaíba"],
+  "Rio Grande do Sul": ["Porto Alegre", "Caxias do Sul", "Pelotas", "Canoas", "Santa Maria", "Gravataí", "Viamão", "Novo Hamburgo", "São Leopoldo", "Passo Fundo"],
+  "Rondônia": ["Porto Velho", "Ji-Paraná", "Ariquemes", "Vilhena", "Cacoal"],
+  "Roraima": ["Boa Vista", "Rorainópolis", "Caracaraí"],
+  "Santa Catarina": ["Florianópolis", "Joinville", "Blumenau", "São José", "Chapecó", "Itajaí", "Criciúma", "Jaraguá do Sul", "Balneário Camboriú"],
+  "São Paulo": ["São Paulo", "Guarulhos", "Campinas", "São Bernardo do Campo", "Santo André", "Osasco", "São José dos Campos", "Ribeirão Preto", "Sorocaba", "Santos", "Mauá", "São José do Rio Preto", "Mogi das Cruzes", "Diadema", "Jundiaí", "Piracicaba", "Carapicuíba", "Bauru", "Itaquaquecetuba", "São Vicente", "Franca", "Praia Grande", "Guarujá", "Taubaté", "Limeira", "Suzano", "Barueri", "Taboão da Serra", "Sumaré", "Marília", "Indaiatuba", "Presidente Prudente", "Cotia", "Araraquara", "Jacareí", "Hortolândia", "São Carlos", "Americana", "Itapevi", "Embu das Artes"],
+  "Sergipe": ["Aracaju", "Nossa Senhora do Socorro", "Lagarto", "Itabaiana"],
+  "Tocantins": ["Palmas", "Araguaína", "Gurupi", "Porto Nacional"],
+};
+
+/* ── ComboBox: input com sugestões filtrando por digitação ────────────── */
+function ComboBox({ value, onChange, options, placeholder, label }) {
+  const [aberto, setAberto] = useState(false);
+  const [texto, setTexto] = useState(value);
+  const ref = useRef(null);
+
+  useEffect(() => { setTexto(value); }, [value]);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setAberto(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtradas = useMemo(() => {
+    const t = texto.toLowerCase().trim();
+    if (!t) return options;
+    return options.filter((o) => o.toLowerCase().includes(t));
+  }, [texto, options]);
+
+  const selecionar = (v) => { setTexto(v); onChange(v); setAberto(false); };
+
+  return (
+    <label ref={ref} style={{ position: "relative", display: "block" }}>
+      <span className="vx-label">{label}</span>
+      <input className="vx-input" value={texto} placeholder={placeholder}
+        onChange={(e) => { setTexto(e.target.value); onChange(e.target.value); setAberto(true); }}
+        onFocus={() => setAberto(true)} />
+      {aberto && filtradas.length > 0 && (
+        <div className="ll-combo-list">
+          {filtradas.slice(0, 12).map((o) => (
+            <div key={o} className={`ll-combo-item ${o === value ? "ll-combo-sel" : ""}`}
+              onMouseDown={(e) => { e.preventDefault(); selecionar(o); }}>
+              {o}
+            </div>
+          ))}
+          {filtradas.length > 12 && <div className="ll-combo-item vx-mut" style={{ pointerEvents: "none", fontSize: 11.5 }}>+{filtradas.length - 12} resultados — refine a busca</div>}
+        </div>
+      )}
+    </label>
+  );
+}
 
 /* ═══ Componente principal ════════════════════════════════════════════════ */
 export default function LojaLeads({ aviso, role: roleProp }) {
@@ -185,7 +258,8 @@ export default function LojaLeads({ aviso, role: roleProp }) {
 function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarListas, isEmpresa, ciclo }) {
   const [segmento, setSegmento] = useState("");
   const [pais, setPais] = useState("Brasil");
-  const [regiao, setRegiao] = useState("");
+  const [estado, setEstado] = useState("");
+  const [cidade, setCidade] = useState("");
   const [quantidade, setQuantidade] = useState(100);
   const [campos, setCampos] = useState(() => new Set());
   const [destino, setDestino] = useState("new");
@@ -194,9 +268,11 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
 
+  const cidadesDisponiveis = useMemo(() => CIDADES_POR_ESTADO[estado] || [], [estado]);
   const valorEstimado = quantidade * precoUnitario;
   const listaFinal = destino === "new" ? nomeLista : (listas.find((l) => String(l.id) === listaExistente)?.nome || "");
-  const podeEnviar = campos.size > 0 && segmento.trim() && regiao.trim();
+  const regiao = cidade && estado ? `${cidade}, ${estado}` : estado || "";
+  const podeEnviar = campos.size > 0 && segmento.trim() && estado.trim();
 
   const toggleCampo = (c) => setCampos((prev) => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n; });
   const toggleGrupo = (fs) => {
@@ -249,27 +325,17 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
           <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
             <div className="vx-disp" style={{ fontSize: 17, marginBottom: 12 }}>Configure sua busca</div>
             <div className="vx-grid" style={{ gap: 12 }}>
-              <label>
-                <span className="vx-label">Segmento ou tipo de empresa</span>
-                <select className="vx-input" value={segmento} onChange={(e) => setSegmento(e.target.value)}>
-                  <option value="">Selecione o segmento...</option>
-                  {SEGMENTOS.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </label>
               <div className="vx-grid vx-g2" style={{ gap: 12 }}>
-                <label>
-                  <span className="vx-label">País</span>
-                  <select className="vx-input" value={pais} onChange={(e) => setPais(e.target.value)}>
-                    {["Brasil", "Estados Unidos", "Índia", "Portugal", "Reino Unido", "Outro"].map((c) => <option key={c}>{c}</option>)}
-                  </select>
-                </label>
-                <label>
-                  <span className="vx-label">Cidade ou região</span>
-                  <select className="vx-input" value={regiao} onChange={(e) => setRegiao(e.target.value)}>
-                    <option value="">Selecione a região...</option>
-                    {ESTADOS_BR.map((e) => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                </label>
+                <ComboBox label="Segmento ou tipo de empresa" value={segmento} onChange={setSegmento}
+                  options={SEGMENTOS} placeholder="Digite para buscar..." />
+                <ComboBox label="País" value={pais} onChange={setPais}
+                  options={PAISES} placeholder="Digite o país..." />
+              </div>
+              <div className="vx-grid vx-g2" style={{ gap: 12 }}>
+                <ComboBox label="Estado" value={estado} onChange={(v) => { setEstado(v); setCidade(""); }}
+                  options={ESTADOS_BR} placeholder="Digite o estado..." />
+                <ComboBox label="Cidade" value={cidade} onChange={setCidade}
+                  options={cidadesDisponiveis} placeholder={estado ? "Digite a cidade..." : "Selecione o estado primeiro"} />
               </div>
             </div>
           </div>
@@ -400,6 +466,10 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
       <style>{`
         @media(max-width:1000px){ .ll-layout{grid-template-columns:1fr!important} .ll-summary{position:static!important} }
         @media(max-width:650px){ .ll-categories{grid-template-columns:repeat(2,1fr)!important} .ll-groups{grid-template-columns:1fr!important} }
+        .ll-combo-list{position:absolute;top:100%;left:0;right:0;z-index:50;max-height:220px;overflow-y:auto;background:var(--surface-solid,#fff);border:1px solid var(--border-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow-pop);margin-top:4px}
+        .ll-combo-item{padding:9px 12px;font-size:13px;cursor:pointer;transition:background .1s}
+        .ll-combo-item:hover{background:var(--brand-50)}
+        .ll-combo-sel{background:var(--brand-50);font-weight:600}
       `}</style>
     </>
   );
