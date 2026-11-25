@@ -1,55 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Search, MapPin, Phone, Globe, Star, Eye, Plus, Loader2, ChevronRight,
-  Building2, FolderOpen, List, Receipt, Pencil, Trash2, ArrowLeft,
-  ChevronDown, ListPlus, X, Clock, DollarSign, FileText,
-  Megaphone, Link2, Unlink, BarChart3, RefreshCw,
+  Building2, FolderOpen, List, Receipt, Pencil, Trash2,
+  ChevronDown, ListPlus, X, Clock, FileText, Store,
+  Megaphone, Link2, Unlink, RefreshCw,
+  Wallet, Users,
+  Utensils, HeartPulse, Dumbbell,
+  Building, Scissors, ShoppingBag, Cpu,
 } from "lucide-react";
 import { api } from "../../lib/api.js";
 
-const ABAS = [
-  { key: "buscar", label: "Encontrar Leads", Icon: Search },
-  { key: "revelados", label: "Meus Contatos", Icon: Eye },
-  { key: "listas", label: "Minhas Listas", Icon: FolderOpen },
-  { key: "consumo", label: "Consumo", Icon: Receipt },
-];
-
-const CATEGORIAS = [
-  "Restaurantes", "Clínicas", "Academias", "Escritórios de advocacia",
-  "Contabilidade", "Imobiliárias", "Salões de beleza", "Pet shops",
-  "Oficinas mecânicas", "Dentistas", "Escolas", "Padarias",
-  "Farmácias", "Supermercados", "Construtoras", "Consultorias",
-];
-
-export default function LojaLeads({ aviso }) {
-  const [aba, setAba] = useState("buscar");
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div>
-        <h2 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>Loja de Leads</h2>
-        <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
-          Encontre contatos comerciais por segmento e região.
-        </p>
-      </div>
-
-      <div className="vx-seg" style={{ alignSelf: "flex-start" }}>
-        {ABAS.map(({ key, label, Icon }) => (
-          <button key={key} data-on={aba === key ? "1" : "0"} onClick={() => setAba(key)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Icon size={14} /> {label}
-          </button>
-        ))}
-      </div>
-
-      {aba === "buscar" && <AbaBuscar aviso={aviso} />}
-      {aba === "revelados" && <AbaRevelados aviso={aviso} />}
-      {aba === "listas" && <AbaListas aviso={aviso} />}
-      {aba === "consumo" && <AbaConsumo />}
-    </div>
-  );
-}
-
-// ── helpers PATCH / DELETE (api() só faz GET/POST) ──────────────────────────
+/* ── helpers ────────────────────────────────────────────────────────────── */
 async function apiPatch(path, body) {
   const res = await fetch(`/api${path}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), credentials: "include" });
   return res.json();
@@ -58,295 +19,582 @@ async function apiDelete(path) {
   const res = await fetch(`/api${path}`, { method: "DELETE", credentials: "include" });
   return res.json();
 }
-
-// ── helper: carregar todas as listas de todas as pastas ─────────────────────
 async function carregarTodasListas() {
   const r = await api("/loja-leads/pastas");
   const pastas = r?.pastas || [];
   const todas = [];
   for (const p of pastas) {
     const lr = await api(`/loja-leads/listas/${p.id}`);
-    for (const l of (lr?.listas || [])) todas.push({ ...l, pastaNome: p.nome });
+    for (const l of (lr?.listas || [])) todas.push({ ...l, pastaNome: p.nome, pastaId: p.id });
   }
   return todas;
 }
+const money = (n) => (n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-// ── Aba Buscar ──────────────────────────────────────────────────────────────
-function AbaBuscar({ aviso }) {
-  const [texto, setTexto] = useState("");
-  const [regiao, setRegiao] = useState("");
-  const [contatos, setContatos] = useState([]);
-  const [ocupado, setOcupado] = useState(false);
-  const [nextPage, setNextPage] = useState(null);
-  const [buscou, setBuscou] = useState(false);
+/* ── Design tokens (referência) ─────────────────────────────────────────── */
+const C = {
+  blue: "#318CE7", blueBg: "#eaf3fe", blueBorder: "#d9e9fb", blueLight: "#e9f3ff",
+  green: "#16A085", greenBg: "#e9f9f4",
+  orange: "#D97706", orangeBg: "#fef3e2",
+  purple: "#9363DB", purpleBg: "#f0eafc",
+  pink: "#DC5472", pinkBg: "#fce8ed",
+  gray: "#64748B", grayBg: "#f0f2f5",
+  line: "#e1e6ec", muted: "#687586", bg: "#f7f8fa", ink: "#172333",
+};
+const R = 12;
+
+/* ── Categorias (8, referência) ─────────────────────────────────────────── */
+const CATEGORIAS = [
+  { key: "restaurantes", label: "Restaurantes", Icon: Utensils, cor: "#E28A35" },
+  { key: "clinicas", label: "Clínicas odontológicas", Icon: HeartPulse, cor: C.blue },
+  { key: "imobiliarias", label: "Imobiliárias", Icon: Building2, cor: C.purple },
+  { key: "academias", label: "Academias", Icon: Dumbbell, cor: C.green },
+  { key: "escritorios", label: "Escritórios", Icon: Building, cor: C.gray },
+  { key: "saloes", label: "Salões de beleza", Icon: Scissors, cor: C.pink },
+  { key: "comercios", label: "Comércios", Icon: ShoppingBag, cor: "#D99529" },
+  { key: "tecnologia", label: "Tecnologia", Icon: Cpu, cor: C.blue },
+];
+
+/* ── 5 grupos de informações (27 campos, referência) ──────────────────── */
+const GRUPOS = [
+  { key: "empresariais", label: "Dados empresariais", Icon: Building2, cor: C.blue,
+    campos: ["Nome da empresa", "Razão social", "Nome fantasia", "CNPJ", "Segmento / CNAE", "Porte da empresa"] },
+  { key: "contatos", label: "Contatos", Icon: Users, cor: C.green,
+    campos: ["Telefone fixo", "Celular", "WhatsApp", "E-mail comercial", "Nome do responsável", "Cargo do responsável"] },
+  { key: "localizacao", label: "Localização", Icon: MapPin, cor: C.orange,
+    campos: ["Endereço completo", "Cidade e estado", "CEP", "Geolocalização"] },
+  { key: "digital", label: "Presença digital", Icon: Globe, cor: C.purple,
+    campos: ["Website", "Instagram", "Facebook", "LinkedIn", "Google Maps"] },
+  { key: "complementares", label: "Informações complementares", Icon: FileText, cor: C.pink,
+    campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Data de abertura", "Situação cadastral", "Capital social"] },
+];
+const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos);
+const QTDS = [25, 50, 100, 250, 500, 1000];
+
+/* ═══ Estilos inline fiéis à referência ═══════════════════════════════════ */
+const S = {
+  root: { fontFamily: "'General Sans', Arial, sans-serif", color: C.ink, padding: 28, boxSizing: "border-box" },
+  header: { display: "flex", alignItems: "center", gap: 14, marginBottom: 22 },
+  symbol: (cor = C.blue) => ({ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 46, height: 46, borderRadius: 11, background: `${cor}18`, color: cor, flexShrink: 0 }),
+  symbolSm: (cor = C.blue) => ({ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 11, background: `${cor}18`, color: cor, flexShrink: 0 }),
+  banner: { display: "flex", alignItems: "center", gap: 14, background: C.blueBg, border: `1px solid ${C.blueBorder}`, borderRadius: R, padding: 22, marginBottom: 20, color: "#174e85" },
+  bannerP: { color: "#37638c", lineHeight: 1.55, margin: 0 },
+  metrics: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 },
+  metric: { background: "white", border: `1px solid ${C.line}`, borderRadius: R, padding: 18, display: "grid", gap: 8 },
+  nav: { display: "flex", gap: 5, overflowX: "auto" },
+  tab: (active) => ({
+    display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap", borderRadius: "10px 10px 0 0",
+    background: active ? C.blue : "#edf0f4", border: "none", padding: "14px 20px",
+    color: active ? "white" : "#667281", cursor: "pointer", fontSize: 14, fontWeight: 500,
+    fontFamily: "'General Sans', Arial, sans-serif",
+  }),
+  sheet: { background: "white", border: `1px solid ${C.line}`, borderRadius: "0 12px 12px 12px", padding: 24 },
+  layout: { display: "grid", gridTemplateColumns: "minmax(0, 2.3fr) minmax(250px, 1fr)", gap: 24, alignItems: "start" },
+  section: { padding: "22px 0", borderBottom: `1px solid ${C.line}` },
+  sectionLast: { padding: "22px 0" },
+  label: { display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".65px", color: C.muted, margin: "0 0 9px", textTransform: "uppercase" },
+  categories: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 },
+  category: (active) => ({
+    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 9,
+    minHeight: 94, fontSize: 13, textAlign: "center", padding: "10px 5px", cursor: "pointer",
+    border: active ? `1px solid ${C.blue}` : `1px solid ${C.line}`, borderRadius: 8,
+    background: active ? "#eef6ff" : "white", color: active ? "#2479c9" : C.ink,
+    fontFamily: "'General Sans', Arial, sans-serif", fontWeight: 500,
+  }),
+  formgrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16 },
+  input: { width: "100%", height: 46, border: `1px solid ${C.line}`, borderRadius: 8, padding: "0 12px", background: "white", color: C.ink, fontSize: 14, fontFamily: "'General Sans', Arial, sans-serif", boxSizing: "border-box" },
+  quantities: { display: "flex", flexWrap: "wrap", gap: 8 },
+  qtyBtn: (active) => ({
+    flex: 1, padding: "10px 14px", cursor: "pointer", borderRadius: 8, fontSize: 14, fontWeight: 500,
+    border: active ? `1px solid ${C.blue}` : `1px solid ${C.line}`,
+    background: active ? "#eef6ff" : "white", color: active ? "#2479c9" : C.ink,
+    fontFamily: "'General Sans', Arial, sans-serif",
+  }),
+  between: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  groups: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12, marginTop: 16 },
+  group: { background: "white", border: `1px solid ${C.line}`, borderRadius: R, padding: 14 },
+  groupHead: { display: "flex", alignItems: "center", gap: 9, marginBottom: 14 },
+  checks: { display: "grid", gap: 10 },
+  checkLabel: { display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" },
+  checkbox: { accentColor: C.blue, width: 16, height: 16, flexShrink: 0, margin: 0, cursor: "pointer" },
+  summary: { position: "sticky", top: 20, background: "#f7f9fc", border: `1px solid ${C.line}`, borderRadius: R, padding: 20, display: "grid", gap: 16, alignSelf: "start" },
+  summaryRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, fontSize: 13, marginBottom: 12 },
+  today: { fontSize: 32, color: "#16866b", fontWeight: 700 },
+  hr: { border: 0, borderTop: `1px solid ${C.line}`, width: "100%", margin: 0 },
+  primary: (disabled) => ({
+    width: "100%", fontWeight: 600, padding: 14, borderRadius: 8, border: "none",
+    background: C.blue, color: "white", cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.5 : 1, fontSize: 14, fontFamily: "'General Sans', Arial, sans-serif",
+    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+  }),
+  btn: { cursor: "pointer", border: `1px solid ${C.line}`, background: "white", color: C.ink, borderRadius: 8, padding: "10px 14px", fontSize: 14, fontFamily: "'General Sans', Arial, sans-serif" },
+  folders: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginTop: 20 },
+  folder: { background: "white", border: `1px solid ${C.line}`, borderRadius: R, padding: 18, display: "grid", gap: 10, cursor: "pointer" },
+  table: { width: "100%", borderCollapse: "collapse", marginTop: 20, textAlign: "left", fontSize: 14 },
+  th: { padding: 14, borderBottom: `1px solid ${C.line}`, fontWeight: 600, color: C.muted, fontSize: 12 },
+  td: { padding: 14, borderBottom: `1px solid ${C.line}`, color: C.ink },
+  empty: { textAlign: "center", padding: "40px 12px", color: C.muted },
+};
+
+/* ═══ Componente principal ════════════════════════════════════════════════ */
+export default function LojaLeads({ aviso, role: roleProp }) {
+  const [aba, setAba] = useState(0);
+  const [ciclo, setCiclo] = useState(null);
+  const [consumo, setConsumo] = useState(null);
   const [listas, setListas] = useState([]);
+  const [precos, setPrecos] = useState([]);
+  const [detectedRole, setDetectedRole] = useState(null);
+  const role = roleProp || detectedRole || "empresa";
+  const isEmpresa = role === "empresa";
 
-  useEffect(() => { carregarTodasListas().then(setListas); }, []);
+  useEffect(() => {
+    if (!roleProp) api("/auth/me").then((r) => { if (r?.role) setDetectedRole(r.role); });
+    api("/loja-leads/ciclo").then(setCiclo);
+    api("/loja-leads/consumo").then(setConsumo);
+    api("/loja-leads/precos").then((r) => setPrecos(r?.precos || []));
+    carregarTodasListas().then(setListas);
+  }, []);
 
-  const buscar = async (pageToken) => {
-    if (!texto.trim()) return aviso?.("Digite o que buscar.");
-    setOcupado(true);
-    const r = await api("/loja-leads/buscar", { texto: texto.trim(), regiao: regiao.trim(), pageToken });
-    setOcupado(false);
-    if (!r || r.error) return aviso?.(r?.error || "Erro ao buscar.");
-    if (pageToken) setContatos((prev) => [...prev, ...(r.contatos || [])]);
-    else setContatos(r.contatos || []);
-    setNextPage(r.nextPageToken || null);
-    setBuscou(true);
-  };
+  const recarregarListas = useCallback(async () => { setListas(await carregarTodasListas()); }, []);
+  const recarregarCiclo = useCallback(async () => {
+    const [c, co] = await Promise.all([api("/loja-leads/ciclo"), api("/loja-leads/consumo")]);
+    setCiclo(c); setConsumo(co);
+  }, []);
 
-  const revelar = async (contato) => {
-    const r = await api("/loja-leads/revelar", { contatoId: contato.id });
-    if (!r || r.error) return aviso?.(r?.error || "Erro ao revelar contato.");
-    setContatos((prev) => prev.map((c) => c.id === contato.id ? { ...c, revelado: true } : c));
-    if (!r.jaRevelado) aviso?.(`Contato "${contato.nome}" revelado.`);
-  };
+  const precoUnitario = precos.length > 0 ? precos[0].valorUnitario : 0;
+  const totalLeads = consumo?.totalRevelados || ciclo?.totalContatos || 0;
+  const totalListas = listas.length;
+  const consumoValor = ciclo?.valorTotal || 0;
+  const proxCobranca = ciclo?.fim ? new Date(ciclo.fim).toLocaleDateString("pt-BR") : "—";
 
-  const adicionarALista = async (contatoId, listaId) => {
-    const r = await api("/loja-leads/listas/adicionar", { listaId, contatoId });
-    if (r?.error) return aviso?.(r.error);
-    aviso?.("Contato adicionado à lista.");
-  };
+  const ABAS = [
+    { label: "Encontrar leads", Icon: Search },
+    { label: "Meus contatos", Icon: Users },
+    { label: "Minhas listas", Icon: FolderOpen },
+    { label: "Consumo", Icon: FileText },
+  ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        {CATEGORIAS.map((cat) => (
-          <button key={cat} type="button" className="vx-btn vx-btn-sm"
-            onClick={() => setTexto(cat)}
-            style={{ fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>
-            {cat}
+    <div style={S.root} className="loja-leads-root">
+      <style>{`
+        @media(max-width:1000px){
+          .loja-leads-root .ll-layout{grid-template-columns:1fr!important}
+          .loja-leads-root .ll-summary{position:static!important}
+        }
+        @media(max-width:650px){
+          .loja-leads-root{padding:14px!important}
+          .loja-leads-root .ll-sheet{padding:14px!important}
+          .loja-leads-root .ll-metrics{grid-template-columns:repeat(2,1fr)!important}
+          .loja-leads-root .ll-categories{grid-template-columns:repeat(2,1fr)!important}
+          .loja-leads-root .ll-groups{grid-template-columns:1fr!important}
+          .loja-leads-root .ll-formgrid{grid-template-columns:1fr!important}
+          .loja-leads-root .ll-folders{grid-template-columns:1fr!important}
+          .loja-leads-root .ll-between{flex-wrap:wrap}
+        }
+      `}</style>
+      {/* Header */}
+      <div style={S.header}>
+        <span style={S.symbol()}><Store size={24} /></span>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 28, letterSpacing: "-.7px" }}>Loja de Leads</h1>
+          <p style={{ margin: 0, color: C.muted, lineHeight: 1.55 }}>
+            {isEmpresa
+              ? "Encontre novos clientes e expanda suas oportunidades comerciais."
+              : "Construa sua carteira de contatos e encontre novas oportunidades comerciais."}
+          </p>
+        </div>
+      </div>
+
+      {/* Banner */}
+      <div style={S.banner}>
+        <span style={S.symbol()}><Clock size={24} /></span>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-.35px" }}>Use agora. Pague em 30 dias.</h2>
+          <p style={S.bannerP}>
+            Encontre e adquira seus leads sem pagamento antecipado. Sua primeira cobrança acontece 30 dias após o primeiro uso, considerando os leads adquiridos no período.
+          </p>
+        </div>
+      </div>
+
+      {/* Metrics */}
+      <div style={S.metrics} className="ll-metrics">
+        <Metric icon={<Users size={24} />} cor={C.blue} label="Leads adquiridos" valor={totalLeads} sub="Neste ciclo" />
+        <Metric icon={<FolderOpen size={24} />} cor="#D99529" label="Minhas listas" valor={totalListas} sub="Listas criadas" />
+        <Metric icon={<Wallet size={24} />} cor={C.green} label="Consumo atual" valor={money(consumoValor)} sub="Valor acumulado" />
+        <Metric icon={<Clock size={24} />} cor={C.purple} label="Próxima cobrança" valor={proxCobranca} sub="Após o primeiro uso" />
+      </div>
+
+      {/* Tabs fichário */}
+      <nav style={S.nav}>
+        {ABAS.map(({ label, Icon }, i) => (
+          <button key={i} onClick={() => setAba(i)} style={S.tab(aba === i)}>
+            <Icon size={18} /> {label}
           </button>
         ))}
+      </nav>
+
+      {/* Sheet */}
+      <div style={S.sheet} className="ll-sheet">
+        {aba === 0 && <AbaBuscar aviso={aviso} listas={listas} precoUnitario={precoUnitario} recarregarCiclo={recarregarCiclo} recarregarListas={recarregarListas} isEmpresa={isEmpresa} ciclo={ciclo} />}
+        {aba === 1 && <AbaContatos aviso={aviso} listas={listas} />}
+        {aba === 2 && <AbaListas aviso={aviso} isEmpresa={isEmpresa} recarregarListas={recarregarListas} />}
+        {aba === 3 && <AbaConsumo ciclo={ciclo} />}
       </div>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <div style={{ flex: 2, minWidth: 200, position: "relative" }}>
-          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
-          <input className="vx-input" placeholder="Ex: Restaurantes, Clínicas, Academias..."
-            value={texto} onChange={(e) => setTexto(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && buscar()}
-            style={{ width: "100%", paddingLeft: 36, minHeight: 44, fontSize: 13, boxSizing: "border-box" }} />
-        </div>
-        <div style={{ flex: 1, minWidth: 160, position: "relative" }}>
-          <MapPin size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
-          <input className="vx-input" placeholder="Cidade ou região"
-            value={regiao} onChange={(e) => setRegiao(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && buscar()}
-            style={{ width: "100%", paddingLeft: 36, minHeight: 44, fontSize: 13, boxSizing: "border-box" }} />
-        </div>
-        <button type="button" className="vx-btn vx-btn-primary" disabled={ocupado} onClick={() => buscar()}
-          style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, whiteSpace: "nowrap" }}>
-          {ocupado ? <Loader2 size={15} className="vx-spin" /> : <Search size={15} />}
-          {ocupado ? "Buscando..." : "Buscar"}
-        </button>
-      </div>
-
-      {buscou && contatos.length === 0 && !ocupado && (
-        <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 13, padding: 24 }}>
-          Nenhum resultado encontrado. Tente outra categoria ou região.
-        </p>
-      )}
-
-      {contatos.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>{contatos.length} resultado(s)</span>
-          {contatos.map((c) => (
-            <CardContato key={c.id || c.placeId} contato={c} onRevelar={() => revelar(c)}
-              listas={listas} onAdicionarLista={(listaId) => adicionarALista(c.id, listaId)} />
-          ))}
-          {nextPage && (
-            <button type="button" className="vx-btn" disabled={ocupado} onClick={() => buscar(nextPage)}
-              style={{ alignSelf: "center", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              {ocupado ? <Loader2 size={14} className="vx-spin" /> : <ChevronRight size={14} />}
-              Carregar mais
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-// ── Card de contato ─────────────────────────────────────────────────────────
-function CardContato({ contato, onRevelar, listas, onAdicionarLista, onRemover }) {
-  const c = contato;
-  const oculto = !c.revelado;
-  const [menuLista, setMenuLista] = useState(false);
+/* ── Metric card ──────────────────────────────────────────────────────── */
+function Metric({ icon, cor, label, valor, sub }) {
+  return (
+    <article style={S.metric}>
+      <span style={S.symbol(cor)}>{icon}</span>
+      <small style={{ color: C.muted }}>{label}</small>
+      <strong style={{ fontSize: 26, letterSpacing: "-.7px" }}>{valor}</strong>
+      <small style={{ color: C.muted }}>{sub}</small>
+    </article>
+  );
+}
+
+/* ═══ ABA 0: Encontrar leads ═════════════════════════════════════════════ */
+function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarListas, isEmpresa, ciclo }) {
+  const [segmento, setSegmento] = useState("");
+  const [pais, setPais] = useState("Brasil");
+  const [regiao, setRegiao] = useState("");
+  const [quantidade, setQuantidade] = useState(100);
+  const [campos, setCampos] = useState(() => new Set());
+  const [destino, setDestino] = useState("new");
+  const [nomeLista, setNomeLista] = useState("");
+  const [listaExistente, setListaExistente] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [feedback, setFeedback] = useState("");
+
+  const valorEstimado = quantidade * precoUnitario;
+  const listaFinal = destino === "new" ? nomeLista : (listas.find((l) => String(l.id) === listaExistente)?.nome || "");
+  const podeEnviar = campos.size > 0 && segmento.trim() && regiao.trim();
+
+  const toggleCampo = (c) => setCampos((prev) => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n; });
+  const toggleGrupo = (fs) => {
+    setCampos((prev) => {
+      const n = new Set(prev);
+      const all = fs.every((f) => n.has(f));
+      fs.forEach((f) => all ? n.delete(f) : n.add(f));
+      return n;
+    });
+  };
+  const toggleAll = () => setCampos((prev) => prev.size === ALL_CAMPOS.length ? new Set() : new Set(ALL_CAMPOS));
+
+  const buscar = async () => {
+    if (!podeEnviar) return;
+    setOcupado(true);
+    setFeedback("");
+    const r = await api("/loja-leads/buscar", { texto: segmento.trim(), regiao: regiao.trim() });
+    setOcupado(false);
+    if (!r || r.error) { setFeedback(r?.error || "Erro ao buscar."); return aviso?.(r?.error || "Erro ao buscar."); }
+    const n = r.contatos?.length || 0;
+    setFeedback(n > 0 ? `${n} lead(s) encontrado(s).` : "Nenhum resultado encontrado para esta busca.");
+    aviso?.(n > 0 ? `${n} lead(s) encontrado(s).` : "Nenhum resultado.");
+    recarregarCiclo?.();
+  };
 
   return (
-    <div style={{
-      background: "var(--surface-2)", borderRadius: 10, padding: "14px 16px",
-      display: "flex", flexDirection: "column", gap: 8,
-      border: oculto ? "1px dashed var(--border)" : "1px solid var(--border)",
-      opacity: oculto ? 0.85 : 1,
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
-            <Building2 size={15} style={{ flexShrink: 0, color: "var(--brand)" }} />
-            {c.nome || "Sem nome"}
+    <>
+      <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-.35px" }}>Encontre seus próximos clientes</h2>
+      <p style={{ margin: "0 0 4px", color: C.muted, lineHeight: 1.55 }}>Personalize sua busca e escolha quais informações deseja receber.</p>
+
+      <div style={S.layout} className="ll-layout">
+        {/* ── Coluna principal ── */}
+        <div>
+          {/* Segmentos */}
+          <div style={S.section}>
+            <span style={S.label}>SEGMENTOS POPULARES</span>
+            <div style={S.categories} className="ll-categories">
+              {CATEGORIAS.map(({ key, label, Icon, cor }) => (
+                <button key={key} onClick={() => setSegmento(label)} style={S.category(segmento === label)}>
+                  <span style={S.symbol(cor)}><Icon size={24} /></span>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-          {c.categoria && (
-            <span style={{ fontSize: 11, color: "var(--muted)", background: "var(--surface)", padding: "2px 8px", borderRadius: 10, display: "inline-block", marginTop: 4 }}>
-              {c.categoria.replace(/_/g, " ")}
-            </span>
-          )}
+
+          {/* Configure sua busca */}
+          <div style={S.section}>
+            <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-.35px" }}>Configure sua busca</h2>
+            <div style={S.formgrid} className="ll-formgrid">
+              <label style={{ gridColumn: "1 / -1" }}>
+                <span style={S.label}>SEGMENTO OU TIPO DE EMPRESA</span>
+                <input style={S.input} value={segmento} onChange={(e) => setSegmento(e.target.value)}
+                  placeholder="Clínicas odontológicas, empresas de tecnologia..." />
+              </label>
+              <label>
+                <span style={S.label}>PAÍS</span>
+                <select style={S.input} value={pais} onChange={(e) => setPais(e.target.value)}>
+                  {["Brasil", "Estados Unidos", "Índia", "Portugal", "Reino Unido", "Outro"].map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </label>
+              <label>
+                <span style={S.label}>CIDADE OU REGIÃO</span>
+                <input style={S.input} value={regiao} onChange={(e) => setRegiao(e.target.value)} placeholder="Sorocaba, SP" />
+              </label>
+            </div>
+          </div>
+
+          {/* Quantidade */}
+          <div style={S.section}>
+            <span style={S.label}>QUANTIDADE DE LEADS</span>
+            <div style={S.quantities}>
+              {QTDS.map((q) => (
+                <button key={q} onClick={() => setQuantidade(q)} style={S.qtyBtn(quantidade === q)}>
+                  {q.toLocaleString("pt-BR")}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Informações desejadas */}
+          <div style={S.section}>
+            <div style={S.between}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-.35px" }}>Informações desejadas</h2>
+                <small style={{ color: C.muted }}>{campos.size} de {ALL_CAMPOS.length} informações selecionadas</small>
+              </div>
+              <button onClick={toggleAll} style={S.btn}>
+                {campos.size === ALL_CAMPOS.length ? "Desmarcar tudo" : "Selecionar tudo"}
+              </button>
+            </div>
+            <div style={S.groups} className="ll-groups">
+              {GRUPOS.map((g, gi) => {
+                const selCount = g.campos.filter((f) => campos.has(f)).length;
+                const allSel = selCount === g.campos.length;
+                return (
+                  <article key={g.key} style={S.group}>
+                    <div style={S.groupHead}>
+                      <span style={S.symbolSm(g.cor)}><g.Icon size={19} /></span>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: 0, fontSize: 14 }}>{g.label}</h3>
+                        <small style={{ color: C.muted }}>{selCount} de {g.campos.length} selecionadas</small>
+                      </div>
+                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, cursor: "pointer", marginLeft: "auto" }}>
+                        <input type="checkbox" checked={allSel}
+                          ref={(el) => { if (el) el.indeterminate = selCount > 0 && !allSel; }}
+                          onChange={() => toggleGrupo(g.campos)} style={S.checkbox} />
+                        Todos
+                      </label>
+                    </div>
+                    <div style={S.checks}>
+                      {g.campos.map((f) => (
+                        <label key={f} style={S.checkLabel}>
+                          <input type="checkbox" checked={campos.has(f)} onChange={() => toggleCampo(f)} style={S.checkbox} />
+                          {f}
+                        </label>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+            <small style={{ display: "block", marginTop: 12, color: C.muted }}>O preenchimento depende da disponibilidade das fontes de dados.</small>
+          </div>
+
+          {/* Organize seus leads */}
+          <div style={S.sectionLast}>
+            <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-.35px" }}>Organize seus leads</h2>
+            <p style={{ margin: "4px 0 0", color: C.muted, lineHeight: 1.55 }}>Escolha onde deseja armazenar os contatos adquiridos.</p>
+            <div style={S.formgrid} className="ll-formgrid">
+              <label>
+                <span style={S.label}>DESTINO</span>
+                <select style={S.input} value={destino} onChange={(e) => setDestino(e.target.value)}>
+                  <option value="new">Criar nova lista</option>
+                  {listas.length > 0 && <option value="existing">Lista existente</option>}
+                </select>
+              </label>
+              <label>
+                <span style={S.label}>LISTA</span>
+                {destino === "new"
+                  ? <input style={S.input} placeholder="Nome da nova lista" value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
+                  : <select style={S.input} value={listaExistente} onChange={(e) => setListaExistente(e.target.value)}>
+                      <option value="">Selecione</option>
+                      {listas.map((l) => <option key={l.id} value={l.id}>{l.nome}</option>)}
+                    </select>}
+              </label>
+            </div>
+          </div>
         </div>
-        {c.rating > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 12, color: "var(--amber)", flexShrink: 0 }}>
-            <Star size={13} fill="var(--amber)" /> {c.rating.toFixed(1)}
-            <span style={{ color: "var(--muted)", fontSize: 11 }}>({c.totalAvaliacoes})</span>
+
+        {/* ── Coluna direita: Resumo ── */}
+        <aside style={S.summary} className="ll-summary">
+          <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-.35px" }}>Resumo da aquisição</h2>
+          <div>
+            {[
+              ["Segmento", segmento || "—"],
+              ["Localização", regiao ? `${regiao}, ${pais}` : pais],
+              ["Quantidade", `${quantidade} leads`],
+              ["Informações", `${campos.size} campos`],
+              ["Lista", listaFinal || "A definir"],
+              ["Valor estimado", money(valorEstimado)],
+            ].map(([k, v]) => (
+              <div key={k} style={S.summaryRow}>
+                <span>{k}</span>
+                <strong>{v}</strong>
+              </div>
+            ))}
+          </div>
+          <hr style={S.hr} />
+          <span style={S.label}>VALOR A PAGAR HOJE</span>
+          <div style={S.today}>R$ 0,00</div>
+          <small style={{ color: C.muted }}>
+            {ciclo?.fim
+              ? `Cobrança prevista em ${new Date(ciclo.fim).toLocaleDateString("pt-BR")}`
+              : "Primeira cobrança em 30 dias após o primeiro uso."}
+          </small>
+          <button onClick={buscar} disabled={!podeEnviar || ocupado} style={S.primary(!podeEnviar || ocupado)}>
+            {ocupado ? <Loader2 size={16} className="vx-spin" /> : null}
+            {ocupado ? "Buscando..." : `Encontrar ${quantidade} leads`}
+          </button>
+          {precoUnitario > 0 && <small style={{ color: C.muted }}>Preço por lead: {money(precoUnitario)}</small>}
+          {feedback && <p style={{ margin: 0, fontSize: 13, color: C.blue }} role="status">{feedback}</p>}
+        </aside>
+      </div>
+    </>
+  );
+}
+
+/* ═══ ABA 1: Meus contatos ═══════════════════════════════════════════════ */
+function AbaContatos({ aviso, listas }) {
+  const [contatos, setContatos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [drawer, setDrawer] = useState(null);
+
+  useEffect(() => { api("/loja-leads/revelados").then((r) => { setContatos(r?.contatos || []); setLoading(false); }); }, []);
+
+  const filtrados = useMemo(() => {
+    const t = busca.toLowerCase().trim();
+    if (!t) return contatos;
+    return contatos.filter((c) => [c.nome, c.endereco, c.categoria].some((v) => (v || "").toLowerCase().includes(t)));
+  }, [contatos, busca]);
+
+  if (loading) return <Loading />;
+
+  if (!contatos.length) return (
+    <div style={S.empty}>
+      <span style={S.symbol()}><Users size={24} /></span>
+      <h3 style={{ margin: "12px 0 4px" }}>Sua carteira começa aqui.</h3>
+      <p style={{ margin: 0, color: C.muted }}>Encontre novos contatos comerciais.</p>
+    </div>
+  );
+
+  return (
+    <>
+      <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>Meus contatos</h2>
+      <p style={{ margin: "0 0 16px", color: C.muted }}>Minha carteira de contatos comerciais.</p>
+
+      <div style={{ position: "relative", marginBottom: 16 }}>
+        <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.muted }} />
+        <input style={{ ...S.input, paddingLeft: 36 }} placeholder="Buscar por nome, segmento ou localização..."
+          value={busca} onChange={(e) => setBusca(e.target.value)} />
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={S.table}>
+          <thead>
+            <tr>
+              <th style={S.th}>Empresa</th>
+              <th style={S.th}>Segmento</th>
+              <th style={S.th}>Localização</th>
+              <th style={S.th}>Telefone</th>
+              <th style={S.th}>Website</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrados.map((c) => (
+              <tr key={c.id} onClick={() => setDrawer(c)} style={{ cursor: "pointer" }}>
+                <td style={{ ...S.td, fontWeight: 600 }}>{c.nome || "—"}</td>
+                <td style={S.td}>{(c.categoria || "—").replace(/_/g, " ")}</td>
+                <td style={S.td}>{c.endereco || "—"}</td>
+                <td style={S.td}>{c.telefone ? <a href={`tel:${c.telefone}`} style={{ color: C.blue, textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{c.telefone}</a> : "—"}</td>
+                <td style={S.td}>{c.site ? <a href={c.site} target="_blank" rel="noopener noreferrer" style={{ color: C.blue, textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{c.site.replace(/^https?:\/\//, "").slice(0, 30)}</a> : "—"}</td>
+              </tr>
+            ))}
+            {!filtrados.length && <tr><td colSpan={5} style={{ ...S.td, textAlign: "center", color: C.muted }}>Nenhum contato encontrado.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {drawer && <DrawerContato contato={drawer} onClose={() => setDrawer(null)} listas={listas} aviso={aviso} />}
+    </>
+  );
+}
+
+/* ── Drawer contato ──────────────────────────────────────────────────────── */
+function DrawerContato({ contato: c, onClose, listas, aviso }) {
+  const addToList = async (listaId) => {
+    const r = await api("/loja-leads/listas/adicionar", { listaId, contatoId: c.id });
+    if (r?.error) return aviso?.(r.error);
+    aviso?.("Contato adicionado à lista.");
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.3)" }} onClick={onClose} />
+      <div style={{ position: "relative", width: 400, maxWidth: "90vw", height: "100%", background: "#fff", overflowY: "auto", padding: "24px 22px", boxShadow: "-4px 0 24px rgba(0,0,0,.08)" }}>
+        <div style={{ ...S.between, marginBottom: 20 }}>
+          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>Detalhes do contato</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><X size={18} style={{ color: C.muted }} /></button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <span style={S.symbol()}><Building2 size={22} /></span>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{c.nome || "Sem nome"}</div>
+            {c.categoria && <small style={{ color: C.muted }}>{c.categoria.replace(/_/g, " ")}</small>}
+          </div>
+        </div>
+        {c.endereco && <InfoRow icon={<MapPin size={14} />} label="Endereço" value={c.endereco} />}
+        {c.telefone && <InfoRow icon={<Phone size={14} />} label="Telefone" value={c.telefone} href={`tel:${c.telefone}`} />}
+        {c.site && <InfoRow icon={<Globe size={14} />} label="Website" value={c.site.replace(/^https?:\/\//, "")} href={c.site} />}
+        {c.rating > 0 && <InfoRow icon={<Star size={14} />} label="Google" value={`${c.rating.toFixed(1)} (${c.totalAvaliacoes || 0} avaliações)`} />}
+        {listas.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <span style={S.label}>ADICIONAR A UMA LISTA</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
+              {listas.map((l) => (
+                <button key={l.id} onClick={() => addToList(l.id)} style={{ ...S.btn, display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-start" }}>
+                  <ListPlus size={14} /> {l.nome}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
-
-      {c.endereco && (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--muted)" }}>
-          <MapPin size={13} style={{ flexShrink: 0 }} /> {c.endereco}
-        </div>
-      )}
-
-      {oculto ? (
-        <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" onClick={onRevelar}
-          style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 36 }}>
-          <Eye size={14} /> Revelar contato
-        </button>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {c.telefone && (
-            <a href={`tel:${c.telefone}`} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--brand)", textDecoration: "none" }}>
-              <Phone size={13} /> {c.telefone}
-            </a>
-          )}
-          {c.site && (
-            <a href={c.site} target="_blank" rel="noopener noreferrer"
-              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--brand)", textDecoration: "none", wordBreak: "break-all" }}>
-              <Globe size={13} /> {c.site.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-            </a>
-          )}
-          {!c.telefone && !c.site && (
-            <span style={{ fontSize: 12.5, color: "var(--muted)" }}>Nenhum contato disponível para este local.</span>
-          )}
-        </div>
-      )}
-
-      {c.revelado && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-          {listas && listas.length > 0 && (
-            <div style={{ position: "relative" }}>
-              <button type="button" className="vx-btn vx-btn-sm"
-                onClick={() => setMenuLista(!menuLista)}
-                style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12 }}>
-                <ListPlus size={13} /> Salvar em lista <ChevronDown size={12} />
-              </button>
-              {menuLista && (
-                <div style={{
-                  position: "absolute", top: "100%", left: 0, zIndex: 50, marginTop: 4,
-                  background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8,
-                  boxShadow: "0 4px 16px rgba(0,0,0,.12)", minWidth: 200, maxHeight: 240, overflowY: "auto",
-                }}>
-                  {listas.map((l) => (
-                    <button key={l.id} type="button"
-                      style={{
-                        display: "block", width: "100%", textAlign: "left", padding: "8px 12px",
-                        fontSize: 13, color: "var(--ink)", background: "none", border: "none", cursor: "pointer",
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = "var(--surface)"; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = "none"; }}
-                      onClick={() => { onAdicionarLista?.(l.id); setMenuLista(false); }}>
-                      <div style={{ fontWeight: 500 }}>{l.nome}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{l.pastaNome}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          {onRemover && (
-            <button type="button" className="vx-btn vx-btn-sm"
-              onClick={onRemover}
-              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--danger)" }}>
-              <X size={13} /> Remover
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-// ── Aba Revelados ───────────────────────────────────────────────────────────
-function AbaRevelados({ aviso }) {
-  const [contatos, setContatos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [listas, setListas] = useState([]);
-
-  useEffect(() => {
-    Promise.all([
-      api("/loja-leads/revelados"),
-      carregarTodasListas(),
-    ]).then(([r, ls]) => {
-      setContatos(r?.contatos || []);
-      setListas(ls);
-      setLoading(false);
-    });
-  }, []);
-
-  const adicionarALista = async (contatoId, listaId) => {
-    const r = await api("/loja-leads/listas/adicionar", { listaId, contatoId });
-    if (r?.error) return aviso?.(r.error);
-    aviso?.("Contato adicionado à lista.");
-  };
-
-  if (loading) return <div style={{ padding: 24, textAlign: "center" }}><div className="vx-spinner" /></div>;
-
-  if (!contatos.length) return (
-    <div style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}>
-      <Eye size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
-      <p style={{ margin: 0, fontSize: 14 }}>Nenhum contato revelado ainda.</p>
-      <p style={{ margin: "4px 0 0", fontSize: 12.5 }}>Busque por segmento e região para encontrar leads.</p>
+function InfoRow({ icon, label, value, href }) {
+  const content = (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, padding: "6px 0" }}>
+      <span style={{ color: C.muted }}>{icon}</span>
+      <span style={{ color: C.muted, minWidth: 70, fontSize: 12 }}>{label}</span>
+      <span style={{ color: href ? C.blue : C.ink, fontWeight: 500 }}>{value}</span>
     </div>
   );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <span style={{ fontSize: 12, color: "var(--muted)" }}>{contatos.length} contato(s) revelado(s)</span>
-      {contatos.map((c) => (
-        <CardContato key={c.id} contato={{ ...c, revelado: true }}
-          listas={listas} onAdicionarLista={(listaId) => adicionarALista(c.id, listaId)} />
-      ))}
-    </div>
-  );
+  return href ? <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>{content}</a> : content;
 }
 
-// ── Aba Listas (Lote 2 — CRUD completo) ────────────────────────────────────
-function AbaListas({ aviso }) {
+/* ═══ ABA 2: Minhas listas ═══════════════════════════════════════════════ */
+function AbaListas({ aviso, isEmpresa, recarregarListas }) {
   const [pastas, setPastas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pastaAberta, setPastaAberta] = useState(null);
   const [listaAberta, setListaAberta] = useState(null);
 
-  const recarregar = useCallback(async () => {
-    const r = await api("/loja-leads/pastas");
-    setPastas(r?.pastas || []);
-  }, []);
-
+  const recarregar = useCallback(async () => { const r = await api("/loja-leads/pastas"); setPastas(r?.pastas || []); }, []);
   useEffect(() => { recarregar().then(() => setLoading(false)); }, []);
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center" }}><div className="vx-spinner" /></div>;
+  if (loading) return <Loading />;
 
-  if (listaAberta) {
-    return <VistaLista lista={listaAberta} aviso={aviso} voltar={() => setListaAberta(null)} />;
-  }
-
-  if (pastaAberta) {
-    return (
-      <VistaPasta pasta={pastaAberta} aviso={aviso}
-        voltar={() => { setPastaAberta(null); recarregar(); }}
-        abrirLista={setListaAberta} />
-    );
-  }
+  if (listaAberta) return <VistaLista lista={listaAberta} aviso={aviso} voltar={() => { setListaAberta(null); recarregar(); recarregarListas?.(); }} isEmpresa={isEmpresa} />;
+  if (pastaAberta) return <VistaPasta pasta={pastaAberta} aviso={aviso} voltar={() => { setPastaAberta(null); recarregar(); }} abrirLista={setListaAberta} />;
 
   const novaPasta = async () => {
     const r = await api("/loja-leads/pastas", { nome: "Nova pasta" });
@@ -355,567 +603,311 @@ function AbaListas({ aviso }) {
     aviso?.("Pasta criada.");
   };
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Pastas</span>
-        <button type="button" className="vx-btn vx-btn-sm vx-btn-primary" onClick={novaPasta}
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, minHeight: 36 }}>
-          <Plus size={14} /> Nova pasta
-        </button>
-      </div>
-
-      {!pastas.length && (
-        <div style={{ textAlign: "center", padding: 32, color: "var(--muted)" }}>
-          <FolderOpen size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
-          <p style={{ margin: 0, fontSize: 14 }}>Nenhuma pasta criada.</p>
-          <p style={{ margin: "4px 0 0", fontSize: 12.5 }}>Organize seus leads em pastas e listas.</p>
-        </div>
-      )}
-
-      {pastas.map((p) => (
-        <PastaCard key={p.id} pasta={p} aviso={aviso} onAbrir={() => setPastaAberta(p)} onAtualizar={recarregar} />
-      ))}
+  if (!pastas.length) return (
+    <div style={S.empty}>
+      <span style={S.symbol("#D99529")}><FolderOpen size={24} /></span>
+      <h3 style={{ margin: "12px 0 4px" }}>Organize suas oportunidades.</h3>
+      <p style={{ margin: "0 0 16px", color: C.muted }}>Crie listas e pastas para manter seus contatos organizados.</p>
+      <button onClick={novaPasta} style={{ ...S.btn, borderColor: C.blue, color: C.blue }}>Criar primeira pasta</button>
     </div>
+  );
+
+  return (
+    <>
+      <div style={S.between}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20 }}>Minhas listas</h2>
+          <p style={{ margin: "4px 0 0", color: C.muted }}>Organize suas oportunidades por segmento ou região.</p>
+        </div>
+        <button onClick={novaPasta} style={{ ...S.btn, display: "flex", alignItems: "center", gap: 6 }}><Plus size={14} /> Nova pasta</button>
+      </div>
+      <div style={S.folders} className="ll-folders">
+        {pastas.map((p) => (
+          <PastaCard key={p.id} pasta={p} aviso={aviso} onAbrir={() => setPastaAberta(p)} onAtualizar={recarregar} />
+        ))}
+      </div>
+    </>
   );
 }
 
-// ── Card de pasta ───────────────────────────────────────────────────────────
 function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(pasta.nome);
-
-  const salvar = async () => {
-    if (!nome.trim()) return;
-    await apiPatch(`/loja-leads/pastas/${pasta.id}`, { nome: nome.trim() });
-    setEditando(false);
-    onAtualizar?.();
-  };
-
-  const excluir = async () => {
-    if (!confirm(`Excluir pasta "${pasta.nome}" e todas as listas dentro dela?`)) return;
-    const r = await apiDelete(`/loja-leads/pastas/${pasta.id}`);
-    if (r?.error) return aviso?.(r.error);
-    aviso?.("Pasta excluída.");
-    onAtualizar?.();
-  };
+  const salvar = async () => { if (!nome.trim()) return; await apiPatch(`/loja-leads/pastas/${pasta.id}`, { nome: nome.trim() }); setEditando(false); onAtualizar?.(); };
+  const excluir = async () => { if (!confirm(`Excluir pasta "${pasta.nome}" e todas as listas dentro dela?`)) return; const r = await apiDelete(`/loja-leads/pastas/${pasta.id}`); if (r?.error) return aviso?.(r.error); aviso?.("Pasta excluída."); onAtualizar?.(); };
 
   return (
-    <div style={{
-      background: "var(--surface-2)", borderRadius: 10, padding: "12px 16px",
-      display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)",
-      cursor: "pointer",
-    }}>
-      <FolderOpen size={16} style={{ color: pasta.cor || "var(--brand)", flexShrink: 0 }} />
-
+    <article style={S.folder} onClick={!editando ? onAbrir : undefined}>
+      <span style={S.symbol("#D99529")}><FolderOpen size={24} /></span>
       {editando ? (
-        <div style={{ flex: 1, display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-          <input className="vx-input" value={nome} onChange={(e) => setNome(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && salvar()}
-            autoFocus style={{ flex: 1, fontSize: 13, minHeight: 32, padding: "4px 8px" }} />
-          <button type="button" className="vx-btn vx-btn-sm vx-btn-primary" onClick={salvar}>OK</button>
-          <button type="button" className="vx-btn vx-btn-sm" onClick={() => { setEditando(false); setNome(pasta.nome); }}>
-            <X size={13} />
-          </button>
+        <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+          <input style={{ ...S.input, height: 36 }} value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && salvar()} autoFocus />
+          <button onClick={salvar} style={{ ...S.btn, padding: "6px 12px", background: C.blue, color: "white", borderColor: C.blue }}>OK</button>
         </div>
       ) : (
         <>
-          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "var(--ink)" }} onClick={onAbrir}>
-            {pasta.nome}
-          </span>
-          <button type="button" className="vx-btn vx-btn-sm" onClick={(e) => { e.stopPropagation(); setEditando(true); }}
-            title="Renomear" style={{ padding: 4 }}>
-            <Pencil size={13} />
-          </button>
-          <button type="button" className="vx-btn vx-btn-sm" onClick={(e) => { e.stopPropagation(); excluir(); }}
-            title="Excluir" style={{ padding: 4, color: "var(--danger)" }}>
-            <Trash2 size={13} />
-          </button>
-          <ChevronRight size={15} style={{ color: "var(--muted)" }} onClick={onAbrir} />
+          <strong>{pasta.nome}</strong>
+          <small style={{ color: C.muted }}>{pasta.totalListas || 0} lista(s) · {pasta.totalContatos || 0} contato(s)</small>
+          <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditando(true)} title="Renomear" style={{ ...S.btn, padding: 6 }}><Pencil size={13} /></button>
+            <button onClick={excluir} title="Excluir" style={{ ...S.btn, padding: 6, color: "#B42318" }}><Trash2 size={13} /></button>
+          </div>
         </>
       )}
-    </div>
+    </article>
   );
 }
 
-// ── Vista de uma pasta (listas dentro) ──────────────────────────────────────
 function VistaPasta({ pasta, aviso, voltar, abrirLista }) {
   const [listas, setListas] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const recarregar = useCallback(async () => {
-    const r = await api(`/loja-leads/listas/${pasta.id}`);
-    setListas(r?.listas || []);
-  }, [pasta.id]);
-
+  const recarregar = useCallback(async () => { const r = await api(`/loja-leads/listas/${pasta.id}`); setListas(r?.listas || []); }, [pasta.id]);
   useEffect(() => { recarregar().then(() => setLoading(false)); }, []);
 
   const novaLista = async () => {
     const r = await api("/loja-leads/listas", { pastaId: pasta.id, nome: "Nova lista" });
     if (r?.error) return aviso?.(r.error);
     await recarregar();
-    aviso?.("Lista criada.");
   };
 
-  const renomearLista = async (lista, novoNome) => {
-    await apiPatch(`/loja-leads/listas/${lista.id}`, { nome: novoNome });
-    recarregar();
-  };
-
-  const excluirLista = async (lista) => {
-    if (!confirm(`Excluir lista "${lista.nome}"?`)) return;
-    const r = await apiDelete(`/loja-leads/listas/${lista.id}`);
-    if (r?.error) return aviso?.(r.error);
-    aviso?.("Lista excluída.");
-    recarregar();
-  };
-
-  if (loading) return <div style={{ padding: 24, textAlign: "center" }}><div className="vx-spinner" /></div>;
+  if (loading) return <Loading />;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button type="button" className="vx-btn vx-btn-sm" onClick={voltar}
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, minHeight: 36 }}>
-          <ArrowLeft size={14} /> Voltar
-        </button>
-        <FolderOpen size={16} style={{ color: pasta.cor || "var(--brand)" }} />
-        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{pasta.nome}</span>
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.muted, marginBottom: 14 }}>
+        <button onClick={voltar} style={{ background: "none", border: "none", color: C.blue, cursor: "pointer", fontWeight: 600, fontSize: 13, padding: 0 }}>Minhas Listas</button>
+        <ChevronRight size={13} />
+        <span style={{ fontWeight: 600, color: C.ink }}>{pasta.nome}</span>
       </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 13, color: "var(--muted)" }}>{listas.length} lista(s)</span>
-        <button type="button" className="vx-btn vx-btn-sm vx-btn-primary" onClick={novaLista}
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, minHeight: 36 }}>
-          <Plus size={14} /> Nova lista
-        </button>
+      <div style={S.between}>
+        <span style={{ fontSize: 13, color: C.muted }}>{listas.length} lista(s)</span>
+        <button onClick={novaLista} style={{ ...S.btn, display: "flex", alignItems: "center", gap: 6 }}><Plus size={14} /> Nova lista</button>
       </div>
-
-      {!listas.length && (
-        <div style={{ textAlign: "center", padding: 32, color: "var(--muted)" }}>
-          <List size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
-          <p style={{ margin: 0, fontSize: 14 }}>Nenhuma lista nesta pasta.</p>
-        </div>
-      )}
-
-      {listas.map((l) => (
-        <ListaCard key={l.id} lista={l}
-          onAbrir={() => abrirLista(l)}
-          onRenomear={(novoNome) => renomearLista(l, novoNome)}
-          onExcluir={() => excluirLista(l)} />
-      ))}
-    </div>
+      {!listas.length && <div style={S.empty}><h3>Nenhuma lista nesta pasta.</h3></div>}
+      <div style={S.folders} className="ll-folders">
+        {listas.map((l) => (
+          <ListaCardSimple key={l.id} lista={l} aviso={aviso} onAbrir={() => abrirLista(l)} onAtualizar={recarregar} />
+        ))}
+      </div>
+    </>
   );
 }
 
-// ── Card de lista ───────────────────────────────────────────────────────────
-function ListaCard({ lista, onAbrir, onRenomear, onExcluir }) {
+function ListaCardSimple({ lista, aviso, onAbrir, onAtualizar }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(lista.nome);
+  const salvar = async () => { if (!nome.trim()) return; await apiPatch(`/loja-leads/listas/${lista.id}`, { nome: nome.trim() }); setEditando(false); onAtualizar?.(); };
+  const excluir = async () => { if (!confirm(`Excluir lista "${lista.nome}"?`)) return; const r = await apiDelete(`/loja-leads/listas/${lista.id}`); if (r?.error) return aviso?.(r.error); aviso?.("Lista excluída."); onAtualizar?.(); };
 
   return (
-    <div style={{
-      background: "var(--surface-2)", borderRadius: 10, padding: "12px 16px",
-      display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)", cursor: "pointer",
-    }}>
-      <List size={16} style={{ color: "var(--brand)", flexShrink: 0 }} />
-
+    <article style={S.folder} onClick={!editando ? onAbrir : undefined}>
+      <span style={S.symbol()}><List size={24} /></span>
       {editando ? (
-        <div style={{ flex: 1, display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-          <input className="vx-input" value={nome} onChange={(e) => setNome(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { onRenomear(nome.trim()); setEditando(false); } }}
-            autoFocus style={{ flex: 1, fontSize: 13, minHeight: 32, padding: "4px 8px" }} />
-          <button type="button" className="vx-btn vx-btn-sm vx-btn-primary"
-            onClick={() => { onRenomear(nome.trim()); setEditando(false); }}>OK</button>
-          <button type="button" className="vx-btn vx-btn-sm" onClick={() => { setEditando(false); setNome(lista.nome); }}>
-            <X size={13} />
-          </button>
+        <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+          <input style={{ ...S.input, height: 36 }} value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && salvar()} autoFocus />
+          <button onClick={salvar} style={{ ...S.btn, padding: "6px 12px", background: C.blue, color: "white", borderColor: C.blue }}>OK</button>
         </div>
       ) : (
         <>
-          <div style={{ flex: 1 }} onClick={onAbrir}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{lista.nome}</span>
-            <span style={{ fontSize: 11, color: "var(--muted)", marginLeft: 8 }}>
-              {lista.totalContatos ?? 0} contato(s)
-            </span>
+          <strong>{lista.nome}</strong>
+          <small style={{ color: C.muted }}>{lista.totalContatos ?? 0} contato(s)</small>
+          <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditando(true)} style={{ ...S.btn, padding: 6 }}><Pencil size={13} /></button>
+            <button onClick={excluir} style={{ ...S.btn, padding: 6, color: "#B42318" }}><Trash2 size={13} /></button>
           </div>
-          <button type="button" className="vx-btn vx-btn-sm" onClick={(e) => { e.stopPropagation(); setEditando(true); }}
-            title="Renomear" style={{ padding: 4 }}>
-            <Pencil size={13} />
-          </button>
-          <button type="button" className="vx-btn vx-btn-sm" onClick={(e) => { e.stopPropagation(); onExcluir(); }}
-            title="Excluir" style={{ padding: 4, color: "var(--danger)" }}>
-            <Trash2 size={13} />
-          </button>
-          <ChevronRight size={15} style={{ color: "var(--muted)" }} onClick={onAbrir} />
         </>
       )}
-    </div>
+    </article>
   );
 }
 
-// ── Vista de uma lista (contatos dentro + vincular à campanha) ─────────────
-function VistaLista({ lista, aviso, voltar }) {
+function VistaLista({ lista, aviso, voltar, isEmpresa }) {
   const [contatos, setContatos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vinculos, setVinculos] = useState([]);
-  const [indicadores, setIndicadores] = useState(null);
   const [campanhas, setCampanhas] = useState([]);
-  const [mostrarVincular, setMostrarVincular] = useState(false);
-  const [campSelecionada, setCampSelecionada] = useState("");
+  const [showVincular, setShowVincular] = useState(false);
+  const [campSel, setCampSel] = useState("");
   const [modoVinculo, setModoVinculo] = useState("pontual");
   const [vinculando, setVinculando] = useState(false);
 
   const recarregar = useCallback(async () => {
-    const [r, v, ind] = await Promise.all([
-      api(`/loja-leads/listas/${lista.id}/contatos`),
-      api(`/loja-leads/vinculos/lista/${lista.id}`),
-      api(`/loja-leads/listas/${lista.id}/indicadores`),
-    ]);
-    setContatos(r?.contatos || []);
-    setVinculos(v?.vinculos || []);
-    setIndicadores(ind);
+    const [r, v] = await Promise.all([api(`/loja-leads/listas/${lista.id}/contatos`), api(`/loja-leads/vinculos/lista/${lista.id}`)]);
+    setContatos(r?.contatos || []); setVinculos(v?.vinculos || []);
   }, [lista.id]);
-
   useEffect(() => { recarregar().then(() => setLoading(false)); }, []);
 
   const abrirVincular = async () => {
     const r = await api("/campaigns");
     setCampanhas((r || []).filter((c) => c.status === "ativa" || c.status === "rascunho"));
-    setMostrarVincular(true);
+    setShowVincular(true);
   };
-
   const vincular = async () => {
-    if (!campSelecionada) return aviso?.("Selecione uma campanha.");
+    if (!campSel) return aviso?.("Selecione uma campanha.");
     setVinculando(true);
-    const r = await api("/loja-leads/vincular", { listaId: lista.id, campaignId: campSelecionada, modo: modoVinculo });
+    const r = await api("/loja-leads/vincular", { listaId: lista.id, campaignId: campSel, modo: modoVinculo });
     setVinculando(false);
     if (r?.error) return aviso?.(r.error);
-    aviso?.(`Lista vinculada. ${r.copiados} contato(s) copiado(s) para a campanha.`);
-    setMostrarVincular(false);
-    setCampSelecionada("");
-    recarregar();
+    aviso?.(`Lista vinculada. ${r.copiados} contato(s) copiado(s).`);
+    setShowVincular(false); setCampSel(""); recarregar();
   };
+  const desvincular = async (id) => { if (!confirm("Remover vínculo?")) return; const r = await apiDelete(`/loja-leads/vinculos/${id}`); if (r?.error) return aviso?.(r.error); aviso?.("Vínculo removido."); recarregar(); };
+  const sincronizar = async (cid) => { const r = await api(`/loja-leads/sincronizar/${cid}`, {}); if (r?.error) return aviso?.(r.error); aviso?.(`${r.totalSincronizados} novo(s) contato(s).`); recarregar(); };
+  const remover = async (cid) => { const r = await api("/loja-leads/listas/remover", { listaId: lista.id, contatoId: cid }); if (r?.error) return aviso?.(r.error); aviso?.("Contato removido."); recarregar(); };
 
-  const desvincular = async (vinculoId) => {
-    if (!confirm("Remover vínculo desta lista com a campanha?")) return;
-    const r = await apiDelete(`/loja-leads/vinculos/${vinculoId}`);
-    if (r?.error) return aviso?.(r.error);
-    aviso?.("Vínculo removido.");
-    recarregar();
-  };
-
-  const sincronizar = async (campaignId) => {
-    const r = await api(`/loja-leads/sincronizar/${campaignId}`, {});
-    if (r?.error) return aviso?.(r.error);
-    aviso?.(`Sincronização concluída. ${r.totalSincronizados} novo(s) contato(s).`);
-    recarregar();
-  };
-
-  const remover = async (contatoId) => {
-    const r = await api("/loja-leads/listas/remover", { listaId: lista.id, contatoId });
-    if (r?.error) return aviso?.(r.error);
-    aviso?.("Contato removido da lista.");
-    recarregar();
-  };
-
-  if (loading) return <div style={{ padding: 24, textAlign: "center" }}><div className="vx-spinner" /></div>;
+  if (loading) return <Loading />;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button type="button" className="vx-btn vx-btn-sm" onClick={voltar}
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, minHeight: 36 }}>
-          <ArrowLeft size={14} /> Voltar
-        </button>
-        <List size={16} style={{ color: "var(--brand)" }} />
-        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{lista.nome}</span>
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.muted, marginBottom: 14 }}>
+        <button onClick={voltar} style={{ background: "none", border: "none", color: C.blue, cursor: "pointer", fontWeight: 600, fontSize: 13, padding: 0 }}>Minhas Listas</button>
+        <ChevronRight size={13} />
+        <span style={{ fontWeight: 600, color: C.ink }}>{lista.nome}</span>
+      </div>
+      <div style={{ ...S.between, marginBottom: 14 }}>
+        <span style={{ fontSize: 13, color: C.muted }}>{contatos.length} contato(s)</span>
+        {isEmpresa && <button onClick={abrirVincular} style={{ ...S.btn, display: "flex", alignItems: "center", gap: 6, color: C.blue, borderColor: C.blue }}><Megaphone size={14} /> Vincular à campanha</button>}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-        <span style={{ fontSize: 12, color: "var(--muted)" }}>{contatos.length} contato(s)</span>
-        <button type="button" className="vx-btn vx-btn-sm vx-btn-primary" onClick={abrirVincular}
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, minHeight: 36 }}>
-          <Megaphone size={14} /> Vincular à campanha
-        </button>
-      </div>
-
-      {/* Modal vincular à campanha */}
-      {mostrarVincular && (
-        <div style={{
-          background: "var(--surface-2)", borderRadius: 10, padding: 16,
-          border: "1px solid var(--brand)", display: "flex", flexDirection: "column", gap: 10,
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Vincular lista à campanha</span>
-            <button type="button" className="vx-btn vx-btn-sm" onClick={() => setMostrarVincular(false)} style={{ padding: 4 }}>
-              <X size={14} />
-            </button>
+      {showVincular && (
+        <div style={{ background: C.blueBg, borderRadius: R, padding: 18, border: `1px solid ${C.blue}33`, marginBottom: 16 }}>
+          <div style={{ ...S.between, marginBottom: 12 }}>
+            <strong>Vincular lista à campanha</strong>
+            <button onClick={() => setShowVincular(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={15} /></button>
           </div>
-          <select className="vx-input" value={campSelecionada} onChange={(e) => setCampSelecionada(e.target.value)}
-            style={{ fontSize: 13 }}>
-            <option value="">Selecione a campanha...</option>
-            {campanhas.map((c) => (
-              <option key={c.id} value={c.id}>{c.titulo} ({c.status})</option>
-            ))}
+          <select style={{ ...S.input, marginBottom: 10 }} value={campSel} onChange={(e) => setCampSel(e.target.value)}>
+            <option value="">Selecione...</option>
+            {campanhas.map((c) => <option key={c.id} value={c.id}>{c.titulo} ({c.status})</option>)}
           </select>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, cursor: "pointer" }}>
-              <input type="radio" name="modo" value="pontual" checked={modoVinculo === "pontual"} onChange={() => setModoVinculo("pontual")} />
-              Pontual
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, cursor: "pointer" }}>
-              <input type="radio" name="modo" value="automatica" checked={modoVinculo === "automatica"} onChange={() => setModoVinculo("automatica")} />
-              Automática
-            </label>
+          <div style={{ display: "flex", gap: 16, marginBottom: 10 }}>
+            <label style={{ ...S.checkLabel }}><input type="radio" name="modo" value="pontual" checked={modoVinculo === "pontual"} onChange={() => setModoVinculo("pontual")} /> Pontual</label>
+            <label style={{ ...S.checkLabel }}><input type="radio" name="modo" value="automatica" checked={modoVinculo === "automatica"} onChange={() => setModoVinculo("automatica")} /> Automática</label>
           </div>
-          <div className="vx-mut" style={{ fontSize: 11.5 }}>
-            {modoVinculo === "pontual"
-              ? "Copia os contatos atuais da lista para a campanha uma única vez."
-              : "Mantém o vínculo ativo: novos contatos adicionados à lista são sincronizados com a campanha."}
-          </div>
-          <button type="button" className="vx-btn vx-btn-primary vx-btn-sm" disabled={vinculando || !campSelecionada}
-            onClick={vincular} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 5 }}>
-            {vinculando ? <Loader2 size={13} className="vx-spin" /> : <Link2 size={13} />}
+          <button onClick={vincular} disabled={vinculando || !campSel} style={S.primary(vinculando || !campSel)}>
+            {vinculando ? <Loader2 size={14} className="vx-spin" /> : <Link2 size={14} />}
             {vinculando ? "Vinculando..." : "Vincular"}
           </button>
         </div>
       )}
 
-      {/* Campanhas vinculadas */}
-      {vinculos.length > 0 && (
-        <div style={{
-          background: "var(--surface-2)", borderRadius: 10, padding: 14,
-          border: "1px solid var(--border)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <Link2 size={14} style={{ color: "var(--brand)" }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".04em" }}>
-              Campanhas vinculadas
-            </span>
+      {vinculos.length > 0 && vinculos.map((v) => (
+        <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: C.bg, borderRadius: 8, marginBottom: 8 }}>
+          <Megaphone size={14} style={{ color: C.blue, flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>{v.campanhaTitulo}</div>
+            <small style={{ color: C.muted }}>{v.modo === "automatica" ? "Automática" : "Pontual"} · {v.totalCopiados} enviado(s)</small>
           </div>
-          {vinculos.map((v) => (
-            <div key={v.id} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-              padding: "8px 0", borderTop: "1px solid var(--border)",
-            }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>{v.campanhaTitulo}</div>
-                <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                  {v.modo === "automatica" ? "Automática" : "Pontual"} · {v.totalCopiados} enviado(s) · {v.campanhaStatus}
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 4 }}>
-                {v.modo === "automatica" && (
-                  <button type="button" className="vx-btn vx-btn-sm" title="Sincronizar agora"
-                    onClick={() => sincronizar(v.campaignId)} style={{ padding: 4 }}>
-                    <RefreshCw size={13} />
-                  </button>
-                )}
-                <button type="button" className="vx-btn vx-btn-sm" title="Remover vínculo"
-                  onClick={() => desvincular(v.id)} style={{ padding: 4, color: "var(--danger)" }}>
-                  <Unlink size={13} />
-                </button>
-              </div>
-            </div>
-          ))}
+          {v.modo === "automatica" && <button onClick={() => sincronizar(v.campaignId)} style={{ ...S.btn, padding: 6 }}><RefreshCw size={13} /></button>}
+          <button onClick={() => desvincular(v.id)} style={{ ...S.btn, padding: 6, color: "#B42318" }}><Unlink size={13} /></button>
         </div>
-      )}
-
-      {/* Indicadores de desempenho */}
-      {indicadores && indicadores.campanhasVinculadas?.length > 0 && (
-        <div style={{
-          background: "var(--surface-2)", borderRadius: 10, padding: 14,
-          border: "1px solid var(--border)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <BarChart3 size={14} style={{ color: "var(--brand)" }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".04em" }}>
-              Desempenho por campanha
-            </span>
-          </div>
-          <div style={{ border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead>
-                <tr style={{ background: "var(--surface)" }}>
-                  <th style={thStyle}>Campanha</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Enviados</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Distribuídos</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Leads</th>
-                </tr>
-              </thead>
-              <tbody>
-                {indicadores.campanhasVinculadas.map((c) => (
-                  <tr key={c.campaignId} style={{ borderTop: "1px solid var(--border)" }}>
-                    <td style={tdStyle}>
-                      <div style={{ fontWeight: 500 }}>{c.titulo}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{c.status}</div>
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "right" }}>{c.contatosEnviados}</td>
-                    <td style={{ ...tdStyle, textAlign: "right" }}>{c.distribuidos}</td>
-                    <td style={{ ...tdStyle, textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{c.leadsGerados}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {!contatos.length && (
-        <div style={{ textAlign: "center", padding: 32, color: "var(--muted)" }}>
-          <Eye size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
-          <p style={{ margin: 0, fontSize: 14 }}>Nenhum contato nesta lista.</p>
-          <p style={{ margin: "4px 0 0", fontSize: 12.5 }}>Busque leads e adicione-os a esta lista.</p>
-        </div>
-      )}
-
-      {contatos.map((c) => (
-        <CardContato key={c.id} contato={{ ...c, revelado: true }}
-          onRemover={() => remover(c.id)} />
       ))}
-    </div>
+
+      {!contatos.length ? (
+        <div style={S.empty}><h3>Nenhum contato nesta lista.</h3></div>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table style={S.table}>
+            <thead><tr><th style={S.th}>Empresa</th><th style={S.th}>Telefone</th><th style={S.th}>Website</th><th style={{ ...S.th, textAlign: "center" }}>Ações</th></tr></thead>
+            <tbody>
+              {contatos.map((c) => (
+                <tr key={c.id}>
+                  <td style={{ ...S.td, fontWeight: 600 }}>{c.nome || "—"}</td>
+                  <td style={S.td}>{c.telefone || "—"}</td>
+                  <td style={S.td}>{c.site ? <a href={c.site} target="_blank" rel="noopener noreferrer" style={{ color: C.blue, textDecoration: "none" }}>{c.site.replace(/^https?:\/\//, "").slice(0, 25)}</a> : "—"}</td>
+                  <td style={{ ...S.td, textAlign: "center" }}><button onClick={() => remover(c.id)} style={{ ...S.btn, padding: 5, color: "#B42318" }}><Trash2 size={13} /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
 
-// ── Aba Consumo (Lote 3 — ciclo + faturas) ─────────────────────────────────
-function AbaConsumo() {
-  const [ciclo, setCiclo] = useState(null);
+/* ═══ ABA 3: Consumo ═════════════════════════════════════════════════════ */
+function AbaConsumo({ ciclo: cicloInicial }) {
+  const [ciclo, setCiclo] = useState(cicloInicial);
   const [faturas, setFaturas] = useState([]);
   const [precos, setPrecos] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      api("/loja-leads/ciclo"),
-      api("/loja-leads/faturas"),
-      api("/loja-leads/precos"),
-    ]).then(([c, f, p]) => {
-      setCiclo(c);
-      setFaturas(f?.faturas || []);
-      setPrecos(p?.precos || []);
-      setLoading(false);
+    Promise.all([api("/loja-leads/ciclo"), api("/loja-leads/faturas"), api("/loja-leads/precos")]).then(([c, f, p]) => {
+      setCiclo(c); setFaturas(f?.faturas || []); setPrecos(p?.precos || []); setLoading(false);
     });
   }, []);
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center" }}><div className="vx-spinner" /></div>;
+  if (loading) return <Loading />;
 
-  const formatarData = (ts) => {
-    if (!ts) return "—";
-    return new Date(ts).toLocaleDateString("pt-BR");
-  };
+  const fmt = (ts) => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 
-  const faturasAnteriores = faturas.filter((f) => f.id !== ciclo?.id);
+  if (!ciclo && !faturas.length) return (
+    <div style={S.empty}>
+      <span style={S.symbol(C.purple)}><FileText size={24} /></span>
+      <h3 style={{ margin: "12px 0 4px" }}>Nenhuma cobrança registrada.</h3>
+    </div>
+  );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <>
+      <h2 style={{ margin: 0, fontSize: 20 }}>Consumo e cobrança</h2>
       {ciclo && (
-        <div style={{
-          background: "var(--surface-2)", borderRadius: 12, padding: 20, border: "1px solid var(--border)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <Clock size={16} style={{ color: "var(--brand)" }} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Ciclo atual</span>
-            <span style={{
-              fontSize: 11, padding: "2px 10px", borderRadius: 10,
-              background: "var(--brand)", color: "#fff", fontWeight: 600,
-            }}>Aberto</span>
-          </div>
-
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <StatCard label="Período" valor={`${formatarData(ciclo.inicio)} — ${formatarData(ciclo.fim)}`} icone={<Clock size={16} />} />
-            <StatCard label="Contatos revelados" valor={ciclo.totalContatos} icone={<Eye size={16} />} destaque />
-            <StatCard label="Preço/contato" valor={`R$ ${(ciclo.valorUnitario || 0).toFixed(2)}`} icone={<DollarSign size={16} />} />
-            <StatCard label="Estimativa" valor={`R$ ${(ciclo.valorTotal || 0).toFixed(2)}`} icone={<Receipt size={16} />} destaque />
-          </div>
+        <div style={S.section}>
+          <small style={{ color: C.muted, textTransform: "uppercase", letterSpacing: ".5px", fontWeight: 700 }}>ACUMULADO NO CICLO ATUAL</small>
+          <h1 style={{ margin: "8px 0", fontSize: 28, letterSpacing: "-.7px" }}>{money(ciclo.valorTotal || 0)}</h1>
+          <p style={{ margin: 0, color: C.muted }}>Início do ciclo: {ciclo.inicio ? fmt(ciclo.inicio) : "aguardando primeiro uso"}</p>
+          <p style={{ margin: 0, color: C.muted }}>Próxima cobrança: {ciclo.fim ? fmt(ciclo.fim) : "ainda não definida"}</p>
         </div>
       )}
 
-      {faturasAnteriores.length > 0 && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <FileText size={16} style={{ color: "var(--muted)" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Faturas anteriores</span>
-          </div>
-          <div style={{ border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: "var(--surface-2)" }}>
-                  <th style={thStyle}>Período</th>
-                  <th style={thStyle}>Contatos</th>
-                  <th style={thStyle}>Valor</th>
-                  <th style={thStyle}>Status</th>
+      {faturas.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <span style={S.label}>HISTÓRICO DE FATURAS</span>
+          <table style={S.table}>
+            <thead><tr><th style={S.th}>Período</th><th style={S.th}>Leads</th><th style={S.th}>Valor</th><th style={S.th}>Status</th></tr></thead>
+            <tbody>
+              {faturas.map((f) => (
+                <tr key={f.id}>
+                  <td style={S.td}>{fmt(f.inicio)} — {fmt(f.fim)}</td>
+                  <td style={S.td}>{f.totalContatos}</td>
+                  <td style={{ ...S.td, fontWeight: 600, color: C.blue }}>{money(f.valorTotal)}</td>
+                  <td style={S.td}>{f.status === "fechado" ? "Fechado" : "Aberto"}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {faturasAnteriores.map((f) => (
-                  <tr key={f.id} style={{ borderTop: "1px solid var(--border)" }}>
-                    <td style={tdStyle}>{formatarData(f.inicio)} — {formatarData(f.fim)}</td>
-                    <td style={tdStyle}>{f.totalContatos}</td>
-                    <td style={{ ...tdStyle, fontWeight: 600, color: "var(--brand)" }}>R$ {(f.valorTotal || 0).toFixed(2)}</td>
-                    <td style={tdStyle}>
-                      <span style={{
-                        fontSize: 11, padding: "2px 10px", borderRadius: 10, fontWeight: 600,
-                        background: f.status === "fechado" ? "var(--surface)" : "var(--brand)",
-                        color: f.status === "fechado" ? "var(--muted)" : "#fff",
-                      }}>
-                        {f.status === "fechado" ? "Fechado" : "Aberto"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
       {precos.length > 0 && (
-        <div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em" }}>
-            Tabela de preços
-          </span>
-          <div style={{ marginTop: 8, border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: "var(--surface-2)" }}>
-                  <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--ink-2)" }}>Faixa</th>
-                  <th style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, color: "var(--ink-2)" }}>Valor/contato</th>
+        <div style={{ marginTop: 20 }}>
+          <span style={S.label}>TABELA DE PREÇOS</span>
+          <table style={S.table}>
+            <thead><tr><th style={S.th}>Faixa</th><th style={{ ...S.th, textAlign: "right" }}>Valor / contato</th></tr></thead>
+            <tbody>
+              {precos.map((p) => (
+                <tr key={p.id}>
+                  <td style={S.td}>{p.faixa} contatos</td>
+                  <td style={{ ...S.td, textAlign: "right", fontWeight: 600, color: C.blue }}>{money(p.valorUnitario)}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {precos.map((p) => (
-                  <tr key={p.id} style={{ borderTop: "1px solid var(--border)" }}>
-                    <td style={{ padding: "8px 12px", color: "var(--ink)" }}>{p.faixa} contatos</td>
-                    <td style={{ padding: "8px 12px", textAlign: "right", color: "var(--brand)", fontWeight: 600 }}>
-                      R$ {p.valorUnitario.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-// ── Helpers visuais ─────────────────────────────────────────────────────────
-function StatCard({ label, valor, icone, destaque }) {
+/* ── Loading ──────────────────────────────────────────────────────────── */
+function Loading() {
   return (
-    <div style={{
-      flex: 1, minWidth: 140, background: destaque ? "var(--brand-bg, var(--surface))" : "var(--surface)",
-      borderRadius: 10, padding: "14px 16px",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-        <span style={{ color: destaque ? "var(--brand)" : "var(--muted)" }}>{icone}</span>
-        <span style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</span>
-      </div>
-      <div style={{ fontSize: typeof valor === "number" ? 22 : 14, fontWeight: 700, color: "var(--ink)" }}>{valor}</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 24 }}>
+      {[1, 2, 3].map((i) => (
+        <div key={i} style={{ height: 48, borderRadius: 10, background: C.bg, animation: "pulse 1.5s infinite" }} />
+      ))}
+      <style>{`@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}`}</style>
     </div>
   );
 }
-
-const thStyle = { padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--ink-2)", fontSize: 12 };
-const tdStyle = { padding: "8px 12px", color: "var(--ink)" };
