@@ -368,6 +368,7 @@ export default function Integracoes({ aviso, campanhas = [], onAbrirCanal }) {
   const [webhook, setWebhook] = useState(null);
   const [canais, setCanais] = useState([]);
   const [erp, setErp] = useState(null);
+  const [gsheets, setGsheets] = useState(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   // País do catálogo: começa no idioma logado; os botões no topo alternam.
@@ -386,6 +387,7 @@ export default function Integracoes({ aviso, campanhas = [], onAbrirCanal }) {
     api("/webhooks/config").then((w) => setWebhook(w || { ativado: false })).catch(() => setWebhook({ ativado: false }));
     api("/canais").then((r) => setCanais(r?.conexoes || []));
     api("/erp").then((r) => setErp(r && !r.error ? r : null));
+    api("/google-sheets/config").then((r) => setGsheets(r?.conectado ? r : { conectado: false })).catch(() => setGsheets({ conectado: false }));
   }, [aberto]);
 
   const statusDe = (item) => {
@@ -396,7 +398,7 @@ export default function Integracoes({ aviso, campanhas = [], onAbrirCanal }) {
       return minhas.some((c) => c.status === "ativa") ? "conectado" : minhas.length ? "atencao" : "nao_conectado";
     }
     if (item.tipo === "erp") return erp?.conectado && erp.provedor === item.provedor ? (erp.status === "ativa" ? "conectado" : "atencao") : "nao_conectado";
-    if (item.tipo === "google-sheets") return "nao_conectado";
+    if (item.tipo === "google-sheets") return gsheets?.conectado && gsheets.configurado && gsheets.ativo ? "conectado" : gsheets?.conectado ? "atencao" : "nao_conectado";
     return "em_breve";
   };
 
@@ -416,7 +418,7 @@ export default function Integracoes({ aviso, campanhas = [], onAbrirCanal }) {
       .map((item, i) => ({ item, i, rank: ORDEM_STATUS[statusDe(item)] ?? 9 }))
       .sort((a, b) => a.rank - b.rank || a.i - b.i)
       .map((x) => x.item);
-  }, [busca, filtro, conexao, webhook, canais, erp, catalogo]);
+  }, [busca, filtro, conexao, webhook, canais, erp, gsheets, catalogo]);
 
   const itemAberto = aberto ? catalogo.find((i) => i.id === aberto) : null;
 

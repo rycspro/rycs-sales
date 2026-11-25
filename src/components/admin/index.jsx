@@ -21,6 +21,7 @@ import ParceirosCanalAdmin from "./ParceirosCanalAdmin.jsx";
 import { lazy, Suspense } from "react";
 const AgendaComercial = lazy(() => import("../agenda/AgendaComercial.jsx"));
 const ColaboradoresAdmin = lazy(() => import("./ColaboradoresAdmin.jsx"));
+const LojaLeadsAdmin = lazy(() => import("./LojaLeadsAdmin.jsx"));
 
 export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   const triagem = db.sellers.filter((s) => s.status === "triagem");
@@ -104,6 +105,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   if (aba === "onboarding") return <ConvitesOnboarding aviso={aviso} />;
   if (aba === "jornada") return <JornadaAdmin />;
   if (aba === "anuncios") return <CampanhasAdmin />;
+  if (aba === "loja-leads-admin") return <Suspense fallback={<div className="vx-spinner" />}><LojaLeadsAdmin aviso={aviso} /></Suspense>;
 
   return (
     <div className="vx-fade">

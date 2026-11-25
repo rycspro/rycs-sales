@@ -387,6 +387,26 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div className="vx-row" style={{ marginBottom: 12 }}><div><b>Fonte de leads</b><div className="vx-mut" style={{ fontSize: 11.5 }}>De onde virão os contatos desta campanha. Você pode combinar mais de uma fonte.</div></div></div>
+            <div className="vx-wizard-checks">
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", opacity: 0.5, pointerEvents: "none" }}>
+                <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked disabled />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Upload de base própria</div>
+                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>Importe planilhas e CSVs com seus contatos.</div>
+                </div>
+              </label>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginTop: 10 }}>
+                <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={!!campanha.usarLojaLeads} onChange={(e) => set("usarLojaLeads", e.target.checked)} />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Loja de Leads</div>
+                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>Vincule listas da Loja de Leads a esta campanha. Os contatos revelados são copiados automaticamente para a base de contatos da campanha.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           {/* valores: o ponto onde a empresa decide o que paga */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div className="vx-row" style={{ marginBottom: 4 }}>
@@ -597,6 +617,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Limite por profissional</span><div style={{ fontWeight: 600 }}>{campanha.limitePorProfissional || "Sem limite"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Leads próprios</span><div style={{ fontWeight: 600 }}>{campanha.aceitaLeadProprio ? "Aceitos" : "Não aceitos"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Certificação</span><div style={{ fontWeight: 600 }}>{campanha.exigeCertificacao ? "Obrigatória" : "Não exigida"}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Loja de Leads</span><div style={{ fontWeight: 600 }}>{campanha.usarLojaLeads ? "Habilitada" : "Não habilitada"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento</span><div style={{ fontWeight: 600 }}>{(campanha.treinamento || []).length} módulo(s)</div></div>
             </div>
 

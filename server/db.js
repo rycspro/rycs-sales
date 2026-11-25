@@ -2867,6 +2867,10 @@ adicionarColuna("colaboradores", "cargoId", "TEXT");
 adicionarColuna("colaboradores", "dados", "TEXT DEFAULT '{}'");
 
 
+// Loja de Leads → Campanha: origem do contato no pool
+adicionarColuna("campaign_contacts", "origem", "TEXT DEFAULT 'manual'");
+adicionarColuna("campaign_contacts", "listaOrigemId", "TEXT");
+
 criarSchemaAgenda(db);
 
 export default db;
