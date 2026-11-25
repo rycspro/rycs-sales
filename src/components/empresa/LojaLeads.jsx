@@ -59,6 +59,27 @@ const GRUPOS = [
 const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos);
 const QTDS = [25, 50, 100, 250, 500, 1000];
 
+const SEGMENTOS = [
+  "Restaurantes", "Clínicas odontológicas", "Imobiliárias", "Academias",
+  "Escritórios", "Salões de beleza", "Comércios", "Tecnologia",
+  "Clínicas médicas", "Consultórios", "Farmácias", "Pet shops",
+  "Escolas e cursos", "Contabilidade", "Advocacia", "Arquitetura e engenharia",
+  "Agências de marketing", "Agências de viagens", "Hotéis e pousadas",
+  "Oficinas mecânicas", "Autopeças", "Construtoras", "Supermercados",
+  "Padarias e confeitarias", "Óticas", "Floriculturas", "Estúdios de fotografia",
+  "Academias de artes marciais", "Estúdios de pilates", "Clínicas veterinárias",
+];
+
+const ESTADOS_BR = [
+  "São Paulo, SP", "Rio de Janeiro, RJ", "Minas Gerais, MG", "Bahia, BA",
+  "Paraná, PR", "Rio Grande do Sul, RS", "Santa Catarina, SC", "Pernambuco, PE",
+  "Ceará, CE", "Goiás, GO", "Pará, PA", "Maranhão, MA", "Amazonas, AM",
+  "Espírito Santo, ES", "Mato Grosso, MT", "Mato Grosso do Sul, MS",
+  "Distrito Federal, DF", "Paraíba, PB", "Rio Grande do Norte, RN",
+  "Alagoas, AL", "Piauí, PI", "Sergipe, SE", "Rondônia, RO", "Tocantins, TO",
+  "Acre, AC", "Amapá, AP", "Roraima, RR",
+];
+
 /* ═══ Componente principal ════════════════════════════════════════════════ */
 export default function LojaLeads({ aviso, role: roleProp }) {
   const [aba, setAba] = useState(0);
@@ -230,8 +251,10 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
             <div className="vx-grid" style={{ gap: 12 }}>
               <label>
                 <span className="vx-label">Segmento ou tipo de empresa</span>
-                <input className="vx-input" value={segmento} onChange={(e) => setSegmento(e.target.value)}
-                  placeholder="Clínicas odontológicas, empresas de tecnologia..." />
+                <select className="vx-input" value={segmento} onChange={(e) => setSegmento(e.target.value)}>
+                  <option value="">Selecione o segmento...</option>
+                  {SEGMENTOS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
               </label>
               <div className="vx-grid vx-g2" style={{ gap: 12 }}>
                 <label>
@@ -242,7 +265,10 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
                 </label>
                 <label>
                   <span className="vx-label">Cidade ou região</span>
-                  <input className="vx-input" value={regiao} onChange={(e) => setRegiao(e.target.value)} placeholder="Sorocaba, SP" />
+                  <select className="vx-input" value={regiao} onChange={(e) => setRegiao(e.target.value)}>
+                    <option value="">Selecione a região...</option>
+                    {ESTADOS_BR.map((e) => <option key={e} value={e}>{e}</option>)}
+                  </select>
                 </label>
               </div>
             </div>
