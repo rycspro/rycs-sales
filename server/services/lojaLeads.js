@@ -171,6 +171,56 @@ db.exec(`
   }
 }
 
+// ── Migração: recuperar leads órfãos (revelados/cobrados, mas fora de lista) ──
+// Um bug antigo cobrava o contato antes de garantir a lista de destino; se a
+// lista não fosse resolvida, o lead ficava revelado mas sem entrar em lista
+// nenhuma. Esta migração coloca todos esses leads numa lista "Leads recuperados"
+// por entidade, para que nada de já pago fique invisível. Idempotente: depois
+// que o lead entra numa lista, deixa de ser órfão e não é tocado de novo.
+{
+  const orfaos = db.prepare(`
+    SELECT co.contatoId, co.entityId, co.entityRole
+    FROM loja_leads_consumo co
+    WHERE NOT EXISTS (
+      SELECT 1 FROM loja_leads_lista_contatos lc
+      JOIN loja_leads_listas l ON l.id = lc.listaId
+      WHERE lc.contatoId = co.contatoId AND l.entityId = co.entityId
+    )
+  `).all();
+
+  if (orfaos.length) {
+    const ts = agora();
+    const porEntidade = new Map();
+    for (const o of orfaos) {
+      const chave = `${o.entityId}|${o.entityRole}`;
+      if (!porEntidade.has(chave)) porEntidade.set(chave, { entityId: o.entityId, entityRole: o.entityRole, contatos: [] });
+      porEntidade.get(chave).contatos.push(o.contatoId);
+    }
+
+    const addContato = db.prepare("INSERT OR IGNORE INTO loja_leads_lista_contatos (listaId, contatoId, adicionadoEm) VALUES (?, ?, ?)");
+
+    for (const { entityId, entityRole, contatos } of porEntidade.values()) {
+      // Pasta de destino: a primeira existente da entidade, ou uma nova.
+      let pasta = db.prepare("SELECT id FROM loja_leads_pastas WHERE entityId = ? AND entityRole = ? ORDER BY criadoEm LIMIT 1").get(entityId, entityRole);
+      if (!pasta) {
+        const pid = uid();
+        db.prepare("INSERT INTO loja_leads_pastas (id, entityId, entityRole, nome, cor, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)")
+          .run(pid, entityId, entityRole, "Leads recuperados", "#2563EB", ts, ts);
+        pasta = { id: pid };
+      }
+      // Lista "Leads recuperados" dentro dessa pasta (reutiliza se já existir).
+      let lista = db.prepare("SELECT id FROM loja_leads_listas WHERE pastaId = ? AND nome = ? AND parentId IS NULL").get(pasta.id, "Leads recuperados");
+      if (!lista) {
+        const lid = uid();
+        db.prepare("INSERT INTO loja_leads_listas (id, pastaId, entityId, entityRole, nome, descricao, parentId, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+          .run(lid, pasta.id, entityId, entityRole, "Leads recuperados", "Leads já adquiridos que estavam sem lista.", null, ts, ts);
+        lista = { id: lid };
+      }
+      for (const contatoId of contatos) addContato.run(lista.id, contatoId, ts);
+    }
+  }
+}
+
 // ── Google Places API (New) ─────────────────────────────────────────────────
 const PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || "";
 
