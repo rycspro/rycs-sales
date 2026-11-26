@@ -76,7 +76,7 @@ function CampanhaHeader({ campanha, empresa }) {
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {tiposAtivos.map(([tipo, valor]) => (
             <span key={tipo} className="vx-chip vx-mono" style={{ fontSize: 11 }}>
-              {ACOES[tipo]?.nome || tipo} <b style={{ color: "var(--brand)" }}>{money(valor)}</b>
+              {ACOES[tipo]?.nome || tipo} <b style={{ color: "var(--brand)" }}>{tipo === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? `${valor}%` : money(valor)}</b>
             </span>
           ))}
         </div>

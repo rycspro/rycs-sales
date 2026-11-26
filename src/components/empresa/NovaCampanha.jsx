@@ -710,12 +710,33 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               )}
               <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
                 {(campanha.acoesAtivas || []).map((k) => (
-                  <label key={k}>
+                  <div key={k}>
                     <div className="vx-label">{ACOES_DISPONIVEIS.find((a) => a.id === k)?.nome || ACOES[k]?.nome || k}</div>
-                    <input className="vx-input vx-mono" type="number" min="0" step="0.5"
-                      value={campanha.tarefas?.[k] || 0}
-                      onChange={(e) => set("tarefas", { ...campanha.tarefas, [k]: Number(e.target.value) })} />
-                  </label>
+                    {k === "venda" ? (
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <select className="vx-input" style={{ width: 110, fontSize: 12.5 }}
+                          value={campanha.vendaTipoRemuneracao || "fixo"}
+                          onChange={(e) => set("vendaTipoRemuneracao", e.target.value)}>
+                          <option value="fixo">R$ fixo</option>
+                          <option value="percentual">% da venda</option>
+                        </select>
+                        <div style={{ position: "relative", flex: 1 }}>
+                          <input className="vx-input vx-mono" type="number" min="0"
+                            step={campanha.vendaTipoRemuneracao === "percentual" ? "0.5" : "0.5"}
+                            max={campanha.vendaTipoRemuneracao === "percentual" ? "100" : undefined}
+                            value={campanha.tarefas?.[k] || 0}
+                            onChange={(e) => set("tarefas", { ...campanha.tarefas, [k]: Number(e.target.value) })} />
+                          <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 12, pointerEvents: "none" }}>
+                            {campanha.vendaTipoRemuneracao === "percentual" ? "%" : "R$"}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <input className="vx-input vx-mono" type="number" min="0" step="0.5"
+                        value={campanha.tarefas?.[k] || 0}
+                        onChange={(e) => set("tarefas", { ...campanha.tarefas, [k]: Number(e.target.value) })} />
+                    )}
+                  </div>
                 ))}
               </div>
               {mostrarSugestao && sugestaoIA && !sugestaoIA.disponivel && (
@@ -901,7 +922,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               {(campanha.acoesAtivas || []).map((k) => (
                 <div key={k} className="vx-row">
                   <span style={{ color: "var(--text-2)" }}>{ACOES_DISPONIVEIS.find((a) => a.id === k)?.nome || ACOES[k]?.nome || k}</span>
-                  <b className="vx-mono">{money(Number(campanha.tarefas?.[k] || 0))}</b>
+                  <b className="vx-mono">{k === "venda" && campanha.vendaTipoRemuneracao === "percentual"
+                    ? `${campanha.tarefas?.[k] || 0}%`
+                    : money(Number(campanha.tarefas?.[k] || 0))}</b>
                 </div>
               ))}
               {campanha.temComissao && campanha.percentualComissao > 0 && (

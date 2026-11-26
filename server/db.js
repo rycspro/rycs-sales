@@ -3330,6 +3330,7 @@ db.exec(`
 `);
 adicionarColuna("campaigns", "operacaoId", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "estruturaComercial", "TEXT DEFAULT 'independente'");
+adicionarColuna("campaigns", "vendaTipoRemuneracao", "TEXT DEFAULT 'fixo'");
 
 // ── Vínculos entre campanhas (continuidade comercial) ──────────────────
 db.exec(`
