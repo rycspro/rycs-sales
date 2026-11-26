@@ -302,6 +302,7 @@ export default function LojaLeads({ aviso, role: roleProp }) {
   const [ciclo, setCiclo] = useState(null);
   const [consumo, setConsumo] = useState(null);
   const [listas, setListas] = useState([]);
+  const [pastas, setPastas] = useState([]);
   const [precos, setPrecos] = useState([]);
   const [detectedRole, setDetectedRole] = useState(null);
   const role = roleProp || detectedRole || "empresa";
@@ -313,9 +314,14 @@ export default function LojaLeads({ aviso, role: roleProp }) {
     api("/loja-leads/consumo").then(setConsumo);
     api("/loja-leads/precos").then((r) => setPrecos(r?.precos || []));
     carregarTodasListas().then(setListas);
+    api("/loja-leads/pastas").then((r) => setPastas(r?.pastas || []));
   }, []);
 
-  const recarregarListas = useCallback(async () => { setListas(await carregarTodasListas()); }, []);
+  const recarregarListas = useCallback(async () => {
+    setListas(await carregarTodasListas());
+    const r = await api("/loja-leads/pastas");
+    setPastas(r?.pastas || []);
+  }, []);
   const recarregarCiclo = useCallback(async () => {
     const [c, co] = await Promise.all([api("/loja-leads/ciclo"), api("/loja-leads/consumo")]);
     setCiclo(c); setConsumo(co);
@@ -388,7 +394,7 @@ export default function LojaLeads({ aviso, role: roleProp }) {
 
       {/* Content */}
       <div className="vx-card" style={{ borderRadius: "0 var(--radius-md) var(--radius-md) var(--radius-md)", padding: 20, marginBottom: 20 }}>
-        {aba === 0 && <AbaBuscar aviso={aviso} listas={listas} precoUnitario={precoUnitario} recarregarCiclo={recarregarCiclo} recarregarListas={recarregarListas} isEmpresa={isEmpresa} ciclo={ciclo} />}
+        {aba === 0 && <AbaBuscar aviso={aviso} listas={listas} pastas={pastas} precoUnitario={precoUnitario} recarregarCiclo={recarregarCiclo} recarregarListas={recarregarListas} isEmpresa={isEmpresa} ciclo={ciclo} />}
         {aba === 1 && <AbaContatos aviso={aviso} listas={listas} isEmpresa={isEmpresa} />}
         {aba === 2 && <AbaListas aviso={aviso} isEmpresa={isEmpresa} recarregarListas={recarregarListas} />}
         {aba === 3 && <AbaConsumo ciclo={ciclo} />}
@@ -398,7 +404,7 @@ export default function LojaLeads({ aviso, role: roleProp }) {
 }
 
 /* ═══ ABA 0: Encontrar leads ═════════════════════════════════════════════ */
-function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarListas, isEmpresa, ciclo }) {
+function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, recarregarListas, isEmpresa, ciclo }) {
   const [segmento, setSegmento] = useState("");
   const [pais, setPais] = useState("Brasil");
   const [estados, setEstados] = useState([]);
@@ -408,6 +414,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
   const [campos, setCampos] = useState(() => new Set());
   const [destino, setDestino] = useState("new");
   const [nomeLista, setNomeLista] = useState("");
+  const [pastaSel, setPastaSel] = useState("");
   const [listaExistente, setListaExistente] = useState("");
   const [listaPai, setListaPai] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -448,12 +455,14 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
     } else if (destino === "new") {
       body.novaLista = nomeLista.trim() || `${segmento.trim()} — ${regiao.trim() || new Date().toLocaleDateString("pt-BR")}`;
       body.descricaoLista = `${segmento} — ${regiao || pais}`;
+      if (pastaSel) body.novaPasta = pastaSel;
     } else if (destino === "sub" && listaPai) {
       const pai = listas.find((l) => l.id === listaPai);
       body.novaLista = nomeLista.trim() || `${segmento.trim()} — ${regiao.trim() || new Date().toLocaleDateString("pt-BR")}`;
       body.descricaoLista = `${segmento} — ${regiao || pais}`;
       body.parentListaId = listaPai;
-      if (pai?.pastaId) body.novaPasta = pai.pastaId;
+      if (pastaSel) body.novaPasta = pastaSel;
+      else if (pai?.pastaId) body.novaPasta = pai.pastaId;
     }
 
     const r = await api("/loja-leads/buscar", body);
@@ -609,30 +618,35 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
                 <span className="vx-label">Destino</span>
                 <select className="vx-input" value={destino} onChange={(e) => setDestino(e.target.value)}>
                   <option value="new">Criar nova lista</option>
-                  <option value="sub">Criar sub-lista (dentro de lista existente)</option>
+                  {listas.length > 0 && <option value="sub">Criar sub-lista (dentro de lista existente)</option>}
                   {listas.length > 0 && <option value="existing">Lista existente</option>}
                 </select>
               </label>
-              {destino === "new" && (
+              {(destino === "new" || destino === "sub") && pastas.length > 0 && (
                 <label>
-                  <span className="vx-label">Nome da lista</span>
-                  <input className="vx-input" placeholder="Nome da nova lista" value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
+                  <span className="vx-label">Pasta</span>
+                  <select className="vx-input" value={pastaSel} onChange={(e) => setPastaSel(e.target.value)}>
+                    <option value="">Selecionar pasta...</option>
+                    {pastas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                  </select>
                 </label>
               )}
               {destino === "sub" && (
-                <>
-                  <label>
-                    <span className="vx-label">Lista pai</span>
-                    <select className="vx-input" value={listaPai} onChange={(e) => setListaPai(e.target.value)}>
-                      <option value="">Selecione a lista pai</option>
-                      {listas.map((l) => <option key={l.id} value={l.id}>{l.pastaNome} › {l.nome}</option>)}
-                    </select>
-                  </label>
-                  <label>
-                    <span className="vx-label">Nome da sub-lista</span>
-                    <input className="vx-input" placeholder="Nome da sub-lista" value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
-                  </label>
-                </>
+                <label>
+                  <span className="vx-label">Lista pai</span>
+                  <select className="vx-input" value={listaPai} onChange={(e) => setListaPai(e.target.value)}>
+                    <option value="">Selecione a lista pai</option>
+                    {(pastaSel ? listas.filter((l) => l.pastaId === pastaSel) : listas).map((l) => (
+                      <option key={l.id} value={l.id}>{l.pastaNome} › {l.nome}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {(destino === "new" || destino === "sub") && (
+                <label>
+                  <span className="vx-label">{destino === "sub" ? "Nome da sub-lista" : "Nome da lista"}</span>
+                  <input className="vx-input" placeholder={destino === "sub" ? "Nome da sub-lista" : "Nome da nova lista"} value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
+                </label>
               )}
               {destino === "existing" && (
                 <label>
