@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Landmark, Phone, CircleDollarSign, ShoppingBag } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Landmark, Phone, CircleDollarSign, ShoppingBag, Briefcase, Wrench, TrendingUp } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -42,29 +42,31 @@ export const MOTIVO_COR = {
 
 export const NAV = {
   vendedor: [
-    { key: "painel", label: "Visão geral", Icon: BarChart3 },
-    { key: "oportunidades", label: "Oportunidades", Icon: CircleDollarSign },
-    { section: "Ferramentas" },
-    { key: "conversas-evolution", label: "Atendimento", Icon: Headphones },
-    { key: "discadora", label: "Discadora", Icon: Phone },
-    { section: "Desenvolvimento" },
-    { key: "academy", label: "Academy", Icon: GraduationCap },
-    { key: "testes", label: "Skill Labs", Icon: ClipboardList },
-    { key: "club", label: "Minha jornada", Icon: Trophy },
-    { section: "Meus ganhos" },
-    { key: "carteira", label: "Carteira", Icon: Wallet },
-    { key: "indicar", label: "Programa de indicações", Icon: Gift },
+    { key: "trabalho", label: "Trabalho", Icon: Briefcase, children: [
+      { key: "oportunidades", label: "Oportunidades" },
+    ] },
+    { key: "ferramentas", label: "Ferramentas", Icon: Wrench, children: [
+      { key: "conversas-evolution", label: "Atendimento" },
+      { key: "discadora", label: "Discadora" },
+    ] },
+    { key: "desenvolvimento", label: "Desenvolvimento", Icon: GraduationCap, children: [
+      { key: "academy", label: "Academy" },
+      { key: "testes", label: "Skill Labs" },
+      { key: "club", label: "Minha jornada" },
+    ] },
+    { key: "ganhos", label: "Meus ganhos", Icon: TrendingUp, children: [
+      { key: "carteira", label: "Carteira" },
+      { key: "indicar", label: "Programa de indicações" },
+    ] },
+    { key: "minha-conta", label: "Minha conta", Icon: UserIcon, children: [
+      { key: "perfil", label: "Meu perfil" },
+      { key: "planos", label: "Minhas compras" },
+      { key: "configuracoes", label: "Configurações" },
+    ] },
     // Só aparece para closer liberado pelo admin na agenda comercial (Shell filtra).
     { key: "agenda-comercial", label: "Agenda RYCS", Icon: Clock },
     // Só aparece para quem o admin marcou como colaborador interno (Shell filtra).
     { key: "colaborador", label: "Colaborador RYCS", Icon: BriefcaseBusiness },
-    { section: "Minha conta" },
-    { key: "perfil", label: "Meu perfil", Icon: UserIcon },
-    { key: "compras", label: "Minhas compras", Icon: ShoppingBag, children: [
-      { key: "planos", label: "Planos" },
-      { key: "loja-leads", label: "Leads" },
-    ] },
-    { key: "configuracoes", label: "Configurações", Icon: Settings },
     { key: "suporte-conta", label: "Ajuda e suporte", Icon: Headphones },
   ],
   empresa: [
