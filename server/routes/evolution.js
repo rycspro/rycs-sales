@@ -54,10 +54,9 @@ router.get("/evolution/info", soEquipe, rota((req, res) => {
 
 router.post("/evolution/conectar", soVendedor, rota(async (req, res) => {
   if (req.body?.consentimento !== true) throw erroCanal("Confirme o aviso para continuar.");
-  const companyId = String(req.body?.companyId || "");
-  if (!companyId) throw erroCanal("Escolha a empresa.");
+  // Sem empresa: o WhatsApp pessoal é por profissional e atende todas as empresas dele.
   const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket?.remoteAddress || "";
-  const r = await evo.conectar({ user: req.user, companyId, sellerId: req.user.entityId, ip });
+  const r = await evo.conectar({ user: req.user, sellerId: req.user.entityId, ip });
   res.json({ ok: true, ...r });
 }));
 

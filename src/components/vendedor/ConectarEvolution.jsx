@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ShieldCheck, Smartphone, Unplug, RefreshCw, QrCode, Wifi, WifiOff, AlertTriangle } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
 
@@ -25,11 +25,8 @@ const STATUS_TEXTO = {
 };
 
 export default function ConectarEvolution({ aviso, recarregarInfo }) {
-  const id = useId();
   const [info, setInfo] = useState(null);
   const [aceite, setAceite] = useState(false);
-  const [empresaId, setEmpresaId] = useState("");
-  const [empresas, setEmpresas] = useState([]);
   const [ocupado, setOcupado] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [modalQr, setModalQr] = useState(false);
@@ -40,12 +37,9 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
       if (r && !r.error) setInfo(r);
       return r;
     });
-  const carregarEmpresas = () =>
-    api("/canais").then((r) => { if (r?.empresas) setEmpresas(r.empresas); });
 
   useEffect(() => {
     carregar();
-    carregarEmpresas();
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -74,7 +68,7 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
   const conectar = async () => {
     setOcupado(true);
     try {
-      const r = await api("/evolution/conectar", { consentimento: aceite, companyId: empresaId || undefined });
+      const r = await api("/evolution/conectar", { consentimento: aceite });
       if (!r || r.error) throw new Error(r?.error || "Não foi possível conectar.");
       if (r.qrCode) setQrCode(r.qrCode);
       setModalQr(true);
@@ -192,15 +186,6 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
                 {TEXTOS.aviso}
               </div>
 
-              <div style={{ marginTop: 14 }}>
-                <label className="vx-label" htmlFor={`${id}-e`}>Empresa que você atende</label>
-                <select id={`${id}-e`} className="vx-input" value={empresaId} onChange={(e) => setEmpresaId(e.target.value)} style={{ minHeight: 44 }}>
-                  <option value="">Escolha a empresa</option>
-                  {empresas.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
-                </select>
-                {empresas.length === 0 && <div className="vx-mut" style={{ fontSize: 12, marginTop: 4 }}>Você ainda não está aprovado em nenhuma empresa.</div>}
-              </div>
-
               <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 14, fontSize: 13, lineHeight: 1.5, cursor: "pointer" }}>
                 <input type="checkbox" checked={aceite} onChange={(e) => setAceite(e.target.checked)} style={{ marginTop: 3 }} />
                 <span>
@@ -211,7 +196,7 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
 
               <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
                 <button type="button" className="vx-btn vx-btn-primary" style={{ minHeight: 44 }} onClick={conectar}
-                  disabled={ocupado || !aceite || !empresaId}>
+                  disabled={ocupado || !aceite}>
                   {ocupado ? <RefreshCw size={15} className="vx-spin" aria-hidden="true" /> : <QrCode size={15} aria-hidden="true" />}
                   {ocupado ? " Conectando…" : " Conectar com QR Code"}
                 </button>

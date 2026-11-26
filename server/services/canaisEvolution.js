@@ -13,7 +13,7 @@ import db, { uid, agora } from "../db.js";
 import {
   conexaoPorExterno, conexaoPorId, salvarConexao, marcarErroConexao,
   encerrarConexao, registrarMensagem, atualizarStatus, conversaDoUsuario,
-  erroCanal, vendedorAprovado,
+  erroCanal,
 } from "./canais.js";
 import { soDigitos } from "../../shared/canais.js";
 
@@ -150,25 +150,27 @@ export async function excluirInstancia(sellerId) {
 
 // ── Conectar / Desconectar ───────────────────────────────────────────────
 
-export async function conectar({ user, companyId, sellerId, ip }) {
+export async function conectar({ user, sellerId, ip }) {
   if (!evolutionConfigurada()) throw erroCanal("A integração WhatsApp pessoal ainda não foi ativada.", 503);
   if (!sellerId) throw erroCanal("Apenas profissionais podem conectar o WhatsApp pessoal.");
   if (!pilotoAutorizado(sellerId)) throw erroCanal("Você ainda não foi autorizado para o piloto do WhatsApp pessoal. Fale com o administrador.", 403);
-  if (!vendedorAprovado(companyId, sellerId)) throw erroCanal("Você precisa estar aprovado nesta empresa.", 403);
+  // O WhatsApp pessoal é por profissional (um número atende várias empresas):
+  // não se amarra a uma empresa. Cada mensagem recebida é roteada para a empresa
+  // do lead correspondente. Por isso a conexão não exige escolher uma empresa.
 
   // Verifica se já tem conexão Evolution ativa para este vendedor.
   const existente = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status = 'ativa'").get(sellerId);
   if (existente) throw erroCanal("Você já tem um WhatsApp pessoal conectado. Desconecte o atual antes de conectar outro.", 409);
 
-  // Registra consentimento.
-  registrarConsentimento(sellerId, companyId, "Aceito conectar meu WhatsApp pessoal à RYCS para atendimento comercial. Entendo que esta é uma tecnologia não oficial.", ip);
+  // Registra consentimento (sem empresa: vale para todas as que o profissional atende).
+  registrarConsentimento(sellerId, "", "Aceito conectar meu WhatsApp pessoal à RYCS para atendimento comercial. Entendo que esta é uma tecnologia não oficial.", ip);
 
   const instancia = await criarInstancia(sellerId);
   const qr = await buscarQrCode(sellerId);
 
   // Grava a conexão como "aguardando_qr" — o webhook de CONNECTION_UPDATE muda para "ativa".
   const conexao = salvarConexao({
-    companyId, sellerId, canal: "evolution",
+    companyId: "", sellerId, canal: "evolution",
     contaId: instancia.instanceName,
     externoId: instancia.instanceName,
     nome: "", numero: "",
