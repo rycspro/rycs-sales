@@ -82,7 +82,7 @@ function tipoPreview(m) {
 }
 const urlInline = (m) => `${API_URL}/api/materiais/${m.id}/download?inline=1`;
 
-export default function MateriaisEmpresa({ emp, db, aviso }) {
+export default function MateriaisEmpresa({ emp, db, aviso, secao: secaoProp }) {
   const [materiais, setMateriais] = useState([]);
   const [loading, setLoading] = useState(true);
   const [armazenamento, setArmazenamento] = useState(true);
@@ -185,15 +185,23 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
       {!pasta && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
           <div>
-            <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>Materiais</h1>
+            <h1 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>
+              {secaoProp === "informacoes" ? "Informações da Empresa" : secaoProp === "biblioteca" ? "Biblioteca de Arquivos" : "Materiais"}
+            </h1>
             <p style={{ color: "#737373", margin: "4px 0 0", fontSize: 14 }}>
-              Centralize as informações e os arquivos da sua empresa em um só lugar.
+              {secaoProp === "informacoes"
+                ? "Organize o conhecimento que será utilizado para orientar e capacitar seus profissionais."
+                : secaoProp === "biblioteca"
+                ? "Armazene apresentações, documentos e outros recursos da sua empresa."
+                : "Centralize as informações e os arquivos da sua empresa em um só lugar."}
             </p>
           </div>
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModalUpload({ categoria: null })}
-            style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
-            <Plus size={16} /> Adicionar material
-          </button>
+          {secaoProp !== "informacoes" && (
+            <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setModalUpload({ categoria: null })}
+              style={{ gap: 6, background: AZUL, borderColor: AZUL, whiteSpace: "nowrap" }}>
+              <Plus size={16} /> Adicionar material
+            </button>
+          )}
         </div>
       )}
 
@@ -275,17 +283,19 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
         </div>
       ) : (
         <>
-          {/* Busca global */}
-          <div style={{ position: "relative", maxWidth: 420, marginBottom: 24 }}>
-            <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#737373" }} />
-            <input className="vx-input" placeholder="Buscar materiais..." value={buscaGlobal}
-              onChange={(e) => setBuscaGlobal(e.target.value)} style={{ paddingLeft: 32, width: "100%", height: 38 }} />
-            {buscaGlobal && (
-              <button onClick={() => setBuscaGlobal("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#737373", padding: 2 }}>
-                <X size={16} />
-              </button>
-            )}
-          </div>
+          {/* Busca global — só nas seções com arquivos */}
+          {secaoProp !== "informacoes" && (
+            <div style={{ position: "relative", maxWidth: 420, marginBottom: 24 }}>
+              <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#737373" }} />
+              <input className="vx-input" placeholder="Buscar materiais..." value={buscaGlobal}
+                onChange={(e) => setBuscaGlobal(e.target.value)} style={{ paddingLeft: 32, width: "100%", height: 38 }} />
+              {buscaGlobal && (
+                <button onClick={() => setBuscaGlobal("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#737373", padding: 2 }}>
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          )}
 
           {buscandoGlobal ? (
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
@@ -311,59 +321,71 @@ export default function MateriaisEmpresa({ emp, db, aviso }) {
           ) : (
             <>
               {/* SEÇÃO 01 — Informações da empresa (base de conhecimento estruturada) */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
-                  Informações da empresa
-                </div>
-                <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
-                  Organize o conhecimento que será utilizado para orientar e capacitar seus profissionais.
-                </p>
-              </div>
-              <div style={{ marginBottom: 32 }}>
-                <CardsInformacoes resumo={resumoInfo} onAbrir={(s) => setInfoSecao(s)} />
-              </div>
+              {(!secaoProp || secaoProp === "informacoes") && (
+                <>
+                  {!secaoProp && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
+                        Informações da empresa
+                      </div>
+                      <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
+                        Organize o conhecimento que será utilizado para orientar e capacitar seus profissionais.
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ marginBottom: 32 }}>
+                    <CardsInformacoes resumo={resumoInfo} onAbrir={(s) => setInfoSecao(s)} />
+                  </div>
+                </>
+              )}
 
               {/* SEÇÃO 02 — Biblioteca de arquivos (6 pastas existentes) */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
-                  Biblioteca de arquivos
-                </div>
-                <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
-                  Armazene apresentações, documentos e outros recursos da sua empresa.
-                </p>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 14, marginBottom: 32 }}>
-                {PASTAS.map((p) => (
-                  <CardPasta key={p.chave} pasta={p} quantidade={contagem[p.chave] || 0} onClick={() => abrirPasta(p.chave)} />
-                ))}
-              </div>
-
-              {/* Adicionados recentemente */}
-              {recentes.length > 0 && (
+              {(!secaoProp || secaoProp === "biblioteca") && (
                 <>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 12 }}>
-                    Adicionados recentemente
+                  {!secaoProp && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 4 }}>
+                        Biblioteca de arquivos
+                      </div>
+                      <p style={{ fontSize: 13, color: "#737373", margin: 0 }}>
+                        Armazene apresentações, documentos e outros recursos da sua empresa.
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: 14, marginBottom: 32 }}>
+                    {PASTAS.map((p) => (
+                      <CardPasta key={p.chave} pasta={p} quantidade={contagem[p.chave] || 0} onClick={() => abrirPasta(p.chave)} />
+                    ))}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {recentes.map((m) => {
-                      const Icon = ICONE_DE(m.categoria);
-                      return (
-                        <button key={m.id} onClick={() => abrirPasta(m.categoria)}
-                          style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, cursor: "pointer", textAlign: "left", transition: "border-color .15s" }}
-                          onMouseEnter={(e) => e.currentTarget.style.borderColor = "#c5ddf5"}
-                          onMouseLeave={(e) => e.currentTarget.style.borderColor = BORDA}>
-                          <span style={{ width: 34, height: 34, borderRadius: 8, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <Icon size={17} style={{ color: AZUL }} />
-                          </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: "#171717", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.nome}</div>
-                            <div style={{ fontSize: 12, color: "#737373" }}>{PASTA_DE(m.categoria)?.label || m.categoria}</div>
-                          </div>
-                          <span style={{ fontSize: 12, color: "#737373", flexShrink: 0 }}>{formatarData(m.criadoEm)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+
+                  {/* Adicionados recentemente */}
+                  {recentes.length > 0 && (
+                    <>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: ".6px", marginBottom: 12 }}>
+                        Adicionados recentemente
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {recentes.map((m) => {
+                          const Icon = ICONE_DE(m.categoria);
+                          return (
+                            <button key={m.id} onClick={() => abrirPasta(m.categoria)}
+                              style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, cursor: "pointer", textAlign: "left", transition: "border-color .15s" }}
+                              onMouseEnter={(e) => e.currentTarget.style.borderColor = "#c5ddf5"}
+                              onMouseLeave={(e) => e.currentTarget.style.borderColor = BORDA}>
+                              <span style={{ width: 34, height: 34, borderRadius: 8, background: AZUL_SUAVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                <Icon size={17} style={{ color: AZUL }} />
+                              </span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: "#171717", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.nome}</div>
+                                <div style={{ fontSize: 12, color: "#737373" }}>{PASTA_DE(m.categoria)?.label || m.categoria}</div>
+                              </div>
+                              <span style={{ fontSize: 12, color: "#737373", flexShrink: 0 }}>{formatarData(m.criadoEm)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </>

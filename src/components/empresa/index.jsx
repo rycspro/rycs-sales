@@ -191,7 +191,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       </>}
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
-      {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} onIrParaMateriais={() => setAba?.("materiais")} />}
+      {aba === "info-empresa" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} secao="informacoes" />}
+      {aba === "biblioteca" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} secao="biblioteca" />}
+      {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} onIrParaMateriais={() => setAba?.("biblioteca")} />}
       {["leads", "pedidos"].includes(aba) &&
         submenu([["leads", "Pipeline"], ["pedidos", "Pedidos"]], aba, (k) => setAba?.(k))}
       {(aba === "leads-whatsapp" || aba === "leads-instagram") && (
