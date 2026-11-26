@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, Plus, CreditCard, Zap } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Plus, CreditCard, Zap, Phone } from "lucide-react";
 import { money, dataCurta, agora } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
 import { apiPatch, api } from "../../lib/api.js";
@@ -309,6 +309,27 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                       {c.statusCadastro !== "aprovada" && <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => decidirCadastro(c, "aprovada")}>Aprovar empresa</button>}
                       {c.statusCadastro === "aprovada" && <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={() => decidirCadastro(c, "suspensa")}>Suspender</button>}
                     </div>
+                  </div>
+
+                  <div className="vx-row" style={{ marginBottom: 12, alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Phone size={15} color="var(--brand)" />
+                      <div><b style={{ fontSize: 13 }}>RYCS Voice (Discadora)</b><div className="vx-mut" style={{ fontSize: 12 }}>Habilita a discadora comercial para esta empresa.</div></div>
+                    </div>
+                    <button
+                      className={`vx-btn vx-btn-sm ${c.voice_habilitada ? "vx-btn-danger" : "vx-btn-primary"}`}
+                      onClick={async () => {
+                        const r = await api("/voice/admin/habilitar", { companyId: c.id, habilitada: !c.voice_habilitada });
+                        if (r?.ok) {
+                          up?.((d) => ({ companies: d.companies.map((x) => x.id === c.id ? { ...x, voice_habilitada: c.voice_habilitada ? 0 : 1 } : x) }));
+                          aviso(c.voice_habilitada ? "Discadora desabilitada." : "Discadora habilitada para " + c.nome);
+                        } else {
+                          aviso(r?.error || "Erro ao alterar discadora.");
+                        }
+                      }}
+                    >
+                      {c.voice_habilitada ? "Desabilitar discadora" : "Habilitar discadora"}
+                    </button>
                   </div>
                   <Excluir
                     key={c.id}

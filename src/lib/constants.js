@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Landmark } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Landmark, Phone } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -46,8 +46,8 @@ export const NAV = {
     { key: "club", label: "Jornada", Icon: Trophy },
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { key: "loja-leads", label: "Loja de Leads", Icon: Store },
-    { key: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
-    { key: "conversas-evolution", label: "Conversas", Icon: MessageSquare },
+    { key: "conversas-evolution", label: "Atendimento", Icon: Headphones },
+    { key: "discadora", label: "Discadora", Icon: Phone },
     { section: "Desenvolvimento" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "testes", label: "Skill Labs", Icon: ClipboardList },
@@ -81,6 +81,9 @@ export const NAV = {
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
     { key: "leads", label: "Leads", Icon: Target, children: [
+      { key: "leads", label: "Pipeline" },
+      { key: "discadora", label: "Discadora" },
+      { key: "pedidos", label: "Pedidos" },
       { key: "integracoes", label: "Integrações" },
       { key: "calendario", label: "Calendário" },
       { key: "loja-leads", label: "Loja de Leads" },

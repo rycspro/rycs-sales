@@ -45,6 +45,7 @@ import whatsappAdminRoutes from "./routes/whatsappAdmin.js";
 import { retomarDisparos as retomarDisparosWhatsapp } from "./services/whatsappDisparo.js";
 import billingRoutes from "./routes/billing.js";
 import materiaisRoutes, { materiaisPublico } from "./routes/materiais.js";
+import voiceRoutes from "./routes/voice.js";
 import academyEmpresaRoutes from "./routes/academyEmpresa.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
@@ -306,6 +307,7 @@ app.use("/api", authMiddleware, grupoSuporteRoutes);
 app.use("/api", authMiddleware, canaisRoutes);
 app.use("/api", authMiddleware, evolutionRoutes);
 app.use("/api", authMiddleware, erpRoutes);
+app.use("/api", authMiddleware, voiceRoutes);
 
 // --- AI Audit ---
 app.post("/api/analisar", authMiddleware, async (req, res) => {

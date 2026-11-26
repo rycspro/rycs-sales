@@ -7,3 +7,4 @@ server/data.db-shm
 server/data.db-wal
 .vercel
 .env*
+rycs-sales/
