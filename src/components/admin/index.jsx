@@ -20,6 +20,7 @@ import PlanosAdmin from "./PlanosAdmin.jsx";
 import ParceirosCanalAdmin from "./ParceirosCanalAdmin.jsx";
 import { lazy, Suspense } from "react";
 const AgendaComercial = lazy(() => import("../agenda/AgendaComercial.jsx"));
+const CalendarioComercial = lazy(() => import("../calendario/CalendarioComercial.jsx"));
 const ColaboradoresAdmin = lazy(() => import("./ColaboradoresAdmin.jsx"));
 const LojaLeadsAdmin = lazy(() => import("./LojaLeadsAdmin.jsx"));
 const EvolutionAdmin = lazy(() => import("./EvolutionAdmin.jsx"));
@@ -89,6 +90,7 @@ export default function Admin({ db, setDb, up, aviso, aba, recarregar }) {
   };
 
   if (aba === "agenda-comercial") return <Suspense fallback={<div className="vx-spinner" />}><AgendaComercial /></Suspense>;
+  if (aba === "calendario") return <Suspense fallback={<div className="vx-spinner" />}><CalendarioComercial /></Suspense>;
   if (aba === "dashboard") return <DashboardAdmin db={db} />;
   if (aba === "profissionais") return <ProfissionaisAdmin db={db} up={up} aviso={aviso} />;
   if (aba === "empresas") return <EmpresasAdmin db={db} up={up} aviso={aviso} />;

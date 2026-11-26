@@ -28,6 +28,7 @@ const CaixaCanal = lazy(() => import("./leads/CaixaCanal.jsx"));
 const Pedidos = lazy(() => import("./Pedidos.jsx"));
 const LojaLeads = lazy(() => import("./LojaLeads.jsx"));
 const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
+const CalendarioComercial = lazy(() => import("../calendario/CalendarioComercial.jsx"));
 const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
 
 const CAMPOS_SORT = {
@@ -206,6 +207,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <Pedidos aviso={aviso} abrirId={pedidoAberto} aoAbrir={() => setPedidoAberto("")} irParaIntegracoes={() => setAba?.("integracoes")} />
       )}
       {aba === "loja-leads" && <LojaLeads aviso={aviso} />}
+      {aba === "calendario" && <CalendarioComercial />}
       {aba === "integracoes" && (
         <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
           onAbrirCanal={(canal) => setAba?.(`leads-${canal}`)} />
