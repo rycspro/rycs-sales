@@ -137,19 +137,20 @@ jobs:
                   -H "apikey: ${EVO_KEY}" -H "Content-Type: application/json" \
                   -d "{\"instanceName\":\"${NAME}\",\"integration\":\"WHATSAPP-BAILEYS\",\"qrcode\":true}")
                 echo "create HTTP $HTTP"
-                # Na v2.2.x o QR já vem no create (qrcode.base64). connect é o fallback.
-                QLEN=$(python3 -c "import json;d=json.load(open('/tmp/evo_create.json'));q=d.get('qrcode') or {};b=q.get('base64','') or q.get('code','') or d.get('base64','');print(len(b))" 2>/dev/null || echo 0)
-                if [ "${QLEN:-0}" -le 100 ]; then
+                # O QR é assíncrono: pollar o connect até ~36s até vir base64/code.
+                QLEN=0
+                for i in $(seq 1 12); do
+                  curl -s -o /tmp/evo_qr.json -w "" "http://${HOST_IP}:8080/instance/connect/${NAME}" -H "apikey: ${EVO_KEY}" || true
+                  QLEN=$(python3 -c "import json;d=json.load(open('/tmp/evo_qr.json'));b=(d.get('qrcode') or {}).get('base64','') or d.get('base64','') or d.get('code','');print(len(b))" 2>/dev/null || echo 0)
+                  [ "${QLEN:-0}" -gt 100 ] && break
                   sleep 3
-                  HTTP2=$(curl -s -o /tmp/evo_qr.json -w "%{http_code}" "http://${HOST_IP}:8080/instance/connect/${NAME}" -H "apikey: ${EVO_KEY}")
-                  echo "connect HTTP $HTTP2"
-                  QLEN=$(python3 -c "import json;d=json.load(open('/tmp/evo_qr.json'));b=d.get('base64','') or d.get('code','');print(len(b))" 2>/dev/null || echo 0)
-                fi
+                done
                 if [ "${QLEN:-0}" -gt 100 ]; then
-                  echo "✓ QR Code real gerado (base64/code com ${QLEN} chars)"
+                  echo "✓ QR Code real gerado (base64/code com ${QLEN} chars após polling)"
                 else
-                  echo "✗ QR não confirmado. Corpo create:"; head -c 600 /tmp/evo_create.json; echo
-                  echo "Corpo connect:"; head -c 600 /tmp/evo_qr.json 2>/dev/null; echo
+                  echo "✗ QR não confirmado após ~36s. Corpo connect:"; head -c 500 /tmp/evo_qr.json 2>/dev/null; echo
+                  echo "--- Logs da Evolution (últimas 25 linhas) ---"
+                  docker logs --tail 25 "$CN" 2>&1 | tail -25
                 fi
                 curl -s -o /dev/null -X DELETE "http://${HOST_IP}:8080/instance/delete/${NAME}" -H "apikey: ${EVO_KEY}" && echo "✓ instância de teste removida" || echo "(limpe manualmente: $NAME)"
                 ;;
