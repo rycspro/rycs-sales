@@ -2871,6 +2871,9 @@ adicionarColuna("colaboradores", "dados", "TEXT DEFAULT '{}'");
 adicionarColuna("campaign_contacts", "origem", "TEXT DEFAULT 'manual'");
 adicionarColuna("campaign_contacts", "listaOrigemId", "TEXT");
 
+// Vitrine institucional: descrição visível para profissionais
+adicionarColuna("companies", "descricaoInstitucional", "TEXT DEFAULT ''");
+
 // ── Evolution API: piloto (feature flag) ─────────────────────────────────────
 db.exec(`
   CREATE TABLE IF NOT EXISTS evolution_pilotos (
