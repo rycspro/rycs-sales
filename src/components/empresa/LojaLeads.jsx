@@ -21,9 +21,9 @@ async function apiDelete(path) {
 }
 async function carregarTodasListas() {
   const r = await api("/loja-leads/pastas");
-  const pastas = r?.pastas || [];
+  if (!r || !Array.isArray(r.pastas)) return null; // falha de rede/erro: não zere a tela
   const todas = [];
-  for (const p of pastas) {
+  for (const p of r.pastas) {
     const lr = await api(`/loja-leads/listas/${p.id}`);
     for (const l of (lr?.listas || [])) todas.push({ ...l, pastaNome: p.nome, pastaId: p.id });
   }
@@ -313,14 +313,17 @@ export default function LojaLeads({ aviso, role: roleProp }) {
     api("/loja-leads/ciclo").then(setCiclo);
     api("/loja-leads/consumo").then(setConsumo);
     api("/loja-leads/precos").then((r) => setPrecos(r?.precos || []));
-    carregarTodasListas().then(setListas);
-    api("/loja-leads/pastas").then((r) => setPastas(r?.pastas || []));
+    carregarTodasListas().then((t) => { if (Array.isArray(t)) setListas(t); });
+    api("/loja-leads/pastas").then((r) => { if (Array.isArray(r?.pastas)) setPastas(r.pastas); });
   }, []);
 
+  // Só substitui o estado quando a recarga traz dados válidos. Se a chamada
+  // falhar (rede/erro), mantém o que já estava na tela — nunca zera tudo.
   const recarregarListas = useCallback(async () => {
-    setListas(await carregarTodasListas());
+    const t = await carregarTodasListas();
+    if (Array.isArray(t)) setListas(t);
     const r = await api("/loja-leads/pastas");
-    setPastas(r?.pastas || []);
+    if (Array.isArray(r?.pastas)) setPastas(r.pastas);
   }, []);
   const recarregarCiclo = useCallback(async () => {
     const [c, co] = await Promise.all([api("/loja-leads/ciclo"), api("/loja-leads/consumo")]);
