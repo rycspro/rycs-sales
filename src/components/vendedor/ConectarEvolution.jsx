@@ -116,7 +116,26 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
   };
 
   const configurada = info?.configurada !== false;
+  const autorizado = info?.autorizado !== false;
   const conectada = info?.status === "ativa";
+
+  if (configurada && !autorizado && !info?.id) {
+    return (
+      <section className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <span style={{ width: 40, height: 40, borderRadius: 12, background: "var(--muted-50)", color: "var(--muted)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+            <WifiOff size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>WhatsApp Pessoal</h2>
+            <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.55, margin: "4px 0 0" }}>
+              Você ainda não foi autorizado para o piloto do WhatsApp pessoal. O administrador pode liberar seu acesso.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="vx-card" style={{ padding: 18, marginBottom: 16 }}>

@@ -2871,6 +2871,24 @@ adicionarColuna("colaboradores", "dados", "TEXT DEFAULT '{}'");
 adicionarColuna("campaign_contacts", "origem", "TEXT DEFAULT 'manual'");
 adicionarColuna("campaign_contacts", "listaOrigemId", "TEXT");
 
+// ── Evolution API: piloto (feature flag) ─────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS evolution_pilotos (
+    sellerId TEXT PRIMARY KEY,
+    autorizadoPor TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS evolution_consentimentos (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    texto TEXT NOT NULL,
+    ip TEXT NOT NULL DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_evo_consentimentos_seller ON evolution_consentimentos(sellerId);
+`);
+
 criarSchemaAgenda(db);
 
 export default db;

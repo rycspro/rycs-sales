@@ -128,6 +128,7 @@ export const NAV = {
     { key: "club", label: "RYCS Club", Icon: Trophy },
     { key: "emails", label: "E-mails", Icon: Mail },
     { key: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
+    { key: "evolution", label: "WhatsApp Pessoal", Icon: Smartphone },
     { section: "Leads" },
     { key: "loja-leads-admin", label: "Loja de Leads", Icon: Store },
     { section: "Sistema" },

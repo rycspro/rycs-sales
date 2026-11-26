@@ -21,8 +21,43 @@ import { soDigitos } from "../../shared/canais.js";
 
 const BASE_URL = () => (process.env.EVOLUTION_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 const API_KEY = () => process.env.EVOLUTION_API_KEY || "";
+const MAX_PILOTOS = 10;
 
 export const evolutionConfigurada = () => !!(BASE_URL() && API_KEY());
+
+// ── Feature flag (piloto) ───────────────────────────────────────────────
+
+export function pilotoAutorizado(sellerId) {
+  if (!sellerId) return false;
+  return !!db.prepare("SELECT 1 FROM evolution_pilotos WHERE sellerId = ?").get(sellerId);
+}
+
+export function listarPilotos() {
+  return db.prepare("SELECT p.*, s.nome AS nomeVendedor FROM evolution_pilotos p LEFT JOIN sellers s ON s.id = p.sellerId ORDER BY p.criadoEm DESC").all();
+}
+
+export function adicionarPiloto(sellerId, autorizadoPor) {
+  const total = db.prepare("SELECT COUNT(*) AS n FROM evolution_pilotos").get().n;
+  if (total >= MAX_PILOTOS) throw erroCanal(`Limite de ${MAX_PILOTOS} pilotos atingido. Remova um antes de adicionar.`);
+  if (pilotoAutorizado(sellerId)) throw erroCanal("Este profissional já está autorizado.");
+  db.prepare("INSERT INTO evolution_pilotos (sellerId, autorizadoPor, criadoEm) VALUES (?, ?, ?)").run(sellerId, autorizadoPor, agora());
+}
+
+export function removerPiloto(sellerId) {
+  db.prepare("DELETE FROM evolution_pilotos WHERE sellerId = ?").run(sellerId);
+}
+
+// ── Consentimento ───────────────────────────────────────────────────────
+
+export function registrarConsentimento(sellerId, companyId, texto, ip) {
+  const id = uid();
+  db.prepare("INSERT INTO evolution_consentimentos (id, sellerId, companyId, texto, ip, criadoEm) VALUES (?, ?, ?, ?, ?, ?)").run(id, sellerId, companyId, texto, ip || "", agora());
+  return id;
+}
+
+export function consentimentoExiste(sellerId, companyId) {
+  return !!db.prepare("SELECT 1 FROM evolution_consentimentos WHERE sellerId = ? AND companyId = ?").get(sellerId, companyId);
+}
 
 // ── HTTP para a Evolution API ────────────────────────────────────────────
 
@@ -103,14 +138,18 @@ export async function excluirInstancia(sellerId) {
 
 // ── Conectar / Desconectar ───────────────────────────────────────────────
 
-export async function conectar({ user, companyId, sellerId }) {
+export async function conectar({ user, companyId, sellerId, ip }) {
   if (!evolutionConfigurada()) throw erroCanal("A integração WhatsApp pessoal ainda não foi ativada.", 503);
   if (!sellerId) throw erroCanal("Apenas profissionais podem conectar o WhatsApp pessoal.");
+  if (!pilotoAutorizado(sellerId)) throw erroCanal("Você ainda não foi autorizado para o piloto do WhatsApp pessoal. Fale com o administrador.", 403);
   if (!vendedorAprovado(companyId, sellerId)) throw erroCanal("Você precisa estar aprovado nesta empresa.", 403);
 
   // Verifica se já tem conexão Evolution ativa para este vendedor.
   const existente = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status = 'ativa'").get(sellerId);
   if (existente) throw erroCanal("Você já tem um WhatsApp pessoal conectado. Desconecte o atual antes de conectar outro.", 409);
+
+  // Registra consentimento.
+  registrarConsentimento(sellerId, companyId, "Aceito conectar meu WhatsApp pessoal à RYCS para atendimento comercial. Entendo que esta é uma tecnologia não oficial.", ip);
 
   const instancia = await criarInstancia(sellerId);
   const qr = await buscarQrCode(sellerId);
@@ -218,8 +257,17 @@ function tratarConexao(conexao, data) {
   }
   if (state === "close" || state === "disconnected" || state === "refused") {
     const motivo = data?.statusReason || "";
-    db.prepare("UPDATE canais_conexoes SET status = 'desconectada', ultimoErro = ?, atualizadoEm = ? WHERE id = ?")
-      .run(String(motivo).slice(0, 300), t, conexao.id);
+    // statusReason 401/403 = logout intencional; não reconectar.
+    const intencional = /401|403|logout|banned/i.test(String(motivo));
+    if (intencional) {
+      db.prepare("UPDATE canais_conexoes SET status = 'desconectada', ultimoErro = ?, atualizadoEm = ? WHERE id = ?")
+        .run(String(motivo).slice(0, 300), t, conexao.id);
+    } else {
+      db.prepare("UPDATE canais_conexoes SET status = 'reconectando', ultimoErro = ?, atualizadoEm = ? WHERE id = ?")
+        .run(String(motivo).slice(0, 300), t, conexao.id);
+      // Tenta reconectar automaticamente após 5 segundos.
+      setTimeout(() => tentarReconectar(conexao.id), 5_000);
+    }
     return 1;
   }
   if (state === "connecting") {
@@ -247,9 +295,7 @@ function tratarMensagens(conexao, data) {
   let n = 0;
   for (const m of msgs) {
     if (!m?.key?.id) continue;
-    // Ignora mensagens de grupo.
     if (m.key?.remoteJid?.includes("@g.us")) continue;
-    // Ignora status/stories.
     if (m.key?.remoteJid === "status@broadcast") continue;
 
     const tel = soDigitos((m.key.remoteJid || "").split("@")[0]);
@@ -266,9 +312,26 @@ function tratarMensagens(conexao, data) {
       em: m.messageTimestamp ? Number(m.messageTimestamp) * 1000 : agora(),
       tipo, texto, dados,
     });
-    if (resultado?.nova) n++;
+    if (resultado?.nova) {
+      n++;
+      // Notifica o vendedor sobre nova mensagem recebida de lead.
+      if (!fromMe && conexao.sellerId) {
+        const user = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(conexao.sellerId);
+        if (user) {
+          const preview = String(texto || "").slice(0, 60) || "(mídia)";
+          try { notificarVendedor(user.id, m.pushName || tel, preview); } catch {}
+        }
+      }
+    }
   }
   return n;
+}
+
+async function notificarVendedor(userId, nome, preview) {
+  try {
+    const { notificar } = await import("../routes/notifications.js");
+    notificar(userId, "mensagem", `WhatsApp: ${nome}`, preview);
+  } catch {}
 }
 
 function tratarEnviada(conexao, data) {
@@ -356,4 +419,30 @@ export function dadosConexao(sellerId) {
     criadoEm: conexao.criadoEm,
     atualizadoEm: conexao.atualizadoEm,
   };
+}
+
+// ── Reconexão automática ────────────────────────────────────────────────
+
+async function tentarReconectar(conexaoId) {
+  const conexao = db.prepare("SELECT * FROM canais_conexoes WHERE id = ? AND canal = 'evolution' AND status = 'reconectando'").get(conexaoId);
+  if (!conexao) return;
+  try {
+    const nome = nomeInstancia(conexao.sellerId);
+    await evo(`/instance/connect/${nome}`);
+    console.log(`[evolution] reconexão automática iniciada: ${nome}`);
+  } catch (e) {
+    console.warn(`[evolution] reconexão automática falhou: ${e?.message}`);
+    db.prepare("UPDATE canais_conexoes SET status = 'desconectada', ultimoErro = ?, atualizadoEm = ? WHERE id = ?")
+      .run(`Reconexão automática falhou: ${String(e?.message || "").slice(0, 200)}`, agora(), conexaoId);
+  }
+}
+
+// ── Admin: listar todas as instâncias da Evolution API ───────────────────
+
+export async function listarInstancias() {
+  if (!evolutionConfigurada()) return [];
+  try {
+    const r = await evo("/instance/fetchInstances");
+    return Array.isArray(r) ? r : [];
+  } catch { return []; }
 }
