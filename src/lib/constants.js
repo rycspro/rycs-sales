@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -87,6 +87,7 @@ export const NAV = {
       { key: "integracoes", label: "Integrações" },
       { key: "loja-leads", label: "Loja de Leads" },
     ] },
+    { key: "calendario", label: "Calendário", Icon: CalendarDays },
     { key: "conversas", label: "Conversas", Icon: MessageSquare, children: [
       { key: "conversas", label: "Chat Rycs" },
       { key: "leads-whatsapp", label: "WhatsApp" },
@@ -113,6 +114,7 @@ export const NAV = {
     { key: "empresas", label: "Empresas", Icon: Building2 },
     { key: "parceiros", label: "Parceiros de canal", Icon: Handshake },
     { key: "agenda-comercial", label: "Agenda comercial", Icon: Clock },
+    { key: "calendario", label: "Calendário", Icon: CalendarDays },
     { key: "colaboradores", label: "Colaboradores", Icon: BriefcaseBusiness },
     { key: "triagem", label: "Triagem", Icon: ShieldCheck },
     { key: "onboarding", label: "Links de onboarding", Icon: Link2 },
