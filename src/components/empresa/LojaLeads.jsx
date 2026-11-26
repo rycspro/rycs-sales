@@ -380,7 +380,7 @@ export default function LojaLeads({ aviso, role: roleProp }) {
       {/* Tabs */}
       <div className="vx-seg" style={{ marginBottom: 0, borderRadius: "var(--radius-pill) var(--radius-pill) 0 0" }}>
         {ABAS.map(({ label, Icon }, i) => (
-          <button key={i} data-on={aba === i ? "1" : "0"} onClick={() => setAba(i)}>
+          <button key={i} data-on={aba === i ? "1" : "0"} onClick={() => { setAba(i); recarregarListas(); }}>
             <Icon size={14} style={{ marginRight: 4 }} /> {label}
           </button>
         ))}
