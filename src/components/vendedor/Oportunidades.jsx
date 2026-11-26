@@ -198,12 +198,15 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
       (!filtros.pais || e.pais === filtros.pais) &&
       (!filtros.segmento || e.segmento === filtros.segmento))
       .sort((a, b) => {
-        const ca = campsPorEmpresa[a.id] || 0;
-        const cb = campsPorEmpresa[b.id] || 0;
-        if (ca !== cb) return cb - ca;
+        const logoA = a.logo ? 1 : 0;
+        const logoB = b.logo ? 1 : 0;
+        if (logoA !== logoB) return logoB - logoA;
+        const pagA = (metricas[a.id]?.totalPago) || 0;
+        const pagB = (metricas[b.id]?.totalPago) || 0;
+        if (pagA !== pagB) return pagB - pagA;
         return (a.nome || "").localeCompare(b.nome || "");
       });
-  }, [empresas, filtros, campsPorEmpresa]);
+  }, [empresas, filtros, campsPorEmpresa, metricas]);
 
   // ---- candidatura (mantém a lógica e os controles de segurança atuais) ----
   const [candidatando, setCandidatando] = useState(false);
