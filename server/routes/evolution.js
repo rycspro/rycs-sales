@@ -46,8 +46,9 @@ router.get("/evolution/info", soEquipe, rota((req, res) => {
   const configurada = evo.evolutionConfigurada();
   if (req.user.role === "vendedor") {
     const autorizado = evo.pilotoAutorizado(req.user.entityId);
+    const conexoes = autorizado ? evo.listarConexoes(req.user.entityId) : [];
     const dados = autorizado ? evo.dadosConexao(req.user.entityId) : {};
-    return res.json({ configurada, autorizado, ...dados });
+    return res.json({ configurada, autorizado, conexoes, ...dados });
   }
   res.json({ configurada });
 }));
@@ -75,17 +76,29 @@ router.get("/evolution/status", soVendedor, rota(async (req, res) => {
 
 router.post("/evolution/reconectar", soVendedor, rota(async (req, res) => {
   if (!evo.pilotoAutorizado(req.user.entityId)) throw erroCanal("Não autorizado.", 403);
-  const conexao = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status != 'desconectada' ORDER BY criadoEm DESC LIMIT 1").get(req.user.entityId);
+  const cid = req.body?.conexaoId;
+  const conexao = cid
+    ? db.prepare("SELECT * FROM canais_conexoes WHERE id = ? AND canal = 'evolution' AND sellerId = ? AND status != 'desconectada'").get(cid, req.user.entityId)
+    : db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status != 'desconectada' ORDER BY criadoEm DESC LIMIT 1").get(req.user.entityId);
   if (!conexao) throw erroCanal("Nenhuma conexão encontrada. Conecte primeiro.");
   const r = await evo.reconectar(conexao);
   res.json({ ok: true, ...r });
 }));
 
 router.post("/evolution/desconectar", soVendedor, rota(async (req, res) => {
-  const conexao = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status != 'desconectada' ORDER BY criadoEm DESC LIMIT 1").get(req.user.entityId);
+  const cid = req.body?.conexaoId;
+  const conexao = cid
+    ? db.prepare("SELECT * FROM canais_conexoes WHERE id = ? AND canal = 'evolution' AND sellerId = ?").get(cid, req.user.entityId)
+    : db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status != 'desconectada' ORDER BY criadoEm DESC LIMIT 1").get(req.user.entityId);
   if (!conexao) throw erroCanal("Nenhuma conexão encontrada.");
   await evo.desconectar(conexao);
   res.json({ ok: true });
+}));
+
+router.put("/evolution/renomear", soVendedor, rota((req, res) => {
+  const { conexaoId, apelido } = req.body || {};
+  if (!conexaoId) throw erroCanal("Informe a conexão.");
+  res.json(evo.renomearConexao(req.user.entityId, conexaoId, apelido));
 }));
 
 router.post("/evolution/enviar", soEquipe, rota(async (req, res) => {

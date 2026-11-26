@@ -3437,5 +3437,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_remun_seller ON remuneracoes(sellerId, status);
 `);
 
+adicionarColuna("canais_conexoes", "apelido", "TEXT DEFAULT ''");
+
 export default db;
 export { uid, agora };

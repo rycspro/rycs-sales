@@ -158,9 +158,9 @@ export async function conectar({ user, sellerId, ip }) {
   // não se amarra a uma empresa. Cada mensagem recebida é roteada para a empresa
   // do lead correspondente. Por isso a conexão não exige escolher uma empresa.
 
-  // Verifica se já tem conexão Evolution ativa para este vendedor.
-  const existente = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status = 'ativa'").get(sellerId);
-  if (existente) throw erroCanal("Você já tem um WhatsApp pessoal conectado. Desconecte o atual antes de conectar outro.", 409);
+  // Limita a 5 conexões ativas simultâneas por profissional.
+  const ativas = db.prepare("SELECT COUNT(*) AS n FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status = 'ativa'").get(sellerId).n;
+  if (ativas >= 5) throw erroCanal("Você atingiu o limite de 5 WhatsApps conectados. Desconecte um antes de conectar outro.", 409);
 
   // Registra consentimento (sem empresa: vale para todas as que o profissional atende).
   registrarConsentimento(sellerId, "", "Aceito conectar meu WhatsApp pessoal à RYCS para atendimento comercial. Entendo que esta é uma tecnologia não oficial.", ip);
@@ -450,6 +450,26 @@ export function dadosConexao(sellerId) {
     criadoEm: conexao.criadoEm,
     atualizadoEm: conexao.atualizadoEm,
   };
+}
+
+export function listarConexoes(sellerId) {
+  const rows = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? ORDER BY CASE WHEN status = 'ativa' THEN 0 WHEN status = 'desconectada' THEN 2 ELSE 1 END, criadoEm DESC").all(sellerId);
+  return rows.map((c) => {
+    const dados = (() => { try { return JSON.parse(c.dados || "{}"); } catch { return {}; } })();
+    return {
+      id: c.id, status: c.status, numero: c.numero, nome: c.nome,
+      apelido: c.apelido || "",
+      qrCode: dados.qrCode || "", qrCodeEm: dados.qrCodeEm || null,
+      ultimoErro: c.ultimoErro, criadoEm: c.criadoEm, atualizadoEm: c.atualizadoEm,
+    };
+  });
+}
+
+export function renomearConexao(sellerId, conexaoId, apelido) {
+  const conexao = db.prepare("SELECT * FROM canais_conexoes WHERE id = ? AND canal = 'evolution' AND sellerId = ?").get(conexaoId, sellerId);
+  if (!conexao) throw erroCanal("Conexão não encontrada.", 404);
+  db.prepare("UPDATE canais_conexoes SET apelido = ?, atualizadoEm = ? WHERE id = ?").run(String(apelido || "").trim().slice(0, 60), agora(), conexaoId);
+  return { ok: true };
 }
 
 // ── Reconexão automática ────────────────────────────────────────────────

@@ -1,9 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { ShieldCheck, Smartphone, Unplug, RefreshCw, QrCode, Wifi, WifiOff, AlertTriangle } from "lucide-react";
+import { ShieldCheck, Smartphone, Unplug, RefreshCw, QrCode, Wifi, WifiOff, AlertTriangle, Pencil, Check, Plus } from "lucide-react";
 import { api, apiDelete } from "../../lib/api.js";
-
-// Conexão do WhatsApp pessoal via Evolution API (QR Code).
-// Só para profissionais (vendedores). A empresa não conecta por aqui.
 
 const TEXTOS = {
   aviso: "Esta integração usa uma tecnologia não oficial do WhatsApp. A conexão pode sofrer interrupções ou restrições a qualquer momento. Use exclusivamente para comunicações comerciais autorizadas com seus leads.",
@@ -30,7 +27,11 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
   const [ocupado, setOcupado] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [modalQr, setModalQr] = useState(false);
+  const [mostrarForm, setMostrarForm] = useState(false);
   const pollRef = useRef(null);
+
+  const conexoes = info?.conexoes || [];
+  const temAtiva = conexoes.some((c) => c.status !== "desconectada");
 
   const carregar = () =>
     api("/evolution/info").then((r) => {
@@ -43,7 +44,6 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Polling quando aguardando QR Code.
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (info?.status === "aguardando_qr" || info?.status === "reconectando") {
@@ -52,6 +52,7 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
         if (r?.status === "ativa") {
           setModalQr(false);
           setQrCode("");
+          setMostrarForm(false);
           aviso?.("WhatsApp conectado com sucesso!");
           recarregarInfo?.();
         }
@@ -60,7 +61,6 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [info?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Atualiza o QR Code do backend (que vem via webhook da Evolution).
   useEffect(() => {
     if (info?.qrCode && info.status === "aguardando_qr") setQrCode(info.qrCode);
   }, [info?.qrCode, info?.status]);
@@ -77,10 +77,10 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
     finally { setOcupado(false); }
   };
 
-  const reconectar = async () => {
+  const reconectar = async (conexaoId) => {
     setOcupado(true);
     try {
-      const r = await api("/evolution/reconectar", {});
+      const r = await api("/evolution/reconectar", { conexaoId });
       if (!r || r.error) throw new Error(r?.error || "Não foi possível reconectar.");
       if (r.qrCode) setQrCode(r.qrCode);
       setModalQr(true);
@@ -96,10 +96,10 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
     } catch (e) { aviso?.(e.message); }
   };
 
-  const desconectar = async () => {
-    if (!window.confirm("Desconectar o WhatsApp pessoal? As novas mensagens deixam de chegar. O histórico fica guardado.")) return;
+  const desconectar = async (conexaoId) => {
+    if (!window.confirm("Desconectar este WhatsApp? As novas mensagens deixam de chegar. O histórico fica guardado.")) return;
     try {
-      const r = await api("/evolution/desconectar", {});
+      const r = await api("/evolution/desconectar", { conexaoId });
       if (!r || r.error) throw new Error(r?.error || "Não foi possível desconectar.");
       aviso?.("WhatsApp desconectado.");
       setQrCode("");
@@ -111,9 +111,8 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
 
   const configurada = info?.configurada !== false;
   const autorizado = info?.autorizado !== false;
-  const conectada = info?.status === "ativa";
 
-  if (configurada && !autorizado && !info?.id) {
+  if (configurada && !autorizado && conexoes.length === 0 && !info?.id) {
     return (
       <section className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -131,43 +130,38 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
     );
   }
 
+  const exibirForm = conexoes.length === 0 || mostrarForm;
+
   return (
     <section className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
-      {/* Conexão existente */}
-      {info?.id && (
-        <div className="vx-row" style={{ flexWrap: "wrap", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-          <div style={{ minWidth: 0 }}>
-            <b style={{ fontSize: 14 }}>{info.numero ? `+${info.numero}` : "WhatsApp Pessoal"}</b>
-            {info.nome && <div className="vx-mut" style={{ fontSize: 12 }}>{info.nome}</div>}
-            <div style={{ fontSize: 12, color: STATUS_COR[info.status] || "var(--muted-2)" }}>
-              {STATUS_TEXTO[info.status] || info.status}
-              {info.ultimoErro ? ` · ${info.ultimoErro}` : ""}
-            </div>
+      {/* Lista de conexões existentes */}
+      {conexoes.length > 0 && (
+        <div>
+          <div className="vx-row" style={{ marginBottom: 12 }}>
+            <h3 className="vx-disp" style={{ fontSize: 16, margin: 0 }}>Contas conectadas</h3>
           </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {!conectada && info.status !== "desconectada" && (
-              <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={reconectar} disabled={ocupado}>
-                <RefreshCw size={14} aria-hidden="true" /> Reconectar
-              </button>
-            )}
-            {conectada && (
-              <button type="button" className="vx-btn vx-btn-sm vx-btn-danger" style={{ minHeight: 44 }} onClick={desconectar}>
-                <Unplug size={14} aria-hidden="true" /> Desconectar
-              </button>
-            )}
-          </div>
+          {conexoes.map((c) => (
+            <ConexaoCard key={c.id} conexao={c} onReconectar={reconectar} onDesconectar={desconectar} onRenomear={carregar} aviso={aviso} ocupado={ocupado} />
+          ))}
+          {!mostrarForm && conexoes.filter((c) => c.status !== "desconectada").length < 5 && (
+            <button type="button" className="vx-btn vx-btn-sm" style={{ marginTop: 12, minHeight: 44 }} onClick={() => { setMostrarForm(true); setAceite(false); }}>
+              <Plus size={14} aria-hidden="true" /> Conectar outro WhatsApp
+            </button>
+          )}
         </div>
       )}
 
       {/* Formulário de nova conexão */}
-      {!info?.id && (
-        <div>
+      {exibirForm && (
+        <div style={{ marginTop: conexoes.length > 0 ? 16 : 0, paddingTop: conexoes.length > 0 ? 16 : 0, borderTop: conexoes.length > 0 ? "1px solid var(--border)" : "none" }}>
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <span style={{ width: 40, height: 40, borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)", display: "grid", placeItems: "center", flexShrink: 0 }}>
               <Smartphone size={20} aria-hidden="true" />
             </span>
             <div style={{ minWidth: 0 }}>
-              <h2 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>Conecte o seu WhatsApp Pessoal</h2>
+              <h2 className="vx-disp" style={{ fontSize: 17, margin: 0 }}>
+                {conexoes.length > 0 ? "Conectar outro WhatsApp" : "Conecte o seu WhatsApp Pessoal"}
+              </h2>
               <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.55, margin: "4px 0 0" }}>
                 Escaneie o QR Code com o WhatsApp do seu celular para atender leads diretamente pela RYCS.
               </p>
@@ -180,7 +174,6 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
             </div>
           ) : (
             <>
-              {/* Aviso sobre tecnologia não oficial */}
               <div className="vx-notice vx-notice-amber" style={{ marginTop: 14, fontSize: 12.5, lineHeight: 1.5 }}>
                 <AlertTriangle size={14} aria-hidden="true" style={{ verticalAlign: -2, marginRight: 6 }} />
                 {TEXTOS.aviso}
@@ -200,6 +193,11 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
                   {ocupado ? <RefreshCw size={15} className="vx-spin" aria-hidden="true" /> : <QrCode size={15} aria-hidden="true" />}
                   {ocupado ? " Conectando…" : " Conectar com QR Code"}
                 </button>
+                {conexoes.length > 0 && (
+                  <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={() => setMostrarForm(false)}>
+                    Cancelar
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -246,5 +244,75 @@ export default function ConectarEvolution({ aviso, recarregarInfo }) {
         </div>
       )}
     </section>
+  );
+}
+
+function ConexaoCard({ conexao: c, onReconectar, onDesconectar, onRenomear, aviso, ocupado }) {
+  const [editando, setEditando] = useState(false);
+  const [apelido, setApelido] = useState(c.apelido || "");
+  const [salvando, setSalvando] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => { if (editando) inputRef.current?.focus(); }, [editando]);
+
+  const salvarApelido = async () => {
+    setSalvando(true);
+    try {
+      const r = await api.put("/evolution/renomear", { conexaoId: c.id, apelido: apelido.trim() });
+      if (!r || r.error) throw new Error(r?.error || "Erro ao salvar.");
+      setEditando(false);
+      onRenomear?.();
+    } catch (e) { aviso?.(e.message); }
+    finally { setSalvando(false); }
+  };
+
+  const conectada = c.status === "ativa";
+  const label = c.apelido || (c.numero ? `+${c.numero}` : "WhatsApp Pessoal");
+
+  return (
+    <div style={{ padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+      <div className="vx-row" style={{ flexWrap: "wrap", gap: 8 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {!editando ? (
+              <>
+                <b style={{ fontSize: 14 }}>{label}</b>
+                <button type="button" className="vx-btn-icon" style={{ padding: 2, background: "none", border: "none", cursor: "pointer", color: "var(--muted-2)" }}
+                  onClick={() => { setApelido(c.apelido || ""); setEditando(true); }} title="Renomear" aria-label="Renomear conexão">
+                  <Pencil size={13} />
+                </button>
+              </>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); salvarApelido(); }} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input ref={inputRef} className="vx-input" value={apelido} onChange={(e) => setApelido(e.target.value)}
+                  placeholder="Nome do WhatsApp" maxLength={60} style={{ fontSize: 13, padding: "4px 8px", width: 180 }} />
+                <button type="submit" className="vx-btn-icon" style={{ padding: 2, background: "none", border: "none", cursor: "pointer", color: "var(--brand)" }}
+                  disabled={salvando} aria-label="Salvar nome">
+                  <Check size={15} />
+                </button>
+              </form>
+            )}
+          </div>
+          {c.apelido && c.numero && <div className="vx-mut" style={{ fontSize: 12 }}>+{c.numero}</div>}
+          {c.nome && <div className="vx-mut" style={{ fontSize: 12 }}>{c.nome}</div>}
+          <div style={{ fontSize: 12, color: STATUS_COR[c.status] || "var(--muted-2)" }}>
+            {STATUS_TEXTO[c.status] || c.status}
+            {c.ultimoErro ? ` · ${c.ultimoErro}` : ""}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          {!conectada && c.status !== "desconectada" && (
+            <button type="button" className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} onClick={() => onReconectar(c.id)} disabled={ocupado}>
+              <RefreshCw size={14} aria-hidden="true" /> Reconectar
+            </button>
+          )}
+          {conectada && (
+            <button type="button" className="vx-btn vx-btn-sm vx-btn-danger" style={{ minHeight: 44 }} onClick={() => onDesconectar(c.id)}>
+              <Unplug size={14} aria-hidden="true" /> Desconectar
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
