@@ -600,20 +600,19 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={aceitarSugestaoIA}><Check size={12} /> Aceitar sugestão</button>
                 </div>
               )}
+              <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
+                {(campanha.acoesAtivas || []).map((k) => (
+                  <label key={k}>
+                    <div className="vx-label">{ACOES_DISPONIVEIS.find((a) => a.id === k)?.nome || ACOES[k]?.nome || k}</div>
+                    <input className="vx-input vx-mono" type="number" min="0" step="0.5"
+                      value={campanha.tarefas?.[k] || 0}
+                      onChange={(e) => set("tarefas", { ...campanha.tarefas, [k]: Number(e.target.value) })} />
+                  </label>
+                ))}
+              </div>
               {mostrarSugestao && sugestaoIA && !sugestaoIA.disponivel && (
                 <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 4 }}>{sugestaoIA.motivo}</div>
               )}
-            </div>
-
-            <div className="vx-grid vx-g2">
-              {(campanha.acoesAtivas || []).map((k) => (
-                <label key={k}>
-                  <div className="vx-label">{ACOES_DISPONIVEIS.find((a) => a.id === k)?.nome || ACOES[k]?.nome || k}</div>
-                  <input className="vx-input vx-mono" type="number" min="0" step="0.5"
-                    value={campanha.tarefas?.[k] || 0}
-                    onChange={(e) => set("tarefas", { ...campanha.tarefas, [k]: Number(e.target.value) })} />
-                </label>
-              ))}
             </div>
 
             {/* Modelo de pagamento */}
