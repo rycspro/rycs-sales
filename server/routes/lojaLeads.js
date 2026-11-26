@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  buscarPlaces, salvarContatos, revelarContato, contatosRevelados,
+  buscarPlaces, buscarPlacesPorFila, salvarContatos, revelarContato, contatosRevelados,
   resumoConsumo, listarPastas, criarPasta, renomearPasta, excluirPasta,
   listarListas, criarLista, renomearLista, moverLista, excluirLista,
   adicionarContatoLista, removerContatoLista, contatosDaLista, listarPrecos,
@@ -24,10 +24,17 @@ function entityDe(req) {
 router.post("/loja-leads/buscar", async (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
-  const { texto, regiao, quantidade, listaId, novaPasta, novaLista, descricaoLista, parentListaId } = req.body || {};
+  const { texto, regiao, quantidade, listaId, novaPasta, novaLista, descricaoLista, parentListaId, pais, estados, cidades } = req.body || {};
   if (!texto) return res.status(400).json({ error: "Informe o que buscar." });
 
-  const r = await buscarPlaces(texto, { regiao, quantidade });
+  // Brasil: fila cidade por cidade (o Google limita 60 resultados por busca).
+  const r = (pais === "Brasil" && Array.isArray(estados))
+    ? await buscarPlacesPorFila(ent.entityId, texto, {
+      estados: Array.isArray(estados) ? estados : [],
+      cidades: Array.isArray(cidades) ? cidades : [],
+      quantidade,
+    })
+    : await buscarPlaces(texto, { regiao, quantidade });
   if (r.error) return res.status(400).json(r);
 
   const ids = salvarContatos(r.contatos);
@@ -58,7 +65,7 @@ router.post("/loja-leads/buscar", async (req, res) => {
     if (add?.novo) adicionados++;
   }
 
-  res.json({ contatos, listaId: listaIdFinal, adicionados });
+  res.json({ contatos, listaId: listaIdFinal, adicionados, cidadesPercorridas: r.cidadesPercorridas, totalCidades: r.totalCidades });
 });
 
 // ── Revelar contato (registrar consumo) ─────────────────────────────────────

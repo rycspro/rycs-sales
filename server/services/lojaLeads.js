@@ -5,6 +5,7 @@
 // a cobrança é pós-paga por ciclo de 30 dias.
 
 import db, { uid, agora } from "../db.js";
+import { ESTADOS_BR, CIDADES_BR } from "../../shared/localidades.js";
 
 // ── Schema (aditivo, idempotente) ───────────────────────────────────────────
 db.exec(`
@@ -322,6 +323,96 @@ export async function buscarPlaces(textQuery, { regiao, quantidade } = {}) {
     if (todos.length) return { contatos: todos };
     return { error: "Falha ao conectar com a API do Google Places." };
   }
+}
+
+// ── Fila cidade por cidade ──────────────────────────────────────────────────
+// O Google Places devolve no máximo 60 resultados por busca de texto. Buscar
+// "agência de turismo em São Paulo" (estado) sempre para em 60. A fila resolve:
+// percorre os municípios do(s) estado(s) um a um, pula o que a entidade já
+// adquiriu e guarda onde parou (loja_leads_fila) para a próxima busca seguir
+// da cidade seguinte em vez de repetir as mesmas.
+db.exec(`CREATE TABLE IF NOT EXISTS loja_leads_fila (
+  entityId TEXT NOT NULL, chave TEXT NOT NULL, indice INTEGER NOT NULL DEFAULT 0,
+  atualizadoEm INTEGER NOT NULL, PRIMARY KEY (entityId, chave))`);
+
+const UF_POR_NOME = Object.fromEntries(ESTADOS_BR.map((e) => [e.nome.toLowerCase(), e.uf]));
+const ufDe = (estado) => {
+  const t = String(estado || "").trim();
+  if (/^[A-Za-z]{2}$/.test(t)) return t.toUpperCase();
+  return UF_POR_NOME[t.toLowerCase()] || null;
+};
+
+const cacheMunicipios = new Map();
+// Municípios do estado (IBGE), com as cidades principais primeiro.
+async function municipiosDe(uf) {
+  if (cacheMunicipios.has(uf)) return cacheMunicipios.get(uf);
+  const principais = CIDADES_BR[uf] || [];
+  let todos = [];
+  try {
+    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`, { signal: AbortSignal.timeout(8000) });
+    if (r.ok) todos = (await r.json()).map((m) => m.nome).filter(Boolean);
+  } catch (e) {
+    console.error("[loja-leads] IBGE municípios falhou para", uf, e.message);
+  }
+  const lista = [...new Set([...principais, ...todos])];
+  if (todos.length) cacheMunicipios.set(uf, lista); // só cacheia a lista completa
+  return lista;
+}
+
+export async function buscarPlacesPorFila(entityId, textQuery, { estados = [], cidades = [], quantidade = 20 } = {}) {
+  const total = Math.max(Number(quantidade) || 20, 1);
+  let ufs = estados.map(ufDe).filter(Boolean);
+  if (!ufs.length) ufs = ESTADOS_BR.map((e) => e.uf); // país inteiro
+
+  // Monta a fila de [cidade, UF].
+  const fila = [];
+  const porUf = {};
+  for (const uf of ufs) porUf[uf] = await municipiosDe(uf);
+  if (cidades.length) {
+    for (const c of cidades) {
+      const uf = ufs.find((u) => porUf[u].includes(c)) || ufs[0];
+      fila.push([c, uf]);
+    }
+  } else {
+    for (const uf of ufs) for (const c of porUf[uf]) fila.push([c, uf]);
+  }
+  if (!fila.length) return buscarPlaces(textQuery, { regiao: estados.join(", "), quantidade: total });
+
+  // O que a entidade já adquiriu não conta como novo.
+  const jaTem = new Set(db.prepare(`
+    SELECT c.placeId FROM loja_leads_consumo co JOIN loja_leads_contatos c ON c.id = co.contatoId
+    WHERE co.entityId = ?`).all(entityId).map((r) => r.placeId));
+
+  const chave = `${textQuery.trim().toLowerCase()}|${cidades.length ? cidades.join(",") : ufs.join(",")}`;
+  const cursor = db.prepare("SELECT indice FROM loja_leads_fila WHERE entityId = ? AND chave = ?").get(entityId, chave);
+  const inicio = (cursor?.indice || 0) % fila.length;
+
+  const novos = [];
+  const vistos = new Set();
+  const limiteTempo = Date.now() + 100_000; // não estoura o tempo da requisição
+  let passo = 0;
+  let erro = null;
+  for (; passo < fila.length && novos.length < total && Date.now() < limiteTempo; passo++) {
+    const [cidade, uf] = fila[(inicio + passo) % fila.length];
+    const r = await buscarPlaces(textQuery, { regiao: `${cidade}, ${uf}`, quantidade: 60 });
+    if (r.error) { erro = r.error; if (!novos.length && passo === 0) break; continue; }
+    const daCidade = (r.contatos || []).filter((c) => !jaTem.has(c.placeId) && !vistos.has(c.placeId));
+    for (const c of daCidade) {
+      if (novos.length >= total) break;
+      vistos.add(c.placeId);
+      novos.push(c);
+    }
+    // Sobrou lead nesta cidade? Para aqui sem avançar: a próxima busca
+    // recomeça nesta cidade (o que já foi adquirido é pulado).
+    if (novos.length >= total && daCidade.some((c) => !vistos.has(c.placeId))) break;
+  }
+  const proximo = (inicio + passo) % fila.length;
+  db.prepare(`INSERT INTO loja_leads_fila (entityId, chave, indice, atualizadoEm) VALUES (?, ?, ?, ?)
+    ON CONFLICT(entityId, chave) DO UPDATE SET indice = excluded.indice, atualizadoEm = excluded.atualizadoEm`)
+    .run(entityId, chave, proximo, agora());
+
+  if (!novos.length && erro) return { error: erro };
+  return { contatos: novos, cidadesPercorridas: passo, totalCidades: fila.length };
 }
 
 const TIPOS_GENERICOS = new Set(["point_of_interest", "establishment", "place", "premise", "street_address", "route", "political", "locality", "sublocality"]);

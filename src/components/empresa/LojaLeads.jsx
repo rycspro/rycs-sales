@@ -63,7 +63,7 @@ const GRUPOS = [
     campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Data de abertura", "Situação cadastral", "Capital social"] },
 ];
 const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos).filter((f) => !CAMPOS_INDISPONIVEIS.has(f));
-const QTDS = [5, 10, 15, 20, 30, 40, 50, 60];
+const QTDS = [10, 20, 30, 60, 100, 200, 300];
 
 const SEGMENTOS = [
   // Alimentação
@@ -457,7 +457,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
     setOcupado(true);
     setFeedback("");
 
-    const body = { texto: segmento.trim(), regiao: regiao.trim(), quantidade };
+    const body = { texto: segmento.trim(), regiao: regiao.trim(), quantidade, pais, estados, cidades };
 
     if (destino === "existing" && listaExistente) {
       body.listaId = listaExistente;
@@ -474,9 +474,14 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
 
     const novos = r.adicionados ?? contatos.length;
     const repetidos = contatos.length - novos;
-    const msg = repetidos > 0
+    let msg = repetidos > 0
       ? `${novos} novo(s) lead(s) na lista (${repetidos} já estavam lá).`
       : `${novos} lead(s) adicionado(s) à lista.`;
+    if (r.totalCidades && contatos.length < quantidade) {
+      msg += r.cidadesPercorridas >= r.totalCidades
+        ? ` Percorremos todas as ${r.totalCidades} cidades da região.`
+        : ` Percorremos ${r.cidadesPercorridas} de ${r.totalCidades} cidades; busque de novo para continuar da próxima cidade.`;
+    }
     setFeedback(msg);
     aviso?.(msg);
 
@@ -529,7 +534,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
 
           {/* Quantidade */}
           <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
-            <span className="vx-label">QUANTIDADE DE LEADS (máx. 60 por busca)</span>
+            <span className="vx-label">QUANTIDADE DE LEADS (buscamos cidade por cidade)</span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
               {QTDS.map((q) => (
                 <button key={q} onClick={() => setQuantidade(q)}
