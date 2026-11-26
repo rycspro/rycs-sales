@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation, Cloud, CloudOff, LogOut } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation, Cloud, CloudOff, LogOut, GraduationCap, Pencil } from "lucide-react";
 import { api, apiPatch, API_URL } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
@@ -248,6 +248,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [uploadProgresso, setUploadProgresso] = useState({});
   const [enviandoMateriais, setEnviandoMateriais] = useState(false);
   const [modalBiblioteca, setModalBiblioteca] = useState(false);
+  const [modalTreinamentoIA, setModalTreinamentoIA] = useState(false);
   const [bibliotecaMateriais, setBibliotecaMateriais] = useState([]);
   const [bibliotecaBusca, setBibliotecaBusca] = useState("");
   const [bibliotecaFiltro, setBibliotecaFiltro] = useState("");
@@ -789,14 +790,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             />
           </div>
 
-          {/* Materiais da campanha */}
+          {/* Materiais e treinamento (unificado) */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}>Materiais de apoio</b>
-              <div className="vx-mut" style={{ fontSize: 11.5 }}>Envie arquivos que vão ajudar o profissional a vender (apresentações, catálogos, scripts etc.).</div>
+              <b style={{ color: "var(--brand)" }}>Materiais e treinamento</b>
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>Adicione arquivos, treinamentos e conteúdos que vão ajudar o profissional.</div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {/* Card 1 — Enviar arquivos */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              {/* Enviar arquivos */}
               <div
                 onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#318CE7"; }}
                 onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
@@ -806,15 +807,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   const files = [...e.dataTransfer.files].map((f) => ({ file: f, id: `up-${Date.now()}-${Math.random().toString(36).slice(2)}`, nome: f.name, tamanho: f.size, status: "pendente" }));
                   if (files.length) setUploadQueue((prev) => [...prev, ...files]);
                 }}
-                style={{ border: "1.5px dashed var(--border)", borderRadius: 12, padding: "24px 16px", textAlign: "center", cursor: "pointer", transition: "border-color .15s", background: "var(--surface)" }}
+                style={{ border: "1.5px dashed var(--border)", borderRadius: 12, padding: "20px 14px", textAlign: "center", cursor: "pointer", transition: "border-color .15s", background: "var(--surface)" }}
                 onClick={() => uploadInputRef.current?.click()}
               >
-                <CloudUpload size={28} color="var(--muted)" style={{ marginBottom: 8 }} />
-                <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>Enviar arquivos</div>
-                <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 10 }}>Selecione ou arraste arquivos do seu dispositivo.</div>
-                <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={(e) => { e.stopPropagation(); uploadInputRef.current?.click(); }} style={{ background: "#318CE7", borderColor: "#318CE7" }}>
-                  <Plus size={13} /> Selecionar arquivos
-                </button>
+                <CloudUpload size={24} color="var(--muted)" style={{ marginBottom: 6 }} />
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>Enviar arquivos</div>
+                <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.4 }}>Do seu dispositivo</div>
                 <input ref={uploadInputRef} type="file" multiple hidden
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.mp4,.mov,.mp3,.wav,.m4a,.txt,.key"
                   onChange={(e) => {
@@ -824,9 +822,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   }}
                 />
               </div>
-              {/* Card 2 — Biblioteca da empresa */}
+              {/* Buscar na biblioteca */}
               <div
-                style={{ border: "1.5px solid var(--border)", borderRadius: 12, padding: "24px 16px", textAlign: "center", cursor: "pointer", background: "var(--surface)", transition: "border-color .15s" }}
+                style={{ border: "1.5px solid var(--border)", borderRadius: 12, padding: "20px 14px", textAlign: "center", cursor: "pointer", background: "var(--surface)", transition: "border-color .15s" }}
                 onClick={async () => {
                   setModalBiblioteca(true);
                   setCarregandoBiblioteca(true);
@@ -836,12 +834,18 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   setCarregandoBiblioteca(false);
                 }}
               >
-                <Library size={28} color="var(--muted)" style={{ marginBottom: 8 }} />
-                <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>Biblioteca da empresa</div>
-                <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 10 }}>Vincule materiais que já estão cadastrados na RYCS.</div>
-                <button className="vx-btn vx-btn-sm" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: "none" }}>
-                  <Search size={13} /> Buscar materiais
-                </button>
+                <Library size={24} color="var(--muted)" style={{ marginBottom: 6 }} />
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>Buscar na biblioteca</div>
+                <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.4 }}>Materiais e treinamentos da empresa</div>
+              </div>
+              {/* Criar com IA */}
+              <div
+                style={{ border: "1.5px solid var(--border)", borderRadius: 12, padding: "20px 14px", textAlign: "center", cursor: "pointer", background: "var(--surface)", transition: "border-color .15s" }}
+                onClick={() => setModalTreinamentoIA(true)}
+              >
+                <Sparkles size={24} color="var(--brand)" style={{ marginBottom: 6 }} />
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>Criar com IA</div>
+                <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.4 }}>Gerar treinamento automático</div>
               </div>
             </div>
 
@@ -903,15 +907,39 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               </div>
             )}
 
-            {/* Materiais vinculados */}
-            {(campanha.materiaisVinculados || []).length > 0 && (
+            {/* Lista unificada de conteúdos vinculados */}
+            {((campanha.materiaisVinculados || []).length > 0 || (campanha.treinamento || []).length > 0) && (
               <div style={{ marginTop: 14 }}>
-                <div className="vx-eyebrow" style={{ marginBottom: 8 }}>MATERIAIS VINCULADOS ({(campanha.materiaisVinculados || []).length})</div>
+                <div className="vx-eyebrow" style={{ marginBottom: 8 }}>CONTEÚDOS VINCULADOS ({(campanha.materiaisVinculados || []).length + (campanha.treinamento || []).length})</div>
+                {(campanha.treinamento || []).map((modulo, idx) => (
+                  <div key={modulo.id || `tr-${idx}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--surface)", border: "1px solid var(--brand-100)", borderRadius: 8, marginBottom: 6 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 7, background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <GraduationCap size={16} color="var(--brand)" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{modulo.titulo || "Módulo sem título"}</div>
+                      <div className="vx-mut" style={{ fontSize: 11, display: "flex", gap: 8 }}>
+                        <span style={{ color: "var(--brand)" }}>Treinamento</span>
+                        {modulo.conteudo && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>{modulo.conteudo.slice(0, 60)}</span>}
+                      </div>
+                    </div>
+                    <select className="vx-input" style={{ width: 140, fontSize: 11.5, height: 28, padding: "0 8px" }}
+                      value={modulo.obrigatoriedade || "obrigatorio"}
+                      onChange={(e) => set("treinamento", campanha.treinamento.map((m, i) => i === idx ? { ...m, obrigatoriedade: e.target.value } : m))}>
+                      <option value="obrigatorio">Obrigatório</option>
+                      <option value="complementar">Complementar</option>
+                    </select>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Editar" onClick={() => {
+                      const novoTitulo = prompt("Título do módulo:", modulo.titulo || "");
+                      if (novoTitulo !== null) atualizarTreinamento(idx, "titulo", novoTitulo);
+                    }} style={{ padding: 3 }}><Pencil size={14} /></button>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Remover" onClick={() => removerTreinamento(idx)} style={{ padding: 3 }}><Trash2 size={14} /></button>
+                  </div>
+                ))}
                 {(campanha.materiaisVinculados || []).map((mat, idx) => {
                   const IconeMat = mat.mimetype?.startsWith("video/") ? Video : mat.mimetype?.startsWith("audio/") ? Music : mat.mimetype?.includes("spreadsheet") || mat.mimetype?.includes("excel") ? FileSpreadsheet : mat.mimetype?.includes("presentation") || mat.mimetype?.includes("powerpoint") ? Presentation : mat.mimetype?.includes("image") ? Image : FileText;
                   return (
                     <div key={mat.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, marginBottom: 6 }}>
-                      <GripVertical size={14} color="var(--border)" style={{ cursor: "grab", flexShrink: 0 }} />
                       <div style={{ width: 32, height: 32, borderRadius: 7, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <IconeMat size={16} color="var(--muted)" />
                       </div>
@@ -919,14 +947,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mat.nome}</div>
                         <div className="vx-mut" style={{ fontSize: 11, display: "flex", gap: 8 }}>
                           <span>{mat.categoria || "arquivo"}{mat.tamanho ? ` · ${(mat.tamanho / 1024).toFixed(0)} KB` : ""}</span>
-                          <span style={{ color: mat.origem === "upload" ? "#318CE7" : "var(--brand)" }}>{mat.origem === "upload" ? "Enviado do dispositivo" : "Biblioteca da empresa"}</span>
+                          <span style={{ color: mat.origem === "upload" ? "#318CE7" : "var(--brand)" }}>{mat.origem === "upload" ? "Enviado" : "Biblioteca"}</span>
                         </div>
                       </div>
                       <select className="vx-input" style={{ width: 140, fontSize: 11.5, height: 28, padding: "0 8px" }}
                         value={mat.obrigatoriedade || "complementar"}
                         onChange={(e) => set("materiaisVinculados", (campanha.materiaisVinculados || []).map((m, i) => i === idx ? { ...m, obrigatoriedade: e.target.value } : m))}>
                         <option value="complementar">Complementar</option>
-                        <option value="obrigatorio">Consulta obrigatória</option>
+                        <option value="obrigatorio">Obrigatório</option>
                       </select>
                       <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Desvincular" onClick={() => set("materiaisVinculados", (campanha.materiaisVinculados || []).filter((_, i) => i !== idx))} style={{ padding: 3 }}><Trash2 size={14} /></button>
                     </div>
@@ -934,7 +962,56 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 })}
               </div>
             )}
+
+            {/* Exigir treinamento */}
+            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginTop: 14 }}>
+              <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={campanha.exigeCertificacao} onChange={(e) => set("exigeCertificacao", e.target.checked)} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Exigir que complete o treinamento antes de começar</div>
+                <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.5 }}>O profissional só trabalha depois de concluir os treinamentos obrigatórios.</div>
+              </div>
+            </label>
           </div>
+
+          {/* Modal Criar com IA */}
+          {modalTreinamentoIA && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+              onClick={(e) => { if (e.target === e.currentTarget) setModalTreinamentoIA(false); }}>
+              <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 520, overflow: "hidden" }}>
+                <div style={{ padding: "20px 24px 0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Criar treinamento com IA</h3>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setModalTreinamentoIA(false)} style={{ padding: 3 }}><X size={18} /></button>
+                  </div>
+                  <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 16px", lineHeight: 1.5 }}>Escolha o tipo de treinamento. A IA vai usar os dados da campanha e os materiais vinculados para gerar o conteúdo.</p>
+                </div>
+                <div style={{ padding: "0 24px 20px", display: "grid", gap: 8 }}>
+                  {Object.entries(MODELOS_TREINAMENTO).map(([k, m]) => (
+                    <button key={k} onClick={() => setModeloTreinamento(k)}
+                      style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", border: `1.5px solid ${modeloTreinamento === k ? "#318CE7" : "var(--border)"}`, borderRadius: 10, background: modeloTreinamento === k ? "rgba(49,140,231,0.04)" : "var(--surface)", cursor: "pointer", textAlign: "left", width: "100%", transition: "border-color .15s" }}>
+                      <div style={{ width: 20, height: 20, borderRadius: "50%", border: `1.5px solid ${modeloTreinamento === k ? "#318CE7" : "var(--border)"}`, background: modeloTreinamento === k ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {modeloTreinamento === k && <Check size={12} color="#fff" />}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{m.nome}</div>
+                        <div className="vx-mut" style={{ fontSize: 12 }}>{m.descricao}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div style={{ padding: "14px 24px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                  <button className="vx-btn vx-btn-sm" onClick={() => setModalTreinamentoIA(false)}>Cancelar</button>
+                  <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={gerandoTreinamento} style={{ background: "#318CE7", borderColor: "#318CE7" }}
+                    onClick={async () => {
+                      await gerarTreinamentoComIA();
+                      setModalTreinamentoIA(false);
+                    }}>
+                    {gerandoTreinamento ? <><Loader size={13} /> Gerando...</> : <><Sparkles size={13} /> Gerar treinamento</>}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Modal Biblioteca */}
           {modalBiblioteca && (
@@ -1369,18 +1446,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
           </>)}
 
-          {/* Certificação e visibilidade */}
+          {/* Visibilidade */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div className="vx-wizard-checks">
-              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }}>
-                <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={campanha.exigeCertificacao} onChange={(e) => set("exigeCertificacao", e.target.checked)} />
-                <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Exigir que complete o treinamento antes de começar</div>
-                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>O profissional só pode trabalhar depois de concluir todos os módulos de treinamento.</div>
-                </div>
-              </label>
-            </div>
-            <div style={{ marginTop: 14 }}>
+            <div>
               <div className="vx-label">Quem pode ver esta campanha?</div>
               <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
                 <CardOption selected={campanha.visibilidade === "publica"} onClick={() => set("visibilidade", "publica")} icon={Eye} title="Todos podem ver" subtitle="Qualquer profissional que se encaixe no perfil pode se candidatar." />
@@ -1392,7 +1460,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Quanto vai pagar? <ArrowRight size={14} /></button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Ações e pagamentos <ArrowRight size={14} /></button>
           </div>
         </>
       )}
@@ -1680,15 +1748,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </>)}
 
           {/* ── CONFIGURAÇÕES COMUNS AOS DOIS MODOS ── */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div className="vx-row" style={{ marginBottom: 4 }}>
-              <b style={{ fontSize: 14 }}>Orçamento e limites</b>
-              <span className="vx-chip"><Wallet size={12} /> {money(disponivel)} disponível</span>
-            </div>
 
             {/* Sugestão com IA */}
             {(campanha.modoAcoesRemuneradas || "rapido") === "rapido" && (
-              <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10, padding: "12px 14px", marginBottom: 14, marginTop: 10 }}>
+              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
                 <div className="vx-row" style={{ marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}><TrendingUp size={14} color="var(--brand)" /><b style={{ fontSize: 13 }}>Sugestão com IA</b></div>
                   <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={calcularSugestaoIA}><Sparkles size={12} /> Calcular</button>
@@ -1739,7 +1802,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
             {/* Modelo de pagamento */}
             {((campanha.acoesAtivas || []).length > 1 || (campanha.formasGanhoRascunho || []).length > 1) && (
-              <div style={{ marginTop: 10, padding: "12px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10 }}>
+              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
                 <div className="vx-label" style={{ marginBottom: 8 }}>Como funciona o pagamento?</div>
                 <div style={{ display: "grid", gap: 8 }}>
                   <CardOption selected={campanha.remuneracaoCumulativa} onClick={() => set("remuneracaoCumulativa", true)} title="Pagar por cada etapa" subtitle="O profissional ganha por cada atividade que completar (ex: R$10 por contato + R$30 por reunião)." />
@@ -1748,19 +1811,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               </div>
             )}
 
-            <div style={{ marginTop: 14 }}><div className="vx-label">Quanto você quer investir no total?</div>
-              <CampoOrcamento value={campanha.orcamento} onChange={(v) => set("orcamento", v)} /></div>
-
-            <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-              <label><div className="vx-label">Prazo para cada atividade (em horas)</div>
-                <input className="vx-input vx-mono" type="number" min="1" value={campanha.prazoHoras} onChange={(e) => set("prazoHoras", Number(e.target.value))} /></label>
-              <label><div className="vx-label">Máximo de atividades por profissional</div>
-                <input className="vx-input vx-mono" type="number" min="0" value={campanha.limitePorProfissional} onChange={(e) => set("limitePorProfissional", Number(e.target.value))} /></label>
-            </div>
-
             {/* Comissão */}
             {(campanha.modoAcoesRemuneradas || "rapido") === "rapido" && (
-              <div style={{ marginTop: 14 }}>
+              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
                 <label style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}>
                   <input type="checkbox" checked={campanha.temComissao || false} onChange={(e) => set("temComissao", e.target.checked)} />
                   <div style={{ fontSize: 13.5, fontWeight: 600 }}>Pagar uma porcentagem extra sobre cada venda</div>
@@ -1776,7 +1829,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 )}
               </div>
             )}
-          </div>
 
           {/* ── RESUMO DINÂMICO ── */}
           {(() => {
@@ -1795,7 +1847,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             if (totalAcoes === 0) pendencias.push("Nenhuma atividade escolhida");
             if (modo === "rapido" && acoesRapidas.some((k) => !(campanha.tarefas?.[k] > 0))) pendencias.push("Atividades sem valor definido");
             if (modo === "personalizado" && (campanha.formasGanhoRascunho || []).some((f) => !f.nome?.trim())) pendencias.push("Formas de ganho sem nome");
-            if (Number(campanha.orcamento || 0) <= 0) pendencias.push("Orçamento não definido");
+            if (totalAcoes > 0 && fixos.length === 0 && comissoes.length === 0) pendencias.push("Nenhum valor definido");
             const somaFixos = fixos.reduce((s, v) => s + v, 0);
             return totalAcoes > 0 || pendencias.length > 0 ? (
               <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -1815,54 +1867,237 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             ) : null;
           })()}
 
-          {/* Treinamento */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div className="vx-row" style={{ marginBottom: 12 }}>
-              <div><b style={{ color: "var(--brand)" }}>Treinamento</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Opcional. Prepare o profissional antes de começar a trabalhar.</div></div>
-              <button className="vx-btn vx-btn-sm" onClick={adicionarTreinamento}><Plus size={13} /> Módulo</button>
-            </div>
-
-            <div style={{ background: "linear-gradient(135deg, var(--brand-50), var(--indigo-50, var(--brand-50)))", border: "1px solid var(--brand-100)", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                <BookOpen size={14} color="var(--brand)" />
-                <b style={{ fontSize: 13 }}>Gerar treinamento com IA</b>
-              </div>
-              <div className="vx-grid vx-g2" style={{ marginBottom: 10 }}>
-                {Object.entries(MODELOS_TREINAMENTO).map(([k, m]) => (
-                  <label key={k} style={{ display: "flex", gap: 8, alignItems: "flex-start", cursor: "pointer", background: modeloTreinamento === k ? "var(--brand-50)" : "var(--surface)", border: `1px solid ${modeloTreinamento === k ? "var(--brand)" : "var(--border)"}`, borderRadius: 8, padding: "9px 11px" }}>
-                    <input type="radio" name="modeloTreinamento" value={k} checked={modeloTreinamento === k} onChange={() => setModeloTreinamento(k)} style={{ marginTop: 2, flexShrink: 0 }} />
-                    <div><div style={{ fontSize: 13, fontWeight: 600 }}>{m.nome}</div><div className="vx-mut" style={{ fontSize: 11.5 }}>{m.descricao}</div></div>
-                  </label>
-                ))}
-              </div>
-              <button className="vx-btn vx-btn-primary vx-btn-sm" disabled={gerandoTreinamento} onClick={gerarTreinamentoComIA}>
-                {gerandoTreinamento ? <><Loader size={13} /> Gerando…</> : <><Sparkles size={13} /> Gerar treinamento</>}
-              </button>
-            </div>
-
-            {(campanha.treinamento || []).length === 0
-              ? <div className="vx-campaign-inline-empty">Gere com IA ou adicione módulos manualmente.</div>
-              : <div className="vx-training-drafts">
-                  {campanha.treinamento.map((modulo, i) => (
-                    <div key={modulo.id || i}>
-                      <input className="vx-input" placeholder="Título do módulo" value={modulo.titulo || ""} onChange={(e) => atualizarTreinamento(i, "titulo", e.target.value)} />
-                      <textarea className="vx-input" placeholder="Conteúdo ou URL" value={modulo.conteudo || ""} onChange={(e) => atualizarTreinamento(i, "conteudo", e.target.value)} />
-                      <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => removerTreinamento(i)}><Trash2 size={14} /></button>
-                    </div>
-                  ))}
-                </div>}
-          </div>
           </>)}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Revisar tudo <ArrowRight size={14} /></button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Verba da campanha <ArrowRight size={14} /></button>
           </div>
         </>
       )}
 
-      {/* ═══════════════════════ PASSO 5: REVISÃO ═══════════════════════ */}
-      {passo === 4 && campanha && (
+      {/* ═══════════════════════ PASSO 5: VERBA DA CAMPANHA ═══════════════════════ */}
+      {passo === 4 && campanha && (() => {
+        const modo = campanha.modoAcoesRemuneradas || "rapido";
+        const acoesAtivas = campanha.acoesAtivas || [];
+        const tarefas = campanha.tarefas || {};
+        const formasCustom = (campanha.formasGanhoRascunho || []).filter((f) => f.origem !== "predefinido");
+        const todasAcoes = modo === "rapido"
+          ? [...acoesAtivas.map((k) => ({ id: k, nome: ACOES_DISPONIVEIS.find((a) => a.id === k)?.nome || ACOES[k]?.nome || k, valor: Number(tarefas[k]) || 0, tipo: k === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "comissao" : "fixo" })),
+             ...formasCustom.map((f) => ({ id: f.tempId, nome: f.nome || "Personalizada", valor: f.valor || 0, tipo: f.tipoRemuneracao || "fixo" }))]
+          : (campanha.formasGanhoRascunho || []).map((f) => ({ id: f.tempId, nome: f.nome || "Sem nome", valor: f.valor || 0, tipo: f.tipoRemuneracao || "fixo" }));
+        const acoesFixas = todasAcoes.filter((a) => a.tipo === "fixo" && a.valor > 0);
+        const custoUnitarioTotal = acoesFixas.reduce((s, a) => s + a.valor, 0);
+        const orcamentoAtual = Number(campanha.orcamento) || 0;
+        const temMultiFuncao = campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length >= 2;
+        const funcoes = temMultiFuncao ? (campanha.funcoesOperacao || []) : [];
+
+        const SUGESTOES_VERBA = [1000, 2500, 5000, 10000, 25000];
+
+        const distribuicaoVerba = campanha.distribuicaoVerba || {};
+        const modoDistribuicao = campanha.modoDistribuicaoVerba || "automatico";
+
+        const calcularDistribuicaoAuto = (verba) => {
+          if (acoesFixas.length === 0 || custoUnitarioTotal <= 0) return { acoesPossiveis: 0, porAcao: {} };
+          const acoesPossiveis = Math.floor(verba / custoUnitarioTotal);
+          const porAcao = {};
+          acoesFixas.forEach((a) => {
+            const proporcao = a.valor / custoUnitarioTotal;
+            porAcao[a.id] = Math.round(verba * proporcao * 100) / 100;
+          });
+          return { acoesPossiveis, porAcao };
+        };
+
+        const distAuto = calcularDistribuicaoAuto(orcamentoAtual);
+        const verbaUsadaCustom = modoDistribuicao === "personalizado"
+          ? Object.values(distribuicaoVerba).reduce((s, v) => s + (Number(v) || 0), 0)
+          : Object.values(distAuto.porAcao).reduce((s, v) => s + v, 0);
+        const verbaRestante = Math.max(0, orcamentoAtual - verbaUsadaCustom);
+        const precisaAdicionar = orcamentoAtual > disponivel ? orcamentoAtual - disponivel : 0;
+
+        return (
+        <>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Verba da campanha</h2>
+          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
+            Defina quanto você deseja investir. A plataforma distribui automaticamente entre as atividades.
+          </p>
+
+          {/* Saldo disponível */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14, background: "linear-gradient(135deg, var(--brand-50) 0%, var(--surface) 100%)", border: "1.5px solid var(--brand-100)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <Wallet size={20} color="var(--brand)" />
+              <div>
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>Saldo disponível na conta</div>
+                <div className="vx-mono" style={{ fontSize: 22, fontWeight: 700, color: "var(--brand)" }}>{money(disponivel)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Campo principal: Quanto deseja investir */}
+          <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Quanto você deseja investir?</div>
+              <div className="vx-mut" style={{ fontSize: 12.5 }}>Esse é o limite total que a empresa autoriza para esta campanha.</div>
+            </div>
+            <CampoOrcamento value={orcamentoAtual} onChange={(v) => set("orcamento", v)} />
+
+            {/* Sugestões de valores */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+              {SUGESTOES_VERBA.map((v) => (
+                <button key={v} onClick={() => set("orcamento", v)} style={{
+                  padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  border: `1.5px solid ${orcamentoAtual === v ? "var(--brand)" : "var(--border)"}`,
+                  background: orcamentoAtual === v ? "var(--brand-50)" : "var(--surface)",
+                  color: orcamentoAtual === v ? "var(--brand)" : "var(--text-2)",
+                  transition: "all .15s",
+                }}>
+                  {money(v)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Valor total + simulação */}
+          {orcamentoAtual > 0 && (
+            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+              <div className="vx-eyebrow" style={{ marginBottom: 12 }}>SIMULAÇÃO DA VERBA</div>
+
+              {/* Cards de resumo */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
+                <div style={{ background: "var(--brand-50)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--brand-100)" }}>
+                  <Wallet size={18} color="var(--brand)" style={{ marginBottom: 4 }} />
+                  <div className="vx-mut" style={{ fontSize: 11 }}>Verba total</div>
+                  <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{money(orcamentoAtual)}</div>
+                </div>
+                {custoUnitarioTotal > 0 && (
+                  <div style={{ background: "var(--surface)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--border)" }}>
+                    <Target size={18} color="var(--muted)" style={{ marginBottom: 4 }} />
+                    <div className="vx-mut" style={{ fontSize: 11 }}>Ações estimadas</div>
+                    <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700 }}>{distAuto.acoesPossiveis}</div>
+                    <div className="vx-mut" style={{ fontSize: 10.5 }}>Estimativa · pode variar</div>
+                  </div>
+                )}
+                <div style={{ background: verbaRestante > 0 ? "rgba(245,158,11,0.06)" : "rgba(22,163,74,0.06)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${verbaRestante > 0 ? "rgba(245,158,11,0.2)" : "rgba(22,163,74,0.2)"}` }}>
+                  <BadgeDollarSign size={18} color={verbaRestante > 0 ? "var(--amber, #F59E0B)" : "var(--green, #16A34A)"} style={{ marginBottom: 4 }} />
+                  <div className="vx-mut" style={{ fontSize: 11 }}>Verba restante</div>
+                  <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: verbaRestante > 0 ? "var(--amber, #F59E0B)" : "var(--green, #16A34A)" }}>{money(verbaRestante)}</div>
+                </div>
+              </div>
+
+              {/* Distribuição por ação */}
+              {acoesFixas.length > 0 && (
+                <>
+                  <div className="vx-eyebrow" style={{ marginBottom: 8 }}>VERBA POR ATIVIDADE</div>
+                  <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
+                    {acoesFixas.map((a) => {
+                      const valorDist = modoDistribuicao === "personalizado" ? (Number(distribuicaoVerba[a.id]) || 0) : (distAuto.porAcao[a.id] || 0);
+                      const acoesEst = a.valor > 0 ? Math.floor(valorDist / a.valor) : 0;
+                      return (
+                        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500 }}>{a.nome}</div>
+                            <div className="vx-mut" style={{ fontSize: 11.5 }}>{money(a.valor)} por ação · ~{acoesEst} ações</div>
+                          </div>
+                          {modoDistribuicao === "personalizado" ? (
+                            <div style={{ width: 120 }}>
+                              <CampoOrcamento value={valorDist} onChange={(v) => set("distribuicaoVerba", { ...distribuicaoVerba, [a.id]: v })} />
+                            </div>
+                          ) : (
+                            <div className="vx-mono" style={{ fontSize: 14, fontWeight: 600, color: "var(--brand)" }}>{money(valorDist)}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Personalizar divisão */}
+                  <details style={{ marginTop: 4 }}>
+                    <summary style={{ fontSize: 12.5, color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>
+                      <SlidersHorizontal size={12} style={{ marginRight: 4, verticalAlign: -2 }} />
+                      Personalizar divisão da verba
+                    </summary>
+                    <div style={{ marginTop: 10, padding: "14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                        <CardOption selected={modoDistribuicao !== "personalizado"} onClick={() => { set("modoDistribuicaoVerba", "automatico"); set("distribuicaoVerba", {}); }} icon={Zap} title="Automático" subtitle="A plataforma distribui proporcionalmente." />
+                        <CardOption selected={modoDistribuicao === "personalizado"} onClick={() => {
+                          set("modoDistribuicaoVerba", "personalizado");
+                          const init = {};
+                          acoesFixas.forEach((a) => { init[a.id] = distAuto.porAcao[a.id] || 0; });
+                          set("distribuicaoVerba", init);
+                        }} icon={SlidersHorizontal} title="Manual" subtitle="Defina quanto investir em cada atividade." />
+                      </div>
+                    </div>
+                  </details>
+                </>
+              )}
+
+              {/* Distribuição multi-função */}
+              {temMultiFuncao && funcoes.length > 0 && (
+                <>
+                  <div className="vx-eyebrow" style={{ marginTop: 14, marginBottom: 8 }}>VERBA POR FUNÇÃO</div>
+                  <div className="vx-mut" style={{ fontSize: 12, marginBottom: 10 }}>A verba é dividida automaticamente entre as funções, com base nas atividades e dependências comerciais.</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {funcoes.map((fk) => {
+                      const f = FUNCOES[fk];
+                      const cfg = campanha[`config_${fk}`] || {};
+                      const custoFunc = (cfg.acoesAtivas || []).reduce((s, a) => s + Number(cfg[`valor_${a}`] || 0), 0);
+                      const totalCustoFunc = funcoes.reduce((s, k2) => { const c2 = campanha[`config_${k2}`] || {}; return s + (c2.acoesAtivas || []).reduce((s2, a) => s2 + Number(c2[`valor_${a}`] || 0), 0); }, 0);
+                      const proporcao = totalCustoFunc > 0 ? custoFunc / totalCustoFunc : 1 / funcoes.length;
+                      const verbaFunc = Math.round(orcamentoAtual * proporcao * 100) / 100;
+                      return (
+                        <div key={fk} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13.5, fontWeight: 600 }}>{f?.nome || fk}</div>
+                            <div className="vx-mut" style={{ fontSize: 11.5 }}>{(cfg.acoesAtivas || []).length} atividade(s) · {cfg.vagas || 0} vagas</div>
+                          </div>
+                          <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(verbaFunc)}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Aviso: precisa adicionar saldo */}
+          {precisaAdicionar > 0 && (
+            <div className="vx-card" style={{ padding: 16, marginTop: 14, background: "rgba(245,158,11,0.06)", border: "1.5px solid rgba(245,158,11,0.3)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <AlertCircle size={18} color="var(--amber, #F59E0B)" />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>Saldo insuficiente para a verba desejada</div>
+                  <div className="vx-mut" style={{ fontSize: 12.5 }}>
+                    Você precisa adicionar <b className="vx-mono">{money(precisaAdicionar)}</b> ao saldo para cobrir essa verba.
+                    Você pode salvar o rascunho agora e adicionar saldo depois — mas atividades remuneradas só iniciam com cobertura financeira.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Info: separação verba x saldo */}
+          <div className="vx-card" style={{ padding: 14, marginTop: 14, background: "var(--surface)" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+              <ShieldCheck size={16} color="var(--brand)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.6 }}>
+                A verba é o limite que você autoriza para esta campanha. Novas obrigações não ultrapassam esse valor.
+                Você pode salvar o rascunho sem saldo e adicionar quando quiser — atividades remuneradas só iniciam quando houver cobertura.
+                A verba é compartilhada entre os profissionais participantes.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+            <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Revisar tudo <ArrowRight size={14} /></button>
+          </div>
+        </>
+        );
+      })()}
+
+      {/* ═══════════════════════ PASSO 6: REVISÃO ═══════════════════════ */}
+      {passo === 5 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Tudo certo?</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
@@ -1891,8 +2126,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento</span><div style={{ fontWeight: 600 }}>{(campanha.treinamento || []).length} módulo(s)</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Materiais de apoio</span><div style={{ fontWeight: 600 }}>{(campanha.materiaisVinculados || []).length} arquivo(s){(campanha.materiaisVinculados || []).some((m) => m.obrigatoriedade === "obrigatorio") ? ` (${(campanha.materiaisVinculados || []).filter((m) => m.obrigatoriedade === "obrigatorio").length} obrigatório(s))` : ""}</div></div>
               {campanha.estruturaComercial !== "operacao" && (<>
-              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Prazo por atividade</span><div style={{ fontWeight: 600 }}>{campanha.prazoHoras}h</div></div>
-              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Orçamento</span><div style={{ fontWeight: 600 }} className="vx-mono">{money(campanha.orcamento)}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Verba da campanha</span><div style={{ fontWeight: 600 }} className="vx-mono">{money(campanha.orcamento)}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Pagamento</span><div style={{ fontWeight: 600 }}>{campanha.remuneracaoCumulativa ? "Por etapa" : "Só no resultado final"}</div></div>
               </>)}
             </div>
@@ -1981,7 +2215,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={criar}>
               {salvando ? "Salvando…" : <>Salvar rascunho <Check size={14} /></>}
             </button>
