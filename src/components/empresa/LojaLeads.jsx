@@ -359,7 +359,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
     if (!podeEnviar) return;
     setOcupado(true);
     setFeedback("");
-    const r = await api("/loja-leads/buscar", { texto: segmento.trim(), regiao: regiao.trim() });
+    const r = await api("/loja-leads/buscar", { texto: segmento.trim(), regiao: regiao.trim(), quantidade });
     setOcupado(false);
     if (!r || r.error) { setFeedback(r?.error || "Erro ao buscar."); return aviso?.(r?.error || "Erro ao buscar."); }
     const n = r.contatos?.length || 0;

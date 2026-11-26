@@ -126,15 +126,16 @@ db.exec(`
 // ── Google Places API (New) ─────────────────────────────────────────────────
 const PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || "";
 
-export async function buscarPlaces(textQuery, { regiao, pageToken } = {}) {
+export async function buscarPlaces(textQuery, { regiao, pageToken, quantidade } = {}) {
   if (!PLACES_KEY) return { error: "Chave da API Google Places não configurada no servidor." };
   if (!textQuery) return { error: "Informe o que buscar." };
 
+  const limite = Math.min(Math.max(quantidade || 20, 1), 20);
   const url = "https://places.googleapis.com/v1/places:searchText";
   const body = {
     textQuery: regiao ? `${textQuery} em ${regiao}` : textQuery,
     languageCode: "pt-BR",
-    maxResultCount: 20,
+    maxResultCount: limite,
   };
   if (pageToken) body.pageToken = pageToken;
 

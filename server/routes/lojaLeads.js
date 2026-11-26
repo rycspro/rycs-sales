@@ -23,10 +23,10 @@ function entityDe(req) {
 router.post("/loja-leads/buscar", async (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
-  const { texto, regiao, pageToken } = req.body || {};
+  const { texto, regiao, pageToken, quantidade } = req.body || {};
   if (!texto) return res.status(400).json({ error: "Informe o que buscar." });
 
-  const r = await buscarPlaces(texto, { regiao, pageToken });
+  const r = await buscarPlaces(texto, { regiao, pageToken, quantidade });
   if (r.error) return res.status(400).json(r);
 
   const ids = salvarContatos(r.contatos);
