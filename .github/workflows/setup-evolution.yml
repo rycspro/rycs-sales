@@ -35,41 +35,34 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           timeout: 30s
-          command_timeout: 5m
+          command_timeout: 10m
           script: |
             set -e
             ACAO="${{ inputs.acao }}"
-            EVO_DIR="/home/ec2-user/rycs-evolution"
+            CN="rycs-evolution-api"
 
             case "$ACAO" in
               setup)
                 cd /home/ec2-user/rycs-sales
-                git fetch origin
-                git checkout origin/main -- scripts/setup-evolution.sh docker-compose.evolution.yml
+                git fetch origin main
+                git checkout origin/main -- scripts/setup-evolution.sh
                 chmod +x scripts/setup-evolution.sh
                 bash scripts/setup-evolution.sh
-                # Reiniciar backend RYCS para pegar as novas env vars.
-                docker restart rycs-app
-                sleep 5
-                curl -sf http://localhost:3001/api/health && echo "Backend RYCS OK" || echo "Backend RYCS: aguardando..."
                 ;;
               restart)
-                cd "$EVO_DIR"
-                docker compose restart
+                docker restart "$CN"
                 echo "Evolution API reiniciada."
                 ;;
               stop)
-                cd "$EVO_DIR"
-                docker compose down
+                docker stop "$CN"
                 echo "Evolution API parada."
                 ;;
               logs)
-                cd "$EVO_DIR"
-                docker compose logs --tail=50
+                docker logs --tail=50 "$CN" 2>&1
                 ;;
               status)
                 echo "=== Evolution API ==="
-                docker ps --filter name=rycs-evolution-api --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Container não encontrado"
+                docker ps --filter name="$CN" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Container não encontrado"
                 echo ""
                 echo "=== Health check ==="
                 curl -sf http://localhost:8080/ && echo "OK" || echo "Não respondendo"
