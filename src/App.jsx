@@ -406,7 +406,7 @@ export default function App() {
       <style>{CSS}</style>
 
       <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} colaborador={colaborador} onLogout={logout} fullBleed={(role === "empresa" && aba === "conversas") || (role === "vendedor" && aba === "conversas-evolution")} settingsLayout={role === "empresa" && aba === "outros"}>
-        <ErrorBoundary>
+        <ErrorBoundary resetKey={aba}>
           <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
             {carga === "carregando" && (
               <div className="vx-onb-estado vx-fade" role="status" aria-live="polite">

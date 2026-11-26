@@ -26,6 +26,14 @@ export default class ErrorBoundary extends Component {
     sessionStorage.removeItem("_chunk_reload");
   }
 
+  // Trocar de aba/tela (resetKey) limpa o erro: uma tela quebrada não
+  // derruba as outras.
+  componentDidUpdate(prev) {
+    if (this.state.erro && prev.resetKey !== this.props.resetKey) {
+      this.setState({ erro: null, info: null });
+    }
+  }
+
   static getDerivedStateFromError(erro) {
     return { erro };
   }
