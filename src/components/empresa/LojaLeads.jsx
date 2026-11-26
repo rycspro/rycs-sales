@@ -222,6 +222,59 @@ function ComboBox({ value, onChange, options, placeholder, label, allowFreeText 
   );
 }
 
+/* ── MultiComboBox: selecionar múltiplos valores com chips ─────────────── */
+function MultiComboBox({ selected, onChange, options, placeholder, label }) {
+  const [aberto, setAberto] = useState(false);
+  const [texto, setTexto] = useState("");
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setAberto(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtradas = useMemo(() => {
+    const t = norm(texto.trim());
+    const opts = options.filter((o) => !selected.includes(o));
+    if (!t) return opts;
+    return opts.filter((o) => norm(o).includes(t));
+  }, [texto, options, selected]);
+
+  const adicionar = (v) => { onChange([...selected, v]); setTexto(""); };
+  const remover = (v) => onChange(selected.filter((s) => s !== v));
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "block" }}>
+      <span className="vx-label">{label}</span>
+      {selected.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+          {selected.map((s) => (
+            <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, padding: "2px 8px", borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500 }}>
+              {s}
+              <span style={{ cursor: "pointer", fontWeight: 700, fontSize: 14, lineHeight: 1 }} onClick={() => remover(s)}>&times;</span>
+            </span>
+          ))}
+        </div>
+      )}
+      <input className="vx-input" value={texto} placeholder={selected.length ? "Adicionar mais..." : placeholder}
+        onChange={(e) => { setTexto(e.target.value); setAberto(true); }}
+        onFocus={() => setAberto(true)} />
+      {aberto && (texto.trim() || selected.length === 0) && filtradas.length > 0 && (
+        <div className="ll-combo-list">
+          {filtradas.slice(0, 20).map((o) => (
+            <div key={o} className="ll-combo-item"
+              onMouseDown={(e) => { e.preventDefault(); adicionar(o); }}>
+              {o}
+            </div>
+          ))}
+          {filtradas.length > 20 && <div className="ll-combo-item vx-mut" style={{ pointerEvents: "none", fontSize: 11.5 }}>+{filtradas.length - 20} resultados — refine a busca</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══ Componente principal ════════════════════════════════════════════════ */
 export default function LojaLeads({ aviso, role: roleProp }) {
   const [aba, setAba] = useState(0);
@@ -327,8 +380,8 @@ export default function LojaLeads({ aviso, role: roleProp }) {
 function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarListas, isEmpresa, ciclo }) {
   const [segmento, setSegmento] = useState("");
   const [pais, setPais] = useState("Brasil");
-  const [estado, setEstado] = useState("");
-  const [cidade, setCidade] = useState("");
+  const [estados, setEstados] = useState([]);
+  const [cidades, setCidades] = useState([]);
   const [quantidade, setQuantidade] = useState(100);
   const [qtdCustom, setQtdCustom] = useState("");
   const [campos, setCampos] = useState(() => new Set());
@@ -338,11 +391,15 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
 
-  const cidadesDisponiveis = useMemo(() => CIDADES_POR_ESTADO[estado] || [], [estado]);
+  const cidadesDisponiveis = useMemo(() => {
+    const todas = [];
+    for (const e of estados) todas.push(...(CIDADES_POR_ESTADO[e] || []));
+    return [...new Set(todas)].sort();
+  }, [estados]);
   const valorEstimado = quantidade * precoUnitario;
   const listaFinal = destino === "new" ? nomeLista : (listas.find((l) => String(l.id) === listaExistente)?.nome || "");
-  const regiao = cidade && estado ? `${cidade}, ${estado}` : estado || "";
-  const podeEnviar = campos.size > 0 && segmento.trim() && estado.trim();
+  const regiao = cidades.length ? `${cidades.join(", ")}, ${estados.join(", ")}` : estados.join(", ");
+  const podeEnviar = campos.size > 0 && segmento.trim() && estados.length > 0;
 
   const toggleCampo = (c) => setCampos((prev) => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n; });
   const toggleGrupo = (fs) => {
@@ -421,10 +478,10 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
                   options={PAISES} placeholder="Digite o país..." />
               </div>
               <div className="vx-grid vx-g2" style={{ gap: 12 }}>
-                <ComboBox label="Estado" value={estado} onChange={(v) => { setEstado(v); setCidade(""); }}
+                <MultiComboBox label="Estado" selected={estados} onChange={(v) => { setEstados(v); setCidades((prev) => prev.filter((c) => { const validas = new Set(); v.forEach((e) => (CIDADES_POR_ESTADO[e] || []).forEach((ci) => validas.add(ci))); return validas.has(c); })); }}
                   options={ESTADOS_BR} placeholder="Digite o estado..." />
-                <ComboBox label="Cidade" value={cidade} onChange={setCidade}
-                  options={cidadesDisponiveis} placeholder={estado ? "Digite a cidade..." : "Selecione o estado primeiro"} />
+                <MultiComboBox label="Cidade" selected={cidades} onChange={setCidades}
+                  options={cidadesDisponiveis} placeholder={estados.length ? "Digite a cidade..." : "Selecione o estado primeiro"} />
               </div>
             </div>
           </div>
