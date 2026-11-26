@@ -94,8 +94,11 @@ export const NAV = {
       { key: "leads-instagram", label: "Redes Sociais" },
     ] },
     { section: "Sua Empresa" },
-    { key: "materiais", label: "Materiais", Icon: FolderOpen },
-    { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
+    { key: "materiais", label: "Materiais", Icon: FolderOpen, children: [
+      { key: "info-empresa", label: "Informações da Empresa" },
+      { key: "biblioteca", label: "Biblioteca de Arquivos" },
+      { key: "academy-empresa", label: "Academy" },
+    ] },
     { divider: true },
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
       { key: "planos", label: "Planos RYCS" },
