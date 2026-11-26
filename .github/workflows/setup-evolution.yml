@@ -28,10 +28,17 @@ on:
           - down
           - logs
           - status
+          - validate-qr
+          - pilot
       branch:
         description: "Branch de onde buscar o script (homologação antes do merge)"
         required: false
         default: "main"
+        type: string
+      email:
+        description: "E-mail do vendedor a autorizar no piloto (ação pilot)"
+        required: false
+        default: ""
         type: string
 
 concurrency:
@@ -118,6 +125,51 @@ jobs:
                 ;;
               logs)
                 docker logs --tail=60 "$CN" 2>&1
+                ;;
+              validate-qr)
+                # Cria uma instância de teste, confirma que a Evolution gera um
+                # QR Code real e remove a instância. Não mexe em dados de ninguém.
+                HOST_IP=$(ip -4 addr show docker0 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1 || echo "172.17.0.1")
+                EVO_KEY=$(grep "^EVOLUTION_API_KEY=" /home/ec2-user/env_producao.txt | cut -d= -f2-)
+                NAME="rycs_validate_$(date +%s)"
+                echo "Criando instância de teste: $NAME"
+                HTTP=$(curl -s -o /tmp/evo_create.json -w "%{http_code}" -X POST "http://${HOST_IP}:8080/instance/create" \
+                  -H "apikey: ${EVO_KEY}" -H "Content-Type: application/json" \
+                  -d "{\"instanceName\":\"${NAME}\",\"integration\":\"WHATSAPP-BAILEYS\",\"qrcode\":true}")
+                echo "create HTTP $HTTP"
+                # O QR é assíncrono: pollar o connect até ~36s até vir base64/code.
+                QLEN=0
+                for i in $(seq 1 12); do
+                  curl -s -o /tmp/evo_qr.json -w "" "http://${HOST_IP}:8080/instance/connect/${NAME}" -H "apikey: ${EVO_KEY}" || true
+                  QLEN=$(python3 -c "import json;d=json.load(open('/tmp/evo_qr.json'));b=(d.get('qrcode') or {}).get('base64','') or d.get('base64','') or d.get('code','');print(len(b))" 2>/dev/null || echo 0)
+                  [ "${QLEN:-0}" -gt 100 ] && break
+                  sleep 3
+                done
+                if [ "${QLEN:-0}" -gt 100 ]; then
+                  echo "✓ QR Code real gerado (base64/code com ${QLEN} chars após polling)"
+                else
+                  echo "✗ QR não confirmado após ~36s. Corpo connect:"; head -c 500 /tmp/evo_qr.json 2>/dev/null; echo
+                  echo "--- Logs da Evolution (últimas 25 linhas) ---"
+                  docker logs --tail 25 "$CN" 2>&1 | tail -25
+                fi
+                curl -s -o /dev/null -X DELETE "http://${HOST_IP}:8080/instance/delete/${NAME}" -H "apikey: ${EVO_KEY}" && echo "✓ instância de teste removida" || echo "(limpe manualmente: $NAME)"
+                ;;
+              pilot)
+                EMAIL="${{ inputs.email }}"
+                if [ -z "$EMAIL" ]; then echo "Informe o input email."; exit 1; fi
+                # Autoriza o vendedor no piloto via insert direto na tabela
+                # evolution_pilotos (feature flag). Só toca nessa tabela.
+                docker exec rycs-app node -e "
+                  const DB=require('better-sqlite3');
+                  const db=new DB(process.env.DB_PATH||'/data/data.db');
+                  const u=db.prepare(\"SELECT u.entityId AS sid, COALESCE(s.nome,'(sem nome)') AS nome, u.role AS role FROM users u LEFT JOIN sellers s ON s.id=u.entityId WHERE lower(u.email)=lower(?)\").get('${EMAIL}');
+                  if(!u){console.log('NAO_ENCONTRADO: nenhum usuario com esse email');process.exit(2);}
+                  if(u.role!=='vendedor'){console.log('NAO_VENDEDOR: a conta '+'${EMAIL}'+' tem papel '+u.role+' (o piloto precisa ser um vendedor)');process.exit(3);}
+                  const ex=db.prepare('SELECT 1 FROM evolution_pilotos WHERE sellerId=?').get(u.sid);
+                  if(ex){console.log('JA_AUTORIZADO: '+u.nome+' ('+u.sid+')');process.exit(0);}
+                  db.prepare('INSERT INTO evolution_pilotos (sellerId,autorizadoPor,criadoEm) VALUES (?,?,?)').run(u.sid,'setup-workflow',Date.now());
+                  console.log('PILOTO_AUTORIZADO: '+u.nome+' ('+u.sid+')');
+                "
                 ;;
               status)
                 # A Evolution é publicada no IP interno do docker0 (não em localhost).

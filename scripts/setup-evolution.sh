@@ -96,6 +96,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${PG}$"; then
   docker rm -f "$PG" 2>/dev/null || true
   docker run -d --name "$PG" --restart unless-stopped \
     --network "$NET" --memory 512m \
+    --log-opt max-size=10m --log-opt max-file=3 \
     -e POSTGRES_USER=evolution \
     -e POSTGRES_PASSWORD="$DB_PASS" \
     -e POSTGRES_DB=evolution \
@@ -120,6 +121,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${RD}$"; then
   docker rm -f "$RD" 2>/dev/null || true
   docker run -d --name "$RD" --restart unless-stopped \
     --network "$NET" --memory 128m \
+    --log-opt max-size=10m --log-opt max-file=3 \
     -v "${RD_VOL}:/data" \
     "$RD_IMAGE" redis-server --appendonly yes
   echo "✓ Redis iniciado"
@@ -128,7 +130,17 @@ else
 fi
 docker exec "$RD" redis-cli ping >/dev/null 2>&1 && echo "✓ Redis pronto" || echo "⚠ Redis não respondeu ao ping"
 
-# ── 6. Pull da Evolution API ──────────────────────────────────────────────
+# ── 6. Versão atual do WhatsApp Web ───────────────────────────────────────
+# A versão embutida no Baileys da imagem envelhece e o WhatsApp passa a
+# recusar o handshake (Connection Failure), impedindo a geração do QR.
+# Buscamos a versão corrente mantida pelo Baileys; fallback para uma conhecida.
+WA_WEB_VERSION=$(curl -sf --max-time 8 "https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/src/Defaults/baileys-version.json" 2>/dev/null \
+  | python3 -c "import sys,json;print('.'.join(map(str,json.load(sys.stdin)['version'])))" 2>/dev/null || echo "")
+[ -z "$WA_WEB_VERSION" ] && WA_WEB_VERSION="2.3000.1043857760"
+export WA_WEB_VERSION
+echo "✓ Versão do WhatsApp Web: $WA_WEB_VERSION"
+
+# ── 7. Pull da Evolution API ──────────────────────────────────────────────
 echo "Baixando $IMAGE..."
 docker pull "$IMAGE" >/dev/null
 echo "✓ Imagem baixada"
@@ -162,10 +174,12 @@ docker run -d --name "$CN" --restart unless-stopped \
   -e DEL_INSTANCE=false \
   -e CONFIG_SESSION_PHONE_CLIENT=RYCS \
   -e CONFIG_SESSION_PHONE_NAME=Chrome \
+  -e "CONFIG_SESSION_PHONE_VERSION=${WA_WEB_VERSION:-2.3000.1043857760}" \
   -e QRCODE_LIMIT=30 \
   -e TELEMETRY_ENABLED=false \
-  -e LOG_LEVEL=ERROR \
+  -e "LOG_LEVEL=ERROR,WARN,INFO" \
   -e LOG_BAILEYS=error \
+  --log-opt max-size=10m --log-opt max-file=3 \
   "$IMAGE"
 echo "✓ Evolution API iniciada"
 
