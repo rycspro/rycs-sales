@@ -3,11 +3,17 @@ import {
   ArrowLeft, Award, BriefcaseBusiness, CalendarCheck, CheckCircle2, CircleDollarSign,
   CirclePause, Clock3, Ellipsis, FolderOpen, Link2, ListChecks, Pencil, RefreshCw, Settings, Target,
   TrendingUp, Unlink, Upload, UsersRound, X,
+  Laptop, MapPin, Building2, Globe, MessageCircle, Phone, Mail, Eye, EyeOff, Lock,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
+import {
+  MODELOS_TRABALHO, MERCADOS, ORIGENS_LEAD, CANAIS, NIVEIS_EXPERIENCIA,
+  PROCESSOS_ADMISSAO, OBJETIVOS_UI, ACOES_DISPONIVEIS, diagnosticoCampanha,
+} from "../../../shared/campaignEngine.js";
+import { FUNCOES } from "../../../shared/funcoes.js";
 import { lerArquivoLeads, sugerirMapeamento } from "../../lib/importers.js";
 import PipelineKanban from "./PipelineKanban.jsx";
 import ComissoesPanel from "./ComissoesPanel.jsx";
@@ -253,6 +259,91 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
           <Variacao valor={dados.metricas[chave].variacao} />
         </article>)}
       </div>
+
+      {/* ── Configuração V2 ─────────────────────────────────────── */}
+      <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
+        <div className="vx-eyebrow" style={{ marginBottom: 10 }}>Configuração da campanha</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14, fontSize: 13 }}>
+          {/* Modelo de trabalho */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Modelo de trabalho</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+              {campanha.modeloTrabalho === "presencial" ? <MapPin size={14} color="var(--brand)" /> : campanha.modeloTrabalho === "hibrido" ? <Building2 size={14} color="var(--brand)" /> : <Laptop size={14} color="var(--brand)" />}
+              <b>{MODELOS_TRABALHO[campanha.modeloTrabalho]?.nome || "Remoto"}</b>
+            </div>
+          </div>
+          {/* Função */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Função</span>
+            <div style={{ fontWeight: 600, marginTop: 3 }}>{FUNCOES[campanha.funcao]?.nome || (campanha.funcao || "").toUpperCase() || "—"}</div>
+          </div>
+          {/* Mercado */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Mercado</span>
+            <div style={{ fontWeight: 600, marginTop: 3 }}>{MERCADOS[campanha.mercado]?.label || "—"}</div>
+          </div>
+          {/* Origem dos leads */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Origem dos leads</span>
+            <div style={{ fontWeight: 600, marginTop: 3 }}>{ORIGENS_LEAD[campanha.origemLeads]?.label || "—"}</div>
+          </div>
+          {/* Experiência */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Nível de experiência</span>
+            <div style={{ fontWeight: 600, marginTop: 3 }}>{NIVEIS_EXPERIENCIA.find((n) => n.id === campanha.nivelExperiencia)?.label || "Não definido"}</div>
+          </div>
+          {/* Admissão */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Processo de admissão</span>
+            <div style={{ fontWeight: 600, marginTop: 3 }}>{PROCESSOS_ADMISSAO.find((p) => p.id === campanha.processoAdmissao)?.label || "Manual"}</div>
+          </div>
+          {/* Visibilidade */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Visibilidade</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 600, marginTop: 3 }}>
+              {campanha.visibilidade === "privada" ? <><EyeOff size={13} /> Privada</> : campanha.visibilidade === "oculta" ? <><Lock size={13} /> Oculta</> : <><Eye size={13} /> Pública</>}
+            </div>
+          </div>
+          {/* Remuneração */}
+          <div>
+            <span className="vx-mut" style={{ fontSize: 11.5 }}>Modelo de pagamento</span>
+            <div style={{ fontWeight: 600, marginTop: 3 }}>{campanha.remuneracaoCumulativa === false ? "Resultado final" : "Cumulativo"}</div>
+          </div>
+          {/* Comissão */}
+          {campanha.temComissao && (
+            <div>
+              <span className="vx-mut" style={{ fontSize: 11.5 }}>Comissão por venda</span>
+              <div style={{ fontWeight: 600, marginTop: 3 }}>{campanha.percentualComissao || 0}%</div>
+            </div>
+          )}
+        </div>
+
+        {/* Canais */}
+        {(campanha.canais || []).length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <span className="vx-mut" style={{ fontSize: 11.5, display: "block", marginBottom: 6 }}>Canais de abordagem</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {(Array.isArray(campanha.canais) ? campanha.canais : []).map((cId) => {
+                const canal = CANAIS.find((c) => c.id === cId);
+                return <span key={cId} className="vx-chip" style={{ fontSize: 12 }}>{canal?.nome || cId}</span>;
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Ações ativas */}
+        {(campanha.acoesAtivas || []).length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <span className="vx-mut" style={{ fontSize: 11.5, display: "block", marginBottom: 6 }}>Ações ativas</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {(Array.isArray(campanha.acoesAtivas) ? campanha.acoesAtivas : []).map((aId) => {
+                const acao = ACOES_DISPONIVEIS.find((a) => a.id === aId);
+                return <span key={aId} className="vx-chip" style={{ fontSize: 12, background: "var(--brand-50)", border: "1px solid var(--brand-100)", color: "var(--brand)" }}>{acao?.nome || ACOES[aId]?.nome || aId}</span>;
+              })}
+            </div>
+          </div>
+        )}
+      </section>
 
       <div className="vx-campaign-detail-grid">
         <section className="vx-card vx-funnel-card">

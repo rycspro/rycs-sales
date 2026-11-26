@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock } from "lucide-react";
+import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -9,14 +9,18 @@ import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
 import CampaignsDashboard from "./CampaignsDashboard.jsx";
 import CampaignDetail from "./CampaignDetail.jsx";
+import { MODELOS_TRABALHO, STATUS_CAMPANHA_V2, OBJETIVOS_UI, diagnosticoCampanha, migrarCampanhaAntiga } from "../../../shared/campaignEngine.js";
+import { FUNCOES } from "../../../shared/funcoes.js";
 
-// ── Status config ────────────────────────────────────────────────────
+// ── Status config (V2 — cores derivadas de STATUS_CAMPANHA_V2) ───────
+const V2_COR = Object.fromEntries(STATUS_CAMPANHA_V2.map((s) => [s.id, s.cor]));
 const STATUS_CONFIG = {
-  ativa:    { label: "Publicada",  bg: "#DCFCE7", color: "#16A34A" },
-  rascunho: { label: "Rascunho",   bg: "var(--surface-2)", color: "var(--muted)" },
-  pausada:  { label: "Pausada",    bg: "#FEF9C3", color: "#B45309" },
-  encerrada:{ label: "Encerrada",  bg: "var(--surface-2)", color: "var(--muted)" },
-  cancelada:{ label: "Cancelada",  bg: "#FEE2E2", color: "#DC2626" },
+  ativa:     { label: "Publicada",  bg: "#DCFCE7", color: V2_COR.ativa     || "#16A34A" },
+  rascunho:  { label: "Rascunho",   bg: "var(--surface-2)", color: V2_COR.rascunho  || "#8496B4" },
+  pausada:   { label: "Pausada",    bg: "#FEF9C3", color: V2_COR.pausada   || "#F59E0B" },
+  encerrada: { label: "Encerrada",  bg: "var(--surface-2)", color: V2_COR.encerrada || "#EF4444" },
+  cancelada: { label: "Cancelada",  bg: "#FEE2E2", color: "#DC2626" },
+  arquivada: { label: "Arquivada",  bg: "var(--surface-2)", color: V2_COR.arquivada || "#6B7280" },
 };
 
 const FILTROS_STATUS = [
@@ -113,7 +117,11 @@ function MenuCampanha({ campanha, onVisualizar, onEditar, onArquivar, onExcluir,
 
 // Submissões "em execução": enviadas e ainda no fluxo, antes da decisão final.
 const EM_EXECUCAO = ["analisando", "ia_aprovado", "revisao", "conferido"];
-const FUNCAO_LABEL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "PAP" };
+const FUNCAO_LABEL = Object.fromEntries(Object.entries(FUNCOES).map(([k, f]) => [k, f.nome]));
+const MODELO_ICON = { remoto: Laptop, presencial: MapPin, hibrido: Building2 };
+const MODELO_LABEL = Object.fromEntries(Object.entries(MODELOS_TRABALHO).map(([k, m]) => [k, m.nome]));
+const FILTROS_MODELO = [["", "Todos"], ...Object.entries(MODELOS_TRABALHO).map(([k, m]) => [k, m.nome])];
+const FILTROS_FUNCAO = [["", "Todas"], ...Object.entries(FUNCOES).filter(([k]) => k !== "sem-exp").map(([k, f]) => [k, f.nome])];
 
 // Menu "+ Nova campanha": um botão só, com IA e manual no dropdown.
 function NovaCampanhaMenu({ onCriar }) {
@@ -205,6 +213,27 @@ function MiniIndicadores({ s }) {
   );
 }
 
+function ModeloBadge({ modelo }) {
+  if (!modelo) return null;
+  const Ic = MODELO_ICON[modelo] || Laptop;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 12, background: "var(--surface-2)", color: "var(--muted)" }}>
+      <Ic size={11} /> {MODELO_LABEL[modelo] || modelo}
+    </span>
+  );
+}
+
+function ObjetivoLabel({ objetivoUI }) {
+  if (!objetivoUI) return null;
+  const obj = OBJETIVOS_UI[objetivoUI];
+  if (!obj) return null;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)" }}>
+      {obj.nome}
+    </span>
+  );
+}
+
 function InfoCampanha({ c }) {
   const chips = [
     c.funcao && [Users, FUNCAO_LABEL[c.funcao] || c.funcao.toUpperCase()],
@@ -212,7 +241,9 @@ function InfoCampanha({ c }) {
     c.duracaoDias && [Clock, `${c.duracaoDias} dias`],
   ].filter(Boolean);
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", alignItems: "center" }}>
+      <ModeloBadge modelo={c.modeloTrabalho} />
+      <ObjetivoLabel objetivoUI={c.objetivoUI} />
       {chips.map(([Icon, label], i) => <MetricChip key={i} icon={Icon} label={label} />)}
     </div>
   );
@@ -304,6 +335,8 @@ const VISTA_KEY = "rycs-campanhas-vista";
 
 function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onArquivar, onExcluir, onToggleCandidaturas, onStatus, onCandidaturas, filtroBar }) {
   const [filtro, setFiltro] = useState("");
+  const [filtroModelo, setFiltroModelo] = useState("");
+  const [filtroFuncao, setFiltroFuncao] = useState("");
   const [arquivadas, setArquivadas] = useState(false);
   const [busca, setBusca] = useState("");
   const [buscaDeb, setBuscaDeb] = useState("");
@@ -344,10 +377,12 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
     if (arquivadas) r = r.filter((c) => ARQUIVADAS.includes(c.status));
     else r = r.filter((c) => !ARQUIVADAS.includes(c.status));
     if (filtro) r = r.filter((c) => c.status === filtro);
+    if (filtroModelo) r = r.filter((c) => c.modeloTrabalho === filtroModelo);
+    if (filtroFuncao) r = r.filter((c) => c.funcao === filtroFuncao);
     if (buscaDeb) r = r.filter((c) => [c.titulo, c.objetivo, c.descricao, c.regiao, c.funcao]
       .some((v) => String(v || "").toLowerCase().includes(buscaDeb)));
     return r;
-  }, [campanhas, arquivadas, filtro, buscaDeb]);
+  }, [campanhas, arquivadas, filtro, filtroModelo, filtroFuncao, buscaDeb]);
 
   const pills = arquivadas
     ? FILTROS_STATUS.filter(([k]) => k === "" || ARQUIVADAS.includes(k))
@@ -418,6 +453,38 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
                   background: on ? "var(--brand)" : "var(--surface)", cursor: "pointer",
                   fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? "#fff" : "var(--ink)", transition: "all .15s" }}>
                 {label}{total > 0 && <span style={{ fontSize: 11, opacity: on ? 0.85 : 0.6 }}>{total}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Filtros V2: modelo de trabalho + função */}
+      {campanhas.length > 0 && (filtroModelo || filtroFuncao || campanhas.some((c) => c.modeloTrabalho)) && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+          {FILTROS_MODELO.map(([key, label]) => {
+            const on = filtroModelo === key;
+            return (
+              <button key={`m-${key || "all"}`} onClick={() => setFiltroModelo(key)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                  padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand-50)" : "var(--surface)", cursor: "pointer",
+                  fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--brand)" : "var(--muted)", transition: "all .15s" }}>
+                {key && (MODELO_ICON[key] ? (() => { const Ic = MODELO_ICON[key]; return <Ic size={11} />; })() : null)}
+                {label}
+              </button>
+            );
+          })}
+          <span style={{ width: 1, height: 20, background: "var(--border)", margin: "0 4px" }} />
+          {FILTROS_FUNCAO.map(([key, label]) => {
+            const on = filtroFuncao === key;
+            return (
+              <button key={`f-${key || "all"}`} onClick={() => setFiltroFuncao(key)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                  padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand-50)" : "var(--surface)", cursor: "pointer",
+                  fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--brand)" : "var(--muted)", transition: "all .15s" }}>
+                {label}
               </button>
             );
           })}
@@ -730,7 +797,29 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       </div>
     </section>}
 
-    <section className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: check.ok ? "var(--brand)" : "var(--amber)" }}><div style={{ display: "flex", gap: 9 }}><ClipboardCheck size={18} color={check.ok ? "var(--brand)" : "var(--amber)"} /><div><b>{check.ok ? "Pronta para publicar" : "Pendências de publicação"}</b>{!check.ok && <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3 }}>{check.pendencias.join(" · ")}</div>}</div></div></section>
+    <section className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: check.ok ? "var(--brand)" : "var(--amber)" }}>
+      <div style={{ display: "flex", gap: 9, marginBottom: 8 }}><ClipboardCheck size={18} color={check.ok ? "var(--brand)" : "var(--amber)"} /><b>{check.ok ? "Pronta para publicar" : "Pendências de publicação"}</b></div>
+      {!check.ok && <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 6 }}>{check.pendencias.join(" · ")}</div>}
+      {(() => {
+        const diag = diagnosticoCampanha(campanha, emp);
+        return <>
+          {diag.bloqueios.length > 0 && <div style={{ marginTop: 6 }}>
+            {diag.bloqueios.map((b, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--red)", marginTop: 3 }}>
+                <AlertCircle size={13} /> {b}
+              </div>
+            ))}
+          </div>}
+          {diag.recomendacoes.length > 0 && <div style={{ marginTop: 6 }}>
+            {diag.recomendacoes.map((r, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--amber)", marginTop: 3 }}>
+                <CheckCircle2 size={13} /> {r}
+              </div>
+            ))}
+          </div>}
+        </>;
+      })()}
+    </section>
     <div style={{ display: "flex", gap: 9, marginTop: 16 }}><button className="vx-btn vx-btn-primary" onClick={salvar}><Save size={14} /> Salvar</button>{campanha.status === "ativa" ? <button className="vx-btn" onClick={() => mudarStatus("pausada")}><CirclePause size={14} /> Pausar</button> : <button className="vx-btn" disabled={!check.ok} onClick={() => mudarStatus("ativa")}><Rocket size={14} /> Publicar</button>}</div>
     {popupPlanoModal}
   </div>;

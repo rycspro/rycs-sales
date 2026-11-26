@@ -250,6 +250,23 @@ router.post("/campaigns", (req, res) => {
       aceitaLeadProprio ? 1 : 0, exigeCertificacao ? 1 : 0, Math.max(0, Number(visitasPorDia) || 0),
       cidade || "", estado || "", Number(percentualComissao) || 0, modoJarvas || "", candidaturasAbertas === false ? 0 : 1, alcanceLimpo, paisesLimpos, PIPELINE_PADRAO, criadoEm);
     registrarEventoCampanha({ companyId, campaignId: id, tipo: "CAMPAIGN_CREATED", actorId: req.user.id, actorRole: role, source: "USER", criadoEm });
+
+    // V2 fields — saved via UPDATE to keep INSERT stable
+    const v2Plain = ["modeloTrabalho", "restricaoGeo", "origemLeads", "mercado", "nivelExperiencia",
+      "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
+      "icpTipo", "versao", "processoAdmissao"];
+    const v2Bool = ["temComissao", "remuneracaoCumulativa"];
+    const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
+      "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
+      "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig"];
+    const v2Sets = []; const v2Vals = [];
+    for (const k of v2Plain) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k]); } }
+    for (const k of v2Bool) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k] ? 1 : 0); } }
+    for (const k of v2Json) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(JSON.stringify(req.body[k])); } }
+    if (v2Sets.length) {
+      v2Vals.push(id);
+      db.prepare(`UPDATE campaigns SET ${v2Sets.join(", ")} WHERE id = ?`).run(...v2Vals);
+    }
   })();
 
   res.json({ id });
@@ -265,15 +282,21 @@ router.patch("/campaigns/:id", (req, res) => {
 
   const allowed = ["titulo", "descricao", "produto", "publico", "vagas", "requisitos", "objetivo", "regiao", "funcao",
     "orcamento", "prazoHoras", "duracaoDias", "limitePorProfissional", "aceitaLeadProprio", "exigeCertificacao", "visitasPorDia",
-    "cidade", "estado", "lat", "lng", "percentualComissao", "modoJarvas", "candidaturasAbertas"];
+    "cidade", "estado", "lat", "lng", "percentualComissao", "modoJarvas", "candidaturasAbertas",
+    "modeloTrabalho", "restricaoGeo", "origemLeads", "mercado", "nivelExperiencia",
+    "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
+    "temComissao", "remuneracaoCumulativa", "icpTipo", "versao", "processoAdmissao"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
-    "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos"];
+    "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos",
+    "paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
+    "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
+    "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(req.body)) {
     if (allowed.includes(k)) {
       sets.push(`${k} = ?`);
-      vals.push(["aceitaLeadProprio", "exigeCertificacao", "candidaturasAbertas"].includes(k) ? (v ? 1 : 0) : v);
+      vals.push(["aceitaLeadProprio", "exigeCertificacao", "candidaturasAbertas", "temComissao", "remuneracaoCumulativa"].includes(k) ? (v ? 1 : 0) : v);
     }
     else if (jsonFields.includes(k)) { sets.push(`${k} = ?`); vals.push(JSON.stringify(v)); }
   }
@@ -450,6 +473,24 @@ function parseCampaign(row) {
     fluxoDirecionamento: JSON.parse(row.fluxoDirecionamento || "[]"),
     camposPersonalizados: JSON.parse(row.camposPersonalizados || "{}"),
     modelosCampos: JSON.parse(row.modelosCampos || "[]"),
+    // V2 fields
+    paisesRestritos: JSON.parse(row.paisesRestritos || "[]"),
+    regioesRestritas: JSON.parse(row.regioesRestritas || "[]"),
+    cidadesRestritas: JSON.parse(row.cidadesRestritas || "[]"),
+    mercadoPaises: JSON.parse(row.mercadoPaises || "[]"),
+    mercadoRegioes: JSON.parse(row.mercadoRegioes || "[]"),
+    canais: JSON.parse(row.canais || "[]"),
+    idiomasExigidos: JSON.parse(row.idiomasExigidos || "[]"),
+    requisitosObrigatorios: JSON.parse(row.requisitosObrigatorios || "[]"),
+    requisitosDesejaveis: JSON.parse(row.requisitosDesejaveis || "[]"),
+    processoAdmissao: row.processoAdmissao || "manual",
+    comissaoConfig: JSON.parse(row.comissaoConfig || "{}"),
+    acoesAtivas: JSON.parse(row.acoesAtivas || "[]"),
+    icpEstruturado: JSON.parse(row.icpEstruturado || "{}"),
+    qualificacaoCriterios: JSON.parse(row.qualificacaoCriterios || "[]"),
+    reuniaoConfig: JSON.parse(row.reuniaoConfig || "{}"),
+    temComissao: !!row.temComissao,
+    remuneracaoCumulativa: !!row.remuneracaoCumulativa,
   };
 }
 
@@ -473,6 +514,35 @@ router.delete("/campaigns/:id/save", (req, res) => {
   if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
   db.prepare("DELETE FROM saved_campaigns WHERE sellerId = ? AND campaignId = ?").run(req.user.entityId, req.params.id);
   res.json({ ok: true, saved: false });
+});
+
+// ── Versionamento de campanha ──────────────────────────────────────────
+router.get("/campaigns/:id/versions", (req, res) => {
+  const { role, entityId } = req.user;
+  const campaign = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const rows = db.prepare("SELECT id, versao, alteradoPor, alteradoRole, motivo, criadoEm FROM campaign_versions WHERE campaignId = ? ORDER BY versao DESC").all(req.params.id);
+  res.json(rows);
+});
+
+router.post("/campaigns/:id/version", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+  const versaoAtual = Number(campaign.versao) || 1;
+  const novaVersao = versaoAtual + 1;
+  const { motivo } = req.body;
+  db.transaction(() => {
+    db.prepare("INSERT INTO campaign_versions (id, campaignId, versao, snapshot, alteradoPor, alteradoRole, motivo, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(
+      uid(), campaign.id, versaoAtual, JSON.stringify(parseCampaign(campaign)), req.user.id, role, motivo || "", agora()
+    );
+    db.prepare("UPDATE campaigns SET versao = ? WHERE id = ?").run(novaVersao, campaign.id);
+  })();
+  res.json({ ok: true, versao: novaVersao });
 });
 
 export default router;

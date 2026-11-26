@@ -50,10 +50,17 @@ function temPipeline(campanha = {}) {
 
 export function requisitosPublicacao(campanha = {}, empresa = {}) {
   const premium = isPremium(empresa);
-  // Pós-pago removido: toda empresa precisa de caixa para publicar e rodar.
   const precisaDeCaixa = true;
   const tarefas = campanha.tarefas || {};
   const disponivel = saldoDisponivel(empresa);
+
+  // Localização condicional: depende do modelo de trabalho e restrições
+  const modelo = campanha.modeloTrabalho || campanha.modeloOperacao || "";
+  const restricao = campanha.restricaoGeo || "";
+  const ehPresencial = modelo === "presencial" || modelo === "hibrido";
+  const exigeRegiao = ehPresencial || (modelo === "remoto" && restricao === "regioes");
+  const exigeCidade = ehPresencial || (modelo === "remoto" && restricao === "cidades");
+  const exigeEstado = ehPresencial || (modelo === "remoto" && (restricao === "regioes" || restricao === "cidades"));
 
   return [
     ["Empresa aprovada", "empresa ainda não aprovada", empresa.statusCadastro === "aprovada", true],
@@ -61,14 +68,14 @@ export function requisitosPublicacao(campanha = {}, empresa = {}) {
     ["Caixa com saldo", "caixa sem saldo disponível", Number(empresa.saldo || 0) - Number(empresa.saldoReservado || 0) > 0, precisaDeCaixa],
     ["Título", "título", !!String(campanha.titulo || "").trim(), true],
     ["Objetivo", "objetivo", !!String(campanha.objetivo || "").trim(), true],
-    ["ICP", "ICP da campanha", !!String(campanha.publico || "").trim(), true],
-    ["Região", "região", !!String(campanha.regiao || "").trim(), true],
-    ["Cidade", "cidade da campanha", !!String(campanha.cidade || "").trim(), true],
-    ["Estado", "estado da campanha", !!String(campanha.estado || "").trim(), true],
+    ["ICP", "ICP da campanha", !!String(campanha.publico || "").trim(), false],
+    ["Região", "região", !!String(campanha.regiao || "").trim(), exigeRegiao],
+    ["Cidade", "cidade da campanha", !!String(campanha.cidade || "").trim(), exigeCidade],
+    ["Estado", "estado da campanha", !!String(campanha.estado || "").trim(), exigeEstado],
     ["Função", "função comercial", !!String(campanha.funcao || "").trim(), true],
     ["Orçamento", "orçamento", Number(campanha.orcamento || 0) > 0, precisaDeCaixa],
     ["Tarefa remunerada", "ao menos uma tarefa remunerada", Object.values(tarefas).some((valor) => Number(valor) > 0), true],
-    ["Treinamento obrigatório", "treinamento", (campanha.treinamento || []).length > 0, true],
+    ["Treinamento obrigatório", "treinamento", (campanha.treinamento || []).length > 0, false],
     ["Pipeline configurado", "pipeline da campanha não configurado (etapas obrigatórias)", temPipeline(campanha), true],
     ["Saldo suficiente", "orçamento superior ao saldo disponível", Number(campanha.orcamento || 0) <= disponivel, precisaDeCaixa],
   ]
