@@ -1,173 +1,218 @@
 #!/bin/bash
-# Setup da Evolution API no EC2.
-# Executar como ec2-user no servidor de produção.
+# Setup da Evolution API no EC2 — stack isolada: Postgres + Redis + Evolution API.
+# Executar como ec2-user no servidor de produção (via workflow setup-evolution).
 #
-# Usa docker run diretamente (sem docker-compose).
-# NÃO expõe a porta 8080 publicamente (só localhost).
-# NÃO altera o container principal da RYCS.
+# Arquitetura:
+#   - Rede Docker isolada "rycs-evolution-net" (DNS por nome de container).
+#   - Postgres e Redis SEM portas publicadas (só acessíveis dentro da rede).
+#   - Evolution API publicada SÓ no IP interno do docker0 (NÃO em interface
+#     pública) para o backend rycs-app (no bridge default) alcançar.
+#   - Webhook Evolution -> backend pela URL pública HTTPS (autenticada por apikey).
+#
+# NÃO altera o container rycs-app nem o deploy de produção.
 # NÃO altera a integração oficial da Meta.
+# NÃO expõe nenhuma porta administrativa publicamente.
 
 set -euo pipefail
 
-CONTAINER_NAME="rycs-evolution-api"
+NET="rycs-evolution-net"
+CN="rycs-evolution-api"
+PG="rycs-evolution-postgres"
+RD="rycs-evolution-redis"
 IMAGE="evoapicloud/evolution-api:v2.2.3"
+PG_IMAGE="postgres:16-alpine"
+RD_IMAGE="redis:7-alpine"
 ENV_FILE="/home/ec2-user/env_producao.txt"
-VOLUME_NAME="rycs_evolution_instances"
+PG_VOL="rycs_evolution_pgdata"
+RD_VOL="rycs_evolution_redisdata"
+WEBHOOK_URL="https://app.rycs.pro/api/webhooks/evolution"
 
 echo "═══════════════════════════════════════════════"
-echo "  RYCS — Setup Evolution API (WhatsApp Pessoal)"
+echo "  RYCS — Setup Evolution API (Postgres + Redis)"
 echo "═══════════════════════════════════════════════"
 
-# 1. Gerar chave forte se não existir
-if grep -q "^EVOLUTION_API_KEY=" "$ENV_FILE" 2>/dev/null; then
-  EVO_KEY=$(grep "^EVOLUTION_API_KEY=" "$ENV_FILE" | cut -d= -f2-)
-  echo "✓ EVOLUTION_API_KEY já definida no env_producao.txt"
-else
+# ── 0. Preflight de recursos (aborta se faltar RAM/disco) ─────────────────
+AVAIL_MB=$(free -m | awk '/^Mem:/{print $7}')
+DISK_MB=$(df -m / | awk 'NR==2{print $4}')
+echo "Recursos: ${AVAIL_MB}MB RAM disponível, ${DISK_MB}MB disco livre em /"
+if [ "${AVAIL_MB:-0}" -lt 600 ]; then
+  echo "✗ RAM disponível insuficiente (<600MB). Abortando para não arriscar o rycs-app."
+  exit 1
+fi
+if [ "${DISK_MB:-0}" -lt 1500 ]; then
+  echo "✗ Disco livre insuficiente (<1.5GB). Abortando."
+  exit 1
+fi
+echo "✓ Recursos suficientes"
+
+# ── 1. Segredos (gerar e persistir no env; reutilizar se já existirem) ────
+upsert_env() {
+  local chave="$1" valor="$2"
+  if grep -q "^${chave}=" "$ENV_FILE" 2>/dev/null; then
+    sed -i "s|^${chave}=.*|${chave}=${valor}|" "$ENV_FILE"
+  else
+    echo "${chave}=${valor}" >> "$ENV_FILE"
+  fi
+}
+read_env() { grep "^$1=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-; }
+
+EVO_KEY=$(read_env EVOLUTION_API_KEY)
+if [ -z "$EVO_KEY" ]; then
   EVO_KEY=$(openssl rand -hex 32)
-  echo "EVOLUTION_API_KEY=$EVO_KEY" >> "$ENV_FILE"
-  echo "✓ EVOLUTION_API_KEY gerada e adicionada ao env_producao.txt"
-fi
-
-# 2. Adicionar EVOLUTION_API_URL se não existir
-if ! grep -q "^EVOLUTION_API_URL=" "$ENV_FILE" 2>/dev/null; then
-  echo "EVOLUTION_API_URL=http://localhost:8080" >> "$ENV_FILE"
-  echo "✓ EVOLUTION_API_URL adicionada ao env_producao.txt"
+  upsert_env EVOLUTION_API_KEY "$EVO_KEY"
+  echo "✓ EVOLUTION_API_KEY gerada"
 else
-  echo "✓ EVOLUTION_API_URL já definida"
+  echo "✓ EVOLUTION_API_KEY reutilizada"
 fi
 
-# 3. Descobrir o IP do host para o container acessar o backend RYCS.
-HOST_IP=$(ip -4 addr show docker0 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "172.17.0.1")
-WEBHOOK_URL="http://${HOST_IP}:3001/api/webhooks/evolution"
-echo "✓ Webhook URL: $WEBHOOK_URL"
+DB_PASS=$(read_env EVOLUTION_DB_PASSWORD)
+if [ -z "$DB_PASS" ]; then
+  DB_PASS=$(openssl rand -hex 24)
+  upsert_env EVOLUTION_DB_PASSWORD "$DB_PASS"
+  echo "✓ EVOLUTION_DB_PASSWORD gerada"
+else
+  echo "✓ EVOLUTION_DB_PASSWORD reutilizada"
+fi
 
-# 4. Pull da imagem
-echo "Baixando imagem $IMAGE..."
-docker pull "$IMAGE"
+# IP interno do docker0 — o backend rycs-app (bridge default) alcança a Evolution por aqui.
+HOST_IP=$(ip -4 addr show docker0 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1 || echo "172.17.0.1")
+upsert_env EVOLUTION_API_URL "http://${HOST_IP}:8080"
+upsert_env EVOLUTION_WEBHOOK_URL "$WEBHOOK_URL"
+echo "✓ EVOLUTION_API_URL=http://${HOST_IP}:8080 (interno, não público)"
+echo "✓ EVOLUTION_WEBHOOK_URL=${WEBHOOK_URL}"
+
+# ── 2. Rede isolada ───────────────────────────────────────────────────────
+docker network inspect "$NET" >/dev/null 2>&1 || docker network create "$NET"
+echo "✓ Rede $NET pronta"
+
+# ── 3. Volumes persistentes ───────────────────────────────────────────────
+docker volume create "$PG_VOL" >/dev/null 2>&1 || true
+docker volume create "$RD_VOL" >/dev/null 2>&1 || true
+
+# ── 4. Postgres (sem porta publicada) ─────────────────────────────────────
+if ! docker ps --format '{{.Names}}' | grep -q "^${PG}$"; then
+  docker rm -f "$PG" 2>/dev/null || true
+  docker run -d --name "$PG" --restart unless-stopped \
+    --network "$NET" --memory 512m \
+    -e POSTGRES_USER=evolution \
+    -e POSTGRES_PASSWORD="$DB_PASS" \
+    -e POSTGRES_DB=evolution \
+    -v "${PG_VOL}:/var/lib/postgresql/data" \
+    "$PG_IMAGE"
+  echo "✓ Postgres iniciado"
+else
+  echo "✓ Postgres já em execução"
+fi
+
+echo -n "Aguardando Postgres aceitar conexões"
+pgok=0
+for i in $(seq 1 20); do
+  if docker exec "$PG" pg_isready -U evolution >/dev/null 2>&1; then pgok=1; break; fi
+  echo -n "."; sleep 2
+done
+echo
+[ "$pgok" = "1" ] && echo "✓ Postgres pronto" || { echo "✗ Postgres não respondeu"; docker logs --tail 20 "$PG"; exit 1; }
+
+# ── 5. Redis (sem porta publicada) ────────────────────────────────────────
+if ! docker ps --format '{{.Names}}' | grep -q "^${RD}$"; then
+  docker rm -f "$RD" 2>/dev/null || true
+  docker run -d --name "$RD" --restart unless-stopped \
+    --network "$NET" --memory 128m \
+    -v "${RD_VOL}:/data" \
+    "$RD_IMAGE" redis-server --appendonly yes
+  echo "✓ Redis iniciado"
+else
+  echo "✓ Redis já em execução"
+fi
+docker exec "$RD" redis-cli ping >/dev/null 2>&1 && echo "✓ Redis pronto" || echo "⚠ Redis não respondeu ao ping"
+
+# ── 6. Pull da Evolution API ──────────────────────────────────────────────
+echo "Baixando $IMAGE..."
+docker pull "$IMAGE" >/dev/null
 echo "✓ Imagem baixada"
 
-# 5. Parar container anterior se existir
-if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-  echo "Parando container anterior..."
-  docker stop "$CONTAINER_NAME" 2>/dev/null || true
-  docker rm "$CONTAINER_NAME" 2>/dev/null || true
-  echo "✓ Container anterior removido"
-fi
-
-# 6. Criar volume se não existir
-docker volume create "$VOLUME_NAME" 2>/dev/null || true
-
-# 7. Iniciar container
-docker run -d \
-  --name "$CONTAINER_NAME" \
-  --restart unless-stopped \
-  -p 127.0.0.1:8080:8080 \
-  -v "${VOLUME_NAME}:/evolution/instances" \
-  --memory 512m \
-  -e SERVER_URL=http://localhost:8080 \
+# ── 7. Evolution API (publicada só no IP interno do docker0) ──────────────
+docker rm -f "$CN" 2>/dev/null || true
+docker run -d --name "$CN" --restart unless-stopped \
+  --network "$NET" --memory 768m \
+  -p "${HOST_IP}:8080:8080" \
+  -e SERVER_TYPE=http \
   -e SERVER_PORT=8080 \
-  -e AUTHENTICATION_TYPE=apikey \
+  -e "SERVER_URL=http://${HOST_IP}:8080" \
   -e "AUTHENTICATION_API_KEY=${EVO_KEY}" \
   -e AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true \
-  -e DATABASE_ENABLED=false \
+  -e DATABASE_ENABLED=true \
+  -e DATABASE_PROVIDER=postgresql \
+  -e "DATABASE_CONNECTION_URI=postgresql://evolution:${DB_PASS}@${PG}:5432/evolution?schema=public" \
+  -e DATABASE_CONNECTION_CLIENT_NAME=evolution_rycs \
+  -e DATABASE_SAVE_DATA_INSTANCE=true \
+  -e DATABASE_SAVE_DATA_NEW_MESSAGE=false \
+  -e DATABASE_SAVE_MESSAGE_UPDATE=false \
+  -e DATABASE_SAVE_DATA_CONTACTS=false \
+  -e DATABASE_SAVE_DATA_CHATS=false \
+  -e DATABASE_SAVE_DATA_LABELS=false \
+  -e DATABASE_SAVE_DATA_HISTORIC=false \
+  -e CACHE_REDIS_ENABLED=true \
+  -e "CACHE_REDIS_URI=redis://${RD}:6379/6" \
+  -e CACHE_REDIS_PREFIX_KEY=evolution_rycs \
+  -e CACHE_REDIS_SAVE_INSTANCES=false \
+  -e CACHE_LOCAL_ENABLED=false \
   -e DEL_INSTANCE=false \
   -e CONFIG_SESSION_PHONE_CLIENT=RYCS \
   -e CONFIG_SESSION_PHONE_NAME=Chrome \
-  -e "WEBHOOK_GLOBAL_URL=${WEBHOOK_URL}" \
-  -e WEBHOOK_GLOBAL_ENABLED=true \
-  -e WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false \
-  -e WEBHOOK_EVENTS_APPLICATION_STARTUP=false \
-  -e WEBHOOK_EVENTS_QRCODE_UPDATED=true \
-  -e WEBHOOK_EVENTS_MESSAGES_SET=false \
-  -e WEBHOOK_EVENTS_MESSAGES_UPSERT=true \
-  -e WEBHOOK_EVENTS_MESSAGES_UPDATE=true \
-  -e WEBHOOK_EVENTS_MESSAGES_DELETE=false \
-  -e WEBHOOK_EVENTS_SEND_MESSAGE=true \
-  -e WEBHOOK_EVENTS_CONTACTS_SET=false \
-  -e WEBHOOK_EVENTS_CONTACTS_UPSERT=false \
-  -e WEBHOOK_EVENTS_CONTACTS_UPDATE=false \
-  -e WEBHOOK_EVENTS_PRESENCE_UPDATE=false \
-  -e WEBHOOK_EVENTS_CHATS_SET=false \
-  -e WEBHOOK_EVENTS_CHATS_UPSERT=false \
-  -e WEBHOOK_EVENTS_CHATS_UPDATE=false \
-  -e WEBHOOK_EVENTS_CHATS_DELETE=false \
-  -e WEBHOOK_EVENTS_GROUPS_UPSERT=false \
-  -e WEBHOOK_EVENTS_GROUPS_UPDATE=false \
-  -e WEBHOOK_EVENTS_GROUP_PARTICIPANTS_UPDATE=false \
-  -e WEBHOOK_EVENTS_CONNECTION_UPDATE=true \
-  -e WEBHOOK_EVENTS_CALL=false \
-  -e STORE_MESSAGES=false \
-  -e STORE_MESSAGE_UP=false \
-  -e STORE_CONTACTS=false \
-  -e STORE_CHATS=false \
-  -e CLEAN_STORE_CLEANING_INTERVAL=7200 \
-  -e CLEAN_STORE_MESSAGES=true \
-  -e CLEAN_STORE_MESSAGE_UP=true \
-  -e CLEAN_STORE_CONTACTS=true \
-  -e CLEAN_STORE_CHATS=true \
-  -e LOG_LEVEL=WARN \
-  -e LOG_COLOR=true \
+  -e QRCODE_LIMIT=30 \
+  -e TELEMETRY_ENABLED=false \
+  -e LOG_LEVEL=ERROR \
   -e LOG_BAILEYS=error \
   "$IMAGE"
+echo "✓ Evolution API iniciada"
 
-echo "✓ Container $CONTAINER_NAME iniciado"
-
-# 8. Aguardar health check
-echo -n "Aguardando health check"
+# ── 8. Health check (migrations do Prisma rodam no boot) ──────────────────
+echo -n "Aguardando Evolution API responder"
 ok=0
-for i in $(seq 1 20); do
-  if curl -sf --max-time 3 http://localhost:8080/ >/dev/null 2>&1; then
-    ok=1
-    break
-  fi
-  echo -n "."
-  sleep 3
+for i in $(seq 1 30); do
+  if curl -sf --max-time 3 "http://${HOST_IP}:8080/" >/dev/null 2>&1; then ok=1; break; fi
+  echo -n "."; sleep 3
 done
 echo
-
 if [ "$ok" = "1" ]; then
-  echo "✓ Evolution API respondendo em localhost:8080"
+  echo "✓ Evolution API respondendo em http://${HOST_IP}:8080"
 else
   echo "✗ Evolution API não respondeu. Logs:"
-  docker logs --tail 20 "$CONTAINER_NAME" 2>&1 || true
+  docker logs --tail 40 "$CN" 2>&1 || true
   exit 1
 fi
 
-# 9. Testar comunicação com o backend RYCS
-echo -n "Testando webhook do backend RYCS... "
-RESP=$(curl -sf -o /dev/null -w "%{http_code}" -X POST \
-  -H "Content-Type: application/json" \
-  -H "apikey: $EVO_KEY" \
-  -d '{"event":"test","instance":"setup-check","data":{}}' \
-  http://localhost:3001/api/webhooks/evolution 2>/dev/null || echo "000")
+# ── 9. Backend rycs-app consegue alcançar a Evolution? ────────────────────
+echo -n "Testando acesso backend rycs-app -> Evolution... "
+if docker exec rycs-app node -e "fetch('http://${HOST_IP}:8080/').then(r=>{console.log('HTTP '+r.status);process.exit(r.ok?0:1)}).catch(e=>{console.log('FALHOU: '+e.message);process.exit(1)})" 2>/dev/null; then
+  echo "(rycs-app alcança a Evolution ✓)"
+else
+  echo "⚠ rycs-app não alcançou a Evolution (verifique após o próximo deploy)"
+fi
 
+# ── 10. Webhook público aceita eventos autenticados? ──────────────────────
+echo -n "Testando webhook público (apikey)... "
+RESP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
+  -H "Content-Type: application/json" -H "apikey: ${EVO_KEY}" \
+  -d '{"event":"test","instance":"setup-check","data":{}}' \
+  "$WEBHOOK_URL" 2>/dev/null || echo "000")
 if [ "$RESP" = "200" ]; then
   echo "OK (HTTP 200)"
 else
-  echo "AVISO: HTTP $RESP (reiniciando o backend para pegar as novas env vars)"
-  docker restart rycs-app 2>/dev/null || true
-  sleep 10
-  RESP2=$(curl -sf -o /dev/null -w "%{http_code}" -X POST \
-    -H "Content-Type: application/json" \
-    -H "apikey: $EVO_KEY" \
-    -d '{"event":"test","instance":"setup-check","data":{}}' \
-    http://localhost:3001/api/webhooks/evolution 2>/dev/null || echo "000")
-  echo "Após restart: HTTP $RESP2"
+  echo "HTTP $RESP (o backend aplica a nova EVOLUTION_API_KEY após o próximo deploy)"
 fi
 
-# 10. Verificar que a porta não está exposta publicamente
-PUBLIC=$(ss -tlnp | grep ":8080" | grep -v "127.0.0.1" | head -1 || true)
+# ── 11. Garantir que a porta 8080 NÃO está em interface pública ───────────
+PUBLIC=$(ss -tlnp 2>/dev/null | grep ":8080" | grep -vE "127.0.0.1|${HOST_IP}" | head -1 || true)
 if [ -n "$PUBLIC" ]; then
-  echo "⚠ ALERTA: a porta 8080 está escutando em interface pública!"
+  echo "⚠ ALERTA: 8080 em interface pública: $PUBLIC"
 else
-  echo "✓ Porta 8080 apenas em localhost (seguro)"
+  echo "✓ Porta 8080 só no IP interno ${HOST_IP} (não pública)"
 fi
 
 echo
 echo "═══════════════════════════════════════════════"
-echo "  Setup concluído!"
-echo ""
-echo "  Logs:    docker logs -f $CONTAINER_NAME"
-echo "  Parar:   docker stop $CONTAINER_NAME"
-echo "  Restart: docker restart $CONTAINER_NAME"
+echo "  Setup concluído. Containers:"
+docker ps --filter name="$CN" --filter name="$PG" --filter name="$RD" --format "  {{.Names}}: {{.Status}}"
 echo "═══════════════════════════════════════════════"

@@ -1,9 +1,10 @@
 # Evolution API — microsserviço independente para WhatsApp pessoal via Baileys.
-# NÃO faz parte do processo principal da RYCS. Roda ao lado do container
-# principal e se comunica com o backend por HTTP na rede interna.
 #
-# Uso:
-#   docker compose -f docker-compose.evolution.yml up -d
+# ATENÇÃO: este compose é só referência para ambientes locais com docker compose.
+# No EC2 de produção a stack (Postgres + Redis + Evolution) é provisionada por
+# scripts/setup-evolution.sh via o workflow "Setup Evolution API" — é lá que
+# ficam a configuração e a rede reais. A v2.2.3 EXIGE Postgres; este arquivo
+# de exemplo não sobe Postgres/Redis, então não serve para produção.
 #
 # Em produção, garantir:
 #   - EVOLUTION_API_KEY definida e forte
@@ -15,7 +16,7 @@ version: "3.8"
 
 services:
   evolution-api:
-    image: atendai/evolution-api:v2.2.3
+    image: evoapicloud/evolution-api:v2.2.3
     container_name: rycs-evolution-api
     restart: unless-stopped
     ports:

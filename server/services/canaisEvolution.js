@@ -21,6 +21,8 @@ import { soDigitos } from "../../shared/canais.js";
 
 const BASE_URL = () => (process.env.EVOLUTION_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 const API_KEY = () => process.env.EVOLUTION_API_KEY || "";
+// URL pública que a Evolution usa para entregar os webhooks ao backend.
+const WEBHOOK_URL = () => process.env.EVOLUTION_WEBHOOK_URL || "";
 const MAX_PILOTOS = 10;
 
 export const evolutionConfigurada = () => !!(BASE_URL() && API_KEY());
@@ -84,21 +86,31 @@ function nomeInstancia(sellerId) { return `rycs_${sellerId}`.replace(/[^a-zA-Z0-
 
 export async function criarInstancia(sellerId) {
   const nome = nomeInstancia(sellerId);
+  const dados = {
+    instanceName: nome,
+    integration: "WHATSAPP-BAILEYS",
+    qrcode: true,
+    reject_call: false,
+    always_online: false,
+    groups_ignore: true,
+    read_messages: false,
+    read_status: false,
+    sync_full_history: false,
+  };
+  // Webhook por-instância com o header apikey que o backend valida. Sem isso,
+  // a Evolution entregaria sem o header e o webhook recusaria (401). base64
+  // faz o QR Code chegar pronto; só assinamos os eventos que a RYCS trata.
+  if (WEBHOOK_URL()) {
+    dados.webhook = {
+      url: WEBHOOK_URL(),
+      byEvents: false,
+      base64: true,
+      headers: { apikey: API_KEY(), "Content-Type": "application/json" },
+      events: ["QRCODE_UPDATED", "CONNECTION_UPDATE", "MESSAGES_UPSERT", "MESSAGES_UPDATE", "SEND_MESSAGE"],
+    };
+  }
   // Tenta criar; se já existe, a Evolution retorna a instância existente.
-  const r = await evo("/instance/create", {
-    metodo: "POST",
-    dados: {
-      instanceName: nome,
-      integration: "WHATSAPP-BAILEYS",
-      qrcode: true,
-      reject_call: false,
-      always_online: false,
-      groups_ignore: true,
-      read_messages: false,
-      read_status: false,
-      sync_full_history: false,
-    },
-  });
+  const r = await evo("/instance/create", { metodo: "POST", dados });
   return { instanceName: r.instance?.instanceName || nome, instanceId: r.instance?.instanceId || "", hash: r.hash || "" };
 }
 
