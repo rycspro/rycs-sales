@@ -33,34 +33,32 @@ router.post("/loja-leads/buscar", async (req, res) => {
   const ids = salvarContatos(r.contatos);
   const contatos = r.contatos.map((c, i) => ({ ...c, id: ids[i] }));
 
-  // Revelar automaticamente todos os contatos encontrados
+  // 1) Resolver a lista de destino ANTES de cobrar — assim nenhum lead fica órfão.
+  let listaIdFinal = listaId || null;
+  if (!listaIdFinal) {
+    // Garante uma pasta de destino (a escolhida, a primeira existente, ou uma padrão).
+    let pastaId = novaPasta;
+    const pastas = listarPastas(ent.entityId, ent.entityRole);
+    if (pastaId && !pastas.some((p) => p.id === pastaId)) pastaId = null; // pasta inválida/apagada
+    if (!pastaId) pastaId = pastas.length ? pastas[0].id : criarPasta(ent.entityId, ent.entityRole, "Loja de Leads").id;
+
+    const nomeLista = (novaLista && novaLista.trim())
+      || `${texto.trim()} — ${(regiao || "").trim() || new Date().toLocaleDateString("pt-BR")}`;
+    const lista = criarLista(pastaId, ent.entityId, ent.entityRole, nomeLista, descricaoLista || "", parentListaId || null);
+    if (lista.error) return res.status(400).json({ error: lista.error });
+    listaIdFinal = lista.id;
+  }
+
+  // 2) Revelar (cobrar) e adicionar à lista.
+  let adicionados = 0;
   for (const c of contatos) {
     revelarContato(ent.entityId, ent.entityRole, c.id);
     c.revelado = true;
+    const add = adicionarContatoLista(listaIdFinal, c.id);
+    if (add?.novo) adicionados++;
   }
 
-  // Criar lista se solicitado e adicionar contatos
-  let listaIdFinal = listaId || null;
-  if (!listaIdFinal && novaLista) {
-    let pastaId = novaPasta;
-    if (!pastaId) {
-      const pastas = listarPastas(ent.entityId, ent.entityRole);
-      if (pastas.length) {
-        pastaId = pastas[0].id;
-      } else {
-        const p = criarPasta(ent.entityId, ent.entityRole, "Loja de Leads");
-        pastaId = p.id;
-      }
-    }
-    const lista = criarLista(pastaId, ent.entityId, ent.entityRole, novaLista, descricaoLista || "", parentListaId || null);
-    if (lista.error) return res.json({ contatos, listaErro: lista.error });
-    listaIdFinal = lista.id;
-  }
-  if (listaIdFinal) {
-    for (const c of contatos) adicionarContatoLista(listaIdFinal, c.id);
-  }
-
-  res.json({ contatos, listaId: listaIdFinal });
+  res.json({ contatos, listaId: listaIdFinal, adicionados });
 });
 
 // ── Revelar contato (registrar consumo) ─────────────────────────────────────

@@ -417,8 +417,8 @@ export function criarLista(pastaId, entityId, entityRole, nome, descricao, paren
 export function adicionarContatoLista(listaId, contatoId) {
   const ts = agora();
   try {
-    db.prepare("INSERT OR IGNORE INTO loja_leads_lista_contatos (listaId, contatoId, adicionadoEm) VALUES (?, ?, ?)").run(listaId, contatoId, ts);
-    return { ok: true };
+    const r = db.prepare("INSERT OR IGNORE INTO loja_leads_lista_contatos (listaId, contatoId, adicionadoEm) VALUES (?, ?, ?)").run(listaId, contatoId, ts);
+    return { ok: true, novo: r.changes > 0 };
   } catch (e) {
     return { error: e.message };
   }

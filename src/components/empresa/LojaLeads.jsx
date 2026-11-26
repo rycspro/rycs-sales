@@ -462,13 +462,13 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
     const contatos = r.contatos || [];
     if (!contatos.length) { setOcupado(false); setFeedback("Nenhum resultado encontrado para esta busca."); return aviso?.("Nenhum resultado."); }
 
-    if (r.listaId) {
-      setFeedback(`${contatos.length} lead(s) encontrado(s) e adicionado(s) à lista.`);
-      aviso?.(`${contatos.length} lead(s) adicionados à lista.`);
-    } else {
-      setFeedback(`${contatos.length} lead(s) encontrado(s).`);
-      aviso?.(`${contatos.length} lead(s) encontrado(s).`);
-    }
+    const novos = r.adicionados ?? contatos.length;
+    const repetidos = contatos.length - novos;
+    const msg = repetidos > 0
+      ? `${novos} novo(s) lead(s) na lista (${repetidos} já estavam lá).`
+      : `${novos} lead(s) adicionado(s) à lista.`;
+    setFeedback(msg);
+    aviso?.(msg);
 
     setOcupado(false);
     recarregarCiclo?.();
