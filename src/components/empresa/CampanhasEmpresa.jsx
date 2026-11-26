@@ -335,6 +335,8 @@ const VISTA_KEY = "rycs-campanhas-vista";
 
 function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onArquivar, onExcluir, onToggleCandidaturas, onStatus, onCandidaturas, filtroBar }) {
   const [filtro, setFiltro] = useState("");
+  const [filtroModelo, setFiltroModelo] = useState("");
+  const [filtroFuncao, setFiltroFuncao] = useState("");
   const [arquivadas, setArquivadas] = useState(false);
   const [busca, setBusca] = useState("");
   const [buscaDeb, setBuscaDeb] = useState("");
@@ -375,10 +377,12 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
     if (arquivadas) r = r.filter((c) => ARQUIVADAS.includes(c.status));
     else r = r.filter((c) => !ARQUIVADAS.includes(c.status));
     if (filtro) r = r.filter((c) => c.status === filtro);
+    if (filtroModelo) r = r.filter((c) => c.modeloTrabalho === filtroModelo);
+    if (filtroFuncao) r = r.filter((c) => c.funcao === filtroFuncao);
     if (buscaDeb) r = r.filter((c) => [c.titulo, c.objetivo, c.descricao, c.regiao, c.funcao]
       .some((v) => String(v || "").toLowerCase().includes(buscaDeb)));
     return r;
-  }, [campanhas, arquivadas, filtro, buscaDeb]);
+  }, [campanhas, arquivadas, filtro, filtroModelo, filtroFuncao, buscaDeb]);
 
   const pills = arquivadas
     ? FILTROS_STATUS.filter(([k]) => k === "" || ARQUIVADAS.includes(k))
@@ -449,6 +453,38 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
                   background: on ? "var(--brand)" : "var(--surface)", cursor: "pointer",
                   fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? "#fff" : "var(--ink)", transition: "all .15s" }}>
                 {label}{total > 0 && <span style={{ fontSize: 11, opacity: on ? 0.85 : 0.6 }}>{total}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Filtros V2: modelo de trabalho + função */}
+      {campanhas.length > 0 && (filtroModelo || filtroFuncao || campanhas.some((c) => c.modeloTrabalho)) && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+          {FILTROS_MODELO.map(([key, label]) => {
+            const on = filtroModelo === key;
+            return (
+              <button key={`m-${key || "all"}`} onClick={() => setFiltroModelo(key)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                  padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand-50)" : "var(--surface)", cursor: "pointer",
+                  fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--brand)" : "var(--muted)", transition: "all .15s" }}>
+                {key && (MODELO_ICON[key] ? (() => { const Ic = MODELO_ICON[key]; return <Ic size={11} />; })() : null)}
+                {label}
+              </button>
+            );
+          })}
+          <span style={{ width: 1, height: 20, background: "var(--border)", margin: "0 4px" }} />
+          {FILTROS_FUNCAO.map(([key, label]) => {
+            const on = filtroFuncao === key;
+            return (
+              <button key={`f-${key || "all"}`} onClick={() => setFiltroFuncao(key)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                  padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                  background: on ? "var(--brand-50)" : "var(--surface)", cursor: "pointer",
+                  fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--brand)" : "var(--muted)", transition: "all .15s" }}>
+                {label}
               </button>
             );
           })}
@@ -761,7 +797,29 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       </div>
     </section>}
 
-    <section className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: check.ok ? "var(--brand)" : "var(--amber)" }}><div style={{ display: "flex", gap: 9 }}><ClipboardCheck size={18} color={check.ok ? "var(--brand)" : "var(--amber)"} /><div><b>{check.ok ? "Pronta para publicar" : "Pendências de publicação"}</b>{!check.ok && <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 3 }}>{check.pendencias.join(" · ")}</div>}</div></div></section>
+    <section className="vx-card" style={{ padding: 16, marginTop: 16, borderColor: check.ok ? "var(--brand)" : "var(--amber)" }}>
+      <div style={{ display: "flex", gap: 9, marginBottom: 8 }}><ClipboardCheck size={18} color={check.ok ? "var(--brand)" : "var(--amber)"} /><b>{check.ok ? "Pronta para publicar" : "Pendências de publicação"}</b></div>
+      {!check.ok && <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 6 }}>{check.pendencias.join(" · ")}</div>}
+      {(() => {
+        const diag = diagnosticoCampanha(campanha, emp);
+        return <>
+          {diag.bloqueios.length > 0 && <div style={{ marginTop: 6 }}>
+            {diag.bloqueios.map((b, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--red)", marginTop: 3 }}>
+                <AlertCircle size={13} /> {b}
+              </div>
+            ))}
+          </div>}
+          {diag.recomendacoes.length > 0 && <div style={{ marginTop: 6 }}>
+            {diag.recomendacoes.map((r, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--amber)", marginTop: 3 }}>
+                <CheckCircle2 size={13} /> {r}
+              </div>
+            ))}
+          </div>}
+        </>;
+      })()}
+    </section>
     <div style={{ display: "flex", gap: 9, marginTop: 16 }}><button className="vx-btn vx-btn-primary" onClick={salvar}><Save size={14} /> Salvar</button>{campanha.status === "ativa" ? <button className="vx-btn" onClick={() => mudarStatus("pausada")}><CirclePause size={14} /> Pausar</button> : <button className="vx-btn" disabled={!check.ok} onClick={() => mudarStatus("ativa")}><Rocket size={14} /> Publicar</button>}</div>
     {popupPlanoModal}
   </div>;
