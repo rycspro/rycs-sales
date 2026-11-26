@@ -3331,6 +3331,20 @@ db.exec(`
 adicionarColuna("campaigns", "operacaoId", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "estruturaComercial", "TEXT DEFAULT 'independente'");
 adicionarColuna("campaigns", "vendaTipoRemuneracao", "TEXT DEFAULT 'fixo'");
+adicionarColuna("campaigns", "modoAcoesRemuneradas", "TEXT DEFAULT 'rapido'");
+
+adicionarColuna("formas_ganho", "origem", "TEXT DEFAULT 'personalizado'");
+adicionarColuna("formas_ganho", "modeloOriginalId", "TEXT DEFAULT ''");
+adicionarColuna("formas_ganho", "condicoesRecebimento", "TEXT DEFAULT ''");
+adicionarColuna("formas_ganho", "limiteDiario", "INTEGER DEFAULT 0");
+adicionarColuna("formas_ganho", "limiteSemanal", "INTEGER DEFAULT 0");
+adicionarColuna("formas_ganho", "limiteMensal", "INTEGER DEFAULT 0");
+adicionarColuna("formas_ganho", "limiteTotalCampanha", "INTEGER DEFAULT 0");
+adicionarColuna("formas_ganho", "dependeDeAcao", "TEXT DEFAULT ''");
+adicionarColuna("formas_ganho", "prazoValidacaoHoras", "INTEGER DEFAULT 0");
+adicionarColuna("formas_ganho", "frequenciaPagamento", "TEXT DEFAULT 'ocorrencia'");
+adicionarColuna("formas_ganho", "condicoesAdicionais", "TEXT DEFAULT ''");
+adicionarColuna("formas_ganho", "campaignVinculadaId", "TEXT DEFAULT ''");
 
 // ── Vínculos entre campanhas (continuidade comercial) ──────────────────
 db.exec(`

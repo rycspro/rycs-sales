@@ -256,7 +256,7 @@ router.post("/campaigns", (req, res) => {
       "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
       "icpTipo", "versao", "processoAdmissao",
       "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao"];
+      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas"];
     const v2Bool = ["temComissao", "remuneracaoCumulativa"];
     const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
       "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
@@ -728,10 +728,16 @@ router.post("/campaigns/:id/formas-ganho", (req, res) => {
   const camp = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(req.params.id);
   if (!camp || camp.companyId !== entityId) return res.status(403).json({ error: "Sem acesso" });
   const id = uid();
-  const { nome, descricao, tipoRemuneracao, valor, moeda, eventoComercial, criteriosValidacao, evidenciasNecessarias, metodoAprovacao, limiteRecorrencia, limitePorProfissional, limitePorLead, regraRecorrencia, regraCumulatividade, baseCalculo, condicaoLiberacao, ordem } = req.body;
-  if (!nome?.trim()) return res.status(400).json({ error: "Nome obrigatório" });
-  db.prepare(`INSERT INTO formas_ganho (id, campaignId, nome, descricao, tipoRemuneracao, valor, moeda, eventoComercial, criteriosValidacao, evidenciasNecessarias, metodoAprovacao, limiteRecorrencia, limitePorProfissional, limitePorLead, regraRecorrencia, regraCumulatividade, baseCalculo, condicaoLiberacao, ordem, ativo, criadoEm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?)`).run(
-    id, req.params.id, nome.trim(), descricao || "", tipoRemuneracao || "fixo", Number(valor) || 0, moeda || "BRL", eventoComercial || "", typeof criteriosValidacao === "object" ? JSON.stringify(criteriosValidacao) : criteriosValidacao || "{}", typeof evidenciasNecessarias === "object" ? JSON.stringify(evidenciasNecessarias) : evidenciasNecessarias || "[]", metodoAprovacao || "manual", Number(limiteRecorrencia) || 0, Number(limitePorProfissional) || 0, Number(limitePorLead) || 1, regraRecorrencia || "unica", regraCumulatividade === false ? 0 : 1, baseCalculo || "", condicaoLiberacao || "", Number(ordem) || 0, agora()
+  const b = req.body;
+  if (!b.nome?.trim()) return res.status(400).json({ error: "Nome obrigatório" });
+  db.prepare(`INSERT INTO formas_ganho (id, campaignId, nome, descricao, tipoRemuneracao, valor, moeda, eventoComercial, criteriosValidacao, evidenciasNecessarias, metodoAprovacao, limiteRecorrencia, limitePorProfissional, limitePorLead, regraRecorrencia, regraCumulatividade, baseCalculo, condicaoLiberacao, ordem, ativo, criadoEm, origem, modeloOriginalId, condicoesRecebimento, limiteDiario, limiteSemanal, limiteMensal, limiteTotalCampanha, dependeDeAcao, prazoValidacaoHoras, frequenciaPagamento, condicoesAdicionais, campaignVinculadaId) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+    id, req.params.id, b.nome.trim(), b.descricao || "", b.tipoRemuneracao || "fixo", Number(b.valor) || 0, b.moeda || "BRL", b.eventoComercial || "",
+    typeof b.criteriosValidacao === "object" ? JSON.stringify(b.criteriosValidacao) : b.criteriosValidacao || "{}",
+    typeof b.evidenciasNecessarias === "object" ? JSON.stringify(b.evidenciasNecessarias) : b.evidenciasNecessarias || "[]",
+    b.metodoAprovacao || "manual", Number(b.limiteRecorrencia) || 0, Number(b.limitePorProfissional) || 0, Number(b.limitePorLead) || 1, b.regraRecorrencia || "unica", b.regraCumulatividade === false ? 0 : 1, b.baseCalculo || "", b.condicaoLiberacao || "", Number(b.ordem) || 0, agora(),
+    b.origem || "personalizado", b.modeloOriginalId || "", b.condicoesRecebimento || "",
+    Number(b.limiteDiario) || 0, Number(b.limiteSemanal) || 0, Number(b.limiteMensal) || 0, Number(b.limiteTotalCampanha) || 0,
+    b.dependeDeAcao || "", Number(b.prazoValidacaoHoras) || 0, b.frequenciaPagamento || "ocorrencia", b.condicoesAdicionais || "", b.campaignVinculadaId || ""
   );
   res.json({ id });
 });
@@ -743,7 +749,7 @@ router.patch("/campaigns/:cid/formas-ganho/:fid", (req, res) => {
   if (!camp || camp.companyId !== entityId) return res.status(403).json({ error: "Sem acesso" });
   const fg = db.prepare("SELECT * FROM formas_ganho WHERE id = ? AND campaignId = ?").get(req.params.fid, req.params.cid);
   if (!fg) return res.status(404).json({ error: "Forma de ganho não encontrada" });
-  const campos = ["nome", "descricao", "tipoRemuneracao", "valor", "moeda", "eventoComercial", "criteriosValidacao", "evidenciasNecessarias", "metodoAprovacao", "limiteRecorrencia", "limitePorProfissional", "limitePorLead", "regraRecorrencia", "regraCumulatividade", "baseCalculo", "condicaoLiberacao", "ativo", "ordem"];
+  const campos = ["nome", "descricao", "tipoRemuneracao", "valor", "moeda", "eventoComercial", "criteriosValidacao", "evidenciasNecessarias", "metodoAprovacao", "limiteRecorrencia", "limitePorProfissional", "limitePorLead", "regraRecorrencia", "regraCumulatividade", "baseCalculo", "condicaoLiberacao", "ativo", "ordem", "origem", "modeloOriginalId", "condicoesRecebimento", "limiteDiario", "limiteSemanal", "limiteMensal", "limiteTotalCampanha", "dependeDeAcao", "prazoValidacaoHoras", "frequenciaPagamento", "condicoesAdicionais", "campaignVinculadaId"];
   const sets = []; const vals = [];
   for (const c of campos) {
     if (req.body[c] !== undefined) {
@@ -751,7 +757,7 @@ router.patch("/campaigns/:cid/formas-ganho/:fid", (req, res) => {
       if (typeof v === "object") v = JSON.stringify(v);
       if (c === "regraCumulatividade") v = v ? 1 : 0;
       if (c === "ativo") v = v ? 1 : 0;
-      if (["valor", "limiteRecorrencia", "limitePorProfissional", "limitePorLead", "ordem"].includes(c)) v = Number(v) || 0;
+      if (["valor", "limiteRecorrencia", "limitePorProfissional", "limitePorLead", "ordem", "limiteDiario", "limiteSemanal", "limiteMensal", "limiteTotalCampanha", "prazoValidacaoHoras"].includes(c)) v = Number(v) || 0;
       sets.push(`${c} = ?`); vals.push(v);
     }
   }
