@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   buscarPlaces, salvarContatos, revelarContato, contatosRevelados,
   resumoConsumo, listarPastas, criarPasta, renomearPasta, excluirPasta,
-  listarListas, criarLista, renomearLista, excluirLista,
+  listarListas, criarLista, renomearLista, moverLista, excluirLista,
   adicionarContatoLista, removerContatoLista, contatosDaLista, listarPrecos,
   cicloAtual, historicoFaturas, fecharCiclo,
   adminResumo, adminAtualizarPreco, adminListarCiclos,
@@ -186,7 +186,12 @@ router.delete("/loja-leads/pastas/:id", (req, res) => {
 router.patch("/loja-leads/listas/:id", (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
-  const { nome, descricao } = req.body || {};
+  const { nome, descricao, pastaId } = req.body || {};
+  if (pastaId) {
+    const r = moverLista(req.params.id, ent.entityId, pastaId);
+    if (r.error) return res.status(400).json(r);
+    return res.json(r);
+  }
   res.json(renomearLista(req.params.id, ent.entityId, nome, descricao));
 });
 
