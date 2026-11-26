@@ -75,7 +75,7 @@ function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {Icon && <Icon size={18} color={selected ? "var(--brand)" : "var(--text-2)"} />}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: selected ? "var(--brand)" : "var(--text-1)" }}>{title}</div>
+          <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: selected ? "var(--brand)" : "var(--text-1)" }}>{title}</div>
           {subtitle && <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{subtitle}</div>}
         </div>
         {selected && <Check size={16} color="var(--brand)" />}
@@ -333,7 +333,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Modelo de trabalho */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Modelo de trabalho</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como o profissional executa as atividades.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Modelo de trabalho</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como o profissional executa as atividades.</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(MODELOS_TRABALHO).map((m) => {
                 const Ic = ICONES_MODELO[m.id] || Globe;
@@ -345,7 +345,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Restrição geográfica do profissional (só remoto) */}
           {campanha.modeloTrabalho === "remoto" && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b>Localização do profissional</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Aceita profissionais de qualquer lugar ou restringe por região?</div></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização do profissional</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Aceita profissionais de qualquer lugar ou restringe por região?</div></div>
               <div style={{ display: "grid", gap: 8 }}>
                 {Object.values(RESTRICOES_GEO).map((r) => (
                   <CardOption key={r.id} selected={campanha.restricaoGeo === r.id} onClick={() => set("restricaoGeo", r.id)} title={r.label} />
@@ -375,7 +375,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Território (presencial/híbrido) */}
           {(campanha.modeloTrabalho === "presencial" || campanha.modeloTrabalho === "hibrido") && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b>Território de atuação</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde o profissional precisa atuar fisicamente.</div></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Território de atuação</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde o profissional precisa atuar fisicamente.</div></div>
               <div className="vx-grid vx-g2">
                 <label><div className="vx-label">Região</div>
                   <input className="vx-input" value={campanha.regiao} onChange={(e) => set("regiao", e.target.value)} placeholder="Ex.: interior de SP" /></label>
@@ -386,7 +386,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Mercado de atuação do cliente */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Mercado dos seus clientes</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os potenciais clientes que esta campanha vai atingir.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Mercado dos seus clientes</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os potenciais clientes que esta campanha vai atingir.</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(MERCADOS).map((m) => (
                 <CardOption key={m.id} selected={campanha.mercado === m.id} onClick={() => set("mercado", m.id)} title={m.label} />
@@ -402,7 +402,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Origem dos leads */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Origem dos leads</b><div className="vx-mut" style={{ fontSize: 11.5 }}>De onde virão os contatos desta campanha.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Origem dos leads</b><div className="vx-mut" style={{ fontSize: 11.5 }}>De onde virão os contatos desta campanha.</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(ORIGENS_LEAD).map((o) => (
                 <CardOption key={o.id} selected={campanha.origemLeads === o.id} onClick={() => set("origemLeads", o.id)} title={o.label} />
@@ -412,7 +412,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Canais */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Canais de abordagem</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como o profissional pode entrar em contato com os leads.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Canais de abordagem</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como o profissional pode entrar em contato com os leads.</div></div>
             <ChipToggle
               items={CANAIS.map((c) => ({ id: c.id, nome: c.nome, icon: ICONES_CANAL[c.id] || Globe }))}
               value={campanha.canais || []}
@@ -438,7 +438,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Função comercial */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Função comercial</b>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Função comercial</b>
               {objUI?.funcaoSugerida && <span className="vx-badge vx-badge-brand" style={{ fontSize: 11, marginLeft: 8 }}>Sugerida: {FUNCOES[objUI.funcaoSugerida]?.nome}</span>}
             </div>
             <div style={{ display: "grid", gap: 8 }}>
@@ -451,7 +451,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* ICP */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Perfil do cliente ideal (ICP)</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Descreva o tipo de empresa ou pessoa que o profissional deve abordar.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Perfil do cliente ideal (ICP)</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Descreva o tipo de empresa ou pessoa que o profissional deve abordar.</div></div>
             <textarea className="vx-input" style={{ minHeight: 64 }} value={campanha.publico || ""}
               onChange={(e) => set("publico", e.target.value)}
               placeholder="Ex.: distribuidoras de bebida com 10 a 80 funcionários" />
@@ -461,7 +461,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Nível de experiência */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Nível de experiência</b></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Nível de experiência</b></div>
             <div style={{ display: "grid", gap: 8 }}>
               {NIVEIS_EXPERIENCIA.map((n) => (
                 <CardOption key={n.id} selected={campanha.nivelExperiencia === n.id} onClick={() => set("nivelExperiencia", n.id)} title={n.label} />
@@ -471,7 +471,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Processo de admissão */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Processo de admissão</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como os profissionais entram na campanha.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Processo de admissão</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como os profissionais entram na campanha.</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {PROCESSOS_ADMISSAO.map((p) => (
                 <CardOption key={p.id} selected={campanha.processoAdmissao === p.id} onClick={() => set("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
@@ -523,7 +523,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Ações ativas */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b>Ações remuneradas</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione as ações que a campanha vai remunerar. As sugeridas já estão marcadas.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Ações remuneradas</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione as ações que a campanha vai remunerar. As sugeridas já estão marcadas.</div></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
               {ACOES_DISPONIVEIS.map((a) => {
                 const ativa = (campanha.acoesAtivas || []).includes(a.id);
@@ -658,7 +658,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Treinamento */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div className="vx-row" style={{ marginBottom: 12 }}>
-              <div><b>Treinamento</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Opcional. O profissional conhece a operação antes de começar.</div></div>
+              <div><b style={{ color: "var(--brand)" }}>Treinamento</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Opcional. O profissional conhece a operação antes de começar.</div></div>
               <button className="vx-btn vx-btn-sm" onClick={adicionarTreinamento}><Plus size={13} /> Módulo</button>
             </div>
 
