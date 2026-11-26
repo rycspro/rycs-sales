@@ -4,15 +4,16 @@
 
 | Item | Status |
 |------|--------|
-| Commit | `6571370` em `feature/rycs-voice` |
-| Push | Concluído para `origin/feature/rycs-voice` |
-| PR | Pendente — `gh` CLI não disponível nesta sessão. Criar via GitHub: [compare/main...feature/rycs-voice](https://github.com/rycspro/rycs-sales/compare/main...feature/rycs-voice) |
-| Merge | Aguardando PR |
-| Deploy | Automático ao merge na `main` (GitHub Actions) |
+| Commit original | `6571370` em `feature/rycs-voice` |
+| Merge na main | Concluído (commit `2a1795f`) |
+| Deploy | Ativo em produção (`app.rycs.pro`) via GitHub Actions #534 |
+| CI/CD | Estável — runs #533 e #534 passando (Node 22) |
+| Feature flag | `voice_habilitada` = 0 por padrão (discadora invisível) |
 
 ## 2. Resultado dos testes
 
-**34 testes E2E — todos passando (~18s)**
+**586 testes na suíte completa — todos passando com Node 22**
+**34 testes de Voice E2E incluídos — todos passando**
 
 Cobertura:
 - Bloqueio sem feature flag
@@ -135,4 +136,5 @@ Operadoras sugeridas: **Nvoip**, **TotalVoice/Zenvia**, **Twilio**
 
 ---
 
-**Arquivo gerado em 2026-11-26. Corresponde ao commit `6571370` na branch `feature/rycs-voice`.**
+**Atualizado em 2026-11-26. RYCS Voice em produção na `main`, deploy automático via GitHub Actions.**
+**Plano de piloto para telefonia real: `docs/discadora/PLANO_PILOTO_TELEFONIA.md`**
