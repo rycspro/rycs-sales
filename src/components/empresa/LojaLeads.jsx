@@ -588,14 +588,42 @@ function AbaContatos({ aviso, listas }) {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [drawer, setDrawer] = useState(null);
+  const [selecionados, setSelecionados] = useState(new Set());
+  const [filtroSegmento, setFiltroSegmento] = useState("");
+  const [filtroLista, setFiltroLista] = useState("");
+  const [filtroResponsavel, setFiltroResponsavel] = useState("");
 
-  useEffect(() => { api("/loja-leads/revelados").then((r) => { setContatos(r?.contatos || []); setLoading(false); }); }, []);
+  const recarregar = useCallback(() => { api("/loja-leads/revelados").then((r) => { setContatos(r?.contatos || []); setLoading(false); }); }, []);
+  useEffect(recarregar, []);
+
+  const segmentos = useMemo(() => [...new Set(contatos.map((c) => c.categoria).filter(Boolean))].sort(), [contatos]);
+  const listasUnicas = useMemo(() => {
+    const m = new Map();
+    for (const c of contatos) for (const l of (c.listas || [])) if (!m.has(l.id)) m.set(l.id, l);
+    return [...m.values()];
+  }, [contatos]);
+  const responsaveis = useMemo(() => {
+    const m = new Map();
+    for (const c of contatos) if (c.respVendedorId) m.set(c.respVendedorId, { id: c.respVendedorId, nome: c.respNome });
+    return [...m.values()];
+  }, [contatos]);
 
   const filtrados = useMemo(() => {
+    let arr = contatos;
     const t = busca.toLowerCase().trim();
-    if (!t) return contatos;
-    return contatos.filter((c) => [c.nome, c.endereco, c.categoria].some((v) => (v || "").toLowerCase().includes(t)));
-  }, [contatos, busca]);
+    if (t) arr = arr.filter((c) => [c.nome, c.endereco, c.categoria].some((v) => (v || "").toLowerCase().includes(t)));
+    if (filtroSegmento) arr = arr.filter((c) => c.categoria === filtroSegmento);
+    if (filtroLista) arr = arr.filter((c) => (c.listas || []).some((l) => l.id === filtroLista));
+    if (filtroResponsavel) arr = arr.filter((c) => c.respVendedorId === filtroResponsavel);
+    return arr;
+  }, [contatos, busca, filtroSegmento, filtroLista, filtroResponsavel]);
+
+  const todosSelecionados = filtrados.length > 0 && filtrados.every((c) => selecionados.has(c.id));
+  const toggleTodos = () => {
+    if (todosSelecionados) setSelecionados(new Set());
+    else setSelecionados(new Set(filtrados.map((c) => c.id)));
+  };
+  const toggleUm = (id) => setSelecionados((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   if (loading) return <Loading />;
 
@@ -609,57 +637,124 @@ function AbaContatos({ aviso, listas }) {
 
   return (
     <>
-      <div className="vx-disp" style={{ fontSize: 17, marginBottom: 4 }}>Meus contatos</div>
-      <p className="vx-mut" style={{ margin: "0 0 14px", fontSize: 13 }}>Minha carteira de contatos comerciais.</p>
+      <div className="vx-row" style={{ marginBottom: 4 }}>
+        <div>
+          <div className="vx-disp" style={{ fontSize: 17 }}>Meus contatos</div>
+          <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Minha carteira de contatos comerciais.</p>
+        </div>
+        {selecionados.size > 0 && (
+          <span className="vx-mut" style={{ fontSize: 12 }}>{selecionados.size} selecionado(s)</span>
+        )}
+      </div>
 
-      <div style={{ position: "relative", marginBottom: 14 }}>
-        <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
-        <input className="vx-input" style={{ paddingLeft: 36 }} placeholder="Buscar por nome, segmento ou localização..."
-          value={busca} onChange={(e) => setBusca(e.target.value)} />
+      {/* Filtros */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14, marginTop: 12 }}>
+        <div style={{ position: "relative", flex: "1 1 200px" }}>
+          <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
+          <input className="vx-input" style={{ paddingLeft: 36 }} placeholder="Buscar por nome, segmento ou localização..."
+            value={busca} onChange={(e) => setBusca(e.target.value)} />
+        </div>
+        <select className="vx-input" style={{ flex: "0 0 auto", minWidth: 140 }} value={filtroSegmento} onChange={(e) => setFiltroSegmento(e.target.value)}>
+          <option value="">Segmento</option>
+          {segmentos.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {listasUnicas.length > 0 && (
+          <select className="vx-input" style={{ flex: "0 0 auto", minWidth: 140 }} value={filtroLista} onChange={(e) => setFiltroLista(e.target.value)}>
+            <option value="">Lista / Pasta</option>
+            {listasUnicas.map((l) => <option key={l.id} value={l.id}>{l.pastaNome} › {l.nome}</option>)}
+          </select>
+        )}
+        {responsaveis.length > 0 && (
+          <select className="vx-input" style={{ flex: "0 0 auto", minWidth: 140 }} value={filtroResponsavel} onChange={(e) => setFiltroResponsavel(e.target.value)}>
+            <option value="">Responsável</option>
+            {responsaveis.map((r) => <option key={r.id} value={r.id}>{r.nome || "Sem nome"}</option>)}
+          </select>
+        )}
       </div>
 
       <div className="vx-table-wrap">
         <table className="vx-table">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input type="checkbox" checked={todosSelecionados} onChange={toggleTodos}
+                  style={{ accentColor: "var(--brand)", width: 16, height: 16 }} />
+              </th>
               <th>Empresa</th>
               <th>Segmento</th>
               <th>Localização</th>
               <th>Telefone</th>
-              <th>Website</th>
+              <th>Responsável</th>
             </tr>
           </thead>
           <tbody>
             {filtrados.map((c) => (
-              <tr key={c.id} onClick={() => setDrawer(c)} style={{ cursor: "pointer" }}>
+              <tr key={c.id} onClick={() => setDrawer(c)} style={{ cursor: "pointer", background: selecionados.has(c.id) ? "var(--brand-50)" : undefined }}>
+                <td onClick={(e) => e.stopPropagation()}>
+                  <input type="checkbox" checked={selecionados.has(c.id)} onChange={() => toggleUm(c.id)}
+                    style={{ accentColor: "var(--brand)", width: 16, height: 16 }} />
+                </td>
                 <td style={{ fontWeight: 600 }}>{c.nome || "—"}</td>
-                <td>{(c.categoria || "—").replace(/_/g, " ")}</td>
-                <td>{c.endereco || "—"}</td>
+                <td>{c.categoria || "—"}</td>
+                <td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.endereco || "—"}</td>
                 <td>{c.telefone ? <a href={`tel:${c.telefone}`} style={{ color: "var(--brand)", textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{c.telefone}</a> : "—"}</td>
-                <td>{c.site ? <a href={c.site} target="_blank" rel="noopener noreferrer" style={{ color: "var(--brand)", textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{c.site.replace(/^https?:\/\//, "").slice(0, 30)}</a> : "—"}</td>
+                <td>
+                  {c.respVendedorId ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      {c.respFoto
+                        ? <img src={c.respFoto} alt="" style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover" }} />
+                        : <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "var(--brand)" }}>{(c.respNome || "?")[0].toUpperCase()}</div>
+                      }
+                      <span style={{ fontSize: 12.5 }}>{c.respNome || "—"}</span>
+                    </div>
+                  ) : <span className="vx-mut" style={{ fontSize: 12 }}>—</span>}
+                </td>
               </tr>
             ))}
-            {!filtrados.length && <tr><td colSpan={5} style={{ textAlign: "center" }} className="vx-mut">Nenhum contato encontrado.</td></tr>}
+            {!filtrados.length && <tr><td colSpan={6} style={{ textAlign: "center" }} className="vx-mut">Nenhum contato encontrado.</td></tr>}
           </tbody>
         </table>
       </div>
 
-      {drawer && <DrawerContato contato={drawer} onClose={() => setDrawer(null)} listas={listas} aviso={aviso} />}
+      {drawer && <DrawerContato contato={drawer} onClose={() => { setDrawer(null); recarregar(); }} listas={listas} aviso={aviso} />}
     </>
   );
 }
 
 /* ── Drawer contato ──────────────────────────────────────────────────────── */
 function DrawerContato({ contato: c, onClose, listas, aviso }) {
+  const [historico, setHistorico] = useState([]);
+  const [novoTexto, setNovoTexto] = useState("");
+  const [tipoNota, setTipoNota] = useState("nota");
+  const [loadingHist, setLoadingHist] = useState(true);
+
+  useEffect(() => {
+    api(`/loja-leads/contato/${c.id}/historico`).then((r) => { setHistorico(r?.historico || []); setLoadingHist(false); });
+  }, [c.id]);
+
   const addToList = async (listaId) => {
     const r = await api("/loja-leads/listas/adicionar", { listaId, contatoId: c.id });
     if (r?.error) return aviso?.(r.error);
     aviso?.("Contato adicionado à lista.");
   };
+
+  const salvarNota = async () => {
+    if (!novoTexto.trim()) return;
+    const r = await api(`/loja-leads/contato/${c.id}/historico`, { tipo: tipoNota, texto: novoTexto.trim() });
+    if (r?.id) {
+      setHistorico((prev) => [{ ...r, tipo: tipoNota, texto: novoTexto.trim(), vendedorNome: "", vendedorFoto: "" }, ...prev]);
+      setNovoTexto("");
+      aviso?.("Registro adicionado ao histórico.");
+    }
+  };
+
+  const fmtData = (ts) => ts ? new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+  const TIPOS_HIST = { nota: "Nota", ligacao: "Ligação", email: "E-mail", reuniao: "Reunião", visita: "Visita", proposta: "Proposta" };
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", justifyContent: "flex-end" }}>
       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.3)" }} onClick={onClose} />
-      <div style={{ position: "relative", width: 400, maxWidth: "90vw", height: "100%", background: "var(--surface-solid)", overflowY: "auto", padding: "20px 18px", boxShadow: "var(--shadow-pop)" }}>
+      <div style={{ position: "relative", width: 440, maxWidth: "90vw", height: "100%", background: "var(--surface-solid)", overflowY: "auto", padding: "20px 18px", boxShadow: "var(--shadow-pop)" }}>
         <div className="vx-row" style={{ marginBottom: 16 }}>
           <div className="vx-disp" style={{ fontSize: 17 }}>Detalhes do contato</div>
           <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onClose}><X size={16} /></button>
@@ -668,7 +763,7 @@ function DrawerContato({ contato: c, onClose, listas, aviso }) {
           <div className="vx-empty-icon" style={{ width: 42, height: 42, borderRadius: 12 }}><Building2 size={20} /></div>
           <div>
             <div style={{ fontWeight: 700 }}>{c.nome || "Sem nome"}</div>
-            {c.categoria && <span className="vx-mut" style={{ fontSize: 12 }}>{c.categoria.replace(/_/g, " ")}</span>}
+            {c.categoria && <span className="vx-mut" style={{ fontSize: 12 }}>{c.categoria}</span>}
           </div>
         </div>
         <div className="vx-grid" style={{ gap: 6 }}>
@@ -677,6 +772,36 @@ function DrawerContato({ contato: c, onClose, listas, aviso }) {
           {c.site && <InfoRow icon={<Globe size={14} />} label="Website" value={c.site.replace(/^https?:\/\//, "")} href={c.site} />}
           {c.rating > 0 && <InfoRow icon={<Star size={14} />} label="Google" value={`${c.rating.toFixed(1)} (${c.totalAvaliacoes || 0} avaliações)`} />}
         </div>
+
+        {/* Listas onde está */}
+        {(c.listas || []).length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <span className="vx-label">Listas</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+              {c.listas.map((l) => (
+                <span key={l.id} style={{ fontSize: 11.5, padding: "3px 10px", borderRadius: 20, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500 }}>
+                  {l.pastaNome} › {l.nome}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Responsável */}
+        {c.respVendedorId && (
+          <div style={{ marginTop: 16 }}>
+            <span className="vx-label">Profissional responsável</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+              {c.respFoto
+                ? <img src={c.respFoto} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                : <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, color: "var(--brand)" }}>{(c.respNome || "?")[0].toUpperCase()}</div>
+              }
+              <span style={{ fontWeight: 600, fontSize: 13 }}>{c.respNome}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Adicionar a lista */}
         {listas.length > 0 && (
           <div style={{ marginTop: 18 }}>
             <span className="vx-label">Adicionar a uma lista</span>
@@ -689,6 +814,46 @@ function DrawerContato({ contato: c, onClose, listas, aviso }) {
             </div>
           </div>
         )}
+
+        {/* Histórico */}
+        <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+          <span className="vx-label">Histórico de interações</span>
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <select className="vx-input" style={{ flex: "0 0 auto", minWidth: 100, fontSize: 12.5 }} value={tipoNota} onChange={(e) => setTipoNota(e.target.value)}>
+              {Object.entries(TIPOS_HIST).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <input className="vx-input" style={{ flex: 1, fontSize: 12.5 }} placeholder="Adicionar registro..." value={novoTexto} onChange={(e) => setNovoTexto(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && salvarNota()} />
+            <button className="vx-btn vx-btn-sm" onClick={salvarNota} disabled={!novoTexto.trim()} style={{ flexShrink: 0 }}>
+              <Plus size={14} />
+            </button>
+          </div>
+          {loadingHist ? <div className="vx-mut" style={{ fontSize: 12, marginTop: 8 }}>Carregando...</div> : (
+            <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+              {historico.length === 0 && <div className="vx-mut" style={{ fontSize: 12 }}>Nenhum registro ainda.</div>}
+              {historico.map((h) => (
+                <div key={h.id} style={{ display: "flex", gap: 8, fontSize: 12.5, padding: "8px 10px", borderRadius: 8, background: "var(--surface-2)" }}>
+                  <div style={{ flex: "0 0 auto", marginTop: 2 }}>
+                    {h.vendedorFoto
+                      ? <img src={h.vendedorFoto} alt="" style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} />
+                      : <div style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: "var(--brand)" }}>{(h.vendedorNome || "?")[0].toUpperCase()}</div>
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                      <span style={{ fontWeight: 600 }}>{h.vendedorNome || "Sistema"}</span>
+                      <span className="vx-mut" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{fmtData(h.criadoEm)}</span>
+                    </div>
+                    <div style={{ marginTop: 2 }}>
+                      <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 8, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500, marginRight: 6 }}>{TIPOS_HIST[h.tipo] || h.tipo}</span>
+                      {h.texto}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

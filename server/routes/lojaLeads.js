@@ -8,6 +8,7 @@ import {
   adminResumo, adminAtualizarPreco, adminListarCiclos,
   vincularListaCampanha, desvincularLista, listarVinculosDaLista,
   listarVinculosDaCampanha, sincronizarVinculosAutomaticos, indicadoresLista,
+  historicoContato, adicionarHistorico, atribuirResponsavel, removerResponsavel,
 } from "../services/lojaLeads.js";
 
 const router = Router();
@@ -85,6 +86,41 @@ router.get("/loja-leads/consumo", (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
   res.json(resumoConsumo(ent.entityId));
+});
+
+// ── Histórico do contato ────────────────────────────────────────────────────
+router.get("/loja-leads/contato/:contatoId/historico", (req, res) => {
+  const ent = entityDe(req);
+  if (!ent) return res.status(403).json({ error: "Acesso negado." });
+  res.json({ historico: historicoContato(req.params.contatoId, ent.entityId) });
+});
+
+router.post("/loja-leads/contato/:contatoId/historico", (req, res) => {
+  const ent = entityDe(req);
+  if (!ent) return res.status(403).json({ error: "Acesso negado." });
+  const { tipo, texto } = req.body || {};
+  if (!texto?.trim()) return res.status(400).json({ error: "Informe o texto." });
+  const vendedorId = req.user?.role === "vendedor" ? req.user.entityId : null;
+  const vendedorNome = req.user?.nome || "";
+  const vendedorFoto = req.user?.foto || "";
+  const r = adicionarHistorico(req.params.contatoId, ent.entityId, { vendedorId, vendedorNome, vendedorFoto, tipo, texto: texto.trim() });
+  res.json(r);
+});
+
+// ── Responsável pelo contato ────────────────────────────────────────────────
+router.post("/loja-leads/contato/:contatoId/responsavel", (req, res) => {
+  const ent = entityDe(req);
+  if (!ent) return res.status(403).json({ error: "Acesso negado." });
+  const { vendedorId, vendedorNome, vendedorFoto } = req.body || {};
+  if (!vendedorId) return res.status(400).json({ error: "Informe o profissional." });
+  const r = atribuirResponsavel(req.params.contatoId, ent.entityId, { vendedorId, vendedorNome, vendedorFoto });
+  res.json(r);
+});
+
+router.delete("/loja-leads/contato/:contatoId/responsavel", (req, res) => {
+  const ent = entityDe(req);
+  if (!ent) return res.status(403).json({ error: "Acesso negado." });
+  res.json(removerResponsavel(req.params.contatoId, ent.entityId));
 });
 
 // ── Pastas ──────────────────────────────────────────────────────────────────

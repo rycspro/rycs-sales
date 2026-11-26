@@ -61,6 +61,30 @@ db.exec(`
     FOREIGN KEY (contatoId) REFERENCES loja_leads_contatos(id)
   );
 
+  CREATE TABLE IF NOT EXISTS loja_leads_historico (
+    id TEXT PRIMARY KEY,
+    contatoId TEXT NOT NULL,
+    entityId TEXT NOT NULL,
+    vendedorId TEXT,
+    vendedorNome TEXT DEFAULT '',
+    vendedorFoto TEXT DEFAULT '',
+    tipo TEXT DEFAULT 'nota',
+    texto TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (contatoId) REFERENCES loja_leads_contatos(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_loja_hist_contato ON loja_leads_historico(contatoId, criadoEm);
+
+  CREATE TABLE IF NOT EXISTS loja_leads_responsavel (
+    contatoId TEXT NOT NULL,
+    entityId TEXT NOT NULL,
+    vendedorId TEXT NOT NULL,
+    vendedorNome TEXT DEFAULT '',
+    vendedorFoto TEXT DEFAULT '',
+    atribuidoEm INTEGER NOT NULL,
+    PRIMARY KEY (contatoId, entityId)
+  );
+
   CREATE TABLE IF NOT EXISTS loja_leads_consumo (
     id TEXT PRIMARY KEY,
     entityId TEXT NOT NULL,
@@ -283,12 +307,49 @@ export function revelarContato(entityId, entityRole, contatoId) {
 
 // ── Contatos já revelados ───────────────────────────────────────────────────
 export function contatosRevelados(entityId) {
-  return db.prepare(`
-    SELECT c.* FROM loja_leads_contatos c
+  const rows = db.prepare(`
+    SELECT c.*, r.criadoEm AS reveladoEm,
+      resp.vendedorId AS respVendedorId, resp.vendedorNome AS respNome, resp.vendedorFoto AS respFoto
+    FROM loja_leads_contatos c
     JOIN loja_leads_consumo r ON r.contatoId = c.id
+    LEFT JOIN loja_leads_responsavel resp ON resp.contatoId = c.id AND resp.entityId = r.entityId
     WHERE r.entityId = ?
     ORDER BY r.criadoEm DESC
   `).all(entityId);
+  for (const row of rows) {
+    const ls = db.prepare(`
+      SELECT l.id, l.nome, p.nome AS pastaNome FROM loja_leads_lista_contatos lc
+      JOIN loja_leads_listas l ON l.id = lc.listaId
+      JOIN loja_leads_pastas p ON p.id = l.pastaId
+      WHERE lc.contatoId = ? AND l.entityId = ?
+    `).all(row.id, entityId);
+    row.listas = ls;
+  }
+  return rows;
+}
+
+export function historicoContato(contatoId, entityId) {
+  return db.prepare("SELECT * FROM loja_leads_historico WHERE contatoId = ? AND entityId = ? ORDER BY criadoEm DESC").all(contatoId, entityId);
+}
+
+export function adicionarHistorico(contatoId, entityId, { vendedorId, vendedorNome, vendedorFoto, tipo, texto }) {
+  const id = uid();
+  const ts = agora();
+  db.prepare("INSERT INTO loja_leads_historico (id, contatoId, entityId, vendedorId, vendedorNome, vendedorFoto, tipo, texto, criadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .run(id, contatoId, entityId, vendedorId || null, vendedorNome || "", vendedorFoto || "", tipo || "nota", texto || "", ts);
+  return { id, criadoEm: ts };
+}
+
+export function atribuirResponsavel(contatoId, entityId, { vendedorId, vendedorNome, vendedorFoto }) {
+  const ts = agora();
+  db.prepare("INSERT OR REPLACE INTO loja_leads_responsavel (contatoId, entityId, vendedorId, vendedorNome, vendedorFoto, atribuidoEm) VALUES (?, ?, ?, ?, ?, ?)")
+    .run(contatoId, entityId, vendedorId, vendedorNome || "", vendedorFoto || "", ts);
+  return { ok: true };
+}
+
+export function removerResponsavel(contatoId, entityId) {
+  db.prepare("DELETE FROM loja_leads_responsavel WHERE contatoId = ? AND entityId = ?").run(contatoId, entityId);
+  return { ok: true };
 }
 
 // ── Consumo do período ──────────────────────────────────────────────────────
