@@ -164,7 +164,7 @@ export default function PainelEmpresa({ emp, db, up, aviso, irParaCampanhas, vis
 
       {financeiro?.extrato?.length > 0 && <div className="vx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="vx-disp" style={{ fontSize: 17, marginBottom: 10 }}>Extrato operacional</div>
-        {financeiro.extrato.slice(0, 8).map((m) => <div key={m.id} className="vx-row" style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}><div><b>{({ deposito: "Depósito", reserva: "Reserva de tarefa", estorno_reserva: "Reserva liberada", liquidacao: "Tarefa paga" })[m.tipo] || m.tipo}</b><div className="vx-mut" style={{ fontSize: 11.5 }}>{dataCurta(m.criadoEm)}</div></div><b className="vx-mono" style={{ color: m.valor < 0 ? "var(--red)" : "var(--brand)" }}>{money(m.valor)}</b></div>)}
+        {financeiro.extrato.slice(0, 8).map((m) => <div key={m.id} className="vx-row" style={{ padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}><div><b>{({ deposito: "Depósito", reserva: "Reserva de tarefa", reserva_campanha: "Reserva de campanha", estorno_reserva: "Reserva liberada", liberacao_campanha: "Verba devolvida", liquidacao: "Tarefa paga" })[m.tipo] || m.tipo}</b><div className="vx-mut" style={{ fontSize: 11.5 }}>{dataCurta(m.criadoEm)}</div></div><b className="vx-mono" style={{ color: m.valor < 0 ? "var(--red)" : "var(--brand)" }}>{money(m.valor)}</b></div>)}
       </div>}
 
     </>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, Filter, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
+import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, Filter, GitBranch, LayoutGrid, List, Lock, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, ShieldCheck, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch, apiDelete } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -9,6 +9,7 @@ import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
 import CampaignsDashboard from "./CampaignsDashboard.jsx";
 import CampaignDetail from "./CampaignDetail.jsx";
+import AbastecerCaixa from "./AbastecerCaixa.jsx";
 import { MODELOS_TRABALHO, STATUS_CAMPANHA_V2, OBJETIVOS_UI, diagnosticoCampanha, migrarCampanhaAntiga } from "../../../shared/campaignEngine.js";
 import { FUNCOES } from "../../../shared/funcoes.js";
 
@@ -721,6 +722,8 @@ const novaCampanha = (emp) => ({
 
 export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtroData, filtroBar, bloqueado, irParaPlano }) {
   const [popupPlano, setPopupPlano] = useState(null); // null | "sem-plano" (só publicação exige plano)
+  const [popupVerba, setPopupVerba] = useState(null); // null | { id, verba, disponivel, faltante, campanhaTitulo }
+  const [publicando, setPublicando] = useState(false);
   const campanhasBase = (db.campaigns || []).filter((c) => c.companyId === emp.id);
   const campanhas = (() => {
     if (!filtroData) return campanhasBase;
@@ -779,17 +782,42 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     setAlterado(false);removerArmazenado(`rycs-campanha-${emp.id}`);
     return r.id || existente.id;
   };
+  const executarPublicacao = async (id, dadosCampanha) => {
+    setPublicando(true);
+    const r = await api(`/campaigns/${id}/status`, { status: "ativa" });
+    setPublicando(false);
+    if (!r || r.error) {
+      if (r?.acao === "adicionar-saldo") {
+        setPopupVerba({ id, verba: r.verba, disponivel: r.disponivel, faltante: r.faltante, campanhaTitulo: dadosCampanha?.titulo || campanha.titulo });
+        return;
+      }
+      return aviso(r?.pendencias?.join(" · ") || r?.error || "Não foi possível publicar.");
+    }
+    up((d) => ({ campaigns: d.campaigns.map((c) => c.id === id ? { ...c, ...dadosCampanha, status: "ativa" } : c) }));
+    setEdicao((c) => c ? { ...c, status: "ativa" } : c);
+    setPopupVerba(null);
+    aviso("Campanha publicada. A verba foi reservada.");
+    recarregar?.();
+  };
+
   const mudarStatus = async (status) => {
-    // Publicar exige plano ativo; criar/salvar rascunho não.
     if (status === "ativa" && bloqueado) { setPopupPlano("sem-plano"); return; }
     const id = existente?.id || await salvar();
     if (!id) return;
     if (existente) await apiPatch(`/campaigns/${id}`, campanha);
+    if (status === "ativa") {
+      const cv = await api(`/campaigns/${id}/check-verba`);
+      if (cv?.faltante > 0) {
+        setPopupVerba({ id, verba: cv.verba, disponivel: cv.disponivel, faltante: cv.faltante, campanhaTitulo: campanha.titulo });
+        return;
+      }
+      return executarPublicacao(id, campanha);
+    }
     const r = await api(`/campaigns/${id}/status`, { status });
     if (!r || r.error) return aviso(r?.pendencias?.join(" · ") || r?.error || "Não foi possível alterar a campanha.");
     up((d) => ({ campaigns: d.campaigns.map((c) => c.id === id ? { ...c, ...campanha, status } : c) }));
     setEdicao((c) => c ? { ...c, status } : c);
-    aviso(status === "ativa" ? "Campanha publicada." : "Campanha pausada.");
+    aviso(status === "pausada" ? "Campanha pausada." : "Status atualizado.");
   };
   const adicionarModulo = () => set("treinamento", [...(campanha.treinamento || []), { id: `mod-${Date.now()}`, titulo: "", conteudo: "" }]);
   const decidirCandidatura = async (app, status) => {
@@ -811,6 +839,73 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
         </p>
         <button className="vx-btn vx-btn-primary vx-btn-block" onClick={() => { setPopupPlano(null); irParaPlano?.(); }}>Ver planos</button>
         <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupPlano(null)}>Agora não</button>
+      </div>
+    </div>
+  );
+
+  const popupVerbaModal = popupVerba && (
+    <div onClick={() => setPopupVerba(null)} style={{ position: "fixed", inset: 0, zIndex: 130, background: "rgba(248,250,252,.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 50px rgba(0,0,0,.14)", width: "100%", maxWidth: 480, padding: "28px 26px", maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ width: 52, height: 52, borderRadius: "50%", background: popupVerba.faltante > 0 ? "rgba(245,158,11,0.1)" : "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+          {popupVerba.faltante > 0 ? <Wallet size={22} color="#f59e0b" /> : <ShieldCheck size={22} color="var(--brand)" />}
+        </div>
+        <h3 className="vx-disp" style={{ margin: "0 0 6px", fontSize: 18, textAlign: "center" }}>
+          {popupVerba.faltante > 0 ? "Confirme a verba da campanha" : "Confirmar verba e publicar"}
+        </h3>
+        <p className="vx-mut" style={{ margin: "0 0 16px", fontSize: 13.5, lineHeight: 1.6, textAlign: "center" }}>
+          {popupVerba.campanhaTitulo}
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+          <div className="vx-row" style={{ padding: "10px 14px", borderRadius: 10, background: "var(--surface-2)" }}>
+            <span className="vx-mut" style={{ fontSize: 13 }}>Verba da campanha</span>
+            <b className="vx-mono" style={{ fontSize: 14 }}>{money(popupVerba.verba)}</b>
+          </div>
+          <div className="vx-row" style={{ padding: "10px 14px", borderRadius: 10, background: "var(--surface-2)" }}>
+            <span className="vx-mut" style={{ fontSize: 13 }}>Saldo disponível</span>
+            <b className="vx-mono" style={{ fontSize: 14, color: popupVerba.faltante > 0 ? "var(--red, #dc2626)" : "var(--brand)" }}>{money(popupVerba.disponivel)}</b>
+          </div>
+          {popupVerba.faltante > 0 && (
+            <div className="vx-row" style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#f59e0b" }}>Valor faltante</span>
+              <b className="vx-mono" style={{ fontSize: 14, color: "#f59e0b" }}>{money(popupVerba.faltante)}</b>
+            </div>
+          )}
+        </div>
+
+        {popupVerba.faltante > 0 ? (
+          <>
+            <div style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 12, lineHeight: 1.6 }}>
+              Adicione pelo menos <b className="vx-mono">{money(popupVerba.faltante)}</b> ao caixa para publicar esta campanha. Após a confirmação do pagamento, clique em <b>Publicar</b>.
+            </div>
+            <AbastecerCaixa emp={emp} db={db} up={up} aviso={aviso} />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button className="vx-btn vx-btn-primary" style={{ flex: 1 }} disabled={publicando} onClick={async () => {
+                const cv = await api(`/campaigns/${popupVerba.id}/check-verba`);
+                if (cv?.faltante > 0) {
+                  setPopupVerba((p) => ({ ...p, verba: cv.verba, disponivel: cv.disponivel, faltante: cv.faltante }));
+                  return aviso("Saldo ainda insuficiente. Aguarde a confirmação do pagamento.");
+                }
+                executarPublicacao(popupVerba.id, campanha);
+              }}>
+                <Rocket size={14} /> {publicando ? "Publicando…" : "Adicionar saldo e publicar"}
+              </button>
+            </div>
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => { setPopupVerba(null); aviso("Campanha mantida como rascunho."); }}>
+              Salvar como rascunho
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 16, lineHeight: 1.6 }}>
+              A verba será reservada integralmente no caixa da empresa. Enquanto a campanha estiver ativa, esse valor não poderá ser usado em outras campanhas.
+            </div>
+            <button className="vx-btn vx-btn-primary vx-btn-block" disabled={publicando} onClick={() => executarPublicacao(popupVerba.id, campanha)}>
+              <ShieldCheck size={14} /> {publicando ? "Publicando…" : "Confirmar verba e publicar"}
+            </button>
+            <button className="vx-btn vx-btn-block" style={{ marginTop: 8 }} onClick={() => setPopupVerba(null)}>Agora não</button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -883,10 +978,18 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
 
   // Pausar/Retomar a partir do card — reutiliza o mesmo endpoint de status do editor.
   const mudarStatusCampanha = async (c, status) => {
+    if (status === "ativa") {
+      const cv = await api(`/campaigns/${c.id}/check-verba`);
+      if (cv?.faltante > 0) {
+        setPopupVerba({ id: c.id, verba: cv.verba, disponivel: cv.disponivel, faltante: cv.faltante, campanhaTitulo: c.titulo });
+        return;
+      }
+      return executarPublicacao(c.id, c);
+    }
     const r = await api(`/campaigns/${c.id}/status`, { status });
     if (!r || r.error) return aviso(r?.pendencias?.join(" · ") || r?.error || "Não foi possível alterar a campanha.");
     up((d) => ({ campaigns: d.campaigns.map((x) => x.id === c.id ? { ...x, status } : x) }));
-    aviso(status === "ativa" ? "Campanha retomada." : status === "pausada" ? "Campanha pausada." : "Campanha atualizada.");
+    aviso(status === "pausada" ? "Campanha pausada." : "Campanha atualizada.");
   };
 
   const abrirEditor = (c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("editor"); };
@@ -912,6 +1015,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       onToggleCandidaturas={alternarCandidaturas}
     />
     {popupPlanoModal}
+    {popupVerbaModal}
   </>;
 
   if (modo === "detalhe" && existente) return <>
@@ -923,6 +1027,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       onStatus={mudarStatus}
     />
     {popupPlanoModal}
+    {popupVerbaModal}
   </>;
 
   return <div className="vx-fade">
@@ -1013,5 +1118,6 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
     </section>
     <div style={{ display: "flex", gap: 9, marginTop: 16 }}><button className="vx-btn vx-btn-primary" onClick={salvar}><Save size={14} /> Salvar</button>{campanha.status === "ativa" ? <button className="vx-btn" onClick={() => mudarStatus("pausada")}><CirclePause size={14} /> Pausar</button> : <button className="vx-btn" disabled={!check.ok} onClick={() => mudarStatus("ativa")}><Rocket size={14} /> Publicar</button>}</div>
     {popupPlanoModal}
+    {popupVerbaModal}
   </div>;
 }

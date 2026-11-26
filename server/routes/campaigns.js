@@ -5,6 +5,7 @@ import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel, isPremium }
 import { dentroDoLimite } from "../../shared/planos.js";
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { empresaLiberada } from "../services/acessoEmpresa.js";
+import { reservarVerbaCampanha, liberarVerbaCampanha, posicaoEmpresa } from "../services/financeiro.js";
 import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
 import { obterOperacaoCampanha, obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
@@ -390,6 +391,20 @@ router.delete("/campaigns/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+router.post("/campaigns/:id/check-verba", (req, res) => {
+  const { role, entityId } = req.user;
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+  const parsed = parseCampaign(campaign);
+  const verba = Number(parsed.orcamento || 0);
+  const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(campaign.companyId);
+  const posicao = posicaoEmpresa(campaign.companyId);
+  const disponivel = posicao?.disponivel || 0;
+  const faltante = Math.max(0, verba - disponivel);
+  res.json({ verba, disponivel, faltante, saldo: posicao?.saldo || 0, reservado: posicao?.reservado || 0 });
+});
+
 router.post("/campaigns/:id/status", (req, res) => {
   const { role, entityId } = req.user;
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
@@ -400,7 +415,6 @@ router.post("/campaigns/:id/status", (req, res) => {
   if (!STATUS_CAMPANHA.includes(status)) return res.status(400).json({ error: "Status inválido" });
 
   if (status === "ativa") {
-    // Publicar exige plano ativo. Criar e salvar como rascunho é liberado.
     if (role === "empresa" && !empresaLiberada(campaign.companyId))
       return res.status(402).json({ error: "Ative um plano para publicar a campanha.", acao: "escolher-plano" });
     const empresa = db.prepare("SELECT * FROM companies WHERE id = ?").get(campaign.companyId);
@@ -411,16 +425,31 @@ router.post("/campaigns/:id/status", (req, res) => {
       .get(campaign.companyId, campaign.id).n;
     if (!isPremium(empresa) && !dentroDoLimite(empresa.assinatura, "campanhasAtivas", ativas))
       return res.status(422).json({ error: "Limite de campanhas ativas do plano atingido." });
-    if (!isPremium(empresa) && Number(parsed.orcamento) > saldoDisponivel(empresa))
-      return res.status(422).json({ error: "O orçamento da campanha supera o saldo disponível." });
+    const verba = Number(parsed.orcamento || 0);
+    if (verba > 0) {
+      const posicao = posicaoEmpresa(campaign.companyId);
+      if ((posicao?.disponivel || 0) < verba)
+        return res.status(422).json({ error: "Saldo insuficiente para cobrir a verba da campanha.", acao: "adicionar-saldo", verba, disponivel: posicao?.disponivel || 0, faltante: verba - (posicao?.disponivel || 0) });
+    }
   }
 
-  db.transaction(() => {
-    db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").run(status, campaign.id);
-    const tipo = status === "ativa" ? "CAMPAIGN_PUBLISHED" : status === "pausada" ? "CAMPAIGN_PAUSED" : status === "encerrada" ? "CAMPAIGN_CLOSED" : null;
-    if (tipo && status !== campaign.status) registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo, actorId: req.user.id, actorRole: role, source: "USER", dados: { statusAnterior: campaign.status, statusNovo: status } });
-  })();
-  res.json({ ok: true, status });
+  try {
+    db.transaction(() => {
+      if (status === "ativa") {
+        const verba = Number(parseCampaign(campaign).orcamento || 0);
+        if (verba > 0) reservarVerbaCampanha({ companyId: campaign.companyId, campaignId: campaign.id, valor: verba });
+      }
+      if ((status === "encerrada" || status === "cancelada") && (campaign.status === "ativa" || campaign.status === "pausada")) {
+        liberarVerbaCampanha({ companyId: campaign.companyId, campaignId: campaign.id });
+      }
+      db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").run(status, campaign.id);
+      const tipo = status === "ativa" ? "CAMPAIGN_PUBLISHED" : status === "pausada" ? "CAMPAIGN_PAUSED" : status === "encerrada" ? "CAMPAIGN_CLOSED" : null;
+      if (tipo && status !== campaign.status) registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo, actorId: req.user.id, actorRole: role, source: "USER", dados: { statusAnterior: campaign.status, statusNovo: status } });
+    })();
+    res.json({ ok: true, status });
+  } catch (err) {
+    res.status(422).json({ error: err.message });
+  }
 });
 
 router.post("/campaigns/:id/apply", (req, res) => {

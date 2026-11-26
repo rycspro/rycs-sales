@@ -10,7 +10,9 @@ import { ACOES } from "../../lib/constants.js";
 const MOVIMENTOS = {
   deposito: { nome: "Depósito", tom: "brand", sinal: "entrada" },
   reserva: { nome: "Reserva de ação", tom: "amber", sinal: "bloqueio" },
+  reserva_campanha: { nome: "Reserva de campanha", tom: "amber", sinal: "bloqueio" },
   estorno_reserva: { nome: "Reserva devolvida", tom: "muted", sinal: "liberação" },
+  liberacao_campanha: { nome: "Verba devolvida", tom: "muted", sinal: "liberação" },
   liquidacao: { nome: "Ação liberada", tom: "red", sinal: "saída" },
 };
 
@@ -119,8 +121,8 @@ export default function FinanceiroEmpresa({ emp, db, aviso }) {
 
       <div className="vx-grid vx-g3" style={{ marginTop: 16 }}>
         <Stat label="Disponível" value={money(posicao.disponivel)} Icon={Wallet} tone="brand" />
-        <Stat label="Reservado em ações" value={money(posicao.reservado)} Icon={Lock} tone="amber" />
-        <Stat label="Saldo em caixa" value={money(posicao.saldo)} Icon={Landmark} tone="muted" />
+        <Stat label="Reservado em campanhas" value={money(posicao.reservado)} Icon={Lock} tone="amber" />
+        <Stat label="Saldo total em caixa" value={money(posicao.saldo)} Icon={Landmark} tone="muted" />
       </div>
 
       <div className="vx-grid vx-g4" style={{ marginTop: 12 }}>

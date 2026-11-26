@@ -10,10 +10,12 @@ import { ACOES } from "../../lib/constants.js";
 
 // ── Catálogo de movimentos / status (mesma linguagem do restante da página) ────
 const MOV = {
-  deposito:        { nome: "Depósito via Pix",    entrada: true },
-  reserva:         { nome: "Reserva de saldo",    interna: true },
-  estorno_reserva: { nome: "Liberação de reserva",interna: true },
-  liquidacao:      { nome: "Pagamento de tarefa", entrada: false },
+  deposito:           { nome: "Depósito via Pix",       entrada: true },
+  reserva:            { nome: "Reserva de saldo",       interna: true },
+  reserva_campanha:   { nome: "Reserva de campanha",    interna: true },
+  estorno_reserva:    { nome: "Liberação de reserva",   interna: true },
+  liberacao_campanha: { nome: "Verba devolvida",        interna: true },
+  liquidacao:         { nome: "Pagamento de tarefa",    entrada: false },
 };
 
 const STATUS_MOV = {

@@ -117,6 +117,34 @@ export function liberarRetidosPorCiclo() {
   return { liberadas, valorTotal: dinheiro(total) };
 }
 
+export function reservarVerbaCampanha({ companyId, campaignId, valor }) {
+  const bruto = dinheiro(valor);
+  if (bruto <= 0) throw new Error("Verba inválida");
+  const posicao = posicaoEmpresa(companyId);
+  if (!posicao) throw new Error("Empresa não encontrada");
+  if (posicao.disponivel < bruto) throw new Error("Saldo insuficiente para reservar a verba da campanha");
+  const jaReservou = dinheiro(db.prepare("SELECT COALESCE(SUM(valor), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'reserva_campanha' AND dados LIKE ?").get(companyId, `%"campaignId":"${campaignId}"%`).t);
+  const jaLiberou = dinheiro(db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liberacao_campanha' AND dados LIKE ?").get(companyId, `%"campaignId":"${campaignId}"%`).t);
+  const reservadoAtual = dinheiro(jaReservou - jaLiberou);
+  const adicional = dinheiro(bruto - Math.max(0, reservadoAtual));
+  if (adicional <= 0) return posicaoEmpresa(companyId);
+  db.prepare("UPDATE companies SET saldoReservado = saldoReservado + ? WHERE id = ?").run(adicional, companyId);
+  registrar({ companyId, tipo: "reserva_campanha", valor: adicional, idempotencyKey: `campanha:${campaignId}:${Date.now()}`, dados: { campaignId } });
+  return posicaoEmpresa(companyId);
+}
+
+export function liberarVerbaCampanha({ companyId, campaignId }) {
+  const jaReservou = dinheiro(db.prepare("SELECT COALESCE(SUM(valor), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'reserva_campanha' AND dados LIKE ?").get(companyId, `%"campaignId":"${campaignId}"%`).t);
+  const jaLiberou = dinheiro(db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liberacao_campanha' AND dados LIKE ?").get(companyId, `%"campaignId":"${campaignId}"%`).t);
+  const jaGasto = dinheiro(db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liquidacao' AND submissionId IN (SELECT id FROM submissions WHERE campaignId = ?)").get(companyId, campaignId).t);
+  const reservado = dinheiro(Math.max(0, jaReservou - jaLiberou));
+  const liberar = dinheiro(Math.max(0, reservado - jaGasto));
+  if (liberar <= 0) return posicaoEmpresa(companyId);
+  db.prepare("UPDATE companies SET saldoReservado = MAX(0, saldoReservado - ?) WHERE id = ?").run(liberar, companyId);
+  registrar({ companyId, tipo: "liberacao_campanha", valor: -liberar, idempotencyKey: `campanha:${campaignId}:lib:${Date.now()}`, dados: { campaignId, jaGasto } });
+  return posicaoEmpresa(companyId);
+}
+
 export function registrarMovimento({ companyId = null, sellerId = null, submissionId = null, tipo, valor, idempotencyKey, dados }) {
   registrar({ companyId, sellerId, submissionId, tipo, valor, idempotencyKey, dados });
 }
