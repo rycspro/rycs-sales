@@ -164,8 +164,8 @@ docker run -d --name "$CN" --restart unless-stopped \
   -e CONFIG_SESSION_PHONE_NAME=Chrome \
   -e QRCODE_LIMIT=30 \
   -e TELEMETRY_ENABLED=false \
-  -e LOG_LEVEL=ERROR \
-  -e LOG_BAILEYS=error \
+  -e "LOG_LEVEL=ERROR,WARN,INFO,LOG" \
+  -e LOG_BAILEYS=info \
   "$IMAGE"
 echo "✓ Evolution API iniciada"
 
