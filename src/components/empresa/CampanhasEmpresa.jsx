@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
-import { api, apiPatch } from "../../lib/api.js";
+import { api, apiPatch, apiDelete } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import { campanhaPodeSerPublicada, saldoDisponivel } from "../../../shared/empresa.js";
 import { money } from "../../lib/utils.js";
@@ -271,6 +271,74 @@ function ToggleCandidaturas({ c, onToggle }) {
   );
 }
 
+// Etapas do wizard (espelham PASSOS de NovaCampanha) — para rotular a etapa
+// atual do rascunho no card.
+const PASSOS_WIZARD = ["Objetivo", "Estrutura", "Perfil profissional", "Ações & Remuneração", "Revisão"];
+
+// Progresso REAL do rascunho: proporção de configurações significativas já
+// preenchidas. Sem percentual fictício — cada item reflete um dado de verdade.
+function progressoRascunho(c) {
+  const checks = [
+    !!(c.titulo && c.titulo.trim() && c.titulo !== "Campanha sem título"),
+    !!(c.objetivoUI || c.objetivo),
+    !!c.modeloTrabalho,
+    !!c.funcao,
+    !!(c.publico && String(c.publico).trim()),
+    Array.isArray(c.canais) && c.canais.length > 0,
+    Array.isArray(c.acoesAtivas) && c.acoesAtivas.length > 0,
+    Object.values(c.tarefas || {}).some((v) => Number(v) > 0),
+    Number(c.orcamento) > 0,
+  ];
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
+function dataEdicao(c) {
+  const t = Number(c.atualizadoEm || c.criadoEm || 0);
+  if (!t) return "";
+  try { return new Date(t).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch { return ""; }
+}
+
+const nomeRascunho = (c) => (c.titulo && c.titulo.trim() && c.titulo !== "Campanha sem título") ? c.titulo : "Campanha sem título";
+
+function CampanhaRascunhoCard({ c, onContinuar, onExcluir, menu }) {
+  const pct = progressoRascunho(c);
+  const etapa = PASSOS_WIZARD[Number(c.passoWizard) || 0] || PASSOS_WIZARD[0];
+  const quando = dataEdicao(c);
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 16, display: "flex", flexDirection: "column", gap: 12, transition: "border-color .15s, box-shadow .15s" }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand-200)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(17,24,39,.05)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <StatusBadge status="rascunho" />
+        {menu}
+      </div>
+      <div onClick={() => onContinuar(c)} style={{ cursor: "pointer", flex: 1 }}>
+        <div style={{ fontSize: 15.5, fontWeight: 700, color: "var(--ink)", lineHeight: 1.3, letterSpacing: -0.2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{nomeRascunho(c)}</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", alignItems: "center", marginTop: 6 }}>
+          {c.funcao && <MetricChip icon={Users} label={FUNCAO_LABEL[c.funcao] || c.funcao.toUpperCase()} />}
+          <MetricChip icon={FileText} label={`Etapa: ${etapa}`} />
+        </div>
+      </div>
+      {/* Progresso real */}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>
+          <span>Progresso</span><span style={{ fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
+        </div>
+        <div style={{ height: 6, borderRadius: 999, background: "var(--surface-2)", overflow: "hidden" }}>
+          <div style={{ width: `${pct}%`, height: "100%", background: "var(--brand)", transition: "width .2s" }} />
+        </div>
+      </div>
+      {quando && <div style={{ fontSize: 11, color: "var(--muted)" }}>Última edição: {quando}</div>}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button className="vx-btn vx-btn-primary vx-btn-sm" style={{ flex: 1, justifyContent: "center" }} onClick={() => onContinuar(c)}>Continuar edição</button>
+        <button className="vx-btn vx-btn-sm" style={{ justifyContent: "center", whiteSpace: "nowrap", color: "var(--red)" }} onClick={() => onExcluir(c)}>
+          <Trash2 size={13} /> Excluir
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CampanhaCard({ c, s, onAbrir, onCandidaturas, onToggleCandidaturas, menu }) {
   return (
     <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 16, display: "flex", flexDirection: "column", gap: 12, transition: "border-color .15s, box-shadow .15s" }}
@@ -333,7 +401,7 @@ function CampanhaRow({ c, s, onAbrir, onCandidaturas, onToggleCandidaturas, menu
 
 const VISTA_KEY = "rycs-campanhas-vista";
 
-function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onArquivar, onExcluir, onToggleCandidaturas, onStatus, onCandidaturas, filtroBar }) {
+function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onArquivar, onExcluir, onToggleCandidaturas, onStatus, onCandidaturas, onContinuar, filtroBar }) {
   const [filtro, setFiltro] = useState("");
   const [filtroModelo, setFiltroModelo] = useState("");
   const [filtroFuncao, setFiltroFuncao] = useState("");
@@ -584,13 +652,17 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
       {visiveis.length > 0 && (vista === "grade" ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 12 }}>
           {visiveis.map((c) => (
-            <CampanhaCard key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} onToggleCandidaturas={onToggleCandidaturas} menu={menuDe(c)} />
+            c.status === "rascunho"
+              ? <CampanhaRascunhoCard key={c.id} c={c} onContinuar={onContinuar} onExcluir={onExcluir} menu={menuDe(c)} />
+              : <CampanhaCard key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} onToggleCandidaturas={onToggleCandidaturas} menu={menuDe(c)} />
           ))}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {visiveis.map((c) => (
-            <CampanhaRow key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} onToggleCandidaturas={onToggleCandidaturas} menu={menuDe(c)} />
+            c.status === "rascunho"
+              ? <CampanhaRascunhoCard key={c.id} c={c} onContinuar={onContinuar} onExcluir={onExcluir} menu={menuDe(c)} />
+              : <CampanhaRow key={c.id} c={c} s={statsDe(c, porCampanha)} onAbrir={onAbrir} onCandidaturas={onCandidaturas} onToggleCandidaturas={onToggleCandidaturas} menu={menuDe(c)} />
           ))}
         </div>
       ))}
@@ -630,6 +702,8 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
   // editor completo, com todos os campos à mão.
   const [criando, setCriando] = useState(false);
   const [criarComIA, setCriarComIA] = useState(false);
+  // Rascunho que está sendo retomado no wizard (Continuar edição). null = criação nova.
+  const [rascunhoEdicao, setRascunhoEdicao] = useState(null);
   const [modo, setModo] = useState(campanhas.length ? "lista" : "lista");
   const [recarregarDashboard, setRecarregarDashboard] = useState(0);
   const [selecionada, setSelecionada] = useState(campanhas[0]?.id || "nova");
@@ -708,15 +782,22 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       emp={emp}
       aviso={aviso}
       iniciarComIA={criarComIA}
-      aoCancelar={() => { setCriando(false); setCriarComIA(false); }}
+      rascunho={rascunhoEdicao}
+      aoCancelar={() => { setCriando(false); setCriarComIA(false); setRascunhoEdicao(null); recarregar?.(); }}
+      aoSair={() => { setCriando(false); setCriarComIA(false); setRascunhoEdicao(null); setModo("lista"); recarregar?.(); }}
       aoCriar={(criada) => {
-        up((d) => ({ campaigns: [...(d.campaigns || []), criada] }));
+        up((d) => {
+          const existe = (d.campaigns || []).some((c) => c.id === criada.id);
+          return { campaigns: existe ? d.campaigns.map((c) => c.id === criada.id ? { ...c, ...criada } : c) : [...(d.campaigns || []), criada] };
+        });
         setSelecionada(criada.id);
         setEdicao(criada);
         setCriando(false);
         setCriarComIA(false);
+        setRascunhoEdicao(null);
         setModo("editor");
         setRecarregarDashboard((n) => n + 1);
+        recarregar?.();
         aviso("Campanha criada como rascunho. Adicione o treinamento para publicar.");
       }}
     />
@@ -739,12 +820,28 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
   };
 
   const excluirCampanha = async (c) => {
-    if (!window.confirm(`Excluir "${c.titulo || "esta campanha"}"? Esta ação não pode ser desfeita.`)) return;
+    const ehRascunho = c.status === "rascunho";
+    const msg = ehRascunho
+      ? "Deseja excluir este rascunho? As configurações desta campanha serão removidas."
+      : `Excluir "${c.titulo || "esta campanha"}"? Esta ação não pode ser desfeita.`;
+    if (!window.confirm(msg)) return;
+    if (ehRascunho) {
+      // Rascunho é removido de fato; leads e materiais da biblioteca são preservados no backend.
+      const r = await apiDelete(`/campaigns/${c.id}`);
+      if (!r || r.error) return aviso(r?.error || "Não foi possível excluir o rascunho.");
+      up((d) => ({ campaigns: (d.campaigns || []).filter((x) => x.id !== c.id) }));
+      aviso("Rascunho excluído.");
+      return;
+    }
     const r = await api(`/campaigns/${c.id}/status`, { status: "cancelada" });
     if (!r || r.error) return aviso(r?.error || "Não foi possível excluir a campanha.");
     up((d) => ({ campaigns: d.campaigns.map((x) => x.id === c.id ? { ...x, status: "cancelada" } : x) }));
     aviso("Campanha excluída.");
   };
+
+  // Continuar edição de um rascunho: reabre o wizard carregando o registro
+  // existente (mesmo id, mesma etapa) — nunca cria uma campanha nova.
+  const continuarRascunho = (c) => { setRascunhoEdicao(c); setCriarComIA(false); setCriando(true); };
 
   // Pausar/Retomar a partir do card — reutiliza o mesmo endpoint de status do editor.
   const mudarStatusCampanha = async (c, status) => {
@@ -762,7 +859,8 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
       submissions={(db.submissions || []).filter((s) => s.companyId === emp.id)}
       filtroBar={filtroBar}
       onAbrir={(c) => { setSelecionada(c.id); setEdicao({ ...c }); setModo("detalhe"); }}
-      onEditar={abrirEditor}
+      onEditar={(c) => c.status === "rascunho" ? continuarRascunho(c) : abrirEditor(c)}
+      onContinuar={continuarRascunho}
       onCandidaturas={abrirEditor}
       onStatus={mudarStatusCampanha}
       onCriar={(ia) => {

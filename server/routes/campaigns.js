@@ -256,13 +256,13 @@ router.post("/campaigns", (req, res) => {
       "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
       "icpTipo", "versao", "processoAdmissao",
       "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas"];
+      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas", "passoWizard"];
     const v2Bool = ["temComissao", "remuneracaoCumulativa"];
     const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
       "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
       "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
       "selecaoLeadsFiltros"];
-    const v2Sets = []; const v2Vals = [];
+    const v2Sets = ["atualizadoEm = ?"]; const v2Vals = [criadoEm];
     for (const k of v2Plain) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k]); } }
     for (const k of v2Bool) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k] ? 1 : 0); } }
     for (const k of v2Json) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(JSON.stringify(req.body[k])); } }
@@ -290,7 +290,7 @@ router.patch("/campaigns/:id", (req, res) => {
     "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
     "temComissao", "remuneracaoCumulativa", "icpTipo", "versao", "processoAdmissao",
     "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-    "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica"];
+    "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica", "passoWizard"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
     "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos",
     "paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
@@ -316,8 +316,53 @@ router.patch("/campaigns/:id", (req, res) => {
     sets.push("paisesAceitos = ?"); vals.push(JSON.stringify(sanearPaisesAceitos(lista, paisEmpresa, alc)));
   }
   if (!sets.length) return res.status(400).json({ error: "Nenhum campo válido" });
+  // Toda atualização carimba a última edição — alimenta o "última edição" do
+  // card de rascunho e o indicador de salvamento automático.
+  sets.push("atualizadoEm = ?"); vals.push(agora());
   vals.push(req.params.id);
   db.prepare(`UPDATE campaigns SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+  res.json({ ok: true });
+});
+
+// Exclusão de rascunho. Só rascunhos podem ser apagados por aqui; campanhas
+// publicadas/encerradas seguem o fluxo de status (cancelada/arquivada). Remove
+// apenas vínculos exclusivos do rascunho (formas de ganho, links de materiais e
+// leads, candidaturas, eventos, versões) — os leads da empresa e os materiais
+// da biblioteca são preservados, pois só os vínculos são apagados, não a fonte.
+router.delete("/campaigns/:id", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId)
+    return res.status(403).json({ error: "Sem permissão" });
+  if (campaign.status !== "rascunho")
+    return res.status(409).json({ error: "Só rascunhos podem ser excluídos. Arquive a campanha publicada." });
+
+  // Apaga em tabela por tabela, tolerando ausência de alguma (bases antigas).
+  const apagarVinculos = (tabela, coluna = "campaignId") => {
+    try { db.prepare(`DELETE FROM ${tabela} WHERE ${coluna} = ?`).run(req.params.id); } catch { /* tabela inexistente nesta base */ }
+  };
+  try {
+    db.transaction(() => {
+      // Eventos de campanha são imutáveis por gatilho (trilha de auditoria). Para
+      // excluir um RASCUNHO (nunca publicado) o gatilho sai e volta dentro da
+      // mesma transação — mesmo padrão autorizado da exclusão de empresa
+      // (services/exclusaoEmpresa.js) e do reset do Beta. Rollback restaura tudo.
+      const gatilho = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'no_delete_campaign_events'").get();
+      if (gatilho) db.exec("DROP TRIGGER no_delete_campaign_events");
+      // Remove apenas vínculos exclusivos do rascunho. Os leads da empresa e os
+      // materiais da biblioteca são preservados — só os vínculos saem, não a fonte.
+      for (const t of ["formas_ganho", "materiais_campanhas", "campaign_leads", "campaign_contacts",
+        "campaign_versions", "campaign_events", "campaign_applications", "materiais_consultas",
+        "eventos_comerciais", "remuneracoes"]) apagarVinculos(t);
+      db.prepare("DELETE FROM campaigns WHERE id = ?").run(req.params.id);
+      if (gatilho) db.exec(gatilho.sql);
+    })();
+  } catch (err) {
+    console.error("[campaigns] falha ao excluir rascunho:", err.message);
+    return res.status(500).json({ error: "Não foi possível excluir o rascunho." });
+  }
   res.json({ ok: true });
 });
 

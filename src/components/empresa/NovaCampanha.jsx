@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation } from "lucide-react";
-import { api, API_URL } from "../../lib/api.js";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation, Cloud, CloudOff, LogOut } from "lucide-react";
+import { api, apiPatch, API_URL } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
 import { useI18n } from "../../lib/i18n.jsx";
@@ -141,14 +141,42 @@ function ChipToggle({ items, value, onChange, multi = false }) {
   );
 }
 
-export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarComIA = false }) {
+// Indicador discreto de salvamento automático, no cabeçalho da criação.
+function IndicadorSalvamento({ estado, onRetry }) {
+  if (estado === "idle") return <span />;
+  const mapa = {
+    salvando: { Icon: Loader, cor: "var(--text-2)", texto: "Salvando alterações…", spin: true },
+    salvo: { Icon: Cloud, cor: "var(--green, #16A34A)", texto: "Todas as alterações foram salvas", check: true },
+    erro: { Icon: AlertCircle, cor: "var(--red, #DC2626)", texto: "Não foi possível salvar" },
+    offline: { Icon: CloudOff, cor: "var(--amber, #F59E0B)", texto: "Sem conexão — alterações pendentes" },
+  };
+  const s = mapa[estado] || mapa.salvando;
+  const Icon = s.Icon;
+  return (
+    <span aria-live="polite" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: s.cor, whiteSpace: "nowrap" }}>
+      <Icon size={14} style={s.spin ? { animation: "spin 1s linear infinite" } : undefined} />
+      {s.check && <Check size={12} />}
+      {s.texto}
+      {estado === "erro" && <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: "2px 8px", fontSize: 12, color: "var(--brand)" }} onClick={onRetry}>Tentar novamente</button>}
+    </span>
+  );
+}
+
+export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarComIA = false, rascunho = null, aoSair }) {
   const { locale } = useI18n();
   const nome = nomeAssistente(locale);
   const chaveRascunho = `rycs-wizard-${emp.id}`;
-  const rascunhoSalvo = useRef(lerJson(chaveRascunho, null));
-  const [passo, _setPasso] = useState(rascunhoSalvo.current?.passo || 0);
+  // Ao continuar a edição de um rascunho existente (vindo do banco), ele é a
+  // fonte de verdade — ignora qualquer resquício em localStorage.
+  const rascunhoSalvo = useRef(rascunho ? null : lerJson(chaveRascunho, null));
+  const [passo, _setPasso] = useState(rascunho?.passoWizard ?? rascunhoSalvo.current?.passo ?? 0);
   const setPasso = (p) => { _setPasso(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const [campanha, setCampanha] = useState(rascunhoSalvo.current?.campanha || null);
+  const [campanha, setCampanha] = useState(rascunho || rascunhoSalvo.current?.campanha || null);
+  // id do registro persistente no banco (DRAFT). Existe desde a primeira
+  // interação significativa; é o mesmo id até a publicação (sem duplicar).
+  const [rascunhoId, setRascunhoId] = useState(rascunho?.id || null);
+  // idle | salvando | salvo | erro | offline
+  const [estadoSalvamento, setEstadoSalvamento] = useState(rascunho ? "salvo" : "idle");
   const [salvando, setSalvando] = useState(false);
   const [explicacao, setExplicacao] = useState("");
   const [gerandoTreinamento, setGerandoTreinamento] = useState(false);
@@ -170,9 +198,89 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
 
+  // ── Salvamento automático (fonte de verdade = banco) ────────────────────────
+  // O localStorage é apenas auxiliar de recuperação (fechamento abrupto); o
+  // registro DRAFT no banco é persistido a cada alteração relevante, para que a
+  // campanha nunca se perca ao sair da página antes de publicar.
+  const rascunhoIdRef = useRef(rascunhoId);
+  const campanhaRef = useRef(campanha);
+  const passoRef = useRef(passo);
+  const criandoRef = useRef(false);     // trava para não criar rascunhos duplicados
+  const pendenteRef = useRef(false);     // há alteração aguardando persistência
+  const seqRef = useRef(0);              // controle de versão: nº da requisição
+  const seqSalvoRef = useRef(0);         // última seq efetivamente confirmada
+  const debounceRef = useRef(null);
+  useEffect(() => { rascunhoIdRef.current = rascunhoId; }, [rascunhoId]);
+  useEffect(() => { campanhaRef.current = campanha; }, [campanha]);
+  useEffect(() => { passoRef.current = passo; }, [passo]);
+
+  // Monta o corpo enviado ao banco. Campos só-do-wizard (formas de ganho em
+  // rascunho, nome de operação, estado de upload) são ignorados pelo backend,
+  // então podem seguir sem risco; passoWizard carrega a etapa atual.
+  const montarPayloadRascunho = (c) => {
+    const { formasGanhoRascunho, nomeOperacao, uploadQueue: _uq, ...payload } = c || {};
+    return { ...payload, titulo: (c?.titulo || "").trim() || "Campanha sem título", passoWizard: passoRef.current };
+  };
+
+  const persistirRascunho = async () => {
+    const c = campanhaRef.current;
+    if (!c) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      pendenteRef.current = true;
+      setEstadoSalvamento("offline");
+      return;
+    }
+    // 1) Ainda não existe registro → cria uma única vez.
+    if (!rascunhoIdRef.current) {
+      if (criandoRef.current) { pendenteRef.current = true; return; }
+      criandoRef.current = true;
+      setEstadoSalvamento("salvando");
+      const r = await api("/campaigns", montarPayloadRascunho(campanhaRef.current));
+      criandoRef.current = false;
+      if (!r || r.error) { setEstadoSalvamento("erro"); return; }
+      rascunhoIdRef.current = r.id;
+      setRascunhoId(r.id);
+      seqSalvoRef.current = ++seqRef.current;
+      setEstadoSalvamento("salvo");
+      // Se algo mudou durante a criação, grava a versão mais recente.
+      if (pendenteRef.current) { pendenteRef.current = false; persistirRascunho(); }
+      return;
+    }
+    // 2) Atualização parcial — envia o estado atual completo; a última a sair
+    //    vence. Respostas atrasadas não revertem o indicador.
+    const seq = ++seqRef.current;
+    setEstadoSalvamento("salvando");
+    const r = await apiPatch(`/campaigns/${rascunhoIdRef.current}`, montarPayloadRascunho(campanhaRef.current));
+    if (!r || r.error) {
+      if (seq >= seqSalvoRef.current) setEstadoSalvamento("erro");
+      return;
+    }
+    if (seq > seqSalvoRef.current) {
+      seqSalvoRef.current = seq;
+      setEstadoSalvamento("salvo");
+    }
+  };
+
+  // Debounce de ~900ms para texto; qualquer alteração de campanha/passo reagenda.
   useEffect(() => {
-    if (campanha) gravarJson(chaveRascunho, { campanha, passo });
+    if (!campanha) return;
+    gravarJson(chaveRascunho, { campanha, passo }); // auxiliar de recuperação
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => { persistirRascunho(); }, 900);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campanha, passo, chaveRascunho]);
+
+  // Recuperação ao voltar a conexão: regrava o que ficou pendente offline.
+  useEffect(() => {
+    const aoVoltarOnline = () => { pendenteRef.current = false; persistirRascunho(); };
+    const aoCairOffline = () => setEstadoSalvamento("offline");
+    window.addEventListener("online", aoVoltarOnline);
+    window.addEventListener("offline", aoCairOffline);
+    return () => { window.removeEventListener("online", aoVoltarOnline); window.removeEventListener("offline", aoCairOffline); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const setNested = (k, sub, v) => setCampanha((c) => ({ ...c, [k]: { ...(c[k] || {}), [sub]: v } }));
 
   const vis = useMemo(() => campanha ? camposVisiveis(campanha) : {}, [campanha]);
@@ -275,38 +383,80 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     set("tarefas", tarefas);
   };
 
-  const criar = async () => {
-    if (!campanha?.titulo?.trim()) return aviso("Dê um título à campanha.");
-    setSalvando(true);
-    const { formasGanhoRascunho, nomeOperacao, ...payload } = campanha;
-    // Criar operação se necessário
-    if (payload.estruturaComercial === "operacao" && nomeOperacao?.trim()) {
-      const opR = await api("/operacoes", { nome: nomeOperacao.trim() });
-      if (opR?.id) payload.operacaoId = opR.id;
-    }
-    const r = await api("/campaigns", payload);
-    setSalvando(false);
-    if (!r || r.error) return aviso(r?.error || "Não foi possível criar a campanha.");
-    // Salvar formas de ganho configuradas no wizard
+  // Persiste formas de ganho e materiais vinculados ao id do rascunho. Chamado
+  // tanto ao finalizar quanto ao "Salvar e sair".
+  const gravarRelacionamentos = async (id, c) => {
+    const { formasGanhoRascunho } = c;
     if (formasGanhoRascunho?.length) {
       for (const fg of formasGanhoRascunho) {
-        if (fg.nome?.trim()) await api(`/campaigns/${r.id}/formas-ganho`, fg);
+        if (fg.nome?.trim()) await api(`/campaigns/${id}/formas-ganho`, fg);
       }
     }
-    // Vincular materiais à campanha
-    const mats = campanha.materiaisVinculados || [];
+    const mats = c.materiaisVinculados || [];
     if (mats.length) {
       const payload2 = mats.map((m, i) => ({
         materialId: m.id, categoria: m.categoria || "outros",
         obrigatoriedade: m.obrigatoriedade || "complementar", ordem: i,
       }));
-      await fetch(`${API_URL}/api/campaigns/${r.id}/materiais`, {
+      await fetch(`${API_URL}/api/campaigns/${id}/materiais`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ materiais: payload2 }), credentials: "include",
       });
     }
+  };
+
+  // Garante que o registro DRAFT existe e está atualizado no banco. Reutiliza o
+  // rascunho já criado pelo autosave — nunca cria uma campanha duplicada.
+  const garantirRascunhoPersistido = async (c) => {
+    const payload = montarPayloadRascunho(c);
+    // Cria operação se necessário (apenas uma vez).
+    if (c.estruturaComercial === "operacao" && c.nomeOperacao?.trim() && !c.operacaoId) {
+      const opR = await api("/operacoes", { nome: c.nomeOperacao.trim() });
+      if (opR?.id) payload.operacaoId = opR.id;
+    }
+    let id = rascunhoIdRef.current;
+    if (id) {
+      const r = await apiPatch(`/campaigns/${id}`, payload);
+      if (!r || r.error) return { error: r?.error || "Não foi possível salvar a campanha." };
+    } else {
+      const r = await api("/campaigns", payload);
+      if (!r || r.error) return { error: r?.error || "Não foi possível criar a campanha." };
+      id = r.id;
+      rascunhoIdRef.current = id;
+      setRascunhoId(id);
+    }
+    return { id, operacaoId: payload.operacaoId };
+  };
+
+  const criar = async () => {
+    if (!campanha?.titulo?.trim()) return aviso("Dê um título à campanha.");
+    setSalvando(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const res = await garantirRascunhoPersistido(campanha);
+    if (res.error) { setSalvando(false); return aviso(res.error); }
+    await gravarRelacionamentos(res.id, campanha);
+    setSalvando(false);
+    seqSalvoRef.current = ++seqRef.current;
+    setEstadoSalvamento("salvo");
     removerArmazenado(chaveRascunho);
-    aoCriar?.({ ...campanha, id: r.id, companyId: emp.id, status: "rascunho", criadoEm: Date.now() });
+    aoCriar?.({ ...campanha, id: res.id, companyId: emp.id, status: "rascunho", criadoEm: campanha.criadoEm || Date.now() });
+  };
+
+  // "Salvar e sair": conveniência. Persiste tudo e volta para a lista — mas sair
+  // sem clicar aqui também preserva a campanha (o autosave já cuidou).
+  const salvarESair = async () => {
+    if (!campanha) { (aoSair || aoCancelar)?.(); return; }
+    setSalvando(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const res = await garantirRascunhoPersistido(campanha);
+    if (res.error) { setSalvando(false); return aviso(res.error); }
+    await gravarRelacionamentos(res.id, campanha);
+    setSalvando(false);
+    seqSalvoRef.current = ++seqRef.current;
+    setEstadoSalvamento("salvo");
+    removerArmazenado(chaveRascunho);
+    aviso("Rascunho salvo.");
+    (aoSair || aoCancelar)?.();
   };
 
   const objUI = campanha?.objetivoUI ? OBJETIVOS_UI[campanha.objetivoUI] : null;
@@ -326,6 +476,15 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         <div className="vx-notice" style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span>Rascunho restaurado automaticamente{campanha.titulo ? `: "${campanha.titulo}"` : ""}.</span>
           <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { removerArmazenado(chaveRascunho); rascunhoSalvo.current = null; setCampanha(null); setPasso(0); }}>Descartar</button>
+        </div>
+      )}
+      {/* Cabeçalho do rascunho: indicador de salvamento + salvar e sair */}
+      {campanha && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+          <IndicadorSalvamento estado={estadoSalvamento} onRetry={persistirRascunho} />
+          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" disabled={salvando} onClick={salvarESair} style={{ whiteSpace: "nowrap" }}>
+            <LogOut size={13} /> Salvar e sair
+          </button>
         </div>
       )}
       {/* trilha dos passos */}
