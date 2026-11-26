@@ -323,6 +323,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [quantidade, setQuantidade] = useState(100);
+  const [qtdCustom, setQtdCustom] = useState("");
   const [campos, setCampos] = useState(() => new Set());
   const [destino, setDestino] = useState("new");
   const [nomeLista, setNomeLista] = useState("");
@@ -405,14 +406,24 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
           {/* Quantidade */}
           <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
             <span className="vx-label">QUANTIDADE DE LEADS</span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
               {QTDS.map((q) => (
-                <button key={q} onClick={() => setQuantidade(q)}
-                  className={`vx-btn ${quantidade === q ? "vx-btn-primary" : ""}`}
+                <button key={q} onClick={() => { setQuantidade(q); setQtdCustom(""); }}
+                  className={`vx-btn ${quantidade === q && !qtdCustom ? "vx-btn-primary" : ""}`}
                   style={{ flex: 1, minWidth: 60 }}>
                   {q.toLocaleString("pt-BR")}
                 </button>
               ))}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 100 }}>
+                <input className="vx-input" type="number" min="1" max="10000" placeholder="Outro"
+                  value={qtdCustom} style={{ textAlign: "center", minWidth: 80 }}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setQtdCustom(v);
+                    const n = parseInt(v, 10);
+                    if (n > 0) setQuantidade(n);
+                  }} />
+              </div>
             </div>
           </div>
 
