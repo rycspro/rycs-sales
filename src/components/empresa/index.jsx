@@ -30,6 +30,9 @@ const LojaLeads = lazy(() => import("./LojaLeads.jsx"));
 const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
 const CalendarioComercial = lazy(() => import("../calendario/CalendarioComercial.jsx"));
 const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
+const MeuTime = lazy(() => import("../gestao/MeuTime.jsx"));
+const MetasDesempenho = lazy(() => import("../gestao/MetasDesempenho.jsx"));
+const Fechamentos = lazy(() => import("../gestao/Fechamentos.jsx"));
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
@@ -205,6 +208,9 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
         <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
           onAbrirCanal={(canal) => setAba?.(`leads-${canal}`)} />
       )}
+      {aba === "meu-time" && <MeuTime aviso={aviso} />}
+      {aba === "metas-desempenho" && <MetasDesempenho aviso={aviso} />}
+      {aba === "fechamentos" && <Fechamentos aviso={aviso} />}
       {(aba === "planos" || aba === "pagamentos" || aba === "pagamentos-visibilidade") && (
         <PagamentosEmpresa emp={emp} db={db} up={up} aviso={aviso} recarregar={recarregar}
           secao="plano" onTrocarSecao={() => {}} />
