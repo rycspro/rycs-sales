@@ -133,6 +133,27 @@ const SEGMENTOS = [
 
 const PAISES = ["Brasil", "Estados Unidos", "Portugal", "Índia", "Reino Unido", "Argentina", "Chile", "Colômbia", "México", "Paraguai", "Uruguai", "Alemanha", "Espanha", "França", "Itália", "Japão", "Canadá", "Austrália"];
 
+const TIPO_PT_FRONT = {
+  point_of_interest: "", establishment: "", place: "", premise: "", street_address: "", route: "", political: "", locality: "", sublocality: "",
+  restaurant: "Restaurante", cafe: "Café", bar: "Bar", bakery: "Padaria", food: "Alimentação", meal_delivery: "Delivery", meal_takeaway: "Takeaway",
+  dentist: "Dentista", doctor: "Médico", hospital: "Hospital", pharmacy: "Farmácia", health: "Saúde", physiotherapist: "Fisioterapeuta", veterinary_care: "Veterinário",
+  gym: "Academia", spa: "Spa", real_estate_agency: "Imobiliária", insurance_agency: "Seguradora", lawyer: "Advocacia", accounting: "Contabilidade", finance: "Financeiro",
+  hair_care: "Salão de beleza", beauty_salon: "Salão de beleza", clothing_store: "Loja de roupas", shoe_store: "Loja de calçados",
+  shopping_mall: "Shopping", store: "Loja", supermarket: "Supermercado", convenience_store: "Conveniência", electronics_store: "Eletrônicos",
+  furniture_store: "Móveis", hardware_store: "Ferragem", jewelry_store: "Joalheria", home_goods_store: "Casa e decoração", pet_store: "Pet shop",
+  car_dealer: "Concessionária", car_repair: "Oficina mecânica", car_wash: "Lava-jato", gas_station: "Posto de combustível",
+  lodging: "Hospedagem", hotel: "Hotel", school: "Escola", university: "Universidade", church: "Igreja", mosque: "Mesquita",
+  plumber: "Encanador", electrician: "Eletricista", painter: "Pintor", roofing_contractor: "Telhados", locksmith: "Chaveiro",
+  moving_company: "Mudanças", storage: "Armazenamento", travel_agency: "Agência de viagens", laundry: "Lavanderia",
+  manufacturer: "Indústria", general_contractor: "Empreiteira",
+};
+function traduzirCategoria(cat) {
+  if (!cat) return "";
+  if (TIPO_PT_FRONT[cat] !== undefined) return TIPO_PT_FRONT[cat] || "";
+  if (cat.includes("_")) return cat.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return cat;
+}
+
 const ESTADOS_BR = [
   "Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal",
   "Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul",
@@ -653,7 +674,7 @@ function AbaContatos({ aviso, listas }) {
   const recarregar = useCallback(() => { api("/loja-leads/revelados").then((r) => { setContatos(r?.contatos || []); setLoading(false); }); }, []);
   useEffect(recarregar, []);
 
-  const segmentos = useMemo(() => [...new Set(contatos.map((c) => c.categoria).filter(Boolean))].sort(), [contatos]);
+  const segmentos = useMemo(() => [...new Set(contatos.map((c) => traduzirCategoria(c.categoria)).filter(Boolean))].sort(), [contatos]);
   const listasUnicas = useMemo(() => {
     const m = new Map();
     for (const c of contatos) for (const l of (c.listas || [])) if (!m.has(l.id)) m.set(l.id, l);
@@ -668,8 +689,8 @@ function AbaContatos({ aviso, listas }) {
   const filtrados = useMemo(() => {
     let arr = contatos;
     const t = busca.toLowerCase().trim();
-    if (t) arr = arr.filter((c) => [c.nome, c.endereco, c.categoria].some((v) => (v || "").toLowerCase().includes(t)));
-    if (filtroSegmento) arr = arr.filter((c) => c.categoria === filtroSegmento);
+    if (t) arr = arr.filter((c) => [c.nome, c.endereco, traduzirCategoria(c.categoria)].some((v) => (v || "").toLowerCase().includes(t)));
+    if (filtroSegmento) arr = arr.filter((c) => traduzirCategoria(c.categoria) === filtroSegmento);
     if (filtroLista) arr = arr.filter((c) => (c.listas || []).some((l) => l.id === filtroLista));
     if (filtroResponsavel) arr = arr.filter((c) => c.respVendedorId === filtroResponsavel);
     return arr;
@@ -752,7 +773,7 @@ function AbaContatos({ aviso, listas }) {
                     style={{ accentColor: "var(--brand)", width: 16, height: 16 }} />
                 </td>
                 <td style={{ fontWeight: 600 }}>{c.nome || "—"}</td>
-                <td>{c.categoria || "—"}</td>
+                <td>{traduzirCategoria(c.categoria) || "—"}</td>
                 <td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.endereco || "—"}</td>
                 <td>{c.telefone ? <a href={`tel:${c.telefone}`} style={{ color: "var(--brand)", textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{c.telefone}</a> : "—"}</td>
                 <td>
@@ -820,7 +841,7 @@ function DrawerContato({ contato: c, onClose, listas, aviso }) {
           <div className="vx-empty-icon" style={{ width: 42, height: 42, borderRadius: 12 }}><Building2 size={20} /></div>
           <div>
             <div style={{ fontWeight: 700 }}>{c.nome || "Sem nome"}</div>
-            {c.categoria && <span className="vx-mut" style={{ fontSize: 12 }}>{c.categoria}</span>}
+            {traduzirCategoria(c.categoria) && <span className="vx-mut" style={{ fontSize: 12 }}>{traduzirCategoria(c.categoria)}</span>}
           </div>
         </div>
         <div className="vx-grid" style={{ gap: 6 }}>
