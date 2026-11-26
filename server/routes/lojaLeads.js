@@ -23,7 +23,7 @@ function entityDe(req) {
 router.post("/loja-leads/buscar", async (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
-  const { texto, regiao, quantidade } = req.body || {};
+  const { texto, regiao, quantidade, listaId, novaPasta, novaLista, descricaoLista } = req.body || {};
   if (!texto) return res.status(400).json({ error: "Informe o que buscar." });
 
   const r = await buscarPlaces(texto, { regiao, quantidade });
@@ -32,11 +32,34 @@ router.post("/loja-leads/buscar", async (req, res) => {
   const ids = salvarContatos(r.contatos);
   const contatos = r.contatos.map((c, i) => ({ ...c, id: ids[i] }));
 
-  // Marcar quais já foram revelados
-  const revelados = new Set(contatosRevelados(ent.entityId).map((c) => c.id));
-  for (const c of contatos) c.revelado = revelados.has(c.id);
+  // Revelar automaticamente todos os contatos encontrados
+  for (const c of contatos) {
+    revelarContato(ent.entityId, ent.entityRole, c.id);
+    c.revelado = true;
+  }
 
-  res.json({ contatos });
+  // Criar lista se solicitado e adicionar contatos
+  let listaIdFinal = listaId || null;
+  if (!listaIdFinal && novaLista) {
+    let pastaId = novaPasta;
+    if (!pastaId) {
+      const pastas = listarPastas(ent.entityId, ent.entityRole);
+      if (pastas.length) {
+        pastaId = pastas[0].id;
+      } else {
+        const p = criarPasta(ent.entityId, ent.entityRole, "Loja de Leads");
+        pastaId = p.id;
+      }
+    }
+    const lista = criarLista(pastaId, ent.entityId, ent.entityRole, novaLista, descricaoLista || "");
+    if (lista.error) return res.json({ contatos, listaErro: lista.error });
+    listaIdFinal = lista.id;
+  }
+  if (listaIdFinal) {
+    for (const c of contatos) adicionarContatoLista(listaIdFinal, c.id);
+  }
+
+  res.json({ contatos, listaId: listaIdFinal });
 });
 
 // ── Revelar contato (registrar consumo) ─────────────────────────────────────

@@ -123,6 +123,22 @@ db.exec(`
   }
 }
 
+// ── Migração: revelar contatos órfãos que estão em listas mas sem consumo ──
+{
+  const orfaos = db.prepare(`
+    SELECT DISTINCT lc.contatoId, l.entityId, l.entityRole
+    FROM loja_leads_lista_contatos lc
+    JOIN loja_leads_listas l ON l.id = lc.listaId
+    LEFT JOIN loja_leads_consumo co ON co.contatoId = lc.contatoId AND co.entityId = l.entityId
+    WHERE co.id IS NULL
+  `).all();
+  if (orfaos.length) {
+    const ins = db.prepare("INSERT OR IGNORE INTO loja_leads_consumo (id, entityId, entityRole, contatoId, criadoEm) VALUES (?, ?, ?, ?, ?)");
+    const ts = agora();
+    for (const o of orfaos) ins.run(uid(), o.entityId, o.entityRole, o.contatoId, ts);
+  }
+}
+
 // ── Google Places API (New) ─────────────────────────────────────────────────
 const PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || "";
 
