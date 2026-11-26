@@ -577,4 +577,45 @@ describe("RYCS Voice — Discadora comercial", () => {
     const r = await req("/voice/admin/consumo", { cookie: cookieVendedor });
     assert.equal(r.status, 403);
   });
+
+  // ── 21. Admin telefonia — painel centralizado ──
+
+  it("admin telefonia resumo retorna dados consolidados", async () => {
+    const r = await req("/voice/admin/telefonia/resumo", { cookie: cookieAdmin });
+    assert.equal(r.status, 200);
+    assert.ok("diario" in r.corpo);
+    assert.ok("mensal" in r.corpo);
+    assert.ok("porEmpresa" in r.corpo);
+    assert.ok("porProfissional" in r.corpo);
+    assert.ok("porCampanha" in r.corpo);
+    assert.ok("sessoesAtivas" in r.corpo);
+    assert.ok("empresasHabilitadas" in r.corpo);
+    assert.equal(typeof r.corpo.diario.minutos, "number");
+  });
+
+  it("vendedor não acessa admin telefonia resumo", async () => {
+    const r = await req("/voice/admin/telefonia/resumo", { cookie: cookieVendedor });
+    assert.equal(r.status, 403);
+  });
+
+  it("admin telefonia config retorna defaults desativados", async () => {
+    const r = await req("/voice/admin/telefonia/config", { cookie: cookieAdmin });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.limitesAtivos, 0);
+    assert.equal(r.corpo.telefoniaReal, 0);
+  });
+
+  it("admin salva config telefonia", async () => {
+    const r = await req("/voice/admin/telefonia/config", {
+      cookie: cookieAdmin,
+      body: { limitesAtivos: false, maxChamadasDiaGlobal: 0, maxMinutosMesGlobal: 0, maxSimultaneosGlobal: 10 },
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.ok, true);
+  });
+
+  it("vendedor não acessa admin telefonia config", async () => {
+    const r = await req("/voice/admin/telefonia/config", { cookie: cookieVendedor });
+    assert.equal(r.status, 403);
+  });
 });

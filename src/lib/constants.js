@@ -151,6 +151,8 @@ export const NAV = {
     { section: "Leads" },
     { key: "loja-leads-admin", label: "Loja de Leads", Icon: Store },
     { key: "calendario", label: "Calendário", Icon: CalendarDays },
+    { section: "Operações" },
+    { key: "telefonia", label: "Telefonia", Icon: Phone },
     { section: "Sistema" },
     { key: "beta", label: "Ambiente Beta", Icon: RotateCcw },
   ],

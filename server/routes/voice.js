@@ -1006,4 +1006,138 @@ router.get("/voice/admin/consumo", (req, res) => {
   res.json(rows);
 });
 
+// ── Admin Telefonia — painel centralizado ──────────────────────────
+
+router.get("/voice/admin/telefonia/resumo", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const agr = agora();
+  const inicioDia = new Date(); inicioDia.setHours(0, 0, 0, 0);
+  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+
+  const diario = db.prepare(`
+    SELECT
+      COUNT(*) as ligacoes,
+      SUM(CASE WHEN resultado IN ('atendeu','reuniao_agendada','venda','retornar') THEN 1 ELSE 0 END) as atendidas,
+      SUM(duracaoTotal) as segundos,
+      SUM(CASE WHEN origemDados = 'verificado' THEN duracaoTotal ELSE 0 END) as segundosVerificados
+    FROM voice_calls WHERE criadoEm >= ?
+  `).get(inicioDia.getTime());
+
+  const mensal = db.prepare(`
+    SELECT
+      COUNT(*) as ligacoes,
+      SUM(CASE WHEN resultado IN ('atendeu','reuniao_agendada','venda','retornar') THEN 1 ELSE 0 END) as atendidas,
+      SUM(duracaoTotal) as segundos,
+      SUM(CASE WHEN origemDados = 'verificado' THEN duracaoTotal ELSE 0 END) as segundosVerificados
+    FROM voice_calls WHERE criadoEm >= ?
+  `).get(inicioMes.getTime());
+
+  const custoMensal = db.prepare(`
+    SELECT SUM(custoOperadora) as custo, SUM(valorComercial) as comercial
+    FROM voice_billing_records WHERE criadoEm >= ?
+  `).get(inicioMes.getTime());
+
+  const porEmpresa = db.prepare(`
+    SELECT c.companyId, co.nome as empresa,
+      COUNT(*) as ligacoes,
+      SUM(CASE WHEN c.resultado IN ('atendeu','reuniao_agendada','venda','retornar') THEN 1 ELSE 0 END) as atendidas,
+      SUM(c.duracaoTotal) as segundos
+    FROM voice_calls c
+    LEFT JOIN companies co ON co.id = c.companyId
+    WHERE c.criadoEm >= ?
+    GROUP BY c.companyId ORDER BY ligacoes DESC LIMIT 50
+  `).all(inicioMes.getTime());
+
+  const porProfissional = db.prepare(`
+    SELECT c.sellerId, s.nome as profissional, co.nome as empresa, c.companyId,
+      COUNT(*) as ligacoes,
+      SUM(CASE WHEN c.resultado IN ('atendeu','reuniao_agendada','venda','retornar') THEN 1 ELSE 0 END) as atendidas,
+      SUM(c.duracaoTotal) as segundos
+    FROM voice_calls c
+    LEFT JOIN sellers s ON s.id = c.sellerId
+    LEFT JOIN companies co ON co.id = c.companyId
+    WHERE c.criadoEm >= ?
+    GROUP BY c.sellerId ORDER BY ligacoes DESC LIMIT 100
+  `).all(inicioMes.getTime());
+
+  const porCampanha = db.prepare(`
+    SELECT c.campaignId, camp.titulo as campanha, co.nome as empresa, c.companyId,
+      COUNT(*) as ligacoes,
+      SUM(CASE WHEN c.resultado IN ('atendeu','reuniao_agendada','venda','retornar') THEN 1 ELSE 0 END) as atendidas,
+      SUM(c.duracaoTotal) as segundos
+    FROM voice_calls c
+    LEFT JOIN campaigns camp ON camp.id = c.campaignId
+    LEFT JOIN companies co ON co.id = c.companyId
+    WHERE c.criadoEm >= ? AND c.campaignId IS NOT NULL AND c.campaignId != ''
+    GROUP BY c.campaignId ORDER BY ligacoes DESC LIMIT 50
+  `).all(inicioMes.getTime());
+
+  const sessoes = db.prepare(`
+    SELECT COUNT(*) as ativas FROM voice_sessions WHERE status = 'ativo'
+  `).get();
+
+  const empresasHabilitadas = db.prepare(`
+    SELECT COUNT(*) as c FROM companies WHERE voice_habilitada = 1
+  `).get();
+
+  res.json({
+    diario: { ...diario, minutos: Math.round((diario.segundos || 0) / 60) },
+    mensal: { ...mensal, minutos: Math.round((mensal.segundos || 0) / 60) },
+    custoMensal: custoMensal || { custo: 0, comercial: 0 },
+    porEmpresa,
+    porProfissional,
+    porCampanha,
+    sessoesAtivas: sessoes?.ativas || 0,
+    empresasHabilitadas: empresasHabilitadas?.c || 0,
+  });
+});
+
+// Admin: configurações globais de limites (desativados por padrão)
+router.get("/voice/admin/telefonia/config", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const cfg = db.prepare("SELECT * FROM voice_admin_config WHERE id = 'global'").get();
+  res.json(cfg || {
+    id: "global",
+    limitesAtivos: 0,
+    maxChamadasDiaGlobal: 0,
+    maxMinutosMesGlobal: 0,
+    maxSimultaneosGlobal: 10,
+    prefixosBloqueadosGlobal: '["0900","0300"]',
+    telefoniaReal: 0,
+  });
+});
+
+router.post("/voice/admin/telefonia/config", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const { limitesAtivos, maxChamadasDiaGlobal, maxMinutosMesGlobal,
+    maxSimultaneosGlobal, prefixosBloqueadosGlobal } = req.body;
+  const now = agora();
+
+  db.prepare(`
+    INSERT INTO voice_admin_config (id, limitesAtivos, maxChamadasDiaGlobal, maxMinutosMesGlobal,
+      maxSimultaneosGlobal, prefixosBloqueadosGlobal, atualizadoEm)
+    VALUES ('global', ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      limitesAtivos = excluded.limitesAtivos,
+      maxChamadasDiaGlobal = excluded.maxChamadasDiaGlobal,
+      maxMinutosMesGlobal = excluded.maxMinutosMesGlobal,
+      maxSimultaneosGlobal = excluded.maxSimultaneosGlobal,
+      prefixosBloqueadosGlobal = excluded.prefixosBloqueadosGlobal,
+      atualizadoEm = excluded.atualizadoEm
+  `).run(
+    limitesAtivos ? 1 : 0,
+    maxChamadasDiaGlobal || 0,
+    maxMinutosMesGlobal || 0,
+    maxSimultaneosGlobal || 10,
+    JSON.stringify(prefixosBloqueadosGlobal || ["0900", "0300"]),
+    now
+  );
+
+  auditLog("GLOBAL", req.user.id, "atualizar_config_telefonia", "voice_admin_config", "global", req.body);
+  res.json({ ok: true });
+});
+
 export default router;

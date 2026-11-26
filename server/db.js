@@ -3221,6 +3221,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_voice_billing_company ON voice_billing_records(companyId, criadoEm);
   CREATE INDEX IF NOT EXISTS idx_voice_billing_call ON voice_billing_records(callId);
   CREATE INDEX IF NOT EXISTS idx_voice_billing_seller ON voice_billing_records(sellerId, criadoEm);
+
+  CREATE TABLE IF NOT EXISTS voice_admin_config (
+    id TEXT PRIMARY KEY DEFAULT 'global',
+    limitesAtivos INTEGER DEFAULT 0,
+    maxChamadasDiaGlobal INTEGER DEFAULT 0,
+    maxMinutosMesGlobal INTEGER DEFAULT 0,
+    maxSimultaneosGlobal INTEGER DEFAULT 10,
+    prefixosBloqueadosGlobal TEXT DEFAULT '["0900","0300"]',
+    telefoniaReal INTEGER DEFAULT 0,
+    atualizadoEm INTEGER
+  );
 `);
 
 criarSchemaAgenda(db);
@@ -3380,6 +3391,7 @@ adicionarColuna("campaigns", "modoAcoesRemuneradas", "TEXT DEFAULT 'rapido'");
 // Rascunho persistente: etapa atual do wizard e carimbo da última edição.
 adicionarColuna("campaigns", "passoWizard", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "atualizadoEm", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "ordemOperacao", "INTEGER DEFAULT 0");
 
 adicionarColuna("formas_ganho", "origem", "TEXT DEFAULT 'personalizado'");
 adicionarColuna("formas_ganho", "modeloOriginalId", "TEXT DEFAULT ''");
