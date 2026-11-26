@@ -254,11 +254,14 @@ router.post("/campaigns", (req, res) => {
     // V2 fields — saved via UPDATE to keep INSERT stable
     const v2Plain = ["modeloTrabalho", "restricaoGeo", "origemLeads", "mercado", "nivelExperiencia",
       "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
-      "icpTipo", "versao", "processoAdmissao"];
+      "icpTipo", "versao", "processoAdmissao",
+      "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
+      "prazoContatoHoras", "prazoInatividadeHoras"];
     const v2Bool = ["temComissao", "remuneracaoCumulativa"];
     const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
       "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
-      "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig"];
+      "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
+      "selecaoLeadsFiltros"];
     const v2Sets = []; const v2Vals = [];
     for (const k of v2Plain) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k]); } }
     for (const k of v2Bool) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k] ? 1 : 0); } }
@@ -285,12 +288,15 @@ router.patch("/campaigns/:id", (req, res) => {
     "cidade", "estado", "lat", "lng", "percentualComissao", "modoJarvas", "candidaturasAbertas",
     "modeloTrabalho", "restricaoGeo", "origemLeads", "mercado", "nivelExperiencia",
     "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
-    "temComissao", "remuneracaoCumulativa", "icpTipo", "versao", "processoAdmissao"];
+    "temComissao", "remuneracaoCumulativa", "icpTipo", "versao", "processoAdmissao",
+    "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
+    "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
     "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos",
     "paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
     "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
-    "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig"];
+    "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
+    "selecaoLeadsFiltros"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(req.body)) {
@@ -543,6 +549,168 @@ router.post("/campaigns/:id/version", (req, res) => {
     db.prepare("UPDATE campaigns SET versao = ? WHERE id = ?").run(novaVersao, campaign.id);
   })();
   res.json({ ok: true, versao: novaVersao });
+});
+
+// ── Materiais da campanha ──────────────────────────────────────────────
+
+router.get("/campaigns/:id/materiais", (req, res) => {
+  const { role, entityId } = req.user;
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor") {
+    const aprovado = db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(campaign.id, entityId);
+    if (!aprovado) return res.status(403).json({ error: "Acesso negado" });
+  }
+
+  const materiais = db.prepare(`
+    SELECT m.*, mc.categoria AS catCampanha, mc.obrigatoriedade, mc.acaoVinculada, mc.ordem, mc.regraAcesso
+    FROM materiais_campanhas mc
+    JOIN materiais m ON m.id = mc.materialId
+    WHERE mc.campaignId = ? AND m.ativo = 1
+    ORDER BY mc.ordem ASC, m.nome ASC
+  `).all(campaign.id);
+
+  if (role === "vendedor") {
+    const consultas = db.prepare("SELECT materialId, tipo, criadoEm FROM materiais_consultas WHERE campaignId = ? AND sellerId = ?").all(campaign.id, entityId);
+    const consultaMap = {};
+    for (const c of consultas) { consultaMap[c.materialId] = { tipo: c.tipo, criadoEm: c.criadoEm }; }
+    return res.json(materiais.filter(m => m.regraAcesso !== "confidencial").map(m => ({ ...m, consulta: consultaMap[m.id] || null })));
+  }
+  res.json(materiais);
+});
+
+router.put("/campaigns/:id/materiais", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const { materiais } = req.body;
+  if (!Array.isArray(materiais)) return res.status(400).json({ error: "Lista de materiais inválida" });
+
+  db.transaction(() => {
+    db.prepare("DELETE FROM materiais_campanhas WHERE campaignId = ?").run(campaign.id);
+    const ins = db.prepare("INSERT OR IGNORE INTO materiais_campanhas (materialId, campaignId, vinculadoEm, categoria, obrigatoriedade, acaoVinculada, ordem, regraAcesso) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    for (let i = 0; i < materiais.length; i++) {
+      const m = materiais[i];
+      ins.run(m.id, campaign.id, agora(), m.categoria || "outros", m.obrigatoriedade || "complementar", m.acaoVinculada || "", i, m.regraAcesso || "todos");
+    }
+  })();
+  res.json({ ok: true, total: materiais.length });
+});
+
+router.post("/campaigns/:id/materiais/consulta", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const { materialId } = req.body;
+  if (!materialId) return res.status(400).json({ error: "materialId obrigatório" });
+  const vinculo = db.prepare("SELECT 1 FROM materiais_campanhas WHERE campaignId = ? AND materialId = ?").get(req.params.id, materialId);
+  if (!vinculo) return res.status(404).json({ error: "Material não vinculado" });
+  const aprovado = db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(req.params.id, entityId);
+  if (!aprovado) return res.status(403).json({ error: "Acesso negado" });
+  const existente = db.prepare("SELECT id FROM materiais_consultas WHERE materialId = ? AND campaignId = ? AND sellerId = ?").get(materialId, req.params.id, entityId);
+  if (existente) return res.json({ ok: true, ja: true });
+  db.prepare("INSERT INTO materiais_consultas (id, materialId, campaignId, sellerId, tipo, criadoEm) VALUES (?, ?, ?, ?, ?, ?)").run(uid(), materialId, req.params.id, entityId, "visualizacao", agora());
+  res.json({ ok: true });
+});
+
+// ── Base de leads da campanha ──────────────────────────────────────────
+
+router.get("/campaigns/:id/leads", (req, res) => {
+  const { role, entityId } = req.user;
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  if (role === "vendedor") {
+    const aprovado = db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(campaign.id, entityId);
+    if (!aprovado) return res.status(403).json({ error: "Acesso negado" });
+    const meusLeads = db.prepare(`
+      SELECT cl.*, l.nome, l.empresa, l.telefone, l.email, l.etapa, l.origem
+      FROM campaign_leads cl JOIN leads l ON l.id = cl.leadId
+      WHERE cl.campaignId = ? AND cl.sellerId = ?
+      ORDER BY cl.criadoEm DESC
+    `).all(campaign.id, entityId);
+    const disponiveis = db.prepare("SELECT COUNT(*) as total FROM campaign_leads WHERE campaignId = ? AND status = 'disponivel'").get(campaign.id);
+    return res.json({ leads: meusLeads, disponiveis: disponiveis.total });
+  }
+
+  const leads = db.prepare(`
+    SELECT cl.*, l.nome, l.empresa, l.telefone, l.email, l.etapa, l.origem, l.segmento, l.cargo
+    FROM campaign_leads cl JOIN leads l ON l.id = cl.leadId
+    WHERE cl.campaignId = ?
+    ORDER BY cl.criadoEm DESC
+  `).all(campaign.id);
+  const stats = {
+    total: leads.length,
+    disponiveis: leads.filter(l => l.status === "disponivel").length,
+    atribuidos: leads.filter(l => l.status === "atribuido").length,
+    emAtendimento: leads.filter(l => l.status === "em_atendimento").length,
+    concluidos: leads.filter(l => l.status === "concluido").length,
+  };
+  res.json({ leads, stats });
+});
+
+router.put("/campaigns/:id/leads", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role === "vendedor") return res.status(403).json({ error: "Sem permissão" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const { leadIds } = req.body;
+  if (!Array.isArray(leadIds)) return res.status(400).json({ error: "Lista de leads inválida" });
+
+  const companyLeads = db.prepare("SELECT id FROM leads WHERE companyId = ? AND id IN (" + leadIds.map(() => "?").join(",") + ")").all(campaign.companyId, ...leadIds);
+  const validIds = new Set(companyLeads.map(l => l.id));
+
+  let inseridos = 0;
+  db.transaction(() => {
+    const ins = db.prepare("INSERT OR IGNORE INTO campaign_leads (id, campaignId, leadId, status, criadoEm) VALUES (?, ?, ?, 'disponivel', ?)");
+    for (const lid of leadIds) {
+      if (!validIds.has(lid)) continue;
+      ins.run(uid(), campaign.id, lid, agora());
+      inseridos++;
+    }
+  })();
+  res.json({ ok: true, inseridos });
+});
+
+router.post("/campaigns/:id/leads/solicitar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  const aprovado = db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(campaign.id, entityId);
+  if (!aprovado) return res.status(403).json({ error: "Acesso negado" });
+
+  const limite = Number(campaign.limiteLeadsSimultaneos) || 0;
+  if (limite > 0) {
+    const ativos = db.prepare("SELECT COUNT(*) as total FROM campaign_leads WHERE campaignId = ? AND sellerId = ? AND status IN ('atribuido', 'em_atendimento')").get(campaign.id, entityId);
+    if (ativos.total >= limite) return res.status(400).json({ error: `Limite de ${limite} leads simultâneos atingido` });
+  }
+
+  const proximo = db.prepare("SELECT id, leadId FROM campaign_leads WHERE campaignId = ? AND status = 'disponivel' ORDER BY criadoEm ASC LIMIT 1").get(campaign.id);
+  if (!proximo) return res.status(404).json({ error: "Nenhum lead disponível no momento" });
+
+  const result = db.prepare("UPDATE campaign_leads SET sellerId = ?, status = 'atribuido', atribuidoEm = ? WHERE id = ? AND status = 'disponivel'").run(entityId, agora(), proximo.id);
+  if (result.changes === 0) return res.status(409).json({ error: "Lead já foi atribuído a outro profissional" });
+
+  const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(proximo.leadId);
+  res.json({ ok: true, lead });
+});
+
+router.post("/campaigns/:id/leads/devolver", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const { campaignLeadId, motivo } = req.body;
+  if (!campaignLeadId) return res.status(400).json({ error: "campaignLeadId obrigatório" });
+  const cl = db.prepare("SELECT * FROM campaign_leads WHERE id = ? AND campaignId = ? AND sellerId = ?").get(campaignLeadId, req.params.id, entityId);
+  if (!cl) return res.status(404).json({ error: "Lead não encontrado" });
+  db.prepare("UPDATE campaign_leads SET sellerId = '', status = 'disponivel', motivoDevolucao = ?, atribuidoEm = NULL WHERE id = ?").run(motivo || "", cl.id);
+  res.json({ ok: true });
 });
 
 export default router;

@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle } from "lucide-react";
 import { api } from "../../lib/api.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
 import { useI18n } from "../../lib/i18n.jsx";
@@ -419,6 +419,66 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               onChange={(v) => set("canais", v)}
               multi
             />
+          </div>
+
+          {/* Materiais da campanha */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}>Materiais da campanha</b>
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>Disponibilize os recursos que os profissionais utilizarão nesta operação.</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <CardOption selected={campanha._materiaisOpcao === "enviar"} onClick={() => set("_materiaisOpcao", "enviar")} icon={Upload} title="Enviar materiais" subtitle="Upload de novos arquivos, links ou scripts." />
+              <CardOption selected={campanha._materiaisOpcao === "biblioteca"} onClick={() => set("_materiaisOpcao", "biblioteca")} icon={Library} title="Biblioteca da empresa" subtitle="Selecione materiais já cadastrados." />
+            </div>
+            {campanha._materiaisOpcao && (
+              <div style={{ marginTop: 12, padding: "12px 14px", background: "var(--surface-2)", borderRadius: 10 }}>
+                <div className="vx-mut" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <FileText size={13} />
+                  {campanha._materiaisOpcao === "enviar"
+                    ? "Após salvar a campanha, acesse a aba Materiais para fazer upload dos arquivos."
+                    : "Após salvar a campanha, acesse a aba Materiais para selecionar da biblioteca."}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Base de leads da campanha */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}>Base de leads da campanha</b>
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>Defina quais contatos os profissionais poderão trabalhar.</div>
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <CardOption selected={campanha.fonteLeads === "empresa"} onClick={() => set("fonteLeads", "empresa")} icon={Database} title="Utilizar leads da minha empresa" subtitle="Disponibilize contatos da sua base para os profissionais." />
+              <CardOption selected={campanha.fonteLeads === "profissional"} onClick={() => set("fonteLeads", "profissional")} icon={UserPlus} title="Profissionais encontram novos leads" subtitle="Os profissionais prospectam e cadastram seus próprios leads." />
+              <CardOption selected={campanha.fonteLeads === "ambos"} onClick={() => set("fonteLeads", "ambos")} icon={Shuffle} title="Combinar as duas opções" subtitle="A empresa fornece leads e os profissionais também podem prospectar." />
+            </div>
+            {(campanha.fonteLeads === "empresa" || campanha.fonteLeads === "ambos") && (
+              <div style={{ marginTop: 14, padding: "14px 16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
+                <b style={{ fontSize: 13, color: "var(--brand)" }}>Distribuição dos leads</b>
+                <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+                  <CardOption selected={campanha.distribuicaoLeads === "fila"} onClick={() => set("distribuicaoLeads", "fila")} title="Fila compartilhada" subtitle="Profissionais solicitam o próximo lead disponível." />
+                  <CardOption selected={campanha.distribuicaoLeads === "automatica"} onClick={() => set("distribuicaoLeads", "automatica")} title="Distribuição automática" subtitle="O sistema distribui os contatos entre os profissionais elegíveis." />
+                  <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} title="Distribuição manual" subtitle="A empresa escolhe quais contatos atribuir a cada profissional." />
+                </div>
+                <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
+                  <label><div className="vx-label">Leads simultâneos por profissional</div>
+                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsSimultaneos || 0}
+                      onChange={(e) => set("limiteLeadsSimultaneos", Number(e.target.value))} placeholder="0 = sem limite" /></label>
+                  <label><div className="vx-label">Novos leads por dia</div>
+                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsDia || 0}
+                      onChange={(e) => set("limiteLeadsDia", Number(e.target.value))} placeholder="0 = sem limite" /></label>
+                  <label><div className="vx-label">Prazo primeiro contato (horas)</div>
+                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoContatoHoras || 0}
+                      onChange={(e) => set("prazoContatoHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
+                  <label><div className="vx-label">Prazo inatividade (horas)</div>
+                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoInatividadeHoras || 0}
+                      onChange={(e) => set("prazoInatividadeHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
+                </div>
+                <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8 }}>Após salvar, acesse a aba Leads para vincular os contatos da base.</div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>

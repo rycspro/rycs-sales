@@ -4,6 +4,7 @@ import {
   CirclePause, Clock3, Ellipsis, FolderOpen, Link2, ListChecks, Pencil, RefreshCw, Settings, Target,
   TrendingUp, Unlink, Upload, UsersRound, X,
   Laptop, MapPin, Building2, Globe, MessageCircle, Phone, Mail, Eye, EyeOff, Lock,
+  FileText, Download, Trash2, Database, UserPlus, Shuffle, Filter, List, Users,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -21,7 +22,8 @@ import CriadorCampos from "./CriadorCampos.jsx";
 
 const ABAS = [
   ["geral", "Visão Geral"], ["profissionais", "Profissionais"], ["tarefas", "Tarefas"],
-  ["pipeline", "Pipeline"], ["contatos", "Contatos"], ["reunioes", "Reuniões"], ["performance", "Performance"],
+  ["pipeline", "Pipeline"], ["contatos", "Contatos"], ["materiais", "Materiais"], ["leads", "Leads"],
+  ["reunioes", "Reuniões"], ["performance", "Performance"],
   ["financeiro", "Financeiro"], ["comissoes", "Comissões"], ["campos", "Campos"],
   ["verificacao", "Verificação"], ["configuracoes", "Configurações"],
 ];
@@ -464,6 +466,8 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">Configurações da campanha</h2><p>Objetivo, público, região, valores, evidências, treinamento e regras de publicação continuam no editor completo.</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> Editar configuração</button></section>}
     {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} aviso={(msg) => console.log("[contatos]", msg)} />}
     {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
+    {aba === "materiais" && <MateriaisCampanha campanha={campanha} />}
+    {aba === "leads" && <LeadsCampanha campanha={campanha} profissionais={profissionais} onRecarregar={() => setRecarregar((n) => n + 1)} />}
     {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} campanha={campanha} onClose={() => setProfissionalAberto(null)} onStatusChange={async (status) => {
       await apiPatch(`/campaigns/${campanha.id}/applications/${profissionalAberto.applicationId || profissionalAberto.id}`, { status });
       setProfissionalAberto(null);
@@ -632,6 +636,274 @@ function ContatosCampanha({ campanha, profissionais, aviso }) {
 }
 
 // ── Modelo de Verificação ────────────────────────────────────────────────────
+
+const CATEGORIAS_MATERIAL = [
+  { id: "treinamento", label: "Treinamento" },
+  { id: "vendas", label: "Material de vendas" },
+  { id: "produto", label: "Produto" },
+  { id: "compliance", label: "Compliance" },
+  { id: "outros", label: "Outros" },
+];
+const OBRIGATORIEDADE = [
+  { id: "obrigatorio", label: "Obrigatório" },
+  { id: "recomendado", label: "Recomendado" },
+  { id: "complementar", label: "Complementar" },
+];
+const REGRAS_ACESSO = [
+  { id: "todos", label: "Todos os profissionais" },
+  { id: "aprovados", label: "Apenas aprovados" },
+  { id: "confidencial", label: "Confidencial (empresa)" },
+];
+
+function MateriaisCampanha({ campanha }) {
+  const [materiais, setMateriais] = useState([]);
+  const [biblioteca, setBiblioteca] = useState([]);
+  const [vinculados, setVinculados] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [aviso, setAviso] = useState("");
+  const [abaLocal, setAbaLocal] = useState("vinculados");
+
+  const carregar = async () => {
+    setCarregando(true);
+    const [bib, vinc] = await Promise.all([
+      api("/materiais"),
+      api(`/campaigns/${campanha.id}/materiais`),
+    ]);
+    setBiblioteca(Array.isArray(bib) ? bib : []);
+    setVinculados(Array.isArray(vinc) ? vinc : []);
+    setMateriais(Array.isArray(vinc) ? vinc : []);
+    setCarregando(false);
+  };
+
+  useEffect(() => { carregar(); }, [campanha.id]);
+
+  const vincular = async (mat) => {
+    const ja = materiais.find((m) => m.materialId === mat.id || m.id === mat.id);
+    if (ja) return;
+    setMateriais((prev) => [...prev, { materialId: mat.id, nome: mat.nome, tipo: mat.tipo, categoria: "outros", obrigatoriedade: "complementar", regraAcesso: "todos", ordem: prev.length }]);
+  };
+
+  const remover = (idx) => setMateriais((prev) => prev.filter((_, i) => i !== idx));
+
+  const atualizar = (idx, campo, valor) => setMateriais((prev) => prev.map((m, i) => i === idx ? { ...m, [campo]: valor } : m));
+
+  const salvar = async () => {
+    setSalvando(true);
+    const payload = materiais.map((m, i) => ({
+      materialId: m.materialId || m.id,
+      categoria: m.categoria || "outros",
+      obrigatoriedade: m.obrigatoriedade || "complementar",
+      regraAcesso: m.regraAcesso || "todos",
+      ordem: i,
+    }));
+    const r = await api(`/campaigns/${campanha.id}/materiais`, { method: "PUT", body: JSON.stringify(payload), headers: { "Content-Type": "application/json" } });
+    setSalvando(false);
+    if (r?.error) return setAviso(r.error);
+    setAviso("Materiais salvos com sucesso.");
+    await carregar();
+  };
+
+  return (
+    <div className="vx-fade">
+      <div style={{ marginBottom: 16 }}>
+        <div className="vx-eyebrow">Recursos da campanha</div>
+        <h2 className="vx-disp" style={{ margin: "4px 0" }}>Materiais</h2>
+        <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Vincule materiais da biblioteca da empresa a esta campanha. Defina categoria, obrigatoriedade e regras de acesso.</p>
+      </div>
+
+      {aviso && <div className="vx-notice" style={{ marginBottom: 12 }}>{aviso}</div>}
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {[["vinculados", "Vinculados"], ["biblioteca", "Biblioteca"]].map(([k, l]) => (
+          <button key={k} className="vx-btn" data-on={abaLocal === k ? "1" : "0"} onClick={() => setAbaLocal(k)} style={{ fontWeight: abaLocal === k ? 600 : 400 }}>{l}</button>
+        ))}
+      </div>
+
+      {carregando ? <div className="vx-mut">Carregando materiais...</div> : abaLocal === "vinculados" ? (
+        <>
+          {materiais.length === 0 ? (
+            <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+              <FileText size={24} color="var(--muted)" />
+              <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum material vinculado. Vá na aba "Biblioteca" para adicionar.</p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {materiais.map((mat, idx) => (
+                <div key={mat.materialId || mat.id || idx} className="vx-card" style={{ padding: 14, display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <FileText size={18} style={{ color: "var(--brand)", flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{mat.nome || "Material"}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                      <select className="vx-input" style={{ width: "auto", fontSize: 12 }} value={mat.categoria} onChange={(e) => atualizar(idx, "categoria", e.target.value)}>
+                        {CATEGORIAS_MATERIAL.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                      </select>
+                      <select className="vx-input" style={{ width: "auto", fontSize: 12 }} value={mat.obrigatoriedade} onChange={(e) => atualizar(idx, "obrigatoriedade", e.target.value)}>
+                        {OBRIGATORIEDADE.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                      </select>
+                      <select className="vx-input" style={{ width: "auto", fontSize: 12 }} value={mat.regraAcesso} onChange={(e) => atualizar(idx, "regraAcesso", e.target.value)}>
+                        {REGRAS_ACESSO.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => remover(idx)} title="Remover"><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+          {materiais.length > 0 && (
+            <button className="vx-btn vx-btn-primary" style={{ marginTop: 14 }} disabled={salvando} onClick={salvar}>
+              {salvando ? "Salvando..." : "Salvar materiais da campanha"}
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          {biblioteca.length === 0 ? (
+            <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+              <FileText size={24} color="var(--muted)" />
+              <p className="vx-mut" style={{ marginTop: 10 }}>Biblioteca vazia. Faça upload de materiais na seção "Materiais" do menu lateral.</p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 8 }}>
+              {biblioteca.map((mat) => {
+                const jaVinculado = materiais.some((m) => (m.materialId || m.id) === mat.id);
+                return (
+                  <div key={mat.id} className="vx-card" style={{ padding: 12, display: "flex", alignItems: "center", gap: 10, opacity: jaVinculado ? 0.5 : 1 }}>
+                    <FileText size={16} style={{ color: "var(--brand)", flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{mat.nome}</div>
+                      <div className="vx-mut" style={{ fontSize: 11 }}>{mat.tipo || "arquivo"} · {mat.tamanhoFormatado || ""}</div>
+                    </div>
+                    <button className="vx-btn vx-btn-sm" disabled={jaVinculado} onClick={() => vincular(mat)}>
+                      {jaVinculado ? "Vinculado" : "Adicionar"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+const SELECAO_LEADS_TIPOS = [
+  { id: "toda_base", label: "Toda a base", icon: Database, desc: "Todos os leads da empresa entram na campanha" },
+  { id: "filtros", label: "Por filtros", icon: Filter, desc: "Leads que atendem critérios específicos" },
+  { id: "listas", label: "Por listas", icon: List, desc: "Selecione listas específicas da Loja de Leads" },
+  { id: "individual", label: "Individual", icon: UserPlus, desc: "Selecione leads um a um" },
+  { id: "importar", label: "Importar", icon: Upload, desc: "Importe uma base de leads externa" },
+];
+const DISTRIBUICAO_LEADS = [
+  { id: "fila", label: "Fila compartilhada", desc: "Profissionais solicitam o próximo lead disponível" },
+  { id: "automatica", label: "Automática", desc: "Sistema distribui equitativamente" },
+  { id: "manual", label: "Manual", desc: "Gestor atribui leads manualmente" },
+];
+
+function LeadsCampanha({ campanha, profissionais, onRecarregar }) {
+  const [leads, setLeads] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [aviso, setAviso] = useState("");
+
+  const carregar = async () => {
+    setCarregando(true);
+    const r = await api(`/campaigns/${campanha.id}/leads`);
+    setLeads(r?.leads || r || []);
+    setCarregando(false);
+  };
+
+  useEffect(() => { carregar(); }, [campanha.id]);
+
+  const stats = useMemo(() => {
+    const total = leads.length;
+    const disponiveis = leads.filter((l) => l.status === "disponivel").length;
+    const emAtendimento = leads.filter((l) => l.status === "em_atendimento").length;
+    const convertidos = leads.filter((l) => l.status === "convertido").length;
+    const devolvidos = leads.filter((l) => l.status === "devolvido").length;
+    return { total, disponiveis, emAtendimento, convertidos, devolvidos };
+  }, [leads]);
+
+  const selecaoTipo = campanha.selecaoLeadsTipo || "toda_base";
+  const distribuicao = campanha.distribuicaoLeads || "fila";
+
+  return (
+    <div className="vx-fade">
+      <div style={{ marginBottom: 16 }}>
+        <div className="vx-eyebrow">Base de leads</div>
+        <h2 className="vx-disp" style={{ margin: "4px 0" }}>Leads da campanha</h2>
+        <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Gerencie a base de leads vinculada à campanha e acompanhe a distribuição.</p>
+      </div>
+
+      {aviso && <div className="vx-notice" style={{ marginBottom: 12 }}>{aviso}</div>}
+
+      <div className="vx-grid vx-g4" style={{ marginBottom: 16 }}>
+        {[["Total", stats.total, Database], ["Disponíveis", stats.disponiveis, Users], ["Em atendimento", stats.emAtendimento, UserPlus], ["Convertidos", stats.convertidos, TrendingUp]].map(([label, valor, Icon]) => (
+          <div key={label} className="vx-card" style={{ padding: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}><Icon size={14} color="var(--brand)" /><span className="vx-mut" style={{ fontSize: 12 }}>{label}</span></div>
+            <b className="vx-mono" style={{ fontSize: 19 }}>{valor}</b>
+          </div>
+        ))}
+      </div>
+
+      <div className="vx-grid vx-g2" style={{ marginBottom: 16 }}>
+        <div className="vx-card" style={{ padding: 16 }}>
+          <div className="vx-label" style={{ marginBottom: 6 }}>Método de seleção</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {(() => { const t = SELECAO_LEADS_TIPOS.find((s) => s.id === selecaoTipo); return t ? <><t.icon size={16} color="var(--brand)" /><div><b style={{ fontSize: 13 }}>{t.label}</b><div className="vx-mut" style={{ fontSize: 11 }}>{t.desc}</div></div></> : <span>—</span>; })()}
+          </div>
+        </div>
+        <div className="vx-card" style={{ padding: 16 }}>
+          <div className="vx-label" style={{ marginBottom: 6 }}>Distribuição</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Shuffle size={16} color="var(--brand)" />
+            <div><b style={{ fontSize: 13 }}>{DISTRIBUICAO_LEADS.find((d) => d.id === distribuicao)?.label || "Fila"}</b><div className="vx-mut" style={{ fontSize: 11 }}>{DISTRIBUICAO_LEADS.find((d) => d.id === distribuicao)?.desc || ""}</div></div>
+          </div>
+        </div>
+      </div>
+
+      {(campanha.limiteLeadsSimultaneos || campanha.limiteLeadsDia || campanha.prazoContatoHoras || campanha.prazoInatividadeHoras) && (
+        <div className="vx-card" style={{ padding: 16, marginBottom: 16 }}>
+          <div className="vx-label" style={{ marginBottom: 10 }}>Regras de distribuição</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, fontSize: 13 }}>
+            {campanha.limiteLeadsSimultaneos > 0 && <div><span className="vx-mut" style={{ fontSize: 11 }}>Leads simultâneos</span><div style={{ fontWeight: 600 }}>{campanha.limiteLeadsSimultaneos}</div></div>}
+            {campanha.limiteLeadsDia > 0 && <div><span className="vx-mut" style={{ fontSize: 11 }}>Leads por dia</span><div style={{ fontWeight: 600 }}>{campanha.limiteLeadsDia}</div></div>}
+            {campanha.prazoContatoHoras > 0 && <div><span className="vx-mut" style={{ fontSize: 11 }}>Prazo primeiro contato</span><div style={{ fontWeight: 600 }}>{campanha.prazoContatoHoras}h</div></div>}
+            {campanha.prazoInatividadeHoras > 0 && <div><span className="vx-mut" style={{ fontSize: 11 }}>Prazo inatividade</span><div style={{ fontWeight: 600 }}>{campanha.prazoInatividadeHoras}h</div></div>}
+          </div>
+        </div>
+      )}
+
+      {carregando ? <div className="vx-mut">Carregando leads...</div> : leads.length === 0 ? (
+        <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+          <Database size={24} color="var(--muted)" />
+          <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum lead vinculado a esta campanha.</p>
+          <p className="vx-mut" style={{ fontSize: 12 }}>Configure a fonte de leads no editor da campanha ou importe na aba Contatos.</p>
+        </div>
+      ) : (
+        <div className="vx-card" style={{ padding: 0 }}>
+          <div style={{ overflowX: "auto" }}>
+            <table className="vx-table" style={{ width: "100%", fontSize: 13 }}>
+              <thead><tr><th>Lead</th><th>Status</th><th>Profissional</th><th>Atribuído em</th></tr></thead>
+              <tbody>
+                {leads.slice(0, 50).map((lead) => (
+                  <tr key={lead.id || lead.leadId}>
+                    <td style={{ fontWeight: 500 }}>{lead.nome || lead.leadNome || `#${lead.leadId || lead.id}`}</td>
+                    <td><span className="vx-chip" style={{ fontSize: 11 }}>{lead.status || "disponivel"}</span></td>
+                    <td>{lead.sellerNome || lead.sellerId || "—"}</td>
+                    <td className="vx-mono">{lead.atribuidoEm ? new Date(lead.atribuidoEm).toLocaleDateString("pt-BR") : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {leads.length > 50 && <div className="vx-chart-source" style={{ padding: 10 }}>Mostrando 50 de {leads.length} leads</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function VerificacaoCampanha({ campanha }) {
   const tarefasCampanha = (() => {

@@ -3228,5 +3228,60 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_campaign_versions_camp ON campaign_versions(campaignId, versao);
 `);
 
+// ── Materiais de campanha: colunas extras na junction ──────────────────
+adicionarColuna("materiais_campanhas", "categoria", "TEXT DEFAULT 'outros'");
+adicionarColuna("materiais_campanhas", "obrigatoriedade", "TEXT DEFAULT 'complementar'");
+adicionarColuna("materiais_campanhas", "acaoVinculada", "TEXT DEFAULT ''");
+adicionarColuna("materiais_campanhas", "ordem", "INTEGER DEFAULT 0");
+adicionarColuna("materiais_campanhas", "regraAcesso", "TEXT DEFAULT 'todos'");
+adicionarColuna("materiais", "tipo", "TEXT DEFAULT 'arquivo'");
+
+// ── Consulta de materiais pelo profissional ────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS materiais_consultas (
+    id TEXT PRIMARY KEY,
+    materialId TEXT NOT NULL,
+    campaignId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    tipo TEXT DEFAULT 'visualizacao',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (materialId) REFERENCES materiais(id),
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_matconsulta_camp ON materiais_consultas(campaignId, sellerId);
+`);
+
+// ── Base de leads da campanha ──────────────────────────────────────────
+adicionarColuna("campaigns", "fonteLeads", "TEXT DEFAULT 'profissional'");
+adicionarColuna("campaigns", "selecaoLeadsTipo", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "selecaoLeadsFiltros", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "selecaoLeadsDinamica", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "distribuicaoLeads", "TEXT DEFAULT 'fila'");
+adicionarColuna("campaigns", "limiteLeadsSimultaneos", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "limiteLeadsDia", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "prazoContatoHoras", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "prazoInatividadeHoras", "INTEGER DEFAULT 0");
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS campaign_leads (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    leadId TEXT NOT NULL,
+    sellerId TEXT DEFAULT '',
+    status TEXT DEFAULT 'disponivel',
+    atribuidoEm INTEGER,
+    primeiroContatoEm INTEGER,
+    ultimaAtividadeEm INTEGER,
+    motivoDevolucao TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id),
+    FOREIGN KEY (leadId) REFERENCES leads(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_camplead_camp ON campaign_leads(campaignId, status);
+  CREATE INDEX IF NOT EXISTS idx_camplead_seller ON campaign_leads(sellerId);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_camplead_uniq ON campaign_leads(campaignId, leadId);
+`);
+
 export default db;
 export { uid, agora };
