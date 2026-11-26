@@ -363,7 +363,12 @@ export function resumoConsumo(entityId) {
 
 // ── Pastas ──────────────────────────────────────────────────────────────────
 export function listarPastas(entityId, entityRole) {
-  return db.prepare("SELECT * FROM loja_leads_pastas WHERE entityId = ? AND entityRole = ? ORDER BY criadoEm").all(entityId, entityRole);
+  const pastas = db.prepare("SELECT * FROM loja_leads_pastas WHERE entityId = ? AND entityRole = ? ORDER BY criadoEm").all(entityId, entityRole);
+  for (const p of pastas) {
+    p.totalListas = db.prepare("SELECT COUNT(*) n FROM loja_leads_listas WHERE pastaId = ?").get(p.id)?.n || 0;
+    p.totalContatos = db.prepare("SELECT COUNT(DISTINCT lc.contatoId) n FROM loja_leads_lista_contatos lc JOIN loja_leads_listas l ON l.id = lc.listaId WHERE l.pastaId = ?").get(p.id)?.n || 0;
+  }
+  return pastas;
 }
 
 export function criarPasta(entityId, entityRole, nome, cor) {
