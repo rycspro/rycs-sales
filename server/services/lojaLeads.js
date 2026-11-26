@@ -325,6 +325,51 @@ export async function buscarPlaces(textQuery, { regiao, quantidade } = {}) {
   }
 }
 
+// ── Correção única (pedido do dono, 2026-11-26): organizar pastas ──────────
+// 1) "Nova pasta" cujos leads/lista são de ar-condicionado → "Ar-condicionado".
+// 2) Leads de turismo resgatados em "Leads recuperados" → vão para a pasta de
+//    turismo que o usuário criou; a pasta "Leads recuperados" vazia é removida
+//    (foi criada pelo sistema e não guarda nada).
+// Só age quando a maioria dos contatos é do segmento. Roda uma única vez.
+try {
+  const MARCA = "organiza-pastas-ar-turismo-v1";
+  if (!db.prepare("SELECT 1 FROM loja_leads_migracoes WHERE nome = ?").get(MARCA)) {
+    db.transaction(() => {
+      const ts = agora();
+      const proporcao = (pastaId, padroes) => {
+        const rows = db.prepare(`
+          SELECT DISTINCT c.id, lower(c.nome || ' ' || IFNULL(c.categoria,'') || ' ' || l.nome || ' ' || IFNULL(l.descricao,'')) AS t
+          FROM loja_leads_lista_contatos lc JOIN loja_leads_listas l ON l.id = lc.listaId
+          JOIN loja_leads_contatos c ON c.id = lc.contatoId WHERE l.pastaId = ?`).all(pastaId);
+        if (!rows.length) return 0;
+        return rows.filter((r) => padroes.some((p) => r.t.includes(p))).length / rows.length;
+      };
+      const AR = ["ar condicionado", "ar-condicionado", "ar condicionados", "climatiza", "refrigera"];
+      const TUR = ["turismo", "viage", "viagem", "tour", "travel"];
+
+      for (const p of db.prepare("SELECT id FROM loja_leads_pastas WHERE nome = 'Nova pasta'").all()) {
+        if (proporcao(p.id, AR) >= 0.5) {
+          db.prepare("UPDATE loja_leads_pastas SET nome = 'Ar-condicionado', atualizadoEm = ? WHERE id = ?").run(ts, p.id);
+        }
+      }
+
+      for (const rec of db.prepare("SELECT id, entityId FROM loja_leads_pastas WHERE nome = 'Leads recuperados'").all()) {
+        if (proporcao(rec.id, TUR) < 0.5) continue;
+        const destino = db.prepare(`SELECT id, nome FROM loja_leads_pastas WHERE entityId = ? AND id != ?
+          AND (lower(nome) LIKE '%turismo%' OR lower(nome) LIKE '%viage%') ORDER BY criadoEm LIMIT 1`).get(rec.entityId, rec.id);
+        if (!destino) continue;
+        db.prepare("UPDATE loja_leads_listas SET pastaId = ?, atualizadoEm = ? WHERE pastaId = ?").run(destino.id, ts, rec.id);
+        db.prepare("UPDATE loja_leads_listas SET nome = ?, atualizadoEm = ? WHERE pastaId = ? AND nome = 'Leads recuperados'").run(destino.nome, ts, destino.id);
+        const resta = db.prepare("SELECT COUNT(*) n FROM loja_leads_listas WHERE pastaId = ?").get(rec.id).n;
+        if (!resta) db.prepare("DELETE FROM loja_leads_pastas WHERE id = ?").run(rec.id);
+      }
+      db.prepare("INSERT INTO loja_leads_migracoes (nome, criadoEm) VALUES (?, ?)").run(MARCA, ts);
+    })();
+  }
+} catch (e) {
+  console.error("[loja-leads] organização única de pastas falhou (boot segue normal):", e.message);
+}
+
 // ── Fila cidade por cidade ──────────────────────────────────────────────────
 // O Google Places devolve no máximo 60 resultados por busca de texto. Buscar
 // "agência de turismo em São Paulo" (estado) sempre para em 60. A fila resolve:

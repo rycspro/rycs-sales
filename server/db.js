@@ -3452,7 +3452,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_remun_seller ON remuneracoes(sellerId, status);
 `);
 
-adicionarColuna("canais_conexoes", "apelido", "TEXT DEFAULT ''");
+// canais_conexoes.apelido é adicionada em services/canais.js, logo após criar a tabela.
 
 export default db;
 export { uid, agora };

@@ -96,6 +96,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_canais_auditorias_conversa ON canais_auditorias(conversaId, criadoEm);
 `);
 
+// Coluna nova (aditiva): apelido por conexão. Fica aqui porque a tabela é
+// criada neste arquivo — em db.js ela ainda não existe num banco novo.
+if (!db.prepare("PRAGMA table_info(canais_conexoes)").all().some((c) => c.name === "apelido")) {
+  db.exec("ALTER TABLE canais_conexoes ADD COLUMN apelido TEXT DEFAULT ''");
+}
+
 export const erroCanal = (msg, status = 400) => Object.assign(new Error(msg), { validacao: true, http: status });
 
 // ── Conexões ──────────────────────────────────────────────────────────────
