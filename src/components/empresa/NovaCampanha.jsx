@@ -101,12 +101,12 @@ function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {Icon && <Icon size={18} color={selected ? "var(--brand)" : "var(--text-2)"} />}
+        {Icon && <Icon size={18} color={selected ? "#318CE7" : "var(--text-2)"} />}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: selected ? "var(--brand)" : "var(--text-1)" }}>{title}</div>
+          <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: "var(--ink, #171717)" }}>{title}</div>
           {subtitle && <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{subtitle}</div>}
         </div>
-        {selected && <Check size={16} color="var(--brand)" />}
+        {selected && <Check size={16} color="#318CE7" />}
       </div>
     </button>
   );
@@ -130,7 +130,7 @@ function ChipToggle({ items, value, onChange, multi = false }) {
           fontSize: 12.5, fontWeight: 500, cursor: "pointer",
           border: `1.5px solid ${isActive(item.id) ? "var(--brand)" : "var(--border)"}`,
           background: isActive(item.id) ? "var(--brand-50)" : "var(--surface)",
-          color: isActive(item.id) ? "var(--brand)" : "var(--text-2)",
+          color: isActive(item.id) ? "var(--ink, #171717)" : "var(--text-2)",
           transition: "all .15s",
         }}>
           {item.icon && <item.icon size={13} />}
@@ -146,7 +146,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const nome = nomeAssistente(locale);
   const chaveRascunho = `rycs-wizard-${emp.id}`;
   const rascunhoSalvo = useRef(lerJson(chaveRascunho, null));
-  const [passo, setPasso] = useState(rascunhoSalvo.current?.passo || 0);
+  const [passo, _setPasso] = useState(rascunhoSalvo.current?.passo || 0);
+  const setPasso = (p) => { _setPasso(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [campanha, setCampanha] = useState(rascunhoSalvo.current?.campanha || null);
   const [salvando, setSalvando] = useState(false);
   const [explicacao, setExplicacao] = useState("");
@@ -917,7 +918,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   }}>
                     {on && <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: "#318CE7", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" /></div>}
                     <m.icon size={22} color={on ? "#318CE7" : "var(--muted)"} style={{ marginBottom: 8 }} />
-                    <div style={{ fontSize: 14, fontWeight: 600, color: on ? "#318CE7" : "var(--ink)", marginBottom: 4 }}>{m.titulo}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink, #171717)", marginBottom: 4 }}>{m.titulo}</div>
                     <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>{m.desc}</div>
                   </button>
                 );
