@@ -194,6 +194,42 @@ export async function buscarPlaces(textQuery, { regiao, quantidade } = {}) {
   }
 }
 
+const TIPOS_GENERICOS = new Set(["point_of_interest", "establishment", "place", "premise", "street_address", "route", "political", "locality", "sublocality"]);
+const TIPO_PT = {
+  restaurant: "Restaurante", cafe: "Café", bar: "Bar", bakery: "Padaria",
+  food: "Alimentação", meal_delivery: "Delivery", meal_takeaway: "Takeaway",
+  dentist: "Dentista", doctor: "Médico", hospital: "Hospital", pharmacy: "Farmácia",
+  health: "Saúde", physiotherapist: "Fisioterapeuta", veterinary_care: "Veterinário",
+  gym: "Academia", spa: "Spa",
+  real_estate_agency: "Imobiliária", insurance_agency: "Seguradora",
+  lawyer: "Advocacia", accounting: "Contabilidade", finance: "Financeiro",
+  hair_care: "Salão de beleza", beauty_salon: "Salão de beleza",
+  clothing_store: "Loja de roupas", shoe_store: "Loja de calçados",
+  shopping_mall: "Shopping", store: "Loja", supermarket: "Supermercado",
+  convenience_store: "Conveniência", electronics_store: "Eletrônicos",
+  furniture_store: "Móveis", hardware_store: "Ferragem", jewelry_store: "Joalheria",
+  home_goods_store: "Casa e decoração", pet_store: "Pet shop",
+  car_dealer: "Concessionária", car_repair: "Oficina mecânica", car_wash: "Lava-jato",
+  gas_station: "Posto de combustível",
+  lodging: "Hospedagem", hotel: "Hotel",
+  school: "Escola", university: "Universidade",
+  church: "Igreja", mosque: "Mesquita",
+  plumber: "Encanador", electrician: "Eletricista", painter: "Pintor",
+  roofing_contractor: "Telhados", locksmith: "Chaveiro",
+  moving_company: "Mudanças", storage: "Armazenamento",
+  travel_agency: "Agência de viagens",
+  laundry: "Lavanderia",
+  manufacturer: "Indústria",
+  general_contractor: "Empreiteira",
+};
+
+function categoriaPt(types) {
+  if (!types?.length) return "";
+  const especifico = types.find((t) => !TIPOS_GENERICOS.has(t));
+  const tipo = especifico || types[0];
+  return TIPO_PT[tipo] || tipo.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function normalizar(p) {
   return {
     placeId: p.id || "",
@@ -201,7 +237,7 @@ function normalizar(p) {
     telefone: p.nationalPhoneNumber || p.internationalPhoneNumber || "",
     endereco: p.formattedAddress || "",
     site: p.websiteUri || "",
-    categoria: (p.types || [])[0] || "",
+    categoria: categoriaPt(p.types),
     lat: p.location?.latitude || null,
     lng: p.location?.longitude || null,
     rating: p.rating || 0,
