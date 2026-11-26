@@ -359,13 +359,48 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
     if (!podeEnviar) return;
     setOcupado(true);
     setFeedback("");
+
     const r = await api("/loja-leads/buscar", { texto: segmento.trim(), regiao: regiao.trim(), quantidade });
+    if (!r || r.error) { setOcupado(false); setFeedback(r?.error || "Erro ao buscar."); return aviso?.(r?.error || "Erro ao buscar."); }
+    const contatos = r.contatos || [];
+    if (!contatos.length) { setOcupado(false); setFeedback("Nenhum resultado encontrado para esta busca."); return aviso?.("Nenhum resultado."); }
+
+    // Determinar lista de destino
+    let listaId = null;
+    if (destino === "existing" && listaExistente) {
+      listaId = listaExistente;
+    } else if (destino === "new" && nomeLista.trim()) {
+      // Buscar ou criar pasta padrão
+      const pastasR = await api("/loja-leads/pastas");
+      const pastasArr = pastasR?.pastas || [];
+      let pastaId = pastasArr[0]?.id;
+      if (!pastaId) {
+        const novaPasta = await api("/loja-leads/pastas", { nome: "Loja de Leads" });
+        if (novaPasta?.error) { setOcupado(false); setFeedback(novaPasta.error); return aviso?.(novaPasta.error); }
+        pastaId = novaPasta.id;
+      }
+      const novaLista = await api("/loja-leads/listas", { pastaId, nome: nomeLista.trim(), descricao: `${segmento} — ${regiao || pais}` });
+      if (novaLista?.error) { setOcupado(false); setFeedback(novaLista.error); return aviso?.(novaLista.error); }
+      listaId = novaLista.id;
+    }
+
+    // Adicionar contatos à lista
+    if (listaId) {
+      let adicionados = 0;
+      for (const c of contatos) {
+        const ar = await api("/loja-leads/listas/adicionar", { listaId, contatoId: c.id });
+        if (!ar?.error) adicionados++;
+      }
+      setFeedback(`${contatos.length} lead(s) encontrado(s). ${adicionados} adicionado(s) à lista.`);
+      aviso?.(`${adicionados} lead(s) adicionados à lista "${destino === "new" ? nomeLista.trim() : listaFinal}".`);
+    } else {
+      setFeedback(`${contatos.length} lead(s) encontrado(s).`);
+      aviso?.(`${contatos.length} lead(s) encontrado(s).`);
+    }
+
     setOcupado(false);
-    if (!r || r.error) { setFeedback(r?.error || "Erro ao buscar."); return aviso?.(r?.error || "Erro ao buscar."); }
-    const n = r.contatos?.length || 0;
-    setFeedback(n > 0 ? `${n} lead(s) encontrado(s).` : "Nenhum resultado encontrado para esta busca.");
-    aviso?.(n > 0 ? `${n} lead(s) encontrado(s).` : "Nenhum resultado.");
     recarregarCiclo?.();
+    recarregarListas?.();
   };
 
   return (
