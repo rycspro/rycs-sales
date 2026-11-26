@@ -59,6 +59,11 @@ function auditLog(companyId, userId, acao, entidade, entidadeId, dados = {}) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(uid(), companyId, userId, acao, entidade, entidadeId, JSON.stringify(dados), agora());
 }
 
+function limitesCommerciaisAtivos() {
+  const cfg = db.prepare("SELECT limitesAtivos FROM voice_admin_config WHERE id = 'global'").get();
+  return cfg?.limitesAtivos === 1;
+}
+
 // ── Provedores ───────────────────────────────────────────────────────
 
 router.get("/voice/providers", (req, res) => {
@@ -893,7 +898,7 @@ router.get("/voice/billing/por-campanha", (req, res) => {
 router.get("/voice/admin/limits/:companyId", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
   const limits = db.prepare("SELECT * FROM voice_company_limits WHERE companyId = ?").get(req.params.companyId);
-  res.json(limits || { companyId: req.params.companyId, maxCanaisSimultaneos: 2, maxChamadasDia: 500, maxMinutosMes: 10000 });
+  res.json(limits || { companyId: req.params.companyId, maxCanaisSimultaneos: 2, maxChamadasDia: 0, maxMinutosMes: 0 });
 });
 
 router.post("/voice/admin/limits", (req, res) => {
@@ -921,7 +926,7 @@ router.post("/voice/admin/limits", (req, res) => {
       valorComercialMinuto = COALESCE(excluded.valorComercialMinuto, valorComercialMinuto),
       atualizadoEm = excluded.atualizadoEm
   `).run(companyId,
-    maxCanaisSimultaneos ?? 2, maxChamadasDia ?? 500, maxMinutosMes ?? 10000,
+    maxCanaisSimultaneos ?? 2, maxChamadasDia ?? 0, maxMinutosMes ?? 0,
     JSON.stringify(prefixosBloqueados || ["0900", "0300"]),
     operadoraSipId || "", JSON.stringify(didNumeros || []),
     custoMinutoFixo ?? 0, custoMinutoCelular ?? 0, valorComercialMinuto ?? 0, now);
@@ -941,8 +946,9 @@ router.get("/voice/channels/active", (req, res) => {
     WHERE companyId = ? AND status IN ('iniciada', 'chamando', 'em_andamento')
   `).get(companyId);
 
-  const limits = db.prepare("SELECT maxCanaisSimultaneos FROM voice_company_limits WHERE companyId = ?").get(companyId);
-  const max = limits?.maxCanaisSimultaneos || 2;
+  const companyLimits = db.prepare("SELECT maxCanaisSimultaneos FROM voice_company_limits WHERE companyId = ?").get(companyId);
+  const globalCfg = db.prepare("SELECT maxSimultaneosGlobal FROM voice_admin_config WHERE id = 'global'").get();
+  const max = companyLimits?.maxCanaisSimultaneos || globalCfg?.maxSimultaneosGlobal || 10;
 
   res.json({ canaisAtivos: ativos?.canaisAtivos || 0, maxCanais: max, disponivel: (ativos?.canaisAtivos || 0) < max });
 });
@@ -969,13 +975,18 @@ router.post("/voice/check-destination", (req, res) => {
     if (limpo.startsWith(p)) return res.json({ permitido: false, motivo: `Prefixo ${p} bloqueado` });
   }
 
-  // Limite diário
-  const inicioDia = new Date(); inicioDia.setHours(0, 0, 0, 0);
-  const chamadasHoje = db.prepare(`
-    SELECT COUNT(*) as c FROM voice_calls WHERE companyId = ? AND criadoEm >= ?
-  `).get(companyId, inicioDia.getTime());
-  const maxDia = db.prepare("SELECT maxChamadasDia FROM voice_company_limits WHERE companyId = ?").get(companyId)?.maxChamadasDia || 500;
-  if ((chamadasHoje?.c || 0) >= maxDia) return res.json({ permitido: false, motivo: "Limite diário de chamadas atingido" });
+  // Limite diário (só quando limites comerciais estão ativos)
+  if (limitesCommerciaisAtivos()) {
+    const inicioDia = new Date(); inicioDia.setHours(0, 0, 0, 0);
+    const chamadasHoje = db.prepare(`
+      SELECT COUNT(*) as c FROM voice_calls WHERE companyId = ? AND criadoEm >= ?
+    `).get(companyId, inicioDia.getTime());
+    const companyLimits = db.prepare("SELECT maxChamadasDia FROM voice_company_limits WHERE companyId = ?").get(companyId);
+    const maxDia = companyLimits?.maxChamadasDia || 0;
+    if (maxDia > 0 && (chamadasHoje?.c || 0) >= maxDia) {
+      return res.json({ permitido: false, motivo: "Limite diário de chamadas atingido" });
+    }
+  }
 
   // Tipo de destino
   const tipoDestino = limpo.length >= 10 && ["6", "7", "8", "9"].includes(limpo.charAt(limpo.length >= 11 ? 2 : 1)) ? "celular" : "fixo";

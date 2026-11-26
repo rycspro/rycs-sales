@@ -618,4 +618,27 @@ describe("RYCS Voice — Discadora comercial", () => {
     const r = await req("/voice/admin/telefonia/config", { cookie: cookieVendedor });
     assert.equal(r.status, 403);
   });
+
+  it("check-destination não aplica limite diário com limites comerciais desativados", async () => {
+    // Garantir que limites comerciais estão desativados
+    await req("/voice/admin/telefonia/config", {
+      cookie: cookieAdmin,
+      body: { limitesAtivos: false },
+    });
+    // Mesmo com limite per-company de 200/dia (setado antes), check-destination deve permitir
+    const r = await req("/voice/check-destination", {
+      body: { telefone: "11988887777" },
+      cookie: cookieEmpresa,
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.permitido, true);
+  });
+
+  it("admin limits default retorna 0 (ilimitado) para limites comerciais", async () => {
+    const r = await req("/voice/admin/limits/empresa_inexistente_xyz", { cookie: cookieAdmin });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.maxChamadasDia, 0);
+    assert.equal(r.corpo.maxMinutosMes, 0);
+    assert.equal(r.corpo.maxCanaisSimultaneos, 2);
+  });
 });
