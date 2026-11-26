@@ -6,6 +6,7 @@ import { ErroMeta } from "../services/meta.js";
 import * as canais from "../services/canais.js";
 import * as wa from "../services/canaisWhatsapp.js";
 import * as ig from "../services/canaisInstagram.js";
+import * as evo from "../services/canaisEvolution.js";
 import * as auditoria from "../services/auditoriaConversas.js";
 import { notificar } from "./notifications.js";
 
@@ -68,7 +69,7 @@ router.get("/canais", soEquipe, rota((req, res) => {
   const empresas = role === "vendedor"
     ? db.prepare("SELECT c.id, c.nome FROM applications a JOIN companies c ON c.id = a.companyId WHERE a.sellerId = ? AND a.status = 'aprovado' ORDER BY c.nome").all(entityId)
     : undefined;
-  res.json({ whatsapp: wa.dadosLogin(), instagram: { configurada: ig.instagramConfigurado() }, conexoes, naoLidas: canais.naoLidas(req.user), empresas });
+  res.json({ whatsapp: wa.dadosLogin(), instagram: { configurada: ig.instagramConfigurado() }, evolution: { configurada: evo.evolutionConfigurada() }, conexoes, naoLidas: canais.naoLidas(req.user), empresas });
 }));
 
 const exigirConsentimento = (req) => { if (req.body?.consentimento !== true) throw erroCanal("Confirme o aviso sobre o uso das conversas para continuar."); };
@@ -132,7 +133,21 @@ router.post("/canais/conversas/:id/responder", soEquipe, rota(async (req, res) =
   if (!v) throw erroCanal("Conversa não encontrada.", 404);
   const r = v.canal === "instagram"
     ? await ig.responder(req.user, v.id, { texto: req.body?.texto, comentarioId: String(req.body?.comentarioId || ""), privado: req.body?.privado === true })
-    : await wa.enviarTexto(req.user, v.id, req.body?.texto);
+    : v.canal === "evolution"
+      ? await (async () => {
+          const conexao = canais.conexaoPorId(v.conexaoId);
+          if (!conexao || conexao.status !== "ativa") throw erroCanal("O WhatsApp pessoal não está conectado.");
+          const para = v.contatoExterno || v.telefone;
+          const sent = await evo.enviarTexto(conexao, { para, texto: req.body?.texto });
+          canais.registrarMensagem(conexao, {
+            contato: para, telefone: para, nome: "", externoId: sent.id,
+            direcao: "enviada", origem: "vendedor", em: Date.now(),
+            tipo: "texto", texto: String(req.body?.texto || "").trim(),
+            dados: {}, status: "sent", autorUserId: req.user.id,
+          });
+          return sent;
+        })()
+      : await wa.enviarTexto(req.user, v.id, req.body?.texto);
   res.json({ ok: true, ...r });
 }));
 

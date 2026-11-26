@@ -69,6 +69,7 @@ import sequenciasEmailRoutes, { sequenciasPublico } from "./routes/sequenciasEma
 import { iniciarSequenciasEmail } from "./services/sequenciasEmail.js";
 import { iniciarReativacao } from "./services/reativacaoEmpresas.js";
 import webhooksRoutes, { webhooksPublico } from "./routes/webhooks.js";
+import evolutionRoutes, { evolutionPublico } from "./routes/evolution.js";
 import googleSheetsRoutes from "./routes/googleSheets.js";
 import { iniciarWorkerGoogleSheets } from "./services/googleSheets.js";
 import lojaLeadsRoutes from "./routes/lojaLeads.js";
@@ -206,6 +207,7 @@ app.use("/api/onboarding/convites", authLimiter);
 app.use("/api/parceiros/inscricao", authLimiter);
 app.use("/api", apiLimiter);
 app.use("/api/webhooks/meta", rateLimit({ windowMs: 60 * 1000, max: 3000, standardHeaders: true, legacyHeaders: false }));
+app.use("/api/webhooks/evolution", rateLimit({ windowMs: 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false }));
 
 // --- Routes ---
 app.use("/api", authRoutes);
@@ -229,6 +231,8 @@ app.use("/api", stripePublico);
 app.use("/api", materiaisPublico);
 // Entrada de leads por webhook: sistemas externos chamam sem cookie (auth = token na URL).
 app.use("/api", webhooksPublico);
+// Webhook da Evolution API: chega sem cookie de sessão (auth = apikey no header).
+app.use("/api/webhooks", evolutionPublico);
 // Callback do OAuth do Google Sheets: redireciona sem cookie de sessão.
 // Passos da jornada antes do cadastro (visita, formulário): visitante sem conta.
 app.use("/api", jornadaPublico);
@@ -296,6 +300,7 @@ app.use("/api", authMiddleware, colaboradoresRoutes);
 app.use("/api", authMiddleware, agendaRoutes);
 app.use("/api", authMiddleware, grupoSuporteRoutes);
 app.use("/api", authMiddleware, canaisRoutes);
+app.use("/api", authMiddleware, evolutionRoutes);
 app.use("/api", authMiddleware, erpRoutes);
 
 // --- AI Audit ---

@@ -2,11 +2,11 @@
 // vendedor) e Instagram. Regras puras, usadas pelo servidor, pela tela e pelos
 // testes.
 
-export const CANAIS = { whatsapp: "WhatsApp", instagram: "Instagram" };
+export const CANAIS = { whatsapp: "WhatsApp", instagram: "Instagram", evolution: "WhatsApp Pessoal" };
 export const JANELA_MS = 24 * 60 * 60 * 1000;
 const MIN = 60 * 1000;
 
-export const LIMITE_TEXTO = { whatsapp: 4096, instagram: 1000 };
+export const LIMITE_TEXTO = { whatsapp: 4096, instagram: 1000, evolution: 4096 };
 
 export const soDigitos = (v) => String(v ?? "").replace(/\D/g, "");
 
