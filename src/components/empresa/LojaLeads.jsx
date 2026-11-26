@@ -396,7 +396,7 @@ export default function LojaLeads({ aviso, role: roleProp }) {
       <div className="vx-card" style={{ borderRadius: "0 var(--radius-md) var(--radius-md) var(--radius-md)", padding: 20, marginBottom: 20 }}>
         {aba === 0 && <AbaBuscar aviso={aviso} listas={listas} pastas={pastas} precoUnitario={precoUnitario} recarregarCiclo={recarregarCiclo} recarregarListas={recarregarListas} isEmpresa={isEmpresa} ciclo={ciclo} />}
         {aba === 1 && <AbaContatos aviso={aviso} listas={listas} isEmpresa={isEmpresa} />}
-        {aba === 2 && <AbaListas aviso={aviso} isEmpresa={isEmpresa} recarregarListas={recarregarListas} />}
+        {aba === 2 && <AbaListas aviso={aviso} isEmpresa={isEmpresa} pastas={pastas} recarregar={recarregarListas} />}
         {aba === 3 && <AbaConsumo ciclo={ciclo} />}
       </div>
     </div>
@@ -973,24 +973,20 @@ function InfoRow({ icon, label, value, href }) {
 }
 
 /* ═══ ABA 2: Minhas listas ═══════════════════════════════════════════════ */
-function AbaListas({ aviso, isEmpresa, recarregarListas }) {
-  const [pastas, setPastas] = useState([]);
-  const [loading, setLoading] = useState(true);
+function AbaListas({ aviso, isEmpresa, pastas, recarregar }) {
   const [pastaAberta, setPastaAberta] = useState(null);
   const [listaAberta, setListaAberta] = useState(null);
 
-  const recarregar = useCallback(async () => { const r = await api("/loja-leads/pastas"); setPastas(r?.pastas || []); }, []);
-  useEffect(() => { recarregar().then(() => setLoading(false)); }, []);
+  // Mantém a pasta/lista aberta em sincronia com os dados atualizados do pai.
+  const pastaAbertaViva = pastaAberta ? pastas.find((p) => p.id === pastaAberta.id) || pastaAberta : null;
 
-  if (loading) return <Loading />;
-
-  if (listaAberta) return <VistaLista lista={listaAberta} aviso={aviso} voltar={() => { setListaAberta(null); recarregar(); recarregarListas?.(); }} isEmpresa={isEmpresa} />;
-  if (pastaAberta) return <VistaPasta pasta={pastaAberta} aviso={aviso} voltar={() => { setPastaAberta(null); recarregar(); }} abrirLista={setListaAberta} />;
+  if (listaAberta) return <VistaLista lista={listaAberta} aviso={aviso} voltar={() => { setListaAberta(null); recarregar?.(); }} isEmpresa={isEmpresa} />;
+  if (pastaAbertaViva) return <VistaPasta pasta={pastaAbertaViva} aviso={aviso} voltar={() => { setPastaAberta(null); recarregar?.(); }} abrirLista={setListaAberta} recarregarPai={recarregar} />;
 
   const novaPasta = async () => {
     const r = await api("/loja-leads/pastas", { nome: "Nova pasta" });
     if (r?.error) return aviso?.(r.error);
-    await recarregar();
+    await recarregar?.();
     aviso?.("Pasta criada.");
   };
 
@@ -1061,10 +1057,14 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
   );
 }
 
-function VistaPasta({ pasta, aviso, voltar, abrirLista }) {
+function VistaPasta({ pasta, aviso, voltar, abrirLista, recarregarPai }) {
   const [listas, setListas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const recarregar = useCallback(async () => { const r = await api(`/loja-leads/listas/${pasta.id}`); setListas(r?.listas || []); }, [pasta.id]);
+  const recarregar = useCallback(async () => {
+    const r = await api(`/loja-leads/listas/${pasta.id}`);
+    setListas(r?.listas || []);
+    recarregarPai?.();
+  }, [pasta.id, recarregarPai]);
   useEffect(() => { recarregar().then(() => setLoading(false)); }, []);
 
   const novaLista = async (parentId) => {
