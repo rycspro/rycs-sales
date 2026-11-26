@@ -10,7 +10,7 @@
 set -euo pipefail
 
 CONTAINER_NAME="rycs-evolution-api"
-IMAGE="atendai/evolution-api:v2.2.3"
+IMAGE="evoapicloud/evolution-api:v2.2.3"
 ENV_FILE="/home/ec2-user/env_producao.txt"
 VOLUME_NAME="rycs_evolution_instances"
 
