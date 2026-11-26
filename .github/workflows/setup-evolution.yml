@@ -162,12 +162,13 @@ jobs:
                 docker exec rycs-app node -e "
                   const DB=require('better-sqlite3');
                   const db=new DB(process.env.DB_PATH||'/data/data.db');
-                  const u=db.prepare(\"SELECT entityId,nome FROM users WHERE lower(email)=lower(?) AND role='vendedor'\").get('${EMAIL}');
-                  if(!u){const n=db.prepare(\"SELECT COUNT(*) c FROM users WHERE role='vendedor'\").get().c;console.log('NAO_ENCONTRADO: nenhum vendedor com esse email (total de vendedores: '+n+')');process.exit(2);}
-                  const ex=db.prepare('SELECT 1 FROM evolution_pilotos WHERE sellerId=?').get(u.entityId);
-                  if(ex){console.log('JA_AUTORIZADO: '+u.nome+' ('+u.entityId+')');process.exit(0);}
-                  db.prepare('INSERT INTO evolution_pilotos (sellerId,autorizadoPor,criadoEm) VALUES (?,?,?)').run(u.entityId,'setup-workflow',Date.now());
-                  console.log('PILOTO_AUTORIZADO: '+u.nome+' ('+u.entityId+')');
+                  const u=db.prepare(\"SELECT u.entityId AS sid, COALESCE(s.nome,'(sem nome)') AS nome, u.role AS role FROM users u LEFT JOIN sellers s ON s.id=u.entityId WHERE lower(u.email)=lower(?)\").get('${EMAIL}');
+                  if(!u){console.log('NAO_ENCONTRADO: nenhum usuario com esse email');process.exit(2);}
+                  if(u.role!=='vendedor'){console.log('NAO_VENDEDOR: a conta '+'${EMAIL}'+' tem papel '+u.role+' (o piloto precisa ser um vendedor)');process.exit(3);}
+                  const ex=db.prepare('SELECT 1 FROM evolution_pilotos WHERE sellerId=?').get(u.sid);
+                  if(ex){console.log('JA_AUTORIZADO: '+u.nome+' ('+u.sid+')');process.exit(0);}
+                  db.prepare('INSERT INTO evolution_pilotos (sellerId,autorizadoPor,criadoEm) VALUES (?,?,?)').run(u.sid,'setup-workflow',Date.now());
+                  console.log('PILOTO_AUTORIZADO: '+u.nome+' ('+u.sid+')');
                 "
                 ;;
               status)
