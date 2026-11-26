@@ -169,6 +169,20 @@ export function leadDoTelefone({ companyId, sellerId = null, telefone }) {
   return linhas.find((l) => mesmoTelefone(l.telefone, telefone)) || null;
 }
 
+// WhatsApp pessoal (Evolution): o profissional atende várias empresas com um só
+// número. Acha o lead entre as empresas onde ele está APROVADO — nunca em outras,
+// o que mantém o isolamento. Prefere lead do próprio vendedor e o mais recente.
+export function leadDoTelefoneEntreEmpresas({ sellerId, telefone }) {
+  const chave = chaveTelefone(telefone);
+  if (!chave || !sellerId) return null;
+  const linhas = db.prepare(`SELECT l.id, l.nome, l.telefone, l.sellerId, l.companyId FROM leads l
+    JOIN applications a ON a.companyId = l.companyId AND a.sellerId = ? AND a.status = 'aprovado'
+    WHERE l.telefone != '' AND replace(replace(replace(replace(replace(l.telefone,' ',''),'-',''),'(',''),')',''),'+','') LIKE ?
+    ORDER BY (l.sellerId = ?) DESC, l.criadoEm DESC`)
+    .all(sellerId, `%${chave.slice(-8)}`, sellerId);
+  return linhas.find((l) => mesmoTelefone(l.telefone, telefone)) || null;
+}
+
 export const vendedorAprovado = (companyId, sellerId) =>
   !!db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(String(sellerId || ""), companyId);
 
@@ -177,23 +191,35 @@ export const vendedorAprovado = (companyId, sellerId) =>
 export function registrarMensagem(conexao, m) {
   const contato = String(m.contato || m.contatoAlternativo || "");
   if (!contato || !m.externoId) return null;
-  // Vendedor que saiu da empresa: o número dele para de alimentar a empresa.
-  if (conexao.sellerId && !vendedorAprovado(conexao.companyId, conexao.sellerId)) return null;
   const tipo = m.conversaTipo || "direta";
   const telefone = m.telefone || "";
-  const lead = telefone ? leadDoTelefone({ companyId: conexao.companyId, sellerId: conexao.sellerId, telefone }) : null;
+  // WhatsApp pessoal (Evolution) é por profissional: a mensagem é roteada para a
+  // empresa do lead correspondente, entre as empresas onde o vendedor está
+  // aprovado. Os demais canais seguem presos à empresa da conexão.
+  const multiEmpresa = conexao.canal === "evolution" && !conexao.companyId;
+  let lead = null;
+  if (multiEmpresa) {
+    lead = telefone ? leadDoTelefoneEntreEmpresas({ sellerId: conexao.sellerId, telefone }) : null;
+  } else {
+    // Vendedor que saiu da empresa: o número dele para de alimentar a empresa.
+    if (conexao.sellerId && !vendedorAprovado(conexao.companyId, conexao.sellerId)) return null;
+    lead = telefone ? leadDoTelefone({ companyId: conexao.companyId, sellerId: conexao.sellerId, telefone }) : null;
+  }
 
   return db.transaction(() => {
     let conv = db.prepare(`SELECT * FROM canais_conversas WHERE conexaoId = ? AND tipo = ? AND (contatoExterno = ?
       OR (? != '' AND (contatoAlternativo = ? OR contatoExterno = ?)))`).get(conexao.id, tipo, contato, m.contatoAlternativo || "", m.contatoAlternativo || "", m.contatoAlternativo || "");
-    // WhatsApp pessoal do vendedor: só guarda conversa com lead da empresa.
+    // WhatsApp pessoal do vendedor: só guarda conversa com lead de empresa onde atende.
     if (conexao.sellerId && !lead && !conv?.leadId) return null;
+    // A conversa/mensagem pertencem à empresa do lead (no multi-empresa); nos
+    // demais canais, à empresa da conexão. Conversa existente mantém a sua.
+    const companyIdMsg = conv?.companyId || lead?.companyId || conexao.companyId || "";
     const t = agora();
     if (!conv) {
       const id = uid();
       db.prepare(`INSERT INTO canais_conversas (id, conexaoId, companyId, sellerId, canal, tipo, contatoExterno, contatoAlternativo, nome, usuario, telefone, leadId, midiaId, criadoEm)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .run(id, conexao.id, conexao.companyId, conexao.sellerId || null, conexao.canal, tipo, contato, m.contatoAlternativo || "", m.nome || "", m.usuario || "", telefone, lead?.id || null, m.midiaId || "", t);
+        .run(id, conexao.id, companyIdMsg, conexao.sellerId || null, conexao.canal, tipo, contato, m.contatoAlternativo || "", m.nome || "", m.usuario || "", telefone, lead?.id || null, m.midiaId || "", t);
       conv = db.prepare("SELECT * FROM canais_conversas WHERE id = ?").get(id);
     } else {
       db.prepare(`UPDATE canais_conversas SET nome = CASE WHEN ? != '' THEN ? ELSE nome END, usuario = CASE WHEN ? != '' THEN ? ELSE usuario END,
@@ -204,7 +230,7 @@ export function registrarMensagem(conexao, m) {
     const em = m.em || t;
     const r = db.prepare(`INSERT OR IGNORE INTO canais_mensagens (id, conversaId, companyId, externoId, direcao, origem, tipo, texto, dados, status, autorUserId, em, criadoEm)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .run(uid(), conv.id, conexao.companyId, String(m.externoId), m.direcao, m.origem || "cliente", m.tipo || "texto", String(m.texto || "").slice(0, 8000),
+      .run(uid(), conv.id, conv.companyId, String(m.externoId), m.direcao, m.origem || "cliente", m.tipo || "texto", String(m.texto || "").slice(0, 8000),
         JSON.stringify(m.dados || {}), m.status || "", m.autorUserId || "", em, t);
     if (!r.changes) return { conversaId: conv.id, nova: false };
 
