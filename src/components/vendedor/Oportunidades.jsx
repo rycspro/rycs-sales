@@ -130,6 +130,13 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     return { c, emp, cls };
   }), [campanhas, empresasMap, eu.pais]);
 
+  // Histórico por empresa: todas as campanhas já publicadas (ativas e inativas), para a tela "Ver campanhas".
+  const classificadasTodas = useMemo(() => (db.campaigns || []).map((c) => {
+    const emp = empresasMap[c.companyId] || {};
+    const cls = classificarCampanha({ alcance: c.alcance, paisesAceitos: c.paisesAceitos, paisEmpresa: emp.pais, paisProfissional: eu.pais });
+    return { c, emp, cls };
+  }), [db.campaigns, empresasMap, eu.pais]);
+
   const nacionais = useMemo(() => classificadas.filter((x) => x.cls.nacional), [classificadas]);
   const internacionais = useMemo(() => classificadas.filter((x) => x.cls.internacional), [classificadas]);
 
@@ -221,7 +228,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
   // ---- navegação interna ----
   if (campanhaSel) {
-    const item = classificadas.find((x) => x.c.id === campanhaSel) || { c: campanhas.find((c) => c.id === campanhaSel), emp: {} };
+    const item = classificadasTodas.find((x) => x.c.id === campanhaSel) || { c: (db.campaigns || []).find((c) => c.id === campanhaSel), emp: {}, cls: {} };
     if (!item?.c) { setCampanhaSel(null); return null; }
     return <DetalheCampanha item={item} eu={eu} candidatar={candidatar} candidatando={candidatando}
       abrirCampanha={abrirCampanha} onVoltar={() => setCampanhaSel(null)} />;
@@ -229,7 +236,14 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
   if (empresaSel) {
     const emp = empresasMap[empresaSel];
     if (!emp) { setEmpresaSel(null); return null; }
-    const itens = classificadas.filter((x) => x.c.companyId === emp.id);
+    const PESO_STATUS = { ativa: 0, pausada: 1, encerrada: 2 };
+    const itens = classificadasTodas
+      .filter((x) => x.c.companyId === emp.id)
+      .sort((a, b) => {
+        const pa = PESO_STATUS[a.c.status] ?? 3, pb = PESO_STATUS[b.c.status] ?? 3;
+        if (pa !== pb) return pa - pb;
+        return (b.c.criadoEm || 0) - (a.c.criadoEm || 0);
+      });
     return <DetalheEmpresa emp={emp} itens={itens}
       onVoltar={() => setEmpresaSel(null)} onAbrirCampanha={(c) => setCampanhaSel(c.id)}
       salvas={salvas} onSalvar={toggleSalvar} />;
@@ -328,8 +342,25 @@ function EmpresaCardVitrine({ empresa, onAbrir }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
+const STATUS_META = {
+  ativa: { label: "Ativa", cor: "#16a34a", bg: "rgba(22,163,74,.10)" },
+  pausada: { label: "Pausada", cor: "#b45309", bg: "rgba(180,83,9,.10)" },
+  encerrada: { label: "Encerrada", cor: "var(--muted)", bg: "var(--surface-2)" },
+};
+function StatusBadge({ status }) {
+  const m = STATUS_META[status];
+  if (!m) return null;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600,
+      color: m.cor, background: m.bg, border: `1px solid ${m.bg}`, borderRadius: 999, padding: "2px 9px", whiteSpace: "nowrap" }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.cor, flexShrink: 0 }} />{m.label}
+    </span>
+  );
+}
+
+function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar, mostrarStatus }) {
   const { c, emp, cls } = item;
+  const inativa = c.status && c.status !== "ativa";
   const rem = remuneracao(c, emp.moeda);
   const aceitos = parsePaisesAceitos(c.paisesAceitos);
   const st = (c.candidaturas || [])[0]?.status;
@@ -342,17 +373,20 @@ function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
   const funcaoLabel = c.funcao ? (FUNCOES[c.funcao]?.nome || String(c.funcao)) : "";
 
   const btnLabel = st === "aprovado" ? "Acessar campanha"
+    : inativa ? "Ver detalhes"
     : st === "pendente" ? "Candidatura em análise"
     : st === "recusado" ? "Candidatar-se novamente"
     : c.candidaturasAbertas === false ? "Candidaturas encerradas"
     : vagas > 0 && (c._totalCandidaturas || 0) >= vagas ? "Vagas preenchidas"
     : "Candidatar-se";
 
-  const btnDisabled = st === "pendente" || c.candidaturasAbertas === false
-    || (vagas > 0 && (c._totalCandidaturas || 0) >= vagas && st !== "aprovado");
+  const btnDisabled = st !== "aprovado" && !inativa && (st === "pendente" || c.candidaturasAbertas === false
+    || (vagas > 0 && (c._totalCandidaturas || 0) >= vagas));
 
   const btnStyle = st === "aprovado"
     ? { background: "#22c55e", color: "#fff" }
+    : inativa
+    ? { background: "var(--surface-2)", color: "var(--ink)" }
     : st === "pendente"
     ? { background: "var(--surface-2)", color: "var(--muted)", cursor: "default" }
     : st === "recusado"
@@ -362,6 +396,7 @@ function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
     : { background: hoverBtn ? "#318CE7" : "#2563EB", color: "#fff" };
 
   const BtnIcon = st === "aprovado" ? CheckCircle2
+    : inativa ? Eye
     : st === "pendente" ? Clock
     : st === "recusado" ? XCircle
     : btnDisabled ? Ban : null;
@@ -396,6 +431,7 @@ function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
 
       {/* Title + description */}
       <div style={{ padding: "12px 16px 0" }}>
+        {mostrarStatus && c.status ? <div style={{ marginBottom: 8 }}><StatusBadge status={c.status} /></div> : null}
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", lineHeight: 1.35,
           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {c.titulo || "Campanha"}
@@ -485,7 +521,7 @@ function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
   );
 }
 
-function GridCampanhas({ itens, internacional, onAbrir, vazio, salvas, onSalvar }) {
+function GridCampanhas({ itens, internacional, onAbrir, vazio, salvas, onSalvar, mostrarStatus }) {
   const [limite, setLimite] = useState(12);
   if (!itens.length) return <Vazio Icon={internacional ? Globe2 : Flag} texto={vazio} />;
   const visiveis = itens.slice(0, limite);
@@ -493,7 +529,7 @@ function GridCampanhas({ itens, internacional, onAbrir, vazio, salvas, onSalvar 
     <>
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 310px), 1fr))" }}>
         {visiveis.map((item) => <CampanhaCard key={item.c.id} item={item} internacional={internacional} onAbrir={onAbrir}
-          salva={salvas?.has(item.c.id)} onSalvar={onSalvar} />)}
+          salva={salvas?.has(item.c.id)} onSalvar={onSalvar} mostrarStatus={mostrarStatus} />)}
       </div>
       {itens.length > limite && (
         <div style={{ textAlign: "center", marginTop: 14 }}>
@@ -537,13 +573,31 @@ function DetalheEmpresa({ emp, itens, onVoltar, onAbrirCampanha, salvas, onSalva
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <div className="vx-eyebrow">Campanhas disponíveis</div>
-        <span className="vx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>({itens.length})</span>
-      </div>
-      {itens.length > 0 ? (
-        <GridCampanhas itens={itens} onAbrir={onAbrirCampanha} salvas={salvas} onSalvar={onSalvar} vazio="" />
-      ) : (
+      {(() => {
+        const ativas = itens.filter((x) => x.c.status === "ativa");
+        const historico = itens.filter((x) => x.c.status !== "ativa");
+        return itens.length > 0 ? (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <div className="vx-eyebrow">Campanhas disponíveis</div>
+              <span className="vx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>({ativas.length})</span>
+            </div>
+            {ativas.length > 0 ? (
+              <GridCampanhas itens={ativas} onAbrir={onAbrirCampanha} salvas={salvas} onSalvar={onSalvar} mostrarStatus vazio="" />
+            ) : (
+              <p className="vx-mut" style={{ fontSize: 13, margin: "0 0 4px" }}>Esta empresa não tem campanhas abertas no momento.</p>
+            )}
+            {historico.length > 0 && (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "26px 0 14px" }}>
+                  <div className="vx-eyebrow">Histórico de campanhas</div>
+                  <span className="vx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>({historico.length})</span>
+                </div>
+                <GridCampanhas itens={historico} onAbrir={onAbrirCampanha} salvas={salvas} onSalvar={onSalvar} mostrarStatus vazio="" />
+              </>
+            )}
+          </>
+        ) : (
         <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
           <Building2 size={32} style={{ color: "var(--muted)", marginBottom: 10 }} />
           <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Nenhuma campanha disponível</div>
@@ -552,7 +606,8 @@ function DetalheEmpresa({ emp, itens, onVoltar, onAbrirCampanha, salvas, onSalva
             <ArrowLeft size={14} /> Voltar às empresas
           </button>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
@@ -564,6 +619,7 @@ function DetalheCampanha({ item, candidatar, candidatando, abrirCampanha, onVolt
   const rem = remuneracao(c, emp.moeda);
   const aceitos = parsePaisesAceitos(c.paisesAceitos);
   const st = (c.candidaturas || [])[0]?.status;
+  const inativa = c.status && c.status !== "ativa";
   const tarefas = parseObj(c.tarefas);
   const acoes = ORDEM_ACOES.filter((k) => tarefas[k]);
 
@@ -584,8 +640,11 @@ function DetalheCampanha({ item, candidatar, candidatando, abrirCampanha, onVolt
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 14 }}>
           <Logo empresa={emp} size={52} />
           <div style={{ minWidth: 0 }}>
-            <h1 className="vx-disp" style={{ fontSize: 21, margin: 0 }}>{c.titulo || "Campanha"}</h1>
-            <div className="vx-mut" style={{ fontSize: 13, marginTop: 2 }}>{emp.nome} · {nomePais(cls.paisEmpresa)}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <h1 className="vx-disp" style={{ fontSize: 21, margin: 0 }}>{c.titulo || "Campanha"}</h1>
+              {c.status ? <StatusBadge status={c.status} /> : null}
+            </div>
+            <div className="vx-mut" style={{ fontSize: 13, marginTop: 2 }}>{emp.nome}{cls.paisEmpresa ? ` · ${nomePais(cls.paisEmpresa)}` : ""}</div>
           </div>
         </div>
 
@@ -621,6 +680,12 @@ function DetalheCampanha({ item, candidatar, candidatando, abrirCampanha, onVolt
             <button className="vx-btn vx-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => abrirCampanha?.(c)}>
               Acessar campanha <ChevronRight size={14} />
             </button>
+          ) : inativa ? (
+            <div className="vx-mut" style={{ fontSize: 13, textAlign: "center", padding: "10px 0" }}>
+              {c.status === "pausada"
+                ? "Campanha pausada — candidaturas temporariamente indisponíveis."
+                : "Campanha encerrada — visível apenas como histórico."}
+            </div>
           ) : st === "pendente" ? (
             <button className="vx-btn" style={{ width: "100%", justifyContent: "center" }} disabled>Candidatura em análise</button>
           ) : c.candidaturasAbertas === false ? (

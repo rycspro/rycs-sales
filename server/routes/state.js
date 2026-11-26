@@ -355,7 +355,8 @@ function montarVendedorState(entityId, marcar) {
   marcar("campanhas");
   if (oportunidadesLiberadas) {
     // Esconde também as campanhas de empresas marcadas como invisíveis.
-    campaigns = db.prepare("SELECT * FROM campaigns WHERE status = 'ativa' AND companyId IN (SELECT id FROM companies WHERE visivel = 1) ORDER BY criadoEm DESC").all().map(parseCampaign);
+    // Inclui o histórico já publicado (ativa/pausada/encerrada) para a visão por empresa; rascunhos nunca são expostos.
+    campaigns = db.prepare("SELECT * FROM campaigns WHERE status IN ('ativa','pausada','encerrada') AND companyId IN (SELECT id FROM companies WHERE visivel = 1) ORDER BY criadoEm DESC").all().map(parseCampaign);
     const campIds = campaigns.map((c) => c.id);
     const campaignApps = campIds.length
       ? db.prepare(`SELECT * FROM campaign_applications WHERE campaignId IN (${campIds.map(() => "?").join(",")}) AND sellerId = ?`)
