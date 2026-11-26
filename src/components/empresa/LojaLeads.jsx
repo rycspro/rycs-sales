@@ -968,7 +968,7 @@ function AbaConsumo({ ciclo: cicloInicial }) {
 
   if (loading) return <Loading />;
 
-  const fmt = (ts) => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
+  const fmt = (ts) => ts ? new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 
   if (!ciclo && !faturas.length) return (
     <div className="vx-empty">
