@@ -177,10 +177,15 @@ db.exec(`
 // nenhuma. Esta migração coloca todos esses leads numa lista "Leads recuperados"
 // por entidade, para que nada de já pago fique invisível. Idempotente: depois
 // que o lead entra numa lista, deixa de ser órfão e não é tocado de novo.
-{
+// Blindado: nunca pode derrubar o boot. Qualquer falha é registrada e o
+// servidor sobe normalmente (melhor subir sem recuperar do que não subir).
+try {
+  // O JOIN com loja_leads_contatos garante que só entram contatos que ainda
+  // existem — evita violar a foreign key (foreign_keys = ON) no INSERT.
   const orfaos = db.prepare(`
     SELECT co.contatoId, co.entityId, co.entityRole
     FROM loja_leads_consumo co
+    JOIN loja_leads_contatos c ON c.id = co.contatoId
     WHERE NOT EXISTS (
       SELECT 1 FROM loja_leads_lista_contatos lc
       JOIN loja_leads_listas l ON l.id = lc.listaId
@@ -199,8 +204,7 @@ db.exec(`
 
     const addContato = db.prepare("INSERT OR IGNORE INTO loja_leads_lista_contatos (listaId, contatoId, adicionadoEm) VALUES (?, ?, ?)");
 
-    for (const { entityId, entityRole, contatos } of porEntidade.values()) {
-      // Pasta de destino: a primeira existente da entidade, ou uma nova.
+    const recuperarEntidade = db.transaction(({ entityId, entityRole, contatos }) => {
       let pasta = db.prepare("SELECT id FROM loja_leads_pastas WHERE entityId = ? AND entityRole = ? ORDER BY criadoEm LIMIT 1").get(entityId, entityRole);
       if (!pasta) {
         const pid = uid();
@@ -208,7 +212,6 @@ db.exec(`
           .run(pid, entityId, entityRole, "Leads recuperados", "#2563EB", ts, ts);
         pasta = { id: pid };
       }
-      // Lista "Leads recuperados" dentro dessa pasta (reutiliza se já existir).
       let lista = db.prepare("SELECT id FROM loja_leads_listas WHERE pastaId = ? AND nome = ? AND parentId IS NULL").get(pasta.id, "Leads recuperados");
       if (!lista) {
         const lid = uid();
@@ -217,8 +220,17 @@ db.exec(`
         lista = { id: lid };
       }
       for (const contatoId of contatos) addContato.run(lista.id, contatoId, ts);
+    });
+
+    let total = 0;
+    for (const grupo of porEntidade.values()) {
+      try { recuperarEntidade(grupo); total += grupo.contatos.length; }
+      catch (e) { console.error("[loja-leads] recuperar órfãos falhou para entidade", grupo.entityId, e.message); }
     }
+    if (total) console.log(`[loja-leads] ${total} lead(s) órfão(s) recuperado(s) para lista "Leads recuperados".`);
   }
+} catch (e) {
+  console.error("[loja-leads] migração de recuperação de órfãos falhou (boot segue normal):", e.message);
 }
 
 // ── Google Places API (New) ─────────────────────────────────────────────────
