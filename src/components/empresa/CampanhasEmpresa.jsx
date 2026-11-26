@@ -341,6 +341,12 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
   const [busca, setBusca] = useState("");
   const [buscaDeb, setBuscaDeb] = useState("");
   const [vista, setVista] = useState(() => (lerJson(VISTA_KEY, "grade") === "lista" ? "lista" : "grade"));
+  const [operacoes, setOperacoes] = useState([]);
+  const [verOperacoes, setVerOperacoes] = useState(false);
+
+  useEffect(() => {
+    api("/operacoes").then((r) => { if (Array.isArray(r)) setOperacoes(r); }).catch(() => {});
+  }, [campanhas.length]);
 
   useEffect(() => { const t = setTimeout(() => setBuscaDeb(busca.trim().toLowerCase()), 200); return () => clearTimeout(t); }, [busca]);
   const trocarVista = (v) => { setVista(v); gravarJson(VISTA_KEY, v); };
@@ -410,6 +416,55 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
           <IndicadorTopo label="Campanhas ativas" valor={ativas} descricao="Operações em andamento" Icon={Megaphone} />
           <IndicadorTopo label="Profissionais trabalhando" valor={profissionaisTrabalhando} descricao="Ativos nas campanhas publicadas" Icon={UserCheck} />
           <IndicadorTopo label="Tarefas em execução" valor={tarefasExecucao} descricao="Atividades em andamento" Icon={Activity} />
+        </div>
+      )}
+
+      {/* Operações vinculadas */}
+      {operacoes.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <button type="button" className="vx-btn vx-btn-sm" onClick={() => setVerOperacoes((v) => !v)}
+            style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: verOperacoes ? 10 : 0 }}>
+            <GitBranch size={14} /> Operações vinculadas
+            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: "var(--brand-50)", color: "var(--brand)" }}>{operacoes.length}</span>
+            <ChevronDown size={13} style={{ transform: verOperacoes ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+          </button>
+          {verOperacoes && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: 10 }}>
+              {operacoes.map((op) => {
+                const campanhasOp = campanhas.filter((c) => c.operacaoId === op.id);
+                const ativasOp = campanhasOp.filter((c) => c.status === "ativa").length;
+                const profsOp = new Set();
+                campanhasOp.forEach((c) => (c.candidaturas || []).filter((a) => a.status === "aprovado").forEach((a) => profsOp.add(a.sellerId)));
+                return (
+                  <div key={op.id} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand)" }}>
+                        <GitBranch size={15} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{op.nome}</div>
+                        <div style={{ fontSize: 11.5, color: "var(--muted)" }}>{campanhasOp.length} campanha{campanhasOp.length !== 1 ? "s" : ""}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 12, fontSize: 12, color: "var(--muted)" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Play size={11} /> {ativasOp} ativa{ativasOp !== 1 ? "s" : ""}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Users size={11} /> {profsOp.size} profissiona{profsOp.size !== 1 ? "is" : "l"}</span>
+                    </div>
+                    {campanhasOp.length > 0 && (
+                      <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {campanhasOp.slice(0, 4).map((c) => (
+                          <button key={c.id} onClick={() => onAbrir(c)} className="vx-btn" style={{ padding: "2px 8px", fontSize: 11, borderRadius: 6 }}>
+                            {(c.titulo || "Sem título").slice(0, 20)}{c.titulo?.length > 20 ? "…" : ""}
+                          </button>
+                        ))}
+                        {campanhasOp.length > 4 && <span style={{ fontSize: 11, color: "var(--muted)", alignSelf: "center" }}>+{campanhasOp.length - 4}</span>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

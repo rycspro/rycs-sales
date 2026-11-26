@@ -23,6 +23,7 @@ import CriadorCampos from "./CriadorCampos.jsx";
 const ABAS = [
   ["geral", "Visão Geral"], ["profissionais", "Profissionais"], ["tarefas", "Tarefas"],
   ["pipeline", "Pipeline"], ["contatos", "Contatos"], ["materiais", "Materiais"], ["leads", "Leads"],
+  ["formasganho", "Formas de ganho"], ["vinculos", "Vínculos"],
   ["reunioes", "Reuniões"], ["performance", "Performance"],
   ["financeiro", "Financeiro"], ["comissoes", "Comissões"], ["campos", "Campos"],
   ["verificacao", "Verificação"], ["configuracoes", "Configurações"],
@@ -468,6 +469,8 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
     {aba === "materiais" && <MateriaisCampanha campanha={campanha} />}
     {aba === "leads" && <LeadsCampanha campanha={campanha} profissionais={profissionais} onRecarregar={() => setRecarregar((n) => n + 1)} />}
+    {aba === "formasganho" && <FormasGanhoCampanha campanha={campanha} />}
+    {aba === "vinculos" && <VinculosCampanha campanha={campanha} />}
     {profissionalAberto && <ProfessionalProfile item={profissionalAberto} tarefas={tarefas} leads={leads} campanha={campanha} onClose={() => setProfissionalAberto(null)} onStatusChange={async (status) => {
       await apiPatch(`/campaigns/${campanha.id}/applications/${profissionalAberto.applicationId || profissionalAberto.id}`, { status });
       setProfissionalAberto(null);
@@ -477,6 +480,282 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
 }
 
 // ── Lista de Contatos ────────────────────────────────────────────────────────
+
+const EVENTOS_COMERCIAIS = [
+  { id: "contato_discadora", label: "Contato na discadora" },
+  { id: "contato_whatsapp", label: "Contato no WhatsApp" },
+  { id: "lead_qualificado", label: "Lead qualificado" },
+  { id: "reuniao_agendada", label: "Reunião agendada" },
+  { id: "reuniao_confirmada", label: "Reunião confirmada" },
+  { id: "cliente_compareceu", label: "Cliente compareceu" },
+  { id: "reuniao_realizada", label: "Reunião realizada" },
+  { id: "proposta_apresentada", label: "Proposta apresentada" },
+  { id: "venda_concluida", label: "Venda concluída" },
+  { id: "pagamento_confirmado", label: "Pagamento confirmado" },
+  { id: "acao_personalizada", label: "Ação personalizada" },
+];
+
+function FormasGanhoCampanha({ campanha }) {
+  const [formas, setFormas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [aviso, setAviso] = useState("");
+  const [novo, setNovo] = useState(null);
+
+  const carregar = async () => {
+    setCarregando(true);
+    const r = await api(`/campaigns/${campanha.id}/formas-ganho`);
+    setFormas(Array.isArray(r) ? r : []);
+    setCarregando(false);
+  };
+
+  useEffect(() => { carregar(); }, [campanha.id]);
+
+  const criar = async () => {
+    if (!novo?.nome?.trim()) return setAviso("Nome obrigatório");
+    setSalvando(true);
+    const r = await api(`/campaigns/${campanha.id}/formas-ganho`, novo);
+    setSalvando(false);
+    if (r?.error) return setAviso(r.error);
+    setNovo(null);
+    setAviso("Forma de ganho criada.");
+    await carregar();
+  };
+
+  const alterarStatus = async (fg, ativo) => {
+    await apiPatch(`/campaigns/${campanha.id}/formas-ganho/${fg.id}`, { ativo });
+    await carregar();
+  };
+
+  const remover = async (fg) => {
+    if (!window.confirm(`Remover "${fg.nome}"?`)) return;
+    await api(`/campaigns/${campanha.id}/formas-ganho/${fg.id}`, { method: "DELETE" });
+    await carregar();
+  };
+
+  return (
+    <div className="vx-fade">
+      <div style={{ marginBottom: 16 }}>
+        <div className="vx-eyebrow">Remuneração</div>
+        <h2 className="vx-disp" style={{ margin: "4px 0" }}>Formas de ganho</h2>
+        <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Defina como os profissionais são remunerados nesta campanha. Cada forma de ganho é vinculada a um evento comercial.</p>
+      </div>
+
+      {aviso && <div className="vx-notice" style={{ marginBottom: 12 }}>{aviso}</div>}
+
+      {carregando ? <div className="vx-mut">Carregando...</div> : (
+        <>
+          {formas.length === 0 && !novo && (
+            <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+              <CircleDollarSign size={24} color="var(--muted)" />
+              <p className="vx-mut" style={{ marginTop: 10 }}>Nenhuma forma de ganho configurada. Use o botão abaixo para adicionar.</p>
+            </div>
+          )}
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {formas.map((fg) => (
+              <div key={fg.id} className="vx-card" style={{ padding: 14, opacity: fg.ativo ? 1 : 0.5 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{fg.nome}</div>
+                    {fg.descricao && <div className="vx-mut" style={{ fontSize: 12 }}>{fg.descricao}</div>}
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                      <span className="vx-chip" style={{ fontSize: 11 }}>{fg.tipoRemuneracao === "comissao" ? `${fg.valor}%` : money(fg.valor)}</span>
+                      <span className="vx-chip" style={{ fontSize: 11 }}>{EVENTOS_COMERCIAIS.find((e) => e.id === fg.eventoComercial)?.label || fg.eventoComercial || "Sem evento"}</span>
+                      <span className="vx-chip" style={{ fontSize: 11 }}>{fg.metodoAprovacao}</span>
+                      {!fg.ativo && <span className="vx-chip" style={{ fontSize: 11, color: "var(--danger, #dc2626)" }}>Inativo</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => alterarStatus(fg, fg.ativo ? 0 : 1)}>{fg.ativo ? "Desativar" : "Ativar"}</button>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => remover(fg)}><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {novo && (
+            <div className="vx-card" style={{ padding: 16, marginTop: 10 }}>
+              <div style={{ fontWeight: 600, marginBottom: 10 }}>Nova forma de ganho</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <label><div className="vx-label">Nome *</div><input className="vx-input" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Ex: Bônus por comparecimento" /></label>
+                <label><div className="vx-label">Tipo</div>
+                  <select className="vx-input" value={novo.tipoRemuneracao} onChange={(e) => setNovo({ ...novo, tipoRemuneracao: e.target.value })}>
+                    <option value="fixo">Valor fixo</option><option value="comissao">Comissão %</option>
+                  </select>
+                </label>
+                <label><div className="vx-label">{novo.tipoRemuneracao === "comissao" ? "Percentual (%)" : "Valor (R$)"}</div>
+                  <input className="vx-input vx-mono" type="number" min="0" value={novo.valor} onChange={(e) => setNovo({ ...novo, valor: Number(e.target.value) })} />
+                </label>
+                <label><div className="vx-label">Evento gatilho</div>
+                  <select className="vx-input" value={novo.eventoComercial} onChange={(e) => setNovo({ ...novo, eventoComercial: e.target.value })}>
+                    <option value="">Selecione...</option>
+                    {EVENTOS_COMERCIAIS.map((ev) => <option key={ev.id} value={ev.id}>{ev.label}</option>)}
+                  </select>
+                </label>
+                <label><div className="vx-label">Método de aprovação</div>
+                  <select className="vx-input" value={novo.metodoAprovacao} onChange={(e) => setNovo({ ...novo, metodoAprovacao: e.target.value })}>
+                    <option value="manual">Manual</option><option value="automatico">Automático</option><option value="ia">IA</option>
+                  </select>
+                </label>
+                <label><div className="vx-label">Limite por lead</div>
+                  <input className="vx-input vx-mono" type="number" min="0" value={novo.limitePorLead} onChange={(e) => setNovo({ ...novo, limitePorLead: Number(e.target.value) })} />
+                </label>
+              </div>
+              <input className="vx-input" style={{ marginTop: 8 }} placeholder="Descrição (opcional)" value={novo.descricao || ""} onChange={(e) => setNovo({ ...novo, descricao: e.target.value })} />
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={criar}>{salvando ? "Salvando..." : "Salvar"}</button>
+                <button className="vx-btn" onClick={() => setNovo(null)}>Cancelar</button>
+              </div>
+            </div>
+          )}
+
+          <button className="vx-btn" style={{ marginTop: 12 }} onClick={() => setNovo({ nome: "", tipoRemuneracao: "fixo", valor: 0, eventoComercial: "", metodoAprovacao: "manual", limitePorLead: 1, descricao: "" })}>
+            <CircleDollarSign size={14} /> Adicionar forma de ganho
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function VinculosCampanha({ campanha }) {
+  const [vinculos, setVinculos] = useState([]);
+  const [campanhas, setCampanhas] = useState([]);
+  const [transferencias, setTransferencias] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [aviso, setAviso] = useState("");
+  const [novo, setNovo] = useState(null);
+
+  const carregar = async () => {
+    setCarregando(true);
+    const [v, t] = await Promise.all([
+      api(`/campaigns/${campanha.id}/vinculos`),
+      api(`/campaigns/${campanha.id}/transferencias`),
+    ]);
+    setVinculos(Array.isArray(v) ? v : []);
+    setTransferencias(Array.isArray(t) ? t : []);
+    setCarregando(false);
+  };
+
+  useEffect(() => { carregar(); }, [campanha.id]);
+
+  const criarVinculo = async () => {
+    if (!novo?.campanhaDestinoId) return setAviso("Selecione a campanha de destino");
+    const r = await api("/vinculos-campanhas", { campanhaOrigemId: campanha.id, campanhaDestinoId: novo.campanhaDestinoId, eventoTransferencia: novo.eventoTransferencia || "reuniao_agendada", distribuicaoDestino: novo.distribuicaoDestino || "equilibrada" });
+    if (r?.error) return setAviso(r.error);
+    setNovo(null);
+    setAviso("Vínculo criado.");
+    await carregar();
+  };
+
+  const removerVinculo = async (vId) => {
+    if (!window.confirm("Remover vínculo?")) return;
+    await api(`/vinculos-campanhas/${vId}`, { method: "DELETE" });
+    await carregar();
+  };
+
+  return (
+    <div className="vx-fade">
+      <div style={{ marginBottom: 16 }}>
+        <div className="vx-eyebrow">Continuidade comercial</div>
+        <h2 className="vx-disp" style={{ margin: "4px 0" }}>Vínculos entre campanhas</h2>
+        <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Configure transferências de oportunidades entre campanhas (ex: SDR → Closer).</p>
+      </div>
+
+      {aviso && <div className="vx-notice" style={{ marginBottom: 12 }}>{aviso}</div>}
+
+      {carregando ? <div className="vx-mut">Carregando...</div> : (
+        <>
+          {vinculos.length === 0 && !novo && (
+            <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+              <Shuffle size={24} color="var(--muted)" />
+              <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum vínculo configurado. Vincule esta campanha a outra para transferir oportunidades automaticamente.</p>
+            </div>
+          )}
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {vinculos.map((v) => (
+              <div key={v.id} className="vx-card" style={{ padding: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>
+                      {v.origemTitulo} <span style={{ color: "var(--brand)" }}>→</span> {v.destinoTitulo}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                      <span className="vx-chip" style={{ fontSize: 11 }}>{v.origemFuncao?.toUpperCase()}</span>
+                      <span className="vx-chip" style={{ fontSize: 11 }}>→ {v.destinoFuncao?.toUpperCase()}</span>
+                      <span className="vx-chip" style={{ fontSize: 11 }}>{EVENTOS_COMERCIAIS.find((e) => e.id === v.eventoTransferencia)?.label || v.eventoTransferencia}</span>
+                      <span className="vx-chip" style={{ fontSize: 11 }}>{v.distribuicaoDestino}</span>
+                    </div>
+                  </div>
+                  <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => removerVinculo(v.id)}><Trash2 size={13} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Transferências recentes */}
+          {transferencias.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <div className="vx-label" style={{ marginBottom: 8 }}>Transferências recentes</div>
+              <div className="vx-card" style={{ padding: 0 }}>
+                <table className="vx-table" style={{ width: "100%", fontSize: 13 }}>
+                  <thead><tr><th>Lead</th><th>SDR</th><th>Closer</th><th>Status</th><th>Data</th></tr></thead>
+                  <tbody>
+                    {transferencias.slice(0, 20).map((t) => (
+                      <tr key={t.id}>
+                        <td style={{ fontWeight: 500 }}>{t.leadNome || `#${t.leadId}`}</td>
+                        <td>{t.sellerOrigemNome || "—"}</td>
+                        <td>{t.sellerDestinoNome || "Pendente"}</td>
+                        <td><span className="vx-chip" style={{ fontSize: 11 }}>{t.status}</span></td>
+                        <td className="vx-mono">{new Date(t.criadoEm).toLocaleDateString("pt-BR")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {novo && (
+            <div className="vx-card" style={{ padding: 16, marginTop: 10 }}>
+              <div style={{ fontWeight: 600, marginBottom: 10 }}>Novo vínculo</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <label><div className="vx-label">Campanha de destino</div>
+                  <input className="vx-input" placeholder="ID da campanha destino" value={novo.campanhaDestinoId || ""} onChange={(e) => setNovo({ ...novo, campanhaDestinoId: e.target.value })} />
+                </label>
+                <label><div className="vx-label">Evento de transferência</div>
+                  <select className="vx-input" value={novo.eventoTransferencia || "reuniao_agendada"} onChange={(e) => setNovo({ ...novo, eventoTransferencia: e.target.value })}>
+                    {EVENTOS_COMERCIAIS.map((ev) => <option key={ev.id} value={ev.id}>{ev.label}</option>)}
+                  </select>
+                </label>
+                <label><div className="vx-label">Distribuição</div>
+                  <select className="vx-input" value={novo.distribuicaoDestino || "equilibrada"} onChange={(e) => setNovo({ ...novo, distribuicaoDestino: e.target.value })}>
+                    <option value="equilibrada">Equilibrada</option>
+                    <option value="disponibilidade">Por disponibilidade</option>
+                    <option value="performance">Por performance</option>
+                    <option value="manual">Manual</option>
+                    <option value="especifico">Closer específico</option>
+                  </select>
+                </label>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="vx-btn vx-btn-primary" onClick={criarVinculo}>Criar vínculo</button>
+                <button className="vx-btn" onClick={() => setNovo(null)}>Cancelar</button>
+              </div>
+            </div>
+          )}
+
+          <button className="vx-btn" style={{ marginTop: 12 }} onClick={() => setNovo({ campanhaDestinoId: "", eventoTransferencia: "reuniao_agendada", distribuicaoDestino: "equilibrada" })}>
+            <Shuffle size={14} /> Adicionar vínculo
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 const MODELOS_VERIFICACAO = [
   { value: "ia", label: "IA", desc: "Avaliação automática por inteligência artificial" },

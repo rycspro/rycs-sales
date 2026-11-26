@@ -74,7 +74,7 @@ export function requisitosPublicacao(campanha = {}, empresa = {}) {
     ["Estado", "estado da campanha", !!String(campanha.estado || "").trim(), exigeEstado],
     ["Função", "função comercial", !!String(campanha.funcao || "").trim(), true],
     ["Orçamento", "orçamento", Number(campanha.orcamento || 0) > 0, precisaDeCaixa],
-    ["Tarefa remunerada", "ao menos uma tarefa remunerada", Object.values(tarefas).some((valor) => Number(valor) > 0), true],
+    ["Tarefa remunerada", "valor fixo por ação obrigatório — defina quanto o profissional ganha por tarefa", Object.values(tarefas).some((valor) => Number(valor) > 0), true],
     ["Treinamento obrigatório", "treinamento", (campanha.treinamento || []).length > 0, false],
     ["Pipeline configurado", "pipeline da campanha não configurado (etapas obrigatórias)", temPipeline(campanha), true],
     ["Saldo suficiente", "orçamento superior ao saldo disponível", Number(campanha.orcamento || 0) <= disponivel, precisaDeCaixa],

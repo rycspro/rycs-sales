@@ -256,7 +256,7 @@ router.post("/campaigns", (req, res) => {
       "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
       "icpTipo", "versao", "processoAdmissao",
       "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-      "prazoContatoHoras", "prazoInatividadeHoras"];
+      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial"];
     const v2Bool = ["temComissao", "remuneracaoCumulativa"];
     const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
       "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
@@ -710,6 +710,321 @@ router.post("/campaigns/:id/leads/devolver", (req, res) => {
   const cl = db.prepare("SELECT * FROM campaign_leads WHERE id = ? AND campaignId = ? AND sellerId = ?").get(campaignLeadId, req.params.id, entityId);
   if (!cl) return res.status(404).json({ error: "Lead não encontrado" });
   db.prepare("UPDATE campaign_leads SET sellerId = '', status = 'disponivel', motivoDevolucao = ?, atribuidoEm = NULL WHERE id = ?").run(motivo || "", cl.id);
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FORMAS DE GANHO
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.get("/campaigns/:id/formas-ganho", (req, res) => {
+  const rows = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ? ORDER BY ordem, criadoEm").all(req.params.id);
+  res.json(rows);
+});
+
+router.post("/campaigns/:id/formas-ganho", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp || camp.companyId !== entityId) return res.status(403).json({ error: "Sem acesso" });
+  const id = uid();
+  const { nome, descricao, tipoRemuneracao, valor, moeda, eventoComercial, criteriosValidacao, evidenciasNecessarias, metodoAprovacao, limiteRecorrencia, limitePorProfissional, limitePorLead, regraRecorrencia, regraCumulatividade, baseCalculo, condicaoLiberacao, ordem } = req.body;
+  if (!nome?.trim()) return res.status(400).json({ error: "Nome obrigatório" });
+  db.prepare(`INSERT INTO formas_ganho (id, campaignId, nome, descricao, tipoRemuneracao, valor, moeda, eventoComercial, criteriosValidacao, evidenciasNecessarias, metodoAprovacao, limiteRecorrencia, limitePorProfissional, limitePorLead, regraRecorrencia, regraCumulatividade, baseCalculo, condicaoLiberacao, ordem, ativo, criadoEm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?)`).run(
+    id, req.params.id, nome.trim(), descricao || "", tipoRemuneracao || "fixo", Number(valor) || 0, moeda || "BRL", eventoComercial || "", typeof criteriosValidacao === "object" ? JSON.stringify(criteriosValidacao) : criteriosValidacao || "{}", typeof evidenciasNecessarias === "object" ? JSON.stringify(evidenciasNecessarias) : evidenciasNecessarias || "[]", metodoAprovacao || "manual", Number(limiteRecorrencia) || 0, Number(limitePorProfissional) || 0, Number(limitePorLead) || 1, regraRecorrencia || "unica", regraCumulatividade === false ? 0 : 1, baseCalculo || "", condicaoLiberacao || "", Number(ordem) || 0, agora()
+  );
+  res.json({ id });
+});
+
+router.patch("/campaigns/:cid/formas-ganho/:fid", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(req.params.cid);
+  if (!camp || camp.companyId !== entityId) return res.status(403).json({ error: "Sem acesso" });
+  const fg = db.prepare("SELECT * FROM formas_ganho WHERE id = ? AND campaignId = ?").get(req.params.fid, req.params.cid);
+  if (!fg) return res.status(404).json({ error: "Forma de ganho não encontrada" });
+  const campos = ["nome", "descricao", "tipoRemuneracao", "valor", "moeda", "eventoComercial", "criteriosValidacao", "evidenciasNecessarias", "metodoAprovacao", "limiteRecorrencia", "limitePorProfissional", "limitePorLead", "regraRecorrencia", "regraCumulatividade", "baseCalculo", "condicaoLiberacao", "ativo", "ordem"];
+  const sets = []; const vals = [];
+  for (const c of campos) {
+    if (req.body[c] !== undefined) {
+      let v = req.body[c];
+      if (typeof v === "object") v = JSON.stringify(v);
+      if (c === "regraCumulatividade") v = v ? 1 : 0;
+      if (c === "ativo") v = v ? 1 : 0;
+      if (["valor", "limiteRecorrencia", "limitePorProfissional", "limitePorLead", "ordem"].includes(c)) v = Number(v) || 0;
+      sets.push(`${c} = ?`); vals.push(v);
+    }
+  }
+  if (!sets.length) return res.json({ ok: true });
+  sets.push("atualizadoEm = ?"); vals.push(agora());
+  vals.push(req.params.fid);
+  db.prepare(`UPDATE formas_ganho SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+  res.json({ ok: true });
+});
+
+router.delete("/campaigns/:cid/formas-ganho/:fid", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(req.params.cid);
+  if (!camp || camp.companyId !== entityId) return res.status(403).json({ error: "Sem acesso" });
+  db.prepare("DELETE FROM formas_ganho WHERE id = ? AND campaignId = ?").run(req.params.fid, req.params.cid);
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// OPERAÇÕES COMERCIAIS
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.get("/operacoes", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const ops = db.prepare("SELECT * FROM operacoes_comerciais WHERE companyId = ? ORDER BY criadoEm DESC").all(entityId);
+  const result = ops.map((op) => {
+    const camps = db.prepare("SELECT id, titulo, funcao, status FROM campaigns WHERE operacaoId = ?").all(op.id);
+    return { ...op, campanhas: camps };
+  });
+  res.json(result);
+});
+
+router.post("/operacoes", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const { nome, descricao } = req.body;
+  if (!nome?.trim()) return res.status(400).json({ error: "Nome obrigatório" });
+  const id = uid();
+  db.prepare("INSERT INTO operacoes_comerciais (id, companyId, nome, descricao, criadoEm) VALUES (?,?,?,?,?)").run(id, entityId, nome.trim(), descricao || "", agora());
+  res.json({ id });
+});
+
+router.patch("/operacoes/:id", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const op = db.prepare("SELECT * FROM operacoes_comerciais WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!op) return res.status(404).json({ error: "Operação não encontrada" });
+  const { nome, descricao, status } = req.body;
+  if (nome !== undefined) db.prepare("UPDATE operacoes_comerciais SET nome = ?, atualizadoEm = ? WHERE id = ?").run(nome, agora(), op.id);
+  if (descricao !== undefined) db.prepare("UPDATE operacoes_comerciais SET descricao = ?, atualizadoEm = ? WHERE id = ?").run(descricao, agora(), op.id);
+  if (status !== undefined) db.prepare("UPDATE operacoes_comerciais SET status = ?, atualizadoEm = ? WHERE id = ?").run(status, agora(), op.id);
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VÍNCULOS ENTRE CAMPANHAS
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.get("/campaigns/:id/vinculos", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const vinculos = db.prepare(`
+    SELECT v.*, co.titulo AS origemTitulo, co.funcao AS origemFuncao, cd.titulo AS destinoTitulo, cd.funcao AS destinoFuncao
+    FROM vinculos_campanhas v
+    JOIN campaigns co ON co.id = v.campanhaOrigemId
+    JOIN campaigns cd ON cd.id = v.campanhaDestinoId
+    WHERE (v.campanhaOrigemId = ? OR v.campanhaDestinoId = ?) AND v.companyId = ?
+  `).all(req.params.id, req.params.id, entityId);
+  res.json(vinculos);
+});
+
+router.post("/vinculos-campanhas", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const { campanhaOrigemId, campanhaDestinoId, operacaoId, eventoTransferencia, distribuicaoDestino, responsavelRecebimento, infosCompartilhadas, condicoesTransferencia } = req.body;
+  if (!campanhaOrigemId || !campanhaDestinoId) return res.status(400).json({ error: "Origem e destino obrigatórios" });
+  if (campanhaOrigemId === campanhaDestinoId) return res.status(400).json({ error: "Origem e destino não podem ser iguais" });
+  const orig = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(campanhaOrigemId);
+  const dest = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(campanhaDestinoId);
+  if (!orig || orig.companyId !== entityId || !dest || dest.companyId !== entityId) return res.status(403).json({ error: "Ambas campanhas devem pertencer à sua empresa" });
+  const existente = db.prepare("SELECT id FROM vinculos_campanhas WHERE campanhaOrigemId = ? AND campanhaDestinoId = ?").get(campanhaOrigemId, campanhaDestinoId);
+  if (existente) return res.status(409).json({ error: "Vínculo já existe" });
+  const circular = db.prepare("SELECT id FROM vinculos_campanhas WHERE campanhaOrigemId = ? AND campanhaDestinoId = ?").get(campanhaDestinoId, campanhaOrigemId);
+  if (circular) return res.status(400).json({ error: "Vínculo circular não permitido" });
+  const id = uid();
+  db.prepare(`INSERT INTO vinculos_campanhas (id, companyId, operacaoId, campanhaOrigemId, campanhaDestinoId, eventoTransferencia, distribuicaoDestino, responsavelRecebimento, infosCompartilhadas, condicoesTransferencia, criadoEm)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(
+    id, entityId, operacaoId || "", campanhaOrigemId, campanhaDestinoId, eventoTransferencia || "reuniao_agendada", distribuicaoDestino || "equilibrada", responsavelRecebimento || "qualquer",
+    typeof infosCompartilhadas === "object" ? JSON.stringify(infosCompartilhadas) : infosCompartilhadas || '["lead","historico","qualificacao"]',
+    typeof condicoesTransferencia === "object" ? JSON.stringify(condicoesTransferencia) : condicoesTransferencia || "{}",
+    agora()
+  );
+  res.json({ id });
+});
+
+router.delete("/vinculos-campanhas/:id", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const v = db.prepare("SELECT * FROM vinculos_campanhas WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!v) return res.status(404).json({ error: "Vínculo não encontrado" });
+  db.prepare("DELETE FROM vinculos_campanhas WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EVENTOS COMERCIAIS + MOTOR DE REMUNERAÇÃO
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.post("/campaigns/:id/eventos", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem acesso" });
+  if (role === "vendedor") {
+    const app = db.prepare("SELECT id FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(req.params.id, entityId);
+    if (!app) return res.status(403).json({ error: "Sem acesso" });
+  }
+  const { tipo, leadId, reuniaoId, dadosEvento, valorVenda, sellerOrigemId, campanhaOrigemId } = req.body;
+  if (!tipo) return res.status(400).json({ error: "Tipo do evento obrigatório" });
+  const evId = uid();
+  const sellerId = role === "vendedor" ? entityId : (req.body.sellerId || "");
+  db.prepare(`INSERT INTO eventos_comerciais (id, companyId, campaignId, tipo, leadId, sellerId, sellerOrigemId, campanhaOrigemId, reuniaoId, dadosEvento, valorVenda, criadoEm)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+    evId, camp.companyId, req.params.id, tipo, leadId || "", sellerId, sellerOrigemId || "", campanhaOrigemId || "", reuniaoId || "",
+    typeof dadosEvento === "object" ? JSON.stringify(dadosEvento) : dadosEvento || "{}",
+    Number(valorVenda) || 0, agora()
+  );
+
+  // Motor de remuneração: processa formas de ganho ativas que correspondem ao evento
+  const formas = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ? AND ativo = 1 AND eventoComercial = ?").all(req.params.id, tipo);
+  const remuneracoesCriadas = [];
+  for (const fg of formas) {
+    const beneficiarios = [];
+    if (sellerId) beneficiarios.push({ sid: sellerId, campId: req.params.id });
+    // Verificar se há SDR de origem com bônus configurado
+    if (sellerOrigemId && campanhaOrigemId && campanhaOrigemId !== req.params.id) {
+      const fgOrigem = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ? AND ativo = 1 AND eventoComercial = ?").all(campanhaOrigemId, tipo);
+      for (const fgo of fgOrigem) {
+        beneficiarios.push({ sid: sellerOrigemId, campId: campanhaOrigemId, fg: fgo });
+      }
+    }
+    for (const b of beneficiarios) {
+      const formaUsada = b.fg || fg;
+      const chave = `${formaUsada.id}:${b.sid}:${evId}`;
+      const existe = db.prepare("SELECT id FROM remuneracoes WHERE chaveUnicidade = ?").get(chave);
+      if (existe) continue;
+      if (formaUsada.limitePorLead > 0 && leadId) {
+        const jaPagou = db.prepare("SELECT COUNT(*) n FROM remuneracoes WHERE formaGanhoId = ? AND sellerId = ? AND leadId = ? AND estornado = 0").get(formaUsada.id, b.sid, leadId);
+        if (jaPagou.n >= formaUsada.limitePorLead) continue;
+      }
+      if (formaUsada.limitePorProfissional > 0) {
+        const total = db.prepare("SELECT COUNT(*) n FROM remuneracoes WHERE formaGanhoId = ? AND sellerId = ? AND estornado = 0").get(formaUsada.id, b.sid);
+        if (total.n >= formaUsada.limitePorProfissional) continue;
+      }
+      let valorFinal = Number(formaUsada.valor) || 0;
+      if (formaUsada.tipoRemuneracao === "comissao" && Number(valorVenda) > 0) {
+        valorFinal = Math.round(Number(valorVenda) * (Number(formaUsada.valor) / 100) * 100) / 100;
+      }
+      const remId = uid();
+      db.prepare(`INSERT INTO remuneracoes (id, companyId, campaignId, formaGanhoId, sellerId, eventoComercialId, leadId, tipo, valor, moeda, status, chaveUnicidade, versaoRegra, criadoEm)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,?)`).run(
+        remId, camp.companyId, b.campId, formaUsada.id, b.sid, evId, leadId || "", formaUsada.tipoRemuneracao, valorFinal, formaUsada.moeda || "BRL",
+        formaUsada.metodoAprovacao === "automatico" ? "aprovado" : "pendente", chave, agora()
+      );
+      remuneracoesCriadas.push({ id: remId, sellerId: b.sid, valor: valorFinal, formaGanho: formaUsada.nome });
+    }
+  }
+
+  db.prepare("UPDATE eventos_comerciais SET processado = 1 WHERE id = ?").run(evId);
+  res.json({ eventoId: evId, remuneracoes: remuneracoesCriadas });
+});
+
+router.get("/campaigns/:id/eventos", (req, res) => {
+  const rows = db.prepare("SELECT * FROM eventos_comerciais WHERE campaignId = ? ORDER BY criadoEm DESC LIMIT 100").all(req.params.id);
+  res.json(rows);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REMUNERAÇÕES
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.get("/campaigns/:id/remuneracoes", (req, res) => {
+  const { role, entityId } = req.user;
+  let rows;
+  if (role === "empresa") {
+    rows = db.prepare(`SELECT r.*, s.nome AS sellerNome, fg.nome AS formaGanhoNome FROM remuneracoes r LEFT JOIN sellers s ON s.id = r.sellerId LEFT JOIN formas_ganho fg ON fg.id = r.formaGanhoId WHERE r.campaignId = ? ORDER BY r.criadoEm DESC`).all(req.params.id);
+  } else {
+    rows = db.prepare(`SELECT r.*, fg.nome AS formaGanhoNome FROM remuneracoes r LEFT JOIN formas_ganho fg ON fg.id = r.formaGanhoId WHERE r.campaignId = ? AND r.sellerId = ? ORDER BY r.criadoEm DESC`).all(req.params.id, entityId);
+  }
+  res.json(rows);
+});
+
+router.patch("/remuneracoes/:id", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const rem = db.prepare("SELECT * FROM remuneracoes WHERE id = ?").get(req.params.id);
+  if (!rem) return res.status(404).json({ error: "Remuneração não encontrada" });
+  const camp = db.prepare("SELECT companyId FROM campaigns WHERE id = ?").get(rem.campaignId);
+  if (!camp || camp.companyId !== entityId) return res.status(403).json({ error: "Sem acesso" });
+  const { status, motivoEstorno } = req.body;
+  if (status === "aprovado") {
+    db.prepare("UPDATE remuneracoes SET status = 'aprovado', aprovadoPor = ?, aprovadoEm = ? WHERE id = ?").run(entityId, agora(), rem.id);
+  } else if (status === "estornado") {
+    db.prepare("UPDATE remuneracoes SET estornado = 1, motivoEstorno = ?, status = 'estornado' WHERE id = ?").run(motivoEstorno || "", rem.id);
+  } else if (status === "pago") {
+    db.prepare("UPDATE remuneracoes SET status = 'pago', pagoEm = ? WHERE id = ?").run(agora(), rem.id);
+  }
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TRANSFERÊNCIAS DE OPORTUNIDADE
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.post("/transferencias", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const { vinculoId, leadId, sellerOrigemId, reuniaoId, dadosQualificacao, anotacoes } = req.body;
+  if (!vinculoId || !leadId || !sellerOrigemId) return res.status(400).json({ error: "vinculoId, leadId e sellerOrigemId obrigatórios" });
+  const vinculo = db.prepare("SELECT * FROM vinculos_campanhas WHERE id = ? AND companyId = ?").get(vinculoId, entityId);
+  if (!vinculo) return res.status(404).json({ error: "Vínculo não encontrado" });
+  const duplicada = db.prepare("SELECT id FROM transferencias_oportunidade WHERE vinculoId = ? AND leadId = ? AND status NOT IN ('cancelada')").get(vinculoId, leadId);
+  if (duplicada) return res.status(409).json({ error: "Transferência já existe para este lead neste vínculo" });
+
+  let sellerDestinoId = "";
+  if (vinculo.distribuicaoDestino === "equilibrada") {
+    const aprovados = db.prepare("SELECT sellerId FROM campaign_applications WHERE campaignId = ? AND status = 'aprovado'").all(vinculo.campanhaDestinoId);
+    if (aprovados.length) {
+      const contagem = db.prepare(`SELECT sellerDestinoId, COUNT(*) n FROM transferencias_oportunidade WHERE campanhaDestinoId = ? AND status NOT IN ('cancelada') GROUP BY sellerDestinoId`).all(vinculo.campanhaDestinoId);
+      const mapa = Object.fromEntries(contagem.map((c) => [c.sellerDestinoId, c.n]));
+      aprovados.sort((a, b) => (mapa[a.sellerId] || 0) - (mapa[b.sellerId] || 0));
+      sellerDestinoId = aprovados[0].sellerId;
+    }
+  }
+
+  const id = uid();
+  db.prepare(`INSERT INTO transferencias_oportunidade (id, companyId, vinculoId, leadId, campanhaOrigemId, campanhaDestinoId, sellerOrigemId, sellerDestinoId, reuniaoId, status, dadosQualificacao, anotacoes, historico, criadoEm, atribuidoEm)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+    id, entityId, vinculoId, leadId, vinculo.campanhaOrigemId, vinculo.campanhaDestinoId, sellerOrigemId, sellerDestinoId,
+    reuniaoId || "", sellerDestinoId ? "atribuida" : "pendente",
+    typeof dadosQualificacao === "object" ? JSON.stringify(dadosQualificacao) : dadosQualificacao || "{}",
+    anotacoes || "", "[]", agora(), sellerDestinoId ? agora() : null
+  );
+  res.json({ id, sellerDestinoId, status: sellerDestinoId ? "atribuida" : "pendente" });
+});
+
+router.get("/campaigns/:id/transferencias", (req, res) => {
+  const rows = db.prepare(`
+    SELECT t.*, l.nome AS leadNome, so.nome AS sellerOrigemNome, sd.nome AS sellerDestinoNome
+    FROM transferencias_oportunidade t
+    LEFT JOIN leads l ON l.id = t.leadId
+    LEFT JOIN sellers so ON so.id = t.sellerOrigemId
+    LEFT JOIN sellers sd ON sd.id = t.sellerDestinoId
+    WHERE t.campanhaOrigemId = ? OR t.campanhaDestinoId = ?
+    ORDER BY t.criadoEm DESC
+  `).all(req.params.id, req.params.id);
+  res.json(rows);
+});
+
+router.patch("/transferencias/:id", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const t = db.prepare("SELECT * FROM transferencias_oportunidade WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!t) return res.status(404).json({ error: "Transferência não encontrada" });
+  const { status, sellerDestinoId } = req.body;
+  if (sellerDestinoId) {
+    db.prepare("UPDATE transferencias_oportunidade SET sellerDestinoId = ?, status = 'atribuida', atribuidoEm = ? WHERE id = ?").run(sellerDestinoId, agora(), t.id);
+  }
+  if (status) {
+    db.prepare("UPDATE transferencias_oportunidade SET status = ? WHERE id = ?").run(status, t.id);
+  }
   res.json({ ok: true });
 });
 

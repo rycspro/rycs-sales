@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, BookOpen, ChevronDown, ChevronUp, FileText, Download, Database, Clock3 } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronDown, ChevronUp, FileText, Download, Database, Clock3, Shuffle, TrendingUp } from "lucide-react";
 import { money } from "../../lib/utils.js";
 import { ACOES, TAXA } from "../../lib/constants.js";
 import { api, apiPatch } from "../../lib/api.js";
@@ -237,6 +237,116 @@ function MeusLeads({ campaignId }) {
   );
 }
 
+function TransferenciasSDR({ campaignId }) {
+  const [dados, setDados] = useState({ originadas: 0, transferidas: 0, convertidas: 0, lista: [] });
+  const [carregando, setCarregando] = useState(true);
+  useEffect(() => {
+    setCarregando(true);
+    api(`/campaigns/${campaignId}/eventos`).then((r) => {
+      const eventos = Array.isArray(r) ? r : [];
+      const originadas = eventos.filter((e) => e.tipo === "reuniao_realizada").length;
+      const transferidas = eventos.filter((e) => e.tipo === "transferencia").length;
+      const convertidas = eventos.filter((e) => e.tipo === "venda").length;
+      setDados({ originadas, transferidas, convertidas, lista: eventos.slice(0, 20) });
+      setCarregando(false);
+    }).catch(() => setCarregando(false));
+  }, [campaignId]);
+
+  if (carregando) return <div className="vx-mut">Carregando...</div>;
+  return (
+    <div className="vx-fade">
+      <div className="vx-eyebrow">Desempenho SDR</div>
+      <h3 className="vx-disp" style={{ fontSize: 16, margin: "4px 0 14px" }}>Oportunidades originadas</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 }}>
+        <div className="vx-card" style={{ padding: 14, textAlign: "center" }}>
+          <div className="vx-mut" style={{ fontSize: 11 }}>Reuniões</div>
+          <b className="vx-mono" style={{ fontSize: 20 }}>{dados.originadas}</b>
+        </div>
+        <div className="vx-card" style={{ padding: 14, textAlign: "center" }}>
+          <div className="vx-mut" style={{ fontSize: 11 }}>Transferidas</div>
+          <b className="vx-mono" style={{ fontSize: 20, color: "var(--brand)" }}>{dados.transferidas}</b>
+        </div>
+        <div className="vx-card" style={{ padding: 14, textAlign: "center" }}>
+          <div className="vx-mut" style={{ fontSize: 11 }}>Vendas</div>
+          <b className="vx-mono" style={{ fontSize: 20, color: "#16A34A" }}>{dados.convertidas}</b>
+        </div>
+      </div>
+      {dados.lista.length > 0 ? (
+        <div style={{ display: "grid", gap: 6 }}>
+          {dados.lista.map((ev) => (
+            <div key={ev.id} className="vx-card" style={{ padding: 10, display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 6, background: ev.tipo === "venda" ? "#DCFCE7" : "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {ev.tipo === "venda" ? <TrendingUp size={13} color="#16A34A" /> : <Shuffle size={13} color="var(--brand)" />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 500 }}>{ev.tipo === "venda" ? "Venda fechada" : ev.tipo === "transferencia" ? "Transferida p/ Closer" : ev.tipo === "reuniao_realizada" ? "Reunião realizada" : ev.tipo}</div>
+                <div className="vx-mut" style={{ fontSize: 11 }}>{new Date(ev.criadoEm).toLocaleDateString("pt-BR")}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+          <Shuffle size={24} color="var(--muted)" />
+          <p className="vx-mut" style={{ marginTop: 10 }}>Nenhum evento registrado ainda.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilaCloser({ campaignId }) {
+  const [transferencias, setTransferencias] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  useEffect(() => {
+    setCarregando(true);
+    api(`/transferencias?campanhaDestinoId=${campaignId}`).then((r) => {
+      setTransferencias(Array.isArray(r) ? r : []);
+      setCarregando(false);
+    }).catch(() => setCarregando(false));
+  }, [campaignId]);
+
+  if (carregando) return <div className="vx-mut">Carregando...</div>;
+  const pendentes = transferencias.filter((t) => t.status === "pendente");
+  const aceitas = transferencias.filter((t) => t.status === "aceita");
+  return (
+    <div className="vx-fade">
+      <div className="vx-eyebrow">Closer</div>
+      <h3 className="vx-disp" style={{ fontSize: 16, margin: "4px 0 14px" }}>Oportunidades recebidas</h3>
+      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+        <div className="vx-card" style={{ padding: 14, flex: 1, textAlign: "center" }}>
+          <div className="vx-mut" style={{ fontSize: 11 }}>Pendentes</div>
+          <b className="vx-mono" style={{ fontSize: 20, color: "#F59E0B" }}>{pendentes.length}</b>
+        </div>
+        <div className="vx-card" style={{ padding: 14, flex: 1, textAlign: "center" }}>
+          <div className="vx-mut" style={{ fontSize: 11 }}>Aceitas</div>
+          <b className="vx-mono" style={{ fontSize: 20, color: "#16A34A" }}>{aceitas.length}</b>
+        </div>
+      </div>
+      {transferencias.length === 0 ? (
+        <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>
+          <Shuffle size={24} color="var(--muted)" />
+          <p className="vx-mut" style={{ marginTop: 10 }}>Nenhuma oportunidade transferida para esta campanha.</p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 6 }}>
+          {transferencias.map((t) => (
+            <div key={t.id} className="vx-card" style={{ padding: 12, display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: t.status === "pendente" ? "#F59E0B" : "#16A34A", flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>Oportunidade #{String(t.id).slice(-6)}</div>
+                <div className="vx-mut" style={{ fontSize: 11 }}>
+                  {t.status === "pendente" ? "Aguardando aceite" : "Aceita"} · {new Date(t.criadoEm).toLocaleDateString("pt-BR")}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Workspace({ campanha, empresa, eu, db, setDb, up, aviso, voltar, recarregar }) {
   const [aba, setAba] = useState("tarefas");
   const feitos = eu.curso?.[empresa.id];
@@ -261,13 +371,20 @@ export default function Workspace({ campanha, empresa, eu, db, setDb, up, aviso,
       {campanha && <TreinamentoCampanha campanha={campanha} />}
 
       <div className="vx-tabs" style={{ margin: "4px 0 18px" }}>
-        {[["tarefas", "Tarefas"], ...(campanha ? [["materiais", "Materiais"], ["meusleads", "Meus leads"]] : []), ["curso", "Curso da empresa"], ["envios", "Meus envios"], ["chat", "Chat"]].map(([k, t]) => (
+        {[["tarefas", "Tarefas"],
+          ...(campanha ? [["materiais", "Materiais"], ["meusleads", "Meus leads"]] : []),
+          ...(campanha?.funcao === "sdr" ? [["sdr", "Oportunidades"]] : []),
+          ...(campanha?.funcao === "closer" ? [["closer", "Fila Closer"]] : []),
+          ["curso", "Curso da empresa"], ["envios", "Meus envios"], ["chat", "Chat"]
+        ].map(([k, t]) => (
           <button key={k} className="vx-tab" data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>{t}</button>
         ))}
       </div>
 
       {aba === "materiais" && campanha && <MateriaisProfissional campaignId={campanha.id} />}
       {aba === "meusleads" && campanha && <MeusLeads campaignId={campanha.id} />}
+      {aba === "sdr" && campanha && <TransferenciasSDR campaignId={campanha.id} />}
+      {aba === "closer" && campanha && <FilaCloser campaignId={campanha.id} />}
       {aba === "curso" && <Curso empresa={empresa} eu={eu} up={up} aviso={aviso} />}
       {aba === "tarefas" && (
         semCampanha

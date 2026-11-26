@@ -3284,5 +3284,158 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_camplead_uniq ON campaign_leads(campaignId, leadId);
 `);
 
+// ── Formas de ganho configuráveis ──────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS formas_ganho (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    tipoRemuneracao TEXT NOT NULL DEFAULT 'fixo',
+    valor REAL DEFAULT 0,
+    moeda TEXT DEFAULT 'BRL',
+    eventoComercial TEXT DEFAULT '',
+    criteriosValidacao TEXT DEFAULT '{}',
+    evidenciasNecessarias TEXT DEFAULT '[]',
+    metodoAprovacao TEXT DEFAULT 'manual',
+    limiteRecorrencia INTEGER DEFAULT 0,
+    limitePorProfissional INTEGER DEFAULT 0,
+    limitePorLead INTEGER DEFAULT 1,
+    regraRecorrencia TEXT DEFAULT 'unica',
+    regraCumulatividade INTEGER DEFAULT 1,
+    baseCalculo TEXT DEFAULT '',
+    condicaoLiberacao TEXT DEFAULT '',
+    ativo INTEGER DEFAULT 1,
+    ordem INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_fg_camp ON formas_ganho(campaignId, ativo);
+`);
+
+// ── Operações comerciais (agrupamento de campanhas) ────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS operacoes_comerciais (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    status TEXT DEFAULT 'ativa',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_opcom_company ON operacoes_comerciais(companyId);
+`);
+adicionarColuna("campaigns", "operacaoId", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "estruturaComercial", "TEXT DEFAULT 'independente'");
+
+// ── Vínculos entre campanhas (continuidade comercial) ──────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS vinculos_campanhas (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    operacaoId TEXT DEFAULT '',
+    campanhaOrigemId TEXT NOT NULL,
+    campanhaDestinoId TEXT NOT NULL,
+    eventoTransferencia TEXT DEFAULT 'reuniao_agendada',
+    distribuicaoDestino TEXT DEFAULT 'equilibrada',
+    responsavelRecebimento TEXT DEFAULT 'qualquer',
+    infosCompartilhadas TEXT DEFAULT '["lead","historico","qualificacao"]',
+    condicoesTransferencia TEXT DEFAULT '{}',
+    ativo INTEGER DEFAULT 1,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id),
+    FOREIGN KEY (campanhaOrigemId) REFERENCES campaigns(id),
+    FOREIGN KEY (campanhaDestinoId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_vinccamp_orig ON vinculos_campanhas(campanhaOrigemId);
+  CREATE INDEX IF NOT EXISTS idx_vinccamp_dest ON vinculos_campanhas(campanhaDestinoId);
+`);
+
+// ── Eventos comerciais ─────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS eventos_comerciais (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    campaignId TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    leadId TEXT DEFAULT '',
+    sellerId TEXT DEFAULT '',
+    sellerOrigemId TEXT DEFAULT '',
+    campanhaOrigemId TEXT DEFAULT '',
+    oportunidadeId TEXT DEFAULT '',
+    reuniaoId TEXT DEFAULT '',
+    dadosEvento TEXT DEFAULT '{}',
+    valorVenda REAL DEFAULT 0,
+    processado INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id),
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_evcom_camp ON eventos_comerciais(campaignId, tipo);
+  CREATE INDEX IF NOT EXISTS idx_evcom_lead ON eventos_comerciais(leadId, tipo);
+  CREATE INDEX IF NOT EXISTS idx_evcom_seller ON eventos_comerciais(sellerId);
+`);
+
+// ── Transferência de oportunidades ─────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS transferencias_oportunidade (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    vinculoId TEXT NOT NULL,
+    leadId TEXT NOT NULL,
+    campanhaOrigemId TEXT NOT NULL,
+    campanhaDestinoId TEXT NOT NULL,
+    sellerOrigemId TEXT NOT NULL,
+    sellerDestinoId TEXT DEFAULT '',
+    reuniaoId TEXT DEFAULT '',
+    status TEXT DEFAULT 'pendente',
+    dadosQualificacao TEXT DEFAULT '{}',
+    anotacoes TEXT DEFAULT '',
+    historico TEXT DEFAULT '[]',
+    criadoEm INTEGER NOT NULL,
+    atribuidoEm INTEGER,
+    FOREIGN KEY (companyId) REFERENCES companies(id),
+    FOREIGN KEY (vinculoId) REFERENCES vinculos_campanhas(id),
+    FOREIGN KEY (leadId) REFERENCES leads(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_transf_dest ON transferencias_oportunidade(campanhaDestinoId, status);
+  CREATE INDEX IF NOT EXISTS idx_transf_seller ON transferencias_oportunidade(sellerDestinoId);
+`);
+
+// ── Remunerações geradas por eventos ───────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS remuneracoes (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    campaignId TEXT NOT NULL,
+    formaGanhoId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    eventoComercialId TEXT DEFAULT '',
+    leadId TEXT DEFAULT '',
+    tipo TEXT DEFAULT 'fixo',
+    valor REAL DEFAULT 0,
+    moeda TEXT DEFAULT 'BRL',
+    status TEXT DEFAULT 'pendente',
+    chaveUnicidade TEXT NOT NULL,
+    aprovadoPor TEXT DEFAULT '',
+    aprovadoEm INTEGER,
+    pagoEm INTEGER,
+    estornado INTEGER DEFAULT 0,
+    motivoEstorno TEXT DEFAULT '',
+    versaoRegra INTEGER DEFAULT 1,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id),
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id),
+    FOREIGN KEY (formaGanhoId) REFERENCES formas_ganho(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_remun_uniq ON remuneracoes(chaveUnicidade);
+  CREATE INDEX IF NOT EXISTS idx_remun_camp ON remuneracoes(campaignId, sellerId, status);
+  CREATE INDEX IF NOT EXISTS idx_remun_seller ON remuneracoes(sellerId, status);
+`);
+
 export default db;
 export { uid, agora };

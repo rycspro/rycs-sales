@@ -1,7 +1,8 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
 import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle } from "lucide-react";
 import { api } from "../../lib/api.js";
+import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
 import { useI18n } from "../../lib/i18n.jsx";
 import { nomeAssistente } from "../../../shared/jarvas.js";
@@ -116,8 +117,10 @@ function ChipToggle({ items, value, onChange, multi = false }) {
 export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarComIA = false }) {
   const { locale } = useI18n();
   const nome = nomeAssistente(locale);
-  const [passo, setPasso] = useState(0);
-  const [campanha, setCampanha] = useState(null);
+  const chaveRascunho = `rycs-wizard-${emp.id}`;
+  const rascunhoSalvo = useRef(lerJson(chaveRascunho, null));
+  const [passo, setPasso] = useState(rascunhoSalvo.current?.passo || 0);
+  const [campanha, setCampanha] = useState(rascunhoSalvo.current?.campanha || null);
   const [salvando, setSalvando] = useState(false);
   const [explicacao, setExplicacao] = useState("");
   const [gerandoTreinamento, setGerandoTreinamento] = useState(false);
@@ -128,6 +131,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
+
+  useEffect(() => {
+    if (campanha) gravarJson(chaveRascunho, { campanha, passo });
+  }, [campanha, passo, chaveRascunho]);
   const setNested = (k, sub, v) => setCampanha((c) => ({ ...c, [k]: { ...(c[k] || {}), [sub]: v } }));
 
   const vis = useMemo(() => campanha ? camposVisiveis(campanha) : {}, [campanha]);
@@ -233,10 +240,22 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const criar = async () => {
     if (!campanha?.titulo?.trim()) return aviso("Dê um título à campanha.");
     setSalvando(true);
-    const payload = { ...campanha };
+    const { formasGanhoRascunho, nomeOperacao, ...payload } = campanha;
+    // Criar operação se necessário
+    if (payload.estruturaComercial === "operacao" && nomeOperacao?.trim()) {
+      const opR = await api("/operacoes", { nome: nomeOperacao.trim() });
+      if (opR?.id) payload.operacaoId = opR.id;
+    }
     const r = await api("/campaigns", payload);
     setSalvando(false);
     if (!r || r.error) return aviso(r?.error || "Não foi possível criar a campanha.");
+    // Salvar formas de ganho configuradas no wizard
+    if (formasGanhoRascunho?.length) {
+      for (const fg of formasGanhoRascunho) {
+        if (fg.nome?.trim()) await api(`/campaigns/${r.id}/formas-ganho`, fg);
+      }
+    }
+    removerArmazenado(chaveRascunho);
     aoCriar?.({ ...campanha, id: r.id, companyId: emp.id, status: "rascunho", criadoEm: Date.now() });
   };
 
@@ -253,6 +272,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   return (
     <div className="vx-fade vx-campaign-wizard">
+      {rascunhoSalvo.current && campanha && (
+        <div className="vx-notice" style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>Rascunho restaurado automaticamente{campanha.titulo ? `: "${campanha.titulo}"` : ""}.</span>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { removerArmazenado(chaveRascunho); rascunhoSalvo.current = null; setCampanha(null); setPasso(0); }}>Descartar</button>
+        </div>
+      )}
       {/* trilha dos passos */}
       <div className="vx-wizard-steps">
         {PASSOS.map((p, i) => (
@@ -477,6 +502,29 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                       onChange={(e) => set("prazoInatividadeHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
                 </div>
                 <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8 }}>Após salvar, acesse a aba Leads para vincular os contatos da base.</div>
+              </div>
+            )}
+          </div>
+
+          {/* Estrutura comercial */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Estrutura comercial</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Defina se esta campanha é independente ou faz parte de uma operação integrada.</div></div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <CardOption selected={campanha.estruturaComercial === "independente" || !campanha.estruturaComercial} onClick={() => set("estruturaComercial", "independente")} icon={Target} title="Campanha independente" subtitle="Funciona por conta própria, sem vínculo com outras campanhas." />
+              <CardOption selected={campanha.estruturaComercial === "vinculada"} onClick={() => set("estruturaComercial", "vinculada")} icon={Workflow} title="Vincular a outra campanha" subtitle="Continuidade comercial: leads e oportunidades são transferidos entre campanhas." />
+              <CardOption selected={campanha.estruturaComercial === "operacao"} onClick={() => set("estruturaComercial", "operacao")} icon={Shuffle} title="Criar uma operação integrada" subtitle="Agrupe campanhas relacionadas (ex: SDR + Closer) em uma única operação." />
+            </div>
+            {campanha.estruturaComercial === "operacao" && (
+              <div style={{ marginTop: 12 }}>
+                <label><div className="vx-label">Nome da operação</div>
+                  <input className="vx-input" placeholder="Ex: RYCS Sales Machine" value={campanha.nomeOperacao || ""}
+                    onChange={(e) => set("nomeOperacao", e.target.value)} />
+                </label>
+              </div>
+            )}
+            {campanha.estruturaComercial === "vinculada" && (
+              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10, padding: "10px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)" }}>
+                Após criar a campanha, acesse a aba de configurações para definir a campanha de origem ou destino e as regras de transferência.
               </div>
             )}
           </div>
@@ -712,6 +760,66 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Formas de ganho configuráveis */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div className="vx-row" style={{ marginBottom: 12 }}>
+              <div><b style={{ color: "var(--brand)" }}>Formas de ganho</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Adicione formas de remuneração extras além das ações acima. Estas serão salvas após criar a campanha.</div></div>
+              <button className="vx-btn vx-btn-sm" onClick={() => set("formasGanhoRascunho", [...(campanha.formasGanhoRascunho || []), { tempId: `fg-${Date.now()}`, nome: "", tipoRemuneracao: "fixo", valor: 0, eventoComercial: "", descricao: "" }])}><Plus size={13} /> Forma de ganho</button>
+            </div>
+            {(campanha.formasGanhoRascunho || []).length === 0
+              ? <div className="vx-campaign-inline-empty">Nenhuma forma de ganho extra. As ações acima já definem a remuneração base.</div>
+              : (campanha.formasGanhoRascunho || []).map((fg, i) => (
+                <div key={fg.tempId} style={{ padding: "12px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <label><div className="vx-label">Nome *</div>
+                        <input className="vx-input" placeholder="Ex: Bônus por comparecimento" value={fg.nome}
+                          onChange={(e) => set("formasGanhoRascunho", campanha.formasGanhoRascunho.map((f, j) => j === i ? { ...f, nome: e.target.value } : f))} />
+                      </label>
+                      <label><div className="vx-label">Tipo</div>
+                        <select className="vx-input" value={fg.tipoRemuneracao}
+                          onChange={(e) => set("formasGanhoRascunho", campanha.formasGanhoRascunho.map((f, j) => j === i ? { ...f, tipoRemuneracao: e.target.value } : f))}>
+                          <option value="fixo">Valor fixo</option>
+                          <option value="comissao">Comissão %</option>
+                        </select>
+                      </label>
+                      <label><div className="vx-label">{fg.tipoRemuneracao === "comissao" ? "Percentual (%)" : "Valor (R$)"}</div>
+                        <input className="vx-input vx-mono" type="number" min="0" step="0.5" value={fg.valor}
+                          onChange={(e) => set("formasGanhoRascunho", campanha.formasGanhoRascunho.map((f, j) => j === i ? { ...f, valor: Number(e.target.value) } : f))} />
+                      </label>
+                      <label><div className="vx-label">Evento gatilho</div>
+                        <select className="vx-input" value={fg.eventoComercial}
+                          onChange={(e) => set("formasGanhoRascunho", campanha.formasGanhoRascunho.map((f, j) => j === i ? { ...f, eventoComercial: e.target.value } : f))}>
+                          <option value="">Selecione...</option>
+                          <option value="contato_discadora">Contato na discadora</option>
+                          <option value="contato_whatsapp">Contato no WhatsApp</option>
+                          <option value="lead_qualificado">Lead qualificado</option>
+                          <option value="reuniao_agendada">Reunião agendada</option>
+                          <option value="reuniao_confirmada">Reunião confirmada</option>
+                          <option value="cliente_compareceu">Cliente compareceu</option>
+                          <option value="reuniao_realizada">Reunião realizada</option>
+                          <option value="proposta_apresentada">Proposta apresentada</option>
+                          <option value="venda_concluida">Venda concluída</option>
+                          <option value="pagamento_confirmado">Pagamento confirmado</option>
+                          <option value="acao_personalizada">Ação personalizada</option>
+                        </select>
+                      </label>
+                    </div>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => set("formasGanhoRascunho", campanha.formasGanhoRascunho.filter((_, j) => j !== i))}><Trash2 size={14} /></button>
+                  </div>
+                  <input className="vx-input" style={{ marginTop: 6 }} placeholder="Descrição (opcional)" value={fg.descricao || ""}
+                    onChange={(e) => set("formasGanhoRascunho", campanha.formasGanhoRascunho.map((f, j) => j === i ? { ...f, descricao: e.target.value } : f))} />
+                </div>
+              ))
+            }
+            {campanha.funcao === "sdr" && !(campanha.formasGanhoRascunho || []).length && (
+              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 6 }}>Sugestões para SDR: contato na discadora, contato no WhatsApp, lead qualificado, reunião agendada, bônus por comparecimento.</div>
+            )}
+            {campanha.funcao === "closer" && !(campanha.formasGanhoRascunho || []).length && (
+              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 6 }}>Sugestões para Closer: reunião realizada, proposta apresentada, venda concluída, comissão por venda.</div>
+            )}
           </div>
 
           {/* Treinamento */}
