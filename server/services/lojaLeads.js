@@ -126,37 +126,54 @@ db.exec(`
 // ── Google Places API (New) ─────────────────────────────────────────────────
 const PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || "";
 
-export async function buscarPlaces(textQuery, { regiao, pageToken, quantidade } = {}) {
+export async function buscarPlaces(textQuery, { regiao, quantidade } = {}) {
   if (!PLACES_KEY) return { error: "Chave da API Google Places não configurada no servidor." };
   if (!textQuery) return { error: "Informe o que buscar." };
 
-  const limite = Math.min(Math.max(quantidade || 20, 1), 20);
+  const total = Math.max(quantidade || 20, 1);
   const url = "https://places.googleapis.com/v1/places:searchText";
-  const body = {
-    textQuery: regiao ? `${textQuery} em ${regiao}` : textQuery,
-    languageCode: "pt-BR",
-    maxResultCount: limite,
-  };
-  if (pageToken) body.pageToken = pageToken;
-
   const headers = {
     "Content-Type": "application/json",
     "X-Goog-Api-Key": PLACES_KEY,
     "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.location,nextPageToken",
   };
 
+  const todos = [];
+  const vistos = new Set();
+  let nextToken = null;
+  const maxPaginas = 50;
+
   try {
-    const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-    if (!res.ok) {
-      const txt = await res.text();
-      console.error("[loja-leads] Places API erro:", res.status, txt);
-      return { error: `Erro na API do Google Places (${res.status}).` };
+    for (let pg = 0; pg < maxPaginas && todos.length < total; pg++) {
+      const pedido = Math.min(total - todos.length, 20);
+      const body = {
+        textQuery: regiao ? `${textQuery} em ${regiao}` : textQuery,
+        languageCode: "pt-BR",
+        maxResultCount: pedido,
+      };
+      if (nextToken) body.pageToken = nextToken;
+
+      const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("[loja-leads] Places API erro:", res.status, txt);
+        if (!todos.length) return { error: `Erro na API do Google Places (${res.status}).` };
+        break;
+      }
+      const data = await res.json();
+      for (const p of (data.places || [])) {
+        if (vistos.has(p.id)) continue;
+        vistos.add(p.id);
+        todos.push(normalizar(p));
+        if (todos.length >= total) break;
+      }
+      nextToken = data.nextPageToken || null;
+      if (!nextToken) break;
     }
-    const data = await res.json();
-    const places = (data.places || []).map(normalizar);
-    return { contatos: places, nextPageToken: data.nextPageToken || null };
+    return { contatos: todos };
   } catch (e) {
     console.error("[loja-leads] Places fetch erro:", e.message);
+    if (todos.length) return { contatos: todos };
     return { error: "Falha ao conectar com a API do Google Places." };
   }
 }

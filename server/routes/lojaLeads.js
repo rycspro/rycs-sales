@@ -23,10 +23,10 @@ function entityDe(req) {
 router.post("/loja-leads/buscar", async (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
-  const { texto, regiao, pageToken, quantidade } = req.body || {};
+  const { texto, regiao, quantidade } = req.body || {};
   if (!texto) return res.status(400).json({ error: "Informe o que buscar." });
 
-  const r = await buscarPlaces(texto, { regiao, pageToken, quantidade });
+  const r = await buscarPlaces(texto, { regiao, quantidade });
   if (r.error) return res.status(400).json(r);
 
   const ids = salvarContatos(r.contatos);
@@ -36,7 +36,7 @@ router.post("/loja-leads/buscar", async (req, res) => {
   const revelados = new Set(contatosRevelados(ent.entityId).map((c) => c.id));
   for (const c of contatos) c.revelado = revelados.has(c.id);
 
-  res.json({ contatos, nextPageToken: r.nextPageToken });
+  res.json({ contatos });
 });
 
 // ── Revelar contato (registrar consumo) ─────────────────────────────────────
