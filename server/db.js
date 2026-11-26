@@ -1,5 +1,6 @@
 import { criarSchemaAgenda } from "./services/agendaComercial.js";
 import { criarSchemaCalendario } from "./services/calendarioComercial.js";
+import { criarSchemaGestaoInterna } from "./services/gestaoInterna.js";
 import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
@@ -2907,6 +2908,7 @@ db.exec(`
 
 criarSchemaAgenda(db);
 criarSchemaCalendario(db);
+criarSchemaGestaoInterna(db);
 
 export default db;
 export { uid, agora };

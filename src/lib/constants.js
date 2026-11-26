@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Landmark } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -74,7 +74,6 @@ export const NAV = {
     { key: "profissionais", label: "Profissionais", Icon: UserRoundSearch, children: [
       { key: "profissionais", label: "Profissionais" },
       { key: "conferir-fila", label: "Aprovações" },
-      { key: "conferir-time", label: "Time" },
     ] },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone, children: [
       { key: "campanhas", label: "Campanhas" },
@@ -96,6 +95,11 @@ export const NAV = {
       { key: "info-empresa", label: "Informações da Empresa" },
       { key: "biblioteca", label: "Biblioteca de Arquivos" },
       { key: "academy-empresa", label: "Academy" },
+    ] },
+    { key: "gestao-interna", label: "Gestão interna", Icon: Landmark, children: [
+      { key: "meu-time", label: "Meu time" },
+      { key: "metas-desempenho", label: "Metas e desempenho" },
+      { key: "fechamentos", label: "Fechamentos" },
     ] },
     { divider: true },
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
