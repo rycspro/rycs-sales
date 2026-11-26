@@ -413,10 +413,11 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
   const [campos, setCampos] = useState(() => new Set());
   const [destino, setDestino] = useState("new");
   const [nomeLista, setNomeLista] = useState("");
-  const [pastaSel, setPastaSel] = useState("");
+  const [pastaSel, setPastaSel] = useState(pastas.length ? pastas[0].id : "");
   const [listaExistente, setListaExistente] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
+  useEffect(() => { if (pastas.length && !pastaSel) setPastaSel(pastas[0].id); }, [pastas]);
 
   const cidadesDisponiveis = useMemo(() => {
     const todas = [];
@@ -601,7 +602,6 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 <label>
                   <span className="vx-label">Pasta</span>
                   <select className="vx-input" value={pastaSel} onChange={(e) => setPastaSel(e.target.value)}>
-                    <option value="">Selecionar pasta...</option>
                     {pastas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
                   </select>
                 </label>
