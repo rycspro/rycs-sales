@@ -171,64 +171,83 @@ db.exec(`
   }
 }
 
-// ── Migração: recuperar leads órfãos (revelados/cobrados, mas fora de lista) ──
+// ── Migração: recuperar leads órfãos numa PASTA DEDICADA "Leads recuperados" ──
 // Um bug antigo cobrava o contato antes de garantir a lista de destino; se a
 // lista não fosse resolvida, o lead ficava revelado mas sem entrar em lista
-// nenhuma. Esta migração coloca todos esses leads numa lista "Leads recuperados"
-// por entidade, para que nada de já pago fique invisível. Idempotente: depois
-// que o lead entra numa lista, deixa de ser órfão e não é tocado de novo.
-// Blindado: nunca pode derrubar o boot. Qualquer falha é registrada e o
-// servidor sobe normalmente (melhor subir sem recuperar do que não subir).
+// nenhuma. Esta migração coloca esses leads numa lista "Leads recuperados"
+// dentro de uma PASTA PRÓPRIA "Leads recuperados" (nunca mesclada a uma pasta
+// já existente do usuário, para não poluí-la nem trocar o título do card).
+// Também CORRIGE uma versão anterior que havia colocado a lista na primeira
+// pasta existente: se encontrar a lista "Leads recuperados" numa pasta que não
+// é a dedicada, move a lista para a pasta dedicada.
+// Idempotente e blindado: nunca derruba o boot.
 try {
-  // O JOIN com loja_leads_contatos garante que só entram contatos que ainda
-  // existem — evita violar a foreign key (foreign_keys = ON) no INSERT.
-  const orfaos = db.prepare(`
-    SELECT co.contatoId, co.entityId, co.entityRole
-    FROM loja_leads_consumo co
-    JOIN loja_leads_contatos c ON c.id = co.contatoId
-    WHERE NOT EXISTS (
-      SELECT 1 FROM loja_leads_lista_contatos lc
-      JOIN loja_leads_listas l ON l.id = lc.listaId
-      WHERE lc.contatoId = co.contatoId AND l.entityId = co.entityId
-    )
-  `).all();
+  const NOME = "Leads recuperados";
+  const ts = agora();
 
-  if (orfaos.length) {
-    const ts = agora();
-    const porEntidade = new Map();
-    for (const o of orfaos) {
-      const chave = `${o.entityId}|${o.entityRole}`;
-      if (!porEntidade.has(chave)) porEntidade.set(chave, { entityId: o.entityId, entityRole: o.entityRole, contatos: [] });
-      porEntidade.get(chave).contatos.push(o.contatoId);
+  // Entidades com órfãos (contato existente, fora de qualquer lista) OU que já
+  // têm uma lista "Leads recuperados" (para corrigir posição se preciso).
+  const entidades = db.prepare(`
+    SELECT entityId, entityRole FROM (
+      SELECT co.entityId AS entityId, co.entityRole AS entityRole
+      FROM loja_leads_consumo co
+      JOIN loja_leads_contatos c ON c.id = co.contatoId
+      WHERE NOT EXISTS (
+        SELECT 1 FROM loja_leads_lista_contatos lc
+        JOIN loja_leads_listas l ON l.id = lc.listaId
+        WHERE lc.contatoId = co.contatoId AND l.entityId = co.entityId)
+      UNION
+      SELECT entityId, entityRole FROM loja_leads_listas WHERE nome = ? AND parentId IS NULL
+    ) GROUP BY entityId, entityRole
+  `).all(NOME);
+
+  const corrigirEntidade = db.transaction((entityId, entityRole) => {
+    // Órfãos ainda soltos desta entidade.
+    const orfaos = db.prepare(`
+      SELECT co.contatoId FROM loja_leads_consumo co
+      JOIN loja_leads_contatos c ON c.id = co.contatoId
+      WHERE co.entityId = ? AND NOT EXISTS (
+        SELECT 1 FROM loja_leads_lista_contatos lc
+        JOIN loja_leads_listas l ON l.id = lc.listaId
+        WHERE lc.contatoId = co.contatoId AND l.entityId = co.entityId)
+    `).all(entityId).map((r) => r.contatoId);
+
+    // Lista "Leads recuperados" existente (em qualquer pasta).
+    let lista = db.prepare("SELECT id, pastaId FROM loja_leads_listas WHERE entityId = ? AND nome = ? AND parentId IS NULL ORDER BY criadoEm LIMIT 1").get(entityId, NOME);
+    if (!lista && !orfaos.length) return 0;
+
+    // Pasta dedicada "Leads recuperados" (cria se não existir).
+    let dedicada = db.prepare("SELECT id FROM loja_leads_pastas WHERE entityId = ? AND entityRole = ? AND nome = ? ORDER BY criadoEm LIMIT 1").get(entityId, entityRole, NOME);
+    if (!dedicada) {
+      const pid = uid();
+      db.prepare("INSERT INTO loja_leads_pastas (id, entityId, entityRole, nome, cor, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        .run(pid, entityId, entityRole, NOME, "#2563EB", ts, ts);
+      dedicada = { id: pid };
+    }
+
+    if (lista) {
+      // Corrige posição: move para a pasta dedicada se estiver em outra.
+      if (lista.pastaId !== dedicada.id) {
+        db.prepare("UPDATE loja_leads_listas SET pastaId = ?, atualizadoEm = ? WHERE id = ?").run(dedicada.id, ts, lista.id);
+      }
+    } else {
+      const lid = uid();
+      db.prepare("INSERT INTO loja_leads_listas (id, pastaId, entityId, entityRole, nome, descricao, parentId, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .run(lid, dedicada.id, entityId, entityRole, NOME, "Leads já adquiridos que estavam sem lista.", null, ts, ts);
+      lista = { id: lid };
     }
 
     const addContato = db.prepare("INSERT OR IGNORE INTO loja_leads_lista_contatos (listaId, contatoId, adicionadoEm) VALUES (?, ?, ?)");
+    for (const contatoId of orfaos) addContato.run(lista.id, contatoId, ts);
+    return orfaos.length;
+  });
 
-    const recuperarEntidade = db.transaction(({ entityId, entityRole, contatos }) => {
-      let pasta = db.prepare("SELECT id FROM loja_leads_pastas WHERE entityId = ? AND entityRole = ? ORDER BY criadoEm LIMIT 1").get(entityId, entityRole);
-      if (!pasta) {
-        const pid = uid();
-        db.prepare("INSERT INTO loja_leads_pastas (id, entityId, entityRole, nome, cor, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)")
-          .run(pid, entityId, entityRole, "Leads recuperados", "#2563EB", ts, ts);
-        pasta = { id: pid };
-      }
-      let lista = db.prepare("SELECT id FROM loja_leads_listas WHERE pastaId = ? AND nome = ? AND parentId IS NULL").get(pasta.id, "Leads recuperados");
-      if (!lista) {
-        const lid = uid();
-        db.prepare("INSERT INTO loja_leads_listas (id, pastaId, entityId, entityRole, nome, descricao, parentId, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-          .run(lid, pasta.id, entityId, entityRole, "Leads recuperados", "Leads já adquiridos que estavam sem lista.", null, ts, ts);
-        lista = { id: lid };
-      }
-      for (const contatoId of contatos) addContato.run(lista.id, contatoId, ts);
-    });
-
-    let total = 0;
-    for (const grupo of porEntidade.values()) {
-      try { recuperarEntidade(grupo); total += grupo.contatos.length; }
-      catch (e) { console.error("[loja-leads] recuperar órfãos falhou para entidade", grupo.entityId, e.message); }
-    }
-    if (total) console.log(`[loja-leads] ${total} lead(s) órfão(s) recuperado(s) para lista "Leads recuperados".`);
+  let total = 0;
+  for (const e of entidades) {
+    try { total += corrigirEntidade(e.entityId, e.entityRole); }
+    catch (err) { console.error("[loja-leads] recuperar/mover órfãos falhou para entidade", e.entityId, err.message); }
   }
+  if (total) console.log(`[loja-leads] ${total} lead(s) órfão(s) recuperado(s) na pasta dedicada "${NOME}".`);
 } catch (e) {
   console.error("[loja-leads] migração de recuperação de órfãos falhou (boot segue normal):", e.message);
 }
@@ -526,6 +545,15 @@ export function renomearLista(listaId, entityId, nome, descricao) {
   const ts = agora();
   if (nome !== undefined) db.prepare("UPDATE loja_leads_listas SET nome = ?, atualizadoEm = ? WHERE id = ?").run(nome, ts, listaId);
   if (descricao !== undefined) db.prepare("UPDATE loja_leads_listas SET descricao = ?, atualizadoEm = ? WHERE id = ?").run(descricao, ts, listaId);
+  return { ok: true };
+}
+
+export function moverLista(listaId, entityId, pastaId) {
+  const lista = db.prepare("SELECT * FROM loja_leads_listas WHERE id = ? AND entityId = ?").get(listaId, entityId);
+  if (!lista) return { error: "Lista não encontrada." };
+  const pasta = db.prepare("SELECT id FROM loja_leads_pastas WHERE id = ? AND entityId = ?").get(pastaId, entityId);
+  if (!pasta) return { error: "Pasta de destino não encontrada." };
+  db.prepare("UPDATE loja_leads_listas SET pastaId = ?, parentId = NULL, atualizadoEm = ? WHERE id = ?").run(pastaId, agora(), listaId);
   return { ok: true };
 }
 

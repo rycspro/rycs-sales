@@ -28,6 +28,7 @@ const CaixaCanal = lazy(() => import("./leads/CaixaCanal.jsx"));
 const Pedidos = lazy(() => import("./Pedidos.jsx"));
 const LojaLeads = lazy(() => import("./LojaLeads.jsx"));
 const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
+const CalendarioComercial = lazy(() => import("../calendario/CalendarioComercial.jsx"));
 const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
 const DiscadoraEmpresa = lazy(() => import("../voice/DiscadoraEmpresa.jsx"));
 
@@ -37,10 +38,9 @@ const CAMPOS_SORT = {
   financeiro: [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
   campanhas:  [{ key: "criadoEm", label: "Data" }, { key: "titulo", label: "Nome" }, { key: "valor", label: "Valor" }],
   "campanhas-tarefas": [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
-  leads:      [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "statusCliente", label: "Status" }],
   "conferir-fila":   [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }, { key: "status", label: "Aprovação" }],
 };
-const ABAS_COM_FILTRO = new Set(["painel", "financeiro", "campanhas", "campanhas-tarefas", "leads", "conferir-fila"]);
+const ABAS_COM_FILTRO = new Set(["painel", "financeiro", "campanhas", "campanhas-tarefas", "conferir-fila"]);
 
 export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar, acesso: acessoProp, consultarAcesso: consultarAcessoProp }) {
   const [secaoCampanhas, setSecaoCampanhas] = useState("campanhas");
@@ -191,23 +191,18 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       </>}
       {aba === "conferir-time" && <TimeEmpresa emp={emp} db={db} up={up} aviso={aviso} />}
       {aba === "materiais" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} />}
-      {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} onIrParaMateriais={() => setAba?.("materiais")} />}
-      {["leads", "pedidos"].includes(aba) &&
-        submenu([["leads", "Pipeline"], ["pedidos", "Pedidos"]], aba, (k) => setAba?.(k))}
+      {aba === "info-empresa" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} secao="informacoes" />}
+      {aba === "biblioteca" && <MateriaisEmpresa emp={emp} db={db} aviso={aviso} secao="biblioteca" />}
+      {aba === "academy-empresa" && <AcademyEmpresa emp={emp} db={db} aviso={aviso} onIrParaMateriais={() => setAba?.("biblioteca")} />}
       {(aba === "leads-whatsapp" || aba === "leads-instagram") && (
         <CaixaCanal key={aba} canal={aba === "leads-instagram" ? "instagram" : "whatsapp"} aviso={aviso}
           time={(db.sellers || []).filter((s) => s.aplicacoes?.[emp.id] === "aprovado")}
           campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
-          onGerarPedido={abrirPedido} onAbrirPipeline={() => setAba?.("leads")} />
-      )}
-      {aba === "leads" && (
-        <LeadsEmpresa emp={emp} db={db} aviso={aviso} filtroData={filtroAtual} onGerarPedido={abrirPedido} />
-      )}
-      {aba === "pedidos" && (
-        <Pedidos aviso={aviso} abrirId={pedidoAberto} aoAbrir={() => setPedidoAberto("")} irParaIntegracoes={() => setAba?.("integracoes")} />
+          onGerarPedido={abrirPedido} onAbrirPipeline={() => setAba?.("integracoes")} />
       )}
       {aba === "discadora" && <DiscadoraEmpresa emp={emp} aviso={aviso} />}
       {aba === "loja-leads" && <LojaLeads aviso={aviso} />}
+      {aba === "calendario" && <CalendarioComercial />}
       {aba === "integracoes" && (
         <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
           onAbrirCanal={(canal) => setAba?.(`leads-${canal}`)} />

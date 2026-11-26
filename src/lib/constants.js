@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, Phone } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Phone } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -47,7 +47,7 @@ export const NAV = {
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { key: "loja-leads", label: "Loja de Leads", Icon: Store },
     { key: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
-    { key: "whatsapp-pessoal", label: "WhatsApp Pessoal", Icon: Smartphone },
+    { key: "conversas-evolution", label: "Conversas", Icon: MessageSquare },
     { key: "discadora", label: "Discadora", Icon: Phone },
     { section: "Desenvolvimento" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
@@ -87,6 +87,7 @@ export const NAV = {
       { key: "discadora", label: "Discadora" },
       { key: "pedidos", label: "Pedidos" },
       { key: "integracoes", label: "Integrações" },
+      { key: "calendario", label: "Calendário" },
       { key: "loja-leads", label: "Loja de Leads" },
     ] },
     { key: "conversas", label: "Conversas", Icon: MessageSquare, children: [
@@ -95,8 +96,11 @@ export const NAV = {
       { key: "leads-instagram", label: "Redes Sociais" },
     ] },
     { section: "Sua Empresa" },
-    { key: "materiais", label: "Materiais", Icon: FolderOpen },
-    { key: "academy-empresa", label: "Academy", Icon: GraduationCap },
+    { key: "materiais", label: "Materiais", Icon: FolderOpen, children: [
+      { key: "info-empresa", label: "Informações da Empresa" },
+      { key: "biblioteca", label: "Biblioteca de Arquivos" },
+      { key: "academy-empresa", label: "Academy" },
+    ] },
     { divider: true },
     { key: "pagamentos", label: "Pagamentos", Icon: CreditCard, children: [
       { key: "planos", label: "Planos RYCS" },
@@ -133,6 +137,7 @@ export const NAV = {
     { key: "evolution", label: "WhatsApp Pessoal", Icon: Smartphone },
     { section: "Leads" },
     { key: "loja-leads-admin", label: "Loja de Leads", Icon: Store },
+    { key: "calendario", label: "Calendário", Icon: CalendarDays },
     { section: "Sistema" },
     { key: "beta", label: "Ambiente Beta", Icon: RotateCcw },
   ],

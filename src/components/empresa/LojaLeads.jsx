@@ -21,9 +21,9 @@ async function apiDelete(path) {
 }
 async function carregarTodasListas() {
   const r = await api("/loja-leads/pastas");
-  const pastas = r?.pastas || [];
+  if (!r || !Array.isArray(r.pastas)) return null; // falha de rede/erro: não zere a tela
   const todas = [];
-  for (const p of pastas) {
+  for (const p of r.pastas) {
     const lr = await api(`/loja-leads/listas/${p.id}`);
     for (const l of (lr?.listas || [])) todas.push({ ...l, pastaNome: p.nome, pastaId: p.id });
   }
@@ -313,14 +313,17 @@ export default function LojaLeads({ aviso, role: roleProp }) {
     api("/loja-leads/ciclo").then(setCiclo);
     api("/loja-leads/consumo").then(setConsumo);
     api("/loja-leads/precos").then((r) => setPrecos(r?.precos || []));
-    carregarTodasListas().then(setListas);
-    api("/loja-leads/pastas").then((r) => setPastas(r?.pastas || []));
+    carregarTodasListas().then((t) => { if (Array.isArray(t)) setListas(t); });
+    api("/loja-leads/pastas").then((r) => { if (Array.isArray(r?.pastas)) setPastas(r.pastas); });
   }, []);
 
+  // Só substitui o estado quando a recarga traz dados válidos. Se a chamada
+  // falhar (rede/erro), mantém o que já estava na tela — nunca zera tudo.
   const recarregarListas = useCallback(async () => {
-    setListas(await carregarTodasListas());
+    const t = await carregarTodasListas();
+    if (Array.isArray(t)) setListas(t);
     const r = await api("/loja-leads/pastas");
-    setPastas(r?.pastas || []);
+    if (Array.isArray(r?.pastas)) setPastas(r.pastas);
   }, []);
   const recarregarCiclo = useCallback(async () => {
     const [c, co] = await Promise.all([api("/loja-leads/ciclo"), api("/loja-leads/consumo")]);
@@ -981,7 +984,7 @@ function AbaListas({ aviso, isEmpresa, pastas, recarregar }) {
   const pastaAbertaViva = pastaAberta ? pastas.find((p) => p.id === pastaAberta.id) || pastaAberta : null;
 
   if (listaAberta) return <VistaLista lista={listaAberta} aviso={aviso} voltar={() => { setListaAberta(null); recarregar?.(); }} isEmpresa={isEmpresa} />;
-  if (pastaAbertaViva) return <VistaPasta pasta={pastaAbertaViva} aviso={aviso} voltar={() => { setPastaAberta(null); recarregar?.(); }} abrirLista={setListaAberta} recarregarPai={recarregar} />;
+  if (pastaAbertaViva) return <VistaPasta pasta={pastaAbertaViva} aviso={aviso} voltar={() => { setPastaAberta(null); recarregar?.(); }} abrirLista={setListaAberta} recarregarPai={recarregar} pastas={pastas} />;
 
   const novaPasta = async () => {
     const r = await api("/loja-leads/pastas", { nome: "Nova pasta" });
@@ -1057,7 +1060,7 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
   );
 }
 
-function VistaPasta({ pasta, aviso, voltar, abrirLista, recarregarPai }) {
+function VistaPasta({ pasta, aviso, voltar, abrirLista, recarregarPai, pastas = [] }) {
   const [listas, setListas] = useState([]);
   const [loading, setLoading] = useState(true);
   const recarregar = useCallback(async () => {
@@ -1089,20 +1092,23 @@ function VistaPasta({ pasta, aviso, voltar, abrirLista, recarregarPai }) {
       {!listas.length && <div className="vx-empty"><h2>Nenhuma lista nesta pasta.</h2></div>}
       <div className="vx-grid vx-g3" style={{ gap: 12 }}>
         {listas.map((l) => (
-          <ListaCardSimple key={l.id} lista={l} aviso={aviso} onAbrir={() => abrirLista(l)} onAtualizar={recarregar} onCriarSub={(pai) => novaLista(pai.id)} onAbrirSub={(s) => abrirLista(s)} />
+          <ListaCardSimple key={l.id} lista={l} aviso={aviso} onAbrir={() => abrirLista(l)} onAtualizar={recarregar} onCriarSub={(pai) => novaLista(pai.id)} onAbrirSub={(s) => abrirLista(s)} pastas={pastas} pastaAtual={pasta.id} />
         ))}
       </div>
     </>
   );
 }
 
-function ListaCardSimple({ lista, aviso, onAbrir, onAtualizar, onCriarSub, onAbrirSub }) {
+function ListaCardSimple({ lista, aviso, onAbrir, onAtualizar, onCriarSub, onAbrirSub, pastas = [], pastaAtual }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(lista.nome);
   const [expandido, setExpandido] = useState(false);
+  const [movendo, setMovendo] = useState(false);
   const subs = lista.subListas || [];
+  const outrasPastas = pastas.filter((p) => p.id !== pastaAtual);
   const salvar = async () => { if (!nome.trim()) return; await apiPatch(`/loja-leads/listas/${lista.id}`, { nome: nome.trim() }); setEditando(false); onAtualizar?.(); };
   const excluir = async () => { if (!confirm(`Excluir lista "${lista.nome}"?`)) return; const r = await apiDelete(`/loja-leads/listas/${lista.id}`); if (r?.error) return aviso?.(r.error); aviso?.("Lista excluída."); onAtualizar?.(); };
+  const mover = async (pastaId) => { if (!pastaId) return; const r = await apiPatch(`/loja-leads/listas/${lista.id}`, { pastaId }); if (r?.error) return aviso?.(r.error); setMovendo(false); aviso?.("Lista movida."); onAtualizar?.(); };
 
   return (
     <div className="vx-card" style={{ padding: 0, display: "grid", gap: 0 }}>
@@ -1125,11 +1131,23 @@ function ListaCardSimple({ lista, aviso, onAbrir, onAtualizar, onCriarSub, onAbr
           <>
             <strong>{lista.nome}</strong>
             <span className="vx-mut" style={{ fontSize: 12 }}>{lista.totalContatos ?? 0} contato(s){subs.length > 0 ? ` · ${subs.length} sub-lista(s)` : ""}</span>
-            <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
               <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditando(true)}><Pencil size={13} /></button>
               <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Criar sub-lista" onClick={() => onCriarSub?.(lista)}><Plus size={13} /></button>
+              {outrasPastas.length > 0 && (
+                <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Mover para outra pasta" onClick={() => setMovendo((v) => !v)}><FolderOpen size={13} /></button>
+              )}
               <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={excluir}><Trash2 size={13} /></button>
             </div>
+            {movendo && outrasPastas.length > 0 && (
+              <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
+                <span className="vx-label" style={{ fontSize: 11 }}>Mover para a pasta</span>
+                <select className="vx-input" defaultValue="" onChange={(e) => mover(e.target.value)}>
+                  <option value="" disabled>Selecione...</option>
+                  {outrasPastas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                </select>
+              </div>
+            )}
           </>
         )}
       </div>

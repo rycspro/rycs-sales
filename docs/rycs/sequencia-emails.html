@@ -1,0 +1,68 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sequência de e-mails RYCS</title>
+<style>:root{--bg:#f5f6f8;--card:#fff;--ink:#14171f;--mut:#5b6170;--line:#e3e6ec;--brand:#2563EB}
+@media (prefers-color-scheme:dark){:root{--bg:#111318;--card:#1a1d24;--ink:#eceef3;--mut:#a3a9b6;--line:#2a2e38;--brand:#60A5FA}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 16px 64px}h1{font-size:26px;margin:0 0 6px}h2{margin:36px 0 12px;font-size:19px}small{color:var(--mut);font-weight:500}
+.regras{color:var(--mut);font-size:14px}.regras li{margin:2px 0}
+.mail{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 16px;overflow:hidden}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.tag{background:var(--brand);color:#fff;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}.quando{font-size:13px;color:var(--mut)}
+.assunto{padding:10px 16px;border-bottom:1px solid var(--line);font-size:14px}.corpo{padding:4px 16px 16px}.corpo h3{font-size:17px}
+.btn{display:inline-block;background:var(--brand);color:#fff;border-radius:8px;padding:9px 16px;font-weight:700;margin:6px 0 10px}.rod{font-size:12px;color:var(--mut)}</style></head>
+<body><main><h1>Sequência de e-mails RYCS</h1><p class="regras">Gerado do código em produção (commit 9f460b4). Textos em português; quem não é do Brasil recebe a versão em inglês. Campos entre chaves são preenchidos com os dados de cada pessoa.</p>
+<ul class="regras"><li>No máximo 1 e-mail por pessoa a cada 20 horas, entre 9h e 20h (Brasília).</li><li>Quem já fez a ação sai daquele passo.</li><li>Teto diário começa em 150 e sobe 50 por dia até 2000 (aquecimento do domínio).</li><li>Todo e-mail tem link de descadastro.</li></ul>
+<h2>Onboarding <small>· profissional</small></h2><section class="mail"><div class="meta"><span class="tag">boas_vindas</span><span class="quando">Dia 0 a 1 após o cadastro (só quem acabou de entrar)</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, bem-vindo à RYCS</div>
+<div class="corpo"><h3>Bem-vindo à RYCS, {Nome}</h3><p>A RYCS conecta você a empresas que pagam por cada ação de venda: prospecção, agendamento de reunião e fechamento.</p><p>Você escolhe as campanhas, faz as ações e recebe por cada uma aprovada. O saque é por Pix.</p><p>O primeiro passo é completar o seu perfil. É ele que as empresas veem antes de aceitar você.</p>
+<a class="btn">Completar meu perfil</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">perfil_falta</span><span class="quando">A partir do dia 1, se o perfil ainda não está completo</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, falta pouco pro seu perfil ser aprovado</div>
+<div class="corpo"><h3>Falta pouco para o seu perfil ser aprovado</h3><p>Ainda falta: <b>{o que falta no perfil}</b>.</p><p>Perfil com foto e descrição é o que faz a empresa aceitar você nas campanhas. Leva uns 5 minutos.</p>
+<a class="btn">Colocar foto e descrição</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">oportunidade</span><span class="quando">A partir do dia 2</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, sua primeira oportunidade</div>
+<div class="corpo"><h3>Sua primeira oportunidade</h3><p>Novas campanhas entram na RYCS toda semana.</p><p>E você também ganha trazendo empresas: <b>R$ 1,50</b> por empresa cadastrada e aprovada, e <b>30% da primeira mensalidade</b> quando ela assina um plano pago.</p>
+<a class="btn">Ver oportunidades</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">aviso_inativacao</span><span class="quando">A partir do dia 3, se o perfil ainda não está completo</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, sua conta será desativada em 3 dias</div>
+<div class="corpo"><h3>Sua conta será desativada em 3 dias</h3><p>Seu perfil continua incompleto. Falta: <b>{o que falta no perfil}</b>.</p><p>Se ele não for completado em 3 dias, a conta fica inativa e você deixa de receber oportunidades. Nada é apagado: ao completar o perfil, ela volta na hora.</p>
+<a class="btn">Completar meu perfil</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><h2>Indicações <small>· profissional</small></h2><section class="mail"><div class="meta"><span class="tag">indique</span><span class="quando">A partir do dia 4, com perfil completo</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, indique 10 profissionais e ganhe um bônus</div>
+<div class="corpo"><h3>Indique 10 profissionais e ganhe R$ 3,00</h3><p>A cada 10 profissionais que entram pelo seu link e completam o perfil, você ganha <b>R$ 3,00</b> no saldo.</p><p>Seu código: <b>{CÓDIGO}</b>. O botão abaixo leva para a página com o seu link pronto para copiar.</p>
+<a class="btn">Pegar meu link de indicação</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">codigo_nao_usado</span><span class="quando">A partir do dia 5, se ninguém usou o código de indicação</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, seu código de indicação ainda não foi usado</div>
+<div class="corpo"><h3>Seu código de indicação ainda não foi usado</h3><p>Ninguém entrou com o código <b>{CÓDIGO}</b> ainda.</p><p>Mande o link para colegas de vendas no WhatsApp ou no LinkedIn. Quem entra e completa o perfil conta para o seu bônus.</p>
+<a class="btn">Compartilhar meu link</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><h2>Graduação <small>· profissional</small></h2><section class="mail"><div class="meta"><span class="tag">academy</span><span class="quando">A partir do dia 6</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, conheça a RYCS Sales Academy</div>
+<div class="corpo"><h3>RYCS Sales Academy</h3><p>Na Academy você faz os cursos de vendas da RYCS e ganha a certificação, que você leva para a vida toda.</p><p>Os cursos estão liberados na sua conta. Comece pelo primeiro módulo.</p>
+<a class="btn">Abrir a Academy</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">planos</span><span class="quando">A partir do dia 7, só para quem está no plano Grátis</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, Pro ou Premium?</div>
+<div class="corpo"><h3>Pro ou Premium: qual combina com você</h3><p><b>Pro, R$ 29,90 por mês:</b> ferramentas, treino e prioridade de visibilidade para as empresas.</p><p><b>Premium, R$ 69,90 por mês:</b> tudo do Pro, com o professor de vendas de IA, mentoria e acesso às campanhas premium.</p><p>No plano semestral ou anual a mensalidade fica mais barata.</p>
+<a class="btn">Comparar os planos</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><h2>Repescagem <small>· profissional</small></h2><section class="mail"><div class="meta"><span class="tag">precisa</span><span class="quando">A partir do dia 8, depois de 5 dias sem usar a plataforma</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, a plataforma está precisando de você</div>
+<div class="corpo"><h3>A plataforma está precisando de você</h3><p>Tem oportunidade nova esperando por você.</p><p>Faz uns dias que você não entra. Dá uma olhada no que chegou.</p>
+<a class="btn">Ver oportunidades</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">novas</span><span class="quando">3 dias depois do anterior, se continua parado</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, empresas novas entraram essa semana</div>
+<div class="corpo"><h3>Empresas novas entraram essa semana</h3><p>Novas campanhas foram abertas na RYCS.</p><p>Quem chega primeiro nas campanhas novas pega as melhores vagas.</p>
+<a class="btn">Ver as empresas</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">ultima</span><span class="quando">4 dias depois do anterior, se continua parado</span></div>
+<div class="assunto"><b>Assunto:</b> {Nome}, última chamada</div>
+<div class="corpo"><h3>Última chamada</h3><p>Este é o último lembrete que mandamos sobre as oportunidades abertas.</p><p>Se quiser continuar ganhando com a RYCS, é só entrar e escolher uma campanha.</p>
+<a class="btn">Voltar para a RYCS</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><h2>Empresas offline <small>· empresa</small></h2><section class="mail"><div class="meta"><span class="tag">dia 1</span><span class="quando">5 dias sem atividade (1 e-mail por dia, 7 no total)</span></div>
+<div class="assunto"><b>Assunto:</b> {Empresa}, sua campanha está esperando</div>
+<div class="corpo"><h3>Sua campanha está esperando</h3><p>Faz alguns dias que ninguém da <b>{Empresa}</b> entra na RYCS. Os profissionais continuam disponíveis para a sua campanha.</p>
+<a class="btn">Abrir meu painel</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">dia 2</span><span class="quando">6 dias sem atividade (1 e-mail por dia, 7 no total)</span></div>
+<div class="assunto"><b>Assunto:</b> {Empresa}, tem profissional pronto para vender</div>
+<div class="corpo"><h3>Tem profissional pronto para vender</h3><p>Há profissionais com perfil completo esperando campanhas. Entre e veja quem combina com a <b>{Empresa}</b>.</p>
+<a class="btn">Abrir meu painel</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">dia 3</span><span class="quando">7 dias sem atividade (1 e-mail por dia, 7 no total)</span></div>
+<div class="assunto"><b>Assunto:</b> {Empresa}, quanto custa ficar parado</div>
+<div class="corpo"><h3>Quanto custa ficar parado</h3><p>Cada dia sem campanha ativa é um dia sem reuniões no funil da <b>{Empresa}</b>.</p>
+<a class="btn">Abrir meu painel</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">dia 4</span><span class="quando">8 dias sem atividade (1 e-mail por dia, 7 no total)</span></div>
+<div class="assunto"><b>Assunto:</b> {Empresa}, retome em 5 minutos</div>
+<div class="corpo"><h3>Retome em 5 minutos</h3><p>Abra o painel, revise a campanha e publique. A IA da RYCS ajuda com o script.</p>
+<a class="btn">Abrir meu painel</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">dia 5</span><span class="quando">9 dias sem atividade (1 e-mail por dia, 7 no total)</span></div>
+<div class="assunto"><b>Assunto:</b> {Empresa}, você aprova cada ação</div>
+<div class="corpo"><h3>Você aprova cada ação</h3><p>As ações dos profissionais só são pagas depois que você aprova. Vale reativar a campanha da <b>{Empresa}</b>.</p>
+<a class="btn">Abrir meu painel</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">dia 6</span><span class="quando">10 dias sem atividade (1 e-mail por dia, 7 no total)</span></div>
+<div class="assunto"><b>Assunto:</b> {Empresa}, precisa de ajuda?</div>
+<div class="corpo"><h3>Precisa de ajuda?</h3><p>Se algo travou no uso da plataforma, responda este e-mail que a equipe RYCS ajuda.</p>
+<a class="btn">Abrir meu painel</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section><section class="mail"><div class="meta"><span class="tag">dia 7</span><span class="quando">11 dias sem atividade (1 e-mail por dia, 7 no total)</span></div>
+<div class="assunto"><b>Assunto:</b> {Empresa}, último lembrete</div>
+<div class="corpo"><h3>Último lembrete</h3><p>Este é o último lembrete desta semana. Quando quiser voltar, o painel da <b>{Empresa}</b> está do jeito que você deixou.</p>
+<a class="btn">Abrir meu painel</a><p class="rod">Equipe RYCS<br><u>Não quer mais receber estes e-mails? Descadastre-se</u></p></div></section></main></body></html>
