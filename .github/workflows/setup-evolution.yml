@@ -120,11 +120,13 @@ jobs:
                 docker logs --tail=60 "$CN" 2>&1
                 ;;
               status)
+                # A Evolution é publicada no IP interno do docker0 (não em localhost).
+                HOST_IP=$(ip -4 addr show docker0 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1 || echo "172.17.0.1")
                 echo "=== Containers ==="
                 docker ps --filter name="$CN" --filter name="$PG" --filter name="$RD" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Nenhum encontrado"
                 echo ""
-                echo "=== Health check Evolution ==="
-                curl -sf http://localhost:8080/ >/dev/null 2>&1 && echo "OK - respondendo em localhost:8080" || echo "Não respondendo"
+                echo "=== Health check Evolution ($HOST_IP:8080) ==="
+                curl -sf "http://${HOST_IP}:8080/" >/dev/null 2>&1 && echo "OK - respondendo" || echo "Não respondendo"
                 echo ""
                 echo "=== Postgres ==="
                 docker exec "$PG" pg_isready -U evolution 2>/dev/null || echo "Postgres não respondendo"
@@ -133,6 +135,7 @@ jobs:
                 docker exec "$RD" redis-cli ping 2>/dev/null || echo "Redis não respondendo"
                 echo ""
                 echo "=== Porta 8080 pública? ==="
-                ss -tlnp 2>/dev/null | grep ":8080" | grep -v "127.0.0.1" && echo "ALERTA: 8080 exposta publicamente!" || echo "OK - 8080 não está em interface pública"
+                # 127.0.0.1 e o IP do docker0 são internos; só alarma se escutar em outra interface.
+                ss -tlnp 2>/dev/null | grep ":8080" | grep -vE "127.0.0.1|${HOST_IP}" && echo "ALERTA: 8080 exposta publicamente!" || echo "OK - 8080 só em interface interna (não pública)"
                 ;;
             esac
