@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot } from "lucide-react";
-import { api } from "../../lib/api.js";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation } from "lucide-react";
+import { api, API_URL } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
 import { useI18n } from "../../lib/i18n.jsx";
@@ -155,6 +155,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [ticketLocal, setTicketLocal] = useState("");
   const [sugestaoIA, setSugestaoIA] = useState(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
+  const [uploadQueue, setUploadQueue] = useState([]);
+  const [uploadProgresso, setUploadProgresso] = useState({});
+  const [enviandoMateriais, setEnviandoMateriais] = useState(false);
+  const [modalBiblioteca, setModalBiblioteca] = useState(false);
+  const [bibliotecaMateriais, setBibliotecaMateriais] = useState([]);
+  const [bibliotecaBusca, setBibliotecaBusca] = useState("");
+  const [bibliotecaFiltro, setBibliotecaFiltro] = useState("");
+  const [bibliotecaSel, setBibliotecaSel] = useState([]);
+  const [carregandoBiblioteca, setCarregandoBiblioteca] = useState(false);
+  const uploadInputRef = useRef(null);
 
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
@@ -281,6 +291,18 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       for (const fg of formasGanhoRascunho) {
         if (fg.nome?.trim()) await api(`/campaigns/${r.id}/formas-ganho`, fg);
       }
+    }
+    // Vincular materiais à campanha
+    const mats = campanha.materiaisVinculados || [];
+    if (mats.length) {
+      const payload2 = mats.map((m, i) => ({
+        materialId: m.id, categoria: m.categoria || "outros",
+        obrigatoriedade: m.obrigatoriedade || "complementar", ordem: i,
+      }));
+      await fetch(`${API_URL}/api/campaigns/${r.id}/materiais`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materiais: payload2 }), credentials: "include",
+      });
     }
     removerArmazenado(chaveRascunho);
     aoCriar?.({ ...campanha, id: r.id, companyId: emp.id, status: "rascunho", criadoEm: Date.now() });
@@ -477,23 +499,232 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
               <b style={{ color: "var(--brand)" }}>Materiais da campanha</b>
-              <div className="vx-mut" style={{ fontSize: 11.5 }}>Disponibilize os recursos que os profissionais utilizarão nesta operação.</div>
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>Disponibilize os materiais que os profissionais utilizarão durante a operação.</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <CardOption selected={campanha._materiaisOpcao === "enviar"} onClick={() => set("_materiaisOpcao", "enviar")} icon={Upload} title="Enviar materiais" subtitle="Upload de novos arquivos, links ou scripts." />
-              <CardOption selected={campanha._materiaisOpcao === "biblioteca"} onClick={() => set("_materiaisOpcao", "biblioteca")} icon={Library} title="Biblioteca da empresa" subtitle="Selecione materiais já cadastrados." />
+              {/* Card 1 — Enviar arquivos */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#318CE7"; }}
+                onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  const files = [...e.dataTransfer.files].map((f) => ({ file: f, id: `up-${Date.now()}-${Math.random().toString(36).slice(2)}`, nome: f.name, tamanho: f.size, status: "pendente" }));
+                  if (files.length) setUploadQueue((prev) => [...prev, ...files]);
+                }}
+                style={{ border: "1.5px dashed var(--border)", borderRadius: 12, padding: "24px 16px", textAlign: "center", cursor: "pointer", transition: "border-color .15s", background: "var(--surface)" }}
+                onClick={() => uploadInputRef.current?.click()}
+              >
+                <CloudUpload size={28} color="var(--muted)" style={{ marginBottom: 8 }} />
+                <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>Enviar arquivos</div>
+                <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 10 }}>Selecione ou arraste arquivos do seu dispositivo.</div>
+                <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={(e) => { e.stopPropagation(); uploadInputRef.current?.click(); }} style={{ background: "#318CE7", borderColor: "#318CE7" }}>
+                  <Plus size={13} /> Selecionar arquivos
+                </button>
+                <input ref={uploadInputRef} type="file" multiple hidden
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.mp4,.mov,.mp3,.wav,.m4a,.txt,.key"
+                  onChange={(e) => {
+                    const files = [...e.target.files].map((f) => ({ file: f, id: `up-${Date.now()}-${Math.random().toString(36).slice(2)}`, nome: f.name, tamanho: f.size, status: "pendente" }));
+                    if (files.length) setUploadQueue((prev) => [...prev, ...files]);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+              {/* Card 2 — Biblioteca da empresa */}
+              <div
+                style={{ border: "1.5px solid var(--border)", borderRadius: 12, padding: "24px 16px", textAlign: "center", cursor: "pointer", background: "var(--surface)", transition: "border-color .15s" }}
+                onClick={async () => {
+                  setModalBiblioteca(true);
+                  setCarregandoBiblioteca(true);
+                  setBibliotecaSel((campanha.materiaisVinculados || []).filter((m) => m.origem === "biblioteca").map((m) => m.id));
+                  const r = await api("/materiais");
+                  if (r?.materiais) setBibliotecaMateriais(r.materiais);
+                  setCarregandoBiblioteca(false);
+                }}
+              >
+                <Library size={28} color="var(--muted)" style={{ marginBottom: 8 }} />
+                <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>Biblioteca da empresa</div>
+                <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 10 }}>Vincule materiais que já estão cadastrados na RYCS.</div>
+                <button className="vx-btn vx-btn-sm" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: "none" }}>
+                  <Search size={13} /> Buscar materiais
+                </button>
+              </div>
             </div>
-            {campanha._materiaisOpcao && (
-              <div style={{ marginTop: 12, padding: "12px 14px", background: "var(--surface-2)", borderRadius: 10 }}>
-                <div className="vx-mut" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                  <FileText size={13} />
-                  {campanha._materiaisOpcao === "enviar"
-                    ? "Após salvar a campanha, acesse a aba Materiais para fazer upload dos arquivos."
-                    : "Após salvar a campanha, acesse a aba Materiais para selecionar da biblioteca."}
+
+            {/* Upload queue / progress */}
+            {uploadQueue.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div className="vx-eyebrow" style={{ marginBottom: 8 }}>ENVIANDO ARQUIVOS</div>
+                {uploadQueue.map((arq) => (
+                  <div key={arq.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, marginBottom: 6, fontSize: 13 }}>
+                    <File size={16} color="var(--muted)" style={{ flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{arq.nome}</div>
+                      <div className="vx-mut" style={{ fontSize: 11 }}>
+                        {arq.status === "pendente" && `${(arq.tamanho / 1024).toFixed(0)} KB — Aguardando`}
+                        {arq.status === "enviando" && `${uploadProgresso[arq.id] || 0}%`}
+                        {arq.status === "ok" && "Enviado"}
+                        {arq.status === "erro" && <span style={{ color: "#DC2626" }}>{arq.erro || "Erro no envio"}</span>}
+                      </div>
+                      {arq.status === "enviando" && <div style={{ height: 3, borderRadius: 2, background: "var(--border)", marginTop: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${uploadProgresso[arq.id] || 0}%`, background: "#318CE7", borderRadius: 2, transition: "width .2s" }} /></div>}
+                    </div>
+                    {arq.status !== "enviando" && (
+                      <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setUploadQueue((prev) => prev.filter((a) => a.id !== arq.id))} style={{ padding: 2 }}><X size={14} /></button>
+                    )}
+                  </div>
+                ))}
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button className="vx-btn vx-btn-primary vx-btn-sm" disabled={enviandoMateriais || uploadQueue.every((a) => a.status === "ok")} style={{ background: "#318CE7", borderColor: "#318CE7" }}
+                    onClick={async () => {
+                      setEnviandoMateriais(true);
+                      const vinculados = [...(campanha.materiaisVinculados || [])];
+                      for (const arq of uploadQueue) {
+                        if (arq.status === "ok") continue;
+                        setUploadQueue((prev) => prev.map((a) => a.id === arq.id ? { ...a, status: "enviando" } : a));
+                        try {
+                          const r = await new Promise((resolve, reject) => {
+                            const xhr = new XMLHttpRequest();
+                            xhr.open("POST", `${API_URL}/api/materiais/upload`);
+                            xhr.withCredentials = true;
+                            xhr.setRequestHeader("Content-Type", arq.file.type || "application/octet-stream");
+                            xhr.setRequestHeader("X-Arquivo-Nome", encodeURIComponent(arq.file.name));
+                            xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadProgresso((prev) => ({ ...prev, [arq.id]: Math.round(e.loaded / e.total * 100) })); };
+                            xhr.onload = () => { try { const res = JSON.parse(xhr.responseText); if (res.error) reject(new Error(res.error)); else resolve(res); } catch { reject(new Error("Erro no envio")); } };
+                            xhr.onerror = () => reject(new Error("Falha na conexão"));
+                            xhr.send(arq.file);
+                          });
+                          setUploadQueue((prev) => prev.map((a) => a.id === arq.id ? { ...a, status: "ok" } : a));
+                          vinculados.push({ id: r.id, nome: r.nome, categoria: r.categoria, mimetype: r.mimetype, tamanho: r.tamanho, origem: "upload", obrigatoriedade: "complementar", salvarBiblioteca: true });
+                        } catch (e) {
+                          setUploadQueue((prev) => prev.map((a) => a.id === arq.id ? { ...a, status: "erro", erro: e.message } : a));
+                        }
+                      }
+                      set("materiaisVinculados", vinculados);
+                      setEnviandoMateriais(false);
+                    }}>
+                    {enviandoMateriais ? <><Loader size={13} /> Enviando...</> : <><Upload size={13} /> Enviar todos</>}
+                  </button>
+                  <button className="vx-btn vx-btn-sm" onClick={() => { setUploadQueue([]); setUploadProgresso({}); }}>Limpar fila</button>
                 </div>
               </div>
             )}
+
+            {/* Materiais vinculados */}
+            {(campanha.materiaisVinculados || []).length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div className="vx-eyebrow" style={{ marginBottom: 8 }}>MATERIAIS VINCULADOS ({(campanha.materiaisVinculados || []).length})</div>
+                {(campanha.materiaisVinculados || []).map((mat, idx) => {
+                  const IconeMat = mat.mimetype?.startsWith("video/") ? Video : mat.mimetype?.startsWith("audio/") ? Music : mat.mimetype?.includes("spreadsheet") || mat.mimetype?.includes("excel") ? FileSpreadsheet : mat.mimetype?.includes("presentation") || mat.mimetype?.includes("powerpoint") ? Presentation : mat.mimetype?.includes("image") ? Image : FileText;
+                  return (
+                    <div key={mat.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, marginBottom: 6 }}>
+                      <GripVertical size={14} color="var(--border)" style={{ cursor: "grab", flexShrink: 0 }} />
+                      <div style={{ width: 32, height: 32, borderRadius: 7, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <IconeMat size={16} color="var(--muted)" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mat.nome}</div>
+                        <div className="vx-mut" style={{ fontSize: 11, display: "flex", gap: 8 }}>
+                          <span>{mat.categoria || "arquivo"}{mat.tamanho ? ` · ${(mat.tamanho / 1024).toFixed(0)} KB` : ""}</span>
+                          <span style={{ color: mat.origem === "upload" ? "#318CE7" : "var(--brand)" }}>{mat.origem === "upload" ? "Enviado do dispositivo" : "Biblioteca da empresa"}</span>
+                        </div>
+                      </div>
+                      <select className="vx-input" style={{ width: 140, fontSize: 11.5, height: 28, padding: "0 8px" }}
+                        value={mat.obrigatoriedade || "complementar"}
+                        onChange={(e) => set("materiaisVinculados", (campanha.materiaisVinculados || []).map((m, i) => i === idx ? { ...m, obrigatoriedade: e.target.value } : m))}>
+                        <option value="complementar">Complementar</option>
+                        <option value="obrigatorio">Consulta obrigatória</option>
+                      </select>
+                      <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Desvincular" onClick={() => set("materiaisVinculados", (campanha.materiaisVinculados || []).filter((_, i) => i !== idx))} style={{ padding: 3 }}><Trash2 size={14} /></button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* Modal Biblioteca */}
+          {modalBiblioteca && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+              onClick={(e) => { if (e.target === e.currentTarget) setModalBiblioteca(false); }}>
+              <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 640, maxHeight: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                <div style={{ padding: "20px 24px 0", flexShrink: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Biblioteca de materiais</h3>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setModalBiblioteca(false)} style={{ padding: 3 }}><X size={18} /></button>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                    <div style={{ position: "relative", flex: 1 }}>
+                      <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
+                      <input className="vx-input" placeholder="Buscar por nome..." value={bibliotecaBusca} onChange={(e) => setBibliotecaBusca(e.target.value)} style={{ paddingLeft: 32, fontSize: 13, height: 36 }} />
+                    </div>
+                    <select className="vx-input" value={bibliotecaFiltro} onChange={(e) => setBibliotecaFiltro(e.target.value)} style={{ width: 140, fontSize: 12.5, height: 36 }}>
+                      <option value="">Todos os tipos</option>
+                      <option value="apresentacao">Apresentações</option>
+                      <option value="documento">Documentos</option>
+                      <option value="foto">Fotos</option>
+                      <option value="video">Vídeos</option>
+                      <option value="audio">Áudios</option>
+                      <option value="link">Links</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
+                  {carregandoBiblioteca ? (
+                    <div style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}><Loader size={20} style={{ animation: "spin 1s linear infinite" }} /><div style={{ marginTop: 8, fontSize: 13 }}>Carregando materiais...</div></div>
+                  ) : (() => {
+                    const filtrados = bibliotecaMateriais.filter((m) => {
+                      if (bibliotecaFiltro && m.categoria !== bibliotecaFiltro) return false;
+                      if (bibliotecaBusca && !m.nome.toLowerCase().includes(bibliotecaBusca.toLowerCase())) return false;
+                      return true;
+                    });
+                    return filtrados.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: 40, color: "var(--muted)", fontSize: 13 }}>Nenhum material encontrado na biblioteca.</div>
+                    ) : (
+                      <div style={{ display: "grid", gap: 4 }}>
+                        {filtrados.map((mat) => {
+                          const sel = bibliotecaSel.includes(mat.id);
+                          const IconeMat = mat.categoria === "video" ? Video : mat.categoria === "audio" ? Music : mat.categoria === "foto" ? Image : mat.categoria === "apresentacao" ? Presentation : mat.categoria === "link" ? Link2 : FileText;
+                          return (
+                            <button key={mat.id} onClick={() => setBibliotecaSel((prev) => sel ? prev.filter((x) => x !== mat.id) : [...prev, mat.id])}
+                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1.5px solid ${sel ? "#318CE7" : "var(--border)"}`, borderRadius: 8, background: sel ? "rgba(49,140,231,0.04)" : "var(--surface)", cursor: "pointer", width: "100%", textAlign: "left", transition: "border-color .15s" }}>
+                              <div style={{ width: 20, height: 20, borderRadius: 4, border: `1.5px solid ${sel ? "#318CE7" : "var(--border)"}`, background: sel ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                {sel && <Check size={12} color="#fff" />}
+                              </div>
+                              <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                <IconeMat size={16} color={sel ? "#318CE7" : "var(--muted)"} />
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: sel ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mat.nome}</div>
+                                <div className="vx-mut" style={{ fontSize: 11 }}>{mat.categoria}{mat.tamanho ? ` · ${(mat.tamanho / 1024).toFixed(0)} KB` : ""}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div style={{ padding: "14px 24px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+                  <span className="vx-mut" style={{ fontSize: 13 }}>{bibliotecaSel.length} material(is) selecionado(s)</span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="vx-btn vx-btn-sm" onClick={() => setModalBiblioteca(false)}>Cancelar</button>
+                    <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={!bibliotecaSel.length} style={{ background: "#318CE7", borderColor: "#318CE7" }}
+                      onClick={() => {
+                        const existentes = new Set((campanha.materiaisVinculados || []).map((m) => m.id));
+                        const novos = bibliotecaSel.filter((id) => !existentes.has(id)).map((id) => {
+                          const mat = bibliotecaMateriais.find((m) => m.id === id);
+                          return mat ? { id: mat.id, nome: mat.nome, categoria: mat.categoria, mimetype: mat.mimetype, tamanho: mat.tamanho, origem: "biblioteca", obrigatoriedade: "complementar" } : null;
+                        }).filter(Boolean);
+                        set("materiaisVinculados", [...(campanha.materiaisVinculados || []), ...novos]);
+                        setModalBiblioteca(false);
+                      }}>
+                      <Check size={13} /> Vincular materiais selecionados
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Base de leads da campanha */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -1117,6 +1348,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Visibilidade</span><div style={{ fontWeight: 600 }}>{campanha.visibilidade === "publica" ? "Pública" : campanha.visibilidade === "privada" ? "Privada" : "Oculta"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Certificação</span><div style={{ fontWeight: 600 }}>{campanha.exigeCertificacao ? "Obrigatória" : "Não exigida"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento</span><div style={{ fontWeight: 600 }}>{(campanha.treinamento || []).length} módulo(s)</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Materiais</span><div style={{ fontWeight: 600 }}>{(campanha.materiaisVinculados || []).length} arquivo(s){(campanha.materiaisVinculados || []).some((m) => m.obrigatoriedade === "obrigatorio") ? ` (${(campanha.materiaisVinculados || []).filter((m) => m.obrigatoriedade === "obrigatorio").length} obrigatório(s))` : ""}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Prazo / ação</span><div style={{ fontWeight: 600 }}>{campanha.prazoHoras}h</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Orçamento</span><div style={{ fontWeight: 600 }} className="vx-mono">{money(campanha.orcamento)}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Pagamento</span><div style={{ fontWeight: 600 }}>{campanha.remuneracaoCumulativa ? "Cumulativo" : "Resultado final"}</div></div>
