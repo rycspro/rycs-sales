@@ -96,6 +96,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${PG}$"; then
   docker rm -f "$PG" 2>/dev/null || true
   docker run -d --name "$PG" --restart unless-stopped \
     --network "$NET" --memory 512m \
+    --log-opt max-size=10m --log-opt max-file=3 \
     -e POSTGRES_USER=evolution \
     -e POSTGRES_PASSWORD="$DB_PASS" \
     -e POSTGRES_DB=evolution \
@@ -120,6 +121,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${RD}$"; then
   docker rm -f "$RD" 2>/dev/null || true
   docker run -d --name "$RD" --restart unless-stopped \
     --network "$NET" --memory 128m \
+    --log-opt max-size=10m --log-opt max-file=3 \
     -v "${RD_VOL}:/data" \
     "$RD_IMAGE" redis-server --appendonly yes
   echo "✓ Redis iniciado"
@@ -175,8 +177,9 @@ docker run -d --name "$CN" --restart unless-stopped \
   -e "CONFIG_SESSION_PHONE_VERSION=${WA_WEB_VERSION:-2.3000.1043857760}" \
   -e QRCODE_LIMIT=30 \
   -e TELEMETRY_ENABLED=false \
-  -e "LOG_LEVEL=ERROR,WARN,INFO,LOG" \
-  -e LOG_BAILEYS=info \
+  -e "LOG_LEVEL=ERROR,WARN,INFO" \
+  -e LOG_BAILEYS=error \
+  --log-opt max-size=10m --log-opt max-file=3 \
   "$IMAGE"
 echo "✓ Evolution API iniciada"
 
