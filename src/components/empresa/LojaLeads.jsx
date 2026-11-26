@@ -364,8 +364,8 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
 
     if (destino === "existing" && listaExistente) {
       body.listaId = listaExistente;
-    } else if (destino === "new" && nomeLista.trim()) {
-      body.novaLista = nomeLista.trim();
+    } else if (destino === "new") {
+      body.novaLista = nomeLista.trim() || `${segmento.trim()} — ${regiao.trim() || new Date().toLocaleDateString("pt-BR")}`;
       body.descricaoLista = `${segmento} — ${regiao || pais}`;
     }
 
