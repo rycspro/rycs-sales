@@ -8,16 +8,15 @@ import {
   Utensils, HeartPulse, Dumbbell,
   Building, Scissors, ShoppingBag, Cpu,
 } from "lucide-react";
-import { api } from "../../lib/api.js";
+import { api, apiPatch, apiDelete } from "../../lib/api.js";
 
 /* ── helpers ────────────────────────────────────────────────────────────── */
-async function apiPatch(path, body) {
-  const res = await fetch(`/api${path}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), credentials: "include" });
-  return res.json();
-}
-async function apiDelete(path) {
-  const res = await fetch(`/api${path}`, { method: "DELETE", credentials: "include" });
-  return res.json();
+// Renomeia a pasta no servidor e só confirma se o servidor confirmou.
+async function salvarNomePasta(pastaId, nome, aviso) {
+  const r = await apiPatch(`/loja-leads/pastas/${pastaId}`, { nome });
+  if (!r || r.error) { aviso?.(r?.error || "Não foi possível renomear a pasta."); return false; }
+  aviso?.("Pasta renomeada.");
+  return true;
 }
 async function carregarTodasListas() {
   const r = await api("/loja-leads/pastas");
@@ -1024,17 +1023,24 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(pasta.nome);
   const [listasInterna, setListasInterna] = useState([]);
-  const salvar = async () => { if (!nome.trim()) return; await apiPatch(`/loja-leads/pastas/${pasta.id}`, { nome: nome.trim() }); setEditando(false); onAtualizar?.(); };
-  const excluir = async () => { if (!confirm(`Excluir pasta "${pasta.nome}" e todas as listas dentro dela?`)) return; const r = await apiDelete(`/loja-leads/pastas/${pasta.id}`); if (r?.error) return aviso?.(r.error); aviso?.("Pasta excluída."); onAtualizar?.(); };
+  // O card sempre reflete o nome salvo no servidor.
+  useEffect(() => { if (!editando) setNome(pasta.nome); }, [pasta.nome, editando]);
+  const salvar = async () => {
+    const n = nome.trim();
+    if (!n) return;
+    if (n === pasta.nome) return setEditando(false);
+    if (await salvarNomePasta(pasta.id, n, aviso)) { setEditando(false); await onAtualizar?.(); }
+  };
+  const excluir = async () => { if (!confirm(`Excluir pasta "${pasta.nome}" e todas as listas dentro dela?`)) return; const r = await apiDelete(`/loja-leads/pastas/${pasta.id}`); if (!r || r.error) return aviso?.(r?.error || "Não foi possível excluir a pasta."); aviso?.("Pasta excluída."); onAtualizar?.(); };
 
-  useEffect(() => { api(`/loja-leads/listas/${pasta.id}`).then((r) => setListasInterna(r?.listas || [])); }, [pasta.id]);
+  useEffect(() => { api(`/loja-leads/listas/${pasta.id}`).then((r) => { if (Array.isArray(r?.listas)) setListasInterna(r.listas); }); }, [pasta.id, pasta.totalListas, pasta.totalContatos]);
 
   return (
     <div className="vx-card" style={{ padding: 16, cursor: editando ? "default" : "pointer", display: "grid", gap: 8 }} onClick={!editando ? onAbrir : undefined}>
       <FolderOpen size={20} style={{ color: "var(--brand)" }} />
       {editando ? (
         <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-          <input className="vx-input" value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && salvar()} autoFocus />
+          <input className="vx-input" aria-label="Nome da pasta" value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") salvar(); if (e.key === "Escape") { setNome(pasta.nome); setEditando(false); } }} autoFocus />
           <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={salvar}>OK</button>
         </div>
       ) : (
@@ -1051,8 +1057,8 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
             </div>
           )}
           <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
-            <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditando(true)}><Pencil size={13} /></button>
-            <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={excluir}><Trash2 size={13} /></button>
+            <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Renomear pasta" aria-label="Renomear pasta" onClick={() => setEditando(true)}><Pencil size={13} /></button>
+            <button className="vx-btn vx-btn-danger vx-btn-sm" title="Excluir pasta" aria-label="Excluir pasta" onClick={excluir}><Trash2 size={13} /></button>
           </div>
         </>
       )}
@@ -1063,6 +1069,15 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
 function VistaPasta({ pasta, aviso, voltar, abrirLista, recarregarPai, pastas = [] }) {
   const [listas, setListas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editandoNome, setEditandoNome] = useState(false);
+  const [nomePasta, setNomePasta] = useState(pasta.nome);
+  useEffect(() => { if (!editandoNome) setNomePasta(pasta.nome); }, [pasta.nome, editandoNome]);
+  const salvarNome = async () => {
+    const n = nomePasta.trim();
+    if (!n) return;
+    if (n === pasta.nome) return setEditandoNome(false);
+    if (await salvarNomePasta(pasta.id, n, aviso)) { setEditandoNome(false); await recarregarPai?.(); }
+  };
   const recarregar = useCallback(async () => {
     const r = await api(`/loja-leads/listas/${pasta.id}`);
     setListas(r?.listas || []);
@@ -1083,10 +1098,20 @@ function VistaPasta({ pasta, aviso, voltar, abrirLista, recarregarPai, pastas = 
       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, marginBottom: 14 }}>
         <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={voltar} style={{ padding: 0 }}>Minhas Listas</button>
         <ChevronRight size={13} className="vx-mut" />
-        <strong>{pasta.nome}</strong>
+        {editandoNome ? (
+          <>
+            <input className="vx-input" aria-label="Nome da pasta" value={nomePasta} onChange={(e) => setNomePasta(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") salvarNome(); if (e.key === "Escape") { setNomePasta(pasta.nome); setEditandoNome(false); } }} autoFocus style={{ maxWidth: 260 }} />
+            <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={salvarNome}>OK</button>
+          </>
+        ) : (
+          <>
+            <strong>{pasta.nome}</strong>
+            <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Renomear pasta" aria-label="Renomear pasta" onClick={() => setEditandoNome(true)}><Pencil size={13} /></button>
+          </>
+        )}
       </div>
       <div className="vx-row" style={{ marginBottom: 14 }}>
-        <span className="vx-mut" style={{ fontSize: 13 }}>{listas.length} lista(s)</span>
+        <span className="vx-mut" style={{ fontSize: 13 }}>{listas.length} lista(s) nesta pasta</span>
         <button className="vx-btn vx-btn-sm" onClick={() => novaLista()}><Plus size={14} /> Nova lista</button>
       </div>
       {!listas.length && <div className="vx-empty"><h2>Nenhuma lista nesta pasta.</h2></div>}
@@ -1106,9 +1131,10 @@ function ListaCardSimple({ lista, aviso, onAbrir, onAtualizar, onCriarSub, onAbr
   const [movendo, setMovendo] = useState(false);
   const subs = lista.subListas || [];
   const outrasPastas = pastas.filter((p) => p.id !== pastaAtual);
-  const salvar = async () => { if (!nome.trim()) return; await apiPatch(`/loja-leads/listas/${lista.id}`, { nome: nome.trim() }); setEditando(false); onAtualizar?.(); };
+  useEffect(() => { if (!editando) setNome(lista.nome); }, [lista.nome, editando]);
+  const salvar = async () => { if (!nome.trim()) return; const r = await apiPatch(`/loja-leads/listas/${lista.id}`, { nome: nome.trim() }); if (!r || r.error) return aviso?.(r?.error || "Não foi possível renomear a lista."); setEditando(false); aviso?.("Lista renomeada."); onAtualizar?.(); };
   const excluir = async () => { if (!confirm(`Excluir lista "${lista.nome}"?`)) return; const r = await apiDelete(`/loja-leads/listas/${lista.id}`); if (r?.error) return aviso?.(r.error); aviso?.("Lista excluída."); onAtualizar?.(); };
-  const mover = async (pastaId) => { if (!pastaId) return; const r = await apiPatch(`/loja-leads/listas/${lista.id}`, { pastaId }); if (r?.error) return aviso?.(r.error); setMovendo(false); aviso?.("Lista movida."); onAtualizar?.(); };
+  const mover = async (pastaId) => { if (!pastaId) return; const r = await apiPatch(`/loja-leads/listas/${lista.id}`, { pastaId }); if (!r || r.error) return aviso?.(r?.error || "Não foi possível mover a lista."); setMovendo(false); aviso?.("Lista movida."); onAtualizar?.(); };
 
   return (
     <div className="vx-card" style={{ padding: 0, display: "grid", gap: 0 }}>

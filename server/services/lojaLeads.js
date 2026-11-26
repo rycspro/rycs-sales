@@ -185,21 +185,20 @@ try {
   const NOME = "Leads recuperados";
   const ts = agora();
 
-  // Entidades com órfãos (contato existente, fora de qualquer lista) OU que já
-  // têm uma lista "Leads recuperados" (para corrigir posição se preciso).
+  // Só entidades com órfãos de verdade (contato revelado fora de qualquer
+  // lista). Pastas e listas do usuário NUNCA são movidas ou recriadas aqui:
+  // a versão anterior rodava a cada boot e devolvia a lista "Leads recuperados"
+  // para a pasta dedicada, desfazendo o que o usuário tinha movido/renomeado.
   const entidades = db.prepare(`
-    SELECT entityId, entityRole FROM (
-      SELECT co.entityId AS entityId, co.entityRole AS entityRole
-      FROM loja_leads_consumo co
-      JOIN loja_leads_contatos c ON c.id = co.contatoId
-      WHERE NOT EXISTS (
-        SELECT 1 FROM loja_leads_lista_contatos lc
-        JOIN loja_leads_listas l ON l.id = lc.listaId
-        WHERE lc.contatoId = co.contatoId AND l.entityId = co.entityId)
-      UNION
-      SELECT entityId, entityRole FROM loja_leads_listas WHERE nome = ? AND parentId IS NULL
-    ) GROUP BY entityId, entityRole
-  `).all(NOME);
+    SELECT co.entityId AS entityId, co.entityRole AS entityRole
+    FROM loja_leads_consumo co
+    JOIN loja_leads_contatos c ON c.id = co.contatoId
+    WHERE NOT EXISTS (
+      SELECT 1 FROM loja_leads_lista_contatos lc
+      JOIN loja_leads_listas l ON l.id = lc.listaId
+      WHERE lc.contatoId = co.contatoId AND l.entityId = co.entityId)
+    GROUP BY co.entityId, co.entityRole
+  `).all();
 
   const corrigirEntidade = db.transaction((entityId, entityRole) => {
     // Órfãos ainda soltos desta entidade.
@@ -212,25 +211,16 @@ try {
         WHERE lc.contatoId = co.contatoId AND l.entityId = co.entityId)
     `).all(entityId).map((r) => r.contatoId);
 
-    // Lista "Leads recuperados" existente (em qualquer pasta).
-    let lista = db.prepare("SELECT id, pastaId FROM loja_leads_listas WHERE entityId = ? AND nome = ? AND parentId IS NULL ORDER BY criadoEm LIMIT 1").get(entityId, NOME);
-    if (!lista && !orfaos.length) return 0;
+    if (!orfaos.length) return 0;
 
-    // Pasta dedicada "Leads recuperados" (cria se não existir).
-    let dedicada = db.prepare("SELECT id FROM loja_leads_pastas WHERE entityId = ? AND entityRole = ? AND nome = ? ORDER BY criadoEm LIMIT 1").get(entityId, entityRole, NOME);
-    if (!dedicada) {
+    // Reaproveita a lista "Leads recuperados" onde quer que o usuário a tenha
+    // deixado (sem mover). Só cria pasta/lista se ainda não existir.
+    let lista = db.prepare("SELECT id, pastaId FROM loja_leads_listas WHERE entityId = ? AND nome = ? AND parentId IS NULL ORDER BY criadoEm LIMIT 1").get(entityId, NOME);
+    if (!lista) {
       const pid = uid();
       db.prepare("INSERT INTO loja_leads_pastas (id, entityId, entityRole, nome, cor, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?)")
         .run(pid, entityId, entityRole, NOME, "#2563EB", ts, ts);
-      dedicada = { id: pid };
-    }
-
-    if (lista) {
-      // Corrige posição: move para a pasta dedicada se estiver em outra.
-      if (lista.pastaId !== dedicada.id) {
-        db.prepare("UPDATE loja_leads_listas SET pastaId = ?, atualizadoEm = ? WHERE id = ?").run(dedicada.id, ts, lista.id);
-      }
-    } else {
+      const dedicada = { id: pid };
       const lid = uid();
       db.prepare("INSERT INTO loja_leads_listas (id, pastaId, entityId, entityRole, nome, descricao, parentId, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .run(lid, dedicada.id, entityId, entityRole, NOME, "Leads já adquiridos que estavam sem lista.", null, ts, ts);
@@ -250,6 +240,33 @@ try {
   if (total) console.log(`[loja-leads] ${total} lead(s) órfão(s) recuperado(s) na pasta dedicada "${NOME}".`);
 } catch (e) {
   console.error("[loja-leads] migração de recuperação de órfãos falhou (boot segue normal):", e.message);
+}
+
+// ── Correção única: pasta "Nova pasta" com uma só lista nomeada ─────────────
+// A tela antiga deixava o usuário renomear a LISTA achando que era a pasta;
+// o card continuava "Nova pasta". Aqui a pasta herda o nome que o usuário deu.
+// Roda uma única vez (marcador em loja_leads_migracoes).
+try {
+  db.exec("CREATE TABLE IF NOT EXISTS loja_leads_migracoes (nome TEXT PRIMARY KEY, criadoEm INTEGER NOT NULL)");
+  const MARCA = "pasta-herda-nome-lista-v1";
+  if (!db.prepare("SELECT 1 FROM loja_leads_migracoes WHERE nome = ?").get(MARCA)) {
+    db.transaction(() => {
+      const alvos = db.prepare(`
+        SELECT p.id AS pastaId, MIN(l.nome) AS nomeLista FROM loja_leads_pastas p
+        JOIN loja_leads_listas l ON l.pastaId = p.id AND l.parentId IS NULL
+        WHERE p.nome = 'Nova pasta'
+        GROUP BY p.id HAVING COUNT(l.id) = 1
+      `).all();
+      const upd = db.prepare("UPDATE loja_leads_pastas SET nome = ?, atualizadoEm = ? WHERE id = ?");
+      for (const a of alvos) {
+        const nome = (a.nomeLista || "").trim();
+        if (nome && nome !== "Nova lista") upd.run(nome, agora(), a.pastaId);
+      }
+      db.prepare("INSERT INTO loja_leads_migracoes (nome, criadoEm) VALUES (?, ?)").run(MARCA, agora());
+    })();
+  }
+} catch (e) {
+  console.error("[loja-leads] correção de nome de pasta falhou (boot segue normal):", e.message);
 }
 
 // ── Google Places API (New) ─────────────────────────────────────────────────
