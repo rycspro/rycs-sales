@@ -3452,7 +3452,33 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_remun_seller ON remuneracoes(sellerId, status);
 `);
 
-// canais_conexoes.apelido é adicionada em services/canais.js, logo após criar a tabela.
+// canais_conexoes é criada em services/canais.js (import posterior), mas
+// adicionarColuna precisa que a tabela exista. CREATE IF NOT EXISTS é seguro.
+db.exec(`CREATE TABLE IF NOT EXISTS canais_conexoes (
+  id TEXT PRIMARY KEY,
+  companyId TEXT NOT NULL,
+  sellerId TEXT,
+  canal TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'ativa',
+  contaId TEXT NOT NULL DEFAULT '',
+  externoId TEXT NOT NULL DEFAULT '',
+  nome TEXT NOT NULL DEFAULT '',
+  numero TEXT NOT NULL DEFAULT '',
+  foto TEXT NOT NULL DEFAULT '',
+  token TEXT NOT NULL DEFAULT '',
+  tokenExpiraEm INTEGER,
+  tokenRenovadoEm INTEGER,
+  coexistencia INTEGER NOT NULL DEFAULT 0,
+  auditoriaIA INTEGER NOT NULL DEFAULT 1,
+  consentimentoEm INTEGER,
+  consentimentoUserId TEXT NOT NULL DEFAULT '',
+  dados TEXT NOT NULL DEFAULT '{}',
+  ultimoEventoEm INTEGER,
+  ultimoErro TEXT NOT NULL DEFAULT '',
+  criadoEm INTEGER NOT NULL,
+  atualizadoEm INTEGER NOT NULL
+)`);
+adicionarColuna("canais_conexoes", "apelido", "TEXT DEFAULT ''");
 
 export default db;
 export { uid, agora };
