@@ -89,6 +89,7 @@ html.dark .vx-app{
   --red-50:rgba(180,35,24,.10); --red-100:rgba(180,35,24,.18);
   --indigo-50:rgba(67,56,202,.12); --indigo-100:rgba(67,56,202,.20);
   --sky-50:rgba(56,189,248,.06);
+  --rem-bg:rgba(37,99,235,.08); --rem-border:rgba(37,99,235,.15);
   --glass:rgba(20,22,28,.66);
   --glass-strong:rgba(20,22,28,.86);
   --glass-blur:blur(28px) saturate(160%);

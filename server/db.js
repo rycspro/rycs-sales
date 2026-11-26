@@ -2874,6 +2874,18 @@ adicionarColuna("campaign_contacts", "listaOrigemId", "TEXT");
 // Vitrine institucional: descrição visível para profissionais
 adicionarColuna("companies", "descricaoInstitucional", "TEXT DEFAULT ''");
 
+// Campanhas salvas pelo profissional (bookmark)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS saved_campaigns (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    campaignId TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    UNIQUE(sellerId, campaignId)
+  );
+  CREATE INDEX IF NOT EXISTS idx_saved_campaigns_seller ON saved_campaigns(sellerId);
+`);
+
 // ── Evolution API: piloto (feature flag) ─────────────────────────────────────
 db.exec(`
   CREATE TABLE IF NOT EXISTS evolution_pilotos (

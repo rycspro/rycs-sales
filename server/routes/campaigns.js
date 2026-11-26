@@ -453,4 +453,26 @@ function parseCampaign(row) {
   };
 }
 
+// ── Campanhas salvas (bookmark) ─────────────────────────────────────────
+router.get("/campaigns/saved", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const rows = db.prepare("SELECT campaignId FROM saved_campaigns WHERE sellerId = ?").all(req.user.entityId);
+  res.json({ ids: rows.map((r) => r.campaignId) });
+});
+
+router.post("/campaigns/:id/save", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const campaignId = req.params.id;
+  const existing = db.prepare("SELECT id FROM saved_campaigns WHERE sellerId = ? AND campaignId = ?").get(req.user.entityId, campaignId);
+  if (existing) return res.json({ ok: true, saved: true });
+  db.prepare("INSERT INTO saved_campaigns (id, sellerId, campaignId, criadoEm) VALUES (?, ?, ?, ?)").run(uid(), req.user.entityId, campaignId, agora());
+  res.json({ ok: true, saved: true });
+});
+
+router.delete("/campaigns/:id/save", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  db.prepare("DELETE FROM saved_campaigns WHERE sellerId = ? AND campaignId = ?").run(req.user.entityId, req.params.id);
+  res.json({ ok: true, saved: false });
+});
+
 export default router;

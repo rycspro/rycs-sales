@@ -3,8 +3,9 @@ import { createPortal } from "react-dom";
 import {
   Building2, Globe2, MapPin, Briefcase, Target, ChevronRight, ArrowLeft, ArrowRight,
   Wallet, CheckCircle2, Clock, Flag, Search, SlidersHorizontal, X, Coins, ChevronDown, Check, ArrowDownUp,
+  Eye, Bookmark, Users, Ban, XCircle,
 } from "lucide-react";
-import { api } from "../../lib/api.js";
+import { api, apiDelete } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
 import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import { PAISES, bandeiraPais } from "../../../shared/paises.js";
@@ -31,14 +32,11 @@ function remuneracao(c, moeda) {
   const base = Object.keys(tarefas).length ? tarefas : comissoes;
   const vals = Object.values(base).map(Number).filter((v) => v > 0);
   const pct = Number(c.percentualComissao) || 0;
+  const max = vals.length ? Math.max(...vals) : 0;
   let label = "";
-  if (vals.length) {
-    const min = Math.min(...vals), max = Math.max(...vals);
-    label = min === max ? money(min, moeda) : `${money(min, moeda)}–${money(max, moeda)}`;
-    label += " por tarefa";
-  }
+  if (max > 0) label = `Até ${money(max, moeda)} por tarefa`;
   if (pct > 0) label = label ? `${label} · ${pct}% comissão` : `${pct}% de comissão`;
-  return { label: label || "A combinar", chips: base, moeda };
+  return { label: label || "A combinar", max, chips: base, moeda };
 }
 
 function Logo({ empresa, size = 44, r: rOverride }) {
@@ -106,6 +104,20 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     api("/oportunidades/metricas-empresas").then((r) => { if (r && !r.error) setMetricas(r.metricas || {}); });
   }, []);
 
+  const [salvas, setSalvas] = useState(new Set());
+  useEffect(() => {
+    api("/campaigns/saved").then((r) => { if (r?.ids) setSalvas(new Set(r.ids)); });
+  }, []);
+  const toggleSalvar = async (campaignId) => {
+    const isSaved = salvas.has(campaignId);
+    setSalvas((prev) => { const next = new Set(prev); isSaved ? next.delete(campaignId) : next.add(campaignId); return next; });
+    if (isSaved) {
+      await apiDelete(`/campaigns/${campaignId}/save`);
+    } else {
+      await api(`/campaigns/${campaignId}/save`, {});
+    }
+  };
+
   const empresas = useMemo(() => (db.companies || []).filter((c) => c.visivel !== false), [db.companies]);
   const empresasMap = useMemo(() => Object.fromEntries(empresas.map((e) => [e.id, e])), [empresas]);
   const campanhas = useMemo(() => (db.campaigns || []).filter((c) => c.status === "ativa"), [db.campaigns]);
@@ -127,7 +139,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
   }, [campanhas]);
 
   // ---------------- filtros (F4) ----------------
-  const FILTROS_VAZIO = { busca: "", pais: "", segmento: "", funcao: "", moeda: "", pagamento: "", remMin: "", ordenar: "recentes" };
+  const FILTROS_VAZIO = { busca: "", pais: "", segmento: "", funcao: "", moeda: "", pagamento: "", remMin: "", ordenar: "recentes", salvas: false };
   const [filtros, setFiltros] = useState(FILTROS_VAZIO);
   const [maisFiltros, setMaisFiltros] = useState(false);
   const setFiltro = (k, v) => setFiltros((f) => ({ ...f, [k]: v }));
@@ -155,6 +167,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
   const aplicarFiltros = (lista) => {
     const q = filtros.busca.trim().toLowerCase();
     let out = lista.filter(({ c, emp }) => {
+      if (filtros.salvas && !salvas.has(c.id)) return false;
       if (q && !`${c.titulo || ""} ${emp.nome || ""} ${c.descricao || ""}`.toLowerCase().includes(q)) return false;
       if (filtros.pais && emp.pais !== filtros.pais) return false;
       if (filtros.funcao && c.funcao !== filtros.funcao) return false;
@@ -209,7 +222,8 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     if (!emp) { setEmpresaSel(null); return null; }
     const itens = classificadas.filter((x) => x.c.companyId === emp.id);
     return <DetalheEmpresa emp={emp} itens={itens}
-      onVoltar={() => setEmpresaSel(null)} onAbrirCampanha={(c) => setCampanhaSel(c.id)} />;
+      onVoltar={() => setEmpresaSel(null)} onAbrirCampanha={(c) => setCampanhaSel(c.id)}
+      salvas={salvas} onSalvar={toggleSalvar} />;
   }
 
   const abas = [
@@ -231,17 +245,20 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
       <div role="tabpanel" style={{ border: "1px solid var(--border)", borderRadius: "0 12px 12px 12px", background: "var(--surface)", padding: 16 }}>
         <BarraFiltros filtros={filtros} setFiltro={setFiltro} opcoes={opcoes} opcoesEmpresas={opcoesEmpresas} empresa={aba === "empresas"}
           maisFiltros={maisFiltros} setMaisFiltros={setMaisFiltros} limpar={limparFiltros}
-          total={aba === "empresas" ? empresasFiltradas.length : aba === "nacionais" ? aplicarFiltros(nacionais).length : aplicarFiltros(internacionais).length} />
+          total={aba === "empresas" ? empresasFiltradas.length : aba === "nacionais" ? aplicarFiltros(nacionais).length : aplicarFiltros(internacionais).length}
+          salvasCount={salvas.size} onToggleSalvas={() => setFiltro("salvas", !filtros.salvas)} />
 
         {aba === "empresas" && (
           <GridEmpresas empresas={empresasFiltradas} onAbrir={(e) => setEmpresaSel(e.id)} />
         )}
         {aba === "nacionais" && (
           <GridCampanhas key={`nac-${JSON.stringify(filtros)}`} itens={aplicarFiltros(nacionais)} onAbrir={(c) => setCampanhaSel(c.id)}
+            salvas={salvas} onSalvar={toggleSalvar}
             vazio="Nenhuma campanha nacional corresponde aos filtros." />
         )}
         {aba === "internacionais" && (
           <GridCampanhas key={`intl-${JSON.stringify(filtros)}`} itens={aplicarFiltros(internacionais)} internacional onAbrir={(c) => setCampanhaSel(c.id)}
+            salvas={salvas} onSalvar={toggleSalvar}
             vazio="Nenhuma campanha internacional corresponde aos filtros." />
         )}
       </div>
@@ -302,60 +319,169 @@ function EmpresaCardVitrine({ empresa, onAbrir }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-function CampanhaCard({ item, internacional, onAbrir }) {
+function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
   const { c, emp, cls } = item;
   const rem = remuneracao(c, emp.moeda);
   const aceitos = parsePaisesAceitos(c.paisesAceitos);
   const st = (c.candidaturas || [])[0]?.status;
+  const seg = segmentoLabel(emp.segmento);
+  const [hoverBtn, setHoverBtn] = useState(false);
+  const [hoverSave, setHoverSave] = useState(false);
+
+  const location = c.cidade && c.estado ? `${c.cidade}, ${c.estado}` : c.regiao || "";
+  const vagas = Number(c.vagas) || 0;
+  const funcaoLabel = c.funcao ? (FUNCOES[c.funcao]?.nome || String(c.funcao)) : "";
+
+  const btnLabel = st === "aprovado" ? "Acessar campanha"
+    : st === "pendente" ? "Candidatura em análise"
+    : st === "recusado" ? "Candidatar-se novamente"
+    : c.candidaturasAbertas === false ? "Candidaturas encerradas"
+    : vagas > 0 && (c._totalCandidaturas || 0) >= vagas ? "Vagas preenchidas"
+    : "Candidatar-se";
+
+  const btnDisabled = st === "pendente" || c.candidaturasAbertas === false
+    || (vagas > 0 && (c._totalCandidaturas || 0) >= vagas && st !== "aprovado");
+
+  const btnStyle = st === "aprovado"
+    ? { background: "#22c55e", color: "#fff" }
+    : st === "pendente"
+    ? { background: "var(--surface-2)", color: "var(--muted)", cursor: "default" }
+    : st === "recusado"
+    ? { background: "var(--surface-2)", color: "var(--ink)" }
+    : btnDisabled
+    ? { background: "var(--surface-2)", color: "var(--muted)", cursor: "default" }
+    : { background: hoverBtn ? "#318CE7" : "#2563EB", color: "#fff" };
+
+  const BtnIcon = st === "aprovado" ? CheckCircle2
+    : st === "pendente" ? Clock
+    : st === "recusado" ? XCircle
+    : btnDisabled ? Ban : null;
+
   return (
-    <button type="button" onClick={() => onAbrir(c)} className="vx-card"
-      style={{ padding: 14, textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: 9, font: "inherit" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <Logo empresa={emp} size={36} />
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div className="vx-mut" style={{ fontSize: 11.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{emp.nome}</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.titulo || "Campanha"}</div>
+    <div className="vx-card" style={{ padding: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* Header: logo + nome + segmento + icons */}
+      <div style={{ padding: "16px 16px 0", display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <Logo empresa={emp} size={42} r={10} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {emp.nome}
+          </div>
+          <div style={{ fontSize: 12, color: "#318CE7", fontWeight: 600, marginTop: 2 }}>
+            {seg || "Segmento não informado"}
+          </div>
         </div>
-        {st === "aprovado" && <CheckCircle2 size={15} style={{ color: "var(--green, #22c55e)", flexShrink: 0 }} />}
-        {st === "pendente" && <Clock size={15} style={{ color: "var(--amber)", flexShrink: 0 }} />}
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, fontSize: 11.5 }}>
-        {c.funcao && <span className="vx-chip" style={{ fontSize: 11 }}><Briefcase size={10} style={{ marginRight: 3, verticalAlign: -1 }} />{String(c.funcao).toUpperCase()}</span>}
-        <span className="vx-chip" style={{ fontSize: 11 }}><span aria-hidden="true" style={{ marginRight: 4 }}>{bandeiraPais(cls.paisEmpresa)}</span>{nomePais(cls.paisEmpresa)}</span>
-        {c.modeloOperacao && <span className="vx-chip" style={{ fontSize: 11 }}>{c.modeloOperacao}</span>}
-      </div>
-
-      <div>
-        <div className="vx-eyebrow" style={{ fontSize: 10 }}>Remuneração</div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand)", marginTop: 1 }}>
-          <Wallet size={12} style={{ marginRight: 4, verticalAlign: -1 }} />{rem.label}
+        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+          <button type="button" aria-label="Ver campanha" onClick={() => onAbrir(c)}
+            style={{ width: 30, height: 30, border: "none", background: "transparent", color: "var(--muted)", cursor: "pointer", display: "grid", placeItems: "center", borderRadius: 6 }}>
+            <Eye size={16} />
+          </button>
+          <button type="button" aria-label={salva ? "Remover dos salvos" : "Salvar campanha"}
+            onClick={(e) => { e.stopPropagation(); onSalvar?.(c.id); }}
+            onMouseEnter={() => setHoverSave(true)} onMouseLeave={() => setHoverSave(false)}
+            style={{ width: 30, height: 30, border: "none", background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", borderRadius: 6,
+              color: salva ? "#318CE7" : hoverSave ? "#318CE7" : "var(--muted)", transition: "color .15s" }}>
+            <Bookmark size={16} fill={salva ? "#318CE7" : "none"} />
+          </button>
         </div>
       </div>
 
+      {/* Title + description */}
+      <div style={{ padding: "12px 16px 0" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", lineHeight: 1.35,
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {c.titulo || "Campanha"}
+        </div>
+        {c.descricao && (
+          <div style={{ fontSize: 13, color: "var(--ink-2, var(--muted))", lineHeight: 1.5, marginTop: 6,
+            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            {c.descricao}
+          </div>
+        )}
+      </div>
+
+      {/* Info chips */}
+      <div style={{ padding: "10px 16px 0", display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {location && (
+          <span className="vx-chip" style={{ fontSize: 11 }}>
+            <MapPin size={11} style={{ marginRight: 3, verticalAlign: -1 }} />{location}
+          </span>
+        )}
+        {vagas > 0 && (
+          <span className="vx-chip" style={{ fontSize: 11 }}>
+            <Users size={11} style={{ marginRight: 3, verticalAlign: -1 }} />{vagas} vaga{vagas > 1 ? "s" : ""}
+          </span>
+        )}
+        {cls.paisEmpresa && (
+          <span className="vx-chip" style={{ fontSize: 11 }}>
+            <span aria-hidden="true" style={{ marginRight: 4 }}>{bandeiraPais(cls.paisEmpresa)}</span>{nomePais(cls.paisEmpresa)}
+          </span>
+        )}
+        {c.modeloOperacao && (
+          <span className="vx-chip" style={{ fontSize: 11 }}>{c.modeloOperacao}</span>
+        )}
+        {funcaoLabel && (
+          <span className="vx-chip" style={{ fontSize: 11 }}>
+            <Briefcase size={10} style={{ marginRight: 3, verticalAlign: -1 }} />{funcaoLabel}
+          </span>
+        )}
+      </div>
+
+      {/* Remuneration block */}
+      <div style={{ margin: "12px 16px 0", padding: "12px 14px", borderRadius: 10,
+        background: "var(--rem-bg, #EDF6FF)", border: "1px solid var(--rem-border, rgba(37,99,235,.12))" }}>
+        <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em", color: "var(--muted)", marginBottom: 4 }}>
+          Remuneração
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: "#2563EB", lineHeight: 1.2 }}>
+          {rem.label}
+        </div>
+        {Number(c.percentualComissao) > 0 && rem.max > 0 && (
+          <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 3 }}>
+            + {c.percentualComissao}% de comissão
+          </div>
+        )}
+      </div>
+
+      {/* International countries */}
       {internacional && aceitos.length > 0 && (
-        <div className="vx-mut" style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+        <div className="vx-mut" style={{ padding: "8px 16px 0", fontSize: 11, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
           <Globe2 size={11} /> Aceita: {aceitos.map(nomePais).slice(0, 3).join(", ")}{aceitos.length > 3 ? ` +${aceitos.length - 3}` : ""}
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: "var(--brand)", fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>
-        Ver campanha <ChevronRight size={14} />
+      {/* Spacer to push button to bottom */}
+      <div style={{ flex: 1 }} />
+
+      {/* CTA button */}
+      <div style={{ padding: "14px 16px 16px" }}>
+        <button type="button"
+          onClick={() => onAbrir(c)}
+          disabled={btnDisabled && st !== "aprovado"}
+          onMouseEnter={() => setHoverBtn(true)} onMouseLeave={() => setHoverBtn(false)}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            height: 42, border: "none", borderRadius: 10, cursor: btnDisabled && st !== "aprovado" ? "default" : "pointer",
+            fontSize: 13.5, fontWeight: 600, fontFamily: "inherit", transition: "background .15s, color .15s",
+            ...btnStyle,
+          }}>
+          {BtnIcon && <BtnIcon size={14} />}
+          {btnLabel}
+          {st === "aprovado" && <ChevronRight size={14} />}
+        </button>
       </div>
-    </button>
+    </div>
   );
 }
 
-function GridCampanhas({ itens, internacional, onAbrir, vazio }) {
-  // Renderização incremental: evita montar centenas de cards de uma vez.
-  // O `key` no pai (assinatura dos filtros) remonta e reseta o limite ao filtrar.
+function GridCampanhas({ itens, internacional, onAbrir, vazio, salvas, onSalvar }) {
   const [limite, setLimite] = useState(12);
   if (!itens.length) return <Vazio Icon={internacional ? Globe2 : Flag} texto={vazio} />;
   const visiveis = itens.slice(0, limite);
   return (
     <>
-      <div style={{ display: "grid", gap: 13, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))" }}>
-        {visiveis.map((item) => <CampanhaCard key={item.c.id} item={item} internacional={internacional} onAbrir={onAbrir} />)}
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 310px), 1fr))" }}>
+        {visiveis.map((item) => <CampanhaCard key={item.c.id} item={item} internacional={internacional} onAbrir={onAbrir}
+          salva={salvas?.has(item.c.id)} onSalvar={onSalvar} />)}
       </div>
       {itens.length > limite && (
         <div style={{ textAlign: "center", marginTop: 14 }}>
@@ -369,7 +495,7 @@ function GridCampanhas({ itens, internacional, onAbrir, vazio }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-function DetalheEmpresa({ emp, itens, onVoltar, onAbrirCampanha }) {
+function DetalheEmpresa({ emp, itens, onVoltar, onAbrirCampanha, salvas, onSalvar }) {
   const desc = emp.descricaoInstitucional || emp.produto || emp.icp || "";
   const seg = segmentoLabel(emp.segmento);
   return (
@@ -404,7 +530,7 @@ function DetalheEmpresa({ emp, itens, onVoltar, onAbrirCampanha }) {
         <span className="vx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>({itens.length})</span>
       </div>
       {itens.length > 0 ? (
-        <GridCampanhas itens={itens} onAbrir={onAbrirCampanha} vazio="" />
+        <GridCampanhas itens={itens} onAbrir={onAbrirCampanha} salvas={salvas} onSalvar={onSalvar} vazio="" />
       ) : (
         <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
           <Building2 size={32} style={{ color: "var(--muted)", marginBottom: 10 }} />
@@ -603,7 +729,7 @@ function ListaOpcoes({ opcoes, valor, onEscolher, buscavel }) {
   );
 }
 
-function BarraFiltros({ filtros, setFiltro, opcoes, opcoesEmpresas, empresa, maisFiltros, setMaisFiltros, limpar, total }) {
+function BarraFiltros({ filtros, setFiltro, opcoes, opcoesEmpresas, empresa, maisFiltros, setMaisFiltros, limpar, total, salvasCount, onToggleSalvas }) {
   const [buscaLocal, setBuscaLocal] = useState(filtros.busca);
   useEffect(() => { setBuscaLocal(filtros.busca); }, [filtros.busca]);
   useEffect(() => {
@@ -676,6 +802,20 @@ function BarraFiltros({ filtros, setFiltro, opcoes, opcoesEmpresas, empresa, mai
             valorLabel={filtros.moeda || null}>
             {(fechar) => <ListaOpcoes opcoes={opcoesMoeda} valor={filtros.moeda} onEscolher={(v) => { setFiltro("moeda", v); fechar(); }} />}
           </PopoverFiltro>
+        )}
+        {!empresa && salvasCount > 0 && (
+          <button type="button" onClick={onToggleSalvas}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 13px", borderRadius: 8, cursor: "pointer",
+              fontSize: 12.5, fontWeight: filtros.salvas ? 600 : 500, fontFamily: "inherit", whiteSpace: "nowrap",
+              border: `1px solid ${filtros.salvas ? AZUL_FILTRO : "var(--border)"}`,
+              background: filtros.salvas ? "var(--brand-50)" : "var(--surface-solid, #fff)", color: filtros.salvas ? AZUL_FILTRO : "var(--ink)", transition: "border-color .15s, background .15s",
+            }}>
+            <Bookmark size={15} fill={filtros.salvas ? AZUL_FILTRO : "none"} /> Salvas
+            <span style={{ fontSize: 10.5, fontWeight: 700, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 999, background: filtros.salvas ? AZUL_FILTRO : "var(--surface-2)", color: filtros.salvas ? "#fff" : "var(--muted)", display: "grid", placeItems: "center" }}>
+              {salvasCount}
+            </span>
+          </button>
         )}
       </div>
 
