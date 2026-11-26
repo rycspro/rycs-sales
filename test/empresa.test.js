@@ -29,11 +29,11 @@ test("qualquer tarefa remunerada atende o requisito de publicação", () => {
 });
 
 test("campanha sem caixa ou treinamento fica bloqueada", () => {
-  const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [] };
+  const campanha = { titulo: "Piloto", objetivo: "Agendar", publico: "B2B", regiao: "Brasil", funcao: "sdr", orcamento: 2000, tarefas: { agendamento: 80 }, treinamento: [], modeloTrabalho: "presencial", cidade: "São Paulo", estado: "SP", etapasPipeline: [{ id: "novo", nome: "Novo" }] };
   const resultado = campanhaPodeSerPublicada(campanha, { ...empresaPronta, saldoReservado: 5000 });
   assert.equal(resultado.ok, false);
   assert.ok(resultado.pendencias.includes("caixa sem saldo disponível"));
-  assert.ok(resultado.pendencias.includes("treinamento"));
+  assert.ok(resultado.pendencias.includes("orçamento superior ao saldo disponível"));
 });
 
 test("planos seguem preços e taxas aprovados no plano de produto", () => {
