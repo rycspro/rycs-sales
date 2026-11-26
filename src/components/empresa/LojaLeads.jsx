@@ -416,7 +416,6 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
   const [nomeLista, setNomeLista] = useState("");
   const [pastaSel, setPastaSel] = useState("");
   const [listaExistente, setListaExistente] = useState("");
-  const [listaPai, setListaPai] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
 
@@ -456,13 +455,6 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
       body.novaLista = nomeLista.trim() || `${segmento.trim()} — ${regiao.trim() || new Date().toLocaleDateString("pt-BR")}`;
       body.descricaoLista = `${segmento} — ${regiao || pais}`;
       if (pastaSel) body.novaPasta = pastaSel;
-    } else if (destino === "sub" && listaPai) {
-      const pai = listas.find((l) => l.id === listaPai);
-      body.novaLista = nomeLista.trim() || `${segmento.trim()} — ${regiao.trim() || new Date().toLocaleDateString("pt-BR")}`;
-      body.descricaoLista = `${segmento} — ${regiao || pais}`;
-      body.parentListaId = listaPai;
-      if (pastaSel) body.novaPasta = pastaSel;
-      else if (pai?.pastaId) body.novaPasta = pai.pastaId;
     }
 
     const r = await api("/loja-leads/buscar", body);
@@ -618,11 +610,10 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 <span className="vx-label">Destino</span>
                 <select className="vx-input" value={destino} onChange={(e) => setDestino(e.target.value)}>
                   <option value="new">Criar nova lista</option>
-                  {listas.length > 0 && <option value="sub">Criar sub-lista (dentro de lista existente)</option>}
                   {listas.length > 0 && <option value="existing">Lista existente</option>}
                 </select>
               </label>
-              {(destino === "new" || destino === "sub") && pastas.length > 0 && (
+              {destino === "new" && pastas.length > 0 && (
                 <label>
                   <span className="vx-label">Pasta</span>
                   <select className="vx-input" value={pastaSel} onChange={(e) => setPastaSel(e.target.value)}>
@@ -631,21 +622,10 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                   </select>
                 </label>
               )}
-              {destino === "sub" && (
+              {destino === "new" && (
                 <label>
-                  <span className="vx-label">Lista pai</span>
-                  <select className="vx-input" value={listaPai} onChange={(e) => setListaPai(e.target.value)}>
-                    <option value="">Selecione a lista pai</option>
-                    {(pastaSel ? listas.filter((l) => l.pastaId === pastaSel) : listas).map((l) => (
-                      <option key={l.id} value={l.id}>{l.pastaNome} › {l.nome}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {(destino === "new" || destino === "sub") && (
-                <label>
-                  <span className="vx-label">{destino === "sub" ? "Nome da sub-lista" : "Nome da lista"}</span>
-                  <input className="vx-input" placeholder={destino === "sub" ? "Nome da sub-lista" : "Nome da nova lista"} value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
+                  <span className="vx-label">Nome da lista</span>
+                  <input className="vx-input" placeholder="Nome da nova lista" value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
                 </label>
               )}
               {destino === "existing" && (
