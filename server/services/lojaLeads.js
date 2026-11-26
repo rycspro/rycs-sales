@@ -163,6 +163,14 @@ db.exec(`
   }
 }
 
+// ── Migração: sub-listas (parentId) ──
+{
+  const cols = db.pragma("table_info(loja_leads_listas)").map((c) => c.name);
+  if (!cols.includes("parentId")) {
+    db.exec("ALTER TABLE loja_leads_listas ADD COLUMN parentId TEXT DEFAULT NULL");
+  }
+}
+
 // ── Google Places API (New) ─────────────────────────────────────────────────
 const PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || "";
 
@@ -384,17 +392,25 @@ export function listarListas(pastaId) {
   const listas = db.prepare("SELECT * FROM loja_leads_listas WHERE pastaId = ? ORDER BY criadoEm").all(pastaId);
   for (const l of listas) {
     l.totalContatos = db.prepare("SELECT COUNT(*) n FROM loja_leads_lista_contatos WHERE listaId = ?").get(l.id)?.n || 0;
+    l.subListas = db.prepare("SELECT * FROM loja_leads_listas WHERE parentId = ? ORDER BY criadoEm").all(l.id);
+    for (const s of l.subListas) {
+      s.totalContatos = db.prepare("SELECT COUNT(*) n FROM loja_leads_lista_contatos WHERE listaId = ?").get(s.id)?.n || 0;
+    }
   }
-  return listas;
+  return listas.filter((l) => !l.parentId);
 }
 
-export function criarLista(pastaId, entityId, entityRole, nome, descricao) {
+export function criarLista(pastaId, entityId, entityRole, nome, descricao, parentId) {
   const pasta = db.prepare("SELECT * FROM loja_leads_pastas WHERE id = ? AND entityId = ?").get(pastaId, entityId);
   if (!pasta) return { error: "Pasta não encontrada." };
+  if (parentId) {
+    const pai = db.prepare("SELECT id FROM loja_leads_listas WHERE id = ? AND pastaId = ?").get(parentId, pastaId);
+    if (!pai) return { error: "Lista pai não encontrada." };
+  }
   const ts = agora();
   const id = uid();
-  db.prepare("INSERT INTO loja_leads_listas (id, pastaId, entityId, entityRole, nome, descricao, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-    .run(id, pastaId, entityId, entityRole, nome || "Nova lista", descricao || "", ts, ts);
+  db.prepare("INSERT INTO loja_leads_listas (id, pastaId, entityId, entityRole, nome, descricao, parentId, criadoEm, atualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .run(id, pastaId, entityId, entityRole, nome || "Nova lista", descricao || "", parentId || null, ts, ts);
   return { id, nome };
 }
 

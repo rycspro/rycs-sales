@@ -24,7 +24,7 @@ function entityDe(req) {
 router.post("/loja-leads/buscar", async (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
-  const { texto, regiao, quantidade, listaId, novaPasta, novaLista, descricaoLista } = req.body || {};
+  const { texto, regiao, quantidade, listaId, novaPasta, novaLista, descricaoLista, parentListaId } = req.body || {};
   if (!texto) return res.status(400).json({ error: "Informe o que buscar." });
 
   const r = await buscarPlaces(texto, { regiao, quantidade });
@@ -52,7 +52,7 @@ router.post("/loja-leads/buscar", async (req, res) => {
         pastaId = p.id;
       }
     }
-    const lista = criarLista(pastaId, ent.entityId, ent.entityRole, novaLista, descricaoLista || "");
+    const lista = criarLista(pastaId, ent.entityId, ent.entityRole, novaLista, descricaoLista || "", parentListaId || null);
     if (lista.error) return res.json({ contatos, listaErro: lista.error });
     listaIdFinal = lista.id;
   }
@@ -147,9 +147,9 @@ router.get("/loja-leads/listas/:pastaId", (req, res) => {
 router.post("/loja-leads/listas", (req, res) => {
   const ent = entityDe(req);
   if (!ent) return res.status(403).json({ error: "Acesso negado." });
-  const { pastaId, nome, descricao } = req.body || {};
+  const { pastaId, nome, descricao, parentId } = req.body || {};
   if (!pastaId) return res.status(400).json({ error: "Informe a pasta." });
-  const r = criarLista(pastaId, ent.entityId, ent.entityRole, nome, descricao);
+  const r = criarLista(pastaId, ent.entityId, ent.entityRole, nome, descricao, parentId);
   if (r.error) return res.status(400).json(r);
   res.json(r);
 });

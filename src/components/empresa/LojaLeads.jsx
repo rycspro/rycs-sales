@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
-  Search, MapPin, Phone, Globe, Star, Plus, Loader2, ChevronRight,
+  Search, MapPin, Phone, Globe, Star, Plus, Loader2, ChevronRight, ChevronDown,
   Building2, FolderOpen, List, Pencil, Trash2,
   ListPlus, X, Clock, FileText, Store,
   Megaphone, Link2, Unlink, RefreshCw,
@@ -409,6 +409,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
   const [destino, setDestino] = useState("new");
   const [nomeLista, setNomeLista] = useState("");
   const [listaExistente, setListaExistente] = useState("");
+  const [listaPai, setListaPai] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
 
@@ -447,6 +448,12 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
     } else if (destino === "new") {
       body.novaLista = nomeLista.trim() || `${segmento.trim()} — ${regiao.trim() || new Date().toLocaleDateString("pt-BR")}`;
       body.descricaoLista = `${segmento} — ${regiao || pais}`;
+    } else if (destino === "sub" && listaPai) {
+      const pai = listas.find((l) => l.id === listaPai);
+      body.novaLista = nomeLista.trim() || `${segmento.trim()} — ${regiao.trim() || new Date().toLocaleDateString("pt-BR")}`;
+      body.descricaoLista = `${segmento} — ${regiao || pais}`;
+      body.parentListaId = listaPai;
+      if (pai?.pastaId) body.novaPasta = pai.pastaId;
     }
 
     const r = await api("/loja-leads/buscar", body);
@@ -602,18 +609,40 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
                 <span className="vx-label">Destino</span>
                 <select className="vx-input" value={destino} onChange={(e) => setDestino(e.target.value)}>
                   <option value="new">Criar nova lista</option>
+                  <option value="sub">Criar sub-lista (dentro de lista existente)</option>
                   {listas.length > 0 && <option value="existing">Lista existente</option>}
                 </select>
               </label>
-              <label>
-                <span className="vx-label">Lista</span>
-                {destino === "new"
-                  ? <input className="vx-input" placeholder="Nome da nova lista" value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
-                  : <select className="vx-input" value={listaExistente} onChange={(e) => setListaExistente(e.target.value)}>
-                      <option value="">Selecione</option>
-                      {listas.map((l) => <option key={l.id} value={l.id}>{l.nome}</option>)}
-                    </select>}
-              </label>
+              {destino === "new" && (
+                <label>
+                  <span className="vx-label">Nome da lista</span>
+                  <input className="vx-input" placeholder="Nome da nova lista" value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
+                </label>
+              )}
+              {destino === "sub" && (
+                <>
+                  <label>
+                    <span className="vx-label">Lista pai</span>
+                    <select className="vx-input" value={listaPai} onChange={(e) => setListaPai(e.target.value)}>
+                      <option value="">Selecione a lista pai</option>
+                      {listas.map((l) => <option key={l.id} value={l.id}>{l.pastaNome} › {l.nome}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="vx-label">Nome da sub-lista</span>
+                    <input className="vx-input" placeholder="Nome da sub-lista" value={nomeLista} onChange={(e) => setNomeLista(e.target.value)} />
+                  </label>
+                </>
+              )}
+              {destino === "existing" && (
+                <label>
+                  <span className="vx-label">Lista</span>
+                  <select className="vx-input" value={listaExistente} onChange={(e) => setListaExistente(e.target.value)}>
+                    <option value="">Selecione</option>
+                    {listas.map((l) => <option key={l.id} value={l.id}>{l.pastaNome} › {l.nome}</option>)}
+                  </select>
+                </label>
+              )}
             </div>
           </div>
         </div>
@@ -1052,8 +1081,8 @@ function VistaPasta({ pasta, aviso, voltar, abrirLista }) {
   const recarregar = useCallback(async () => { const r = await api(`/loja-leads/listas/${pasta.id}`); setListas(r?.listas || []); }, [pasta.id]);
   useEffect(() => { recarregar().then(() => setLoading(false)); }, []);
 
-  const novaLista = async () => {
-    const r = await api("/loja-leads/listas", { pastaId: pasta.id, nome: "Nova lista" });
+  const novaLista = async (parentId) => {
+    const r = await api("/loja-leads/listas", { pastaId: pasta.id, nome: parentId ? "Nova sub-lista" : "Nova lista", parentId: parentId || undefined });
     if (r?.error) return aviso?.(r.error);
     await recarregar();
   };
@@ -1069,41 +1098,65 @@ function VistaPasta({ pasta, aviso, voltar, abrirLista }) {
       </div>
       <div className="vx-row" style={{ marginBottom: 14 }}>
         <span className="vx-mut" style={{ fontSize: 13 }}>{listas.length} lista(s)</span>
-        <button className="vx-btn vx-btn-sm" onClick={novaLista}><Plus size={14} /> Nova lista</button>
+        <button className="vx-btn vx-btn-sm" onClick={() => novaLista()}><Plus size={14} /> Nova lista</button>
       </div>
       {!listas.length && <div className="vx-empty"><h2>Nenhuma lista nesta pasta.</h2></div>}
       <div className="vx-grid vx-g3" style={{ gap: 12 }}>
         {listas.map((l) => (
-          <ListaCardSimple key={l.id} lista={l} aviso={aviso} onAbrir={() => abrirLista(l)} onAtualizar={recarregar} />
+          <ListaCardSimple key={l.id} lista={l} aviso={aviso} onAbrir={() => abrirLista(l)} onAtualizar={recarregar} onCriarSub={(pai) => novaLista(pai.id)} onAbrirSub={(s) => abrirLista(s)} />
         ))}
       </div>
     </>
   );
 }
 
-function ListaCardSimple({ lista, aviso, onAbrir, onAtualizar }) {
+function ListaCardSimple({ lista, aviso, onAbrir, onAtualizar, onCriarSub, onAbrirSub }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(lista.nome);
+  const [expandido, setExpandido] = useState(false);
+  const subs = lista.subListas || [];
   const salvar = async () => { if (!nome.trim()) return; await apiPatch(`/loja-leads/listas/${lista.id}`, { nome: nome.trim() }); setEditando(false); onAtualizar?.(); };
   const excluir = async () => { if (!confirm(`Excluir lista "${lista.nome}"?`)) return; const r = await apiDelete(`/loja-leads/listas/${lista.id}`); if (r?.error) return aviso?.(r.error); aviso?.("Lista excluída."); onAtualizar?.(); };
 
   return (
-    <div className="vx-card" style={{ padding: 16, cursor: editando ? "default" : "pointer", display: "grid", gap: 8 }} onClick={!editando ? onAbrir : undefined}>
-      <List size={20} style={{ color: "var(--brand)" }} />
-      {editando ? (
-        <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-          <input className="vx-input" value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && salvar()} autoFocus />
-          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={salvar}>OK</button>
+    <div className="vx-card" style={{ padding: 0, display: "grid", gap: 0 }}>
+      <div style={{ padding: 16, cursor: editando ? "default" : "pointer", display: "grid", gap: 8 }} onClick={!editando ? onAbrir : undefined}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <List size={20} style={{ color: "var(--brand)" }} />
+          {subs.length > 0 && (
+            <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 2, marginLeft: "auto" }} onClick={(e) => { e.stopPropagation(); setExpandido(!expandido); }}>
+              {expandido ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <span style={{ fontSize: 11 }}>{subs.length}</span>
+            </button>
+          )}
         </div>
-      ) : (
-        <>
-          <strong>{lista.nome}</strong>
-          <span className="vx-mut" style={{ fontSize: 12 }}>{lista.totalContatos ?? 0} contato(s)</span>
-          <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
-            <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditando(true)}><Pencil size={13} /></button>
-            <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={excluir}><Trash2 size={13} /></button>
+        {editando ? (
+          <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+            <input className="vx-input" value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && salvar()} autoFocus />
+            <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={salvar}>OK</button>
           </div>
-        </>
+        ) : (
+          <>
+            <strong>{lista.nome}</strong>
+            <span className="vx-mut" style={{ fontSize: 12 }}>{lista.totalContatos ?? 0} contato(s){subs.length > 0 ? ` · ${subs.length} sub-lista(s)` : ""}</span>
+            <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditando(true)}><Pencil size={13} /></button>
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" title="Criar sub-lista" onClick={() => onCriarSub?.(lista)}><Plus size={13} /></button>
+              <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={excluir}><Trash2 size={13} /></button>
+            </div>
+          </>
+        )}
+      </div>
+      {expandido && subs.length > 0 && (
+        <div style={{ borderTop: "1px solid var(--border)", padding: "8px 16px 12px", display: "grid", gap: 6 }}>
+          {subs.map((s) => (
+            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", background: "var(--bg-hover, rgba(0,0,0,0.03))" }} onClick={() => onAbrirSub?.(s)}>
+              <List size={14} style={{ color: "var(--brand-400, var(--brand))", opacity: 0.7 }} />
+              <span style={{ fontSize: 13, flex: 1 }}>{s.nome}</span>
+              <span className="vx-mut" style={{ fontSize: 11 }}>{s.totalContatos ?? 0}</span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
