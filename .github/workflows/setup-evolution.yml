@@ -1,0 +1,88 @@
+name: Setup Evolution API
+
+# Workflow manual para configurar a Evolution API no EC2.
+# NÃO roda automaticamente. Requer ação manual via GitHub Actions.
+# NÃO altera o container principal da RYCS nem a integração da Meta.
+
+on:
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: "Ação a executar"
+        required: true
+        type: choice
+        options:
+          - setup
+          - restart
+          - stop
+          - logs
+          - status
+
+concurrency:
+  group: evolution-setup
+  cancel-in-progress: false
+
+jobs:
+  evolution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Executar no EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 3.132.225.173
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          timeout: 30s
+          command_timeout: 5m
+          script: |
+            set -e
+            ACAO="${{ inputs.acao }}"
+            EVO_DIR="/home/ec2-user/rycs-evolution"
+
+            case "$ACAO" in
+              setup)
+                cd /home/ec2-user/rycs-sales
+                git fetch origin
+                git checkout origin/main -- scripts/setup-evolution.sh docker-compose.evolution.yml
+                chmod +x scripts/setup-evolution.sh
+                bash scripts/setup-evolution.sh
+                # Reiniciar backend RYCS para pegar as novas env vars.
+                docker restart rycs-app
+                sleep 5
+                curl -sf http://localhost:3001/api/health && echo "Backend RYCS OK" || echo "Backend RYCS: aguardando..."
+                ;;
+              restart)
+                cd "$EVO_DIR"
+                docker compose restart
+                echo "Evolution API reiniciada."
+                ;;
+              stop)
+                cd "$EVO_DIR"
+                docker compose down
+                echo "Evolution API parada."
+                ;;
+              logs)
+                cd "$EVO_DIR"
+                docker compose logs --tail=50
+                ;;
+              status)
+                echo "=== Evolution API ==="
+                docker ps --filter name=rycs-evolution-api --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Container não encontrado"
+                echo ""
+                echo "=== Health check ==="
+                curl -sf http://localhost:8080/ && echo "OK" || echo "Não respondendo"
+                echo ""
+                echo "=== Backend webhook ==="
+                EVO_KEY=$(grep "^EVOLUTION_API_KEY=" /home/ec2-user/env_producao.txt 2>/dev/null | cut -d= -f2- || echo "")
+                curl -sf -o /dev/null -w "HTTP %{http_code}" -X POST \
+                  -H "Content-Type: application/json" \
+                  -H "apikey: $EVO_KEY" \
+                  -d '{"event":"test","instance":"status-check","data":{}}' \
+                  http://localhost:3001/api/webhooks/evolution || echo "Webhook falhou"
+                echo ""
+                echo "=== Porta 8080 ==="
+                ss -tlnp | grep ":8080" || echo "Nenhum listener na 8080"
+                ;;
+            esac
