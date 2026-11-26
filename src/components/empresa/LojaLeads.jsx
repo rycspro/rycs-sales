@@ -116,6 +116,12 @@ const SEGMENTOS = [
   "Organizadores de eventos", "DJs e bandas", "Chaveiros",
   "Assistência técnica", "Empresas de limpeza", "Empresas de segurança",
   "Igrejas e instituições religiosas", "ONGs e associações",
+  "Ar-condicionado e refrigeração", "Dedetizadoras e controle de pragas",
+  "Empresas de mudança", "Empresas de pintura", "Eletricistas",
+  "Encanadores e hidráulica", "Marcenarias", "Estofarias",
+  "Empresas de impermeabilização", "Empresas de desentupimento",
+  "Clínicas de reabilitação", "Casas de repouso", "Creches e berçários",
+  "Academias de natação", "Escolas de surf e esportes",
 ];
 
 const PAISES = ["Brasil", "Estados Unidos", "Portugal", "Índia", "Reino Unido", "Argentina", "Chile", "Colômbia", "México", "Paraguai", "Uruguai", "Alemanha", "Espanha", "França", "Itália", "Japão", "Canadá", "Austrália"];
@@ -188,7 +194,7 @@ function ComboBox({ value, onChange, options, placeholder, label }) {
       <input className="vx-input" value={texto} placeholder={placeholder}
         onChange={(e) => { setTexto(e.target.value); onChange(e.target.value); setAberto(true); }}
         onFocus={() => setAberto(true)} />
-      {aberto && filtradas.length > 0 && (
+      {aberto && texto.trim() && (
         <div className="ll-combo-list">
           {filtradas.slice(0, 20).map((o) => (
             <div key={o} className={`ll-combo-item ${o === value ? "ll-combo-sel" : ""}`}
@@ -197,6 +203,12 @@ function ComboBox({ value, onChange, options, placeholder, label }) {
             </div>
           ))}
           {filtradas.length > 20 && <div className="ll-combo-item vx-mut" style={{ pointerEvents: "none", fontSize: 11.5 }}>+{filtradas.length - 20} resultados — refine a busca</div>}
+          {filtradas.length === 0 && (
+            <div className="ll-combo-item" style={{ color: "var(--brand)", fontWeight: 600 }}
+              onMouseDown={(e) => { e.preventDefault(); selecionar(texto.trim()); }}>
+              Usar: "{texto.trim()}"
+            </div>
+          )}
         </div>
       )}
     </label>
