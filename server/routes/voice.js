@@ -803,4 +803,207 @@ router.get("/voice/audit", (req, res) => {
   res.json(logs.map((l) => ({ ...l, dados: JSON.parse(l.dados || "{}") })));
 });
 
+// ── Consumo detalhado (billing records) ─────────────────────────────
+
+router.get("/voice/billing", (req, res) => {
+  const companyId = companyIdDoUsuario(req);
+  if (!companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const de = parseInt(req.query.inicio) || (agora() - 30 * 86400000);
+  const ate = parseInt(req.query.fim) || agora();
+  const sellerId = req.query.sellerId || null;
+  const campaignId = req.query.campaignId || null;
+
+  let sql = `SELECT * FROM voice_billing_records WHERE companyId = ? AND criadoEm >= ? AND criadoEm <= ?`;
+  const args = [companyId, de, ate];
+  if (sellerId) { sql += " AND sellerId = ?"; args.push(sellerId); }
+  if (campaignId) { sql += " AND campaignId = ?"; args.push(campaignId); }
+  sql += " ORDER BY criadoEm DESC LIMIT 500";
+
+  res.json(db.prepare(sql).all(...args));
+});
+
+router.get("/voice/billing/resumo", (req, res) => {
+  const companyId = companyIdDoUsuario(req);
+  if (!companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const de = parseInt(req.query.inicio) || (agora() - 30 * 86400000);
+  const ate = parseInt(req.query.fim) || agora();
+
+  const resumo = db.prepare(`
+    SELECT
+      COUNT(*) as totalChamadas,
+      SUM(atendida) as totalAtendidas,
+      SUM(duracaoTotal) as duracaoTotal,
+      SUM(duracaoAtendida) as duracaoAtendida,
+      SUM(duracaoTarifada) as duracaoTarifada,
+      SUM(custoOperadora) as custoOperadora,
+      SUM(valorComercial) as valorComercial,
+      SUM(CASE WHEN tipoDestino = 'fixo' THEN 1 ELSE 0 END) as chamadasFixo,
+      SUM(CASE WHEN tipoDestino = 'celular' THEN 1 ELSE 0 END) as chamadasCelular
+    FROM voice_billing_records WHERE companyId = ? AND criadoEm >= ? AND criadoEm <= ?
+  `).get(companyId, de, ate);
+
+  res.json(resumo || {});
+});
+
+router.get("/voice/billing/por-profissional", (req, res) => {
+  const companyId = companyIdDoUsuario(req);
+  if (!companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const de = parseInt(req.query.inicio) || (agora() - 30 * 86400000);
+  const ate = parseInt(req.query.fim) || agora();
+
+  const rows = db.prepare(`
+    SELECT sellerId,
+      COUNT(*) as chamadas,
+      SUM(atendida) as atendidas,
+      SUM(duracaoAtendida) as minutos,
+      SUM(duracaoTarifada) as minutosTarifados,
+      SUM(custoOperadora) as custo
+    FROM voice_billing_records WHERE companyId = ? AND criadoEm >= ? AND criadoEm <= ?
+    GROUP BY sellerId ORDER BY custo DESC
+  `).all(companyId, de, ate);
+
+  res.json(rows);
+});
+
+router.get("/voice/billing/por-campanha", (req, res) => {
+  const companyId = companyIdDoUsuario(req);
+  if (!companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const de = parseInt(req.query.inicio) || (agora() - 30 * 86400000);
+  const ate = parseInt(req.query.fim) || agora();
+
+  const rows = db.prepare(`
+    SELECT campaignId,
+      COUNT(*) as chamadas,
+      SUM(atendida) as atendidas,
+      SUM(duracaoAtendida) as minutos,
+      SUM(custoOperadora) as custo
+    FROM voice_billing_records WHERE companyId = ? AND criadoEm >= ? AND criadoEm <= ? AND campaignId != ''
+    GROUP BY campaignId ORDER BY custo DESC
+  `).all(companyId, de, ate);
+
+  res.json(rows);
+});
+
+// ── Limites multiempresa ────────────────────────────────────────────
+
+router.get("/voice/admin/limits/:companyId", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+  const limits = db.prepare("SELECT * FROM voice_company_limits WHERE companyId = ?").get(req.params.companyId);
+  res.json(limits || { companyId: req.params.companyId, maxCanaisSimultaneos: 2, maxChamadasDia: 500, maxMinutosMes: 10000 });
+});
+
+router.post("/voice/admin/limits", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+  const { companyId, maxCanaisSimultaneos, maxChamadasDia, maxMinutosMes,
+    prefixosBloqueados, operadoraSipId, didNumeros,
+    custoMinutoFixo, custoMinutoCelular, valorComercialMinuto } = req.body;
+  if (!companyId) return res.status(400).json({ error: "companyId obrigatório" });
+
+  const now = agora();
+  db.prepare(`
+    INSERT INTO voice_company_limits (companyId, maxCanaisSimultaneos, maxChamadasDia, maxMinutosMes,
+      prefixosBloqueados, operadoraSipId, didNumeros,
+      custoMinutoFixo, custoMinutoCelular, valorComercialMinuto, atualizadoEm)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(companyId) DO UPDATE SET
+      maxCanaisSimultaneos = COALESCE(excluded.maxCanaisSimultaneos, maxCanaisSimultaneos),
+      maxChamadasDia = COALESCE(excluded.maxChamadasDia, maxChamadasDia),
+      maxMinutosMes = COALESCE(excluded.maxMinutosMes, maxMinutosMes),
+      prefixosBloqueados = COALESCE(excluded.prefixosBloqueados, prefixosBloqueados),
+      operadoraSipId = COALESCE(excluded.operadoraSipId, operadoraSipId),
+      didNumeros = COALESCE(excluded.didNumeros, didNumeros),
+      custoMinutoFixo = COALESCE(excluded.custoMinutoFixo, custoMinutoFixo),
+      custoMinutoCelular = COALESCE(excluded.custoMinutoCelular, custoMinutoCelular),
+      valorComercialMinuto = COALESCE(excluded.valorComercialMinuto, valorComercialMinuto),
+      atualizadoEm = excluded.atualizadoEm
+  `).run(companyId,
+    maxCanaisSimultaneos ?? 2, maxChamadasDia ?? 500, maxMinutosMes ?? 10000,
+    JSON.stringify(prefixosBloqueados || ["0900", "0300"]),
+    operadoraSipId || "", JSON.stringify(didNumeros || []),
+    custoMinutoFixo ?? 0, custoMinutoCelular ?? 0, valorComercialMinuto ?? 0, now);
+
+  auditLog(companyId, req.user.id, "atualizar_limites", "voice_company_limits", companyId, req.body);
+  res.json({ ok: true });
+});
+
+// ── Controle de canais simultâneos ──────────────────────────────────
+
+router.get("/voice/channels/active", (req, res) => {
+  const companyId = companyIdDoUsuario(req);
+  if (!companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const ativos = db.prepare(`
+    SELECT COUNT(*) as canaisAtivos FROM voice_calls
+    WHERE companyId = ? AND status IN ('iniciada', 'chamando', 'em_andamento')
+  `).get(companyId);
+
+  const limits = db.prepare("SELECT maxCanaisSimultaneos FROM voice_company_limits WHERE companyId = ?").get(companyId);
+  const max = limits?.maxCanaisSimultaneos || 2;
+
+  res.json({ canaisAtivos: ativos?.canaisAtivos || 0, maxCanais: max, disponivel: (ativos?.canaisAtivos || 0) < max });
+});
+
+// ── Verificação de destino (bloqueio de prefixos, fraude) ───────────
+
+router.post("/voice/check-destination", (req, res) => {
+  const companyId = companyIdDoUsuario(req);
+  if (!companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const { telefone } = req.body;
+  if (!telefone) return res.status(400).json({ error: "telefone obrigatório" });
+
+  const limpo = telefone.replace(/\D/g, "");
+
+  // DNC
+  const dnc = db.prepare("SELECT 1 FROM voice_do_not_call WHERE companyId = ? AND telefone = ?").get(companyId, limpo);
+  if (dnc) return res.json({ permitido: false, motivo: "Número na lista DNC" });
+
+  // Prefixos bloqueados
+  const limits = db.prepare("SELECT prefixosBloqueados FROM voice_company_limits WHERE companyId = ?").get(companyId);
+  const bloqueados = JSON.parse(limits?.prefixosBloqueados || '["0900","0300"]');
+  for (const p of bloqueados) {
+    if (limpo.startsWith(p)) return res.json({ permitido: false, motivo: `Prefixo ${p} bloqueado` });
+  }
+
+  // Limite diário
+  const inicioDia = new Date(); inicioDia.setHours(0, 0, 0, 0);
+  const chamadasHoje = db.prepare(`
+    SELECT COUNT(*) as c FROM voice_calls WHERE companyId = ? AND criadoEm >= ?
+  `).get(companyId, inicioDia.getTime());
+  const maxDia = db.prepare("SELECT maxChamadasDia FROM voice_company_limits WHERE companyId = ?").get(companyId)?.maxChamadasDia || 500;
+  if ((chamadasHoje?.c || 0) >= maxDia) return res.json({ permitido: false, motivo: "Limite diário de chamadas atingido" });
+
+  // Tipo de destino
+  const tipoDestino = limpo.length >= 10 && ["6", "7", "8", "9"].includes(limpo.charAt(limpo.length >= 11 ? 2 : 1)) ? "celular" : "fixo";
+
+  res.json({ permitido: true, tipoDestino, telefone: limpo });
+});
+
+// ── Admin: listar consumo de todas as empresas ──────────────────────
+
+router.get("/voice/admin/consumo", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+
+  const de = parseInt(req.query.inicio) || (agora() - 30 * 86400000);
+  const ate = parseInt(req.query.fim) || agora();
+
+  const rows = db.prepare(`
+    SELECT br.companyId, c.nome as empresa,
+      COUNT(*) as chamadas,
+      SUM(br.atendida) as atendidas,
+      SUM(br.duracaoTarifada) as minutosTarifados,
+      SUM(br.custoOperadora) as custoOperadora
+    FROM voice_billing_records br
+    LEFT JOIN companies c ON c.id = br.companyId
+    WHERE br.criadoEm >= ? AND br.criadoEm <= ?
+    GROUP BY br.companyId ORDER BY custoOperadora DESC
+  `).all(de, ate);
+
+  res.json(rows);
+});
+
 export default router;

@@ -3176,6 +3176,51 @@ db.exec(`
     FOREIGN KEY (companyId) REFERENCES companies(id)
   );
   CREATE INDEX IF NOT EXISTS idx_voice_sess_seller ON voice_sessions(sellerId, status);
+
+  -- Limites e controle multiempresa
+  CREATE TABLE IF NOT EXISTS voice_company_limits (
+    companyId TEXT PRIMARY KEY,
+    maxCanaisSimultaneos INTEGER DEFAULT 2,
+    maxChamadasDia INTEGER DEFAULT 500,
+    maxMinutosMes INTEGER DEFAULT 10000,
+    numerosPermitidos TEXT DEFAULT '[]',
+    prefixosBloqueados TEXT DEFAULT '["0900","0300"]',
+    operadoraSipId TEXT DEFAULT '',
+    didNumeros TEXT DEFAULT '[]',
+    custoMinutoFixo REAL DEFAULT 0,
+    custoMinutoCelular REAL DEFAULT 0,
+    valorComercialMinuto REAL DEFAULT 0,
+    alertaConsumo80 INTEGER DEFAULT 1,
+    alertaConsumo100 INTEGER DEFAULT 1,
+    atualizadoEm INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  -- Contabilização detalhada por chamada (fonte: servidor Asterisk, não navegador)
+  CREATE TABLE IF NOT EXISTS voice_billing_records (
+    id TEXT PRIMARY KEY,
+    callId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    campaignId TEXT DEFAULT '',
+    sellerId TEXT DEFAULT '',
+    numeroOrigem TEXT DEFAULT '',
+    numeroDestino TEXT DEFAULT '',
+    tipoDestino TEXT DEFAULT 'celular',
+    duracaoTotal INTEGER DEFAULT 0,
+    duracaoAtendida INTEGER DEFAULT 0,
+    duracaoTarifada INTEGER DEFAULT 0,
+    custoOperadora REAL DEFAULT 0,
+    valorComercial REAL DEFAULT 0,
+    tarifacaoEventoId TEXT DEFAULT '',
+    fonte TEXT DEFAULT 'asterisk',
+    atendida INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (callId) REFERENCES voice_calls(id),
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_billing_company ON voice_billing_records(companyId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_voice_billing_call ON voice_billing_records(callId);
+  CREATE INDEX IF NOT EXISTS idx_voice_billing_seller ON voice_billing_records(sellerId, criadoEm);
 `);
 
 criarSchemaAgenda(db);
@@ -3332,6 +3377,9 @@ adicionarColuna("campaigns", "operacaoId", "TEXT DEFAULT ''");
 adicionarColuna("campaigns", "estruturaComercial", "TEXT DEFAULT 'independente'");
 adicionarColuna("campaigns", "vendaTipoRemuneracao", "TEXT DEFAULT 'fixo'");
 adicionarColuna("campaigns", "modoAcoesRemuneradas", "TEXT DEFAULT 'rapido'");
+// Rascunho persistente: etapa atual do wizard e carimbo da última edição.
+adicionarColuna("campaigns", "passoWizard", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "atualizadoEm", "INTEGER DEFAULT 0");
 
 adicionarColuna("formas_ganho", "origem", "TEXT DEFAULT 'personalizado'");
 adicionarColuna("formas_ganho", "modeloOriginalId", "TEXT DEFAULT ''");

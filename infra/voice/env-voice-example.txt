@@ -1,0 +1,33 @@
+# RYCS Voice — Variáveis de ambiente
+# Copie para .env.voice e preencha com os valores reais.
+
+# Domínio do servidor de voz (certificado TLS)
+VOICE_DOMAIN=voice.rycs.pro
+
+# IP elástico do EC2
+ELASTIC_IP=
+
+# ARI (Asterisk REST Interface)
+ASTERISK_ARI_URL=http://127.0.0.1:8088/ari
+ASTERISK_ARI_USER=rycs-voice
+ASTERISK_ARI_PASSWORD=
+ASTERISK_WS_URL=ws://127.0.0.1:8088/ari/events?app=rycs-voice
+
+# WebRTC (WSS exposto ao navegador)
+WEBRTC_WSS_URL=wss://voice.rycs.pro:8089/ws
+
+# STUN/TURN
+STUN_SERVER=stun:stun.l.google.com:19302
+TURN_SERVER=
+TURN_USER=
+TURN_PASS=
+
+# SIP Trunk (operadora)
+SIP_TRUNK_HOST=
+SIP_TRUNK_USER=
+SIP_TRUNK_PASS=
+SIP_TRUNK_PORT=5060
+
+# Backend RYCS (para callbacks do Asterisk)
+RYCS_BACKEND_URL=https://app.rycs.pro
+RYCS_BACKEND_IP=

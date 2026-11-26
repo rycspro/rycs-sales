@@ -487,4 +487,94 @@ describe("RYCS Voice — Discadora comercial", () => {
       assert.equal(r.status, 400, "SIP não está operacional");
     }
   });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // 17. Consumo detalhado (billing)
+  // ══════════════════════════════════════════════════════════════════════
+
+  it("billing resumo retorna zeros para empresa nova", async () => {
+    const r = await req("/voice/billing/resumo", { cookie: cookieEmpresa });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.totalChamadas, 0);
+  });
+
+  it("billing por profissional retorna lista", async () => {
+    const r = await req("/voice/billing/por-profissional", { cookie: cookieEmpresa });
+    assert.equal(r.status, 200);
+    assert.ok(Array.isArray(r.corpo));
+  });
+
+  it("billing por campanha retorna lista", async () => {
+    const r = await req("/voice/billing/por-campanha", { cookie: cookieEmpresa });
+    assert.equal(r.status, 200);
+    assert.ok(Array.isArray(r.corpo));
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // 18. Limites multiempresa
+  // ══════════════════════════════════════════════════════════════════════
+
+  it("admin configura limites para empresa", async () => {
+    const r = await req("/voice/admin/limits", {
+      body: { companyId: realCompanyId, maxCanaisSimultaneos: 5, maxChamadasDia: 200, maxMinutosMes: 5000 },
+      cookie: cookieAdmin,
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.ok, true);
+  });
+
+  it("admin lê limites da empresa", async () => {
+    const r = await req(`/voice/admin/limits/${realCompanyId}`, { cookie: cookieAdmin });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.maxCanaisSimultaneos, 5);
+    assert.equal(r.corpo.maxChamadasDia, 200);
+    assert.equal(r.corpo.maxMinutosMes, 5000);
+  });
+
+  it("empresa vê canais ativos e limite", async () => {
+    const r = await req("/voice/channels/active", { cookie: cookieEmpresa });
+    assert.equal(r.status, 200);
+    assert.ok("canaisAtivos" in r.corpo);
+    assert.ok("maxCanais" in r.corpo);
+    assert.ok("disponivel" in r.corpo);
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // 19. Verificação de destino (bloqueio, fraude)
+  // ══════════════════════════════════════════════════════════════════════
+
+  it("verifica destino válido", async () => {
+    const r = await req("/voice/check-destination", {
+      body: { telefone: "11999001001" },
+      cookie: cookieEmpresa,
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.permitido, true);
+    assert.ok(r.corpo.tipoDestino);
+  });
+
+  it("bloqueia prefixo 0900", async () => {
+    const r = await req("/voice/check-destination", {
+      body: { telefone: "09001234567" },
+      cookie: cookieEmpresa,
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.corpo.permitido, false);
+    assert.ok(r.corpo.motivo.includes("0900"));
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // 20. Admin: consumo geral
+  // ══════════════════════════════════════════════════════════════════════
+
+  it("admin vê consumo de todas empresas", async () => {
+    const r = await req("/voice/admin/consumo", { cookie: cookieAdmin });
+    assert.equal(r.status, 200);
+    assert.ok(Array.isArray(r.corpo));
+  });
+
+  it("vendedor não acessa admin/consumo", async () => {
+    const r = await req("/voice/admin/consumo", { cookie: cookieVendedor });
+    assert.equal(r.status, 403);
+  });
 });
