@@ -1076,9 +1076,8 @@ const SELECAO_LEADS_TIPOS = [
   { id: "importar", label: "Importar", icon: Upload, desc: "Importe uma base de leads externa" },
 ];
 const DISTRIBUICAO_LEADS = [
-  { id: "fila", label: "Fila compartilhada", desc: "Profissionais solicitam o próximo lead disponível" },
-  { id: "automatica", label: "Automática", desc: "Sistema distribui equitativamente" },
-  { id: "manual", label: "Manual", desc: "Gestor atribui leads manualmente" },
+  { id: "automatica", label: "Automática", desc: "A RYCS gerencia e distribui leads automaticamente" },
+  { id: "manual", label: "Manual", desc: "Gestor define limites, prazos e atribui leads manualmente" },
 ];
 
 function LeadsCampanha({ campanha, profissionais, onRecarregar }) {
@@ -1105,7 +1104,7 @@ function LeadsCampanha({ campanha, profissionais, onRecarregar }) {
   }, [leads]);
 
   const selecaoTipo = campanha.selecaoLeadsTipo || "toda_base";
-  const distribuicao = campanha.distribuicaoLeads || "fila";
+  const distribuicao = (campanha.distribuicaoLeads === "fila" ? "automatica" : campanha.distribuicaoLeads) || "automatica";
 
   return (
     <div className="vx-fade">
@@ -1137,12 +1136,12 @@ function LeadsCampanha({ campanha, profissionais, onRecarregar }) {
           <div className="vx-label" style={{ marginBottom: 6 }}>Distribuição</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Shuffle size={16} color="var(--brand)" />
-            <div><b style={{ fontSize: 13 }}>{DISTRIBUICAO_LEADS.find((d) => d.id === distribuicao)?.label || "Fila"}</b><div className="vx-mut" style={{ fontSize: 11 }}>{DISTRIBUICAO_LEADS.find((d) => d.id === distribuicao)?.desc || ""}</div></div>
+            <div><b style={{ fontSize: 13 }}>{DISTRIBUICAO_LEADS.find((d) => d.id === distribuicao)?.label || "Automática"}</b><div className="vx-mut" style={{ fontSize: 11 }}>{DISTRIBUICAO_LEADS.find((d) => d.id === distribuicao)?.desc || ""}</div></div>
           </div>
         </div>
       </div>
 
-      {(campanha.limiteLeadsSimultaneos || campanha.limiteLeadsDia || campanha.prazoContatoHoras || campanha.prazoInatividadeHoras) && (
+      {distribuicao === "manual" && (campanha.limiteLeadsSimultaneos || campanha.limiteLeadsDia || campanha.prazoContatoHoras || campanha.prazoInatividadeHoras) && (
         <div className="vx-card" style={{ padding: 16, marginBottom: 16 }}>
           <div className="vx-label" style={{ marginBottom: 10 }}>Regras de distribuição</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, fontSize: 13 }}>

@@ -266,6 +266,14 @@ router.post("/campaigns", (req, res) => {
     for (const k of v2Plain) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k]); } }
     for (const k of v2Bool) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k] ? 1 : 0); } }
     for (const k of v2Json) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(JSON.stringify(req.body[k])); } }
+    // Distribuição automática: aplica defaults operacionais seguros.
+    if ((req.body.distribuicaoLeads || "automatica") === "automatica") {
+      for (const [k, v] of [["limiteLeadsSimultaneos", 5], ["limiteLeadsDia", 10], ["prazoContatoHoras", 4], ["prazoInatividadeHoras", 48]]) {
+        const idx = v2Sets.findIndex((s) => s.startsWith(k + " ="));
+        if (idx !== -1) { v2Vals[idx] = v; } else { v2Sets.push(`${k} = ?`); v2Vals.push(v); }
+      }
+    }
+
     if (v2Sets.length) {
       v2Vals.push(id);
       db.prepare(`UPDATE campaigns SET ${v2Sets.join(", ")} WHERE id = ?`).run(...v2Vals);
@@ -316,6 +324,22 @@ router.patch("/campaigns/:id", (req, res) => {
     sets.push("paisesAceitos = ?"); vals.push(JSON.stringify(sanearPaisesAceitos(lista, paisEmpresa, alc)));
   }
   if (!sets.length) return res.status(400).json({ error: "Nenhum campo válido" });
+
+  // Migra "fila" para "automatica" (opção removida do frontend).
+  if (req.body.distribuicaoLeads === "fila") {
+    const idx = sets.findIndex((s) => s.startsWith("distribuicaoLeads ="));
+    if (idx !== -1) vals[idx] = "automatica";
+  }
+
+  // Distribuição automática: o backend define parâmetros operacionais seguros.
+  const dist = (req.body.distribuicaoLeads === "fila" ? "automatica" : req.body.distribuicaoLeads) || campaign.distribuicaoLeads;
+  if (dist === "automatica") {
+    for (const [k, v] of [["limiteLeadsSimultaneos", 5], ["limiteLeadsDia", 10], ["prazoContatoHoras", 4], ["prazoInatividadeHoras", 48]]) {
+      const idx = sets.findIndex((s) => s.startsWith(k + " ="));
+      if (idx !== -1) { vals[idx] = v; } else { sets.push(`${k} = ?`); vals.push(v); }
+    }
+  }
+
   // Toda atualização carimba a última edição — alimenta o "última edição" do
   // card de rascunho e o indicador de salvamento automático.
   sets.push("atualizadoEm = ?"); vals.push(agora());

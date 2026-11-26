@@ -95,13 +95,13 @@ function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }
       style={{
         padding: "14px 16px", cursor: disabled ? "not-allowed" : "pointer", textAlign: "left", width: "100%",
         border: `1.5px solid ${selected ? "var(--brand)" : "var(--border)"}`,
-        background: selected ? "var(--brand-50)" : "var(--surface)",
+        background: selected ? "var(--brand-100)" : "var(--surface)",
         opacity: disabled ? 0.5 : 1,
         transition: "border-color .15s, background .15s",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {Icon && <Icon size={18} color={selected ? "#318CE7" : "var(--text-2)"} />}
+        {Icon && <Icon size={18} color={selected ? "#318CE7" : "var(--muted, #6b7280)"} />}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: "var(--ink, #171717)" }}>{title}</div>
           {subtitle && <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{subtitle}</div>}
@@ -137,6 +137,66 @@ function ChipToggle({ items, value, onChange, multi = false }) {
           {item.nome || item.label || item.id}
         </button>
       ))}
+    </div>
+  );
+}
+
+function LeadsSelectorInline({ campanha, set, rascunhoId }) {
+  const [leads, setLeads] = useState([]);
+  const [carregando, setCarregando] = useState(false);
+  const [busca, setBusca] = useState("");
+  const selecionados = campanha.leadsSelecionados || [];
+
+  useEffect(() => {
+    let cancelado = false;
+    setCarregando(true);
+    api("/leads").then((r) => {
+      if (!cancelado && Array.isArray(r)) setLeads(r);
+      setCarregando(false);
+    }).catch(() => setCarregando(false));
+    return () => { cancelado = true; };
+  }, []);
+
+  const toggle = (id) => {
+    const novos = selecionados.includes(id) ? selecionados.filter((x) => x !== id) : [...selecionados, id];
+    set("leadsSelecionados", novos);
+  };
+
+  const filtrados = leads.filter((l) => {
+    if (!busca.trim()) return true;
+    const t = busca.toLowerCase();
+    return (l.nome || "").toLowerCase().includes(t) || (l.empresa || "").toLowerCase().includes(t) || (l.telefone || "").includes(t) || (l.email || "").toLowerCase().includes(t);
+  });
+
+  if (!leads.length && !carregando) return null;
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div className="vx-label" style={{ marginBottom: 6 }}>Vincular leads da empresa</div>
+      <div style={{ position: "relative", marginBottom: 8 }}>
+        <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-2)" }} />
+        <input className="vx-input" placeholder="Buscar por nome, empresa, telefone ou e-mail…" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ paddingLeft: 30, fontSize: 13 }} />
+      </div>
+      {carregando ? (
+        <div className="vx-mut" style={{ fontSize: 12, padding: 8 }}><Loader size={13} style={{ animation: "spin 1s linear infinite", marginRight: 6 }} />Carregando leads…</div>
+      ) : (
+        <>
+          {selecionados.length > 0 && <div className="vx-mut" style={{ fontSize: 12, marginBottom: 6 }}>{selecionados.length} lead(s) selecionado(s)</div>}
+          <div style={{ maxHeight: 220, overflowY: "auto", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)" }}>
+            {filtrados.length === 0 ? (
+              <div className="vx-mut" style={{ fontSize: 12, padding: 12, textAlign: "center" }}>Nenhum lead encontrado</div>
+            ) : filtrados.map((l) => (
+              <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
+                <input type="checkbox" checked={selecionados.includes(l.id)} onChange={() => toggle(l.id)} style={{ accentColor: "var(--brand)" }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 500 }}>{l.nome || "Sem nome"}</div>
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>{[l.empresa, l.telefone, l.email].filter(Boolean).join(" · ")}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -298,6 +358,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       restricaoGeo: "nenhuma",
       origemLeads: "",
       mercado: "pais_todo",
+      distribuicaoLeads: "automatica",
       canais: [],
       nivelExperiencia: "indiferente",
       idiomasExigidos: [],
@@ -323,7 +384,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   };
 
   const receberCampanhaDoJarvas = (chaveObjetivo, campanhaMontada) => {
-    setCampanha({ ...campanhaMontada, objetivoUI: "", modeloTrabalho: "remoto", restricaoGeo: "nenhuma", origemLeads: "", mercado: "pais_todo", canais: [], nivelExperiencia: "indiferente", processoAdmissao: "manual", visibilidade: "publica", temComissao: false, remuneracaoCumulativa: true, acoesAtivas: Object.keys(campanhaMontada.tarefas || {}) });
+    setCampanha({ ...campanhaMontada, objetivoUI: "", modeloTrabalho: "remoto", restricaoGeo: "nenhuma", origemLeads: "", mercado: "pais_todo", distribuicaoLeads: "automatica", canais: [], nivelExperiencia: "indiferente", processoAdmissao: "manual", visibilidade: "publica", temComissao: false, remuneracaoCumulativa: true, acoesAtivas: Object.keys(campanhaMontada.tarefas || {}) });
     setExplicacao("");
     setPasso(1);
   };
@@ -401,6 +462,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       await fetch(`${API_URL}/api/campaigns/${id}/materiais`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ materiais: payload2 }), credentials: "include",
+      });
+    }
+    const leadIds = c.leadsSelecionados || [];
+    if (leadIds.length) {
+      await fetch(`${API_URL}/api/campaigns/${id}/leads`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadIds }), credentials: "include",
       });
     }
   };
@@ -901,25 +969,26 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div style={{ marginTop: 14, padding: "14px 16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
                 <b style={{ fontSize: 13, color: "var(--brand)" }}>Distribuição dos leads</b>
                 <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-                  <CardOption selected={campanha.distribuicaoLeads === "fila"} onClick={() => set("distribuicaoLeads", "fila")} title="Fila compartilhada" subtitle="Profissionais solicitam o próximo lead disponível." />
-                  <CardOption selected={campanha.distribuicaoLeads === "automatica"} onClick={() => set("distribuicaoLeads", "automatica")} title="Distribuição automática" subtitle="O sistema distribui os contatos entre os profissionais elegíveis." />
-                  <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} title="Distribuição manual" subtitle="A empresa escolhe quais contatos atribuir a cada profissional." />
+                  <CardOption selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"} onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }} icon={Zap} title="Distribuição automática (recomendado)" subtitle="A RYCS gerencia e distribui seus leads automaticamente entre os profissionais disponíveis." />
+                  <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} icon={SlidersHorizontal} title="Distribuição manual" subtitle="Você define limites, prazos e atribui contatos manualmente." />
                 </div>
-                <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-                  <label><div className="vx-label">Leads simultâneos por profissional</div>
-                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsSimultaneos || 0}
-                      onChange={(e) => set("limiteLeadsSimultaneos", Number(e.target.value))} placeholder="0 = sem limite" /></label>
-                  <label><div className="vx-label">Novos leads por dia</div>
-                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsDia || 0}
-                      onChange={(e) => set("limiteLeadsDia", Number(e.target.value))} placeholder="0 = sem limite" /></label>
-                  <label><div className="vx-label">Prazo primeiro contato (horas)</div>
-                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoContatoHoras || 0}
-                      onChange={(e) => set("prazoContatoHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
-                  <label><div className="vx-label">Prazo inatividade (horas)</div>
-                    <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoInatividadeHoras || 0}
-                      onChange={(e) => set("prazoInatividadeHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
-                </div>
-                <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8 }}>Após salvar, acesse a aba Leads para vincular os contatos da base.</div>
+                {campanha.distribuicaoLeads === "manual" && (
+                  <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
+                    <label><div className="vx-label">Leads simultâneos por profissional</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsSimultaneos || 0}
+                        onChange={(e) => set("limiteLeadsSimultaneos", Number(e.target.value))} placeholder="0 = sem limite" /></label>
+                    <label><div className="vx-label">Novos leads por dia</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsDia || 0}
+                        onChange={(e) => set("limiteLeadsDia", Number(e.target.value))} placeholder="0 = sem limite" /></label>
+                    <label><div className="vx-label">Prazo primeiro contato (horas)</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoContatoHoras || 0}
+                        onChange={(e) => set("prazoContatoHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
+                    <label><div className="vx-label">Prazo inatividade (horas)</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoInatividadeHoras || 0}
+                        onChange={(e) => set("prazoInatividadeHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
+                  </div>
+                )}
+                <LeadsSelectorInline campanha={campanha} set={set} rascunhoId={rascunhoIdRef.current} />
               </div>
             )}
           </div>
