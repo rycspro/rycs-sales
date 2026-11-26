@@ -329,7 +329,7 @@ export default function LojaLeads({ aviso, role: roleProp }) {
 
   const precoUnitario = precos.length > 0 ? precos[0].valorUnitario : 0;
   const totalLeads = consumo?.totalRevelados || ciclo?.totalContatos || 0;
-  const totalListas = listas.length;
+  const totalListas = pastas.length;
   const consumoValor = ciclo?.valorTotal || 0;
   const proxCobranca = ciclo?.fim ? new Date(ciclo.fim).toLocaleDateString("pt-BR") : "—";
 
@@ -425,10 +425,18 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
     return [...new Set(todas)].sort();
   }, [estados]);
   const valorEstimado = quantidade * precoUnitario;
-  const listaFinal = destino === "new" ? nomeLista : (listas.find((l) => String(l.id) === listaExistente)?.nome || "");
   const regiao = cidades.length
     ? `${cidades.join(", ")}, ${estados.join(", ")}`
     : estados.length ? estados.join(", ") : pais;
+  const destinoLabel = (() => {
+    if (destino === "existing") {
+      const l = listas.find((x) => String(x.id) === String(listaExistente));
+      return l ? `${l.pastaNome} › ${l.nome}` : "A definir";
+    }
+    const pastaNome = pastas.find((p) => p.id === pastaSel)?.nome || "—";
+    const nome = nomeLista.trim() || `${(segmento || "leads").trim()} — ${regiao || pais}`;
+    return `${pastaNome} › ${nome}`;
+  })();
   const podeEnviar = campos.size > 0 && segmento.trim();
 
   const toggleCampo = (c) => setCampos((prev) => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n; });
@@ -634,7 +642,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
               ["Localização", regiao ? `${regiao}, ${pais}` : pais],
               ["Quantidade", `${quantidade} leads`],
               ["Informações", `${campos.size} campos`],
-              ["Lista", listaFinal || "A definir"],
+              ["Destino", destinoLabel || "A definir"],
               ["Valor estimado", money(valorEstimado)],
             ].map(([k, v]) => (
               <div key={k} className="vx-row" style={{ fontSize: 13, marginBottom: 10 }}>
