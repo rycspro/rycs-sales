@@ -3,6 +3,15 @@ name: Setup Evolution API
 # Workflow manual para configurar a Evolution API no EC2.
 # NÃO roda automaticamente. Requer ação manual via GitHub Actions.
 # NÃO altera o container principal da RYCS nem a integração da Meta.
+#
+# Ações:
+#   preflight - só inspeciona o servidor (RAM, disco, CPU, rede). Não muda nada.
+#   setup     - sobe/atualiza a stack (Postgres + Redis + Evolution API).
+#   restart   - reinicia o container da Evolution API.
+#   stop      - para a Evolution API (Postgres e Redis continuam).
+#   down      - para e remove os 3 containers (volumes/dados são preservados).
+#   logs      - últimas 60 linhas de log da Evolution API.
+#   status    - estado dos containers, health check e webhook.
 
 on:
   workflow_dispatch:
@@ -12,11 +21,18 @@ on:
         required: true
         type: choice
         options:
+          - preflight
           - setup
           - restart
           - stop
+          - down
           - logs
           - status
+      branch:
+        description: "Branch de onde buscar o script (homologação antes do merge)"
+        required: false
+        default: "main"
+        type: string
 
 concurrency:
   group: evolution-setup
@@ -26,8 +42,6 @@ jobs:
   evolution:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
       - name: Executar no EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -35,17 +49,57 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           timeout: 30s
-          command_timeout: 10m
+          command_timeout: 15m
           script: |
             set -e
             ACAO="${{ inputs.acao }}"
+            BRANCH="${{ inputs.branch }}"
             CN="rycs-evolution-api"
+            PG="rycs-evolution-postgres"
+            RD="rycs-evolution-redis"
 
             case "$ACAO" in
+              preflight)
+                echo "═══════════ PREFLIGHT (somente leitura) ═══════════"
+                echo "### Sistema"
+                echo "- Uptime: $(uptime | sed 's/^ *//')"
+                echo "- CPUs: $(nproc)"
+                echo ""
+                echo "### Memória"
+                free -h
+                echo ""
+                echo "### Disco (/)"
+                df -h / /data 2>/dev/null || df -h /
+                echo ""
+                echo "### Docker"
+                docker version --format 'Client {{.Client.Version}} / Server {{.Server.Version}}' 2>/dev/null || docker --version
+                echo ""
+                echo "### Containers em execução"
+                docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+                echo ""
+                echo "### Uso de recursos dos containers"
+                docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}" 2>/dev/null || echo "(stats indisponível)"
+                echo ""
+                echo "### Redes Docker"
+                docker network ls
+                echo ""
+                echo "### Rede do rycs-app"
+                docker inspect rycs-app --format 'Networks: {{range $k,$v := .NetworkSettings.Networks}}{{$k}}(gw {{$v.Gateway}}) {{end}}' 2>/dev/null || echo "(rycs-app não encontrado)"
+                echo ""
+                echo "### Porta 8080 (deve estar livre ou só em localhost)"
+                ss -tlnp 2>/dev/null | grep ":8080" || echo "8080 livre"
+                echo ""
+                echo "### Chaves Evolution já presentes no env (nomes, sem valores)"
+                grep -oE "^EVOLUTION_[A-Z_]+=" /home/ec2-user/env_producao.txt 2>/dev/null | sed 's/=$//' || echo "(nenhuma)"
+                echo ""
+                echo "### Imagem evoapicloud/evolution-api:v2.2.3 disponível?"
+                docker manifest inspect evoapicloud/evolution-api:v2.2.3 >/dev/null 2>&1 && echo "OK - imagem existe no registry" || echo "AVISO - não foi possível confirmar o manifest"
+                echo "═══════════ FIM DO PREFLIGHT ═══════════"
+                ;;
               setup)
                 cd /home/ec2-user/rycs-sales
-                git fetch origin main
-                git checkout origin/main -- scripts/setup-evolution.sh
+                git fetch origin "$BRANCH"
+                git checkout "origin/$BRANCH" -- scripts/setup-evolution.sh
                 chmod +x scripts/setup-evolution.sh
                 bash scripts/setup-evolution.sh
                 ;;
@@ -55,27 +109,33 @@ jobs:
                 ;;
               stop)
                 docker stop "$CN"
-                echo "Evolution API parada."
+                echo "Evolution API parada (Postgres e Redis continuam)."
+                ;;
+              down)
+                docker stop "$CN" "$RD" "$PG" 2>/dev/null || true
+                docker rm "$CN" "$RD" "$PG" 2>/dev/null || true
+                echo "Containers removidos. Volumes/dados preservados."
                 ;;
               logs)
-                docker logs --tail=50 "$CN" 2>&1
+                docker logs --tail=60 "$CN" 2>&1
                 ;;
               status)
-                echo "=== Evolution API ==="
-                docker ps --filter name="$CN" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Container não encontrado"
+                # A Evolution é publicada no IP interno do docker0 (não em localhost).
+                HOST_IP=$(ip -4 addr show docker0 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1 || echo "172.17.0.1")
+                echo "=== Containers ==="
+                docker ps --filter name="$CN" --filter name="$PG" --filter name="$RD" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Nenhum encontrado"
                 echo ""
-                echo "=== Health check ==="
-                curl -sf http://localhost:8080/ && echo "OK" || echo "Não respondendo"
+                echo "=== Health check Evolution ($HOST_IP:8080) ==="
+                curl -sf "http://${HOST_IP}:8080/" >/dev/null 2>&1 && echo "OK - respondendo" || echo "Não respondendo"
                 echo ""
-                echo "=== Backend webhook ==="
-                EVO_KEY=$(grep "^EVOLUTION_API_KEY=" /home/ec2-user/env_producao.txt 2>/dev/null | cut -d= -f2- || echo "")
-                curl -sf -o /dev/null -w "HTTP %{http_code}" -X POST \
-                  -H "Content-Type: application/json" \
-                  -H "apikey: $EVO_KEY" \
-                  -d '{"event":"test","instance":"status-check","data":{}}' \
-                  http://localhost:3001/api/webhooks/evolution || echo "Webhook falhou"
+                echo "=== Postgres ==="
+                docker exec "$PG" pg_isready -U evolution 2>/dev/null || echo "Postgres não respondendo"
                 echo ""
-                echo "=== Porta 8080 ==="
-                ss -tlnp | grep ":8080" || echo "Nenhum listener na 8080"
+                echo "=== Redis ==="
+                docker exec "$RD" redis-cli ping 2>/dev/null || echo "Redis não respondendo"
+                echo ""
+                echo "=== Porta 8080 pública? ==="
+                # 127.0.0.1 e o IP do docker0 são internos; só alarma se escutar em outra interface.
+                ss -tlnp 2>/dev/null | grep ":8080" | grep -vE "127.0.0.1|${HOST_IP}" && echo "ALERTA: 8080 exposta publicamente!" || echo "OK - 8080 só em interface interna (não pública)"
                 ;;
             esac
