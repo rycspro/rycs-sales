@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, Filter, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch, apiDelete } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -411,6 +411,15 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
   const [vista, setVista] = useState(() => (lerJson(VISTA_KEY, "grade") === "lista" ? "lista" : "grade"));
   const [operacoes, setOperacoes] = useState([]);
   const [verOperacoes, setVerOperacoes] = useState(false);
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const filtrosRef = useRef(null);
+
+  useEffect(() => {
+    if (!filtrosAbertos) return;
+    const fechar = (e) => { if (filtrosRef.current && !filtrosRef.current.contains(e.target)) setFiltrosAbertos(false); };
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, [filtrosAbertos]);
 
   useEffect(() => {
     api("/operacoes").then((r) => { if (Array.isArray(r)) setOperacoes(r); }).catch(() => {});
@@ -545,6 +554,85 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
               style={{ paddingLeft: 34, width: "100%", height: "auto", padding: "9px 12px 9px 34px" }} />
           </div>
           {filtroBar}
+          <div ref={filtrosRef} style={{ position: "relative" }}>
+            <button type="button" className="vx-btn" onClick={() => setFiltrosAbertos((v) => !v)}
+              style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+                borderColor: (filtro || filtroModelo || filtroFuncao) ? "var(--brand)" : undefined,
+                color: (filtro || filtroModelo || filtroFuncao) ? "var(--brand)" : undefined }}>
+              <Filter size={14} /> Filtros
+              {(filtro || filtroModelo || filtroFuncao) && (
+                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: "var(--brand)", color: "#fff" }}>
+                  {[filtro, filtroModelo, filtroFuncao].filter(Boolean).length}
+                </span>
+              )}
+              <ChevronDown size={13} style={{ transform: filtrosAbertos ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+            </button>
+            {filtrosAbertos && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 50,
+                background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12,
+                padding: "14px 16px", minWidth: 320, boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+                display: "flex", flexDirection: "column", gap: 10 }}>
+                {/* Status */}
+                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Status</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {pills.map(([key, label]) => {
+                    const on = filtro === key;
+                    const total = key ? counts[key] : (arquivadas ? counts["encerrada"] + counts["cancelada"] : campanhas.length - counts["encerrada"] - counts["cancelada"]);
+                    return (
+                      <button key={key || "todas"} onClick={() => setFiltro(key)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
+                          padding: "5px 12px", borderRadius: 20, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                          background: on ? "var(--brand)" : "#fff", cursor: "pointer",
+                          fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? "#fff" : "var(--ink)", transition: "all .15s" }}>
+                        {label}{total > 0 && <span style={{ fontSize: 11, opacity: on ? 0.85 : 0.6 }}>{total}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Modelo + função */}
+                {(filtroModelo || filtroFuncao || campanhas.some((c) => c.modeloTrabalho)) && (<>
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Modelo & Função</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {FILTROS_MODELO.map(([key, label]) => {
+                        const on = filtroModelo === key;
+                        return (
+                          <button key={`m-${key || "all"}`} onClick={() => setFiltroModelo(key)}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                              padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                              background: on ? "var(--brand-50)" : "#fff", cursor: "pointer",
+                              fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--ink)" : "var(--muted)", transition: "all .15s" }}>
+                            {key && (MODELO_ICON[key] ? (() => { const Ic = MODELO_ICON[key]; return <Ic size={11} />; })() : null)}
+                            {label}
+                          </button>
+                        );
+                      })}
+                      <span style={{ width: 1, height: 20, background: "var(--border)", margin: "0 4px", alignSelf: "center" }} />
+                      {FILTROS_FUNCAO.map(([key, label]) => {
+                        const on = filtroFuncao === key;
+                        return (
+                          <button key={`f-${key || "all"}`} onClick={() => setFiltroFuncao(key)}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                              padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                              background: on ? "var(--brand-50)" : "#fff", cursor: "pointer",
+                              fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--ink)" : "var(--muted)", transition: "all .15s" }}>
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>)}
+                {/* Limpar filtros */}
+                {(filtro || filtroModelo || filtroFuncao) && (
+                  <button type="button" onClick={() => { setFiltro(""); setFiltroModelo(""); setFiltroFuncao(""); }}
+                    style={{ alignSelf: "flex-start", fontSize: 12, color: "var(--brand)", background: "none", border: "none", cursor: "pointer", padding: "4px 0", fontWeight: 500 }}>
+                    Limpar filtros
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           <button type="button" className="vx-btn" aria-pressed={arquivadas}
             style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", borderColor: arquivadas ? "var(--brand)" : undefined, color: arquivadas ? "var(--brand)" : undefined }}
             onClick={() => { setArquivadas((v) => !v); setFiltro(""); }}>
@@ -563,58 +651,6 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
         </div>
       )}
 
-      {/* Filtros unificados */}
-      {campanhas.length > 0 && (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* Status */}
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
-            {pills.map(([key, label]) => {
-              const on = filtro === key;
-              const total = key ? counts[key] : (arquivadas ? counts["encerrada"] + counts["cancelada"] : campanhas.length - counts["encerrada"] - counts["cancelada"]);
-              return (
-                <button key={key || "todas"} onClick={() => setFiltro(key)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
-                    padding: "5px 12px", borderRadius: 20, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
-                    background: on ? "var(--brand)" : "#fff", cursor: "pointer",
-                    fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? "#fff" : "var(--ink)", transition: "all .15s" }}>
-                  {label}{total > 0 && <span style={{ fontSize: 11, opacity: on ? 0.85 : 0.6 }}>{total}</span>}
-                </button>
-              );
-            })}
-          </div>
-          {/* Modelo de trabalho + função */}
-          {(filtroModelo || filtroFuncao || campanhas.some((c) => c.modeloTrabalho)) && (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-              {FILTROS_MODELO.map(([key, label]) => {
-                const on = filtroModelo === key;
-                return (
-                  <button key={`m-${key || "all"}`} onClick={() => setFiltroModelo(key)}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
-                      padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
-                      background: on ? "var(--brand-50)" : "#fff", cursor: "pointer",
-                      fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--ink)" : "var(--muted)", transition: "all .15s" }}>
-                    {key && (MODELO_ICON[key] ? (() => { const Ic = MODELO_ICON[key]; return <Ic size={11} />; })() : null)}
-                    {label}
-                  </button>
-                );
-              })}
-              <span style={{ width: 1, height: 20, background: "var(--border)", margin: "0 4px", alignSelf: "center" }} />
-              {FILTROS_FUNCAO.map(([key, label]) => {
-                const on = filtroFuncao === key;
-                return (
-                  <button key={`f-${key || "all"}`} onClick={() => setFiltroFuncao(key)}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
-                      padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
-                      background: on ? "var(--brand-50)" : "#fff", cursor: "pointer",
-                      fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--ink)" : "var(--muted)", transition: "all .15s" }}>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Estado vazio — nenhuma campanha criada */}
       {campanhas.length === 0 && (
