@@ -158,6 +158,8 @@ const CIDADES_POR_ESTADO = {
   "Tocantins": ["Palmas", "Araguaína", "Gurupi", "Porto Nacional"],
 };
 
+const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
 /* ── ComboBox: input com sugestões filtrando por digitação ────────────── */
 function ComboBox({ value, onChange, options, placeholder, label }) {
   const [aberto, setAberto] = useState(false);
@@ -173,9 +175,9 @@ function ComboBox({ value, onChange, options, placeholder, label }) {
   }, []);
 
   const filtradas = useMemo(() => {
-    const t = texto.toLowerCase().trim();
+    const t = norm(texto.trim());
     if (!t) return options;
-    return options.filter((o) => o.toLowerCase().includes(t));
+    return options.filter((o) => norm(o).includes(t));
   }, [texto, options]);
 
   const selecionar = (v) => { setTexto(v); onChange(v); setAberto(false); };
