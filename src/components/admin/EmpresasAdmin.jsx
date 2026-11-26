@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, Plus, CreditCard, Zap, Phone } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Plus, CreditCard, Zap, Phone, Pencil, Sparkles } from "lucide-react";
 import { money, dataCurta, agora } from "../../lib/utils.js";
 import { Medidor, Excluir } from "../ui.jsx";
 import { apiPatch, api } from "../../lib/api.js";
 import { takeRateDoPlano } from "../../../shared/planos.js";
+import { SEGMENTOS, nichosPorSegmento, inferirSegmentoEmpresa, rotuloDoSegmento, rotuloSegmentoEmpresa } from "../../../shared/segmentos.js";
+import { PAISES } from "../../../shared/paises.js";
 import { DossieEmpresa } from "./Dossie.jsx";
 import CobrancaEmpresa from "./CobrancaEmpresa.jsx";
 
@@ -136,6 +138,103 @@ function PainelPagamento({ empresa, aviso, onClose }) {
   );
 }
 
+// Dados que o profissional vê no card da empresa. O segmento pode ser
+// deduzido do próprio cadastro (nome, produto, descrição) com um clique.
+const CAMPOS_EDITAVEIS = ["nome", "segmento", "nicho", "produto", "descricaoInstitucional", "pais", "emailEmpresa", "telefoneEmpresa"];
+
+function ModalEditarEmpresa({ empresa, aviso, onClose, onSalva }) {
+  const [inicial] = useState(() => Object.fromEntries(CAMPOS_EDITAVEIS.map((k) => [k, empresa[k] ?? ""])));
+  const [form, setForm] = useState(inicial);
+  const [salvando, setSalvando] = useState(false);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const setSegmento = (e) => {
+    const segmento = e.target.value;
+    setForm((f) => ({ ...f, segmento, nicho: nichosPorSegmento(segmento).includes(f.nicho) ? f.nicho : "" }));
+  };
+
+  const nichos = nichosPorSegmento(form.segmento);
+  const opcoesNicho = form.nicho && !nichos.includes(form.nicho) ? [form.nicho, ...nichos] : nichos;
+  const segmentoForaDoCatalogo = form.segmento && !SEGMENTOS.some((s) => s.valor === form.segmento);
+  const id = (k) => `editar-empresa-${k}`;
+
+  const preencherAuto = () => {
+    const inferido = inferirSegmentoEmpresa({ ...empresa, ...form });
+    if (!inferido) return aviso("Não deu para identificar o segmento pelo nome e pela descrição. Escolha na lista.");
+    setForm((f) => ({ ...f, segmento: inferido.segmento, nicho: inferido.nicho || "" }));
+    aviso(`Segmento sugerido: ${inferido.nicho || rotuloDoSegmento(inferido.segmento)}. Confira e salve.`);
+  };
+
+  const salvar = async () => {
+    if (!String(form.nome).trim()) return aviso("Informe o nome da empresa.");
+    const mudou = Object.fromEntries(CAMPOS_EDITAVEIS
+      .filter((k) => String(form[k] ?? "") !== String(inicial[k] ?? ""))
+      .map((k) => [k, String(form[k] ?? "").trim()]));
+    if (!Object.keys(mudou).length) return onClose();
+    setSalvando(true);
+    const r = await apiPatch(`/companies/${empresa.id}`, mudou);
+    setSalvando(false);
+    if (!r?.ok) return aviso(r?.error || "Não foi possível salvar os dados da empresa.");
+    onSalva({ ...mudou, ...(r.segmento ? { segmento: r.segmento, nicho: r.nicho } : {}) });
+    aviso("Dados da empresa atualizados.");
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+      <div className="vx-card" role="dialog" aria-modal="true" aria-labelledby={id("titulo")} style={{ width: "min(560px,95vw)", padding: 24, maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}><Pencil size={16} color="var(--brand)" /><b id={id("titulo")} style={{ fontSize: 15 }}>Editar · {empresa.nome}</b></div>
+          <button className="vx-btn vx-btn-sm" onClick={onClose} aria-label="Fechar">✕</button>
+        </div>
+        <div className="vx-grid" style={{ gap: 10 }}>
+          <div><label className="vx-label" htmlFor={id("nome")}>Nome da empresa *</label><input id={id("nome")} className="vx-input" value={form.nome} onChange={set("nome")} /></div>
+
+          <div className="vx-row" style={{ alignItems: "center", gap: 8 }}>
+            <b style={{ fontSize: 13 }}>Segmento</b>
+            <button type="button" className="vx-btn vx-btn-sm" onClick={preencherAuto} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <Sparkles size={13} /> Preencher automaticamente
+            </button>
+          </div>
+          <div className="vx-grid vx-g2">
+            <div><label className="vx-label" htmlFor={id("segmento")}>Segmento</label>
+              <select id={id("segmento")} className="vx-input" value={form.segmento} onChange={setSegmento}>
+                <option value="">Não informado</option>
+                {segmentoForaDoCatalogo && <option value={form.segmento}>{form.segmento}</option>}
+                {SEGMENTOS.map((s) => <option key={s.valor} value={s.valor}>{s.label}</option>)}
+              </select>
+            </div>
+            <div><label className="vx-label" htmlFor={id("nicho")}>Nicho (aparece no card)</label>
+              <select id={id("nicho")} className="vx-input" value={form.nicho} onChange={set("nicho")} disabled={!opcoesNicho.length}>
+                <option value="">{opcoesNicho.length ? "Sem nicho (mostra o segmento)" : "Escolha um segmento"}</option>
+                {opcoesNicho.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div><label className="vx-label" htmlFor={id("produto")}>Produto / serviço</label><input id={id("produto")} className="vx-input" value={form.produto} onChange={set("produto")} /></div>
+          <div><label className="vx-label" htmlFor={id("descricao")}>Descrição institucional</label>
+            <textarea id={id("descricao")} className="vx-input" rows={3} value={form.descricaoInstitucional} onChange={set("descricaoInstitucional")} style={{ resize: "vertical" }} />
+          </div>
+          <div className="vx-grid vx-g2">
+            <div><label className="vx-label" htmlFor={id("pais")}>País</label>
+              <select id={id("pais")} className="vx-input" value={form.pais} onChange={set("pais")}>
+                <option value="">Não informado</option>
+                {PAISES.map((p) => <option key={p.code} value={p.code}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div><label className="vx-label" htmlFor={id("telefone")}>Telefone da empresa</label><input id={id("telefone")} className="vx-input" type="tel" value={form.telefoneEmpresa} onChange={set("telefoneEmpresa")} /></div>
+          </div>
+          <div><label className="vx-label" htmlFor={id("email")}>E-mail da empresa</label><input id={id("email")} className="vx-input" type="email" value={form.emailEmpresa} onChange={set("emailEmpresa")} /></div>
+        </div>
+        <div style={{ marginTop: 20, display: "flex", gap: 8 }}>
+          <button className="vx-btn vx-btn-primary" onClick={salvar} disabled={salvando}>{salvando ? "Salvando…" : "Salvar"}</button>
+          <button className="vx-btn" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EmpresasAdmin({ db, up, aviso }) {
   const [busca, setBusca] = useState("");
   const [expandido, setExpandido] = useState(null);
@@ -143,6 +242,24 @@ export default function EmpresasAdmin({ db, up, aviso }) {
   const [criandoEmpresa, setCriandoEmpresa] = useState(false);
   const [empresaPagamento, setEmpresaPagamento] = useState(null);
   const [resetando, setResetando] = useState(null);
+  const [empresaEdicao, setEmpresaEdicao] = useState(null);
+  const [preenchendo, setPreenchendo] = useState(false);
+  const semSegmento = db.companies.filter((c) => !String(c.segmento || "").trim()).length;
+
+  const atualizarEmpresa = (id, campos) =>
+    up?.((d) => ({ companies: d.companies.map((x) => x.id === id ? { ...x, ...campos } : x) }));
+
+  const preencherSegmentos = async () => {
+    setPreenchendo(true);
+    const r = await api("/admin/companies/segmentos/auto", {});
+    setPreenchendo(false);
+    if (!r?.ok) return aviso(r?.error || "Não foi possível preencher os segmentos.");
+    const porId = Object.fromEntries(r.alteradas.map((a) => [a.id, a]));
+    up?.((d) => ({ companies: d.companies.map((x) => porId[x.id] ? { ...x, segmento: porId[x.id].segmento, nicho: porId[x.id].nicho } : x) }));
+    const restantes = semSegmento - r.alteradas.length;
+    aviso((r.alteradas.length ? `${r.alteradas.length} empresa(s) com segmento preenchido.` : "Nenhuma empresa tinha pista suficiente.")
+      + (restantes > 0 ? ` ${restantes} sem pista no cadastro: use "Editar dados".` : ""));
+  };
 
   const resetarSenha = async (c) => {
     if (!window.confirm(`Redefinir a senha de acesso da empresa "${c.nome}"?`)) return;
@@ -206,6 +323,10 @@ export default function EmpresasAdmin({ db, up, aviso }) {
           onCriada={(r) => up?.((d) => ({ companies: [...d.companies, { id: r.companyId, nome: r.email, statusCadastro: "aprovada", saldo: 0, totalAportado: 0, criadoEm: Date.now() }] }))}
         />
       )}
+      {empresaEdicao && (
+        <ModalEditarEmpresa empresa={empresaEdicao} aviso={aviso} onClose={() => setEmpresaEdicao(null)}
+          onSalva={(campos) => atualizarEmpresa(empresaEdicao.id, campos)} />
+      )}
       {empresaPagamento && (
         <PainelPagamento empresa={empresaPagamento} aviso={aviso} onClose={() => setEmpresaPagamento(null)} />
       )}
@@ -214,9 +335,16 @@ export default function EmpresasAdmin({ db, up, aviso }) {
           <div className="vx-disp" style={{ fontSize: 22 }}>Empresas</div>
           <span className="vx-badge vx-badge-muted">{empresas.length}</span>
         </div>
-        <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setCriandoEmpresa(true)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Plus size={14} /> Nova empresa
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {semSegmento > 0 && (
+            <button className="vx-btn vx-btn-sm" onClick={preencherSegmentos} disabled={preenchendo} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Sparkles size={14} /> {preenchendo ? "Preenchendo…" : `Preencher segmentos (${semSegmento})`}
+            </button>
+          )}
+          <button className="vx-btn vx-btn-primary vx-btn-sm" onClick={() => setCriandoEmpresa(true)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Plus size={14} /> Nova empresa
+          </button>
+        </div>
       </div>
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 16, fontSize: 13 }}>
@@ -250,7 +378,7 @@ export default function EmpresasAdmin({ db, up, aviso }) {
                     {c.diaFechamento && <span className="vx-badge vx-badge-muted">Ciclo D{c.diaFechamento}/P{c.diaPagamento}</span>}
                     <span className={`vx-badge ${c.statusCadastro === "aprovada" ? "vx-badge-brand" : c.statusCadastro === "em_analise" ? "vx-badge-amber" : "vx-badge-muted"}`}>{({ rascunho: "Rascunho", em_analise: "Em análise", aprovada: "Aprovada", suspensa: "Suspensa" })[c.statusCadastro] || "Rascunho"}</span>
                   </div>
-                  <div className="vx-mut" style={{ fontSize: 12 }}>{c.profissionais} profissionais · {c.liberados} ações liberadas</div>
+                  <div className="vx-mut" style={{ fontSize: 12 }}>{rotuloSegmentoEmpresa(c) || "Segmento não informado"} · {c.profissionais} profissionais · {c.liberados} ações liberadas</div>
                 </div>
                 <div style={{ textAlign: "right", marginRight: 8 }}>
                   <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700 }}>{money(c.saldo)}</div>
@@ -290,6 +418,9 @@ export default function EmpresasAdmin({ db, up, aviso }) {
 
                   <hr className="vx-sep" />
                   <div style={{ marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button className="vx-btn vx-btn-sm" onClick={() => setEmpresaEdicao(c)} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <Pencil size={13} /> Editar dados
+                    </button>
                     <button className="vx-btn vx-btn-sm" onClick={() => setEmpresaCobranca(c)}>
                       Cobrança e Acesso
                     </button>

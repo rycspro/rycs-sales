@@ -11,7 +11,7 @@ import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import { PAISES, bandeiraPais } from "../../../shared/paises.js";
 import { FUNCOES } from "../../../shared/funcoes.js";
 import { classificarCampanha, codigoPais, parsePaisesAceitos } from "../../../shared/oportunidades.js";
-import { SEGMENTOS } from "../../../shared/segmentos.js";
+import { SEGMENTOS, rotuloSegmentoEmpresa } from "../../../shared/segmentos.js";
 import { MODELOS_TRABALHO, OBJETIVOS_UI, NIVEIS_EXPERIENCIA } from "../../../shared/campaignEngine.js";
 
 const SEGMENTO_LABEL = Object.fromEntries(SEGMENTOS.map((s) => [s.valor, s.label]));
@@ -194,7 +194,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     const q = filtros.busca.trim().toLowerCase();
     const descEmpresa = (e) => e.descricaoInstitucional || e.produto || e.icp || "";
     return empresas.filter((e) =>
-      (!q || `${e.nome || ""} ${segmentoLabel(e.segmento)} ${descEmpresa(e)}`.toLowerCase().includes(q)) &&
+      (!q || `${e.nome || ""} ${segmentoLabel(e.segmento)} ${rotuloSegmentoEmpresa(e)} ${descEmpresa(e)}`.toLowerCase().includes(q)) &&
       (!filtros.pais || e.pais === filtros.pais) &&
       (!filtros.segmento || e.segmento === filtros.segmento))
       .sort((a, b) => {
@@ -288,7 +288,7 @@ function GridEmpresas({ empresas, onAbrir }) {
 function EmpresaCardVitrine({ empresa, onAbrir }) {
   const [hoverBtn, setHoverBtn] = useState(false);
   const desc = empresa.descricaoInstitucional || empresa.produto || empresa.icp || "";
-  const seg = segmentoLabel(empresa.segmento);
+  const seg = rotuloSegmentoEmpresa(empresa);
   return (
     <div className="vx-card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 0 }}>
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
@@ -333,7 +333,7 @@ function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
   const rem = remuneracao(c, emp.moeda);
   const aceitos = parsePaisesAceitos(c.paisesAceitos);
   const st = (c.candidaturas || [])[0]?.status;
-  const seg = segmentoLabel(emp.segmento);
+  const seg = rotuloSegmentoEmpresa(emp);
   const [hoverBtn, setHoverBtn] = useState(false);
   const [hoverSave, setHoverSave] = useState(false);
 
@@ -509,7 +509,7 @@ function GridCampanhas({ itens, internacional, onAbrir, vazio, salvas, onSalvar 
 // ─────────────────────────────────────────────────────────────────────────
 function DetalheEmpresa({ emp, itens, onVoltar, onAbrirCampanha, salvas, onSalvar }) {
   const desc = emp.descricaoInstitucional || emp.produto || emp.icp || "";
-  const seg = segmentoLabel(emp.segmento);
+  const seg = rotuloSegmentoEmpresa(emp);
   return (
     <div className="vx-fade" style={{ maxWidth: 780, margin: "0 auto" }}>
       <button type="button" className="vx-btn vx-btn-sm" onClick={onVoltar} style={{ marginBottom: 14 }}>

@@ -15,6 +15,7 @@ import { montarDossieEmpresa, narrativaEmpresa } from "../services/dossieEmpresa
 import { excluirEmpresa, arquivosDaEmpresa } from "../services/exclusaoEmpresa.js";
 import { remover as removerArquivo } from "../services/arquivos.js";
 import { ativarIndicacaoEmpresa } from "../services/indicacoes.js";
+import { preencherSegmentosVazios } from "../services/segmentoEmpresa.js";
 
 const router = Router();
 
@@ -55,7 +56,7 @@ router.patch("/companies/:id", (req, res) => {
   // saldo/totalAportado/aportes só mudam por pagamento confirmado no gateway
   // ou por liberação de ação — nunca por escrita direta do cliente.
   const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "destaqueTipo", "visivel", "vagas", "cor", "documento",
-    "razaoSocial", "endereco", "segmento", "regiao", "diferenciais", "objecoes", "representanteLegal",
+    "razaoSocial", "endereco", "segmento", "nicho", "regiao", "diferenciais", "objecoes", "representanteLegal",
     "contatoFinanceiro", "contatoComercial", "situacaoCadastral", "dataAbertura", "naturezaJuridica", "cnaes", "telefoneEmpresa", "emailEmpresa",
     "pais", "moeda", "descricaoInstitucional"];
   const jsonFields = ["comissoes", "curso", "qualificacao", "materiais"];
@@ -116,7 +117,15 @@ router.patch("/companies/:id", (req, res) => {
   if (!sets.length) return res.status(400).json({ error: "nenhum campo válido" });
   vals.push(id);
   db.prepare(`UPDATE companies SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
-  res.json({ ok: true });
+  // Sem segmento escolhido, deduz do cadastro (nome, produto, descrição).
+  const auto = fields.segmento === undefined ? preencherSegmentosVazios([id])[0] : null;
+  res.json({ ok: true, ...(auto ? { segmento: auto.segmento, nicho: auto.nicho } : {}) });
+});
+
+// ─── ADMIN: Preencher o segmento das empresas que estão sem ───────────────────
+router.post("/admin/companies/segmentos/auto", (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
+  res.json({ ok: true, alteradas: preencherSegmentosVazios() });
 });
 
 router.post("/companies/:id/cnpj/extract", async (req,res)=>{
@@ -502,6 +511,7 @@ router.post("/admin/companies", (req, res) => {
 
   db.prepare("INSERT INTO users (id, email, senha, role, entityId, aceitouTermos, criadoEm) VALUES (?, ?, ?, 'empresa', ?, 1, ?)")
     .run(userId, emailNorm, bcrypt.hashSync(senhaFinal, 10), companyId, agora());
+  preencherSegmentosVazios([companyId]);
 
   res.json({ ok: true, companyId, userId, email: emailNorm, senhaTemporaria: senhaFinal });
 });

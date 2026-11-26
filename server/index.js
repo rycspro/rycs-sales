@@ -49,6 +49,7 @@ import voiceRoutes from "./routes/voice.js";
 import academyEmpresaRoutes from "./routes/academyEmpresa.js";
 import onboardingRoutes, { onboardingPublico } from "./routes/onboarding.js";
 import { iniciarWorkerIA } from "./services/iaOnboarding.js";
+import { preencherSegmentosVazios } from "./services/segmentoEmpresa.js";
 import onboardingProRoutes from "./routes/onboardingProfissional.js";
 import discAvaliacaoRoutes from "./routes/discAvaliacao.js";
 import bigFiveAvaliacaoRoutes from "./routes/bigFiveAvaliacao.js";
@@ -428,6 +429,13 @@ try {
   const ciclo = liberarRetidosPorCiclo();
   if (ciclo.liberadas) console.log(`[ciclo] ${ciclo.liberadas} tarefa(s) retidas liberadas para saque: R$ ${ciclo.valorTotal.toFixed(2)}`);
 } catch (e) { console.error("[ciclo] falha ao liberar valores retidos:", e.message); }
+
+// Uma vez por subida, idempotente: empresas sem segmento ganham o segmento
+// deduzido do próprio cadastro, em vez de "Segmento não informado".
+try {
+  const segs = preencherSegmentosVazios();
+  if (segs.length) console.log(`[segmento] ${segs.length} empresa(s) com segmento preenchido automaticamente`);
+} catch (e) { console.error("[segmento] falha ao preencher segmentos:", e.message); }
 
 app.listen(PORT, () => {
   console.log(`RYCS API rodando em http://localhost:${PORT} [${isProd ? "PRODUÇÃO" : "DEV"}]`);
