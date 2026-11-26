@@ -61,9 +61,15 @@ export default function DiscadoraProfissional({ aviso }) {
   const [abaScript, setAbaScript] = useState("abertura");
   const [salvando, setSalvando] = useState(false);
   const [callbacks, setCallbacks] = useState([]);
-  const [abaOp, setAbaOp] = useState("operacao"); // operacao, fila, historico, desempenho
+  const [abaOp, setAbaOp] = useState("operacao");
+  const [voiceStatus, setVoiceStatus] = useState(null);
+  const [agendarData, setAgendarData] = useState("");
+  const [agendarHora, setAgendarHora] = useState("");
+  const [retornoData, setRetornoData] = useState("");
+  const [retornoHora, setRetornoHora] = useState("");
 
   useEffect(() => {
+    api.get("/voice/status").then(setVoiceStatus).catch(() => setVoiceStatus({ habilitada: false }));
     api.get("/voice/queues").then(setFilas).catch(() => {});
     api.get("/voice/providers").then(setProviders).catch(() => {});
     api.get("/voice/settings").then(setSettings).catch(() => {});
@@ -71,6 +77,18 @@ export default function DiscadoraProfissional({ aviso }) {
     voice.carregarSessaoAtual();
     voice.carregarStats();
   }, []);
+
+  if (voiceStatus && !voiceStatus.habilitada) {
+    return (
+      <div style={{ padding: "60px 20px", textAlign: "center" }}>
+        <Phone size={48} style={{ color: "var(--muted-2)", marginBottom: 16 }} />
+        <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700 }}>Discadora não disponível</h2>
+        <p style={{ color: "var(--muted)", fontSize: 14, maxWidth: 400, margin: "0 auto" }}>
+          A discadora ainda não foi habilitada para a sua empresa. Solicite a ativação ao administrador.
+        </p>
+      </div>
+    );
+  }
 
   const iniciar = async () => {
     if (!filaSelecionada) return aviso?.("Selecione uma fila.");
@@ -93,12 +111,30 @@ export default function DiscadoraProfissional({ aviso }) {
     if (!voice.ligacaoAtual?.callId) return aviso?.("Nenhuma ligação ativa.");
     setSalvando(true);
     const dados = { resultado, observacao };
+
+    // Agendar reunião no calendário
+    if (resultado === "reuniao_agendada" && agendarData && agendarHora) {
+      const dt = new Date(`${agendarData}T${agendarHora}`);
+      if (!isNaN(dt.getTime())) dados.agendarReuniao = { data: dt.getTime(), duracao: 30 };
+    }
+
+    // Agendar retorno
+    if (resultado === "retornar" && retornoData && retornoHora) {
+      const dt = new Date(`${retornoData}T${retornoHora}`);
+      if (!isNaN(dt.getTime())) dados.agendarRetorno = dt.getTime();
+    }
+
     const r = await voice.registrarResultado(voice.ligacaoAtual.callId, dados);
     if (r?.ok) {
       setResultado("");
       setObservacao("");
+      setAgendarData("");
+      setAgendarHora("");
+      setRetornoData("");
+      setRetornoHora("");
       await voice.buscarProximo(filaSelecionada);
       voice.carregarStats();
+      api.get("/voice/callbacks").then(setCallbacks).catch(() => {});
     }
     setSalvando(false);
   };
@@ -352,6 +388,35 @@ export default function DiscadoraProfissional({ aviso }) {
                       placeholder="Observações (opcional)"
                       rows={2}
                       style={{ width: "100%", marginTop: 10, padding: "8px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", fontSize: 13, resize: "vertical", fontFamily: "inherit" }} />
+
+                    {resultado === "reuniao_agendada" && (
+                      <div style={{ marginTop: 10, padding: 12, background: "var(--green-50)", borderRadius: "var(--radius-sm)", border: "1px solid var(--green-100)" }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--green)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                          <Calendar size={14} /> Agendar reunião
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <input type="date" value={agendarData} onChange={(e) => setAgendarData(e.target.value)}
+                            style={{ flex: 1, padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", fontSize: 13 }} />
+                          <input type="time" value={agendarHora} onChange={(e) => setAgendarHora(e.target.value)}
+                            style={{ width: 100, padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", fontSize: 13 }} />
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--green)", marginTop: 4 }}>A reunião aparecerá no calendário da empresa.</div>
+                      </div>
+                    )}
+
+                    {resultado === "retornar" && (
+                      <div style={{ marginTop: 10, padding: 12, background: "var(--sky-50)", borderRadius: "var(--radius-sm)", border: "1px solid var(--sky-100)" }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--sky-600)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                          <RotateCcw size={14} /> Agendar retorno
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <input type="date" value={retornoData} onChange={(e) => setRetornoData(e.target.value)}
+                            style={{ flex: 1, padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", fontSize: 13 }} />
+                          <input type="time" value={retornoHora} onChange={(e) => setRetornoHora(e.target.value)}
+                            style={{ width: 100, padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", fontSize: 13 }} />
+                        </div>
+                      </div>
+                    )}
 
                     <button onClick={salvarEProximo} disabled={!resultado || salvando}
                       style={{ marginTop: 10, width: "100%", padding: "12px", borderRadius: "var(--radius-sm)", background: resultado ? "var(--brand)" : "var(--muted-2)", color: "#fff", border: "none", fontWeight: 700, fontSize: 14, cursor: resultado ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: resultado ? "var(--shadow-brand)" : "none" }}>

@@ -8,6 +8,28 @@ import {
 
 const router = Router();
 
+// ── Feature flag: discadora habilitada por empresa ──────────────────
+// A coluna `voice_habilitada` na tabela companies controla quais empresas
+// podem usar a discadora. Empresas sem a flag veem 403 em todas as rotas.
+// Admin sempre tem acesso (para configurar).
+
+function voiceHabilitada(companyId, role) {
+  if (role === "admin") return true;
+  if (!companyId) return false;
+  const emp = db.prepare("SELECT voice_habilitada FROM companies WHERE id = ?").get(companyId);
+  return emp?.voice_habilitada === 1;
+}
+
+function exigirVoiceAtiva(req, res) {
+  const companyId = companyIdDoUsuario(req);
+  if (!companyId) { res.status(403).json({ error: "Empresa não identificada." }); return false; }
+  if (!voiceHabilitada(companyId, req.user.role)) {
+    res.status(403).json({ error: "A discadora não está habilitada para esta empresa. Solicite ativação." });
+    return false;
+  }
+  return true;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function exigirEmpresa(req, res) {
@@ -43,11 +65,30 @@ router.get("/voice/providers", (req, res) => {
   res.json(listProviders());
 });
 
+// ── Status / Feature flag ───────────────────────────────────────────
+
+router.get("/voice/status", (req, res) => {
+  const companyId = companyIdDoUsuario(req);
+  const habilitada = voiceHabilitada(companyId, req.user.role);
+  res.json({ habilitada, companyId });
+});
+
+// Admin: habilitar/desabilitar voice para uma empresa
+router.post("/voice/admin/habilitar", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin." });
+  const { companyId, habilitada } = req.body;
+  if (!companyId) return res.status(400).json({ error: "companyId obrigatório." });
+  db.prepare("UPDATE companies SET voice_habilitada = ? WHERE id = ?").run(habilitada ? 1 : 0, companyId);
+  auditLog(companyId, req.user.id, habilitada ? "habilitar_voice" : "desabilitar_voice", "company", companyId, {});
+  res.json({ ok: true, companyId, habilitada: !!habilitada });
+});
+
 // ── Configurações da empresa ─────────────────────────────────────────
 
 router.get("/voice/settings", (req, res) => {
   const companyId = companyIdDoUsuario(req);
   if (!companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (!voiceHabilitada(companyId, req.user.role)) return res.status(403).json({ error: "Discadora não habilitada." });
   const settings = db.prepare("SELECT * FROM voice_company_settings WHERE companyId = ?").get(companyId);
   if (!settings) {
     return res.json({
@@ -268,6 +309,7 @@ router.post("/voice/session/start", (req, res) => {
   const { queueId, companyId: bodyCompanyId, modalidade } = req.body;
   const companyId = bodyCompanyId || companyIdDoUsuario(req);
   if (!companyId) return res.status(400).json({ error: "Empresa não identificada." });
+  if (!voiceHabilitada(companyId, req.user.role)) return res.status(403).json({ error: "Discadora não habilitada para esta empresa." });
 
   // Verificar se settings permite
   const settings = db.prepare("SELECT * FROM voice_company_settings WHERE companyId = ?").get(companyId);
@@ -381,8 +423,14 @@ router.post("/voice/calls", (req, res) => {
   const recente = db.prepare("SELECT 1 FROM voice_calls WHERE leadId = ? AND sellerId = ? AND criadoEm > ?").get(leadId, sellerId, agora() - 30000);
   if (recente) return res.status(429).json({ error: "Aguarde antes de ligar novamente para este contato." });
 
-  const provider = getProvider(providerId || "mobile");
+  const provId = providerId || "mobile";
+  const provider = getProvider(provId);
   if (!provider) return res.status(400).json({ error: "Provedor não disponível." });
+
+  // Mock provider: apenas admin ou ambiente de teste
+  if (provId === "mock" && req.user.role !== "admin" && process.env.NODE_ENV === "production") {
+    return res.status(403).json({ error: "Provedor simulado não disponível em produção." });
+  }
 
   const caps = provider.getCapabilities();
   if (!caps.canInitiate) return res.status(400).json({ error: `O provedor ${provider.nome} não está operacional.` });
@@ -474,6 +522,29 @@ router.post("/voice/calls/:id/result", (req, res) => {
   if (agendarRetorno) {
     db.prepare(`INSERT INTO voice_callbacks (id, leadId, sellerId, companyId, queueId, agendadoPara, observacao, criadoEm)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(uid(), call.leadId, sellerId, call.companyId, call.queueId, agendarRetorno, observacao || "", now);
+  }
+
+  // Integração com calendário existente: criar evento ao agendar reunião
+  if (agendarReuniao && resultado === "reuniao_agendada") {
+    const sellerInfo = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(sellerId);
+    const leadInfo = db.prepare("SELECT nome, email, telefone FROM leads WHERE id = ?").get(call.leadId);
+    const startAt = typeof agendarReuniao === "object" ? agendarReuniao.data : agendarReuniao;
+    const duracao = typeof agendarReuniao === "object" ? (agendarReuniao.duracao || 30) : 30;
+    const endAt = startAt + duracao * 60 * 1000;
+    db.prepare(`INSERT INTO calendar_events (title, description, meetingType, status, startAt, endAt, organizerName, organizerEmail, createdById, campaignId, leadId, companyId, createdAt, updatedAt)
+      VALUES (?, ?, 'sales_call', 'scheduled', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+      `Reunião: ${leadInfo?.nome || "Lead"}`,
+      observacao || "Reunião agendada via discadora",
+      startAt, endAt,
+      sellerInfo?.nome || "", sellerInfo?.email || "",
+      sellerId, call.campaignId || "", call.leadId, call.companyId,
+      now, now
+    );
+    if (leadInfo) {
+      const eventId = db.prepare("SELECT last_insert_rowid() as id").get().id;
+      db.prepare(`INSERT INTO calendar_event_participants (eventId, name, email, phone, role, createdAt)
+        VALUES (?, ?, ?, ?, 'guest', ?)`).run(eventId, leadInfo.nome || "", leadInfo.email || "", leadInfo.telefone || "", now);
+    }
   }
 
   // Atualizar sessão

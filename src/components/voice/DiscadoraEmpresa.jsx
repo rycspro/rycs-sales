@@ -42,6 +42,7 @@ export default function DiscadoraEmpresa({ emp, aviso }) {
   const [settings, setSettings] = useState(null);
   const [calls, setCalls] = useState([]);
   const [uso, setUso] = useState(null);
+  const [voiceStatus, setVoiceStatus] = useState(null);
 
   const carregar = useCallback(async () => {
     try {
@@ -62,7 +63,22 @@ export default function DiscadoraEmpresa({ emp, aviso }) {
     } catch {}
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    api.get("/voice/status").then((r) => { setVoiceStatus(r); if (r.habilitada) carregar(); }).catch(() => setVoiceStatus({ habilitada: false }));
+  }, [carregar]);
+
+  if (voiceStatus && !voiceStatus.habilitada) {
+    return (
+      <div style={{ padding: "60px 20px", textAlign: "center" }}>
+        <Phone size={48} style={{ color: "var(--muted-2)", marginBottom: 16 }} />
+        <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700 }}>Discadora não ativada</h2>
+        <p style={{ color: "var(--muted)", fontSize: 14, maxWidth: 420, margin: "0 auto" }}>
+          A discadora comercial ainda não está habilitada para a sua empresa.
+          Entre em contato com a equipe RYCS para solicitar a ativação.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: "0 4px" }}>
@@ -290,18 +306,65 @@ function GerenciarFilas({ filas, aviso, onAtualizar }) {
 
 function FilaCard({ fila, aviso, onAtualizar }) {
   const [aberto, setAberto] = useState(false);
+  const [membros, setMembros] = useState([]);
+  const [profDisponiveis, setProfDisponiveis] = useState([]);
+  const [profSel, setProfSel] = useState("");
+  const [leadsDisponiveis, setLeadsDisponiveis] = useState([]);
+  const [adicionandoLeads, setAdicionandoLeads] = useState(false);
+  const [campanhaFiltro, setCampanhaFiltro] = useState("");
+  const [campanhas, setCampanhas] = useState([]);
 
-  const adicionarLeads = async () => {
+  const carregarDetalhes = async () => {
     try {
-      const leads = await api.get("/leads");
-      const ids = leads.slice(0, 20).map((l) => l.id);
-      if (!ids.length) return aviso?.("Nenhum lead disponível.");
+      const [m, profs, camps] = await Promise.all([
+        api.get(`/voice/queues/${fila.id}/members`),
+        api.get("/profissionais"),
+        api.get("/campaigns"),
+      ]);
+      setMembros(m);
+      setProfDisponiveis(profs.filter((p) => !m.some((mem) => mem.sellerId === p.id)));
+      setCampanhas(camps);
+    } catch {}
+  };
+
+  useEffect(() => { if (aberto) carregarDetalhes(); }, [aberto]);
+
+  const adicionarMembro = async () => {
+    if (!profSel) return;
+    try {
+      await api.post(`/voice/queues/${fila.id}/members`, { sellerIds: [profSel] });
+      setProfSel("");
+      carregarDetalhes();
+      aviso?.("Profissional adicionado à fila.");
+    } catch (e) { aviso?.("Erro: " + (e.message || "Falha")); }
+  };
+
+  const removerMembro = async (sellerId) => {
+    try {
+      await api.delete(`/voice/queues/${fila.id}/members/${sellerId}`);
+      carregarDetalhes();
+      aviso?.("Profissional removido.");
+    } catch (e) { aviso?.("Erro: " + (e.message || "Falha")); }
+  };
+
+  const carregarLeads = async () => {
+    setAdicionandoLeads(true);
+    try {
+      const leads = await api.get("/leads", campanhaFiltro ? { campaignId: campanhaFiltro } : {});
+      setLeadsDisponiveis(leads.filter((l) => l.telefone));
+    } catch { setLeadsDisponiveis([]); }
+  };
+
+  const adicionarLeadsSelecionados = async () => {
+    const ids = leadsDisponiveis.slice(0, 100).map((l) => l.id);
+    if (!ids.length) return aviso?.("Nenhum lead com telefone disponível.");
+    try {
       const r = await api.post(`/voice/queues/${fila.id}/leads`, { leadIds: ids });
       aviso?.(`${r.adicionados} leads adicionados à fila.`);
+      setAdicionandoLeads(false);
+      setLeadsDisponiveis([]);
       onAtualizar();
-    } catch (e) {
-      aviso?.("Erro: " + (e.message || "Falha"));
-    }
+    } catch (e) { aviso?.("Erro: " + (e.message || "Falha")); }
   };
 
   return (
@@ -320,14 +383,76 @@ function FilaCard({ fila, aviso, onAtualizar }) {
       </div>
       {aberto && (
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button onClick={adicionarLeads}
-              style={{ padding: "6px 14px", borderRadius: "var(--radius-sm)", background: "var(--brand-50)", color: "var(--brand)", border: "1px solid var(--brand-100)", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
-              + Adicionar leads
-            </button>
-          </div>
-          <div style={{ marginTop: 8, fontSize: 12, color: "var(--muted)" }}>
+          {/* Info */}
+          <div style={{ marginBottom: 12, fontSize: 12, color: "var(--muted)" }}>
             Estratégia: {fila.estrategia} · Max tentativas: {fila.maxTentativas} · Horário: {fila.horarioInicio}–{fila.horarioFim}
+          </div>
+
+          {/* Membros */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "var(--muted)", marginBottom: 6 }}>PROFISSIONAIS</div>
+            {membros.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>Nenhum profissional associado.</p>}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {membros.map((m) => (
+                <span key={m.id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: "var(--radius-pill)", background: "var(--brand-50)", color: "var(--brand)", fontSize: 12 }}>
+                  <User size={12} /> {m.nome}
+                  <button onClick={(e) => { e.stopPropagation(); removerMembro(m.sellerId); }}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--red)", padding: 0, marginLeft: 4, lineHeight: 1 }}>
+                    <XCircle size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <select value={profSel} onChange={(e) => setProfSel(e.target.value)}
+                style={{ flex: 1, padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", fontSize: 12 }}>
+                <option value="">Selecionar profissional...</option>
+                {profDisponiveis.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+              <button onClick={adicionarMembro} disabled={!profSel}
+                style={{ padding: "6px 12px", borderRadius: "var(--radius-sm)", background: profSel ? "var(--brand)" : "var(--muted-2)", color: "#fff", border: "none", fontSize: 12, fontWeight: 600, cursor: profSel ? "pointer" : "default" }}>
+                Adicionar
+              </button>
+            </div>
+          </div>
+
+          {/* Leads */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "var(--muted)", marginBottom: 6 }}>LEADS</div>
+            {!adicionandoLeads ? (
+              <button onClick={() => { carregarLeads(); }}
+                style={{ padding: "6px 14px", borderRadius: "var(--radius-sm)", background: "var(--brand-50)", color: "var(--brand)", border: "1px solid var(--brand-100)", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
+                + Adicionar leads do pipeline
+              </button>
+            ) : (
+              <div style={{ padding: 10, background: "var(--surface-2)", borderRadius: "var(--radius-sm)" }}>
+                <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                  <select value={campanhaFiltro} onChange={(e) => { setCampanhaFiltro(e.target.value); }}
+                    style={{ flex: 1, padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", fontSize: 12 }}>
+                    <option value="">Todos os leads</option>
+                    {campanhas.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+                  </select>
+                  <button onClick={carregarLeads} style={{ padding: "6px 12px", borderRadius: "var(--radius-sm)", background: "var(--brand-50)", color: "var(--brand)", border: "1px solid var(--brand-100)", fontSize: 12, cursor: "pointer" }}>Buscar</button>
+                </div>
+                {leadsDisponiveis.length > 0 ? (
+                  <>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 6 }}>{leadsDisponiveis.length} leads com telefone encontrados (máx. 100)</div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={adicionarLeadsSelecionados}
+                        style={{ padding: "6px 14px", borderRadius: "var(--radius-sm)", background: "var(--brand)", color: "#fff", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        Adicionar {Math.min(leadsDisponiveis.length, 100)} leads
+                      </button>
+                      <button onClick={() => { setAdicionandoLeads(false); setLeadsDisponiveis([]); }}
+                        style={{ padding: "6px 14px", borderRadius: "var(--radius-sm)", background: "var(--surface-3)", color: "var(--muted)", border: "none", fontSize: 12, cursor: "pointer" }}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>Carregando leads ou nenhum disponível com telefone...</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

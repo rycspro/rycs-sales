@@ -2905,6 +2905,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_evo_consentimentos_seller ON evolution_consentimentos(sellerId);
 `);
 
+// ── Feature flag: discadora por empresa ──────────────────────────────
+adicionarColuna("companies", "voice_habilitada", "INTEGER DEFAULT 0");
+
 // =====================================================================
 // RYCS VOICE — Discadora comercial nativa
 // =====================================================================
