@@ -419,8 +419,10 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
   }, [estados]);
   const valorEstimado = quantidade * precoUnitario;
   const listaFinal = destino === "new" ? nomeLista : (listas.find((l) => String(l.id) === listaExistente)?.nome || "");
-  const regiao = cidades.length ? `${cidades.join(", ")}, ${estados.join(", ")}` : estados.join(", ");
-  const podeEnviar = campos.size > 0 && segmento.trim() && estados.length > 0;
+  const regiao = cidades.length
+    ? `${cidades.join(", ")}, ${estados.join(", ")}`
+    : estados.length ? estados.join(", ") : pais;
+  const podeEnviar = campos.size > 0 && segmento.trim();
 
   const toggleCampo = (c) => setCampos((prev) => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n; });
   const toggleGrupo = (fs) => {
@@ -499,10 +501,10 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
                   options={PAISES} placeholder="Digite o país..." />
               </div>
               <div className="vx-grid vx-g2" style={{ gap: 12 }}>
-                <MultiComboBox label="Estado" selected={estados} onChange={(v) => { setEstados(v); setCidades((prev) => prev.filter((c) => { const validas = new Set(); v.forEach((e) => (CIDADES_POR_ESTADO[e] || []).forEach((ci) => validas.add(ci))); return validas.has(c); })); }}
-                  options={ESTADOS_BR} placeholder="Digite o estado..." />
-                <MultiComboBox label="Cidade" selected={cidades} onChange={setCidades}
-                  options={cidadesDisponiveis} placeholder={estados.length ? "Digite a cidade..." : "Selecione o estado primeiro"} />
+                <MultiComboBox label="Estado (opcional — vazio = país inteiro)" selected={estados} onChange={(v) => { setEstados(v); setCidades((prev) => prev.filter((c) => { const validas = new Set(); v.forEach((e) => (CIDADES_POR_ESTADO[e] || []).forEach((ci) => validas.add(ci))); return validas.has(c); })); }}
+                  options={ESTADOS_BR} placeholder="Todos os estados" />
+                <MultiComboBox label="Cidade (opcional — vazio = estado inteiro)" selected={cidades} onChange={setCidades}
+                  options={cidadesDisponiveis} placeholder={estados.length ? "Todas as cidades" : "Selecione um estado primeiro"} />
               </div>
             </div>
           </div>
