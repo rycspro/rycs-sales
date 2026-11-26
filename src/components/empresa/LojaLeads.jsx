@@ -520,6 +520,11 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
                   {q.toLocaleString("pt-BR")}
                 </button>
               ))}
+              <button onClick={() => { setQuantidade(10000); setQtdCustom(""); }}
+                className={`vx-btn ${quantidade === 10000 && !qtdCustom ? "vx-btn-primary" : ""}`}
+                style={{ flex: 1, minWidth: 80 }}>
+                Máximo
+              </button>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 100 }}>
                 <input className="vx-input" type="number" min="1" max="10000" placeholder="Outro"
                   value={qtdCustom} style={{ textAlign: "center", minWidth: 80, ...(qtdCustom ? { borderColor: "var(--brand)", boxShadow: "0 0 0 1px var(--brand)" } : {}) }}
@@ -620,7 +625,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
             {[
               ["Segmento", segmento || "—"],
               ["Localização", regiao ? `${regiao}, ${pais}` : pais],
-              ["Quantidade", `${quantidade} leads`],
+              ["Quantidade", quantidade >= 10000 ? "Máximo disponível" : `${quantidade} leads`],
               ["Informações", `${campos.size} campos`],
               ["Lista", listaFinal || "A definir"],
               ["Valor estimado", money(valorEstimado)],
@@ -643,7 +648,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
           </div>
           <button onClick={buscar} disabled={!podeEnviar || ocupado} className="vx-btn vx-btn-primary vx-btn-block" style={{ minHeight: 44 }}>
             {ocupado ? <Loader2 size={16} className="vx-spin" /> : null}
-            {ocupado ? "Buscando..." : `Encontrar ${quantidade} leads`}
+            {ocupado ? "Buscando..." : quantidade >= 10000 ? "Encontrar o máximo de leads" : `Encontrar ${quantidade} leads`}
           </button>
           {precoUnitario > 0 && <span className="vx-mut" style={{ fontSize: 11.5 }}>Preço por lead: {money(precoUnitario)}</span>}
           {feedback && <p className="vx-mut" style={{ margin: 0, fontSize: 13, color: "var(--brand)" }} role="status">{feedback}</p>}
