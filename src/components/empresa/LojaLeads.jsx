@@ -995,9 +995,9 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
         </div>
       ) : (
         <>
-          <strong>{pasta.nome}</strong>
-          <span className="vx-mut" style={{ fontSize: 12 }}>{pasta.totalListas || 0} lista(s) · {pasta.totalContatos || 0} contato(s)</span>
-          {listasInterna.length > 0 && (
+          <strong>{listasInterna.length === 1 ? listasInterna[0].nome : pasta.nome}</strong>
+          <span className="vx-mut" style={{ fontSize: 12 }}>{pasta.totalContatos || 0} contato(s)</span>
+          {listasInterna.length > 1 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
               {listasInterna.map((l) => (
                 <span key={l.id} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500 }}>
