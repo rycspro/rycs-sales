@@ -389,7 +389,7 @@ export default function LojaLeads({ aviso, role: roleProp }) {
       {/* Content */}
       <div className="vx-card" style={{ borderRadius: "0 var(--radius-md) var(--radius-md) var(--radius-md)", padding: 20, marginBottom: 20 }}>
         {aba === 0 && <AbaBuscar aviso={aviso} listas={listas} precoUnitario={precoUnitario} recarregarCiclo={recarregarCiclo} recarregarListas={recarregarListas} isEmpresa={isEmpresa} ciclo={ciclo} />}
-        {aba === 1 && <AbaContatos aviso={aviso} listas={listas} />}
+        {aba === 1 && <AbaContatos aviso={aviso} listas={listas} isEmpresa={isEmpresa} />}
         {aba === 2 && <AbaListas aviso={aviso} isEmpresa={isEmpresa} recarregarListas={recarregarListas} />}
         {aba === 3 && <AbaConsumo ciclo={ciclo} />}
       </div>
@@ -661,7 +661,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
 }
 
 /* ═══ ABA 1: Meus contatos ═══════════════════════════════════════════════ */
-function AbaContatos({ aviso, listas }) {
+function AbaContatos({ aviso, listas, isEmpresa }) {
   const [contatos, setContatos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
@@ -794,13 +794,13 @@ function AbaContatos({ aviso, listas }) {
         </table>
       </div>
 
-      {drawer && <DrawerContato contato={drawer} onClose={() => { setDrawer(null); recarregar(); }} listas={listas} aviso={aviso} />}
+      {drawer && <DrawerContato contato={drawer} onClose={() => { setDrawer(null); recarregar(); }} listas={listas} aviso={aviso} isEmpresa={isEmpresa} />}
     </>
   );
 }
 
 /* ── Drawer contato ──────────────────────────────────────────────────────── */
-function DrawerContato({ contato: c, onClose, listas, aviso }) {
+function DrawerContato({ contato: c, onClose, listas, aviso, isEmpresa }) {
   const [historico, setHistorico] = useState([]);
   const [novoTexto, setNovoTexto] = useState("");
   const [tipoNota, setTipoNota] = useState("nota");
@@ -896,16 +896,18 @@ function DrawerContato({ contato: c, onClose, listas, aviso }) {
         {/* Histórico */}
         <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
           <span className="vx-label">Histórico de interações</span>
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-            <select className="vx-input" style={{ flex: "0 0 auto", minWidth: 100, fontSize: 12.5 }} value={tipoNota} onChange={(e) => setTipoNota(e.target.value)}>
-              {Object.entries(TIPOS_HIST).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
-            <input className="vx-input" style={{ flex: 1, fontSize: 12.5 }} placeholder="Adicionar registro..." value={novoTexto} onChange={(e) => setNovoTexto(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && salvarNota()} />
-            <button className="vx-btn vx-btn-sm" onClick={salvarNota} disabled={!novoTexto.trim()} style={{ flexShrink: 0 }}>
-              <Plus size={14} />
-            </button>
-          </div>
+          {!isEmpresa && (
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <select className="vx-input" style={{ flex: "0 0 auto", minWidth: 100, fontSize: 12.5 }} value={tipoNota} onChange={(e) => setTipoNota(e.target.value)}>
+                {Object.entries(TIPOS_HIST).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+              <input className="vx-input" style={{ flex: 1, fontSize: 12.5 }} placeholder="Adicionar registro..." value={novoTexto} onChange={(e) => setNovoTexto(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && salvarNota()} />
+              <button className="vx-btn vx-btn-sm" onClick={salvarNota} disabled={!novoTexto.trim()} style={{ flexShrink: 0 }}>
+                <Plus size={14} />
+              </button>
+            </div>
+          )}
           {loadingHist ? <div className="vx-mut" style={{ fontSize: 12, marginTop: 8 }}>Carregando...</div> : (
             <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
               {historico.length === 0 && <div className="vx-mut" style={{ fontSize: 12 }}>Nenhum registro ainda.</div>}
