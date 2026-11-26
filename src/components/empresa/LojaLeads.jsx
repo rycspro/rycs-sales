@@ -922,8 +922,11 @@ function AbaListas({ aviso, isEmpresa, recarregarListas }) {
 function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(pasta.nome);
+  const [listasInterna, setListasInterna] = useState([]);
   const salvar = async () => { if (!nome.trim()) return; await apiPatch(`/loja-leads/pastas/${pasta.id}`, { nome: nome.trim() }); setEditando(false); onAtualizar?.(); };
   const excluir = async () => { if (!confirm(`Excluir pasta "${pasta.nome}" e todas as listas dentro dela?`)) return; const r = await apiDelete(`/loja-leads/pastas/${pasta.id}`); if (r?.error) return aviso?.(r.error); aviso?.("Pasta excluída."); onAtualizar?.(); };
+
+  useEffect(() => { api(`/loja-leads/listas/${pasta.id}`).then((r) => setListasInterna(r?.listas || [])); }, [pasta.id]);
 
   return (
     <div className="vx-card" style={{ padding: 16, cursor: editando ? "default" : "pointer", display: "grid", gap: 8 }} onClick={!editando ? onAbrir : undefined}>
@@ -937,6 +940,15 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
         <>
           <strong>{pasta.nome}</strong>
           <span className="vx-mut" style={{ fontSize: 12 }}>{pasta.totalListas || 0} lista(s) · {pasta.totalContatos || 0} contato(s)</span>
+          {listasInterna.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
+              {listasInterna.map((l) => (
+                <span key={l.id} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500 }}>
+                  {l.nome} ({l.totalContatos || 0})
+                </span>
+              ))}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
             <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEditando(true)}><Pencil size={13} /></button>
             <button className="vx-btn vx-btn-danger vx-btn-sm" onClick={excluir}><Trash2 size={13} /></button>
