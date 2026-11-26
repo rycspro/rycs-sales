@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock } from "lucide-react";
+import { Activity, Archive, ChevronDown, CirclePause, ClipboardCheck, FileText, GitBranch, LayoutGrid, List, MapPin, Megaphone, MoreHorizontal, Pause, Play, Plus, Rocket, Save, Search, SearchX, SlidersHorizontal, Sparkles, Users, UserCheck, Wallet, Clock, Laptop, Building2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { EditorEtapas } from "./PipelineKanban.jsx";
 import { api, apiPatch } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
@@ -9,14 +9,18 @@ import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import NovaCampanha from "./NovaCampanha.jsx";
 import CampaignsDashboard from "./CampaignsDashboard.jsx";
 import CampaignDetail from "./CampaignDetail.jsx";
+import { MODELOS_TRABALHO, STATUS_CAMPANHA_V2, OBJETIVOS_UI, diagnosticoCampanha, migrarCampanhaAntiga } from "../../../shared/campaignEngine.js";
+import { FUNCOES } from "../../../shared/funcoes.js";
 
-// ── Status config ────────────────────────────────────────────────────
+// ── Status config (V2 — cores derivadas de STATUS_CAMPANHA_V2) ───────
+const V2_COR = Object.fromEntries(STATUS_CAMPANHA_V2.map((s) => [s.id, s.cor]));
 const STATUS_CONFIG = {
-  ativa:    { label: "Publicada",  bg: "#DCFCE7", color: "#16A34A" },
-  rascunho: { label: "Rascunho",   bg: "var(--surface-2)", color: "var(--muted)" },
-  pausada:  { label: "Pausada",    bg: "#FEF9C3", color: "#B45309" },
-  encerrada:{ label: "Encerrada",  bg: "var(--surface-2)", color: "var(--muted)" },
-  cancelada:{ label: "Cancelada",  bg: "#FEE2E2", color: "#DC2626" },
+  ativa:     { label: "Publicada",  bg: "#DCFCE7", color: V2_COR.ativa     || "#16A34A" },
+  rascunho:  { label: "Rascunho",   bg: "var(--surface-2)", color: V2_COR.rascunho  || "#8496B4" },
+  pausada:   { label: "Pausada",    bg: "#FEF9C3", color: V2_COR.pausada   || "#F59E0B" },
+  encerrada: { label: "Encerrada",  bg: "var(--surface-2)", color: V2_COR.encerrada || "#EF4444" },
+  cancelada: { label: "Cancelada",  bg: "#FEE2E2", color: "#DC2626" },
+  arquivada: { label: "Arquivada",  bg: "var(--surface-2)", color: V2_COR.arquivada || "#6B7280" },
 };
 
 const FILTROS_STATUS = [
@@ -113,7 +117,11 @@ function MenuCampanha({ campanha, onVisualizar, onEditar, onArquivar, onExcluir,
 
 // Submissões "em execução": enviadas e ainda no fluxo, antes da decisão final.
 const EM_EXECUCAO = ["analisando", "ia_aprovado", "revisao", "conferido"];
-const FUNCAO_LABEL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "PAP" };
+const FUNCAO_LABEL = Object.fromEntries(Object.entries(FUNCOES).map(([k, f]) => [k, f.nome]));
+const MODELO_ICON = { remoto: Laptop, presencial: MapPin, hibrido: Building2 };
+const MODELO_LABEL = Object.fromEntries(Object.entries(MODELOS_TRABALHO).map(([k, m]) => [k, m.nome]));
+const FILTROS_MODELO = [["", "Todos"], ...Object.entries(MODELOS_TRABALHO).map(([k, m]) => [k, m.nome])];
+const FILTROS_FUNCAO = [["", "Todas"], ...Object.entries(FUNCOES).filter(([k]) => k !== "sem-exp").map(([k, f]) => [k, f.nome])];
 
 // Menu "+ Nova campanha": um botão só, com IA e manual no dropdown.
 function NovaCampanhaMenu({ onCriar }) {
@@ -205,6 +213,27 @@ function MiniIndicadores({ s }) {
   );
 }
 
+function ModeloBadge({ modelo }) {
+  if (!modelo) return null;
+  const Ic = MODELO_ICON[modelo] || Laptop;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 12, background: "var(--surface-2)", color: "var(--muted)" }}>
+      <Ic size={11} /> {MODELO_LABEL[modelo] || modelo}
+    </span>
+  );
+}
+
+function ObjetivoLabel({ objetivoUI }) {
+  if (!objetivoUI) return null;
+  const obj = OBJETIVOS_UI[objetivoUI];
+  if (!obj) return null;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)" }}>
+      {obj.nome}
+    </span>
+  );
+}
+
 function InfoCampanha({ c }) {
   const chips = [
     c.funcao && [Users, FUNCAO_LABEL[c.funcao] || c.funcao.toUpperCase()],
@@ -212,7 +241,9 @@ function InfoCampanha({ c }) {
     c.duracaoDias && [Clock, `${c.duracaoDias} dias`],
   ].filter(Boolean);
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", alignItems: "center" }}>
+      <ModeloBadge modelo={c.modeloTrabalho} />
+      <ObjetivoLabel objetivoUI={c.objetivoUI} />
       {chips.map(([Icon, label], i) => <MetricChip key={i} icon={Icon} label={label} />)}
     </div>
   );

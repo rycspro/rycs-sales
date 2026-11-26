@@ -12,6 +12,7 @@ import { PAISES, bandeiraPais } from "../../../shared/paises.js";
 import { FUNCOES } from "../../../shared/funcoes.js";
 import { classificarCampanha, codigoPais, parsePaisesAceitos } from "../../../shared/oportunidades.js";
 import { SEGMENTOS } from "../../../shared/segmentos.js";
+import { MODELOS_TRABALHO, OBJETIVOS_UI, NIVEIS_EXPERIENCIA } from "../../../shared/campaignEngine.js";
 
 const SEGMENTO_LABEL = Object.fromEntries(SEGMENTOS.map((s) => [s.valor, s.label]));
 const segmentoLabel = (val) => SEGMENTO_LABEL[val] || val || "";
@@ -139,7 +140,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
   }, [campanhas]);
 
   // ---------------- filtros (F4) ----------------
-  const FILTROS_VAZIO = { busca: "", pais: "", segmento: "", funcao: "", moeda: "", pagamento: "", remMin: "", ordenar: "recentes", salvas: false };
+  const FILTROS_VAZIO = { busca: "", pais: "", segmento: "", funcao: "", moeda: "", pagamento: "", remMin: "", ordenar: "recentes", salvas: false, modeloTrabalho: "", objetivo: "", experiencia: "" };
   const [filtros, setFiltros] = useState(FILTROS_VAZIO);
   const [maisFiltros, setMaisFiltros] = useState(false);
   const setFiltro = (k, v) => setFiltros((f) => ({ ...f, [k]: v }));
@@ -155,13 +156,15 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
   }, [empresas]);
 
   const opcoes = useMemo(() => {
-    const paises = new Set(), funcoes = new Set(), moedas = new Set();
+    const paises = new Set(), funcoes = new Set(), moedas = new Set(), modelos = new Set(), objetivos = new Set();
     for (const { c, emp } of classificadas) {
       if (emp.pais) paises.add(emp.pais);
       if (c.funcao) funcoes.add(c.funcao);
       if (emp.moeda) moedas.add(emp.moeda);
+      if (c.modeloTrabalho) modelos.add(c.modeloTrabalho);
+      if (c.objetivoUI) objetivos.add(c.objetivoUI);
     }
-    return { paises: [...paises], funcoes: [...funcoes], moedas: [...moedas] };
+    return { paises: [...paises], funcoes: [...funcoes], moedas: [...moedas], modelos: [...modelos], objetivos: [...objetivos] };
   }, [classificadas]);
 
   const aplicarFiltros = (lista) => {
@@ -176,6 +179,9 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
       if (filtros.pagamento === "tarefa" && !Object.values(tarefas).some((v) => Number(v) > 0)) return false;
       if (filtros.pagamento === "comissao" && !(Number(c.percentualComissao) > 0)) return false;
       if (filtros.remMin && maxTarefa(c) < Number(filtros.remMin)) return false;
+      if (filtros.modeloTrabalho && c.modeloTrabalho !== filtros.modeloTrabalho) return false;
+      if (filtros.objetivo && c.objetivoUI !== filtros.objetivo) return false;
+      if (filtros.experiencia && c.nivelExperiencia !== filtros.experiencia) return false;
       return true;
     });
     out = [...out].sort((a, b) => filtros.ordenar === "remuneracao"
@@ -416,8 +422,11 @@ function CampanhaCard({ item, internacional, onAbrir, salva, onSalvar }) {
             <span aria-hidden="true" style={{ marginRight: 4 }}>{bandeiraPais(cls.paisEmpresa)}</span>{nomePais(cls.paisEmpresa)}
           </span>
         )}
-        {c.modeloOperacao && (
-          <span className="vx-chip" style={{ fontSize: 11 }}>{c.modeloOperacao}</span>
+        {(c.modeloTrabalho || c.modeloOperacao) && (
+          <span className="vx-chip" style={{ fontSize: 11 }}>
+            {c.modeloTrabalho === "presencial" ? <MapPin size={10} style={{ marginRight: 3, verticalAlign: -1 }} /> : c.modeloTrabalho === "hibrido" ? <Building2 size={10} style={{ marginRight: 3, verticalAlign: -1 }} /> : null}
+            {MODELOS_TRABALHO[c.modeloTrabalho]?.nome || c.modeloOperacao || ""}
+          </span>
         )}
         {funcaoLabel && (
           <span className="vx-chip" style={{ fontSize: 11 }}>
@@ -751,6 +760,9 @@ function BarraFiltros({ filtros, setFiltro, opcoes, opcoesEmpresas, empresa, mai
   if (!empresa && filtros.pagamento) ativos.push(["pagamento", filtros.pagamento === "tarefa" ? "Por tarefa" : "Comissão"]);
   if (!empresa && filtros.moeda) ativos.push(["moeda", filtros.moeda]);
   if (!empresa && filtros.remMin) ativos.push(["remMin", `≥ ${filtros.remMin}`]);
+  if (!empresa && filtros.modeloTrabalho) ativos.push(["modeloTrabalho", MODELOS_TRABALHO[filtros.modeloTrabalho]?.nome || filtros.modeloTrabalho]);
+  if (!empresa && filtros.objetivo) ativos.push(["objetivo", OBJETIVOS_UI[filtros.objetivo]?.nome || filtros.objetivo]);
+  if (!empresa && filtros.experiencia) ativos.push(["experiencia", NIVEIS_EXPERIENCIA.find((n) => n.id === filtros.experiencia)?.label || filtros.experiencia]);
 
   const ordenarLabel = { recentes: "Mais recentes", remuneracao: "Maior remuneração" }[filtros.ordenar] || "Mais recentes";
 
@@ -795,6 +807,18 @@ function BarraFiltros({ filtros, setFiltro, opcoes, opcoesEmpresas, empresa, mai
           <PopoverFiltro Icon={Wallet} rotulo="Pagamento" largura={200}
             valorLabel={filtros.pagamento ? (filtros.pagamento === "tarefa" ? "Por tarefa" : "Comissão") : null}>
             {(fechar) => <ListaOpcoes opcoes={opcoesPagamento} valor={filtros.pagamento} onEscolher={(v) => { setFiltro("pagamento", v); fechar(); }} />}
+          </PopoverFiltro>
+        )}
+        {!empresa && opcoes.modelos.length > 0 && (
+          <PopoverFiltro Icon={Globe2} rotulo="Modelo" largura={220}
+            valorLabel={filtros.modeloTrabalho ? (MODELOS_TRABALHO[filtros.modeloTrabalho]?.nome || filtros.modeloTrabalho) : null}>
+            {(fechar) => <ListaOpcoes opcoes={opcoes.modelos.map((m) => ({ value: m, label: MODELOS_TRABALHO[m]?.nome || m }))} valor={filtros.modeloTrabalho} onEscolher={(v) => { setFiltro("modeloTrabalho", v); fechar(); }} />}
+          </PopoverFiltro>
+        )}
+        {!empresa && opcoes.objetivos.length > 0 && (
+          <PopoverFiltro Icon={Target} rotulo="Objetivo" largura={260}
+            valorLabel={filtros.objetivo ? (OBJETIVOS_UI[filtros.objetivo]?.nome || filtros.objetivo) : null}>
+            {(fechar) => <ListaOpcoes opcoes={opcoes.objetivos.map((o) => ({ value: o, label: OBJETIVOS_UI[o]?.nome || o }))} valor={filtros.objetivo} buscavel onEscolher={(v) => { setFiltro("objetivo", v); fechar(); }} />}
           </PopoverFiltro>
         )}
         {!empresa && opcoesMoeda.length > 0 && (
@@ -849,9 +873,13 @@ function BarraFiltros({ filtros, setFiltro, opcoes, opcoesEmpresas, empresa, mai
               <input className="vx-input vx-mono" type="number" min="0" value={filtros.remMin}
                 onChange={(e) => setFiltro("remMin", e.target.value)} placeholder="0" aria-label="Remuneração mínima" />
             </label>
-          </div>
-          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10 }}>
-            Os filtros refletem apenas o que as campanhas publicadas informam. Mais critérios (idioma, experiência, modalidade) entram conforme as campanhas passam a registrá-los.
+            <label>
+              <div className="vx-label">Nível de experiência</div>
+              <select className="vx-input" value={filtros.experiencia} onChange={(e) => setFiltro("experiencia", e.target.value)}>
+                <option value="">Todos</option>
+                {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+              </select>
+            </label>
           </div>
         </div>
       )}

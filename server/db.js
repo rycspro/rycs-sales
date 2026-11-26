@@ -2908,5 +2908,52 @@ db.exec(`
 criarSchemaAgenda(db);
 criarSchemaCalendario(db);
 
+// ── Campaign Ecosystem v2: novos campos condicionais ────────────────────
+adicionarColuna("campaigns", "modeloTrabalho", "TEXT DEFAULT 'remoto'");
+adicionarColuna("campaigns", "restricaoGeo", "TEXT DEFAULT 'nenhuma'");
+adicionarColuna("campaigns", "paisesRestritos", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "regioesRestritas", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "cidadesRestritas", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "origemLeads", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "mercado", "TEXT DEFAULT 'pais_todo'");
+adicionarColuna("campaigns", "mercadoPaises", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "mercadoRegioes", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "canais", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "nivelExperiencia", "TEXT DEFAULT 'indiferente'");
+adicionarColuna("campaigns", "idiomasExigidos", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "disponibilidade", "TEXT DEFAULT 'flexivel'");
+adicionarColuna("campaigns", "disponibilidadeDetalhes", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "requisitosObrigatorios", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "requisitosDesejaveis", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "processoAdmissao", "TEXT DEFAULT 'manual'");
+adicionarColuna("campaigns", "limiteProf", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "visibilidade", "TEXT DEFAULT 'publica'");
+adicionarColuna("campaigns", "objetivoUI", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "temComissao", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "comissaoConfig", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "remuneracaoCumulativa", "INTEGER DEFAULT 1");
+adicionarColuna("campaigns", "acoesAtivas", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "icpTipo", "TEXT DEFAULT ''");
+adicionarColuna("campaigns", "icpEstruturado", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "qualificacaoCriterios", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "reuniaoConfig", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "versao", "INTEGER DEFAULT 1");
+
+// Histórico de versões de campanha (versionamento de alterações)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS campaign_versions (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    versao INTEGER NOT NULL,
+    snapshot TEXT NOT NULL,
+    alteradoPor TEXT,
+    alteradoRole TEXT DEFAULT 'empresa',
+    motivo TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_campaign_versions_camp ON campaign_versions(campaignId, versao);
+`);
+
 export default db;
 export { uid, agora };
