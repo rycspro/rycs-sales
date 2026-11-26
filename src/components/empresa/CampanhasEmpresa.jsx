@@ -563,54 +563,56 @@ function CampanhaLista({ campanhas, submissions, onAbrir, onEditar, onCriar, onA
         </div>
       )}
 
-      {/* Pills de status */}
+      {/* Filtros unificados */}
       {campanhas.length > 0 && (
-        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 2, marginBottom: 16 }}>
-          {pills.map(([key, label]) => {
-            const on = filtro === key;
-            const total = key ? counts[key] : (arquivadas ? counts["encerrada"] + counts["cancelada"] : campanhas.length - counts["encerrada"] - counts["cancelada"]);
-            return (
-              <button key={key || "todas"} onClick={() => setFiltro(key)}
-                style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
-                  padding: "5px 12px", borderRadius: 20, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
-                  background: on ? "var(--brand)" : "var(--surface)", cursor: "pointer",
-                  fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? "#fff" : "var(--ink)", transition: "all .15s" }}>
-                {label}{total > 0 && <span style={{ fontSize: 11, opacity: on ? 0.85 : 0.6 }}>{total}</span>}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Filtros V2: modelo de trabalho + função */}
-      {campanhas.length > 0 && (filtroModelo || filtroFuncao || campanhas.some((c) => c.modeloTrabalho)) && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-          {FILTROS_MODELO.map(([key, label]) => {
-            const on = filtroModelo === key;
-            return (
-              <button key={`m-${key || "all"}`} onClick={() => setFiltroModelo(key)}
-                style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
-                  padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
-                  background: on ? "var(--brand-50)" : "var(--surface)", cursor: "pointer",
-                  fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--brand)" : "var(--muted)", transition: "all .15s" }}>
-                {key && (MODELO_ICON[key] ? (() => { const Ic = MODELO_ICON[key]; return <Ic size={11} />; })() : null)}
-                {label}
-              </button>
-            );
-          })}
-          <span style={{ width: 1, height: 20, background: "var(--border)", margin: "0 4px" }} />
-          {FILTROS_FUNCAO.map(([key, label]) => {
-            const on = filtroFuncao === key;
-            return (
-              <button key={`f-${key || "all"}`} onClick={() => setFiltroFuncao(key)}
-                style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
-                  padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
-                  background: on ? "var(--brand-50)" : "var(--surface)", cursor: "pointer",
-                  fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--brand)" : "var(--muted)", transition: "all .15s" }}>
-                {label}
-              </button>
-            );
-          })}
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* Status */}
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
+            {pills.map(([key, label]) => {
+              const on = filtro === key;
+              const total = key ? counts[key] : (arquivadas ? counts["encerrada"] + counts["cancelada"] : campanhas.length - counts["encerrada"] - counts["cancelada"]);
+              return (
+                <button key={key || "todas"} onClick={() => setFiltro(key)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
+                    padding: "5px 12px", borderRadius: 20, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                    background: on ? "var(--brand)" : "#fff", cursor: "pointer",
+                    fontSize: 12.5, fontWeight: on ? 600 : 400, color: on ? "#fff" : "var(--ink)", transition: "all .15s" }}>
+                  {label}{total > 0 && <span style={{ fontSize: 11, opacity: on ? 0.85 : 0.6 }}>{total}</span>}
+                </button>
+              );
+            })}
+          </div>
+          {/* Modelo de trabalho + função */}
+          {(filtroModelo || filtroFuncao || campanhas.some((c) => c.modeloTrabalho)) && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+              {FILTROS_MODELO.map(([key, label]) => {
+                const on = filtroModelo === key;
+                return (
+                  <button key={`m-${key || "all"}`} onClick={() => setFiltroModelo(key)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                      padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                      background: on ? "var(--brand-50)" : "#fff", cursor: "pointer",
+                      fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--ink)" : "var(--muted)", transition: "all .15s" }}>
+                    {key && (MODELO_ICON[key] ? (() => { const Ic = MODELO_ICON[key]; return <Ic size={11} />; })() : null)}
+                    {label}
+                  </button>
+                );
+              })}
+              <span style={{ width: 1, height: 20, background: "var(--border)", margin: "0 4px", alignSelf: "center" }} />
+              {FILTROS_FUNCAO.map(([key, label]) => {
+                const on = filtroFuncao === key;
+                return (
+                  <button key={`f-${key || "all"}`} onClick={() => setFiltroFuncao(key)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                      padding: "4px 10px", borderRadius: 16, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                      background: on ? "var(--brand-50)" : "#fff", cursor: "pointer",
+                      fontSize: 11.5, fontWeight: on ? 600 : 400, color: on ? "var(--ink)" : "var(--muted)", transition: "all .15s" }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
