@@ -142,6 +142,51 @@ router.get("/admin/subscriptions", (req, res) => {
   res.json({ linhas, resumo, total: linhas.length });
 });
 
+// Receita recorrente do dashboard. Conta só quem paga de fato: assinatura de
+// empresa com status 'ativa' (trial, pendente, inadimplente e premium/isenção
+// sem cobrança ficam de fora) e plano Pro/Premium de profissional ativo e
+// cobrado pelo gateway (concessões do admin e migrações não são receita).
+// `valor` é o total do ciclo; o MRR divide pelos meses do ciclo.
+router.get("/admin/receita-recorrente", (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
+
+  const mensal = (valor, ciclo) => (Number(valor) || 0) / mesesDoCiclo(normalizarCiclo(ciclo));
+  const somarMoeda = (acc, moeda, v) => { const m = String(moeda || "BRL").toUpperCase(); acc[m] = (acc[m] || 0) + v; };
+
+  const empresasSubs = db.prepare(
+    "SELECT companyId, valor, ciclo, moeda FROM subscriptions WHERE status = 'ativa' AND valor > 0 ORDER BY criadoEm DESC"
+  ).all();
+  const porEmpresa = new Map();
+  for (const s of empresasSubs) if (!porEmpresa.has(s.companyId)) porEmpresa.set(s.companyId, s);
+  const mrrEmpresas = {};
+  for (const s of porEmpresa.values()) somarMoeda(mrrEmpresas, s.moeda, mensal(s.valor, s.ciclo));
+
+  const profSubs = db.prepare(`
+    SELECT sellerId, valor, ciclo FROM assinaturas_profissional
+    WHERE status = 'ativa' AND origem NOT IN ('admin', 'migracao') AND valor > 0 AND pagoAte > ?
+    ORDER BY criadoEm DESC
+  `).all(agora());
+  const porProfissional = new Map();
+  for (const s of profSubs) if (!porProfissional.has(s.sellerId)) porProfissional.set(s.sellerId, s);
+  const mrrProfissionais = {};
+  for (const s of porProfissional.values()) somarMoeda(mrrProfissionais, "BRL", mensal(s.valor, s.ciclo));
+
+  const arred = (n) => Math.round((n || 0) * 100) / 100;
+  const mrrBrl = (mrrEmpresas.BRL || 0) + (mrrProfissionais.BRL || 0);
+  const outrasMoedas = Object.fromEntries(
+    Object.entries(mrrEmpresas).filter(([m]) => m !== "BRL").map(([m, v]) => [m, arred(v)])
+  );
+
+  res.json({
+    mrr: arred(mrrBrl),
+    arr: arred(mrrBrl * 12),
+    outrasMoedas,
+    assinantesPagos: porEmpresa.size + porProfissional.size,
+    empresas: { pagantes: porEmpresa.size, mrr: arred(mrrEmpresas.BRL) },
+    profissionais: { pagantes: porProfissional.size, mrr: arred(mrrProfissionais.BRL) },
+  });
+});
+
 router.get("/admin/cancellations", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas a plataforma" });
   const rows = db.prepare(`

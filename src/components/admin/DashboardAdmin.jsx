@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import { Users, Building2, Banknote, TrendingUp, Activity, Wallet, Target, BarChart3 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Users, Building2, Banknote, TrendingUp, Activity, Wallet, Target, BarChart3, Repeat, BadgeCheck, UserCheck } from "lucide-react";
+import { api } from "../../lib/api.js";
 import { money, agora, dataCurta } from "../../lib/utils.js";
 import { TAXA, ACOES } from "../../lib/constants.js";
 import { Stat } from "../ui.jsx";
@@ -116,6 +117,13 @@ function BlocosIsometricos({ itens }) {
 }
 
 export default function DashboardAdmin({ db }) {
+  const [recorrente, setRecorrente] = useState(null);
+  useEffect(() => {
+    let vivo = true;
+    api("/admin/receita-recorrente").then((r) => { if (vivo && r && !r.error && r.empresas && r.profissionais) setRecorrente(r); }).catch(() => {});
+    return () => { vivo = false; };
+  }, []);
+
   const stats = useMemo(() => {
     const now = agora();
     const dia30 = now - 86400000 * 30;
@@ -227,6 +235,33 @@ export default function DashboardAdmin({ db }) {
         <Stat label="GMV liberado" value={money(stats.gmv)} Icon={Banknote} tone="amber" />
         <Stat label="Profissionais ativos" value={`${stats.profAtivos}/${stats.totalProfissionais}`} Icon={Users} tone="indigo" mono={false} />
         <Stat label="Empresas com saldo" value={`${stats.empComSaldo}/${stats.totalEmpresas}`} Icon={Building2} tone="muted" mono={false} />
+      </div>
+
+      <div className="vx-grid vx-g4" style={{ marginBottom: 22 }}>
+        <Stat
+          label="Receita recorrente (MRR)"
+          value={recorrente ? money(recorrente.mrr) : "—"}
+          Icon={Repeat}
+          sub={recorrente && [
+            `ARR ${money(recorrente.arr)}`,
+            ...Object.entries(recorrente.outrasMoedas || {}).map(([m, v]) => `+ ${money(v, m)}/mês`),
+          ].join(" · ")}
+        />
+        <Stat label="Assinantes pagos" value={recorrente ? recorrente.assinantesPagos : "—"} Icon={BadgeCheck} mono={false} sub="Empresas e profissionais em dia" />
+        <Stat
+          label="Empresas pagantes"
+          value={recorrente ? recorrente.empresas.pagantes : "—"}
+          Icon={Building2}
+          mono={false}
+          sub={recorrente && `MRR ${money(recorrente.empresas.mrr)}`}
+        />
+        <Stat
+          label="Profissionais pagantes"
+          value={recorrente ? recorrente.profissionais.pagantes : "—"}
+          Icon={UserCheck}
+          mono={false}
+          sub={recorrente && `MRR ${money(recorrente.profissionais.mrr)}`}
+        />
       </div>
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 22 }}>

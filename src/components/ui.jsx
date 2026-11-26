@@ -58,7 +58,7 @@ export function Vazio({ titulo, texto, acao }) {
   );
 }
 
-export function Stat({ label, value, Icon, tone = "brand", mono = true }) {
+export function Stat({ label, value, Icon, tone = "brand", mono = true, sub }) {
   return (
     <div className="vx-stat">
       <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 10 }}>
@@ -66,6 +66,7 @@ export function Stat({ label, value, Icon, tone = "brand", mono = true }) {
         <div className="vx-eyebrow" style={{ margin: 0 }}>{label}</div>
       </div>
       <div className={"vx-stat-val" + (mono ? " vx-mono" : "")}>{value}</div>
+      {sub && <div className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>{sub}</div>}
     </div>
   );
 }
