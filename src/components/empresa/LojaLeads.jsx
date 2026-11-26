@@ -1039,7 +1039,7 @@ function PastaCard({ pasta, aviso, onAbrir, onAtualizar }) {
         </div>
       ) : (
         <>
-          <strong>{listasInterna.length === 1 ? listasInterna[0].nome : pasta.nome}</strong>
+          <strong>{pasta.nome}</strong>
           <span className="vx-mut" style={{ fontSize: 12 }}>{pasta.totalContatos || 0} contato(s)</span>
           {listasInterna.length > 1 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
