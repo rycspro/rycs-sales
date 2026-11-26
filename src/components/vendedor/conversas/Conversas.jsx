@@ -10,7 +10,7 @@ import { ETAPAS } from "../../../../shared/pipeline.js";
 import { duracao, LIMITE_TEXTO } from "../../../../shared/canais.js";
 
 // ── Design tokens (RYCS White Editorial) ─────────────────────────────────
-const DS = {
+export const DS = {
   blue: "#318CE7",
   blue50: "rgba(49,140,231,.06)",
   blue100: "rgba(49,140,231,.12)",
@@ -276,7 +276,7 @@ const SEM_MIDIA = { imagem: "Foto", audio: "Áudio", video: "Vídeo", documento:
 const MARCA = { sent: [Check, DS.muted2, "Enviada"], delivered: [CheckCheck, DS.muted2, "Entregue"], read: [CheckCheck, DS.blue, "Lida"], played: [CheckCheck, DS.blue, "Ouvida"], failed: [AlertTriangle, "#EF4444", "Não entregue"] };
 
 // ── Conversa (coluna central) ───────────────────────────────────────────
-function AreaChat({ conversaId, largura, aviso, onVoltar, onMudou, onSelLead }) {
+function AreaChat({ conversaId, largura, aviso, onVoltar, onMudou, onSelLead, onAbrirLead, onAgendar, onFollowUp }) {
   const uid = useId();
   const [c, setC] = useState(null);
   const [texto, setTexto] = useState("");
@@ -340,7 +340,7 @@ function AreaChat({ conversaId, largura, aviso, onVoltar, onMudou, onSelLead }) 
             {[c.telefone && `+${c.telefone}`, c.lead && (ETAPAS[c.lead.etapa]?.nome || c.lead.etapa)].filter(Boolean).join(" · ")}
           </span>
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {c.lead && (
             <span style={{
               display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px",
@@ -349,6 +349,24 @@ function AreaChat({ conversaId, largura, aviso, onVoltar, onMudou, onSelLead }) 
             }}>
               {ETAPAS[c.lead.etapa]?.nome || "Lead"}
             </span>
+          )}
+          {c.lead && onAbrirLead && (
+            <button type="button" title="Ficha do lead" onClick={() => onAbrirLead(c.lead)}
+              style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${DS.border}`, background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", color: DS.muted }}>
+              <Building2 size={15} />
+            </button>
+          )}
+          {c.lead && onAgendar && (
+            <button type="button" title="Agendar reunião" onClick={() => onAgendar(c)}
+              style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${DS.border}`, background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", color: DS.muted }}>
+              <Clock size={15} />
+            </button>
+          )}
+          {c.lead && onFollowUp && (
+            <button type="button" title="Criar follow-up" onClick={() => onFollowUp(c)}
+              style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${DS.border}`, background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", color: DS.muted }}>
+              <Reply size={15} />
+            </button>
           )}
         </div>
       </div>
@@ -938,8 +956,8 @@ function BannerDesconectado({ info, onReconectar }) {
   );
 }
 
-// ── Componente principal ────────────────────────────────────────────────
-export default function Conversas({ aviso }) {
+// ── Componente principal (seção WhatsApp da central) ────────────────────
+export default function Conversas({ aviso, onAbrirLead, contexto }) {
   const largura = useLargura();
   const desktop = largura >= 1024;
   const tablet = largura >= 768 && largura < 1024;
@@ -1013,7 +1031,8 @@ export default function Conversas({ aviso }) {
   const colunaCentral = aberta ? (
     <AreaChat conversaId={aberta} largura={largura} aviso={aviso}
       onVoltar={mobile || tablet ? () => { setAberta(""); carregarLista(); } : null}
-      onMudou={carregarLista} onSelLead={setLeadSel} />
+      onMudou={carregarLista} onSelLead={setLeadSel}
+      onAbrirLead={onAbrirLead} onAgendar={contexto?.onAgendar} onFollowUp={contexto?.onFollowUp} />
   ) : (
     <EstadoVazio tipo={temConversas ? "nenhuma-selecionada" : "sem-conversas"} onNova={() => setModal(true)} />
   );
