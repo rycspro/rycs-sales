@@ -76,6 +76,7 @@ export const NIVEIS_EXPERIENCIA = [
 // ── Processo de admissão ────────────────────────────────────────────────
 export const PROCESSOS_ADMISSAO = [
   { id: "manual", label: "Aprovação manual", descricao: "A empresa analisa e aprova cada candidatura." },
+  { id: "ia", label: "Aprovação com IA", descricao: "A inteligência artificial avalia o perfil e decide a aprovação automaticamente." },
   { id: "automatico", label: "Aprovação automática", descricao: "Profissionais que atendam aos requisitos são admitidos automaticamente." },
   { id: "convite", label: "Somente por convite", descricao: "A campanha é destinada aos profissionais convidados." },
 ];
