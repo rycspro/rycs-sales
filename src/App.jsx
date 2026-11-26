@@ -405,7 +405,7 @@ export default function App() {
     <div className="vx-app">
       <style>{CSS}</style>
 
-      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} colaborador={colaborador} onLogout={logout} fullBleed={role === "empresa" && aba === "conversas"} settingsLayout={role === "empresa" && aba === "outros"}>
+      <Shell role={role} user={user} entity={entidadeConta} active={aba} onSelect={setAba} counts={counts} beta={environment === "beta"} colaborador={colaborador} onLogout={logout} fullBleed={(role === "empresa" && aba === "conversas") || (role === "vendedor" && aba === "conversas-evolution")} settingsLayout={role === "empresa" && aba === "outros"}>
         <ErrorBoundary>
           <Suspense fallback={<div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>}>
             {carga === "carregando" && (

@@ -47,7 +47,7 @@ export const NAV = {
     { key: "oportunidades", label: "Oportunidades", Icon: Target },
     { key: "loja-leads", label: "Loja de Leads", Icon: Store },
     { key: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
-    { key: "whatsapp-pessoal", label: "WhatsApp Pessoal", Icon: Smartphone },
+    { key: "conversas-evolution", label: "Conversas", Icon: MessageSquare },
     { section: "Desenvolvimento" },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "testes", label: "Skill Labs", Icon: ClipboardList },

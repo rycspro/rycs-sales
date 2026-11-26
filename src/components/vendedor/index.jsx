@@ -22,6 +22,7 @@ const PlanosProfissional = lazy(() => import("./PlanosProfissional.jsx"));
 const AgendaComercial = lazy(() => import("../agenda/AgendaComercial.jsx"));
 const WhatsappVendedor = lazy(() => import("./WhatsappVendedor.jsx"));
 const WhatsappPessoal = lazy(() => import("./WhatsappPessoal.jsx"));
+const Conversas = lazy(() => import("./conversas/Conversas.jsx"));
 const AreaColaborador = lazy(() => import("../colaborador/AreaColaborador.jsx"));
 const LojaLeads = lazy(() => import("../empresa/LojaLeads.jsx"));
 
@@ -112,6 +113,7 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
       {aba === "loja-leads" && <LojaLeads aviso={aviso} />}
       {aba === "whatsapp" && <WhatsappVendedor aviso={aviso} />}
       {aba === "whatsapp-pessoal" && <WhatsappPessoal aviso={aviso} />}
+      {aba === "conversas-evolution" && <Conversas aviso={aviso} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} setAba={setAba} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}
       {aba === "planos" && <PlanosProfissional aviso={aviso} />}
