@@ -100,12 +100,15 @@ const PORT = process.env.PORT || 3001;
 // saudável. O deploy (e o monitor) tratam != 200 como falha — então um banco
 // quebrado não é promovido nem fica no ar silenciosamente.
 app.get("/api/health", (_, res) => {
+  // commit: carimbado na imagem no build (APP_COMMIT). Permite confirmar QUAL
+  // versão está no ar sem acesso ao servidor. "desconhecido" em dev/local.
+  const commit = process.env.APP_COMMIT || "desconhecido";
   try {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok" });
+    res.json({ status: "ok", commit });
   } catch (e) {
     console.error("[health] banco indisponível:", e?.message || e);
-    res.status(503).json({ status: "degraded", erro: "banco" });
+    res.status(503).json({ status: "degraded", erro: "banco", commit });
   }
 });
 app.get("/api/environment", (_, res) => res.json({ environment: process.env.RYCS_ENVIRONMENT === "beta" ? "beta" : "production" }));

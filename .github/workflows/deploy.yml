@@ -97,7 +97,8 @@ jobs:
             fi
 
             # Build da nova versão com tag de candidato (não promove ainda).
-            docker build -t rycs-app:candidate .
+            # Carimba o commit na imagem para o /api/health reportar a versão no ar.
+            docker build --build-arg APP_COMMIT="$(git rev-parse --short HEAD)" -t rycs-app:candidate .
 
             # Sobe o candidato.
             docker stop rycs-app 2>/dev/null || true

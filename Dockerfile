@@ -32,6 +32,10 @@ RUN npm run build
 
 ENV NODE_ENV=production
 ENV PORT=3001
+# Commit que originou esta imagem (passado pelo deploy). Fica por último para
+# não invalidar o cache das camadas de npm/build a cada deploy.
+ARG APP_COMMIT=""
+ENV APP_COMMIT=$APP_COMMIT
 
 EXPOSE 3001
 
