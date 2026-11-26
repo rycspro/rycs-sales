@@ -54,7 +54,9 @@ upsert_env() {
     echo "${chave}=${valor}" >> "$ENV_FILE"
   fi
 }
-read_env() { grep "^$1=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2-; }
+# || true: sob pipefail, grep sem match retorna não-zero e o set -e mataria o
+# script na atribuição VAR=$(read_env ...) quando a chave ainda não existe.
+read_env() { grep "^$1=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true; }
 
 EVO_KEY=$(read_env EVOLUTION_API_KEY)
 if [ -z "$EVO_KEY" ]; then
