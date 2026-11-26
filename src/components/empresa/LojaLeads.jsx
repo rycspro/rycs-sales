@@ -44,6 +44,13 @@ const CATEGORIAS = [
 ];
 
 /* ── 5 grupos de informações (27 campos) ──────────────────────────────── */
+const CAMPOS_INDISPONIVEIS = new Set([
+  "Razão social", "Nome fantasia", "CNPJ", "Segmento / CNAE", "Porte da empresa",
+  "Celular", "WhatsApp", "E-mail comercial", "Nome do responsável", "Cargo do responsável",
+  "CEP",
+  "Instagram", "Facebook", "LinkedIn",
+  "Data de abertura", "Situação cadastral", "Capital social",
+]);
 const GRUPOS = [
   { key: "empresariais", label: "Dados empresariais", Icon: Building2,
     campos: ["Nome da empresa", "Razão social", "Nome fantasia", "CNPJ", "Segmento / CNAE", "Porte da empresa"] },
@@ -56,7 +63,7 @@ const GRUPOS = [
   { key: "complementares", label: "Informações complementares", Icon: FileText,
     campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Data de abertura", "Situação cadastral", "Capital social"] },
 ];
-const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos);
+const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos).filter((f) => !CAMPOS_INDISPONIVEIS.has(f));
 const QTDS = [25, 50, 100, 250, 500, 1000];
 
 const SEGMENTOS = [
@@ -167,7 +174,7 @@ const CIDADES_POR_ESTADO = {
 const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 /* ── ComboBox: input com sugestões filtrando por digitação ────────────── */
-function ComboBox({ value, onChange, options, placeholder, label }) {
+function ComboBox({ value, onChange, options, placeholder, label, allowFreeText = false }) {
   const [aberto, setAberto] = useState(false);
   const [texto, setTexto] = useState(value);
   const ref = useRef(null);
@@ -203,7 +210,7 @@ function ComboBox({ value, onChange, options, placeholder, label }) {
             </div>
           ))}
           {filtradas.length > 20 && <div className="ll-combo-item vx-mut" style={{ pointerEvents: "none", fontSize: 11.5 }}>+{filtradas.length - 20} resultados — refine a busca</div>}
-          {filtradas.length === 0 && (
+          {filtradas.length === 0 && allowFreeText && (
             <div className="ll-combo-item" style={{ color: "var(--brand)", fontWeight: 600 }}
               onMouseDown={(e) => { e.preventDefault(); selecionar(texto.trim()); }}>
               Usar: "{texto.trim()}"
@@ -390,7 +397,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
             <div className="vx-grid" style={{ gap: 12 }}>
               <div className="vx-grid vx-g2" style={{ gap: 12 }}>
                 <ComboBox label="Segmento ou tipo de empresa" value={segmento} onChange={setSegmento}
-                  options={SEGMENTOS} placeholder="Digite para buscar..." />
+                  options={SEGMENTOS} placeholder="Digite para buscar..." allowFreeText />
                 <ComboBox label="País" value={pais} onChange={setPais}
                   options={PAISES} placeholder="Digite o país..." />
               </div>
@@ -416,7 +423,7 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
               ))}
               <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 100 }}>
                 <input className="vx-input" type="number" min="1" max="10000" placeholder="Outro"
-                  value={qtdCustom} style={{ textAlign: "center", minWidth: 80 }}
+                  value={qtdCustom} style={{ textAlign: "center", minWidth: 80, ...(qtdCustom ? { borderColor: "var(--brand)", boxShadow: "0 0 0 1px var(--brand)" } : {}) }}
                   onChange={(e) => {
                     const v = e.target.value;
                     setQtdCustom(v);
@@ -440,32 +447,40 @@ function AbaBuscar({ aviso, listas, precoUnitario, recarregarCiclo, recarregarLi
             </div>
             <div className="vx-grid vx-g2 ll-groups" style={{ gap: 12 }}>
               {GRUPOS.map((g) => {
-                const selCount = g.campos.filter((f) => campos.has(f)).length;
-                const allSel = selCount === g.campos.length;
+                const disponiveis = g.campos.filter((f) => !CAMPOS_INDISPONIVEIS.has(f));
+                const selCount = disponiveis.filter((f) => campos.has(f)).length;
+                const allSel = disponiveis.length > 0 && selCount === disponiveis.length;
                 return (
                   <div key={g.key} className="vx-card" style={{ padding: 14 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
                       <g.Icon size={18} style={{ color: "var(--brand)", flexShrink: 0 }} />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 600 }}>{g.label}</div>
-                        <span className="vx-mut" style={{ fontSize: 11 }}>{selCount} de {g.campos.length} selecionadas</span>
+                        <span className="vx-mut" style={{ fontSize: 11 }}>{selCount} de {disponiveis.length} selecionadas</span>
                       </div>
-                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, cursor: "pointer" }}>
-                        <input type="checkbox" checked={allSel}
-                          ref={(el) => { if (el) el.indeterminate = selCount > 0 && !allSel; }}
-                          onChange={() => toggleGrupo(g.campos)}
-                          style={{ accentColor: "var(--brand)", width: 16, height: 16 }} />
-                        Todos
-                      </label>
+                      {disponiveis.length > 0 && (
+                        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, cursor: "pointer" }}>
+                          <input type="checkbox" checked={allSel}
+                            ref={(el) => { if (el) el.indeterminate = selCount > 0 && !allSel; }}
+                            onChange={() => toggleGrupo(disponiveis)}
+                            style={{ accentColor: "var(--brand)", width: 16, height: 16 }} />
+                          Todos
+                        </label>
+                      )}
                     </div>
                     <div style={{ display: "grid", gap: 8 }}>
-                      {g.campos.map((f) => (
-                        <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
-                          <input type="checkbox" checked={campos.has(f)} onChange={() => toggleCampo(f)}
-                            style={{ accentColor: "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
-                          {f}
-                        </label>
-                      ))}
+                      {g.campos.map((f) => {
+                        const indisponivel = CAMPOS_INDISPONIVEIS.has(f);
+                        return (
+                          <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: indisponivel ? "default" : "pointer", opacity: indisponivel ? 0.45 : 1 }}>
+                            <input type="checkbox" checked={!indisponivel && campos.has(f)} disabled={indisponivel}
+                              onChange={() => !indisponivel && toggleCampo(f)}
+                              style={{ accentColor: "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
+                            <span style={indisponivel ? { textDecoration: "line-through" } : undefined}>{f}</span>
+                            {indisponivel && <span style={{ fontSize: 10, color: "var(--muted-2)", marginLeft: "auto", whiteSpace: "nowrap" }}>Em breve</span>}
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                 );
