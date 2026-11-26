@@ -3392,6 +3392,8 @@ adicionarColuna("campaigns", "modoAcoesRemuneradas", "TEXT DEFAULT 'rapido'");
 adicionarColuna("campaigns", "passoWizard", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "atualizadoEm", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "ordemOperacao", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "distribuicaoVerba", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "modoDistribuicaoVerba", "TEXT DEFAULT 'automatico'");
 
 adicionarColuna("formas_ganho", "origem", "TEXT DEFAULT 'personalizado'");
 adicionarColuna("formas_ganho", "modeloOriginalId", "TEXT DEFAULT ''");

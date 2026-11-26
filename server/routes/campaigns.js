@@ -256,12 +256,12 @@ router.post("/campaigns", (req, res) => {
       "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
       "icpTipo", "versao", "processoAdmissao",
       "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas", "passoWizard", "ordemOperacao"];
+      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas", "passoWizard", "ordemOperacao", "modoDistribuicaoVerba"];
     const v2Bool = ["temComissao", "remuneracaoCumulativa"];
     const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
       "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
       "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
-      "selecaoLeadsFiltros"];
+      "selecaoLeadsFiltros", "distribuicaoVerba"];
     const v2Sets = ["atualizadoEm = ?"]; const v2Vals = [criadoEm];
     for (const k of v2Plain) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k]); } }
     for (const k of v2Bool) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k] ? 1 : 0); } }
@@ -298,13 +298,13 @@ router.patch("/campaigns/:id", (req, res) => {
     "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
     "temComissao", "remuneracaoCumulativa", "icpTipo", "versao", "processoAdmissao",
     "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-    "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica", "passoWizard"];
+    "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica", "passoWizard", "modoDistribuicaoVerba"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
     "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos",
     "paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
     "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
     "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
-    "selecaoLeadsFiltros"];
+    "selecaoLeadsFiltros", "distribuicaoVerba"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(req.body)) {

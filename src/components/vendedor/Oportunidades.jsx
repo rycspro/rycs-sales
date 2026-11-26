@@ -665,6 +665,32 @@ function DetalheCampanha({ item, candidatar, candidatando, abrirCampanha, onVolt
           )}
         </div>
 
+        {/* Verba da campanha — visível ao profissional */}
+        {Number(c.orcamento) > 0 && (
+          <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+            <div className="vx-eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>Verba da campanha</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
+              <div style={{ textAlign: "center" }}>
+                <div className="vx-mut" style={{ fontSize: 11 }}>Verba total</div>
+                <div className="vx-mono" style={{ fontSize: 16, fontWeight: 700, color: "var(--brand)" }}>{money(c.orcamento, emp.moeda)}</div>
+              </div>
+              {acoes.length > 0 && (() => {
+                const custoUnit = acoes.reduce((s, k) => s + (Number(tarefas[k]) || 0), 0);
+                const previstas = custoUnit > 0 ? Math.floor(Number(c.orcamento) / custoUnit) : 0;
+                return previstas > 0 ? (
+                  <div style={{ textAlign: "center" }}>
+                    <div className="vx-mut" style={{ fontSize: 11 }}>Ações previstas</div>
+                    <div className="vx-mono" style={{ fontSize: 16, fontWeight: 700 }}>~{previstas}</div>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10, lineHeight: 1.5 }}>
+              A verba é compartilhada entre os profissionais participantes e não representa um ganho individual garantido. Os indicadores são atualizados conforme as ações forem realizadas.
+            </div>
+          </div>
+        )}
+
         <Linha rotulo="Descrição">{c.descricao}</Linha>
         <Linha rotulo="Objetivo">{c.objetivo}</Linha>
         <Linha rotulo="Público-alvo">{c.publico || c.icp}</Linha>
