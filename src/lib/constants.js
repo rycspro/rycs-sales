@@ -82,12 +82,10 @@ export const NAV = {
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
     { key: "leads", label: "Leads", Icon: Target, children: [
-      { key: "leads", label: "Pipeline" },
-      { key: "pedidos", label: "Pedidos" },
       { key: "integracoes", label: "Integrações" },
+      { key: "calendario", label: "Calendário" },
       { key: "loja-leads", label: "Loja de Leads" },
     ] },
-    { key: "calendario", label: "Calendário", Icon: CalendarDays },
     { key: "conversas", label: "Conversas", Icon: MessageSquare, children: [
       { key: "conversas", label: "Chat Rycs" },
       { key: "leads-whatsapp", label: "WhatsApp" },
