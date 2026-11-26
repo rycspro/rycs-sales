@@ -29,6 +29,7 @@ const Pedidos = lazy(() => import("./Pedidos.jsx"));
 const LojaLeads = lazy(() => import("./LojaLeads.jsx"));
 const MateriaisEmpresa = lazy(() => import("./MateriaisEmpresa.jsx"));
 const AcademyEmpresa = lazy(() => import("./AcademyEmpresa.jsx"));
+const DiscadoraEmpresa = lazy(() => import("../voice/DiscadoraEmpresa.jsx"));
 
 const CAMPOS_SORT = {
   inicio:    [{ key: "criadoEm", label: "Data" }, { key: "valor", label: "Valor" }],
@@ -205,6 +206,7 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
       {aba === "pedidos" && (
         <Pedidos aviso={aviso} abrirId={pedidoAberto} aoAbrir={() => setPedidoAberto("")} irParaIntegracoes={() => setAba?.("integracoes")} />
       )}
+      {aba === "discadora" && <DiscadoraEmpresa emp={emp} aviso={aviso} />}
       {aba === "loja-leads" && <LojaLeads aviso={aviso} />}
       {aba === "integracoes" && (
         <Integracoes aviso={aviso} campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}

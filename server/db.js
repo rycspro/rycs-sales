@@ -2904,6 +2904,274 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_evo_consentimentos_seller ON evolution_consentimentos(sellerId);
 `);
 
+// =====================================================================
+// RYCS VOICE — Discadora comercial nativa
+// =====================================================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS voice_providers (
+    id TEXT PRIMARY KEY,
+    tipo TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    config TEXT DEFAULT '{}',
+    status TEXT DEFAULT 'ativo',
+    criadoEm INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS voice_company_settings (
+    companyId TEXT PRIMARY KEY,
+    ativo INTEGER DEFAULT 0,
+    modalidades TEXT DEFAULT '["mobile"]',
+    horarioInicio TEXT DEFAULT '08:00',
+    horarioFim TEXT DEFAULT '20:00',
+    diasOperacao TEXT DEFAULT '["seg","ter","qua","qui","sex"]',
+    metaDiaria INTEGER DEFAULT 30,
+    maxTentativas INTEGER DEFAULT 3,
+    intervaloRetentativa INTEGER DEFAULT 3600,
+    scriptPadrao TEXT DEFAULT '',
+    resultadosDisponiveis TEXT DEFAULT '[]',
+    regrasDistribuicao TEXT DEFAULT '{}',
+    gravacaoAtiva INTEGER DEFAULT 0,
+    limiteMinutosMensal INTEGER DEFAULT 0,
+    campanhasAutorizadas TEXT DEFAULT '[]',
+    profissionaisAutorizados TEXT DEFAULT '[]',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS voice_queues (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    campaignId TEXT,
+    nome TEXT NOT NULL,
+    descricao TEXT DEFAULT '',
+    estrategia TEXT DEFAULT 'ordem',
+    status TEXT DEFAULT 'ativa',
+    prioridade INTEGER DEFAULT 0,
+    maxTentativas INTEGER DEFAULT 3,
+    intervaloRetentativa INTEGER DEFAULT 3600,
+    horarioInicio TEXT DEFAULT '08:00',
+    horarioFim TEXT DEFAULT '20:00',
+    diasOperacao TEXT DEFAULT '["seg","ter","qua","qui","sex"]',
+    config TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_queues_company ON voice_queues(companyId);
+
+  CREATE TABLE IF NOT EXISTS voice_queue_members (
+    id TEXT PRIMARY KEY,
+    queueId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    papel TEXT DEFAULT 'operador',
+    ativo INTEGER DEFAULT 1,
+    criadoEm INTEGER NOT NULL,
+    UNIQUE(queueId, sellerId),
+    FOREIGN KEY (queueId) REFERENCES voice_queues(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_qm_queue ON voice_queue_members(queueId);
+  CREATE INDEX IF NOT EXISTS idx_voice_qm_seller ON voice_queue_members(sellerId);
+
+  CREATE TABLE IF NOT EXISTS voice_queue_leads (
+    id TEXT PRIMARY KEY,
+    queueId TEXT NOT NULL,
+    leadId TEXT NOT NULL,
+    posicao INTEGER DEFAULT 0,
+    tentativas INTEGER DEFAULT 0,
+    ultimaTentativa INTEGER,
+    proximaTentativa INTEGER,
+    status TEXT DEFAULT 'pendente',
+    prioridade INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    UNIQUE(queueId, leadId),
+    FOREIGN KEY (queueId) REFERENCES voice_queues(id),
+    FOREIGN KEY (leadId) REFERENCES leads(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_ql_queue ON voice_queue_leads(queueId, status);
+  CREATE INDEX IF NOT EXISTS idx_voice_ql_lead ON voice_queue_leads(leadId);
+
+  CREATE TABLE IF NOT EXISTS voice_lead_reservations (
+    id TEXT PRIMARY KEY,
+    queueId TEXT NOT NULL,
+    leadId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    status TEXT DEFAULT 'ativa',
+    expiraEm INTEGER NOT NULL,
+    criadoEm INTEGER NOT NULL,
+    liberadoEm INTEGER,
+    FOREIGN KEY (queueId) REFERENCES voice_queues(id),
+    FOREIGN KEY (leadId) REFERENCES leads(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_res_queue ON voice_lead_reservations(queueId, status);
+  CREATE INDEX IF NOT EXISTS idx_voice_res_lead ON voice_lead_reservations(leadId, status);
+  CREATE INDEX IF NOT EXISTS idx_voice_res_seller ON voice_lead_reservations(sellerId, status);
+
+  CREATE TABLE IF NOT EXISTS voice_calls (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    campaignId TEXT,
+    queueId TEXT,
+    leadId TEXT,
+    sellerId TEXT NOT NULL,
+    providerId TEXT DEFAULT 'mobile',
+    numeroOrigem TEXT DEFAULT '',
+    numeroDestino TEXT NOT NULL,
+    status TEXT DEFAULT 'iniciada',
+    resultado TEXT DEFAULT '',
+    observacao TEXT DEFAULT '',
+    origemDados TEXT DEFAULT 'declarado',
+    iniciadaEm INTEGER NOT NULL,
+    atendidaEm INTEGER,
+    encerradaEm INTEGER,
+    duracaoTotal INTEGER DEFAULT 0,
+    duracaoTarifavel INTEGER DEFAULT 0,
+    providerCallId TEXT DEFAULT '',
+    gravacaoRef TEXT DEFAULT '',
+    metadados TEXT DEFAULT '{}',
+    validado INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_calls_company ON voice_calls(companyId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_voice_calls_seller ON voice_calls(sellerId, criadoEm);
+  CREATE INDEX IF NOT EXISTS idx_voice_calls_lead ON voice_calls(leadId);
+  CREATE INDEX IF NOT EXISTS idx_voice_calls_queue ON voice_calls(queueId);
+
+  CREATE TABLE IF NOT EXISTS voice_call_events (
+    id TEXT PRIMARY KEY,
+    callId TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    dados TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (callId) REFERENCES voice_calls(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_ce_call ON voice_call_events(callId);
+
+  CREATE TABLE IF NOT EXISTS voice_call_dispositions (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    codigo TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    categoria TEXT DEFAULT 'neutro',
+    ativo INTEGER DEFAULT 1,
+    ordem INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    UNIQUE(companyId, codigo)
+  );
+
+  CREATE TABLE IF NOT EXISTS voice_callbacks (
+    id TEXT PRIMARY KEY,
+    leadId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    queueId TEXT,
+    agendadoPara INTEGER NOT NULL,
+    observacao TEXT DEFAULT '',
+    status TEXT DEFAULT 'pendente',
+    callId TEXT,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (leadId) REFERENCES leads(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_cb_seller ON voice_callbacks(sellerId, status);
+  CREATE INDEX IF NOT EXISTS idx_voice_cb_agenda ON voice_callbacks(agendadoPara);
+
+  CREATE TABLE IF NOT EXISTS voice_scripts (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    campaignId TEXT,
+    queueId TEXT,
+    nome TEXT NOT NULL,
+    abertura TEXT DEFAULT '',
+    qualificacao TEXT DEFAULT '',
+    argumentacao TEXT DEFAULT '',
+    objecoes TEXT DEFAULT '',
+    encerramento TEXT DEFAULT '',
+    agendamento TEXT DEFAULT '',
+    ativo INTEGER DEFAULT 1,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_scripts_company ON voice_scripts(companyId);
+
+  CREATE TABLE IF NOT EXISTS voice_do_not_call (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    telefone TEXT NOT NULL,
+    motivo TEXT DEFAULT '',
+    criadoPor TEXT,
+    criadoEm INTEGER NOT NULL,
+    UNIQUE(companyId, telefone)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_dnc ON voice_do_not_call(companyId, telefone);
+
+  CREATE TABLE IF NOT EXISTS voice_usage_events (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    sellerId TEXT,
+    callId TEXT,
+    tipo TEXT NOT NULL,
+    minutos REAL DEFAULT 0,
+    custo REAL DEFAULT 0,
+    simulado INTEGER DEFAULT 0,
+    idempotencyKey TEXT UNIQUE,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_usage_company ON voice_usage_events(companyId, criadoEm);
+
+  CREATE TABLE IF NOT EXISTS voice_recordings (
+    id TEXT PRIMARY KEY,
+    callId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    url TEXT DEFAULT '',
+    duracao INTEGER DEFAULT 0,
+    formato TEXT DEFAULT 'wav',
+    tamanho INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'pendente',
+    retencaoAte INTEGER,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (callId) REFERENCES voice_calls(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS voice_audit_logs (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    acao TEXT NOT NULL,
+    entidade TEXT NOT NULL,
+    entidadeId TEXT NOT NULL,
+    dados TEXT DEFAULT '{}',
+    ip TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_audit ON voice_audit_logs(companyId, criadoEm);
+
+  CREATE TABLE IF NOT EXISTS voice_sessions (
+    id TEXT PRIMARY KEY,
+    sellerId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    queueId TEXT,
+    status TEXT DEFAULT 'ativo',
+    modalidade TEXT DEFAULT 'mobile',
+    iniciadoEm INTEGER NOT NULL,
+    pausadoEm INTEGER,
+    encerradoEm INTEGER,
+    totalLigacoes INTEGER DEFAULT 0,
+    totalAtendidas INTEGER DEFAULT 0,
+    tempoTotal INTEGER DEFAULT 0,
+    FOREIGN KEY (sellerId) REFERENCES sellers(id),
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_sess_seller ON voice_sessions(sellerId, status);
+`);
+
 criarSchemaAgenda(db);
 
 export default db;
