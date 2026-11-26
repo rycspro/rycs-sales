@@ -133,21 +133,25 @@ jobs:
                 EVO_KEY=$(grep "^EVOLUTION_API_KEY=" /home/ec2-user/env_producao.txt | cut -d= -f2-)
                 NAME="rycs_validate_$(date +%s)"
                 echo "Criando instância de teste: $NAME"
-                curl -sf -X POST "http://${HOST_IP}:8080/instance/create" \
+                HTTP=$(curl -s -o /tmp/evo_create.json -w "%{http_code}" -X POST "http://${HOST_IP}:8080/instance/create" \
                   -H "apikey: ${EVO_KEY}" -H "Content-Type: application/json" \
-                  -d "{\"instanceName\":\"${NAME}\",\"integration\":\"WHATSAPP-BAILEYS\",\"qrcode\":true}" \
-                  -o /tmp/evo_create.json 2>/dev/null || echo "(create falhou)"
-                sleep 2
-                curl -sf "http://${HOST_IP}:8080/instance/connect/${NAME}" \
-                  -H "apikey: ${EVO_KEY}" -o /tmp/evo_qr.json 2>/dev/null || true
-                QLEN=$(python3 -c "import json;d=json.load(open('/tmp/evo_qr.json'));b=d.get('base64','') or d.get('code','');print(len(b))" 2>/dev/null || echo 0)
+                  -d "{\"instanceName\":\"${NAME}\",\"integration\":\"WHATSAPP-BAILEYS\",\"qrcode\":true}")
+                echo "create HTTP $HTTP"
+                # Na v2.2.x o QR já vem no create (qrcode.base64). connect é o fallback.
+                QLEN=$(python3 -c "import json;d=json.load(open('/tmp/evo_create.json'));q=d.get('qrcode') or {};b=q.get('base64','') or q.get('code','') or d.get('base64','');print(len(b))" 2>/dev/null || echo 0)
+                if [ "${QLEN:-0}" -le 100 ]; then
+                  sleep 3
+                  HTTP2=$(curl -s -o /tmp/evo_qr.json -w "%{http_code}" "http://${HOST_IP}:8080/instance/connect/${NAME}" -H "apikey: ${EVO_KEY}")
+                  echo "connect HTTP $HTTP2"
+                  QLEN=$(python3 -c "import json;d=json.load(open('/tmp/evo_qr.json'));b=d.get('base64','') or d.get('code','');print(len(b))" 2>/dev/null || echo 0)
+                fi
                 if [ "${QLEN:-0}" -gt 100 ]; then
                   echo "✓ QR Code real gerado (base64/code com ${QLEN} chars)"
                 else
-                  echo "✗ QR não gerado. Resposta create:"; head -c 400 /tmp/evo_create.json; echo
-                  echo "Resposta connect:"; head -c 400 /tmp/evo_qr.json; echo
+                  echo "✗ QR não confirmado. Corpo create:"; head -c 600 /tmp/evo_create.json; echo
+                  echo "Corpo connect:"; head -c 600 /tmp/evo_qr.json 2>/dev/null; echo
                 fi
-                curl -sf -X DELETE "http://${HOST_IP}:8080/instance/delete/${NAME}" -H "apikey: ${EVO_KEY}" >/dev/null 2>&1 && echo "✓ instância de teste removida" || echo "(remoção da instância de teste falhou — limpe manualmente: $NAME)"
+                curl -s -o /dev/null -X DELETE "http://${HOST_IP}:8080/instance/delete/${NAME}" -H "apikey: ${EVO_KEY}" && echo "✓ instância de teste removida" || echo "(limpe manualmente: $NAME)"
                 ;;
               pilot)
                 EMAIL="${{ inputs.email }}"
