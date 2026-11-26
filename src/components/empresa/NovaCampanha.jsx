@@ -27,7 +27,7 @@ const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
-const PASSOS = ["O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Quanto vai pagar?", "Tudo certo?"];
+const PASSOS = ["O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações e pagamentos", "Verba da campanha", "Tudo certo?"];
 
 const ICONES_OBJETIVO_UI = {
   encontrar_clientes: Search, qualificar: Filter, agendar_reunioes: CalendarCheck,
@@ -1400,7 +1400,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 4: AÇÕES & REMUNERAÇÃO ═══════════════════════ */}
       {passo === 3 && campanha && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Quanto vai pagar?</h2>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Ações e pagamentos</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
             {campanha.estruturaComercial === "operacao" ? "As atividades e valores de cada função foram configurados no passo 2." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
           </p>
@@ -1523,19 +1523,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                   {a.id === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "%" : "R$"}
                                 </span>
                               </div>
-                            </label>
-                            <label>
-                              <div className="vx-label">Método de aprovação</div>
-                              <select className="vx-input" value={campanha[`aprovacao_${a.id}`] || "manual"}
-                                onChange={(e) => set(`aprovacao_${a.id}`, e.target.value)}>
-                                {METODOS_APROVACAO.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
-                              </select>
-                            </label>
-                            <label>
-                              <div className="vx-label">Critérios de validação</div>
-                              <input className="vx-input" placeholder="Ex: Lead no ICP, dados completos"
-                                value={campanha[`criterio_${a.id}`] || ""}
-                                onChange={(e) => set(`criterio_${a.id}`, e.target.value)} />
                             </label>
                           </div>
                         )}
