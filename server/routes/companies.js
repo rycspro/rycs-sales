@@ -57,7 +57,7 @@ router.patch("/companies/:id", (req, res) => {
   const allowed = ["nome", "produto", "ticket", "icp", "plano", "destaque", "destaqueTipo", "visivel", "vagas", "cor", "documento",
     "razaoSocial", "endereco", "segmento", "regiao", "diferenciais", "objecoes", "representanteLegal",
     "contatoFinanceiro", "contatoComercial", "situacaoCadastral", "dataAbertura", "naturezaJuridica", "cnaes", "telefoneEmpresa", "emailEmpresa",
-    "pais", "moeda"];
+    "pais", "moeda", "descricaoInstitucional"];
   const jsonFields = ["comissoes", "curso", "qualificacao", "materiais"];
   const sets = [];
   const vals = [];

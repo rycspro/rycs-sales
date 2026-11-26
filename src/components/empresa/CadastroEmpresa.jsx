@@ -31,7 +31,8 @@ export default function CadastroEmpresa({ emp, up, aviso, camposDestacados = [] 
     setSalvando(true);
     const payload = Object.fromEntries([...campos.map(([k]) => [k, form[k] || ""]),
       ["ticket", form.ticket || ""], ["icp", form.icp || ""], ["diferenciais", form.diferenciais || ""],
-      ["objecoes", form.objecoes || ""], ["materiais", form.materiais || []]]);
+      ["objecoes", form.objecoes || ""], ["descricaoInstitucional", form.descricaoInstitucional || ""],
+      ["materiais", form.materiais || []]]);
     const r = await apiPatch(`/companies/${emp.id}`, payload);
     setSalvando(false);
     if (!r || r.error) { aviso(r?.error || "Não foi possível salvar."); return false; }
@@ -66,6 +67,7 @@ export default function CadastroEmpresa({ emp, up, aviso, camposDestacados = [] 
         <label><div className="vx-label">Ticket médio</div><input className="vx-input" value={form.ticket || ""} onChange={set("ticket")} placeholder="Ex.: R$ 1.500 por mês" /></label>
         <label><div className="vx-label" style={camposDestacados.includes("icp") ? { color: "var(--amber)", fontWeight: 700 } : undefined}>ICP{camposDestacados.includes("icp") ? " · necessário para a IA" : ""}</div><input className="vx-input" style={camposDestacados.includes("icp") ? { borderColor: "var(--amber)" } : undefined} value={form.icp || ""} onChange={set("icp")} placeholder="Quem compra e em qual contexto" /></label>
       </div>
+      <label style={{ display: "block", marginTop: 14 }}><div className="vx-label">Descrição institucional</div><textarea className="vx-input" style={{ minHeight: 76 }} value={form.descricaoInstitucional || ""} onChange={set("descricaoInstitucional")} placeholder="Descreva sua empresa para os profissionais da plataforma" /></label>
       <label style={{ display: "block", marginTop: 14 }}><div className="vx-label" style={camposDestacados.includes("diferenciais") ? { color: "var(--amber)", fontWeight: 700 } : undefined}>Diferenciais{camposDestacados.includes("diferenciais") ? " · necessário para a IA" : ""}</div><textarea className="vx-input" style={{ minHeight: 76, ...(camposDestacados.includes("diferenciais") ? { borderColor: "var(--amber)" } : {}) }} value={form.diferenciais || ""} onChange={set("diferenciais")} /></label>
       <label style={{ display: "block", marginTop: 14 }}><div className="vx-label" style={camposDestacados.includes("objecoes") ? { color: "var(--amber)", fontWeight: 700 } : undefined}>Objeções mais comuns{camposDestacados.includes("objecoes") ? " · necessário para a IA" : ""}</div><textarea className="vx-input" style={{ minHeight: 76, ...(camposDestacados.includes("objecoes") ? { borderColor: "var(--amber)" } : {}) }} value={form.objecoes || ""} onChange={set("objecoes")} /></label>
     </div>

@@ -10,9 +10,11 @@ import { ACOES, ORDEM_ACOES } from "../../lib/constants.js";
 import { PAISES, bandeiraPais } from "../../../shared/paises.js";
 import { FUNCOES } from "../../../shared/funcoes.js";
 import { classificarCampanha, codigoPais, parsePaisesAceitos } from "../../../shared/oportunidades.js";
+import { SEGMENTOS } from "../../../shared/segmentos.js";
 
-// Lembra a aba escolhida ao voltar de uma página de detalhe (sem depender do
-// index.jsx). Vive no módulo, então sobrevive ao remonte do componente.
+const SEGMENTO_LABEL = Object.fromEntries(SEGMENTOS.map((s) => [s.valor, s.label]));
+const segmentoLabel = (val) => SEGMENTO_LABEL[val] || val || "";
+
 let abaMemoria = "empresas";
 
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
@@ -39,10 +41,10 @@ function remuneracao(c, moeda) {
   return { label: label || "A combinar", chips: base, moeda };
 }
 
-function Logo({ empresa, size = 44 }) {
-  const r = Math.round(size * 0.23);
+function Logo({ empresa, size = 44, r: rOverride }) {
+  const r = rOverride ?? Math.round(size * 0.23);
   return empresa.logo
-    ? <img src={empresa.logo} alt="" style={{ width: size, height: size, borderRadius: r, objectFit: "cover", flexShrink: 0 }} />
+    ? <img src={empresa.logo} alt="" style={{ width: size, height: size, borderRadius: r, objectFit: "contain", flexShrink: 0, background: "var(--surface-2, #f5f5f5)" }} />
     : <div style={{ width: size, height: size, borderRadius: r, flexShrink: 0, background: empresa.cor || "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: size * 0.32, fontWeight: 700 }}>
         {String(empresa.nome || "?").slice(0, 2).toUpperCase()}
       </div>;
@@ -125,11 +127,20 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
   }, [campanhas]);
 
   // ---------------- filtros (F4) ----------------
-  const FILTROS_VAZIO = { busca: "", pais: "", funcao: "", moeda: "", pagamento: "", remMin: "", ordenar: "recentes" };
+  const FILTROS_VAZIO = { busca: "", pais: "", segmento: "", funcao: "", moeda: "", pagamento: "", remMin: "", ordenar: "recentes" };
   const [filtros, setFiltros] = useState(FILTROS_VAZIO);
   const [maisFiltros, setMaisFiltros] = useState(false);
   const setFiltro = (k, v) => setFiltros((f) => ({ ...f, [k]: v }));
   const limparFiltros = () => setFiltros(FILTROS_VAZIO);
+
+  const opcoesEmpresas = useMemo(() => {
+    const paises = new Set(), segmentos = new Set();
+    for (const e of empresas) {
+      if (e.pais) paises.add(e.pais);
+      if (e.segmento) segmentos.add(e.segmento);
+    }
+    return { paises: [...paises], segmentos: [...segmentos] };
+  }, [empresas]);
 
   const opcoes = useMemo(() => {
     const paises = new Set(), funcoes = new Set(), moedas = new Set();
@@ -162,14 +173,18 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 
   const empresasFiltradas = useMemo(() => {
     const q = filtros.busca.trim().toLowerCase();
-    // Empresas com logo/imagem sempre primeiro; as sem logo vão para o fim.
-    // sort é estável, então dentro de cada grupo a ordem original é mantida.
+    const descEmpresa = (e) => e.descricaoInstitucional || e.produto || e.icp || "";
     return empresas.filter((e) =>
-      (!q || (e.nome || "").toLowerCase().includes(q)) &&
+      (!q || `${e.nome || ""} ${segmentoLabel(e.segmento)} ${descEmpresa(e)}`.toLowerCase().includes(q)) &&
       (!filtros.pais || e.pais === filtros.pais) &&
-      (!filtros.moeda || e.moeda === filtros.moeda))
-      .sort((a, b) => (b.logo ? 1 : 0) - (a.logo ? 1 : 0));
-  }, [empresas, filtros]);
+      (!filtros.segmento || e.segmento === filtros.segmento))
+      .sort((a, b) => {
+        const ca = campsPorEmpresa[a.id] || 0;
+        const cb = campsPorEmpresa[b.id] || 0;
+        if (ca !== cb) return cb - ca;
+        return (a.nome || "").localeCompare(b.nome || "");
+      });
+  }, [empresas, filtros, campsPorEmpresa]);
 
   // ---- candidatura (mantém a lógica e os controles de segurança atuais) ----
   const [candidatando, setCandidatando] = useState(false);
@@ -193,7 +208,7 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
     const emp = empresasMap[empresaSel];
     if (!emp) { setEmpresaSel(null); return null; }
     const itens = classificadas.filter((x) => x.c.companyId === emp.id);
-    return <DetalheEmpresa emp={emp} itens={itens} metrica={metricas[emp.id]} eu={eu}
+    return <DetalheEmpresa emp={emp} itens={itens}
       onVoltar={() => setEmpresaSel(null)} onAbrirCampanha={(c) => setCampanhaSel(c.id)} />;
   }
 
@@ -208,18 +223,18 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
       <div style={{ marginBottom: 14 }}>
         <h2 className="vx-disp" style={{ fontSize: 20, margin: 0 }}>Oportunidades</h2>
         <p className="vx-mut" style={{ fontSize: 13, marginTop: 4 }}>
-          Explore empresas e descubra campanhas nacionais e internacionais.
+          Conheça empresas e encontre novas oportunidades profissionais.
         </p>
       </div>
 
       <FolderTabs abas={abas} aba={aba} setAba={setAba} />
       <div role="tabpanel" style={{ border: "1px solid var(--border)", borderRadius: "0 12px 12px 12px", background: "var(--surface)", padding: 16 }}>
-        <BarraFiltros filtros={filtros} setFiltro={setFiltro} opcoes={opcoes} empresa={aba === "empresas"}
+        <BarraFiltros filtros={filtros} setFiltro={setFiltro} opcoes={opcoes} opcoesEmpresas={opcoesEmpresas} empresa={aba === "empresas"}
           maisFiltros={maisFiltros} setMaisFiltros={setMaisFiltros} limpar={limparFiltros}
           total={aba === "empresas" ? empresasFiltradas.length : aba === "nacionais" ? aplicarFiltros(nacionais).length : aplicarFiltros(internacionais).length} />
 
         {aba === "empresas" && (
-          <GridEmpresas empresas={empresasFiltradas} metricas={metricas} campsPorEmpresa={campsPorEmpresa} onAbrir={(e) => setEmpresaSel(e.id)} />
+          <GridEmpresas empresas={empresasFiltradas} onAbrir={(e) => setEmpresaSel(e.id)} />
         )}
         {aba === "nacionais" && (
           <GridCampanhas key={`nac-${JSON.stringify(filtros)}`} itens={aplicarFiltros(nacionais)} onAbrir={(c) => setCampanhaSel(c.id)}
@@ -235,41 +250,53 @@ export default function Oportunidades({ eu, db, aviso, recarregar, abrirCampanha
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-function GridEmpresas({ empresas, metricas, campsPorEmpresa, onAbrir }) {
+function GridEmpresas({ empresas, onAbrir }) {
   if (!empresas.length) return <Vazio Icon={Building2} texto="Nenhuma empresa disponível no momento." />;
   return (
-    <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))" }}>
-      {empresas.map((e) => {
-        const m = metricas[e.id] || {};
-        const nCamp = campsPorEmpresa[e.id] || 0;
-        return (
-          <button key={e.id} type="button" onClick={() => onAbrir(e)}
-            className="vx-card" style={{ padding: 16, textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: 12, font: "inherit" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <Logo empresa={e} size={48} />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nome}</div>
-                <div className="vx-mut" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                  <span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1 }}>{bandeiraPais(e.pais)}</span> {nomePais(e.pais)}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <div>
-                <div className="vx-eyebrow" style={{ fontSize: 10 }}>Campanhas</div>
-                <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{nCamp}</div>
-              </div>
-              <div>
-                <div className="vx-eyebrow" style={{ fontSize: 10 }}>Pago aos profissionais</div>
-                <div className="vx-mono" style={{ fontSize: 13.5, fontWeight: 700, color: "var(--brand)" }}>{money(m.totalPago || 0, e.moeda)}</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "var(--brand)", fontSize: 12.5, fontWeight: 600 }}>
-              {nCamp ? "Ver oportunidades" : "Ver empresa"} <ChevronRight size={14} />
-            </div>
-          </button>
-        );
-      })}
+    <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", padding: "4px 0" }}>
+      {empresas.map((e) => <EmpresaCardVitrine key={e.id} empresa={e} onAbrir={() => onAbrir(e)} />)}
+    </div>
+  );
+}
+
+function EmpresaCardVitrine({ empresa, onAbrir }) {
+  const [hoverBtn, setHoverBtn] = useState(false);
+  const desc = empresa.descricaoInstitucional || empresa.produto || empresa.icp || "";
+  const seg = segmentoLabel(empresa.segmento);
+  return (
+    <div className="vx-card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 0 }}>
+      <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+        <Logo empresa={empresa} size={64} r={12} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {empresa.nome}
+          </div>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: "#318CE7", marginTop: 3 }}>
+            {seg || "Segmento não informado"}
+          </div>
+          <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, lineHeight: 1.5,
+            display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            {desc || "Esta empresa ainda não adicionou uma descrição institucional."}
+          </div>
+          <div className="vx-mut" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginTop: 8 }}>
+            {empresa.pais
+              ? <><span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1 }}>{bandeiraPais(empresa.pais)}</span> {nomePais(empresa.pais)}</>
+              : "Localização não informada"}
+          </div>
+        </div>
+      </div>
+      <div style={{ borderTop: "1px solid var(--border)", marginTop: 16, paddingTop: 14 }}>
+        <button type="button" onClick={onAbrir}
+          onMouseEnter={() => setHoverBtn(true)} onMouseLeave={() => setHoverBtn(false)}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            height: 40, border: "none", borderRadius: 10, cursor: "pointer", fontSize: 13.5, fontWeight: 600,
+            fontFamily: "inherit", transition: "background .15s, color .15s",
+            background: hoverBtn ? "#318CE7" : "#EDF5FF", color: hoverBtn ? "#fff" : "#318CE7",
+          }}>
+          Ver campanhas <ChevronRight size={15} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -342,34 +369,52 @@ function GridCampanhas({ itens, internacional, onAbrir, vazio }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-function DetalheEmpresa({ emp, itens, metrica, onVoltar, onAbrirCampanha }) {
+function DetalheEmpresa({ emp, itens, onVoltar, onAbrirCampanha }) {
+  const desc = emp.descricaoInstitucional || emp.produto || emp.icp || "";
+  const seg = segmentoLabel(emp.segmento);
   return (
-    <div className="vx-fade">
+    <div className="vx-fade" style={{ maxWidth: 780, margin: "0 auto" }}>
       <button type="button" className="vx-btn vx-btn-sm" onClick={onVoltar} style={{ marginBottom: 14 }}>
         <ArrowLeft size={14} /> Voltar
       </button>
-      <div className="vx-card" style={{ padding: 20, marginBottom: 16 }}>
-        <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-          <Logo empresa={emp} size={60} />
-          <div style={{ flex: 1, minWidth: 180 }}>
-            <h2 className="vx-disp" style={{ fontSize: 20, margin: 0 }}>{emp.nome}</h2>
-            <div className="vx-mut" style={{ fontSize: 12.5, display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1 }}>{bandeiraPais(emp.pais)}</span> {nomePais(emp.pais)}</span>
-              {emp.segmento && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Briefcase size={12} /> {emp.segmento}</span>}
+      <div className="vx-card" style={{ padding: 24, marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <Logo empresa={emp} size={72} r={14} />
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h2 className="vx-disp" style={{ fontSize: 22, margin: 0 }}>{emp.nome}</h2>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#318CE7", marginTop: 4 }}>
+              {seg || "Segmento não informado"}
+            </div>
+            {desc ? (
+              <p style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.65, margin: "12px 0 0" }}>{desc}</p>
+            ) : (
+              <p className="vx-mut" style={{ fontSize: 13, margin: "12px 0 0", fontStyle: "italic" }}>Esta empresa ainda não adicionou uma descrição institucional.</p>
+            )}
+            <div className="vx-mut" style={{ fontSize: 12.5, display: "flex", alignItems: "center", gap: 5, marginTop: 10 }}>
+              {emp.pais
+                ? <><span aria-hidden="true" style={{ fontSize: 14, lineHeight: 1 }}>{bandeiraPais(emp.pais)}</span> {nomePais(emp.pais)}</>
+                : "Localização não informada"}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 20 }}>
-            <div><div className="vx-eyebrow" style={{ fontSize: 10 }}>Campanhas</div><div className="vx-mono" style={{ fontSize: 18, fontWeight: 700 }}>{itens.length}</div></div>
-            <div><div className="vx-eyebrow" style={{ fontSize: 10 }}>Pago aos profissionais</div><div className="vx-mono" style={{ fontSize: 16, fontWeight: 700, color: "var(--brand)" }}>{money(metrica?.totalPago || 0, emp.moeda)}</div></div>
-          </div>
         </div>
-        {(emp.icp || emp.produto) && (
-          <p className="vx-mut" style={{ fontSize: 13, lineHeight: 1.6, margin: "14px 0 0" }}>{emp.produto || emp.icp}</p>
-        )}
       </div>
 
-      <div className="vx-eyebrow" style={{ marginBottom: 12 }}>Campanhas disponíveis</div>
-      <GridCampanhas itens={itens} onAbrir={onAbrirCampanha} vazio="Esta empresa não tem campanhas abertas para o seu perfil no momento." />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <div className="vx-eyebrow">Campanhas disponíveis</div>
+        <span className="vx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>({itens.length})</span>
+      </div>
+      {itens.length > 0 ? (
+        <GridCampanhas itens={itens} onAbrir={onAbrirCampanha} vazio="" />
+      ) : (
+        <div className="vx-card" style={{ padding: 32, textAlign: "center" }}>
+          <Building2 size={32} style={{ color: "var(--muted)", marginBottom: 10 }} />
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Nenhuma campanha disponível</div>
+          <p className="vx-mut" style={{ fontSize: 13, margin: 0 }}>Esta empresa não tem campanhas abertas para o seu perfil no momento.</p>
+          <button type="button" className="vx-btn vx-btn-sm" onClick={onVoltar} style={{ marginTop: 16 }}>
+            <ArrowLeft size={14} /> Voltar às empresas
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -507,7 +552,7 @@ function PopoverFiltro({ Icon, rotulo, valorLabel, largura = 240, children }) {
           display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 13px", borderRadius: 8, cursor: "pointer",
           fontSize: 12.5, fontWeight: ativo ? 600 : 500, fontFamily: "inherit", whiteSpace: "nowrap",
           border: `1px solid ${ativo ? AZUL_FILTRO : "var(--border)"}`,
-          background: ativo ? "#EAF4FF" : "#fff", color: ativo ? AZUL_FILTRO : "var(--ink)", transition: "border-color .15s, background .15s",
+          background: ativo ? "var(--brand-50)" : "var(--surface-solid, #fff)", color: ativo ? AZUL_FILTRO : "var(--ink)", transition: "border-color .15s, background .15s",
         }}>
         <Icon size={15} /> {valorLabel || rotulo}
         <ChevronDown size={14} style={{ transition: "transform .2s", transform: aberto ? "rotate(180deg)" : "none", opacity: 0.7 }} />
@@ -533,7 +578,7 @@ function ListaOpcoes({ opcoes, valor, onEscolher, buscavel }) {
   const visiveis = buscavel && q ? opcoes.filter((o) => String(o.label).toLowerCase().includes(q.toLowerCase())) : opcoes;
   const item = (sel, label, flag, onClick, key) => (
     <button key={key} type="button" role="menuitemradio" aria-checked={sel} onClick={onClick}
-      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: "none", background: sel ? "#EAF4FF" : "transparent",
+      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: "none", background: sel ? "var(--brand-50)" : "transparent",
         padding: "9px 12px", fontSize: 13, fontFamily: "inherit", cursor: "pointer", color: sel ? AZUL_FILTRO : "var(--ink)", fontWeight: sel ? 600 : 400 }}
       onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = "var(--surface-2)"; }}
       onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = "transparent"; }}>
@@ -558,9 +603,7 @@ function ListaOpcoes({ opcoes, valor, onEscolher, buscavel }) {
   );
 }
 
-function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMaisFiltros, limpar, total }) {
-  // Debounce da busca textual: o input é local e só propaga ao filtro após uma
-  // pausa, evitando refiltrar a cada tecla.
+function BarraFiltros({ filtros, setFiltro, opcoes, opcoesEmpresas, empresa, maisFiltros, setMaisFiltros, limpar, total }) {
   const [buscaLocal, setBuscaLocal] = useState(filtros.busca);
   useEffect(() => { setBuscaLocal(filtros.busca); }, [filtros.busca]);
   useEffect(() => {
@@ -568,29 +611,30 @@ function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMai
     return () => clearTimeout(t);
   }, [buscaLocal]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const opcoesPaisEmp = empresa && opcoesEmpresas ? opcoesEmpresas.paises.map((p) => ({ value: p, label: nomePais(p), flag: bandeiraPais(p) })) : [];
+  const opcoesSegmento = empresa && opcoesEmpresas ? opcoesEmpresas.segmentos.map((s) => ({ value: s, label: segmentoLabel(s) })) : [];
   const opcoesPais = opcoes.paises.map((p) => ({ value: p, label: nomePais(p), flag: bandeiraPais(p) }));
   const opcoesFuncao = opcoes.funcoes.map((f) => ({ value: f, label: FUNCOES[f]?.nome || f }));
   const opcoesMoeda = opcoes.moedas.map((m) => ({ value: m, label: m }));
   const opcoesPagamento = [{ value: "tarefa", label: "Por tarefa" }, { value: "comissao", label: "Comissão" }];
 
-  // Filtros ativos (para contador, chips e "limpar").
   const ativos = [];
   if (filtros.pais) ativos.push(["pais", nomePais(filtros.pais)]);
+  if (empresa && filtros.segmento) ativos.push(["segmento", segmentoLabel(filtros.segmento)]);
   if (!empresa && filtros.funcao) ativos.push(["funcao", FUNCOES[filtros.funcao]?.nome || filtros.funcao]);
   if (!empresa && filtros.pagamento) ativos.push(["pagamento", filtros.pagamento === "tarefa" ? "Por tarefa" : "Comissão"]);
-  if (filtros.moeda) ativos.push(["moeda", filtros.moeda]);
+  if (!empresa && filtros.moeda) ativos.push(["moeda", filtros.moeda]);
   if (!empresa && filtros.remMin) ativos.push(["remMin", `≥ ${filtros.remMin}`]);
 
   const ordenarLabel = { recentes: "Mais recentes", remuneracao: "Maior remuneração" }[filtros.ordenar] || "Mais recentes";
 
   return (
     <div style={{ marginBottom: 16 }}>
-      {/* Linha 1 — pesquisa */}
-      <div style={{ display: "flex", alignItems: "center", gap: 0, height: 44, border: "1px solid #E2E8F0", borderRadius: 10, background: "#fff", overflow: "hidden", marginBottom: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 0, height: 44, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface-solid, #fff)", overflow: "hidden", marginBottom: 10 }}>
         <Search size={16} style={{ margin: "0 8px 0 12px", color: "var(--muted)", flexShrink: 0 }} />
         <input value={buscaLocal} onChange={(e) => setBuscaLocal(e.target.value)} aria-label="Buscar"
-          placeholder="Cargo, empresa ou campanha"
-          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, height: "100%", padding: 0, fontFamily: "inherit" }} />
+          placeholder={empresa ? "Buscar empresa ou segmento..." : "Cargo, empresa ou campanha"}
+          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, height: "100%", padding: 0, fontFamily: "inherit", color: "var(--ink)" }} />
         {buscaLocal && (
           <button type="button" aria-label="Limpar busca" onClick={() => setBuscaLocal("")}
             style={{ border: "none", background: "transparent", color: "var(--muted)", cursor: "pointer", padding: "0 6px", display: "grid", placeItems: "center" }}><X size={15} /></button>
@@ -601,18 +645,24 @@ function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMai
         </button>
       </div>
 
-      {/* Linha 2 — botões de filtro (largura do conteúdo, não esticam) */}
+      {empresa && <div className="vx-eyebrow" style={{ marginBottom: 8 }}>Explore as empresas</div>}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+        {empresa && opcoesSegmento.length > 0 && (
+          <PopoverFiltro Icon={Briefcase} rotulo="Segmento de atuação" largura={260}
+            valorLabel={filtros.segmento ? segmentoLabel(filtros.segmento) : null}>
+            {(fechar) => <ListaOpcoes opcoes={opcoesSegmento} valor={filtros.segmento} buscavel onEscolher={(v) => { setFiltro("segmento", v); fechar(); }} />}
+          </PopoverFiltro>
+        )}
         {!empresa && opcoesFuncao.length > 0 && (
           <PopoverFiltro Icon={Briefcase} rotulo="Função" largura={240}
             valorLabel={filtros.funcao ? (FUNCOES[filtros.funcao]?.nome || filtros.funcao) : null}>
             {(fechar) => <ListaOpcoes opcoes={opcoesFuncao} valor={filtros.funcao} buscavel onEscolher={(v) => { setFiltro("funcao", v); fechar(); }} />}
           </PopoverFiltro>
         )}
-        {opcoesPais.length > 0 && (
-          <PopoverFiltro Icon={MapPin} rotulo="Localização" largura={260}
+        {(empresa ? opcoesPaisEmp : opcoesPais).length > 0 && (
+          <PopoverFiltro Icon={MapPin} rotulo="País" largura={260}
             valorLabel={filtros.pais ? nomePais(filtros.pais) : null}>
-            {(fechar) => <ListaOpcoes opcoes={opcoesPais} valor={filtros.pais} buscavel onEscolher={(v) => { setFiltro("pais", v); fechar(); }} />}
+            {(fechar) => <ListaOpcoes opcoes={empresa ? opcoesPaisEmp : opcoesPais} valor={filtros.pais} buscavel onEscolher={(v) => { setFiltro("pais", v); fechar(); }} />}
           </PopoverFiltro>
         )}
         {!empresa && (
@@ -621,7 +671,7 @@ function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMai
             {(fechar) => <ListaOpcoes opcoes={opcoesPagamento} valor={filtros.pagamento} onEscolher={(v) => { setFiltro("pagamento", v); fechar(); }} />}
           </PopoverFiltro>
         )}
-        {opcoesMoeda.length > 0 && (
+        {!empresa && opcoesMoeda.length > 0 && (
           <PopoverFiltro Icon={Coins} rotulo="Moeda" largura={180}
             valorLabel={filtros.moeda || null}>
             {(fechar) => <ListaOpcoes opcoes={opcoesMoeda} valor={filtros.moeda} onEscolher={(v) => { setFiltro("moeda", v); fechar(); }} />}
@@ -629,12 +679,11 @@ function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMai
         )}
       </div>
 
-      {/* Linha 3 — ações secundárias */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         {!empresa && (
           <button type="button" onClick={() => setMaisFiltros((v) => !v)} aria-expanded={maisFiltros}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 34, padding: "0 11px", borderRadius: 8, cursor: "pointer", fontSize: 12.5, fontFamily: "inherit",
-              border: "1px solid var(--border)", background: maisFiltros ? "var(--surface-2)" : "#fff", color: "var(--ink)" }}>
+              border: "1px solid var(--border)", background: maisFiltros ? "var(--surface-2)" : "var(--surface-solid, #fff)", color: "var(--ink)" }}>
             <SlidersHorizontal size={14} /> Filtros avançados
             {ativos.length > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 999, background: AZUL_FILTRO, color: "#fff", display: "grid", placeItems: "center" }}>{ativos.length}</span>}
           </button>
@@ -652,7 +701,6 @@ function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMai
         </span>
       </div>
 
-      {/* Filtros avançados */}
       {maisFiltros && !empresa && (
         <div style={{ marginTop: 12, padding: 14, border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface-2)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 12 }}>
@@ -668,13 +716,12 @@ function BarraFiltros({ filtros, setFiltro, opcoes, empresa, maisFiltros, setMai
         </div>
       )}
 
-      {/* Seleções ativas (compacto) */}
       {ativos.length > 0 && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
           {ativos.map(([k, label]) => (
             <button key={k} type="button" onClick={() => setFiltro(k, "")}
               style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "4px 9px", borderRadius: 999, cursor: "pointer",
-                border: `1px solid ${AZUL_FILTRO}`, background: "#EAF4FF", color: AZUL_FILTRO, fontFamily: "inherit" }}>
+                border: `1px solid ${AZUL_FILTRO}`, background: "var(--brand-50)", color: AZUL_FILTRO, fontFamily: "inherit" }}>
               {label} <X size={12} />
             </button>
           ))}
@@ -692,7 +739,7 @@ function ListaOpcoesSimples({ opcoes, valor, onEscolher }) {
         const sel = valor === o.value;
         return (
           <button key={o.value} type="button" role="menuitemradio" aria-checked={sel} onClick={() => onEscolher(o.value)}
-            style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: "none", background: sel ? "#EAF4FF" : "transparent",
+            style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: "none", background: sel ? "var(--brand-50)" : "transparent",
               padding: "9px 12px", fontSize: 13, fontFamily: "inherit", cursor: "pointer", color: sel ? AZUL_FILTRO : "var(--ink)", fontWeight: sel ? 600 : 400 }}>
             <span style={{ flex: 1 }}>{o.label}</span>{sel && <Check size={15} />}
           </button>
