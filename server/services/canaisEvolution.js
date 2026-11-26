@@ -419,7 +419,24 @@ function extrairConteudo(msg) {
 
 export function dadosConexao(sellerId) {
   const conexao = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status != 'desconectada' ORDER BY criadoEm DESC LIMIT 1").get(sellerId);
-  if (!conexao) return { conectada: false };
+  if (!conexao) {
+    // Conexão desconectada: retorna os dados para o frontend mostrar o histórico
+    // e oferecer reconexão com contexto (número, nome, etc.).
+    const desconectada = db.prepare("SELECT * FROM canais_conexoes WHERE canal = 'evolution' AND sellerId = ? AND status = 'desconectada' ORDER BY atualizadoEm DESC LIMIT 1").get(sellerId);
+    if (!desconectada) return { conectada: false };
+    return {
+      conectada: false,
+      id: desconectada.id,
+      status: "desconectada",
+      numero: desconectada.numero,
+      nome: desconectada.nome,
+      qrCode: "",
+      qrCodeEm: null,
+      ultimoErro: desconectada.ultimoErro,
+      criadoEm: desconectada.criadoEm,
+      atualizadoEm: desconectada.atualizadoEm,
+    };
+  }
   const dados = (() => { try { return JSON.parse(conexao.dados || "{}"); } catch { return {}; } })();
   return {
     conectada: conexao.status === "ativa",
