@@ -64,7 +64,7 @@ const GRUPOS = [
     campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Data de abertura", "Situação cadastral", "Capital social"] },
 ];
 const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos).filter((f) => !CAMPOS_INDISPONIVEIS.has(f));
-const QTDS = [25, 50, 100, 250, 500, 1000];
+const QTDS = [5, 10, 15, 20, 30, 40, 50, 60];
 
 const SEGMENTOS = [
   // Alimentação
@@ -409,8 +409,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
   const [pais, setPais] = useState("Brasil");
   const [estados, setEstados] = useState([]);
   const [cidades, setCidades] = useState([]);
-  const [quantidade, setQuantidade] = useState(100);
-  const [qtdCustom, setQtdCustom] = useState("");
+  const [quantidade, setQuantidade] = useState(20);
   const [campos, setCampos] = useState(() => new Set());
   const [destino, setDestino] = useState("new");
   const [nomeLista, setNomeLista] = useState("");
@@ -519,30 +518,15 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
 
           {/* Quantidade */}
           <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
-            <span className="vx-label">QUANTIDADE DE LEADS</span>
+            <span className="vx-label">QUANTIDADE DE LEADS (máx. 60 por busca)</span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
               {QTDS.map((q) => (
-                <button key={q} onClick={() => { setQuantidade(q); setQtdCustom(""); }}
-                  className={`vx-btn ${quantidade === q && !qtdCustom ? "vx-btn-primary" : ""}`}
-                  style={{ flex: 1, minWidth: 60 }}>
-                  {q.toLocaleString("pt-BR")}
+                <button key={q} onClick={() => setQuantidade(q)}
+                  className={`vx-btn ${quantidade === q ? "vx-btn-primary" : ""}`}
+                  style={{ flex: 1, minWidth: 50 }}>
+                  {q}
                 </button>
               ))}
-              <button onClick={() => { setQuantidade(10000); setQtdCustom(""); }}
-                className={`vx-btn ${quantidade === 10000 && !qtdCustom ? "vx-btn-primary" : ""}`}
-                style={{ flex: 1, minWidth: 80 }}>
-                Máximo
-              </button>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 100 }}>
-                <input className="vx-input" type="number" min="1" max="10000" placeholder="Outro"
-                  value={qtdCustom} style={{ textAlign: "center", minWidth: 80, ...(qtdCustom ? { borderColor: "var(--brand)", boxShadow: "0 0 0 1px var(--brand)" } : {}) }}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setQtdCustom(v);
-                    const n = parseInt(v, 10);
-                    if (n > 0) setQuantidade(n);
-                  }} />
-              </div>
             </div>
           </div>
 
@@ -648,7 +632,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
             {[
               ["Segmento", segmento || "—"],
               ["Localização", regiao ? `${regiao}, ${pais}` : pais],
-              ["Quantidade", quantidade >= 10000 ? "Máximo disponível" : `${quantidade} leads`],
+              ["Quantidade", `${quantidade} leads`],
               ["Informações", `${campos.size} campos`],
               ["Lista", listaFinal || "A definir"],
               ["Valor estimado", money(valorEstimado)],
@@ -671,7 +655,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
           </div>
           <button onClick={buscar} disabled={!podeEnviar || ocupado} className="vx-btn vx-btn-primary vx-btn-block" style={{ minHeight: 44 }}>
             {ocupado ? <Loader2 size={16} className="vx-spin" /> : null}
-            {ocupado ? "Buscando..." : quantidade >= 10000 ? "Encontrar o máximo de leads" : `Encontrar ${quantidade} leads`}
+            {ocupado ? "Buscando..." : `Encontrar ${quantidade} leads`}
           </button>
           {precoUnitario > 0 && <span className="vx-mut" style={{ fontSize: 11.5 }}>Preço por lead: {money(precoUnitario)}</span>}
           {feedback && <p className="vx-mut" style={{ margin: 0, fontSize: 13, color: "var(--brand)" }} role="status">{feedback}</p>}
