@@ -2,7 +2,7 @@ import {
   Video, Send, ClipboardList, Users, Banknote,
   CheckCircle2, Clock, AlertTriangle, XCircle, Sparkles,
   Building2, Wallet, User as UserIcon, SlidersHorizontal,
-  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Landmark, Phone } from "lucide-react";
+  BarChart3, ShieldCheck, MessageSquare, UserCheck, GraduationCap, Sparkles as SparklesIcon, Gift, Megaphone, ContactRound, CreditCard, UserRoundSearch, RotateCcw, Mail, Link2, Target, Home, Settings, Ticket, Headphones, FolderOpen, Menu, Trophy, Route, Crown, Handshake, BriefcaseBusiness, Store, Smartphone, CalendarDays, Landmark, Phone, CircleDollarSign } from "lucide-react";
 
 // Re-export shared constants (used by both frontend and backend)
 export { CAMPOS, ORDEM_ACOES, TAXA } from "../../shared/acoes.js";
@@ -44,7 +44,7 @@ export const NAV = {
   vendedor: [
     { key: "painel", label: "Painel", Icon: BarChart3 },
     { key: "club", label: "Jornada", Icon: Trophy },
-    { key: "oportunidades", label: "Oportunidades", Icon: Target },
+    { key: "oportunidades", label: "Oportunidades", Icon: CircleDollarSign },
     { key: "loja-leads", label: "Loja de Leads", Icon: Store },
     { key: "conversas-evolution", label: "Atendimento", Icon: Headphones },
     { key: "discadora", label: "Discadora", Icon: Phone },
@@ -152,7 +152,7 @@ export const NAV = {
 // e Indicar do profissional também ficam dentro de "Minha conta".
 export const MOBILE_NAV = {
   vendedor: [
-    { key: "oportunidades", label: "Oportunidades", Icon: Target },
+    { key: "oportunidades", label: "Oportunidades", Icon: CircleDollarSign },
     { key: "academy", label: "Academy", Icon: GraduationCap },
     { key: "carteira", label: "Carteira", Icon: Wallet },
     { key: "conta", label: "Conta", Icon: UserIcon },
