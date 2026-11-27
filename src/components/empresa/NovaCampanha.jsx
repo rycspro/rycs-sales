@@ -1231,8 +1231,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 3: CONFIGURAÇÕES DA OPERAÇÃO ═══════════════════════ */}
       {passo === 3 && campanha && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Como vai operar?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Configure localização, canais, materiais e validação desta campanha.</p>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Sobre os leads</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina a origem, a localização e os critérios de qualificação dos seus potenciais clientes.</p>
 
           {/* Mercado de atuação do cliente */}
           {secaoVisivel.mercado && (<>
