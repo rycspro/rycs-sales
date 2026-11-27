@@ -2643,62 +2643,77 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Quais produtos ou serviços serão comercializados?</div>
-              <div className="vx-mut" style={{ fontSize: 12.5 }}>Selecione do catálogo ou adicione um novo. Informe o preço para calcular o faturamento estimado.</div>
+              <div className="vx-mut" style={{ fontSize: 12.5 }}>Selecione os produtos do seu catálogo para calcular o faturamento estimado.</div>
             </div>
-            <div style={{ position: "relative", marginBottom: 10 }}>
-              <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
-              <input className="vx-input" style={{ paddingLeft: 32 }} placeholder="Buscar produto ou serviço..." value={buscaCatalogo}
-                onChange={(e) => set("_buscaCatalogo", e.target.value)} />
-            </div>
-            {produtosSelecionados.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                {produtosSelecionados.map((p, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 20, background: "var(--brand-50)", border: "1px solid var(--brand-100)", fontSize: 12.5, fontWeight: 500 }}>
-                    <span>{p.nome}</span>
-                    {p.preco > 0 && <span className="vx-mono" style={{ color: "var(--brand)", fontSize: 11 }}>{money(p.preco)}</span>}
-                    <button onClick={() => set("produtosCampanha", produtosSelecionados.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1, color: "var(--muted)" }}>
-                      <X size={12} />
-                    </button>
+            {catalogoProdutos.length === 0 ? (
+              <div style={{ padding: "16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--brand)", marginBottom: 2 }}>Nenhum produto cadastrado</div>
+                  <div className="vx-mut" style={{ fontSize: 12 }}>Cadastre seus produtos e serviços em Materiais para selecioná-los aqui.</div>
+                </div>
+                <a href="/empresa/materiais" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "var(--brand)", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <Plus size={14} /> Ir a Materiais
+                </a>
+              </div>
+            ) : (
+              <>
+                {(() => {
+                  const [dropOpen, setDropOpen] = React.useState(false);
+                  const dropRef = React.useRef(null);
+                  React.useEffect(() => {
+                    const h = (e) => { if (dropRef.current && !dropRef.current.contains(e.target)) setDropOpen(false); };
+                    document.addEventListener("mousedown", h);
+                    return () => document.removeEventListener("mousedown", h);
+                  }, []);
+                  const naoSelecionados = catalogoProdutos.filter((p) => !produtosSelecionados.some((s) => s.nome === p.nome));
+                  return (
+                    <div ref={dropRef} style={{ position: "relative", marginBottom: produtosSelecionados.length > 0 ? 12 : 0 }}>
+                      <button type="button" onClick={() => setDropOpen((v) => !v)} style={{
+                        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "10px 14px", background: "var(--surface)", border: `1px solid ${dropOpen ? "var(--brand)" : "var(--border)"}`,
+                        borderRadius: 8, cursor: "pointer", fontSize: 13.5, color: naoSelecionados.length === 0 ? "var(--muted)" : "var(--text)",
+                        boxShadow: dropOpen ? "0 0 0 3px var(--brand-100)" : "none",
+                      }}>
+                        <span>{naoSelecionados.length === 0 ? "Todos os produtos já selecionados" : "Selecionar produto ou serviço…"}</span>
+                        <ChevronDown size={15} color="var(--muted)" style={{ transform: dropOpen ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }} />
+                      </button>
+                      {dropOpen && naoSelecionados.length > 0 && (
+                        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.12)", overflow: "hidden", maxHeight: 220, overflowY: "auto" }}>
+                          {naoSelecionados.map((p, i) => (
+                            <button key={i} type="button" onClick={() => { set("produtosCampanha", [...produtosSelecionados, { nome: p.nome, preco: p.preco || 0 }]); setDropOpen(false); }}
+                              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 14px", background: "transparent", border: "none", borderBottom: i < naoSelecionados.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer", textAlign: "left" }}>
+                              <span style={{ fontSize: 13.5 }}>{p.nome}</span>
+                              {p.preco > 0 && <span className="vx-mono" style={{ fontSize: 12, color: "var(--brand)" }}>{money(p.preco)}</span>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+                {produtosSelecionados.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {produtosSelecionados.map((p, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 20, background: "var(--brand-50)", border: "1px solid var(--brand-100)", fontSize: 12.5, fontWeight: 500 }}>
+                        <span>{p.nome}</span>
+                        {p.preco > 0 && <span className="vx-mono" style={{ color: "var(--brand)", fontSize: 11 }}>{money(p.preco)}</span>}
+                        <button onClick={() => set("produtosCampanha", produtosSelecionados.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1, color: "var(--muted)" }}>
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {produtosSelecionados.filter((p) => !p.preco).map((p, idx) => (
+                  <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, marginTop: 8 }}>
+                    <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{p.nome}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--muted)", marginRight: 6, whiteSpace: "nowrap" }}>Informe o preço:</div>
+                    <div style={{ width: 130 }}>
+                      <CampoOrcamento value={0} onChange={(v) => set("produtosCampanha", produtosSelecionados.map((x) => x.nome === p.nome ? { ...x, preco: v } : x))} />
+                    </div>
                   </div>
                 ))}
-              </div>
-            )}
-            {buscaCatalogo && (
-              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, maxHeight: 200, overflowY: "auto", marginBottom: 10 }}>
-                {catalogoFiltrado.map((p, i) => {
-                  const jaSel = produtosSelecionados.some((s) => s.nome === p.nome);
-                  return (
-                    <button key={i} onClick={() => {
-                      if (jaSel) set("produtosCampanha", produtosSelecionados.filter((s) => s.nome !== p.nome));
-                      else { set("produtosCampanha", [...produtosSelecionados, { nome: p.nome, preco: p.preco || 0 }]); set("_buscaCatalogo", ""); }
-                    }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 14px", background: "transparent", border: "none", borderBottom: i < catalogoFiltrado.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ fontSize: 13 }}>{p.nome}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {p.preco > 0 && <span className="vx-mono" style={{ fontSize: 12, color: "var(--brand)" }}>{money(p.preco)}</span>}
-                        {jaSel && <Check size={14} color="var(--brand)" />}
-                      </div>
-                    </button>
-                  );
-                })}
-                {!catalogoFiltrado.some((p) => p.nome?.toLowerCase() === buscaCatalogo.toLowerCase()) && (
-                  <button onClick={() => { set("produtosCampanha", [...produtosSelecionados, { nome: buscaCatalogo, preco: 0 }]); set("_buscaCatalogo", ""); }}
-                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "10px 14px", background: "var(--brand-50)", border: "none", cursor: "pointer", color: "var(--brand)", fontSize: 13, fontWeight: 600 }}>
-                    <Plus size={14} /> Adicionar &quot;{buscaCatalogo}&quot;
-                  </button>
-                )}
-              </div>
-            )}
-            {produtosSelecionados.filter((p) => !p.preco).map((p, idx) => (
-              <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, marginBottom: 6 }}>
-                <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{p.nome}</div>
-                <div style={{ fontSize: 11.5, color: "var(--muted)", marginRight: 6, whiteSpace: "nowrap" }}>Informe o preço:</div>
-                <div style={{ width: 130 }}>
-                  <CampoOrcamento value={0} onChange={(v) => set("produtosCampanha", produtosSelecionados.map((x) => x.nome === p.nome ? { ...x, preco: v } : x))} />
-                </div>
-              </div>
-            ))}
-            {produtosSelecionados.length === 0 && !buscaCatalogo && (
-              <div className="vx-mut" style={{ fontSize: 12.5, fontStyle: "italic" }}>Nenhum produto selecionado — digite acima para buscar ou adicionar.</div>
+              </>
             )}
           </div>
 
