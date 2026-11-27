@@ -1850,159 +1850,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                               </select></label>
                           </div>
                         </div>
-                        <div className="vx-card" style={{ padding: 14 }}>
-                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Atividades e pagamentos — {fInfo?.nome}</b><Tag obrigatorio={true} />
-                          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 12 }}>Como este profissional é remunerado?</div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: cfg.modoAtividades ? 14 : 0 }}>
-                            {[
-                              { id: "rapido", Icon: Zap, titulo: "Seleção rápida", desc: "Atividades predefinidas para esta função." },
-                              { id: "personalizado", Icon: SlidersHorizontal, titulo: "Personalizado", desc: "Configure suas próprias atividades e remunerações." },
-                            ].map(({ id, Icon, titulo, desc }) => {
-                              const sel = cfg.modoAtividades === id;
-                              return (
-                                <button key={id} type="button" onClick={() => setConfig("modoAtividades", id)} style={{
-                                  display: "flex", flexDirection: "column", gap: 8, padding: 14, borderRadius: 10, cursor: "pointer", textAlign: "left", position: "relative",
-                                  border: `1px solid ${sel ? SEL.border : SEL.borderOff}`, background: sel ? SEL.bg : SEL.bgOff,
-                                }}>
-                                  {sel && <div style={{ position: "absolute", top: 8, right: 8, width: 16, height: 16, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={10} color="#fff" /></div>}
-                                  <div style={{ width: 32, height: 32, borderRadius: 8, background: sel ? "var(--brand)" : "var(--brand-50)", border: sel ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    <Icon size={16} color={sel ? "#fff" : "var(--brand)"} />
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: sel ? "var(--brand)" : "var(--text)" }}>{titulo}</div>
-                                    <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 2 }}>{desc}</div>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {(cfg.modoAtividades === "rapido" || cfg.modoAtividades === "personalizado") && (() => {
-                            const listaAtividades = cfg.modoAtividades === "rapido"
-                              ? (SELECAO_RAPIDA[funcaoAtiva] || ACOES_DISPONIVEIS.filter((a) => sugeridas.includes(a.id)))
-                              : ACOES_DISPONIVEIS;
-                            const nomesPersonalizados = cfg.nomesPersonalizados || {};
-                            return (
-                              <div style={{ display: "grid", gap: 8 }}>
-                                {listaAtividades.map((a) => {
-                                  const ativa = (cfg.acoesAtivas || []).includes(a.id);
-                                  return (
-                                    <div key={a.id} style={{ borderRadius: 10, border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`, background: ativa ? SEL.bg : SEL.bgOff, overflow: "hidden" }}>
-                                      <button type="button" onClick={() => {
-                                        const novas = ativa ? (cfg.acoesAtivas || []).filter((x) => x !== a.id) : [...(cfg.acoesAtivas || []), a.id];
-                                        setConfig("acoesAtivas", novas);
-                                        if (!ativa) setConfig("tarefas", { ...(cfg.tarefas || {}), [a.id]: cfg.tarefas?.[a.id] || 0 });
-                                      }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", textAlign: "left", cursor: "pointer", background: "transparent", border: "none" }}>
-                                        <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${ativa ? "var(--brand)" : "var(--border)"}`, background: ativa ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                          {ativa && <Check size={11} color="#fff" />}
-                                        </div>
-                                        <span style={{ flex: 1, fontSize: 13, fontWeight: ativa ? 600 : 400, color: ativa ? "var(--brand)" : "var(--text)" }}>{a.nome}</span>
-                                      </button>
-                                      {ativa && (
-                                        <div style={{ padding: "0 12px 12px 12px", display: "grid", gap: 8 }}>
-                                          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                            <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>Valor (R$)</span>
-                                            <input className="vx-input vx-mono" type="number" min="0" step="0.01" style={{ width: 100, padding: "4px 8px", fontSize: 13 }}
-                                              value={cfg.tarefas?.[a.id] || ""} placeholder="0,00"
-                                              onChange={(e) => setConfig("tarefas", { ...(cfg.tarefas || {}), [a.id]: Number(e.target.value) })} />
-                                          </label>
-                                          <div>
-                                            <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 4 }}>Comprovação</div>
-                                            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                                              {EVIDENCIAS_OPCOES.map((ev) => {
-                                                const selEv = ((cfg.comprovacoes || {})[a.id] || []).includes(ev.id);
-                                                return (
-                                                  <button key={ev.id} type="button" onClick={() => {
-                                                    const atual = (cfg.comprovacoes || {})[a.id] || [];
-                                                    const novas = selEv ? atual.filter((x) => x !== ev.id) : [...atual, ev.id];
-                                                    setConfig("comprovacoes", { ...(cfg.comprovacoes || {}), [a.id]: novas });
-                                                  }} style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11.5, cursor: "pointer", fontWeight: selEv ? 600 : 400, border: `1px solid ${selEv ? SEL.border : SEL.borderOff}`, background: selEv ? SEL.bg : SEL.bgOff, color: selEv ? "var(--brand)" : "var(--text-2)" }}>
-                                                    {ev.nome}
-                                                  </button>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                                {cfg.modoAtividades === "personalizado" && (cfg.acoesAtivas || []).filter((id) => id.startsWith("custom_")).map((id) => {
-                                  const ativa = true;
-                                  return (
-                                    <div key={id} style={{ borderRadius: 10, border: `1px solid ${SEL.border}`, background: SEL.bg, overflow: "hidden" }}>
-                                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px" }}>
-                                        <input className="vx-input" placeholder="Nome da atividade" style={{ flex: 1, fontSize: 13, padding: "4px 8px" }}
-                                          value={nomesPersonalizados[id] || ""}
-                                          onChange={(e) => setConfig("nomesPersonalizados", { ...nomesPersonalizados, [id]: e.target.value })} />
-                                        <button type="button" onClick={() => {
-                                          setConfig("acoesAtivas", (cfg.acoesAtivas || []).filter((x) => x !== id));
-                                        }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 2 }}><Trash2 size={14} /></button>
-                                      </div>
-                                      <div style={{ padding: "0 12px 12px 12px", display: "grid", gap: 8 }}>
-                                        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                          <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>Valor (R$)</span>
-                                          <input className="vx-input vx-mono" type="number" min="0" step="0.01" style={{ width: 100, padding: "4px 8px", fontSize: 13 }}
-                                            value={cfg.tarefas?.[id] || ""} placeholder="0,00"
-                                            onChange={(e) => setConfig("tarefas", { ...(cfg.tarefas || {}), [id]: Number(e.target.value) })} />
-                                        </label>
-                                        <div>
-                                          <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 4 }}>Comprovação</div>
-                                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                                            {EVIDENCIAS_OPCOES.map((ev) => {
-                                              const selEv = ((cfg.comprovacoes || {})[id] || []).includes(ev.id);
-                                              return (
-                                                <button key={ev.id} type="button" onClick={() => {
-                                                  const atual = (cfg.comprovacoes || {})[id] || [];
-                                                  const novas = selEv ? atual.filter((x) => x !== ev.id) : [...atual, ev.id];
-                                                  setConfig("comprovacoes", { ...(cfg.comprovacoes || {}), [id]: novas });
-                                                }} style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11.5, cursor: "pointer", fontWeight: selEv ? 600 : 400, border: `1px solid ${selEv ? SEL.border : SEL.borderOff}`, background: selEv ? SEL.bg : SEL.bgOff, color: selEv ? "var(--brand)" : "var(--text-2)" }}>
-                                                  {ev.nome}
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                                {cfg.modoAtividades === "personalizado" && (
-                                  <button type="button" onClick={() => {
-                                    const novaId = `custom_${Date.now()}`;
-                                    setConfig("acoesAtivas", [...(cfg.acoesAtivas || []), novaId]);
-                                    setConfig("tarefas", { ...(cfg.tarefas || {}), [novaId]: 0 });
-                                  }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", borderRadius: 10, border: "1.5px dashed var(--border)", background: "transparent", cursor: "pointer", fontSize: 13, color: "var(--brand)", fontWeight: 600 }}>
-                                    <Plus size={15} /> Adicionar forma de ganho
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })()}
-                          {cfg.modoAtividades && (
-                            <div style={{ marginTop: 14, marginBottom: 4 }}>
-                              <b style={{ fontSize: 12.5, color: "var(--brand)" }}>Gestão operacional</b><Tag obrigatorio={false} />
-                              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-                                <CardOption selected={!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", false)} icon={Zap} title="Automático (recomendado)" subtitle="A RYCS define prazos e limites automaticamente." />
-                                <CardOption selected={!!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", true)} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Defina orçamento e prazos manualmente." />
-                              </div>
-                              {!cfg.gestaoManual && (
-                                <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
-                                  <Check size={14} color="var(--green, #16A34A)" style={{ flexShrink: 0 }} />
-                                  <span className="vx-mut" style={{ fontSize: 12 }}>Prazos e limites serão gerenciados automaticamente pela RYCS.</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {!!cfg.gestaoManual && (
-                            <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-                              <label><div className="vx-label">Orçamento para esta função</div>
-                                <CampoOrcamento value={cfg.orcamento || 0} onChange={(v) => setConfig("orcamento", v)} /></label>
-                              <label><div className="vx-label">Prazo por atividade (horas)</div>
-                                <input className="vx-input vx-mono" type="number" min="1" value={cfg.prazoHoras || 24} onChange={(e) => setConfig("prazoHoras", Number(e.target.value))} /></label>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     );
                   })()}
@@ -2129,36 +1976,213 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </button>
           )}
 
-          {campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length > 0 ? (
-            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Resumo de pagamentos por função</b><Tag obrigatorio={true} /></div>
-              <div style={{ display: "grid", gap: 10 }}>
-                {(campanha.funcoesOperacao || []).map((k) => {
-                  const f = FUNCOES[k];
-                  const cfg = campanha[`config_${k}`] || {};
-                  const totalAtividades = (cfg.acoesAtivas || []).reduce((s, a) => s + Number(cfg[`valor_${a}`] || 0), 0);
-                  return (
-                    <div key={k} style={{ padding: "14px 16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <Check size={14} color="var(--brand)" />
-                        <span style={{ fontSize: 14, fontWeight: 700 }}>{f?.nome || k}</span>
-                        <span className="vx-mut" style={{ fontSize: 12 }}>{cfg.vagas || 0} vagas</span>
-                      </div>
-                      <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-                        {(cfg.acoesAtivas || []).map((a) => (
-                          <div key={a} className="vx-row">
-                            <span style={{ color: "var(--text-2)" }}>{ACOES_DISPONIVEIS.find((x) => x.id === a)?.nome || ACOES[a]?.nome || a}</span>
-                            <b className="vx-mono">{money(Number(cfg[`valor_${a}`] || 0))}</b>
-                          </div>
-                        ))}
-                      </div>
-                      {cfg.orcamento > 0 && <div className="vx-mut" style={{ fontSize: 12, marginTop: 6 }}>Orçamento: <b className="vx-mono">{money(cfg.orcamento)}</b></div>}
-                    </div>
-                  );
-                })}
-              </div>
+          {campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length > 0 ? (<>
+            {/* Abas por função */}
+            <div style={{ display: "flex", gap: 0, borderBottom: "2px solid var(--border)", marginBottom: 14 }}>
+              {(campanha.funcoesOperacao || []).map((k) => {
+                const f = FUNCOES[k];
+                const ativaAba = (campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0]) === k;
+                return (
+                  <button key={k} onClick={() => set("abaFuncaoAtiva", k)} style={{
+                    padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    color: ativaAba ? "#fff" : "var(--muted)",
+                    background: ativaAba ? "var(--brand)" : "transparent",
+                    borderRadius: "8px 8px 0 0", border: "none",
+                    marginBottom: -2, borderBottomWidth: 2, borderBottomStyle: "solid",
+                    borderBottomColor: ativaAba ? "var(--brand)" : "transparent",
+                  }}>
+                    {f?.nome || k}
+                  </button>
+                );
+              })}
             </div>
-          ) : (<>
+            {(() => {
+              const funcaoAtiva = campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0];
+              if (!funcaoAtiva) return null;
+              const cfg = campanha[`config_${funcaoAtiva}`] || {};
+              const setConfig = (campo, valor) => set(`config_${funcaoAtiva}`, { ...cfg, [campo]: valor });
+              const fInfo = FUNCOES[funcaoAtiva];
+              const sugeridas = SUGESTOES_FUNCAO[funcaoAtiva] || [];
+              return (
+                <div style={{ display: "grid", gap: 14 }}>
+                  <div className="vx-card" style={{ padding: 14 }}>
+                    <b style={{ fontSize: 13, color: "var(--brand)" }}>Atividades e pagamentos — {fInfo?.nome}</b><Tag obrigatorio={true} />
+                    <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 12 }}>Como este profissional é remunerado?</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: cfg.modoAtividades ? 14 : 0 }}>
+                      {[
+                        { id: "rapido", Icon: Zap, titulo: "Seleção rápida", desc: "Atividades predefinidas para esta função." },
+                        { id: "personalizado", Icon: SlidersHorizontal, titulo: "Personalizado", desc: "Configure suas próprias atividades e remunerações." },
+                      ].map(({ id, Icon, titulo, desc }) => {
+                        const sel = cfg.modoAtividades === id;
+                        return (
+                          <button key={id} type="button" onClick={() => setConfig("modoAtividades", id)} style={{
+                            display: "flex", flexDirection: "column", gap: 8, padding: 14, borderRadius: 10, cursor: "pointer", textAlign: "left", position: "relative",
+                            border: `1px solid ${sel ? SEL.border : SEL.borderOff}`, background: sel ? SEL.bg : SEL.bgOff,
+                          }}>
+                            {sel && <div style={{ position: "absolute", top: 8, right: 8, width: 16, height: 16, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={10} color="#fff" /></div>}
+                            <div style={{ width: 32, height: 32, borderRadius: 8, background: sel ? "var(--brand)" : "var(--brand-50)", border: sel ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <Icon size={16} color={sel ? "#fff" : "var(--brand)"} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: sel ? "var(--brand)" : "var(--text)" }}>{titulo}</div>
+                              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 2 }}>{desc}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(cfg.modoAtividades === "rapido" || cfg.modoAtividades === "personalizado") && (() => {
+                      const listaAtividades = cfg.modoAtividades === "rapido"
+                        ? (SELECAO_RAPIDA[funcaoAtiva] || ACOES_DISPONIVEIS.filter((a) => sugeridas.includes(a.id)))
+                        : ACOES_DISPONIVEIS;
+                      return (
+                        <div style={{ display: "grid", gap: 8 }}>
+                          {listaAtividades.map((a) => {
+                            const ativa = (cfg.acoesAtivas || []).includes(a.id);
+                            return (
+                              <div key={a.id} style={{ borderRadius: 10, border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`, background: ativa ? SEL.bg : SEL.bgOff, overflow: "hidden" }}>
+                                <button type="button" onClick={() => {
+                                  const novas = ativa ? (cfg.acoesAtivas || []).filter((x) => x !== a.id) : [...(cfg.acoesAtivas || []), a.id];
+                                  setConfig("acoesAtivas", novas);
+                                  if (!ativa) setConfig("tarefas", { ...(cfg.tarefas || {}), [a.id]: cfg.tarefas?.[a.id] || 0 });
+                                }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", textAlign: "left", cursor: "pointer", background: "transparent", border: "none" }}>
+                                  <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${ativa ? "var(--brand)" : "var(--border)"}`, background: ativa ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                    {ativa && <Check size={11} color="#fff" />}
+                                  </div>
+                                  <span style={{ flex: 1, fontSize: 13, fontWeight: ativa ? 600 : 400, color: ativa ? "var(--brand)" : "var(--text)" }}>{a.nome}</span>
+                                </button>
+                                {ativa && (
+                                  <div style={{ padding: "0 12px 12px 12px", display: "grid", gap: 10 }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                                      <label>
+                                        <div className="vx-label">Tipo de remuneração</div>
+                                        <select className="vx-input" value={a.id === "venda" ? (cfg.vendaTipoRemuneracao || "fixo") : "fixo"}
+                                          onChange={(e) => { if (a.id === "venda") setConfig("vendaTipoRemuneracao", e.target.value); }}>
+                                          <option value="fixo">Valor fixo (R$)</option>
+                                          {a.id === "venda" && <option value="percentual">Comissão (%)</option>}
+                                        </select>
+                                      </label>
+                                      <label>
+                                        <div className="vx-label">{a.id === "venda" && cfg.vendaTipoRemuneracao === "percentual" ? "Percentual (%)" : "Valor (R$)"}</div>
+                                        <input className="vx-input vx-mono" type="number" min="0" step="0.5"
+                                          max={a.id === "venda" && cfg.vendaTipoRemuneracao === "percentual" ? "100" : undefined}
+                                          value={cfg.tarefas?.[a.id] || ""}
+                                          placeholder={a.id === "venda" && cfg.vendaTipoRemuneracao === "percentual" ? "0" : "0,00"}
+                                          onChange={(e) => setConfig("tarefas", { ...(cfg.tarefas || {}), [a.id]: Number(e.target.value) })} />
+                                      </label>
+                                    </div>
+                                    {a.id === "venda" && cfg.vendaTipoRemuneracao === "percentual" && (
+                                      <label>
+                                        <div className="vx-label">Base de cálculo</div>
+                                        <input className="vx-input" placeholder="Ex: Valor do contrato fechado" value={cfg.baseCalculoVenda || ""} onChange={(e) => setConfig("baseCalculoVenda", e.target.value)} />
+                                      </label>
+                                    )}
+                                    {(campanha.origemLeads === "ambos" || campanha.fonteLeads === "ambos") && (
+                                      <div>
+                                        <div className="vx-label" style={{ marginBottom: 4 }}>Remuneração por origem do lead</div>
+                                        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, cursor: "pointer" }}>
+                                          <input type="checkbox" checked={!!((cfg.remuneracaoPorOrigem || {})[a.id]?.diferenciar)}
+                                            onChange={(e) => setConfig("remuneracaoPorOrigem", { ...(cfg.remuneracaoPorOrigem || {}), [a.id]: { ...(cfg.remuneracaoPorOrigem?.[a.id] || {}), diferenciar: e.target.checked } })} />
+                                          Diferenciar valor para leads do profissional
+                                        </label>
+                                        {(cfg.remuneracaoPorOrigem || {})[a.id]?.diferenciar && (
+                                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+                                            <label><div className="vx-label">Multiplicador — Lead da empresa</div>
+                                              <input className="vx-input vx-mono" type="number" step="0.1" min="0" value={(cfg.remuneracaoPorOrigem?.[a.id]?.fatorEmpresa) || 1}
+                                                onChange={(e) => setConfig("remuneracaoPorOrigem", { ...(cfg.remuneracaoPorOrigem || {}), [a.id]: { ...(cfg.remuneracaoPorOrigem?.[a.id] || {}), fatorEmpresa: Number(e.target.value) } })} /></label>
+                                            <label><div className="vx-label">Multiplicador — Lead do profissional</div>
+                                              <input className="vx-input vx-mono" type="number" step="0.1" min="0" value={(cfg.remuneracaoPorOrigem?.[a.id]?.fatorProfissional) || 1.5}
+                                                onChange={(e) => setConfig("remuneracaoPorOrigem", { ...(cfg.remuneracaoPorOrigem || {}), [a.id]: { ...(cfg.remuneracaoPorOrigem?.[a.id] || {}), fatorProfissional: Number(e.target.value) } })} /></label>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    <div>
+                                      <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 4 }}>Comprovação</div>
+                                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                                        {EVIDENCIAS_OPCOES.map((ev) => {
+                                          const selEv = ((cfg.comprovacoes || {})[a.id] || []).includes(ev.id);
+                                          return (
+                                            <button key={ev.id} type="button" onClick={() => {
+                                              const atual = (cfg.comprovacoes || {})[a.id] || [];
+                                              const novas = selEv ? atual.filter((x) => x !== ev.id) : [...atual, ev.id];
+                                              setConfig("comprovacoes", { ...(cfg.comprovacoes || {}), [a.id]: novas });
+                                            }} style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11.5, cursor: "pointer", fontWeight: selEv ? 600 : 400, border: `1px solid ${selEv ? SEL.border : SEL.borderOff}`, background: selEv ? SEL.bg : SEL.bgOff, color: selEv ? "var(--brand)" : "var(--text-2)" }}>
+                                              {ev.nome}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {cfg.modoAtividades === "personalizado" && (cfg.acoesAtivas || []).filter((id) => id.startsWith("custom_")).map((id) => (
+                            <div key={id} style={{ borderRadius: 10, border: `1px solid ${SEL.border}`, background: SEL.bg, overflow: "hidden" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px" }}>
+                                <input className="vx-input" placeholder="Nome da atividade" style={{ flex: 1, fontSize: 13, padding: "4px 8px" }}
+                                  value={(cfg.nomesPersonalizados || {})[id] || ""}
+                                  onChange={(e) => setConfig("nomesPersonalizados", { ...(cfg.nomesPersonalizados || {}), [id]: e.target.value })} />
+                                <button type="button" onClick={() => setConfig("acoesAtivas", (cfg.acoesAtivas || []).filter((x) => x !== id))}
+                                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 2 }}><Trash2 size={14} /></button>
+                              </div>
+                              <div style={{ padding: "0 12px 12px 12px", display: "grid", gap: 8 }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>Valor (R$)</span>
+                                  <input className="vx-input vx-mono" type="number" min="0" step="0.01" style={{ width: 100, padding: "4px 8px", fontSize: 13 }}
+                                    value={cfg.tarefas?.[id] || ""} placeholder="0,00"
+                                    onChange={(e) => setConfig("tarefas", { ...(cfg.tarefas || {}), [id]: Number(e.target.value) })} />
+                                </label>
+                              </div>
+                            </div>
+                          ))}
+                          {cfg.modoAtividades === "personalizado" && (
+                            <button type="button" onClick={() => {
+                              const novaId = `custom_${Date.now()}`;
+                              setConfig("acoesAtivas", [...(cfg.acoesAtivas || []), novaId]);
+                              setConfig("tarefas", { ...(cfg.tarefas || {}), [novaId]: 0 });
+                            }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", borderRadius: 10, border: "1.5px dashed var(--border)", background: "transparent", cursor: "pointer", fontSize: 13, color: "var(--brand)", fontWeight: 600 }}>
+                              <Plus size={15} /> Adicionar forma de ganho
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    {cfg.modoAtividades && (cfg.acoesAtivas || []).filter((id) => !id.startsWith("custom_")).length > 1 && (
+                      <div style={{ marginTop: 14 }}>
+                        <div className="vx-label" style={{ marginBottom: 8 }}>Como funciona o pagamento?</div>
+                        <div style={{ display: "grid", gap: 8 }}>
+                          <CardOption selected={cfg.remuneracaoCumulativa !== false} onClick={() => setConfig("remuneracaoCumulativa", true)} title="Pagar por cada etapa" subtitle="O profissional ganha por cada atividade que completar." />
+                          <CardOption selected={cfg.remuneracaoCumulativa === false} onClick={() => setConfig("remuneracaoCumulativa", false)} title="Pagar só pelo resultado final" subtitle="Só paga quando o profissional chega ao último passo." />
+                        </div>
+                      </div>
+                    )}
+                    {cfg.modoAtividades && (
+                      <div style={{ marginTop: 14 }}>
+                        <div className="vx-label" style={{ marginBottom: 8 }}>Como os pagamentos serão aprovados?</div>
+                        <div style={{ display: "grid", gap: 8 }}>
+                          {METODOS_APROVACAO.map((m) => {
+                            const MIcon = m.icon;
+                            return (
+                              <CardOption key={m.id} selected={(cfg.aprovacaoPagamentos || "manual") === m.id}
+                                onClick={() => setConfig("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
+                                subtitle={m.id === "automatica" ? "Validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e aprova dentro dos critérios." : "Você revisa e aprova manualmente cada pagamento."} />
+                            );
+                          })}
+                        </div>
+                        <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                          <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+                          <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias definidas pela RYCS nunca podem ser ignoradas.</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </>) : (<>
           {/* Seletor de modo */}
           <div className="vx-card" style={{ padding: 20, marginTop: 14 }}>
             <div style={{ marginBottom: 14 }}>
