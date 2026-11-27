@@ -1651,47 +1651,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
           </div>
 
-          {/* Confirmação de contato */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}><ShieldCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Confirmação de contato</b>
-              <div className="vx-mut" style={{ fontSize: 11.5 }}>O cliente recebe um link para confirmar que o contato realmente aconteceu.</div>
-            </div>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13 }}>
-              <input type="checkbox" checked={!!(campanha.confirmacaoContato || {}).habilitada}
-                onChange={(e) => set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), habilitada: e.target.checked })} />
-              <span>Exigir confirmação do cliente por link</span>
-            </label>
-            {(campanha.confirmacaoContato || {}).habilitada && (
-              <div style={{ marginTop: 12 }}>
-                <div className="vx-label">Canais de envio</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {CANAIS_CONFIRMACAO.map((c) => {
-                    const canaisAtivos = (campanha.confirmacaoContato || {}).canais || ["whatsapp", "email"];
-                    const ativo = canaisAtivos.includes(c.id);
-                    return (
-                      <button key={c.id} style={{
-                        padding: "8px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                        border: `1px solid ${ativo ? SEL.border : SEL.borderOff}`,
-                        background: ativo ? SEL.bg : SEL.bgOff,
-                        color: ativo ? "var(--brand)" : "var(--text-2)",
-                      }} onClick={() => {
-                        const novos = ativo ? canaisAtivos.filter((x) => x !== c.id) : [...canaisAtivos, c.id];
-                        set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), canais: novos });
-                      }}>{c.nome}</button>
-                    );
-                  })}
-                </div>
-                <label style={{ display: "block", marginTop: 10 }}>
-                  <div className="vx-label">Tempo para responder (horas)</div>
-                  <input className="vx-input" type="number" min="1" max="168" style={{ maxWidth: 120 }}
-                    value={(campanha.confirmacaoContato || {}).expiracaoHoras || 48}
-                    onChange={(e) => set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), expiracaoHoras: Number(e.target.value) || 48 })} />
-                </label>
-              </div>
-            )}
-          </div>
-
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(0)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" onClick={() => setPasso(2)}>Quem vai trabalhar? <ArrowRight size={14} /></button>
@@ -1949,6 +1908,41 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                 </span>
                               </div>
                             </label>
+                            {a.id === "contato" && (
+                              <div style={{ gridColumn: "1 / -1", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                                <div className="vx-label" style={{ marginBottom: 4 }}>
+                                  <ShieldCheck size={13} style={{ marginRight: 4, verticalAlign: -2 }} />Confirmação de contato
+                                </div>
+                                <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 8 }}>O cliente recebe um link para confirmar que o contato realmente aconteceu.</div>
+                                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13 }}>
+                                  <input type="checkbox" checked={!!(campanha.confirmacaoContato || {}).habilitada}
+                                    onChange={(e) => set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), habilitada: e.target.checked })} />
+                                  <span>Exigir confirmação do cliente por link</span>
+                                </label>
+                                {(campanha.confirmacaoContato || {}).habilitada && (
+                                  <div style={{ marginTop: 10 }}>
+                                    <div className="vx-label" style={{ marginBottom: 6 }}>Canal de envio</div>
+                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                      {CANAIS_CONFIRMACAO.filter((c) => ["whatsapp", "email"].includes(c.id)).map((c) => {
+                                        const canaisAtivos = (campanha.confirmacaoContato || {}).canais || ["whatsapp", "email"];
+                                        const ativo2 = canaisAtivos.includes(c.id);
+                                        return (
+                                          <button key={c.id} style={{
+                                            padding: "8px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                            border: `1px solid ${ativo2 ? SEL.border : SEL.borderOff}`,
+                                            background: ativo2 ? SEL.bg : SEL.bgOff,
+                                            color: ativo2 ? "var(--brand)" : "var(--text-2)",
+                                          }} onClick={() => {
+                                            const novos = ativo2 ? canaisAtivos.filter((x) => x !== c.id) : [...canaisAtivos, c.id];
+                                            set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), canais: novos });
+                                          }}>{c.nome}</button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
