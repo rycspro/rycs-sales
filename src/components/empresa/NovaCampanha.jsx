@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation, Cloud, CloudOff, LogOut, GraduationCap, Pencil, Info } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation, Cloud, CloudOff, LogOut, GraduationCap, Pencil, Info, Briefcase } from "lucide-react";
 import { api, apiPatch, API_URL } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
@@ -113,6 +113,14 @@ function CampoOrcamento({ value, onChange }) {
 }
 
 const SEL = { bg: "var(--brand-50, #E4F0FF)", border: "var(--brand, #318CE7)", bgOff: "var(--surface, #FFFFFF)", borderOff: "var(--border, #E2E2E2)" };
+
+const KIT_CATS = [
+  { key: "script", label: "Script de abordagem", desc: "Roteiro de conversa, argumentos de vendas e frases de abertura.", Icon: MessageCircle },
+  { key: "apresentacao", label: "Apresentação comercial", desc: "Slides, PDFs ou vídeos que apresentam o produto ou serviço.", Icon: Presentation },
+  { key: "contorno", label: "Contorno de objeções", desc: "Respostas prontas para as principais resistências dos clientes.", Icon: ShieldCheck },
+  { key: "orientacoes", label: "Orientações de trabalho", desc: "Regras, boas práticas e orientações operacionais da campanha.", Icon: ClipboardCheck },
+  { key: "complementares", label: "Materiais complementares", desc: "Outros conteúdos de apoio, como catálogos, tabelas e fotos.", Icon: FileText },
+];
 
 function Tag({ obrigatorio }) {
   return (
@@ -615,11 +623,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [bibliotecaFiltro, setBibliotecaFiltro] = useState("");
   const [bibliotecaSel, setBibliotecaSel] = useState([]);
   const [carregandoBiblioteca, setCarregandoBiblioteca] = useState(false);
+  const [kitCatAberta, setKitCatAberta] = useState(null);
+  const [kitBibliotecaCat, setKitBibliotecaCat] = useState(null);
+  const [kitUploadCat, setKitUploadCat] = useState(null);
+  const [kitUploadEnviando, setKitUploadEnviando] = useState(false);
   const [gerandoICP, setGerandoICP] = useState(false);
   const [recomendandoAtividades, setRecomendandoAtividades] = useState(false);
   const [recomendandoEvidencias, setRecomendandoEvidencias] = useState(false);
   const [gerandoDescricao, setGerandoDescricao] = useState(false);
   const uploadInputRef = useRef(null);
+  const kitUploadRef = useRef(null);
   const [catalogoProdutos, setCatalogoProdutos] = useState([]);
   const [popoverProjecao, setPopoverProjecao] = useState(null);
   const [modalSaldoAberto, setModalSaldoAberto] = useState(false);
@@ -1221,6 +1234,148 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
           </>
+          {/* Kit comercial da campanha */}
+          {(() => {
+            const kit = campanha.kitComercial || {};
+            const catPreenchidas = KIT_CATS.filter((c) => (kit[c.key]?.materiais || []).length > 0).length;
+            const pct = Math.round(catPreenchidas / 5 * 100);
+            const setKitMat = (catKey, mats) => set("kitComercial", { ...kit, [catKey]: { ...(kit[catKey] || {}), materiais: mats } });
+            const removeKitMat = (catKey, idx) => setKitMat(catKey, (kit[catKey]?.materiais || []).filter((_, i) => i !== idx));
+            return (
+              <>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Kit comercial da campanha</h2>
+                <p className="vx-mut" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>Forneça aos profissionais tudo o que eles precisam para vender.</p>
+                <div className="vx-card" style={{ padding: 14, marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: catPreenchidas === 5 ? "var(--brand-50)" : "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Briefcase size={18} color={catPreenchidas === 5 ? "var(--brand)" : "var(--muted)"} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>Seu kit comercial</div>
+                        <div className="vx-mut" style={{ fontSize: 12 }}>{catPreenchidas} de 5 categorias preenchidas · {pct}%</div>
+                      </div>
+                      <div style={{ height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, background: "var(--brand)", borderRadius: 3, transition: "width .3s" }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {KIT_CATS.map((cat) => {
+                  const { Icon } = cat;
+                  const mats = kit[cat.key]?.materiais || [];
+                  const filled = mats.length > 0;
+                  const aberta = kitCatAberta === cat.key;
+                  return (
+                    <div key={cat.key} className="vx-card" style={{ padding: 0, marginBottom: 8, overflow: "hidden" }}>
+                      <button
+                        style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        onClick={() => setKitCatAberta(aberta ? null : cat.key)}
+                      >
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: filled ? "var(--brand-50)" : "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Icon size={18} color={filled ? "var(--brand)" : "var(--muted)"} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{cat.label}</div>
+                          <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.4 }}>{cat.desc}</div>
+                        </div>
+                        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                          {filled ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#16A34A", fontWeight: 600 }}>
+                              <CheckCircle2 size={15} color="#16A34A" /> {mats.length} arquivo{mats.length > 1 ? "s" : ""}
+                            </div>
+                          ) : (
+                            <span className="vx-mut" style={{ fontSize: 11.5 }}>Vazio</span>
+                          )}
+                          {aberta ? <ChevronUp size={16} color="var(--muted)" /> : <ChevronDown size={16} color="var(--muted)" />}
+                        </div>
+                      </button>
+                      {aberta && (
+                        <div style={{ borderTop: "1px solid var(--border)", padding: "12px 16px" }}>
+                          {mats.length > 0 && (
+                            <div style={{ marginBottom: 10 }}>
+                              {mats.map((mat, idx) => {
+                                const IconeMat = mat.mimetype?.startsWith("video/") ? Video : mat.mimetype?.startsWith("audio/") ? Music : mat.mimetype?.includes("spreadsheet") || mat.mimetype?.includes("excel") ? FileSpreadsheet : mat.mimetype?.includes("presentation") || mat.mimetype?.includes("powerpoint") ? Presentation : mat.mimetype?.includes("image") ? Image : mat.categoria === "link" ? Link2 : FileText;
+                                return (
+                                  <div key={mat.id || idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, marginBottom: 5, fontSize: 12.5 }}>
+                                    <IconeMat size={14} color="var(--muted)" />
+                                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{mat.nome}</span>
+                                    <span className="vx-mut" style={{ fontSize: 11 }}>{mat.tamanho ? `${(mat.tamanho / 1024).toFixed(0)} KB` : mat.origem === "biblioteca" ? "Biblioteca" : ""}</span>
+                                    <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={(e) => { e.stopPropagation(); removeKitMat(cat.key, idx); }} style={{ padding: 2 }}><X size={13} /></button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <button className="vx-btn vx-btn-sm" style={{ gap: 5 }}
+                              onClick={() => { setKitUploadCat(cat.key); kitUploadRef.current?.click(); }}>
+                              <CloudUpload size={13} /> Enviar arquivo
+                            </button>
+                            <button className="vx-btn vx-btn-sm" style={{ gap: 5 }}
+                              onClick={async () => {
+                                setKitBibliotecaCat(cat.key);
+                                setModalBiblioteca(true);
+                                setCarregandoBiblioteca(true);
+                                setBibliotecaSel([]);
+                                const r = await api("/materiais");
+                                if (r?.materiais) setBibliotecaMateriais(r.materiais);
+                                setCarregandoBiblioteca(false);
+                              }}>
+                              <Library size={13} /> Buscar na biblioteca
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <input ref={kitUploadRef} type="file" multiple hidden
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.mp4,.mov,.mp3,.wav,.m4a,.txt,.key"
+                  onChange={async (e) => {
+                    const catKey = kitUploadCat;
+                    if (!catKey) return;
+                    const files = [...e.target.files];
+                    e.target.value = "";
+                    if (!files.length) return;
+                    setKitUploadEnviando(true);
+                    const catKit = campanha.kitComercial || {};
+                    const mats = [...(catKit[catKey]?.materiais || [])];
+                    for (const f of files) {
+                      try {
+                        const r = await new Promise((resolve, reject) => {
+                          const xhr = new XMLHttpRequest();
+                          xhr.open("POST", `${API_URL}/api/materiais/upload`);
+                          xhr.withCredentials = true;
+                          xhr.setRequestHeader("Content-Type", f.type || "application/octet-stream");
+                          xhr.setRequestHeader("X-Arquivo-Nome", encodeURIComponent(f.name));
+                          xhr.onload = () => { try { const res = JSON.parse(xhr.responseText); if (res.error) reject(new Error(res.error)); else resolve(res); } catch { reject(new Error("Erro no envio")); } };
+                          xhr.onerror = () => reject(new Error("Falha na conexão"));
+                          xhr.send(f);
+                        });
+                        mats.push({ id: r.id, nome: r.nome, categoria: r.categoria, mimetype: r.mimetype, tamanho: r.tamanho, origem: "upload" });
+                      } catch {}
+                    }
+                    set("kitComercial", { ...catKit, [catKey]: { ...(catKit[catKey] || {}), materiais: mats } });
+                    setKitUploadEnviando(false);
+                  }}
+                />
+                {kitUploadEnviando && <p className="vx-mut" style={{ fontSize: 12, margin: "8px 0 0" }}><Loader size={12} style={{ animation: "spin 1s linear infinite", verticalAlign: "middle" }} /> Enviando arquivos…</p>}
+                <div className="vx-card" style={{ padding: 14, marginTop: 8 }}>
+                  <label style={{ display: "flex", gap: 12, alignItems: "flex-start", cursor: "pointer" }}>
+                    <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={campanha.exigeCertificacao || false} onChange={(e) => set("exigeCertificacao", e.target.checked)} />
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+                        <GraduationCap size={15} color="var(--muted)" />
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>Treinamento obrigatório</span>
+                      </div>
+                      <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.5 }}>Exige que o profissional conclua os treinamentos antes de iniciar as atividades remuneradas da campanha.</div>
+                    </div>
+                  </label>
+                </div>
+              </>
+            );
+          })()}
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Continuar <ArrowRight size={14} /></button>
@@ -1718,12 +1873,24 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     <button className="vx-btn vx-btn-sm" onClick={() => setModalBiblioteca(false)}>Cancelar</button>
                     <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={!bibliotecaSel.length} style={{ background: "var(--brand)", borderColor: "var(--brand)" }}
                       onClick={() => {
-                        const existentes = new Set((campanha.materiaisVinculados || []).map((m) => m.id));
-                        const novos = bibliotecaSel.filter((id) => !existentes.has(id)).map((id) => {
-                          const mat = bibliotecaMateriais.find((m) => m.id === id);
-                          return mat ? { id: mat.id, nome: mat.nome, categoria: mat.categoria, mimetype: mat.mimetype, tamanho: mat.tamanho, origem: "biblioteca", obrigatoriedade: "complementar" } : null;
-                        }).filter(Boolean);
-                        set("materiaisVinculados", [...(campanha.materiaisVinculados || []), ...novos]);
+                        if (kitBibliotecaCat) {
+                          const kit = campanha.kitComercial || {};
+                          const catMats = (kit[kitBibliotecaCat]?.materiais || []);
+                          const existentes = new Set(catMats.map((m) => m.id));
+                          const novos = bibliotecaSel.filter((id) => !existentes.has(id)).map((id) => {
+                            const mat = bibliotecaMateriais.find((m) => m.id === id);
+                            return mat ? { id: mat.id, nome: mat.nome, categoria: mat.categoria, mimetype: mat.mimetype, tamanho: mat.tamanho, origem: "biblioteca" } : null;
+                          }).filter(Boolean);
+                          set("kitComercial", { ...kit, [kitBibliotecaCat]: { ...(kit[kitBibliotecaCat] || {}), materiais: [...catMats, ...novos] } });
+                          setKitBibliotecaCat(null);
+                        } else {
+                          const existentes = new Set((campanha.materiaisVinculados || []).map((m) => m.id));
+                          const novos = bibliotecaSel.filter((id) => !existentes.has(id)).map((id) => {
+                            const mat = bibliotecaMateriais.find((m) => m.id === id);
+                            return mat ? { id: mat.id, nome: mat.nome, categoria: mat.categoria, mimetype: mat.mimetype, tamanho: mat.tamanho, origem: "biblioteca", obrigatoriedade: "complementar" } : null;
+                          }).filter(Boolean);
+                          set("materiaisVinculados", [...(campanha.materiaisVinculados || []), ...novos]);
+                        }
                         setModalBiblioteca(false);
                       }}>
                       <Check size={13} /> Vincular materiais selecionados
