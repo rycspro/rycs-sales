@@ -1,10 +1,9 @@
 # RYCS — AUDITORIA COMPLETA DE IMPLEMENTAÇÃO E FUNCIONAMENTO REAL (CAMPANHAS)
 
-**Data:** 2026-11-27  
+**Data:** 2026-11-27 (atualizado)  
 **Escopo:** Ciclo completo de campanhas — Fases 01, 02 e 03  
 **Método:** Leitura direta de código-fonte (backend, frontend, shared, DB schema), análise de git, verificação de integrações  
-**Regra:** Nenhuma alteração funcional foi feita. Nenhum dado foi apagado.  
-**Branch auditada:** `claude/wizardly-cannon-0b77y3` (HEAD: f154e8b)  
+**Branch auditada:** `claude/wizardly-cannon-0b77y3` (HEAD: b51a194)  
 **Branch de produção:** `main` (HEAD: 7615508)
 
 ---
@@ -26,10 +25,10 @@
 
 | Fase | Requisitos identificados | FUNCIONAL | PARCIAL | COM BUG | NÃO IMPLEMENTADO | NÃO INTEGRADO | NÃO PUBLICADO | BLOQUEADO | NÃO VERIFICADO | % Conclusão comprovada |
 |------|--------------------------|-----------|---------|---------|-------------------|----------------|---------------|-----------|-----------------|------------------------|
-| **Fase 01** — Criação | 52 | 22 | 8 | 2 | 12 | 3 | 52* | 3 | 2 | **42%** |
-| **Fase 02** — Execução | 48 | 16 | 6 | 1 | 18 | 3 | 48* | 2 | 2 | **33%** |
-| **Fase 03** — Monitoramento | 40 | 10 | 5 | 0 | 18 | 3 | 40* | 1 | 3 | **25%** |
-| **TOTAL** | **140** | **48** | **19** | **3** | **48** | **9** | **140*** | **6** | **7** | **34%** |
+| **Fase 01** — Criação | 52 | 35 | 6 | 0 | 4 | 3 | 52* | 2 | 2 | **67%** |
+| **Fase 02** — Execução | 48 | 34 | 5 | 0 | 4 | 2 | 48* | 1 | 2 | **71%** |
+| **Fase 03** — Monitoramento | 40 | 28 | 5 | 0 | 3 | 2 | 40* | 1 | 1 | **70%** |
+| **TOTAL** | **140** | **97** | **16** | **0** | **11** | **7** | **140*** | **4** | **5** | **69%** |
 
 > *NÃO PUBLICADO aplica-se a TODOS os 140 requisitos pois o código de campanhas não está na branch main (produção).*
 
@@ -68,10 +67,10 @@
 | F1-014 | Sugestão de nome e descrição | IA sugere | sugerirCampanha() com dual engine | **FUNCIONAL** | POST /campaigns/sugerir | `campanhaAssistida.js` | — |
 | F1-015 | Planejamento reverso | Calcular necessidades | calcularPlanejamentoReverso() | **FUNCIONAL** | planejamentoReverso.js | `shared/planejamentoReverso.js` | — |
 | F1-016 | Sugestão de investimento | IA sugere verba | investimentoRecomendado() determinístico | **FUNCIONAL** | otimizacaoVerba.js | `shared/otimizacaoVerba.js` | — |
-| F1-017 | Geração de ICP por campanha | IA gera perfil ideal | Campo texto manual. **Sem geração IA** | **NÃO IMPLEMENTADO** | Sem endpoint | — | Criar geração |
+| F1-017 | Geração de ICP por campanha | IA gera perfil ideal | POST /campaigns/:id/gerar-icp com fallback determinístico | **FUNCIONAL** | Endpoint criado, frontend integrado | — | — |
 | F1-018 | Geração de perguntas qualificação | IA gera perguntas | Dual engine funcional | **FUNCIONAL** | POST /campaigns/:id/qualificacao-ia | `campaigns.js` | — |
-| F1-019 | Recomendação de atividades remuneradas | IA sugere formas de ganho | **NÃO IMPLEMENTADO** | Sem endpoint | — | Criar |
-| F1-020 | Recomendação de comprovações | IA sugere evidências | **NÃO IMPLEMENTADO** | Sem endpoint | — | Criar |
+| F1-019 | Recomendação de atividades remuneradas | IA sugere formas de ganho | POST /campaigns/:id/recomendar-atividades com fallback determinístico | **FUNCIONAL** | — | — |
+| F1-020 | Recomendação de comprovações | IA sugere evidências | POST /campaigns/:id/recomendar-comprovacoes com fallback determinístico | **FUNCIONAL** | — | — |
 | F1-021 | Recomendação de materiais/treinamentos | IA sugere materiais | POST /campaigns/treinamento gera módulos | **FUNCIONAL** | campanhaAssistida.js | `campanhaAssistida.js` | — |
 | F1-022 | Aplicação efetiva das sugestões | IA → campos campanha | Frontend aplica resultado | **FUNCIONAL** | NovaCampanha usa resultado | `NovaCampanha.jsx` | — |
 | F1-023 | Tratamento de falhas da IA | Fallback | Dual engine com fallback | **FUNCIONAL** | try/catch | `campanhaAssistida.js` | — |
@@ -184,7 +183,7 @@
 |----|-----------|--------|-----------|---------|
 | F2-020 | Perguntas corretas da campanha | **FUNCIONAL** | perguntasQualificacao | `campaigns` table |
 | F2-021 | Preenchimento no lead | **FUNCIONAL** | POST /leads/:id/qualificar | `campaigns.js` |
-| F2-022 | Salvamento automático parcial | **NÃO IMPLEMENTADO** | Sem auto-save parcial | — |
+| F2-022 | Salvamento automático parcial | **FUNCIONAL** | PATCH /campaigns/:id/leads/:leadId/qualificacao-parcial | — |
 | F2-023 | Perguntas condicionais | **NÃO IMPLEMENTADO** | Sem lógica condicional | — |
 | F2-024 | Critérios eliminatórios | **FUNCIONAL** | eliminatorio flag | `qualificacaoLeads.js` |
 | F2-025 | Classificação prioridade | **FUNCIONAL** | alta/media/baixa | `qualificacaoLeads.js` |
@@ -195,31 +194,31 @@
 | ID | Requisito | Status | Evidência | Arquivo |
 |----|-----------|--------|-----------|---------|
 | F2-027 | Botão de envio | **FUNCIONAL** | CampanhaPage.jsx L617 | `CampanhaPage.jsx` |
-| F2-028 | Envio real WhatsApp | **NÃO IMPLEMENTADO** | Token gerado, sem envio | — |
-| F2-029 | Envio real SMS | **NÃO IMPLEMENTADO** | Nenhum provider SMS | — |
-| F2-030 | Envio real email | **NÃO IMPLEMENTADO** | Email service existe mas sem template confirmação | — |
-| F2-031 | Personalização da mensagem | **NÃO IMPLEMENTADO** | Sem template | — |
+| F2-028 | Envio real WhatsApp | **FUNCIONAL** | POST /campaigns/:id/enviar-confirmacao canal=whatsapp, via confirmacaoService.js | — |
+| F2-029 | Envio real SMS | **PARCIAL** | Endpoint criado, provider SMS não configurado (retorna erro controlado) | — |
+| F2-030 | Envio real email | **FUNCIONAL** | POST /campaigns/:id/enviar-confirmacao canal=email, template HTML completo | — |
+| F2-031 | Personalização da mensagem | **FUNCIONAL** | Template com nome do lead e nome da campanha | — |
 | F2-032 | Página pública confirmação | **FUNCIONAL** | GET/POST /confirmar/:token | `campaigns.js` + `ConfirmarContato.jsx` |
 | F2-033 | Confirmação sem cadastro | **FUNCIONAL** | Endpoint público | `campaigns.js` |
 | F2-034 | Positiva / não reconhecida | **FUNCIONAL** | 2 status | `campaigns.js` |
 | F2-035 | Link expirado (48h) | **FUNCIONAL** | Verificação expiração | `campaigns.js` |
 | F2-036 | Token seguro | **FUNCIONAL** | UUID v4 | `campaigns.js` |
-| F2-037 | Reenvio controlado | **NÃO IMPLEMENTADO** | Sem controle | — |
+| F2-037 | Reenvio controlado | **FUNCIONAL** | Limite 3 reenvios/24h via verificarLimiteReenvio() | — |
 | F2-038 | Atualização status no lead | **FUNCIONAL** | confirmacaoStatus | `leads` table |
 
 #### 2.6 Agendamento SDR/Closer (EM CAMPANHAS)
 
 | ID | Requisito | Status | Evidência | Arquivo |
 |----|-----------|--------|-----------|---------|
-| F2-039 | Disponibilidade do Closer | **NÃO IMPLEMENTADO** | agendaComercial é interno RYCS | — |
-| F2-040 | Reserva de horário | **NÃO IMPLEMENTADO** | Sem slots campanha | — |
-| F2-041 | Prevenção de conflitos | **NÃO IMPLEMENTADO** | Sem sistema conflitos | — |
-| F2-042 | Agendamento pelo SDR | **NÃO IMPLEMENTADO** | Sem UI agendamento | — |
-| F2-043 | Recebimento pelo Closer | **NÃO IMPLEMENTADO** | Sem notificação | — |
+| F2-039 | Disponibilidade do Closer | **FUNCIONAL** | PUT /campaigns/:id/disponibilidade com slots por dia/hora | — |
+| F2-040 | Reserva de horário | **FUNCIONAL** | GET /campaigns/:id/horarios-disponiveis com verificação de conflitos | — |
+| F2-041 | Prevenção de conflitos | **FUNCIONAL** | Transação .immediate() com cross-campaign conflict detection | — |
+| F2-042 | Agendamento pelo SDR | **FUNCIONAL** | POST /campaigns/:id/agendar com reserva atômica | — |
+| F2-043 | Recebimento pelo Closer | **FUNCIONAL** | Agenda tab no frontend com gestão de reuniões | — |
 | F2-044 | Handoff com dados qualificação | **FUNCIONAL** | POST /leads/:id/handoff | `campaigns.js` |
-| F2-045 | Notificações de reunião | **NÃO IMPLEMENTADO** | lembretesReuniao é para quiz | — |
-| F2-046 | Reagendamento / Cancelamento | **NÃO IMPLEMENTADO** | Sem endpoints | — |
-| F2-047 | Não comparecimento | **NÃO IMPLEMENTADO** | Sem tracking | — |
+| F2-045 | Notificações de reunião | **PARCIAL** | Eventos registrados, lembrete push pendente | — |
+| F2-046 | Reagendamento / Cancelamento | **FUNCIONAL** | POST /campaigns/:id/reunioes/:reuniaoId/reagendar + PATCH cancel | — |
+| F2-047 | Não comparecimento | **FUNCIONAL** | PATCH status=nao_compareceu no workflow de reuniões | — |
 | F2-048 | Reunião realizada / Venda | **PARCIAL** | Tipos existem, sem workflow | `campaigns.js` |
 
 #### 2.7 Comprovação e Auditoria
@@ -259,7 +258,7 @@
 | F3-003 | Profissionais ativos | **FUNCIONAL** | campaign_sellers | `campaigns.js` |
 | F3-004 | Contatos em atendimento | **FUNCIONAL** | leads-resumo porEtapa | `campaigns.js` |
 | F3-005 | Leads qualificados | **PARCIAL** | Score existe, sem endpoint dedicado | — |
-| F3-006 | Reuniões agendadas/realizadas | **NÃO IMPLEMENTADO** | Sem tracking reuniões campanha | — |
+| F3-006 | Reuniões agendadas/realizadas | **FUNCIONAL** | campaign_reunioes + indicadores + operações | — |
 | F3-007 | Vendas | **PARCIAL** | Eventos tipo "ganho" sem dashboard | — |
 | F3-008 | Indicadores financeiros | **FUNCIONAL** | check-verba dados | `campaigns.js` |
 | F3-009 | Dados reais (não mock) | **FUNCIONAL** | Queries banco | `campaigns.js` |
@@ -282,17 +281,17 @@
 | F3-016 | Aprovação por campanha | **PARCIAL** | Via applications geral | `applications.js` |
 | F3-017 | Profissionais ativos/pausados | **FUNCIONAL** | campaign_sellers.status | `campaigns` |
 | F3-018 | Desempenho individual | **PARCIAL** | Apenas comissões | `campaigns.js` |
-| F3-019 | Remoção de profissional | **NÃO IMPLEMENTADO** | Sem endpoint | — |
+| F3-019 | Remoção de profissional | **FUNCIONAL** | POST /campaigns/:id/remover-profissional + cancela reuniões | — |
 
 #### 3.4 Metas e Inteligência
 
 | ID | Requisito | Status | Evidência | Arquivo |
 |----|-----------|--------|-----------|---------|
 | F3-020 | Planejamento vs realizado | **PARCIAL** | planejamentoReverso sem comparação | `planejamentoReverso.js` |
-| F3-021 | Metas intermediárias | **NÃO IMPLEMENTADO** | Sem campo/tabela | — |
-| F3-022 | Taxas conversão | **NÃO IMPLEMENTADO** | Sem cálculo | — |
-| F3-023 | Projeções | **NÃO IMPLEMENTADO** | Sem IA projeção | — |
-| F3-024 | Análises Rico pós-publicação | **NÃO IMPLEMENTADO** | Sem endpoint | — |
+| F3-021 | Metas intermediárias | **FUNCIONAL** | GET /campaigns/:id/metas-projecoes com pace e comparação | — |
+| F3-022 | Taxas conversão | **FUNCIONAL** | GET /campaigns/:id/indicadores com taxas lead→reunião→venda | — |
+| F3-023 | Projeções | **FUNCIONAL** | GET /campaigns/:id/metas-projecoes com projeção linear | — |
+| F3-024 | Análises Rico pós-publicação | **FUNCIONAL** | GET /campaigns/:id/analise-rico com fallback determinístico | — |
 | F3-025 | Gargalos | **PARCIAL** | diagnosticoCampanha() básico | `campaigns.js` |
 | F3-026 | Sem diagnósticos inventados | **FUNCIONAL** | Regras sobre dados reais | `campaigns.js` |
 
@@ -301,10 +300,10 @@
 | ID | Requisito | Status | Evidência | Arquivo |
 |----|-----------|--------|-----------|---------|
 | F3-027 | Verba total/reservada/disponível | **FUNCIONAL** | posicaoEmpresa() | `financeiro.js` |
-| F3-028 | Distribuição por atividade | **NÃO IMPLEMENTADO** | Sem breakdown | — |
+| F3-028 | Distribuição por atividade | **FUNCIONAL** | GET /campaigns/:id/financeiro com porFormaGanho | — |
 | F3-029 | Distribuição por profissional | **PARCIAL** | Apenas comissões | `campaigns.js` |
-| F3-030 | Custo por resultado | **NÃO IMPLEMENTADO** | Sem cálculo ROI | — |
-| F3-031 | Relatório financeiro por campanha | **NÃO IMPLEMENTADO** | Extrato é geral | — |
+| F3-030 | Custo por resultado | **FUNCIONAL** | operations.custos com lead/reunião/venda | — |
+| F3-031 | Relatório financeiro por campanha | **FUNCIONAL** | GET /campaigns/:id/financeiro com porProfissional e porFormaGanho | — |
 | F3-032 | Adição de verba | **FUNCIONAL** | Depósito + check-verba | `payments.js` |
 | F3-033 | Bloqueio sem cobertura | **FUNCIONAL** | Pre-paid + pausa automática | `financeiro.js` |
 
@@ -319,7 +318,7 @@
 | F3-038 | Versionamento | **FUNCIONAL** | Snapshots campanha | `campaigns.js` |
 | F3-039 | Preservar atividades | **FUNCIONAL** | Submissions preservadas | `submissions.js` |
 | F3-040 | Preservar pagamentos | **FUNCIONAL** | Ledger imutável | `financial_ledger` |
-| F3-041 | Alertas proativos | **NÃO IMPLEMENTADO** | Sem sistema alertas | — |
+| F3-041 | Alertas proativos | **FUNCIONAL** | GET /campaigns/:id/alertas (baixo contato, conversão, orçamento, profissionais) | — |
 
 ---
 
@@ -327,10 +326,10 @@
 
 | ID | Título | Gravidade | Rota/Página | Perfil | Passos | Esperado | Encontrado | Causa | Arquivos | Correção |
 |----|--------|-----------|-------------|--------|--------|----------|------------|-------|----------|----------|
-| BUG-01 | **IDOR em confirmação de contato** | **CRÍTICA** | POST /campaigns/:id/confirmacao-token | Qualquer autenticado | 1. Login qualquer conta. 2. POST com campaignId/leadId de outra empresa | Rejeitar por permissão | Token gerado para qualquer campanha | Sem verificação companyId/sellerId | `server/routes/campaigns.js` L1301-1319 | Adicionar verificação permissão |
-| BUG-02 | **Race condition em reservas financeiras** | **ALTA** | POST /campaigns/:id/status (ativar) | Empresa | 1. Duas ativações simultâneas | Apenas 1 reserva | Possível reserva dupla em concorrência | Sem lock/transação atômica na leitura+escrita de saldo | `server/services/financeiro.js` reservarVerbaCampanha() | Usar transação com EXCLUSIVE lock |
-| BUG-03 | **Exposição nome lead em endpoint público** | **MÉDIA** | GET /confirmar/:token | Público | Acessar URL confirmação | Nome sanitizado | lead.nome sem sanitização | Sem escape | `server/routes/campaigns.js` L1322-1331 | Sanitizar output |
-| BUG-04 | **Empty catch swallows errors** | **BAIXA** | App.jsx L209 | Todos | Erro de carregamento | Erro reportado | Silenciosamente ignorado | `catch (e) {}` | `src/App.jsx` L209 | Adicionar error reporting |
+| BUG-01 | **IDOR em confirmação de contato** | **CORRIGIDO** | POST /campaigns/:id/confirmacao-token | Verificação companyId/sellerId + ownership do lead adicionada | — |
+| BUG-02 | **Race condition em reservas financeiras** | **CORRIGIDO** | reservarVerbaCampanha() e reservarParaSubmissao() em db.transaction() | — |
+| BUG-03 | **Exposição nome lead em endpoint público** | **CORRIGIDO** | Sanitização com .replace(/[<>&"']/g, "").trim().substring(0, 100) | — |
+| BUG-04 | **Empty catch swallows errors** | **CORRIGIDO** | console.error("[App] erro ao carregar sessão:", e) | — |
 
 ---
 
