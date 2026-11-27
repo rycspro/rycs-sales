@@ -1199,8 +1199,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {secaoVisivel.mercado && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização dos seus clientes</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os clientes que o profissional vai contatar?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
-              {Object.values(MERCADOS).map((m) => (
-                <CardOption key={m.id} selected={campanha.mercado === m.id} onClick={() => set("mercado", m.id)} title={m.label} />
+              {[
+                { id: "pais_todo", label: "Em todo o meu país", icon: MapPin, subtitle: "O profissional pode atuar em qualquer estado ou cidade." },
+                { id: "regioes_pais", label: "Em regiões específicas", icon: Filter, subtitle: "Defina estados ou cidades onde os clientes estão." },
+                { id: "outros_paises", label: "Em outros países", icon: Globe, subtitle: "Clientes fora do seu país de origem." },
+                { id: "global", label: "Em qualquer lugar do mundo", icon: Globe, subtitle: "Sem restrição geográfica nenhuma." },
+              ].map(({ id, label, icon: Icon, subtitle }) => (
+                <CardOption key={id} selected={campanha.mercado === id} onClick={() => set("mercado", id)} icon={Icon} title={label} subtitle={subtitle} />
               ))}
             </div>
             {(campanha.mercado === "outros_paises" || campanha.mercado === "global") && (
