@@ -100,9 +100,9 @@ function Tag({ obrigatorio }) {
       fontSize: 10, fontWeight: 700, letterSpacing: ".04em",
       padding: "2px 7px", borderRadius: 20,
       marginLeft: 7, verticalAlign: "middle",
-      background: obrigatorio ? "var(--brand-50,#E4F0FF)" : "var(--surface-2,#F5F5F5)",
-      color: obrigatorio ? "var(--brand,#318CE7)" : "var(--muted,#888)",
-      border: `1px solid ${obrigatorio ? "var(--brand-100,#bdd7ff)" : "var(--border,#E2E2E2)"}`,
+      background: obrigatorio ? "#FEF3C7" : "var(--brand-600,#1D4ED8)",
+      color: obrigatorio ? "#92400E" : "#fff",
+      border: `1px solid ${obrigatorio ? "#FCD34D" : "var(--brand-600,#1D4ED8)"}`,
     }}>
       {obrigatorio ? "OBRIGATÓRIO" : "OPCIONAL"}
     </span>
