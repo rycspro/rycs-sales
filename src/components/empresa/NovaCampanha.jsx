@@ -530,6 +530,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [recomendandoEvidencias, setRecomendandoEvidencias] = useState(false);
   const [gerandoDescricao, setGerandoDescricao] = useState(false);
   const uploadInputRef = useRef(null);
+  const [catalogoProdutos, setCatalogoProdutos] = useState([]);
 
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
@@ -549,6 +550,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   useEffect(() => { rascunhoIdRef.current = rascunhoId; }, [rascunhoId]);
   useEffect(() => { campanhaRef.current = campanha; }, [campanha]);
   useEffect(() => { passoRef.current = passo; }, [passo]);
+  useEffect(() => {
+    if (passo !== 5) return;
+    api("/erp/pedidos/catalogo").then((r) => {
+      if (r && Array.isArray(r.produtos)) setCatalogoProdutos(r.produtos);
+    }).catch(() => {});
+  }, [passo]);
 
   // Monta o corpo enviado ao banco. Campos só-do-wizard (formas de ganho em
   // rascunho, nome de operação, estado de upload) são ignorados pelo backend,
@@ -2629,144 +2636,44 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
       {/* ═══════════════════════ PASSO 5: VERBA DA CAMPANHA ═══════════════════════ */}
       {passo === 5 && campanha && (() => {
-        const modo = campanha.modoAcoesRemuneradas || "rapido";
-        const acoesAtivas = campanha.acoesAtivas || [];
-        const tarefas = campanha.tarefas || {};
-        const formasCustom = (campanha.formasGanhoRascunho || []).filter((f) => f.origem !== "predefinido");
-        const todasAcoes = modo === "rapido"
-          ? [...acoesAtivas.map((k) => ({ id: k, nome: ACOES_DISPONIVEIS.find((a) => a.id === k)?.nome || ACOES[k]?.nome || k, valor: Number(tarefas[k]) || 0, tipo: k === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "comissao" : "fixo" })),
-             ...formasCustom.map((f) => ({ id: f.tempId, nome: f.nome || "Personalizada", valor: f.valor || 0, tipo: f.tipoRemuneracao || "fixo" }))]
-          : (campanha.formasGanhoRascunho || []).map((f) => ({ id: f.tempId, nome: f.nome || "Sem nome", valor: f.valor || 0, tipo: f.tipoRemuneracao || "fixo" }));
-        const acoesFixas = todasAcoes.filter((a) => a.tipo === "fixo" && a.valor > 0);
-        const custoUnitarioTotal = acoesFixas.reduce((s, a) => s + a.valor, 0);
         const orcamentoAtual = Number(campanha.orcamento) || 0;
-        const temMultiFuncao = campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length >= 2;
-        const funcoes = temMultiFuncao ? (campanha.funcoesOperacao || []) : [];
-
-        const SUGESTOES_VERBA = [1000, 2500, 5000, 10000, 25000];
-
-        const distribuicaoVerba = campanha.distribuicaoVerba || {};
-        const modoDistribuicao = campanha.modoDistribuicaoVerba || "automatico";
-
-        const calcularDistribuicaoAuto = (verba) => {
-          if (acoesFixas.length === 0 || custoUnitarioTotal <= 0) return { acoesPossiveis: 0, porAcao: {} };
-          const acoesPossiveis = Math.floor(verba / custoUnitarioTotal);
-          const porAcao = {};
-          acoesFixas.forEach((a) => {
-            const proporcao = a.valor / custoUnitarioTotal;
-            porAcao[a.id] = Math.round(verba * proporcao * 100) / 100;
-          });
-          return { acoesPossiveis, porAcao };
-        };
-
-        const distAuto = calcularDistribuicaoAuto(orcamentoAtual);
-        const verbaUsadaCustom = modoDistribuicao === "personalizado"
-          ? Object.values(distribuicaoVerba).reduce((s, v) => s + (Number(v) || 0), 0)
-          : Object.values(distAuto.porAcao).reduce((s, v) => s + v, 0);
-        const verbaRestante = Math.max(0, orcamentoAtual - verbaUsadaCustom);
         const precisaAdicionar = orcamentoAtual > disponivel ? orcamentoAtual - disponivel : 0;
+        const produtosSelecionados = campanha.produtosCampanha || [];
+        const ticketMedioEstimado = produtosSelecionados.length > 0
+          ? produtosSelecionados.reduce((s, p) => s + (Number(p.preco) || 0), 0) / produtosSelecionados.length
+          : Number(emp?.ticket) || 0;
+        const buscaCatalogo = campanha._buscaCatalogo || "";
+        const catalogoFiltrado = catalogoProdutos.filter((p) =>
+          !buscaCatalogo || (p.nome || "").toLowerCase().includes(buscaCatalogo.toLowerCase())
+        );
+        const calcProj = () => {
+          if (orcamentoAtual <= 0) return { contatos: 0, leads: 0, reunioesAgendadas: 0, reunioesRealizadas: 0, vendas: 0, custoPorVenda: 0, faturamento: 0 };
+          const contatos = Math.round(orcamentoAtual / 20);
+          const leads = Math.round(contatos * 0.25);
+          const reunioesAgendadas = Math.round(leads * 0.4);
+          const reunioesRealizadas = Math.round(reunioesAgendadas * 0.75);
+          const vendas = Math.round(reunioesRealizadas * 0.3);
+          const custoPorVenda = vendas > 0 ? Math.round(orcamentoAtual / vendas) : 0;
+          const faturamento = vendas * ticketMedioEstimado;
+          return { contatos, leads, reunioesAgendadas, reunioesRealizadas, vendas, custoPorVenda, faturamento };
+        };
+        const proj = calcProj();
+        const funcoesList = campanha.estruturaComercial === "operacao"
+          ? (campanha.funcoesOperacao || [])
+          : campanha.funcao ? [campanha.funcao] : [];
+        const gestaoModo = campanha.gestaoOperacionalModo || "automatico";
+        const ICONE_FUNCAO = { sdr: Footprints, bdr: Globe, closer: Target, pap: MapPin };
 
         return (
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Planejamento e verba</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            Defina sua meta, veja o planejamento e quanto investir.
+            Defina seu investimento e descubra o potencial da sua campanha.
           </p>
 
-          {/* Meta da campanha + planejamento reverso */}
-          {campanha.objetivo && (() => {
-            const metaQ = perguntaMetaQuantitativa(campanha.objetivo);
-            const metaAtual = Number(campanha.metaQuantitativa) || 0;
-            const tarefasCalc = campanha.estruturaComercial === "operacao"
-              ? Object.assign({}, ...(campanha.funcoesOperacao || []).map(fk => (campanha[`config_${fk}`] || {}).tarefas || {}))
-              : (tarefas || {});
-            const plan = metaAtual > 0 ? calcularPlanejamentoReverso({ objetivoChave: campanha.objetivo, metaQuantidade: metaAtual, tarefas: tarefasCalc }) : null;
-            const funcoesConfig = campanha.estruturaComercial === "operacao"
-              ? (campanha.funcoesOperacao || []).map(fk => ({ funcao: fk, nome: FUNCOES[fk]?.nome || fk, vagas: (campanha[`config_${fk}`] || {}).vagas || 0 }))
-              : campanha.funcao ? [{ funcao: campanha.funcao, nome: FUNCOES[campanha.funcao]?.nome || campanha.funcao, vagas: campanha.vagas || 0 }] : [];
-            return (
-              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-                <div style={{ marginBottom: 12 }}>
-                  <b style={{ color: "var(--brand)" }}><Target size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Meta da campanha</b><Tag obrigatorio={false} />
-                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Informe sua meta para calcularmos automaticamente o esforço e investimento necessários.</div>
-                </div>
-                <label><div className="vx-label">{metaQ.label}</div>
-                  <input className="vx-input" type="number" min="0" value={metaAtual || ""} placeholder={metaQ.placeholder}
-                    onChange={(e) => { const v = Math.max(0, Number(e.target.value) || 0); set("metaQuantitativa", v); }} />
-                </label>
-                {plan && plan.etapas.length > 0 && (() => {
-                  const ICONES_ETAPA = { contatos_trabalhados: Phone, contatos_qualificados: Filter, leads_qualificados: Filter, reunioes_agendadas: CalendarCheck, reunioes_realizadas: Users, visitas_realizadas: MapPin, vendas: Target, clientes_reativados: RotateCcw };
-                  const etapasInvertidas = [...plan.etapas].reverse();
-                  return (
-                    <div style={{ marginTop: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                        <div className="vx-eyebrow" style={{ margin: 0 }}>PLANEJAMENTO REVERSO</div>
-                        <span style={{ fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: plan.fonte === "historico" ? "rgba(22,163,74,.1)" : "var(--brand-50)", color: plan.fonte === "historico" ? "var(--green)" : "var(--brand)", border: `1px solid ${plan.fonte === "historico" ? "rgba(22,163,74,.2)" : "var(--brand-100)"}` }}>
-                          {plan.fonte === "historico" ? "Dados reais" : "Estimativa"}
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-                        {etapasInvertidas.map((e, i) => {
-                          const Ic = ICONES_ETAPA[e.id] || Target;
-                          const isMeta = e.tipo === "meta";
-                          return (
-                            <div key={e.id} style={{ display: "contents" }}>
-                              {i > 0 && <div style={{ display: "flex", alignItems: "center", color: "var(--muted)", fontSize: 13, fontWeight: 600 }}>→</div>}
-                              <div style={{ flex: "1 1 100px", maxWidth: 160, minWidth: 90, textAlign: "center", padding: "14px 8px 10px", borderRadius: 10, background: isMeta ? "var(--brand)" : "var(--surface-solid)", border: `1px solid ${isMeta ? "var(--brand)" : "var(--border)"}`, boxShadow: isMeta ? "var(--shadow-brand)" : "var(--shadow-card)" }}>
-                                <Ic size={18} color={isMeta ? "#fff" : "var(--brand)"} style={{ marginBottom: 6 }} />
-                                <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: isMeta ? "#fff" : "var(--brand)" }}>{e.quantidade.toLocaleString("pt-BR")}</div>
-                                <div style={{ fontSize: 10.5, fontWeight: 600, color: isMeta ? "rgba(255,255,255,.85)" : "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{e.nome}</div>
-                                {e.taxa > 0 && <div style={{ fontSize: 9.5, color: "var(--muted)", marginTop: 2 }}>{(e.taxa * 100).toFixed(0)}% {e.taxaNome?.replace("Taxa de ", "")}</div>}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {funcoesConfig.length > 0 && (
-                        <div style={{ marginTop: 12 }}>
-                          <div className="vx-eyebrow" style={{ marginBottom: 8 }}>PROFISSIONAIS RECOMENDADOS</div>
-                          <div style={{ display: "grid", gap: 6 }}>
-                            {funcoesConfig.map(fc => {
-                              const recPorFunc = Math.max(1, Math.ceil(plan.contatosTotais / (200 * funcoesConfig.length)));
-                              return (
-                                <div key={fc.funcao} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10 }}>
-                                  <div>
-                                    <div style={{ fontSize: 13, fontWeight: 600 }}>{fc.nome}</div>
-                                    <div className="vx-mut" style={{ fontSize: 11.5 }}>Vagas atuais: {fc.vagas || "Ilimitado"}</div>
-                                  </div>
-                                  <div style={{ textAlign: "right" }}>
-                                    <div className="vx-mono" style={{ fontSize: 18, fontWeight: 800, color: "var(--brand)" }}>{recPorFunc}</div>
-                                    <div className="vx-mut" style={{ fontSize: 10.5 }}>recomendados</div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                      <div style={{ display: "grid", gridTemplateColumns: plan.investimentoEstimado > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 10 }}>
-                        <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
-                          <div className="vx-mut" style={{ fontSize: 10.5 }}>Total de profissionais</div>
-                          <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{plan.profissionaisRecomendados}</div>
-                        </div>
-                        {plan.investimentoEstimado > 0 && (
-                          <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
-                            <div className="vx-mut" style={{ fontSize: 10.5 }}>Investimento estimado</div>
-                            <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{money(plan.investimentoEstimado)}</div>
-                          </div>
-                        )}
-                      </div>
-                      {plan.aviso && <div className="vx-mut" style={{ fontSize: 11, marginTop: 8, fontStyle: "italic" }}>{plan.aviso}</div>}
-                    </div>
-                  );
-                })()}
-              </div>
-            );
-          })()}
-
-          {/* Saldo disponível */}
+          {/* 1. Saldo disponível */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14, background: "linear-gradient(135deg, var(--brand-50) 0%, var(--surface) 100%)", border: "1.5px solid var(--brand-100)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Wallet size={20} color="var(--brand)" />
               <div>
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Saldo disponível na conta</div>
@@ -2775,196 +2682,230 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
-          {/* Campo principal: Quanto deseja investir */}
+          {/* 2. Quanto investir */}
           <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Quanto você deseja investir? <Tag obrigatorio={true} /></div>
               <div className="vx-mut" style={{ fontSize: 12.5 }}>Esse é o limite total que a empresa autoriza para esta campanha.</div>
             </div>
             <CampoOrcamento value={orcamentoAtual} onChange={(v) => set("orcamento", v)} />
+            {precisaAdicionar > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, padding: "10px 14px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 10 }}>
+                <AlertCircle size={15} color="var(--amber, #F59E0B)" style={{ flexShrink: 0 }} />
+                <div className="vx-mut" style={{ fontSize: 12.5 }}>
+                  Saldo insuficiente. Você precisa adicionar <b className="vx-mono">{money(precisaAdicionar)}</b> para cobrir essa verba.
+                </div>
+              </div>
+            )}
+          </div>
 
-            {/* Sugestões de valores */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-              {SUGESTOES_VERBA.map((v) => (
-                <button key={v} onClick={() => set("orcamento", v)} style={{
-                  padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  border: `1px solid ${orcamentoAtual === v ? SEL.border : SEL.borderOff}`,
-                  background: orcamentoAtual === v ? SEL.bg : SEL.bgOff,
-                  color: orcamentoAtual === v ? "var(--brand)" : "var(--text-2)",
-                  transition: "all .15s",
-                }}>
-                  {money(v)}
-                </button>
+          {/* 3. Produtos e serviços */}
+          <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Quais produtos ou serviços serão comercializados?</div>
+              <div className="vx-mut" style={{ fontSize: 12.5 }}>Selecione do catálogo ou adicione um novo. Informe o preço para calcular o faturamento estimado.</div>
+            </div>
+            <div style={{ position: "relative", marginBottom: 10 }}>
+              <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
+              <input className="vx-input" style={{ paddingLeft: 32 }} placeholder="Buscar produto ou serviço..." value={buscaCatalogo}
+                onChange={(e) => set("_buscaCatalogo", e.target.value)} />
+            </div>
+            {produtosSelecionados.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                {produtosSelecionados.map((p, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 20, background: "var(--brand-50)", border: "1px solid var(--brand-100)", fontSize: 12.5, fontWeight: 500 }}>
+                    <span>{p.nome}</span>
+                    {p.preco > 0 && <span className="vx-mono" style={{ color: "var(--brand)", fontSize: 11 }}>{money(p.preco)}</span>}
+                    <button onClick={() => set("produtosCampanha", produtosSelecionados.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1, color: "var(--muted)" }}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {buscaCatalogo && (
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, maxHeight: 200, overflowY: "auto", marginBottom: 10 }}>
+                {catalogoFiltrado.map((p, i) => {
+                  const jaSel = produtosSelecionados.some((s) => s.nome === p.nome);
+                  return (
+                    <button key={i} onClick={() => {
+                      if (jaSel) set("produtosCampanha", produtosSelecionados.filter((s) => s.nome !== p.nome));
+                      else { set("produtosCampanha", [...produtosSelecionados, { nome: p.nome, preco: p.preco || 0 }]); set("_buscaCatalogo", ""); }
+                    }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 14px", background: "transparent", border: "none", borderBottom: i < catalogoFiltrado.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer", textAlign: "left" }}>
+                      <span style={{ fontSize: 13 }}>{p.nome}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {p.preco > 0 && <span className="vx-mono" style={{ fontSize: 12, color: "var(--brand)" }}>{money(p.preco)}</span>}
+                        {jaSel && <Check size={14} color="var(--brand)" />}
+                      </div>
+                    </button>
+                  );
+                })}
+                {!catalogoFiltrado.some((p) => p.nome?.toLowerCase() === buscaCatalogo.toLowerCase()) && (
+                  <button onClick={() => { set("produtosCampanha", [...produtosSelecionados, { nome: buscaCatalogo, preco: 0 }]); set("_buscaCatalogo", ""); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "10px 14px", background: "var(--brand-50)", border: "none", cursor: "pointer", color: "var(--brand)", fontSize: 13, fontWeight: 600 }}>
+                    <Plus size={14} /> Adicionar &quot;{buscaCatalogo}&quot;
+                  </button>
+                )}
+              </div>
+            )}
+            {produtosSelecionados.filter((p) => !p.preco).map((p, idx) => (
+              <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, marginBottom: 6 }}>
+                <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{p.nome}</div>
+                <div style={{ fontSize: 11.5, color: "var(--muted)", marginRight: 6, whiteSpace: "nowrap" }}>Informe o preço:</div>
+                <div style={{ width: 130 }}>
+                  <CampoOrcamento value={0} onChange={(v) => set("produtosCampanha", produtosSelecionados.map((x) => x.nome === p.nome ? { ...x, preco: v } : x))} />
+                </div>
+              </div>
+            ))}
+            {produtosSelecionados.length === 0 && !buscaCatalogo && (
+              <div className="vx-mut" style={{ fontSize: 12.5, fontStyle: "italic" }}>Nenhum produto selecionado — digite acima para buscar ou adicionar.</div>
+            )}
+          </div>
+
+          {/* 4. Projeção de resultados com IA */}
+          <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>
+                <Sparkles size={15} style={{ marginRight: 6, verticalAlign: -2, color: "var(--brand)" }} />Projeção de resultados com IA
+              </div>
+              <div className="vx-mut" style={{ fontSize: 12.5 }}>
+                {orcamentoAtual > 0 ? "Baseado no investimento e benchmarks comerciais." : "Defina o investimento para ver a projeção."}
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>
+              {[
+                { label: "Contatos trabalhados", valor: proj.contatos, Ic: Phone },
+                { label: "Leads qualificados", valor: proj.leads, Ic: Filter },
+                { label: "Reuniões agendadas", valor: proj.reunioesAgendadas, Ic: CalendarCheck },
+                { label: "Reuniões realizadas", valor: proj.reunioesRealizadas, Ic: Users },
+                { label: "Vendas estimadas", valor: proj.vendas, Ic: Target },
+                { label: "Custo por venda", valor: proj.custoPorVenda, Ic: BadgeDollarSign, isMoney: true },
+              ].map(({ label, valor, Ic, isMoney }) => (
+                <div key={label} style={{ padding: "14px 10px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, textAlign: "center" }}>
+                  <Ic size={16} color="var(--brand)" style={{ marginBottom: 4 }} />
+                  <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>
+                    {orcamentoAtual <= 0 ? "—" : isMoney ? money(valor) : valor.toLocaleString("pt-BR")}
+                  </div>
+                  <div style={{ fontSize: 10.5, fontWeight: 500, color: "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{label}</div>
+                </div>
               ))}
+            </div>
+            <div style={{ padding: "16px 20px", background: "var(--brand)", borderRadius: 10, textAlign: "center" }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.8)", marginBottom: 4 }}>FATURAMENTO BRUTO ESTIMADO</div>
+              <div className="vx-mono" style={{ fontSize: 26, fontWeight: 900, color: "#fff" }}>
+                {orcamentoAtual <= 0 || ticketMedioEstimado <= 0 ? "—" : money(proj.faturamento)}
+              </div>
+              {ticketMedioEstimado <= 0 && orcamentoAtual > 0 && (
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,.7)", marginTop: 4 }}>Informe o preço dos produtos para calcular</div>
+              )}
             </div>
           </div>
 
-          {/* Otimização da verba com base na meta */}
-          {Number(campanha.metaQuantitativa) > 0 && (() => {
-            const inv = investimentoRecomendado({ metaQuantidade: campanha.metaQuantitativa, tarefas, etapasPlanejamento: (JSON.parse(campanha.planejamentoReverso || "{}")).etapas || [] });
-            if (!inv) return null;
-            const suficiente = orcamentoAtual >= inv.investimentoRecomendado;
-            return (
-              <div className="vx-card" style={{ padding: 16, marginTop: 14, background: suficiente ? "rgba(22,163,74,0.04)" : "rgba(245,158,11,0.04)", border: `1px solid ${suficiente ? "rgba(22,163,74,0.2)" : "rgba(245,158,11,0.2)"}` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <TrendingUp size={16} color={suficiente ? "#16A34A" : "#F59E0B"} />
-                  <b style={{ fontSize: 13, color: suficiente ? "#16A34A" : "#F59E0B" }}>
-                    {suficiente ? "Verba adequada para sua meta" : "Verba abaixo do recomendado"}
-                  </b>
-                </div>
-                <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.6 }}>
-                  Para atingir <b>{campanha.metaQuantitativa} {perguntaMetaQuantitativa(campanha.objetivo).unidade}</b>, o investimento recomendado é de <b className="vx-mono">{money(inv.investimentoRecomendado)}</b> (mínimo: {money(inv.investimentoMinimo)}).
-                  {!suficiente && orcamentoAtual > 0 && ` Com ${money(orcamentoAtual)}, você pode alcançar aproximadamente ${Math.round((orcamentoAtual / inv.investimentoRecomendado) * campanha.metaQuantitativa)} ${perguntaMetaQuantitativa(campanha.objetivo).unidade}.`}
-                </div>
-                {!suficiente && <button className="vx-btn vx-btn-sm" style={{ marginTop: 8, fontSize: 12 }} onClick={() => set("orcamento", inv.investimentoRecomendado)}>
-                  Usar valor recomendado: {money(inv.investimentoRecomendado)}
-                </button>}
+          {/* 5. Equipe recomendada */}
+          {funcoesList.length > 0 && (
+            <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Equipe recomendada</div>
+                <div className="vx-mut" style={{ fontSize: 12.5 }}>Profissionais sugeridos pela IA com base na verba e nas atividades configuradas. Você pode editar os valores.</div>
               </div>
-            );
-          })()}
-
-          {/* Valor total + simulação */}
-          {orcamentoAtual > 0 && (
-            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div className="vx-eyebrow" style={{ marginBottom: 12 }}>SIMULAÇÃO DA VERBA</div>
-
-              {/* Cards de resumo */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
-                <div style={{ background: "var(--brand-50)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--brand-100)" }}>
-                  <Wallet size={18} color="var(--brand)" style={{ marginBottom: 4 }} />
-                  <div className="vx-mut" style={{ fontSize: 11 }}>Verba total</div>
-                  <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{money(orcamentoAtual)}</div>
-                </div>
-                {custoUnitarioTotal > 0 && (
-                  <div style={{ background: "var(--surface)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--border)" }}>
-                    <Target size={18} color="var(--muted)" style={{ marginBottom: 4 }} />
-                    <div className="vx-mut" style={{ fontSize: 11 }}>Ações estimadas</div>
-                    <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700 }}>{distAuto.acoesPossiveis}</div>
-                    <div className="vx-mut" style={{ fontSize: 10.5 }}>Estimativa · pode variar</div>
-                  </div>
-                )}
-                <div style={{ background: verbaRestante > 0 ? "rgba(245,158,11,0.06)" : "rgba(22,163,74,0.06)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: `1px solid ${verbaRestante > 0 ? "rgba(245,158,11,0.2)" : "rgba(22,163,74,0.2)"}` }}>
-                  <BadgeDollarSign size={18} color={verbaRestante > 0 ? "var(--amber, #F59E0B)" : "var(--green, #16A34A)"} style={{ marginBottom: 4 }} />
-                  <div className="vx-mut" style={{ fontSize: 11 }}>Verba restante</div>
-                  <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: verbaRestante > 0 ? "var(--amber, #F59E0B)" : "var(--green, #16A34A)" }}>{money(verbaRestante)}</div>
-                </div>
-              </div>
-
-              {/* Distribuição por ação */}
-              {acoesFixas.length > 0 && (
-                <>
-                  <div className="vx-eyebrow" style={{ marginBottom: 8 }}>VERBA POR ATIVIDADE</div>
-                  <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
-                    {acoesFixas.map((a) => {
-                      const valorDist = modoDistribuicao === "personalizado" ? (Number(distribuicaoVerba[a.id]) || 0) : (distAuto.porAcao[a.id] || 0);
-                      const acoesEst = a.valor > 0 ? Math.floor(valorDist / a.valor) : 0;
-                      return (
-                        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10 }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 500 }}>{a.nome}</div>
-                            <div className="vx-mut" style={{ fontSize: 11.5 }}>{money(a.valor)} por ação · ~{acoesEst} ações</div>
-                          </div>
-                          {modoDistribuicao === "personalizado" ? (
-                            <div style={{ width: 120 }}>
-                              <CampoOrcamento value={valorDist} onChange={(v) => set("distribuicaoVerba", { ...distribuicaoVerba, [a.id]: v })} />
-                            </div>
-                          ) : (
-                            <div className="vx-mono" style={{ fontSize: 14, fontWeight: 600, color: "var(--brand)" }}>{money(valorDist)}</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Personalizar divisão */}
-                  <details style={{ marginTop: 4 }}>
-                    <summary style={{ fontSize: 12.5, color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>
-                      <SlidersHorizontal size={12} style={{ marginRight: 4, verticalAlign: -2 }} />
-                      Personalizar divisão da verba
-                    </summary>
-                    <div style={{ marginTop: 10, padding: "14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10 }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                        <CardOption selected={modoDistribuicao !== "personalizado"} onClick={() => { set("modoDistribuicaoVerba", "automatico"); set("distribuicaoVerba", {}); }} icon={Zap} title="Automático" subtitle="A plataforma distribui proporcionalmente." />
-                        <CardOption selected={modoDistribuicao === "personalizado"} onClick={() => {
-                          set("modoDistribuicaoVerba", "personalizado");
-                          const init = {};
-                          acoesFixas.forEach((a) => { init[a.id] = distAuto.porAcao[a.id] || 0; });
-                          set("distribuicaoVerba", init);
-                        }} icon={SlidersHorizontal} title="Manual" subtitle="Defina quanto investir em cada atividade." />
-                      </div>
-                    </div>
-                  </details>
-                </>
-              )}
-
-              {/* Distribuição multi-função */}
-              {temMultiFuncao && funcoes.length > 0 && (() => {
-                const custosPorFuncao = funcoes.map((fk) => {
+              <div style={{ display: "grid", gap: 12 }}>
+                {funcoesList.map((fk) => {
+                  const f = FUNCOES[fk];
                   const cfg = campanha[`config_${fk}`] || {};
-                  const custoFixo = (cfg.acoesAtivas || []).reduce((s, a) => s + Number(cfg.tarefas?.[a] || 0), 0);
-                  return { fk, custoFixo };
-                });
-                const custoJornada = custosPorFuncao.reduce((s, c) => s + c.custoFixo, 0);
-                const jornadasPossiveis = custoJornada > 0 ? Math.floor(orcamentoAtual / custoJornada) : 0;
-                const totalCustoFunc = custosPorFuncao.reduce((s, c) => s + c.custoFixo, 0);
-
-                return (
-                <>
-                  <div className="vx-eyebrow" style={{ marginTop: 14, marginBottom: 8 }}>CUSTO POR JORNADA COMPLETA</div>
-                  <div className="vx-mut" style={{ fontSize: 12, marginBottom: 10 }}>Uma jornada completa inclui o pagamento de todas as funções participantes para um único contato.</div>
-                  {custoJornada > 0 && (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 14 }}>
-                      <div style={{ background: "var(--brand-50)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--brand-100)" }}>
-                        <div className="vx-mut" style={{ fontSize: 11 }}>Custo por jornada</div>
-                        <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{money(custoJornada)}</div>
-                      </div>
-                      <div style={{ background: "var(--surface)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--border)" }}>
-                        <div className="vx-mut" style={{ fontSize: 11 }}>Jornadas possíveis</div>
-                        <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700 }}>até {jornadasPossiveis}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="vx-eyebrow" style={{ marginBottom: 8 }}>VERBA POR FUNÇÃO</div>
-                  <div className="vx-mut" style={{ fontSize: 12, marginBottom: 10 }}>A verba é compartilhada entre as funções. A distribuição é proporcional ao custo das atividades de cada uma.</div>
-                  <div style={{ display: "grid", gap: 8 }}>
-                    {custosPorFuncao.map(({ fk, custoFixo }) => {
-                      const f = FUNCOES[fk];
-                      const cfg = campanha[`config_${fk}`] || {};
-                      const proporcao = totalCustoFunc > 0 ? custoFixo / totalCustoFunc : 1 / funcoes.length;
-                      const verbaFunc = Math.round(orcamentoAtual * proporcao * 100) / 100;
-                      return (
-                        <div key={fk} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10 }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 600 }}>{f?.nome || fk}</div>
-                            <div className="vx-mut" style={{ fontSize: 11.5 }}>{(cfg.acoesAtivas || []).length} atividade(s) · {cfg.vagas || 0} vagas · {money(custoFixo)}/jornada</div>
+                  const acoesAtivasFunc = cfg.acoesAtivas || [];
+                  const custoUnitario = acoesAtivasFunc.reduce((s, a) => s + Number(cfg.tarefas?.[a] || 0), 0);
+                  const recProf = orcamentoAtual > 0 && custoUnitario > 0
+                    ? Math.max(1, Math.ceil(orcamentoAtual / (custoUnitario * 50)))
+                    : 1;
+                  const FuncIc = ICONE_FUNCAO[fk] || UserPlus;
+                  return (
+                    <div key={fk} style={{ padding: 16, background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <FuncIc size={18} color="#fff" />
                           </div>
-                          <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(verbaFunc)}</div>
+                          <div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{f?.nome || fk}</div>
+                            <div className="vx-mut" style={{ fontSize: 11.5 }}>{f?.descricao || ""}</div>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Aviso: precisa adicionar saldo */}
-          {precisaAdicionar > 0 && (
-            <div className="vx-card" style={{ padding: 16, marginTop: 14, background: "rgba(245,158,11,0.06)", border: "1.5px solid rgba(245,158,11,0.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <AlertCircle size={18} color="var(--amber, #F59E0B)" />
-                <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>Saldo insuficiente para a verba desejada</div>
-                  <div className="vx-mut" style={{ fontSize: 12.5 }}>
-                    Você precisa adicionar <b className="vx-mono">{money(precisaAdicionar)}</b> ao saldo para cobrir essa verba.
-                    Você pode salvar o rascunho agora e adicionar saldo depois — mas atividades remuneradas só iniciam com cobertura financeira.
-                  </div>
-                </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{recProf}</div>
+                          <div className="vx-mut" style={{ fontSize: 10.5 }}>recomendados</div>
+                        </div>
+                      </div>
+                      {acoesAtivasFunc.length > 0 && (
+                        <div style={{ display: "grid", gap: 6 }}>
+                          {acoesAtivasFunc.map((aId) => {
+                            const nomeAcao = ACOES_DISPONIVEIS.find((a) => a.id === aId)?.nome || aId;
+                            const valorAtual = Number(cfg.tarefas?.[aId] || 0);
+                            return (
+                              <div key={aId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                                <div style={{ flex: 1, fontSize: 12.5, fontWeight: 500 }}>{nomeAcao}</div>
+                                <div style={{ width: 110 }}>
+                                  <CampoOrcamento value={valorAtual} onChange={(v) => {
+                                    const cfgAtual = campanha[`config_${fk}`] || {};
+                                    set(`config_${fk}`, { ...cfgAtual, tarefas: { ...cfgAtual.tarefas, [aId]: v } });
+                                  }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
+
+          {/* 6. Gestão operacional */}
+          <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Gestão operacional</div>
+              <div className="vx-mut" style={{ fontSize: 12.5 }}>Como a campanha será acompanhada.</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: gestaoModo === "manual" ? 14 : 0 }}>
+              <div onClick={() => set("gestaoOperacionalModo", "automatico")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo === "automatico" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo === "automatico" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <Zap size={16} color={gestaoModo === "automatico" ? "var(--brand)" : "var(--muted)"} />
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo === "automatico" ? "var(--brand)" : "var(--text)" }}>Automático</div>
+                  {gestaoModo === "automatico" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
+                </div>
+                <div className="vx-mut" style={{ fontSize: 12 }}>A RYCS gerencia prazos, alertas e indicadores automaticamente.</div>
+              </div>
+              <div onClick={() => set("gestaoOperacionalModo", "manual")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo === "manual" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo === "manual" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <SlidersHorizontal size={16} color={gestaoModo === "manual" ? "var(--brand)" : "var(--muted)"} />
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo === "manual" ? "var(--brand)" : "var(--text)" }}>Manual</div>
+                  {gestaoModo === "manual" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
+                </div>
+                <div className="vx-mut" style={{ fontSize: 12 }}>Você define prazo, metas diárias e cria seus próprios controles.</div>
+              </div>
+            </div>
+            {gestaoModo === "manual" && (
+              <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr", marginTop: 2 }}>
+                <label>
+                  <div className="vx-label">Data de início</div>
+                  <input className="vx-input" type="date" value={campanha.dataInicioGestao || ""} onChange={(e) => set("dataInicioGestao", e.target.value)} />
+                </label>
+                <label>
+                  <div className="vx-label">Data de encerramento</div>
+                  <input className="vx-input" type="date" value={campanha.dataEncerramentoGestao || ""} onChange={(e) => set("dataEncerramentoGestao", e.target.value)} />
+                </label>
+                <label>
+                  <div className="vx-label">Meta diária de contatos</div>
+                  <input className="vx-input" type="number" min="0" placeholder="Ex.: 50" value={campanha.metaDiariaContatos || ""} onChange={(e) => set("metaDiariaContatos", Number(e.target.value) || 0)} />
+                </label>
+                <label>
+                  <div className="vx-label">Meta de vendas</div>
+                  <input className="vx-input" type="number" min="0" placeholder="Ex.: 10" value={campanha.metaVendasManual || ""} onChange={(e) => set("metaVendasManual", Number(e.target.value) || 0)} />
+                </label>
+              </div>
+            )}
+          </div>
 
           {/* Info: separação verba x saldo */}
           <div className="vx-card" style={{ padding: 14, marginTop: 14, background: "var(--surface)" }}>
