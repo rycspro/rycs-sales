@@ -135,6 +135,8 @@ function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados 
   const [serverMetas, setServerMetas] = useState(null);
   const [serverAlertas, setServerAlertas] = useState(null);
   const [ricoAnalise, setRicoAnalise] = useState(null);
+  const [desempenhoProfs, setDesempenhoProfs] = useState(null);
+  const [finDetalhado, setFinDetalhado] = useState(null);
   const toggle = (s) => setSecao((v) => v === s ? null : s);
 
   useEffect(() => {
@@ -143,6 +145,8 @@ function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados 
     api(`/campaigns/${campanha.id}/metas-projecoes`).then(setServerMetas).catch(() => {});
     api(`/campaigns/${campanha.id}/alertas`).then((r) => setServerAlertas(r.alertas || [])).catch(() => {});
     api(`/campaigns/${campanha.id}/analise-rico`).then(setRicoAnalise).catch(() => {});
+    api(`/campaigns/${campanha.id}/desempenho-profissionais`).then(setDesempenhoProfs).catch(() => {});
+    api(`/campaigns/${campanha.id}/financeiro-detalhado`).then(setFinDetalhado).catch(() => {});
   }, [campanha?.id, campanha?.status]);
 
   const totalLeads = leads.length;
@@ -311,8 +315,34 @@ function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados 
     </Sec>
 
     <Sec id="profissionais" titulo="Desempenho dos profissionais">
-      {profStats.length === 0 ? (
+      {(desempenhoProfs?.profissionais || profStats).length === 0 ? (
         <div className="vx-mut" style={{ fontSize: 12.5 }}>Nenhum profissional vinculado.</div>
+      ) : desempenhoProfs?.profissionais ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {desempenhoProfs.profissionais.slice(0, 15).map((p) => (
+            <div key={p.sellerId} style={{ padding: 10, borderRadius: 8, background: "var(--surface-2)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 14, background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11, color: "var(--brand)" }}>
+                  {(p.nome || "?")[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{p.nome}</div>
+                  <div className="vx-mut" style={{ fontSize: 11 }}>{p.funcao || "—"} · Nota: {p.nota || "—"}</div>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))", gap: 6, fontSize: 11.5 }}>
+                <div><span className="vx-mut">Aprovadas</span><div style={{ fontWeight: 700, color: "#16a34a" }}>{p.tarefas.aprovadas}</div></div>
+                <div><span className="vx-mut">Pendentes</span><div style={{ fontWeight: 700 }}>{p.tarefas.pendentes}</div></div>
+                <div><span className="vx-mut">Recusadas</span><div style={{ fontWeight: 700, color: "#dc2626" }}>{p.tarefas.recusadas}</div></div>
+                <div><span className="vx-mut">Valor</span><div style={{ fontWeight: 700 }}>{money(p.financeiro.bruto)}</div></div>
+                <div><span className="vx-mut">Tx. Aprovação</span><div style={{ fontWeight: 700 }}>{p.indicadores.taxaAprovacao}%</div></div>
+                <div><span className="vx-mut">Tx. Conversão</span><div style={{ fontWeight: 700 }}>{p.indicadores.taxaConversao}%</div></div>
+                <div><span className="vx-mut">Reuniões</span><div style={{ fontWeight: 700 }}>{p.reunioes.realizadas}/{p.reunioes.agendadas}</div></div>
+                <div><span className="vx-mut">Leads</span><div style={{ fontWeight: 700 }}>{p.leads.convertidos}/{p.leads.atribuidos}</div></div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {profStats.slice(0, 15).map((p) => (
@@ -391,17 +421,37 @@ function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados 
 
     <Sec id="financeiro_m" titulo="Gestão financeira">
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 12.5 }}>
-        <div><span className="vx-mut">Orçamento</span><div style={{ fontWeight: 700 }}>{money(orcamento)}</div></div>
-        <div><span className="vx-mut">Gasto total</span><div style={{ fontWeight: 700 }}>{money(gastoTotal)}</div></div>
-        <div><span className="vx-mut">Saldo</span><div style={{ fontWeight: 700, color: orcamento - gastoTotal < 0 ? "#dc2626" : "#16a34a" }}>{money(orcamento - gastoTotal)}</div></div>
-        <div><span className="vx-mut">Ticket médio</span><div style={{ fontWeight: 700 }}>{money(aprovadas.length > 0 ? gastoTotal / aprovadas.length : 0)}</div></div>
+        <div><span className="vx-mut">Orçamento</span><div style={{ fontWeight: 700 }}>{money(finDetalhado?.orcamento ?? orcamento)}</div></div>
+        <div><span className="vx-mut">Gasto total</span><div style={{ fontWeight: 700 }}>{money(finDetalhado?.totalBruto ?? gastoTotal)}</div></div>
+        <div><span className="vx-mut">Saldo</span><div style={{ fontWeight: 700, color: (finDetalhado?.orcamento ?? orcamento) - (finDetalhado?.totalBruto ?? gastoTotal) < 0 ? "#dc2626" : "#16a34a" }}>{money((finDetalhado?.orcamento ?? orcamento) - (finDetalhado?.totalBruto ?? gastoTotal))}</div></div>
+        <div><span className="vx-mut">Ticket médio</span><div style={{ fontWeight: 700 }}>{money(aprovadas.length > 0 ? (finDetalhado?.totalBruto ?? gastoTotal) / aprovadas.length : 0)}</div></div>
       </div>
       {orcamento > 0 && (
         <div style={{ marginTop: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-            <span>Consumo</span><b>{((gastoTotal / orcamento) * 100).toFixed(0)}%</b>
+            <span>Consumo</span><b>{(((finDetalhado?.totalBruto ?? gastoTotal) / orcamento) * 100).toFixed(0)}%</b>
           </div>
-          <Bar valor={gastoTotal} max={orcamento} cor={gastoTotal / orcamento > 0.8 ? "#dc2626" : "var(--brand)"} />
+          <Bar valor={finDetalhado?.totalBruto ?? gastoTotal} max={orcamento} cor={(finDetalhado?.totalBruto ?? gastoTotal) / orcamento > 0.8 ? "#dc2626" : "var(--brand)"} />
+        </div>
+      )}
+      {finDetalhado?.porAtividade?.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6 }}>Por tipo de atividade</div>
+          {finDetalhado.porAtividade.map((a) => (
+            <div key={a.tipo} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "3px 0" }}>
+              <span>{ACOES[a.tipo]?.nome || a.tipo} ({a.quantidade})</span><b>{money(a.bruto)}</b>
+            </div>
+          ))}
+        </div>
+      )}
+      {finDetalhado?.porFuncao?.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6 }}>Por função</div>
+          {finDetalhado.porFuncao.map((f) => (
+            <div key={f.funcao || "—"} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "3px 0" }}>
+              <span>{f.funcao || "Não definida"} ({f.quantidade})</span><b>{money(f.bruto)}</b>
+            </div>
+          ))}
         </div>
       )}
     </Sec>
@@ -1544,6 +1594,23 @@ function LeadsCampanha({ campanha, profissionais, onRecarregar }) {
           </div>
         </div>
       )}
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        <button className="vx-btn vx-btn-sm" onClick={async () => {
+          setAviso("");
+          const r = await api(`/campaigns/${campanha.id}/importar-meta-leads`, {});
+          if (r?.forms) setAviso(`Meta Ads: ${r.forms.length} formulário(s) encontrado(s). Configure em Integrações > Meta Ads.`);
+          else if (r?.acao === "conectar_meta") setAviso("Conecte o Meta Ads em Integrações para importar leads.");
+          else if (r?.error) setAviso(r.error);
+          else { setAviso(`Meta Ads: ${r?.inseridos || 0} lead(s) importado(s).`); carregar(); }
+        }}>Importar do Meta Ads</button>
+        <button className="vx-btn vx-btn-sm" onClick={async () => {
+          setAviso("");
+          const r = await api(`/campaigns/${campanha.id}/importar-loja-leads`, { leadIds: [] });
+          if (r?.error) setAviso(r.error);
+          else { setAviso(`Loja de Leads: ${r?.inseridos || 0} lead(s) importado(s).`); carregar(); }
+        }}>Importar da Loja de Leads</button>
+      </div>
 
       {carregando ? <div className="vx-mut">Carregando leads...</div> : leads.length === 0 ? (
         <div className="vx-card" style={{ padding: 28, textAlign: "center" }}>

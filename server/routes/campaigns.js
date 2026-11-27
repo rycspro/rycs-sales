@@ -14,6 +14,8 @@ import { calcularPlanejamentoReverso } from "../../shared/planejamentoReverso.js
 import { investimentoRecomendado, capacidadeOperacional } from "../../shared/otimizacaoVerba.js";
 import { criarPergunta, criarCriterio } from "../../shared/qualificacaoLeads.js";
 import { diagnosticoCampanha } from "../../shared/campaignEngine.js";
+import { randomBytes, createHash } from "crypto";
+import { enviarConfirmacao, verificarLimiteReenvio } from "../services/confirmacaoService.js";
 
 const router = Router();
 
@@ -1297,54 +1299,88 @@ router.post("/campaigns/:id/gerar-qualificacao", async (req, res) => {
   }
 });
 
-// ── Fase 01: Confirmação de contato (gerar token público) ──────────────
+// ── Fase 01: Confirmação de contato (token criptográfico com hash) ────
 router.post("/campaigns/:id/confirmacao-token", (req, res) => {
+  const { role, entityId } = req.user;
   const { leadId, submissionId, canal } = req.body;
   if (!leadId) return res.status(400).json({ error: "leadId obrigatório" });
 
   const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
   if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
-
-  const token = uid() + "-" + uid();
-  const expiraEm = agora() + (48 * 60 * 60 * 1000); // 48h
-
-  db.prepare("UPDATE leads SET confirmacaoToken = ?, confirmacaoStatus = 'aguardando', confirmacaoEnviadaEm = ?, confirmacaoCanal = ? WHERE id = ?")
-    .run(token, agora(), canal || "whatsapp", leadId);
-
-  if (submissionId) {
-    db.prepare("UPDATE submissions SET confirmacaoToken = ?, confirmacaoStatus = 'aguardando', confirmacaoExigida = 1 WHERE id = ?")
-      .run(token, submissionId);
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor") {
+    const aprovado = db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(campaign.id, entityId);
+    if (!aprovado) return res.status(403).json({ error: "Sem permissão" });
   }
+
+  const lead = db.prepare("SELECT id, companyId FROM leads WHERE id = ?").get(leadId);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+  if (lead.companyId !== campaign.companyId) return res.status(403).json({ error: "Lead não pertence à empresa desta campanha" });
+
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const expiraEm = agora() + (48 * 60 * 60 * 1000);
+
+  db.transaction(() => {
+    db.prepare("UPDATE leads SET confirmacaoTokenHash = ?, confirmacaoStatus = 'aguardando', confirmacaoEnviadaEm = ?, confirmacaoCanal = ?, confirmacaoExpiraEm = ? WHERE id = ?")
+      .run(tokenHash, agora(), canal || "whatsapp", expiraEm, leadId);
+    if (submissionId) {
+      const sub = db.prepare("SELECT id FROM submissions WHERE id = ? AND companyId = ?").get(submissionId, campaign.companyId);
+      if (sub) db.prepare("UPDATE submissions SET confirmacaoToken = ?, confirmacaoStatus = 'aguardando', confirmacaoExigida = 1 WHERE id = ?").run(tokenHash, submissionId);
+    }
+  })();
 
   res.json({ token, expiraEm, linkConfirmacao: `/confirmar/${token}` });
 });
 
-// ── Fase 01: Página pública de confirmação ─────────────────────────────
+// ── Fase 01: Página pública de confirmação (sem IDs internos) ─────────
+const confirmacaoRateLimit = new Map();
+function checkConfirmacaoRate(ip) {
+  const agr = Date.now();
+  const janela = 60000;
+  const limite = 20;
+  const registros = confirmacaoRateLimit.get(ip) || [];
+  const recentes = registros.filter(t => agr - t < janela);
+  if (recentes.length >= limite) return false;
+  recentes.push(agr);
+  confirmacaoRateLimit.set(ip, recentes);
+  if (confirmacaoRateLimit.size > 10000) {
+    for (const [k, v] of confirmacaoRateLimit) { if (v.every(t => agr - t > janela)) confirmacaoRateLimit.delete(k); }
+  }
+  return true;
+}
+
 router.get("/confirmar/:token", (req, res) => {
-  const lead = db.prepare("SELECT id, nome, confirmacaoStatus, confirmacaoEnviadaEm FROM leads WHERE confirmacaoToken = ?").get(req.params.token);
+  if (!checkConfirmacaoRate(req.ip)) return res.status(429).json({ error: "Muitas tentativas" });
+  const tokenHash = createHash("sha256").update(req.params.token).digest("hex");
+  const lead = db.prepare("SELECT id, nome, confirmacaoStatus, confirmacaoEnviadaEm, confirmacaoExpiraEm FROM leads WHERE confirmacaoTokenHash = ?").get(tokenHash);
   if (!lead) return res.status(404).json({ error: "Token inválido ou expirado" });
-  const expirado = lead.confirmacaoEnviadaEm && (agora() - lead.confirmacaoEnviadaEm > 48 * 60 * 60 * 1000);
+  const expirado = lead.confirmacaoExpiraEm ? agora() > lead.confirmacaoExpiraEm : (lead.confirmacaoEnviadaEm && (agora() - lead.confirmacaoEnviadaEm > 48 * 60 * 60 * 1000));
   if (expirado) {
     db.prepare("UPDATE leads SET confirmacaoStatus = 'expirada' WHERE id = ?").run(lead.id);
     return res.status(410).json({ error: "Link expirado" });
   }
-  res.json({ leadId: lead.id, nome: lead.nome, status: lead.confirmacaoStatus });
+  res.json({ nome: lead.nome, status: lead.confirmacaoStatus });
 });
 
 router.post("/confirmar/:token", (req, res) => {
-  const lead = db.prepare("SELECT id, confirmacaoEnviadaEm, confirmacaoStatus FROM leads WHERE confirmacaoToken = ?").get(req.params.token);
+  if (!checkConfirmacaoRate(req.ip)) return res.status(429).json({ error: "Muitas tentativas" });
+  const tokenHash = createHash("sha256").update(req.params.token).digest("hex");
+  const lead = db.prepare("SELECT id, confirmacaoEnviadaEm, confirmacaoStatus, confirmacaoExpiraEm FROM leads WHERE confirmacaoTokenHash = ?").get(tokenHash);
   if (!lead) return res.status(404).json({ error: "Token inválido" });
   if (lead.confirmacaoStatus === "confirmada" || lead.confirmacaoStatus === "nao_reconhecida")
     return res.status(409).json({ error: "Confirmação já respondida", status: lead.confirmacaoStatus });
-  const expirado = lead.confirmacaoEnviadaEm && (agora() - lead.confirmacaoEnviadaEm > 48 * 60 * 60 * 1000);
+  const expirado = lead.confirmacaoExpiraEm ? agora() > lead.confirmacaoExpiraEm : (lead.confirmacaoEnviadaEm && (agora() - lead.confirmacaoEnviadaEm > 48 * 60 * 60 * 1000));
   if (expirado) return res.status(410).json({ error: "Link expirado" });
 
-  const { confirmado } = req.body; // true = confirmado, false = não reconhecido
+  const { confirmado } = req.body;
   const novoStatus = confirmado ? "confirmada" : "nao_reconhecida";
-  db.prepare("UPDATE leads SET confirmacaoStatus = ?, confirmacaoRespondidaEm = ? WHERE id = ?")
-    .run(novoStatus, agora(), lead.id);
-  db.prepare("UPDATE submissions SET confirmacaoStatus = ? WHERE confirmacaoToken = ?")
-    .run(novoStatus, req.params.token);
+  db.transaction(() => {
+    db.prepare("UPDATE leads SET confirmacaoStatus = ?, confirmacaoRespondidaEm = ?, confirmacaoTokenHash = NULL WHERE id = ?")
+      .run(novoStatus, agora(), lead.id);
+    db.prepare("UPDATE submissions SET confirmacaoStatus = ? WHERE confirmacaoToken = ?")
+      .run(novoStatus, tokenHash);
+  })();
 
   res.json({ status: novoStatus });
 });
@@ -1508,6 +1544,7 @@ router.post("/campaigns/:id/agendar", (req, res) => {
       return { id, data, horaInicio, horaFim, closerId, status: "agendada" };
     }).immediate();
     registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "MEETING_SCHEDULED", actorId: entityId, actorRole: role === "vendedor" ? "profissional" : "empresa", sellerId: closerId, leadId: leadId || null, dados: { reuniaoId: reuniao.id, data, horaInicio } });
+    notificarAgendamento({ campaign: camp, reuniao: { ...reuniao, leadId, sellerCloserId: closerId, sellerSdrId: role === "vendedor" ? entityId : (req.body.sdrId || "") }, tipo: "agendada", actorRole: role }).catch(e => console.warn("[notif-agenda]", e.message));
     res.json(reuniao);
   } catch (err) {
     res.status(409).json({ error: err.message });
@@ -1585,6 +1622,9 @@ router.patch("/campaigns/:id/reunioes/:reuniaoId", (req, res) => {
   if (status === "venda" && Number(valorVenda) > 0) {
     registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "SALE_RECORDED", actorId: entityId, actorRole: role === "vendedor" ? "profissional" : "empresa", sellerId: reuniao.sellerCloserId, leadId: reuniao.leadId || null, dados: { reuniaoId: reuniao.id, valorVenda } });
   }
+  if (status === "cancelada") {
+    notificarAgendamento({ campaign: camp, reuniao, tipo: "cancelada", actorRole: role }).catch(e => console.warn("[notif-agenda]", e.message));
+  }
 
   res.json({ ok: true, status: status || reuniao.status });
 });
@@ -1621,6 +1661,7 @@ router.post("/campaigns/:id/reunioes/:reuniaoId/reagendar", (req, res) => {
       return { id: novoId, data, horaInicio, horaFim, closerId: novoCloser, reagendadoDe: reuniao.id };
     }).immediate();
     registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "MEETING_SCHEDULED", actorId: entityId, actorRole: role === "vendedor" ? "profissional" : "empresa", sellerId: novoCloser, leadId: reuniao.leadId || null, dados: { reuniaoId: nova.id, reagendadoDe: reuniao.id, data, horaInicio } });
+    notificarAgendamento({ campaign: camp, reuniao: { ...nova, leadId: reuniao.leadId, sellerCloserId: novoCloser, sellerSdrId: reuniao.sellerSdrId }, tipo: "reagendada", actorRole: role }).catch(e => console.warn("[notif-agenda]", e.message));
     res.json(nova);
   } catch (err) {
     res.status(409).json({ error: err.message });
@@ -1628,8 +1669,6 @@ router.post("/campaigns/:id/reunioes/:reuniaoId/reagendar", (req, res) => {
 });
 
 // ── F2-028/031/037: Enviar confirmação ao lead (WhatsApp/Email) ──────────
-import { enviarConfirmacao, verificarLimiteReenvio } from "../services/confirmacaoService.js";
-
 router.post("/campaigns/:id/enviar-confirmacao", async (req, res) => {
   const { role, entityId } = req.user;
   const camp = db.prepare("SELECT id, companyId, titulo FROM campaigns WHERE id = ?").get(req.params.id);
@@ -2428,6 +2467,395 @@ router.get("/campaigns/:id/analise-rico", async (req, res) => {
   }
 
   res.json({ resumo, analises, acoes, fonte: analises.some(a => a.tipo === "ia") ? "ia+dados" : "dados" });
+});
+
+// ── F1: Importar contatos da Loja de Leads para campanha ─────────────
+router.post("/campaigns/:id/importar-loja-leads", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const { listaId, leadIds } = req.body;
+  if (!listaId && !Array.isArray(leadIds)) return res.status(400).json({ error: "Informe listaId ou leadIds" });
+
+  let ids = [];
+  if (listaId) {
+    const itens = db.prepare("SELECT contatoId FROM lista_contatos WHERE listaId = ? AND listaId IN (SELECT id FROM listas WHERE entityId = ?)").all(listaId, entityId);
+    const contatoIds = itens.map(i => i.contatoId);
+    if (contatoIds.length === 0) return res.json({ inseridos: 0 });
+    const placeholders = contatoIds.map(() => "?").join(",");
+    const leads = db.prepare(`SELECT id FROM leads WHERE companyId = ? AND id IN (${placeholders})`).all(campaign.companyId, ...contatoIds);
+    const leadsFromContatos = db.prepare(`SELECT l.id FROM leads l JOIN contatos c ON c.id = l.contatoId WHERE l.companyId = ? AND c.id IN (${placeholders})`).all(campaign.companyId, ...contatoIds);
+    ids = [...new Set([...leads.map(l => l.id), ...leadsFromContatos.map(l => l.id)])];
+  } else {
+    const placeholders = leadIds.map(() => "?").join(",");
+    const valid = db.prepare(`SELECT id FROM leads WHERE companyId = ? AND id IN (${placeholders})`).all(campaign.companyId, ...leadIds);
+    ids = valid.map(l => l.id);
+  }
+
+  let inseridos = 0;
+  db.transaction(() => {
+    const ins = db.prepare("INSERT OR IGNORE INTO campaign_leads (id, campaignId, leadId, status, criadoEm) VALUES (?, ?, ?, 'disponivel', ?)");
+    for (const lid of ids) { ins.run(uid(), campaign.id, lid, agora()); inseridos++; }
+  })();
+  registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "LEAD_CREATED", actorId: req.user.id, actorRole: "empresa", source: "USER", dados: { fonte: "loja_leads", inseridos, listaId: listaId || null } });
+  res.json({ ok: true, inseridos });
+});
+
+// ── F1: Importar leads do Meta Ads para campanha ─────────────────────
+router.post("/campaigns/:id/importar-meta-leads", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const { formId, limite = 100 } = req.body;
+  const conexao = db.prepare("SELECT accessToken, whatsappId FROM meta_connections WHERE companyId = ? AND ativo = 1").get(entityId);
+  if (!conexao) return res.status(422).json({ error: "Meta Ads não conectado. Configure a integração na seção Integrações.", acao: "conectar_meta" });
+
+  try {
+    const url = formId
+      ? `https://graph.facebook.com/v19.0/${formId}/leads?limit=${Math.min(500, Number(limite))}&access_token=${conexao.accessToken}`
+      : `https://graph.facebook.com/v19.0/${conexao.whatsappId}/lead_gen_forms?limit=5&access_token=${conexao.accessToken}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return res.status(502).json({ error: "Falha ao buscar leads do Meta Ads" });
+    const data = await resp.json();
+
+    const metaLeads = formId ? (data.data || []) : [];
+    if (!formId) {
+      const forms = data.data || [];
+      return res.json({ forms: forms.map(f => ({ id: f.id, name: f.name, status: f.status })), total: forms.length });
+    }
+
+    let inseridos = 0;
+    db.transaction(() => {
+      for (const ml of metaLeads.slice(0, 500)) {
+        const campos = {};
+        for (const f of (ml.field_data || [])) campos[f.name] = f.values?.[0] || "";
+        const nome = campos.full_name || campos.nome || `${campos.first_name || ""} ${campos.last_name || ""}`.trim() || "Lead Meta";
+        const email = campos.email || "";
+        const telefone = campos.phone_number || campos.telefone || "";
+
+        const existente = db.prepare("SELECT id FROM leads WHERE companyId = ? AND (email = ? OR telefone = ?) AND email != '' AND telefone != ''").get(campaign.companyId, email, telefone);
+        let leadId;
+        if (existente) {
+          leadId = existente.id;
+        } else {
+          leadId = uid();
+          db.prepare("INSERT INTO leads (id, companyId, campaignId, nome, email, telefone, origem, etapa, criadoEm) VALUES (?,?,?,?,?,?,?,?,?)")
+            .run(leadId, campaign.companyId, campaign.id, nome.slice(0, 200), email.slice(0, 200), telefone.slice(0, 30), "meta_ads", "novo", agora());
+        }
+        const r = db.prepare("INSERT OR IGNORE INTO campaign_leads (id, campaignId, leadId, status, criadoEm) VALUES (?, ?, ?, 'disponivel', ?)").run(uid(), campaign.id, leadId, agora());
+        if (r.changes > 0) inseridos++;
+      }
+    })();
+    registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo: "LEAD_CREATED", actorId: req.user.id, actorRole: "empresa", source: "USER", dados: { fonte: "meta_ads", inseridos, formId } });
+    res.json({ ok: true, inseridos, totalMeta: metaLeads.length });
+  } catch (err) {
+    console.error("[meta-leads]", err.message);
+    res.status(502).json({ error: "Erro ao importar leads do Meta Ads" });
+  }
+});
+
+// ── F1: Rico gerar perguntas de qualificação comercial ───────────────
+router.post("/campaigns/:id/gerar-qualificacao-comercial", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  const empresa = db.prepare("SELECT nome, segmento, produto, ticket, icp FROM companies WHERE id = ?").get(entityId);
+
+  const objetivo = campaign.objetivo || "vendas";
+  const perguntas = [
+    criarPergunta({ texto: "O contato demonstrou interesse no produto/serviço?", tipo: "sim_nao", obrigatoria: true, ordem: 1, categoria: "qualificacao" }),
+    criarPergunta({ texto: "Qual o cargo ou função do contato na empresa?", tipo: "texto_curto", ordem: 2, categoria: "qualificacao" }),
+    criarPergunta({ texto: "O contato tem poder de decisão de compra?", tipo: "escolha_unica", opcoes: ["Sim, decide sozinho", "Precisa consultar", "Não tem poder de decisão"], ordem: 3, categoria: "qualificacao",
+      condicional: { dependeDe: null, condicao: null } }),
+    criarPergunta({ texto: "Qual o orçamento disponível para este tipo de solução?", tipo: "valor_monetario", ordem: 4, categoria: "qualificacao",
+      condicional: { dependeDe: 0, condicao: "igual", valor: "sim" } }),
+    criarPergunta({ texto: "Qual a urgência para resolver o problema?", tipo: "escala", ordem: 5, categoria: "qualificacao",
+      condicional: { dependeDe: 0, condicao: "igual", valor: "sim" } }),
+  ];
+
+  if (["reunioes", "prospeccao"].includes(objetivo)) {
+    perguntas.push(criarPergunta({ texto: "O contato confirmou disponibilidade para reunião?", tipo: "sim_nao", ordem: 6, categoria: "qualificacao",
+      condicional: { dependeDe: 2, condicao: "diferente", valor: "Não tem poder de decisão" } }));
+  }
+  if (objetivo === "reativacao") {
+    perguntas.push(criarPergunta({ texto: "Há quanto tempo não há contato com a empresa?", tipo: "escolha_unica", opcoes: ["Menos de 3 meses", "3 a 6 meses", "6 a 12 meses", "Mais de 1 ano"], ordem: 6, categoria: "qualificacao" }));
+  }
+
+  const criterios = perguntas.map(p => criarCriterio({ perguntaId: p.id, condicao: p.tipo === "sim_nao" ? "sim" : "nao_vazio", peso: p.obrigatoria ? 2 : 1, obrigatoria: p.obrigatoria }));
+
+  if (req.body.aplicar) {
+    db.prepare("UPDATE campaigns SET qualificacaoCriterios = ?, qualificacaoPerguntas = ? WHERE id = ?")
+      .run(JSON.stringify(criterios), JSON.stringify(perguntas), campaign.id);
+  }
+
+  res.json({ perguntas, criterios, fonte: "interno", categoria: "qualificacao_comercial" });
+});
+
+// ── F2: Questionário com perguntas condicionais ──────────────────────
+router.post("/campaigns/:id/quiz-condicional", (req, res) => {
+  if (req.user.role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const { entityId } = req.user;
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const questoes = JSON.parse(campaign.qualificacaoPerguntas || campaign.quiz || "[]");
+  if (!questoes.length) return res.status(422).json({ error: "Nenhuma pergunta configurada" });
+
+  const { respostas = {}, leadId } = req.body;
+  if (!leadId) return res.status(400).json({ error: "leadId obrigatório" });
+
+  const lead = db.prepare("SELECT id FROM campaign_leads WHERE campaignId = ? AND leadId = ? AND sellerId = ?").get(campaign.id, leadId, entityId);
+  if (!lead) return res.status(403).json({ error: "Lead não atribuído a este profissional" });
+
+  const visiveisIds = [];
+  const respostasValidadas = {};
+  for (let i = 0; i < questoes.length; i++) {
+    const q = questoes[i];
+    const cond = q.condicional;
+    if (cond && cond.dependeDe != null && cond.condicao) {
+      const respPai = respostas[String(cond.dependeDe)];
+      const passa = cond.condicao === "igual" ? String(respPai).toLowerCase() === String(cond.valor).toLowerCase()
+        : cond.condicao === "diferente" ? String(respPai).toLowerCase() !== String(cond.valor).toLowerCase()
+        : cond.condicao === "nao_vazio" ? !!respPai
+        : true;
+      if (!passa) continue;
+    }
+    visiveisIds.push(i);
+    if (respostas[String(i)] !== undefined) respostasValidadas[String(i)] = respostas[String(i)];
+  }
+
+  const obrigatoriasFaltando = visiveisIds.filter(i => questoes[i].obrigatoria && respostasValidadas[String(i)] === undefined);
+  if (obrigatoriasFaltando.length > 0) return res.status(400).json({ error: "Perguntas obrigatórias não respondidas", faltando: obrigatoriasFaltando });
+
+  const criterios = JSON.parse(campaign.qualificacaoCriterios || "[]");
+  let score = 0, maxScore = 0;
+  for (const c of criterios) {
+    maxScore += (c.peso || 1);
+    const idx = questoes.findIndex(q => q.id === c.perguntaId);
+    if (idx < 0) continue;
+    const resp = respostasValidadas[String(idx)];
+    if (!resp) continue;
+    const passa = c.condicao === "sim" ? String(resp).toLowerCase() === "sim"
+      : c.condicao === "nao_vazio" ? !!resp
+      : c.condicao === "igual" ? String(resp) === String(c.respostaEsperada)
+      : !!resp;
+    if (passa) score += (c.peso || 1);
+  }
+  const scoreNorm = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+  const classificacao = scoreNorm >= 70 ? "alta" : scoreNorm >= 40 ? "media" : scoreNorm > 0 ? "baixa" : "desqualificado";
+
+  db.prepare("UPDATE leads SET qualificacaoScore = ?, qualificacaoClassificacao = ?, qualificacaoRespostas = ?, qualificacaoEm = ? WHERE id = ?")
+    .run(scoreNorm, classificacao, JSON.stringify(respostasValidadas), agora(), leadId);
+
+  res.json({ score: scoreNorm, classificacao, visiveisIds, respostasValidadas });
+});
+
+// ── F2: Histórico WhatsApp vinculado ao lead da campanha ─────────────
+router.get("/campaigns/:id/leads/:leadId/whatsapp", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== camp.companyId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor") {
+    const vinc = db.prepare("SELECT 1 FROM campaign_leads WHERE campaignId = ? AND leadId = ? AND sellerId = ?").get(camp.id, req.params.leadId, entityId);
+    if (!vinc) return res.status(403).json({ error: "Lead não atribuído" });
+  }
+
+  const lead = db.prepare("SELECT id, telefone, whatsapp FROM leads WHERE id = ? AND companyId = ?").get(req.params.leadId, camp.companyId);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+  const numero = lead.whatsapp || lead.telefone;
+  if (!numero) return res.json({ mensagens: [], numero: null });
+
+  const mensagens = db.prepare(`SELECT * FROM mensagens WHERE (remetente = ? OR destinatario = ?) AND companyId = ? ORDER BY criadoEm DESC LIMIT 100`)
+    .all(numero, numero, camp.companyId);
+  res.json({ mensagens, numero, leadId: lead.id, campaignId: camp.id });
+});
+
+// ── F2: Notificações de agendamento (email/WhatsApp) ─────────────────
+async function notificarAgendamento({ campaign, reuniao, tipo, actorRole }) {
+  const lead = reuniao.leadId ? db.prepare("SELECT nome, email, telefone, whatsapp FROM leads WHERE id = ?").get(reuniao.leadId) : null;
+  const closer = db.prepare("SELECT nome, email FROM sellers WHERE id = ?").get(reuniao.sellerCloserId);
+  const labels = { agendada: "Nova reunião agendada", reagendada: "Reunião reagendada", cancelada: "Reunião cancelada" };
+  const titulo = labels[tipo] || "Atualização de reunião";
+  const texto = `${titulo}: ${reuniao.data} ${reuniao.horaInicio}-${reuniao.horaFim}${lead ? ` com ${lead.nome}` : ""}`;
+
+  const closerUser = closer ? db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(reuniao.sellerCloserId) : null;
+  if (closerUser) {
+    db.prepare("INSERT INTO notificacoes (id, userId, tipo, titulo, mensagem, criadoEm) VALUES (?,?,?,?,?,?)")
+      .run(uid(), closerUser.id, "reuniao", titulo, texto, agora());
+  }
+  if (reuniao.sellerSdrId && reuniao.sellerSdrId !== reuniao.sellerCloserId) {
+    const sdrUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(reuniao.sellerSdrId);
+    if (sdrUser) db.prepare("INSERT INTO notificacoes (id, userId, tipo, titulo, mensagem, criadoEm) VALUES (?,?,?,?,?,?)").run(uid(), sdrUser.id, "reuniao", titulo, texto, agora());
+  }
+
+  if (lead?.email && tipo !== "cancelada") {
+    try {
+      const { sendEmail } = await import("../services/email.js");
+      await sendEmail(lead.email, titulo, `<p>${texto}</p><p>Campanha: ${campaign.titulo || campaign.id}</p>`);
+    } catch (e) { console.warn("[notif-agenda] email:", e.message); }
+  }
+  if (lead?.whatsapp || lead?.telefone) {
+    try {
+      const { envioConfigurado, enviarTexto, numeroWhatsapp } = await import("../services/whatsappDisparo.js");
+      if (envioConfigurado()) {
+        const num = numeroWhatsapp(lead.whatsapp || lead.telefone);
+        if (num) await enviarTexto({ numero: num, texto, origem: "notificacao_reuniao" });
+      }
+    } catch (e) { console.warn("[notif-agenda] whatsapp:", e.message); }
+  }
+}
+
+// ── F2: Concluir atividade → auditoria → crédito ────────────────────
+router.post("/campaigns/:id/atividades/:atividadeId/concluir", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissionais" });
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const aprovado = db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId);
+  if (!aprovado) return res.status(403).json({ error: "Profissional não aprovado" });
+
+  const fg = db.prepare("SELECT * FROM formas_ganho WHERE id = ? AND campaignId = ?").get(req.params.atividadeId, camp.id);
+  if (!fg) return res.status(404).json({ error: "Atividade não encontrada" });
+
+  const { leadId, evidencias = [] } = req.body;
+  const idempotencyKey = `camp:${camp.id}:${fg.id}:${entityId}:${leadId || "sem"}`;
+
+  const existente = db.prepare("SELECT id FROM submissions WHERE idempotencyKey = ? AND sellerId = ?").get(idempotencyKey, entityId);
+  if (existente) return res.status(409).json({ error: "Atividade já concluída para este lead", submissionId: existente.id });
+
+  const valor = Number(fg.valor) || 0;
+  if (valor <= 0) return res.status(422).json({ error: "Atividade sem valor definido" });
+
+  try {
+    const result = db.transaction(() => {
+      const subId = uid();
+      db.prepare(`INSERT INTO submissions (id, sellerId, companyId, campaignId, tipo, valor, status, leadId, idempotencyKey, criadoEm, evidencias) VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+        .run(subId, entityId, camp.companyId, camp.id, fg.eventoComercial || fg.nome, valor, fg.metodoAprovacao === "automatica" ? "ia_aprovado" : "pendente", leadId || null, idempotencyKey, agora(), JSON.stringify(evidencias));
+
+      const posicao = posicaoEmpresa(camp.companyId);
+      if (posicao && posicao.disponivel >= valor) {
+        db.prepare("UPDATE companies SET saldoReservado = saldoReservado + ? WHERE id = ?").run(valor, camp.companyId);
+        const ciclo = db.prepare("SELECT COUNT(*) n FROM financial_ledger WHERE submissionId = ? AND tipo = 'reserva'").get(subId).n + 1;
+        db.prepare(`INSERT OR IGNORE INTO financial_ledger (id, companyId, sellerId, submissionId, tipo, valor, saldoEmpresa, reservadoEmpresa, saldoProfissional, idempotencyKey, dados, criadoEm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+          .run(uid(), camp.companyId, entityId, subId, "reserva", valor, posicao.saldo, posicao.reservado + valor, null, `${subId}:${ciclo}`, JSON.stringify({}), agora());
+      }
+
+      registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "TASK_COMPLETED", actorId: entityId, actorRole: "profissional", sellerId: entityId, submissionId: subId, leadId, source: "USER", dados: { atividadeId: fg.id, tipo: fg.eventoComercial, valor } });
+      return { submissionId: subId, status: fg.metodoAprovacao === "automatica" ? "ia_aprovado" : "pendente" };
+    }).immediate();
+    res.json(result);
+  } catch (err) {
+    res.status(422).json({ error: err.message });
+  }
+});
+
+// ── F2: SMS desabilitado (sem provider configurado) ──────────────────
+router.get("/campaigns/canais-disponiveis", (req, res) => {
+  const canais = [
+    { id: "whatsapp", nome: "WhatsApp", disponivel: true },
+    { id: "email", nome: "E-mail", disponivel: true },
+    { id: "sms", nome: "SMS", disponivel: false, motivo: "Provider SMS não configurado. Canal desabilitado." },
+  ];
+  res.json({ canais });
+});
+
+// ── F3: Desempenho individual por profissional ──────────────────────
+router.get("/campaigns/:id/desempenho-profissionais", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const cid = campaign.id;
+  const profissionais = db.prepare(`
+    SELECT ca.sellerId, s.nome, s.perfil, s.nota, ca.criadoEm as entradaEm
+    FROM campaign_applications ca JOIN sellers s ON s.id = ca.sellerId
+    WHERE ca.campaignId = ? AND ca.status = 'aprovado'
+  `).all(cid);
+
+  const result = profissionais.map(p => {
+    const subs = db.prepare("SELECT tipo, status, valor, liquido, criadoEm FROM submissions WHERE campaignId = ? AND sellerId = ?").all(cid, p.sellerId);
+    const aprovadas = subs.filter(s => s.status === "liberado" || s.status === "ia_aprovado" || s.status === "conferido");
+    const recusadas = subs.filter(s => s.status === "recusado" || s.status === "ia_recusado");
+    const pendentes = subs.filter(s => s.status === "pendente" || s.status === "revisao");
+    const totalBruto = aprovadas.reduce((s, t) => s + (Number(t.valor) || 0), 0);
+    const totalLiquido = aprovadas.reduce((s, t) => s + (Number(t.liquido) || Number(t.valor) || 0), 0);
+
+    const reunioesAgendadas = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND (sellerSdrId = ? OR sellerCloserId = ?)").get(cid, p.sellerId, p.sellerId).n;
+    const reunioesRealizadas = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND (sellerSdrId = ? OR sellerCloserId = ?) AND status IN ('realizada','venda')").get(cid, p.sellerId, p.sellerId).n;
+    const vendas = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND sellerCloserId = ? AND status = 'venda'").get(cid, p.sellerId).n;
+    const leadsAtribuidos = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ? AND sellerId = ?").get(cid, p.sellerId).n;
+    const leadsConvertidos = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ? AND sellerId = ? AND status = 'concluido'").get(cid, p.sellerId).n;
+
+    const porTipo = {};
+    for (const s of subs) { porTipo[s.tipo] = (porTipo[s.tipo] || 0) + 1; }
+
+    const taxaAprovacao = subs.length > 0 ? Math.round((aprovadas.length / subs.length) * 100) : 0;
+    const taxaConversao = leadsAtribuidos > 0 ? Math.round((leadsConvertidos / leadsAtribuidos) * 100) : 0;
+
+    return {
+      sellerId: p.sellerId, nome: p.nome, funcao: p.perfil, nota: p.nota, entradaEm: p.entradaEm,
+      tarefas: { total: subs.length, aprovadas: aprovadas.length, recusadas: recusadas.length, pendentes: pendentes.length, porTipo },
+      financeiro: { bruto: Math.round(totalBruto * 100) / 100, liquido: Math.round(totalLiquido * 100) / 100 },
+      reunioes: { agendadas: reunioesAgendadas, realizadas: reunioesRealizadas, vendas },
+      leads: { atribuidos: leadsAtribuidos, convertidos: leadsConvertidos },
+      indicadores: { taxaAprovacao, taxaConversao, ticketMedio: aprovadas.length > 0 ? Math.round((totalBruto / aprovadas.length) * 100) / 100 : 0 },
+    };
+  }).sort((a, b) => b.tarefas.aprovadas - a.tarefas.aprovadas);
+
+  res.json({ profissionais: result });
+});
+
+// ── F3: Financeiro detalhado por atividade, profissional e função ────
+router.get("/campaigns/:id/financeiro-detalhado", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const cid = campaign.id;
+
+  const porAtividade = db.prepare(`
+    SELECT s.tipo, COUNT(*) as quantidade, SUM(s.valor) as bruto, SUM(COALESCE(s.liquido, s.valor)) as liquido
+    FROM submissions s WHERE s.campaignId = ? AND s.status = 'liberado'
+    GROUP BY s.tipo
+  `).all(cid).map(r => ({ tipo: r.tipo, quantidade: r.quantidade, bruto: Math.round((r.bruto || 0) * 100) / 100, liquido: Math.round((r.liquido || 0) * 100) / 100 }));
+
+  const porProfissional = db.prepare(`
+    SELECT s.sellerId, sl.nome, sl.perfil as funcao,
+      COUNT(*) as quantidade, SUM(s.valor) as bruto, SUM(COALESCE(s.liquido, s.valor)) as liquido
+    FROM submissions s JOIN sellers sl ON sl.id = s.sellerId
+    WHERE s.campaignId = ? AND s.status = 'liberado'
+    GROUP BY s.sellerId
+  `).all(cid).map(r => ({ sellerId: r.sellerId, nome: r.nome, funcao: r.funcao, quantidade: r.quantidade, bruto: Math.round((r.bruto || 0) * 100) / 100, liquido: Math.round((r.liquido || 0) * 100) / 100 }));
+
+  const porFuncao = db.prepare(`
+    SELECT sl.perfil as funcao, COUNT(*) as quantidade, SUM(s.valor) as bruto, SUM(COALESCE(s.liquido, s.valor)) as liquido
+    FROM submissions s JOIN sellers sl ON sl.id = s.sellerId
+    WHERE s.campaignId = ? AND s.status = 'liberado'
+    GROUP BY sl.perfil
+  `).all(cid).map(r => ({ funcao: r.funcao, quantidade: r.quantidade, bruto: Math.round((r.bruto || 0) * 100) / 100, liquido: Math.round((r.liquido || 0) * 100) / 100 }));
+
+  const movimentacoes = db.prepare(`
+    SELECT fl.tipo, fl.valor, fl.criadoEm, fl.dados
+    FROM financial_ledger fl
+    WHERE fl.companyId = ? AND (fl.dados LIKE ? OR fl.submissionId IN (SELECT id FROM submissions WHERE campaignId = ?))
+    ORDER BY fl.criadoEm DESC LIMIT 200
+  `).all(campaign.companyId, `%"campaignId":"${cid}"%`, cid).map(r => ({ ...r, dados: JSON.parse(r.dados || "{}") }));
+
+  const orcamento = Number(campaign.orcamento) || 0;
+  const totalBruto = porAtividade.reduce((s, r) => s + r.bruto, 0);
+  const totalLiquido = porAtividade.reduce((s, r) => s + r.liquido, 0);
+
+  res.json({ orcamento, totalBruto: Math.round(totalBruto * 100) / 100, totalLiquido: Math.round(totalLiquido * 100) / 100, porAtividade, porProfissional, porFuncao, movimentacoes });
 });
 
 export default router;

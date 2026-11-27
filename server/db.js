@@ -3599,5 +3599,24 @@ adicionarColuna("campaigns", "configConfirmacao", "TEXT DEFAULT '{}'");
 adicionarColuna("campaigns", "icpEstruturado", "TEXT DEFAULT '{}'");
 adicionarColuna("leads", "qualificacaoParcial", "TEXT DEFAULT '[]'");
 
+// Leads: tokens criptográficos de confirmação
+adicionarColuna("leads", "confirmacaoTokenHash", "TEXT");
+adicionarColuna("leads", "confirmacaoExpiraEm", "INTEGER");
+adicionarColuna("leads", "qualificacaoEm", "INTEGER");
+
+// Notificações internas (agenda, tarefas, etc.)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS notificacoes (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    tipo TEXT NOT NULL DEFAULT 'geral',
+    titulo TEXT NOT NULL,
+    mensagem TEXT DEFAULT '',
+    lida INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_notif_user ON notificacoes(userId, lida);
+`);
+
 export default db;
 export { uid, agora };
