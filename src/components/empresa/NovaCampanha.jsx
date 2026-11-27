@@ -23,6 +23,7 @@ import {
 } from "../../../shared/campaignEngine.js";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
 import { perguntaMetaQuantitativa, calcularPlanejamentoReverso } from "../../../shared/planejamentoReverso.js";
+import { calcularFunilProjecao, entradaDaCampanha } from "../../../shared/funilProjecao.js";
 import { TIPOS_RESPOSTA, CLASSIFICACOES, calcularScore, criarPergunta, criarCriterio, perguntasVisiveis } from "../../../shared/qualificacaoLeads.js";
 import { CANAIS_CONFIRMACAO, configConfirmacaoPadrao } from "../../../shared/confirmacaoContato.js";
 import { investimentoRecomendado, capacidadeOperacional } from "../../../shared/otimizacaoVerba.js";
@@ -2541,25 +2542,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         const orcamentoAtual = Number(campanha.orcamento) || 0;
         const precisaAdicionar = orcamentoAtual > disponivel ? orcamentoAtual - disponivel : 0;
         const produtosSelecionados = campanha.produtosCampanha || [];
-        const ticketMedioEstimado = produtosSelecionados.length > 0
-          ? produtosSelecionados.reduce((s, p) => s + (Number(p.preco) || 0), 0) / produtosSelecionados.length
-          : Number(emp?.ticket) || 0;
+        const entradasProj = entradaDaCampanha(campanha, emp);
+        const projecao = calcularFunilProjecao(entradasProj);
+        const ticketMedioEstimado = entradasProj.ticketMensal;
         const buscaCatalogo = campanha._buscaCatalogo || "";
         const catalogoFiltrado = catalogoProdutos.filter((p) =>
           !buscaCatalogo || (p.nome || "").toLowerCase().includes(buscaCatalogo.toLowerCase())
         );
-        const calcProj = () => {
-          if (orcamentoAtual <= 0) return { contatos: 0, leads: 0, reunioesAgendadas: 0, reunioesRealizadas: 0, vendas: 0, custoPorVenda: 0, faturamento: 0 };
-          const contatos = Math.round(orcamentoAtual / 20);
-          const leads = Math.round(contatos * 0.25);
-          const reunioesAgendadas = Math.round(leads * 0.4);
-          const reunioesRealizadas = Math.round(reunioesAgendadas * 0.75);
-          const vendas = Math.round(reunioesRealizadas * 0.3);
-          const custoPorVenda = vendas > 0 ? Math.round(orcamentoAtual / vendas) : 0;
-          const faturamento = vendas * ticketMedioEstimado;
-          return { contatos, leads, reunioesAgendadas, reunioesRealizadas, vendas, custoPorVenda, faturamento };
-        };
-        const proj = calcProj();
         const funcoesList = campanha.estruturaComercial === "operacao"
           ? (campanha.funcoesOperacao || [])
           : campanha.funcao ? [campanha.funcao] : [];
@@ -2675,55 +2664,59 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               </div>
             </div>
             {(() => {
-              const custoPorContato = 20;
-              const txLead = 0.25;
-              const txAgend = 0.4;
-              const txReali = 0.75;
-              const txFech = 0.3;
-              const origemDados = ticketMedioEstimado > 0 && produtosSelecionados.some((p) => p.preco > 0)
-                ? "Preço informado nos produtos da campanha"
-                : (emp?.ticket ? "Ticket médio do perfil da empresa" : "Estimativa — informe o preço dos produtos");
+              const f = projecao.funil;
+              const fin = projecao.financeiro;
+              const ep = entradasProj;
+              const pctTxt = (v) => `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+              const num = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+              const origemTaxas = `Planilha RYCS — canal ${ep.canal}`;
+              const origemDados = ep.ticketOrigem === "produtos" ? "Preço informado nos produtos da campanha"
+                : ep.ticketOrigem === "perfil" ? "Ticket médio do perfil da empresa" : "Sem preço — informe o preço dos produtos";
+              const semCusto = orcamentoAtual > 0 && !f.baseVerba;
+              const temTicket = ticketMedioEstimado > 0;
               const kpiTooltips = {
                 "Contatos trabalhados": {
-                  formula: `${money(orcamentoAtual)} ÷ R$ ${custoPorContato},00 = ${proj.contatos}`,
-                  explicacao: `Com ${money(orcamentoAtual)} de investimento e um custo médio de R$ ${custoPorContato},00 por contato trabalhado, estima-se alcançar ${proj.contatos} contatos.`,
-                  taxa: `Custo médio por contato: R$ ${custoPorContato},00`,
-                  origem: "Estimativa baseada em benchmarks comerciais do mercado",
-                },
-                "Leads qualificados": {
-                  formula: `${proj.contatos} contatos × ${(txLead * 100).toFixed(0)}% = ${proj.leads}`,
-                  explicacao: `De ${proj.contatos} contatos trabalhados, espera-se que ${(txLead * 100).toFixed(0)}% respondam e se qualifiquem como leads.`,
-                  taxa: `Taxa de qualificação contato → lead: ${(txLead * 100).toFixed(0)}%`,
-                  origem: "Benchmark comercial — média do mercado B2B",
+                  formula: `${money(orcamentoAtual)} ÷ ${money(f.custoPorContatoUsado)} = ${num(f.contatos)}`,
+                  explicacao: f.baseVerba === "closer"
+                    ? `A campanha não paga por contato nem por agendamento, então a verba foi dividida pelo custo do closer em cada contato (reunião e venda pagas × taxas do funil).`
+                    : `A verba dividida pelo custo de aquisição de cada contato: o pago por contato (${money(ep.ganhoSdrContato)}) mais a parte do pago por agendamento (${money(ep.ganhoSdrAgendamento)} × ${pctTxt(ep.pctAgenda)}).`,
+                  taxa: `Custo por contato: ${money(f.custoPorContatoUsado)}`,
+                  origem: "Valores das tarefas da campanha",
                 },
                 "Reuniões agendadas": {
-                  formula: `${proj.leads} leads × ${(txAgend * 100).toFixed(0)}% = ${proj.reunioesAgendadas}`,
-                  explicacao: `De ${proj.leads} leads qualificados, ${(txAgend * 100).toFixed(0)}% devem aceitar e agendar uma reunião.`,
-                  taxa: `Taxa de agendamento lead → reunião: ${(txAgend * 100).toFixed(0)}%`,
-                  origem: "Benchmark comercial — média do mercado B2B",
+                  formula: `${num(f.contatos)} contatos × ${pctTxt(ep.pctAgenda)} = ${num(f.agendamentos)}`,
+                  explicacao: `De cada contato trabalhado, ${pctTxt(ep.pctAgenda)} marcam reunião.`,
+                  taxa: `% que agenda: ${pctTxt(ep.pctAgenda)}`,
+                  origem: origemTaxas,
                 },
                 "Reuniões realizadas": {
-                  formula: `${proj.reunioesAgendadas} agendadas × ${(txReali * 100).toFixed(0)}% = ${proj.reunioesRealizadas}`,
-                  explicacao: `De ${proj.reunioesAgendadas} reuniões agendadas, ${(txReali * 100).toFixed(0)}% são efetivamente realizadas (considera no-shows e cancelamentos).`,
-                  taxa: `Taxa de realização reunião agendada → realizada: ${(txReali * 100).toFixed(0)}%`,
-                  origem: "Benchmark comercial — média do mercado B2B",
+                  formula: `${num(f.agendamentos)} agendadas × ${pctTxt(ep.pctComparece)} = ${num(f.reunioesRealizadas)}`,
+                  explicacao: `Dos agendamentos, ${pctTxt(ep.pctComparece)} comparecem à reunião.`,
+                  taxa: `% que comparece: ${pctTxt(ep.pctComparece)}`,
+                  origem: origemTaxas,
                 },
                 "Vendas estimadas": {
-                  formula: `${proj.reunioesRealizadas} reuniões × ${(txFech * 100).toFixed(0)}% = ${proj.vendas}`,
-                  explicacao: `De ${proj.reunioesRealizadas} reuniões realizadas, ${(txFech * 100).toFixed(0)}% devem resultar em venda fechada.`,
-                  taxa: `Taxa de fechamento reunião → venda: ${(txFech * 100).toFixed(0)}%`,
-                  origem: "Benchmark comercial — média do mercado B2B",
+                  formula: `${num(f.reunioesRealizadas)} reuniões × ${pctTxt(ep.pctFecha)} = ${num(f.vendas)}`,
+                  explicacao: `Das reuniões realizadas, ${pctTxt(ep.pctFecha)} viram venda.`,
+                  taxa: `% que fecha: ${pctTxt(ep.pctFecha)}`,
+                  origem: origemTaxas,
                 },
                 "Custo por venda": {
-                  formula: `${money(orcamentoAtual)} ÷ ${proj.vendas} vendas = ${money(proj.custoPorVenda)}`,
-                  explicacao: `O investimento total de ${money(orcamentoAtual)} dividido pelas ${proj.vendas} vendas estimadas resulta em um custo de aquisição de ${money(proj.custoPorVenda)} por venda.`,
-                  taxa: "Calculado a partir do total investido e das vendas projetadas",
-                  origem: "Calculado — sem benchmark externo",
+                  formula: `${money(fin.custoTotal)} ÷ ${num(f.vendas)} vendas = ${money(fin.cac)}`,
+                  explicacao: `Custo total dividido pelas vendas: contatos e SDRs ${money(fin.custoMidia + fin.custoSdrs)}, closers ${money(fin.custoClosers)}, taxas e impostos ${money(fin.taxasImpostos)}.`,
+                  taxa: `Taxas e impostos: ${pctTxt(ep.taxasImpostos)} do faturamento`,
+                  origem: "Planilha RYCS — CAC (custo por venda)",
+                },
+                "ROI": {
+                  formula: `${money(fin.lucro)} ÷ ${money(fin.custoTotal)} = ${num(fin.roi)}%`,
+                  explicacao: `Lucro (faturamento ${money(fin.faturamento)} menos custo total ${money(fin.custoTotal)}) dividido pelo custo total. Cada R$ 1 investido retorna ${money(fin.retornoPorReal)}.`,
+                  taxa: `Margem: ${num(fin.margem)}%`,
+                  origem: origemDados,
                 },
               };
               const faturamentoTooltip = {
-                formula: `${proj.vendas} vendas × ${money(ticketMedioEstimado)} (ticket médio) = ${money(proj.faturamento)}`,
-                explicacao: `Com ${proj.vendas} vendas estimadas e ticket médio de ${money(ticketMedioEstimado)}, o faturamento bruto projetado é ${money(proj.faturamento)}.`,
+                formula: `${num(f.vendas)} vendas × ${money(ticketMedioEstimado)} (ticket médio) = ${money(fin.faturamento)}`,
+                explicacao: `Com ${num(f.vendas)} vendas estimadas e ticket médio de ${money(ticketMedioEstimado)}, o faturamento bruto projetado é ${money(fin.faturamento)}.`,
                 taxa: `Ticket médio utilizado: ${money(ticketMedioEstimado)}`,
                 origem: origemDados,
               };
@@ -2739,20 +2732,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               return (<>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>
                   {[
-                    { label: "Contatos trabalhados", valor: proj.contatos, Ic: Phone },
-                    { label: "Leads qualificados", valor: proj.leads, Ic: Filter },
-                    { label: "Reuniões agendadas", valor: proj.reunioesAgendadas, Ic: CalendarCheck },
-                    { label: "Reuniões realizadas", valor: proj.reunioesRealizadas, Ic: Users },
-                    { label: "Vendas estimadas", valor: proj.vendas, Ic: Target },
-                    { label: "Custo por venda", valor: proj.custoPorVenda, Ic: BadgeDollarSign, isMoney: true },
-                  ].map(({ label, valor, Ic, isMoney }) => (
+                    { label: "Contatos trabalhados", texto: num(f.contatos), Ic: Phone },
+                    { label: "Reuniões agendadas", texto: num(f.agendamentos), Ic: CalendarCheck },
+                    { label: "Reuniões realizadas", texto: num(f.reunioesRealizadas), Ic: Users },
+                    { label: "Vendas estimadas", texto: num(f.vendas), Ic: Target },
+                    { label: "Custo por venda", texto: f.vendas > 0 ? money(fin.cac) : "—", Ic: BadgeDollarSign },
+                    { label: "ROI", texto: temTicket ? `${num(fin.roi)}%` : "—", Ic: TrendingUp },
+                  ].map(({ label, texto, Ic }) => (
                     <div key={label} style={{ position: "relative", padding: "14px 10px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, textAlign: "center" }}>
                       <button onClick={() => setPopoverProjecao(popoverProjecao === label ? null : label)}
                         style={{ position: "absolute", top: 6, right: 6, background: "none", border: "1px solid var(--border)", borderRadius: "50%", width: 18, height: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--muted)", fontSize: 10, fontWeight: 700, lineHeight: 1 }}>?</button>
-                      {popoverProjecao === label && orcamentoAtual > 0 && <PopoverConteudo tip={kpiTooltips[label]} />}
+                      {popoverProjecao === label && orcamentoAtual > 0 && !semCusto && (label !== "ROI" || temTicket) && <PopoverConteudo tip={kpiTooltips[label]} />}
                       <Ic size={16} color="var(--brand)" style={{ marginBottom: 4 }} />
                       <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>
-                        {orcamentoAtual <= 0 ? "—" : isMoney ? money(valor) : valor.toLocaleString("pt-BR")}
+                        {orcamentoAtual <= 0 || semCusto ? "—" : texto}
                       </div>
                       <div style={{ fontSize: 10.5, fontWeight: 500, color: "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{label}</div>
                     </div>
@@ -2772,12 +2765,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   )}
                   <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.8)", marginBottom: 4 }}>FATURAMENTO BRUTO ESTIMADO</div>
                   <div className="vx-mono" style={{ fontSize: 26, fontWeight: 900, color: "#fff" }}>
-                    {orcamentoAtual <= 0 || ticketMedioEstimado <= 0 ? "—" : money(proj.faturamento)}
+                    {orcamentoAtual <= 0 || !temTicket || semCusto ? "—" : money(fin.faturamento)}
                   </div>
-                  {ticketMedioEstimado <= 0 && orcamentoAtual > 0 && (
+                  {!temTicket && orcamentoAtual > 0 && (
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,.7)", marginTop: 4 }}>Informe o preço dos produtos para calcular</div>
                   )}
+                  {temTicket && orcamentoAtual > 0 && !semCusto && (
+                    <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.85)", marginTop: 4 }}>
+                      Lucro estimado {money(fin.lucro)} · Margem {num(fin.margem)}% · Cada R$ 1 retorna {money(fin.retornoPorReal)}
+                    </div>
+                  )}
                 </div>
+                {semCusto && (
+                  <div className="vx-mut" style={{ fontSize: 12, marginTop: 8 }}>Defina o valor pago nas ações da campanha para projetar os resultados.</div>
+                )}
               </>);
             })()}
           </div>

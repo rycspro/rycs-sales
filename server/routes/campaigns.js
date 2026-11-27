@@ -2273,7 +2273,7 @@ router.get("/campaigns/:id/projecao-funil", (req, res) => {
   const entradas = entradaDaCampanha(parsed, empresa, formasGanho);
   const projecao = calcularFunilProjecao(entradas);
 
-  res.json({ projecao, entradas, ticketInformado: !!(Number(empresa.ticket) || 0) });
+  res.json({ projecao, entradas, ticketInformado: entradas.ticketMensal > 0 });
 });
 
 // ── F3: Alertas proativos ───────────────────────────────────────────────
