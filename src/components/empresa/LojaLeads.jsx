@@ -44,17 +44,30 @@ const CATEGORIAS = [
   { key: "tecnologia", label: "Tecnologia", Icon: Cpu },
 ];
 
-/* ── Campos de enriquecimento ─────────────────────────────────────────── */
-const CAMPOS_INDISPONIVEIS = new Set([
-  "WhatsApp",
-]);
+/* ── Faixas e filtros de enriquecimento ────────────────────────────────── */
+const FAIXAS_FATURAMENTO = [
+  "Até R$ 81 mil",
+  "R$ 81 mil – R$ 360 mil",
+  "R$ 360 mil – R$ 4,8 M",
+  "R$ 4,8 M – R$ 30 M",
+  "R$ 30 M – R$ 300 M",
+  "Acima de R$ 300 M",
+];
+const FAIXAS_FUNCIONARIOS = [
+  "Sem funcionários (MEI/autônomo)",
+  "1 – 5", "6 – 19", "20 – 49", "50 – 99",
+  "100 – 249", "250 – 499", "500 – 999", "1.000+",
+];
+const PORTES = ["MEI", "ME", "EPP", "DEMAIS"];
+const NATUREZAS = ["Sociedade Limitada", "Empresário Individual", "Sociedade Anônima", "EIRELI", "Cooperativa"];
+const SITUACOES = ["Ativa", "Baixada", "Inapta", "Suspensa", "Nula"];
+
+const CAMPOS_INDISPONIVEIS = new Set(["WhatsApp"]);
 const CAMPOS_ENRIQ = new Set([
   "Razão social", "Nome fantasia", "CNPJ", "CNAE primário", "CNAEs secundários",
   "Porte da empresa", "Natureza jurídica", "Situação cadastral",
   "Data de abertura", "Idade da empresa", "Capital social",
   "Simples Nacional / MEI", "Inscrição estadual", "Quantidade de filiais",
-  "Faixa de faturamento", "Faturamento estimado",
-  "Faixa de funcionários", "Funcionários estimado",
   "Sócios / QSA", "Nome do responsável", "Cargo do responsável",
   "Departamento do decisor", "Nível hierárquico",
   "E-mail profissional (Hunter.io)", "LinkedIn do decisor",
@@ -69,8 +82,6 @@ const GRUPOS = [
     campos: ["Nome da empresa", "Razão social", "Nome fantasia", "CNPJ", "CNAE primário", "Porte da empresa"] },
   { key: "receita", label: "Receita Federal (CNPJ.ws)", Icon: FileText, enriq: true,
     campos: ["CNAEs secundários", "Natureza jurídica", "Situação cadastral", "Data de abertura", "Idade da empresa", "Capital social", "Simples Nacional / MEI", "Inscrição estadual", "Quantidade de filiais"] },
-  { key: "estimativas", label: "Estimativas inteligentes", Icon: TrendingUp, enriq: true,
-    campos: ["Faixa de faturamento", "Faturamento estimado", "Faixa de funcionários", "Funcionários estimado"] },
   { key: "decisores", label: "Decisores e sócios", Icon: UserCheck, enriq: true,
     campos: ["Sócios / QSA", "Nome do responsável", "Cargo do responsável", "Departamento do decisor", "Nível hierárquico", "E-mail profissional (Hunter.io)", "LinkedIn do decisor"] },
   { key: "contatos", label: "Contatos", Icon: Phone,
@@ -442,8 +453,14 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [enriqProg, setEnriqProg] = useState(null);
+  const [filtFaturamento, setFiltFaturamento] = useState([]);
+  const [filtFuncionarios, setFiltFuncionarios] = useState([]);
+  const [filtPorte, setFiltPorte] = useState([]);
+  const [filtSituacao, setFiltSituacao] = useState([]);
+  const [filtSimples, setFiltSimples] = useState("");
   useEffect(() => { if (pastas.length && !pastaSel) setPastaSel(pastas[0].id); }, [pastas]);
-  const temEnriq = useMemo(() => [...campos].some((c) => CAMPOS_ENRIQ.has(c)), [campos]);
+  const temEnriq = useMemo(() => [...campos].some((c) => CAMPOS_ENRIQ.has(c)) || filtFaturamento.length > 0 || filtFuncionarios.length > 0 || filtPorte.length > 0 || filtSituacao.length > 0 || filtSimples, [campos, filtFaturamento, filtFuncionarios, filtPorte, filtSituacao, filtSimples]);
+  const totalFiltros = filtFaturamento.length + filtFuncionarios.length + filtPorte.length + filtSituacao.length + (filtSimples ? 1 : 0);
 
   const cidadesDisponiveis = useMemo(() => {
     const todas = [];
@@ -515,7 +532,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
     if (temEnriq && contatos.length > 0) {
       const ids = contatos.map((c) => c.id).filter(Boolean);
       if (ids.length > 0) {
-        setEnriqProg({ total: ids.length, done: 0, errors: 0 });
+        setEnriqProg({ total: ids.length, done: 0, errors: 0, fase: "enriquecendo" });
         setFeedback((prev) => prev + " Enriquecendo dados...");
         let done = 0, errors = 0;
         const lotes = [];
@@ -525,14 +542,46 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
           const res = r2?.resultados || [];
           done += res.filter((x) => x.status === "ok").length;
           errors += res.filter((x) => x.status === "erro").length;
-          setEnriqProg({ total: ids.length, done: done + errors, errors });
+          setEnriqProg({ total: ids.length, done: done + errors, errors, fase: "enriquecendo" });
+        }
+
+        setEnriqProg({ total: ids.length, done: ids.length, errors, fase: "filtrando" });
+        let filtrados = 0, removidos = 0;
+        const temFiltros = filtFaturamento.length || filtFuncionarios.length || filtPorte.length || filtSituacao.length || filtSimples;
+        const camposObrig = [...campos].filter((c) => CAMPOS_ENRIQ.has(c));
+        if (temFiltros || camposObrig.length > 0) {
+          for (const id of ids) {
+            const e = await api(`/enriquecimento/${id}`);
+            if (!e || e.error) continue;
+            let passa = true;
+            if (filtFaturamento.length && !filtFaturamento.includes(e.faixaFaturamento)) passa = false;
+            if (filtFuncionarios.length && !filtFuncionarios.includes(e.faixaFuncionarios)) passa = false;
+            if (filtPorte.length && !filtPorte.some((p) => (e.porte || "").toUpperCase().includes(p))) passa = false;
+            if (filtSituacao.length && !filtSituacao.includes(e.situacaoCadastral)) passa = false;
+            if (filtSimples === "sim" && !e.simplesNacional) passa = false;
+            if (filtSimples === "nao" && e.simplesNacional) passa = false;
+            if (camposObrig.includes("Nome do responsável") && !(e.decisores || []).length) passa = false;
+            if (camposObrig.includes("Cargo do responsável") && !(e.decisores || []).some((d) => d.cargo)) passa = false;
+            if (camposObrig.includes("E-mail profissional (Hunter.io)") && !(e.decisores || []).some((d) => d.emailProfissional)) passa = false;
+            if (camposObrig.includes("CNPJ") && !e.cnpj) passa = false;
+            if (camposObrig.includes("Sócios / QSA") && !(e.socios || []).length) passa = false;
+            if (camposObrig.includes("Telefones da Receita Federal")) { try { if (!JSON.parse(e.telefonesRF || "[]").length) passa = false; } catch { passa = false; } }
+            if (camposObrig.includes("E-mail da Receita Federal") && !e.emailRF) passa = false;
+            if (passa) filtrados++; else removidos++;
+          }
+          const filtMsg = removidos > 0
+            ? `Filtragem: ${filtrados} lead(s) atendem aos filtros, ${removidos} não atendem.`
+            : `Todos os ${filtrados} leads atendem aos filtros.`;
+          setFeedback((prev) => prev.replace(" Enriquecendo dados...", "") + " " + filtMsg);
+          aviso?.(filtMsg);
+        } else {
+          const enriqMsg = errors > 0
+            ? `Enriquecimento: ${done} completo(s), ${errors} erro(s).`
+            : `Enriquecimento concluído: ${done} contato(s) enriquecido(s).`;
+          setFeedback((prev) => prev.replace(" Enriquecendo dados...", "") + " " + enriqMsg);
+          aviso?.(enriqMsg);
         }
         setEnriqProg(null);
-        const enriqMsg = errors > 0
-          ? `Enriquecimento: ${done} completo(s), ${errors} erro(s).`
-          : `Enriquecimento concluído: ${done} contato(s) enriquecido(s).`;
-        setFeedback((prev) => prev.replace(" Enriquecendo dados...", "") + " " + enriqMsg);
-        aviso?.(enriqMsg);
       }
     }
 
@@ -595,12 +644,105 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
             </div>
           </div>
 
-          {/* Informações desejadas */}
+          {/* Filtros avançados (enriquecimento) */}
+          <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <Sparkles size={18} style={{ color: "var(--indigo)" }} />
+              <div>
+                <div className="vx-disp" style={{ fontSize: 17 }}>Filtros de enriquecimento</div>
+                <span className="vx-mut" style={{ fontSize: 12 }}>Selecione as faixas para filtrar os resultados. Só serão gerados leads que atendam aos filtros.</span>
+              </div>
+              {totalFiltros > 0 && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: "var(--indigo-50)", color: "var(--indigo)", fontWeight: 600, marginLeft: "auto" }}>{totalFiltros} filtro(s)</span>}
+            </div>
+            <div className="vx-grid vx-g2" style={{ gap: 12 }}>
+              {/* Faixa de faturamento */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <TrendingUp size={16} style={{ color: "var(--green)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Faixa de faturamento</span>
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {FAIXAS_FATURAMENTO.map((f) => (
+                    <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtFaturamento.includes(f)}
+                        onChange={() => setFiltFaturamento((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])}
+                        style={{ accentColor: "var(--green)", width: 16, height: 16, flexShrink: 0 }} />
+                      {f}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Faixa de funcionários */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Users size={16} style={{ color: "var(--brand)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Faixa de funcionários</span>
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {FAIXAS_FUNCIONARIOS.map((f) => (
+                    <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtFuncionarios.includes(f)}
+                        onChange={() => setFiltFuncionarios((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])}
+                        style={{ accentColor: "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
+                      {f}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Porte */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Building2 size={16} style={{ color: "var(--indigo)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Porte da empresa</span>
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {PORTES.map((p) => (
+                    <label key={p} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtPorte.includes(p)}
+                        onChange={() => setFiltPorte((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p])}
+                        style={{ accentColor: "var(--indigo)", width: 16, height: 16, flexShrink: 0 }} />
+                      {p}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Situação + Simples */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Shield size={16} style={{ color: "var(--amber)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Situação e regime</span>
+                </div>
+                <span className="vx-label" style={{ fontSize: 11, marginBottom: 4 }}>Situação cadastral</span>
+                <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
+                  {SITUACOES.map((s) => (
+                    <label key={s} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtSituacao.includes(s)}
+                        onChange={() => setFiltSituacao((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])}
+                        style={{ accentColor: "var(--amber)", width: 16, height: 16, flexShrink: 0 }} />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+                <span className="vx-label" style={{ fontSize: 11, marginBottom: 4 }}>Simples Nacional</span>
+                <div style={{ display: "flex", gap: 12 }}>
+                  {[["", "Qualquer"], ["sim", "Optante"], ["nao", "Não optante"]].map(([v, l]) => (
+                    <label key={v} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, cursor: "pointer" }}>
+                      <input type="radio" name="simples" value={v} checked={filtSimples === v} onChange={() => setFiltSimples(v)}
+                        style={{ accentColor: "var(--amber)", width: 16, height: 16 }} />
+                      {l}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dados obrigatórios na lista */}
           <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
             <div className="vx-row" style={{ marginBottom: 12 }}>
               <div>
-                <div className="vx-disp" style={{ fontSize: 17 }}>Informações desejadas</div>
-                <span className="vx-mut" style={{ fontSize: 12 }}>{campos.size} de {ALL_CAMPOS.length} informações selecionadas</span>
+                <div className="vx-disp" style={{ fontSize: 17 }}>Dados obrigatórios na lista</div>
+                <span className="vx-mut" style={{ fontSize: 12 }}>Marque os dados que cada lead <strong>precisa ter</strong>. {campos.size} de {ALL_CAMPOS.length} selecionados.</span>
               </div>
               <button className="vx-btn vx-btn-sm" onClick={toggleAll}>
                 {campos.size === ALL_CAMPOS.length ? "Desmarcar tudo" : "Selecionar tudo"}
@@ -703,7 +845,8 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
               ["Localização", regiao ? `${regiao}, ${pais}` : pais],
               ["Quantidade", `${quantidade} leads`],
               ["Informações", `${campos.size} campos`],
-              ["Enriquecimento", temEnriq ? `${[...campos].filter((c) => CAMPOS_ENRIQ.has(c)).length} campos` : "Nenhum"],
+              ["Filtros", totalFiltros > 0 ? `${totalFiltros} ativo(s)` : "Nenhum"],
+              ["Dados obrigatórios", campos.size > 0 ? `${campos.size} campo(s)` : "Nenhum"],
               ["Destino", destinoLabel || "A definir"],
               ["Valor estimado", money(valorEstimado)],
             ].map(([k, v]) => (
