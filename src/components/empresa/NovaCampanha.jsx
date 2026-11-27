@@ -1783,12 +1783,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           <div style={{ padding: 16, borderTop: "1px solid var(--border)", display: "grid", gap: 14 }}>
                             {/* Origem */}
                             <div>
-                              <div className="vx-label" style={{ marginBottom: 8 }}>Origem dos profissionais <Tag obrigatorio={true} /></div>
-                              <div style={{ display: "grid", gap: 6 }}>
-                                {Object.values(ORIGENS_PROFISSIONAIS).map((o) => (
-                                  <CardOption key={o.id} selected={(cfg.origemProfissionais || "rycs") === o.id} onClick={() => setConfig("origemProfissionais", o.id)} title={o.label} />
-                                ))}
-                              </div>
+                              <div className="vx-label" style={{ marginBottom: 6 }}>Origem dos profissionais <Tag obrigatorio={true} /></div>
+                              <select className="vx-input" value={cfg.origemProfissionais || "rycs"} onChange={(e) => setConfig("origemProfissionais", e.target.value)}>
+                                {Object.values(ORIGENS_PROFISSIONAIS).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                              </select>
                               {(cfg.origemProfissionais === "interno" || cfg.origemProfissionais === "ambos") && (
                                 <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8, padding: "8px 10px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)" }}>
                                   Os colaboradores da sua empresa podem ser selecionados em <b>Gestão interna → Meu time</b> após a publicação.
@@ -1797,22 +1795,18 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                             </div>
                             {/* Experiência */}
                             <div>
-                              <div className="vx-label" style={{ marginBottom: 8 }}>Experiência <Tag obrigatorio={false} /></div>
-                              <div style={{ display: "grid", gap: 6 }}>
-                                {NIVEIS_EXPERIENCIA.map((n) => (
-                                  <CardOption key={n.id} selected={(cfg.nivelExperiencia || "indiferente") === n.id} onClick={() => setConfig("nivelExperiencia", n.id)} title={n.label} subtitle={n.descricao} />
-                                ))}
-                              </div>
+                              <div className="vx-label" style={{ marginBottom: 6 }}>Experiência <Tag obrigatorio={false} /></div>
+                              <select className="vx-input" value={cfg.nivelExperiencia || "indiferente"} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
+                                {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+                              </select>
                             </div>
                             {/* Aprovação — oculta se só equipe interna */}
                             {cfg.origemProfissionais !== "interno" && (
                               <div>
-                                <div className="vx-label" style={{ marginBottom: 8 }}>Aprovação da candidatura <Tag obrigatorio={false} /></div>
-                                <div style={{ display: "grid", gap: 6 }}>
-                                  {PROCESSOS_ADMISSAO.map((p) => (
-                                    <CardOption key={p.id} selected={(cfg.processoAdmissao || "manual") === p.id} onClick={() => setConfig("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
-                                  ))}
-                                </div>
+                                <div className="vx-label" style={{ marginBottom: 6 }}>Aprovação da candidatura <Tag obrigatorio={false} /></div>
+                                <select className="vx-input" value={cfg.processoAdmissao || "manual"} onChange={(e) => setConfig("processoAdmissao", e.target.value)}>
+                                  {PROCESSOS_ADMISSAO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                                </select>
                               </div>
                             )}
                             <button type="button" className="vx-btn vx-btn-brand" style={{ justifyContent: "center" }} onClick={() => set("abaFuncaoAtiva", null)}>
