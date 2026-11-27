@@ -67,7 +67,35 @@ function limitesCommerciaisAtivos() {
 // ── Provedores ───────────────────────────────────────────────────────
 
 router.get("/voice/providers", (req, res) => {
-  res.json(listProviders());
+  const cfg = db.prepare("SELECT telefoniaReal FROM voice_admin_config WHERE id = 'global'").get();
+  res.json(listProviders().map((p) => (p.id === "sip" ? { ...p, liberado: cfg?.telefoniaReal === 1 } : p)));
+});
+
+// Credencial temporária do ramal WebRTC do profissional (renovada a cada conexão).
+router.post("/voice/webrtc/credenciais", async (req, res) => {
+  const sellerId = sellerIdDoUsuario(req);
+  if (!sellerId) return res.status(403).json({ error: "Apenas profissionais." });
+  if (!exigirVoiceAtiva(req, res)) return;
+
+  const r = await getProvider("sip").createWebRtcEndpoint({ sellerId });
+  if (!r.ok) return res.status(503).json({ error: r.motivo });
+  res.json(r);
+});
+
+// Eventos reais do Asterisk viram horários e duração verificados da ligação.
+getProvider("sip").aoAtualizarChamada((callId, d) => {
+  const call = db.prepare("SELECT iniciadaEm FROM voice_calls WHERE id = ?").get(callId);
+  if (!call) return;
+  if (d.encerradaEm) {
+    const total = Math.max(0, Math.round((d.encerradaEm - call.iniciadaEm) / 1000));
+    const tarifavel = d.atendidaEm ? Math.max(0, Math.round((d.encerradaEm - d.atendidaEm) / 1000)) : 0;
+    db.prepare(`UPDATE voice_calls SET status = ?, atendidaEm = ?, encerradaEm = ?, duracaoTotal = ?,
+      duracaoTarifavel = ?, origemDados = 'verificado' WHERE id = ?`).run(d.status, d.atendidaEm || null, d.encerradaEm, total, tarifavel, callId);
+    db.prepare("UPDATE voice_usage_events SET minutos = ? WHERE callId = ?").run(tarifavel / 60, callId);
+  } else {
+    db.prepare("UPDATE voice_calls SET status = ?, atendidaEm = COALESCE(?, atendidaEm) WHERE id = ?").run(d.status, d.atendidaEm || null, callId);
+  }
+  db.prepare("INSERT INTO voice_call_events (id, callId, tipo, dados, criadoEm) VALUES (?, ?, ?, ?, ?)").run(uid(), callId, d.status, JSON.stringify(d), agora());
 });
 
 // ── Status / Feature flag ───────────────────────────────────────────
@@ -286,7 +314,14 @@ router.post("/voice/queues/:id/leads", (req, res) => {
   const idsValidos = validos.map((l) => l.id);
 
   const resultado = adicionarLeadsNaFila(fila.id, idsValidos);
-  auditLog(companyId, req.user.id, "adicionar_leads_fila", "voice_queue", fila.id, { total: idsValidos.length, adicionados: resultado.adicionados });
+  // Número de teste: vai para o topo da fila e volta a ficar pendente,
+  // mesmo que já tenha sido discado antes.
+  if (req.body.teste && idsValidos.length) {
+    const ph = idsValidos.map(() => "?").join(",");
+    db.prepare(`UPDATE voice_queue_leads SET prioridade = 1000, status = 'pendente', tentativas = 0, proximaTentativa = NULL, atualizadoEm = ?
+      WHERE queueId = ? AND leadId IN (${ph})`).run(agora(), fila.id, ...idsValidos);
+  }
+  auditLog(companyId, req.user.id, "adicionar_leads_fila", "voice_queue", fila.id, { total: idsValidos.length, adicionados: resultado.adicionados, teste: !!req.body.teste });
   res.json(resultado);
 });
 
@@ -449,7 +484,8 @@ router.post("/voice/calls", (req, res) => {
   const callId = uid();
 
   // Iniciar chamada via provedor
-  provider.initiateCall({ telefone: lead.telefone, leadId, sellerId }).then((resultado) => {
+  provider.initiateCall({ telefone: lead.telefone, leadId, sellerId, companyId, callId }).then((resultado) => {
+    if (provId === "sip" && resultado.ok === false) return res.status(400).json({ error: resultado.motivo });
     const simulado = resultado.simulado ? 1 : 0;
 
     db.prepare(`INSERT INTO voice_calls
@@ -571,7 +607,7 @@ router.post("/voice/calls/:id/result", (req, res) => {
     db.prepare(`INSERT INTO voice_usage_events (id, companyId, sellerId, callId, tipo, minutos, simulado, idempotencyKey, criadoEm)
       VALUES (?, ?, ?, ?, 'chamada', ?, 0, ?, ?)`).run(
       uid(), call.companyId, sellerId, call.id,
-      (duracaoManual || call.duracaoTotal || 0) / 60,
+      (duracaoManual || (call.origemDados === "verificado" ? call.duracaoTarifavel : call.duracaoTotal) || 0) / 60,
       `call_${call.id}`, now
     );
   }
@@ -605,7 +641,9 @@ router.get("/voice/calls/:id", (req, res) => {
   const call = db.prepare("SELECT * FROM voice_calls WHERE id = ?").get(req.params.id);
   if (!call) return res.status(404).json({ error: "Ligação não encontrada." });
   const companyId = companyIdDoUsuario(req);
-  if (call.companyId !== companyId && req.user.role !== "admin") return res.status(403).json({ error: "Sem permissão" });
+  if (call.companyId !== companyId && call.sellerId !== sellerIdDoUsuario(req) && req.user.role !== "admin") {
+    return res.status(403).json({ error: "Sem permissão" });
+  }
 
   const eventos = db.prepare("SELECT * FROM voice_call_events WHERE callId = ? ORDER BY criadoEm").all(call.id);
   res.json({ ...call, metadados: JSON.parse(call.metadados || "{}"), eventos });
@@ -801,7 +839,16 @@ router.get("/voice/usage", (req, res) => {
     FROM voice_usage_events WHERE companyId = ? AND criadoEm >= ? AND criadoEm <= ?
   `).get(companyId, de, ate);
 
-  res.json(uso || { totalMinutos: 0, totalCusto: 0, minutosSimulados: 0, totalEventos: 0 });
+  const sip = db.prepare(`
+    SELECT COUNT(*) as ligacoes, COALESCE(SUM(duracaoTarifavel), 0) / 60.0 as minutos
+    FROM voice_calls WHERE companyId = ? AND providerId = 'sip' AND criadoEm >= ? AND criadoEm <= ?
+  `).get(companyId, de, ate);
+
+  res.json({
+    ...(uso || { totalMinutos: 0, totalCusto: 0, minutosSimulados: 0, totalEventos: 0 }),
+    ligacoesNavegador: sip.ligacoes,
+    minutosVerificados: sip.minutos,
+  });
 });
 
 // ── Audit logs ───────────────────────────────────────────────────────

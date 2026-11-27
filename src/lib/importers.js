@@ -75,5 +75,15 @@ export function sugerirMapeamento(colunas) {
     nome: ["nome", "contato", "lead"], empresa: ["empresa", "company", "conta"], cargo: ["cargo", "titulo", "função", "funcao"],
     telefone: ["telefone", "celular", "whatsapp", "fone"], email: ["email", "e-mail"], valorEstimado: ["valor", "receita", "ticket"],
   };
-  return Object.fromEntries(Object.entries(aliases).map(([campo, nomes]) => [campo, colunas.findIndex((c) => nomes.some((n) => c.toLocaleLowerCase("pt-BR").includes(n))) ]));
+  const norm = colunas.map((c) => c.toLocaleLowerCase("pt-BR").trim());
+  // Nome exato primeiro, e cada coluna serve a um campo só: "Contato" contém
+  // "conta" e não pode virar Empresa também.
+  const mapa = Object.fromEntries(Object.entries(aliases).map(([campo, nomes]) => [campo, norm.findIndex((c) => nomes.includes(c))]));
+  const usadas = new Set(Object.values(mapa).filter((i) => i >= 0));
+  for (const [campo, nomes] of Object.entries(aliases)) {
+    if (mapa[campo] >= 0) continue;
+    mapa[campo] = norm.findIndex((c, i) => !usadas.has(i) && nomes.some((n) => c.includes(n)));
+    if (mapa[campo] >= 0) usadas.add(mapa[campo]);
+  }
+  return mapa;
 }

@@ -4,8 +4,9 @@ import {
   Phone, Users, Clock, Target, Settings, BarChart3, List, History,
   TrendingUp, Zap, Plus, Trash2, CheckCircle2, Calendar, PhoneCall,
   AlertTriangle, Building2, User, XCircle, FileText, Play, Pause,
-  Edit3, Save, ChevronDown, ChevronUp, Eye, PhoneOff
+  Edit3, Save, ChevronDown, ChevronUp, Eye, PhoneOff, Upload
 } from "lucide-react";
+import ConfigurarDiscadora from "./ConfigurarDiscadora.jsx";
 
 function Card({ children, style, ...p }) {
   return <div style={{ background: "var(--surface-solid)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)", ...style }} {...p}>{children}</div>;
@@ -25,17 +26,18 @@ function StatCard({ label, valor, icon: Icon, cor, sub }) {
 }
 
 const ABAS = [
+  { id: "configurar", label: "Configurar", Icon: Upload },
   { id: "visao", label: "Visão geral", Icon: BarChart3 },
   { id: "operacao", label: "Operação", Icon: Zap },
-  { id: "filas", label: "Filas", Icon: List },
   { id: "historico", label: "Histórico", Icon: History },
   { id: "desempenho", label: "Desempenho", Icon: TrendingUp },
   { id: "consumo", label: "Telefonia", Icon: Phone },
-  { id: "config", label: "Configurações", Icon: Settings },
+  { id: "avancado", label: "Avançado", Icon: Settings },
 ];
 
-export default function DiscadoraEmpresa({ emp, aviso }) {
-  const [aba, setAba] = useState("visao");
+export default function DiscadoraEmpresa({ emp, aviso, time = [] }) {
+  // Sem aba escolhida ainda: abre em Configurar até existir lista na fila.
+  const [aba, setAba] = useState(null);
   const [stats, setStats] = useState(null);
   const [sellers, setSellers] = useState([]);
   const [filas, setFilas] = useState([]);
@@ -57,6 +59,7 @@ export default function DiscadoraEmpresa({ emp, aviso }) {
       setStats(s);
       setSellers(sl);
       setFilas(f);
+      setAba((a) => a ?? (f.some((q) => (q.stats?.total || 0) > 0) ? "visao" : "configurar"));
       setSettings(st);
       setCalls(c);
       setUso(u);
@@ -80,6 +83,8 @@ export default function DiscadoraEmpresa({ emp, aviso }) {
     );
   }
 
+  const abaAtual = aba || "configurar";
+
   return (
     <div style={{ padding: "0 4px" }}>
       {/* Header */}
@@ -96,20 +101,26 @@ export default function DiscadoraEmpresa({ emp, aviso }) {
       {/* Tabs */}
       <div style={{ display: "flex", gap: 2, marginBottom: 16, overflowX: "auto", borderBottom: "1px solid var(--border)" }}>
         {ABAS.map((a) => (
-          <button key={a.id} onClick={() => setAba(a.id)}
-            style={{ padding: "8px 14px", fontSize: 13, fontWeight: aba === a.id ? 600 : 400, color: aba === a.id ? "var(--brand)" : "var(--muted)", background: "transparent", border: "none", borderBottom: aba === a.id ? "2px solid var(--brand)" : "2px solid transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+          <button key={a.id} onClick={() => setAba(a.id)} aria-current={abaAtual === a.id ? "page" : undefined}
+            style={{ padding: "8px 14px", minHeight: 44, fontSize: 13, fontWeight: abaAtual === a.id ? 600 : 400, color: abaAtual === a.id ? "var(--brand)" : "var(--muted)", background: "transparent", border: "none", borderBottom: abaAtual === a.id ? "2px solid var(--brand)" : "2px solid transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
             <a.Icon size={14} /> {a.label}
           </button>
         ))}
       </div>
 
-      {aba === "visao" && <VisaoGeral stats={stats} sellers={sellers} filas={filas} settings={settings} uso={uso} />}
-      {aba === "operacao" && <Operacao sellers={sellers} stats={stats} />}
-      {aba === "filas" && <GerenciarFilas filas={filas} aviso={aviso} onAtualizar={carregar} />}
-      {aba === "historico" && <HistoricoCalls calls={calls} />}
-      {aba === "desempenho" && <DesempenhoSellers sellers={sellers} />}
-      {aba === "consumo" && <Consumo uso={uso} />}
-      {aba === "config" && <Configuracoes settings={settings} aviso={aviso} onAtualizar={carregar} />}
+      {abaAtual === "configurar" && <ConfigurarDiscadora time={time} filas={filas} settings={settings} aviso={aviso} onAtualizar={carregar} />}
+      {abaAtual === "visao" && <VisaoGeral stats={stats} sellers={sellers} filas={filas} settings={settings} uso={uso} />}
+      {abaAtual === "operacao" && <Operacao sellers={sellers} stats={stats} />}
+      {abaAtual === "historico" && <HistoricoCalls calls={calls} />}
+      {abaAtual === "desempenho" && <DesempenhoSellers sellers={sellers} />}
+      {abaAtual === "consumo" && <Consumo uso={uso} />}
+      {abaAtual === "avancado" && (
+        <>
+          <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--muted)" }}>Ajustes finos e várias filas. Para subir lista e liberar profissionais, use a aba Configurar.</p>
+          <Configuracoes settings={settings} aviso={aviso} onAtualizar={carregar} />
+          <div style={{ marginTop: 20 }}><GerenciarFilas filas={filas} time={time} aviso={aviso} onAtualizar={carregar} /></div>
+        </>
+      )}
     </div>
   );
 }
@@ -236,7 +247,7 @@ function Operacao({ sellers, stats }) {
   );
 }
 
-function GerenciarFilas({ filas, aviso, onAtualizar }) {
+function GerenciarFilas({ filas, time, aviso, onAtualizar }) {
   const [criando, setCriando] = useState(false);
   const [nome, setNome] = useState("");
   const [campanhas, setCampanhas] = useState([]);
@@ -299,12 +310,12 @@ function GerenciarFilas({ filas, aviso, onAtualizar }) {
         </Card>
       )}
 
-      {filas.map((f) => <FilaCard key={f.id} fila={f} aviso={aviso} onAtualizar={onAtualizar} />)}
+      {filas.map((f) => <FilaCard key={f.id} fila={f} time={time} aviso={aviso} onAtualizar={onAtualizar} />)}
     </div>
   );
 }
 
-function FilaCard({ fila, aviso, onAtualizar }) {
+function FilaCard({ fila, time = [], aviso, onAtualizar }) {
   const [aberto, setAberto] = useState(false);
   const [membros, setMembros] = useState([]);
   const [profDisponiveis, setProfDisponiveis] = useState([]);
@@ -316,13 +327,13 @@ function FilaCard({ fila, aviso, onAtualizar }) {
 
   const carregarDetalhes = async () => {
     try {
-      const [m, profs, camps] = await Promise.all([
+      // O time aprovado vem do painel da empresa (não existe rota /profissionais).
+      const [m, camps] = await Promise.all([
         api.get(`/voice/queues/${fila.id}/members`),
-        api.get("/profissionais"),
         api.get("/campaigns"),
       ]);
       setMembros(m);
-      setProfDisponiveis(profs.filter((p) => !m.some((mem) => mem.sellerId === p.id)));
+      setProfDisponiveis(time.filter((p) => !m.some((mem) => mem.sellerId === p.id)));
       setCampanhas(camps);
     } catch {}
   };
@@ -561,16 +572,20 @@ function Consumo({ uso }) {
           <div style={{ fontSize: 12, color: "var(--muted)" }}>Custo total</div>
         </div>
         <div style={{ padding: 16, background: "var(--surface-2)", borderRadius: "var(--radius-sm)" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "var(--green)" }}>{uso?.minutosVerificados ? Math.round(uso.minutosVerificados) : 0}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>Minutos pelo navegador · {uso?.ligacoesNavegador || 0} ligações</div>
+        </div>
+        <div style={{ padding: 16, background: "var(--surface-2)", borderRadius: "var(--radius-sm)" }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: "var(--indigo)" }}>{uso?.minutosSimulados ? Math.round(uso.minutosSimulados) : 0}</div>
           <div style={{ fontSize: 12, color: "var(--muted)" }}>Minutos simulados</div>
         </div>
       </div>
 
       <Card style={{ marginTop: 20, padding: 16, background: "var(--surface-2)", border: "1px dashed var(--border-strong)" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Carteira de minutos</div>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Como as ligações são contadas</div>
         <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
-          A carteira de minutos será habilitada quando a integração com o provedor SIP/Asterisk estiver operacional.
-          Atualmente, o modo celular utiliza a linha do profissional (sem custo na plataforma) e o modo simulação não gera consumo real.
+          No modo Navegador, a ligação sai pela operadora da RYCS: atendimento, duração e minutos são medidos automaticamente.
+          No modo Celular, o profissional usa a própria linha e informa o resultado; esses dados aparecem como declarados.
         </p>
       </Card>
     </Card>

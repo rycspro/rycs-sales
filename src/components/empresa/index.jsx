@@ -203,7 +203,8 @@ export default function Empresa({ db, setDb, up, aviso, aba, setAba, recarregar,
           campanhas={(db.campaigns || []).filter((c) => c.companyId === emp.id)}
           onGerarPedido={abrirPedido} onAbrirPipeline={() => setAba?.("integracoes")} />
       )}
-      {aba === "discadora" && <DiscadoraEmpresa emp={emp} aviso={aviso} />}
+      {aba === "discadora" && <DiscadoraEmpresa emp={emp} aviso={aviso}
+        time={(db.sellers || []).filter((s) => s.aplicacoes?.[emp.id] === "aprovado")} />}
       {aba === "loja-leads" && <LojaLeads aviso={aviso} />}
       {aba === "calendario" && <CalendarioComercial />}
       {aba === "integracoes" && (

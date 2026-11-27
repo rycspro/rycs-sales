@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../lib/api.js";
 import { useVoice } from "./useVoice.js";
+import { useSipPhone } from "./useSipPhone.js";
 import {
   Phone, PhoneOff, Play, Pause, SkipForward, Clock, Target,
   CheckCircle2, User, Building2, ChevronRight, AlertTriangle,
@@ -70,13 +71,33 @@ export default function DiscadoraProfissional({ aviso }) {
 
   useEffect(() => {
     api.get("/voice/status").then(setVoiceStatus).catch(() => setVoiceStatus({ habilitada: false }));
-    api.get("/voice/queues").then(setFilas).catch(() => {});
+    api.get("/voice/queues").then((f) => {
+      setFilas(f);
+      // Uma fila só: já vem escolhida, basta apertar Iniciar.
+      if (f.length === 1) setFilaSelecionada((atual) => atual || f[0].id);
+    }).catch(() => {});
     api.get("/voice/providers").then(setProviders).catch(() => {});
     api.get("/voice/settings").then(setSettings).catch(() => {});
     api.get("/voice/callbacks").then(setCallbacks).catch(() => {});
     voice.carregarSessaoAtual();
     voice.carregarStats();
   }, []);
+
+  const emSessao = voice.sessao?.status === "ativo" || voice.sessao?.status === "pausado";
+  const sip = useSipPhone(modalidade === "sip" && emSessao);
+  const capsSip = providers.find((p) => p.id === "sip");
+  const sipDisponivel = !!capsSip?.capabilities?.canInitiate;
+  const [statusSip, setStatusSip] = useState("");
+  const callIdSip = modalidade === "sip" ? voice.ligacaoAtual?.callId : null;
+
+  // Andamento real da ligação vem dos eventos do Asterisk gravados no servidor.
+  useEffect(() => {
+    if (!callIdSip) { setStatusSip(""); return undefined; }
+    const t = setInterval(() => {
+      api.get(`/voice/calls/${callIdSip}`).then((c) => setStatusSip(c?.status || "")).catch(() => {});
+    }, 2000);
+    return () => clearInterval(t);
+  }, [callIdSip]);
 
   if (voiceStatus && !voiceStatus.habilitada) {
     return (
@@ -102,7 +123,8 @@ export default function DiscadoraProfissional({ aviso }) {
 
   const ligar = async () => {
     if (!voice.leadAtual) return;
-    const prov = modalidade === "mock" ? "mock" : "mobile";
+    const prov = modalidade === "mock" || modalidade === "sip" ? modalidade : "mobile";
+    if (prov === "sip" && sip.estado !== "pronto") return aviso?.("O áudio do navegador ainda não está conectado.");
     await voice.iniciarLigacao(voice.leadAtual.id, filaSelecionada, prov);
   };
 
@@ -163,6 +185,7 @@ export default function DiscadoraProfissional({ aviso }) {
 
   return (
     <div style={{ padding: "0 4px" }}>
+      <audio ref={sip.audioRef} autoPlay />
       {/* Header */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -189,7 +212,7 @@ export default function DiscadoraProfissional({ aviso }) {
             style={{ padding: "6px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-strong)", background: "var(--surface-solid)", fontSize: 13 }}>
             <option value="mobile">Celular</option>
             <option value="mock">Simulação</option>
-            <option value="sip" disabled>SIP (em ativação)</option>
+            <option value="sip" disabled={!sipDisponivel}>{sipDisponivel ? "Navegador (fone)" : "Navegador (em ativação)"}</option>
           </select>
 
           {!em && !pausado && (
@@ -329,6 +352,26 @@ export default function DiscadoraProfissional({ aviso }) {
                         <AlertTriangle size={12} /> O resultado deve ser registrado manualmente
                       </div>
                     )}
+                    {modalidade === "sip" && (
+                      <div style={{ marginTop: 8, fontSize: 12, color: sip.estado === "erro" ? "var(--red)" : "var(--muted)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                        <span>
+                          {sip.estado === "pronto" ? "Áudio conectado · use fone de ouvido"
+                            : sip.estado === "erro" ? sip.erro
+                            : sip.estado === "em_chamada" ? "Teste de áudio em andamento"
+                            : "Conectando o áudio…"}
+                        </span>
+                        {sip.estado === "pronto" && (
+                          <button onClick={sip.testarAudio} className="vx-btn vx-btn-sm" style={{ minHeight: 44 }}>
+                            <Mic size={14} /> Testar áudio (eco)
+                          </button>
+                        )}
+                        {sip.estado === "em_chamada" && (
+                          <button onClick={sip.desligar} className="vx-btn vx-btn-danger vx-btn-sm" style={{ minHeight: 44 }}>
+                            <PhoneOff size={14} /> Encerrar teste
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -340,6 +383,23 @@ export default function DiscadoraProfissional({ aviso }) {
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--green)" }}>
                       {voice.ligacaoAtual.simulado ? "Chamada simulada" : voice.ligacaoAtual.status === "iniciada" ? "Ligação iniciada" : voice.ligacaoAtual.status}
                     </div>
+                    {modalidade === "sip" && (
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                          {{ chamando_profissional: "Conectando seu áudio…", discando: "Chamando o contato…", em_andamento: "Em conversa", nao_atendida: "Não atendeu", encerrada: "Ligação encerrada", falhou: "A ligação não completou" }[statusSip] || "Preparando a ligação…"}
+                        </span>
+                        {sip.estado === "em_chamada" && (
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button onClick={sip.alternarMudo} className="vx-btn vx-btn-sm" style={{ minHeight: 44 }} aria-pressed={sip.mudo}>
+                              {sip.mudo ? <><MicOff size={14} /> Ativar microfone</> : <><Mic size={14} /> Silenciar</>}
+                            </button>
+                            <button onClick={sip.desligar} className="vx-btn vx-btn-danger vx-btn-sm" style={{ minHeight: 44 }}>
+                              <PhoneOff size={14} /> Desligar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {voice.ligacaoAtual.origemDados === "declarado" && (
                       <div style={{ fontSize: 11, color: "var(--amber)", marginTop: 4 }}>Dados declarados pelo profissional</div>
                     )}
@@ -418,7 +478,7 @@ export default function DiscadoraProfissional({ aviso }) {
                       </div>
                     )}
 
-                    <button onClick={salvarEProximo} disabled={!resultado || salvando}
+                    <button onClick={salvarEProximo} disabled={!resultado || salvando || sip.estado === "em_chamada"}
                       style={{ marginTop: 10, width: "100%", padding: "12px", borderRadius: "var(--radius-sm)", background: resultado ? "var(--brand)" : "var(--muted-2)", color: "#fff", border: "none", fontWeight: 700, fontSize: 14, cursor: resultado ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: resultado ? "var(--shadow-brand)" : "none" }}>
                       {salvando ? <div className="vx-spinner" style={{ width: 16, height: 16 }} /> : <><CheckCircle2 size={16} /> Salvar e próximo lead</>}
                     </button>

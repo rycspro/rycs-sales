@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import jwt from "jsonwebtoken";
+import { paraE164 } from "../server/services/voice/sipProvider.js";
 
 const SEGREDO = "segredo-de-teste-onboarding";
 const assinar = (payload) => `sm_token=${jwt.sign(payload, SEGREDO, { expiresIn: "1h" })}`;
@@ -620,6 +621,29 @@ describe("RYCS Voice — Discadora comercial", () => {
     assert.equal(r.status, 403);
   });
 
+  it("credencial WebRTC fica indisponível sem Asterisk configurado", async () => {
+    const r = await req("/voice/webrtc/credenciais", { cookie: cookieVendedor, body: {} });
+    assert.equal(r.status, 503);
+  });
+
+  it("empresa não pede credencial WebRTC", async () => {
+    const r = await req("/voice/webrtc/credenciais", { cookie: cookieEmpresa, body: {} });
+    assert.equal(r.status, 403);
+  });
+
+  it("provedor SIP informa se a telefonia real foi liberada", async () => {
+    const r = await req("/voice/providers", { cookie: cookieVendedor });
+    const sip = r.corpo.find((p) => p.id === "sip");
+    assert.equal(sip.liberado, false);
+  });
+
+  it("números brasileiros viram E.164 para a operadora", () => {
+    assert.equal(paraE164("(11) 98765-4321"), "5511987654321");
+    assert.equal(paraE164("011 3333-4444"), "551133334444");
+    assert.equal(paraE164("+55 21 99999-8888"), "5521999998888");
+    assert.equal(paraE164("+91 98765 43210"), "919876543210");
+  });
+
   it("check-destination não aplica limite diário com limites comerciais desativados", async () => {
     // Garantir que limites comerciais estão desativados
     await req("/voice/admin/telefonia/config", {
@@ -641,5 +665,56 @@ describe("RYCS Voice — Discadora comercial", () => {
     assert.equal(r.corpo.maxChamadasDia, 0);
     assert.equal(r.corpo.maxMinutosMes, 0);
     assert.equal(r.corpo.maxCanaisSimultaneos, 2);
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Configuração simples: subir lista + número de teste no topo
+  // ══════════════════════════════════════════════════════════════════════
+
+  it("importação devolve ids novos e existentes e distribui só entre os escolhidos", async () => {
+    const camp = await req("/campaigns", { cookie: cookieEmpresa, body: { titulo: "Campanha Discadora" } });
+    assert.equal(camp.status, 200, JSON.stringify(camp.corpo));
+    const campaignId = camp.corpo.id;
+    const primeiro = await req("/leads/import", {
+      cookie: cookieEmpresa,
+      body: { campaignId, sellerIds: [realSellerId2], linhas: [{ nome: "Já na base", telefone: "11977770002" }] },
+    });
+    assert.equal(primeiro.status, 200, JSON.stringify(primeiro.corpo));
+    const jaNaBase = primeiro.corpo.ids[0];
+    const r = await req("/leads/import", {
+      cookie: cookieEmpresa,
+      body: { campaignId, sellerIds: [realSellerId2], linhas: [
+        { nome: "Contato Novo", telefone: "11977770001" },
+        { nome: "Repetido", telefone: "(11) 97777-0002" },
+      ] },
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.corpo));
+    assert.equal(r.corpo.importados, 1);
+    assert.equal(r.corpo.ids.length, 1);
+    assert.deepEqual(r.corpo.idsExistentes, [jaNaBase]);
+    const novo = await req(`/leads/${r.corpo.ids[0]}`, { cookie: cookieEmpresa });
+    assert.equal(novo.corpo.sellerId, realSellerId2);
+
+    const fila = await req("/voice/queues", { body: { nome: "Discadora · Campanha Discadora", campaignId }, cookie: cookieEmpresa });
+    const filaId = fila.corpo.id;
+    const add = await req(`/voice/queues/${filaId}/leads`, { body: { leadIds: [...r.corpo.ids, ...r.corpo.idsExistentes] }, cookie: cookieEmpresa });
+    assert.equal(add.corpo.adicionados, 2);
+
+    // Número de teste: entra (ou volta) no topo da fila
+    const teste = await req(`/voice/queues/${filaId}/leads`, { body: { leadIds: [jaNaBase], teste: true }, cookie: cookieEmpresa });
+    assert.equal(teste.status, 200);
+    const lista = await req(`/voice/queues/${filaId}/leads`, { cookie: cookieEmpresa });
+    assert.equal(lista.corpo[0].leadId, jaNaBase);
+    assert.equal(lista.corpo[0].prioridade, 1000);
+    assert.equal(lista.corpo[0].status, "pendente");
+  });
+
+  it("importação recusa profissionais escolhidos fora do time", async () => {
+    const camps = await req("/campaigns", { cookie: cookieEmpresa });
+    const r = await req("/leads/import", {
+      cookie: cookieEmpresa,
+      body: { campaignId: camps.corpo[0].id, sellerIds: ["nao_existe"], linhas: [{ nome: "X", telefone: "11977770009" }] },
+    });
+    assert.equal(r.status, 422);
   });
 });
