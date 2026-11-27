@@ -1340,18 +1340,100 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </>)}
 
           {/* Canais */}
-          {blocoAtual === "canais" && secaoVisivel.canais && (<>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Canais de comunicação</h2>
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por onde ele vai falar com os contatos?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione os meios de comunicação que o profissional pode usar.</div></div>
-            <ChipToggle
-              items={CANAIS.map((c) => ({ id: c.id, nome: c.nome, icon: ICONES_CANAL[c.id] || Globe }))}
-              value={campanha.canais || []}
-              onChange={(v) => set("canais", v)}
-              multi
-            />
-          </div>
-          </>)}
+          {blocoAtual === "canais" && secaoVisivel.canais && (() => {
+            const canaisSel = campanha.canais || [];
+            const toggleCanal = (id) => {
+              const novos = canaisSel.includes(id) ? canaisSel.filter((x) => x !== id) : [...canaisSel, id];
+              set("canais", novos);
+            };
+            const isPresencialOuHibrido = campanha.modeloTrabalho === "presencial" || campanha.modeloTrabalho === "hibrido";
+            const CARDS_CANAL = [
+              { id: "whatsapp", Icon: MessageCircle, color: "#25D366", titulo: "WhatsApp", descricao: "Prospecção, atendimento e acompanhamento de clientes.", ferramenta: "WhatsApp da RYCS" },
+              { id: "ligacao", Icon: Phone, color: "#3B82F6", titulo: "Ligação telefônica", descricao: "Abordagens comerciais e conversas por telefone.", ferramenta: "Discadora da RYCS" },
+              { id: "email", Icon: Mail, color: "var(--brand)", titulo: "E-mail", descricao: "Envio de apresentações, propostas e follow-ups.", ferramenta: null },
+              { id: "linkedin", Icon: Linkedin, color: "#0077B5", titulo: "LinkedIn", descricao: "Prospecção de empresas e contato com decisores.", ferramenta: null },
+              { id: "instagram", Icon: Instagram, color: "#E1306C", titulo: "Instagram", descricao: "Abordagem de potenciais clientes pelas redes sociais.", ferramenta: null },
+              ...(isPresencialOuHibrido ? [{ id: "presencial", Icon: MapPin, color: "#F59E0B", titulo: "Visita presencial", descricao: "Atendimento e prospecção diretamente no local do cliente.", ferramenta: null }] : []),
+            ];
+            const totalSel = canaisSel.length;
+            return (<>
+              <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Por onde o profissional vai falar?</h2>
+              <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Selecione um ou mais canais de atendimento para esta campanha.</p>
+              {totalSel > 0 && (
+                <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 600, color: "var(--brand)" }}>
+                  {totalSel} canal{totalSel > 1 ? "is" : ""} selecionado{totalSel > 1 ? "s" : ""}
+                </div>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4 }}>
+                {CARDS_CANAL.map(({ id, Icon, color, titulo, descricao, ferramenta }) => {
+                  const sel = canaisSel.includes(id);
+                  return (
+                    <button key={id} type="button" onClick={() => toggleCanal(id)} style={{
+                      position: "relative", textAlign: "left", padding: "16px", cursor: "pointer",
+                      border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
+                      background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+                      borderRadius: 12, transition: "border-color .15s, background .15s",
+                      display: "flex", flexDirection: "column", gap: 0,
+                    }}>
+                      {sel && (
+                        <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Check size={12} color="#fff" />
+                        </div>
+                      )}
+                      <Icon size={22} color={sel ? color : "var(--muted)"} style={{ marginBottom: 8 }} />
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #171717)", marginBottom: 4 }}>{titulo}</div>
+                      <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, flex: 1 }}>{descricao}</div>
+                      {ferramenta && (
+                        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "var(--brand)", borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+                          <Zap size={11} /> {ferramenta}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+                {/* Outros canais — largura total */}
+                {(() => {
+                  const sel = canaisSel.includes("outro");
+                  return (
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <button type="button" onClick={() => toggleCanal("outro")} style={{
+                        width: "100%", textAlign: "left", padding: "14px 16px", cursor: "pointer",
+                        border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
+                        background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+                        borderRadius: 12, transition: "border-color .15s, background .15s",
+                        display: "flex", alignItems: "center", gap: 12, position: "relative",
+                      }}>
+                        {sel && (
+                          <div style={{ position: "absolute", top: 10, right: 12, width: 20, height: 20, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Check size={12} color="#fff" />
+                          </div>
+                        )}
+                        <Globe size={22} color={sel ? "var(--brand)" : "var(--muted)"} style={{ flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #171717)" }}>Outros canais</div>
+                          <div className="vx-mut" style={{ fontSize: 12 }}>Utilização de outros meios de comunicação.</div>
+                        </div>
+                      </button>
+                      {sel && (
+                        <div style={{ marginTop: 8, padding: "0 2px" }}>
+                          <input className="vx-input" placeholder="Descreva os canais utilizados (ex.: Telegram, SMS, etc.)"
+                            value={campanha.outrosCanaisDescricao || ""}
+                            onChange={(e) => set("outrosCanaisDescricao", e.target.value)} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+              <div style={{ marginTop: 14, padding: "12px 14px", background: "var(--surface)", borderRadius: 10, border: "1px solid var(--border)", display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <Zap size={15} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand)", marginBottom: 2 }}>Ferramentas de trabalho</div>
+                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5 }}>Os canais selecionados orientarão o ambiente de trabalho do profissional e os métodos de comprovação das atividades. As ferramentas integradas da RYCS são exibidas apenas quando há integração ativa.</div>
+                </div>
+              </div>
+            </>);
+          })()}
 
           {/* Materiais e treinamento (unificado) */}
           {blocoAtual === "materiais" && secaoVisivel.materiais && (<>
