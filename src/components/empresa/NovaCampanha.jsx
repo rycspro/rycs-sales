@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import CidadeEstadoSelector from "./CidadeEstadoSelector.jsx";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation, Cloud, CloudOff, LogOut, GraduationCap, Pencil, Info, Briefcase } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Wallet, Loader, Target, CalendarCheck, MapPin, BadgeDollarSign, Workflow, Plus, Trash2, ShieldCheck, TrendingUp, BookOpen, ChevronDown, ChevronUp, Send, RotateCcw, Search, Filter, HandCoins, Footprints, Settings, Laptop, Building2, MessageCircle, Phone, Mail, Linkedin, Instagram, Globe, Users, Eye, EyeOff, Lock, AlertCircle, CheckCircle2, FileText, Upload, Library, Database, UserPlus, Shuffle, Zap, SlidersHorizontal, Image, Link2, ClipboardCheck, UserCheck, Bot, X, File, CloudUpload, GripVertical, Download, Video, Music, FileSpreadsheet, Presentation, Cloud, CloudOff, LogOut, GraduationCap, Pencil, Info, Briefcase, Clock } from "lucide-react";
 import { api, apiPatch, API_URL } from "../../lib/api.js";
 import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/armazenamento.js";
 import ConversaJarvas from "./ConversaJarvas.jsx";
@@ -2554,6 +2554,131 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             );
           })()}
 
+          {/* Suporte aos profissionais */}
+          {(() => {
+            const sup = campanha.suporte || {};
+            const canais = sup.canais || [];
+            const setSup = (k, v) => set("suporte", { ...sup, [k]: v });
+            const toggleCanal = (c) => setSup("canais", canais.includes(c) ? canais.filter((x) => x !== c) : [...canais, c]);
+            const CANAIS_CONFIG = [
+              { key: "chat", Icon: MessageCircle, label: "Chat da RYCS", desc: "Converse com os profissionais diretamente pela plataforma." },
+              { key: "whatsapp", Icon: Phone, label: "WhatsApp", desc: "Disponibilize um número para dúvidas e orientações." },
+              { key: "email", Icon: Mail, label: "E-mail", desc: "Receba dúvidas e solicitações por e-mail." },
+            ];
+            const DISP_OPTS = [
+              { key: "comercial", label: "Horário comercial", desc: "Seg–Sex, 09h–18h" },
+              { key: "sempre", label: "Todos os dias, a qualquer horário", desc: "24 horas por dia, 7 dias por semana" },
+              { key: "personalizado", label: "Horário personalizado", desc: "Defina os dias e horários de atendimento" },
+            ];
+            const DIAS_SEMANA_SUP = [
+              { id: "seg", label: "Seg" }, { id: "ter", label: "Ter" }, { id: "qua", label: "Qua" },
+              { id: "qui", label: "Qui" }, { id: "sex", label: "Sex" }, { id: "sab", label: "Sáb" }, { id: "dom", label: "Dom" },
+            ];
+            const disp = sup.disponibilidade || "comercial";
+            const hor = sup.horariosPersonalizados || { dias: ["seg", "ter", "qua", "qui", "sex"], inicio: "09:00", fim: "18:00", fuso: "America/Sao_Paulo" };
+            const setHor = (k, v) => setSup("horariosPersonalizados", { ...hor, [k]: v });
+            return (
+              <>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Suporte aos profissionais</h2>
+                <p className="vx-mut" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>Defina como os profissionais poderão entrar em contato com sua empresa durante a campanha.</p>
+                {CANAIS_CONFIG.map(({ key, Icon: Ic, label, desc }) => {
+                  const sel = canais.includes(key);
+                  const temInput = sel && (key === "whatsapp" || key === "email");
+                  return (
+                    <div key={key} style={{ marginBottom: temInput ? 0 : 8 }}>
+                      <button type="button" onClick={() => toggleCanal(key)} style={{
+                        display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", width: "100%", textAlign: "left",
+                        border: `1px solid ${sel ? "var(--brand)" : "var(--border)"}`,
+                        borderRadius: temInput ? "10px 10px 0 0" : 10,
+                        background: sel ? "var(--brand-50)" : "var(--surface)", cursor: "pointer",
+                        transition: "border-color .15s, background .15s",
+                      }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: sel ? "var(--brand)" : "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Ic size={18} color={sel ? "#fff" : "var(--muted)"} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{label}</div>
+                          <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.4 }}>{desc}</div>
+                        </div>
+                        <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${sel ? "var(--brand)" : "var(--border)"}`, background: sel ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {sel && <Check size={12} color="#fff" />}
+                        </div>
+                      </button>
+                      {sel && key === "whatsapp" && (
+                        <div style={{ padding: "12px 16px", border: "1px solid var(--brand)", borderTop: "none", borderRadius: "0 0 10px 10px", background: "var(--brand-50)", marginBottom: 8 }}>
+                          <div className="vx-label" style={{ marginBottom: 6 }}>Número de WhatsApp para suporte</div>
+                          <input className="vx-input" placeholder="+55 (11) 90000-0000"
+                            value={sup.whatsappSuporte !== undefined ? sup.whatsappSuporte : (emp.telefoneEmpresa || "")}
+                            onChange={(e) => setSup("whatsappSuporte", e.target.value)} />
+                        </div>
+                      )}
+                      {sel && key === "email" && (
+                        <div style={{ padding: "12px 16px", border: "1px solid var(--brand)", borderTop: "none", borderRadius: "0 0 10px 10px", background: "var(--brand-50)", marginBottom: 8 }}>
+                          <div className="vx-label" style={{ marginBottom: 6 }}>E-mail para suporte</div>
+                          <input className="vx-input" type="email" placeholder="suporte@empresa.com.br"
+                            value={sup.emailSuporte !== undefined ? sup.emailSuporte : (emp.emailEmpresa || "")}
+                            onChange={(e) => setSup("emailSuporte", e.target.value)} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <div style={{ borderTop: "1px solid var(--border)", margin: "16px 0 12px" }} />
+                <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>Disponibilidade do suporte</div>
+                <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 12px" }}>Quando os profissionais poderão receber atendimento?</p>
+                {DISP_OPTS.map(({ key, label, desc }) => (
+                  <button key={key} type="button" onClick={() => setSup("disponibilidade", key)} style={{
+                    display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", width: "100%", textAlign: "left",
+                    border: `1px solid ${disp === key ? "var(--brand)" : "var(--border)"}`, borderRadius: 10,
+                    background: disp === key ? "var(--brand-50)" : "var(--surface)", cursor: "pointer", marginBottom: 6,
+                    transition: "border-color .15s, background .15s",
+                  }}>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${disp === key ? "var(--brand)" : "var(--border)"}`, background: disp === key ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {disp === key && <Check size={12} color="#fff" />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{label}</div>
+                      <div className="vx-mut" style={{ fontSize: 12 }}>{desc}</div>
+                    </div>
+                  </button>
+                ))}
+                {disp === "personalizado" && (
+                  <div className="vx-card" style={{ padding: 14, marginTop: 4 }}>
+                    <div className="vx-label" style={{ marginBottom: 8 }}>Dias de atendimento</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+                      {DIAS_SEMANA_SUP.map((d) => {
+                        const on = (hor.dias || []).includes(d.id);
+                        return (
+                          <button key={d.id} type="button"
+                            onClick={() => setHor("dias", on ? (hor.dias || []).filter((x) => x !== d.id) : [...(hor.dias || []), d.id])}
+                            style={{ padding: "6px 12px", borderRadius: 20, border: `1px solid ${on ? "var(--brand)" : "var(--border)"}`, background: on ? "var(--brand)" : "var(--surface)", color: on ? "#fff" : "var(--ink)", fontSize: 12.5, cursor: "pointer", fontWeight: on ? 600 : 400 }}>
+                            {d.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                      <label><div className="vx-label">Horário de início</div><input type="time" className="vx-input" value={hor.inicio || "09:00"} onChange={(e) => setHor("inicio", e.target.value)} /></label>
+                      <label><div className="vx-label">Horário de fim</div><input type="time" className="vx-input" value={hor.fim || "18:00"} onChange={(e) => setHor("fim", e.target.value)} /></label>
+                    </div>
+                    <label><div className="vx-label">Fuso horário</div>
+                      <select className="vx-input" value={hor.fuso || "America/Sao_Paulo"} onChange={(e) => setHor("fuso", e.target.value)}>
+                        <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
+                        <option value="America/Manaus">Manaus (GMT-4)</option>
+                        <option value="America/Belem">Belém (GMT-3)</option>
+                        <option value="America/Recife">Recife (GMT-3)</option>
+                        <option value="America/Fortaleza">Fortaleza (GMT-3)</option>
+                        <option value="America/Cuiaba">Cuiabá (GMT-4)</option>
+                        <option value="America/Porto_Velho">Porto Velho (GMT-4)</option>
+                        <option value="America/Rio_Branco">Rio Branco (GMT-5)</option>
+                        <option value="America/Noronha">Fernando de Noronha (GMT-2)</option>
+                      </select>
+                    </label>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>

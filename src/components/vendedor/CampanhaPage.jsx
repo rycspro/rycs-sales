@@ -3,7 +3,7 @@ import {
   ArrowLeft, Target, BookOpen, Zap, Users, BarChart2, Award,
   CheckCircle, XCircle, TrendingUp, Calendar,
   DollarSign, Shield, ChevronDown, ChevronUp, ClipboardCheck,
-  ShieldCheck, AlertCircle, ArrowRight, MessageCircle
+  ShieldCheck, AlertCircle, ArrowRight, MessageCircle, Phone, Mail, Clock
 } from "lucide-react";
 import { money } from "../../lib/utils.js";
 import { ACOES, TAXA } from "../../lib/constants.js";
@@ -523,6 +523,50 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
               ))}
             </div>
           )}
+          {/* Suporte da empresa */}
+          {(() => {
+            const sup = campanha.suporte;
+            if (!sup?.canais?.length) return null;
+            const canaisVisiveis = [
+              { key: "chat", Icon: MessageCircle, label: "Chat da RYCS", acao: () => setAba("chat") },
+              { key: "whatsapp", Icon: Phone, label: "WhatsApp", acao: () => { const num = (sup.whatsappSuporte || "").replace(/\D/g, ""); if (num) window.open(`https://wa.me/${num}`, "_blank"); } },
+              { key: "email", Icon: Mail, label: "E-mail", acao: () => { if (sup.emailSuporte) window.open(`mailto:${sup.emailSuporte}`, "_blank"); } },
+            ].filter((c) => sup.canais.includes(c.key) && (c.key === "chat" || (c.key === "whatsapp" && sup.whatsappSuporte) || (c.key === "email" && sup.emailSuporte)));
+            if (!canaisVisiveis.length) return null;
+            const descDisp = {
+              comercial: "Seg–Sex, 09h–18h",
+              sempre: "24 horas, 7 dias por semana",
+              personalizado: (() => {
+                const h = sup.horariosPersonalizados || {};
+                const nomes = { seg: "Seg", ter: "Ter", qua: "Qua", qui: "Qui", sex: "Sex", sab: "Sáb", dom: "Dom" };
+                const dias = (h.dias || []).map((d) => nomes[d] || d).join(", ");
+                return [dias, h.inicio && h.fim ? `${h.inicio}–${h.fim}` : ""].filter(Boolean).join(", ");
+              })(),
+            }[sup.disponibilidade || "comercial"];
+            return (
+              <div className="vx-card" style={{ padding: 16, marginBottom: 14 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3 }}>Precisa de ajuda nesta campanha?</div>
+                <div className="vx-mut" style={{ fontSize: 12.5, marginBottom: 12 }}>Entre em contato com a equipe responsável.</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {canaisVisiveis.map(({ key, Icon: Ic, label, acao }) => (
+                    <button key={key} onClick={acao} style={{
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 7, padding: "12px 18px",
+                      border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface)", cursor: "pointer",
+                      flex: "1 0 auto", minWidth: 90, transition: "border-color .15s",
+                    }}>
+                      <Ic size={20} color="var(--brand)" />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>{label}</span>
+                    </button>
+                  ))}
+                </div>
+                {descDisp && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, fontSize: 12 }} className="vx-mut">
+                    <Clock size={13} /> {descDisp}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
