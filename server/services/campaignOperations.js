@@ -259,6 +259,9 @@ export function obterOperacaoCampanha(companyId, campaignId, opcoes = {}) {
     profissionais,
     financeiro,
     alertas: gerarAlertasCampanha({ profissionais, financeiro, variacaoReunioes, taxaAprovacaoAtual, taxaAprovacaoAnterior }),
+    reunioes: db.prepare(`SELECT r.*, s1.nome sdrNome, s2.nome closerNome, l.nome leadNome
+      FROM campaign_reunioes r LEFT JOIN sellers s1 ON s1.id = r.sellerSdrId LEFT JOIN sellers s2 ON s2.id = r.sellerCloserId LEFT JOIN leads l ON l.id = r.leadId
+      WHERE r.campaignId = ? AND r.companyId = ? ORDER BY r.data DESC, r.horaInicio DESC LIMIT 100`).all(campaignId, companyId),
     eventos: listarEventosCampanha(companyId, campaignId, 40),
     origem: {
       investimento: "liquidações da razão financeira",

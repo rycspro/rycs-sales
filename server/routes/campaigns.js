@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sugerirCampanha } from "../services/campanhaAssistida.js";
+import { sugerirCampanha, gerarICPDeterministico, recomendarAtividadesDeterministico, recomendarComprovacoesDeterministico } from "../services/campanhaAssistida.js";
 import db, { uid, agora } from "../db.js";
 import { campanhaPodeSerPublicada, STATUS_CAMPANHA, saldoDisponivel, isPremium } from "../../shared/empresa.js";
 import { dentroDoLimite } from "../../shared/planos.js";
@@ -1380,6 +1380,1120 @@ router.post("/campaigns/:id/recomendacoes", async (req, res) => {
   }
 
   res.json({ recomendacoes, diagnostico });
+});
+
+// ── F2-039 a F2-048: Agenda SDR/Closer (disponibilidade + reuniões) ───────
+
+// F2-039: Profissional define sua disponibilidade na campanha
+router.put("/campaigns/:id/disponibilidade", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "vendedor") return res.status(403).json({ error: "Apenas profissional" });
+  const camp = db.prepare("SELECT id, companyId, status FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const vinculo = db.prepare("SELECT id FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId);
+  if (!vinculo) return res.status(403).json({ error: "Profissional não aprovado nesta campanha" });
+
+  const { slots } = req.body;
+  if (!Array.isArray(slots)) return res.status(400).json({ error: "slots deve ser um array" });
+
+  const diasValidos = new Set(["seg", "ter", "qua", "qui", "sex", "sab", "dom"]);
+  const horaRe = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const validados = [];
+  for (const s of slots.slice(0, 50)) {
+    if (!diasValidos.has(s.diaSemana) || !horaRe.test(s.horaInicio) || !horaRe.test(s.horaFim)) continue;
+    if (s.horaInicio >= s.horaFim) continue;
+    validados.push(s);
+  }
+
+  db.transaction(() => {
+    db.prepare("UPDATE campaign_disponibilidade SET ativo = 0 WHERE campaignId = ? AND sellerId = ?").run(camp.id, entityId);
+    const ins = db.prepare("INSERT INTO campaign_disponibilidade (id, campaignId, sellerId, diaSemana, horaInicio, horaFim, ativo, criadoEm) VALUES (?, ?, ?, ?, ?, ?, 1, ?)");
+    for (const s of validados) {
+      ins.run(uid(), camp.id, entityId, s.diaSemana, s.horaInicio, s.horaFim, agora());
+    }
+  })();
+
+  res.json({ ok: true, slots: validados.length });
+});
+
+// F2-040: Listar disponibilidade do profissional na campanha
+router.get("/campaigns/:id/disponibilidade", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const sellerId = role === "empresa" ? req.query.sellerId : entityId;
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && !db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId)) {
+    return res.status(403).json({ error: "Sem acesso" });
+  }
+  const slots = db.prepare("SELECT id, diaSemana, horaInicio, horaFim FROM campaign_disponibilidade WHERE campaignId = ? AND sellerId = ? AND ativo = 1").all(camp.id, sellerId || entityId);
+  res.json({ slots });
+});
+
+// F2-041: Horários disponíveis para agendamento (público para SDR)
+router.get("/campaigns/:id/horarios-disponiveis", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && !db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId)) {
+    return res.status(403).json({ error: "Sem acesso" });
+  }
+
+  const { data, closerId } = req.query;
+  if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ error: "data obrigatória (YYYY-MM-DD)" });
+
+  const diaSemana = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][new Date(data + "T12:00:00").getDay()];
+
+  let closers;
+  if (closerId) {
+    closers = db.prepare("SELECT sellerId FROM campaign_disponibilidade WHERE campaignId = ? AND sellerId = ? AND diaSemana = ? AND ativo = 1").all(camp.id, closerId, diaSemana);
+  } else {
+    closers = db.prepare("SELECT DISTINCT sellerId FROM campaign_disponibilidade WHERE campaignId = ? AND diaSemana = ? AND ativo = 1").all(camp.id, diaSemana);
+  }
+
+  const ocupados = db.prepare("SELECT sellerCloserId, horaInicio, horaFim FROM campaign_reunioes WHERE sellerCloserId IN (" + closers.map(() => "?").join(",") + ") AND data = ? AND status NOT IN ('cancelada', 'nao_compareceu')").all(...closers.map((c) => c.sellerId), data);
+  const ocupadoMap = {};
+  for (const o of ocupados) {
+    if (!ocupadoMap[o.sellerCloserId]) ocupadoMap[o.sellerCloserId] = [];
+    ocupadoMap[o.sellerCloserId].push({ i: o.horaInicio, f: o.horaFim });
+  }
+
+  const horarios = [];
+  for (const c of closers) {
+    const slots = db.prepare("SELECT horaInicio, horaFim FROM campaign_disponibilidade WHERE campaignId = ? AND sellerId = ? AND diaSemana = ? AND ativo = 1").all(camp.id, c.sellerId, diaSemana);
+    for (const sl of slots) {
+      const conflito = (ocupadoMap[c.sellerId] || []).some((o) => sl.horaInicio < o.f && sl.horaFim > o.i);
+      if (!conflito) {
+        const seller = db.prepare("SELECT nome FROM sellers WHERE id = ?").get(c.sellerId);
+        horarios.push({ closerId: c.sellerId, closerNome: seller?.nome || "", horaInicio: sl.horaInicio, horaFim: sl.horaFim });
+      }
+    }
+  }
+
+  res.json({ data, diaSemana, horarios });
+});
+
+// F2-042/043: Agendar reunião (SDR agenda com closer) — reserva atômica
+router.post("/campaigns/:id/agendar", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && !db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId)) {
+    return res.status(403).json({ error: "Profissional não aprovado" });
+  }
+
+  const { closerId, leadId, data, horaInicio, horaFim, titulo, tipo, linkReuniao, local } = req.body;
+  if (!closerId || !data || !horaInicio || !horaFim) return res.status(400).json({ error: "closerId, data, horaInicio e horaFim obrigatórios" });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ error: "data inválida" });
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(horaInicio) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(horaFim)) return res.status(400).json({ error: "horário inválido" });
+  if (horaInicio >= horaFim) return res.status(400).json({ error: "horaInicio deve ser antes de horaFim" });
+
+  try {
+    const reuniao = db.transaction(() => {
+      const conflito = db.prepare("SELECT id FROM campaign_reunioes WHERE sellerCloserId = ? AND data = ? AND horaInicio < ? AND horaFim > ? AND status NOT IN ('cancelada', 'nao_compareceu')").get(closerId, data, horaFim, horaInicio);
+      if (conflito) throw new Error("Horário já reservado");
+      const id = uid();
+      const sdrId = role === "vendedor" ? entityId : (req.body.sdrId || "");
+      db.prepare(`INSERT INTO campaign_reunioes (id, campaignId, companyId, leadId, sellerSdrId, sellerCloserId, titulo, data, horaInicio, horaFim, status, tipo, linkReuniao, local, criadoEm)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'agendada', ?, ?, ?, ?)`).run(
+        id, camp.id, camp.companyId, leadId || "", sdrId, closerId,
+        String(titulo || "Reunião").slice(0, 200), data, horaInicio, horaFim,
+        String(tipo || "reuniao").slice(0, 30), String(linkReuniao || "").slice(0, 500),
+        String(local || "").slice(0, 200), agora()
+      );
+      return { id, data, horaInicio, horaFim, closerId, status: "agendada" };
+    }).immediate();
+    registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "MEETING_SCHEDULED", actorId: entityId, actorRole: role === "vendedor" ? "profissional" : "empresa", sellerId: closerId, leadId: leadId || null, dados: { reuniaoId: reuniao.id, data, horaInicio } });
+    res.json(reuniao);
+  } catch (err) {
+    res.status(409).json({ error: err.message });
+  }
+});
+
+// F2-044: Listar reuniões da campanha
+router.get("/campaigns/:id/reunioes", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && !db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId)) {
+    return res.status(403).json({ error: "Sem acesso" });
+  }
+
+  let where = "campaignId = ?";
+  const params = [camp.id];
+  if (role === "vendedor") {
+    where += " AND (sellerSdrId = ? OR sellerCloserId = ?)";
+    params.push(entityId, entityId);
+  }
+  if (req.query.status) {
+    where += " AND status = ?";
+    params.push(req.query.status);
+  }
+
+  const reunioes = db.prepare(`SELECT r.*, s1.nome sdrNome, s2.nome closerNome FROM campaign_reunioes r LEFT JOIN sellers s1 ON s1.id = r.sellerSdrId LEFT JOIN sellers s2 ON s2.id = r.sellerCloserId WHERE ${where} ORDER BY r.data DESC, r.horaInicio DESC LIMIT 200`).all(...params);
+  res.json({ reunioes });
+});
+
+// F2-045: Atualizar status da reunião (workflow completo)
+router.patch("/campaigns/:id/reunioes/:reuniaoId", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+
+  const reuniao = db.prepare("SELECT * FROM campaign_reunioes WHERE id = ? AND campaignId = ?").get(req.params.reuniaoId, camp.id);
+  if (!reuniao) return res.status(404).json({ error: "Reunião não encontrada" });
+
+  if (role === "vendedor") {
+    if (reuniao.sellerSdrId !== entityId && reuniao.sellerCloserId !== entityId) return res.status(403).json({ error: "Sem acesso a esta reunião" });
+  }
+
+  const statusValidos = { agendada: ["confirmada", "cancelada", "reagendada"], confirmada: ["realizada", "nao_compareceu", "cancelada", "reagendada"], realizada: ["venda", "negociacao", "perdida"] };
+  const { status, anotacoes, resultado, valorVenda, motivoPerda, dadosQualificacao } = req.body;
+
+  if (status) {
+    const permitidos = statusValidos[reuniao.status];
+    if (!permitidos || !permitidos.includes(status)) return res.status(400).json({ error: `Transição ${reuniao.status} → ${status} não permitida` });
+  }
+
+  const sets = [];
+  const vals = [];
+  if (status) { sets.push("status = ?"); vals.push(status); }
+  if (anotacoes !== undefined) { sets.push("anotacoes = ?"); vals.push(String(anotacoes).slice(0, 2000)); }
+  if (resultado !== undefined) { sets.push("resultado = ?"); vals.push(String(resultado).slice(0, 500)); }
+  if (valorVenda !== undefined) { sets.push("valorVenda = ?"); vals.push(Math.max(0, Number(valorVenda) || 0)); }
+  if (motivoPerda !== undefined) { sets.push("motivoPerda = ?"); vals.push(String(motivoPerda).slice(0, 500)); }
+  if (dadosQualificacao !== undefined) { sets.push("dadosQualificacao = ?"); vals.push(JSON.stringify(dadosQualificacao).slice(0, 5000)); }
+  sets.push("atualizadoEm = ?"); vals.push(agora());
+  if (status === "cancelada") { sets.push("canceladoEm = ?"); vals.push(agora()); }
+
+  if (!sets.length) return res.status(400).json({ error: "Nenhum campo para atualizar" });
+
+  vals.push(req.params.reuniaoId, camp.id);
+  db.prepare(`UPDATE campaign_reunioes SET ${sets.join(", ")} WHERE id = ? AND campaignId = ?`).run(...vals);
+
+  if (status === "realizada" || status === "venda") {
+    registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "MEETING_COMPLETED", actorId: entityId, actorRole: role === "vendedor" ? "profissional" : "empresa", sellerId: reuniao.sellerCloserId, leadId: reuniao.leadId || null, dados: { reuniaoId: reuniao.id, resultado: status } });
+  }
+  if (status === "venda" && Number(valorVenda) > 0) {
+    registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "SALE_RECORDED", actorId: entityId, actorRole: role === "vendedor" ? "profissional" : "empresa", sellerId: reuniao.sellerCloserId, leadId: reuniao.leadId || null, dados: { reuniaoId: reuniao.id, valorVenda } });
+  }
+
+  res.json({ ok: true, status: status || reuniao.status });
+});
+
+// F2-046: Reagendar reunião
+router.post("/campaigns/:id/reunioes/:reuniaoId/reagendar", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const reuniao = db.prepare("SELECT * FROM campaign_reunioes WHERE id = ? AND campaignId = ?").get(req.params.reuniaoId, camp.id);
+  if (!reuniao) return res.status(404).json({ error: "Reunião não encontrada" });
+
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && reuniao.sellerSdrId !== entityId && reuniao.sellerCloserId !== entityId) return res.status(403).json({ error: "Sem acesso" });
+  if (!["agendada", "confirmada"].includes(reuniao.status)) return res.status(400).json({ error: "Reunião não pode ser reagendada no status atual" });
+
+  const { data, horaInicio, horaFim, closerId } = req.body;
+  if (!data || !horaInicio || !horaFim) return res.status(400).json({ error: "data, horaInicio e horaFim obrigatórios" });
+
+  const novoCloser = closerId || reuniao.sellerCloserId;
+  try {
+    const nova = db.transaction(() => {
+      const conflito = db.prepare("SELECT id FROM campaign_reunioes WHERE sellerCloserId = ? AND data = ? AND horaInicio < ? AND horaFim > ? AND status NOT IN ('cancelada', 'nao_compareceu') AND id != ?").get(novoCloser, data, horaFim, horaInicio, reuniao.id);
+      if (conflito) throw new Error("Horário já reservado");
+      db.prepare("UPDATE campaign_reunioes SET status = 'reagendada', atualizadoEm = ? WHERE id = ?").run(agora(), reuniao.id);
+      const novoId = uid();
+      db.prepare(`INSERT INTO campaign_reunioes (id, campaignId, companyId, leadId, sellerSdrId, sellerCloserId, titulo, data, horaInicio, horaFim, status, tipo, linkReuniao, local, dadosQualificacao, criadoEm, reagendadoDe)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'agendada', ?, ?, ?, ?, ?, ?)`).run(
+        novoId, camp.id, camp.companyId, reuniao.leadId, reuniao.sellerSdrId, novoCloser,
+        reuniao.titulo, data, horaInicio, horaFim, reuniao.tipo, reuniao.linkReuniao, reuniao.local,
+        reuniao.dadosQualificacao, agora(), reuniao.id
+      );
+      return { id: novoId, data, horaInicio, horaFim, closerId: novoCloser, reagendadoDe: reuniao.id };
+    }).immediate();
+    registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "MEETING_SCHEDULED", actorId: entityId, actorRole: role === "vendedor" ? "profissional" : "empresa", sellerId: novoCloser, leadId: reuniao.leadId || null, dados: { reuniaoId: nova.id, reagendadoDe: reuniao.id, data, horaInicio } });
+    res.json(nova);
+  } catch (err) {
+    res.status(409).json({ error: err.message });
+  }
+});
+
+// ── F2-028/031/037: Enviar confirmação ao lead (WhatsApp/Email) ──────────
+import { enviarConfirmacao, verificarLimiteReenvio } from "../services/confirmacaoService.js";
+
+router.post("/campaigns/:id/enviar-confirmacao", async (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId, titulo FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const autorizado = role === "empresa" ? camp.companyId === entityId : !!db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId);
+  if (!autorizado) return res.status(403).json({ error: "Sem permissão" });
+
+  const { leadId, canal } = req.body;
+  if (!leadId || !canal) return res.status(400).json({ error: "leadId e canal obrigatórios" });
+  if (!["whatsapp", "email", "sms"].includes(canal)) return res.status(400).json({ error: "Canal inválido" });
+
+  const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(leadId);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+
+  const limite = verificarLimiteReenvio(leadId, camp.id);
+  if (!limite.podeReenviar) return res.status(429).json({ error: "Limite de reenvios atingido", ...limite });
+
+  let token = db.prepare("SELECT token FROM campaign_contacts WHERE campaignId = ? AND leadId = ? AND status = 'pendente' AND token IS NOT NULL").get(camp.id, leadId)?.token;
+  if (!token) {
+    token = uid();
+    const existe = db.prepare("SELECT id FROM campaign_contacts WHERE campaignId = ? AND leadId = ?").get(camp.id, leadId);
+    if (existe) {
+      db.prepare("UPDATE campaign_contacts SET token = ?, status = 'pendente', atualizadoEm = ? WHERE campaignId = ? AND leadId = ?").run(token, agora(), camp.id, leadId);
+    } else {
+      db.prepare("INSERT INTO campaign_contacts (id, campaignId, leadId, sellerId, token, status, criadoEm) VALUES (?, ?, ?, ?, ?, 'pendente', ?)").run(uid(), camp.id, leadId, role === "vendedor" ? entityId : "", token, agora());
+    }
+  }
+
+  const resultado = await enviarConfirmacao({ leadId, campaignId: camp.id, canal, token, lead, campanhaNome: camp.titulo });
+
+  if (resultado.enviado) {
+    db.prepare("UPDATE leads SET confirmacaoEnvios = COALESCE(confirmacaoEnvios, 0) + 1, confirmacaoUltimoEnvio = ? WHERE id = ?").run(agora(), leadId);
+  }
+
+  res.json(resultado);
+});
+
+// ── F2-022: Auto-save parcial do questionário ────────────────────────────
+router.patch("/campaigns/:id/leads/:leadId/qualificacao-parcial", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const autorizado = role === "empresa" ? camp.companyId === entityId : !!db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId);
+  if (!autorizado) return res.status(403).json({ error: "Sem permissão" });
+
+  const { respostas } = req.body;
+  if (!respostas || typeof respostas !== "object") return res.status(400).json({ error: "respostas obrigatório" });
+
+  db.prepare("UPDATE leads SET qualificacaoParcial = ? WHERE id = ?").run(JSON.stringify(respostas).slice(0, 10000), req.params.leadId);
+  res.json({ ok: true });
+});
+
+// ── F3: Indicadores reais da campanha ────────────────────────────────────
+router.get("/campaigns/:id/indicadores", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  if (role === "vendedor" && !db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId)) {
+    return res.status(403).json({ error: "Sem acesso" });
+  }
+
+  const cid = camp.id;
+  const totalLeads = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ?").get(cid).n;
+  const leadsPorStatus = db.prepare("SELECT status, COUNT(*) n FROM campaign_leads WHERE campaignId = ? GROUP BY status").all(cid);
+  const profissionaisAtivos = db.prepare("SELECT COUNT(*) n FROM campaign_applications WHERE campaignId = ? AND status = 'aprovado'").get(cid).n;
+  const profissionaisPendentes = db.prepare("SELECT COUNT(*) n FROM campaign_applications WHERE campaignId = ? AND status = 'pendente'").get(cid).n;
+
+  const reunioesPorStatus = db.prepare("SELECT status, COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? GROUP BY status").all(cid);
+  const reunioesMap = {};
+  for (const r of reunioesPorStatus) reunioesMap[r.status] = r.n;
+
+  const vendas = db.prepare("SELECT COUNT(*) n, COALESCE(SUM(valorVenda), 0) total FROM campaign_reunioes WHERE campaignId = ? AND status = 'venda'").get(cid);
+
+  const submissions = db.prepare("SELECT status, COUNT(*) n FROM submissions WHERE campaignId = ? GROUP BY status").all(cid);
+  const submissionsMap = {};
+  for (const s of submissions) submissionsMap[s.status] = s.n;
+
+  const gastoTotal = db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liquidacao' AND submissionId IN (SELECT id FROM submissions WHERE campaignId = ?)").get(camp.companyId, cid).t;
+  const reservado = db.prepare("SELECT COALESCE(SUM(valor), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'reserva_campanha' AND dados LIKE ?").get(camp.companyId, `%"campaignId":"${cid}"%`).t;
+
+  const totalReunioes = Object.values(reunioesMap).reduce((a, b) => a + b, 0);
+  const taxaConversaoLeadReuniao = totalLeads > 0 ? Math.round(((reunioesMap.realizada || 0) + (vendas.n || 0)) / totalLeads * 100) : 0;
+  const taxaConversaoReuniaoVenda = totalReunioes > 0 ? Math.round((vendas.n || 0) / totalReunioes * 100) : 0;
+
+  res.json({
+    leads: { total: totalLeads, porStatus: Object.fromEntries(leadsPorStatus.map((l) => [l.status, l.n])) },
+    profissionais: { ativos: profissionaisAtivos, pendentes: profissionaisPendentes },
+    reunioes: { ...reunioesMap, total: totalReunioes },
+    vendas: { total: vendas.n, valorTotal: vendas.total, ticketMedio: vendas.n > 0 ? Math.round(vendas.total / vendas.n * 100) / 100 : 0 },
+    submissions: submissionsMap,
+    financeiro: { orcamento: camp.orcamento || 0, reservado: Math.round(reservado * 100) / 100, gasto: Math.round(gastoTotal * 100) / 100, disponivel: Math.round(Math.max(0, (camp.orcamento || 0) - gastoTotal) * 100) / 100 },
+    conversao: { leadReuniao: taxaConversaoLeadReuniao, reuniaoVenda: taxaConversaoReuniaoVenda },
+  });
+});
+
+// ── F3: Candidaturas por campanha ────────────────────────────────────────
+router.get("/campaigns/:id/candidaturas", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp || camp.companyId !== entityId) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  let where = "ca.campaignId = ?";
+  const params = [camp.id];
+  if (req.query.status) { where += " AND ca.status = ?"; params.push(req.query.status); }
+
+  const candidaturas = db.prepare(`SELECT ca.*, s.nome, s.email, s.whatsapp, s.cidade, s.estado, s.foto FROM campaign_applications ca LEFT JOIN sellers s ON s.id = ca.sellerId WHERE ${where} ORDER BY ca.criadoEm DESC LIMIT 200`).all(...params);
+  res.json({ candidaturas });
+});
+
+// ── F3: Remover profissional da campanha ─────────────────────────────────
+router.post("/campaigns/:id/remover-profissional", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp || camp.companyId !== entityId) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const { sellerId, motivo } = req.body;
+  if (!sellerId) return res.status(400).json({ error: "sellerId obrigatório" });
+
+  db.transaction(() => {
+    db.prepare("UPDATE campaign_applications SET status = 'removido' WHERE campaignId = ? AND sellerId = ?").run(camp.id, sellerId);
+    db.prepare("UPDATE campaign_reunioes SET status = 'cancelada', canceladoEm = ?, atualizadoEm = ? WHERE campaignId = ? AND (sellerSdrId = ? OR sellerCloserId = ?) AND status IN ('agendada', 'confirmada')").run(agora(), agora(), camp.id, sellerId, sellerId);
+  })();
+
+  registrarEventoCampanha({ companyId: camp.companyId, campaignId: camp.id, tipo: "PROFESSIONAL_REJECTED", actorId: entityId, actorRole: "empresa", sellerId, dados: { motivo: String(motivo || "").slice(0, 300), acao: "removido" } });
+  res.json({ ok: true });
+});
+
+// ── F3: Adicionar verba à campanha em andamento ─────────────────────────
+router.post("/campaigns/:id/adicionar-verba", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id, companyId, orcamento FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const { valor } = req.body;
+  const v = Math.round((Number(valor) || 0) * 100) / 100;
+  if (v <= 0) return res.status(400).json({ error: "Valor inválido" });
+
+  try {
+    const posicao = reservarVerbaCampanha({ companyId: entityId, campaignId: camp.id, valor: v });
+    db.prepare("UPDATE campaigns SET orcamento = orcamento + ? WHERE id = ?").run(v, camp.id);
+    res.json({ ok: true, novoOrcamento: Math.round(((camp.orcamento || 0) + v) * 100) / 100, posicao });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ── F3: Pausar campanha ─────────────────────────────────────────────────
+router.post("/campaigns/:id/pausar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id, companyId, status FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (camp.status !== "ativa") return res.status(400).json({ error: "Campanha precisa estar ativa para pausar" });
+
+  db.prepare("UPDATE campaigns SET status = 'pausada', atualizadoEm = ? WHERE id = ?").run(agora(), camp.id);
+  registrarEventoCampanha({ companyId: entityId, campaignId: camp.id, tipo: "CAMPAIGN_PAUSED", actorId: entityId, actorRole: "empresa" });
+  res.json({ ok: true, status: "pausada" });
+});
+
+// ── F3: Retomar campanha ────────────────────────────────────────────────
+router.post("/campaigns/:id/retomar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id, companyId, status FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (camp.status !== "pausada") return res.status(400).json({ error: "Campanha precisa estar pausada para retomar" });
+
+  db.prepare("UPDATE campaigns SET status = 'ativa', atualizadoEm = ? WHERE id = ?").run(agora(), camp.id);
+  registrarEventoCampanha({ companyId: entityId, campaignId: camp.id, tipo: "CAMPAIGN_PUBLISHED", actorId: entityId, actorRole: "empresa", dados: { acao: "retomada" } });
+  res.json({ ok: true, status: "ativa" });
+});
+
+// ── F3: Relatório financeiro por campanha ────────────────────────────────
+router.get("/campaigns/:id/financeiro", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id, companyId, orcamento FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const cid = camp.id;
+  const reservado = db.prepare("SELECT COALESCE(SUM(valor), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'reserva_campanha' AND dados LIKE ?").get(entityId, `%"campaignId":"${cid}"%`).t;
+  const liberado = db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liberacao_campanha' AND dados LIKE ?").get(entityId, `%"campaignId":"${cid}"%`).t;
+  const gasto = db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liquidacao' AND submissionId IN (SELECT id FROM submissions WHERE campaignId = ?)").get(entityId, cid).t;
+
+  const porProfissional = db.prepare(`SELECT s.id, s.nome, COALESCE(SUM(ABS(fl.valor)), 0) total, COUNT(fl.id) qtd FROM financial_ledger fl JOIN sellers s ON s.id = fl.sellerId WHERE fl.companyId = ? AND fl.tipo = 'liquidacao' AND fl.submissionId IN (SELECT id FROM submissions WHERE campaignId = ?) GROUP BY s.id ORDER BY total DESC LIMIT 50`).all(entityId, cid);
+
+  const porFormaGanho = db.prepare(`SELECT fg.nome, fg.tipo, COALESCE(SUM(ABS(fl.valor)), 0) total, COUNT(fl.id) qtd FROM financial_ledger fl JOIN submissions sub ON sub.id = fl.submissionId JOIN formas_ganho fg ON fg.id = sub.formaGanhoId WHERE fl.companyId = ? AND fl.tipo = 'liquidacao' AND sub.campaignId = ? GROUP BY fg.id ORDER BY total DESC`).all(entityId, cid);
+
+  res.json({
+    orcamento: camp.orcamento || 0,
+    reservado: Math.round(reservado * 100) / 100,
+    liberado: Math.round(liberado * 100) / 100,
+    gasto: Math.round(gasto * 100) / 100,
+    saldoRestante: Math.round(Math.max(0, (camp.orcamento || 0) - gasto) * 100) / 100,
+    porProfissional,
+    porFormaGanho,
+  });
+});
+
+// ── Duplicação de campanha ───────────────────────────────────────────────
+router.post("/campaigns/:id/duplicar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const novoId = uid();
+  const agr = Date.now();
+  const cols = Object.keys(camp).filter((c) => !["id", "status", "criadoEm", "atualizadoEm", "reservado"].includes(c));
+  const ins = db.prepare(`INSERT INTO campaigns (id, ${cols.join(", ")}, status, criadoEm, atualizadoEm, reservado, titulo)
+    VALUES (@id, ${cols.map((c) => "@" + c).join(", ")}, 'rascunho', @criadoEm, @atualizadoEm, 0, @novoTitulo)`);
+  const params = { id: novoId, criadoEm: agr, atualizadoEm: agr, novoTitulo: `${camp.titulo} (cópia)` };
+  for (const c of cols) params[c] = camp[c];
+  try { ins.run(params); } catch (e) {
+    console.error("[duplicar] erro:", e.message);
+    return res.status(500).json({ error: "Falha ao duplicar" });
+  }
+  const formas = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ?").all(camp.id);
+  for (const f of formas) {
+    const fId = uid();
+    const fCols = Object.keys(f).filter((c) => c !== "id" && c !== "campaignId");
+    try {
+      db.prepare(`INSERT INTO formas_ganho (id, campaignId, ${fCols.join(", ")}) VALUES (?, ?, ${fCols.map(() => "?").join(", ")})`)
+        .run(fId, novoId, ...fCols.map((c) => f[c]));
+    } catch (e) { /* coluna opcional */ }
+  }
+  const materiais = db.prepare("SELECT * FROM materiais_campanhas WHERE campaignId = ?").all(camp.id);
+  for (const m of materiais) {
+    try {
+      db.prepare("INSERT INTO materiais_campanhas (id, campaignId, materialId, categoria, obrigatoriedade, acaoVinculada, ordem, regraAcesso) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        .run(uid(), novoId, m.materialId, m.categoria || "outros", m.obrigatoriedade || "complementar", m.acaoVinculada || "", m.ordem || 0, m.regraAcesso || "todos");
+    } catch (e) { /* ok */ }
+  }
+  res.json({ id: novoId, titulo: `${camp.titulo} (cópia)`, status: "rascunho" });
+});
+
+// ── Seleção de contatos para campanha ────────────────────────────────────
+router.post("/campaigns/:id/contatos/selecionar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const { leadIds } = req.body;
+  if (!Array.isArray(leadIds) || !leadIds.length) return res.status(400).json({ error: "leadIds obrigatório" });
+  const ins = db.prepare("INSERT OR IGNORE INTO campaign_leads (id, campaignId, leadId, status, criadoEm) VALUES (?, ?, ?, 'disponivel', ?)");
+  let adicionados = 0;
+  const agr = Date.now();
+  for (const lid of leadIds.slice(0, 5000)) {
+    const lead = db.prepare("SELECT id FROM leads WHERE id = ? AND companyId = ?").get(lid, entityId);
+    if (!lead) continue;
+    const r = ins.run(uid(), camp.id, lid, agr);
+    if (r.changes) adicionados++;
+  }
+  const total = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ?").get(camp.id).n;
+  res.json({ adicionados, total });
+});
+
+// ── Distribuição automática de leads ─────────────────────────────────────
+router.post("/campaigns/:id/distribuicao-automatica", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const profissionais = db.prepare("SELECT sellerId FROM campaign_applications WHERE campaignId = ? AND status = 'aprovado'").all(camp.id);
+  if (!profissionais.length) return res.status(400).json({ error: "Nenhum profissional aprovado" });
+  const disponiveis = db.prepare("SELECT id FROM campaign_leads WHERE campaignId = ? AND status = 'disponivel'").all(camp.id);
+  if (!disponiveis.length) return res.json({ distribuidos: 0, profissionais: profissionais.length });
+  const agr = Date.now();
+  const upd = db.prepare("UPDATE campaign_leads SET status = 'atribuido', sellerId = ?, atribuidoEm = ? WHERE id = ?");
+  let idx = 0;
+  for (const lead of disponiveis) {
+    upd.run(profissionais[idx % profissionais.length].sellerId, agr, lead.id);
+    idx++;
+  }
+  res.json({ distribuidos: disponiveis.length, profissionais: profissionais.length });
+});
+
+// ── Configuração de canais de confirmação ────────────────────────────────
+router.patch("/campaigns/:id/configuracao-confirmacao", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT id FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const { canais, mensagemPersonalizada, prazoHoras } = req.body;
+  const config = { canais: canais || {}, mensagemPersonalizada: (mensagemPersonalizada || "").slice(0, 1000), prazoHoras: Number(prazoHoras) || 48 };
+  db.prepare("UPDATE campaigns SET configConfirmacao = ?, atualizadoEm = ? WHERE id = ?").run(JSON.stringify(config), Date.now(), camp.id);
+  res.json({ ok: true });
+});
+
+// ── Cobertura financeira ─────────────────────────────────────────────────
+router.get("/campaigns/:id/cobertura-financeira", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const camp = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const posicao = posicaoEmpresa(entityId);
+  const formas = db.prepare("SELECT valor FROM formas_ganho WHERE campaignId = ? AND ativo = 1").all(camp.id);
+  const totalLeads = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ?").get(camp.id).n;
+  const custoEstimado = formas.reduce((s, f) => s + (f.valor || 0), 0) * Math.max(1, totalLeads);
+  const cobertura = custoEstimado > 0 ? Math.round(((posicao?.disponivel || 0) / custoEstimado) * 10000) / 100 : 100;
+  const alertas = [];
+  if (cobertura < 50) alertas.push("Verba cobre menos de 50% do custo estimado. Considere adicionar saldo.");
+  if (cobertura < 10) alertas.push("Verba crítica: menos de 10% de cobertura.");
+  if (totalLeads === 0) alertas.push("Nenhum contato vinculado à campanha.");
+  res.json({ verba: camp.orcamento || 0, saldoDisponivel: posicao?.disponivel || 0, custoEstimado: Math.round(custoEstimado * 100) / 100, cobertura, alertas });
+});
+
+// ── Agendamentos de campanha (SDR/Closer scheduling) ─────────────────────
+router.get("/campaigns/:id/agendamentos", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  let where = "s.campaignId = ?";
+  const params = [camp.id];
+  if (role === "empresa") {
+    if (camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  } else if (role === "vendedor") {
+    const aprov = db.prepare("SELECT id FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId);
+    if (!aprov) return res.status(403).json({ error: "Sem permissão" });
+    where += " AND s.sellerId = ?";
+    params.push(entityId);
+  } else { return res.status(403).json({ error: "Sem permissão" }); }
+
+  if (req.query.status) { where += " AND s.status = ?"; params.push(req.query.status); }
+  if (req.query.de) { where += " AND s.dataHora >= ?"; params.push(Number(req.query.de)); }
+  if (req.query.ate) { where += " AND s.dataHora <= ?"; params.push(Number(req.query.ate)); }
+
+  const rows = db.prepare(`SELECT s.*, l.nome AS leadNome FROM campaign_schedules s LEFT JOIN leads l ON l.id = s.leadId WHERE ${where} ORDER BY s.dataHora ASC LIMIT 500`).all(...params);
+  res.json(rows);
+});
+
+router.post("/campaigns/:id/agendamentos", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  let sellerId;
+  if (role === "empresa") {
+    if (camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+    sellerId = req.body.sellerId;
+    if (!sellerId) return res.status(400).json({ error: "sellerId obrigatório para empresa" });
+  } else if (role === "vendedor") {
+    const aprov = db.prepare("SELECT id FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId);
+    if (!aprov) return res.status(403).json({ error: "Sem permissão" });
+    sellerId = entityId;
+  } else { return res.status(403).json({ error: "Sem permissão" }); }
+
+  const { leadId, tipo, titulo, descricao, dataHora, duracao, local: loc, linkOnline, observacoes } = req.body;
+  if (!dataHora || dataHora < Date.now()) return res.status(400).json({ error: "dataHora deve ser futura" });
+  const tiposValidos = ["reuniao", "visita", "ligacao", "follow", "apresentacao", "outro"];
+  if (!tiposValidos.includes(tipo || "reuniao")) return res.status(400).json({ error: "Tipo inválido" });
+
+  const id = uid();
+  const agr = Date.now();
+  db.prepare(`INSERT INTO campaign_schedules (id, campaignId, sellerId, leadId, tipo, titulo, descricao, dataHora, duracao, status, local, linkOnline, observacoes, criadoEm, atualizadoEm)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'agendado', ?, ?, ?, ?, ?)`)
+    .run(id, camp.id, sellerId, leadId || "", tipo || "reuniao", (titulo || "").slice(0, 200), (descricao || "").slice(0, 1000), dataHora, duracao || 30, (loc || "").slice(0, 300), (linkOnline || "").slice(0, 500), (observacoes || "").slice(0, 1000), agr, agr);
+
+  res.status(201).json({ id, campaignId: camp.id, sellerId, tipo: tipo || "reuniao", dataHora, status: "agendado" });
+});
+
+router.patch("/campaigns/:id/agendamentos/:schedId", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
+  const sched = db.prepare("SELECT * FROM campaign_schedules WHERE id = ? AND campaignId = ?").get(req.params.schedId, camp.id);
+  if (!sched) return res.status(404).json({ error: "Agendamento não encontrado" });
+
+  if (role === "empresa") {
+    if (camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  } else if (role === "vendedor") {
+    if (sched.sellerId !== entityId) return res.status(403).json({ error: "Sem permissão" });
+  } else { return res.status(403).json({ error: "Sem permissão" }); }
+
+  const statusValidos = { agendado: ["realizado", "cancelado", "reagendado"], reagendado: ["realizado", "cancelado"] };
+  if (req.body.status && req.body.status !== sched.status) {
+    const permitidos = statusValidos[sched.status] || [];
+    if (!permitidos.includes(req.body.status)) return res.status(400).json({ error: `Transição ${sched.status} → ${req.body.status} não permitida` });
+  }
+
+  const campos = ["titulo", "descricao", "dataHora", "duracao", "status", "local", "linkOnline", "observacoes"];
+  const sets = [];
+  const vals = [];
+  for (const c of campos) {
+    if (req.body[c] !== undefined) { sets.push(`${c} = ?`); vals.push(c === "local" ? req.body[c] : req.body[c]); }
+  }
+  if (!sets.length) return res.status(400).json({ error: "Nenhum campo para atualizar" });
+  sets.push("atualizadoEm = ?");
+  vals.push(Date.now());
+  vals.push(sched.id);
+  db.prepare(`UPDATE campaign_schedules SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
+  res.json({ ok: true, id: sched.id });
+});
+
+// ── Agendamentos do vendedor (todos as campanhas) ────────────────────────
+router.get("/vendedor/agendamentos", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "vendedor") return res.status(403).json({ error: "Apenas vendedor" });
+  let where = "s.sellerId = ?";
+  const params = [entityId];
+  if (req.query.status) { where += " AND s.status = ?"; params.push(req.query.status); }
+  if (req.query.de) { where += " AND s.dataHora >= ?"; params.push(Number(req.query.de)); }
+  if (req.query.ate) { where += " AND s.dataHora <= ?"; params.push(Number(req.query.ate)); }
+  const rows = db.prepare(`SELECT s.*, c.titulo AS campanhaTitulo, l.nome AS leadNome
+    FROM campaign_schedules s
+    LEFT JOIN campaigns c ON c.id = s.campaignId
+    LEFT JOIN leads l ON l.id = s.leadId
+    WHERE ${where} ORDER BY s.dataHora ASC LIMIT 500`).all(...params);
+  res.json(rows);
+});
+
+// ── F1-017: Gerar ICP com IA ───────────────────────────────────────────
+router.post("/campaigns/gerar-icp", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const { objetivo, funcao, produto, regiao, mercado, empresa: empInput } = req.body;
+  try {
+    const { gerarICPDeterministico } = await import("../services/campanhaAssistida.js");
+    const empresa = db.prepare("SELECT nome, segmento, produto, icp, ticket FROM companies WHERE id = ?").get(entityId) || {};
+    const resultado = gerarICPDeterministico(
+      { ...empresa, ...(empInput || {}) },
+      { objetivo, funcao, produto: produto || empresa.produto, regiao, mercado }
+    );
+    res.json({ icp: resultado.icp, icpEstruturado: resultado.estruturado, fonte: resultado.fonte });
+  } catch (e) {
+    res.status(500).json({ error: "Erro ao gerar ICP" });
+  }
+});
+
+// ── F1-019: Recomendar atividades com IA ────────────────────────────────
+router.post("/campaigns/recomendar-atividades", async (req, res) => {
+  const { role } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const { objetivo, funcao, mercado, origemLeads, canais, produto } = req.body;
+  try {
+    const { recomendarAtividadesDeterministico } = await import("../services/campanhaAssistida.js");
+    const resultado = recomendarAtividadesDeterministico({ objetivo, funcao, mercado, origemLeads, canais, produto });
+    const atividades = resultado.atividades.map((a) => ({ id: a.eventoComercial, nome: a.nome, descricao: a.descricao, valorSugerido: a.valorSugerido }));
+    const valores = {};
+    resultado.atividades.forEach((a) => { if (a.valorSugerido) valores[a.eventoComercial] = a.valorSugerido; });
+    res.json({ atividades, valores, fonte: resultado.fonte });
+  } catch (e) {
+    res.status(500).json({ error: "Erro ao recomendar atividades" });
+  }
+});
+
+// ── F1-020: Recomendar comprovações com IA ──────────────────────────────
+router.post("/campaigns/recomendar-comprovacoes", async (req, res) => {
+  const { role } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const { atividade, funcao, objetivo, canais } = req.body;
+  try {
+    const { recomendarComprovacoesDeterministico } = await import("../services/campanhaAssistida.js");
+    const resultado = recomendarComprovacoesDeterministico([{ nome: atividade, eventoComercial: atividade }]);
+    const evidencias = (resultado.comprovacoes[0]?.evidencias || []).map((e) => ({
+      id: e.tipo === "captura_tela" ? "envio_imagem" : e.tipo === "contrato" ? "envio_documento" : e.tipo === "convite_calendario" ? "registro_calendario" : e.tipo === "resumo" ? "envio_documento" : e.tipo === "foto_geolocalizacao" ? "envio_imagem" : "evidencia_personalizada",
+      nome: e.descricao,
+      obrigatoria: e.obrigatoria,
+    }));
+    res.json({ evidencias, metodoAprovacao: "manual", fonte: resultado.fonte });
+  } catch (e) {
+    res.status(500).json({ error: "Erro ao recomendar comprovações" });
+  }
+});
+
+// ── F1-023: Duplicar campanha ───────────────────────────────────────────
+router.post("/campaigns/:id/duplicar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const original = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!original) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const novoId = uid();
+  const agr = agora();
+  const cols = Object.keys(original).filter((k) => !["id", "criadoEm", "atualizadoEm", "status", "publicadaEm"].includes(k));
+  const valores = cols.map((k) => original[k]);
+
+  db.prepare(`INSERT INTO campaigns (id, ${cols.join(", ")}, status, criadoEm, atualizadoEm)
+    VALUES (?, ${cols.map(() => "?").join(", ")}, 'rascunho', ?, ?)`)
+    .run(novoId, ...valores, agr, agr);
+
+  db.prepare("UPDATE campaigns SET titulo = ? WHERE id = ?").run(`${original.titulo || "Campanha"} (cópia)`, novoId);
+
+  const novaFormas = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ?").all(original.id);
+  for (const fg of novaFormas) {
+    const fgId = uid();
+    db.prepare(`INSERT INTO formas_ganho (id, campaignId, companyId, nome, tipo, tipoRemuneracao, valor, eventoComercial, descricao, metodoAprovacao, evidencias, condicoesRecebimento, limiteDiario, limiteSemanal, limiteMensal, limitePorProfissional, limitePorLead, limiteTotalCampanha, dependeDeAcao, prazoValidacaoHoras, frequenciaPagamento, condicoesAdicionais, regraCumulatividade, baseCalculo, ativa, criadoEm, atualizadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(fgId, novoId, entityId, fg.nome, fg.tipo, fg.tipoRemuneracao, fg.valor, fg.eventoComercial, fg.descricao, fg.metodoAprovacao, fg.evidencias, fg.condicoesRecebimento, fg.limiteDiario, fg.limiteSemanal, fg.limiteMensal, fg.limitePorProfissional, fg.limitePorLead, fg.limiteTotalCampanha, fg.dependeDeAcao, fg.prazoValidacaoHoras, fg.frequenciaPagamento, fg.condicoesAdicionais, fg.regraCumulatividade, fg.baseCalculo, fg.ativa, agr, agr);
+  }
+
+  const nova = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(novoId);
+  res.json(nova);
+});
+
+// ── F3: Métricas avançadas (qualificação, funil, confirmações, reuniões) ──
+
+router.get("/campaigns/:id/metricas-avancadas", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const cid = campaign.id;
+
+  const qualLeads = db.prepare("SELECT qualificacaoClassificacao AS cls, COUNT(*) AS n FROM leads WHERE campaignId = ? AND qualificacaoClassificacao IS NOT NULL AND qualificacaoClassificacao != '' GROUP BY qualificacaoClassificacao").all(cid);
+  const qualMap = Object.fromEntries(qualLeads.map(r => [r.cls, r.n]));
+
+  const qualificados = {
+    total: (qualMap.alta || 0) + (qualMap.media || 0) + (qualMap.baixa || 0),
+    alta: qualMap.alta || 0, media: qualMap.media || 0, baixa: qualMap.baixa || 0,
+    desqualificados: qualMap.desqualificado || 0,
+  };
+
+  const etapas = db.prepare("SELECT etapa, COUNT(*) AS total FROM leads WHERE campaignId = ? GROUP BY etapa").all(cid);
+  const totalLeads = etapas.reduce((s, e) => s + e.total, 0) || 1;
+  const funil = etapas.map(e => ({ etapa: e.etapa, total: e.total, percentual: Math.round((e.total / totalLeads) * 100) }));
+
+  const confStats = db.prepare("SELECT confirmacaoStatus AS st, COUNT(*) AS n FROM leads WHERE campaignId = ? AND confirmacaoStatus IS NOT NULL AND confirmacaoStatus != '' GROUP BY confirmacaoStatus").all(cid);
+  const confMap = Object.fromEntries(confStats.map(r => [r.st, r.n]));
+  const confirmacoes = {
+    enviadas: (confMap.aguardando || 0) + (confMap.confirmada || 0) + (confMap.nao_reconhecida || 0) + (confMap.expirada || 0),
+    confirmadas: confMap.confirmada || 0, naoReconhecidas: confMap.nao_reconhecida || 0, expiradas: confMap.expirada || 0,
+  };
+
+  const reunStats = db.prepare("SELECT status, COUNT(*) AS n FROM campaign_reunioes WHERE campaignId = ? GROUP BY status").all(cid);
+  const reunMap = Object.fromEntries(reunStats.map(r => [r.status, r.n]));
+  const agendadas = reunMap.agendada || 0;
+  const realizadas = reunMap.realizada || 0;
+  const reunioes = {
+    agendadas, realizadas, canceladas: reunMap.cancelada || 0, naoCompareceu: reunMap.nao_compareceu || 0,
+    taxaComparecimento: agendadas > 0 ? Math.round((realizadas / agendadas) * 100) : 0,
+  };
+
+  res.json({ qualificados, funil, confirmacoes, reunioes });
+});
+
+// ── F3: Metas, projeções e planejamento vs realizado ────────────────────
+
+router.get("/campaigns/:id/metas-projecoes", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const cid = campaign.id;
+  const meta = Number(campaign.metaQuantitativa) || 0;
+  const duracaoDias = Number(campaign.duracaoDias) || 30;
+  const inicio = Number(campaign.criadoEm) || Date.now();
+  const diasDecorridos = Math.max(1, Math.ceil((Date.now() - inicio) / (1000 * 60 * 60 * 24)));
+  const diasRestantes = Math.max(0, duracaoDias - diasDecorridos);
+
+  const totalLeadsTrabalhados = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ? AND status != 'disponivel'").get(cid).n;
+  const totalQualificados = db.prepare("SELECT COUNT(*) n FROM leads WHERE campaignId = ? AND qualificacaoClassificacao IN ('alta','media')").get(cid).n;
+  const totalReunioes = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND status IN ('agendada','confirmada','realizada','venda')").get(cid).n;
+  const totalReunioesRealizadas = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND status IN ('realizada','venda')").get(cid).n;
+  const totalVendas = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND status = 'venda'").get(cid).n;
+
+  const ritmo = {
+    leadsPorDia: Math.round((totalLeadsTrabalhados / diasDecorridos) * 10) / 10,
+    qualificadosPorDia: Math.round((totalQualificados / diasDecorridos) * 10) / 10,
+    reunioesPorDia: Math.round((totalReunioes / diasDecorridos) * 10) / 10,
+    vendasPorDia: Math.round((totalVendas / diasDecorridos) * 10) / 10,
+  };
+
+  const projecao = {
+    leadsProjetados: Math.round(ritmo.leadsPorDia * duracaoDias),
+    qualificadosProjetados: Math.round(ritmo.qualificadosPorDia * duracaoDias),
+    reunioesProjetadas: Math.round(ritmo.reunioesPorDia * duracaoDias),
+    vendasProjetadas: Math.round(ritmo.vendasPorDia * duracaoDias),
+  };
+
+  let planejamento = null;
+  try { planejamento = JSON.parse(campaign.planejamentoReverso || "null"); } catch { /* */ }
+
+  let comparacao = null;
+  if (planejamento && planejamento.etapas) {
+    comparacao = planejamento.etapas.map(etapa => {
+      let realizado = 0;
+      if (etapa.id === "vendas") realizado = totalVendas;
+      else if (etapa.id === "reunioes_realizadas") realizado = totalReunioesRealizadas;
+      else if (etapa.id === "reunioes_agendadas") realizado = totalReunioes;
+      else if (etapa.id === "contatos_qualificados" || etapa.id === "leads_qualificados") realizado = totalQualificados;
+      else if (etapa.id === "contatos_trabalhados") realizado = totalLeadsTrabalhados;
+      return { id: etapa.id, nome: etapa.nome, planejado: etapa.quantidade, realizado, percentual: etapa.quantidade > 0 ? Math.round((realizado / etapa.quantidade) * 100) : 0 };
+    });
+  }
+
+  const metasDiarias = meta > 0 ? Math.round((meta / duracaoDias) * 10) / 10 : 0;
+  res.json({ meta, diasDecorridos, diasRestantes, duracaoDias, realizado: { leadsTrabalhados: totalLeadsTrabalhados, qualificados: totalQualificados, reunioes: totalReunioes, reunioesRealizadas: totalReunioesRealizadas, vendas: totalVendas }, ritmo, projecao, comparacao, metasIntermediarias: { diaria: metasDiarias, semanal: Math.round(metasDiarias * 7), meta, duracaoDias }, planejamento });
+});
+
+// ── F3: Alertas proativos ───────────────────────────────────────────────
+
+router.get("/campaigns/:id/alertas", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const cid = campaign.id;
+  const alertas = [];
+
+  const disponiveis = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ? AND status = 'disponivel'").get(cid).n;
+  const totalLeads = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ?").get(cid).n;
+  if (totalLeads > 0 && disponiveis <= Math.max(3, Math.ceil(totalLeads * 0.1))) {
+    alertas.push({ tipo: "contatos_baixos", severidade: disponiveis === 0 ? "critica" : "alta", mensagem: disponiveis === 0 ? "Nenhum contato disponível para distribuição." : `Apenas ${disponiveis} contato(s) disponível(is).`, sugestao: "Adicione mais contatos ou importe uma nova lista." });
+  }
+
+  const trabalhados = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ? AND status != 'disponivel'").get(cid).n;
+  const qualificados = db.prepare("SELECT COUNT(*) n FROM leads WHERE campaignId = ? AND qualificacaoClassificacao IN ('alta','media')").get(cid).n;
+  if (trabalhados >= 20 && qualificados / trabalhados < 0.05) {
+    alertas.push({ tipo: "baixa_conversao", severidade: "alta", mensagem: `Apenas ${Math.round((qualificados / trabalhados) * 100)}% dos contatos trabalhados foram qualificados.`, sugestao: "Revise os critérios de qualificação ou o perfil dos contatos." });
+  }
+
+  const tresdiasAtras = Date.now() - (3 * 24 * 60 * 60 * 1000);
+  const profAtivos = db.prepare("SELECT sellerId FROM campaign_applications WHERE campaignId = ? AND status = 'aprovado'").all(cid);
+  for (const p of profAtivos) {
+    const ultimaAtividade = db.prepare("SELECT MAX(criadoEm) m FROM campaign_events WHERE campaignId = ? AND sellerId = ?").get(cid, p.sellerId);
+    if (!ultimaAtividade?.m || ultimaAtividade.m < tresdiasAtras) {
+      const seller = db.prepare("SELECT nome FROM sellers WHERE id = ?").get(p.sellerId);
+      alertas.push({ tipo: "profissional_inativo", severidade: "media", mensagem: `${seller?.nome || "Profissional"} está inativo há mais de 3 dias.`, sugestao: "Entre em contato para verificar disponibilidade." });
+    }
+  }
+
+  const pendentesAprov = db.prepare("SELECT COUNT(*) n FROM submissions WHERE campaignId = ? AND status = 'pendente'").get(cid).n;
+  if (pendentesAprov > 0) {
+    alertas.push({ tipo: "pendencias_aprovacao", severidade: pendentesAprov > 10 ? "alta" : "media", mensagem: `${pendentesAprov} tarefa(s) aguardando aprovação.`, sugestao: "Revise e aprove as pendências para manter os profissionais motivados." });
+  }
+
+  const orcamento = Number(campaign.orcamento) || 0;
+  if (orcamento > 0) {
+    const gasto = db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liquidacao' AND submissionId IN (SELECT id FROM submissions WHERE campaignId = ?)").get(campaign.companyId, cid).t;
+    const percentualUsado = Math.round((gasto / orcamento) * 100);
+    if (percentualUsado >= 80) {
+      alertas.push({ tipo: "verba_esgotando", severidade: percentualUsado >= 95 ? "critica" : "alta", mensagem: `${percentualUsado}% da verba da campanha já foi utilizada.`, sugestao: percentualUsado >= 95 ? "Adicione verba imediatamente para evitar a pausa automática." : "Considere adicionar mais verba para manter a campanha ativa." });
+    }
+  }
+
+  const candPendentes = db.prepare("SELECT COUNT(*) n FROM campaign_applications WHERE campaignId = ? AND status = 'pendente'").get(cid).n;
+  if (candPendentes > 0) {
+    alertas.push({ tipo: "candidaturas_pendentes", severidade: "media", mensagem: `${candPendentes} candidatura(s) aguardando análise.`, sugestao: "Avalie as candidaturas para expandir a equipe." });
+  }
+
+  res.json({ alertas });
+});
+
+// ── ESQ-24: Duplicação de campanha ──────────────────────────────────────
+
+router.post("/campaigns/:id/duplicar", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresa" });
+  const original = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!original) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== original.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const novoId = uid();
+  const cr = agora();
+
+  db.transaction(() => {
+    const cols = db.prepare("PRAGMA table_info(campaigns)").all().map(c => c.name).filter(c => c !== "id" && c !== "criadoEm" && c !== "status");
+    const selectCols = cols.map(c => `"${c}"`).join(", ");
+    db.prepare(`INSERT INTO campaigns (id, ${selectCols}, status, criadoEm) SELECT ?, ${selectCols}, 'rascunho', ? FROM campaigns WHERE id = ?`).run(novoId, cr, original.id);
+    db.prepare("UPDATE campaigns SET titulo = ?, versao = 1, passoWizard = 0 WHERE id = ?").run((original.titulo || "Campanha") + " (cópia)", novoId);
+
+    const formas = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ?").all(original.id);
+    for (const fg of formas) {
+      const fgId = uid();
+      const fgCols = db.prepare("PRAGMA table_info(formas_ganho)").all().map(c => c.name).filter(c => c !== "id" && c !== "campaignId" && c !== "criadoEm");
+      const vals = fgCols.map(c => fg[c] ?? null);
+      db.prepare(`INSERT INTO formas_ganho (id, campaignId, criadoEm, ${fgCols.map(c => `"${c}"`).join(", ")}) VALUES (?, ?, ?, ${fgCols.map(() => "?").join(", ")})`).run(fgId, novoId, cr, ...vals);
+    }
+
+    const materiais = db.prepare("SELECT * FROM materiais_campanhas WHERE campaignId = ?").all(original.id);
+    for (const m of materiais) {
+      db.prepare("INSERT OR IGNORE INTO materiais_campanhas (materialId, campaignId, vinculadoEm, categoria, obrigatoriedade, acaoVinculada, ordem, regraAcesso) VALUES (?,?,?,?,?,?,?,?)").run(m.materialId, novoId, cr, m.categoria, m.obrigatoriedade, m.acaoVinculada, m.ordem, m.regraAcesso);
+    }
+
+    registrarEventoCampanha({ companyId: original.companyId, campaignId: novoId, tipo: "CAMPAIGN_CREATED", actorId: req.user.id, actorRole: role, source: "USER", dados: { duplicadaDe: original.id } });
+  })();
+
+  res.json({ id: novoId });
+});
+
+// ── F1-017: Geração de ICP via IA ──────────────────────────────────────
+
+router.post("/campaigns/:id/gerar-icp", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  const empresa = db.prepare("SELECT nome, segmento, produto, ticket, icp FROM companies WHERE id = ?").get(entityId);
+
+  const base = gerarICPDeterministico(empresa || {}, campaign);
+  if (!process.env.ANTHROPIC_API_KEY) return res.json(base);
+
+  try {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 30000 });
+    const resp = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 600,
+      system: "Gere um perfil de cliente ideal (ICP) em JSON: {icp: string, estruturado: {segmento, porte, cargo_decisor, localizacao, ticket_minimo, necessidade, sinais_compra: string[], restricoes: string[]}}. Baseie-se nos dados fornecidos. Não invente dados que não existam.",
+      messages: [{ role: "user", content: `Empresa: ${empresa?.nome || "—"}\nSegmento: ${empresa?.segmento || "—"}\nProduto: ${empresa?.produto || campaign.produto || "—"}\nTicket: ${empresa?.ticket || "—"}\nICP atual: ${empresa?.icp || "—"}\nCampanha: ${campaign.titulo || "—"}\nObjetivo: ${campaign.objetivo || "—"}\nPúblico: ${campaign.publico || "—"}\nRegião: ${campaign.regiao || "—"}` }],
+    });
+    const txt = resp.content.map(b => b.text || "").join("");
+    const ia = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
+    res.json({ ...ia, fonte: "externo" });
+  } catch (err) {
+    console.error("[icp] IA indisponível:", err.message);
+    res.json(base);
+  }
+});
+
+// ── F1-019: Recomendação de atividades remuneradas via IA ──────────────
+
+router.post("/campaigns/:id/recomendar-atividades", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const base = recomendarAtividadesDeterministico(campaign);
+  if (!process.env.ANTHROPIC_API_KEY) return res.json(base);
+
+  try {
+    const empresa = db.prepare("SELECT nome, produto, ticket FROM companies WHERE id = ?").get(entityId);
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 30000 });
+    const resp = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 600,
+      system: "Recomende atividades remuneradas para uma campanha comercial. JSON: {atividades: [{nome, descricao, tipoRemuneracao: 'fixo'|'comissao', valorSugerido: number, eventoComercial, evidenciasNecessarias: string[], metodoAprovacao: 'manual'|'automatico'}]}. Máx 5. Valores realistas.",
+      messages: [{ role: "user", content: `Empresa: ${empresa?.nome || "—"}\nProduto: ${empresa?.produto || "—"}\nTicket: ${empresa?.ticket || "—"}\nObjetivo: ${campaign.objetivo || "vendas"}\nFunção: ${campaign.funcao || "SDR"}` }],
+    });
+    const txt = resp.content.map(b => b.text || "").join("");
+    const ia = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
+    if (Array.isArray(ia.atividades)) return res.json({ atividades: ia.atividades.slice(0, 5), fonte: "externo" });
+    res.json(base);
+  } catch {
+    res.json(base);
+  }
+});
+
+// ── F1-020: Recomendação de comprovações via IA ────────────────────────
+
+router.post("/campaigns/:id/recomendar-comprovacoes", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const formas = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ?").all(campaign.id);
+  const base = recomendarComprovacoesDeterministico(formas);
+  if (!process.env.ANTHROPIC_API_KEY) return res.json(base);
+
+  try {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 30000 });
+    const resp = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 500,
+      system: "Recomende tipos de comprovação para atividades comerciais. JSON: {comprovacoes: [{atividade, evidencias: [{tipo, descricao, obrigatoria: boolean}]}]}. Máx 5.",
+      messages: [{ role: "user", content: `Objetivo: ${campaign.objetivo || "vendas"}\nAtividades: ${formas.map(f => f.nome).join(", ") || "—"}\nFunção: ${campaign.funcao || "SDR"}` }],
+    });
+    const txt = resp.content.map(b => b.text || "").join("");
+    const ia = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
+    if (Array.isArray(ia.comprovacoes)) return res.json({ comprovacoes: ia.comprovacoes.slice(0, 5), fonte: "externo" });
+    res.json(base);
+  } catch {
+    res.json(base);
+  }
+});
+
+// ── F3: Análise Rico pós-publicação ─────────────────────────────────────
+
+router.get("/campaigns/:id/analise-rico", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const cid = campaign.id;
+  const totalLeads = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ?").get(cid).n;
+  const disponiveis = db.prepare("SELECT COUNT(*) n FROM campaign_leads WHERE campaignId = ? AND status = 'disponivel'").get(cid).n;
+  const trabalhados = totalLeads - disponiveis;
+  const qualificados = db.prepare("SELECT COUNT(*) n FROM leads WHERE campaignId = ? AND qualificacaoClassificacao IN ('alta','media')").get(cid).n;
+  const reunioes = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND status IN ('agendada','confirmada','realizada','venda')").get(cid).n;
+  const vendas = db.prepare("SELECT COUNT(*) n FROM campaign_reunioes WHERE campaignId = ? AND status = 'venda'").get(cid).n;
+  const profissionais = db.prepare("SELECT COUNT(*) n FROM campaign_applications WHERE campaignId = ? AND status = 'aprovado'").get(cid).n;
+  const gasto = db.prepare("SELECT COALESCE(SUM(ABS(valor)), 0) t FROM financial_ledger WHERE companyId = ? AND tipo = 'liquidacao' AND submissionId IN (SELECT id FROM submissions WHERE campaignId = ?)").get(campaign.companyId, cid).t;
+  const orcamento = Number(campaign.orcamento) || 0;
+  const diasDecorridos = Math.max(1, Math.ceil((Date.now() - (Number(campaign.criadoEm) || Date.now())) / (1000 * 60 * 60 * 24)));
+  const duracaoDias = Number(campaign.duracaoDias) || 30;
+  const diasRestantes = Math.max(0, duracaoDias - diasDecorridos);
+
+  const analises = [];
+  const acoes = [];
+
+  if (totalLeads === 0) {
+    analises.push({ tipo: "gargalo", texto: "A campanha não possui contatos. Sem contatos, não há como gerar resultados." });
+    acoes.push("Adicione contatos à campanha: importe uma lista ou selecione da base existente.");
+  } else if (disponiveis === 0 && trabalhados > 0) {
+    analises.push({ tipo: "gargalo", texto: `Todos os ${totalLeads} contatos já foram distribuídos. Se não houver mais, o ritmo vai cair.` });
+    acoes.push("Adicione mais contatos para manter o ritmo de trabalho.");
+  }
+
+  if (profissionais === 0) {
+    analises.push({ tipo: "gargalo", texto: "Nenhum profissional aprovado. A campanha precisa de profissionais ativos." });
+    acoes.push("Aprove candidaturas ou convide profissionais.");
+  }
+
+  if (trabalhados >= 10) {
+    const taxaQ = qualificados / trabalhados;
+    if (taxaQ < 0.1) {
+      analises.push({ tipo: "gargalo", texto: `Apenas ${Math.round(taxaQ * 100)}% dos contatos foram qualificados. A taxa esperada é acima de 20%.` });
+      acoes.push("Revise o perfil dos contatos ou ajuste os critérios de qualificação.");
+    } else if (taxaQ > 0.5) {
+      analises.push({ tipo: "positivo", texto: `${Math.round(taxaQ * 100)}% de qualificação é excelente.` });
+    }
+  }
+
+  if (qualificados >= 5 && reunioes === 0) {
+    analises.push({ tipo: "gargalo", texto: `Há ${qualificados} leads qualificados, mas nenhuma reunião agendada.` });
+    acoes.push("Verifique se os profissionais estão agendando reuniões.");
+  }
+
+  if (orcamento > 0 && gasto > 0) {
+    const ritmoGasto = gasto / diasDecorridos;
+    const diasAteEsgotamento = ritmoGasto > 0 ? Math.ceil((orcamento - gasto) / ritmoGasto) : duracaoDias;
+    if (diasAteEsgotamento < diasRestantes) {
+      analises.push({ tipo: "atencao", texto: `A verba será consumida em ~${diasAteEsgotamento} dias, antes do fim planejado.` });
+      acoes.push("Avalie adicionar mais verba ou reduzir o ritmo de atividades.");
+    }
+  }
+
+  const resumo = { diasDecorridos, diasRestantes, totalLeads, trabalhados, qualificados, reunioes, vendas, profissionais, orcamento, gasto };
+
+  if (process.env.ANTHROPIC_API_KEY && trabalhados >= 5) {
+    try {
+      const { default: Anthropic } = await import("@anthropic-ai/sdk");
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 30000 });
+      const resp = await client.messages.create({
+        model: "claude-haiku-4-5-20251001", max_tokens: 500,
+        system: "Analise métricas de campanha comercial. Identifique o principal gargalo e sugira UMA ação concreta. JSON: {analise: string, acao: string}. Não invente dados.",
+        messages: [{ role: "user", content: JSON.stringify(resumo) }],
+      });
+      const txt = resp.content.map(b => b.text || "").join("");
+      const ia = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
+      if (ia.analise) analises.push({ tipo: "ia", texto: ia.analise });
+      if (ia.acao) acoes.push(ia.acao);
+    } catch { /* IA indisponível */ }
+  }
+
+  res.json({ resumo, analises, acoes, fonte: analises.some(a => a.tipo === "ia") ? "ia+dados" : "dados" });
 });
 
 export default router;

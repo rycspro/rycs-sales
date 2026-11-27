@@ -3569,5 +3569,35 @@ adicionarColuna("submissions", "confirmacaoExigida", "INTEGER DEFAULT 0");
 adicionarColuna("submissions", "confirmacaoStatus", "TEXT DEFAULT 'nao_enviada'");
 adicionarColuna("submissions", "confirmacaoToken", "TEXT DEFAULT ''");
 
+// ── Agendamentos de campanha (SDR/Closer scheduling) ──────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS campaign_schedules (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    leadId TEXT DEFAULT '',
+    tipo TEXT NOT NULL DEFAULT 'reuniao',
+    titulo TEXT DEFAULT '',
+    descricao TEXT DEFAULT '',
+    dataHora INTEGER NOT NULL,
+    duracao INTEGER DEFAULT 30,
+    status TEXT DEFAULT 'agendado',
+    local TEXT DEFAULT '',
+    linkOnline TEXT DEFAULT '',
+    observacoes TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id),
+    FOREIGN KEY (sellerId) REFERENCES sellers(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_schedules_campaign ON campaign_schedules(campaignId);
+  CREATE INDEX IF NOT EXISTS idx_schedules_seller ON campaign_schedules(sellerId);
+  CREATE INDEX IF NOT EXISTS idx_schedules_data ON campaign_schedules(dataHora);
+`);
+
+adicionarColuna("campaigns", "configConfirmacao", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "icpEstruturado", "TEXT DEFAULT '{}'");
+adicionarColuna("leads", "qualificacaoParcial", "TEXT DEFAULT '[]'");
+
 export default db;
 export { uid, agora };

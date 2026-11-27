@@ -260,6 +260,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [bibliotecaFiltro, setBibliotecaFiltro] = useState("");
   const [bibliotecaSel, setBibliotecaSel] = useState([]);
   const [carregandoBiblioteca, setCarregandoBiblioteca] = useState(false);
+  const [gerandoICP, setGerandoICP] = useState(false);
+  const [recomendandoAtividades, setRecomendandoAtividades] = useState(false);
+  const [recomendandoEvidencias, setRecomendandoEvidencias] = useState(false);
   const uploadInputRef = useRef(null);
 
   const disponivel = saldoDisponivel(emp);
@@ -431,6 +434,72 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     setGerandoTreinamento(false);
     if (!r || r.error) return;
     if (Array.isArray(r.modulos) && r.modulos.length > 0) set("treinamento", r.modulos);
+  };
+
+  const gerarICP = async () => {
+    if (!campanha || gerandoICP) return;
+    setGerandoICP(true);
+    try {
+      const r = await api("/campaigns/gerar-icp", {
+        objetivo: campanha.objetivo, funcao: campanha.funcao,
+        produto: campanha.produto || emp.produto || "", regiao: campanha.regiao || "",
+        mercado: campanha.mercado || "", empresa: { nome: emp.nome, segmento: emp.segmento },
+      });
+      if (r && !r.error && r.icp) {
+        set("publico", r.icp);
+        if (r.icpEstruturado) set("icpEstruturado", r.icpEstruturado);
+      }
+    } catch (_) { /* silently fail */ }
+    setGerandoICP(false);
+  };
+
+  const recomendarAtividades = async () => {
+    if (!campanha || recomendandoAtividades) return;
+    setRecomendandoAtividades(true);
+    try {
+      const r = await api("/campaigns/recomendar-atividades", {
+        objetivo: campanha.objetivo, funcao: campanha.funcao,
+        mercado: campanha.mercado || "", origemLeads: campanha.origemLeads || "",
+        canais: campanha.canais || [], produto: campanha.produto || emp.produto || "",
+      });
+      if (r && !r.error && Array.isArray(r.atividades)) {
+        const novas = r.atividades.map((a) => a.id).filter((id) => !(campanha.acoesAtivas || []).includes(id));
+        if (novas.length > 0) set("acoesAtivas", [...(campanha.acoesAtivas || []), ...novas]);
+        if (r.valores) {
+          const t = { ...(campanha.tarefas || {}) };
+          for (const [k, v] of Object.entries(r.valores)) { if (!t[k]) t[k] = v; }
+          set("tarefas", t);
+        }
+      }
+    } catch (_) { /* silently fail */ }
+    setRecomendandoAtividades(false);
+  };
+
+  const recomendarEvidencias = async (fgIndex) => {
+    if (!campanha || recomendandoEvidencias) return;
+    setRecomendandoEvidencias(true);
+    try {
+      const fg = (campanha.formasGanhoRascunho || [])[fgIndex];
+      if (!fg) { setRecomendandoEvidencias(false); return; }
+      const r = await api("/campaigns/recomendar-comprovacoes", {
+        atividade: fg.nome, funcao: campanha.funcao || "",
+        objetivo: campanha.objetivo || "", canais: campanha.canais || [],
+      });
+      if (r && !r.error && Array.isArray(r.evidencias)) {
+        const ids = r.evidencias.map((e) => e.id).filter((id) => EVIDENCIAS_OPCOES.some((o) => o.id === id));
+        if (ids.length) {
+          const fgs = [...(campanha.formasGanhoRascunho || [])];
+          fgs[fgIndex] = { ...fgs[fgIndex], evidencias: [...new Set([...(fgs[fgIndex].evidencias || []), ...ids])] };
+          set("formasGanhoRascunho", fgs);
+        }
+        if (r.metodoAprovacao) {
+          const fgs = [...(campanha.formasGanhoRascunho || [])];
+          fgs[fgIndex] = { ...fgs[fgIndex], metodoAprovacao: r.metodoAprovacao };
+          set("formasGanhoRascunho", fgs);
+        }
+      }
+    } catch (_) { /* silently fail */ }
+    setRecomendandoEvidencias(false);
   };
 
   const calcularSugestaoIA = () => {
@@ -1643,6 +1712,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               placeholder="Ex.: distribuidoras de bebida com 10 a 80 funcionários" />
             <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">Produto ou serviço ofertado</div>
               <input className="vx-input" value={campanha.produto || ""} onChange={(e) => set("produto", e.target.value)} placeholder="Ex.: Software de gestão" /></label>
+            <button className="vx-btn vx-btn-sm" style={{ marginTop: 10, gap: 6 }} disabled={gerandoICP} onClick={gerarICP}>
+              {gerandoICP ? <><Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> Gerando ICP…</> : <><Sparkles size={13} /> Gerar ICP com IA</>}
+            </button>
           </div>
 
           {/* Nível de experiência */}
@@ -1714,6 +1786,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
             {campanha.estruturaComercial === "operacao" ? "As atividades e valores de cada função foram configurados no passo 2." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
           </p>
+
+          {campanha.estruturaComercial !== "operacao" && (
+            <button className="vx-btn vx-btn-sm" style={{ marginTop: 4, marginBottom: 10, gap: 6 }} disabled={recomendandoAtividades} onClick={recomendarAtividades}>
+              {recomendandoAtividades ? <><Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> Recomendando…</> : <><Sparkles size={13} /> Recomendar atividades com IA</>}
+            </button>
+          )}
 
           {campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length > 0 ? (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -1934,6 +2012,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                 );
                               })}
                             </div>
+                            <button className="vx-btn vx-btn-sm" style={{ marginTop: 6, gap: 5, fontSize: 11.5 }} disabled={recomendandoEvidencias} onClick={() => recomendarEvidencias(i)}>
+                              {recomendandoEvidencias ? <><Loader size={11} style={{ animation: "spin 1s linear infinite" }} /> Sugerindo…</> : <><Sparkles size={11} /> Sugerir comprovações</>}
+                            </button>
                           </div>
                           <label><div className="vx-label">Método de aprovação</div>
                             <select className="vx-input" value={fg.metodoAprovacao || "manual"} onChange={(e) => upd("metodoAprovacao", e.target.value)}>

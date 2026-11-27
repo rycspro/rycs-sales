@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, Award, BriefcaseBusiness, CalendarCheck, CheckCircle2, CircleDollarSign,
-  CirclePause, Clock3, Ellipsis, FolderOpen, Link2, ListChecks, Pencil, RefreshCw, Settings, Target,
-  TrendingUp, Unlink, Upload, UsersRound, X,
+  CirclePause, Clock3, Copy, Ellipsis, FolderOpen, Link2, ListChecks, Loader, Pencil, RefreshCw, Settings, Target,
+  TrendingUp, Unlink, Upload, UserMinus, UsersRound, X,
   Laptop, MapPin, Building2, Globe, MessageCircle, Phone, Mail, Eye, EyeOff, Lock,
   FileText, Download, Trash2, Database, UserPlus, Shuffle, Filter, List, Users,
   Sparkles, ChevronDown,
@@ -416,6 +416,8 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
   const [dataDe, setDataDe] = useState(() => dataInput(Date.now() - 6 * 86400000));
   const [dataAte, setDataAte] = useState(() => dataInput(Date.now()));
   const [vinculos, setVinculos] = useState([]);
+  const [duplicando, setDuplicando] = useState(false);
+  const [removendoProf, setRemovendoProf] = useState(null);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, []);
 
@@ -452,6 +454,30 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
     || (filtroProfissional === "pendente" && item.candidaturaStatus === "pendente"));
   const reunioes = tarefas.filter((s) => ["agendamento", "realizada"].includes(s.tipo));
 
+  const duplicarCampanha = async () => {
+    if (duplicando) return;
+    setDuplicando(true);
+    setMenu(false);
+    try {
+      const r = await api(`/campaigns/${campanha.id}/duplicar`, {});
+      if (r && r.id) {
+        setRecarregar((n) => n + 1);
+        onEditar(r);
+      }
+    } catch (_) { /* handled by api */ }
+    setDuplicando(false);
+  };
+
+  const removerProfissional = async (applicationId) => {
+    if (removendoProf) return;
+    setRemovendoProf(applicationId);
+    try {
+      await api(`/campaigns/${campanha.id}/remover-profissional`, { applicationId });
+      setRecarregar((n) => n + 1);
+    } catch (_) { /* handled by api */ }
+    setRemovendoProf(null);
+  };
+
   const alterarStatus = async (status) => {
     setMenu(false);
     await onStatus(status);
@@ -477,6 +503,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
         {campanha.status === "ativa" && <button className="vx-btn" onClick={() => alterarStatus("pausada")}><CirclePause size={14} /> Pausar</button>}
         <button className="vx-btn" onClick={onEditar}><Pencil size={14} /> Editar</button>
         <div className="vx-context-wrap"><button className="vx-btn" aria-label="Mais ações" onClick={() => setMenu((v) => !v)}><Ellipsis size={16} /></button>{menu && <div className="vx-context-menu">
+          <button onClick={duplicarCampanha} disabled={duplicando}>{duplicando ? "Duplicando…" : "Duplicar campanha"}</button>
           {campanha.status === "pausada" && <button onClick={() => alterarStatus("ativa")}>Retomar campanha</button>}
           {!['encerrada'].includes(campanha.status) && <button className="is-danger" onClick={() => alterarStatus("encerrada")}>Encerrar campanha</button>}
         </div>}</div>
@@ -666,7 +693,12 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
           <span data-label="Resultado" className="vx-mono">{(item.reunioes || 0) + (item.vendas || 0)}</span>
           <span data-label="Ganhos" className="vx-mono">{money(item.ganhos)}</span>
           <span data-label="Score" className="vx-mono">{item.score || "—"}</span>
-          <span className="vx-team-action">Ver perfil →</span>
+          <span className="vx-team-action" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            Ver perfil →
+            {item.candidaturaStatus === "aprovado" && <button className="vx-btn vx-btn-sm" style={{ padding: "2px 6px", fontSize: 11 }} title="Remover profissional" disabled={removendoProf === item.applicationId} onClick={(e) => { e.stopPropagation(); removerProfissional(item.applicationId); }}>
+              <UserMinus size={12} />
+            </button>}
+          </span>
         </button>)}
       </div>}
     </section>}
@@ -695,7 +727,28 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
         tarefa="geral"
       />
     </section>}
-    {dados && aba === "reunioes" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Reuniões</h2><p>Agendamentos e reuniões realizadas vinculados à campanha.</p>{reunioes.length === 0 ? <Empty texto="Nenhuma reunião registrada nesta campanha." /> : <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? "Reunião realizada" : "Reunião agendada"}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>}</section>}
+    {dados && aba === "reunioes" && <section className="vx-card vx-detail-section">
+      <h2 className="vx-disp">Reuniões</h2>
+      <p>Agendamentos e reuniões realizadas vinculados à campanha.</p>
+      {dados.reunioes && dados.reunioes.length > 0 ? (
+        <div className="vx-compact-list">
+          {dados.reunioes.map((r) => <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+            <CalendarCheck size={16} color={r.status === "realizada" ? "var(--brand)" : r.status === "cancelada" ? "var(--danger)" : "var(--amber)"} />
+            <div style={{ flex: 1 }}>
+              <b style={{ fontSize: 13 }}>{r.titulo || (r.status === "realizada" ? "Reunião realizada" : "Reunião agendada")}</b>
+              <div className="vx-mut" style={{ fontSize: 12 }}>
+                {r.dataHora ? new Date(r.dataHora).toLocaleString("pt-BR") : ""}
+                {r.closerNome ? ` · ${r.closerNome}` : ""}
+                {r.leadNome ? ` · ${r.leadNome}` : ""}
+              </div>
+            </div>
+            <span className={`vx-chip ${r.status === "realizada" ? "is-brand" : r.status === "cancelada" ? "is-danger" : ""}`}>{r.status}</span>
+          </div>)}
+        </div>
+      ) : reunioes.length > 0 ? (
+        <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? "Reunião realizada" : "Reunião agendada"}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>
+      ) : <Empty texto="Nenhuma reunião registrada nesta campanha." />}
+    </section>}
     {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Resultados ao longo do tempo</h2><p>Compare investimento, tarefas, leads, reuniões e vendas em {dados.periodo.label.toLowerCase()}.</p><PerformanceChart serie={dados.serie} /></section>}
     {dados && aba === "financeiro" && <div className="vx-finance-stack">
       <section className="vx-card vx-detail-section">

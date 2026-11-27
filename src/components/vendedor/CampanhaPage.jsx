@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   ArrowLeft, Target, BookOpen, Zap, Users, BarChart2, Award,
-  CheckCircle, XCircle, TrendingUp,
+  CheckCircle, XCircle, TrendingUp, Calendar,
   DollarSign, Shield, ChevronDown, ChevronUp, ClipboardCheck,
   ShieldCheck, AlertCircle, ArrowRight, MessageCircle
 } from "lucide-react";
@@ -24,6 +24,7 @@ const ABAS = [
   { id: "equipe", label: "Equipe", Icon: Users },
   { id: "resultados", label: "Meus Resultados", Icon: BarChart2 },
   { id: "envios", label: "Meus Envios", Icon: CheckCircle },
+  { id: "agenda", label: "Agenda", Icon: Calendar },
   { id: "chat", label: "Chat", Icon: null },
 ];
 
@@ -260,23 +261,32 @@ function QualificacaoLeadCard({ lead, campanha, onQualificado }) {
   const perguntas = JSON.parse(campanha?.perguntasQualificacao || "[]");
   const criterios = JSON.parse(campanha?.criteriosQualificacaoLeads || "[]");
   const [respostas, setRespostas] = useState(() => {
-    try { return JSON.parse(lead?.qualificacaoRespostas || "[]"); } catch { return []; }
+    try { return JSON.parse(lead?.qualificacaoParcial || lead?.qualificacaoRespostas || "[]"); } catch { return []; }
   });
   const [salvando, setSalvando] = useState(false);
+  const [autoSalvo, setAutoSalvo] = useState(false);
+  const autoSaveRef = useRef(null);
 
   if (!perguntas.length) return null;
 
   const setResposta = (perguntaId, valor) => {
     setRespostas((prev) => {
       const idx = prev.findIndex((r) => r.perguntaId === perguntaId);
-      if (idx >= 0) { const n = [...prev]; n[idx] = { ...n[idx], valor }; return n; }
-      return [...prev, { perguntaId, valor }];
+      const novas = idx >= 0 ? prev.map((r, i) => i === idx ? { ...r, valor } : r) : [...prev, { perguntaId, valor }];
+      if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+      autoSaveRef.current = setTimeout(() => {
+        apiPatch(`/campaigns/${campanha.id}/leads/${lead.id}/qualificacao-parcial`, { respostas: novas }).then((r) => {
+          if (r && !r.error) { setAutoSalvo(true); setTimeout(() => setAutoSalvo(false), 2000); }
+        });
+      }, 1500);
+      return novas;
     });
   };
 
   const resultado = calcularScore(respostas, criterios);
 
   const salvar = async () => {
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
     setSalvando(true);
     const r = await api(`/leads/${lead.id}/qualificar`, { respostas });
     setSalvando(false);
@@ -341,7 +351,10 @@ function QualificacaoLeadCard({ lead, campanha, onQualificado }) {
         })}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
-        <div className="vx-mut" style={{ fontSize: 11.5 }}>{resultado.respondidas}/{resultado.total} respondidas</div>
+        <div className="vx-mut" style={{ fontSize: 11.5 }}>
+          {resultado.respondidas}/{resultado.total} respondidas
+          {autoSalvo && <span style={{ marginLeft: 8, color: "var(--brand)", fontSize: 11 }}>Salvo automaticamente</span>}
+        </div>
         <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={salvando} onClick={salvar}>
           {salvando ? "Salvando..." : "Salvar qualificação"}
         </button>
@@ -614,17 +627,29 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
               </div>
 
               <ConfirmacaoStatusCard lead={leadSelecionado} />
-              {(!leadSelecionado.confirmacaoStatus || leadSelecionado.confirmacaoStatus === "nao_enviada") && campanha.confirmacaoContato && JSON.parse(campanha.confirmacaoContato || "{}").habilitada && (
-                <button className="vx-btn vx-btn-sm" style={{ marginBottom: 10, gap: 6 }} onClick={async () => {
-                  const r = await api(`/campaigns/${campanha.id}/confirmacao-token`, { leadId: leadSelecionado.id });
-                  if (r?.token) {
-                    setLeadSelecionado((prev) => ({ ...prev, confirmacaoStatus: "enviada" }));
-                    aviso("Link de confirmação gerado!");
-                  }
-                }}>
-                  <MessageCircle size={14} /> Enviar confirmação de contato
-                </button>
-              )}
+              {campanha.confirmacaoContato && JSON.parse(campanha.confirmacaoContato || "{}").habilitada && (<>
+                {(!leadSelecionado.confirmacaoStatus || leadSelecionado.confirmacaoStatus === "nao_enviada") && (
+                  <button className="vx-btn vx-btn-sm" style={{ marginBottom: 10, gap: 6 }} onClick={async () => {
+                    const r = await api(`/campaigns/${campanha.id}/confirmacao-token`, { leadId: leadSelecionado.id });
+                    if (r?.token) {
+                      setLeadSelecionado((prev) => ({ ...prev, confirmacaoStatus: "aguardando" }));
+                      setLeadsLocal((prev) => prev.map((l) => l.id === leadSelecionado.id ? { ...l, confirmacaoStatus: "aguardando" } : l));
+                      aviso("Confirmação enviada!");
+                    }
+                  }}>
+                    <MessageCircle size={14} /> Enviar confirmação de contato
+                  </button>
+                )}
+                {leadSelecionado.confirmacaoStatus === "aguardando" && (
+                  <button className="vx-btn vx-btn-sm vx-btn-ghost" style={{ marginBottom: 10, gap: 6 }} onClick={async () => {
+                    const r = await api(`/campaigns/${campanha.id}/confirmacao-reenvio`, { leadId: leadSelecionado.id });
+                    if (r?.ok) aviso("Confirmação reenviada!");
+                    else aviso(r?.error || "Não foi possível reenviar.");
+                  }}>
+                    <MessageCircle size={14} /> Reenviar confirmação
+                  </button>
+                )}
+              </>)}
               <ProximaAtividadeCard lead={leadSelecionado} campanha={campanha} onAcao={(tipo) => { setTipoAcao(tipo); setAba("operacao"); }} />
               <QualificacaoLeadCard
                 lead={leadSelecionado}
@@ -703,8 +728,150 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
         />
       )}
 
+      {/* AGENDA */}
+      {aba === "agenda" && <AgendaCampanhaTab campanha={campanha} eu={eu} aviso={aviso} />}
+
       {/* CHAT */}
       {aba === "chat" && <Chat empresa={empresa} sellerId={eu.id} db={db} up={up} de="vendedor" />}
+    </div>
+  );
+}
+
+// ── Componente: Agenda da Campanha (disponibilidade + reuniões) ──────────
+const DIAS_SEMANA = [
+  { id: "seg", label: "Seg" }, { id: "ter", label: "Ter" }, { id: "qua", label: "Qua" },
+  { id: "qui", label: "Qui" }, { id: "sex", label: "Sex" }, { id: "sab", label: "Sáb" }, { id: "dom", label: "Dom" },
+];
+
+function AgendaCampanhaTab({ campanha, eu, aviso }) {
+  const [slots, setSlots] = useState([]);
+  const [reunioes, setReunioes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [novoSlot, setNovoSlot] = useState({ diaSemana: "seg", horaInicio: "09:00", horaFim: "10:00" });
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api(`/campaigns/${campanha.id}/disponibilidade`),
+      api(`/campaigns/${campanha.id}/reunioes`),
+    ]).then(([d, r]) => {
+      setSlots(d?.slots || []);
+      setReunioes(r?.reunioes || []);
+    }).finally(() => setLoading(false));
+  }, [campanha.id]);
+
+  const adicionarSlot = () => {
+    if (novoSlot.horaInicio >= novoSlot.horaFim) return aviso("Horário de início deve ser antes do fim");
+    const existe = slots.find((s) => s.diaSemana === novoSlot.diaSemana && s.horaInicio === novoSlot.horaInicio);
+    if (existe) return aviso("Já existe um slot neste horário");
+    const novos = [...slots, { ...novoSlot, id: "temp-" + Date.now() }];
+    setSlots(novos);
+    salvarSlots(novos);
+  };
+
+  const removerSlot = (id) => {
+    const novos = slots.filter((s) => s.id !== id);
+    setSlots(novos);
+    salvarSlots(novos);
+  };
+
+  const salvarSlots = async (lista) => {
+    const r = await api(`/campaigns/${campanha.id}/disponibilidade`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slots: lista.map(({ diaSemana, horaInicio, horaFim }) => ({ diaSemana, horaInicio, horaFim })) }),
+    });
+    if (r?.ok) aviso("Disponibilidade salva");
+    else aviso(r?.error || "Erro ao salvar");
+    const d = await api(`/campaigns/${campanha.id}/disponibilidade`);
+    if (d?.slots) setSlots(d.slots);
+  };
+
+  const atualizarReuniao = async (reuniaoId, dados) => {
+    const r = await api(`/campaigns/${campanha.id}/reunioes/${reuniaoId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados),
+    });
+    if (r?.ok) {
+      aviso("Reunião atualizada");
+      const res = await api(`/campaigns/${campanha.id}/reunioes`);
+      if (res?.reunioes) setReunioes(res.reunioes);
+    } else aviso(r?.error || "Erro");
+  };
+
+  if (loading) return <p className="vx-mut" style={{ textAlign: "center", padding: 20 }}>Carregando agenda...</p>;
+
+  const STATUS_COR = { agendada: "#3b82f6", confirmada: "#8b5cf6", realizada: "#16a34a", venda: "#059669", cancelada: "#ef4444", nao_compareceu: "#f97316", reagendada: "#6b7280", negociacao: "#eab308", perdida: "#dc2626" };
+
+  return (
+    <div className="vx-fade">
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>Minha disponibilidade</div>
+      <div className="vx-card" style={{ padding: 16, marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          <select value={novoSlot.diaSemana} onChange={(e) => setNovoSlot((s) => ({ ...s, diaSemana: e.target.value }))} className="vx-input" style={{ width: 80 }}>
+            {DIAS_SEMANA.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+          </select>
+          <input type="time" value={novoSlot.horaInicio} onChange={(e) => setNovoSlot((s) => ({ ...s, horaInicio: e.target.value }))} className="vx-input" style={{ width: 110 }} />
+          <span style={{ alignSelf: "center" }}>até</span>
+          <input type="time" value={novoSlot.horaFim} onChange={(e) => setNovoSlot((s) => ({ ...s, horaFim: e.target.value }))} className="vx-input" style={{ width: 110 }} />
+          <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={adicionarSlot}>Adicionar</button>
+        </div>
+        {slots.length === 0 ? (
+          <p className="vx-mut" style={{ fontSize: 12.5 }}>Nenhum horário cadastrado. Adicione sua disponibilidade para receber agendamentos.</p>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {slots.map((s) => (
+              <span key={s.id} className="vx-chip" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
+                {DIAS_SEMANA.find((d) => d.id === s.diaSemana)?.label} {s.horaInicio}–{s.horaFim}
+                <button onClick={() => removerSlot(s.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, marginLeft: 2, color: "var(--danger)" }}><XCircle size={12} /></button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, marginTop: 20 }}>Minhas reuniões</div>
+      {reunioes.length === 0 ? (
+        <div className="vx-card" style={{ padding: 20, textAlign: "center" }}>
+          <Calendar size={22} color="var(--muted)" />
+          <p className="vx-mut" style={{ marginTop: 8 }}>Nenhuma reunião agendada.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {reunioes.map((r) => (
+            <div key={r.id} className="vx-card" style={{ padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{r.titulo || "Reunião"}</span>
+                <span className="vx-chip" style={{ fontSize: 11, background: STATUS_COR[r.status] || "var(--surface-2)", color: "#fff" }}>{r.status}</span>
+              </div>
+              <div style={{ fontSize: 12.5, color: "var(--ink-2)", display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <span>{new Date(r.data + "T12:00:00").toLocaleDateString("pt-BR")} {r.horaInicio}–{r.horaFim}</span>
+                {r.closerNome && <span>Closer: {r.closerNome}</span>}
+                {r.sdrNome && <span>SDR: {r.sdrNome}</span>}
+              </div>
+              {r.anotacoes && <p style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 6 }}>{r.anotacoes}</p>}
+              {r.status === "agendada" && (
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <button className="vx-btn vx-btn-sm" onClick={() => atualizarReuniao(r.id, { status: "confirmada" })}>Confirmar</button>
+                  <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={() => atualizarReuniao(r.id, { status: "cancelada" })}>Cancelar</button>
+                </div>
+              )}
+              {r.status === "confirmada" && (
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <button className="vx-btn vx-btn-sm" onClick={() => atualizarReuniao(r.id, { status: "realizada" })}>Realizada</button>
+                  <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={() => atualizarReuniao(r.id, { status: "nao_compareceu" })}>Não compareceu</button>
+                </div>
+              )}
+              {r.status === "realizada" && (
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <button className="vx-btn vx-btn-sm" style={{ background: "#059669", color: "#fff" }} onClick={() => atualizarReuniao(r.id, { status: "venda" })}>Venda</button>
+                  <button className="vx-btn vx-btn-sm" onClick={() => atualizarReuniao(r.id, { status: "negociacao" })}>Negociação</button>
+                  <button className="vx-btn vx-btn-sm vx-btn-ghost" onClick={() => atualizarReuniao(r.id, { status: "perdida" })}>Perdida</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

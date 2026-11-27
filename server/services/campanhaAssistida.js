@@ -1,5 +1,6 @@
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha } from "../../shared/objetivosCampanha.js";
 import { detectarObjetivo, extrairRegiao, extrairPublico } from "../../shared/interpretacaoCampanha.js";
+import { ACOES } from "../../shared/acoes.js";
 
 // Monta uma campanha a partir de um texto livre da empresa.
 //
@@ -102,4 +103,77 @@ export async function sugerirCampanha({ empresa = {}, brief = "" }) {
     console.error("[campanha] provedor externo indisponível, usando motor interno:", err.message);
     return base;
   }
+}
+
+// ── Helpers determinísticos para endpoints de IA ─────────────────────────
+
+const EVIDENCIAS_POR_TIPO = {
+  ligacao: [{ tipo: "gravacao", descricao: "Gravação da ligação", obrigatoria: true }],
+  contato: [{ tipo: "captura_tela", descricao: "Print da conversa", obrigatoria: true }],
+  lead_qualificado: [{ tipo: "formulario", descricao: "Formulário de qualificação preenchido", obrigatoria: true }],
+  follow: [{ tipo: "captura_tela", descricao: "Print do follow-up enviado", obrigatoria: true }],
+  agendamento: [{ tipo: "convite_calendario", descricao: "Convite de calendário enviado", obrigatoria: true }, { tipo: "captura_tela", descricao: "Confirmação do agendamento", obrigatoria: false }],
+  realizada: [{ tipo: "resumo", descricao: "Resumo da reunião realizada", obrigatoria: true }, { tipo: "gravacao", descricao: "Gravação da reunião", obrigatoria: false }],
+  visita: [{ tipo: "foto_geolocalizacao", descricao: "Foto com geolocalização no local", obrigatoria: true }, { tipo: "resumo", descricao: "Resumo da visita", obrigatoria: false }],
+  venda: [{ tipo: "contrato", descricao: "Contrato ou pedido assinado", obrigatoria: true }, { tipo: "nota_fiscal", descricao: "Nota fiscal emitida", obrigatoria: false }],
+};
+
+export function gerarICPDeterministico(empresa, campanha) {
+  const segmento = empresa.segmento || campanha.segmento || "Não definido";
+  const produto = empresa.produto || campanha.produto || "";
+  const ticket = empresa.ticket || "";
+  const icp = empresa.icp || "";
+  const publico = campanha.publico || "";
+  const regiao = campanha.regiao || "";
+
+  const descricao = icp
+    ? `${icp}. ${publico ? `Público-alvo: ${publico}.` : ""} ${regiao ? `Região: ${regiao}.` : ""}`
+    : `Empresas do segmento ${segmento}${produto ? ` que necessitam de ${produto}` : ""}${regiao ? ` na região de ${regiao}` : ""}${ticket ? `, com ticket a partir de R$ ${ticket}` : ""}.`;
+
+  return {
+    icp: descricao.trim().slice(0, 1000),
+    estruturado: {
+      segmento,
+      porte: "PME",
+      cargo_decisor: "Decisor / Gerente",
+      localizacao: regiao || "Nacional",
+      ticket_minimo: ticket || "A definir",
+      necessidade: produto || "Solução oferecida pela empresa",
+      sinais_compra: ["Busca ativa por fornecedores", "Orçamento aprovado", "Contrato vencendo"],
+      restricoes: [],
+    },
+    fonte: "interno",
+  };
+}
+
+export function recomendarAtividadesDeterministico(campanha) {
+  const objetivo = campanha.objetivo || "vendas";
+  const obj = OBJETIVOS[objetivo] || OBJETIVOS.vendas;
+  const funcao = obj.funcao || "sdr";
+  const acoesChaves = obj.acoes || ["ligacao", "contato"];
+
+  const atividades = acoesChaves.map((chave) => {
+    const acao = ACOES[chave];
+    if (!acao) return null;
+    return {
+      nome: acao.nome,
+      descricao: `${acao.nome} — ${acao.regra || "Conforme regras da campanha"}`,
+      tipoRemuneracao: "fixo",
+      valorSugerido: 0,
+      eventoComercial: chave,
+      evidenciasNecessarias: acao.prova || [],
+      metodoAprovacao: "manual",
+    };
+  }).filter(Boolean);
+
+  return { atividades, fonte: "interno" };
+}
+
+export function recomendarComprovacoesDeterministico(atividades) {
+  const comprovacoes = atividades.map((a) => {
+    const chave = a.eventoComercial || a.nome?.toLowerCase().replace(/\s+/g, "_") || "";
+    const evidencias = EVIDENCIAS_POR_TIPO[chave] || [{ tipo: "captura_tela", descricao: "Evidência da atividade realizada", obrigatoria: true }];
+    return { atividade: a.nome || chave, evidencias };
+  });
+  return { comprovacoes, fonte: "interno" };
 }
