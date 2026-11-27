@@ -44,25 +44,45 @@ const CATEGORIAS = [
   { key: "tecnologia", label: "Tecnologia", Icon: Cpu },
 ];
 
-/* ── 5 grupos de informações (27 campos) ──────────────────────────────── */
+/* ── Campos de enriquecimento ─────────────────────────────────────────── */
 const CAMPOS_INDISPONIVEIS = new Set([
-  "Razão social", "Nome fantasia", "CNPJ", "Segmento / CNAE", "Porte da empresa",
-  "Celular", "WhatsApp", "E-mail comercial", "Nome do responsável", "Cargo do responsável",
-  "CEP",
-  "Instagram", "Facebook", "LinkedIn",
-  "Data de abertura", "Situação cadastral", "Capital social",
+  "WhatsApp",
+]);
+const CAMPOS_ENRIQ = new Set([
+  "Razão social", "Nome fantasia", "CNPJ", "CNAE primário", "CNAEs secundários",
+  "Porte da empresa", "Natureza jurídica", "Situação cadastral",
+  "Data de abertura", "Idade da empresa", "Capital social",
+  "Simples Nacional / MEI", "Inscrição estadual", "Quantidade de filiais",
+  "Faixa de faturamento", "Faturamento estimado",
+  "Faixa de funcionários", "Funcionários estimado",
+  "Sócios / QSA", "Nome do responsável", "Cargo do responsável",
+  "Departamento do decisor", "Nível hierárquico",
+  "E-mail profissional (Hunter.io)", "LinkedIn do decisor",
+  "Telefones da Receita Federal", "E-mail da Receita Federal",
+  "Validação de e-mails (SMTP)", "Validação de telefones (HLR)",
+  "CEP", "Endereço da Receita Federal",
+  "Instagram", "Facebook", "LinkedIn da empresa", "Twitter / X",
+  "Tecnologias do site", "PIB do município", "População do município",
 ]);
 const GRUPOS = [
   { key: "empresariais", label: "Dados empresariais", Icon: Building2,
-    campos: ["Nome da empresa", "Razão social", "Nome fantasia", "CNPJ", "Segmento / CNAE", "Porte da empresa"] },
-  { key: "contatos", label: "Contatos", Icon: Users,
-    campos: ["Telefone fixo", "Celular", "WhatsApp", "E-mail comercial", "Nome do responsável", "Cargo do responsável"] },
+    campos: ["Nome da empresa", "Razão social", "Nome fantasia", "CNPJ", "CNAE primário", "Porte da empresa"] },
+  { key: "receita", label: "Receita Federal (CNPJ.ws)", Icon: FileText, enriq: true,
+    campos: ["CNAEs secundários", "Natureza jurídica", "Situação cadastral", "Data de abertura", "Idade da empresa", "Capital social", "Simples Nacional / MEI", "Inscrição estadual", "Quantidade de filiais"] },
+  { key: "estimativas", label: "Estimativas inteligentes", Icon: TrendingUp, enriq: true,
+    campos: ["Faixa de faturamento", "Faturamento estimado", "Faixa de funcionários", "Funcionários estimado"] },
+  { key: "decisores", label: "Decisores e sócios", Icon: UserCheck, enriq: true,
+    campos: ["Sócios / QSA", "Nome do responsável", "Cargo do responsável", "Departamento do decisor", "Nível hierárquico", "E-mail profissional (Hunter.io)", "LinkedIn do decisor"] },
+  { key: "contatos", label: "Contatos", Icon: Phone,
+    campos: ["Telefone fixo", "Celular", "WhatsApp", "E-mail comercial", "Telefones da Receita Federal", "E-mail da Receita Federal"] },
+  { key: "validacao", label: "Validação de contatos", Icon: Shield, enriq: true,
+    campos: ["Validação de e-mails (SMTP)", "Validação de telefones (HLR)"] },
   { key: "localizacao", label: "Localização", Icon: MapPin,
-    campos: ["Endereço completo", "Cidade e estado", "CEP", "Geolocalização"] },
+    campos: ["Endereço completo", "Cidade e estado", "CEP", "Geolocalização", "Endereço da Receita Federal"] },
   { key: "digital", label: "Presença digital", Icon: Globe,
-    campos: ["Website", "Instagram", "Facebook", "LinkedIn", "Google Maps"] },
-  { key: "complementares", label: "Informações complementares", Icon: FileText,
-    campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Data de abertura", "Situação cadastral", "Capital social"] },
+    campos: ["Website", "Instagram", "Facebook", "LinkedIn da empresa", "Twitter / X", "Google Maps"] },
+  { key: "complementares", label: "Informações complementares", Icon: Database,
+    campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Tecnologias do site", "PIB do município", "População do município"] },
 ];
 const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos).filter((f) => !CAMPOS_INDISPONIVEIS.has(f));
 const QTDS = [10, 20, 30, 60, 100, 200, 300];
@@ -421,7 +441,9 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
   const [listaExistente, setListaExistente] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [enriqProg, setEnriqProg] = useState(null);
   useEffect(() => { if (pastas.length && !pastaSel) setPastaSel(pastas[0].id); }, [pastas]);
+  const temEnriq = useMemo(() => [...campos].some((c) => CAMPOS_ENRIQ.has(c)), [campos]);
 
   const cidadesDisponiveis = useMemo(() => {
     const todas = [];
@@ -487,9 +509,34 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
     setFeedback(msg);
     aviso?.(msg);
 
-    setOcupado(false);
     recarregarCiclo?.();
     recarregarListas?.();
+
+    if (temEnriq && contatos.length > 0) {
+      const ids = contatos.map((c) => c.id).filter(Boolean);
+      if (ids.length > 0) {
+        setEnriqProg({ total: ids.length, done: 0, errors: 0 });
+        setFeedback((prev) => prev + " Enriquecendo dados...");
+        let done = 0, errors = 0;
+        const lotes = [];
+        for (let i = 0; i < ids.length; i += 10) lotes.push(ids.slice(i, i + 10));
+        for (const lote of lotes) {
+          const r2 = await api("/enriquecimento/lote", { contatoIds: lote });
+          const res = r2?.resultados || [];
+          done += res.filter((x) => x.status === "ok").length;
+          errors += res.filter((x) => x.status === "erro").length;
+          setEnriqProg({ total: ids.length, done: done + errors, errors });
+        }
+        setEnriqProg(null);
+        const enriqMsg = errors > 0
+          ? `Enriquecimento: ${done} completo(s), ${errors} erro(s).`
+          : `Enriquecimento concluído: ${done} contato(s) enriquecido(s).`;
+        setFeedback((prev) => prev.replace(" Enriquecendo dados...", "") + " " + enriqMsg);
+        aviso?.(enriqMsg);
+      }
+    }
+
+    setOcupado(false);
   };
 
   return (
@@ -565,11 +612,14 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 const selCount = disponiveis.filter((f) => campos.has(f)).length;
                 const allSel = disponiveis.length > 0 && selCount === disponiveis.length;
                 return (
-                  <div key={g.key} className="vx-card" style={{ padding: 14 }}>
+                  <div key={g.key} className="vx-card" style={{ padding: 14, border: g.enriq ? "1px solid var(--brand-100)" : undefined }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
-                      <g.Icon size={18} style={{ color: "var(--brand)", flexShrink: 0 }} />
+                      <g.Icon size={18} style={{ color: g.enriq ? "var(--indigo)" : "var(--brand)", flexShrink: 0 }} />
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{g.label}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                          {g.label}
+                          {g.enriq && <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 8, background: "var(--indigo-50)", color: "var(--indigo)", fontWeight: 600, letterSpacing: ".02em" }}>ENRIQUECIMENTO</span>}
+                        </div>
                         <span className="vx-mut" style={{ fontSize: 11 }}>{selCount} de {disponiveis.length} selecionadas</span>
                       </div>
                       {disponiveis.length > 0 && (
@@ -585,13 +635,15 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                     <div style={{ display: "grid", gap: 8 }}>
                       {g.campos.map((f) => {
                         const indisponivel = CAMPOS_INDISPONIVEIS.has(f);
+                        const isEnriq = CAMPOS_ENRIQ.has(f);
                         return (
                           <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: indisponivel ? "default" : "pointer", opacity: indisponivel ? 0.45 : 1 }}>
                             <input type="checkbox" checked={!indisponivel && campos.has(f)} disabled={indisponivel}
                               onChange={() => !indisponivel && toggleCampo(f)}
-                              style={{ accentColor: "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
+                              style={{ accentColor: isEnriq ? "var(--indigo)" : "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
                             <span style={indisponivel ? { textDecoration: "line-through" } : undefined}>{f}</span>
                             {indisponivel && <span style={{ fontSize: 10, color: "var(--muted-2)", marginLeft: "auto", whiteSpace: "nowrap" }}>Em breve</span>}
+                            {!indisponivel && isEnriq && <Sparkles size={11} style={{ color: "var(--indigo)", marginLeft: "auto", flexShrink: 0 }} />}
                           </label>
                         );
                       })}
@@ -600,7 +652,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 );
               })}
             </div>
-            <div className="vx-chart-source">O preenchimento depende da disponibilidade das fontes de dados.</div>
+            <div className="vx-chart-source">Campos com <Sparkles size={10} style={{ display: "inline", verticalAlign: "middle", color: "var(--indigo)" }} /> são enriquecidos automaticamente após a busca (Receita Federal, Hunter.io, SMTP, HLR).</div>
           </div>
 
           {/* Organize seus leads */}
@@ -651,6 +703,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
               ["Localização", regiao ? `${regiao}, ${pais}` : pais],
               ["Quantidade", `${quantidade} leads`],
               ["Informações", `${campos.size} campos`],
+              ["Enriquecimento", temEnriq ? `${[...campos].filter((c) => CAMPOS_ENRIQ.has(c)).length} campos` : "Nenhum"],
               ["Destino", destinoLabel || "A definir"],
               ["Valor estimado", money(valorEstimado)],
             ].map(([k, v]) => (
@@ -670,10 +723,23 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 : "Primeira cobrança em 30 dias após o primeiro uso."}
             </span>
           </div>
+          {temEnriq && (
+            <div style={{ padding: "8px 10px", borderRadius: 8, background: "var(--indigo-50)", fontSize: 11.5, color: "var(--indigo)", display: "flex", alignItems: "center", gap: 6 }}>
+              <Sparkles size={13} />
+              <span>Enriquecimento automático após a busca</span>
+            </div>
+          )}
           <button onClick={buscar} disabled={!podeEnviar || ocupado} className="vx-btn vx-btn-primary vx-btn-block" style={{ minHeight: 44 }}>
-            {ocupado ? <Loader2 size={16} className="vx-spin" /> : null}
-            {ocupado ? "Buscando..." : `Encontrar ${quantidade} leads`}
+            {ocupado ? <Loader2 size={16} className="vx-spin" /> : <Search size={16} />}
+            {ocupado
+              ? (enriqProg ? `Enriquecendo ${enriqProg.done}/${enriqProg.total}...` : "Buscando...")
+              : `Encontrar ${quantidade} leads${temEnriq ? " + enriquecer" : ""}`}
           </button>
+          {enriqProg && (
+            <div style={{ width: "100%", height: 6, borderRadius: 3, background: "var(--surface-2)", overflow: "hidden" }}>
+              <div style={{ height: "100%", borderRadius: 3, background: "var(--grad-brand)", transition: "width .3s", width: `${Math.round((enriqProg.done / enriqProg.total) * 100)}%` }} />
+            </div>
+          )}
           {precoUnitario > 0 && <span className="vx-mut" style={{ fontSize: 11.5 }}>Preço por lead: {money(precoUnitario)}</span>}
           {feedback && <p className="vx-mut" style={{ margin: 0, fontSize: 13, color: "var(--brand)" }} role="status">{feedback}</p>}
         </aside>
