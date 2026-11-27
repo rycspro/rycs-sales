@@ -862,11 +862,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Dados básicos */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <label><div className="vx-label">Como você quer chamar esta campanha?</div>
+            <label><div className="vx-label">Como você quer chamar esta campanha? <Tag obrigatorio={true} /></div>
               <input className="vx-input" value={campanha.titulo} onChange={(e) => set("titulo", e.target.value)} /></label>
             <div style={{ marginTop: 12 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <div className="vx-label" style={{ margin: 0 }}>Descreva o que o profissional vai fazer</div>
+                <div className="vx-label" style={{ margin: 0 }}>Descreva o que o profissional vai fazer <Tag obrigatorio={false} /></div>
                 <button className="vx-btn vx-btn-sm" style={{ gap: 5, fontSize: 11.5 }} disabled={gerandoDescricao} onClick={gerarDescricaoIA}>
                   {gerandoDescricao ? <><Loader size={12} style={{ animation: "spin 1s linear infinite" }} /> Gerando…</> : <><Sparkles size={12} /> Gerar com IA</>}
                 </button>
@@ -1307,7 +1307,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
             {(campanha.fonteLeads === "empresa" || campanha.fonteLeads === "ambos") && (
               <div style={{ marginTop: 14, padding: "14px 16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
-                <b style={{ fontSize: 13, color: "var(--brand)" }}>Como dividir os contatos entre os profissionais?</b>
+                <b style={{ fontSize: 13, color: "var(--brand)" }}>Como dividir os contatos entre os profissionais?</b><Tag obrigatorio={false} />
                 <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
                   <CardOption selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"} onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }} icon={Zap} title="Automático (recomendado)" subtitle="A plataforma distribui os contatos de forma equilibrada entre os profissionais." />
                   <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Você define quantos contatos cada profissional recebe e os prazos." />
@@ -1473,7 +1473,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quais profissionais vão trabalhar nesta campanha?</b><Tag obrigatorio={true} />
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione todas as funções que a equipe precisa. Cada uma vira uma campanha ligada às outras.</div>
               </div>
-              <label style={{ display: "block", marginBottom: 12 }}><div className="vx-label">Nome da equipe</div>
+              <label style={{ display: "block", marginBottom: 12 }}><div className="vx-label">Nome da equipe <Tag obrigatorio={false} /></div>
                 <input className="vx-input" placeholder="Ex: Equipe Vendas Restaurantes" value={campanha.nomeOperacao || ""}
                   onChange={(e) => set("nomeOperacao", e.target.value)} />
               </label>
@@ -1509,7 +1509,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               </div>
               {(campanha.funcoesOperacao || []).length >= 2 && (
                 <div style={{ marginTop: 16 }}>
-                  <div className="vx-label" style={{ marginBottom: 8 }}>Ordem das funções na operação</div>
+                  <div className="vx-label" style={{ marginBottom: 8 }}>Ordem das funções na operação <Tag obrigatorio={false} /></div>
                   <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 10 }}>Os contatos seguem esta ordem: a primeira função trabalha o contato e passa para a seguinte.</div>
                   <div style={{ display: "grid", gap: 4 }}>
                     {(campanha.funcoesOperacao || []).map((k, i) => {
@@ -1569,7 +1569,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     return (
                       <div style={{ display: "grid", gap: 14 }}>
                         <div className="vx-card" style={{ padding: 14 }}>
-                          <b style={{ fontSize: 13, color: "var(--brand)" }}>De onde vêm os profissionais? — {fInfo?.nome}</b>
+                          <b style={{ fontSize: 13, color: "var(--brand)" }}>De onde vêm os profissionais? — {fInfo?.nome}</b><Tag obrigatorio={true} />
                           <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Escolha se contrata pela RYCS, usa sua equipe ou ambos.</div>
                           <div style={{ display: "grid", gap: 6 }}>
                             {Object.values(ORIGENS_PROFISSIONAIS).map((o) => (
@@ -1583,7 +1583,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           )}
                         </div>
                         <div className="vx-card" style={{ padding: 14 }}>
-                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Perfil e requisitos — {fInfo?.nome}</b>
+                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Perfil e requisitos — {fInfo?.nome}</b><Tag obrigatorio={false} />
                           <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
                             <label><div className="vx-label">Experiência</div>
                               <select className="vx-input" value={cfg.nivelExperiencia || "indiferente"} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
@@ -1596,7 +1596,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           </div>
                         </div>
                         <div className="vx-card" style={{ padding: 14 }}>
-                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Atividades e pagamentos — {fInfo?.nome}</b>
+                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Atividades e pagamentos — {fInfo?.nome}</b><Tag obrigatorio={true} />
                           <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Marque o que este profissional faz e quanto ganha.</div>
                           {SELECAO_RAPIDA[funcaoAtiva] && (
                             <div style={{ marginBottom: 12 }}>
@@ -1658,7 +1658,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                             })()}
                           </div>
                           <div style={{ marginTop: 14, marginBottom: 4 }}>
-                            <b style={{ fontSize: 12.5, color: "var(--brand)" }}>Gestão operacional</b>
+                            <b style={{ fontSize: 12.5, color: "var(--brand)" }}>Gestão operacional</b><Tag obrigatorio={false} />
                             <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
                               <CardOption selected={!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", false)} icon={Zap} title="Automático (recomendado)" subtitle="A RYCS define prazos e limites automaticamente." />
                               <CardOption selected={!!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", true)} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Defina orçamento e prazos manualmente." />
@@ -1775,7 +1775,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Visibilidade */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div>
-              <div className="vx-label">Quem pode ver esta campanha?</div>
+              <div className="vx-label">Quem pode ver esta campanha? <Tag obrigatorio={false} /></div>
               <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
                 <CardOption selected={campanha.visibilidade === "publica"} onClick={() => set("visibilidade", "publica")} icon={Eye} title="Todos podem ver" subtitle="Qualquer profissional que se encaixe no perfil pode se candidatar." />
                 <CardOption selected={campanha.visibilidade === "privada"} onClick={() => set("visibilidade", "privada")} icon={EyeOff} title="Só convidados" subtitle="Apenas profissionais que você convidar verão a campanha." />
@@ -1838,7 +1838,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Seletor de modo */}
           <div className="vx-card" style={{ padding: 20, marginTop: 14 }}>
             <div style={{ marginBottom: 14 }}>
-              <b style={{ fontSize: 15, color: "var(--ink)" }}>Atividades e pagamentos — {FUNCOES[campanha.funcao]?.nome || campanha.funcao || "SDR"}</b>
+              <b style={{ fontSize: 15, color: "var(--ink)" }}>Atividades e pagamentos — {FUNCOES[campanha.funcao]?.nome || campanha.funcao || "SDR"}</b><Tag obrigatorio={true} />
               <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 2 }}>Defina o que o profissional fará e quanto receberá.</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -2144,7 +2144,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             {/* Modelo de pagamento */}
             {((campanha.acoesAtivas || []).length > 1 || (campanha.formasGanhoRascunho || []).length > 1) && (
               <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-                <div className="vx-label" style={{ marginBottom: 8 }}>Como funciona o pagamento?</div>
+                <div className="vx-label" style={{ marginBottom: 8 }}>Como funciona o pagamento? <Tag obrigatorio={false} /></div>
                 <div style={{ display: "grid", gap: 8 }}>
                   <CardOption selected={campanha.remuneracaoCumulativa} onClick={() => set("remuneracaoCumulativa", true)} title="Pagar por cada etapa" subtitle="O profissional ganha por cada atividade que completar (ex: R$10 por contato + R$30 por reunião)." />
                   <CardOption selected={!campanha.remuneracaoCumulativa} onClick={() => set("remuneracaoCumulativa", false)} title="Pagar só pelo resultado final" subtitle="Só paga quando o profissional chega ao último passo. Etapas anteriores não são remuneradas." />
@@ -2173,7 +2173,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
                 <label style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}>
                   <input type="checkbox" checked={campanha.temComissao || false} onChange={(e) => set("temComissao", e.target.checked)} />
-                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Pagar uma porcentagem extra sobre cada venda</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>Pagar uma porcentagem extra sobre cada venda <Tag obrigatorio={false} /></div>
                 </label>
                 {campanha.temComissao && (
                   <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
@@ -2413,7 +2413,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Campo principal: Quanto deseja investir */}
           <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Quanto você deseja investir?</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Quanto você deseja investir? <Tag obrigatorio={true} /></div>
               <div className="vx-mut" style={{ fontSize: 12.5 }}>Esse é o limite total que a empresa autoriza para esta campanha.</div>
             </div>
             <CampoOrcamento value={orcamentoAtual} onChange={(v) => set("orcamento", v)} />
