@@ -2046,6 +2046,28 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
+          {/* Validação de resultados */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 10 }}>
+              <b style={{ color: "var(--brand)" }}>Como os resultados serão validados?</b><Tag obrigatorio={false} />
+              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 2 }}>Defina como você aprova um lead qualificado, uma reunião agendada ou outro resultado desta atividade.</div>
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {METODOS_APROVACAO.map((m) => {
+                const MIcon = m.icon;
+                return (
+                  <CardOption key={m.id} selected={(campanha.aprovacaoPagamentos || "manual") === m.id}
+                    onClick={() => set("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
+                    subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
+              <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+              <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias definidas pela RYCS nunca podem ser ignoradas.</span>
+            </div>
+          </div>
+
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Ações e pagamentos <ArrowRight size={14} /></button>
@@ -2525,28 +2547,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </>)}
 
           {/* ── CONFIGURAÇÕES COMUNS AOS DOIS MODOS ── */}
-
-          {/* Validação de resultados — fonte única de verdade para campanhas individuais */}
-          {campanha.modoAcoesRemuneradas && (
-            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div className="vx-label" style={{ marginBottom: 8 }}>Como os resultados serão validados?</div>
-              <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 10 }}>Define como os resultados entregues são aprovados para pagamento.</div>
-              <div style={{ display: "grid", gap: 8 }}>
-                {METODOS_APROVACAO.map((m) => {
-                  const MIcon = m.icon;
-                  return (
-                    <CardOption key={m.id} selected={(campanha.aprovacaoPagamentos || "manual") === m.id}
-                      onClick={() => set("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
-                      subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
-                  );
-                })}
-              </div>
-              <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
-                <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias da RYCS, a auditoria antifraude e as regras financeiras continuam sendo respeitadas.</span>
-              </div>
-            </div>
-          )}
 
           </>)}
 
