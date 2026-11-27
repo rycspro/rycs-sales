@@ -561,16 +561,20 @@ function Consumo({ uso }) {
           <div style={{ fontSize: 12, color: "var(--muted)" }}>Custo total</div>
         </div>
         <div style={{ padding: 16, background: "var(--surface-2)", borderRadius: "var(--radius-sm)" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "var(--green)" }}>{uso?.minutosVerificados ? Math.round(uso.minutosVerificados) : 0}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>Minutos pelo navegador · {uso?.ligacoesNavegador || 0} ligações</div>
+        </div>
+        <div style={{ padding: 16, background: "var(--surface-2)", borderRadius: "var(--radius-sm)" }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: "var(--indigo)" }}>{uso?.minutosSimulados ? Math.round(uso.minutosSimulados) : 0}</div>
           <div style={{ fontSize: 12, color: "var(--muted)" }}>Minutos simulados</div>
         </div>
       </div>
 
       <Card style={{ marginTop: 20, padding: 16, background: "var(--surface-2)", border: "1px dashed var(--border-strong)" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Carteira de minutos</div>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Como as ligações são contadas</div>
         <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
-          A carteira de minutos será habilitada quando a integração com o provedor SIP/Asterisk estiver operacional.
-          Atualmente, o modo celular utiliza a linha do profissional (sem custo na plataforma) e o modo simulação não gera consumo real.
+          No modo Navegador, a ligação sai pela operadora da RYCS: atendimento, duração e minutos são medidos automaticamente.
+          No modo Celular, o profissional usa a própria linha e informa o resultado; esses dados aparecem como declarados.
         </p>
       </Card>
     </Card>

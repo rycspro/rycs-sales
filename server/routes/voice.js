@@ -832,7 +832,16 @@ router.get("/voice/usage", (req, res) => {
     FROM voice_usage_events WHERE companyId = ? AND criadoEm >= ? AND criadoEm <= ?
   `).get(companyId, de, ate);
 
-  res.json(uso || { totalMinutos: 0, totalCusto: 0, minutosSimulados: 0, totalEventos: 0 });
+  const sip = db.prepare(`
+    SELECT COUNT(*) as ligacoes, COALESCE(SUM(duracaoTarifavel), 0) / 60.0 as minutos
+    FROM voice_calls WHERE companyId = ? AND providerId = 'sip' AND criadoEm >= ? AND criadoEm <= ?
+  `).get(companyId, de, ate);
+
+  res.json({
+    ...(uso || { totalMinutos: 0, totalCusto: 0, minutosSimulados: 0, totalEventos: 0 }),
+    ligacoesNavegador: sip.ligacoes,
+    minutosVerificados: sip.minutos,
+  });
 });
 
 // ── Audit logs ───────────────────────────────────────────────────────
