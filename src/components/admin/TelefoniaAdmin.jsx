@@ -198,6 +198,14 @@ export default function TelefoniaAdmin({ aviso }) {
         <div className="vx-card" style={{ padding: 20, maxWidth: 500 }}>
           <h3 className="vx-disp" style={{ fontSize: 15, marginBottom: 16 }}>Configurações globais</h3>
 
+          <label className="vx-row" style={{ marginBottom: 8, gap: 8, cursor: "pointer" }}>
+            <input type="checkbox" checked={!!cfg.telefoniaReal} onChange={(e) => setCfg({ ...cfg, telefoniaReal: e.target.checked ? 1 : 0 })} />
+            <span style={{ fontSize: 14 }}>Liberar telefonia real (operadora SIP)</span>
+          </label>
+          <div className="vx-mut" style={{ fontSize: 12, marginBottom: 16 }}>
+            Só ative depois de testar a operadora. Desativada, ligações pelo provedor SIP são recusadas.
+          </div>
+
           <label className="vx-row" style={{ marginBottom: 16, gap: 8, cursor: "pointer" }}>
             <input type="checkbox" checked={!!cfg.limitesAtivos} onChange={(e) => setCfg({ ...cfg, limitesAtivos: e.target.checked ? 1 : 0 })} />
             <span style={{ fontSize: 14 }}>Ativar limites comerciais</span>

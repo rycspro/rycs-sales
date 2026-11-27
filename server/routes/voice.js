@@ -437,6 +437,11 @@ router.post("/voice/calls", (req, res) => {
     return res.status(403).json({ error: "Provedor simulado não disponível em produção." });
   }
 
+  if (provId === "sip") {
+    const cfgTel = db.prepare("SELECT telefoniaReal FROM voice_admin_config WHERE id = 'global'").get();
+    if (cfgTel?.telefoniaReal !== 1) return res.status(403).json({ error: "Telefonia real ainda não liberada pelo admin." });
+  }
+
   const caps = provider.getCapabilities();
   if (!caps.canInitiate) return res.status(400).json({ error: `O provedor ${provider.nome} não está operacional.` });
 
@@ -1124,19 +1129,20 @@ router.post("/voice/admin/telefonia/config", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Apenas admin" });
 
   const { limitesAtivos, maxChamadasDiaGlobal, maxMinutosMesGlobal,
-    maxSimultaneosGlobal, prefixosBloqueadosGlobal } = req.body;
+    maxSimultaneosGlobal, prefixosBloqueadosGlobal, telefoniaReal } = req.body;
   const now = agora();
 
   db.prepare(`
     INSERT INTO voice_admin_config (id, limitesAtivos, maxChamadasDiaGlobal, maxMinutosMesGlobal,
-      maxSimultaneosGlobal, prefixosBloqueadosGlobal, atualizadoEm)
-    VALUES ('global', ?, ?, ?, ?, ?, ?)
+      maxSimultaneosGlobal, prefixosBloqueadosGlobal, telefoniaReal, atualizadoEm)
+    VALUES ('global', ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       limitesAtivos = excluded.limitesAtivos,
       maxChamadasDiaGlobal = excluded.maxChamadasDiaGlobal,
       maxMinutosMesGlobal = excluded.maxMinutosMesGlobal,
       maxSimultaneosGlobal = excluded.maxSimultaneosGlobal,
       prefixosBloqueadosGlobal = excluded.prefixosBloqueadosGlobal,
+      telefoniaReal = excluded.telefoniaReal,
       atualizadoEm = excluded.atualizadoEm
   `).run(
     limitesAtivos ? 1 : 0,
@@ -1144,6 +1150,7 @@ router.post("/voice/admin/telefonia/config", (req, res) => {
     maxMinutosMesGlobal || 0,
     maxSimultaneosGlobal || 10,
     JSON.stringify(prefixosBloqueadosGlobal || ["0900", "0300"]),
+    telefoniaReal ? 1 : 0,
     now
   );
 

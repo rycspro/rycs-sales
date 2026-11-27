@@ -478,13 +478,14 @@ describe("RYCS Voice — Discadora comercial", () => {
   // 16. Provedor SIP não pode ser usado
   // ══════════════════════════════════════════════════════════════════════
 
-  it("tentativa de ligação via SIP falha (não operacional)", async () => {
+  it("ligação via SIP é recusada enquanto o admin não libera a telefonia real", async () => {
     if (leadId2) {
       const r = await req("/voice/calls", {
         body: { leadId: leadId2, providerId: "sip" },
         cookie: cookieVendedor,
       });
-      assert.equal(r.status, 400, "SIP não está operacional");
+      assert.equal(r.status, 403);
+      assert.match(r.corpo.error, /não liberada/);
     }
   });
 
