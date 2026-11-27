@@ -86,6 +86,8 @@ function CampoOrcamento({ value, onChange }) {
   );
 }
 
+const SEL = { bg: "#E4F0FF", border: "#318CE7", bgOff: "#FFFFFF", borderOff: "#E2E2E2" };
+
 function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }) {
   return (
     <button
@@ -94,16 +96,16 @@ function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }
       onClick={onClick}
       style={{
         padding: "14px 16px", cursor: disabled ? "not-allowed" : "pointer", textAlign: "left", width: "100%",
-        border: `1.5px solid ${selected ? "var(--brand)" : "var(--border)"}`,
-        background: selected ? "var(--brand-100)" : "var(--surface)",
+        border: `1px solid ${selected ? SEL.border : SEL.borderOff}`,
+        background: selected ? SEL.bg : SEL.bgOff,
         opacity: disabled ? 0.5 : 1,
         transition: "border-color .15s, background .15s",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {Icon && <Icon size={18} color={selected ? "#318CE7" : "var(--muted, #6b7280)"} />}
+        {Icon && <Icon size={18} color={selected ? "#318CE7" : "#6b7280"} />}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: "var(--ink, #171717)" }}>{title}</div>
+          <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: "#171717" }}>{title}</div>
           {subtitle && <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{subtitle}</div>}
         </div>
         {selected && <Check size={16} color="#318CE7" />}
@@ -128,9 +130,9 @@ function ChipToggle({ items, value, onChange, multi = false }) {
         <button key={item.id} onClick={() => toggle(item.id)} style={{
           display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20,
           fontSize: 12.5, fontWeight: 500, cursor: "pointer",
-          border: `1.5px solid ${isActive(item.id) ? "var(--brand)" : "var(--border)"}`,
-          background: isActive(item.id) ? "var(--brand-50)" : "var(--surface)",
-          color: isActive(item.id) ? "var(--ink, #171717)" : "var(--text-2)",
+          border: `1px solid ${isActive(item.id) ? SEL.border : SEL.borderOff}`,
+          background: isActive(item.id) ? SEL.bg : SEL.bgOff,
+          color: isActive(item.id) ? "#171717" : "var(--text-2)",
           transition: "all .15s",
         }}>
           {item.icon && <item.icon size={13} />}
@@ -988,7 +990,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <div style={{ padding: "0 24px 20px", display: "grid", gap: 8 }}>
                   {Object.entries(MODELOS_TREINAMENTO).map(([k, m]) => (
                     <button key={k} onClick={() => setModeloTreinamento(k)}
-                      style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", border: `1.5px solid ${modeloTreinamento === k ? "#318CE7" : "var(--border)"}`, borderRadius: 10, background: modeloTreinamento === k ? "rgba(49,140,231,0.04)" : "var(--surface)", cursor: "pointer", textAlign: "left", width: "100%", transition: "border-color .15s" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", border: `1px solid ${modeloTreinamento === k ? SEL.border : SEL.borderOff}`, borderRadius: 10, background: modeloTreinamento === k ? SEL.bg : SEL.bgOff, cursor: "pointer", textAlign: "left", width: "100%", transition: "border-color .15s, background .15s" }}>
                       <div style={{ width: 20, height: 20, borderRadius: "50%", border: `1.5px solid ${modeloTreinamento === k ? "#318CE7" : "var(--border)"}`, background: modeloTreinamento === k ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         {modeloTreinamento === k && <Check size={12} color="#fff" />}
                       </div>
@@ -1057,7 +1059,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           const IconeMat = mat.categoria === "video" ? Video : mat.categoria === "audio" ? Music : mat.categoria === "foto" ? Image : mat.categoria === "apresentacao" ? Presentation : mat.categoria === "link" ? Link2 : FileText;
                           return (
                             <button key={mat.id} onClick={() => setBibliotecaSel((prev) => sel ? prev.filter((x) => x !== mat.id) : [...prev, mat.id])}
-                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1.5px solid ${sel ? "#318CE7" : "var(--border)"}`, borderRadius: 8, background: sel ? "rgba(49,140,231,0.04)" : "var(--surface)", cursor: "pointer", width: "100%", textAlign: "left", transition: "border-color .15s" }}>
+                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1px solid ${sel ? SEL.border : SEL.borderOff}`, borderRadius: 8, background: sel ? SEL.bg : SEL.bgOff, cursor: "pointer", width: "100%", textAlign: "left", transition: "border-color .15s, background .15s" }}>
                               <div style={{ width: 20, height: 20, borderRadius: 4, border: `1.5px solid ${sel ? "#318CE7" : "var(--border)"}`, background: sel ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                                 {sel && <Check size={12} color="#fff" />}
                               </div>
@@ -1169,8 +1171,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           }
                         }} style={{
                           display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", width: "100%", textAlign: "left", cursor: "pointer",
-                          border: `1.5px solid ${ativa ? "var(--brand)" : "var(--border)"}`,
-                          background: ativa ? "var(--brand-100)" : "var(--surface)",
+                          border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`,
+                          background: ativa ? SEL.bg : SEL.bgOff,
                           borderRadius: 10, transition: "border-color .15s, background .15s",
                         }}>
                           <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "#318CE7" : "var(--border)"}`, background: ativa ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -1282,7 +1284,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                   const cfgAcoes = cfg.acoesAtivas || [];
                                   const ativa = cfgAcoes.includes(a.id);
                                   return (
-                                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", border: `1px solid ${ativa ? "var(--brand)" : "var(--border)"}`, borderRadius: 8, background: ativa ? "var(--brand-50)" : "var(--surface)" }}>
+                                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`, borderRadius: 8, background: ativa ? SEL.bg : SEL.bgOff }}>
                                       <input type="checkbox" checked={ativa} onChange={() => {
                                         const novas = ativa ? cfgAcoes.filter((x) => x !== a.id) : [...cfgAcoes, a.id];
                                         setConfig("acoesAtivas", novas);
@@ -1527,8 +1529,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     set("modoAcoesRemuneradas", m.id);
                   }} style={{
                     padding: "18px 16px", cursor: "pointer", textAlign: "left", width: "100%", borderRadius: 12,
-                    border: `1.5px solid ${on ? "#318CE7" : "var(--border)"}`,
-                    background: on ? "rgba(49,140,231,0.04)" : "var(--surface)",
+                    border: `1px solid ${on ? SEL.border : SEL.borderOff}`,
+                    background: on ? SEL.bg : SEL.bgOff,
                     transition: "border-color .15s, background .15s", position: "relative",
                   }}>
                     {on && <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: "#318CE7", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" /></div>}
@@ -1558,7 +1560,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     const sugerida = sugeridas.includes(a.id);
                     const AcIcon = ACOES[a.id]?.Icon;
                     return (
-                      <div key={a.id} style={{ border: `1.5px solid ${ativa ? "#318CE7" : "var(--border)"}`, borderRadius: 10, background: ativa ? "rgba(49,140,231,0.03)" : "var(--surface)", overflow: "hidden", transition: "border-color .15s" }}>
+                      <div key={a.id} style={{ border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`, borderRadius: 10, background: ativa ? SEL.bg : SEL.bgOff, overflow: "hidden", transition: "border-color .15s, background .15s" }}>
                         <button onClick={() => toggleAcao(a.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", width: "100%", textAlign: "left", cursor: "pointer", border: "none", background: "transparent" }}>
                           <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "#318CE7" : "var(--border)"}`, background: ativa ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             {ativa && <Check size={12} color="#fff" />}
@@ -1686,7 +1688,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                 const selecionada = (fg.evidencias || []).includes(ev.id);
                                 return (
                                   <button key={ev.id} onClick={() => upd("evidencias", selecionada ? (fg.evidencias || []).filter((e) => e !== ev.id) : [...(fg.evidencias || []), ev.id])}
-                                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 12, border: `1px solid ${selecionada ? "#318CE7" : "var(--border)"}`, background: selecionada ? "rgba(49,140,231,0.06)" : "var(--surface)", color: selecionada ? "#318CE7" : "var(--text-2)", cursor: "pointer", fontWeight: selecionada ? 600 : 400 }}>
+                                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 12, border: `1px solid ${selecionada ? SEL.border : SEL.borderOff}`, background: selecionada ? SEL.bg : SEL.bgOff, color: selecionada ? "#318CE7" : "var(--text-2)", cursor: "pointer", fontWeight: selecionada ? 600 : 400 }}>
                                     {selecionada && <Check size={10} style={{ marginRight: 4 }} />}{ev.nome}
                                   </button>
                                 );
@@ -1946,9 +1948,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               {SUGESTOES_VERBA.map((v) => (
                 <button key={v} onClick={() => set("orcamento", v)} style={{
                   padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  border: `1.5px solid ${orcamentoAtual === v ? "var(--brand)" : "var(--border)"}`,
-                  background: orcamentoAtual === v ? "var(--brand-50)" : "var(--surface)",
-                  color: orcamentoAtual === v ? "var(--brand)" : "var(--text-2)",
+                  border: `1px solid ${orcamentoAtual === v ? SEL.border : SEL.borderOff}`,
+                  background: orcamentoAtual === v ? SEL.bg : SEL.bgOff,
+                  color: orcamentoAtual === v ? "#318CE7" : "var(--text-2)",
                   transition: "all .15s",
                 }}>
                   {money(v)}
