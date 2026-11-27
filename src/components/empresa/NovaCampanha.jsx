@@ -1713,36 +1713,34 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quais profissionais vão trabalhar nesta campanha?</b><Tag obrigatorio={true} />
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione todas as funções que a equipe precisa. Cada uma vira uma campanha ligada às outras.</div>
               </div>
-              <label style={{ display: "block", marginBottom: 12 }}><div className="vx-label">Nome da equipe <Tag obrigatorio={false} /></div>
-                <input className="vx-input" placeholder="Ex: Equipe Vendas Restaurantes" value={campanha.nomeOperacao || ""}
-                  onChange={(e) => set("nomeOperacao", e.target.value)} />
-              </label>
-              <div style={{ display: "grid", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {ORDEM_FUNCOES.filter((f) => f !== "sem-exp").map((k) => {
                   const f = FUNCOES[k];
-                  const nomeAmigavel = { sdr: "Qualificar contatos e agendar reuniões", bdr: "Encontrar novos clientes", closer: "Negociar e fechar vendas", pap: "Visitar clientes presencialmente" }[k] || f.completo;
+                  const IconFuncao = { sdr: CalendarCheck, bdr: Target, closer: BadgeDollarSign, pap: Footprints }[k] || Users;
+                  const nomeAmigavel = { sdr: "Qualificar e agendar reuniões", bdr: "Encontrar novos clientes", closer: "Negociar e fechar vendas", pap: "Visitar clientes presencialmente" }[k] || f.completo;
                   const funcoesOp = campanha.funcoesOperacao || [];
                   const ativa = funcoesOp.includes(k);
                   return (
-                    <button key={k} onClick={() => {
+                    <button key={k} type="button" onClick={() => {
                       const novas = ativa ? funcoesOp.filter((x) => x !== k) : [...funcoesOp, k];
                       set("funcoesOperacao", novas);
                       if (!ativa && !campanha[`config_${k}`]) {
                         set(`config_${k}`, { funcao: k, vagas: 0, nivelExperiencia: "", processoAdmissao: "manual", acoesAtivas: [], tarefas: {}, remuneracaoCumulativa: true, prazoHoras: 24, limitePorProfissional: 10, orcamento: 0 });
                       }
                     }} style={{
-                      display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", width: "100%", textAlign: "left", cursor: "pointer",
+                      display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: "14px 14px", width: "100%", textAlign: "left", cursor: "pointer",
                       border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`,
                       background: ativa ? SEL.bg : SEL.bgOff,
-                      borderRadius: 10, transition: "border-color .15s, background .15s",
+                      borderRadius: 10, transition: "border-color .15s, background .15s", position: "relative",
                     }}>
-                      <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "var(--brand)" : "var(--border)"}`, background: ativa ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {ativa && <Check size={12} color="#fff" />}
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ativa ? "var(--brand)" : "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <IconFuncao size={18} color={ativa ? "#fff" : "var(--text-2)"} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: ativa ? 600 : 400, color: "var(--ink, #171717)" }}>{nomeAmigavel} ({f.nome})</div>
-                        <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{f.descricao}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: ativa ? "var(--brand)" : "var(--text)" }}>{nomeAmigavel}</div>
+                        <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 3 }}>{f.nome} · {f.descricao}</div>
                       </div>
+                      {ativa && <div style={{ position: "absolute", top: 10, right: 10, width: 18, height: 18, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={11} color="#fff" /></div>}
                     </button>
                   );
                 })}
