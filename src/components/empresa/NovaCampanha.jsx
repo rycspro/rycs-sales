@@ -893,32 +893,50 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   <input className="vx-input" type="number" min="0" value={metaAtual || ""} placeholder={metaQ.placeholder}
                     onChange={(e) => { const v = Math.max(0, Number(e.target.value) || 0); set("metaQuantitativa", v); }} />
                 </label>
-                {plan && plan.etapas.length > 0 && (
-                  <div style={{ marginTop: 14, padding: 14, background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
-                    <div className="vx-eyebrow" style={{ marginBottom: 10 }}>PLANEJAMENTO REVERSO {plan.fonte === "historico" ? "(dados reais)" : "(estimativa)"}</div>
-                    <div style={{ display: "grid", gap: 6 }}>
-                      {plan.etapas.map((e, i) => (
-                        <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, padding: "4px 0", borderBottom: i < plan.etapas.length - 1 ? "1px solid var(--brand-100)" : "none" }}>
-                          <span style={{ color: e.tipo === "meta" ? "var(--brand)" : "var(--ink)", fontWeight: e.tipo === "meta" ? 700 : 400 }}>{e.nome}</span>
-                          <span className="vx-mono" style={{ fontWeight: 700, color: "var(--brand)" }}>{e.quantidade}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
-                      <div style={{ textAlign: "center", padding: "8px 0" }}>
-                        <div className="vx-mut" style={{ fontSize: 11 }}>Profissionais sugeridos</div>
-                        <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{plan.profissionaisRecomendados}</div>
+                {plan && plan.etapas.length > 0 && (() => {
+                  const ICONES_ETAPA = { contatos_trabalhados: Phone, contatos_qualificados: Filter, leads_qualificados: Filter, reunioes_agendadas: CalendarCheck, reunioes_realizadas: Users, visitas_realizadas: MapPin, vendas: Target, clientes_reativados: RotateCcw };
+                  const etapasInvertidas = [...plan.etapas].reverse();
+                  return (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                        <div className="vx-eyebrow" style={{ margin: 0 }}>PLANEJAMENTO REVERSO</div>
+                        <span style={{ fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: plan.fonte === "historico" ? "rgba(22,163,74,.1)" : "var(--brand-50)", color: plan.fonte === "historico" ? "var(--green)" : "var(--brand)", border: `1px solid ${plan.fonte === "historico" ? "rgba(22,163,74,.2)" : "var(--brand-100)"}` }}>
+                          {plan.fonte === "historico" ? "Dados reais" : "Estimativa"}
+                        </span>
                       </div>
-                      {plan.investimentoEstimado > 0 && (
-                        <div style={{ textAlign: "center", padding: "8px 0" }}>
-                          <div className="vx-mut" style={{ fontSize: 11 }}>Investimento estimado</div>
-                          <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{money(plan.investimentoEstimado)}</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                        {etapasInvertidas.map((e, i) => {
+                          const Ic = ICONES_ETAPA[e.id] || Target;
+                          const isMeta = e.tipo === "meta";
+                          return (
+                            <div key={e.id} style={{ display: "contents" }}>
+                              {i > 0 && <div style={{ display: "flex", alignItems: "center", color: "var(--muted)", fontSize: 13, fontWeight: 600 }}>→</div>}
+                              <div style={{ flex: "1 1 100px", maxWidth: 160, minWidth: 90, textAlign: "center", padding: "14px 8px 10px", borderRadius: 10, background: isMeta ? "var(--brand)" : "var(--surface-solid)", border: `1px solid ${isMeta ? "var(--brand)" : "var(--border)"}`, boxShadow: isMeta ? "var(--shadow-brand)" : "var(--shadow-card)" }}>
+                                <Ic size={18} color={isMeta ? "#fff" : "var(--brand)"} style={{ marginBottom: 6 }} />
+                                <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: isMeta ? "#fff" : "var(--brand)" }}>{e.quantidade.toLocaleString("pt-BR")}</div>
+                                <div style={{ fontSize: 10.5, fontWeight: 600, color: isMeta ? "rgba(255,255,255,.85)" : "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{e.nome}</div>
+                                {e.taxa > 0 && <div style={{ fontSize: 9.5, color: "var(--muted)", marginTop: 2 }}>{(e.taxa * 100).toFixed(0)}% {e.taxaNome?.replace("Taxa de ", "")}</div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: plan.investimentoEstimado > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 10 }}>
+                        <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
+                          <div className="vx-mut" style={{ fontSize: 10.5 }}>Profissionais sugeridos</div>
+                          <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{plan.profissionaisRecomendados}</div>
                         </div>
-                      )}
+                        {plan.investimentoEstimado > 0 && (
+                          <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
+                            <div className="vx-mut" style={{ fontSize: 10.5 }}>Investimento estimado</div>
+                            <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{money(plan.investimentoEstimado)}</div>
+                          </div>
+                        )}
+                      </div>
+                      {plan.aviso && <div className="vx-mut" style={{ fontSize: 11, marginTop: 8, fontStyle: "italic" }}>{plan.aviso}</div>}
                     </div>
-                    {plan.aviso && <div className="vx-mut" style={{ fontSize: 11, marginTop: 8, fontStyle: "italic" }}>{plan.aviso}</div>}
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })()}
