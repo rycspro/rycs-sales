@@ -1753,13 +1753,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     return (
                       <div key={k} style={{ border: `1px solid ${expandido ? "var(--brand)" : "var(--border)"}`, borderRadius: 12, overflow: "hidden", background: "var(--surface)", transition: "border-color .15s" }}>
                         {/* cabeçalho */}
-                        <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <IconFuncao size={20} color="var(--brand)" />
+                        <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, background: "var(--brand-50)" }}>
+                          <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <IconFuncao size={20} color="#fff" />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: 15 }}>{f?.nome || k}</div>
-                            <div className="vx-mut" style={{ fontSize: 12 }}>{nomeAmigavel}</div>
+                            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--brand)" }}>{f?.nome || k}</div>
+                            <div style={{ fontSize: 12, color: "var(--brand)", opacity: 0.75 }}>{nomeAmigavel}</div>
                           </div>
                           <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 6 }} onClick={() => set("abaFuncaoAtiva", expandido ? null : k)}>
                             <Pencil size={15} color="var(--brand)" />
