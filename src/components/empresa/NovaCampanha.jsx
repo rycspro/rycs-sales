@@ -1932,7 +1932,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina o perfil do profissional para esta campanha.</p>
 
           {campanha.estruturaComercial === "operacao" ? (<>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Funções da operação <Tag obrigatorio={true} /></h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Profissionais que vão trabalhar <Tag obrigatorio={true} /></h2>
             <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Selecione todas as funções que a equipe precisa. Cada uma vira uma campanha ligada às outras.</p>
             <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
