@@ -1128,6 +1128,17 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 onChange={(e) => set("descricao", e.target.value)}
                 placeholder="Ex.: Ligar para donos de restaurante e agendar uma demonstração do sistema." />
             </div>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <div className="vx-label" style={{ margin: 0 }}>Descreva o público que o profissional precisa abordar <Tag obrigatorio={false} /></div>
+                <button className="vx-btn vx-btn-sm" style={{ gap: 5, fontSize: 11.5 }} disabled={gerandoICP} onClick={gerarICP}>
+                  {gerandoICP ? <><Loader size={12} style={{ animation: "spin 1s linear infinite" }} /> Gerando…</> : <><Sparkles size={12} /> Gerar com IA</>}
+                </button>
+              </div>
+              <textarea className="vx-input" style={{ minHeight: 62 }} value={campanha.publico || ""}
+                onChange={(e) => set("publico", e.target.value)}
+                placeholder="Ex.: Donos de restaurante com mais de 10 mesas no interior de SP." />
+            </div>
           </div>
 
           {/* Mercado de atuação do cliente */}
